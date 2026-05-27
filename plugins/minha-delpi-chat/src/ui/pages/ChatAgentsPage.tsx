@@ -142,11 +142,16 @@ export function ChatAgentsPage({
 }: ChatAgentsPageProps) {
   const [showInactive, setShowInactive] = useState(false);
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
+  const [resumeBuilderAgent, setResumeBuilderAgent] = useState<ChatAgent | null>(null);
   const [actionEditor, setActionEditor] = useState<{
     agent: ChatAgent;
     providerKey?: string | null;
+    returnToBuilder?: boolean;
   } | null>(null);
-  const [skillsEditor, setSkillsEditor] = useState<ChatAgent | null>(null);
+  const [skillsEditor, setSkillsEditor] = useState<{
+    agent: ChatAgent;
+    returnToBuilder?: boolean;
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const onReloadAgentsRef = useRef(onReloadAgents);
   onReloadAgentsRef.current = onReloadAgents;
@@ -197,11 +202,26 @@ export function ChatAgentsPage({
   if (skillsEditor) {
     return (
       <ChatAgentSkillsPage
-        agent={skillsEditor}
-        onBack={() => setSkillsEditor(null)}
-        onOpenActions={(target) => {
+        agent={skillsEditor.agent}
+        backLabel={
+          skillsEditor.returnToBuilder ? "Voltar ao agente" : "Voltar para agentes"
+        }
+        onBack={() => {
+          if (skillsEditor.returnToBuilder) {
+            setEditingAgent(skillsEditor.agent);
+            setResumeBuilderAgent(null);
+          }
+
           setSkillsEditor(null);
-          setActionEditor({ agent: target, providerKey: null });
+        }}
+        onOpenActions={(target) => {
+          setResumeBuilderAgent(skillsEditor.returnToBuilder ? skillsEditor.agent : null);
+          setSkillsEditor(null);
+          setActionEditor({
+            agent: target,
+            providerKey: null,
+            returnToBuilder: skillsEditor.returnToBuilder,
+          });
         }}
         getAccessToken={getAccessToken}
       />
@@ -213,7 +233,17 @@ export function ChatAgentsPage({
       <ChatAgentActionsPage
         agent={actionEditor.agent}
         providerKey={actionEditor.providerKey}
-        onBack={() => setActionEditor(null)}
+        backLabel={
+          actionEditor.returnToBuilder ? "Voltar ao agente" : "Voltar para agentes"
+        }
+        onBack={() => {
+          if (actionEditor.returnToBuilder) {
+            setEditingAgent(resumeBuilderAgent ?? actionEditor.agent);
+          }
+
+          setResumeBuilderAgent(null);
+          setActionEditor(null);
+        }}
         getAccessToken={getAccessToken}
       />
     );
@@ -227,24 +257,35 @@ export function ChatAgentsPage({
         onCreateAction={
           editingAgent
             ? () => {
-                setActionEditor({ agent: editingAgent, providerKey: null });
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setActionEditor({
+                  agent: editingAgent,
+                  providerKey: null,
+                  returnToBuilder: true,
+                });
               }
             : undefined
         }
         onConfigureAction={
           editingAgent
             ? (_agent, providerKey) => {
-                setActionEditor({ agent: editingAgent, providerKey });
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setActionEditor({
+                  agent: editingAgent,
+                  providerKey,
+                  returnToBuilder: true,
+                });
               }
             : undefined
         }
         onConfigureSkills={
           editingAgent
             ? () => {
-                setSkillsEditor(editingAgent);
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setSkillsEditor({ agent: editingAgent, returnToBuilder: true });
               }
             : undefined
         }
@@ -265,13 +306,15 @@ export function ChatAgentsPage({
 
   return (
     <section className="mdc-chat-agents-directory" aria-label="Agentes">
-      <header className="mdc-chat-agents-directory__topbar">
-        <button type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar ao chat</span>
-        </button>
+      <header className="mdc-chat-ws-topbar mdc-chat-agents-directory__topbar">
+        <div className="mdc-chat-ws-topbar__start">
+          <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            <span>Voltar ao chat</span>
+          </button>
+        </div>
 
-        <div>
+        <div className="mdc-chat-ws-topbar__title mdc-chat-agents-directory__title">
           <Bot size={18} aria-hidden="true" />
           <span>Agentes</span>
         </div>

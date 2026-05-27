@@ -328,7 +328,7 @@
   width: 1.15rem;
   height: 1.15rem;
   border-radius: 999px;
-  background: white;
+  background: var(--mdc-on-primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
   transition: transform 0.2s ease;
 }

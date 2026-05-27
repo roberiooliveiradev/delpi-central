@@ -6,6 +6,7 @@ import {
   Folder,
   MessageSquarePlus,
   Search,
+  Settings2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -50,6 +51,7 @@ type ChatSidebarProps = {
   onCloseMobile?: () => void;
   onToggleCollapsed?: () => void;
   onViewChange?: (view: ChatSidebarView) => void;
+  onOpenAdmin?: () => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
@@ -89,6 +91,7 @@ export function ChatSidebar({
   onCloseMobile,
   onToggleCollapsed,
   onViewChange,
+  onOpenAdmin,
   onNewSession,
   onSelectSession,
   onRenameSession,
@@ -250,6 +253,18 @@ export function ChatSidebar({
         >
           <Folder size={19} aria-hidden="true" />
         </button>
+
+        {onOpenAdmin ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button mdc-chat-sidebar__rail-button--admin"
+            onClick={onOpenAdmin}
+            aria-label="Administração"
+            title="Administração"
+          >
+            <Settings2 size={19} aria-hidden="true" />
+          </button>
+        ) : null}
       </aside>
     );
   }
@@ -274,6 +289,7 @@ export function ChatSidebar({
           searchTerm={searchTerm}
           searchInputRef={searchInputRef}
           onNewSession={onNewSession}
+          onOpenAdmin={onOpenAdmin}
           onToggleSearch={() => {
             setIsSearchOpen((current) => !current);
             setSearchTerm("");
@@ -383,6 +399,16 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__footer">
+        {onOpenAdmin ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar__footer-admin"
+            onClick={onOpenAdmin}
+          >
+            <Settings2 size={16} aria-hidden="true" />
+            <span>Administração</span>
+          </button>
+        ) : null}
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>

@@ -74,13 +74,10 @@ export function ChatContextTopbar({
       </div>
 
       <div className="mdc-chat-context-topbar__actions">
-        {mode === "general" ? (
-          <>
-            <button type="button" onClick={onOpenAdmin}>
-              Admin
-            </button>
-            <span>MVP</span>
-          </>
+        {onOpenAdmin && mode === "general" ? (
+          <button type="button" onClick={onOpenAdmin}>
+            Administração
+          </button>
         ) : null}
 
         {mode !== "general" ? (
@@ -97,6 +94,19 @@ export function ChatContextTopbar({
 
             {isMenuOpen && mode === "project" ? (
               <div className="mdc-chat-context-topbar__menu">
+                {onOpenAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenAdmin();
+                    }}
+                  >
+                    <Settings size={17} aria-hidden="true" />
+                    <span>Administração</span>
+                  </button>
+                ) : null}
+
                 <button
                   type="button"
                   onClick={() => {
@@ -135,6 +145,19 @@ export function ChatContextTopbar({
 
             {isMenuOpen && mode === "agent" ? (
               <div className="mdc-chat-context-topbar__menu">
+                {onOpenAdmin ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenAdmin();
+                    }}
+                  >
+                    <Settings size={17} aria-hidden="true" />
+                    <span>Administração</span>
+                  </button>
+                ) : null}
+
                 {onManageAgents ? (
                   <button
                     type="button"

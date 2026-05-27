@@ -75,6 +75,8 @@ from app.composition.chat_composer import (
     make_list_chat_agent_shares_use_case,
     make_list_chat_agents_use_case,
     make_preview_chat_agent_use_case,
+    make_publish_chat_agent_use_case,
+    make_list_chat_agent_versions_use_case,
     make_revoke_chat_agent_share_use_case,
     make_share_chat_agent_use_case,
     make_list_chat_project_shares_use_case,
@@ -670,6 +672,34 @@ def revoke_agent_share(agent_id: str, target_user_id: str):
     return "", 204
 
 
+@chat_bp.post("/agents/preview")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def preview_agent_draft():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
+    use_case = make_preview_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=None,
+            message=payload.get("message") or payload.get("question") or "",
+            access_token=access_token,
+            generate_answer=bool(payload.get("generateAnswer", True)),
+            draft=payload.get("draft"),
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        return bad_request(str(exc))
+
+    return jsonify(result), 200
+
+
 @chat_bp.post("/agents/<agent_id>/preview")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def preview_agent(agent_id: str):
@@ -688,6 +718,7 @@ def preview_agent(agent_id: str):
             message=payload.get("message") or payload.get("question") or "",
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
+            draft=payload.get("draft"),
         )
     except ChatAgentPermissionDeniedError as exc:
         return forbidden(str(exc))
@@ -695,6 +726,42 @@ def preview_agent(agent_id: str):
         return bad_request(str(exc))
 
     return jsonify(result), 200
+
+
+@chat_bp.post("/agents/<agent_id>/publish")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def publish_agent(agent_id: str):
+    use_case = make_publish_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            can_manage_official_agents=_can_manage_official_agents(),
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        return bad_request(str(exc))
+
+    if not result:
+        return _not_found_response()
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 200
+
+
+@chat_bp.get("/agents/<agent_id>/versions")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def list_agent_versions(agent_id: str):
+    use_case = make_list_chat_agent_versions_use_case()
+    versions = use_case.execute(user_id=g.current_user.sub, agent_id=agent_id)
+    return jsonify(versions), 200
 
 
 def _find_linked_agent_provider(agent_id: str, provider_key: str):

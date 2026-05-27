@@ -31,6 +31,7 @@ import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
+import { userCanOpenChatAdmin } from "../../security/chatPermissions";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -68,6 +69,7 @@ export function ChatPage({
   const [canManageAgents, setCanManageAgents] = useState(false);
   const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
+  const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
@@ -394,16 +396,21 @@ export function ChatPage({
       setHasLoadedManageAgentsPermission(false);
 
       try {
-        const capabilities = await getChatCapabilities({ getAccessToken });
+        const [capabilities, adminAccess] = await Promise.all([
+          getChatCapabilities({ getAccessToken }),
+          userCanOpenChatAdmin(getAccessToken),
+        ]);
 
         if (isMounted) {
           setCanManageAgents(capabilities.canManageAgents);
           setCanManageOfficialAgents(capabilities.canManageOfficialAgents);
+          setCanOpenAdmin(adminAccess);
         }
       } catch {
         if (isMounted) {
           setCanManageAgents(false);
           setCanManageOfficialAgents(false);
+          setCanOpenAdmin(false);
         }
       } finally {
         if (isMounted) {
@@ -695,6 +702,8 @@ export function ChatPage({
     .filter(Boolean)
     .join(" ");
 
+  const openAdmin = canOpenAdmin && onOpenAdmin ? () => onOpenAdmin() : undefined;
+
   const rootClassName = [
     "minha-delpi-chat",
     isDraggingFile ? "minha-delpi-chat--dragging" : "",
@@ -742,6 +751,7 @@ export function ChatPage({
           isLoadingAgents={isLoadingAgents}
           isLoadingProjects={isLoadingProjects}
           canManageAgents={canManageAgents}
+          onOpenAdmin={openAdmin}
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
@@ -816,7 +826,7 @@ export function ChatPage({
                 void loadAgents(false, true);
               }}
               onReloadAgents={loadAgents}
-              onOpenRagAdmin={onOpenAdmin}
+              onOpenRagAdmin={openAdmin}
               getAccessToken={getAccessToken}
             />
           </section>
@@ -848,7 +858,7 @@ export function ChatPage({
                   ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
                   : undefined
             }
-            onOpenAdmin={onOpenAdmin}
+            onOpenAdmin={openAdmin}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;

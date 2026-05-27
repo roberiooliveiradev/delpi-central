@@ -12,7 +12,9 @@ import type {
   ChatSkillCatalogItem,
   UpsertChatAgentSkillPayload,
   ChatAgentPreviewResponse,
+  ChatAgentPreviewDraft,
   ChatAgentShare,
+  ChatAgentVersion,
   ChatAgentStats,
   ChatProjectShare,
   ChatDirectoryUser,
@@ -794,7 +796,11 @@ export async function getChatAgentStats(
 
 export async function previewChatAgent(
   agentId: string,
-  payload: { message: string; generateAnswer?: boolean },
+  payload: {
+    message: string;
+    generateAnswer?: boolean;
+    draft?: ChatAgentPreviewDraft;
+  },
   options: ChatApiOptions = {},
 ): Promise<ChatAgentPreviewResponse> {
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
@@ -804,6 +810,47 @@ export async function previewChatAgent(
   });
 
   return parseJsonResponse(response);
+}
+
+export async function previewChatAgentDraft(
+  payload: {
+    message: string;
+    generateAnswer?: boolean;
+    draft: ChatAgentPreviewDraft;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatAgentPreviewResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/preview`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function publishChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/publish`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function listChatAgentVersions(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentVersion[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/versions`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentVersion[]>(response);
 }
 
 export async function upsertChatAgentAction(

@@ -154,5 +154,8 @@
 }
 
 .mdc-admin-shell label.mdc-admin-form-row {
-  display: flex !important;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center;
 }

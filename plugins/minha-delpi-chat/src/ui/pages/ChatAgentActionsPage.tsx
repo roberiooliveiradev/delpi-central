@@ -41,6 +41,7 @@ import "./ChatAgentActionsPage.css";
 type ChatAgentActionsPageProps = {
   agent: ChatAgent;
   providerKey?: string | null;
+  backLabel?: string;
   onBack: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
@@ -159,6 +160,7 @@ function readAuthConfig(provider: ChatActionProvider | null): AuthConfigForm {
 export function ChatAgentActionsPage({
   agent,
   providerKey,
+  backLabel = "Voltar ao agente",
   onBack,
   getAccessToken,
 }: ChatAgentActionsPageProps) {
@@ -611,24 +613,24 @@ export function ChatAgentActionsPage({
 
   return (
     <section className="mdc-chat-agent-actions-page">
-      <header className="mdc-chat-agent-actions-page__topbar">
-        <div className="mdc-chat-agent-actions-page__topbar-start">
-          <button type="button" onClick={onBack}>
+      <header className="mdc-chat-ws-topbar mdc-chat-agent-actions-page__topbar">
+        <div className="mdc-chat-ws-topbar__start">
+          <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
             <ArrowLeft size={18} aria-hidden="true" />
-            <span>Voltar ao agente</span>
+            <span>{backLabel}</span>
           </button>
         </div>
 
-        <div className="mdc-chat-agent-actions-page__topbar-title">
+        <div className="mdc-chat-ws-topbar__title">
           <span>{selectedProvider?.name ?? "Nova action"}</span>
           <small>{agent.name}</small>
         </div>
 
-        <div className="mdc-chat-agent-actions-page__topbar-actions">
+        <div className="mdc-chat-ws-topbar__actions">
           {selectedProviderKey ? (
             <button
               type="button"
-              className="mdc-chat-agent-actions-page__primary"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
               disabled={isSavingProvider}
               onClick={() => void saveProviderConfig()}
             >

@@ -28,8 +28,10 @@
   --mdc-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
 
   --mdc-primary: var(--primary, #089bdb);
+  --mdc-on-primary: var(--on-primary, #ffffff);
   --mdc-secondary: var(--secundary, #003866);
   --mdc-success: var(--success, #067647);
+  --mdc-success-text: var(--success, #067647);
   --mdc-danger: var(--danger, #b42318);
 
   --mdc-control-bg: var(--control-bg, var(--surface, #ffffff));

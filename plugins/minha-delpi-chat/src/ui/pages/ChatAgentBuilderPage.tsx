@@ -1,6 +1,5 @@
 import {
   ArrowLeft,
-  BarChart3,
   Bot,
   Check,
   Copy,
@@ -34,6 +33,9 @@ import {
   listChatAgentSkills,
   listChatAgentShares,
   previewChatAgent,
+  previewChatAgentDraft,
+  publishChatAgent,
+  listChatAgentVersions,
   revokeChatAgentShare,
   shareChatAgent,
   uploadAgentSource,
@@ -49,10 +51,13 @@ import type {
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 
+import { AGENT_CREATION_ASSISTANT_PROMPT } from "../../domain/agentCreationAssistant";
 import {
   AGENT_SYSTEM_PROMPT_TEMPLATES,
   getAgentSystemPromptTemplate,
 } from "../../domain/agentSystemPromptTemplates";
+
+import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 
 import "./ChatAgentBuilderPage.css";
 
@@ -162,6 +167,11 @@ export function ChatAgentBuilderPage({
     agent ? "configure" : "create",
   );
   const [createBrief, setCreateBrief] = useState("");
+  const [createInput, setCreateInput] = useState("");
+  const [createMessages, setCreateMessages] = useState<
+    Array<{ role: "user" | "assistant"; content: string }>
+  >([]);
+  const [isCreateChatLoading, setIsCreateChatLoading] = useState(false);
   const [previewInput, setPreviewInput] = useState("");
   const [previewMessages, setPreviewMessages] = useState<
     Array<{ role: "user" | "assistant"; content: string }>
@@ -235,6 +245,14 @@ export function ChatAgentBuilderPage({
   const [updatingShareUserId, setUpdatingShareUserId] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [publishedVersion, setPublishedVersion] = useState(agent?.published_version ?? 0);
+  const [hasUnpublishedChanges, setHasUnpublishedChanges] = useState(
+    agent?.has_unpublished_changes ?? false,
+  );
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [agentVersions, setAgentVersions] = useState<
+    { id: string; version: number; event: string; createdAt: string | null }[]
+  >([]);
 
 
   useEffect(() => {
@@ -296,6 +314,8 @@ export function ChatAgentBuilderPage({
         setAgentSources(sources);
         setAgentActionProviders(actionProviders);
         setAgentSkillBindings(skillBindings);
+        setPublishedVersion(details.published_version ?? 0);
+        setHasUnpublishedChanges(details.has_unpublished_changes ?? false);
       } catch {
         if (isMounted) {
           setLocalError("Não foi possível carregar os detalhes completos do agente.");
@@ -395,15 +415,15 @@ export function ChatAgentBuilderPage({
     });
   }
 
-  function generateDraftFromBrief() {
-    const brief = createBrief.trim();
+  function applyDraftFromBrief(brief: string, options?: { switchToConfigure?: boolean }) {
+    const normalizedBrief = brief.trim();
 
-    if (!brief) {
-      setLocalError("Descreva o agente que deseja criar.");
-      return;
+    if (!normalizedBrief) {
+      return false;
     }
 
-    const firstSentence = brief.split(/[.!?\n]/).find(Boolean)?.trim() || brief;
+    const firstSentence =
+      normalizedBrief.split(/[.!?\n]/).find(Boolean)?.trim() || normalizedBrief;
     const generatedName =
       name.trim() ||
       firstSentence
@@ -425,7 +445,7 @@ export function ChatAgentBuilderPage({
         `Você é ${finalName}, um agente especializado da Minha DELPI.`,
         "",
         "Objetivo:",
-        brief,
+        normalizedBrief,
         "",
         "Regras:",
         "- Responda com clareza e objetividade.",
@@ -449,8 +469,119 @@ export function ChatAgentBuilderPage({
       ];
     });
 
-    setBuilderMode("configure");
+    if (options?.switchToConfigure !== false) {
+      setBuilderMode("configure");
+    }
+
     setLocalError(null);
+    return true;
+  }
+
+  function generateDraftFromBrief() {
+    const brief = createBrief.trim() || createInput.trim();
+
+    if (!brief && createMessages.length === 0) {
+      setLocalError("Descreva o agente que deseja criar.");
+      return;
+    }
+
+    const combinedBrief =
+      brief ||
+      createMessages
+        .filter((message) => message.role === "user")
+        .map((message) => message.content)
+        .join("\n\n");
+
+    setCreateBrief(combinedBrief);
+    applyDraftFromBrief(combinedBrief, { switchToConfigure: true });
+  }
+
+  async function sendCreateChatMessage(content?: string) {
+    const message = (content ?? createInput).trim();
+
+    if (!message || !getAccessToken) {
+      return;
+    }
+
+    const nextMessages: Array<{ role: "user" | "assistant"; content: string }> = [
+      ...createMessages,
+      { role: "user", content: message },
+    ];
+
+    setCreateMessages(nextMessages);
+    setCreateInput("");
+    setIsCreateChatLoading(true);
+    setLocalError(null);
+
+    const combinedBrief = nextMessages
+      .filter((entry) => entry.role === "user")
+      .map((entry) => entry.content)
+      .join("\n\n");
+
+    setCreateBrief(combinedBrief);
+    applyDraftFromBrief(combinedBrief, { switchToConfigure: false });
+
+    try {
+      const result = await previewChatAgentDraft(
+        {
+          message,
+          generateAnswer: true,
+          draft: {
+            key: "assistente-criacao-agente",
+            name: "Assistente de criação",
+            description: "Ajuda a definir novos agentes corporativos",
+            systemPrompt: AGENT_CREATION_ASSISTANT_PROMPT,
+            metadata: { icebreakers: [] },
+          },
+        },
+        { getAccessToken },
+      );
+
+      const answer =
+        (typeof result.answerPreview === "string" && result.answerPreview) ||
+        (typeof result.answer === "string" && result.answer) ||
+        "Não consegui responder agora. Tente reformular o pedido.";
+
+      setCreateMessages((current) => [...current, { role: "assistant", content: answer }]);
+    } catch {
+      setCreateMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            "Não foi possível continuar a conversa. Verifique sua conexão e tente novamente.",
+        },
+      ]);
+    } finally {
+      setIsCreateChatLoading(false);
+    }
+  }
+
+  function buildPreviewDraft() {
+    const normalizedName = name.trim();
+
+    return {
+      key: key.trim() || createKeyFromName(normalizedName),
+      name: normalizedName || "Novo agente",
+      description: description.trim() || null,
+      systemPrompt: systemPrompt.trim() || null,
+      responseStyle,
+      category: category.trim() || null,
+      icon: icon.trim() || null,
+      maxToolCalls,
+      requiresConfirmationForWrite,
+      metadata: {
+        ...(agent?.metadata ?? {}),
+        icebreakers: normalizedIcebreakers,
+        allowed_actions: allowedActions,
+        capabilities: {
+          ...capabilities,
+          actions: capActions,
+          files: capFiles,
+          canvas: capCanvas,
+        },
+      },
+    };
   }
 
   async function sendPreviewMessage(content?: string) {
@@ -460,29 +591,39 @@ export function ChatAgentBuilderPage({
       return;
     }
 
-    setPreviewMessages((current) => [...current, { role: "user", content: message }]);
-    setPreviewInput("");
+    if (!getAccessToken) {
+      return;
+    }
 
-    if (!agent?.id || !getAccessToken) {
+    const draft = buildPreviewDraft();
+
+    if (!draft.name.trim()) {
       setPreviewMessages((current) => [
         ...current,
         {
           role: "assistant",
-          content:
-            "Salve o agente para usar a pré-visualização com instruções, fontes e actions reais.",
+          content: "Informe o nome do agente para testar a pré-visualização.",
         },
       ]);
       return;
     }
 
+    setPreviewMessages((current) => [...current, { role: "user", content: message }]);
+    setPreviewInput("");
     setIsPreviewLoading(true);
 
     try {
-      const result = await previewChatAgent(
-        agent.id,
-        { message, generateAnswer: true },
-        { getAccessToken },
-      );
+      const result = agent?.id
+        ? await previewChatAgent(
+            agent.id,
+            { message, generateAnswer: true, draft },
+            { getAccessToken },
+          )
+        : await previewChatAgentDraft(
+            { message, generateAnswer: true, draft },
+            { getAccessToken },
+          );
+
       const answer =
         (typeof result.answerPreview === "string" && result.answerPreview) ||
         (typeof result.answer === "string" && result.answer) ||
@@ -494,7 +635,7 @@ export function ChatAgentBuilderPage({
         ...current,
         {
           role: "assistant",
-          content: "Não foi possível gerar a pré-visualização deste agente.",
+          content: "Não foi possível gerar a pré-visualização com o rascunho atual.",
         },
       ]);
     } finally {
@@ -523,6 +664,24 @@ export function ChatAgentBuilderPage({
   useEffect(() => {
     void loadAgentShares();
   }, [loadAgentShares]);
+
+  useEffect(() => {
+    async function loadVersions() {
+      if (!agent?.id || !getAccessToken) {
+        setAgentVersions([]);
+        return;
+      }
+
+      try {
+        const versions = await listChatAgentVersions(agent.id, { getAccessToken });
+        setAgentVersions(versions);
+      } catch {
+        setAgentVersions([]);
+      }
+    }
+
+    void loadVersions();
+  }, [agent?.id, getAccessToken, publishedVersion]);
 
   useEffect(() => {
     let isMounted = true;
@@ -582,34 +741,22 @@ export function ChatAgentBuilderPage({
     }
   }
 
-  async function submitForm() {
+  function buildSavePayload(): AgentPayload | null {
     const normalizedName = name.trim();
 
     if (!normalizedName) {
       setLocalError("Informe o nome do agente.");
-      return;
+      return null;
     }
 
     const normalizedKey = key.trim() || createKeyFromName(normalizedName);
 
     if (!normalizedKey) {
       setLocalError("Informe uma chave válida para o agente.");
-      return;
+      return null;
     }
 
-    const metadata = {
-      ...(agent?.metadata ?? {}),
-      icebreakers: normalizedIcebreakers,
-      allowed_actions: allowedActions,
-      capabilities: {
-        ...capabilities,
-        actions: capActions,
-        files: capFiles,
-        canvas: capCanvas,
-      },
-    };
-
-    const payload: AgentPayload = {
+    return {
       key: normalizedKey,
       name: normalizedName,
       description: description.trim() || null,
@@ -618,8 +765,26 @@ export function ChatAgentBuilderPage({
       category: category.trim() || null,
       icon: icon.trim() || null,
       responseStyle,
-      metadata,
+      metadata: {
+        ...(agent?.metadata ?? {}),
+        icebreakers: normalizedIcebreakers,
+        allowed_actions: allowedActions,
+        capabilities: {
+          ...capabilities,
+          actions: capActions,
+          files: capFiles,
+          canvas: capCanvas,
+        },
+      },
     };
+  }
+
+  async function saveDraft(options?: { exitAfterSave?: boolean }) {
+    const payload = buildSavePayload();
+
+    if (!payload) {
+      return null;
+    }
 
     setIsSaving(true);
     setLocalError(null);
@@ -634,22 +799,61 @@ export function ChatAgentBuilderPage({
         });
 
         if (updated) {
+          setPublishedVersion(updated.published_version ?? publishedVersion);
+          setHasUnpublishedChanges(updated.has_unpublished_changes ?? true);
           onSelectAgent?.(updated.key);
-          onBack();
+
+          if (options?.exitAfterSave) {
+            onBack();
+          }
         }
 
-        return;
+        return updated ?? null;
       }
 
       const created = await onCreateAgent?.(payload);
 
       if (created) {
+        setPublishedVersion(created.published_version ?? 0);
+        setHasUnpublishedChanges(created.has_unpublished_changes ?? true);
         onSelectAgent?.(created.key);
-        onBack();
+
+        if (options?.exitAfterSave) {
+          onBack();
+        }
       }
+
+      return created ?? null;
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function publishAgent() {
+    const saved = await saveDraft();
+
+    if (!saved?.id || !getAccessToken) {
+      setLocalError("Salve o agente antes de publicar.");
+      return;
+    }
+
+    setIsPublishing(true);
+    setLocalError(null);
+
+    try {
+      const published = await publishChatAgent(saved.id, { getAccessToken });
+      setPublishedVersion(published.published_version ?? 0);
+      setHasUnpublishedChanges(published.has_unpublished_changes ?? false);
+      onSelectAgent?.(published.key);
+    } catch {
+      setLocalError("Não foi possível publicar o agente.");
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
+  async function submitForm() {
+    await saveDraft({ exitAfterSave: true });
   }
 
   async function updateAgentShareRole(targetUserId: string, role: "viewer" | "editor") {
@@ -867,22 +1071,38 @@ export function ChatAgentBuilderPage({
 
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
-      <header className="mdc-chat-agent-builder__topbar">
-        <div className="mdc-chat-agent-builder__topbar-start">
-          <button type="button" onClick={onBack}>
+      <header className="mdc-chat-ws-topbar mdc-chat-agent-builder__topbar">
+        <div className="mdc-chat-ws-topbar__start">
+          <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
             <ArrowLeft size={18} aria-hidden="true" />
             <span>Voltar para agentes</span>
           </button>
         </div>
 
-        <div className="mdc-chat-agent-builder__topbar-title">
-          <span>{isEditing ? "Configurar agente" : "Criar agente"}</span>
-          {isEditing ? <small>Última edição salva no agente</small> : null}
+        <div className="mdc-chat-ws-topbar__title mdc-chat-agent-builder__topbar-title">
+          <span>{name.trim() || (isEditing ? "Configurar agente" : "Criar agente")}</span>
+          {isEditing ? (
+            <small className="mdc-chat-agent-builder__topbar-meta">
+              {publishedVersion > 0 ? (
+                <em className="mdc-chat-agent-builder__live-badge">
+                  Publicado v{publishedVersion}
+                </em>
+              ) : (
+                <em className="mdc-chat-agent-builder__live-badge mdc-chat-agent-builder__live-badge--off">
+                  Não publicado
+                </em>
+              )}
+              {hasUnpublishedChanges ? <span>· Alterações não publicadas</span> : null}
+              {!enabled ? <span>· Inativo</span> : null}
+            </small>
+          ) : (
+            <small>Rascunho — salve para testar com fontes e publicar</small>
+          )}
         </div>
 
-        <div className="mdc-chat-agent-builder__topbar-actions">
+        <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
           {canImportAgent ? (
-            <label className="mdc-chat-agent-builder__secondary mdc-chat-agent-builder__import-label">
+            <label className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--import">
               <Upload size={16} aria-hidden="true" />
               <span>{isImporting ? "Importando..." : "Importar JSON"}</span>
               <input
@@ -905,7 +1125,7 @@ export function ChatAgentBuilderPage({
           {canExportAgent ? (
             <button
               type="button"
-              className="mdc-chat-agent-builder__secondary"
+              className="mdc-chat-ws-toolbar-btn"
               disabled={isExporting}
               onClick={() => void exportCurrentAgent()}
               title="Baixa configuração em JSON"
@@ -919,7 +1139,7 @@ export function ChatAgentBuilderPage({
             <>
               <button
                 type="button"
-                className="mdc-chat-agent-builder__secondary"
+                className="mdc-chat-ws-toolbar-btn"
                 disabled={isDuplicating}
                 onClick={() => void duplicateCurrentAgent()}
                 title="Cria cópia privada do agente"
@@ -929,7 +1149,7 @@ export function ChatAgentBuilderPage({
               </button>
               <button
                 type="button"
-                className="mdc-chat-agent-builder__danger"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                 onClick={() => void deleteCurrentAgent()}
               >
                 <Trash2 size={17} aria-hidden="true" />
@@ -940,13 +1160,34 @@ export function ChatAgentBuilderPage({
 
           <button
             type="button"
-            className="mdc-chat-agent-builder__primary"
-            disabled={isSaving}
-            onClick={() => void submitForm()}
+            className="mdc-chat-ws-toolbar-btn"
+            disabled={isSaving || isPublishing}
+            onClick={() => void saveDraft()}
           >
-            <Check size={17} aria-hidden="true" />
-            <span>{isSaving ? "Salvando..." : isEditing ? "Atualizar" : "Criar"}</span>
+            <span>{isSaving ? "Salvando..." : "Salvar rascunho"}</span>
           </button>
+
+          {agent?.id ? (
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              disabled={isSaving || isPublishing}
+              onClick={() => void publishAgent()}
+            >
+              <Check size={17} aria-hidden="true" />
+              <span>{isPublishing ? "Publicando..." : "Publicar"}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              disabled={isSaving}
+              onClick={() => void saveDraft()}
+            >
+              <Check size={17} aria-hidden="true" />
+              <span>{isSaving ? "Salvando..." : "Criar e salvar"}</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -958,6 +1199,7 @@ export function ChatAgentBuilderPage({
             void submitForm();
           }}
         >
+          <div className="mdc-chat-agent-builder__panel">
           <div className="mdc-chat-agent-builder__switch" role="tablist" aria-label="Modo de edição">
             <button
               type="button"
@@ -977,138 +1219,192 @@ export function ChatAgentBuilderPage({
 
           {builderMode === "create" ? (
             <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__create-mode">
-              <div className="mdc-chat-agent-builder__section-title">
-                <Wand2 size={18} aria-hidden="true" />
-                <div>
-                  <h2>Criar com orientação</h2>
-                  <p>Descreva o especialista que você quer criar. Vamos gerar um rascunho editável.</p>
+              <h2 className="mdc-chat-ws-section-head">Criar conversando</h2>
+              <p className="mdc-chat-ws-section-lead">
+                Descreva o especialista em linguagem natural. O assistente ajuda a montar o
+                rascunho; a pré-visualização à direita usa as mesmas configurações em tempo real.
+              </p>
+
+              <div className="mdc-chat-ws-create-chat">
+                <div className="mdc-chat-ws-create-chat__messages">
+                  {createMessages.length === 0 ? (
+                    <p className="mdc-chat-ws-empty">
+                      Ex.: &quot;Preciso de um agente para suporte de produtos DELPI, que consulte
+                      estoque via API e responda de forma objetiva.&quot;
+                    </p>
+                  ) : (
+                    createMessages.map((message, index) => (
+                      <div
+                        key={`${message.role}-${index}`}
+                        className={
+                          message.role === "user"
+                            ? "mdc-chat-ws-create-chat__bubble mdc-chat-ws-create-chat__bubble--user"
+                            : "mdc-chat-ws-create-chat__bubble mdc-chat-ws-create-chat__bubble--assistant"
+                        }
+                      >
+                        {message.content}
+                      </div>
+                    ))
+                  )}
+                  {isCreateChatLoading ? (
+                    <div className="mdc-chat-ws-create-chat__bubble mdc-chat-ws-create-chat__bubble--assistant">
+                      Pensando...
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="mdc-chat-ws-create-chat__composer">
+                  <textarea
+                    value={createInput}
+                    rows={2}
+                    disabled={isCreateChatLoading}
+                    onChange={(event) => setCreateInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !event.shiftKey) {
+                        event.preventDefault();
+                        void sendCreateChatMessage();
+                      }
+                    }}
+                    placeholder="Descreva o agente ou responda às perguntas..."
+                  />
+                  <button
+                    type="button"
+                    disabled={isCreateChatLoading || !createInput.trim()}
+                    aria-label="Enviar mensagem"
+                    onClick={() => void sendCreateChatMessage()}
+                  >
+                    <Send size={16} aria-hidden="true" />
+                  </button>
                 </div>
               </div>
 
-              <label>
-                <span>O que este agente deve fazer?</span>
-                <textarea
-                  value={createBrief}
-                  rows={8}
-                  onChange={(event) => setCreateBrief(event.target.value)}
-                  placeholder="Ex.: Crie um agente especialista em produtos DELPI, capaz de consultar API, interpretar estoque, analisar estrutura e explicar próximos passos."
-                />
-              </label>
+              <div className="mdc-chat-agent-builder__create-actions">
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  disabled={isCreateChatLoading}
+                  onClick={() => void sendCreateChatMessage()}
+                >
+                  <Send size={16} aria-hidden="true" />
+                  <span>Enviar</span>
+                </button>
 
-              <button
-                type="button"
-                className="mdc-chat-agent-builder__secondary"
-                onClick={generateDraftFromBrief}
-              >
-                <Wand2 size={16} aria-hidden="true" />
-                <span>Gerar rascunho</span>
-              </button>
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  disabled={isCreateChatLoading}
+                  onClick={generateDraftFromBrief}
+                >
+                  <Wand2 size={16} aria-hidden="true" />
+                  <span>Aplicar rascunho e revisar</span>
+                </button>
+              </div>
 
               <div className="mdc-chat-agent-builder__placeholder">
-                <strong>Depois de gerar o rascunho</strong>
-                <p>Revise nome, instruções, fontes e actions na aba Configurar antes de salvar.</p>
+                <strong>Próximo passo</strong>
+                <p>
+                  Use &quot;Aplicar rascunho e revisar&quot; para abrir a aba Configurar com nome,
+                  instruções e quebra-gelos preenchidos.
+                </p>
               </div>
             </section>
           ) : (
             <>
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Bot size={18} aria-hidden="true" />
-              <div>
-                <h2>Identidade</h2>
-                <p>Nome, descrição e aparência do especialista.</p>
-              </div>
-            </div>
+          <header className="mdc-chat-agent-builder__hero">
+            <span className="mdc-chat-agent-builder__hero-icon" aria-hidden="true">
+              <Bot size={26} />
+            </span>
+            <label className="mdc-chat-agent-builder__hero-name-wrap">
+              <span className="mdc-chat-agent-builder__sr-only">Nome do agente</span>
+              <input
+                className="mdc-chat-agent-builder__hero-name"
+                value={name}
+                maxLength={120}
+                onChange={(event) => {
+                  const nextName = event.target.value;
+                  setName(nextName);
 
-            <div className="mdc-chat-agent-builder__grid">
-              <label>
-                <span>Nome</span>
-                <input
-                  value={name}
-                  maxLength={120}
-                  onChange={(event) => {
-                    const nextName = event.target.value;
-                    setName(nextName);
+                  if (!isEditing && !key.trim()) {
+                    setKey(createKeyFromName(nextName));
+                  }
+                }}
+                placeholder="Especialista em Produtos DELPI"
+              />
+            </label>
+          </header>
 
-                    if (!isEditing && !key.trim()) {
-                      setKey(createKeyFromName(nextName));
-                    }
-                  }}
-                  placeholder="Especialista em Produtos DELPI"
-                />
-              </label>
-
-              <label>
-                <span>Chave</span>
-                <input
-                  value={key}
-                  maxLength={80}
-                  disabled={isEditing}
-                  onChange={(event) => setKey(event.target.value)}
-                  placeholder="especialista-produtos"
-                />
-              </label>
-            </div>
-
-            <label>
+          <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__section--flat">
+            <label className="mdc-chat-ws-field">
               <span>Descrição</span>
               <textarea
                 value={description}
-                rows={3}
+                rows={2}
                 maxLength={900}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Explique quando este agente deve ser usado..."
               />
             </label>
 
-            <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
-              <label>
-                <span>Visibilidade</span>
-                <select
-                  value={visibility}
-                  onChange={(event) => setVisibility(event.target.value)}
-                >
-                  <option value="private">Privado</option>
-                  <option value="public">Público interno</option>
-                  {canManageOfficialAgents ? (
-                    <option value="system">Oficial</option>
-                  ) : null}
-                </select>
-              </label>
+            <details className="mdc-chat-ws-details">
+              <summary>Identificador e visibilidade</summary>
+              <div className="mdc-chat-ws-details-body">
+                <div className="mdc-chat-agent-builder__grid">
+                  <label className="mdc-chat-ws-field">
+                    <span>Chave</span>
+                    <input
+                      value={key}
+                      maxLength={80}
+                      disabled={isEditing}
+                      onChange={(event) => setKey(event.target.value)}
+                      placeholder="especialista-produtos"
+                    />
+                  </label>
 
-              <label>
-                <span>Categoria</span>
-                <input
-                  value={category}
-                  maxLength={80}
-                  onChange={(event) => setCategory(event.target.value)}
-                  placeholder="Produtos"
-                />
-              </label>
+                  <label className="mdc-chat-ws-field">
+                    <span>Visibilidade</span>
+                    <select
+                      value={visibility}
+                      onChange={(event) => setVisibility(event.target.value)}
+                    >
+                      <option value="private">Privado</option>
+                      <option value="public">Público interno</option>
+                      {canManageOfficialAgents ? (
+                        <option value="system">Oficial</option>
+                      ) : null}
+                    </select>
+                  </label>
+                </div>
 
-              <label>
-                <span>Ícone</span>
-                <input
-                  value={icon}
-                  maxLength={60}
-                  onChange={(event) => setIcon(event.target.value)}
-                  placeholder="bot"
-                />
-              </label>
-            </div>
+                <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
+                  <label className="mdc-chat-ws-field">
+                    <span>Categoria</span>
+                    <input
+                      value={category}
+                      maxLength={80}
+                      onChange={(event) => setCategory(event.target.value)}
+                      placeholder="Produtos"
+                    />
+                  </label>
+
+                  <label className="mdc-chat-ws-field">
+                    <span>Ícone</span>
+                    <input
+                      value={icon}
+                      maxLength={60}
+                      onChange={(event) => setIcon(event.target.value)}
+                      placeholder="bot"
+                    />
+                  </label>
+                </div>
+              </div>
+            </details>
           </section>
 
           <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <FileText size={18} aria-hidden="true" />
-              <div>
-                <h2>Instruções</h2>
-                <p>Defina comportamento, regras, limites e estilo de resposta.</p>
-              </div>
-            </div>
+            <h2 className="mdc-chat-ws-section-head">Instruções</h2>
 
             <div className="mdc-chat-agent-builder__prompt-templates">
-              <label>
+              <label className="mdc-chat-ws-field">
                 <span>Modelo de instruções</span>
                 <select
                   value={selectedPromptTemplateKey}
@@ -1156,7 +1452,7 @@ export function ChatAgentBuilderPage({
               </label>
             </div>
 
-            <label>
+            <label className="mdc-chat-ws-field">
               <span>Instruções do agente</span>
               <textarea
                 className="mdc-chat-agent-builder__prompt"
@@ -1172,7 +1468,7 @@ export function ChatAgentBuilderPage({
               </small>
             </label>
 
-            <label>
+            <label className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact">
               <span>Estilo de resposta</span>
               <select
                 value={responseStyle}
@@ -1186,15 +1482,303 @@ export function ChatAgentBuilderPage({
             </label>
           </section>
 
+          <section className="mdc-chat-agent-builder__section">
+            <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
+
+            <div className="mdc-chat-agent-builder__icebreakers">
+              {icebreakers.map((icebreaker, index) => (
+                <div key={`${index}-${icebreakers.length}`}>
+                  <input
+                    value={icebreaker}
+                    maxLength={180}
+                    onChange={(event) => updateIcebreaker(index, event.target.value)}
+                    placeholder="Ex.: Quero verificar um desenho."
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => removeIcebreaker(index)}
+                    aria-label="Remover quebra-gelo"
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={addIcebreaker}
+                disabled={icebreakers.length >= 8}
+              >
+                <Plus size={16} aria-hidden="true" />
+                <span>Adicionar quebra-gelo</span>
+              </button>
+            </div>
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <h2 className="mdc-chat-ws-section-head">Conhecimento</h2>
+
+            {agent ? (
+              <>
+                {onOpenRagAdmin ? (
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    onClick={() => onOpenRagAdmin(agent.id)}
+                  >
+                    Especialização RAG (admin)
+                  </button>
+                ) : null}
+
+                <label className="mdc-chat-ws-outline-btn">
+                  <Plus size={16} aria-hidden="true" />
+                  <span>{isSavingSource ? "Enviando..." : "Adicionar fontes"}</span>
+                  <input
+                    type="file"
+                    disabled={isSavingSource}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      void uploadAgentKnowledgeFile(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+
+                {agentSources.length > 0 ? (
+                  <div className="mdc-chat-ws-list">
+                    {agentSources.map((source) => (
+                      <article key={source.id} className="mdc-chat-ws-list-row">
+                        <span className="mdc-chat-ws-list-row__icon">
+                          <FileText size={18} aria-hidden="true" />
+                        </span>
+                        <div className="mdc-chat-ws-list-row__copy">
+                          <strong>{source.title}</strong>
+                          <small>
+                            {source.original_filename ||
+                              source.source_ref ||
+                              source.source_type}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void removeAgentSource(source.id)}
+                          title="Remover fonte"
+                          aria-label={`Remover ${source.title}`}
+                        >
+                          <Trash2 size={16} aria-hidden="true" />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mdc-chat-ws-empty">
+                    Nenhuma fonte adicionada. Use o botão acima para enviar arquivos.
+                  </p>
+                )}
+
+                <details className="mdc-chat-ws-details">
+                  <summary>Adicionar nota de texto</summary>
+                  <div className="mdc-chat-ws-details-body">
+                    <div className="mdc-chat-agent-builder__source-note">
+                      <input
+                        value={sourceTitle}
+                        onChange={(event) => setSourceTitle(event.target.value)}
+                        placeholder="Título da nota"
+                      />
+                      <textarea
+                        value={sourceContent}
+                        onChange={(event) => setSourceContent(event.target.value)}
+                        rows={4}
+                        placeholder="Cole contexto, políticas ou conhecimento do agente..."
+                      />
+                      <button
+                        type="button"
+                        className="mdc-chat-ws-outline-btn"
+                        disabled={isSavingSource || !sourceContent.trim()}
+                        onClick={() => void createAgentKnowledgeNote()}
+                      >
+                        Adicionar nota
+                      </button>
+                    </div>
+                  </div>
+                </details>
+              </>
+            ) : (
+              <p className="mdc-chat-ws-empty">Salve o agente para adicionar arquivos e notas.</p>
+            )}
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <h2 className="mdc-chat-ws-section-head">Recursos</h2>
+
+            <div className="mdc-chat-agent-builder__resource-list">
+              <AgentBuilderCheckbox
+                checked={capActions}
+                onChange={(event) => setCapActions(event.target.checked)}
+                label="Permitir uso de actions configuradas"
+              />
+              <AgentBuilderCheckbox
+                checked={capFiles}
+                onChange={(event) => setCapFiles(event.target.checked)}
+                label="Permitir documentos e fontes de conhecimento"
+              />
+              <AgentBuilderCheckbox
+                checked={capCanvas}
+                onChange={(event) => setCapCanvas(event.target.checked)}
+                label="Permitir lousa (canvas)"
+              />
+            </div>
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <h2 className="mdc-chat-ws-section-head">Skills</h2>
+            <p className="mdc-chat-ws-section-lead">
+              Comportamentos no prompt. Actions executam APIs externas.
+            </p>
+
+            {agent ? (
+              <div className="mdc-chat-agent-builder__skills-panel">
+                {agentSkillBindings.length > 0 ? (
+                  <div className="mdc-chat-ws-list">
+                    {agentSkillBindings.map((binding) => (
+                      <article
+                        key={binding.skillKey}
+                        className="mdc-chat-ws-list-row mdc-chat-agent-builder__skill-row"
+                      >
+                        <span className="mdc-chat-ws-list-row__icon">
+                          <Sparkles size={18} aria-hidden="true" />
+                        </span>
+                        <div className="mdc-chat-ws-list-row__copy">
+                          <strong>{binding.label}</strong>
+                          <small>{binding.skillKey}</small>
+                        </div>
+                        <span className="mdc-chat-agent-builder__skill-meta">
+                          <em
+                            className={
+                              binding.enabled
+                                ? "mdc-chat-agent-builder__skill-pill mdc-chat-agent-builder__skill-pill--on"
+                                : "mdc-chat-agent-builder__skill-pill"
+                            }
+                          >
+                            {binding.enabled ? "Ativa" : "Inativa"}
+                          </em>
+                          {binding.skillKey === "sql" ? (
+                            <em
+                              className={
+                                binding.derived?.sqlExecutionAvailable
+                                  ? "mdc-chat-agent-builder__skill-pill mdc-chat-agent-builder__skill-pill--on"
+                                  : "mdc-chat-agent-builder__skill-pill"
+                              }
+                            >
+                              {binding.derived?.sqlExecutionAvailable
+                                ? "SQL no banco"
+                                : "Sem action SQL"}
+                            </em>
+                          ) : null}
+                        </span>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mdc-chat-ws-empty">
+                    Nenhuma skill configurada. Ative comportamentos no assistente.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  onClick={() => onConfigureSkills?.(agent)}
+                >
+                  <Settings2 size={16} aria-hidden="true" />
+                  <span>Configurar skills</span>
+                </button>
+              </div>
+            ) : (
+              <p className="mdc-chat-ws-empty">
+                Salve o agente para configurar skills (ex.: Especialista SQL).
+              </p>
+            )}
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <h2 className="mdc-chat-ws-section-head">Ações</h2>
+            <p className="mdc-chat-ws-section-lead">
+              APIs OpenAPI vinculadas a este agente.
+            </p>
+
+            {agent ? (
+              <div className="mdc-chat-agent-builder__actions-panel">
+                {agentActionProviders.length > 0 ? (
+                  <div className="mdc-chat-ws-list">
+                    {agentActionProviders.map((provider) => (
+                      <article key={provider.providerKey} className="mdc-chat-ws-list-row">
+                        <span className="mdc-chat-ws-list-row__icon">
+                          <Zap size={18} aria-hidden="true" />
+                        </span>
+                        <div className="mdc-chat-ws-list-row__copy">
+                          <strong>{provider.providerName || provider.providerKey}</strong>
+                          <small>
+                            {provider.providerKey}
+                            {provider.enabled ? " · ativo" : " · desativado"}
+                            {` · ${provider.actionCount} rota(s)`}
+                          </small>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onConfigureAction?.(agent, provider.providerKey)}
+                          title="Configurar action"
+                        >
+                          <Settings2 size={16} aria-hidden="true" />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mdc-chat-ws-empty">
+                    Nenhuma action configurada. Crie uma API OpenAPI para este agente.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  onClick={() => onCreateAction?.(agent)}
+                >
+                  <Plus size={16} aria-hidden="true" />
+                  <span>Criar nova ação</span>
+                </button>
+              </div>
+            ) : (
+              <p className="mdc-chat-ws-empty">
+                Salve o agente para cadastrar actions e escolher rotas.
+              </p>
+            )}
+          </section>
+
+          <div className="mdc-chat-agent-builder__advanced">
+          {agent?.id && agentVersions.length > 0 ? (
+            <section className="mdc-chat-agent-builder__section">
+              <h2 className="mdc-chat-ws-section-head">Versões publicadas</h2>
+              <ul className="mdc-chat-agent-builder__version-list">
+                {agentVersions.map((version) => (
+                  <li key={version.id}>
+                    <strong>v{version.version}</strong>
+                    <span>{version.event}</span>
+                    {version.createdAt ? (
+                      <time>{new Date(version.createdAt).toLocaleString("pt-BR")}</time>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           {agent && ["owner", "editor", "system"].includes(agent.access_role) ? (
             <section className="mdc-chat-agent-builder__section">
-              <div className="mdc-chat-agent-builder__section-title">
-                <BarChart3 size={18} aria-hidden="true" />
-                <div>
-                  <h2>Uso (últimos 7 dias)</h2>
-                  <p>Resumo de conversas e configuração deste especialista.</p>
-                </div>
-              </div>
+              <h2 className="mdc-chat-ws-section-head">Uso (últimos 7 dias)</h2>
 
               {isLoadingStats ? (
                 <p className="mdc-chat-muted">Carregando estatísticas...</p>
@@ -1222,82 +1806,56 @@ export function ChatAgentBuilderPage({
               )}
 
               {agent.access_role === "owner" ? (
-                <>
-                  <label className="mdc-chat-agent-builder__checkbox">
-                    <input
-                      type="checkbox"
-                      checked={copyActionsOnDuplicate}
-                      onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
-                    />
-                    <span>Ao duplicar, copiar também APIs e actions configuradas</span>
-                  </label>
-                  <label className="mdc-chat-agent-builder__checkbox">
-                    <input
-                      type="checkbox"
-                      checked={copySourcesOnDuplicate}
-                      onChange={(event) => setCopySourcesOnDuplicate(event.target.checked)}
-                    />
-                    <span>Ao duplicar, copiar também fontes de conhecimento do agente</span>
-                  </label>
-                </>
+                <div className="mdc-chat-agent-builder__resource-list">
+                  <AgentBuilderCheckbox
+                    checked={copyActionsOnDuplicate}
+                    onChange={(event) => setCopyActionsOnDuplicate(event.target.checked)}
+                    label="Ao duplicar, copiar também APIs e actions configuradas"
+                  />
+                  <AgentBuilderCheckbox
+                    checked={copySourcesOnDuplicate}
+                    onChange={(event) => setCopySourcesOnDuplicate(event.target.checked)}
+                    label="Ao duplicar, copiar também fontes de conhecimento do agente"
+                  />
+                </div>
               ) : null}
             </section>
           ) : null}
 
           <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Settings2 size={18} aria-hidden="true" />
-              <div>
-                <h2>Execução</h2>
-                <p>Controle disponibilidade e limites de ferramentas por conversa.</p>
-              </div>
-            </div>
+            <h2 className="mdc-chat-ws-section-head">Execução</h2>
 
-            <label className="mdc-chat-agent-builder__checkbox">
+            <AgentBuilderCheckbox
+              checked={enabled}
+              onChange={(event) => setEnabled(event.target.checked)}
+              label="Agente ativo (visível para uso)"
+            />
+
+            <label className="mdc-chat-ws-field mdc-chat-agent-builder__field--compact">
+              <span>Máximo de chamadas de ferramentas</span>
               <input
-                type="checkbox"
-                checked={enabled}
-                onChange={(event) => setEnabled(event.target.checked)}
+                type="number"
+                min={1}
+                max={20}
+                value={maxToolCalls}
+                onChange={(event) =>
+                  setMaxToolCalls(Math.max(1, Math.min(20, Number(event.target.value) || 5)))
+                }
               />
-              <span>Agente ativo (visível para uso)</span>
             </label>
 
-            <div className="mdc-chat-agent-builder__grid">
-              <label>
-                <span>Máximo de chamadas de ferramentas</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  value={maxToolCalls}
-                  onChange={(event) =>
-                    setMaxToolCalls(Math.max(1, Math.min(20, Number(event.target.value) || 5)))
-                  }
-                />
-              </label>
-
-              <label className="mdc-chat-agent-builder__checkbox">
-                <input
-                  type="checkbox"
-                  checked={requiresConfirmationForWrite}
-                  onChange={(event) =>
-                    setRequiresConfirmationForWrite(event.target.checked)
-                  }
-                />
-                <span>Exigir confirmação para ações de escrita</span>
-              </label>
-            </div>
+            <AgentBuilderCheckbox
+              checked={requiresConfirmationForWrite}
+              onChange={(event) =>
+                setRequiresConfirmationForWrite(event.target.checked)
+              }
+              label="Exigir confirmação para ações de escrita"
+            />
           </section>
 
           {agent?.access_role === "owner" ? (
             <section className="mdc-chat-agent-builder__section">
-              <div className="mdc-chat-agent-builder__section-title">
-                <Settings2 size={18} aria-hidden="true" />
-                <div>
-                  <h2>Compartilhamento</h2>
-                  <p>Conceda acesso de visualização ou edição a outro usuário.</p>
-                </div>
-              </div>
+              <h2 className="mdc-chat-ws-section-head">Compartilhamento</h2>
 
               <div className="mdc-chat-agent-builder__grid">
                 <ChatUserSearchField
@@ -1398,319 +1956,7 @@ export function ChatAgentBuilderPage({
               </div>
             </section>
           ) : null}
-
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Sparkles size={18} aria-hidden="true" />
-              <div>
-                <h2>Quebra-gelos</h2>
-                <p>Perguntas iniciais opcionais exibidas na home do agente.</p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-builder__icebreakers">
-              {icebreakers.map((icebreaker, index) => (
-                <div key={`${index}-${icebreakers.length}`}>
-                  <input
-                    value={icebreaker}
-                    maxLength={180}
-                    onChange={(event) => updateIcebreaker(index, event.target.value)}
-                    placeholder="Ex.: Quero verificar um desenho."
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => removeIcebreaker(index)}
-                    aria-label="Remover quebra-gelo"
-                  >
-                    <X size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className="mdc-chat-agent-builder__secondary"
-                onClick={addIcebreaker}
-                disabled={icebreakers.length >= 8}
-              >
-                <Plus size={16} aria-hidden="true" />
-                <span>Adicionar quebra-gelo</span>
-              </button>
-            </div>
-          </section>
-
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Zap size={18} aria-hidden="true" />
-              <div>
-                <h2>Recursos</h2>
-                <p>Defina capacidades gerais do agente. Actions são configuradas na página própria de Actions.</p>
-              </div>
-            </div>
-
-            <div className="mdc-chat-agent-builder__toggles">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={capActions}
-                  onChange={(event) => setCapActions(event.target.checked)}
-                />
-                <span>Permitir uso de actions configuradas</span>
-              </label>
-
-              <label>
-                <input
-                  type="checkbox"
-                  checked={capFiles}
-                  onChange={(event) => setCapFiles(event.target.checked)}
-                />
-                <span>Permitir documentos/fontes</span>
-              </label>
-
-              <label>
-                <input
-                  type="checkbox"
-                  checked={capCanvas}
-                  onChange={(event) => setCapCanvas(event.target.checked)}
-                />
-                <span>Permitir lousa/canvas</span>
-              </label>
-            </div>
-          </section>
-
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Sparkles size={18} aria-hidden="true" />
-              <div>
-                <h2>Skills</h2>
-                <p>
-                  Comportamentos do assistente (prompt). Diferente de <strong>Actions</strong>,
-                  que executam APIs externas.
-                </p>
-              </div>
-            </div>
-
-            {agent ? (
-              <div className="mdc-chat-agent-builder__skills-panel">
-                {agentSkillBindings.length > 0 ? (
-                  <ul className="mdc-chat-agent-builder__skills-list">
-                    {agentSkillBindings.map((binding) => (
-                      <li key={binding.skillKey}>
-                        <span className="mdc-chat-agent-builder__skills-icon">
-                          <Sparkles size={16} aria-hidden="true" />
-                        </span>
-
-                        <span className="mdc-chat-agent-builder__skills-copy">
-                          <strong>{binding.label}</strong>
-                          <small>{binding.skillKey}</small>
-                        </span>
-
-                        <span
-                          className={[
-                            "mdc-chat-agent-builder__skills-badge",
-                            binding.enabled
-                              ? "mdc-chat-agent-builder__skills-badge--on"
-                              : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          {binding.enabled ? "Ativa" : "Inativa"}
-                        </span>
-
-                        {binding.skillKey === "sql" ? (
-                          <span
-                            className={[
-                              "mdc-chat-agent-builder__skills-badge",
-                              "mdc-chat-agent-builder__skills-badge--subtle",
-                              binding.derived?.sqlExecutionAvailable
-                                ? "mdc-chat-agent-builder__skills-badge--on"
-                                : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            {binding.derived?.sqlExecutionAvailable
-                              ? "SQL no banco"
-                              : "Sem action SQL"}
-                          </span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="mdc-chat-agent-builder__actions-empty">
-                    <strong>Nenhuma skill configurada</strong>
-                    <p>Ative skills para orientar o comportamento do assistente.</p>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="mdc-chat-agent-builder__secondary"
-                  onClick={() => onConfigureSkills?.(agent)}
-                >
-                  <Settings2 size={16} aria-hidden="true" />
-                  <span>Configurar skills</span>
-                </button>
-              </div>
-            ) : (
-              <div className="mdc-chat-agent-builder__actions-empty">
-                <strong>Salve o agente para configurar skills</strong>
-                <p>Depois de criar o agente, você poderá ativar comportamentos como Especialista SQL.</p>
-              </div>
-            )}
-          </section>
-
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <Zap size={18} aria-hidden="true" />
-              <div>
-                <h2>Ações</h2>
-                <p>APIs e actions que este agente pode usar. Configure schemas, autenticação e rotas em uma tela própria.</p>
-              </div>
-            </div>
-
-            {agent ? (
-              <div className="mdc-chat-agent-builder__actions-summary">
-                {agentActionProviders.length > 0 ? (
-                  agentActionProviders.map((provider) => (
-                    <article key={provider.providerKey}>
-                      <span className="mdc-chat-agent-builder__actions-icon">
-                        <Zap size={16} aria-hidden="true" />
-                      </span>
-
-                      <span>
-                        <strong>{provider.providerName || provider.providerKey}</strong>
-                        <small>
-                          {provider.providerKey}
-                          {provider.enabled ? " · ativo" : " · desativado"}
-                          {` · ${provider.actionCount} rota(s)`}
-                        </small>
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => onConfigureAction?.(agent, provider.providerKey)}
-                        title="Configurar action"
-                      >
-                        <Settings2 size={16} aria-hidden="true" />
-                      </button>
-                    </article>
-                  ))
-                ) : (
-                  <div className="mdc-chat-agent-builder__actions-empty">
-                    <strong>Nenhuma action configurada</strong>
-                    <p>Crie uma action para conectar este agente a uma API OpenAPI.</p>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="mdc-chat-agent-builder__secondary"
-                  onClick={() => onCreateAction?.(agent)}
-                >
-                  <Plus size={16} aria-hidden="true" />
-                  <span>Criar nova ação</span>
-                </button>
-              </div>
-            ) : (
-              <div className="mdc-chat-agent-builder__actions-empty">
-                <strong>Salve o agente para configurar actions</strong>
-                <p>Depois de criar o agente, você poderá cadastrar APIs OpenAPI e escolher rotas.</p>
-              </div>
-            )}
-          </section>
-
-          <section className="mdc-chat-agent-builder__section">
-            <div className="mdc-chat-agent-builder__section-title">
-              <FileText size={18} aria-hidden="true" />
-              <div>
-                <h2>Fontes do agente</h2>
-                <p>Arquivos e notas usados sempre que este agente estiver ativo.</p>
-              </div>
-            </div>
-
-            {agent ? (
-              <>
-                {onOpenRagAdmin ? (
-                  <button
-                    type="button"
-                    className="mdc-chat-agent-builder__secondary"
-                    onClick={() => onOpenRagAdmin(agent.id)}
-                  >
-                    Especialização RAG (admin)
-                  </button>
-                ) : null}
-
-                <label className="mdc-chat-agent-builder__source-upload">
-                  <Upload size={16} aria-hidden="true" />
-                  <span>{isSavingSource ? "Enviando..." : "Enviar arquivo"}</span>
-                  <input
-                    type="file"
-                    disabled={isSavingSource}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      void uploadAgentKnowledgeFile(file);
-                      event.target.value = "";
-                    }}
-                  />
-                </label>
-
-                <div className="mdc-chat-agent-builder__source-note">
-                  <input
-                    value={sourceTitle}
-                    onChange={(event) => setSourceTitle(event.target.value)}
-                    placeholder="Título da nota"
-                  />
-                  <textarea
-                    value={sourceContent}
-                    onChange={(event) => setSourceContent(event.target.value)}
-                    rows={4}
-                    placeholder="Cole contexto, políticas ou conhecimento do agente..."
-                  />
-                  <button
-                    type="button"
-                    disabled={isSavingSource || !sourceContent.trim()}
-                    onClick={() => void createAgentKnowledgeNote()}
-                  >
-                    Adicionar nota
-                  </button>
-                </div>
-
-                <div className="mdc-chat-agent-builder__source-list">
-                  {agentSources.length > 0 ? (
-                    agentSources.map((source) => (
-                      <article key={source.id}>
-                        <FileText size={16} aria-hidden="true" />
-                        <span>
-                          <strong>{source.title}</strong>
-                          <small>
-                            {source.original_filename || source.source_ref || source.source_type}
-                            {typeof source.chunk_count === "number"
-                              ? ` · ${source.chunk_count} trecho(s)`
-                              : ""}
-                          </small>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void removeAgentSource(source.id)}
-                          title="Remover fonte"
-                        >
-                          <Trash2 size={15} aria-hidden="true" />
-                        </button>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="mdc-chat-muted">Nenhuma fonte adicionada.</p>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="mdc-chat-muted">Salve o agente para adicionar fontes.</p>
-            )}
-          </section>
+          </div>
 
             </>
           )}
@@ -1718,6 +1964,7 @@ export function ChatAgentBuilderPage({
           {localError ? (
             <p className="mdc-chat-agent-builder__error">{localError}</p>
           ) : null}
+          </div>
         </form>
 
         {splitEnabled ? (
@@ -1735,7 +1982,12 @@ export function ChatAgentBuilderPage({
         ) : null}
 
         <aside className="mdc-chat-agent-builder__preview">
-          <div className="mdc-chat-agent-builder__preview-label">Pré-visualizar</div>
+          <div className="mdc-chat-agent-builder__preview-label">
+            <span>Pré-visualizar</span>
+            <span className="mdc-chat-agent-builder__preview-model">
+              Rascunho local · não afeta usuários
+            </span>
+          </div>
 
           <div className="mdc-chat-agent-builder__preview-card">
             <div className="mdc-chat-agent-builder__preview-avatar">

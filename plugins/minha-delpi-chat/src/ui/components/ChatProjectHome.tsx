@@ -1,16 +1,14 @@
 import {
   ArrowUpRight,
   Bot,
-  Database,
   FileText,
   Folder,
+  Loader2,
   MoreHorizontal,
   Pencil,
-  Pin,
   Plus,
   Settings,
   Trash2,
-  Upload,
   X,
   ShieldCheck,
 } from "lucide-react";
@@ -31,7 +29,6 @@ import type {
 } from "../../data/api/chatTypes";
 import { ChatUserSearchField } from "./ChatUserSearchField";
 import { buildChatSessionHref } from "../../navigation/chatRoutes";
-import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
@@ -39,6 +36,35 @@ import { ModalPortal } from "./ModalPortal";
 import "./ChatProjectHome.css";
 
 type ProjectTab = "chats" | "sources" | "agents";
+
+function getSessionInitials(session: ChatSession): string {
+  const title = (session.title || "C").trim();
+  const words = title.split(/\s+/).filter(Boolean);
+
+  if (words.length >= 2) {
+    return `${words[0][0] ?? ""}${words[1][0] ?? ""}`.toUpperCase();
+  }
+
+  return title.slice(0, 2).toUpperCase();
+}
+
+function formatSourceDate(value: string | null | undefined): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 type ChatProjectHomeProps = {
   project: ChatProject;
@@ -338,33 +364,29 @@ export function ChatProjectHome({
       }
       aria-label={`Projeto ${project.name}`}
     >
-      <div className="mdc-chat-project-home__topbar">
-        <div className="mdc-chat-project-home__header">
-          <span>
-            <Folder size={20} aria-hidden="true" />
+      <header className="mdc-chat-project-home__hero">
+        <div className="mdc-chat-project-home__hero-title">
+          <span
+            className="mdc-chat-project-home__icon"
+            style={
+              project.color
+                ? {
+                    backgroundColor: `color-mix(in srgb, ${project.color} 18%, transparent)`,
+                    color: project.color,
+                  }
+                : undefined
+            }
+          >
+            {project.icon?.trim() && project.icon.trim().length <= 3 ? (
+              project.icon.trim()
+            ) : (
+              <Folder size={22} aria-hidden="true" />
+            )}
           </span>
-
-          <div>
-            <p className="mdc-chat-eyebrow">Projeto</p>
-            <h2>{project.name}</h2>
-
-            <div className="mdc-chat-project-home__meta">
-              <span>{project.visibility === "public" ? "Público" : "Privado"}</span>
-              <span>{recentSessions.length} chats</span>
-              <span>{sources.length} fontes</span>
-              {defaultAgent ? (
-                <span>Agente padrão: {defaultAgent.name}</span>
-              ) : (
-                <span>Sem agente padrão</span>
-              )}
-              {contextAgent ? <span>Usando: {contextAgent.name}</span> : null}
-            </div>
-
-            {project.description ? <p>{project.description}</p> : null}
-          </div>
+          <h1>{project.name}</h1>
         </div>
 
-        <div className="mdc-chat-project-home__actions">
+        <div className="mdc-chat-project-home__hero-actions">
           <button
             type="button"
             aria-label="Opções do projeto"
@@ -380,22 +402,22 @@ export function ChatProjectHome({
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  void renameProject();
+                  setIsSettingsOpen(true);
                 }}
               >
-                <Pencil size={18} aria-hidden="true" />
-                <span>Renomear</span>
+                <Settings size={18} aria-hidden="true" />
+                <span>Configurações do projeto</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  setIsSettingsOpen(true);
+                  void renameProject();
                 }}
               >
-                <Settings size={18} aria-hidden="true" />
-                <span>Configurações do projeto</span>
+                <Pencil size={18} aria-hidden="true" />
+                <span>Renomear</span>
               </button>
 
               <button
@@ -412,13 +434,14 @@ export function ChatProjectHome({
             </div>
           ) : null}
         </div>
-      </div>
+      </header>
 
       {composer ? (
         <div className="mdc-chat-project-home__composer">{composer}</div>
       ) : null}
 
       <div className="mdc-chat-project-home__workspace">
+        <div className="mdc-chat-project-home__toolbar">
         <div className="mdc-chat-project-home__tabs" role="tablist" aria-label="Áreas do projeto">
           <button
             type="button"
@@ -450,6 +473,7 @@ export function ChatProjectHome({
             Agentes
           </button>
         </div>
+        </div>
 
         {activeTab === "chats" ? (
           <div className="mdc-chat-project-home__sessions" role="tabpanel">
@@ -460,29 +484,47 @@ export function ChatProjectHome({
                     key={session.id}
                     className={
                       session.id === activeSessionId
-                        ? "mdc-chat-project-home-session-row mdc-chat-project-home-session-row--active"
-                        : "mdc-chat-project-home-session-row"
+                        ? "mdc-chat-project-chat-row mdc-chat-project-chat-row--active"
+                        : "mdc-chat-project-chat-row"
                     }
                   >
-                    <ChatConversationListItem
-                      session={session}
-                      variant="home"
-                      isProcessing={isSessionProcessing?.(session.id) ?? false}
+                    <a
                       href={buildChatSessionHref(session.id)}
-                      leading={
-                        <span className="mdc-chat-conversation-item__avatar">
-                          D
-                        </span>
-                      }
-                      trailing={
-                        <span className="mdc-chat-project-home-session-date">
-                          {formatSessionDate(session.updated_at)}
-                        </span>
-                      }
-                      onClick={() => onSelectSession(session)}
-                    />
+                      className="mdc-chat-project-chat-row__link"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        onSelectSession(session);
+                      }}
+                    >
+                      <span className="mdc-chat-project-chat-row__avatar">
+                        {getSessionInitials(session)}
+                      </span>
 
-                    <div className="mdc-chat-project-home-session-actions">
+                      <span className="mdc-chat-project-chat-row__copy">
+                        <strong>{session.title || "Conversa sem título"}</strong>
+                        <small>
+                          {session.context?.trim() ||
+                            (session.agent_key
+                              ? `Agente: ${session.agent_key}`
+                              : "Conversa neste projeto")}
+                        </small>
+                      </span>
+
+                      <span className="mdc-chat-project-chat-row__meta">
+                        {isSessionProcessing?.(session.id) ? (
+                          <Loader2
+                            size={14}
+                            className="mdc-chat-project-chat-row__spinner"
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <time className="mdc-chat-project-chat-row__date">
+                          {formatSessionDate(session.updated_at)}
+                        </time>
+                      </span>
+                    </a>
+
+                    <div className="mdc-chat-project-chat-row__menu">
                       <ChatConversationMenu
                         open={openSessionMenuId === session.id}
                         onOpenChange={(open) =>
@@ -510,30 +552,16 @@ export function ChatProjectHome({
           </div>
         ) : activeTab === "agents" ? (
           <div className="mdc-chat-project-agents" role="tabpanel">
-            <div className="mdc-chat-project-agents__hero">
-              <span>
-                <Bot size={26} aria-hidden="true" />
-              </span>
-
-              <div>
-                <h3>Agentes do projeto</h3>
-                <p>
-                  Escolha um agente para usar neste projeto ou defina um agente
-                  padrão para novas conversas.
-                </p>
-              </div>
-
-              {contextAgent ? (
-                <button
-                  type="button"
-                  onClick={() => onUseAgent?.(null)}
-                  title="Remover agente do contexto atual"
-                >
-                  <X size={16} aria-hidden="true" />
-                  <span>Remover agente atual</span>
+            {contextAgent ? (
+              <div className="mdc-chat-project-agents__context">
+                <span>
+                  Usando <strong>{contextAgent.name}</strong> neste contexto
+                </span>
+                <button type="button" onClick={() => onUseAgent?.(null)}>
+                  Remover
                 </button>
-              ) : null}
-            </div>
+              </div>
+            ) : null}
 
             {defaultAgent ? (
               <div className="mdc-chat-project-agents__default">
@@ -614,73 +642,35 @@ export function ChatProjectHome({
           </div>
         ) : (
           <div className="mdc-chat-project-sources" role="tabpanel">
-            <div className="mdc-chat-project-sources__hero">
-              <span>
-                <FileText size={26} aria-hidden="true" />
-              </span>
-
-              <div>
-                <h3>Fontes do projeto</h3>
-                <p>
-                  Adicione arquivos e notas para que o assistente use como contexto
-                  exclusivo deste projeto.
-                </p>
-              </div>
-
-              <label className="mdc-chat-project-source-upload">
-                <Upload size={16} aria-hidden="true" />
-                <span>{isSavingSource ? "Enviando..." : "Enviar arquivo"}</span>
-                <input
-                  type="file"
-                  disabled={isSavingSource}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    void uploadSourceFile(file);
-                    event.target.value = "";
-                  }}
-                />
-              </label>
-            </div>
-
-            <div className="mdc-chat-project-source-note">
+            <label className="mdc-chat-project-sources__add">
+              <Plus size={16} aria-hidden="true" />
+              <span>{isSavingSource ? "Enviando..." : "Adicionar fontes"}</span>
               <input
-                value={sourceTitle}
-                onChange={(event) => setSourceTitle(event.target.value)}
-                placeholder="Título da nota"
+                type="file"
+                disabled={isSavingSource}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  void uploadSourceFile(file);
+                  event.target.value = "";
+                }}
               />
-              <textarea
-                value={sourceContent}
-                onChange={(event) => setSourceContent(event.target.value)}
-                placeholder="Cole aqui regras, contexto ou conhecimento do projeto..."
-                rows={4}
-              />
-              <button
-                type="button"
-                disabled={isSavingSource || !sourceContent.trim()}
-                onClick={() => void createTextSource()}
-              >
-                <Plus size={16} aria-hidden="true" />
-                <span>Adicionar nota</span>
-              </button>
-            </div>
+            </label>
 
             {isLoadingSources ? (
               <p className="mdc-chat-project-home__empty">Carregando fontes...</p>
             ) : sources.length > 0 ? (
               <div className="mdc-chat-project-source-list">
                 {sources.map((source) => (
-                  <article key={source.id} className="mdc-chat-project-source-card">
-                    <span>
+                  <article key={source.id} className="mdc-chat-project-source-row">
+                    <span className="mdc-chat-project-source-row__icon">
                       <FileText size={18} aria-hidden="true" />
                     </span>
-                    <div>
+                    <div className="mdc-chat-project-source-row__copy">
                       <strong>{source.title}</strong>
                       <small>
-                        {source.original_filename ||
-                          source.source_ref ||
-                          source.source_type}
-                        {typeof source.chunk_count === "number"
-                          ? ` · ${source.chunk_count} trecho(s)`
+                        Arquivo
+                        {formatSourceDate(source.updated_at || source.created_at)
+                          ? ` · ${formatSourceDate(source.updated_at || source.created_at)}`
                           : ""}
                       </small>
                     </div>
@@ -688,6 +678,7 @@ export function ChatProjectHome({
                       type="button"
                       onClick={() => void onDeleteSource?.(source.id)}
                       title="Remover fonte"
+                      aria-label={`Remover ${source.title}`}
                     >
                       <Trash2 size={16} aria-hidden="true" />
                     </button>
@@ -695,36 +686,35 @@ export function ChatProjectHome({
                 ))}
               </div>
             ) : (
-              <div className="mdc-chat-project-sources__empty">
-                <div>
-                  <FileText size={22} aria-hidden="true" />
-                </div>
-
-                <strong>Nenhuma fonte adicionada</strong>
-                <p>
-                  Arquivos e notas adicionados aqui serão usados apenas neste projeto.
-                </p>
-              </div>
+              <p className="mdc-chat-project-home__empty">
+                Nenhuma fonte adicionada. Use o botão acima para enviar arquivos.
+              </p>
             )}
 
-            <div className="mdc-chat-project-sources__rules">
-              <h4>Como as fontes serão usadas</h4>
-
-              <ul>
-                <li>
-                  <Pin size={15} aria-hidden="true" />
-                  <span>As fontes ficam vinculadas ao projeto atual.</span>
-                </li>
-                <li>
-                  <Database size={15} aria-hidden="true" />
-                  <span>O assistente poderá buscar trechos relevantes durante a conversa.</span>
-                </li>
-                <li>
-                  <Folder size={15} aria-hidden="true" />
-                  <span>Outros projetos não herdam essas fontes automaticamente.</span>
-                </li>
-              </ul>
-            </div>
+            <details className="mdc-chat-project-sources__note">
+              <summary>Adicionar nota de texto</summary>
+              <div className="mdc-chat-project-source-note">
+                <input
+                  value={sourceTitle}
+                  onChange={(event) => setSourceTitle(event.target.value)}
+                  placeholder="Título da nota"
+                />
+                <textarea
+                  value={sourceContent}
+                  onChange={(event) => setSourceContent(event.target.value)}
+                  placeholder="Cole aqui regras, contexto ou conhecimento do projeto..."
+                  rows={4}
+                />
+                <button
+                  type="button"
+                  className="mdc-chat-project-sources__ghost"
+                  disabled={isSavingSource || !sourceContent.trim()}
+                  onClick={() => void createTextSource()}
+                >
+                  Adicionar nota
+                </button>
+              </div>
+            </details>
           </div>
         )}
       </div>
@@ -757,7 +747,7 @@ export function ChatProjectHome({
               </button>
             </header>
 
-            <label>
+            <label className="mdc-chat-project-settings__field">
               <span>Nome do projeto</span>
               <input
                 value={name}
@@ -765,7 +755,7 @@ export function ChatProjectHome({
               />
             </label>
 
-            <label>
+            <label className="mdc-chat-project-settings__field">
               <span>Descrição</span>
               <input
                 value={description}
@@ -774,14 +764,17 @@ export function ChatProjectHome({
               />
             </label>
 
-            <label>
+            <label className="mdc-chat-project-settings__field">
               <span>Instruções</span>
               <textarea
                 value={instructions}
                 onChange={(event) => setInstructions(event.target.value)}
-                rows={5}
+                rows={6}
                 placeholder="Defina o contexto e personalize como o assistente responde neste projeto."
               />
+              <small className="mdc-chat-project-settings__help">
+                O projeto só usa estas instruções nas conversas deste espaço.
+              </small>
             </label>
 
             {project.access_role === "owner" ? (
@@ -862,14 +855,15 @@ export function ChatProjectHome({
             <footer>
               <button
                 type="button"
-                className="mdc-chat-project-home__danger-outline"
+                className="mdc-chat-project-settings__delete"
                 onClick={() => void deleteProject()}
               >
-                Excluir projeto
+                Excluir projeto?
               </button>
 
               <button
                 type="button"
+                className="mdc-chat-project-settings__save"
                 onClick={() => void saveSettings()}
                 disabled={isSaving}
               >

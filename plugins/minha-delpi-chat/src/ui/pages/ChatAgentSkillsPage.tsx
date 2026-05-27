@@ -21,6 +21,7 @@ import "./ChatAgentSkillsPage.css";
 
 type ChatAgentSkillsPageProps = {
   agent: ChatAgent;
+  backLabel?: string;
   onBack: () => void;
   onOpenActions?: (agent: ChatAgent) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -55,6 +56,7 @@ function SkillStatusPill({
 
 export function ChatAgentSkillsPage({
   agent,
+  backLabel = "Voltar ao agente",
   onBack,
   onOpenActions,
   getAccessToken,
@@ -150,7 +152,7 @@ export function ChatAgentSkillsPage({
       <header className="mdc-agent-skills__topbar">
         <button type="button" className="mdc-agent-skills__back" onClick={onBack}>
           <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar</span>
+          <span>{backLabel}</span>
         </button>
 
         <div className="mdc-agent-skills__topbar-title">

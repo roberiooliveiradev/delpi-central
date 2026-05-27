@@ -45,6 +45,52 @@
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 58%, transparent);
 }
 
+.mdc-chat-sidebar__footer-admin {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.48rem;
+  min-height: 2.15rem;
+  margin-bottom: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 0.68rem;
+  background: transparent;
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 820;
+  padding: 0.38rem 0.45rem;
+  text-align: left;
+}
+
+.mdc-chat-sidebar__footer-admin:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+}
+
+.mdc-chat-sidebar__footer-admin svg {
+  justify-self: center;
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-sidebar__footer > span {
+  color: var(--mdc-text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mdc-chat-sidebar__footer > small {
+  color: color-mix(in srgb, var(--mdc-text-muted) 88%, transparent);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.mdc-chat-sidebar--collapsed .mdc-chat-sidebar__rail-button--admin {
+  margin-top: auto;
+}
+
 .mdc-chat-sidebar__section-title {
   display: flex;
   align-items: center;

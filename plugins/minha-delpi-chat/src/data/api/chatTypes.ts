@@ -200,6 +200,30 @@ export type ChatAgent = {
   updated_at: string;
   sessions_in_window?: number | null;
   total_sessions?: number | null;
+  published_version?: number;
+  published_at?: string | null;
+  has_unpublished_changes?: boolean;
+};
+
+export type ChatAgentVersion = {
+  id: string;
+  version: number;
+  event: string;
+  createdAt: string | null;
+  createdBy: string | null;
+};
+
+export type ChatAgentPreviewDraft = {
+  key?: string | null;
+  name: string;
+  description?: string | null;
+  systemPrompt?: string | null;
+  responseStyle?: string | null;
+  category?: string | null;
+  icon?: string | null;
+  maxToolCalls?: number;
+  requiresConfirmationForWrite?: boolean;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type ChatProject = {

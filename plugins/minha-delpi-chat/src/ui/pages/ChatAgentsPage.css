@@ -1,4 +1,5 @@
 @import "../layout/workspace-responsive.css";
+@import "../layout/chat-workspace-shared.css";
 
 .mdc-chat-agents-directory {
   display: grid;
@@ -45,9 +46,18 @@
   color: var(--mdc-primary);
 }
 
-.mdc-chat-agents-directory__topbar > div {
+.mdc-chat-agents-directory__title {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.45rem;
+  justify-items: center;
   color: var(--mdc-primary);
   font-weight: 860;
+}
+
+.mdc-chat-agents-directory__title svg {
+  flex: 0 0 auto;
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-agents-directory__main {
