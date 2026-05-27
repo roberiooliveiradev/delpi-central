@@ -7,6 +7,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Arquivo | Uso |
 |---------|-----|
 | [api-delpi-rotas-agente.md](./api-delpi-rotas-agente.md) | Agente com provider OpenAPI **api-delpi** — mapa intenção → rota, permissões, sinônimos e exemplos (maio/2026) |
+| [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
 
 ## Documentação técnica relacionada
 
@@ -42,4 +43,4 @@ Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeli
 1. Deploy da api-delpi
 2. Reimport OpenAPI no agente (`POST .../providers/{key}/import` ou admin reload-schema)
 3. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
-4. Revisar [`../roadmap/inteligencia-chat-onda-10.md`](../roadmap/inteligencia-chat-onda-10.md) para regressão de seleção de rotas
+4. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

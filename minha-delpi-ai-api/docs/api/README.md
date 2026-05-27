@@ -53,6 +53,8 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |
 | [`../knowledge/README.md`](../knowledge/README.md) | Documentos RAG para agentes (ex.: [`api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md)). |
+| [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) | Pipeline e roteamento automático api-delpi no chat base. |
+| [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria de rotas, regressão e erros conhecidos. |
 | `07-tools.md` | Execução de tools internas. |
 | `08-admin.md` | Endpoints administrativos, métricas, LLM, auditoria e knowledge admin. |
 | `09-deploy-migrations-schema.md` | Migrações, schema audit e fluxo de deploy. |
