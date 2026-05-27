@@ -26,6 +26,7 @@ import {
   pickSourceYearForTarget,
   suggestYearBeforeLatest,
 } from "../utils/goalYearHelpers";
+import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
 import type { ScopeType } from "../../data/types/settings";
 import "./AdminGoalsWorkspace.css";
 
@@ -60,6 +61,8 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
   const [bulkTool, setBulkTool] = useState<BulkToolMode>(null);
   const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<StrategicIndicatorGoalItem | null>(null);
+  const [duplicatingGoal, setDuplicatingGoal] =
+    useState<StrategicIndicatorGoalItem | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
   const [sourceYear, setSourceYear] = useState(new Date().getFullYear() - 1);
@@ -250,6 +253,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
     setBulkTool(null);
     setShowHistory(false);
     setEditingGoal(null);
+    setDuplicatingGoal(null);
     setGoalDrawerOpen(false);
   }
 
@@ -285,6 +289,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
     await goals.createGoal(payload);
     setGoalDrawerOpen(false);
     setEditingGoal(null);
+    setDuplicatingGoal(null);
   }
 
   async function handleUpdate(
@@ -404,6 +409,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       className="si-settings-editor__button"
                       onClick={() => {
                         setEditingGoal(null);
+                        setDuplicatingGoal(null);
                         setGoalDrawerOpen(true);
                       }}
                     >
@@ -627,6 +633,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   actionLabel="Nova meta"
                   onAction={() => {
                     setEditingGoal(null);
+                    setDuplicatingGoal(null);
                     setGoalDrawerOpen(true);
                   }}
                 />
@@ -670,11 +677,24 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                           type="button"
                           className="si-settings-editor__button si-settings-editor__button--secondary"
                           onClick={() => {
+                            setDuplicatingGoal(null);
                             setEditingGoal(item);
                             setGoalDrawerOpen(true);
                           }}
                         >
                           Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="si-settings-editor__button si-settings-editor__button--secondary"
+                          onClick={() => {
+                            setEditingGoal(null);
+                            setDuplicatingGoal(buildGoalDuplicateSeed(item));
+                            setGoalDrawerOpen(true);
+                          }}
+                          disabled={goals.saving}
+                        >
+                          Duplicar
                         </button>
                         <button
                           type="button"
@@ -759,23 +779,38 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
         onClose={() => {
           setGoalDrawerOpen(false);
           setEditingGoal(null);
+          setDuplicatingGoal(null);
         }}
-        title={editingGoal ? "Editar meta analítica" : "Nova meta analítica"}
-        description="Meta por indicador, ano e escopo (consolidado ou filial 01/02)."
+        title={
+          editingGoal
+            ? "Editar meta analítica"
+            : duplicatingGoal
+              ? "Duplicar meta analítica"
+              : "Nova meta analítica"
+        }
+        description={
+          duplicatingGoal
+            ? "Revise os dados e salve. Mesmo indicador, ano e escopo substituem a meta ativa anterior por uma nova versão."
+            : "Meta por indicador, ano e escopo (consolidado ou filial 01/02)."
+        }
         size="xl"
       >
         <IndicatorGoalForm
           saving={goals.saving}
           initialValue={editingGoal}
+          duplicateFrom={duplicatingGoal}
           indicatorOptions={indicatorOptions}
           indicatorCatalog={indicatorCatalog}
           defaultGoalYear={selectedYear ?? undefined}
-          lockGoalYear={typeof selectedYear === "number" && !editingGoal}
+          lockGoalYear={
+            typeof selectedYear === "number" && !editingGoal && !duplicatingGoal
+          }
           onCreate={handleCreate}
           onUpdate={handleUpdate}
           onCancel={() => {
             setGoalDrawerOpen(false);
             setEditingGoal(null);
+            setDuplicatingGoal(null);
           }}
         />
       </DrawerPanel>

@@ -70,7 +70,10 @@ Listagem de metas: em modo Curva exibe apenas o `goal_label` (ex.: `Curva %`), n
 |------|----------------|
 | **Novo ano** | Ano de destino sugerido (ex.: ano anterior ao maior ciclo existente); metas iniciais em lote com select de indicador |
 | **Duplicar ano** | Origem = ano imediatamente posterior ao destino (ex.: 2026 → 2025); destino editável em select |
+| **Duplicar** (por linha) | Abre o formulário com cópia da meta (rótulo com sufixo `(cópia)`); permite mudar indicador, ano ou escopo antes de salvar |
 | **Preencher faltantes** | Completa indicadores sem meta ativa no ano, copiando estrutura de outro ano |
+
+Ao salvar uma cópia com o mesmo indicador, ano e escopo, a meta ativa anterior é desativada e a nova versão passa a ser a ativa.
 
 API: `POST /admin/indicator-goals/duplicate-year` com `source_year`, `target_year`, `overwrite_existing`.
 
