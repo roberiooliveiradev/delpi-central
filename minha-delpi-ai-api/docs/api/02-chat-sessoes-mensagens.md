@@ -144,6 +144,24 @@ Envia mensagem sem streaming.
 
 ---
 
+## POST `/chat/sessions/{sessionId}/messages/{messageId}/resend/stream`
+
+Reenvia uma mensagem do usuário existente com streaming SSE (útil após falha ou para regenerar resposta).
+
+### Permissão
+
+`minha-delpi.chat.ask`
+
+### Body
+
+Opcional (mesmo formato do envio normal, se o backend aceitar override de contexto).
+
+### Resposta
+
+Mesmos eventos SSE de `messages/stream` (`sources`, `tool_calls`, `token`, `done`, `error`).
+
+---
+
 ## POST `/chat/sessions/{sessionId}/messages/stream`
 
 Envia mensagem com streaming SSE.

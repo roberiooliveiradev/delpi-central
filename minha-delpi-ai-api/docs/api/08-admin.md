@@ -1,6 +1,21 @@
 # 08 — Admin API
 
-Todos os endpoints abaixo exigem `minha-delpi.chat.admin`, exceto quando indicado em RBAC (`/admin/rbac/summary` também exige admin).
+A maioria dos endpoints abaixo exige `minha-delpi.chat.admin`. Exceções indicadas (ex.: catálogo de **Skills** usa `minha-delpi.chat.tools.manage`).
+
+## Skills — catálogo global
+
+Gerencia entradas em `ai_chat_skill_catalog` (policies Markdown, flags, ordem). A aba **Skills** no painel admin do chat consome estas rotas.
+
+| Método | Path | Permissão |
+|---|---|---|
+| GET | `/admin/skills` | `tools.manage` |
+| POST | `/admin/skills` | `tools.manage` |
+| PUT | `/admin/skills/{skillId}` | `tools.manage` |
+| DELETE | `/admin/skills/{skillId}` | `tools.manage` (desativa: `is_active=false`) |
+
+Detalhes de campos e vínculo por agente: [`11-skills.md`](11-skills.md).
+
+---
 
 ## External action providers globais
 

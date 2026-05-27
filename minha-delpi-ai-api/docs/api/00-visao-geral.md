@@ -84,8 +84,9 @@ Acesso na listagem: oficiais/públicos, próprios e compartilhados (`ai_chat_age
 ### Agente na conversa
 
 - Sessão com `agent_key` (ou projeto com `default_agent_key`).
-- Cada mensagem monta contexto com `system_prompt`, especialização RAG, `allowedActionIds` e limites do agente.
-- O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes.
+- Agentes precisam estar **publicados** (`published_version >= 1`) para uso por visitantes; o runtime aplica `published_config` (snapshot).
+- Cada mensagem monta contexto com `system_prompt`, especialização RAG, skills ativas, `allowedActionIds` e limites do agente.
+- O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes; skills globais (SQL, company-knowledge) seguem env defaults.
 
 ## Capabilities
 

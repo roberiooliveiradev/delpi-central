@@ -193,16 +193,22 @@
   border-radius: 1rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
   padding: 1rem 1.05rem;
+  box-shadow: var(--mdc-elevation-1);
   transition:
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+    box-shadow var(--mdc-motion-duration) var(--mdc-motion-ease),
+    background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    transform var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
+}
+
+.mdc-agent-skills__card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--mdc-elevation-2);
 }
 
 .mdc-agent-skills__card--on {
   background: color-mix(in srgb, var(--mdc-primary) 5%, var(--mdc-card-bg));
   box-shadow:
-    0 1px 0 color-mix(in srgb, var(--mdc-primary) 18%, transparent),
+    var(--mdc-elevation-2),
     0 12px 32px color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 }
 

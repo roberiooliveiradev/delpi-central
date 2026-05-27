@@ -63,15 +63,16 @@ Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comport
 
 | Recurso | Descrição |
 |---------|-----------|
-| Builder | Instruções, execução, quebra-gelos, compartilhamento, stats, duplicar |
-| Skills | Ativar comportamentos de prompt (ex.: Especialista SQL); ver badge de execução SQL |
+| Builder | Instruções, visibilidade, quebra-gelos, **publicar** rascunho, preview, compartilhamento, stats, duplicar |
+| Skills | Comportamentos de prompt por agente (ex.: Especialista SQL, company-knowledge); badge de execução SQL quando action `/data/sql` habilitada |
 | Actions | Providers OpenAPI, rotas, teste e logs |
 | Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |
 | Transferir | Dono pode transferir propriedade |
 | Export / Import | JSON portável da configuração + actions |
 | Duplicate | `copyActions` e `copySources` opcionais |
 | Lista | Métricas de uso (7 dias), inativos, badges de papel |
-| Preview | Simulação real antes de publicar |
+| Preview | Simulação com rascunho (`POST /chat/agents/preview` ou `.../{id}/preview`) antes de publicar |
+| Publicar | `POST /chat/agents/{id}/publish` — visitantes só veem versão publicada |
 
 Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md).
 

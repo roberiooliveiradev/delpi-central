@@ -25,7 +25,7 @@
 .mdc-admin-card {
   border-radius: var(--mdc-radius-xl);
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  box-shadow: var(--mdc-elevation-1);
   padding: clamp(0.9rem, 1.5vw, 1.15rem);
 }
 

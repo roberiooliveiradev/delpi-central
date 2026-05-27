@@ -4,7 +4,7 @@
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow);
+  box-shadow: var(--mdc-elevation-2);
   padding: var(--mdc-space-4);
 }
 
@@ -87,6 +87,7 @@
 .mdc-admin-tabs button.is-active {
   background: var(--mdc-primary);
   color: var(--mdc-bg);
+  box-shadow: var(--mdc-elevation-tab-active);
 }
 
 @media (max-width: 1023px) {

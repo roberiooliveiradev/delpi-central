@@ -12,7 +12,7 @@ Fallback: se o banco estiver vazio, o `ChatSkillRegistry` usa `app/content/pt-BR
 
 ### Admin — CRUD de catálogo
 
-**Permissão:** `minha-delpi.chat.tools.manage`
+**Permissão:** `minha-delpi.chat.tools.manage` (gestores de ferramentas/agentes; aba **Skills** no admin do chat)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
@@ -81,7 +81,7 @@ Retorna o catálogo mesclado com o estado do agente e capacidades derivadas.
 
 Ativa ou desativa uma skill.
 
-**Permissão:** `minha-delpi.chat.tools.manage` (e permissão de edição do agente; agentes oficiais exigem `chat.admin`)
+**Permissão:** `minha-delpi.chat.tools.manage` (gestores de ferramentas/agentes; aba **Skills** no admin do chat) (e permissão de edição do agente; agentes oficiais exigem `chat.admin`)
 
 **Body:**
 

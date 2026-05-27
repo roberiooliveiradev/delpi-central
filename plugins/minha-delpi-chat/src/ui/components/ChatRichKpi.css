@@ -20,11 +20,15 @@
   border-top: 3px solid var(--mdc-primary);
   border-radius: var(--mdc-radius-sm);
   background: var(--mdc-card-bg);
-  transition: box-shadow 0.15s;
+  box-shadow: var(--mdc-elevation-1);
+  transition:
+    box-shadow var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    transform var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
 }
 
 .mdc-rich-kpi__card:hover {
-  box-shadow: var(--mdc-card-shadow-soft);
+  box-shadow: var(--mdc-elevation-2);
+  transform: translateY(-1px);
 }
 
 .mdc-rich-kpi__label {

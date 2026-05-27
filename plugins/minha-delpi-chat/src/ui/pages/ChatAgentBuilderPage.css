@@ -621,6 +621,7 @@
 .mdc-chat-agent-builder__switch button.is-active {
   background: var(--mdc-bg);
   color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-2);
 }
 
 .mdc-chat-agent-builder__create-mode {
@@ -1211,7 +1212,9 @@
 
 .mdc-chat-agent-builder__switch button.is-active {
   border: 1px solid color-mix(in srgb, var(--mdc-text) 28%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-text) 12%, transparent);
+  box-shadow:
+    var(--mdc-elevation-2),
+    0 0 0 1px color-mix(in srgb, var(--mdc-text) 12%, transparent);
 }
 
 .mdc-chat-agent-builder__preview-label {
