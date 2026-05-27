@@ -304,6 +304,7 @@ class StreamChatMessageUseCase:
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
                 user_context=user_context,
+                skills=workspace_context.get("skills"),
             )
 
         answer_parts: list[str] = []
@@ -471,14 +472,21 @@ class StreamChatMessageUseCase:
 
         agent = self._get_session_agent(session, user_id)
 
+        from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
+
         return {
             "project": None,
             "agent": self._agent_metadata(agent),
             "projectPrompt": None,
             "agentPrompt": agent.system_prompt if agent else None,
             "agentKey": agent.key if agent else session.agent_key,
-            "allowedActionIds": None,
+            "allowedActionIds": [],
             "capabilities": {},
+            "skills": ChatAgentSkillsService.resolve(
+                agent_metadata=agent.metadata if agent else {},
+                allowed_action_ids=[],
+                has_agent=bool(agent),
+            ),
         }
 
     def _get_session_agent(self, session, user_id: UUID):

@@ -56,11 +56,13 @@ class ChatPromptBuilderService:
         history_summary: str | None = None,
         operational_mode: bool = False,
         user_context: str | None = None,
+        skills: dict | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
             tool_context=tool_context,
             operational_mode=operational_mode,
+            skills=skills,
         )
         base_prompt += self._capabilities_policy_addon(current_message)
 

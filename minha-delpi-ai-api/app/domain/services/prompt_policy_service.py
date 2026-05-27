@@ -171,14 +171,18 @@ Comportamento esperado:
             tool_context="",
         )
 
+    SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore consultas SELECT em blocos ```sql``` quando pedido; execução requer action /data/sql."""
+
     def build_contextual_prompt(
         self,
         rag_context: str,
         tool_context: str,
         *,
         operational_mode: bool = False,
+        skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
+        resolved_skills = skills or {}
 
         if rag_context:
             sections.append(
@@ -201,8 +205,17 @@ Comportamento esperado:
             self._response_policy_sections(
                 rag_context=rag_context,
                 tool_context=tool_context,
+                skills=resolved_skills,
             )
         )
+
+        if resolved_skills.get("sqlAuthoring"):
+            sections.append(
+                self._load_policy(
+                    "sql-assistant-skill.md",
+                    self.SQL_ASSISTANT_SKILL_FALLBACK,
+                )
+            )
 
         if operational_mode:
             sections.append(
@@ -218,7 +231,14 @@ Comportamento esperado:
             if section and section.strip()
         )
 
-    def _response_policy_sections(self, *, rag_context: str, tool_context: str) -> list[str]:
+    def _response_policy_sections(
+        self,
+        *,
+        rag_context: str,
+        tool_context: str,
+        skills: dict | None = None,
+    ) -> list[str]:
+        resolved_skills = skills or {}
         sections = [
             self._load_policy(
                 "response-style.md",
@@ -269,7 +289,7 @@ Comportamento esperado:
                 )
             )
 
-        if (
+        if not resolved_skills.get("sqlAuthoring") and (
             self._contains_any(normalized_rag_context, self.SQL_MARKERS)
             or self._contains_any(normalized_tool_context, self.SQL_MARKERS)
         ):

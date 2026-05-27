@@ -208,6 +208,13 @@ export function ChatAgentBuilderPage({
     typeof capabilities.canvas === "boolean" ? capabilities.canvas : true,
   );
 
+  const skillsMeta = getMetadataRecord(agent?.metadata, "skills");
+  const sqlSkillMeta = getMetadataRecord(skillsMeta, "sql");
+
+  const [skillSqlAuthoring, setSkillSqlAuthoring] = useState(
+    typeof sqlSkillMeta.authoring === "boolean" ? sqlSkillMeta.authoring : false,
+  );
+
   const [allowedActions] = useState<string[]>(
     getMetadataStringArray(agent?.metadata, "allowed_actions"),
   );
@@ -285,6 +292,12 @@ export function ChatAgentBuilderPage({
         );
         setCapCanvas(
           typeof nextCapabilities.canvas === "boolean" ? nextCapabilities.canvas : true,
+        );
+
+        const nextSkills = getMetadataRecord(details.metadata, "skills");
+        const nextSqlSkill = getMetadataRecord(nextSkills, "sql");
+        setSkillSqlAuthoring(
+          typeof nextSqlSkill.authoring === "boolean" ? nextSqlSkill.authoring : false,
         );
 
         setAgentSources(sources);
@@ -599,6 +612,13 @@ export function ChatAgentBuilderPage({
         actions: capActions,
         files: capFiles,
         canvas: capCanvas,
+      },
+      skills: {
+        ...skillsMeta,
+        sql: {
+          ...sqlSkillMeta,
+          authoring: skillSqlAuthoring,
+        },
       },
     };
 
@@ -1468,6 +1488,32 @@ export function ChatAgentBuilderPage({
                   onChange={(event) => setCapCanvas(event.target.checked)}
                 />
                 <span>Permitir lousa/canvas</span>
+              </label>
+            </div>
+          </section>
+
+          <section className="mdc-chat-agent-builder__section">
+            <div className="mdc-chat-agent-builder__section-title">
+              <Zap size={18} aria-hidden="true" />
+              <div>
+                <h2>Skills</h2>
+                <p>
+                  Comportamentos do assistente (prompt). Diferente de <strong>Actions</strong>,
+                  que executam APIs. Com SQL ativo, o agente monta queries em blocos de código;
+                  para executar no banco, habilite a action <code>POST /data/sql</code> em
+                  Actions.
+                </p>
+              </div>
+            </div>
+
+            <div className="mdc-chat-agent-builder__toggles">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={skillSqlAuthoring}
+                  onChange={(event) => setSkillSqlAuthoring(event.target.checked)}
+                />
+                <span>Especialista SQL — elaborar e explicar consultas (SELECT)</span>
               </label>
             </div>
           </section>

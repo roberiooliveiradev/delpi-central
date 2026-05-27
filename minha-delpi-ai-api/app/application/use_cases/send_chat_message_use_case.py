@@ -249,6 +249,7 @@ class SendChatMessageUseCase:
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
                 user_context=user_context,
+                skills=workspace_context.get("skills"),
             )
 
         started_at = time.perf_counter()
@@ -565,6 +566,53 @@ class SendChatMessageUseCase:
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_direct_answer(access_token, message)
+
+    def _build_workspace_context(self, session, user_id: UUID) -> dict:
+        if self.workspace_context_service:
+            return self.workspace_context_service.build_context(
+                session=session,
+                user_id=user_id,
+            )
+
+        agent = self._get_session_agent(session, user_id)
+
+        from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
+
+        return {
+            "project": None,
+            "agent": self._agent_metadata(agent),
+            "projectPrompt": None,
+            "agentPrompt": agent.system_prompt if agent else None,
+            "agentKey": agent.key if agent else session.agent_key,
+            "allowedActionIds": [],
+            "capabilities": {},
+            "skills": ChatAgentSkillsService.resolve(
+                agent_metadata=agent.metadata if agent else {},
+                allowed_action_ids=[],
+                has_agent=bool(agent),
+            ),
+            "specialization": None,
+        }
+
+    def _get_session_agent(self, session, user_id: UUID):
+        if not self.agent_repository or not session.agent_key:
+            return None
+
+        return self.agent_repository.get_enabled_by_key(
+            session.agent_key,
+            user_id=user_id,
+        )
+
+    def _agent_metadata(self, agent) -> dict | None:
+        if not agent:
+            return None
+
+        return {
+            "key": agent.key,
+            "name": agent.name,
+            "description": agent.description,
+            "metadata": agent.metadata,
+        }
 
     def _resolve_capabilities_answer(self, workspace_context: dict) -> str | None:
         allowed = workspace_context.get("allowedActionIds") or []

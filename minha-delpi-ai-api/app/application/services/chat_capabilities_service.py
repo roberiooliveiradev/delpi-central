@@ -243,6 +243,12 @@ class ChatCapabilitiesService:
             ]
         )
 
+        skills = workspace_context.get("skills") or {}
+        skill_lines = cls._format_skills_section(skills, workspace_context.get("allowedActionIds"))
+        if skill_lines:
+            lines.extend(["", "**Skills (comportamento do assistente)**"])
+            lines.extend(skill_lines)
+
         agent = workspace_context.get("agent") or {}
         agent_name = str(agent.get("name") or workspace_context.get("agentKey") or "").strip()
         allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
@@ -279,6 +285,48 @@ class ChatCapabilitiesService:
         )
 
         return "\n".join(lines)
+
+    @classmethod
+    def _format_skills_section(
+        cls,
+        skills: dict,
+        allowed_action_ids: list[str] | None,
+    ) -> list[str]:
+        lines: list[str] = []
+        allowed = allowed_action_ids or []
+
+        if skills.get("sqlAuthoring"):
+            lines.append(
+                "- **SQL (elaborar consultas)**: posso montar e explicar queries `SELECT` em "
+                "blocos de código, como um assistente SQL (skill)."
+            )
+        else:
+            lines.append(
+                "- **SQL (elaborar consultas)**: desligado nesta sessão — habilite a skill no "
+                "agente ou use o chat comum (padrão global)."
+            )
+
+        if skills.get("sqlExecutionAvailable"):
+            lines.append(
+                "- **SQL (executar)**: action `POST /data/sql` habilitada — consigo rodar "
+                "consultas somente leitura autorizadas e mostrar o resultado."
+            )
+        elif allowed:
+            lines.append(
+                "- **SQL (executar)**: não há action de execução SQL habilitada; só elaboro "
+                "o texto da query se a skill estiver ativa."
+            )
+        else:
+            lines.append(
+                "- **SQL (executar)**: requer agente com action `POST /data/sql` configurada "
+                "(diferente da skill de elaboração)."
+            )
+
+        lines.append(
+            "- **Skills ≠ Actions**: skills orientam *como* respondo; actions *executam* APIs."
+        )
+
+        return lines
 
     @classmethod
     def _format_action_catalog(cls, catalog: list[dict], allowed_ids: list[str]) -> list[str]:
