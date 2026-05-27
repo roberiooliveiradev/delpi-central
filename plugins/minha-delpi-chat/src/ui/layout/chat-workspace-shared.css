@@ -362,3 +362,185 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+/* Diretórios — listagens de agentes e projetos */
+.mdc-chat-ws-directory {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+}
+
+.mdc-chat-ws-directory__topbar .mdc-chat-ws-directory__title {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.45rem;
+  justify-items: center;
+}
+
+.mdc-chat-ws-directory__title svg {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-ws-directory__main {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  width: min(100%, 920px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.mdc-chat-ws-directory__toolbar {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mdc-chat-ws-directory__lead {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.mdc-chat-ws-directory__search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.65rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 70%, transparent);
+  padding: 0 0.85rem;
+}
+
+.mdc-chat-ws-directory__search svg {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-ws-directory__search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--mdc-text);
+  font: inherit;
+  outline: none;
+}
+
+.mdc-chat-ws-directory__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.mdc-chat-ws-directory__list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-chat-ws-directory__card {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 78%, transparent);
+  padding: 0.65rem 0.75rem;
+}
+
+.mdc-chat-ws-directory__card--active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 42%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
+}
+
+.mdc-chat-ws-directory__card-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0.15rem 0;
+  text-align: left;
+}
+
+.mdc-chat-ws-directory__card-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-ws-directory__card-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mdc-chat-ws-directory__card-copy strong,
+.mdc-chat-ws-directory__card-copy small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-chat-ws-directory__card-copy strong {
+  color: var(--mdc-title);
+  font-size: 0.95rem;
+}
+
+.mdc-chat-ws-directory__card-copy small {
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+}
+
+.mdc-chat-ws-directory__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  padding-left: 2.8rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.74rem;
+}
+
+.mdc-chat-ws-directory__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-left: 2.8rem;
+}
+
+.mdc-chat-ws-directory__empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 1rem;
+  color: var(--mdc-text-muted);
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.mdc-chat-ws-directory__empty svg {
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-ws-directory__empty strong {
+  color: var(--mdc-title);
+}

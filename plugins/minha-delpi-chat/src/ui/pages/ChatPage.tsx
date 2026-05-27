@@ -12,6 +12,7 @@ import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
+import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
   createChatArtifact,
   createProjectTextSource,
@@ -294,6 +295,16 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
+        case "projects": {
+          if (currentView === "projects") {
+            closeMobileSidebar();
+            return;
+          }
+
+          setCurrentView("projects");
+          closeMobileSidebar();
+          break;
+        }
         default:
           break;
       }
@@ -367,6 +378,18 @@ export function ChatPage({
       setCurrentView("chat");
     }
   }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
+
+  function openAgentsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("agents");
+    navigateChatHref(buildChatHref({ kind: "agents" }));
+  }
+
+  function openProjectsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("projects");
+    navigateChatHref(buildChatHref({ kind: "projects" }));
+  }
 
 
   useEffect(() => {
@@ -785,9 +808,45 @@ export function ChatPage({
           onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
           onViewChange={setCurrentView}
+          onOpenAgentsDirectory={openAgentsDirectory}
+          onOpenProjectsDirectory={openProjectsDirectory}
         />
 
-        {currentView === "agents" ? (
+        {currentView === "projects" ? (
+          <section className="mdc-chat-main" aria-label="Projetos">
+            {!isDesktop ? (
+              <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
+                <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
+                  Menu
+                </button>
+              </div>
+            ) : null}
+            <ChatProjectsPage
+              projects={projects}
+              sessions={sessions}
+              selectedProjectId={selectedProjectId}
+              isLoading={isLoadingProjects}
+              onBack={() => {
+                clearWorkspaceError();
+                setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
+              }}
+              onSelectProject={(projectId) => {
+                clearWorkspaceError();
+                clearError();
+                setCanvasDocument(null);
+                setActiveAgentPageKey(null);
+                setContextAgentKey(null);
+                setSelectedProjectId(projectId);
+                setCurrentView("chat");
+                navigateChatHref(buildChatProjectHref(projectId));
+              }}
+              onCreateProject={addProject}
+              onRenameProject={(projectId, name) => editProject(projectId, { name })}
+              onDeleteProject={removeProject}
+            />
+          </section>
+        ) : currentView === "agents" ? (
           <section className="mdc-chat-main" aria-label="Gerenciar agentes">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
@@ -808,6 +867,7 @@ export function ChatPage({
                 clearWorkspaceError();
                 setAgentEditRequest(null);
                 setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
               }}
               onSelectAgent={(agentKey) => {
                 clearWorkspaceError();
@@ -897,14 +957,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={
-              canManageAgents
-                ? () => {
-                    clearWorkspaceError();
-                    setCurrentView("agents");
-                  }
-                : undefined
-            }
+            onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
             onClearAgent={() => {
               setActiveAgentPageKey(null);
               setContextAgentKey(null);

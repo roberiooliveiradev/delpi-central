@@ -239,10 +239,40 @@
   color: var(--mdc-primary);
 }
 
+.mdc-chat-sidebar__section-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.mdc-chat-sidebar__section-chevron,
+.mdc-chat-sidebar__section-link {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.mdc-chat-sidebar__section-link {
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  padding: 0.1rem 0.25rem;
+  text-transform: inherit;
+}
+
+.mdc-chat-sidebar__section-link:hover {
+  color: var(--mdc-primary);
+}
+
 /* Refinamento visual: títulos recolhíveis sem borda/focus box */
 .mdc-chat-sidebar__section-title button,
 .mdc-chat-sidebar__section-toggle,
-.mdc-chat-sidebar__section-title--button > button {
+.mdc-chat-sidebar__section-title--button > button,
+.mdc-chat-sidebar__section-chevron {
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
@@ -252,7 +282,8 @@
 
 .mdc-chat-sidebar__section-title button:hover,
 .mdc-chat-sidebar__section-toggle:hover,
-.mdc-chat-sidebar__section-title--button > button:hover {
+.mdc-chat-sidebar__section-title--button > button:hover,
+.mdc-chat-sidebar__section-chevron:hover {
   color: var(--mdc-primary);
   background: transparent !important;
 }

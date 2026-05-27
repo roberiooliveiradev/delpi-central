@@ -1,7 +1,2 @@
 @import "../layout/workspace-responsive.css";
 @import "../layout/chat-workspace-shared.css";
-
-.mdc-chat-ws-directory__meta-row .mdc-ab-checkbox {
-  width: auto;
-  margin-left: auto;
-}
