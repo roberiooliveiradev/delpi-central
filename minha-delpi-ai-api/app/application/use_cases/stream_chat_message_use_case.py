@@ -199,6 +199,15 @@ class StreamChatMessageUseCase:
 
         pipeline_timings = ChatPipelineTimings()
 
+        pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
+            message=message,
+            workspace_context=workspace_context,
+            allowed_action_ids=allowed_action_ids,
+            action_catalog=ChatCapabilitiesService.load_action_catalog_for_agent(
+                allowed_action_ids,
+            ),
+        )
+
         fast_path = ChatFastPathService.should_use(
             message,
             enabled=Settings.CHAT_FAST_PATH_ENABLED,
@@ -221,6 +230,21 @@ class StreamChatMessageUseCase:
             )
             tool_context = post_tool.tool_context
             analysis_mode = post_tool.analysis_mode
+            pipeline_timings.mark("tools_done")
+        elif pre_capability_answer:
+            fast_path = True
+            tool_context = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": {},
+            }
+            tool_calls = []
+            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+                message,
+                history_source,
+                tool_context,
+            )
+            tool_context = post_tool.tool_context
             pipeline_timings.mark("tools_done")
         else:
             agent_meta = workspace_context.get("agent")
@@ -264,6 +288,8 @@ class StreamChatMessageUseCase:
         )
         if canvas_action:
             direct_answer = canvas_action.answer
+        elif pre_capability_answer:
+            direct_answer = pre_capability_answer
         elif analysis_mode:
             direct_answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
                 message,
@@ -281,7 +307,7 @@ class StreamChatMessageUseCase:
                 analysis_mode=analysis_mode,
             )
 
-        if canvas_action or (analysis_mode and direct_answer):
+        if canvas_action or pre_capability_answer or (analysis_mode and direct_answer):
             skip_rag = True
 
         if not direct_answer and ChatUserContextService.is_user_identity_question(message):
@@ -301,8 +327,8 @@ class StreamChatMessageUseCase:
                 direct_answer = identity_direct
                 skip_rag = True
 
-        if not direct_answer and ChatCapabilitiesService.is_capabilities_question(message):
-            caps_direct = self._resolve_capabilities_answer(workspace_context)
+        if not direct_answer and ChatCapabilitiesService.is_capability_inquiry(message):
+            caps_direct = self._resolve_capabilities_answer(workspace_context, message)
             if caps_direct:
                 direct_answer = caps_direct
                 skip_rag = True
@@ -985,10 +1011,15 @@ class StreamChatMessageUseCase:
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_direct_answer(access_token, message)
 
-    def _resolve_capabilities_answer(self, workspace_context: dict) -> str | None:
+    def _resolve_capabilities_answer(
+        self,
+        workspace_context: dict,
+        message: str,
+    ) -> str | None:
         allowed = workspace_context.get("allowedActionIds") or []
         catalog = ChatCapabilitiesService.load_action_catalog_for_agent(allowed)
-        return ChatCapabilitiesService.build_direct_answer(
+        return ChatCapabilitiesService.resolve_capability_answer(
+            message=message,
             workspace_context=workspace_context,
             allowed_action_ids=allowed,
             action_catalog=catalog,

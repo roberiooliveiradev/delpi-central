@@ -57,7 +57,20 @@ class ChatToolContextService:
 
         raw_message = str(message or "").strip()
 
+        from app.application.services.chat_capabilities_service import ChatCapabilitiesService
         from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+
+        if ChatCapabilitiesService.is_capability_inquiry(raw_message):
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "currentMessage": raw_message,
+                },
+            )
 
         if conversation_context is None and previous_messages:
             conversation_context = ChatIntelligencePipelineService.build_conversation_context(

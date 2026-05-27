@@ -63,8 +63,138 @@ def _common_chat_examples() -> tuple[str, ...]:
     return tuple(str(item) for item in (data.get("commonExamples") or ()))
 
 
+@lru_cache(maxsize=1)
+def _feature_answers() -> dict:
+    return _capabilities_content().get("featureAnswers") or {}
+
+
 class ChatCapabilitiesService:
     """Responde perguntas sobre o que o chat/agente consegue fazer."""
+
+    _COMMAND_VERBS = (
+        "busque",
+        "buscar",
+        "pesquise",
+        "pesquisar",
+        "liste",
+        "listar",
+        "procure",
+        "procurar",
+        "traga",
+        "mostre",
+        "mostrar",
+        "exiba",
+        "exibir",
+    )
+
+    _INQUIRY_MARKERS = (
+        "consegue",
+        "pode buscar",
+        "pode pesquisar",
+        "pode consultar",
+        "pode listar",
+        "da pra buscar",
+        "da pra pesquisar",
+        "da pra consultar",
+        "dá pra buscar",
+        "e possivel buscar",
+        "é possivel buscar",
+        "sabe buscar",
+        "tem como buscar",
+    )
+
+    @classmethod
+    def is_capability_inquiry(cls, message: str) -> bool:
+        if cls.is_capabilities_question(message):
+            return True
+
+        if cls._is_feature_capability_inquiry(message):
+            return True
+
+        return False
+
+    @classmethod
+    def resolve_capability_answer(
+        cls,
+        *,
+        message: str,
+        workspace_context: dict,
+        allowed_action_ids: list[str] | None = None,
+        action_catalog: list[dict] | None = None,
+    ) -> str | None:
+        targeted = cls.build_feature_answer(
+            message=message,
+            workspace_context=workspace_context,
+            allowed_action_ids=allowed_action_ids,
+            action_catalog=action_catalog,
+        )
+
+        if targeted:
+            return targeted
+
+        if cls.is_capabilities_question(message):
+            return cls.build_direct_answer(
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+                action_catalog=action_catalog,
+            )
+
+        return None
+
+    @classmethod
+    def build_feature_answer(
+        cls,
+        *,
+        message: str,
+        workspace_context: dict,
+        allowed_action_ids: list[str] | None = None,
+        action_catalog: list[dict] | None = None,
+    ) -> str | None:
+        if not cls._is_feature_capability_inquiry(message):
+            return None
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
+        catalog = action_catalog or []
+
+        if "grupo" in normalized or "group" in normalized:
+            return cls._answer_product_search_by_group(
+                workspace_context=workspace_context,
+                allowed=allowed,
+                catalog=catalog,
+            )
+
+        if any(
+            token in normalized
+            for token in (
+                "descricao",
+                "descrição",
+                "termo",
+                "nome",
+                "texto",
+                "palavra",
+            )
+        ) and any(token in normalized for token in ("buscar", "pesquisar", "consultar")):
+            return cls._answer_product_search_by_description(
+                workspace_context=workspace_context,
+                allowed=allowed,
+                catalog=catalog,
+            )
+
+        generic = _feature_answers().get("genericInquiry") or {}
+
+        if isinstance(generic, dict):
+            hint = (
+                "Descreva o que precisa (ex.: estoque, estrutura, fornecedores, preço) "
+                "ou peça *o que você pode fazer?* para a lista completa."
+            )
+            body = str(generic.get("body") or "").format(hint=hint)
+            title = str(generic.get("title") or "")
+
+            if title and body:
+                return f"{title}\n\n{body}".strip()
+
+        return None
 
     @classmethod
     def is_capabilities_question(cls, message: str) -> bool:
@@ -90,6 +220,141 @@ class ChatCapabilitiesService:
         capaz_tokens = tuple(str(item) for item in (detection.get("capazTokens") or ()))
         if "capaz" in normalized and any(token in normalized for token in capaz_tokens):
             return True
+
+        return False
+
+    @classmethod
+    def _is_feature_capability_inquiry(cls, message: str) -> bool:
+        detection = _detection()
+        max_length = int(detection.get("maxMessageLength") or 280)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        raw = str(message or "").strip()
+
+        if not normalized or len(normalized) > max_length:
+            return False
+
+        if cls._looks_like_operational_command(normalized):
+            return False
+
+        if not cls._is_ability_question(normalized, raw):
+            return False
+
+        topics = tuple(str(item) for item in (detection.get("inquiryTopics") or ()))
+        return any(topic in normalized for topic in topics)
+
+    @classmethod
+    def _is_ability_question(cls, normalized: str, raw: str) -> bool:
+        if "?" in raw:
+            return True
+
+        if normalized.startswith(("vc ", "voce ", "você ", "ce ")):
+            return True
+
+        return any(marker in normalized for marker in cls._INQUIRY_MARKERS)
+
+    @classmethod
+    def _looks_like_operational_command(cls, normalized: str) -> bool:
+        if any(marker in normalized for marker in cls._INQUIRY_MARKERS):
+            return False
+
+        if "?" in normalized and any(
+            token in normalized for token in ("consegue", "pode ", "da pra", "e possivel")
+        ):
+            return False
+
+        return any(verb in normalized for verb in cls._COMMAND_VERBS)
+
+    @classmethod
+    def _answer_product_search_by_group(
+        cls,
+        *,
+        workspace_context: dict,
+        allowed: list[str],
+        catalog: list[dict],
+    ) -> str:
+        texts = _feature_answers().get("productSearchByGroup") or {}
+        title = str(texts.get("title") or "**Busca por grupo**")
+        agent = workspace_context.get("agent") or {}
+        agent_name = str(agent.get("name") or workspace_context.get("agentKey") or "").strip()
+
+        if not allowed:
+            body = str(texts.get("commonChat") or "")
+            return f"{title}\n\n{body}".strip()
+
+        search_action = cls._find_product_search_action(catalog, allowed)
+
+        if not search_action:
+            body = str(texts.get("unsupportedAction") or "")
+            return f"{title}\n\n{body}".strip()
+
+        if not cls._action_supports_parameter(search_action, "group_code", "groupcode"):
+            body = str(texts.get("unsupportedParam") or "")
+            return f"{title}\n\n{body}".strip()
+
+        body = str(texts.get("supported") or "")
+        if agent_name:
+            body = body.replace("Neste agente", f"No agente **{agent_name}**", 1)
+
+        return f"{title}\n\n{body}".strip()
+
+    @classmethod
+    def _answer_product_search_by_description(
+        cls,
+        *,
+        workspace_context: dict,
+        allowed: list[str],
+        catalog: list[dict],
+    ) -> str:
+        texts = _feature_answers().get("productSearchByDescription") or {}
+        title = str(texts.get("title") or "**Busca por descrição**")
+
+        if not allowed:
+            body = str(texts.get("commonChat") or "")
+            return f"{title}\n\n{body}".strip()
+
+        search_action = cls._find_product_search_action(catalog, allowed)
+
+        if not search_action:
+            body = str(texts.get("unsupportedAction") or "")
+            return f"{title}\n\n{body}".strip()
+
+        body = str(texts.get("supported") or "")
+        return f"{title}\n\n{body}".strip()
+
+    @classmethod
+    def _find_product_search_action(
+        cls,
+        catalog: list[dict],
+        allowed_ids: list[str],
+    ) -> dict | None:
+        allowed_set = set(allowed_ids)
+
+        for action in catalog:
+            action_id = str(action.get("actionId") or "").strip()
+
+            if action_id not in allowed_set:
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if "search" in path or "search" in operation_id:
+                return action
+
+        return None
+
+    @classmethod
+    def _action_supports_parameter(cls, action: dict, *names: str) -> bool:
+        expected = {name.lower() for name in names}
+
+        for parameter in action.get("parametersSchema") or []:
+            if not isinstance(parameter, dict):
+                continue
+
+            name = str(parameter.get("name") or "").lower()
+
+            if name in expected:
+                return True
 
         return False
 
