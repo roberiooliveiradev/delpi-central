@@ -136,3 +136,42 @@ def test_rejects_empty_content():
                 content="",
             )
         )
+
+
+def test_ingests_document_above_legacy_50k_limit(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.use_cases.ingest_knowledge_document_use_case.Settings.KNOWLEDGE_DOCUMENT_MAX_CHARS",
+        2_000_000,
+    )
+    use_case = make_use_case()
+    content = "x" * 60_000
+
+    result = use_case.execute(
+        IngestDocumentRequest(
+            title="Documento grande",
+            source_type="manual",
+            source_ref="test:large",
+            content=content,
+        )
+    )
+
+    assert result["title"] == "Documento grande"
+    assert result["chunks"] == 1
+
+
+def test_rejects_document_above_configured_max_chars(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.use_cases.ingest_knowledge_document_use_case.Settings.KNOWLEDGE_DOCUMENT_MAX_CHARS",
+        1_000,
+    )
+    use_case = make_use_case()
+
+    with pytest.raises(InvalidKnowledgeDocumentInputError, match="content exceeds 1000 characters"):
+        use_case.execute(
+            IngestDocumentRequest(
+                title="Documento grande",
+                source_type="manual",
+                source_ref=None,
+                content="a" * 1_001,
+            )
+        )
