@@ -1,154 +1,465 @@
-.mdc-chat-agent-skills-page {
+.mdc-agent-skills {
   display: grid;
-  gap: var(--mdc-space-4);
-  min-height: 0;
-  height: 100%;
-  padding: var(--mdc-space-5);
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+}
+
+.mdc-agent-skills__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 60%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  padding: 0.5rem clamp(0.9rem, 2vw, 1.35rem);
+}
+
+.mdc-agent-skills__back,
+.mdc-agent-skills__refresh {
+  display: inline-grid;
+  place-items: center;
+  gap: 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 760;
+  padding: 0.5rem 0.7rem;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease;
+}
+
+.mdc-agent-skills__back {
+  grid-template-columns: auto auto;
+}
+
+.mdc-agent-skills__back:hover,
+.mdc-agent-skills__refresh:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-skills__back:focus-visible,
+.mdc-agent-skills__refresh:focus-visible,
+.mdc-agent-skills__cta:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.mdc-agent-skills__refresh {
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+}
+
+.mdc-agent-skills__refresh:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mdc-agent-skills__refresh .is-spinning {
+  animation: mdc-agent-skills-spin 0.85s linear infinite;
+}
+
+@keyframes mdc-agent-skills-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mdc-agent-skills__topbar-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-skills__topbar-title > div {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+  text-align: center;
+}
+
+.mdc-agent-skills__topbar-title span {
+  color: var(--mdc-title);
+  font-weight: 850;
+  font-size: 0.95rem;
+}
+
+.mdc-agent-skills__topbar-title small {
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mdc-agent-skills__body {
+  width: min(100%, 44rem);
+  margin-inline: auto;
+  padding: clamp(1rem, 2.5vw, 1.5rem) clamp(0.9rem, 2vw, 1.35rem) 2rem;
+  display: grid;
+  gap: 1rem;
   overflow: auto;
 }
 
-.mdc-chat-agent-skills-page__topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mdc-space-3);
-  flex-wrap: wrap;
-}
-
-.mdc-chat-agent-skills-page__topbar > div {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: var(--mdc-title);
-  font-weight: 800;
-}
-
-.mdc-chat-agent-skills-page__topbar button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: color-mix(in srgb, var(--mdc-card-bg) 90%, transparent);
-  color: var(--mdc-text);
-  cursor: pointer;
-  padding: 0.45rem 0.7rem;
-}
-
-.mdc-chat-agent-skills-page__intro {
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
-  border-radius: var(--mdc-radius-lg);
-  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
-  padding: var(--mdc-space-4);
-  color: var(--mdc-text);
+.mdc-agent-skills__callout {
+  display: grid;
+  gap: 0.85rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, var(--mdc-bg));
+  padding: 1rem 1.1rem;
   line-height: 1.55;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
 }
 
-.mdc-chat-agent-skills-page__intro code {
-  font-size: 0.88em;
+.mdc-agent-skills__callout p {
+  margin: 0;
+  color: var(--mdc-text);
+  font-size: 0.92rem;
 }
 
-.mdc-chat-agent-skills-page__stats {
-  margin: 0.65rem 0 0;
+.mdc-agent-skills__callout code {
+  font-size: 0.86em;
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-skills__stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mdc-agent-skills__stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.mdc-agent-skills__stat strong {
+  color: var(--mdc-title);
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mdc-agent-skills__stat small {
   color: var(--mdc-text-muted);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
-.mdc-chat-agent-skills-page__error {
-  color: var(--mdc-danger, #c0392b);
+.mdc-agent-skills__stat-divider {
+  width: 1px;
+  height: 1.25rem;
+  background: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+}
+
+.mdc-agent-skills__error {
   margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--mdc-danger, #c0392b) 12%, transparent);
+  color: var(--mdc-danger, #c0392b);
+  font-size: 0.88rem;
+  font-weight: 650;
 }
 
-.mdc-chat-agent-skills-page__loading {
-  color: var(--mdc-text-muted);
-}
-
-.mdc-chat-agent-skills-page__list {
+.mdc-agent-skills__list {
   display: grid;
-  gap: var(--mdc-space-3);
+  gap: 0.75rem;
 }
 
-.mdc-chat-agent-skills-page__card {
+.mdc-agent-skills__card {
   display: grid;
-  gap: var(--mdc-space-3);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: color-mix(in srgb, var(--mdc-card-bg) 96%, var(--mdc-bg));
-  padding: var(--mdc-space-4);
+  gap: 0.85rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
+  padding: 1rem 1.05rem;
+  transition:
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
 }
 
-.mdc-chat-agent-skills-page__card-head {
+.mdc-agent-skills__card--on {
+  background: color-mix(in srgb, var(--mdc-primary) 5%, var(--mdc-card-bg));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--mdc-primary) 18%, transparent),
+    0 12px 32px color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+}
+
+.mdc-agent-skills__card--skeleton {
+  min-height: 7.5rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mdc-card-border) 22%, transparent) 0%,
+    color-mix(in srgb, var(--mdc-card-border) 38%, transparent) 45%,
+    color-mix(in srgb, var(--mdc-card-border) 22%, transparent) 90%
+  );
+  background-size: 200% 100%;
+  animation: mdc-agent-skills-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes mdc-agent-skills-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.mdc-agent-skills__card-main {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: var(--mdc-space-3);
-  align-items: center;
+  gap: 0.85rem;
+  align-items: start;
 }
 
-.mdc-chat-agent-skills-page__icon {
+.mdc-agent-skills__icon {
   display: grid;
   place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-skills__card-copy {
+  min-width: 0;
+}
+
+.mdc-agent-skills__card-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.35rem;
+}
+
+.mdc-agent-skills__card-headline h3 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 0.98rem;
+  font-weight: 860;
+  line-height: 1.25;
+}
+
+.mdc-agent-skills__card-copy > p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+
+.mdc-agent-skills__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 0.18rem 0.5rem;
+}
+
+.mdc-agent-skills__pill--on {
   background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
   color: var(--mdc-primary);
 }
 
-.mdc-chat-agent-skills-page__card-head strong {
+.mdc-agent-skills__pill--off {
+  background: color-mix(in srgb, var(--mdc-text-muted) 12%, transparent);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-agent-skills__pill--saving {
+  opacity: 0.7;
+}
+
+.mdc-agent-skills__switch {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin-top: 0.15rem;
+}
+
+.mdc-agent-skills__switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mdc-agent-skills__switch-track {
   display: block;
+  width: 2.65rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-text-muted) 28%, var(--mdc-card-border));
+  transition: background 0.2s ease;
+}
+
+.mdc-agent-skills__switch-track::after {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: var(--mdc-on-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease;
+}
+
+.mdc-agent-skills__switch input:checked + .mdc-agent-skills__switch-track {
+  background: var(--mdc-primary);
+}
+
+.mdc-agent-skills__switch input:checked + .mdc-agent-skills__switch-track::after {
+  transform: translateX(1.1rem);
+}
+
+.mdc-agent-skills__switch input:focus-visible + .mdc-agent-skills__switch-track {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.mdc-agent-skills__switch input:disabled + .mdc-agent-skills__switch-track {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mdc-agent-skills__card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 45%, transparent);
+}
+
+.mdc-agent-skills__tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-border) 35%, transparent);
+  color: var(--mdc-text-muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+  padding: 0.2rem 0.55rem;
+}
+
+.mdc-agent-skills__tag--ok {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-skills__tag--muted {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.7rem;
+  font-weight: 650;
+}
+
+.mdc-agent-skills__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: auto;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.32rem 0.65rem;
+  transition: background 0.18s ease;
+}
+
+.mdc-agent-skills__cta:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+}
+
+.mdc-agent-skills__empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+  border-radius: 1rem;
+  color: var(--mdc-text-muted);
+  padding: 2.5rem 1.25rem;
+}
+
+.mdc-agent-skills__empty svg {
+  color: var(--mdc-primary);
+  opacity: 0.85;
+}
+
+.mdc-agent-skills__empty strong {
   color: var(--mdc-title);
 }
 
-.mdc-chat-agent-skills-page__card-head small {
-  color: var(--mdc-text-muted);
-  font-size: 0.78rem;
-}
-
-.mdc-chat-agent-skills-page__card p {
+.mdc-agent-skills__empty p {
   margin: 0;
-  color: var(--mdc-text);
-  line-height: 1.55;
-}
-
-.mdc-chat-agent-skills-page__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--mdc-text);
+  max-width: 22rem;
   font-size: 0.86rem;
-  font-weight: 700;
-  cursor: pointer;
+  line-height: 1.45;
 }
 
-.mdc-chat-agent-skills-page__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 0.75rem;
-  color: var(--mdc-text-muted);
-  font-size: 0.8rem;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.mdc-chat-agent-skills-page__badge {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-card-border) 40%, transparent);
-  padding: 0.15rem 0.55rem;
-}
+@media (max-width: 560px) {
+  .mdc-agent-skills__back span {
+    display: none;
+  }
 
-.mdc-chat-agent-skills-page__badge.is-ok {
-  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
-  color: var(--mdc-primary);
-}
+  .mdc-agent-skills__card-main {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
 
-.mdc-chat-agent-skills-page__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  width: fit-content;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
-  border-radius: var(--mdc-radius-md);
-  background: transparent;
-  color: var(--mdc-primary);
-  cursor: pointer;
-  padding: 0.4rem 0.65rem;
+  .mdc-agent-skills__switch {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .mdc-agent-skills__cta {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
 }

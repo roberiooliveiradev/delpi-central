@@ -22,6 +22,9 @@ class AiChatAgentModel(db.Model):
     max_tool_calls = db.Column(db.Integer, nullable=False, default=5, server_default="5")
     requires_confirmation_for_write = db.Column(db.Boolean, nullable=False, default=True, server_default="true")
     enabled = db.Column(db.Boolean, nullable=False, default=True, server_default="true", index=True)
+    published_version = db.Column(db.Integer(), nullable=False, default=0, server_default="0")
+    published_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    published_config = db.Column(JSONB, nullable=True)
     agent_metadata = db.Column("metadata", JSONB, nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True),

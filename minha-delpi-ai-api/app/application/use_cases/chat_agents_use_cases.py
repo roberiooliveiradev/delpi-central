@@ -9,6 +9,10 @@ from app.application.dto.create_chat_agent_request import CreateChatAgentRequest
 from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
 from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
 from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
+from app.application.services.chat_agent_config_snapshot_service import (
+    has_unpublished_changes,
+    normalize_draft_payload,
+)
 from app.domain.entities.chat_agent import ChatAgent
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
@@ -61,6 +65,11 @@ def _to_response(
             usage_summary.get("sessionsInWindow") if usage_summary else None
         ),
         total_sessions=usage_summary.get("totalSessions") if usage_summary else None,
+        published_version=int(getattr(agent, "published_version", 0) or 0),
+        published_at=(
+            agent.published_at.isoformat() if getattr(agent, "published_at", None) else None
+        ),
+        has_unpublished_changes=has_unpublished_changes(agent),
     )
 
 
@@ -413,35 +422,112 @@ class PreviewChatAgentUseCase:
         self,
         *,
         user_id: str,
-        agent_id: str,
+        agent_id: str | None = None,
         message: str,
         access_token: str | None,
         generate_answer: bool = True,
+        draft: dict | None = None,
     ) -> dict:
-        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
-
-        if not record:
-            raise InvalidChatSessionInputError("Agent not found")
-
-        _, access_role = record
-
-        if access_role not in {"owner", "editor", "system"}:
-            raise ChatAgentPermissionDeniedError(
-                "You do not have permission to preview this agent"
-            )
+        from app.application.services.chat_agent_config_snapshot_service import (
+            apply_snapshot_to_agent,
+        )
 
         normalized = str(message or "").strip()
 
         if not normalized:
             raise InvalidChatSessionInputError("message is required")
 
+        draft_snapshot = normalize_draft_payload(draft)
+        agent_prompt_override = None
+        agent_metadata_override = None
+        resolved_agent_id = agent_id
+        resolved_agent_key = None
+
+        if agent_id:
+            agent = self.repository.get_for_preview(UUID(agent_id), UUID(user_id))
+
+            if not agent:
+                raise InvalidChatSessionInputError("Agent not found")
+
+            record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+            if not record:
+                raise InvalidChatSessionInputError("Agent not found")
+
+            _, access_role = record
+
+            if access_role not in {"owner", "editor", "system"}:
+                raise ChatAgentPermissionDeniedError(
+                    "You do not have permission to preview this agent"
+                )
+
+            if draft_snapshot:
+                if not draft_snapshot.get("name"):
+                    draft_snapshot["name"] = agent.name
+                agent = apply_snapshot_to_agent(agent, draft_snapshot)
+
+            agent_prompt_override = agent.system_prompt
+            agent_metadata_override = agent.metadata
+            resolved_agent_key = agent.key
+        elif draft_snapshot:
+            if not draft_snapshot.get("name"):
+                raise InvalidChatSessionInputError("draft.name is required")
+            agent_prompt_override = draft_snapshot.get("systemPrompt")
+            agent_metadata_override = draft_snapshot.get("metadata")
+            draft_key = (draft or {}).get("key") if isinstance(draft, dict) else None
+            resolved_agent_key = _slugify(str(draft_key or draft_snapshot.get("name")))
+        else:
+            raise InvalidChatSessionInputError("agentId or draft is required")
+
         return self.simulate_use_case.execute(
             question=normalized,
-            agent_id=agent_id,
+            agent_id=resolved_agent_id,
+            agent_key=resolved_agent_key,
             generate_answer=generate_answer,
             user_id=user_id,
             access_token=access_token,
+            agent_prompt_override=agent_prompt_override,
+            agent_metadata_override=agent_metadata_override,
+            skip_enabled_check=True,
         )
+
+
+class PublishChatAgentUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgentResponse | None:
+        agent = self.repository.publish(
+            UUID(agent_id),
+            UUID(user_id),
+            can_manage_official_agents=can_manage_official_agents,
+        )
+
+        if not agent:
+            return None
+
+        record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
+
+        if not record:
+            return None
+
+        _, access_role = record
+
+        return _to_response(agent, access_role, include_system_prompt=True)
+
+
+class ListChatAgentVersionsUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(self, *, user_id: str, agent_id: str) -> list[dict]:
+        return self.repository.list_versions(UUID(agent_id), UUID(user_id))
 
 
 class ShareChatAgentUseCase:

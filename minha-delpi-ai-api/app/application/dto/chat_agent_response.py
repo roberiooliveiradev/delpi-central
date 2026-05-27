@@ -22,3 +22,6 @@ class ChatAgentResponse:
     system_prompt: str | None = None
     sessions_in_window: int | None = None
     total_sessions: int | None = None
+    published_version: int = 0
+    published_at: str | None = None
+    has_unpublished_changes: bool = False

@@ -38,17 +38,31 @@ class AdminAgentSimulateUseCase:
         execute_tools_in_sandbox: bool = False,
         user_id: str | None = None,
         access_token: str | None = None,
+        agent_prompt_override: str | None = None,
+        agent_metadata_override: dict | None = None,
+        skip_enabled_check: bool = False,
     ) -> dict:
         normalized_question = str(question or "").strip()
 
         if not normalized_question:
             raise ValueError("question is required")
 
-        agent_prompt, agent_meta, specialization = self._resolve_agent(
-            agent_id=agent_id,
-            agent_key=agent_key,
-            user_id=user_id,
-        )
+        if agent_prompt_override is not None or agent_metadata_override is not None:
+            agent_prompt = agent_prompt_override
+            agent_meta = {
+                "id": agent_id,
+                "key": agent_key,
+            }
+            specialization = self.specialization_service.parse(
+                (agent_metadata_override or {}).get("specialization")
+            )
+        else:
+            agent_prompt, agent_meta, specialization = self._resolve_agent(
+                agent_id=agent_id,
+                agent_key=agent_key,
+                user_id=user_id,
+                skip_enabled_check=skip_enabled_check,
+            )
 
         filters: dict = {"include_global": True}
 
@@ -276,6 +290,7 @@ class AdminAgentSimulateUseCase:
         agent_id: str | None,
         agent_key: str | None,
         user_id: str | None,
+        skip_enabled_check: bool = False,
     ) -> tuple[str | None, dict | None, dict | None]:
         from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
         from app.infrastructure.persistence.postgres_chat_agent_repository import (
@@ -287,18 +302,26 @@ class AdminAgentSimulateUseCase:
 
         if agent_id:
             try:
-                model = AiChatAgentModel.query.filter(
+                query = AiChatAgentModel.query.filter(
                     AiChatAgentModel.id == UUID(str(agent_id)),
-                    AiChatAgentModel.enabled.is_(True),
-                ).first()
+                )
+
+                if not skip_enabled_check:
+                    query = query.filter(AiChatAgentModel.enabled.is_(True))
+
+                model = query.first()
             except ValueError:
                 model = None
 
         if not model and agent_key:
-            model = AiChatAgentModel.query.filter(
+            query = AiChatAgentModel.query.filter(
                 AiChatAgentModel.key == str(agent_key).strip(),
-                AiChatAgentModel.enabled.is_(True),
-            ).first()
+            )
+
+            if not skip_enabled_check:
+                query = query.filter(AiChatAgentModel.enabled.is_(True))
+
+            model = query.first()
 
         if not model:
             return None, None, None

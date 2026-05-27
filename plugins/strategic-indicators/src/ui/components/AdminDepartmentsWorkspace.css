@@ -1,6 +1,11 @@
 .si-admin-workspace {
   display: grid;
   gap: 20px;
+  min-height: 0;
+}
+
+.si-admin-workspace > .si-section-block {
+  margin-bottom: 0;
 }
 
 .si-admin-master-detail {

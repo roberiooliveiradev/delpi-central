@@ -12,6 +12,7 @@ import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
+import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
   createChatArtifact,
   createProjectTextSource,
@@ -31,6 +32,7 @@ import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
+import { userCanOpenChatAdmin } from "../../security/chatPermissions";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -68,6 +70,7 @@ export function ChatPage({
   const [canManageAgents, setCanManageAgents] = useState(false);
   const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
+  const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
@@ -292,6 +295,16 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
+        case "projects": {
+          if (currentView === "projects") {
+            closeMobileSidebar();
+            return;
+          }
+
+          setCurrentView("projects");
+          closeMobileSidebar();
+          break;
+        }
         default:
           break;
       }
@@ -366,6 +379,18 @@ export function ChatPage({
     }
   }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
 
+  function openAgentsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("agents");
+    navigateChatHref(buildChatHref({ kind: "agents" }));
+  }
+
+  function openProjectsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("projects");
+    navigateChatHref(buildChatHref({ kind: "projects" }));
+  }
+
 
   useEffect(() => {
     let isMounted = true;
@@ -394,16 +419,21 @@ export function ChatPage({
       setHasLoadedManageAgentsPermission(false);
 
       try {
-        const capabilities = await getChatCapabilities({ getAccessToken });
+        const [capabilities, adminAccess] = await Promise.all([
+          getChatCapabilities({ getAccessToken }),
+          userCanOpenChatAdmin(getAccessToken),
+        ]);
 
         if (isMounted) {
           setCanManageAgents(capabilities.canManageAgents);
           setCanManageOfficialAgents(capabilities.canManageOfficialAgents);
+          setCanOpenAdmin(adminAccess);
         }
       } catch {
         if (isMounted) {
           setCanManageAgents(false);
           setCanManageOfficialAgents(false);
+          setCanOpenAdmin(false);
         }
       } finally {
         if (isMounted) {
@@ -695,6 +725,8 @@ export function ChatPage({
     .filter(Boolean)
     .join(" ");
 
+  const openAdmin = canOpenAdmin && onOpenAdmin ? () => onOpenAdmin() : undefined;
+
   const rootClassName = [
     "minha-delpi-chat",
     isDraggingFile ? "minha-delpi-chat--dragging" : "",
@@ -742,6 +774,7 @@ export function ChatPage({
           isLoadingAgents={isLoadingAgents}
           isLoadingProjects={isLoadingProjects}
           canManageAgents={canManageAgents}
+          onOpenAdmin={openAdmin}
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
@@ -775,9 +808,45 @@ export function ChatPage({
           onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
           onViewChange={setCurrentView}
+          onOpenAgentsDirectory={openAgentsDirectory}
+          onOpenProjectsDirectory={openProjectsDirectory}
         />
 
-        {currentView === "agents" ? (
+        {currentView === "projects" ? (
+          <section className="mdc-chat-main" aria-label="Projetos">
+            {!isDesktop ? (
+              <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
+                <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
+                  Menu
+                </button>
+              </div>
+            ) : null}
+            <ChatProjectsPage
+              projects={projects}
+              sessions={sessions}
+              selectedProjectId={selectedProjectId}
+              isLoading={isLoadingProjects}
+              onBack={() => {
+                clearWorkspaceError();
+                setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
+              }}
+              onSelectProject={(projectId) => {
+                clearWorkspaceError();
+                clearError();
+                setCanvasDocument(null);
+                setActiveAgentPageKey(null);
+                setContextAgentKey(null);
+                setSelectedProjectId(projectId);
+                setCurrentView("chat");
+                navigateChatHref(buildChatProjectHref(projectId));
+              }}
+              onCreateProject={addProject}
+              onRenameProject={(projectId, name) => editProject(projectId, { name })}
+              onDeleteProject={removeProject}
+            />
+          </section>
+        ) : currentView === "agents" ? (
           <section className="mdc-chat-main" aria-label="Gerenciar agentes">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
@@ -798,6 +867,7 @@ export function ChatPage({
                 clearWorkspaceError();
                 setAgentEditRequest(null);
                 setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
               }}
               onSelectAgent={(agentKey) => {
                 clearWorkspaceError();
@@ -816,7 +886,7 @@ export function ChatPage({
                 void loadAgents(false, true);
               }}
               onReloadAgents={loadAgents}
-              onOpenRagAdmin={onOpenAdmin}
+              onOpenRagAdmin={openAdmin}
               getAccessToken={getAccessToken}
             />
           </section>
@@ -848,7 +918,7 @@ export function ChatPage({
                   ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
                   : undefined
             }
-            onOpenAdmin={onOpenAdmin}
+            onOpenAdmin={openAdmin}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;
@@ -887,14 +957,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={
-              canManageAgents
-                ? () => {
-                    clearWorkspaceError();
-                    setCurrentView("agents");
-                  }
-                : undefined
-            }
+            onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
             onClearAgent={() => {
               setActiveAgentPageKey(null);
               setContextAgentKey(null);

@@ -6,6 +6,7 @@ import {
   saveAdminChatIntelligenceSettings,
 } from "../../../../data/api/adminApi";
 import type { AdminChatIntelligenceSettings } from "../../../../data/api/adminTypes";
+import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 
 type ChatIntelligenceSettingsPanelProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -117,117 +118,93 @@ export function ChatIntelligenceSettingsPanel({
           />
         </label>
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.externalActionSemanticRankEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                externalActionSemanticRankEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Ranking semântico de actions</span>
-        </label>
+        <AdminFormCheckbox
+          title="Ranking semântico de actions"
+          checked={settings.externalActionSemanticRankEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              externalActionSemanticRankEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.chatToolRouterEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                chatToolRouterEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Router LLM de ferramentas</span>
-        </label>
+        <AdminFormCheckbox
+          title="Router LLM de ferramentas"
+          checked={settings.chatToolRouterEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              chatToolRouterEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.chatHistorySummaryEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                chatHistorySummaryEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Resumo de histórico longo</span>
-        </label>
+        <AdminFormCheckbox
+          title="Resumo de histórico longo"
+          checked={settings.chatHistorySummaryEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              chatHistorySummaryEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.ragHybridEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                ragHybridEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>RAG híbrido (vetor + palavras-chave)</span>
-        </label>
+        <AdminFormCheckbox
+          title="RAG híbrido (vetor + palavras-chave)"
+          checked={settings.ragHybridEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              ragHybridEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.ragRerankEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                ragRerankEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Rerank pós-híbrido no RAG</span>
-        </label>
+        <AdminFormCheckbox
+          title="Rerank pós-híbrido no RAG"
+          checked={settings.ragRerankEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              ragRerankEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.ragFtsEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                ragFtsEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Busca FTS no Postgres (keyword RAG)</span>
-        </label>
+        <AdminFormCheckbox
+          title="Busca FTS no Postgres (keyword RAG)"
+          checked={settings.ragFtsEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              ragFtsEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.nativeToolCallingEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                nativeToolCallingEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Tool-calling nativo do LLM (vLLM/Ollama)</span>
-        </label>
+        <AdminFormCheckbox
+          title="Tool-calling nativo do LLM (vLLM/Ollama)"
+          checked={settings.nativeToolCallingEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              nativeToolCallingEnabled: event.target.checked,
+            })
+          }
+        />
 
-        <label className="mdc-admin-metrics-tab__checkbox">
-          <input
-            type="checkbox"
-            checked={settings.agenticLoopEnabled}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                agenticLoopEnabled: event.target.checked,
-              })
-            }
-          />
-          <span>Loop agentic de ferramentas</span>
-        </label>
+        <AdminFormCheckbox
+          title="Loop agentic de ferramentas"
+          checked={settings.agenticLoopEnabled}
+          onChange={(event) =>
+            setSettings({
+              ...settings,
+              agenticLoopEnabled: event.target.checked,
+            })
+          }
+        />
 
         <label>
           <span>Máx. passos do loop agentic</span>

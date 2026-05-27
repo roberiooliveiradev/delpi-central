@@ -10,6 +10,7 @@ import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
+import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
 import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
@@ -31,6 +32,7 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
+  { key: "skills", label: "Skills" },
   { key: "simulate", label: "Simulação" },
   { key: "evaluations", label: "Avaliações" },
   { key: "agents", label: "Agentes" },
@@ -143,6 +145,10 @@ export function ChatAdminPage({
               testAdminRag({ question }, { getAccessToken })
             }
           />
+        ) : null}
+
+        {activeTab === "skills" ? (
+          <AdminSkillsTab getAccessToken={getAccessToken} rbac={adminRbac} />
         ) : null}
 
         {activeTab === "simulate" ? (

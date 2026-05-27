@@ -21,6 +21,7 @@ type ChatSidebarProjectsSectionProps = {
   isLoading?: boolean;
   onSelectProject?: (projectId: string | null) => void;
   onSelectSession?: (session: ChatSession) => void;
+  onOpenProjectsDirectory?: () => void;
   onNewProject: () => void;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
@@ -35,6 +36,7 @@ export function ChatSidebarProjectsSection({
   isLoading,
   onSelectProject,
   onSelectSession: _onSelectSession,
+  onOpenProjectsDirectory,
   onNewProject,
   onRenameProject,
   onDeleteProject,
@@ -104,18 +106,28 @@ export function ChatSidebarProjectsSection({
   return (
     <>
       <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
-        <button
-          type="button"
-          onClick={() => setIsExpanded((current) => !current)}
-          aria-expanded={isExpanded}
-        >
-          {isExpanded ? (
-            <ChevronDown size={13} aria-hidden="true" />
-          ) : (
-            <ChevronRight size={13} aria-hidden="true" />
-          )}
-          <span>Projetos</span>
-        </button>
+        <div className="mdc-chat-sidebar__section-heading">
+          <button
+            type="button"
+            className="mdc-chat-sidebar__section-chevron"
+            onClick={() => setIsExpanded((current) => !current)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Recolher projetos" : "Expandir projetos"}
+          >
+            {isExpanded ? (
+              <ChevronDown size={13} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={13} aria-hidden="true" />
+            )}
+          </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__section-link"
+            onClick={() => onOpenProjectsDirectory?.()}
+          >
+            Projetos
+          </button>
+        </div>
 
         <small>{projects.length}</small>
       </div>

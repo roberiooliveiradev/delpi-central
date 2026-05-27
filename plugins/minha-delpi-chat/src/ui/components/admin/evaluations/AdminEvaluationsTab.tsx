@@ -12,6 +12,8 @@ import type {
   AdminResponseCandidate,
 } from "../../../../data/api/adminTypes";
 
+import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+
 import "./AdminEvaluationsTab.css";
 
 type AdminEvaluationsTabProps = {
@@ -238,14 +240,12 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                 />
               </label>
 
-              <label className="mdc-admin-evaluations__llm-toggle">
-                <input
-                  type="checkbox"
-                  checked={useLlmSuggestions}
-                  onChange={(event) => setUseLlmSuggestions(event.target.checked)}
-                />
-                <span>Enriquecer sugestões com LLM (mais lento)</span>
-              </label>
+              <AdminFormCheckbox
+                title="Enriquecer sugestões com LLM"
+                hint="Mais lento; gera sugestões adicionais com base no contexto da resposta."
+                checked={useLlmSuggestions}
+                onChange={(event) => setUseLlmSuggestions(event.target.checked)}
+              />
 
               <div className="mdc-admin-evaluations__suggestions">
                 <h3>Sugestões automáticas</h3>

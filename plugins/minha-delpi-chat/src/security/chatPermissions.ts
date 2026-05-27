@@ -190,3 +190,20 @@ export async function userCanUseChatTools(
 ): Promise<boolean> {
   return userHasChatPermission(CHAT_PERMISSIONS.TOOLS_USE, getAccessToken);
 }
+
+/** Painel admin (conhecimento, métricas, diretrizes, etc.). */
+export async function userCanOpenChatAdmin(
+  getAccessToken?: () =>
+    | string
+    | undefined
+    | null
+    | Promise<string | undefined | null>,
+): Promise<boolean> {
+  const checks = await Promise.all([
+    userHasChatPermission(CHAT_PERMISSIONS.ADMIN, getAccessToken),
+    userHasChatPermission(CHAT_PERMISSIONS.KNOWLEDGE_MANAGE, getAccessToken),
+    userHasChatPermission(CHAT_PERMISSIONS.TOOLS_MANAGE, getAccessToken),
+  ]);
+
+  return checks.some(Boolean);
+}

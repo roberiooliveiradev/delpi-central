@@ -1,4 +1,5 @@
 @import "../layout/workspace-responsive.css";
+@import "../components/admin/shared/admin-shared.css";
 
 .minha-delpi-chat.mdc-admin-root {
   width: 100%;

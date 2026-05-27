@@ -8,6 +8,8 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 - `metrics/` e `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.
+- `skills/`: catálogo global de skills (CRUD, policy Markdown).
+- `shared/`: formulários e checkboxes alinhados (`AdminFormCheckbox`, `admin-shared.css`).
 - `simulate/`: simulação do agente (sessão, sandbox, LLM).
 - `evaluations/`: avaliação de respostas e sugestões.
 - `agents/`: especialização por agente.

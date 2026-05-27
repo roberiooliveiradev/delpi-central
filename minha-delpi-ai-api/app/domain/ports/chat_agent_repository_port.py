@@ -40,6 +40,24 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_for_preview(self, agent_id: UUID, user_id: UUID) -> ChatAgent | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def publish(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgent | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_versions(self, agent_id: UUID, user_id: UUID) -> list[dict]:
+        raise NotImplementedError
+
+    @abstractmethod
     def create(
         self,
         owner_user_id: UUID | None,

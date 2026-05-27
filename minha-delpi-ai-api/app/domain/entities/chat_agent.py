@@ -21,3 +21,6 @@ class ChatAgent:
     response_style: str | None = None
     max_tool_calls: int = 5
     requires_confirmation_for_write: bool = True
+    published_version: int = 0
+    published_at: datetime | None = None
+    published_config: dict | None = None

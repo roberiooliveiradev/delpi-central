@@ -1,5 +1,6 @@
 import os
 import uuid
+from dataclasses import replace
 from pathlib import Path
 from uuid import UUID
 
@@ -8,6 +9,9 @@ from werkzeug.utils import secure_filename
 from app.application.dto.chat_source_response import ChatSourceResponse
 from app.application.dto.ingest_document_request import IngestDocumentRequest
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
+from app.application.services.knowledge_ingestion_pipeline_service import (
+    KnowledgeIngestionPipelineService,
+)
 from app.application.use_cases.ingest_knowledge_document_use_case import (
     IngestKnowledgeDocumentUseCase,
 )
@@ -240,12 +244,36 @@ class CreateAgentSourceUseCase:
         ingest_use_case: IngestKnowledgeDocumentUseCase,
         text_extractor: ChatAttachmentTextExtractor,
         file_storage: ChatSourceFileStorage | None = None,
+        pipeline: KnowledgeIngestionPipelineService | None = None,
     ):
         self.agent_repository = agent_repository
         self.knowledge_repository = knowledge_repository
         self.ingest_use_case = ingest_use_case
         self.text_extractor = text_extractor
         self.file_storage = file_storage or ChatSourceFileStorage()
+        self.pipeline = pipeline or KnowledgeIngestionPipelineService()
+
+    def _find_duplicate_agent_source(
+        self,
+        agent_key: str,
+        content_hash: str | None,
+    ):
+        normalized_hash = str(content_hash or "").strip()
+
+        if not normalized_hash:
+            return None
+
+        documents = self.knowledge_repository.list_documents_by_metadata(
+            filters={
+                "scope": "agent_source",
+                "agentKey": agent_key,
+                "contentHash": normalized_hash,
+            },
+            limit=1,
+            active=True,
+        )
+
+        return documents[0] if documents else None
 
     def execute_text(
         self,
@@ -257,6 +285,20 @@ class CreateAgentSourceUseCase:
         metadata: dict | None = None,
     ) -> ChatSourceResponse:
         agent, _role = self._get_agent(user_id=user_id, agent_id=agent_id)
+
+        prepared = self.pipeline.prepare(
+            content,
+            title=title,
+            source_type="agent_source",
+            source_ref=agent.key,
+            document_metadata=metadata,
+        )
+
+        duplicate = self._find_duplicate_agent_source(agent.key, prepared.content_hash)
+
+        if duplicate:
+            document, chunk_count = duplicate
+            return replace(_source_response(document, chunk_count), duplicate=True)
 
         document = self.ingest_use_case.execute(
             IngestDocumentRequest(
@@ -307,13 +349,37 @@ class CreateAgentSourceUseCase:
         if not extracted["supported"] or not str(extracted.get("content") or "").strip():
             raise ValueError("File could not be extracted or is unsupported")
 
+        extracted_content = str(extracted.get("content") or "").strip()
+
+        prepared = self.pipeline.prepare(
+            extracted_content,
+            title=original_filename,
+            source_type="agent_source",
+            source_ref=agent.key,
+            document_metadata={
+                "originalFilename": original_filename,
+                "contentType": content_type,
+            },
+        )
+
+        duplicate = self._find_duplicate_agent_source(agent.key, prepared.content_hash)
+
+        if duplicate:
+            try:
+                Path(saved["storagePath"]).unlink(missing_ok=True)
+            except OSError:
+                pass
+
+            document, chunk_count = duplicate
+            return replace(_source_response(document, chunk_count), duplicate=True)
+
         document = self.ingest_use_case.execute(
             IngestDocumentRequest(
                 user_id=user_id,
                 title=original_filename,
                 source_type="agent_source",
                 source_ref=saved["storagePath"],
-                content=extracted["content"],
+                content=extracted_content,
                 metadata={
                     "scope": "agent_source",
                     "userId": user_id,

@@ -2,6 +2,7 @@ export type AdminTab =
   | "knowledge"
   | "metrics"
   | "guidelines"
+  | "skills"
   | "simulate"
   | "evaluations"
   | "agents"

@@ -6,11 +6,22 @@ Para executar dados externos, use **Actions** (OpenAPI). Veja também [`12-model
 
 ## Catálogo global
 
-Skills disponíveis na plataforma vêm de um **registry em código** (`ChatSkillRegistry`). Novas skills exigem deploy com:
+Skills disponíveis na plataforma ficam na tabela `ai_chat_skill_catalog` e são gerenciadas pelo **admin do chat** (aba **Skills**) ou pela API admin abaixo.
 
-1. Arquivo de policy em `app/domain/prompt_policies/<skill>.md`
-2. Entrada no registry
-3. (Opcional) testes e documentação
+Fallback: se o banco estiver vazio, o `ChatSkillRegistry` usa `app/content/pt-BR/skills/catalog.json` e policies em `app/domain/prompt_policies/*.md`.
+
+### Admin — CRUD de catálogo
+
+**Permissão:** `minha-delpi.chat.tools.manage`
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/admin/skills` | Lista catálogo (`?includeInactive=false` para só ativas) |
+| POST | `/admin/skills` | Cria skill |
+| PUT | `/admin/skills/{skillId}` | Atualiza skill (policy, flags, ordem) |
+| DELETE | `/admin/skills/{skillId}` | Desativa skill (`is_active=false`) |
+
+Campos principais: `skillKey`, `label`, `description`, `policyContent` (Markdown), `metadataFlag`, `executionPathHint`, `executionDerivedKey`, `sortOrder`, `isActive`.
 
 ### GET `/chat/skills`
 
