@@ -1152,7 +1152,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                     row["indicator_id"],
                     target_year,
                     row["goal_label"],
-                    row["goal_value"],
+                    0.0
+                    if row.get("goal_mode") == "monthly_curve"
+                    else row["goal_value"],
                     row["goal_periodicity"],
                     row.get("goal_mode", "standard"),
                     goal_scope_branch,
@@ -1274,7 +1276,9 @@ class PostgresStrategicIndicatorsIndicatorGoalsRepository(
                             indicator_id,
                             goal_year,
                             source["goal_label"],
-                            source["goal_value"],
+                            0.0
+                            if source.get("goal_mode") == "monthly_curve"
+                            else source["goal_value"],
                             source["goal_periodicity"],
                             source.get("goal_mode", "standard"),
                             next_version,

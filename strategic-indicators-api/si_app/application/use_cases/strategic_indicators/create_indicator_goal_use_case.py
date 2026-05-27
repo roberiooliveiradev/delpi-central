@@ -6,6 +6,9 @@ from si_app.application.dto.strategic_indicators.create_indicator_goal_request i
 from si_app.application.services.strategic_indicators.goal_scope_validation import (
     validate_goal_scope_branch,
 )
+from si_app.application.services.strategic_indicators.goal_value_policy import (
+    resolve_persisted_goal_value,
+)
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
@@ -47,7 +50,10 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
             indicator_id=request.indicator_id.strip(),
             goal_year=request.goal_year,
             goal_label=request.goal_label.strip(),
-            goal_value=float(request.goal_value),
+            goal_value=resolve_persisted_goal_value(
+                goal_mode=request.goal_mode.strip(),
+                goal_value=float(request.goal_value),
+            ),
             goal_periodicity=request.goal_periodicity.strip(),
             goal_mode=request.goal_mode.strip(),
             goal_scope_branch=goal_scope_branch,
@@ -77,7 +83,9 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
                 "goal_label é obrigatório."
             )
 
-        if float(request.goal_value) < 0:
+        goal_mode = request.goal_mode.strip()
+
+        if goal_mode != "monthly_curve" and float(request.goal_value) < 0:
             raise StrategicIndicatorsIndicatorGoalValidationError(
                 "goal_value não pode ser negativo."
             )
@@ -88,7 +96,6 @@ class CreateStrategicIndicatorsIndicatorGoalUseCase:
                 "goal_periodicity inválido."
             )
 
-        goal_mode = request.goal_mode.strip()
         if goal_mode not in self.VALID_GOAL_MODES:
             raise StrategicIndicatorsIndicatorGoalValidationError(
                 "goal_mode inválido."

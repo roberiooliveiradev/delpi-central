@@ -445,23 +445,12 @@ class StrategicIndicatorsCalculator:
         normalized_goal_mode = (goal_mode or "standard").strip().lower()
 
         if normalized_goal_mode == "monthly_curve":
-            curve_goal = self._calculate_monthly_curve_goal(
+            return self._calculate_monthly_curve_goal(
                 monthly_targets=monthly_targets or [],
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
             )
-            if curve_goal > 0:
-                return curve_goal
-            if goal_value > 0:
-                return self._calculate_standard_period_goal(
-                    goal_value=goal_value,
-                    goal_periodicity=goal_periodicity,
-                    start_date=start_date,
-                    end_date=end_date,
-                    competence=competence,
-                )
-            return 0.0
 
         return self._calculate_standard_period_goal(
             goal_value=goal_value,

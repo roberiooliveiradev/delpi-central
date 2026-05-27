@@ -12,7 +12,7 @@ from si_app.domain.services.strategic_indicators_calculator import (
 )
 
 
-def test_monthly_curve_without_targets_falls_back_to_goal_value() -> None:
+def test_monthly_curve_without_targets_returns_zero() -> None:
     calculator = StrategicIndicatorsCalculator()
 
     comparable = calculator.calculate_comparable_goal(
@@ -23,7 +23,7 @@ def test_monthly_curve_without_targets_falls_back_to_goal_value() -> None:
         competence="2026-05",
     )
 
-    assert comparable == 1_000_000.0
+    assert comparable == 0.0
 
 
 def test_commercial_department_scores_with_rol_and_standard_indicators() -> None:

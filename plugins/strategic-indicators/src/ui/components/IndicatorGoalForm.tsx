@@ -14,6 +14,10 @@ import {
   validateIndicatorGoalForm,
   type IndicatorGoalCatalogEntry,
 } from "../utils/goalFormValidation";
+import {
+  expectedMonthlyCurvePointCount,
+  resolveGoalValueForApi,
+} from "../utils/goalValuePolicy";
 import "./IndicatorGoalForm.css";
 
 type IndicatorOption = {
@@ -166,17 +170,6 @@ export function IndicatorGoalForm({
     );
   }
 
-  function buildResolvedGoalValue() {
-    if (goalMode === "monthly_curve") {
-      return monthlyTargets.reduce(
-        (sum, item) => sum + Number(item.target_value || 0),
-        0,
-      );
-    }
-
-    return Number(goalValue || 0);
-  }
-
   async function handleSubmit() {
     setLocalError(null);
 
@@ -202,7 +195,7 @@ export function IndicatorGoalForm({
       return;
     }
 
-    const resolvedGoalValue = buildResolvedGoalValue();
+    const resolvedGoalValue = resolveGoalValueForApi(goalMode, goalValue);
     const resolvedMonthlyTargets =
       goalMode === "monthly_curve" ? monthlyTargets : [];
 
@@ -356,11 +349,7 @@ export function IndicatorGoalForm({
               onChange={(e) => setGoalValue(Number(e.target.value))}
             />
           </Field>
-        ) : (
-          <Field label="Valor consolidado da curva">
-            <input value={buildResolvedGoalValue()} readOnly />
-          </Field>
-        )}
+        ) : null}
 
         <Field label="Vigência inicial">
           <input
@@ -389,9 +378,14 @@ export function IndicatorGoalForm({
                 {formatGoalModeLabel(goalMode)}
               </span>
               <span className="si-monthly-targets-toolbar__summary">
-                Soma anual: {buildResolvedGoalValue().toLocaleString("pt-BR")}
+                {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos · periodicidade{" "}
+                {goalPeriodicity === "monthly" ? "mensal" : goalPeriodicity}
               </span>
             </div>
+            <p className="si-monthly-targets-hint">
+              Cada mês define a meta do período. Não há valor consolidado — o cálculo usa
+              os pontos da curva.
+            </p>
 
             <div className="si-monthly-targets-grid">
               {monthlyTargets.map((item, index) => (

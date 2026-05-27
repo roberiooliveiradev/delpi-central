@@ -20,6 +20,7 @@ import {
   getGoalPeriodicityLabel,
   getGoalScopeBranchLabel,
 } from "../presentation/labels";
+import { formatAdminGoalMeta } from "../utils/goalValuePolicy";
 import {
   buildYearSelectOptions,
   pickSourceYearForTarget,
@@ -649,7 +650,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       </div>
                       <span>{getGoalScopeBranchLabel(item.goal_scope_branch)}</span>
                       <span>
-                        {item.goal_label} · {item.goal_value}
+                        {formatAdminGoalMeta(item)}
                       </span>
                       <span>
                         {getGoalPeriodicityLabel(item.goal_periodicity)} ·{" "}

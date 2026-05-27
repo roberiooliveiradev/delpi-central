@@ -3,6 +3,9 @@ from __future__ import annotations
 from si_app.application.services.strategic_indicators.goal_scope_validation import (
     validate_goal_scope_branch,
 )
+from si_app.application.services.strategic_indicators.goal_value_policy import (
+    resolve_persisted_goal_value,
+)
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
@@ -52,8 +55,12 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                 raise ValueError("goal_label é obrigatório em todas as metas.")
 
             goal_value = float(item.get("goal_value") or 0)
-            if goal_value < 0:
+            if goal_mode != "monthly_curve" and goal_value < 0:
                 raise ValueError("goal_value não pode ser negativo.")
+            goal_value = resolve_persisted_goal_value(
+                goal_mode=goal_mode,
+                goal_value=goal_value,
+            )
 
             if goal_periodicity not in self.VALID_PERIODICITIES:
                 raise ValueError("goal_periodicity inválido.")
