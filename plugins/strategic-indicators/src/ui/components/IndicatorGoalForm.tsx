@@ -9,6 +9,11 @@ import type {
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
 import { getGoalScopeBranchLabel } from "../presentation/labels";
+import { clampGoalYear, MIN_GOAL_YEAR, MAX_GOAL_YEAR } from "../utils/goalYearHelpers";
+import {
+  validateIndicatorGoalForm,
+  type IndicatorGoalCatalogEntry,
+} from "../utils/goalFormValidation";
 import "./IndicatorGoalForm.css";
 
 type IndicatorOption = {
@@ -20,6 +25,9 @@ type IndicatorGoalFormProps = {
   saving: boolean;
   initialValue?: StrategicIndicatorGoalItem | null;
   indicatorOptions?: Array<string | IndicatorOption>;
+  indicatorCatalog?: IndicatorGoalCatalogEntry[];
+  defaultGoalYear?: number;
+  lockGoalYear?: boolean;
   onCreate?: (payload: CreateStrategicIndicatorGoalRequest) => Promise<void>;
   onUpdate?: (
     goalId: string,
@@ -86,6 +94,9 @@ export function IndicatorGoalForm({
   saving,
   initialValue,
   indicatorOptions = [],
+  indicatorCatalog = [],
+  defaultGoalYear,
+  lockGoalYear = false,
   onCreate,
   onUpdate,
   onCancel,
@@ -115,7 +126,9 @@ export function IndicatorGoalForm({
   useEffect(() => {
     if (!initialValue) {
       setIndicatorId("");
-      setGoalYear(new Date().getFullYear());
+      setGoalYear(
+        clampGoalYear(defaultGoalYear ?? new Date().getFullYear()),
+      );
       setGoalLabel("");
       setGoalValue(0);
       setGoalPeriodicity("monthly");
@@ -141,7 +154,7 @@ export function IndicatorGoalForm({
     setValidTo(initialValue.valid_to ?? "");
     setNotes(initialValue.notes ?? "");
     setLocalError(null);
-  }, [initialValue]);
+  }, [initialValue, defaultGoalYear]);
 
   function updateMonthlyTarget(monthNumber: number, targetValue: number) {
     setMonthlyTargets((current) =>
@@ -167,29 +180,21 @@ export function IndicatorGoalForm({
   async function handleSubmit() {
     setLocalError(null);
 
-    if (!goalLabel.trim()) {
-      setLocalError("O nome da meta é obrigatório.");
+    const validationError = validateIndicatorGoalForm({
+      indicatorId,
+      goalYear,
+      goalLabel,
+      goalScopeBranch,
+      goalMode,
+      goalValue,
+      monthlyTargets,
+      indicatorOptions: normalizedIndicatorOptions,
+      indicatorCatalog,
+      isEditing,
+    });
+    if (validationError) {
+      setLocalError(validationError);
       return;
-    }
-
-    if (!isEditing && !indicatorId.trim()) {
-      setLocalError("Selecione um indicador.");
-      return;
-    }
-
-    if (goalMode === "standard" && goalValue < 0) {
-      setLocalError("O valor da meta não pode ser negativo.");
-      return;
-    }
-
-    if (goalMode === "monthly_curve") {
-      const hasInvalidMonthlyValue = monthlyTargets.some(
-        (item) => Number(item.target_value) < 0,
-      );
-      if (hasInvalidMonthlyValue) {
-        setLocalError("Os valores mensais não podem ser negativos.");
-        return;
-      }
     }
 
     if (validFrom && validTo && validFrom > validTo) {
@@ -258,7 +263,19 @@ export function IndicatorGoalForm({
           {normalizedIndicatorOptions.length > 0 ? (
             <select
               value={indicatorId}
-              onChange={(e) => setIndicatorId(e.target.value)}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setIndicatorId(nextId);
+                if (!isEditing && !goalLabel.trim()) {
+                  const match = normalizedIndicatorOptions.find(
+                    (option) => option.value === nextId,
+                  );
+                  if (match) {
+                    const [name] = match.label.split(" · ");
+                    setGoalLabel(name?.trim() ?? match.label);
+                  }
+                }
+              }}
               autoFocus={!isEditing}
             >
               <option value="">Selecione</option>
@@ -280,8 +297,11 @@ export function IndicatorGoalForm({
         <Field label="Ano da meta">
           <input
             type="number"
+            min={MIN_GOAL_YEAR}
+            max={MAX_GOAL_YEAR}
             value={goalYear}
-            onChange={(e) => setGoalYear(Number(e.target.value))}
+            readOnly={lockGoalYear}
+            onChange={(e) => setGoalYear(clampGoalYear(Number(e.target.value)))}
           />
         </Field>
 

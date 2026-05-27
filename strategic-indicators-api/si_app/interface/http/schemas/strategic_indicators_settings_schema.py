@@ -242,3 +242,17 @@ class FillMissingIndicatorGoalsBodySchema(BaseModel):
     goal_year: int
     department_ids: List[str] = Field(default_factory=list)
     copy_from_year: Optional[int] = None
+
+
+# =========================================================
+# EXPORT / IMPORT CONFIGURAÇÃO ADMINISTRATIVA
+# =========================================================
+
+class ImportAdminConfigBodySchema(BaseModel):
+    schema_version: int = Field(ge=1, le=1)
+    exported_at: Optional[str] = None
+    departments: List[dict] = Field(default_factory=list)
+    department_indicators: List[dict] = Field(default_factory=list)
+    indicator_goals: List[dict] = Field(default_factory=list)
+    module_settings: dict = Field(default_factory=dict)
+    include_goals: bool = True

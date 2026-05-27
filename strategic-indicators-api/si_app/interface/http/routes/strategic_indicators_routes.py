@@ -24,6 +24,7 @@ from si_app.interface.http.schemas.strategic_indicators_settings_schema import (
     BulkCreateIndicatorGoalsBodySchema,
     DuplicateIndicatorGoalsYearBodySchema,
     FillMissingIndicatorGoalsBodySchema,
+    ImportAdminConfigBodySchema,
 )
 
 from si_app.application.dto.strategic_indicators.update_settings_request import (
@@ -101,6 +102,8 @@ from si_app.composition.strategic_indicators_composer import (
     build_get_strategic_indicators_presentation_use_case,
     build_get_departments_tree_snapshot_use_case,
     build_get_departments_tree_trends_use_case,
+    build_export_strategic_indicators_admin_config_use_case,
+    build_import_strategic_indicators_admin_config_use_case,
 )
 
 router = APIRouter(
@@ -924,6 +927,46 @@ def fill_missing_indicator_goals(
         raise HTTPException(
             status_code=500,
             detail=f"Falha ao preencher metas faltantes: {exc}",
+        ) from exc
+
+
+@router.get("/admin/config/export")
+@require_permission("strategic-indicators.settings.manage")
+def export_admin_config():
+    try:
+        use_case = build_export_strategic_indicators_admin_config_use_case()
+        return use_case.execute()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao exportar configuração administrativa: {exc}",
+        ) from exc
+
+
+@router.post("/admin/config/import")
+@require_permission("strategic-indicators.settings.manage")
+def import_admin_config(
+    body: ImportAdminConfigBodySchema,
+    request: Request,
+):
+    try:
+        actor_user_id = _extract_actor(request)
+        include_goals = body.include_goals
+        bundle = body.model_dump(exclude={"include_goals"})
+        use_case = build_import_strategic_indicators_admin_config_use_case()
+        return _invalidate_read_cache_after_mutation(
+            use_case.execute(
+                bundle=bundle,
+                actor_user_id=actor_user_id,
+                include_goals=include_goals,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao importar configuração administrativa: {exc}",
         ) from exc
 
 

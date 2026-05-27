@@ -22,6 +22,7 @@ import { AdminGoalsWorkspace } from "../components/AdminGoalsWorkspace";
 import { CatalogStructureValidationWorkspace } from "../components/CatalogStructureValidationWorkspace";
 import { SettingsStructuredEditor } from "../components/SettingsStructuredEditor";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
+import { AdminConfigImportExportPanel } from "../components/AdminConfigImportExportPanel";
 import {
   getMetaSourceLabel,
 } from "../presentation/labels";
@@ -207,6 +208,11 @@ export function SettingsPage({ getAccessToken }: SettingsPageProps) {
               />
             ) : (
               <>
+                <AdminConfigImportExportPanel
+                  getAccessToken={getAccessToken}
+                  onCompleted={() => void settings.reload()}
+                />
+
                 <SettingsSummaryCards data={dashboardData} />
 
                 <div className="si-settings-overview-grid">

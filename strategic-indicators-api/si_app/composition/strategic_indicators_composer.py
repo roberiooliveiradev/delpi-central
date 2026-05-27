@@ -109,6 +109,15 @@ from si_app.application.use_cases.strategic_indicators.fill_missing_indicator_go
 from si_app.application.use_cases.strategic_indicators.list_goal_years_overview_use_case import (
     ListStrategicIndicatorsGoalYearsOverviewUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.export_admin_config_use_case import (
+    ExportStrategicIndicatorsAdminConfigUseCase,
+)
+from si_app.application.use_cases.strategic_indicators.import_admin_config_use_case import (
+    ImportStrategicIndicatorsAdminConfigUseCase,
+)
+from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_admin_config_bundle_repository import (
+    PostgresStrategicIndicatorsAdminConfigBundleRepository,
+)
 from si_app.application.use_cases.strategic_indicators.activate_admin_department_use_case import (
     ActivateStrategicIndicatorsAdminDepartmentUseCase,
 )
@@ -485,6 +494,16 @@ def build_fill_missing_strategic_indicators_indicator_goals_use_case():
 def build_list_strategic_indicators_goal_years_overview_use_case():
     repository = PostgresStrategicIndicatorsIndicatorGoalsRepository()
     return ListStrategicIndicatorsGoalYearsOverviewUseCase(repository)
+
+
+def build_export_strategic_indicators_admin_config_use_case():
+    repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
+    return ExportStrategicIndicatorsAdminConfigUseCase(repository)
+
+
+def build_import_strategic_indicators_admin_config_use_case():
+    repository = PostgresStrategicIndicatorsAdminConfigBundleRepository()
+    return ImportStrategicIndicatorsAdminConfigUseCase(repository)
 
 
 def build_activate_strategic_indicators_admin_department_use_case():
