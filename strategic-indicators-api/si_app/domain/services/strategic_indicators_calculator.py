@@ -1092,6 +1092,63 @@ class StrategicIndicatorsCalculator:
 
         return {"consolidated": gap}
 
+    def resolve_unit_goals_for_response(
+        self,
+        *,
+        calculated: StrategicIndicatorCalculatedValue,
+        catalog_item: StrategicIndicatorCatalogItem | None,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None] | None:
+        stored = getattr(calculated, "unit_goals", None)
+        if stored:
+            return stored
+
+        if not catalog_item or not (catalog_item.branch_goals or {}):
+            return None
+
+        unit_values = calculated.unit_values
+        if not unit_values:
+            return None
+
+        measurement = StrategicIndicatorMeasuredValue(
+            indicator_id=calculated.indicator_id,
+            department_id=calculated.department_id,
+            value=calculated.value,
+            source=getattr(calculated, "source", "") or "",
+            unit_values=unit_values,
+        )
+        return self._build_unit_goals(
+            indicator=catalog_item,
+            measurement=measurement,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+
+    def resolve_goals_payload_for_calculated(
+        self,
+        *,
+        calculated: StrategicIndicatorCalculatedValue,
+        catalog_item: StrategicIndicatorCatalogItem | None,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None]:
+        unit_goals = self.resolve_unit_goals_for_response(
+            calculated=calculated,
+            catalog_item=catalog_item,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        return self.build_goals_payload(
+            unit_goals=unit_goals,
+            goal_value=calculated.goal_value,
+            department_id=calculated.department_id,
+        )
+
     def build_goals_payload(
         self,
         *,

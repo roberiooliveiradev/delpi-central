@@ -168,6 +168,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         realized: item.realized,
         score: item.score,
         gap: item.gap,
+        goals: item.goals,
         gaps: item.gaps,
         hasValue: item.hasValue,
         trend: item.trend,
