@@ -16,6 +16,7 @@ import {
 } from "../../data/api/chatApi";
 import type {
   ChatAttachment,
+  ChatCanvasOpenPayload,
   ChatMessage,
   ChatSession,
   ChatSource,
@@ -33,6 +34,7 @@ type UseChatSessionOptions = {
   projectId?: string | null;
   agentKey?: string | null;
   onSessionActivated?: (sessionId: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
 
 function createOptimisticUserMessage(
@@ -648,6 +650,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingShowPresentation(false);
           setPlaybackPayload(payload);
         },
+        onCanvasOpen: (payload) => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          options.onOpenCanvas?.(payload);
+        },
         onToken: (token: string) => {
           if (!isStreamForActiveSession(sessionId)) {
             return;
@@ -668,6 +677,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           if (!isStreamForActiveSession(sessionId)) {
             return;
+          }
+
+          if (response.canvasOpen?.markdown) {
+            options.onOpenCanvas?.({
+              title: response.canvasOpen.title,
+              markdown: response.canvasOpen.markdown,
+              messageId: response.messageId,
+              sourceMessageId: response.canvasOpen.sourceMessageId ?? null,
+            });
           }
 
           if (response.playback || awaitingPlaybackRef.current) {
@@ -708,6 +726,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isStreamForActiveSession,
       loadMessages,
       loadSessions,
+      options.onOpenCanvas,
       playbackPayload,
       resetStreamingUi,
     ],

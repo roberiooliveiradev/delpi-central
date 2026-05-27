@@ -137,10 +137,10 @@ class Settings:
         == "true"
     )
     CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS = int(
-        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "4")
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "2")
     )
     CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS = float(
-        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "20")
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "45")
     )
     CHAT_PERSIST_BEFORE_PLAYBACK = (
         os.getenv("CHAT_PERSIST_BEFORE_PLAYBACK", "true").lower() == "true"

@@ -10,8 +10,8 @@ export type ChatPlaybackPayload = {
 };
 
 const TEXT_CHUNK_CHARS = 2;
-const TEXT_DELAY_MS = 28;
-const PRESENTATION_REVEAL_MS = 420;
+const TEXT_DELAY_MS = 45;
+const PRESENTATION_REVEAL_MS = 480;
 
 export function useChatMessagePlayback(
   payload: ChatPlaybackPayload | null,

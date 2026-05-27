@@ -2265,16 +2265,29 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         },
                     )
 
-                elif event_type == "done":
+                elif event_type == "canvas_open":
                     yield _sse(
-                        "done",
+                        "canvas_open",
                         {
+                            "title": event.get("title", ""),
+                            "markdown": event.get("markdown", ""),
+                            "sourceMessageId": event.get("sourceMessageId"),
                             "messageId": event.get("messageId"),
-                            "answer": event.get("answer", ""),
-                            "sources": event.get("sources", []),
-                            "toolCalls": event.get("toolCalls", []),
                         },
                     )
+
+                elif event_type == "done":
+                    done_payload = {
+                        "messageId": event.get("messageId"),
+                        "answer": event.get("answer", ""),
+                        "sources": event.get("sources", []),
+                        "toolCalls": event.get("toolCalls", []),
+                        "playback": event.get("playback"),
+                    }
+                    if event.get("canvasOpen"):
+                        done_payload["canvasOpen"] = event.get("canvasOpen")
+
+                    yield _sse("done", done_payload)
 
             yield _sse("close", {"ok": True})
 

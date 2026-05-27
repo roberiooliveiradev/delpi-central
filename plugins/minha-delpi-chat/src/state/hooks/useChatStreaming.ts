@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { resendChatMessage, streamChatMessage } from "../../data/api/chatApi";
 import type {
+  ChatCanvasOpenPayload,
   ChatPlaybackEvent,
   ChatSource,
   ChatToolCall,
@@ -24,6 +25,7 @@ type StreamMessageParams = {
   onToken?: (token: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
+  onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
 };
@@ -79,6 +81,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           | "onToken"
           | "onAssistantPending"
           | "onPlayback"
+          | "onCanvasOpen"
           | "onDone"
           | "onError"
         >,
@@ -92,6 +95,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
         | "onToken"
         | "onAssistantPending"
         | "onPlayback"
+        | "onCanvasOpen"
         | "onDone"
         | "onError"
       >,
@@ -123,6 +127,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onToken,
       onAssistantPending,
       onPlayback,
+      onCanvasOpen,
       onDone,
       onError,
     }: StreamMessageParams) => {
@@ -150,6 +155,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           onToken,
           onAssistantPending,
           onPlayback,
+          onCanvasOpen,
           onDone,
           onError,
         },
@@ -170,6 +176,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onToken,
       onAssistantPending,
       onPlayback,
+      onCanvasOpen,
       onDone,
       onError,
     }: {
@@ -183,6 +190,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       onToken?: (token: string) => void;
       onAssistantPending?: (messageId: string) => void;
       onPlayback?: (payload: ChatPlaybackEvent) => void;
+      onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
       onDone?: (response: SendChatMessageResponse) => void;
       onError?: (message: string) => void;
     }) => {
@@ -201,6 +209,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           onToken,
           onAssistantPending,
           onPlayback,
+          onCanvasOpen,
           onDone,
           onError,
         },

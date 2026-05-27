@@ -113,6 +113,17 @@ export function ChatPage({
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
+    onOpenCanvas: (payload) => {
+      if (!payload.markdown.trim()) {
+        return;
+      }
+
+      setCanvasDocument({
+        title: payload.title || "Conteúdo do chat",
+        markdown: payload.markdown,
+        messageId: payload.sourceMessageId ?? payload.messageId ?? null,
+      });
+    },
   });
 
   const {

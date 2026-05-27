@@ -29,6 +29,7 @@ import type {
   CreateChatArtifactPayload,
   CreateChatProjectPayload,
   CreateChatSessionPayload,
+  ChatCanvasOpenPayload,
   ChatPlaybackEvent,
   SendChatMessagePayload,
   SendChatMessageResponse,
@@ -55,6 +56,7 @@ type StreamCallbacks = {
   onToken?: (token: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
+  onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
 };
@@ -322,6 +324,16 @@ async function consumeChatMessageStream(
           answer: typeof data.answer === "string" ? data.answer : "",
           sources: (data.sources as SendChatMessageResponse["sources"]) ?? [],
           toolCalls: (data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? [],
+        });
+      }
+
+      if (event === "canvas_open") {
+        callbacks.onCanvasOpen?.({
+          title: typeof data.title === "string" ? data.title : "",
+          markdown: typeof data.markdown === "string" ? data.markdown : "",
+          messageId: typeof data.messageId === "string" ? data.messageId : null,
+          sourceMessageId:
+            typeof data.sourceMessageId === "string" ? data.sourceMessageId : null,
         });
       }
 

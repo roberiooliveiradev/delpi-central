@@ -1,6 +1,7 @@
 import re
 
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -25,6 +26,9 @@ class ExternalActionSelectionService:
         allowed_action_ids = allowed_action_ids or []
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+            return None
+
+        if ChatCanvasIntentService.is_canvas_placement_request(message):
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
