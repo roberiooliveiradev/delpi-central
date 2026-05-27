@@ -57,9 +57,10 @@ class ChatToolContextService:
 
         raw_message = str(message or "").strip()
 
+        from app.application.services.chat_capabilities_service import ChatCapabilitiesService
         from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 
-        if ChatAnalysisIntentService.is_comparison_or_insight_request(raw_message):
+        if ChatCapabilitiesService.is_capability_inquiry(raw_message):
             return self._finalize_tool_context_result(
                 message=raw_message,
                 previous_messages=previous_messages,
@@ -144,6 +145,7 @@ class ChatToolContextService:
                 message=message,
                 allowed_action_ids=allowed_action_ids or [],
                 conversation_context=conversation_context,
+                previous_messages=previous_messages,
                 max_calls=max_external_action_calls,
             )
 
@@ -304,10 +306,11 @@ class ChatToolContextService:
                 ChatCompositeDirectAnswerService,
             )
 
-            direct_answer = ChatCompositeDirectAnswerService.build(
-                message,
-                external_action_results,
-            )
+            if not ChatAnalysisIntentService.is_comparison_or_insight_request(raw_message):
+                direct_answer = ChatCompositeDirectAnswerService.build(
+                    message,
+                    external_action_results,
+                )
 
         if (
             not direct_answer
@@ -326,6 +329,9 @@ class ChatToolContextService:
         requested_format = self._detect_requested_format(message)
         if requested_format:
             self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
+
+        if direct_answer and requested_format != "table":
+            self._suppress_redundant_structure_presentations(safe_tool_calls)
 
         return self._finalize_tool_context_result(
             message=raw_message,
@@ -360,10 +366,33 @@ class ChatToolContextService:
         )
         finalized = post_tool.tool_context
 
-        if post_tool.analysis_mode:
-            finalized["directAnswer"] = None
-
         return finalized
+
+    @classmethod
+    def _suppress_redundant_structure_presentations(cls, safe_tool_calls: list[dict]) -> None:
+        """Evita card de tabela duplicado quando o markdown da resposta direta já traz as tabelas."""
+
+        for tool_call in safe_tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if "/structure" not in path:
+                continue
+
+            presentation = metadata.get("presentation")
+
+            if isinstance(presentation, dict) and presentation.get("type") == "table":
+                metadata["presentation"] = None
+
+            if metadata.get("tablePresentation"):
+                metadata["tablePresentation"] = None
 
     _FORMAT_TABLE_HINTS = (
         "em tabela", "formato tabela", "em formato de tabela",

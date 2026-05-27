@@ -100,6 +100,8 @@ class ChatIntelligencePipelineService:
         cls,
         message: str,
         previous_messages: list[Any] | None,
+        *,
+        current_tool_calls: list | None = None,
     ) -> str | None:
         from app.application.services.chat_structure_comparison_service import (
             ChatStructureComparisonService,
@@ -108,6 +110,7 @@ class ChatIntelligencePipelineService:
         return ChatStructureComparisonService.build_comparison_answer(
             message,
             previous_messages,
+            current_tool_calls=current_tool_calls,
         )
 
     @classmethod
