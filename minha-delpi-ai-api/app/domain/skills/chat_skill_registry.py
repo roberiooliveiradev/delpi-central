@@ -7,6 +7,7 @@ from app.infrastructure.content.content_service import ContentService
 
 SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
+COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
 
 
 @dataclass(frozen=True)
@@ -174,6 +175,7 @@ class ChatSkillRegistry:
         allowed_action_ids: list[str] | None = None,
         has_agent: bool = False,
         default_sql_authoring: bool = False,
+        default_company_knowledge: bool = True,
     ) -> list[dict]:
         allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
         bindings: list[dict] = []
@@ -184,6 +186,13 @@ class ChatSkillRegistry:
             if definition.key == SQL_SKILL_KEY and not has_agent:
                 enabled = default_sql_authoring
             elif definition.key == SQL_SKILL_KEY and has_agent and not cls._has_explicit_config(
+                agent_metadata,
+                definition,
+            ):
+                enabled = False
+            elif definition.key == COMPANY_KNOWLEDGE_SKILL_KEY and not has_agent:
+                enabled = default_company_knowledge
+            elif definition.key == COMPANY_KNOWLEDGE_SKILL_KEY and has_agent and not cls._has_explicit_config(
                 agent_metadata,
                 definition,
             ):
@@ -216,17 +225,20 @@ class ChatSkillRegistry:
         allowed_action_ids: list[str] | None = None,
         has_agent: bool = False,
         default_sql_authoring: bool = False,
+        default_company_knowledge: bool = True,
     ) -> dict:
         bindings = cls.list_agent_bindings(
             agent_metadata=agent_metadata,
             allowed_action_ids=allowed_action_ids,
             has_agent=has_agent,
             default_sql_authoring=default_sql_authoring,
+            default_company_knowledge=default_company_knowledge,
         )
 
         resolved = {
             "sqlAuthoring": False,
             "sqlExecutionAvailable": False,
+            "companyKnowledge": False,
         }
 
         for item in bindings:
@@ -235,6 +247,8 @@ class ChatSkillRegistry:
                 resolved["sqlExecutionAvailable"] = bool(
                     (item.get("derived") or {}).get("sqlExecutionAvailable")
                 )
+            if item["skillKey"] == COMPANY_KNOWLEDGE_SKILL_KEY:
+                resolved["companyKnowledge"] = bool(item["enabled"])
 
         return resolved
 

@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Circle,
   Database,
+  Network,
   RefreshCw,
   Sparkles,
   Zap,
@@ -232,6 +233,8 @@ export function ChatAgentSkillsPage({
                     <span className="mdc-agent-skills__icon" aria-hidden="true">
                       {binding.skillKey === "sql" ? (
                         <Database size={18} />
+                      ) : binding.skillKey === "company-knowledge" ? (
+                        <Network size={18} />
                       ) : (
                         <BookOpen size={18} />
                       )}

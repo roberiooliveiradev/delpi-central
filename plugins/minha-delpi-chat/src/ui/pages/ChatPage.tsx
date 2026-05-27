@@ -19,6 +19,7 @@ import {
   createProjectTextSource,
   deleteChatSource,
   getChatCapabilities,
+  listChatSkillCatalog,
   listProjectSources,
   updateChatArtifact,
   uploadProjectSource,
@@ -80,6 +81,9 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [skillCatalog, setSkillCatalog] = useState<
+    import("../../data/api/chatTypes").ChatSkillCatalogItem[]
+  >([]);
 
   const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
 
@@ -448,7 +452,29 @@ export function ChatPage({
     };
   }, [getAccessToken]);
 
+  useEffect(() => {
+    let isMounted = true;
 
+    async function loadSkillCatalog() {
+      try {
+        const catalog = await listChatSkillCatalog({ getAccessToken });
+
+        if (isMounted) {
+          setSkillCatalog(catalog);
+        }
+      } catch {
+        if (isMounted) {
+          setSkillCatalog([]);
+        }
+      }
+    }
+
+    void loadSkillCatalog();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getAccessToken]);
 
   async function loadProjectSources(projectId: string) {
     setIsLoadingProjectSources(true);
@@ -1097,6 +1123,7 @@ export function ChatPage({
                   ) : (
                     <ChatEmptyState
                       displayName={userDisplayName}
+                      skillCatalog={skillCatalog}
                       onUseSuggestion={setDraft}
                     />
                   )}
@@ -1119,6 +1146,7 @@ export function ChatPage({
           ) : (
             <section className="mdc-chat-conversation" aria-label="Conversa">
               <ChatMessageList
+                skillCatalog={skillCatalog}
                 messages={messages}
                 conversationKey={activeSession?.id ?? null}
                 streamingAnswer={streamingAnswer}

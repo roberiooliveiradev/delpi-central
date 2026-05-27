@@ -15,6 +15,7 @@ def test_sql_authoring_default_for_common_chat(monkeypatch):
 
     assert skills["sqlAuthoring"] is True
     assert skills["sqlExecutionAvailable"] is False
+    assert skills["companyKnowledge"] is True
 
 
 def test_sql_authoring_from_agent_metadata():
@@ -48,3 +49,31 @@ def test_prompt_includes_sql_skill_policy():
 
     assert "Skill — Especialista SQL" in prompt or "Especialista SQL" in prompt
     assert "```sql" in prompt
+
+
+def test_prompt_includes_company_knowledge_skill_policy():
+    from app.domain.services.prompt_policy_service import PromptPolicyService
+
+    prompt = PromptPolicyService().build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        skills={"companyKnowledge": True},
+    )
+
+    assert "Conhecimento da empresa" in prompt
+    assert "search_knowledge_base" in prompt
+
+
+def test_company_knowledge_default_for_common_chat(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_agent_skills_service.Settings.CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL",
+        True,
+    )
+
+    skills = ChatAgentSkillsService.resolve(
+        agent_metadata={},
+        allowed_action_ids=[],
+        has_agent=False,
+    )
+
+    assert skills["companyKnowledge"] is True

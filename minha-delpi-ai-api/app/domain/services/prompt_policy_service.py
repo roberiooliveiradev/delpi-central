@@ -175,6 +175,8 @@ Comportamento esperado:
 
     SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore e revise consultas SELECT (SQL genérico) em blocos ```sql```; identifique erros quando o usuário colar SQL ou mensagens de erro; execução requer action /data/sql."""
 
+    COMPANY_KNOWLEDGE_SKILL_FALLBACK = """Skill Conhecimento da empresa: priorize a base documental global (RAG e search_knowledge_base); cite fontes; não invente políticas."""
+
     def build_contextual_prompt(
         self,
         rag_context: str,
@@ -222,6 +224,23 @@ Comportamento esperado:
                 or self._load_policy(
                     "sql-assistant-skill.md",
                     self.SQL_ASSISTANT_SKILL_FALLBACK,
+                )
+            )
+
+        if resolved_skills.get("companyKnowledge"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                COMPANY_KNOWLEDGE_SKILL_KEY,
+            )
+
+            company_policy = ChatSkillRegistry.get_policy_content(
+                COMPANY_KNOWLEDGE_SKILL_KEY
+            )
+            sections.append(
+                company_policy
+                or self._load_policy(
+                    "company-knowledge-skill.md",
+                    self.COMPANY_KNOWLEDGE_SKILL_FALLBACK,
                 )
             )
 

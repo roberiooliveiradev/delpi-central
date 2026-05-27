@@ -33,6 +33,7 @@ class ListChatAgentSkillsUseCase:
             allowed_action_ids=allowed_action_ids,
             has_agent=True,
             default_sql_authoring=Settings.CHAT_DEFAULT_SQL_AUTHORING_SKILL,
+            default_company_knowledge=Settings.CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL,
         )
 
 
