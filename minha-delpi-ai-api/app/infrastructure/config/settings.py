@@ -197,10 +197,15 @@ class Settings:
     EMBEDDING_CACHE_MAX_ENTRIES = int(os.getenv("EMBEDDING_CACHE_MAX_ENTRIES", "500"))
     REDIS_URL = os.getenv("REDIS_URL", "").strip() or None
 
-    CHAT_AGENTIC_LOOP_ENABLED = (
-        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
+    CHAT_MULTI_ACTION_ENABLED = (
+        os.getenv("CHAT_MULTI_ACTION_ENABLED", "true").lower() == "true"
     )
-    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
+    CHAT_MULTI_ACTION_MAX_CALLS = int(os.getenv("CHAT_MULTI_ACTION_MAX_CALLS", "5"))
+
+    CHAT_AGENTIC_LOOP_ENABLED = (
+        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "true").lower() == "true"
+    )
+    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "3"))
 
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"

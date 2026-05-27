@@ -223,6 +223,10 @@ class StreamChatMessageUseCase:
             analysis_mode = post_tool.analysis_mode
             pipeline_timings.mark("tools_done")
         else:
+            agent_meta = workspace_context.get("agent")
+            max_tool_calls = (
+                agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+            )
             tool_context = self._build_tool_context(
                 request,
                 allowed_action_ids=workspace_context.get("allowedActionIds"),
@@ -230,6 +234,7 @@ class StreamChatMessageUseCase:
                 specialization=workspace_context.get("specialization"),
                 fast_path=fast_path,
                 previous_messages=history_source,
+                max_external_action_calls=max_tool_calls,
             )
             tool_context = self._maybe_extend_tool_context(
                 request=request,
@@ -900,6 +905,7 @@ class StreamChatMessageUseCase:
         specialization: dict | None = None,
         fast_path: bool = False,
         previous_messages: list | None = None,
+        max_external_action_calls: int | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -925,6 +931,7 @@ class StreamChatMessageUseCase:
             allowed_tool_names=allowed_tool_names,
             fast_path=fast_path,
             previous_messages=previous_messages,
+            max_external_action_calls=max_external_action_calls,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

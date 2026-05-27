@@ -46,6 +46,8 @@ Mensagem do usuário
 | `ChatCanvasIntentService` | Pedido de enviar conteúdo à lousa (não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da última resposta assistant + confirmação |
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
+| `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
+| `ChatCompositeDirectAnswerService` | Monta resposta direta única com sucesso/erro por consulta |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise) |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, …) |
