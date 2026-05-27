@@ -19,6 +19,12 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bestoquee\b", r"estoque"),
     (r"\bestok\b", r"estoque"),
     (r"\bsaldo\b", r"saldo"),
+    # KPIs / departamentos
+    (r"\bebita\b", r"ebitda"),
+    (r"\bkaisen\b", r"kaizen"),
+    (r"\bnao conformidade\b", r"nao conformidade"),
+    (r"\bnao-conformidade\b", r"nao conformidade"),
+    (r"\bestqoue\b", r"estoque"),
     # Capacidades / perguntas ao assistente
     (r"\bcoonsegue\b", r"consegue"),
     (r"\bconsigue\b", r"consegue"),
