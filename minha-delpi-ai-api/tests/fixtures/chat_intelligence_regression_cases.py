@@ -296,6 +296,32 @@ SELECTION_CASES = [
         "expected_action_id": "sale-orders",
     },
     {
+        "message": "busque 3 produtos do grupo 1008",
+        "actions": [
+            {
+                "actionId": "search",
+                "method": "GET",
+                "path": "/products/search",
+                "operationId": "search_products",
+                "summary": "Busca de produtos",
+                "parametersSchema": [
+                    {"name": "group_code"},
+                    {"name": "page_size"},
+                ],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "search",
+        "expected_parameters": {"group_code": "1008"},
+    },
+    {
         "message": "liste produtos do grupo MP",
         "actions": [
             {

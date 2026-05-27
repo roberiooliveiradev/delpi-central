@@ -73,6 +73,7 @@
 | Tabela duplicada nível 1 | presenter items antes de markdown | prioridade `root+items` → markdown |
 | Busca por grupo vazia | só `description` preenchido | `_extract_search_group_code` |
 | «consegue buscar por grupo?» → API vazia | não era capability | `is_capability_inquiry` |
+| «grupo 1008» → `/analyser` | `1008` extraído como código de produto | `_is_group_code_numeric_token` + prioridade search |
 
 ---
 

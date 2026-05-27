@@ -83,7 +83,12 @@ class ChatAnalysisIntentService:
             if not text:
                 continue
 
-            for match in ChatProductQueryIntentService._PRODUCT_CODE_RE.finditer(str(text)):
+            raw = str(text)
+
+            for match in ChatProductQueryIntentService._PRODUCT_CODE_RE.finditer(raw):
+                if ChatProductQueryIntentService._is_group_code_numeric_token(raw, match):
+                    continue
+
                 code = ChatProductQueryIntentService.normalize_product_code(match.group(0))
 
                 if not code or code in seen:

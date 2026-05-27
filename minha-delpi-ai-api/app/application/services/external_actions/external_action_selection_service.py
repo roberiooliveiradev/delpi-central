@@ -57,6 +57,18 @@ class ExternalActionSelectionService:
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        group_search_code = self._extract_search_group_code(message, normalized)
+
+        if group_search_code and self._looks_like_product_search(normalized):
+            selected = self._select_product_search_action(
+                message,
+                normalized,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,

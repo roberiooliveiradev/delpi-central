@@ -50,6 +50,16 @@ def test_normalize_product_code_strips_mask():
     assert ChatProductQueryIntentService.extract_product_code("produto 10.080.055") == "10080055"
 
 
+def test_extract_product_code_ignores_group_number():
+    assert (
+        ChatProductQueryIntentService.extract_product_code(
+            "busque 3 produtos do grupo 1008"
+        )
+        is None
+    )
+    assert ChatProductQueryIntentService.extract_product_code("produto 10081387") == "10081387"
+
+
 def test_format_direct_answer_stock_uses_bullets():
     answer = ChatProductQueryIntentService.format_direct_answer(
         {
