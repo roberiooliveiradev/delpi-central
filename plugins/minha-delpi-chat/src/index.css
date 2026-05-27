@@ -33,11 +33,49 @@
   --mdc-success: var(--success, #067647);
   --mdc-success-text: var(--success, #067647);
   --mdc-danger: var(--danger, #b42318);
+  --mdc-danger-surface: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
+  --mdc-danger-border: color-mix(in srgb, var(--mdc-danger) 38%, var(--mdc-card-border));
+  --mdc-danger-text-soft: color-mix(in srgb, var(--mdc-danger) 72%, var(--mdc-text));
 
   --mdc-control-bg: var(--control-bg, var(--surface, #ffffff));
   --mdc-control-text: var(--control-text, var(--text, #111111));
   --mdc-control-border: var(--control-border, var(--border-2, #d9d9d9));
   --mdc-control-placeholder: var(--control-placeholder, rgba(17, 17, 17, 0.55));
+  --mdc-input-bg: var(--mdc-control-bg);
+  --mdc-shadow-lg: 0 24px 64px color-mix(in srgb, var(--mdc-text) 18%, transparent);
+  --mdc-card-shadow-soft: 0 2px 8px color-mix(in srgb, var(--mdc-text) 6%, transparent);
+  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-text) 48%, transparent);
+  --mdc-accent: var(--mdc-primary);
+  --mdc-warning: var(--warning, #d97706);
+
+  --mdc-trend-up: var(--mdc-success);
+  --mdc-trend-down: var(--mdc-danger);
+  --mdc-trend-stable: var(--mdc-text-muted);
+
+  --mdc-rich-hover: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+  --mdc-rich-hover-strong: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  --mdc-rich-control-hover: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+
+  --mdc-chart-grid: color-mix(in srgb, var(--mdc-card-border) 88%, transparent);
+  --mdc-chart-tick: var(--mdc-text-muted);
+  --mdc-chart-tooltip-bg: var(--mdc-card-bg);
+  --mdc-chart-tooltip-border: var(--mdc-card-border);
+  --mdc-chart-tooltip-text: var(--mdc-text);
+  --mdc-chart-export-bg: var(--mdc-card-bg);
+  --mdc-chart-series-1: var(--mdc-primary);
+  --mdc-chart-series-2: color-mix(in srgb, var(--mdc-secondary) 45%, var(--mdc-primary));
+  --mdc-chart-series-3: var(--mdc-success);
+  --mdc-chart-series-4: var(--mdc-warning);
+  --mdc-chart-series-5: var(--mdc-danger);
+  --mdc-chart-series-6: color-mix(in srgb, var(--mdc-primary) 65%, var(--mdc-success));
+  --mdc-chart-series-7: color-mix(in srgb, var(--mdc-secondary) 35%, var(--mdc-primary));
+  --mdc-chart-series-8: color-mix(in srgb, var(--mdc-warning) 75%, var(--mdc-primary));
+  --mdc-chart-series-9: color-mix(in srgb, var(--mdc-danger) 55%, var(--mdc-secondary));
+  --mdc-chart-series-10: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-text-muted));
+
+  --mdc-code-surface: color-mix(in srgb, var(--mdc-secondary) 88%, var(--mdc-bg));
+  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-secondary) 96%, black);
+  --mdc-code-text: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-on-primary));
 
   --mdc-focus-ring: var(
     --focus-ring,
@@ -81,6 +119,7 @@
 ========================================= */
 
 :root[data-theme="dark"] {
+  --mdc-on-primary: var(--on-primary, #ffffff);
   --mdc-bg: var(--surface, #0f1115);
   --mdc-bg-soft: var(--surface-2, #1b2030);
   --mdc-bg-muted: var(--surface-3, #111521);
@@ -116,6 +155,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    --mdc-on-primary: var(--on-primary, #ffffff);
     --mdc-bg: var(--surface, #0f1115);
     --mdc-bg-soft: var(--surface-2, #1b2030);
     --mdc-bg-muted: var(--surface-3, #111521);
@@ -145,6 +185,8 @@
     --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
   }
 }
+
+@import "./ui/layout/chat-transitions.css";
 
 /* =========================================
    ESCOPO DO PLUGIN

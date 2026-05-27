@@ -27,6 +27,7 @@ import type {
   ChatSession,
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
+import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
 import { ChatUserSearchField } from "./ChatUserSearchField";
 import { buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationMenu } from "./ChatConversationMenu";
@@ -475,6 +476,11 @@ export function ChatProjectHome({
         </div>
         </div>
 
+        <ChatAnimatedPanel
+          panelKey={activeTab}
+          variant="tab"
+          className="mdc-chat-project-home__tab-panel"
+        >
         {activeTab === "chats" ? (
           <div className="mdc-chat-project-home__sessions" role="tabpanel">
             {recentSessions.length > 0 ? (
@@ -717,6 +723,7 @@ export function ChatProjectHome({
             </details>
           </div>
         )}
+        </ChatAnimatedPanel>
       </div>
 
       {isSettingsOpen ? (
@@ -808,10 +815,13 @@ export function ChatProjectHome({
 
                 <button
                   type="button"
+                  className="mdc-chat-ws-outline-btn mdc-chat-project-settings__share-btn"
                   disabled={isSharingProject}
                   onClick={() => void shareCurrentProject()}
                 >
-                  {isSharingProject ? "Compartilhando..." : "Compartilhar projeto"}
+                  <span>
+                    {isSharingProject ? "Compartilhando..." : "Compartilhar projeto"}
+                  </span>
                 </button>
 
                 {shareMessage ? <p className="mdc-chat-muted">{shareMessage}</p> : null}
@@ -838,6 +848,7 @@ export function ChatProjectHome({
                         </span>
                         <button
                           type="button"
+                          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                           disabled={revokingShareUserId === share.target_user_id}
                           onClick={() => void revokeProjectShare(share.target_user_id)}
                         >
@@ -852,22 +863,22 @@ export function ChatProjectHome({
               </section>
             ) : null}
 
-            <footer>
+            <footer className="mdc-chat-project-settings__footer">
               <button
                 type="button"
-                className="mdc-chat-project-settings__delete"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                 onClick={() => void deleteProject()}
               >
-                Excluir projeto?
+                <span>Excluir projeto?</span>
               </button>
 
               <button
                 type="button"
-                className="mdc-chat-project-settings__save"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
                 onClick={() => void saveSettings()}
                 disabled={isSaving}
               >
-                {isSaving ? "Salvando..." : "Salvar"}
+                <span>{isSaving ? "Salvando..." : "Salvar"}</span>
               </button>
             </footer>
           </section>

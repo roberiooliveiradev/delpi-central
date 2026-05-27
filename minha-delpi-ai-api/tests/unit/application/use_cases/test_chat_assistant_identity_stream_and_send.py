@@ -1,4 +1,4 @@
-"""Garante resposta direta de capacidades no chat comum e com agente (stream + send)."""
+"""Resposta direta de identidade do assistente (stream + send), sem LLM."""
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -11,10 +11,10 @@ from app.application.use_cases.send_chat_message_use_case import SendChatMessage
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
 from app.domain.entities.chat_session import ChatSession
 
-_CAPABILITY_PHRASES = (
-    "o que vc é capaz de fazer?",
-    "ajuda",
-    "o que você pode fazer?",
+_IDENTITY_PHRASES = (
+    "quem é vc?",
+    "o que vc faz?",
+    "como te usar",
 )
 
 
@@ -46,12 +46,16 @@ def _workspace(*, common: bool) -> dict:
 
     return {
         "project": None,
-        "agent": {"key": "produtos", "name": "Especialista em Produtos"},
+        "agent": {
+            "key": "produtos",
+            "name": "Especialista em Produtos",
+            "description": "consultas e cadastro de produtos.",
+        },
         "projectPrompt": None,
         "agentPrompt": "Você é especialista em produtos.",
         "agentKey": "produtos",
-        "allowedActionIds": ["act.stock"],
-        "capabilities": {"actions": True},
+        "allowedActionIds": [],
+        "capabilities": {},
         "specialization": None,
     }
 
@@ -74,8 +78,8 @@ def _build_use_cases(*, common: bool):
     workspace_context_service.build_context.return_value = workspace
 
     llm_gateway = MagicMock()
-    llm_gateway.generate.side_effect = AssertionError("LLM não deve ser chamado para capacidades")
-    llm_gateway.stream.side_effect = AssertionError("LLM stream não deve ser chamado para capacidades")
+    llm_gateway.generate.side_effect = AssertionError("LLM não deve ser chamado para identidade")
+    llm_gateway.stream.side_effect = AssertionError("LLM stream não deve ser chamado para identidade")
 
     tool_context = {"context": "", "toolCalls": [], "nativeToolCalling": {}}
     chat_tool_context_service = MagicMock()
@@ -144,32 +148,9 @@ def patch_llm_cost(monkeypatch):
     )
 
 
-@pytest.fixture
-def mock_action_catalog(monkeypatch):
-    catalog = [
-        {
-            "actionId": "act.stock",
-            "method": "GET",
-            "path": "/api/v1/products/{code}/stock",
-            "summary": "Estoque do produto",
-        },
-    ]
-
-    monkeypatch.setattr(
-        "app.application.use_cases.send_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
-        lambda allowed: catalog if allowed else [],
-    )
-    monkeypatch.setattr(
-        "app.application.use_cases.stream_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
-        lambda allowed: catalog if allowed else [],
-    )
-
-
-@pytest.mark.parametrize("message", _CAPABILITY_PHRASES)
+@pytest.mark.parametrize("message", _IDENTITY_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_send_capabilities_direct_answer_without_llm(
-    message: str, common: bool, mock_action_catalog
-):
+def test_send_identity_direct_answer_without_llm(message: str, common: bool):
     session, send_use_case, _ = _build_use_cases(common=common)
     request = SendChatMessageRequest(
         user_id=str(session.user_id),
@@ -180,21 +161,19 @@ def test_send_capabilities_direct_answer_without_llm(
 
     response = send_use_case.execute(request)
 
-    assert response.answer.startswith("Posso ajudar você nestes formatos:")
-    assert "Gerenciamento de Permissões" not in response.answer
-    if common:
-        assert "chat comum" in response.answer.lower()
+    assert "Posso ajudar você nestes formatos" not in response.answer
+    assert "forneça seu nome e email" not in response.answer.lower()
+    if message == "quem é vc?":
+        assert "e-mail" in response.answer.lower() or "email" in response.answer.lower()
+    if common and message == "quem é vc?":
         assert "Especialista em Produtos" not in response.answer
-    else:
+    if not common and message == "quem é vc?":
         assert "Especialista em Produtos" in response.answer
-        assert "estoque do produto 10080001" in response.answer
 
 
-@pytest.mark.parametrize("message", _CAPABILITY_PHRASES)
-@pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_stream_capabilities_direct_answer_without_llm(
-    message: str, common: bool, mock_action_catalog
-):
+@pytest.mark.parametrize("message", ("quem é vc?",))
+@pytest.mark.parametrize("common", [False], ids=["agente"])
+def test_stream_identity_direct_answer_without_llm(message: str, common: bool):
     session, _, stream_use_case = _build_use_cases(common=common)
     request = SendChatMessageRequest(
         user_id=str(session.user_id),
@@ -206,10 +185,5 @@ def test_stream_capabilities_direct_answer_without_llm(
     events = list(stream_use_case.stream(request))
     answer = _collect_stream_answer(events)
 
-    assert answer.startswith("Posso ajudar você nestes formatos:")
-    assert "Como seu assistente corporativo" not in answer
-    if common:
-        assert "chat comum" in answer.lower()
-    else:
-        assert "Especialista em Produtos" in answer
-        assert "Consultas operacionais" in answer
+    assert "Especialista em Produtos" in answer
+    assert "nome ou e-mail" in answer.lower() or "e-mail" in answer.lower()

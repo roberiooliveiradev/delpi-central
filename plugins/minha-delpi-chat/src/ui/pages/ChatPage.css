@@ -70,20 +70,6 @@
   padding-top: clamp(1rem, 3vh, 2rem);
 }
 
-/* Mantém compatibilidade caso o header antigo ainda exista em algum fluxo */
-.mdc-chat-header {
-  min-height: unset;
-  padding: 0.75rem clamp(1rem, 2vw, 1.75rem);
-}
-
-.mdc-chat-header h1 {
-  font-size: 1.45rem;
-}
-
-.mdc-chat-header p {
-  margin-block: 0.15rem;
-}
-
 .mdc-chat-empty-composer {
   align-content: center;
   gap: var(--mdc-space-5);

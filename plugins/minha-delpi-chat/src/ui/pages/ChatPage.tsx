@@ -9,6 +9,7 @@ import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { ChatAgentsPage } from "./ChatAgentsPage";
@@ -812,6 +813,11 @@ export function ChatPage({
           onOpenProjectsDirectory={openProjectsDirectory}
         />
 
+        <ChatAnimatedPanel
+          panelKey={currentView}
+          variant="page"
+          className="mdc-chat-view-host"
+        >
         {currentView === "projects" ? (
           <section className="mdc-chat-main" aria-label="Projetos">
             {!isDesktop ? (
@@ -1145,6 +1151,7 @@ export function ChatPage({
           )}
         </section>
         )}
+        </ChatAnimatedPanel>
 
         <ChatCanvas
           document={canvasDocument}

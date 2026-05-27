@@ -1,4 +1,4 @@
-import { Folder, Lightbulb, Settings, X } from "lucide-react";
+import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ChatProject } from "../../data/api/chatTypes";
@@ -144,16 +144,21 @@ export function ChatProjectCreateModal({
           </div>
 
           <footer>
-            <button type="button" className="mdc-chat-project-create-modal__cancel" onClick={onClose}>
-              Cancelar
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn"
+              onClick={onClose}
+            >
+              <span>Cancelar</span>
             </button>
             <button
               type="button"
-              className="mdc-chat-project-create-modal__submit"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
               onClick={() => void handleSubmit()}
               disabled={!canSubmit}
             >
-              {isSaving ? "Criando..." : "Criar projeto"}
+              <Plus size={16} aria-hidden="true" />
+              <span>{isSaving ? "Criando..." : "Criar projeto"}</span>
             </button>
           </footer>
         </section>

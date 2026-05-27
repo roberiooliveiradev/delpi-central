@@ -5,7 +5,7 @@
 .mdc-rich-kpi__title {
   font-weight: 600;
   font-size: 0.85rem;
-  color: var(--mdc-title, #003866);
+  color: var(--mdc-title);
   margin-bottom: 0.5rem;
 }
 
@@ -16,15 +16,15 @@
 
 .mdc-rich-kpi__card {
   padding: 0.8rem 1rem;
-  border: 1px solid var(--mdc-card-border, #e6e6e6);
-  border-top: 3px solid var(--mdc-primary, #089bdb);
-  border-radius: 8px;
-  background: var(--mdc-card-bg, var(--mdc-bg, #fff));
+  border: 1px solid var(--mdc-card-border);
+  border-top: 3px solid var(--mdc-primary);
+  border-radius: var(--mdc-radius-sm);
+  background: var(--mdc-card-bg);
   transition: box-shadow 0.15s;
 }
 
 .mdc-rich-kpi__card:hover {
-  box-shadow: var(--mdc-card-shadow, 0 2px 8px rgba(0, 0, 0, 0.06));
+  box-shadow: var(--mdc-card-shadow-soft);
 }
 
 .mdc-rich-kpi__label {
@@ -32,21 +32,21 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--mdc-text-muted, #64748b);
+  color: var(--mdc-text-muted);
   margin-bottom: 0.3rem;
 }
 
 .mdc-rich-kpi__value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--mdc-text, #111);
+  color: var(--mdc-text);
   line-height: 1.2;
 }
 
 .mdc-rich-kpi__unit {
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--mdc-text-muted, #64748b);
+  color: var(--mdc-text-muted);
   margin-left: 0.2rem;
 }
 
@@ -57,6 +57,18 @@
   margin-top: 0.35rem;
   font-size: 0.78rem;
   font-weight: 600;
+}
+
+.mdc-rich-kpi__trend--up {
+  color: var(--mdc-trend-up);
+}
+
+.mdc-rich-kpi__trend--down {
+  color: var(--mdc-trend-down);
+}
+
+.mdc-rich-kpi__trend--stable {
+  color: var(--mdc-trend-stable);
 }
 
 .mdc-rich-kpi__delta {

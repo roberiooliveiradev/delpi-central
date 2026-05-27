@@ -41,6 +41,10 @@
   color: var(--mdc-primary);
 }
 
+.mdc-agent-knowledge__dropzone-icon svg {
+  display: block;
+}
+
 .mdc-agent-knowledge__dropzone-copy {
   display: grid;
   gap: 0.15rem;
@@ -58,17 +62,8 @@
   line-height: 1.35;
 }
 
-.mdc-agent-knowledge__dropzone-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
-  color: var(--mdc-text);
-  font-size: 0.78rem;
-  font-weight: 780;
-  padding: 0.35rem 0.65rem;
-  white-space: nowrap;
+.mdc-agent-knowledge__dropzone .mdc-chat-ws-outline-btn {
+  pointer-events: none;
 }
 
 .mdc-agent-knowledge__notice {
@@ -97,16 +92,17 @@
 }
 
 .mdc-agent-knowledge__card {
-  position: relative;
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.35rem;
+  align-items: start;
+  gap: 0.35rem 0.45rem;
   min-height: 6.5rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
   border-radius: 0.85rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 82%, var(--mdc-bg));
-  padding: 0.55rem 0.55rem 0.45rem;
-  transition: border-color 0.14s ease, transform 0.14s ease;
+  padding: 0.55rem;
+  transition: border-color 0.14s ease;
 }
 
 .mdc-agent-knowledge__card:hover {
@@ -119,6 +115,8 @@
 }
 
 .mdc-agent-knowledge__card-icon {
+  grid-column: 1;
+  grid-row: 1;
   display: inline-grid;
   place-items: center;
   width: 1.85rem;
@@ -128,11 +126,39 @@
   color: var(--mdc-primary);
 }
 
+.mdc-agent-knowledge__card-icon svg {
+  display: block;
+}
+
+.mdc-agent-knowledge__card-remove {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-bg) 70%, transparent);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+}
+
+.mdc-agent-knowledge__card-remove svg {
+  display: block;
+}
+
+.mdc-agent-knowledge__card-remove:hover {
+  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
+  color: var(--mdc-danger);
+}
+
 .mdc-agent-knowledge__card-copy {
+  grid-column: 1 / -1;
+  grid-row: 2;
   display: grid;
   gap: 0.12rem;
   min-width: 0;
-  padding-right: 1.4rem;
 }
 
 .mdc-agent-knowledge__card-copy strong {
@@ -159,26 +185,6 @@
   font-weight: 700;
 }
 
-.mdc-agent-knowledge__card-remove {
-  position: absolute;
-  top: 0.35rem;
-  right: 0.35rem;
-  display: inline-grid;
-  place-items: center;
-  width: 1.55rem;
-  height: 1.55rem;
-  border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-bg) 70%, transparent);
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-}
-
-.mdc-agent-knowledge__card-remove:hover {
-  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
-  color: var(--mdc-danger);
-}
-
 .mdc-agent-knowledge__note {
   margin-top: 0.25rem;
 }
@@ -189,7 +195,7 @@
     justify-items: start;
   }
 
-  .mdc-agent-knowledge__dropzone-action {
+  .mdc-agent-knowledge__dropzone .mdc-chat-ws-outline-btn {
     justify-self: start;
   }
 }

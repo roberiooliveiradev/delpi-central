@@ -14,7 +14,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useResizablePane } from "../../state/hooks/useResizablePane";
 
@@ -56,6 +56,7 @@ import {
   getAgentSystemPromptTemplate,
 } from "../../domain/agentSystemPromptTemplates";
 
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
 
@@ -239,6 +240,7 @@ export function ChatAgentBuilderPage({
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [copyActionsOnDuplicate, setCopyActionsOnDuplicate] = useState(true);
   const [copySourcesOnDuplicate, setCopySourcesOnDuplicate] = useState(false);
   const [transferTargetUserId, setTransferTargetUserId] = useState("");
@@ -1135,11 +1137,21 @@ export function ChatAgentBuilderPage({
 
         <div className="mdc-chat-ws-topbar__actions mdc-chat-agent-builder__topbar-actions">
           {canImportAgent ? (
-            <label className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--import">
-              <Upload size={16} aria-hidden="true" />
-              <span>{isImporting ? "Importando..." : "Importar JSON"}</span>
+            <>
+              <button
+                type="button"
+                className="mdc-chat-ws-toolbar-btn"
+                disabled={isImporting}
+                title="Importar configuração em JSON"
+                onClick={() => importInputRef.current?.click()}
+              >
+                <Upload size={16} aria-hidden="true" />
+                <span>{isImporting ? "Importando..." : "Importar JSON"}</span>
+              </button>
               <input
+                ref={importInputRef}
                 type="file"
+                className="mdc-chat-agent-builder__sr-only"
                 accept="application/json,.json"
                 disabled={isImporting}
                 onChange={(event) => {
@@ -1152,7 +1164,7 @@ export function ChatAgentBuilderPage({
                   event.target.value = "";
                 }}
               />
-            </label>
+            </>
           ) : null}
 
           {canExportAgent ? (
@@ -1250,6 +1262,7 @@ export function ChatAgentBuilderPage({
             </button>
           </div>
 
+          <ChatAnimatedPanel panelKey={builderMode} variant="tab">
           {builderMode === "create" ? (
             <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__create-mode">
               <h2 className="mdc-chat-ws-section-head">Criar conversando</h2>
@@ -1949,7 +1962,7 @@ export function ChatAgentBuilderPage({
                 />
                 <button
                   type="button"
-                  className="mdc-chat-agent-builder__secondary"
+                  className="mdc-chat-ws-outline-btn"
                   disabled={isTransferring}
                   onClick={() => void transferAgentOwnership()}
                 >
@@ -1963,6 +1976,7 @@ export function ChatAgentBuilderPage({
 
             </>
           )}
+          </ChatAnimatedPanel>
 
           {localError ? (
             <p className="mdc-chat-agent-builder__error">{localError}</p>

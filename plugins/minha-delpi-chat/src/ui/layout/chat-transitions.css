@@ -1,0 +1,158 @@
+/* Transições suaves — páginas, abas e modais do Minha DELPI Chat */
+
+:root {
+  --mdc-motion-duration-fast: 0.16s;
+  --mdc-motion-duration: 0.26s;
+  --mdc-motion-duration-slow: 0.34s;
+  --mdc-motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mdc-motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mdc-motion-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mdc-motion-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mdc-motion-fade-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mdc-chat-page-panel {
+  min-width: 0;
+  min-height: 0;
+  animation: mdc-motion-fade-up var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
+}
+
+.mdc-chat-page-panel--fill {
+  display: grid;
+  min-height: 100%;
+  height: 100%;
+}
+
+.mdc-chat-tab-panel {
+  min-width: 0;
+  min-height: 0;
+  animation: mdc-motion-fade-up calc(var(--mdc-motion-duration) * 0.9) var(--mdc-motion-ease-out) both;
+}
+
+.mdc-chat-view-host {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.mdc-admin-shell__panel {
+  min-width: 0;
+}
+
+/* Abas — transição do indicador ativo */
+.mdc-chat-agent-builder__switch,
+.mdc-chat-project-home__tabs,
+.mdc-admin-tabs {
+  position: relative;
+}
+
+.mdc-chat-agent-builder__switch button,
+.mdc-chat-project-home__tabs button,
+.mdc-admin-tabs button {
+  transition:
+    background-color var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    color var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    border-color var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    box-shadow var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    transform var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
+}
+
+.mdc-chat-agent-builder__switch button.is-active,
+.mdc-chat-project-home__tabs button.is-active,
+.mdc-admin-tabs button.is-active {
+  transition-duration: var(--mdc-motion-duration);
+}
+
+/* Diretórios e workspace — entrada suave do conteúdo principal */
+.mdc-chat-ws-directory__main,
+.mdc-chat-agent-builder__form,
+.mdc-chat-agent-actions-page__editor {
+  animation: mdc-motion-fade-up calc(var(--mdc-motion-duration) * 0.85) var(--mdc-motion-ease-out) both;
+  animation-delay: 0.04s;
+}
+
+/* Modais */
+.mdc-chat-project-settings-backdrop,
+.mdc-chat-project-create-backdrop,
+.mdc-chat-agents-modal-backdrop,
+.mdc-chat-projects-modal-backdrop,
+.mdc-chat-confirm-dialog-backdrop {
+  animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
+}
+
+.mdc-chat-project-settings,
+.mdc-chat-project-create-modal,
+.mdc-chat-agents-modal,
+.mdc-chat-projects-modal {
+  animation: mdc-motion-fade-scale-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
+}
+
+/* Painel de pré-visualização (actions / builder) */
+.mdc-chat-agent-actions-page__preview--visible,
+.mdc-chat-agent-builder__preview {
+  animation: mdc-motion-fade-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
+}
+
+.minha-delpi-chat__loading-page {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  color: var(--mdc-text-muted);
+  animation: mdc-motion-fade-in var(--mdc-motion-duration) ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdc-chat-page-panel,
+  .mdc-chat-tab-panel,
+  .mdc-chat-ws-directory__main,
+  .mdc-chat-agent-builder__form,
+  .mdc-chat-agent-actions-page__editor,
+  .mdc-chat-project-settings-backdrop,
+  .mdc-chat-project-create-backdrop,
+  .mdc-chat-project-settings,
+  .mdc-chat-project-create-modal,
+  .mdc-chat-agent-actions-page__preview--visible,
+  .mdc-chat-agent-builder__preview,
+  .minha-delpi-chat__loading-page {
+    animation: none !important;
+  }
+
+  .mdc-chat-agent-builder__switch button,
+  .mdc-chat-project-home__tabs button,
+  .mdc-admin-tabs button {
+    transition: none;
+  }
+}

@@ -1,7 +1,7 @@
 /* Layout responsivo — admin, agentes e projetos (breakpoints --mdc-bp-*) */
 
 /* Views fullscreen dentro do shell do chat */
-.mdc-chat-main .mdc-chat-agents-directory,
+.mdc-chat-main .mdc-chat-ws-directory,
 .mdc-chat-main .mdc-chat-agent-builder,
 .mdc-chat-main .mdc-chat-agent-actions-page {
   min-height: 0;
@@ -10,11 +10,17 @@
   overflow: hidden;
 }
 
-.mdc-chat-agents-directory,
+.mdc-chat-ws-directory,
 .mdc-chat-agent-builder,
 .mdc-chat-agent-actions-page {
   min-height: 100dvh;
   min-height: 100vh;
+}
+
+.mdc-chat-main .mdc-chat-ws-directory,
+.mdc-chat-main .mdc-chat-agent-builder,
+.mdc-chat-main .mdc-chat-agent-actions-page {
+  min-height: 0;
 }
 
 /* Admin */
