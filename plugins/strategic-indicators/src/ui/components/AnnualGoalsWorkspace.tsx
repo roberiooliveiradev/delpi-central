@@ -19,6 +19,7 @@ import {
   getGoalPeriodicityLabel,
   getGoalScopeBranchLabel,
 } from "../presentation/labels";
+import { buildEmptyCurveTargets } from "../utils/curveTargets";
 import { resolveGoalValueForApi } from "../utils/goalValuePolicy";
 import "./AnnualGoalsWorkspace.css";
 
@@ -470,10 +471,7 @@ export function AnnualGoalsWorkspace({
                                 goal_mode: event.target.value as "standard" | "monthly_curve",
                                 monthly_targets:
                                   event.target.value === "monthly_curve"
-                                    ? Array.from({ length: 12 }, (_, monthIndex) => ({
-                                        month_number: monthIndex + 1,
-                                        target_value: 0,
-                                      }))
+                                    ? buildEmptyCurveTargets(item.goal_periodicity)
                                     : [],
                               }
                             : item,

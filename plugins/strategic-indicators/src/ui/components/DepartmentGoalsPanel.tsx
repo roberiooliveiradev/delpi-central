@@ -31,7 +31,7 @@ function getGoalPeriodicityLabel(value: string): string {
 }
 
 function getGoalModeLabel(value: string): string {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
+  return value === "monthly_curve" ? "Curva" : "Padrão";
 }
 
 export function DepartmentGoalsPanel({

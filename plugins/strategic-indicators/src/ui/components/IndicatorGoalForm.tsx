@@ -8,8 +8,19 @@ import type {
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
-import { getGoalScopeBranchLabel } from "../presentation/labels";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getGoalScopeBranchLabel,
+} from "../presentation/labels";
 import { clampGoalYear, MIN_GOAL_YEAR, MAX_GOAL_YEAR } from "../utils/goalYearHelpers";
+import {
+  buildEmptyCurveTargets,
+  getCurveHintText,
+  getCurvePointLabels,
+  getCurveSectionTitle,
+  normalizeCurveTargets,
+} from "../utils/curveTargets";
 import {
   validateIndicatorGoalForm,
   type IndicatorGoalCatalogEntry,
@@ -40,28 +51,6 @@ type IndicatorGoalFormProps = {
   onCancel?: () => void;
 };
 
-const MONTH_LABELS = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
-
-function buildEmptyMonthlyTargets(): MonthlyTargetItem[] {
-  return Array.from({ length: 12 }, (_, index) => ({
-    month_number: index + 1,
-    target_value: 0,
-  }));
-}
-
 function normalizeIndicatorOptions(
   options: Array<string | IndicatorOption>,
 ): IndicatorOption[] {
@@ -70,28 +59,6 @@ function normalizeIndicatorOptions(
       ? { value: option, label: option }
       : option,
   );
-}
-
-function normalizeMonthlyTargets(
-  input?: MonthlyTargetItem[] | null,
-): MonthlyTargetItem[] {
-  const base = buildEmptyMonthlyTargets();
-
-  if (!input?.length) return base;
-
-  const byMonth = new Map<number, number>();
-  input.forEach((item) => {
-    byMonth.set(item.month_number, Number(item.target_value || 0));
-  });
-
-  return base.map((item) => ({
-    month_number: item.month_number,
-    target_value: byMonth.get(item.month_number) ?? 0,
-  }));
-}
-
-function formatGoalModeLabel(value: GoalMode) {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
 }
 
 export function IndicatorGoalForm({
@@ -114,7 +81,7 @@ export function IndicatorGoalForm({
   const [goalMode, setGoalMode] = useState<GoalMode>("standard");
   const [goalScopeBranch, setGoalScopeBranch] = useState<GoalScopeBranch | string>("");
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetItem[]>(
-    buildEmptyMonthlyTargets(),
+    buildEmptyCurveTargets("monthly"),
   );
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
@@ -125,6 +92,10 @@ export function IndicatorGoalForm({
   const normalizedIndicatorOptions = useMemo(
     () => normalizeIndicatorOptions(indicatorOptions),
     [indicatorOptions],
+  );
+  const curvePointLabels = useMemo(
+    () => getCurvePointLabels(goalPeriodicity),
+    [goalPeriodicity],
   );
 
   useEffect(() => {
@@ -138,7 +109,7 @@ export function IndicatorGoalForm({
       setGoalPeriodicity("monthly");
       setGoalMode("standard");
       setGoalScopeBranch("");
-      setMonthlyTargets(buildEmptyMonthlyTargets());
+      setMonthlyTargets(buildEmptyCurveTargets("monthly"));
       setValidFrom("");
       setValidTo("");
       setNotes("");
@@ -153,7 +124,12 @@ export function IndicatorGoalForm({
     setGoalPeriodicity(initialValue.goal_periodicity);
     setGoalMode(initialValue.goal_mode);
     setGoalScopeBranch(initialValue.goal_scope_branch ?? "");
-    setMonthlyTargets(normalizeMonthlyTargets(initialValue.monthly_targets));
+    setMonthlyTargets(
+      normalizeCurveTargets(
+        initialValue.monthly_targets,
+        initialValue.goal_periodicity,
+      ),
+    );
     setValidFrom(initialValue.valid_from ?? "");
     setValidTo(initialValue.valid_to ?? "");
     setNotes(initialValue.notes ?? "");
@@ -179,6 +155,7 @@ export function IndicatorGoalForm({
       goalLabel,
       goalScopeBranch,
       goalMode,
+      goalPeriodicity,
       goalValue,
       monthlyTargets,
       indicatorOptions: normalizedIndicatorOptions,
@@ -308,10 +285,16 @@ export function IndicatorGoalForm({
         <Field label="Modo da meta">
           <select
             value={goalMode}
-            onChange={(e) => setGoalMode(e.target.value as GoalMode)}
+            onChange={(e) => {
+              const nextMode = e.target.value as GoalMode;
+              setGoalMode(nextMode);
+              if (nextMode === "monthly_curve") {
+                setMonthlyTargets(buildEmptyCurveTargets(goalPeriodicity));
+              }
+            }}
           >
-            <option value="standard">Meta padrão</option>
-            <option value="monthly_curve">Curva mensal</option>
+            <option value="standard">{getGoalModeLabel("standard")}</option>
+            <option value="monthly_curve">{getGoalModeLabel("monthly_curve")}</option>
           </select>
         </Field>
 
@@ -329,9 +312,15 @@ export function IndicatorGoalForm({
         <Field label="Periodicidade">
           <select
             value={goalPeriodicity}
-            onChange={(e) =>
-              setGoalPeriodicity(e.target.value as GoalPeriodicity)
-            }
+            onChange={(e) => {
+              const nextPeriodicity = e.target.value as GoalPeriodicity;
+              setGoalPeriodicity(nextPeriodicity);
+              if (goalMode === "monthly_curve") {
+                setMonthlyTargets((current) =>
+                  normalizeCurveTargets(current, nextPeriodicity),
+                );
+              }
+            }}
           >
             <option value="monthly">Mensal</option>
             <option value="annual">Anual</option>
@@ -370,30 +359,33 @@ export function IndicatorGoalForm({
         {goalMode === "monthly_curve" ? (
           <div className="si-settings-form-field si-settings-form-field--full">
             <span className="si-settings-form-field__label">
-              Curva mensal da meta
+              {getCurveSectionTitle(goalPeriodicity)}
             </span>
 
             <div className="si-monthly-targets-toolbar">
               <span className="si-monthly-targets-toolbar__badge">
-                {formatGoalModeLabel(goalMode)}
+                {getGoalModeLabel(goalMode)}
               </span>
               <span className="si-monthly-targets-toolbar__summary">
-                {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos · periodicidade{" "}
-                {goalPeriodicity === "monthly" ? "mensal" : goalPeriodicity}
+                {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos ·{" "}
+                {getGoalPeriodicityLabel(goalPeriodicity)}
               </span>
             </div>
-            <p className="si-monthly-targets-hint">
-              Cada mês define a meta do período. Não há valor consolidado — o cálculo usa
-              os pontos da curva.
-            </p>
+            <p className="si-monthly-targets-hint">{getCurveHintText(goalPeriodicity)}</p>
 
-            <div className="si-monthly-targets-grid">
+            <div
+              className={`si-monthly-targets-grid ${
+                goalPeriodicity === "weekly"
+                  ? "si-monthly-targets-grid--weekly"
+                  : ""
+              }`}
+            >
               {monthlyTargets.map((item, index) => (
                 <label
                   key={item.month_number}
                   className="si-monthly-targets-grid__item"
                 >
-                  <span>{MONTH_LABELS[index]}</span>
+                  <span>{curvePointLabels[index] ?? `#${item.month_number}`}</span>
                   <input
                     type="number"
                     step="0.0001"
