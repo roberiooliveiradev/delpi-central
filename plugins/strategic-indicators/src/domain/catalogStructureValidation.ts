@@ -92,6 +92,15 @@ export function validateCatalogRow(input: {
     });
   }
 
+  if (indicator.is_active && !(indicator.source_key ?? "").trim()) {
+    issues.push({
+      code: "missing_source_key",
+      severity: "error",
+      message:
+        "Chave da fonte obrigatória para indicador ativo (medições e dashboards departamentais).",
+    });
+  }
+
   if (indicator.is_active && coverage.activeCount === 0) {
     issues.push({
       code: "no_active_goal",

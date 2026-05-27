@@ -24,7 +24,6 @@ def effective_query_branch(branch: str | None) -> str | None:
 
 CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS = frozenset(
     {
-        "commercial",
         "engineering",
         "financial",
     }

@@ -16,6 +16,7 @@ import {
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
+import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import "./DepartmentManagementModal.css";
 
 type DepartmentManagementModalProps = {
@@ -79,6 +80,7 @@ export function DepartmentManagementModal({
   const [indicatorFormOpen, setIndicatorFormOpen] = useState(false);
   const [indicatorFormMode, setIndicatorFormMode] = useState<"create" | "edit">("create");
   const [indicatorForm, setIndicatorForm] = useState<IndicatorFormState>(emptyIndicatorForm);
+  const [indicatorFormError, setIndicatorFormError] = useState<string | null>(null);
 
   const selectedDepartmentId = department?.department_id ?? null;
 
@@ -110,6 +112,16 @@ export function DepartmentManagementModal({
 
   async function handleSubmitIndicatorForm() {
     if (!selectedDepartmentId) return;
+
+    const sourceKeyError = validateIndicatorSourceKey(
+      indicatorForm.source_key,
+      indicatorFormMode === "create" ? true : indicatorForm.is_active,
+    );
+    if (sourceKeyError) {
+      setIndicatorFormError(sourceKeyError);
+      return;
+    }
+    setIndicatorFormError(null);
 
     if (indicatorFormMode === "create") {
       const payload: CreateAdminDepartmentIndicatorRequest = {
@@ -419,9 +431,10 @@ export function DepartmentManagementModal({
           </label>
 
           <label className="si-admin-form-field">
-            <span>Chave da fonte</span>
+            <span>Chave da fonte (obrigatória se ativo)</span>
             <input
               value={indicatorForm.source_key}
+              placeholder="ex.: commercial_rol, production_otd"
               onChange={(event) =>
                 setIndicatorForm((current) => ({
                   ...current,
@@ -429,8 +442,18 @@ export function DepartmentManagementModal({
                 }))
               }
             />
+            <small className="si-admin-form-field__hint">
+              Liga o indicador às medições do SI e às metas nos dashboards
+              departamentais.
+            </small>
           </label>
-          
+
+          {indicatorFormError ? (
+            <p className="si-settings-editor__alert si-settings-editor__alert--error">
+              {indicatorFormError}
+            </p>
+          ) : null}
+
           <label className="si-admin-form-field">
             <span>Unidade</span>
             <select
