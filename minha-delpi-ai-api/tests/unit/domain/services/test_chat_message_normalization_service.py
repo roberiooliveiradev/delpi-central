@@ -21,3 +21,18 @@ def test_contains_any_with_typo():
         "quanto tem em estoq do 10080001",
         ("estoque",),
     )
+
+
+def test_normalize_more_typos():
+    assert "fornecedor" in ChatMessageNormalizationService.normalize_for_matching(
+        "forncedor do 10080001"
+    )
+    assert "preco" in ChatMessageNormalizationService.normalize_for_matching("preço do prduto")
+    assert "estrutura" in ChatMessageNormalizationService.normalize_for_matching("estrutur do 10080001")
+    assert "quantidade" in ChatMessageNormalizationService.normalize_for_matching("qtd em estoque")
+
+
+def test_expand_query_terms():
+    terms = ChatMessageNormalizationService.expand_query_terms("Estoque do 10080001?")
+    assert "estoque do 10080001" in terms
+    assert any("?" not in t for t in terms)

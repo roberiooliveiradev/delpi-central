@@ -10,6 +10,7 @@ _CAPABILITIES_QUESTION_TERMS = (
     "o que vc pode fazer",
     "o que consegue fazer",
     "o que sabe fazer",
+    "o que voce sabe",
     "quais suas capacidades",
     "suas capacidades",
     "suas funcionalidades",
@@ -19,13 +20,16 @@ _CAPABILITIES_QUESTION_TERMS = (
     "como pode me ajudar",
     "como voce pode ajudar",
     "como você pode ajudar",
+    "como voce me ajuda",
     "me ajuda com o que",
+    "me ajude com o que",
     "lista de comandos",
     "quais comandos",
     "quais apis",
     "quais api",
     "quais actions",
     "quais acoes",
+    "quais rotas da api",
     "quais ferramentas",
     "ferramentas disponiveis",
     "rotas disponiveis",
@@ -35,6 +39,14 @@ _CAPABILITIES_QUESTION_TERMS = (
     "quais consultas",
     "pode consultar o que",
     "o que consegue consultar",
+    "o que voce consulta",
+    "quais dados voce acessa",
+    "quais dados você acessa",
+    "me mostre o que da pra fazer",
+    "da pra fazer o que",
+    "o que da pra consultar",
+    "menu de comandos",
+    "help",
 )
 
 _PLATFORM_TOOLS = (
@@ -43,17 +55,117 @@ _PLATFORM_TOOLS = (
     ("get_allowed_routes", "Menus e rotas autorizados no seu perfil."),
 )
 
-_PATH_CATEGORY_HINTS: tuple[tuple[str, str], ...] = (
-    ("/products/", "Produtos (estoque, estrutura, fornecedores, preços, compras, vendas…)"),
-    ("/engineering/lmps", "LMP / engenharia (listas, OVs, dashboard)"),
-    ("/supplies/", "Suprimentos (indicadores CPV, OTD, giro e valor de estoque)"),
-    ("/commercial/", "Indicadores comerciais"),
-    ("/financial/", "Indicadores financeiros"),
-    ("/production/", "Indicadores de produção"),
-    ("/hr/", "Indicadores de RH"),
-    ("/quality/", "Indicadores de qualidade"),
-    ("/data/sql", "Consultas SQL somente leitura (quando habilitado)"),
-    ("/sale-order", "Ordens de venda"),
+# (fragmento de path, categoria, exemplos de pergunta)
+_PATH_RULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
+    ("/stock", "Estoque de produto", (
+        "estoque do produto 10080001",
+        "saldo do 10080001",
+        "quanto tem em estoque do 10080001",
+    )),
+    ("/suppliers", "Fornecedores de produto", (
+        "fornecedores do 10080001",
+        "quem fornece o produto 10080001",
+        "forncedores do 10080001 em tabela",
+    )),
+    ("/customers", "Clientes de produto", (
+        "clientes do produto 10080001",
+        "quem compra o 10080001",
+    )),
+    ("/structure", "Estrutura (BOM)", (
+        "estrutura do produto 10080001",
+        "componentes do 10080001",
+        "bom do 10080001",
+    )),
+    ("/parents", "Onde o produto é usado (pais)", (
+        "onde o 10080001 é usado",
+        "produtos pai do 10080001",
+        "pai do 10080001",
+    )),
+    ("/purchases", "Compras de produto", (
+        "compras do produto 10080001",
+        "historico de compras do 10080001",
+    )),
+    ("/sales", "Vendas de produto", (
+        "vendas do produto 10080001",
+        "faturamento do 10080001",
+    )),
+    ("/prices", "Preços / tabelas", (
+        "preço do produto 10080001",
+        "tabela de preço do 10080001",
+        "quanto custa o 10080001",
+    )),
+    ("/guide", "Roteiro de produção", (
+        "roteiro do produto 10080001",
+        "etapas do 10080001",
+    )),
+    ("/inspection", "Inspeção / qualidade", (
+        "inspeção do produto 10080001",
+        "plano de inspeção do 10080001",
+    )),
+    ("/internal-movements", "Movimentações internas", (
+        "movimentações internas do 10080001",
+        "transferências do 10080001",
+    )),
+    ("/inbound-invoice", "Notas fiscais de entrada", (
+        "notas de entrada do 10080001",
+        "nfe entrada do 10080001",
+    )),
+    ("/outbound-invoice", "Notas fiscais de saída", (
+        "notas de saída do 10080001",
+        "nfe saída do 10080001",
+    )),
+    ("/search", "Busca de produtos", (
+        "buscar produto por descrição parafuso",
+        "pesquisar produto bandeira",
+    )),
+    ("/analyser", "Ficha / descrição do produto", (
+        "descrição do produto 10080001",
+        "me fala do produto 10080001",
+        "dados cadastrais do 10080001",
+    )),
+    ("/engineering/lmps", "LMP / listas de materiais de projeto", (
+        "listar lmps",
+        "lmps da filial 01",
+        "detalhe da lmp ov 12345",
+    )),
+    ("/lmps/", "Detalhe de LMP", (
+        "lmp ov 12345",
+        "detalhes da ov 12345",
+    )),
+    ("/supplies/stock-value", "Valor total de estoque (empresa)", (
+        "valor total de estoque",
+        "quanto vale o estoque",
+    )),
+    ("/inventory-turnover", "Giro de estoque (IDD)", (
+        "giro de estoque",
+        "idd do estoque",
+    )),
+    ("/cpv", "Indicador CPV", ("cpv de suprimentos", "indicador cpv")),
+    ("/otd", "Indicador OTD", ("otd de entregas", "indicador otd")),
+    ("/data/sql", "Consulta SQL (leitura)", (
+        "consulta sql autorizada",
+        "select somente leitura",
+    )),
+    ("/sale-order", "Ordens de venda", (
+        "ordens de venda do período",
+        "listar ovs",
+    )),
+    ("/commercial/", "Indicadores comerciais", ("indicadores comerciais do mês",)),
+    ("/financial/", "Indicadores financeiros", ("indicadores financeiros",)),
+    ("/production/", "Indicadores de produção", ("indicadores de produção",)),
+    ("/hr/", "Indicadores de RH", ("indicadores de rh", "snapshot rh")),
+    ("/quality/", "Indicadores de qualidade", ("indicadores de qualidade",)),
+)
+
+# Exemplos gerais quando não há agente (chat comum)
+_COMMON_CHAT_EXAMPLES: tuple[str, ...] = (
+    "estoque do produto 10080001",
+    "fornecedores do 10080001 em tabela",
+    "estrutura do 10080001",
+    "preço do 10080001",
+    "listar lmps da filial",
+    "o que você pode fazer",
+    "quais apps tenho acesso",
 )
 
 
@@ -64,7 +176,7 @@ class ChatCapabilitiesService:
     def is_capabilities_question(cls, message: str) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        if len(normalized) > 220:
+        if len(normalized) > 280:
             return False
 
         if ChatMessageNormalizationService.contains_any(message, _CAPABILITIES_QUESTION_TERMS):
@@ -76,8 +188,12 @@ class ChatCapabilitiesService:
             "comandos",
             "capacidades",
             "funcionalidades",
+            "menu",
         )
         if normalized in short_help:
+            return True
+
+        if normalized.startswith(("ajuda ", "help ")) and len(normalized) < 80:
             return True
 
         return False
@@ -103,6 +219,8 @@ class ChatCapabilitiesService:
             [
                 "- Respostas com base na **documentação e conhecimento** autorizado (RAG).",
                 "- Anexos e fontes da conversa ou do projeto, quando enviados.",
+                "- Entendo perguntas com **pequenos erros de digitação** (ex.: *forncedores*, "
+                "*estoq*, *preco*, *estrutur*).",
             ]
         )
 
@@ -113,8 +231,8 @@ class ChatCapabilitiesService:
         if allowed and action_catalog:
             lines.extend(["", f"**Consultas operacionais — agente {agent_name or 'atual'}**"])
             lines.append(
-                "Com as APIs/actions abaixo habilitadas neste agente, consigo buscar dados "
-                "reais na api-delpi e apresentar em texto, tabela ou gráfico (quando fizer sentido):"
+                "Com as APIs/actions abaixo habilitadas neste agente, busco dados reais na "
+                "api-delpi e apresento em **texto**, **tabela** ou **gráfico** (quando fizer sentido):"
             )
             lines.append("")
             lines.extend(cls._format_action_catalog(action_catalog, allowed))
@@ -125,20 +243,19 @@ class ChatCapabilitiesService:
                     "**Consultas operacionais (produto, estoque, LMP, fornecedores…)**",
                     "- No **chat comum**, selecione um **agente especializado** com as actions "
                     "OpenAPI habilitadas para a consulta desejada.",
-                    "- Exemplos: estoque do produto 10080001, fornecedores, estrutura (BOM), "
-                    "LMPs, indicadores de suprimentos.",
-                    "- Você pode pedir em linguagem natural; erros leves de digitação "
-                    "costumam ser interpretados (ex.: *forncedores*, *estoq*).",
+                    "- Exemplos de perguntas que funcionam com um agente configurado:",
                 ]
             )
+            for example in _COMMON_CHAT_EXAMPLES:
+                lines.append(f"  - *{example}*")
 
         lines.extend(
             [
                 "",
                 "**Dicas**",
-                "- Seja específico: inclua **código do produto** ou **número da OV** quando souber.",
+                "- Inclua **código do produto** (ex.: 10080001) ou **número da OV** quando souber.",
                 "- Peça formato: *em tabela*, *em gráfico* ou *só texto*.",
-                "- Perguntas ambíguas: vou pedir esclarecimento em vez de inventar dados.",
+                "- Se faltar contexto, pergunto o que você precisa em vez de inventar dados.",
             ]
         )
 
@@ -147,7 +264,7 @@ class ChatCapabilitiesService:
     @classmethod
     def _format_action_catalog(cls, catalog: list[dict], allowed_ids: list[str]) -> list[str]:
         allowed_set = set(allowed_ids)
-        by_category: dict[str, list[str]] = {}
+        by_category: dict[str, list[dict]] = {}
 
         for action in catalog:
             action_id = str(action.get("actionId") or "").strip()
@@ -155,40 +272,57 @@ class ChatCapabilitiesService:
                 continue
 
             path = str(action.get("path") or "")
-            method = str(action.get("method") or "GET").upper()
-            summary = str(action.get("summary") or action.get("description") or action_id).strip()
-            category = cls._category_for_path(path)
-
-            label = summary
-            if path:
-                label = f"{summary} — `{method} {path}`"
-
-            by_category.setdefault(category, []).append(label)
+            category, _examples = cls._resolve_path_rule(path)
+            by_category.setdefault(category, []).append(
+                {
+                    "summary": str(
+                        action.get("summary") or action.get("description") or action_id
+                    ).strip(),
+                    "method": str(action.get("method") or "GET").upper(),
+                    "path": path,
+                    "examples": _examples,
+                }
+            )
 
         if not by_category:
             return ["- Nenhuma action detalhada no catálogo; verifique a configuração do agente."]
 
         output: list[str] = []
-        max_per_category = 8
+        max_per_category = 12
 
         for category in sorted(by_category.keys()):
             items = by_category[category]
             output.append(f"**{category}**")
+            shown_examples: set[str] = set()
+
             for item in items[:max_per_category]:
-                output.append(f"- {item}")
+                summary = item["summary"]
+                path = item["path"]
+                method = item["method"]
+                line = f"- {summary} — `{method} {path}`" if path else f"- {summary}"
+                output.append(line)
+
+                for ex in item.get("examples") or ():
+                    if ex not in shown_examples and len(shown_examples) < 3:
+                        output.append(f"  - Ex.: *{ex}*")
+                        shown_examples.add(ex)
+
             if len(items) > max_per_category:
-                output.append(f"- … e mais {len(items) - max_per_category} action(s)")
+                output.append(f"- … e mais {len(items) - max_per_category} action(s) nesta categoria")
             output.append("")
 
         return output
 
     @classmethod
-    def _category_for_path(cls, path: str) -> str:
+    def _resolve_path_rule(cls, path: str) -> tuple[str, tuple[str, ...]]:
         lowered = path.lower()
-        for token, label in _PATH_CATEGORY_HINTS:
+        for token, category, examples in _PATH_RULES:
             if token in lowered:
-                return label
-        return "Outras APIs"
+                return category, examples
+        return "Outras APIs", (
+            "consulta conforme rota habilitada",
+            "dados operacionais autorizados",
+        )
 
     @classmethod
     def load_action_catalog_for_agent(
