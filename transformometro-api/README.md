@@ -42,7 +42,7 @@ make test
 
 | Grupo | Exemplos |
 |-------|----------|
-| Processos / revisões | `/processos`, `/revisoes`, `POST /revisoes/{id}/ativar` |
+| Processos / revisões | `/processos`, `POST /processos/{id}/duplicar`, `/revisoes`, `POST /revisoes/{id}/ativar` |
 | Recursos | `/recursos-compartilhados`, vínculos `/revisao-recursos-compartilhados` |
 | Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências) |
 | Integração | `/integrations/engineering/transforma-mais/processes` |

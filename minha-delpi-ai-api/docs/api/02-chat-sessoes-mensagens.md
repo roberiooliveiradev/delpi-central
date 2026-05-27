@@ -138,9 +138,12 @@ Envia mensagem sem streaming.
   "messageId": "uuid",
   "answer": "Resposta do assistente",
   "sources": [],
-  "toolCalls": []
+  "toolCalls": [],
+  "canvasOpen": null
 }
 ```
+
+`canvasOpen` (opcional): `{ "title", "markdown", "sourceMessageId" }` quando o usuário pede envio à lousa.
 
 ---
 
@@ -158,7 +161,7 @@ Opcional (mesmo formato do envio normal, se o backend aceitar override de contex
 
 ### Resposta
 
-Mesmos eventos SSE de `messages/stream` (`sources`, `tool_calls`, `token`, `done`, `error`).
+Mesmos eventos SSE de `messages/stream` (ver lista abaixo).
 
 ---
 
@@ -184,22 +187,44 @@ Mesmo de envio normal:
 
 ### Eventos SSE
 
+| Evento | Quando | Payload principal |
+|--------|--------|-------------------|
+| `status` | Etapas intermediárias | `message` |
+| `sources` | Após RAG | `sources` |
+| `tool_calls` | Após tools | `toolCalls`, `adminGuidelines` |
+| `admin_guidelines` | Diretrizes ativas | `adminGuidelines` |
+| `assistant_pending` | Resposta persistida vazia, antes do LLM/playback | `messageId` |
+| `token` | Streaming legado (`CHAT_PERSIST_BEFORE_PLAYBACK=false`) | `content` |
+| `canvas_open` | Pedido de lousa («coloque na lousa/canvas/canva») | `title`, `markdown`, `sourceMessageId`, `messageId` |
+| `playback` | Resposta final já no banco; front anima texto | `messageId`, `answer`, `sources`, `toolCalls` |
+| `done` | Fim do turno | `messageId`, `answer`, `sources`, `toolCalls`, `playback?`, `canvasOpen?` |
+| `error` | Falha | `detail` ou `message` |
+
+Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
+
 ```text
 event: sources
 data: {"sources": [...]}
 
-
 event: tool_calls
 data: {"toolCalls": [...]}
 
+event: assistant_pending
+data: {"messageId": "..."}
 
-event: token
-data: {"content": "Olá"}
+event: canvas_open
+data: {"title": "Perfil", "markdown": "...", "sourceMessageId": "...", "messageId": "..."}
 
+event: playback
+data: {"messageId": "...", "answer": "Coloquei ... na lousa", "sources": [], "toolCalls": []}
 
 event: done
-data: {"messageId": "...", "answer": "...", "sources": [], "toolCalls": []}
+data: {"messageId": "...", "answer": "...", "playback": true, "canvasOpen": {...}}
 ```
+
+Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `done`.
+
+**Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente. O conteúdo vem da **última mensagem `assistant`** do histórico.
 
 ---
 

@@ -54,6 +54,8 @@ src/
 
 - Sessões com pin, arquivo e renomear
 - Mensagens com streaming, fontes, tool calls e anexos
+- **Lousa (canvas):** painel lateral com markdown editável; comando «coloque na lousa/canvas» após uma resposta do assistente
+- Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Feedback** (thumbs up/down) em respostas do assistente
 - Agentes, projetos, fontes e anexos por contexto
 - Notificações (sino) quando habilitado na Core API

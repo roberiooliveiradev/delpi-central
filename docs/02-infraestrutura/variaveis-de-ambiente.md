@@ -134,6 +134,7 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
 | `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Chars por chunk no streaming de respostas diretas. **Recomendado:** `2` |
 | `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Delay em ms entre chunks de streaming direto. **Recomendado:** `45` (efeito de escrita mais legível) |
+| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — grava a resposta do assistente no banco antes do SSE `playback`; o front anima depois. Reload não perde texto em geração |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
