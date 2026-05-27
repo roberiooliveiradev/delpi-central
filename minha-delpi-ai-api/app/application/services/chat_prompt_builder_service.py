@@ -1,13 +1,30 @@
 _FAST_PATH_SYSTEM_PROMPT = (
     "Você é o assistente Minha DELPI. "
     "Responda de forma breve e cordial em português. "
-    "Não invente dados internos."
+    "Use só o contexto desta conversa; não invente dados, permissões ou módulos. "
+    "Conclusão primeiro; se faltar informação, diga claramente."
 )
 
 
 class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
+
+    def _capabilities_policy_addon(self, current_message: str) -> str:
+        from app.application.services.chat_capabilities_service import (
+            ChatCapabilitiesService,
+        )
+
+        if not ChatCapabilitiesService.is_capabilities_question(current_message):
+            return ""
+
+        return (
+            "\n\n"
+            + self.prompt_policy_service._load_policy(
+                "chat-capabilities.md",
+                "Quando perguntarem suas capacidades, liste ferramentas e actions autorizadas.",
+            )
+        )
 
     def build_fast_path_messages(
         self,
@@ -39,12 +56,15 @@ class ChatPromptBuilderService:
         history_summary: str | None = None,
         operational_mode: bool = False,
         user_context: str | None = None,
+        skills: dict | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
             tool_context=tool_context,
             operational_mode=operational_mode,
+            skills=skills,
         )
+        base_prompt += self._capabilities_policy_addon(current_message)
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

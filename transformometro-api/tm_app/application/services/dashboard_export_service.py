@@ -5,9 +5,7 @@ import html
 import io
 from typing import Any
 
-from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
-    DashboardCalculoRepository,
-)
+from tm_app.application.services.dashboard_live_service import DashboardLiveService
 
 EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
     ("codigo_processo", "Código processo"),
@@ -36,7 +34,7 @@ class DashboardExportService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
-        return DashboardCalculoRepository().query_export_rows(
+        return DashboardLiveService().query_export_rows(
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,

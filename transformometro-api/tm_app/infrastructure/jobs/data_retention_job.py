@@ -29,6 +29,7 @@ _TABLES_WITH_SOFT_DELETE = [
     "transformometro.investimentos",
     "transformometro.medicoes",
     "transformometro.revisoes",
+    "transformometro.recurso_custos",
     "transformometro.recursos_compartilhados",
     "transformometro.processos",
 ]

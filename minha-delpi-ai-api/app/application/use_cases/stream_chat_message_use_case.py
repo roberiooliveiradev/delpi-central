@@ -14,10 +14,12 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
+from app.infrastructure.content.content_service import ContentService
 from app.domain.exceptions.chat_exceptions import (
     ChatMessageNotFoundError,
     ChatSessionAccessDeniedError,
@@ -107,7 +109,10 @@ class StreamChatMessageUseCase:
 
         yield {
             "type": "status",
-            "message": "Conectado. Preparando resposta...",
+            "message": ContentService.stream().get(
+                "statusConnected",
+                "Conectado. Preparando resposta...",
+            ),
         }
 
         workspace_context = self._build_workspace_context(session, user_id)
@@ -213,6 +218,12 @@ class StreamChatMessageUseCase:
                 direct_answer = user_direct
                 skip_rag = True
 
+        if not direct_answer and ChatCapabilitiesService.is_capabilities_question(message):
+            caps_direct = self._resolve_capabilities_answer(workspace_context)
+            if caps_direct:
+                direct_answer = caps_direct
+                skip_rag = True
+
         if skip_rag:
             rag = {"context": "", "sources": []}
         else:
@@ -297,6 +308,7 @@ class StreamChatMessageUseCase:
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
                 user_context=user_context,
+                skills=workspace_context.get("skills"),
             )
 
         answer_parts: list[str] = []
@@ -427,11 +439,14 @@ class StreamChatMessageUseCase:
         }
 
         if should_generate_session_title and Settings.CHAT_SESSION_TITLE_LLM_ENABLED:
-            self._schedule_session_title_llm_refine(
-                session_id=session_id,
-                user_id=user_id,
-                message=message,
-            )
+            from flask import has_app_context
+
+            if has_app_context():
+                self._schedule_session_title_llm_refine(
+                    session_id=session_id,
+                    user_id=user_id,
+                    message=message,
+                )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
         if not self.admin_guideline_prompt_service:
@@ -464,14 +479,21 @@ class StreamChatMessageUseCase:
 
         agent = self._get_session_agent(session, user_id)
 
+        from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
+
         return {
             "project": None,
             "agent": self._agent_metadata(agent),
             "projectPrompt": None,
             "agentPrompt": agent.system_prompt if agent else None,
             "agentKey": agent.key if agent else session.agent_key,
-            "allowedActionIds": None,
+            "allowedActionIds": [],
             "capabilities": {},
+            "skills": ChatAgentSkillsService.resolve(
+                agent_metadata=agent.metadata if agent else {},
+                allowed_action_ids=[],
+                has_agent=bool(agent),
+            ),
         }
 
     def _get_session_agent(self, session, user_id: UUID):
@@ -574,8 +596,15 @@ class StreamChatMessageUseCase:
             return False
 
         title = (session.title or "").strip().lower()
+        empty_titles = {
+            "",
+            *(
+                str(item).strip().lower()
+                for item in ContentService.stream().get("sessionTitleEmptyValues") or ()
+            ),
+        }
 
-        return title in {"", "nova conversa", "novo chat", "conversa sem título"}
+        return title in empty_titles
 
     def _schedule_session_title_llm_refine(
         self,
@@ -583,15 +612,29 @@ class StreamChatMessageUseCase:
         user_id: UUID,
         message: str,
     ) -> None:
+        from flask import current_app
+
+        app = current_app._get_current_object()
+
         def worker() -> None:
-            try:
-                self._generate_and_apply_session_title(
-                    session_id=session_id,
-                    user_id=user_id,
-                    message=message,
-                )
-            except Exception:
-                logger.exception("session_title_llm_refine_failed")
+            with app.app_context():
+                try:
+                    self._generate_and_apply_session_title(
+                        session_id=session_id,
+                        user_id=user_id,
+                        message=message,
+                    )
+                    from app.extensions.db import db
+
+                    db.session.commit()
+                except Exception:
+                    from app.extensions.db import db
+
+                    try:
+                        db.session.rollback()
+                    except Exception:
+                        pass
+                    logger.exception("session_title_llm_refine_failed")
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -603,23 +646,30 @@ class StreamChatMessageUseCase:
     ) -> None:
         fallback_title = self._fallback_title_from_message(message)
 
+        stream_texts = ContentService.stream()
+        title_system = str(
+            stream_texts.get("titleGenerationSystem")
+            or (
+                "Você cria títulos curtos para conversas corporativas. "
+                "Responda apenas com o título, em português, sem aspas, "
+                "sem ponto final, com no máximo 6 palavras."
+            )
+        )
+        title_user_template = str(
+            stream_texts.get("titleGenerationUserTemplate")
+            or "Crie um título curto para esta conversa:\n\n{message}"
+        )
+
         try:
             generated_title = self.llm_gateway.generate(
                 [
                     {
                         "role": "system",
-                        "content": (
-                            "Você cria títulos curtos para conversas corporativas. "
-                            "Responda apenas com o título, em português, sem aspas, "
-                            "sem ponto final, com no máximo 6 palavras."
-                        ),
+                        "content": title_system,
                     },
                     {
                         "role": "user",
-                        "content": (
-                            "Crie um título curto para esta conversa:\n\n"
-                            f"{message}"
-                        ),
+                        "content": title_user_template.format(message=message),
                     },
                 ]
             ).strip()
@@ -650,7 +700,9 @@ class StreamChatMessageUseCase:
         normalized = " ".join(message.split()).strip()
 
         if not normalized:
-            return "Nova conversa"
+            return str(
+                ContentService.stream().get("sessionTitleDefault") or "Nova conversa"
+            )
 
         if len(normalized) <= 48:
             return normalized
@@ -782,3 +834,12 @@ class StreamChatMessageUseCase:
 
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_direct_answer(access_token, message)
+
+    def _resolve_capabilities_answer(self, workspace_context: dict) -> str | None:
+        allowed = workspace_context.get("allowedActionIds") or []
+        catalog = ChatCapabilitiesService.load_action_catalog_for_agent(allowed)
+        return ChatCapabilitiesService.build_direct_answer(
+            workspace_context=workspace_context,
+            allowed_action_ids=allowed,
+            action_catalog=catalog,
+        )

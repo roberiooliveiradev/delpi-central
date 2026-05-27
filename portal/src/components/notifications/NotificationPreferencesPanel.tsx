@@ -16,7 +16,6 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   access: "Acesso",
   custom: "Personalizada",
   controle_mp: "Controle MP",
-  transformometro: "Transformômetro",
 };
 
 type Props = {

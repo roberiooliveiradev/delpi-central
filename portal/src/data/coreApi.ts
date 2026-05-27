@@ -64,8 +64,7 @@ export type NotificationCategory =
   | "announcement"
   | "access"
   | "custom"
-  | "controle_mp"
-  | "transformometro";
+  | "controle_mp";
 
 export type NotificationPresentation = "text" | "html" | "template";
 

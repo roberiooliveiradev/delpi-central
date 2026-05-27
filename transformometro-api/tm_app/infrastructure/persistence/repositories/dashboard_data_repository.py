@@ -28,6 +28,9 @@ class DashboardDataRepository(PluginBaseRepository):
         vinculos = self.fetch_all(
             "SELECT * FROM transformometro.revisao_recursos_compartilhados WHERE deletado = FALSE"
         )
+        custos = self.fetch_all(
+            "SELECT * FROM transformometro.recurso_custos WHERE deletado = FALSE"
+        )
         return TransformometroRawData(
             processos=processos,
             revisoes=revisoes,
@@ -35,6 +38,7 @@ class DashboardDataRepository(PluginBaseRepository):
             investimentos=investimentos,
             recursos_compartilhados=recursos,
             revisao_recursos_compartilhados=vinculos,
+            recurso_custos=custos,
         )
 
 

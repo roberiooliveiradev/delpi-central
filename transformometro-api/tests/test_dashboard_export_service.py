@@ -4,10 +4,10 @@ from tm_app.application.services.dashboard_export_service import DashboardExport
 
 
 @patch(
-    "tm_app.application.services.dashboard_export_service.DashboardCalculoRepository"
+    "tm_app.application.services.dashboard_export_service.DashboardLiveService"
 )
-def test_build_excel_html_includes_pt_headers(mock_repo):
-    mock_repo.return_value.query_export_rows.return_value = [
+def test_build_excel_html_includes_pt_headers(mock_live):
+    mock_live.return_value.query_export_rows.return_value = [
         {
             "codigo_processo": "P-001",
             "nome_processo": "Teste",

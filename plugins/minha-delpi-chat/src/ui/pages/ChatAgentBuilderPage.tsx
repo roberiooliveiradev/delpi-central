@@ -31,6 +31,7 @@ import {
   transferChatAgentOwnership,
   listAgentSources,
   listChatAgentActionProviders,
+  listChatAgentSkills,
   listChatAgentShares,
   previewChatAgent,
   revokeChatAgentShare,
@@ -41,6 +42,7 @@ import { ChatUserSearchField } from "../components/ChatUserSearchField";
 import type {
   ChatAgent,
   ChatAgentActionProvider,
+  ChatAgentSkillBinding,
   ChatAgentExportBundle,
   ChatAgentShare,
   ChatAgentStats,
@@ -77,6 +79,7 @@ type ChatAgentBuilderPageProps = {
   onBack: () => void;
   onCreateAction?: (agent: ChatAgent) => void;
   onConfigureAction?: (agent: ChatAgent, providerKey: string) => void;
+  onConfigureSkills?: (agent: ChatAgent) => void;
   onSelectAgent?: (agentKey: string | null) => void;
   onCreateAgent?: (payload: AgentPayload) => Promise<ChatAgent | null>;
   onUpdateAgent?: (
@@ -144,6 +147,7 @@ export function ChatAgentBuilderPage({
   onBack,
   onCreateAction,
   onConfigureAction,
+  onConfigureSkills,
   onSelectAgent,
   onCreateAgent,
   onUpdateAgent,
@@ -213,6 +217,7 @@ export function ChatAgentBuilderPage({
   );
 
   const [agentActionProviders, setAgentActionProviders] = useState<ChatAgentActionProvider[]>([]);
+  const [agentSkillBindings, setAgentSkillBindings] = useState<ChatAgentSkillBinding[]>([]);
   const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
@@ -246,10 +251,11 @@ export function ChatAgentBuilderPage({
       setLocalError(null);
 
       try {
-        const [details, sources, actionProviders] = await Promise.all([
+        const [details, sources, actionProviders, skillBindings] = await Promise.all([
           getChatAgent(agent.id, { getAccessToken }),
           listAgentSources(agent.id, { getAccessToken }),
           listChatAgentActionProviders(agent.id, { getAccessToken }),
+          listChatAgentSkills(agent.id, { getAccessToken }),
         ]);
 
         if (!isMounted) {
@@ -289,6 +295,7 @@ export function ChatAgentBuilderPage({
 
         setAgentSources(sources);
         setAgentActionProviders(actionProviders);
+        setAgentSkillBindings(skillBindings);
       } catch {
         if (isMounted) {
           setLocalError("Não foi possível carregar os detalhes completos do agente.");
@@ -1471,7 +1478,66 @@ export function ChatAgentBuilderPage({
               </label>
             </div>
           </section>
-          
+
+          <section className="mdc-chat-agent-builder__section">
+            <div className="mdc-chat-agent-builder__section-title">
+              <Sparkles size={18} aria-hidden="true" />
+              <div>
+                <h2>Skills</h2>
+                <p>
+                  Comportamentos do assistente (prompt). Diferente de <strong>Actions</strong>,
+                  que executam APIs externas.
+                </p>
+              </div>
+            </div>
+
+            {agent ? (
+              <div className="mdc-chat-agent-builder__actions-summary">
+                {agentSkillBindings.length > 0 ? (
+                  agentSkillBindings.map((binding) => (
+                    <article key={binding.skillKey}>
+                      <span className="mdc-chat-agent-builder__actions-icon">
+                        <Sparkles size={16} aria-hidden="true" />
+                      </span>
+
+                      <span>
+                        <strong>{binding.label}</strong>
+                        <small>
+                          {binding.skillKey}
+                          {binding.enabled ? " · ativa" : " · inativa"}
+                          {binding.derived?.sqlExecutionAvailable
+                            ? " · execução SQL disponível"
+                            : binding.skillKey === "sql"
+                              ? " · sem action SQL"
+                              : ""}
+                        </small>
+                      </span>
+                    </article>
+                  ))
+                ) : (
+                  <div className="mdc-chat-agent-builder__actions-empty">
+                    <strong>Nenhuma skill configurada</strong>
+                    <p>Ative skills para orientar o comportamento do assistente.</p>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className="mdc-chat-agent-builder__secondary"
+                  onClick={() => onConfigureSkills?.(agent)}
+                >
+                  <Settings2 size={16} aria-hidden="true" />
+                  <span>Configurar skills</span>
+                </button>
+              </div>
+            ) : (
+              <div className="mdc-chat-agent-builder__actions-empty">
+                <strong>Salve o agente para configurar skills</strong>
+                <p>Depois de criar o agente, você poderá ativar comportamentos como Especialista SQL.</p>
+              </div>
+            )}
+          </section>
+
           <section className="mdc-chat-agent-builder__section">
             <div className="mdc-chat-agent-builder__section-title">
               <Zap size={18} aria-hidden="true" />

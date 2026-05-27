@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
-    DashboardCalculoRepository,
-)
+from tm_app.application.services.dashboard_live_service import DashboardLiveService
 
 
 class DashboardAlertsService:
@@ -22,7 +20,7 @@ class DashboardAlertsService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        rows = DashboardCalculoRepository().query_process_monthly_liquida(
+        rows = DashboardLiveService().query_process_monthly_liquida(
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,

@@ -1,6 +1,17 @@
 from app.domain.services.prompt_policy_service import PromptPolicyService
 
 
+def test_build_system_prompt_includes_context_engineering():
+    service = PromptPolicyService()
+
+    prompt = service.build_system_prompt()
+
+    assert "Você é o assistente Minha DELPI" in prompt
+    assert "Engenharia de contexto" in prompt
+    assert "Decisões" in prompt
+    assert "não invente" in prompt.lower()
+
+
 def test_contextual_prompt_always_includes_base_and_response_style():
     service = PromptPolicyService()
 
@@ -10,6 +21,7 @@ def test_contextual_prompt_always_includes_base_and_response_style():
     )
 
     assert "Você é o assistente Minha DELPI" in prompt
+    assert "Engenharia de contexto" in prompt
     assert "Contexto documental autorizado" in prompt
     assert "Documento relevante" in prompt
     assert "Estilo e formatação" in prompt or "Instruções gerais para resposta" in prompt

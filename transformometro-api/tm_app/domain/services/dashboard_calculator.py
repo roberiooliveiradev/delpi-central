@@ -6,6 +6,7 @@ from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
 from tm_app.domain.raw_data import TransformometroRawData
+from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,7 @@ class CalculationContext:
     investimentos_by_revisao: Dict[str, List[dict]]
     recursos_by_id: Dict[str, dict]
     vinculos_by_revisao: Dict[str, List[dict]]
+    custos_by_recurso: Dict[str, List[dict]]
 
 
 class DashboardCalculatorService:
@@ -85,7 +87,7 @@ class DashboardCalculatorService:
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> dict:
-        filtered_raw = self._filter_raw_by_filial(raw=raw, filial_id=filial_id)
+        filtered_raw = self.filter_raw(raw=raw, filial_id=filial_id)
         context = self._build_context(filtered_raw)
 
         monthly_breakdown, calculation_rows = self._calculate_monthly_series(
@@ -127,21 +129,55 @@ class DashboardCalculatorService:
             "periodo": range_summary,
         }
 
+    def filter_raw(
+        self,
+        raw: TransformometroRawData,
+        *,
+        filial_id: Optional[str] = None,
+        setor_id: Optional[str] = None,
+        familia_processo: Optional[str] = None,
+    ) -> TransformometroRawData:
+        processos_filtrados = list(raw.processos)
+        filial = self._empty_to_none(filial_id)
+        if filial:
+            processos_filtrados = [
+                processo
+                for processo in processos_filtrados
+                if (self._empty_to_none(processo.get("filial_id")) or "").lower() == filial.lower()
+            ]
+        setor = self._empty_to_none(setor_id)
+        if setor:
+            processos_filtrados = [
+                processo
+                for processo in processos_filtrados
+                if (self._empty_to_none(processo.get("setor_id")) or "").lower() == setor.lower()
+            ]
+        familia = self._empty_to_none(familia_processo)
+        if familia:
+            processos_filtrados = [
+                processo
+                for processo in processos_filtrados
+                if (self._empty_to_none(processo.get("familia_processo")) or "").lower()
+                == familia.lower()
+            ]
+
+        if not (filial or setor or familia):
+            return raw
+
+        return self._narrow_raw_to_processos(raw, processos_filtrados)
+
     def _filter_raw_by_filial(
         self,
         raw: TransformometroRawData,
         filial_id: Optional[str],
     ) -> TransformometroRawData:
-        filial = self._empty_to_none(filial_id)
-        if not filial:
-            return raw
+        return self.filter_raw(raw, filial_id=filial_id)
 
-        processos_filtrados = [
-            processo
-            for processo in raw.processos
-            if (self._empty_to_none(processo.get("filial_id")) or "").lower() == filial.lower()
-        ]
-
+    def _narrow_raw_to_processos(
+        self,
+        raw: TransformometroRawData,
+        processos_filtrados: list[dict],
+    ) -> TransformometroRawData:
         processo_ids = {
             self._empty_to_none(processo.get("processo_id"))
             for processo in processos_filtrados
@@ -190,6 +226,12 @@ class DashboardCalculatorService:
             if self._empty_to_none(recurso.get("recurso_compartilhado_id")) in recurso_ids
         ]
 
+        custos_filtrados = [
+            custo
+            for custo in raw.recurso_custos
+            if self._empty_to_none(custo.get("recurso_compartilhado_id")) in recurso_ids
+        ]
+
         return TransformometroRawData(
             processos=processos_filtrados,
             revisoes=revisoes_filtradas,
@@ -197,6 +239,7 @@ class DashboardCalculatorService:
             investimentos=investimentos_filtrados,
             recursos_compartilhados=recursos_filtrados,
             revisao_recursos_compartilhados=vinculos_filtrados,
+            recurso_custos=custos_filtrados,
         )
 
     def _build_context(self, raw: TransformometroRawData) -> CalculationContext:
@@ -207,6 +250,7 @@ class DashboardCalculatorService:
             investimentos_by_revisao=self._group_by(raw.investimentos, "revisao_id"),
             recursos_by_id=self._index_by(raw.recursos_compartilhados, "recurso_compartilhado_id"),
             vinculos_by_revisao=self._group_by(raw.revisao_recursos_compartilhados, "revisao_id"),
+            custos_by_recurso=self._group_by(raw.recurso_custos, "recurso_compartilhado_id"),
         )
 
     def _calculate_monthly_series(
@@ -699,7 +743,8 @@ class DashboardCalculatorService:
             if not resource or not self._is_resource_eligible(resource, competencia_date):
                 continue
 
-            total_value = self._to_float(resource.get("valor_total_recorrente")) or 0.0
+            custos = context.custos_by_recurso.get(resource_id or "", [])
+            total_value = resolve_recurso_valor_mensal(resource, custos, competencia_date)
             allocation_criteria = (self._empty_to_none(resource.get("criterio_rateio")) or "igualitario").lower()
 
             eligible_links = self._get_eligible_links_for_resource(

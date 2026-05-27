@@ -128,9 +128,22 @@
 }
 
 @media (max-width: 640px) {
+  .mdc-rich-table__header {
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .mdc-rich-table__actions {
+    flex-wrap: wrap;
+  }
+
   .mdc-rich-table__table th,
   .mdc-rich-table__table td {
     padding: 0.35rem 0.5rem;
     font-size: 0.75rem;
+  }
+
+  .mdc-rich-table__scroll {
+    max-height: min(50vh, 22rem);
   }
 }

@@ -170,6 +170,7 @@
 @media (max-width: 720px) {
   .mdc-chat-context-topbar {
     padding-inline: 0.8rem;
+    min-height: 2.55rem;
   }
 
   .mdc-chat-context-topbar__identity {
@@ -177,6 +178,32 @@
   }
 
   .mdc-chat-context-topbar__identity em {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-context-topbar {
+    gap: 0.35rem;
+    padding-inline: 0.65rem;
+  }
+
+  .mdc-chat-context-topbar__identity strong {
+    font-size: 0.84rem;
+  }
+
+  .mdc-chat-context-topbar__actions {
+    gap: 0.35rem;
+  }
+
+  .mdc-chat-context-topbar__actions > button {
+    height: 1.85rem;
+    min-width: 1.85rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .mdc-chat-context-topbar__actions > span {
     display: none;
   }
 }

@@ -1,0 +1,374 @@
+{
+  "intro": "Posso ajudar você nestes formatos:",
+  "sections": {
+    "alwaysAvailableTitle": "**Sempre disponíveis (chat comum e agentes)**",
+    "platformTools": [
+      {
+        "id": "get_current_user",
+        "description": "Dados do seu perfil (nome, e-mail, papéis e grupos, conforme consentimento)."
+      },
+      {
+        "id": "get_allowed_apps",
+        "description": "Aplicativos e módulos que você pode acessar na plataforma."
+      },
+      {
+        "id": "get_allowed_routes",
+        "description": "Menus e rotas autorizados no seu perfil."
+      }
+    ],
+    "alwaysAvailableItems": [
+      "Respostas com base na **documentação e conhecimento** autorizado (RAG).",
+      "Anexos e fontes da conversa ou do projeto, quando enviados.",
+      "Entendo perguntas com **pequenos erros de digitação** (ex.: *forncedores*, *estoq*, *preco*, *estrutur*)."
+    ],
+    "skillsTitle": "**Skills (comportamento do assistente)**",
+    "operationalWithAgentTitle": "**Consultas operacionais — agente {agent_name}**",
+    "operationalWithAgentIntro": "Com as APIs/actions abaixo habilitadas neste agente, busco dados reais na api-delpi e apresento em **texto**, **tabela** ou **gráfico** (quando fizer sentido):",
+    "operationalCommonTitle": "**Consultas operacionais (produto, estoque, LMP, fornecedores…)**",
+    "operationalCommonItems": [
+      "No **chat comum**, selecione um **agente especializado** com as actions OpenAPI habilitadas para a consulta desejada.",
+      "Exemplos de perguntas que funcionam com um agente configurado:"
+    ],
+    "tipsTitle": "**Dicas**",
+    "tipsItems": [
+      "Inclua **código do produto** (ex.: 10080001) ou **número da OV** quando souber.",
+      "Peça formato: *em tabela*, *em gráfico* ou *só texto*.",
+      "Se faltar contexto, pergunto o que você precisa em vez de inventar dados."
+    ]
+  },
+  "skills": {
+    "sqlAuthoringOn": "- **SQL (elaborar consultas)**: posso montar, explicar e **revisar/corrigir** queries `SELECT` (SQL genérico) em blocos de código, incluindo análise de erros de sintaxe quando você colar SQL ou mensagens de erro (skill).",
+    "sqlAuthoringOff": "- **SQL (elaborar consultas)**: desligado nesta sessão — habilite a skill no agente ou use o chat comum (padrão global).",
+    "sqlExecutionOn": "- **SQL (executar)**: action `POST /data/sql` habilitada — consigo rodar consultas somente leitura autorizadas e mostrar o resultado.",
+    "sqlExecutionOffWithActions": "- **SQL (executar)**: não há action de execução SQL habilitada; só elaboro o texto da query se a skill estiver ativa.",
+    "sqlExecutionOff": "- **SQL (executar)**: requer agente com action `POST /data/sql` configurada (diferente da skill de elaboração).",
+    "skillsVsActions": "- **Skills ≠ Actions**: skills orientam *como* respondo; actions *executam* APIs."
+  },
+  "catalog": {
+    "emptyActions": "- Nenhuma action detalhada no catálogo; verifique a configuração do agente.",
+    "moreActions": "- … e mais {count} action(s) nesta categoria",
+    "examplePrefix": "  - Ex.: *{example}*",
+    "actionLineWithPath": "- {summary} — `{method} {path}`",
+    "actionLine": "- {summary}"
+  },
+  "detection": {
+    "questionTerms": [
+      "o que voce pode fazer",
+      "o que você pode fazer",
+      "o que vc pode fazer",
+      "o que voce e capaz de fazer",
+      "o que vc e capaz de fazer",
+      "o que e capaz de fazer",
+      "do que voce e capaz",
+      "do que vc e capaz",
+      "do que e capaz",
+      "quais coisas voce e capaz",
+      "quais coisas vc e capaz",
+      "o que consegue fazer",
+      "o que sabe fazer",
+      "o que voce sabe",
+      "quais suas capacidades",
+      "suas capacidades",
+      "suas funcionalidades",
+      "quais funcionalidades",
+      "o que faz",
+      "o que voce faz",
+      "o que vc faz",
+      "o que você faz",
+      "para que serve",
+      "como pode me ajudar",
+      "como voce pode ajudar",
+      "como voce pode me ajudar",
+      "como você pode ajudar",
+      "como você pode me ajudar",
+      "como voce me ajuda",
+      "me ajuda com o que",
+      "me ajude com o que",
+      "lista de comandos",
+      "quais comandos",
+      "quais apis",
+      "quais api",
+      "quais actions",
+      "quais acoes",
+      "quais rotas da api",
+      "quais ferramentas",
+      "ferramentas disponiveis",
+      "rotas disponiveis",
+      "o que tenho disponivel",
+      "o que esta disponivel",
+      "me explique suas funcoes",
+      "quais consultas",
+      "pode consultar o que",
+      "o que consegue consultar",
+      "o que voce consulta",
+      "quais dados voce acessa",
+      "quais dados você acessa",
+      "me mostre o que da pra fazer",
+      "da pra fazer o que",
+      "o que da pra consultar",
+      "menu de comandos",
+      "help"
+    ],
+    "shortHelp": [
+      "ajuda",
+      "help",
+      "comandos",
+      "capacidades",
+      "funcionalidades",
+      "menu"
+    ],
+    "capazTokens": [
+      "fazer",
+      "consultar",
+      "ajudar",
+      "oferecer"
+    ],
+    "maxMessageLength": 280,
+    "helpPrefixMaxLength": 80
+  },
+  "pathRules": [
+    {
+      "token": "/stock",
+      "category": "Estoque de produto",
+      "examples": [
+        "estoque do produto 10080001",
+        "saldo do 10080001",
+        "quanto tem em estoque do 10080001"
+      ]
+    },
+    {
+      "token": "/suppliers",
+      "category": "Fornecedores de produto",
+      "examples": [
+        "fornecedores do 10080001",
+        "quem fornece o produto 10080001",
+        "forncedores do 10080001 em tabela"
+      ]
+    },
+    {
+      "token": "/customers",
+      "category": "Clientes de produto",
+      "examples": [
+        "clientes do produto 10080001",
+        "quem compra o 10080001"
+      ]
+    },
+    {
+      "token": "/structure",
+      "category": "Estrutura (BOM)",
+      "examples": [
+        "estrutura do produto 10080001",
+        "componentes do 10080001",
+        "bom do 10080001"
+      ]
+    },
+    {
+      "token": "/parents",
+      "category": "Onde o produto é usado (pais)",
+      "examples": [
+        "onde o 10080001 é usado",
+        "produtos pai do 10080001",
+        "pai do 10080001"
+      ]
+    },
+    {
+      "token": "/purchases",
+      "category": "Compras de produto",
+      "examples": [
+        "compras do produto 10080001",
+        "historico de compras do 10080001"
+      ]
+    },
+    {
+      "token": "/sales",
+      "category": "Vendas de produto",
+      "examples": [
+        "vendas do produto 10080001",
+        "faturamento do 10080001"
+      ]
+    },
+    {
+      "token": "/prices",
+      "category": "Preços / tabelas",
+      "examples": [
+        "preço do produto 10080001",
+        "tabela de preço do 10080001",
+        "quanto custa o 10080001"
+      ]
+    },
+    {
+      "token": "/guide",
+      "category": "Roteiro de produção",
+      "examples": [
+        "roteiro do produto 10080001",
+        "etapas do 10080001"
+      ]
+    },
+    {
+      "token": "/inspection",
+      "category": "Inspeção / qualidade",
+      "examples": [
+        "inspeção do produto 10080001",
+        "plano de inspeção do 10080001"
+      ]
+    },
+    {
+      "token": "/internal-movements",
+      "category": "Movimentações internas",
+      "examples": [
+        "movimentações internas do 10080001",
+        "transferências do 10080001"
+      ]
+    },
+    {
+      "token": "/inbound-invoice",
+      "category": "Notas fiscais de entrada",
+      "examples": [
+        "notas de entrada do 10080001",
+        "nfe entrada do 10080001"
+      ]
+    },
+    {
+      "token": "/outbound-invoice",
+      "category": "Notas fiscais de saída",
+      "examples": [
+        "notas de saída do 10080001",
+        "nfe saída do 10080001"
+      ]
+    },
+    {
+      "token": "/search",
+      "category": "Busca de produtos",
+      "examples": [
+        "buscar produto por descrição parafuso",
+        "pesquisar produto bandeira"
+      ]
+    },
+    {
+      "token": "/analyser",
+      "category": "Ficha / descrição do produto",
+      "examples": [
+        "descrição do produto 10080001",
+        "me fala do produto 10080001",
+        "dados cadastrais do 10080001"
+      ]
+    },
+    {
+      "token": "/engineering/lmps",
+      "category": "LMP / listas de materiais de projeto",
+      "examples": [
+        "listar lmps",
+        "lmps da filial 01",
+        "detalhe da lmp ov 12345"
+      ]
+    },
+    {
+      "token": "/lmps/",
+      "category": "Detalhe de LMP",
+      "examples": [
+        "lmp ov 12345",
+        "detalhes da ov 12345"
+      ]
+    },
+    {
+      "token": "/supplies/stock-value",
+      "category": "Valor total de estoque (empresa)",
+      "examples": [
+        "valor total de estoque",
+        "quanto vale o estoque"
+      ]
+    },
+    {
+      "token": "/inventory-turnover",
+      "category": "Giro de estoque (IDD)",
+      "examples": [
+        "giro de estoque",
+        "idd do estoque"
+      ]
+    },
+    {
+      "token": "/cpv",
+      "category": "Indicador CPV",
+      "examples": [
+        "cpv de suprimentos",
+        "indicador cpv"
+      ]
+    },
+    {
+      "token": "/otd",
+      "category": "Indicador OTD",
+      "examples": [
+        "otd de entregas",
+        "indicador otd"
+      ]
+    },
+    {
+      "token": "/data/sql",
+      "category": "Consulta SQL (leitura)",
+      "examples": [
+        "consulta sql autorizada",
+        "select somente leitura"
+      ]
+    },
+    {
+      "token": "/sale-order",
+      "category": "Ordens de venda",
+      "examples": [
+        "ordens de venda do período",
+        "listar ovs"
+      ]
+    },
+    {
+      "token": "/commercial/",
+      "category": "Indicadores comerciais",
+      "examples": [
+        "indicadores comerciais do mês"
+      ]
+    },
+    {
+      "token": "/financial/",
+      "category": "Indicadores financeiros",
+      "examples": [
+        "indicadores financeiros"
+      ]
+    },
+    {
+      "token": "/production/",
+      "category": "Indicadores de produção",
+      "examples": [
+        "indicadores de produção"
+      ]
+    },
+    {
+      "token": "/hr/",
+      "category": "Indicadores de RH",
+      "examples": [
+        "indicadores de rh",
+        "snapshot rh"
+      ]
+    },
+    {
+      "token": "/quality/",
+      "category": "Indicadores de qualidade",
+      "examples": [
+        "indicadores de qualidade"
+      ]
+    }
+  ],
+  "pathRuleDefault": {
+    "category": "Outras APIs",
+    "examples": [
+      "consulta conforme rota habilitada",
+      "dados operacionais autorizados"
+    ]
+  },
+  "commonExamples": [
+    "estoque do produto 10080001",
+    "fornecedores do 10080001 em tabela",
+    "estrutura do 10080001",
+    "preço do 10080001",
+    "listar lmps da filial",
+    "o que você pode fazer",
+    "quais apps tenho acesso"
+  ]
+}

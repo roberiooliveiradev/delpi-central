@@ -100,11 +100,6 @@ append_kv "SI_MEASUREMENTS_BACKEND" "api_delpi_http"
 append_kv "SI_MEASUREMENTS_STUB" "false"
 append_kv "TRANSFORMOMETRO_API_BASE_URL" "http://transformometro-api:8000"
 append_kv "TM_RUN_MIGRATIONS_ON_STARTUP" "true"
-append_kv "TM_NOTIFICATIONS_ENABLED" "false"
-append_kv "TM_CORE_API_URL" "http://core-api:8000"
-append_kv "TM_PORTAL_ROUTE" "/apps/transformometro"
-append_kv "TM_WORKFLOW_APPROVER_EMAILS" ""
-append_kv "TM_WORKFLOW_APPROVER_ROLE_IDS" ""
 
 echo
 echo "Concluído. Recrie os serviços que leem .env:"

@@ -148,6 +148,9 @@ class Settings:
     CHAT_USER_CONTEXT_ENABLED = (
         os.getenv("CHAT_USER_CONTEXT_ENABLED", "true").lower() == "true"
     )
+    CHAT_DEFAULT_SQL_AUTHORING_SKILL = (
+        os.getenv("CHAT_DEFAULT_SQL_AUTHORING_SKILL", "true").lower() == "true"
+    )
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
     CHAT_HISTORY_SUMMARY_ENABLED = (

@@ -5,6 +5,9 @@ from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.services.chat_external_action_direct_answer_service import (
     ChatExternalActionDirectAnswerService,
 )
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
@@ -45,6 +48,10 @@ class ChatToolContextService:
                 "toolCalls": [],
                 "nativeToolCalling": {"used": False, "providerSupports": False},
             }
+
+        message = ChatMessageNormalizationService.normalize_for_matching(message) or str(
+            message or ""
+        ).strip()
 
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []

@@ -27,6 +27,9 @@
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
   backdrop-filter: blur(8px);
+  width: 100%;
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
 }
 
 .mdc-chat-empty-composer {

@@ -75,14 +75,13 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Export dashboard | `GET /dashboard/export.csv` | ✅ |
 | Comparativo revisões | `GET /processos/{id}/comparativo` + tabela no detalhe | ✅ |
 | Diagnóstico rateio | `GET /revisoes/{id}/diagnostico-rateio` + painel na revisão | ✅ |
-| UI Fase 4 | Alertas + CSV/Excel no dashboard; família no cadastro; comparativo + rateio; toolbar workflow | ✅ |
+| UI Fase 4 | Alertas + CSV/Excel no dashboard; família no cadastro; comparativo + rateio | ✅ |
 | Testes | `tests/test_phase4_services.py` | ✅ |
-| Workflow de aprovação de revisão | V005 + `POST /revisoes/{id}/workflow/*`; ativação só se `aprovada` | ✅ |
+| Ativar revisão | `POST /revisoes/{id}/ativar` (sem workflow de aprovação; V006) | ✅ |
 | Export Excel | `GET /dashboard/export.xls` (HTML formatado, abre no Excel) + botão no MFE | ✅ |
 | Export PDF | Botão imprimir + CSS `@media print` no dashboard | ✅ |
 | URLs processo/revisão | `/processos/{id}` e `/revisoes/{id}` no MFE | ✅ |
 | Recálculo incremental | `POST /recalcular` com escopo | ✅ |
-| Notificações workflow | Core API + deep link MFE (`DELPI_NAVIGATE`) | ✅ |
 
 ## Matriz de reaproveitamento
 
@@ -108,4 +107,4 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 1. **Deploy:** rebuild `transformometro-api` + MFE; `TM_RUN_MIGRATIONS_ON_STARTUP=true` (V004–V005); registrar manifesto (rota `/recursos`)
 2. **Registrar manifesto** na Core API + RBAC (`register-manifest.sh`)
 3. **Planilha somente leitura** (checklist em [OPERATIONS.md](./OPERATIONS.md))
-4. **Notificações:** habilitar `TM_NOTIFICATIONS_ENABLED` + aprovadores em produção — ver [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md)
+4. Validar **ativar revisão** após deploy V006 (revisões antigas em `rascunho` passam a `aprovada`)

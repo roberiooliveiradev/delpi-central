@@ -404,6 +404,31 @@ export type ChatAgentAction = {
   updatedAt: string;
 };
 
+export type ChatSkillCatalogItem = {
+  skillKey: string;
+  label: string;
+  description: string;
+  policyFile: string;
+  metadataFlag: string;
+  executionHint?: string | null;
+};
+
+export type ChatAgentSkillBinding = {
+  skillKey: string;
+  label: string;
+  description: string;
+  policyFile: string;
+  enabled: boolean;
+  executionHint?: string | null;
+  derived?: {
+    sqlExecutionAvailable?: boolean;
+  };
+};
+
+export type UpsertChatAgentSkillPayload = {
+  skillKey: string;
+  enabled: boolean;
+};
 
 export type ChatActionProvider = {
   id: string;

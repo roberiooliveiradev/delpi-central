@@ -19,7 +19,6 @@ import {
   FileSpreadsheet,
   Lightbulb,
   Percent,
-  RefreshCw,
 } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -53,7 +52,6 @@ import {
   fetchDashboardProcessos,
   fetchDashboardResumo,
   fetchOptions,
-  recalcularDashboard,
   type DashboardAlertItem,
   type DashboardEvolucaoItem,
   type DashboardFamiliaItem,
@@ -91,7 +89,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [recalculando, setRecalculando] = useState(false);
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
   const [exportando, setExportando] = useState(false);
@@ -185,20 +182,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       setError(err instanceof Error ? err.message : "Erro ao exportar Excel");
     } finally {
       setExportando(false);
-    }
-  }
-
-  async function handleRecalcular() {
-    setRecalculando(true);
-    setError(null);
-    try {
-      await recalcularDashboard(getAccessToken);
-      setLoading(true);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao recalcular");
-    } finally {
-      setRecalculando(false);
     }
   }
 
@@ -401,15 +384,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               <FileSpreadsheet size={16} />
               Excel
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={recalculando || isBusy}
-              onClick={() => void handleRecalcular()}
-            >
-              <RefreshCw size={16} />
-              {recalculando ? "Recalculando…" : "Recalcular"}
-            </button>
           </>
         }
       />
@@ -528,7 +502,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         >
           {savingsChartData.length === 0 && !isBusy ? (
             <p className="ds-state-box">
-              Sem dados no período. Cadastre processos, execute Recalcular e ajuste os
+              Sem dados no período. Cadastre processos, revisões e medições e ajuste os
               filtros de data.
             </p>
           ) : (
@@ -604,7 +578,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         rowKey={(row) => row.processo_id}
         loading={loading}
         refreshing={refreshing}
-        emptyMessage="Nenhum processo com economia calculada. Cadastre revisões e medições, depois Recalcular."
+        emptyMessage="Nenhum processo com economia calculada no período. Cadastre revisões e medições."
       />
     </TransformometroShell>
   );

@@ -10,11 +10,20 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createProcesso,
+  deleteProcesso,
   fetchOptions,
   fetchProcessos,
+  updateProcesso,
   type OptionsData,
   type Processo,
 } from "../../data/api/transformometroApi";
+import { ProcessoFormFields } from "../processos/ProcessoFormFields";
+import {
+  emptyProcessoForm,
+  payloadFromProcessoForm,
+  processoFormFromEntity,
+  type ProcessoFormState,
+} from "../processos/processoForm";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -34,19 +43,13 @@ export function ProcessosPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<ProcessoFormState>(emptyProcessoForm);
   const [filialId, setFilialId] = useState("");
   const [setorId, setSetorId] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQ, setSearchQ] = useState("");
   const [familiaFilter, setFamiliaFilter] = useState("");
-  const [form, setForm] = useState({
-    nome_processo: "",
-    filial_id: "01",
-    setor_id: "engenharia",
-    status_processo: "ativo",
-    familia_processo: "",
-    agrupador_ferramenta: "",
-  });
 
   const listParams = useMemo(() => {
     const params: Record<string, string> = {};
@@ -80,25 +83,60 @@ export function ProcessosPage({
     void load();
   }, [load]);
 
-  async function handleCreate(e: React.FormEvent) {
+  function startCreate() {
+    setEditingId(null);
+    setForm(emptyProcessoForm());
+    setShowForm(true);
+  }
+
+  function startEdit(row: Processo) {
+    setEditingId(row.processo_id);
+    setForm(processoFormFromEntity(row));
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyProcessoForm());
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const payload = payloadFromProcessoForm(form);
     try {
-      const created = await createProcesso(
-        {
-          ...form,
-          familia_processo: form.familia_processo.trim() || undefined,
-          agrupador_ferramenta: form.agrupador_ferramenta.trim() || undefined,
-        },
-        getAccessToken
-      );
-      setShowForm(false);
-      await load();
-      onOpenProcesso(created.processo_id);
+      if (editingId) {
+        await updateProcesso(editingId, payload, getAccessToken);
+        cancelForm();
+        await load();
+      } else {
+        const created = await createProcesso(payload, getAccessToken);
+        cancelForm();
+        await load();
+        onOpenProcesso(created.processo_id);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao criar");
+      setError(err instanceof Error ? err.message : "Erro ao salvar processo");
     }
   }
+
+  async function handleDelete(row: Processo) {
+    const label = `${row.codigo_processo} — ${row.nome_processo}`;
+    if (!window.confirm(`Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`)) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteProcesso(row.processo_id, getAccessToken);
+      if (editingId === row.processo_id) cancelForm();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir processo");
+    }
+  }
+
+  const editingRow = editingId ? items.find((p) => p.processo_id === editingId) : null;
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
     () => [
@@ -113,6 +151,35 @@ export function ProcessosPage({
       { key: "setor", header: "Setor", render: (row) => row.setor_id },
       { key: "familia", header: "Família", render: (row) => row.familia_processo ?? "—" },
       { key: "status", header: "Status", render: (row) => row.status_processo },
+      {
+        key: "acoes",
+        header: "",
+        className: "ds-table__actions",
+        render: (row) => (
+          <>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                startEdit(row);
+              }}
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleDelete(row);
+              }}
+            >
+              Excluir
+            </button>
+          </>
+        ),
+      },
     ],
     []
   );
@@ -127,13 +194,9 @@ export function ProcessosPage({
         onRefresh={() => void load()}
         refreshing={refreshing}
         actions={
-          <button
-            type="button"
-            className="ds-primary-btn"
-            onClick={() => setShowForm((v) => !v)}
-          >
+          <button type="button" className="ds-primary-btn" onClick={startCreate}>
             <Plus size={16} />
-            {showForm ? "Cancelar" : "Novo processo"}
+            Novo processo
           </button>
         }
       />
@@ -150,9 +213,9 @@ export function ProcessosPage({
           />
         </div>
         <div className="ds-filter-box">
-          <label htmlFor="tm-proc-filial">Filial</label>
+          <label htmlFor="tm-proc-list-filial">Filial</label>
           <select
-            id="tm-proc-filial"
+            id="tm-proc-list-filial"
             value={filialId}
             onChange={(e) => setFilialId(e.target.value)}
           >
@@ -165,9 +228,9 @@ export function ProcessosPage({
           </select>
         </div>
         <div className="ds-filter-box">
-          <label htmlFor="tm-proc-setor">Setor</label>
+          <label htmlFor="tm-proc-list-setor">Setor</label>
           <select
-            id="tm-proc-setor"
+            id="tm-proc-list-setor"
             value={setorId}
             onChange={(e) => setSetorId(e.target.value)}
           >
@@ -180,9 +243,9 @@ export function ProcessosPage({
           </select>
         </div>
         <div className="ds-filter-box">
-          <label htmlFor="tm-proc-status">Status</label>
+          <label htmlFor="tm-proc-list-status">Status</label>
           <select
-            id="tm-proc-status"
+            id="tm-proc-list-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -195,9 +258,9 @@ export function ProcessosPage({
           </select>
         </div>
         <div className="ds-filter-box">
-          <label htmlFor="tm-proc-familia">Família</label>
+          <label htmlFor="tm-proc-list-familia">Família</label>
           <input
-            id="tm-proc-familia"
+            id="tm-proc-list-familia"
             type="search"
             placeholder="ex.: ia"
             value={familiaFilter}
@@ -215,82 +278,22 @@ export function ProcessosPage({
 
       {showForm && options ? (
         <section className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">Novo processo</h2>
-          <form onSubmit={handleCreate}>
-            <div className="ds-filters-row">
-              <div className="ds-filter-box ds-filter-box--wide">
-                <label htmlFor="tm-nome">Nome do processo</label>
-                <input
-                  id="tm-nome"
-                  required
-                  value={form.nome_processo}
-                  onChange={(e) => setForm({ ...form, nome_processo: e.target.value })}
-                />
-              </div>
-              <div className="ds-filter-box">
-                <label htmlFor="tm-form-filial">Filial</label>
-                <select
-                  id="tm-form-filial"
-                  value={form.filial_id}
-                  onChange={(e) => setForm({ ...form, filial_id: e.target.value })}
-                >
-                  {options.filiais.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="ds-filter-box">
-                <label htmlFor="tm-form-setor">Setor</label>
-                <select
-                  id="tm-form-setor"
-                  value={form.setor_id}
-                  onChange={(e) => setForm({ ...form, setor_id: e.target.value })}
-                >
-                  {options.setores.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="ds-filter-box">
-                <label htmlFor="tm-form-status">Status</label>
-                <select
-                  id="tm-form-status"
-                  value={form.status_processo}
-                  onChange={(e) => setForm({ ...form, status_processo: e.target.value })}
-                >
-                  {options.status_processo.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="ds-filter-box">
-                <label htmlFor="tm-form-familia">Família (rateio)</label>
-                <input
-                  id="tm-form-familia"
-                  placeholder="ex.: ia, automação"
-                  value={form.familia_processo}
-                  onChange={(e) => setForm({ ...form, familia_processo: e.target.value })}
-                />
-              </div>
-              <div className="ds-filter-box">
-                <label htmlFor="tm-form-ferramenta">Agrupador ferramenta</label>
-                <input
-                  id="tm-form-ferramenta"
-                  placeholder="ex.: ChatGPT, Power Automate"
-                  value={form.agrupador_ferramenta}
-                  onChange={(e) => setForm({ ...form, agrupador_ferramenta: e.target.value })}
-                />
-              </div>
-            </div>
+          <h2 className="ds-section-title">
+            {editingId ? "Editar processo" : "Novo processo"}
+          </h2>
+          <form onSubmit={handleSubmit}>
+            <ProcessoFormFields
+              form={form}
+              options={options}
+              codigoProcesso={editingRow?.codigo_processo}
+              onChange={setForm}
+            />
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">
-                Salvar processo
+                {editingId ? "Salvar alterações" : "Criar processo"}
+              </button>
+              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
+                Cancelar
               </button>
             </div>
           </form>
@@ -299,7 +302,7 @@ export function ProcessosPage({
 
       <DataTableSection
         title="Lista de processos"
-        hint="Filtros acima aplicam na API"
+        hint="Filtros acima aplicam na API · Editar/Excluir ou clique na linha para revisões"
         columns={columns}
         rows={items}
         rowKey={(row) => row.processo_id}
@@ -311,7 +314,7 @@ export function ProcessosPage({
         onRowClick={(row) => onOpenProcesso(row.processo_id)}
         footer={
           <p className="ds-hint">
-            Clique em uma linha para abrir revisões, medições e investimentos.
+            Clique na linha para abrir revisões, medições e investimentos.
           </p>
         }
       />

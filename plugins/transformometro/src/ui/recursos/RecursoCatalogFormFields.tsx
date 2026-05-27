@@ -69,7 +69,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Valor mensal (R$) *
+          Valor mensal atual (R$) *
           <input
             type="number"
             min={0}

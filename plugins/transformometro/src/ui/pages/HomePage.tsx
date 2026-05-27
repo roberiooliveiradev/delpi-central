@@ -363,7 +363,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
         rowKey={(row) => row.processo_id}
         loading={isLoading}
         pageSize={10}
-        emptyMessage="Nenhum processo com economia no mês. Cadastre revisões e execute Recalcular."
+        emptyMessage="Nenhum processo com economia no mês. Cadastre revisões e medições."
       />
 
       <section className="ds-shortcuts-grid ds-shortcuts-grid--home">

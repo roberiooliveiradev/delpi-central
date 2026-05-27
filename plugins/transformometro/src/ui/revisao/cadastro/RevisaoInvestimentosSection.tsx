@@ -5,24 +5,20 @@ import { useClientPagination } from "../../../hooks/useClientPagination";
 import {
   createInvestimento,
   deleteInvestimento,
+  updateInvestimento,
   type Investimento,
   type OptionsData,
 } from "../../../data/api/transformometroApi";
-import { optionalDateField, todayDateInput, toDateInputValue } from "../../../utils/dateInputs";
+import { toDateInputValue } from "../../../utils/dateInputs";
+import { InvestimentoFormFields } from "../InvestimentoFormFields";
+import {
+  emptyInvestimentoForm,
+  investimentoFormFromEntity,
+  payloadFromInvestimentoForm,
+} from "../investimentoForm";
 import { CadastroSection } from "./CadastroSection";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
-
-const emptyInvForm = () => ({
-  tipo_investimento: "unico",
-  descricao_item: "",
-  quantidade: 1,
-  valor_unitario: 0,
-  recorrencia: "unico",
-  categoria_investimento: "",
-  data_investimento: todayDateInput(),
-  meses_vigencia: "",
-});
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
@@ -40,36 +36,70 @@ export function RevisaoInvestimentosSection({
   onError,
   onReload,
 }: Props) {
-  const [invForm, setInvForm] = useState(emptyInvForm);
+  const [invForm, setInvForm] = useState(() => emptyInvestimentoForm(options));
+  const [editingInvestimentoId, setEditingInvestimentoId] = useState<string | null>(null);
+  const [editInvForm, setEditInvForm] = useState(() => emptyInvestimentoForm(options));
   const { slice, page, setPage, total } = useClientPagination(
     investimentos,
     CADASTRO_TABLE_PAGE_SIZE
   );
+
+  function startEditInvestimento(inv: Investimento) {
+    const index = investimentos.findIndex((item) => item.investimento_id === inv.investimento_id);
+    if (index >= 0) {
+      setPage(Math.floor(index / CADASTRO_TABLE_PAGE_SIZE) + 1);
+    }
+    setEditingInvestimentoId(inv.investimento_id);
+    setEditInvForm(investimentoFormFromEntity(inv));
+  }
 
   async function handleAddInvestimento(e: React.FormEvent) {
     e.preventDefault();
     onError(null);
     try {
       await createInvestimento(
-        {
-          revisao_id: revisaoId,
-          tipo_investimento: invForm.tipo_investimento,
-          descricao_item: invForm.descricao_item,
-          quantidade: invForm.quantidade,
-          valor_unitario: invForm.valor_unitario,
-          recorrencia: invForm.recorrencia,
-          categoria_investimento: invForm.categoria_investimento || undefined,
-          data_investimento: optionalDateField(invForm.data_investimento),
-          meses_vigencia: invForm.meses_vigencia
-            ? Number.parseInt(invForm.meses_vigencia, 10)
-            : undefined,
-        },
+        { revisao_id: revisaoId, ...payloadFromInvestimentoForm(invForm) },
         getAccessToken
       );
-      setInvForm(emptyInvForm());
+      setInvForm(emptyInvestimentoForm(options));
       await onReload();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao criar investimento");
+    }
+  }
+
+  async function handleSaveEditInvestimento(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingInvestimentoId) return;
+    onError(null);
+    try {
+      await updateInvestimento(
+        editingInvestimentoId,
+        payloadFromInvestimentoForm(editInvForm),
+        getAccessToken
+      );
+      setEditingInvestimentoId(null);
+      setEditInvForm(emptyInvestimentoForm(options));
+      await onReload();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao atualizar investimento");
+    }
+  }
+
+  async function handleDeleteInvestimento(inv: Investimento) {
+    if (!window.confirm(`Remover o investimento "${inv.descricao_item}"?`)) {
+      return;
+    }
+    onError(null);
+    try {
+      await deleteInvestimento(inv.investimento_id, getAccessToken);
+      if (editingInvestimentoId === inv.investimento_id) {
+        setEditingInvestimentoId(null);
+        setEditInvForm(emptyInvestimentoForm(options));
+      }
+      await onReload();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao excluir investimento");
     }
   }
 
@@ -82,53 +112,93 @@ export function RevisaoInvestimentosSection({
     >
       {investimentos.length > 0 ? (
         <>
-        <div className="ds-table-wrap ds-cadastro-section__table">
-          <table className="ds-table ds-table--compact">
-            <thead>
-              <tr>
-                <th>Tipo</th>
-                <th>Descrição</th>
-                <th>Qtd</th>
-                <th>Unit.</th>
-                <th>Total</th>
-                <th>Data</th>
-                <th>Meses vig.</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {slice.map((inv) => (
-                <tr key={inv.investimento_id}>
-                  <td>{inv.tipo_investimento}</td>
-                  <td>{inv.descricao_item}</td>
-                  <td>{inv.quantidade}</td>
-                  <td>{inv.valor_unitario.toLocaleString("pt-BR")}</td>
-                  <td>{inv.valor_total.toLocaleString("pt-BR")}</td>
-                  <td>{toDateInputValue(inv.data_investimento) || "—"}</td>
-                  <td>{inv.meses_vigencia ?? "—"}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="ds-ghost-btn"
-                      onClick={() =>
-                        void deleteInvestimento(inv.investimento_id, getAccessToken).then(onReload)
-                      }
-                    >
-                      Remover
-                    </button>
-                  </td>
+          <div className="ds-table-wrap ds-cadastro-section__table">
+            <table className="ds-table ds-table--compact">
+              <thead>
+                <tr>
+                  <th>Tipo</th>
+                  <th>Descrição</th>
+                  <th>Qtd</th>
+                  <th>Unit.</th>
+                  <th>Total</th>
+                  <th>Data</th>
+                  <th>Meses vig.</th>
+                  <th />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <Pagination
-          page={page}
-          pageSize={CADASTRO_TABLE_PAGE_SIZE}
-          total={total}
-          onPageChange={setPage}
-          hideWhenSinglePage
-        />
+              </thead>
+              <tbody>
+                {slice.map((inv) =>
+                  editingInvestimentoId === inv.investimento_id ? (
+                    <tr key={inv.investimento_id} className="ds-table__row--editing">
+                      <td colSpan={8}>
+                        <form className="ds-cadastro-subsection" onSubmit={handleSaveEditInvestimento}>
+                          <h4 className="ds-cadastro-subsection__title">
+                            Editar investimento — {inv.descricao_item}
+                          </h4>
+                          <InvestimentoFormFields
+                            form={editInvForm}
+                            options={options}
+                            onChange={setEditInvForm}
+                            idPrefix={`tm-inv-edit-${inv.investimento_id}`}
+                          />
+                          <div className="ds-cadastro-form__actions">
+                            <button type="submit" className="ds-primary-btn">
+                              Salvar investimento
+                            </button>
+                            <button
+                              type="button"
+                              className="ds-ghost-btn"
+                              onClick={() => {
+                                setEditingInvestimentoId(null);
+                                setEditInvForm(emptyInvestimentoForm(options));
+                              }}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={inv.investimento_id}>
+                      <td>{inv.tipo_investimento}</td>
+                      <td>{inv.descricao_item}</td>
+                      <td>{inv.quantidade}</td>
+                      <td>{inv.valor_unitario.toLocaleString("pt-BR")}</td>
+                      <td>{inv.valor_total.toLocaleString("pt-BR")}</td>
+                      <td>{toDateInputValue(inv.data_investimento) || "—"}</td>
+                      <td>{inv.meses_vigencia ?? "—"}</td>
+                      <td>
+                        <div className="ds-table__actions">
+                          <button
+                            type="button"
+                            className="ds-ghost-btn"
+                            onClick={() => startEditInvestimento(inv)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className="ds-ghost-btn"
+                            onClick={() => void handleDeleteInvestimento(inv)}
+                          >
+                            Remover
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
+          </div>
+          <Pagination
+            page={page}
+            pageSize={CADASTRO_TABLE_PAGE_SIZE}
+            total={total}
+            onPageChange={setPage}
+            hideWhenSinglePage
+          />
         </>
       ) : (
         <p className="ds-state-box">Nenhum investimento nesta revisão.</p>
@@ -136,83 +206,7 @@ export function RevisaoInvestimentosSection({
 
       <form className="ds-cadastro-subsection" onSubmit={handleAddInvestimento}>
         <h4 className="ds-cadastro-subsection__title">Adicionar investimento</h4>
-        <div className="ds-filters-row">
-          <label className="ds-filter-box">
-            Tipo
-            <select
-              value={invForm.tipo_investimento}
-              onChange={(e) => setInvForm({ ...invForm, tipo_investimento: e.target.value })}
-            >
-              {options.tipo_investimento.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ds-filter-box ds-filter-box--wide">
-            Descrição *
-            <input
-              required
-              value={invForm.descricao_item}
-              onChange={(e) => setInvForm({ ...invForm, descricao_item: e.target.value })}
-            />
-          </label>
-          <label className="ds-filter-box">
-            Qtd
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={invForm.quantidade}
-              onChange={(e) => setInvForm({ ...invForm, quantidade: Number(e.target.value) })}
-            />
-          </label>
-          <label className="ds-filter-box">
-            Valor unit. (R$)
-            <input
-              type="number"
-              min={0}
-              step="any"
-              value={invForm.valor_unitario}
-              onChange={(e) =>
-                setInvForm({ ...invForm, valor_unitario: Number(e.target.value) })
-              }
-            />
-          </label>
-          <label className="ds-filter-box">
-            Recorrência
-            <select
-              value={invForm.recorrencia}
-              onChange={(e) => setInvForm({ ...invForm, recorrencia: e.target.value })}
-            >
-              {options.recorrencias.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ds-filter-box">
-            Data
-            <input
-              type="date"
-              value={invForm.data_investimento}
-              onChange={(e) => setInvForm({ ...invForm, data_investimento: e.target.value })}
-            />
-          </label>
-          <label className="ds-filter-box">
-            Meses vigência
-            <input
-              type="number"
-              min={1}
-              step={1}
-              placeholder="Opcional"
-              value={invForm.meses_vigencia}
-              onChange={(e) => setInvForm({ ...invForm, meses_vigencia: e.target.value })}
-            />
-          </label>
-        </div>
+        <InvestimentoFormFields form={invForm} options={options} onChange={setInvForm} />
         <button type="submit" className="ds-primary-btn">
           Adicionar investimento
         </button>

@@ -48,6 +48,8 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `02-chat-sessoes-mensagens.md` | Sessões, histórico, mensagens, streaming, pin/archive e edição. |
 | `03-agentes.md` | CRUD, compartilhamento, stats, export/import, duplicate, preview e runtime no chat. |
 | `04-actions-openapi.md` | Providers/actions OpenAPI, vínculo agente -> provider, rotas, teste e logs. |
+| `11-skills.md` | Catálogo de skills, vínculo por agente, SQL elaborar vs executar. |
+| `12-modelo-conceitual.md` | Definições: chat, agente, skill, action, knowledge e demais entidades. |
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |
 | [`../knowledge/README.md`](../knowledge/README.md) | Documentos prontos para anexar à inteligência do agente (ex.: rotas api-delpi). |
@@ -71,6 +73,7 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 ## Observações importantes
 
 - O chat comum não deve executar external actions; actions ficam atreladas a agentes.
+- **Skills** orientam o prompt; **actions** executam APIs. Veja `12-modelo-conceitual.md`.
 - Agentes próprios podem ser gerenciados com `tools.manage`.
 - Agentes oficiais/system exigem `chat.admin` ou superadmin para criar, editar e excluir.
 - O frontend deve usar `GET /chat/capabilities` para decidir exibição de botões de gestão; não deve inferir permissões pelo JWT.

@@ -125,8 +125,7 @@ Alinhada à [ESPECIFICACAO.md §15](./ESPECIFICACAO.md), com convenção Delpi:
 | Grupo | Endpoints |
 |-------|-----------|
 | Processos | `GET/POST /processos`, `GET/PUT/DELETE /processos/{id}` |
-| Revisões | `GET/POST /revisoes`, `PUT /revisoes/{id}`, `GET /processos/{id}/revisoes`, `POST /revisoes/{id}/ativar` (só se `aprovada`) |
-| Workflow revisão | `POST /revisoes/{id}/workflow/submeter`, `/aprovar`, `/rejeitar` |
+| Revisões | `GET/POST /revisoes`, `PUT /revisoes/{id}`, `GET /processos/{id}/revisoes`, `POST /revisoes/{id}/ativar` |
 | Medições | CRUD + `GET /revisoes/{id}/medicoes` |
 | Investimentos | CRUD + cálculo `valor_total` |
 | Recursos | `GET/POST /recursos-compartilhados`, `PUT/DELETE /recursos-compartilhados/{id}`; vínculos `revisao-recursos-compartilhados` |
@@ -192,27 +191,7 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 | `/apps/transformometro/recursos` | Catálogo global (CRUD) |
 | `/apps/transformometro/import` | Import planilha |
 
-Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; toolbar de **workflow** acima das abas. Roteamento por URL (`routeParser`, `useDelpiPortalBridge`).
-
-### Portal (iframe / federated)
-
-| Mensagem | Direção | Uso |
-|----------|---------|-----|
-| `DELPI_NAVIGATE` | Portal → MFE | Deep link de notificação (`metadata.deepPath`) |
-| `DELPI_EMBEDDED_ROUTE` | MFE → portal | Sincroniza barra de URL ao navegar |
-
-Ver [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md) e [embedded-app-deep-links.md](../../05-portal/embedded-app-deep-links.md).
-
-## Notificações de workflow
-
-Após `POST /revisoes/{id}/workflow/*`, a API opcionalmente chama `POST {TM_CORE_API_URL}/integrations/notifications` (`CoreNotificationsClient`).
-
-| Evento | Destinatários |
-|--------|----------------|
-| Submeter | `TM_WORKFLOW_APPROVER_EMAILS` / `ROLE_IDS` |
-| Aprovar / rejeitar | E-mail do último `workflow_submeter` em `audit_logs` |
-
-Configuração: `infra/.env` (`TM_NOTIFICATIONS_*`). Implementação: `revisao_workflow_notification_service.py`.
+Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; **Definir como ativa** sem etapa de aprovação. Roteamento por URL (`routeParser`, `useDelpiPortalBridge` para sincronizar URL com o portal).
 
 ## Integração infra
 
@@ -221,7 +200,7 @@ Espelhar `strategic-indicators` em `infra/docker-compose.dev.yml`:
 - Serviço `transformometro-api` (porta interna 8000, `TM_API_ROOT_PATH`)
 - Serviço `transformometro` (Vite dev / build estático)
 - Traefik/nginx: `/apps/transformometro` e `/apps/transformometro-api`
-- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP`, `TRANSFORMA_MAIS_*`, `TM_NOTIFICATIONS_*` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
+- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP`, `TRANSFORMA_MAIS_*` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
 - Registro Core API: `POST /core-api/admin/apps/register` com manifesto
 
 ## Auditoria

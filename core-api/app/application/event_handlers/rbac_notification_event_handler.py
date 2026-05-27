@@ -169,7 +169,7 @@ class RbacNotificationEventHandler:
             action_target = "/"
             action_label = "Ver aplicativos"
 
-        self.uow.notifications.create(
+        notification_id = self.uow.notifications.create(
             NotificationDTO(
                 user_id=str(user.id),
                 title=title,
@@ -191,6 +191,18 @@ class RbacNotificationEventHandler:
                 },
                 expires_at=None,
                 read=False,
+            )
+        )
+
+        self.uow.collect_event(
+            AdminChangedEvent(
+                entity="notifications",
+                action="notification_created",
+                payload={
+                    "notificationId": str(notification_id),
+                    "category": template_spec.category,
+                },
+                target_user_id=str(user.id),
             )
         )
 

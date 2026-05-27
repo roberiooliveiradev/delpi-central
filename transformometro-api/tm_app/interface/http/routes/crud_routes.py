@@ -28,32 +28,31 @@ from tm_app.infrastructure.persistence.repositories.investimento_repository impo
 )
 from tm_app.infrastructure.persistence.repositories.medicao_repository import MedicaoRepository
 from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
+from tm_app.infrastructure.persistence.repositories.recurso_custo_repository import (
+    RecursoCustoRepository,
+)
 from tm_app.infrastructure.persistence.repositories.recurso_repository import (
     RecursoRepository,
     VinculoRepository,
 )
+from tm_app.application.services.dashboard_live_service import DashboardLiveService
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
-from tm_app.application.services.revisao_workflow_notification_service import (
-    RevisaoWorkflowNotificationService,
-)
-from tm_app.application.services.revisao_workflow_service import (
-    RevisaoWorkflowError,
-    RevisaoWorkflowService,
-)
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoBody,
+    InvestimentoUpdateBody,
     MedicaoBody,
     ProcessoCreateBody,
     ProcessoUpdateBody,
     RecursoBody,
+    RecursoCustoBody,
+    RecursoCustoReajusteBody,
     RevisaoBody,
-    RevisaoRejeitarBody,
     VinculoBody,
     VinculoUpdateBody,
 )
@@ -126,6 +125,23 @@ def list_processos(
         q=q,
     )
     return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.get("/processos/calculados")
+def list_processos_calculados(
+    filial_id: str | None = None,
+    setor_id: str | None = None,
+    familia_processo: str | None = None,
+):
+    items = DashboardLiveService().list_processos_calculados(
+        filial_id=filial_id,
+        setor_id=setor_id,
+        familia_processo=familia_processo,
+    )
+    return ok(
+        {"total": len(items), "items": rows_to_json(items)},
+        "Processos com indicadores calculados em tempo real.",
+    )
 
 
 @router.get("/processos/{processo_id}")
@@ -222,68 +238,9 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     return ok(row_to_json(row), "Revisão atualizada.")
 
 
-@router.post("/revisoes/{revisao_id}/workflow/submeter")
-def submeter_revisao_aprovacao(revisao_id: str, request: Request):
-    _, actor_email = actor_from_request(request)
-    try:
-        row = RevisaoWorkflowService().submeter(revisao_id)
-    except RevisaoWorkflowError as exc:
-        return fail(str(exc), 400)
-    _audit(request, "revisao", revisao_id, "workflow_submeter", {})
-    try:
-        RevisaoWorkflowNotificationService().notify_submitted(row, actor_email=actor_email)
-    except Exception as exc:
-        logger.warning("workflow_notify_submitted_failed revisao=%s err=%s", revisao_id, exc)
-    return ok(row_to_json(row), "Revisão enviada para análise.")
-
-
-@router.post("/revisoes/{revisao_id}/workflow/aprovar")
-def aprovar_revisao(revisao_id: str, request: Request):
-    _, email = actor_from_request(request)
-    try:
-        row = RevisaoWorkflowService().aprovar(revisao_id, email)
-    except RevisaoWorkflowError as exc:
-        return fail(str(exc), 400)
-    _audit(request, "revisao", revisao_id, "workflow_aprovar", {"email": email})
-    try:
-        RevisaoWorkflowNotificationService().notify_decision(
-            row, decision="aprovada", actor_email=email
-        )
-    except Exception as exc:
-        logger.warning("workflow_notify_aprovar_failed revisao=%s err=%s", revisao_id, exc)
-    return ok(row_to_json(row), "Revisão aprovada.")
-
-
-@router.post("/revisoes/{revisao_id}/workflow/rejeitar")
-def rejeitar_revisao(revisao_id: str, body: RevisaoRejeitarBody, request: Request):
-    _, email = actor_from_request(request)
-    try:
-        row = RevisaoWorkflowService().rejeitar(revisao_id, body.motivo, email)
-    except RevisaoWorkflowError as exc:
-        return fail(str(exc), 400)
-    _audit(request, "revisao", revisao_id, "workflow_rejeitar", {"email": email, "motivo": body.motivo})
-    try:
-        RevisaoWorkflowNotificationService().notify_decision(
-            row,
-            decision="rejeitada",
-            actor_email=email,
-            motivo=body.motivo,
-        )
-    except Exception as exc:
-        logger.warning("workflow_notify_rejeitar_failed revisao=%s err=%s", revisao_id, exc)
-    return ok(row_to_json(row), "Revisão rejeitada.")
-
-
 @router.post("/revisoes/{revisao_id}/ativar")
 def activate_revisao(revisao_id: str, request: Request):
     repo = RevisaoRepository()
-    current = repo.get(revisao_id)
-    if not current:
-        return fail("Revisão não encontrada.", 404)
-    try:
-        RevisaoWorkflowService.ensure_can_activate(current)
-    except RevisaoWorkflowError as exc:
-        return fail(str(exc), 400)
     row = repo.activate(revisao_id)
     if not row:
         return fail("Revisão não encontrada.", 404)
@@ -349,6 +306,24 @@ def create_investimento(body: InvestimentoBody, request: Request):
     return ok(row_to_json(row), "Investimento criado.", 201)
 
 
+@router.put("/investimentos/{investimento_id}")
+def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, request: Request):
+    try:
+        assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        if body.categoria_investimento:
+            assert_in(body.categoria_investimento, CATEGORIAS, "categoria_investimento")
+        row = InvestimentoRepository().update(investimento_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Investimento não encontrado.", 404)
+
+    _audit(request, "investimento", investimento_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Investimento atualizado.")
+
+
 @router.delete("/investimentos/{investimento_id}")
 def delete_investimento(investimento_id: str, request: Request):
     if not InvestimentoRepository().soft_delete(investimento_id):
@@ -378,6 +353,12 @@ def create_recurso(body: RecursoBody, request: Request):
         return fail(str(exc), 400)
 
     rid = str(row["recurso_compartilhado_id"])
+    RecursoCustoRepository().create_initial(
+        rid,
+        float(body.valor_total_recorrente),
+        body.data_inicio_vigencia,
+    )
+    row = RecursoRepository().get(rid) or row
     _audit(request, "recurso", rid, "create", body.model_dump())
     return ok(row_to_json(row), "Recurso criado.", 201)
 
@@ -406,6 +387,98 @@ def delete_recurso(recurso_id: str, request: Request):
         return fail("Recurso não encontrado.", 404)
     _audit(request, "recurso", recurso_id, "delete", {})
     return ok(message="Recurso excluído.")
+
+
+@router.get("/recursos-compartilhados/{recurso_id}/custos")
+def list_recurso_custos(recurso_id: str):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    rows = RecursoCustoRepository().list_by_recurso(recurso_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
+
+
+@router.post("/recursos-compartilhados/{recurso_id}/custos")
+def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Request):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    try:
+        row = RecursoCustoRepository().create(
+            {
+                "recurso_compartilhado_id": recurso_id,
+                **body.model_dump(),
+            }
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    cid = str(row["recurso_custo_id"])
+    _audit(request, "recurso_custo", cid, "create", body.model_dump())
+    recurso = RecursoRepository().get(recurso_id)
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Vigência de custo registrada.",
+        201,
+    )
+
+
+@router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste")
+def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    try:
+        row = RecursoCustoRepository().registrar_reajuste(
+            recurso_id,
+            float(body.valor_mensal),
+            body.vigente_desde,
+            body.observacoes,
+        )
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    cid = str(row["recurso_custo_id"])
+    _audit(request, "recurso_custo", cid, "reajuste", body.model_dump())
+    recurso = RecursoRepository().get(recurso_id)
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Reajuste de custo registrado.",
+        201,
+    )
+
+
+@router.put("/recurso-custos/{recurso_custo_id}")
+def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request: Request):
+    existing = RecursoCustoRepository().get(recurso_custo_id)
+    if not existing:
+        return fail("Vigência de custo não encontrada.", 404)
+    try:
+        row = RecursoCustoRepository().update(recurso_custo_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Vigência de custo não encontrada.", 404)
+
+    _audit(request, "recurso_custo", recurso_custo_id, "update", body.model_dump())
+    recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
+    return ok(
+        {"custo": row_to_json(row), "recurso": row_to_json(recurso) if recurso else None},
+        "Vigência de custo atualizada.",
+    )
+
+
+@router.delete("/recurso-custos/{recurso_custo_id}")
+def delete_recurso_custo(recurso_custo_id: str, request: Request):
+    existing = RecursoCustoRepository().get(recurso_custo_id)
+    if not existing:
+        return fail("Vigência de custo não encontrada.", 404)
+    if not RecursoCustoRepository().soft_delete(recurso_custo_id):
+        return fail("Vigência de custo não encontrada.", 404)
+    _audit(request, "recurso_custo", recurso_custo_id, "delete", {})
+    recurso = RecursoRepository().get(str(existing["recurso_compartilhado_id"]))
+    return ok(
+        {"recurso": row_to_json(recurso) if recurso else None},
+        message="Vigência de custo excluída.",
+    )
 
 
 # --- Vínculos ---

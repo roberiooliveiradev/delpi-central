@@ -3,6 +3,7 @@ from uuid import UUID
 from app.application.services.agent_specialization_service import (
     AgentSpecializationService,
 )
+from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 
@@ -35,6 +36,8 @@ class ChatWorkspaceContextService:
         if agent_key:
             agent = self.agent_repository.get_enabled_by_key(agent_key, user_id=user_id)
 
+        allowed_action_ids = self._allowed_action_ids(agent, user_id)
+
         return {
             "project": self._project_metadata(project),
             "agent": self._agent_metadata(agent),
@@ -42,9 +45,14 @@ class ChatWorkspaceContextService:
             "agentPrompt": agent.system_prompt if agent else None,
             "agentKey": agent.key if agent else None,
             "actionProviderKeys": self._action_provider_keys(agent, user_id),
-            "allowedActionIds": self._allowed_action_ids(agent, user_id),
-            "actionsEnabled": bool(agent and self._allowed_action_ids(agent, user_id)),
+            "allowedActionIds": allowed_action_ids,
+            "actionsEnabled": bool(agent and allowed_action_ids),
             "capabilities": self._capabilities(agent),
+            "skills": ChatAgentSkillsService.resolve(
+                agent_metadata=agent.metadata if agent else {},
+                allowed_action_ids=allowed_action_ids,
+                has_agent=bool(agent),
+            ),
             "specialization": self._specialization(agent),
         }
 

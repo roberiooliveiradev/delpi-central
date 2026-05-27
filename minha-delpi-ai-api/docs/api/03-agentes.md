@@ -9,8 +9,11 @@ Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhori
 1. A **sessão** guarda `agent_key` (ou herda `default_agent_key` do projeto).
 2. A cada mensagem, `ChatWorkspaceContextService` resolve o agente ativo (`get_enabled_by_key`).
 3. O prompt do LLM recebe, nesta ordem: diretrizes admin → contexto do projeto → **`system_prompt` do agente** → RAG (escopo da especialização) → tools executadas.
-4. **Tools/actions** só rodam se estiverem habilitadas no agente (`allowedActionIds` / providers vinculados).
-5. Limites do agente: `max_tool_calls`, `requires_confirmation_for_write`, `capabilities` em `metadata`.
+4. **Skills** ativas em `metadata.skills` injetam policies de comportamento (ex.: Especialista SQL). Ver [`11-skills.md`](11-skills.md).
+5. **Tools/actions** só rodam se estiverem habilitadas no agente (`allowedActionIds` / providers vinculados).
+6. Limites do agente: `max_tool_calls`, `requires_confirmation_for_write`, `capabilities` em `metadata`.
+
+Modelo conceitual completo: [`12-modelo-conceitual.md`](12-modelo-conceitual.md).
 
 Metadados da resposta podem incluir `intelligence` (RAG, tools, timings). Ver ondas de inteligência em [`../roadmap/README.md`](../roadmap/README.md).
 

@@ -1377,6 +1377,30 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container {
   margin-bottom: var(--ds-section-gap);
 }
 
+.dashboard-transformometro .ds-processo-summary {
+  margin-bottom: 1rem;
+}
+
+.dashboard-transformometro .ds-dl-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px 20px;
+  margin: 0 0 12px;
+}
+
+.dashboard-transformometro .ds-dl-grid dt {
+  font-size: var(--ds-font-xs, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-muted);
+  margin: 0 0 4px;
+}
+
+.dashboard-transformometro .ds-dl-grid dd {
+  margin: 0;
+  font-size: var(--ds-font-sm);
+}
+
 .dashboard-transformometro .ds-cadastro-form__actions {
   margin-top: 12px;
   display: flex;

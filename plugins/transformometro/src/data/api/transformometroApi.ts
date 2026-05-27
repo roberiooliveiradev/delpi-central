@@ -129,6 +129,26 @@ export function createProcesso(
   });
 }
 
+export function updateProcesso(
+  processoId: string,
+  payload: Partial<Processo>,
+  getAccessToken?: () => string | undefined
+) {
+  return request<Processo>(`/processos/${processoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteProcesso(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<null>(`/processos/${processoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function fetchRevisoes(
   processoId: string,
   getAccessToken?: () => string | undefined
@@ -165,32 +185,12 @@ export function updateRevisao(
   });
 }
 
-export function submeterRevisaoAprovacao(
+export function deleteRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/submeter`, getAccessToken, {
-    method: "POST",
-  });
-}
-
-export function aprovarRevisao(
-  revisaoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/aprovar`, getAccessToken, {
-    method: "POST",
-  });
-}
-
-export function rejeitarRevisao(
-  revisaoId: string,
-  motivo: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/rejeitar`, getAccessToken, {
-    method: "POST",
-    body: JSON.stringify({ motivo }),
+  return request<null>(`/revisoes/${revisaoId}`, getAccessToken, {
+    method: "DELETE",
   });
 }
 
@@ -249,6 +249,20 @@ export type RecursoCompartilhado = {
   data_fim_vigencia?: string | null;
   centro_custo?: string | null;
   observacoes?: string | null;
+};
+
+export type RecursoCusto = {
+  recurso_custo_id: string;
+  recurso_compartilhado_id: string;
+  valor_mensal: number;
+  data_inicio_vigencia: string;
+  data_fim_vigencia?: string | null;
+  observacoes?: string | null;
+};
+
+type RecursoCustoMutationResponse = {
+  custo?: RecursoCusto;
+  recurso?: RecursoCompartilhado | null;
 };
 
 export type VinculoRecurso = {
@@ -312,6 +326,20 @@ export function createInvestimento(
   });
 }
 
+export function updateInvestimento(
+  investimentoId: string,
+  payload: Partial<Investimento> & {
+    tipo_investimento: string;
+    descricao_item: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Investimento>(`/investimentos/${investimentoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function deleteInvestimento(
   investimentoId: string,
   getAccessToken?: () => string | undefined
@@ -362,6 +390,53 @@ export function deleteRecurso(
   getAccessToken?: () => string | undefined
 ) {
   return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
+export function fetchRecursoCustos(
+  recursoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<{ total: number; items: RecursoCusto[] }>(
+    `/recursos-compartilhados/${recursoId}/custos`,
+    getAccessToken
+  );
+}
+
+export function reajusteRecursoCusto(
+  recursoId: string,
+  payload: { valor_mensal: number; vigente_desde: string; observacoes?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(
+    `/recursos-compartilhados/${recursoId}/custos/reajuste`,
+    getAccessToken,
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export function updateRecursoCusto(
+  recursoCustoId: string,
+  payload: {
+    valor_mensal: number;
+    data_inicio_vigencia: string;
+    data_fim_vigencia?: string | null;
+    observacoes?: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteRecursoCusto(
+  recursoCustoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<RecursoCustoMutationResponse>(`/recurso-custos/${recursoCustoId}`, getAccessToken, {
     method: "DELETE",
   });
 }

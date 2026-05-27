@@ -1,9 +1,18 @@
 from functools import lru_cache
 from pathlib import Path
 
+from app.infrastructure.content.content_service import ContentService
+
 
 class PromptPolicyService:
     POLICY_DIR = Path(__file__).resolve().parents[1] / "prompt_policies"
+
+    CONTEXT_ENGINEERING_POLICY_FALLBACK = """Engenharia de contexto:
+- Responda com dados autorizados (ferramentas, RAG, sessão); não invente.
+- Conclusão primeiro; detalhes em tópicos se necessário.
+- Se faltar dado (código, OV, filial), peça esclarecimento em vez de adivinhar.
+- Para capacidades, liste só o que esta sessão permite; não invente módulos ou permissões globais.
+- Priorize resultados de ferramentas sobre texto genérico da internet."""
 
     BASE_POLICY_FALLBACK = """Você é o assistente Minha DELPI, integrado à plataforma Minha DELPI.
 Seu objetivo é ajudar o usuário de forma clara, precisa e objetiva.
@@ -151,7 +160,12 @@ Comportamento esperado:
     )
 
     def build_system_prompt(self) -> str:
-        return self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
+        base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
+        context_engineering = self._load_policy(
+            "context-engineering.md",
+            self.CONTEXT_ENGINEERING_POLICY_FALLBACK,
+        )
+        return f"{base}\n\n{context_engineering}"
 
     def build_rag_prompt(self, context: str) -> str:
         return self.build_contextual_prompt(
@@ -159,38 +173,53 @@ Comportamento esperado:
             tool_context="",
         )
 
+    SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore e revise consultas SELECT (SQL genérico) em blocos ```sql```; identifique erros quando o usuário colar SQL ou mensagens de erro; execução requer action /data/sql."""
+
     def build_contextual_prompt(
         self,
         rag_context: str,
         tool_context: str,
         *,
         operational_mode: bool = False,
+        skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
+        resolved_skills = skills or {}
+
+        stream_texts = ContentService.stream()
+        rag_header = str(stream_texts.get("ragContextHeader") or "Contexto documental autorizado:")
+        rag_empty = str(
+            stream_texts.get("ragEmptyContext")
+            or "Nenhum trecho documental relevante foi encontrado."
+        )
+        tool_header = str(
+            stream_texts.get("toolContextHeader")
+            or "Resultados de ferramentas internas autorizadas:"
+        )
 
         if rag_context:
-            sections.append(
-                "Contexto documental autorizado:\n"
-                f"{rag_context}"
-            )
+            sections.append(f"{rag_header}\n{rag_context}")
         else:
-            sections.append(
-                "Contexto documental autorizado:\n"
-                "Nenhum trecho documental relevante foi encontrado."
-            )
+            sections.append(f"{rag_header}\n{rag_empty}")
 
         if tool_context:
-            sections.append(
-                "Resultados de ferramentas internas autorizadas:\n"
-                f"{tool_context}"
-            )
+            sections.append(f"{tool_header}\n{tool_context}")
 
         sections.extend(
             self._response_policy_sections(
                 rag_context=rag_context,
                 tool_context=tool_context,
+                skills=resolved_skills,
             )
         )
+
+        if resolved_skills.get("sqlAuthoring"):
+            sections.append(
+                self._load_policy(
+                    "sql-assistant-skill.md",
+                    self.SQL_ASSISTANT_SKILL_FALLBACK,
+                )
+            )
 
         if operational_mode:
             sections.append(
@@ -206,7 +235,14 @@ Comportamento esperado:
             if section and section.strip()
         )
 
-    def _response_policy_sections(self, *, rag_context: str, tool_context: str) -> list[str]:
+    def _response_policy_sections(
+        self,
+        *,
+        rag_context: str,
+        tool_context: str,
+        skills: dict | None = None,
+    ) -> list[str]:
+        resolved_skills = skills or {}
         sections = [
             self._load_policy(
                 "response-style.md",
@@ -257,7 +293,7 @@ Comportamento esperado:
                 )
             )
 
-        if (
+        if not resolved_skills.get("sqlAuthoring") and (
             self._contains_any(normalized_rag_context, self.SQL_MARKERS)
             or self._contains_any(normalized_tool_context, self.SQL_MARKERS)
         ):

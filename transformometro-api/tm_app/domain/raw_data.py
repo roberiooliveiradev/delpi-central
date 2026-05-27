@@ -11,3 +11,4 @@ class TransformometroRawData:
     investimentos: list[dict] = field(default_factory=list)
     recursos_compartilhados: list[dict] = field(default_factory=list)
     revisao_recursos_compartilhados: list[dict] = field(default_factory=list)
+    recurso_custos: list[dict] = field(default_factory=list)

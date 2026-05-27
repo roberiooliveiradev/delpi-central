@@ -1,0 +1,14 @@
+{
+  "skills": [
+    {
+      "key": "sql",
+      "label": "Especialista SQL",
+      "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro. A execução no banco depende da action POST /data/sql habilitada no agente.",
+      "policyFile": "sql-assistant-skill.md",
+      "metadataFlag": "authoring",
+      "legacyMetadataFlag": "sqlAuthoring",
+      "executionPathHint": "POST /data/sql",
+      "executionDerivedKey": "sqlExecutionAvailable"
+    }
+  ]
+}

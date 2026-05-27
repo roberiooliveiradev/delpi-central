@@ -88,6 +88,7 @@ class ProcessRevisionCompareService:
                 for v in raw.revisao_recursos_compartilhados
                 if str(v.get("revisao_id")) in revisao_ids
             ],
+            recurso_custos=raw.recurso_custos,
         )
 
     def _sum_revision_rows(self, rows: list[dict]) -> dict[str, float]:

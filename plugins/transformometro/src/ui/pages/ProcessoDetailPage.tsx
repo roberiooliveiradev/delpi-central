@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, RefreshCw } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -15,21 +15,25 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRevisao,
+  deleteProcesso,
+  deleteRevisao,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
   fetchRevisoes,
-  recalcularDashboard,
+  updateProcesso,
   type OptionsData,
   type Processo,
   type RevisionCompareItem,
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
+import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import {
-  badgeClassStatusAprovacao,
-  labelStatusAprovacao,
-} from "../../utils/revisaoWorkflowLabels";
+  payloadFromProcessoForm,
+  processoFormFromEntity,
+  type ProcessoFormState,
+} from "../processos/processoForm";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -57,7 +61,9 @@ export function ProcessoDetailPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
-  const [recalculando, setRecalculando] = useState(false);
+  const [editingProcesso, setEditingProcesso] = useState(false);
+  const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
+  const [savingProcesso, setSavingProcesso] = useState(false);
   const [comparativo, setComparativo] = useState<RevisionCompareItem[]>([]);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
@@ -94,16 +100,71 @@ export function ProcessoDetailPage({
     void load();
   }, [load]);
 
-  async function handleRecalcProcesso() {
-    setRecalculando(true);
+  function startEditProcesso() {
+    if (!processo) return;
+    setProcessoForm(processoFormFromEntity(processo));
+    setEditingProcesso(true);
+    setError(null);
+  }
+
+  function cancelEditProcesso() {
+    setEditingProcesso(false);
+    setProcessoForm(null);
+  }
+
+  async function handleSaveProcesso(e: React.FormEvent) {
+    e.preventDefault();
+    if (!processoForm) return;
+    setSavingProcesso(true);
     setError(null);
     try {
-      await recalcularDashboard(getAccessToken, { processo_id: processoId });
+      const updated = await updateProcesso(
+        processoId,
+        payloadFromProcessoForm(processoForm),
+        getAccessToken
+      );
+      setProcesso(updated);
+      cancelEditProcesso();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao salvar processo");
+    } finally {
+      setSavingProcesso(false);
+    }
+  }
+
+  async function handleDeleteProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    if (
+      !window.confirm(
+        `Excluir o processo ${label}? Você será redirecionado à lista.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteProcesso(processoId, getAccessToken);
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir processo");
+    }
+  }
+
+  async function handleDeleteRevisao(revisao: Revisao) {
+    const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
+    if (!window.confirm(`Excluir a revisão ${label}?`)) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteRevisao(revisao.revisao_id, getAccessToken);
+      if (revisaoId === revisao.revisao_id) {
+        onRevisaoChange(null);
+      }
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao recalcular processo");
-    } finally {
-      setRecalculando(false);
+      setError(err instanceof Error ? err.message : "Erro ao excluir revisão");
     }
   }
 
@@ -186,15 +247,6 @@ export function ProcessoDetailPage({
       },
       { key: "fim", header: "Fim", render: (r) => toDateInputValue(r.data_fim_vigencia) || "—" },
       {
-        key: "aprovacao",
-        header: "Aprovação",
-        render: (r) => (
-          <span className={badgeClassStatusAprovacao(r.status_aprovacao)}>
-            {labelStatusAprovacao(r.status_aprovacao)}
-          </span>
-        ),
-      },
-      {
         key: "ativa",
         header: "Ativa",
         render: (r) =>
@@ -204,8 +256,34 @@ export function ProcessoDetailPage({
             "—"
           ),
       },
+      {
+        key: "acoes",
+        header: "",
+        render: (r) => (
+          <div
+            className="ds-table__actions"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => onRevisaoChange(r.revisao_id)}
+            >
+              Abrir
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => void handleDeleteRevisao(r)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      },
     ],
-    []
+    [onRevisaoChange]
   );
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
@@ -273,11 +351,20 @@ export function ProcessoDetailPage({
             <button
               type="button"
               className="ds-ghost-btn"
-              disabled={recalculando || refreshing}
-              onClick={() => void handleRecalcProcesso()}
+              disabled={editingProcesso}
+              onClick={startEditProcesso}
             >
-              <RefreshCw size={16} />
-              {recalculando ? "Recalculando…" : "Recalcular processo"}
+              <Pencil size={16} />
+              Editar processo
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={refreshing}
+              onClick={() => void handleDeleteProcesso()}
+            >
+              <Trash2 size={16} />
+              Excluir
             </button>
             <button
               type="button"
@@ -297,6 +384,81 @@ export function ProcessoDetailPage({
         hasData
         onRetry={() => void load()}
       />
+
+      {editingProcesso && options && processoForm ? (
+        <section className="ds-card ds-cadastro-form">
+          <h2 className="ds-section-title">Editar processo</h2>
+          <form onSubmit={handleSaveProcesso}>
+            <ProcessoFormFields
+              form={processoForm}
+              options={options}
+              codigoProcesso={processo.codigo_processo}
+              onChange={setProcessoForm}
+            />
+            <div className="ds-cadastro-form__actions">
+              <button type="submit" className="ds-primary-btn" disabled={savingProcesso}>
+                {savingProcesso ? "Salvando…" : "Salvar alterações"}
+              </button>
+              <button
+                type="button"
+                className="ds-ghost-btn"
+                disabled={savingProcesso}
+                onClick={cancelEditProcesso}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : (
+        <section className="ds-card ds-processo-summary">
+          <h2 className="ds-section-title">Dados do processo</h2>
+          <dl className="ds-dl-grid">
+            <div>
+              <dt>Código</dt>
+              <dd>{processo.codigo_processo}</dd>
+            </div>
+            <div>
+              <dt>Status</dt>
+              <dd>{processo.status_processo}</dd>
+            </div>
+            <div>
+              <dt>Filial / setor</dt>
+              <dd>
+                {processo.filial_id} · {processo.setor_id}
+              </dd>
+            </div>
+            {processo.familia_processo ? (
+              <div>
+                <dt>Família</dt>
+                <dd>{processo.familia_processo}</dd>
+              </div>
+            ) : null}
+            {processo.agrupador_ferramenta ? (
+              <div>
+                <dt>Agrupador</dt>
+                <dd>{processo.agrupador_ferramenta}</dd>
+              </div>
+            ) : null}
+            {processo.gestor_responsavel ? (
+              <div>
+                <dt>Gestor</dt>
+                <dd>{processo.gestor_responsavel}</dd>
+              </div>
+            ) : null}
+          </dl>
+          {processo.objetivo_processo ? (
+            <p className="ds-hint">
+              <strong>Objetivo:</strong> {processo.objetivo_processo}
+            </p>
+          ) : null}
+          {processo.descricao_processo ? (
+            <p className="ds-hint">
+              <strong>Descrição:</strong> {processo.descricao_processo}
+            </p>
+          ) : null}
+        </section>
+      )}
 
       {showRevisaoForm && options ? (
         <section className="ds-card ds-cadastro-form">
@@ -423,6 +585,10 @@ export function ProcessoDetailPage({
           getAccessToken={getAccessToken}
           onError={setError}
           onRevisaoUpdated={load}
+          onRevisaoDeleted={() => {
+            onRevisaoChange(null);
+            void load();
+          }}
         />
       ) : null}
     </TransformometroShell>

@@ -35,10 +35,6 @@ class RevisaoBody(BaseModel):
     observacoes: Optional[str] = None
 
 
-class RevisaoRejeitarBody(BaseModel):
-    motivo: str = Field(min_length=1, max_length=2000)
-
-
 class MedicaoBody(BaseModel):
     revisao_id: str
     volume_mensal: float = 0
@@ -66,6 +62,32 @@ class InvestimentoBody(BaseModel):
     data_investimento: Optional[str] = None
     meses_vigencia: Optional[int] = None
     centro_custo: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class InvestimentoUpdateBody(BaseModel):
+    tipo_investimento: str
+    descricao_item: str
+    quantidade: float = 1
+    valor_unitario: float = 0
+    recorrencia: str = "unico"
+    categoria_investimento: Optional[str] = None
+    data_investimento: Optional[str] = None
+    meses_vigencia: Optional[int] = None
+    centro_custo: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class RecursoCustoBody(BaseModel):
+    valor_mensal: float = Field(ge=0)
+    data_inicio_vigencia: str
+    data_fim_vigencia: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
+class RecursoCustoReajusteBody(BaseModel):
+    valor_mensal: float = Field(ge=0)
+    vigente_desde: str
     observacoes: Optional[str] = None
 
 

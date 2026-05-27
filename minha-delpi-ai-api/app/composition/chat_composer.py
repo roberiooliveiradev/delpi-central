@@ -422,6 +422,24 @@ def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
     return UpsertChatAgentActionUseCase(PostgresChatAgentRepository())
 
 
+def make_list_chat_skill_catalog_use_case():
+    from app.application.use_cases.chat_skills_use_cases import ListChatSkillCatalogUseCase
+
+    return ListChatSkillCatalogUseCase()
+
+
+def make_list_chat_agent_skills_use_case():
+    from app.application.use_cases.chat_skills_use_cases import ListChatAgentSkillsUseCase
+
+    return ListChatAgentSkillsUseCase(PostgresChatAgentRepository())
+
+
+def make_upsert_chat_agent_skill_use_case():
+    from app.application.use_cases.chat_skills_use_cases import UpsertChatAgentSkillUseCase
+
+    return UpsertChatAgentSkillUseCase(PostgresChatAgentRepository())
+
+
 def make_share_chat_project_use_case() -> ShareChatProjectUseCase:
     return ShareChatProjectUseCase(PostgresChatProjectRepository())
 
