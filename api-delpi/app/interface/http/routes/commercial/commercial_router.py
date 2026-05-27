@@ -48,10 +48,10 @@ def get_head_office_rol_target_pct(
 
         result = enrich_dashboard_metric(
             use_case.execute(request),
-            source_key=goal_keys.COMMERCIAL_HEAD_OFFICE_ROL,
+            source_key=goal_keys.COMMERCIAL_ROL,
             start_date=start_date,
             end_date=end_date,
-            branch=None,
+            branch="01",
             recompute_target_pct_from="rol",
         )
 
@@ -89,10 +89,10 @@ def get_branch_rol_target_pct(
 
         result = enrich_dashboard_metric(
             use_case.execute(request),
-            source_key=goal_keys.COMMERCIAL_BRANCH_ROL,
+            source_key=goal_keys.COMMERCIAL_ROL,
             start_date=start_date,
             end_date=end_date,
-            branch=None,
+            branch="02",
             recompute_target_pct_from="rol",
         )
 

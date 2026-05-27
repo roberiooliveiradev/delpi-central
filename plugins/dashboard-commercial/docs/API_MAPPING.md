@@ -6,8 +6,8 @@ Permissão: `dashboard-commercial.view` ou `api-delpi.access`
 
 | Função | Método | Rota | Query |
 |--------|--------|------|-------|
-| `getHeadOfficeRolTarget` | GET | `/head_office_rol_target_pct` | `start_date`, `end_date` |
-| `getBranchRolTarget` | GET | `/branch_rol_target_pct` | `start_date`, `end_date` |
+| `getHeadOfficeRolTarget` | GET | `/head_office_rol_target_pct` | `start_date`, `end_date` — meta SI: `commercial_rol`, filial `01` |
+| `getBranchRolTarget` | GET | `/branch_rol_target_pct` | `start_date`, `end_date` — meta SI: `commercial_rol`, filial `02` |
 | `getClosingRate` | GET | `/closing-rate` | `start_date`, `end_date`, `branch` |
 | `getSalesOrderOtd` | GET | `/sales-order-otd` | `start_date`, `end_date`, `branch` |
 | `getNewBusinessRolPct` | GET | `/new-business-rol-pct` | `start_date`, `end_date`, `branch` |

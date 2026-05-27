@@ -26,20 +26,22 @@ def test_monthly_curve_without_targets_returns_zero() -> None:
     assert comparable == 0.0
 
 
-def test_commercial_department_scores_with_rol_and_standard_indicators() -> None:
+def test_commercial_department_scores_with_rol_per_unit_and_average_of_units() -> None:
     calculator = StrategicIndicatorsCalculator()
     catalog = [
         StrategicIndicatorCatalogItem(
-            indicator_id="commercial-rol-matrix",
+            indicator_id="commercial-rol",
             department_id="commercial",
-            indicator_name="ROL Matriz",
-            weight_pct=25,
-            goal_label="Curva mensal",
-            goal_value=1_000_000.0,
+            indicator_name="ROL",
+            weight_pct=40,
+            goal_label="Curva R$",
+            goal_value=0.0,
             goal_periodicity="monthly",
             goal_mode="monthly_curve",
             monthly_targets=[{"month_number": 5, "target_value": 500_000.0}],
             scope_type="per_unit",
+            has_resolved_goal=True,
+            resolved_goal_scope_branch="01",
         ),
         StrategicIndicatorCatalogItem(
             indicator_id="commercial-closing-rate",
@@ -50,23 +52,25 @@ def test_commercial_department_scores_with_rol_and_standard_indicators() -> None
             goal_value=10.0,
             goal_periodicity="monthly",
             goal_mode="standard",
-            scope_type="consolidated",
+            scope_type="per_unit",
+            has_resolved_goal=True,
+            resolved_goal_scope_branch="01",
         ),
     ]
     measurements = [
         StrategicIndicatorMeasuredValue(
-            indicator_id="commercial-rol-matrix",
+            indicator_id="commercial-rol",
             department_id="commercial",
             value=400_000.0,
-            source="commercial_head_office_rol_target",
-            unit_values={"matrix": 400_000.0},
+            source="commercial_rol",
+            unit_values={"01": 400_000.0, "02": 600_000.0},
         ),
         StrategicIndicatorMeasuredValue(
             indicator_id="commercial-closing-rate",
             department_id="commercial",
             value=12.0,
             source="commercial_sales_conversion_rate",
-            unit_values={"consolidated": 12.0},
+            unit_values={"01": 12.0, "02": 8.0},
         ),
     ]
 
@@ -76,6 +80,7 @@ def test_commercial_department_scores_with_rol_and_standard_indicators() -> None
         competence="2026-05",
         start_date="01-05-2026",
         end_date="31-05-2026",
+        scope_branch="01",
     )
 
     assert all(item.score is not None and item.score > 0 for item in calculated)
@@ -88,7 +93,7 @@ def test_commercial_department_scores_with_rol_and_standard_indicators() -> None
                 short_name="COM",
                 weight_pct=17,
                 strategic_summary="",
-                aggregation_mode="consolidated",
+                aggregation_mode="average_of_units",
             )
         ],
         indicators_catalog=catalog,
@@ -140,10 +145,10 @@ def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> 
     calculator = StrategicIndicatorsCalculator()
     indicators = [
         StrategicIndicatorCalculatedValue(
-            indicator_id="commercial-rol-matrix",
+            indicator_id="commercial-rol",
             department_id="commercial",
-            indicator_name="ROL Matriz",
-            weight_pct=25,
+            indicator_name="ROL",
+            weight_pct=40,
             goal_label="Meta",
             goal_value=748_000.0,
             goal_periodicity="monthly",
@@ -152,7 +157,7 @@ def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> 
             score=8.78,
             gap=91_302.89,
             classification="Alto Desempenho",
-            unit_values={"matrix": 656_697.11},
+            unit_values={"01": 656_697.11},
         ),
         StrategicIndicatorCalculatedValue(
             indicator_id="commercial-closing-rate",
@@ -166,7 +171,7 @@ def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> 
             score=7.55,
             gap=2.45,
             classification="Satisfatório com Alertas",
-            unit_values={"consolidated": 7.55},
+            unit_values={"01": 7.55},
         ),
     ]
     stale_department = StrategicDepartmentCalculatedValue(
@@ -175,7 +180,7 @@ def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> 
         short_name="COM",
         weight_pct=17,
         strategic_summary="",
-        aggregation_mode="consolidated",
+        aggregation_mode="average_of_units",
         score=0.0,
         contribution=0.0,
         classification="Crítico",
@@ -197,10 +202,10 @@ def test_reconcile_department_score_from_stale_zero_with_scored_indicators() -> 
 def test_reconcile_uses_flat_indicators_when_nested_scores_are_missing() -> None:
     calculator = StrategicIndicatorsCalculator()
     scored = StrategicIndicatorCalculatedValue(
-        indicator_id="commercial-rol-matrix",
+        indicator_id="commercial-rol",
         department_id="commercial",
-        indicator_name="ROL Matriz",
-        weight_pct=25,
+        indicator_name="ROL",
+        weight_pct=40,
         goal_label="Meta",
         goal_value=748_000.0,
         goal_periodicity="monthly",
@@ -208,10 +213,10 @@ def test_reconcile_uses_flat_indicators_when_nested_scores_are_missing() -> None
         score=8.78,
     )
     stale_nested = StrategicIndicatorCalculatedValue(
-        indicator_id="commercial-rol-matrix",
+        indicator_id="commercial-rol",
         department_id="commercial",
-        indicator_name="ROL Matriz",
-        weight_pct=25,
+        indicator_name="ROL",
+        weight_pct=40,
         goal_label="Meta",
         goal_value=748_000.0,
         goal_periodicity="monthly",
@@ -224,7 +229,7 @@ def test_reconcile_uses_flat_indicators_when_nested_scores_are_missing() -> None
         short_name="COM",
         weight_pct=17,
         strategic_summary="",
-        aggregation_mode="consolidated",
+        aggregation_mode="average_of_units",
         score=0.0,
         contribution=0.0,
         classification="Crítico",
