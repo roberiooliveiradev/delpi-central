@@ -33,7 +33,6 @@ import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
-import { userCanOpenChatAdmin } from "../../security/chatPermissions";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
@@ -420,15 +419,14 @@ export function ChatPage({
       setHasLoadedManageAgentsPermission(false);
 
       try {
-        const [capabilities, adminAccess] = await Promise.all([
-          getChatCapabilities({ getAccessToken }),
-          userCanOpenChatAdmin(getAccessToken),
-        ]);
+        const capabilities = await getChatCapabilities({ getAccessToken });
 
         if (isMounted) {
           setCanManageAgents(capabilities.canManageAgents);
           setCanManageOfficialAgents(capabilities.canManageOfficialAgents);
-          setCanOpenAdmin(adminAccess);
+          setCanOpenAdmin(
+            capabilities.canOpenAdmin === true || capabilities.isSuperadmin === true,
+          );
         }
       } catch {
         if (isMounted) {

@@ -199,11 +199,18 @@ export async function userCanOpenChatAdmin(
     | null
     | Promise<string | undefined | null>,
 ): Promise<boolean> {
-  const checks = await Promise.all([
-    userHasChatPermission(CHAT_PERMISSIONS.ADMIN, getAccessToken),
-    userHasChatPermission(CHAT_PERMISSIONS.KNOWLEDGE_MANAGE, getAccessToken),
-    userHasChatPermission(CHAT_PERMISSIONS.TOOLS_MANAGE, getAccessToken),
-  ]);
+  const { getChatCapabilities } = await import("../data/api/chatApi");
 
-  return checks.some(Boolean);
+  try {
+    const capabilities = await getChatCapabilities({ getAccessToken });
+    return capabilities.canOpenAdmin === true || capabilities.isSuperadmin === true;
+  } catch {
+    const checks = await Promise.all([
+      userHasChatPermission(CHAT_PERMISSIONS.ADMIN, getAccessToken),
+      userHasChatPermission(CHAT_PERMISSIONS.KNOWLEDGE_MANAGE, getAccessToken),
+      userHasChatPermission(CHAT_PERMISSIONS.TOOLS_MANAGE, getAccessToken),
+    ]);
+
+    return checks.some(Boolean);
+  }
 }

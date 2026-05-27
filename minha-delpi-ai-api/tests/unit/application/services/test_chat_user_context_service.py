@@ -1,0 +1,92 @@
+from app.application.services.chat_user_context_service import ChatUserContextService
+
+
+class StubCoreGateway:
+    def __init__(self, *, me: dict, profile: dict | None = None, apps: list | None = None):
+        self.me = me
+        self.profile = profile
+        self.apps = apps or []
+
+    def get_me(self, access_token: str) -> dict:
+        return self.me
+
+    def get_access_profile(self, access_token: str) -> dict:
+        return self.profile or {}
+
+    def get_apps(self, access_token: str) -> list[dict]:
+        return self.apps
+
+
+def test_find_role_in_message_matches_partial_name():
+    roles = [{"name": "Chat Full"}, {"name": "Transforma Mais"}]
+    matched = ChatUserContextService._find_role_in_message(
+        "quais as permissões de chat full?",
+        roles,
+    )
+    assert matched["name"] == "Chat Full"
+
+
+def test_format_role_detail_answer_lists_permissions_and_apps():
+    role = {
+        "name": "Chat Full",
+        "description": "Acesso completo ao chat.",
+        "sources": [{"type": "direct"}],
+        "permissions": [
+            {
+                "code": "minha-delpi.chat.access",
+                "name": "Acessar chat",
+                "description": "Usar o Minha DELPI Chat",
+                "module": "minha-delpi",
+            }
+        ],
+        "apps": [
+            {
+                "name": "Minha DELPI",
+                "routes": [
+                    {
+                        "label": "Chat",
+                        "path": "/chat",
+                        "permission": "minha-delpi.chat.access",
+                    }
+                ],
+            }
+        ],
+    }
+
+    answer = ChatUserContextService._format_role_detail_answer(role)
+
+    assert "Chat Full" in answer
+    assert "minha-delpi.chat.access" in answer
+    assert "Minha DELPI" in answer
+    assert "Chat" in answer
+
+
+def test_build_direct_answer_for_role_permissions_without_llm():
+    gateway = StubCoreGateway(
+        me={
+            "authorized": True,
+            "name": "Robério",
+            "email": "rob@delpi.com",
+            "roles": ["Chat Full"],
+            "permissions": ["minha-delpi.chat.access"],
+        },
+        profile={
+            "roles": [
+                {
+                    "name": "Chat Full",
+                    "permissions": [{"code": "minha-delpi.chat.access", "name": "Acessar"}],
+                    "apps": [],
+                    "sources": [{"type": "direct"}],
+                }
+            ],
+            "effectivePermissions": ["minha-delpi.chat.access"],
+            "effectiveApps": [],
+        },
+    )
+    service = ChatUserContextService(gateway)
+
+    answer = service.build_direct_answer("token", "quais as permissões de chat full?")
+
+    assert answer is not None
+    assert "Chat Full" in answer
+    assert "minha-delpi.chat.access" in answer

@@ -514,6 +514,7 @@ export type ChatActionTestLog = ChatActionTestResult & {
 export type ChatCapabilities = {
   permissions: string[];
   isSuperadmin: boolean;
+  canOpenAdmin: boolean;
   canManageAgents: boolean;
   canManageOwnAgents: boolean;
   canManageOfficialAgents: boolean;

@@ -23,6 +23,10 @@ class CoreApiHttpGateway(CoreApiGatewayPort):
         data = self._get("me/apps", access_token)
         return data if isinstance(data, list) else []
 
+    def get_access_profile(self, access_token: str) -> dict:
+        data = self._get("me/access-profile", access_token)
+        return data if isinstance(data, dict) else {}
+
     def get_routes(self, access_token: str) -> list[dict]:
         data = self._get("me/routes", access_token)
         return data if isinstance(data, list) else []
