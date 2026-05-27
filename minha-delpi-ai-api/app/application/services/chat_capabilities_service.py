@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.application.services.chat_action_label_service import ChatActionLabelService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -8,6 +9,14 @@ _CAPABILITIES_QUESTION_TERMS = (
     "o que voce pode fazer",
     "o que você pode fazer",
     "o que vc pode fazer",
+    "o que voce e capaz de fazer",
+    "o que vc e capaz de fazer",
+    "o que e capaz de fazer",
+    "do que voce e capaz",
+    "do que vc e capaz",
+    "do que e capaz",
+    "quais coisas voce e capaz",
+    "quais coisas vc e capaz",
     "o que consegue fazer",
     "o que sabe fazer",
     "o que voce sabe",
@@ -16,10 +25,15 @@ _CAPABILITIES_QUESTION_TERMS = (
     "suas funcionalidades",
     "quais funcionalidades",
     "o que faz",
+    "o que voce faz",
+    "o que vc faz",
+    "o que você faz",
     "para que serve",
     "como pode me ajudar",
     "como voce pode ajudar",
+    "como voce pode me ajudar",
     "como você pode ajudar",
+    "como você pode me ajudar",
     "como voce me ajuda",
     "me ajuda com o que",
     "me ajude com o que",
@@ -196,6 +210,11 @@ class ChatCapabilitiesService:
         if normalized.startswith(("ajuda ", "help ")) and len(normalized) < 80:
             return True
 
+        if "capaz" in normalized and any(
+            token in normalized for token in ("fazer", "consultar", "ajudar", "oferecer")
+        ):
+            return True
+
         return False
 
     @classmethod
@@ -273,12 +292,19 @@ class ChatCapabilitiesService:
 
             path = str(action.get("path") or "")
             category, _examples = cls._resolve_path_rule(path)
+            raw_summary = str(
+                action.get("summary") or action.get("description") or action_id
+            ).strip()
+            method = str(action.get("method") or "GET").upper()
             by_category.setdefault(category, []).append(
                 {
-                    "summary": str(
-                        action.get("summary") or action.get("description") or action_id
-                    ).strip(),
-                    "method": str(action.get("method") or "GET").upper(),
+                    "summary": ChatActionLabelService.humanize(
+                        path=path,
+                        method=method,
+                        summary=raw_summary,
+                        action_id=action_id,
+                    ),
+                    "method": method,
                     "path": path,
                     "examples": _examples,
                 }
@@ -288,7 +314,7 @@ class ChatCapabilitiesService:
             return ["- Nenhuma action detalhada no catálogo; verifique a configuração do agente."]
 
         output: list[str] = []
-        max_per_category = 12
+        max_per_category = 8
 
         for category in sorted(by_category.keys()):
             items = by_category[category]
