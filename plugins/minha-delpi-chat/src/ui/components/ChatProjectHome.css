@@ -178,11 +178,13 @@
 .mdc-chat-project-home__tabs button:hover {
   background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
   color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-1);
 }
 
 .mdc-chat-project-home__tabs button.is-active {
   background: color-mix(in srgb, var(--mdc-text) 11%, transparent);
   color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-tab-active);
 }
 
 .mdc-chat-project-home__sessions {

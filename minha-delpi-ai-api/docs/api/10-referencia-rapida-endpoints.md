@@ -22,6 +22,7 @@
 | GET | `/chat/sessions/{sessionId}/messages` | `chat.access` |
 | POST | `/chat/sessions/{sessionId}/messages` | `chat.ask` |
 | POST | `/chat/sessions/{sessionId}/messages/stream` | `chat.ask` |
+| POST | `/chat/sessions/{sessionId}/messages/{messageId}/resend/stream` | `chat.ask` |
 | PATCH | `/chat/sessions/{sessionId}` | `chat.access` |
 | DELETE | `/chat/sessions/{sessionId}` | `chat.access` |
 | PATCH | `/chat/sessions/{sessionId}/pin` | `chat.access` |
@@ -45,7 +46,10 @@
 | POST | `/chat/agents/{agentId}/share` | `tools.manage` |
 | GET | `/chat/agents/{agentId}/shares` | `tools.manage` (owner) |
 | DELETE | `/chat/agents/{agentId}/shares/{targetUserId}` | `tools.manage` (owner) |
+| POST | `/chat/agents/preview` | `tools.manage` |
 | POST | `/chat/agents/{agentId}/preview` | `tools.manage` |
+| POST | `/chat/agents/{agentId}/publish` | `tools.manage` |
+| GET | `/chat/agents/{agentId}/versions` | `tools.manage` |
 | POST | `/chat/agents/{agentId}/duplicate` | `tools.manage` |
 | GET | `/chat/agents/{agentId}/export` | `tools.manage` |
 | POST | `/chat/agents/import` | `tools.manage` |
@@ -115,6 +119,15 @@
 | Método | Path | Permissão |
 |---|---|---|
 | POST | `/tools/execute` | `tools.use` |
+
+## Admin — Skills (catálogo)
+
+| Método | Path | Permissão |
+|---|---|---|
+| GET | `/admin/skills` | `tools.manage` |
+| POST | `/admin/skills` | `tools.manage` |
+| PUT | `/admin/skills/{skillId}` | `tools.manage` |
+| DELETE | `/admin/skills/{skillId}` | `tools.manage` |
 
 ## Admin
 

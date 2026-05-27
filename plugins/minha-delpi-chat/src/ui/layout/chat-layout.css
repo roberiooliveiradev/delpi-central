@@ -56,7 +56,7 @@
     border-right: 1px solid var(--mdc-card-border);
     box-shadow: var(--mdc-shadow-lg);
     transform: translateX(-105%);
-    transition: transform 0.24s ease;
+    transition: transform var(--mdc-motion-duration-slow) var(--mdc-motion-ease-out);
     will-change: transform;
   }
 

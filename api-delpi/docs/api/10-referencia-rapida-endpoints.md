@@ -27,6 +27,8 @@ Legenda de permissões:
 | Método | Endpoint | Perm. |
 |---|---|---|
 | GET | `/products/search` | A |
+| GET | `/products/{code}` | A |
+| GET | `/products/{code}/summary` | A |
 | GET | `/products/{code}/structure` | A |
 | GET | `/products/{code}/structure/excel` | A |
 | GET | `/products/{code}/parents` | A |
@@ -80,14 +82,14 @@ Legenda de permissões:
 
 ## Financeiro
 
-> Prefixo real: `/finacial/financial` (typo em `main.py`)
+> Montagem dupla em `main.py`: `/financial/*` (preferido) e `/finacial/*` (legado).
 
 | Método | Endpoint | Perm. |
 |---|---|---|
-| GET | `/finacial/financial/rol` | A |
-| GET | `/finacial/financial/ebitda_pct` | A |
-| GET | `/finacial/financial/fixed_cost_pct` | A |
-| GET | `/finacial/financial/pmr` | A |
+| GET | `/financial/rol` | A |
+| GET | `/financial/ebitda_pct` | A |
+| GET | `/financial/fixed_cost_pct` | A |
+| GET | `/financial/pmr` | A |
 
 ---
 
@@ -102,6 +104,18 @@ Legenda de permissões:
 | GET | `/commercial/new-business-rol-pct` | A |
 | GET | `/commercial/new-clients-average` | A |
 | GET | `/commercial/new-clients-rol-pct` | A |
+| GET | `/commercial/rol/series` | A |
+
+---
+
+## RH (`/hr`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/hr/branches` | A |
+| GET | `/hr/snapshot` | A |
+| GET | `/hr/active-pdi-count` | A |
+| GET | `/hr/performance-reviews-completion` | A |
 
 ---
 
@@ -135,6 +149,7 @@ Legenda de permissões:
 | GET | `/engineering/lmps` | A ou L |
 | GET | `/engineering/lmps/dashboard` | A ou L |
 | GET | `/engineering/lmps/dashboard/summary` | A ou L |
+| GET | `/engineering/lmps/dashboard/items` | A ou L |
 | GET | `/engineering/lmps/dashboard/charts` | A ou L |
 | GET | `/engineering/lmps/{sale_number}` | A ou L |
 | GET | `/engineering/transforma-mais/processes` | A ou L |
@@ -148,10 +163,13 @@ Legenda de permissões:
 |---|---|---|
 | GET | `/quality/branches` | Q |
 | GET | `/quality/nonconformities` | Q |
+| GET | `/quality/nonconformities/series` | Q |
 | GET | `/quality/kaizens/summary` | Q |
 | GET | `/quality/audit-5s/summary` | Q |
 | GET | `/quality/ppm/internal/summary` | Q |
 | GET | `/quality/ppm/external/summary` | Q |
+| GET | `/quality/ppm/internal/series` | Q |
+| GET | `/quality/ppm/external/series` | Q |
 | GET | `/quality/ppm/internal` | Q |
 | GET | `/quality/ppm/external` | Q |
 

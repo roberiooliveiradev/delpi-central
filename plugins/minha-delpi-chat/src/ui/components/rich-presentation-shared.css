@@ -7,6 +7,13 @@
   border-radius: var(--mdc-radius-sm);
   overflow: hidden;
   background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+  transition: box-shadow var(--mdc-motion-duration) var(--mdc-motion-ease);
+}
+
+.mdc-rich-table:hover,
+.mdc-rich-chart:hover {
+  box-shadow: var(--mdc-elevation-2);
 }
 
 .mdc-rich-table__header,

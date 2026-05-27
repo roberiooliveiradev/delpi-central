@@ -7,6 +7,8 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | Área | Caminho |
 |------|---------|
 | **API (referência completa)** | [docs/api/README.md](docs/api/README.md) |
+| **Conhecimento para agentes (RAG)** | [docs/knowledge/README.md](docs/knowledge/README.md) |
+| **Rotas api-delpi (agente)** | [docs/knowledge/api-delpi-rotas-agente.md](docs/knowledge/api-delpi-rotas-agente.md) |
 | Deploy e migrations | [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md) |
 | Roadmap admin (itens 1–15) | [docs/roadmap/admin-minha-delpi-chat.md](docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
@@ -67,7 +69,7 @@ docs/              # documentação técnica
 
 - Chat com histórico, streaming SSE, anexos e artefatos
 - RAG documental (pgvector) com fontes na resposta; RAG híbrido, rerank e loop agentic (configurável)
-- **Agentes** com instruções, compartilhamento, stats, duplicate/export/import, fontes e actions OpenAPI por agente
+- **Agentes** com rascunho/publicação (`published_config`, histórico de versões), preview, instruções, compartilhamento, stats, duplicate/export/import, skills, fontes e actions OpenAPI
 - **Projetos** com instruções, agente padrão e compartilhamento
 - Base global de conhecimento com pipeline de ingestão
 - Painel admin: diretrizes, métricas, auditoria, simulação, avaliações, segurança, especialização de agentes

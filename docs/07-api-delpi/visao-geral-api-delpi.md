@@ -42,8 +42,8 @@ Autenticação: `Authorization: Bearer <JWT>` via `delpi_auth` (mesmo Keycloak d
 | *(movido)* | Indicadores Estratégicos → `/apps/strategic-indicators-api/strategic-indicators` ([doc](../../strategic-indicators-api/docs/README.md)) |
 | `/engineering` | LMPs, Transforma Mais |
 | `/quality` | Métricas qualidade (TOTVS) |
-| `/commercial`, `/production`, `/supplies` | KPIs departamentais |
-| `/finacial/financial` | Financeiro (typo de mount em `main.py`) |
+| `/commercial`, `/production`, `/supplies`, `/hr` | KPIs departamentais |
+| `/financial` e `/finacial` | Financeiro (montagem dupla em `main.py`; preferir `/financial/*`) |
 
 **NC PostgreSQL** (`internal_nc_routes`, `external_nc_routes`): implementadas, **ainda não montadas** em `main.py` — ver [07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md).
 
@@ -99,4 +99,6 @@ Migrações de plugins: `api-delpi/migrations/plugins/`.
 
 1. [api-delpi/docs/api/00-visao-geral.md](../../api-delpi/docs/api/00-visao-geral.md)
 2. [api-delpi/docs/api/10-referencia-rapida-endpoints.md](../../api-delpi/docs/api/10-referencia-rapida-endpoints.md)
-3. [../04-core-api/visao-geral-core-api.md](../04-core-api/visao-geral-core-api.md)
+3. [api-delpi/docs/api/11-guia-agente-chat.md](../../api-delpi/docs/api/11-guia-agente-chat.md) — agentes Minha DELPI Chat
+4. [minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md](../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) — documento RAG expandido
+5. [../04-core-api/visao-geral-core-api.md](../04-core-api/visao-geral-core-api.md)

@@ -1,5 +1,15 @@
 # 09 — Deploy, migrations e schema audit
 
+## Migrações recentes (agentes)
+
+| Revision | Conteúdo |
+|---|---|
+| `h9i0j1k2l3m4` | Publicação de agentes: `published_version`, `published_at`, `published_config`, tabela `ai_chat_agent_versions` |
+
+Após `db upgrade`, agentes existentes precisam de **Publicar** no builder (`POST /chat/agents/{id}/publish`) para ficarem visíveis a visitantes (`published_version >= 1`).
+
+---
+
 ## Estado esperado em produção
 
 ```bash

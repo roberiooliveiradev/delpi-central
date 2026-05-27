@@ -83,6 +83,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 
 ## Observações importantes
 
-- O prefixo financeiro em `main.py` está registrado como `/finacial` (typo). Os endpoints reais são `/finacial/financial/*` — ver [06-modulos-departamentais.md](./06-modulos-departamentais.md).
+- O router financeiro é montado em **`/financial`** (preferido) e em **`/finacial`** (typo legado). Ex.: `GET /financial/rol` e `GET /finacial/rol` — ver [06-modulos-departamentais.md](./06-modulos-departamentais.md).
+- Guia para agentes do Minha DELPI Chat: [11-guia-agente-chat.md](./11-guia-agente-chat.md) e documento RAG em `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`.
 - Rotas `internal_nc_routes` e `external_nc_routes` existem no código mas **não** estão incluídas em `app/main.py` até o momento.
 - Respostas da maioria dos módulos legados usam envelope `{ success, message, data }`; Strategic Indicators e NC usam JSON direto ou `HTTPException`.
