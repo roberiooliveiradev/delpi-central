@@ -120,6 +120,9 @@ Eventos esperados:
 |---|---|
 | `sources` | `{ "sources": [...] }` |
 | `tool_calls` | `{ "toolCalls": [...] }` |
-| `token` | `{ "content": "..." }` |
-| `done` | payload compatível com `SendChatMessageResponse` |
+| `assistant_pending` | `{ "messageId": "..." }` |
+| `token` | `{ "content": "..." }` (modo legado sem persist-before-playback) |
+| `canvas_open` | `{ "title", "markdown", "sourceMessageId", "messageId" }` |
+| `playback` | `{ "messageId", "answer", "sources", "toolCalls" }` |
+| `done` | payload compatível com `SendChatMessageResponse` (`playback`, `canvasOpen` opcionais) |
 | `error` | `{ "message": "..." }` |

@@ -43,9 +43,11 @@ Mensagem do usuário
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights |
+| `ChatCanvasIntentService` | Pedido de enviar conteúdo à lousa (não confunde com Canva.com) |
+| `ChatCanvasContentService` | Monta markdown da última resposta assistant + confirmação |
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise) |
-| `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico) |
+| `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, …) |
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.

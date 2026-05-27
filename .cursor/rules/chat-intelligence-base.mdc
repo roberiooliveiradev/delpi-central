@@ -13,7 +13,7 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 
 | Camada | Responsabilidade | Exemplos no código |
 |--------|-------------------|-------------------|
-| **Chat base** | Intenção, pipeline, tools, policies, contexto de histórico | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ChatAnalysisIntentService`, `prompt_policies/*.md`, `ExternalActionSelectionService` |
+| **Chat base** | Intenção, pipeline, tools, policies, contexto de histórico | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ChatAnalysisIntentService`, `ChatCanvasIntentService`, `ChatCanvasContentService`, `prompt_policies/*.md`, `ExternalActionSelectionService` |
 | **Agente** | Identidade, allowed actions, skills, escopo RAG | `system_prompt`, `metadata.skills`, providers/actions do agente |
 | **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
 | **Use cases** | Orquestração fina (stream/send/simulate) | Apenas **consumir** o pipeline base; sem lógica de inteligência duplicada |

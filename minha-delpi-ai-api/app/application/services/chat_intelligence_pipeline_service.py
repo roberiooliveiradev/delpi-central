@@ -96,6 +96,21 @@ class ChatIntelligencePipelineService:
         )
 
     @classmethod
+    def resolve_analysis_direct_answer(
+        cls,
+        message: str,
+        previous_messages: list[Any] | None,
+    ) -> str | None:
+        from app.application.services.chat_structure_comparison_service import (
+            ChatStructureComparisonService,
+        )
+
+        return ChatStructureComparisonService.build_comparison_answer(
+            message,
+            previous_messages,
+        )
+
+    @classmethod
     def resolve_direct_answer(
         cls,
         tool_context: dict | None,

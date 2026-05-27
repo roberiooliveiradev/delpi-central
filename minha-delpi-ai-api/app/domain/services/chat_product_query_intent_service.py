@@ -196,6 +196,22 @@ class ChatProductQueryIntentService:
         *,
         intent: str,
     ) -> str | None:
+        if intent == ChatProductQueryIntent.STRUCTURE:
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            dados = humanized.get("dados")
+
+            if isinstance(dados, dict):
+                formatted = ChatProductStructurePresentationService.format_markdown(
+                    dados,
+                    source_path=humanized.get("sourcePath"),
+                )
+
+                if formatted:
+                    return formatted
+
         lines = [
             str(line).strip()
             for line in (humanized.get("linhas") or [])

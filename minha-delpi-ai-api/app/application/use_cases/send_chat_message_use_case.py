@@ -146,7 +146,7 @@ class SendChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        if canvas_action:
+        if canvas_action or analysis_mode:
             fast_path = True
             tool_context = {
                 "context": "",
@@ -154,6 +154,13 @@ class SendChatMessageUseCase:
                 "nativeToolCalling": {},
             }
             tool_calls = []
+            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+                message,
+                previous_messages,
+                tool_context,
+            )
+            tool_context = post_tool.tool_context
+            analysis_mode = post_tool.analysis_mode
             pipeline_timings.mark("tools_done")
         else:
             tool_context = self._build_tool_context(
@@ -191,13 +198,18 @@ class SendChatMessageUseCase:
         direct_answer = (
             canvas_action.answer
             if canvas_action
+            else ChatIntelligencePipelineService.resolve_analysis_direct_answer(
+                message,
+                previous_messages,
+            )
+            if analysis_mode
             else ChatIntelligencePipelineService.resolve_direct_answer(
                 tool_context,
                 analysis_mode=analysis_mode,
             )
         )
 
-        if canvas_action:
+        if canvas_action or (analysis_mode and direct_answer):
             skip_rag = True
 
         if not direct_answer and ChatUserContextService.is_user_identity_question(message):

@@ -172,6 +172,38 @@
   text-align: left;
 }
 
+@media (max-width: 480px) {
+  .mdc-chat-input {
+    padding: var(--mdc-space-2) max(0.75rem, env(safe-area-inset-left, 0px))
+      calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px))
+      max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  .mdc-chat-input--center {
+    width: 100%;
+  }
+
+  .mdc-chat-input__box {
+    min-height: 3rem;
+    padding-inline: 0.35rem 0.4rem;
+  }
+
+  .mdc-chat-input textarea {
+    font-size: 1rem;
+    padding: 0.55rem 0.4rem 0.55rem 0.5rem;
+  }
+
+  .mdc-chat-input small {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .mdc-chat-input--center small {
+    text-align: center;
+  }
+}
+
 .mdc-chat-input__menu {
   position: absolute;
   left: 0;

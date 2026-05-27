@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após **Onda 10** (concluída) — novas rotas api-delpi (`/products/{code}`, `/summary`), seleção de rotas 36 cenários, publicação de agentes, skills automáticas no chat comum (maio/2026).
+> Atualizado em **maio/2026** — Onda 10, lousa por intent no chat base, persistência antes do playback e cadência de respostas prontas.
 
 ## Visão geral
 
@@ -26,7 +26,9 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 ### Chat (usuário final)
 
-- Sessões, histórico, streaming, pin/arquivo, edição de mensagem
+- Sessões, histórico, streaming SSE (`assistant_pending`, `playback`, `canvas_open`), pin/arquivo, edição de mensagem
+- **Lousa (canvas):** painel lateral editável; pedidos como «coloque na lousa/canvas/canva» reutilizam a última resposta do assistente (não confunde com Canva.com)
+- **Playback:** resposta persistida no banco antes da animação de escrita (`CHAT_PERSIST_BEFORE_PLAYBACK`, default `true`)
 - RAG com fontes, tools, anexos, projetos e agentes
 - **Gestão de agentes** (builder, publicar/versões, preview rascunho, shares, stats, duplicate, export/import, transfer) — ondas 1–7 + publicação
 - **Skills** injetadas automaticamente no chat comum (sem atalhos na home); por agente no builder
@@ -170,7 +172,9 @@ Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadm
 | Botão "Copiar" na resposta bruta da API | Concluído |
 | Dockerfile.prod: build context `.` + `shared/delpi_auth` | Concluído |
 | Dependência `python-jose` adicionada (necessária para delpi_auth) | Concluído |
-| Streaming em direct responses: 4 chars/chunk, 20ms delay (efeito de escrita) | Concluído |
+| Streaming em direct responses: 2 chars/chunk, 45ms delay (efeito de escrita) | Concluído |
+| Intent «coloque na lousa» + SSE `canvas_open` (chat base, herda em agentes) | Concluído |
+| Persistir resposta antes do playback (reload não perde texto em geração) | Concluído |
 | `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
 | Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
 | Normalização de mensagens (typos/acentos) para seleção de actions | Concluído |
@@ -195,6 +199,7 @@ CHAT_OPERATIONAL_FAST_PATH_ENABLED=true
 CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
 CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS=2
 CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS=45
+CHAT_PERSIST_BEFORE_PLAYBACK=true
 ```
 
 **Após deploy da api-delpi:** reimportar OpenAPI no provider do agente e reindexar o documento de rotas na base de conhecimento.

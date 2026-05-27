@@ -12,7 +12,8 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | Deploy e migrations | [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md) |
 | Roadmap admin (itens 1–15) | [docs/roadmap/admin-minha-delpi-chat.md](docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
-| Inteligência do chat (ondas 1–5) | [docs/roadmap/README.md](docs/roadmap/README.md) |
+| Inteligência do chat (ondas 1–10) | [docs/roadmap/README.md](docs/roadmap/README.md) |
+| Arquitetura inteligência base | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
 | Melhorias futuras (fechadas) | [docs/roadmap/melhorias-futuras.md](docs/roadmap/melhorias-futuras.md) |
 | Plugin (UI) | [../plugins/minha-delpi-chat/README.md](../plugins/minha-delpi-chat/README.md) |
 
@@ -67,7 +68,7 @@ docs/              # documentação técnica
 
 ## Funcionalidades principais
 
-- Chat com histórico, streaming SSE, anexos e artefatos
+- Chat com histórico, streaming SSE (`playback`, `canvas_open`), lousa por intent, anexos e artefatos
 - RAG documental (pgvector) com fontes na resposta; RAG híbrido, rerank e loop agentic (configurável)
 - **Agentes** com rascunho/publicação (`published_config`, histórico de versões), preview, instruções, compartilhamento, stats, duplicate/export/import, skills, fontes e actions OpenAPI
 - **Projetos** com instruções, agente padrão e compartilhamento

@@ -53,6 +53,29 @@ def test_finalize_after_tools_enriches_context_from_history():
     assert post.tool_context.get("analysisMode") is True
 
 
+def test_resolve_analysis_direct_answer_with_history():
+    messages = [
+        {"role": "user", "content": "estrutura do 90260077"},
+        {
+            "role": "assistant",
+            "content": "Estrutura do produto\n50230002 — X (PI) [MI] | Qtd: 1.0",
+            "metadata": {},
+        },
+        {"role": "user", "content": "estrutura do 90260088"},
+        {
+            "role": "assistant",
+            "content": "Estrutura do produto\n50210053 — Y (PI) [MI] | Qtd: 1.0",
+            "metadata": {},
+        },
+    ]
+    answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
+        "compare as duas estruturas",
+        messages,
+    )
+    assert answer
+    assert "90260077" in answer
+
+
 def test_resolve_direct_answer_returns_none_in_analysis_mode():
     answer = ChatIntelligencePipelineService.resolve_direct_answer(
         {"directAnswer": "resposta operacional"},

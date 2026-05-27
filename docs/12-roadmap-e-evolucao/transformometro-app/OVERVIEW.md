@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** 2026-05-21 (URLs processo/revisão; ativar revisão sem workflow de aprovação)
+**Última atualização:** 2026-05-27 (duplicar processo; URLs processo/revisão; ativar revisão sem workflow)
 
 ## O que é
 
@@ -31,7 +31,7 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 |------|--------|
 | `/apps/transformometro` | Início (status API + atalhos) |
 | `/apps/transformometro/dashboard` | KPIs, alertas, export CSV/Excel, recalcular |
-| `/apps/transformometro/processos` | Lista de processos |
+| `/apps/transformometro/processos` | Lista de processos (ação **Duplicar** na lista) |
 | `/apps/transformometro/processos/{id}` | Detalhe do processo |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Detalhe com revisão selecionada |
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
