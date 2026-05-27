@@ -179,10 +179,17 @@ def _get_chat_capabilities_from_request() -> dict:
         or CHAT_ADMIN_PERMISSION in permissions
     )
     can_manage_tools = can_manage_own_agents
+    can_open_admin = (
+        is_superadmin
+        or CHAT_ADMIN_PERMISSION in permissions
+        or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+    )
 
     return {
         "permissions": sorted(permissions),
         "isSuperadmin": is_superadmin,
+        "canOpenAdmin": can_open_admin,
         "canManageAgents": can_manage_own_agents,
         "canManageOwnAgents": can_manage_own_agents,
         "canManageOfficialAgents": can_manage_official_agents,
