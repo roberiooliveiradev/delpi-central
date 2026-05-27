@@ -113,3 +113,12 @@ class ChatSessionRepositoryPort(ABC):
         metadata: dict | None = None,
     ) -> ChatMessage:
         raise NotImplementedError
+
+    @abstractmethod
+    def update_assistant_message(
+        self,
+        message_id: UUID,
+        content: str,
+        metadata: dict | None = None,
+    ) -> ChatMessage | None:
+        raise NotImplementedError

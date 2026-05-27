@@ -153,7 +153,10 @@ class GetStrategicIndicatorsPresentationUseCase:
         )
 
         indicators_by_department_id = (
-            self._build_indicators_by_department_id(current_snapshot=current_snapshot)
+            self._build_indicators_by_department_id(
+                current_snapshot=current_snapshot,
+                catalog_by_indicator_id=current_catalog_by_indicator_id,
+            )
             if "indicators_by_department_id" in include_sections
             else {}
         )
@@ -165,6 +168,7 @@ class GetStrategicIndicatorsPresentationUseCase:
                     start_date=current_snapshot.period.start_date,
                     end_date=current_snapshot.period.end_date,
                     competence=current_snapshot.period.competence,
+                    catalog_by_indicator_id=current_catalog_by_indicator_id,
                 )
                 for ctx in department_contexts
             }
@@ -359,6 +363,7 @@ class GetStrategicIndicatorsPresentationUseCase:
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
+        catalog_by_indicator_id: dict | None = None,
     ) -> dict:
         current_department = department_context.current
         previous_department = department_context.previous
@@ -403,6 +408,12 @@ class GetStrategicIndicatorsPresentationUseCase:
                 self._map_department_indicator(
                     current=indicator,
                     previous=previous_indicators_by_id.get(indicator.indicator_id),
+                    catalog_item=(catalog_by_indicator_id or {}).get(
+                        indicator.indicator_id
+                    ),
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
                 )
                 for indicator in current_department.indicators
             ],
@@ -410,7 +421,16 @@ class GetStrategicIndicatorsPresentationUseCase:
             "partial_success": False,
         }
 
-    def _map_department_indicator(self, *, current, previous) -> dict:
+    def _map_department_indicator(
+        self,
+        *,
+        current,
+        previous,
+        catalog_item=None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+    ) -> dict:
         previous_score = previous.score if previous is not None else current.score
         trend = (
             "stable"
@@ -451,10 +471,12 @@ class GetStrategicIndicatorsPresentationUseCase:
                 gap=current.gap,
                 department_id=current.department_id,
             ),
-            "goals": self._calculator.build_goals_payload(
-                unit_goals=getattr(current, "unit_goals", None),
-                goal_value=current.goal_value,
-                department_id=current.department_id,
+            "goals": self._calculator.resolve_goals_payload_for_calculated(
+                calculated=current,
+                catalog_item=catalog_item,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
             ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
@@ -542,7 +564,12 @@ class GetStrategicIndicatorsPresentationUseCase:
             return "Consolidado"
         return unit_id
 
-    def _build_indicators_by_department_id(self, *, current_snapshot) -> dict[str, list[dict]]:
+    def _build_indicators_by_department_id(
+        self,
+        *,
+        current_snapshot,
+        catalog_by_indicator_id: dict | None = None,
+    ) -> dict[str, list[dict]]:
         grouped: dict[str, list[dict]] = {}
 
         departments_by_id = {
@@ -584,10 +611,14 @@ class GetStrategicIndicatorsPresentationUseCase:
                         gap=item.gap,
                         department_id=item.department_id,
                     ),
-                    "goals": self._calculator.build_goals_payload(
-                        unit_goals=getattr(item, "unit_goals", None),
-                        goal_value=item.goal_value,
-                        department_id=item.department_id,
+                    "goals": self._calculator.resolve_goals_payload_for_calculated(
+                        calculated=item,
+                        catalog_item=(catalog_by_indicator_id or {}).get(
+                            item.indicator_id
+                        ),
+                        start_date=current_snapshot.period.start_date,
+                        end_date=current_snapshot.period.end_date,
+                        competence=current_snapshot.period.competence,
                     ),
                     "has_value": self._calculator.indicator_has_value(item.value),
                     "trend": item.trend,

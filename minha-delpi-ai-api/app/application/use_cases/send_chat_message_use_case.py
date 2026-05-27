@@ -19,6 +19,7 @@ from app.application.services.chat_agent_skills_service import ChatAgentSkillsSe
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
+from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -108,6 +109,14 @@ class SendChatMessageUseCase:
         attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        canvas_action = ChatCanvasContentService.resolve(
+            message,
+            previous_messages,
+            workspace_context,
+        )
+        canvas_open_payload = (
+            canvas_action.open_payload if canvas_action and canvas_action.open_payload else None
+        )
         attachment_ids = getattr(request, "attachment_ids", None)
         allowed_action_ids = workspace_context.get("allowedActionIds") or []
         pre_tool = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
@@ -117,6 +126,10 @@ class SendChatMessageUseCase:
         )
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
+
+        if canvas_action:
+            operational_optimize = False
+            analysis_mode = False
 
         if operational_optimize:
             keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
@@ -133,28 +146,38 @@ class SendChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        tool_context = self._build_tool_context(
-            request,
-            allowed_action_ids=workspace_context.get("allowedActionIds"),
-            capabilities=workspace_context.get("capabilities") or {},
-            specialization=workspace_context.get("specialization"),
-            fast_path=fast_path,
-            previous_messages=previous_messages,
-        )
-        tool_context = self._maybe_extend_tool_context(
-            request=request,
-            workspace_context=workspace_context,
-            tool_context=tool_context,
-        )
-        post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-            message,
-            previous_messages,
-            tool_context,
-        )
-        tool_context = post_tool.tool_context
-        analysis_mode = post_tool.analysis_mode
-        tool_calls = tool_context["toolCalls"]
-        pipeline_timings.mark("tools_done")
+        if canvas_action:
+            fast_path = True
+            tool_context = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": {},
+            }
+            tool_calls = []
+            pipeline_timings.mark("tools_done")
+        else:
+            tool_context = self._build_tool_context(
+                request,
+                allowed_action_ids=workspace_context.get("allowedActionIds"),
+                capabilities=workspace_context.get("capabilities") or {},
+                specialization=workspace_context.get("specialization"),
+                fast_path=fast_path,
+                previous_messages=previous_messages,
+            )
+            tool_context = self._maybe_extend_tool_context(
+                request=request,
+                workspace_context=workspace_context,
+                tool_context=tool_context,
+            )
+            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+                message,
+                previous_messages,
+                tool_context,
+            )
+            tool_context = post_tool.tool_context
+            analysis_mode = post_tool.analysis_mode
+            tool_calls = tool_context["toolCalls"]
+            pipeline_timings.mark("tools_done")
 
         resolved_skills = workspace_context.get("skills") or {}
         skip_rag = (
@@ -165,10 +188,17 @@ class SendChatMessageUseCase:
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
-        direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
-            tool_context,
-            analysis_mode=analysis_mode,
+        direct_answer = (
+            canvas_action.answer
+            if canvas_action
+            else ChatIntelligencePipelineService.resolve_direct_answer(
+                tool_context,
+                analysis_mode=analysis_mode,
+            )
         )
+
+        if canvas_action:
+            skip_rag = True
 
         if not direct_answer and ChatUserContextService.is_user_identity_question(message):
             user_direct = self._resolve_user_identity_answer(request.access_token, message)
@@ -318,33 +348,43 @@ class SendChatMessageUseCase:
             completion_tokens=completion_tokens_estimated,
         )
 
+        assistant_metadata = {
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentKey": workspace_context.get("agentKey"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "toolCalls": tool_calls,
+            "rag": {
+                "enabled": True,
+                "sourceCount": len(sources),
+            },
+            "intelligence": intelligence_metadata,
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
+            "metrics": {
+                "latencyMs": latency_ms,
+                "promptTokensEstimated": prompt_tokens_estimated,
+                "completionTokensEstimated": completion_tokens_estimated,
+                "totalTokensEstimated": total_tokens_estimated,
+                "estimatedCost": estimated_cost,
+            },
+            "directResponse": bool(direct_answer),
+        }
+
+        if canvas_open_payload:
+            assistant_metadata["canvasOpen"] = {
+                "title": canvas_open_payload.title,
+                "markdown": canvas_open_payload.markdown,
+                "sourceMessageId": canvas_open_payload.source_message_id,
+            }
+
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
             role="assistant",
             content=answer,
-            metadata={
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentKey": workspace_context.get("agentKey"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "toolCalls": tool_calls,
-                "rag": {
-                    "enabled": True,
-                    "sourceCount": len(sources),
-                },
-                "intelligence": intelligence_metadata,
-                "adminGuidelines": self._guideline_metadata(active_guidelines),
-                "metrics": {
-                    "latencyMs": latency_ms,
-                    "promptTokensEstimated": prompt_tokens_estimated,
-                    "completionTokensEstimated": completion_tokens_estimated,
-                    "totalTokensEstimated": total_tokens_estimated,
-                    "estimatedCost": estimated_cost,
-                },
-            },
+            metadata=assistant_metadata,
         )
 
         self.audit_repository.log(
@@ -379,6 +419,15 @@ class SendChatMessageUseCase:
             answer=answer,
             sources=sources,
             toolCalls=tool_calls,
+            canvasOpen=(
+                {
+                    "title": canvas_open_payload.title,
+                    "markdown": canvas_open_payload.markdown,
+                    "sourceMessageId": canvas_open_payload.source_message_id,
+                }
+                if canvas_open_payload
+                else None
+            ),
         )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:

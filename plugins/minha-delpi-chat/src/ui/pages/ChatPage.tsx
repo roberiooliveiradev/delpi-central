@@ -82,6 +82,7 @@ export function ChatPage({
     streamingSources,
     streamingToolCalls,
     streamingStatus,
+    streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
@@ -111,6 +112,17 @@ export function ChatPage({
     agentKey: requestedAgentKey,
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
+    },
+    onOpenCanvas: (payload) => {
+      if (!payload.markdown.trim()) {
+        return;
+      }
+
+      setCanvasDocument({
+        title: payload.title || "Conteúdo do chat",
+        markdown: payload.markdown,
+        messageId: payload.sourceMessageId ?? payload.messageId ?? null,
+      });
     },
   });
 
@@ -1107,6 +1119,7 @@ export function ChatPage({
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
                 streamingStatus={streamingStatus}
+                streamingShowPresentation={streamingShowPresentation}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}

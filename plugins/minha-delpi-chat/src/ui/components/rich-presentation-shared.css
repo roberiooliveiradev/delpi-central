@@ -16,6 +16,25 @@
   box-shadow: var(--mdc-elevation-2);
 }
 
+@keyframes mdc-rich-presentation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mdc-rich-presentation--enter .mdc-rich-table,
+.mdc-rich-presentation--enter .mdc-rich-chart,
+.mdc-rich-presentation--enter .mdc-rich-kpi-grid {
+  animation: mdc-rich-presentation-enter var(--mdc-motion-duration-slow) var(--mdc-motion-ease-out)
+    both;
+}
+
 .mdc-rich-table__header,
 .mdc-rich-chart__header {
   display: flex;

@@ -73,7 +73,7 @@ class ProcessoRepository(PluginBaseRepository):
             (processo_id,),
         )
 
-    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         codigo = data.get("codigo_processo") or self.next_codigo()
         row = self.execute_returning_one(
             """
@@ -96,6 +96,7 @@ class ProcessoRepository(PluginBaseRepository):
                 data.get("familia_processo"),
                 data.get("agrupador_ferramenta"),
             ),
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar processo.")

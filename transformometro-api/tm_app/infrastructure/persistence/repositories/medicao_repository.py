@@ -17,11 +17,7 @@ class MedicaoRepository(PluginBaseRepository):
             (revisao_id,),
         )
 
-    def upsert(self, data: dict[str, Any]) -> dict[str, Any]:
-        existing = self.get_by_revisao(data["revisao_id"])
-        if existing:
-            return self.update(str(existing["medicao_id"]), data)  # type: ignore[return-value]
-
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         row = self.execute_returning_one(
             """
             INSERT INTO transformometro.medicoes (
@@ -50,10 +46,18 @@ class MedicaoRepository(PluginBaseRepository):
                 data.get("base_referencia_mes"),
                 data.get("observacoes"),
             ),
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar medição.")
         return row
+
+    def upsert(self, data: dict[str, Any]) -> dict[str, Any]:
+        existing = self.get_by_revisao(data["revisao_id"])
+        if existing:
+            return self.update(str(existing["medicao_id"]), data)  # type: ignore[return-value]
+
+        return self.create(data)
 
     def update(self, medicao_id: str, data: dict[str, Any]) -> dict[str, Any]:
         row = self.execute_returning_one(

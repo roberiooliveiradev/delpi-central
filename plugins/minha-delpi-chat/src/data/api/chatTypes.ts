@@ -146,7 +146,23 @@ export type SendChatMessagePayload = {
   agentKey?: string | null;
 };
 
+export type ChatCanvasOpenPayload = {
+  title: string;
+  markdown: string;
+  messageId?: string | null;
+  sourceMessageId?: string | null;
+};
+
 export type SendChatMessageResponse = {
+  messageId: string;
+  answer: string;
+  sources: ChatSource[];
+  toolCalls: ChatToolCall[];
+  playback?: boolean;
+  canvasOpen?: ChatCanvasOpenPayload | null;
+};
+
+export type ChatPlaybackEvent = {
   messageId: string;
   answer: string;
   sources: ChatSource[];

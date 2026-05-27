@@ -102,9 +102,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     ? `Filial ${branch}`
     : "Consolidado (média das filiais)";
 
-  const rolContextLabel = branch
-    ? `Filial ${branch} · ${periodLabel}`
-    : `Por unidade · ${periodLabel}`;
+  const rolContextLabel = `${branchLabel} · ${periodLabel}`;
 
   const rolKpi = useMemo(
     () =>
@@ -212,8 +210,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         <KpiCard
           title={COMMERCIAL_KPI_TITLES.rol}
           value={rolKpi.value}
-          valueVariant="per-unit"
-          goalVariant="per-unit"
+          valueVariant={rolKpi.valueVariant}
+          goalVariant={rolKpi.valueVariant}
           contextLabel={rolKpi.contextLabel}
           goalLabel={rolKpi.goalLabel}
           goalScopeBadge={rolKpi.goalScopeBadge}
@@ -334,11 +332,10 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             <h2 className="dc-summary-card__title">Como ler os indicadores</h2>
           </div>
           <p className="dc-summary-card__description">
-            <strong>ROL</strong> (R$ com IPI) é um indicador{" "}
-            <em>por unidade</em> no SI (<code>commercial-rol</code>): realizado
-            e meta no formato <strong>01: … | 02: …</strong>. O gráfico mantém
-            as duas séries; conversão, OTD e novos negócios respeitam o filtro
-            de filial (senão, média consolidada).
+            <strong>ROL</strong> (R$ com IPI) segue o indicador{" "}
+            <code>commercial-rol</code> no SI. Com filial <strong>Todas</strong>,
+            o card mostra média consolidada e metas por filial via filtro (como
+            OTD e conversão). O gráfico mantém as séries 01 e 02.
           </p>
         </article>
       </section>

@@ -7,3 +7,4 @@ class SendChatMessageResponse:
     answer: str
     sources: list
     toolCalls: list
+    canvasOpen: dict | None = None

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicDepartmentCatalogItem,
+    StrategicIndicatorCalculatedValue,
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
@@ -241,12 +242,44 @@ def test_unit_goals_for_per_unit_monthly_curve() -> None:
     assert len(calculated) == 1
     assert calculated[0].unit_goals == {"01": 3_466_000.0, "02": 1_006_000.0}
 
-    goals_payload = calculator.build_goals_payload(
-        unit_goals=calculated[0].unit_goals,
-        goal_value=calculated[0].goal_value,
-        department_id="commercial",
+    goals_payload = calculator.resolve_goals_payload_for_calculated(
+        calculated=calculated[0],
+        catalog_item=indicator,
+        start_date="01-05-2026",
+        end_date="27-05-2026",
+        competence="2026-05",
     )
     assert goals_payload == {"01": 3_466_000.0, "02": 1_006_000.0}
+
+    stale = StrategicIndicatorCalculatedValue(
+        indicator_id=calculated[0].indicator_id,
+        department_id=calculated[0].department_id,
+        indicator_name=calculated[0].indicator_name,
+        weight_pct=calculated[0].weight_pct,
+        goal_label=calculated[0].goal_label,
+        goal_value=calculated[0].goal_value,
+        goal_periodicity=calculated[0].goal_periodicity,
+        goal_mode=calculated[0].goal_mode,
+        monthly_targets=calculated[0].monthly_targets,
+        scope_type=calculated[0].scope_type,
+        performance_direction=calculated[0].performance_direction,
+        strategic_description=calculated[0].strategic_description,
+        source=calculated[0].source,
+        value=calculated[0].value,
+        score=calculated[0].score,
+        gap=calculated[0].gap,
+        unit_values=calculated[0].unit_values,
+        unit_gaps=calculated[0].unit_gaps,
+    )
+    assert getattr(stale, "unit_goals", None) is None
+    recomputed = calculator.resolve_goals_payload_for_calculated(
+        calculated=stale,
+        catalog_item=indicator,
+        start_date="01-05-2026",
+        end_date="27-05-2026",
+        competence="2026-05",
+    )
+    assert recomputed == {"01": 3_466_000.0, "02": 1_006_000.0}
 
 
 def test_scope_branch_02_uses_filial_unit_value_and_goal() -> None:

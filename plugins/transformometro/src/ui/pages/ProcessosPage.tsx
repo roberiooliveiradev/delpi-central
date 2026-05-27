@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Copy, Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -11,6 +11,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createProcesso,
   deleteProcesso,
+  duplicateProcesso,
   fetchOptions,
   fetchProcessos,
   updateProcesso,
@@ -121,6 +122,25 @@ export function ProcessosPage({
     }
   }
 
+  async function handleDuplicate(row: Processo) {
+    const label = `${row.codigo_processo} — ${row.nome_processo}`;
+    if (
+      !window.confirm(
+        `Duplicar ${label}? Serão copiadas revisões, medições, investimentos e vínculos de recursos.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      const result = await duplicateProcesso(row.processo_id, undefined, getAccessToken);
+      await load();
+      onOpenProcesso(result.processo.processo_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
+    }
+  }
+
   async function handleDelete(row: Processo) {
     const label = `${row.codigo_processo} — ${row.nome_processo}`;
     if (!window.confirm(`Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica).`)) {
@@ -166,6 +186,17 @@ export function ProcessosPage({
               }}
             >
               Editar
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleDuplicate(row);
+              }}
+            >
+              <Copy size={14} />
+              Duplicar
             </button>
             <button
               type="button"

@@ -20,6 +20,7 @@ from app.application.services.chat_tool_context_service import ChatToolContextSe
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
+from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
@@ -39,6 +40,7 @@ from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
@@ -167,6 +169,14 @@ class StreamChatMessageUseCase:
             )
 
         history_source = history_messages if resend_from_message_id else previous_messages
+        canvas_action = ChatCanvasContentService.resolve(
+            message,
+            history_source,
+            workspace_context,
+        )
+        canvas_open_payload = (
+            canvas_action.open_payload if canvas_action and canvas_action.open_payload else None
+        )
         attachment_ids = getattr(request, "attachment_ids", None)
         allowed_action_ids = workspace_context.get("allowedActionIds") or []
         pre_tool = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
@@ -176,6 +186,10 @@ class StreamChatMessageUseCase:
         )
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
+
+        if canvas_action:
+            operational_optimize = False
+            analysis_mode = False
 
         if operational_optimize:
             keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
@@ -192,28 +206,38 @@ class StreamChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        tool_context = self._build_tool_context(
-            request,
-            allowed_action_ids=workspace_context.get("allowedActionIds"),
-            capabilities=workspace_context.get("capabilities") or {},
-            specialization=workspace_context.get("specialization"),
-            fast_path=fast_path,
-            previous_messages=history_source,
-        )
-        tool_context = self._maybe_extend_tool_context(
-            request=request,
-            workspace_context=workspace_context,
-            tool_context=tool_context,
-        )
-        post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-            message,
-            history_source,
-            tool_context,
-        )
-        tool_context = post_tool.tool_context
-        analysis_mode = post_tool.analysis_mode
-        tool_calls = tool_context["toolCalls"]
-        pipeline_timings.mark("tools_done")
+        if canvas_action:
+            fast_path = True
+            tool_context = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": {},
+            }
+            tool_calls = []
+            pipeline_timings.mark("tools_done")
+        else:
+            tool_context = self._build_tool_context(
+                request,
+                allowed_action_ids=workspace_context.get("allowedActionIds"),
+                capabilities=workspace_context.get("capabilities") or {},
+                specialization=workspace_context.get("specialization"),
+                fast_path=fast_path,
+                previous_messages=history_source,
+            )
+            tool_context = self._maybe_extend_tool_context(
+                request=request,
+                workspace_context=workspace_context,
+                tool_context=tool_context,
+            )
+            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+                message,
+                history_source,
+                tool_context,
+            )
+            tool_context = post_tool.tool_context
+            analysis_mode = post_tool.analysis_mode
+            tool_calls = tool_context["toolCalls"]
+            pipeline_timings.mark("tools_done")
 
         from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 
@@ -226,10 +250,17 @@ class StreamChatMessageUseCase:
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
-        direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
-            tool_context,
-            analysis_mode=analysis_mode,
+        direct_answer = (
+            canvas_action.answer
+            if canvas_action
+            else ChatIntelligencePipelineService.resolve_direct_answer(
+                tool_context,
+                analysis_mode=analysis_mode,
+            )
         )
+
+        if canvas_action:
+            skip_rag = True
 
         if not direct_answer and ChatUserContextService.is_user_identity_question(message):
             user_direct = self._resolve_user_identity_answer(request.access_token, message)
@@ -345,6 +376,8 @@ class StreamChatMessageUseCase:
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
+        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK
+        assistant_placeholder = None
 
         yield {
             "type": "sources",
@@ -362,22 +395,41 @@ class StreamChatMessageUseCase:
             "adminGuidelines": self._guideline_metadata(active_guidelines),
         }
 
+        if persist_before_playback:
+            assistant_placeholder = self.chat_repository.create_message(
+                session_id=session_id,
+                role="assistant",
+                content="",
+                metadata=ChatMessageDeliveryService.generating_metadata(
+                    {
+                        "agentKey": workspace_context.get("agentKey"),
+                        "stream": True,
+                    }
+                ),
+            )
+            yield {
+                "type": "assistant_pending",
+                "messageId": str(assistant_placeholder.id),
+            }
+
         if direct_answer:
-            for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
-                direct_answer
-            ):
-                answer_parts.append(chunk)
-                yield {
-                    "type": "token",
-                    "content": chunk,
-                }
+            answer_parts.append(direct_answer)
+            if not persist_before_playback:
+                for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
+                    direct_answer
+                ):
+                    yield {
+                        "type": "token",
+                        "content": chunk,
+                    }
         else:
             for token in self.llm_gateway.stream(llm_messages):
                 answer_parts.append(token)
-                yield {
-                    "type": "token",
-                    "content": token,
-                }
+                if not persist_before_playback:
+                    yield {
+                        "type": "token",
+                        "content": token,
+                    }
 
         answer = "".join(answer_parts).strip()
         pipeline_timings.mark("llm_done")
@@ -403,36 +455,61 @@ class StreamChatMessageUseCase:
             completion_tokens=completion_tokens_estimated,
         )
 
-        assistant_message = self.chat_repository.create_message(
-            session_id=session_id,
-            role="assistant",
-            content=answer,
-            metadata={
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentKey": workspace_context.get("agentKey"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "toolCalls": tool_calls,
-                "stream": True,
-                "rag": {
-                    "enabled": True,
-                    "sourceCount": len(sources),
-                },
-                "intelligence": intelligence_metadata,
-                "adminGuidelines": self._guideline_metadata(active_guidelines),
-                "metrics": {
-                    "latencyMs": latency_ms,
-                    "promptTokensEstimated": prompt_tokens_estimated,
-                    "completionTokensEstimated": completion_tokens_estimated,
-                    "totalTokensEstimated": total_tokens_estimated,
-                    "estimatedCost": estimated_cost,
-                },
-                "directResponse": bool(direct_answer),
+        assistant_metadata = {
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentKey": workspace_context.get("agentKey"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "toolCalls": tool_calls,
+            "stream": True,
+            "rag": {
+                "enabled": True,
+                "sourceCount": len(sources),
             },
-        )
+            "intelligence": intelligence_metadata,
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
+            "metrics": {
+                "latencyMs": latency_ms,
+                "promptTokensEstimated": prompt_tokens_estimated,
+                "completionTokensEstimated": completion_tokens_estimated,
+                "totalTokensEstimated": total_tokens_estimated,
+                "estimatedCost": estimated_cost,
+            },
+            "directResponse": bool(direct_answer),
+        }
+
+        if canvas_open_payload:
+            assistant_metadata["canvasOpen"] = {
+                "title": canvas_open_payload.title,
+                "markdown": canvas_open_payload.markdown,
+                "sourceMessageId": canvas_open_payload.source_message_id,
+            }
+
+        if persist_before_playback:
+            assistant_metadata = ChatMessageDeliveryService.ready_metadata(
+                assistant_metadata,
+                playback_pending=True,
+            )
+
+        if assistant_placeholder:
+            assistant_message = self.chat_repository.update_assistant_message(
+                assistant_placeholder.id,
+                answer,
+                assistant_metadata,
+            )
+        else:
+            assistant_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="assistant",
+                content=answer,
+                metadata=assistant_metadata,
+            )
+
+        if not assistant_message:
+            raise RuntimeError("Falha ao persistir mensagem do assistente.")
 
         self.audit_repository.log(
             user_id=user_id,
@@ -463,13 +540,41 @@ class StreamChatMessageUseCase:
             },
         )
 
-        yield {
+        if canvas_open_payload:
+            yield {
+                "type": "canvas_open",
+                "title": canvas_open_payload.title,
+                "markdown": canvas_open_payload.markdown,
+                "sourceMessageId": canvas_open_payload.source_message_id,
+                "messageId": str(assistant_message.id),
+            }
+
+        if persist_before_playback:
+            yield {
+                "type": "playback",
+                "messageId": str(assistant_message.id),
+                "answer": answer,
+                "sources": sources,
+                "toolCalls": tool_calls,
+            }
+
+        done_event = {
             "type": "done",
             "messageId": str(assistant_message.id),
             "answer": answer,
             "sources": sources,
             "toolCalls": tool_calls,
+            "playback": persist_before_playback,
         }
+
+        if canvas_open_payload:
+            done_event["canvasOpen"] = {
+                "title": canvas_open_payload.title,
+                "markdown": canvas_open_payload.markdown,
+                "sourceMessageId": canvas_open_payload.source_message_id,
+            }
+
+        yield done_event
 
         if should_generate_session_title and Settings.CHAT_SESSION_TITLE_LLM_ENABLED:
             from flask import has_app_context

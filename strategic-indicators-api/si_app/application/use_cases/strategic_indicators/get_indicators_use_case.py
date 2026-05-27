@@ -46,6 +46,7 @@ class GetStrategicIndicatorsUseCase:
         return self.build_from_period_snapshot(
             comparative.current,
             previous_snapshot=comparative.previous,
+            catalog=comparative.catalog,
         )
 
     def build_from_period_snapshot(
@@ -53,6 +54,7 @@ class GetStrategicIndicatorsUseCase:
         snapshot: StrategicIndicatorsPeriodSnapshot,
         *,
         previous_snapshot: StrategicIndicatorsPeriodSnapshot | None = None,
+        catalog=None,
     ) -> GetStrategicIndicatorsResponse:
         departments_by_id = {
             item.department_id: item
@@ -61,6 +63,10 @@ class GetStrategicIndicatorsUseCase:
         previous_indicators_by_id = {
             item.indicator_id: item
             for item in (previous_snapshot.calculated_indicators if previous_snapshot else [])
+        }
+        catalog_by_indicator_id = {
+            item.indicator_id: item
+            for item in (catalog.indicators_catalog if catalog is not None else [])
         }
 
         return GetStrategicIndicatorsResponse(
@@ -95,10 +101,12 @@ class GetStrategicIndicatorsUseCase:
                         gap=item.gap,
                         department_id=item.department_id,
                     ),
-                    goals=self._calculator.build_goals_payload(
-                        unit_goals=getattr(item, "unit_goals", None),
-                        goal_value=item.goal_value,
-                        department_id=item.department_id,
+                    goals=self._calculator.resolve_goals_payload_for_calculated(
+                        calculated=item,
+                        catalog_item=catalog_by_indicator_id.get(item.indicator_id),
+                        start_date=snapshot.period.start_date,
+                        end_date=snapshot.period.end_date,
+                        competence=snapshot.period.competence,
                     ),
                     has_value=item.value is not None,
                     trend=self._resolve_indicator_trend(
