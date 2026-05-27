@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
 import { SettingsHero } from "../components/SettingsHero";
 import { SettingsStatusStrip } from "../components/SettingsStatusStrip";
@@ -40,9 +40,18 @@ type SettingsTab =
   | "global"
   | "audit";
 
+const SETTINGS_LAYOUT_CLASS = "si-settings-active";
+
 export function SettingsPage({ getAccessToken }: SettingsPageProps) {
   const settings = useStrategicIndicatorsSettings({ getAccessToken });
   const [activeTab, setActiveTab] = useState<SettingsTab>("overview");
+
+  useEffect(() => {
+    document.documentElement.classList.add(SETTINGS_LAYOUT_CLASS);
+    return () => {
+      document.documentElement.classList.remove(SETTINGS_LAYOUT_CLASS);
+    };
+  }, []);
   const overviewLoadingProgress = useLoadingProgress(
     settings.loading && activeTab === "overview",
     settings.requestProgress
