@@ -19,7 +19,6 @@ import {
   createProjectTextSource,
   deleteChatSource,
   getChatCapabilities,
-  listChatSkillCatalog,
   listProjectSources,
   updateChatArtifact,
   uploadProjectSource,
@@ -38,16 +37,6 @@ import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
-
-function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | null } | null | undefined): number {
-  const value = agent?.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return 0;
-  }
-
-  return value.filter((item) => typeof item === "string" && item.trim()).length;
-}
 
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -81,10 +70,6 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [skillCatalog, setSkillCatalog] = useState<
-    import("../../data/api/chatTypes").ChatSkillCatalogItem[]
-  >([]);
-
   const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
 
   const {
@@ -446,30 +431,6 @@ export function ChatPage({
     }
 
     void loadToolManagementPermission();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [getAccessToken]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadSkillCatalog() {
-      try {
-        const catalog = await listChatSkillCatalog({ getAccessToken });
-
-        if (isMounted) {
-          setSkillCatalog(catalog);
-        }
-      } catch {
-        if (isMounted) {
-          setSkillCatalog([]);
-        }
-      }
-    }
-
-    void loadSkillCatalog();
 
     return () => {
       isMounted = false;
@@ -843,7 +804,7 @@ export function ChatPage({
           className="mdc-chat-view-host"
         >
         {currentView === "projects" ? (
-          <section className="mdc-chat-main" aria-label="Projetos">
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Projetos">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
                 <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
@@ -877,7 +838,7 @@ export function ChatPage({
             />
           </section>
         ) : currentView === "agents" ? (
-          <section className="mdc-chat-main" aria-label="Gerenciar agentes">
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Gerenciar agentes">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
                 <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
@@ -944,9 +905,7 @@ export function ChatPage({
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
-                : conversationAgent
-                  ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
-                  : undefined
+                : undefined
             }
             onOpenAdmin={openAdmin}
             onRenameProject={async () => {
@@ -1121,11 +1080,7 @@ export function ChatPage({
                       }}
                     />
                   ) : (
-                    <ChatEmptyState
-                      displayName={userDisplayName}
-                      skillCatalog={skillCatalog}
-                      onUseSuggestion={setDraft}
-                    />
+                    <ChatEmptyState displayName={userDisplayName} />
                   )}
 
                   <ChatInput
@@ -1146,7 +1101,6 @@ export function ChatPage({
           ) : (
             <section className="mdc-chat-conversation" aria-label="Conversa">
               <ChatMessageList
-                skillCatalog={skillCatalog}
                 messages={messages}
                 conversationKey={activeSession?.id ?? null}
                 streamingAnswer={streamingAnswer}
@@ -1155,7 +1109,6 @@ export function ChatPage({
                 streamingStatus={streamingStatus}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
-                onUseSuggestion={setDraft}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}

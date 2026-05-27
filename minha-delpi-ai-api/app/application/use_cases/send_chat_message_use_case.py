@@ -12,6 +12,7 @@ from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
@@ -148,8 +149,12 @@ class SendChatMessageUseCase:
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
 
+        resolved_skills = workspace_context.get("skills") or {}
         skip_rag = (
-            fast_path
+            (
+                fast_path
+                and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
+            )
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
@@ -239,10 +244,15 @@ class SendChatMessageUseCase:
 
         if direct_answer:
             llm_messages = []
-        elif fast_path and Settings.CHAT_FAST_PATH_SLIM_PROMPT:
+        elif (
+            fast_path
+            and Settings.CHAT_FAST_PATH_SLIM_PROMPT
+            and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
+        ):
             llm_messages = self.prompt_builder_service.build_fast_path_messages(
                 current_message=message,
                 history=history[-2:] if history else [],
+                skills=resolved_skills,
             )
         else:
             user_context = self._build_user_context(request.access_token)

@@ -64,6 +64,30 @@ def test_prompt_includes_company_knowledge_skill_policy():
     assert "search_knowledge_base" in prompt
 
 
+def test_preserves_rag_on_fast_path_when_company_knowledge_enabled():
+    assert ChatAgentSkillsService.preserves_rag_on_fast_path(
+        {"companyKnowledge": True},
+    )
+    assert not ChatAgentSkillsService.preserves_rag_on_fast_path(
+        {"companyKnowledge": False},
+    )
+
+
+def test_fast_path_messages_include_sql_skill_policy():
+    from app.application.services.chat_prompt_builder_service import (
+        ChatPromptBuilderService,
+    )
+    from app.domain.services.prompt_policy_service import PromptPolicyService
+
+    messages = ChatPromptBuilderService(PromptPolicyService()).build_fast_path_messages(
+        current_message="oi",
+        skills={"sqlAuthoring": True},
+    )
+
+    system = messages[0]["content"]
+    assert "```sql" in system
+
+
 def test_company_knowledge_default_for_common_chat(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_agent_skills_service.Settings.CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL",

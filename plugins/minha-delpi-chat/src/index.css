@@ -5,6 +5,7 @@
 ========================================= */
 
 @import "./ui/layout/chat-transitions.css";
+@import "./ui/layout/workspace-responsive.css";
 
 :root {
   --mdc-font-family:

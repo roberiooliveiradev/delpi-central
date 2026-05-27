@@ -177,6 +177,46 @@ Comportamento esperado:
 
     COMPANY_KNOWLEDGE_SKILL_FALLBACK = """Skill Conhecimento da empresa: priorize a base documental global (RAG e search_knowledge_base); cite fontes; não invente políticas."""
 
+    def build_active_skill_policy_sections(self, skills: dict | None) -> list[str]:
+        """Políticas de skills ativas no runtime (chat comum ou agente), sem ação do usuário."""
+        resolved_skills = skills or {}
+        sections: list[str] = []
+
+        if resolved_skills.get("sqlAuthoring"):
+            from app.domain.skills.chat_skill_registry import ChatSkillRegistry, SQL_SKILL_KEY
+
+            sql_policy = ChatSkillRegistry.get_policy_content(SQL_SKILL_KEY)
+            sections.append(
+                sql_policy
+                or self._load_policy(
+                    "sql-assistant-skill.md",
+                    self.SQL_ASSISTANT_SKILL_FALLBACK,
+                )
+            )
+
+        if resolved_skills.get("companyKnowledge"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                COMPANY_KNOWLEDGE_SKILL_KEY,
+            )
+
+            company_policy = ChatSkillRegistry.get_policy_content(
+                COMPANY_KNOWLEDGE_SKILL_KEY
+            )
+            sections.append(
+                company_policy
+                or self._load_policy(
+                    "company-knowledge-skill.md",
+                    self.COMPANY_KNOWLEDGE_SKILL_FALLBACK,
+                )
+            )
+
+        return [
+            section.strip()
+            for section in sections
+            if section and section.strip()
+        ]
+
     def build_contextual_prompt(
         self,
         rag_context: str,
@@ -215,34 +255,7 @@ Comportamento esperado:
             )
         )
 
-        if resolved_skills.get("sqlAuthoring"):
-            from app.domain.skills.chat_skill_registry import ChatSkillRegistry, SQL_SKILL_KEY
-
-            sql_policy = ChatSkillRegistry.get_policy_content(SQL_SKILL_KEY)
-            sections.append(
-                sql_policy
-                or self._load_policy(
-                    "sql-assistant-skill.md",
-                    self.SQL_ASSISTANT_SKILL_FALLBACK,
-                )
-            )
-
-        if resolved_skills.get("companyKnowledge"):
-            from app.domain.skills.chat_skill_registry import (
-                ChatSkillRegistry,
-                COMPANY_KNOWLEDGE_SKILL_KEY,
-            )
-
-            company_policy = ChatSkillRegistry.get_policy_content(
-                COMPANY_KNOWLEDGE_SKILL_KEY
-            )
-            sections.append(
-                company_policy
-                or self._load_policy(
-                    "company-knowledge-skill.md",
-                    self.COMPANY_KNOWLEDGE_SKILL_FALLBACK,
-                )
-            )
+        sections.extend(self.build_active_skill_policy_sections(resolved_skills))
 
         if operational_mode:
             sections.append(

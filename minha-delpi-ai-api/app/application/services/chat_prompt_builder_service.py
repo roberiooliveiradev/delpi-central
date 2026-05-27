@@ -47,8 +47,17 @@ class ChatPromptBuilderService:
         *,
         current_message: str,
         history: list | None = None,
+        skills: dict | None = None,
     ) -> list[dict]:
-        messages = [{"role": "system", "content": _FAST_PATH_SYSTEM_PROMPT}]
+        system_prompt = _FAST_PATH_SYSTEM_PROMPT
+        skill_sections = self.prompt_policy_service.build_active_skill_policy_sections(
+            skills
+        )
+
+        if skill_sections:
+            system_prompt = f"{system_prompt}\n\n" + "\n\n".join(skill_sections)
+
+        messages = [{"role": "system", "content": system_prompt}]
 
         for item in history or []:
             if item.role in {"user", "assistant"}:

@@ -1,4 +1,4 @@
-import { Bot, Settings, Share2, Sparkles } from "lucide-react";
+import { Bot, Settings, Sparkles } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
 
@@ -32,6 +32,7 @@ export function ChatAgentHome({
   onManageAgent,
 }: ChatAgentHomeProps) {
   const icebreakers = getAgentIcebreakers(agent);
+  const isPrivate = agent.visibility !== "public";
 
   return (
     <section className="mdc-chat-agent-home" aria-label={`Agente ${agent.name}`}>
@@ -46,25 +47,22 @@ export function ChatAgentHome({
       {agent.description ? <p>{agent.description}</p> : null}
 
       <div className="mdc-chat-agent-home__meta">
-        <span>{agent.visibility === "public" ? "Público interno" : "Privado"}</span>
-        {agent.category ? <span>{agent.category}</span> : null}
-        {agent.response_style ? <span>{agent.response_style}</span> : null}
-        <span>{icebreakers.length} quebra-gelos</span>
+        <span>{isPrivate ? "Privado" : "Público interno"}</span>
+        {!isPrivate && agent.category ? <span>{agent.category}</span> : null}
+        {!isPrivate && agent.response_style ? <span>{agent.response_style}</span> : null}
+        {!isPrivate && icebreakers.length > 0 ? (
+          <span>{icebreakers.length} quebra-gelos</span>
+        ) : null}
       </div>
 
-      <div className="mdc-chat-agent-home__actions">
-        {canManageAgent ? (
+      {canManageAgent ? (
+        <div className="mdc-chat-agent-home__actions">
           <button type="button" onClick={onManageAgent}>
             <Settings size={16} aria-hidden="true" />
             <span>Gerenciar agente</span>
           </button>
-        ) : null}
-
-        <button type="button" disabled title="Em breve">
-          <Share2 size={16} aria-hidden="true" />
-          <span>Compartilhar</span>
-        </button>
-      </div>
+        </div>
+      ) : null}
 
       {icebreakers.length > 0 ? (
         <div className="mdc-chat-agent-home__icebreakers">

@@ -415,21 +415,25 @@
 
 @media (max-width: 760px) {
   .mdc-chat-agent-builder__topbar {
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.35rem 0.5rem;
   }
 
   .mdc-chat-agent-builder__topbar-title {
-    order: -1;
-    flex: 1 1 100%;
-    justify-items: start;
-    text-align: left;
+    justify-self: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .mdc-chat-agent-builder__topbar-meta {
+    display: none;
   }
 
   .mdc-chat-agent-builder__topbar-actions {
-    flex: 1 1 100%;
-    justify-content: flex-start;
+    justify-self: end;
+    justify-content: flex-end;
     max-width: none;
   }
 

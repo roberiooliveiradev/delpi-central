@@ -119,6 +119,8 @@ Formato legado ainda lido: `skills.sqlAuthoring`.
 Quando não há agente selecionado, os padrões globais seguem variáveis de ambiente:
 
 - `CHAT_DEFAULT_SQL_AUTHORING_SKILL` (default `true`) — skill `sql`
+
+As skills ativas são aplicadas automaticamente no prompt (e no escopo RAG, quando for `company-knowledge`); o usuário não precisa pedir nem clicar em atalhos na home do chat. Configure por agente em **Skills** no builder ou pelos defaults do chat comum via env acima.
 - `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) — skill `company-knowledge` (base documental global / RAG)
 
 Execução SQL no chat comum **não** é permitida via external actions.
