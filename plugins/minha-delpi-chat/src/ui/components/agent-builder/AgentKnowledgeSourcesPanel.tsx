@@ -223,9 +223,22 @@ export function AgentKnowledgeSourcesPanel({
                     .join(" ")}
                   title={getSourceLabel(source)}
                 >
-                  <span className="mdc-agent-knowledge__card-icon">
-                    <FileText size={18} aria-hidden="true" />
-                  </span>
+                  <div className="mdc-agent-knowledge__card-head">
+                    <span className="mdc-agent-knowledge__card-icon">
+                      <FileText size={18} aria-hidden="true" />
+                    </span>
+                    <button
+                      type="button"
+                      className="mdc-agent-knowledge__card-remove"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void onRemoveSource(source.id);
+                      }}
+                      aria-label={`Remover ${getSourceLabel(source)}`}
+                    >
+                      <Trash2 size={14} aria-hidden="true" />
+                    </button>
+                  </div>
                   <div className="mdc-agent-knowledge__card-copy">
                     <strong>{getSourceLabel(source)}</strong>
                     {getSourceSize(source) ? <small>{getSourceSize(source)}</small> : null}
@@ -233,17 +246,6 @@ export function AgentKnowledgeSourcesPanel({
                       <em>Já indexado — conteúdo igual</em>
                     ) : hash && knownHashes.has(hash) ? null : null}
                   </div>
-                  <button
-                    type="button"
-                    className="mdc-agent-knowledge__card-remove"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void onRemoveSource(source.id);
-                    }}
-                    aria-label={`Remover ${getSourceLabel(source)}`}
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                  </button>
                 </article>
               </li>
             );
