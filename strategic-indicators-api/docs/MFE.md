@@ -1,6 +1,6 @@
 # Microfrontend — `plugins/strategic-indicators`
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-27
 
 ## Papel
 
@@ -45,9 +45,11 @@ Quando a API retorna `has_value: false` ou `value` / `score` `null`:
 - `realized` pode trazer chaves com `null` por filial; cada unidade é formatada com o mesmo rótulo de ausência.
 - Médias de departamento/unidade na UI consideram apenas indicadores com `hasValue` e `score` numérico.
 - Metas e gaps multi-filial na visão consolidado: **`01: valor | 02: valor`** (código da filial, sem prefixo "Un.") — `formatBranchScopedMetric` em `indicatorValueFormatter.ts`.
-- Admin de metas: escopo da meta com rótulos `01`, `02` (`getGoalScopeBranchLabel` em `ui/presentation/labels.ts`).
+- Admin de metas: escopo da meta com rótulos `01`, `02` (`getGoalScopeBranchLabel`); modo **Padrão** / **Curva** (`getGoalModeLabel`).
+- Settings **Visão geral**: painel export/import JSON (`AdminConfigImportExportPanel`).
+- Settings **Metas**: formulário sem valor consolidado em curva; grade redimensiona ao mudar periodicidade (`curveTargets.ts`, `goalFormValidation.ts`).
 
-Contrato da API: [API.md](./API.md) e regras de cálculo / metas: [ARCHITECTURE.md](./ARCHITECTURE.md), [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md).
+Contrato da API: [API.md](./API.md). Metas e backup: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md), [INDICATOR_GOALS_SCOPE.md](./INDICATOR_GOALS_SCOPE.md). Cálculo: [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Rótulos da visão (consolidado vs filial)
 
@@ -122,7 +124,20 @@ Troubleshooting backend: [OPERATIONS.md](./OPERATIONS.md).
 | `.../trends` | Tendências | `strategic-indicators.trends.view` |
 | `.../alerts` | Alertas | `strategic-indicators.alerts.view` |
 | `.../presentation` | Apresentação | `strategic-indicators.presentation.view` |
-| `.../settings` | Admin | `strategic-indicators.settings.manage` |
+| `.../settings` | Admin (visão geral, metas, departamentos) | `strategic-indicators.settings.manage` |
+
+### Admin — metas e configuração
+
+| Componente | Função |
+|------------|--------|
+| `ui/pages/SettingsPage.tsx` | Abas; export/import na visão geral |
+| `ui/components/admin/AdminConfigImportExportPanel.tsx` | Download/upload do bundle |
+| `ui/components/admin/IndicatorGoalForm.tsx` | Cadastro Padrão/Curva |
+| `ui/components/admin/AdminGoalsWorkspace.tsx` | Ciclos anuais, duplicar ano, preencher faltantes |
+| `ui/utils/goalYearHelpers.ts` | Sugestão de ano destino e origem na duplicação |
+| `ui/utils/goalValuePolicy.ts` | Espelha regra de `goal_value` na UI |
+
+Layout do settings: scroll único no container da página (sem scroll aninhado no `main`).
 
 ## Cliente HTTP
 

@@ -135,7 +135,7 @@ O seed padrão (V009) cadastra metas para o ano corrente (ex.: 2026). Trends com
 | Sem meta alguma (visão consolidado) | Indicador omitido do catálogo resolvido (log `si_goal_missing`) |
 | Sem meta na filial (visão `branch=01/02`) | Indicador listado com `has_resolved_goal=false` e rótulo *Sem meta para filial XX* |
 
-Recomendação de negócio: duplicar metas para anos anteriores via admin (`duplicate-year`) em vez de depender só do fallback.
+Recomendação de negócio: duplicar metas para anos anteriores via admin (`duplicate-year`) em vez de depender só do fallback. Modos **Padrão** / **Curva**, pontos por periodicidade e backup JSON: [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
 
 ## Cache e invalidação
 
