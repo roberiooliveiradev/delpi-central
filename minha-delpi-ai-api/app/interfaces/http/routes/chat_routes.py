@@ -16,6 +16,7 @@ from flask import Blueprint, Response, current_app, g, jsonify, request, stream_
 from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.content.content_service import ContentService
 from app.infrastructure.persistence.postgres_chat_agent_repository import PostgresChatAgentRepository
 from app.infrastructure.persistence.postgres_external_action_repository import PostgresExternalActionRepository
 from app.infrastructure.external_actions.external_action_test_executor import ExternalActionTestExecutor
@@ -29,6 +30,7 @@ from app.application.dto.share_chat_agent_request import ShareChatAgentRequest
 from app.application.dto.share_chat_project_request import ShareChatProjectRequest
 from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
 from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
+from app.application.dto.upsert_chat_agent_skill_request import UpsertChatAgentSkillRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
 from app.application.dto.update_chat_project_request import UpdateChatProjectRequest
 from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
@@ -80,6 +82,9 @@ from app.composition.chat_composer import (
     make_share_chat_project_use_case,
     make_update_chat_agent_use_case,
     make_upsert_chat_agent_action_use_case,
+    make_list_chat_skill_catalog_use_case,
+    make_list_chat_agent_skills_use_case,
+    make_upsert_chat_agent_skill_use_case,
     make_list_chat_artifacts_use_case,
     make_list_chat_projects_use_case,
     make_update_chat_project_use_case,
@@ -1093,6 +1098,69 @@ def upsert_agent_action(agent_id: str):
     return jsonify({"ok": True}), 200
 
 
+@chat_bp.get("/skills")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def list_skill_catalog():
+    use_case = make_list_chat_skill_catalog_use_case()
+    return jsonify(use_case.execute()), 200
+
+
+@chat_bp.get("/agents/<agent_id>/skills")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def list_agent_skills(agent_id: str):
+    use_case = make_list_chat_agent_skills_use_case()
+    result = use_case.execute(
+        user_id=g.current_user.sub,
+        agent_id=agent_id,
+    )
+
+    if result is None:
+        return _not_found_response()
+
+    return jsonify(result), 200
+
+
+@chat_bp.put("/agents/<agent_id>/skills")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def upsert_agent_skill(agent_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure skills for this agent")
+
+    skill_key = payload.get("skillKey") or payload.get("skill_key")
+
+    if not skill_key:
+        return bad_request("skillKey is required")
+
+    use_case = make_upsert_chat_agent_skill_use_case()
+
+    try:
+        saved = use_case.execute(
+            UpsertChatAgentSkillRequest(
+                user_id=g.current_user.sub,
+                agent_id=agent_id,
+                skill_key=str(skill_key),
+                enabled=bool(payload.get("enabled", True)),
+                can_manage_official_agents=capabilities["canManageOfficialAgents"],
+            )
+        )
+
+        if not saved:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"ok": True}), 200
 
 
 def _create_source_from_request(use_case, *, user_id: str, owner_id_name: str, owner_id: str):
@@ -1418,7 +1486,9 @@ def upload_attachment_with_session():
         session = session_use_case.execute(
             CreateChatSessionRequest(
                 user_id=g.current_user.sub,
-                title="Nova conversa",
+                title=str(
+                    ContentService.stream().get("sessionTitleDefault") or "Nova conversa"
+                ),
                 context=context,
                 project_id=project_id,
                 agent_key=agent_key,

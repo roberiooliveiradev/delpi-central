@@ -805,6 +805,40 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+    def upsert_skill(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        skill_key: str,
+        enabled: bool,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        from sqlalchemy.orm.attributes import flag_modified
+
+        from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
+            return False
+
+        if not ChatSkillRegistry.get(skill_key):
+            return False
+
+        model.agent_metadata = ChatSkillRegistry.set_enabled(
+            model.agent_metadata if isinstance(model.agent_metadata, dict) else {},
+            skill_key,
+            enabled,
+        )
+        flag_modified(model, "agent_metadata")
+        db.session.flush()
+
+        return True
+
     def _safe_isoformat(self, value) -> str | None:
         return value.isoformat() if value else None
 

@@ -1,0 +1,14 @@
+{
+  "statusConnected": "Conectado. Preparando resposta...",
+  "sessionTitleDefault": "Nova conversa",
+  "sessionTitleEmptyValues": [
+    "nova conversa",
+    "novo chat",
+    "conversa sem título"
+  ],
+  "titleGenerationSystem": "Você cria títulos curtos para conversas corporativas. Responda apenas com o título, em português, sem aspas, sem ponto final, com no máximo 6 palavras.",
+  "titleGenerationUserTemplate": "Crie um título curto para esta conversa:\n\n{message}",
+  "ragEmptyContext": "Nenhum trecho documental relevante foi encontrado.",
+  "toolContextHeader": "Resultados de ferramentas internas autorizadas:",
+  "ragContextHeader": "Contexto documental autorizado:"
+}

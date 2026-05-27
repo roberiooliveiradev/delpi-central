@@ -1,0 +1,154 @@
+.mdc-chat-agent-skills-page {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-height: 0;
+  height: 100%;
+  padding: var(--mdc-space-5);
+  overflow: auto;
+}
+
+.mdc-chat-agent-skills-page__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  flex-wrap: wrap;
+}
+
+.mdc-chat-agent-skills-page__topbar > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--mdc-title);
+  font-weight: 800;
+}
+
+.mdc-chat-agent-skills-page__topbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-card-bg) 90%, transparent);
+  color: var(--mdc-text);
+  cursor: pointer;
+  padding: 0.45rem 0.7rem;
+}
+
+.mdc-chat-agent-skills-page__intro {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: var(--mdc-radius-lg);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+  padding: var(--mdc-space-4);
+  color: var(--mdc-text);
+  line-height: 1.55;
+}
+
+.mdc-chat-agent-skills-page__intro code {
+  font-size: 0.88em;
+}
+
+.mdc-chat-agent-skills-page__stats {
+  margin: 0.65rem 0 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.mdc-chat-agent-skills-page__error {
+  color: var(--mdc-danger, #c0392b);
+  margin: 0;
+}
+
+.mdc-chat-agent-skills-page__loading {
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-agent-skills-page__list {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-chat-agent-skills-page__card {
+  display: grid;
+  gap: var(--mdc-space-3);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, var(--mdc-bg));
+  padding: var(--mdc-space-4);
+}
+
+.mdc-chat-agent-skills-page__card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: center;
+}
+
+.mdc-chat-agent-skills-page__icon {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-agent-skills-page__card-head strong {
+  display: block;
+  color: var(--mdc-title);
+}
+
+.mdc-chat-agent-skills-page__card-head small {
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+}
+
+.mdc-chat-agent-skills-page__card p {
+  margin: 0;
+  color: var(--mdc-text);
+  line-height: 1.55;
+}
+
+.mdc-chat-agent-skills-page__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--mdc-text);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mdc-chat-agent-skills-page__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+}
+
+.mdc-chat-agent-skills-page__badge {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-border) 40%, transparent);
+  padding: 0.15rem 0.55rem;
+}
+
+.mdc-chat-agent-skills-page__badge.is-ok {
+  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-agent-skills-page__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: var(--mdc-radius-md);
+  background: transparent;
+  color: var(--mdc-primary);
+  cursor: pointer;
+  padding: 0.4rem 0.65rem;
+}

@@ -7,6 +7,8 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 | Área | Caminho |
 |------|---------|
 | API backend | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
+| Modelo conceitual (chat, skills, actions…) | [../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md](../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md) |
+| Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes | [../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md) |
@@ -57,11 +59,13 @@ src/
 
 ### Gestão de agentes (plugin)
 
-Fluxo: **Lista de agentes** → **Builder** (configurar) → **Actions** (OpenAPI).
+Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comportamento) / **Actions** (OpenAPI).
 
 | Recurso | Descrição |
 |---------|-----------|
 | Builder | Instruções, execução, quebra-gelos, compartilhamento, stats, duplicar |
+| Skills | Ativar comportamentos de prompt (ex.: Especialista SQL); ver badge de execução SQL |
+| Actions | Providers OpenAPI, rotas, teste e logs |
 | Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |
 | Transferir | Dono pode transferir propriedade |
 | Export / Import | JSON portável da configuração + actions |

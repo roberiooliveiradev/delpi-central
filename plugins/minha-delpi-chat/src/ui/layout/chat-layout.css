@@ -142,13 +142,33 @@
 /* Phones estreitos */
 @media (max-width: 480px) {
   .mdc-chat-context-topbar__actions > button:not(.mdc-chat-context-topbar__menu-trigger) {
-    padding-inline: 0.55rem;
-    font-size: 0.82rem;
+    padding-inline: 0.45rem;
+    font-size: 0.75rem;
   }
 
   .mdc-chat-message-action {
     min-width: 2rem;
     min-height: 2rem;
+  }
+
+  .mdc-chat-empty-composer {
+    padding: var(--mdc-space-3);
+    gap: var(--mdc-space-4);
+  }
+
+  .mdc-chat-conversation .mdc-chat-input {
+    padding-inline: var(--mdc-space-3);
+  }
+}
+
+@media (max-width: 360px) {
+  .mdc-chat-context-topbar__menu-trigger--sidebar {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .mdc-chat-message-list {
+    padding: var(--mdc-space-2);
   }
 }
 

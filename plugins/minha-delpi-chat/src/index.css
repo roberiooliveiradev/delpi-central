@@ -71,6 +71,7 @@
   --mdc-sidebar-width: 17.25rem;
   --mdc-sidebar-rail: 4.75rem;
   --mdc-content-max: 100%;
+  --mdc-chat-column-max: 52rem;
 }
 
 /* =========================================

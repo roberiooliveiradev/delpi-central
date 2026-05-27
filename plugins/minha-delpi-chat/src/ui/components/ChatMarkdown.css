@@ -1,7 +1,8 @@
 .mdc-chat-markdown {
   color: var(--mdc-text);
   line-height: 1.65;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .mdc-chat-markdown > *:first-child {
@@ -52,28 +53,81 @@
   color: var(--mdc-title);
 }
 
-.mdc-chat-markdown code {
+.mdc-chat-markdown-inline-code {
   border: 1px solid var(--mdc-card-border);
   border-radius: 0.35rem;
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-bg));
   color: var(--mdc-title);
   padding: 0.1rem 0.3rem;
+  font-size: 0.9em;
 }
 
-.mdc-chat-markdown pre {
-  overflow: auto;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-lg);
-  background: color-mix(in srgb, var(--mdc-card-bg) 88%, var(--mdc-text) 12%);
+.mdc-chat-code-block {
+  margin: 0.85rem 0;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+  overflow: hidden;
+}
+
+.mdc-chat-code-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  min-height: 2.35rem;
+  padding: 0.35rem 0.65rem 0.35rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mdc-chat-code-block__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   color: var(--mdc-text);
-  padding: var(--mdc-space-4);
 }
 
-.mdc-chat-markdown pre code {
+.mdc-chat-code-block__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   border: 0;
+  border-radius: var(--mdc-radius-md);
   background: transparent;
-  color: inherit;
-  padding: 0;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 0.35rem 0.5rem;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease;
+}
+
+.mdc-chat-code-block__copy:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-title);
+}
+
+.mdc-chat-code-block__pre {
+  margin: 0;
+  overflow: auto;
+  padding: 0.95rem 1.05rem 1.1rem;
+  background: transparent;
+  color: var(--mdc-text);
+  line-height: 1.55;
+  font-size: 0.86rem;
+}
+
+.mdc-chat-code-block__code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  white-space: pre;
 }
 
 .mdc-chat-markdown table {
@@ -95,6 +149,23 @@
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
 }
 
+.mdc-chat-markdown--compact {
+  overflow-wrap: break-word;
+}
+
 .mdc-chat-markdown--compact p {
   margin: 0.35rem 0;
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-code-block__pre {
+    font-size: 0.8rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .mdc-chat-markdown table {
+    display: block;
+    overflow-x: auto;
+    font-size: 0.82rem;
+  }
 }

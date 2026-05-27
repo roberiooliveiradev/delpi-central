@@ -1,4 +1,7 @@
+import { useState } from "react";
+import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
+import { Check, Code2, Copy } from "lucide-react";
 import remarkGfm from "remark-gfm";
 
 import "./ChatMarkdown.css";
@@ -8,6 +11,69 @@ type ChatMarkdownProps = {
   compact?: boolean;
 };
 
+type ChatCodeBlockProps = {
+  language: string;
+  code: string;
+};
+
+function ChatCodeBlock({ language, code }: ChatCodeBlockProps) {
+  const [copied, setCopied] = useState(false);
+  const label = (language || "text").toUpperCase();
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard indisponível */
+    }
+  }
+
+  return (
+    <div className="mdc-chat-code-block">
+      <div className="mdc-chat-code-block__header">
+        <span className="mdc-chat-code-block__lang">
+          <Code2 size={15} aria-hidden="true" />
+          {label}
+        </span>
+        <button
+          type="button"
+          className="mdc-chat-code-block__copy"
+          onClick={() => void handleCopy()}
+          aria-label={copied ? "Código copiado" : "Copiar código"}
+        >
+          {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+          <span>{copied ? "Copiado" : "Copiar"}</span>
+        </button>
+      </div>
+      <pre className="mdc-chat-code-block__pre">
+        <code className={`mdc-chat-code-block__code language-${language}`}>{code}</code>
+      </pre>
+    </div>
+  );
+}
+
+const markdownComponents: Components = {
+  pre({ children }) {
+    return <>{children}</>;
+  },
+  code({ className, children, ...props }) {
+    const match = /language-([\w-]+)/i.exec(className ?? "");
+    const code = String(children).replace(/\n$/, "");
+
+    if (match) {
+      return <ChatCodeBlock language={match[1]} code={code} />;
+    }
+
+    return (
+      <code className="mdc-chat-markdown-inline-code" {...props}>
+        {children}
+      </code>
+    );
+  },
+};
+
 export function ChatMarkdown({ content, compact }: ChatMarkdownProps) {
   return (
     <div
@@ -15,7 +81,9 @@ export function ChatMarkdown({ content, compact }: ChatMarkdownProps) {
         compact ? "mdc-chat-markdown mdc-chat-markdown--compact" : "mdc-chat-markdown"
       }
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }

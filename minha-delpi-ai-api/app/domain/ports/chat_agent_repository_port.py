@@ -190,3 +190,14 @@ class ChatAgentRepositoryPort(ABC):
         can_manage_official_agents: bool = False,
     ) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def upsert_skill(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        skill_key: str,
+        enabled: bool,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        raise NotImplementedError

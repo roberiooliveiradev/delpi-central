@@ -4,8 +4,10 @@
   gap: var(--mdc-space-2);
   align-items: end;
   width: 100%;
-  margin: 0 auto;
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
   padding: var(--mdc-space-3) var(--mdc-space-5) var(--mdc-space-5);
+  box-sizing: border-box;
 }
 
 .mdc-chat-input__box {
@@ -114,7 +116,7 @@
 }
 
 .mdc-chat-input--center {
-  width: min(100%, 760px);
+  width: min(100%, var(--mdc-chat-column-max));
   padding: 0;
 }
 
@@ -128,6 +130,8 @@
 
 .mdc-chat-conversation .mdc-chat-input {
   width: 100%;
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
   padding: var(--mdc-space-3) var(--mdc-space-5) calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -217,6 +221,32 @@
 
   .mdc-chat-input--center {
     padding: 0;
+  }
+
+  .mdc-chat-input small {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-input {
+    padding-inline: var(--mdc-space-3);
+  }
+
+  .mdc-chat-input__box {
+    border-radius: 1.25rem;
+    min-height: 3rem;
+  }
+
+  .mdc-chat-input textarea {
+    font-size: 0.95rem;
+    padding: 0.55rem 0.45rem 0.55rem 0.6rem;
+  }
+
+  .mdc-chat-input__menu {
+    width: min(20rem, calc(100vw - 1.5rem));
   }
 }
 

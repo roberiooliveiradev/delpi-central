@@ -19,6 +19,7 @@ from app.application.services.chat_user_context_service import ChatUserContextSe
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
+from app.infrastructure.content.content_service import ContentService
 from app.domain.exceptions.chat_exceptions import (
     ChatMessageNotFoundError,
     ChatSessionAccessDeniedError,
@@ -108,7 +109,10 @@ class StreamChatMessageUseCase:
 
         yield {
             "type": "status",
-            "message": "Conectado. Preparando resposta...",
+            "message": ContentService.stream().get(
+                "statusConnected",
+                "Conectado. Preparando resposta...",
+            ),
         }
 
         workspace_context = self._build_workspace_context(session, user_id)
@@ -435,11 +439,14 @@ class StreamChatMessageUseCase:
         }
 
         if should_generate_session_title and Settings.CHAT_SESSION_TITLE_LLM_ENABLED:
-            self._schedule_session_title_llm_refine(
-                session_id=session_id,
-                user_id=user_id,
-                message=message,
-            )
+            from flask import has_app_context
+
+            if has_app_context():
+                self._schedule_session_title_llm_refine(
+                    session_id=session_id,
+                    user_id=user_id,
+                    message=message,
+                )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
         if not self.admin_guideline_prompt_service:
@@ -589,8 +596,15 @@ class StreamChatMessageUseCase:
             return False
 
         title = (session.title or "").strip().lower()
+        empty_titles = {
+            "",
+            *(
+                str(item).strip().lower()
+                for item in ContentService.stream().get("sessionTitleEmptyValues") or ()
+            ),
+        }
 
-        return title in {"", "nova conversa", "novo chat", "conversa sem título"}
+        return title in empty_titles
 
     def _schedule_session_title_llm_refine(
         self,
@@ -598,15 +612,29 @@ class StreamChatMessageUseCase:
         user_id: UUID,
         message: str,
     ) -> None:
+        from flask import current_app
+
+        app = current_app._get_current_object()
+
         def worker() -> None:
-            try:
-                self._generate_and_apply_session_title(
-                    session_id=session_id,
-                    user_id=user_id,
-                    message=message,
-                )
-            except Exception:
-                logger.exception("session_title_llm_refine_failed")
+            with app.app_context():
+                try:
+                    self._generate_and_apply_session_title(
+                        session_id=session_id,
+                        user_id=user_id,
+                        message=message,
+                    )
+                    from app.extensions.db import db
+
+                    db.session.commit()
+                except Exception:
+                    from app.extensions.db import db
+
+                    try:
+                        db.session.rollback()
+                    except Exception:
+                        pass
+                    logger.exception("session_title_llm_refine_failed")
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -618,23 +646,30 @@ class StreamChatMessageUseCase:
     ) -> None:
         fallback_title = self._fallback_title_from_message(message)
 
+        stream_texts = ContentService.stream()
+        title_system = str(
+            stream_texts.get("titleGenerationSystem")
+            or (
+                "Você cria títulos curtos para conversas corporativas. "
+                "Responda apenas com o título, em português, sem aspas, "
+                "sem ponto final, com no máximo 6 palavras."
+            )
+        )
+        title_user_template = str(
+            stream_texts.get("titleGenerationUserTemplate")
+            or "Crie um título curto para esta conversa:\n\n{message}"
+        )
+
         try:
             generated_title = self.llm_gateway.generate(
                 [
                     {
                         "role": "system",
-                        "content": (
-                            "Você cria títulos curtos para conversas corporativas. "
-                            "Responda apenas com o título, em português, sem aspas, "
-                            "sem ponto final, com no máximo 6 palavras."
-                        ),
+                        "content": title_system,
                     },
                     {
                         "role": "user",
-                        "content": (
-                            "Crie um título curto para esta conversa:\n\n"
-                            f"{message}"
-                        ),
+                        "content": title_user_template.format(message=message),
                     },
                 ]
             ).strip()
@@ -665,7 +700,9 @@ class StreamChatMessageUseCase:
         normalized = " ".join(message.split()).strip()
 
         if not normalized:
-            return "Nova conversa"
+            return str(
+                ContentService.stream().get("sessionTitleDefault") or "Nova conversa"
+            )
 
         if len(normalized) <= 48:
             return normalized

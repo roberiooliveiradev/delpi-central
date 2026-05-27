@@ -1,186 +1,66 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from app.application.services.chat_action_label_service import ChatActionLabelService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.infrastructure.content.content_service import ContentService
 
-_CAPABILITIES_QUESTION_TERMS = (
-    "o que voce pode fazer",
-    "o que você pode fazer",
-    "o que vc pode fazer",
-    "o que voce e capaz de fazer",
-    "o que vc e capaz de fazer",
-    "o que e capaz de fazer",
-    "do que voce e capaz",
-    "do que vc e capaz",
-    "do que e capaz",
-    "quais coisas voce e capaz",
-    "quais coisas vc e capaz",
-    "o que consegue fazer",
-    "o que sabe fazer",
-    "o que voce sabe",
-    "quais suas capacidades",
-    "suas capacidades",
-    "suas funcionalidades",
-    "quais funcionalidades",
-    "o que faz",
-    "o que voce faz",
-    "o que vc faz",
-    "o que você faz",
-    "para que serve",
-    "como pode me ajudar",
-    "como voce pode ajudar",
-    "como voce pode me ajudar",
-    "como você pode ajudar",
-    "como você pode me ajudar",
-    "como voce me ajuda",
-    "me ajuda com o que",
-    "me ajude com o que",
-    "lista de comandos",
-    "quais comandos",
-    "quais apis",
-    "quais api",
-    "quais actions",
-    "quais acoes",
-    "quais rotas da api",
-    "quais ferramentas",
-    "ferramentas disponiveis",
-    "rotas disponiveis",
-    "o que tenho disponivel",
-    "o que esta disponivel",
-    "me explique suas funcoes",
-    "quais consultas",
-    "pode consultar o que",
-    "o que consegue consultar",
-    "o que voce consulta",
-    "quais dados voce acessa",
-    "quais dados você acessa",
-    "me mostre o que da pra fazer",
-    "da pra fazer o que",
-    "o que da pra consultar",
-    "menu de comandos",
-    "help",
-)
 
-_PLATFORM_TOOLS = (
-    ("get_current_user", "Dados do seu perfil (nome, e-mail, papéis e grupos, conforme consentimento)."),
-    ("get_allowed_apps", "Aplicativos e módulos que você pode acessar na plataforma."),
-    ("get_allowed_routes", "Menus e rotas autorizados no seu perfil."),
-)
+@lru_cache(maxsize=1)
+def _capabilities_content() -> dict:
+    return ContentService.load_json("assistant/capabilities")
 
-# (fragmento de path, categoria, exemplos de pergunta)
-_PATH_RULES: tuple[tuple[str, str, tuple[str, ...]], ...] = (
-    ("/stock", "Estoque de produto", (
-        "estoque do produto 10080001",
-        "saldo do 10080001",
-        "quanto tem em estoque do 10080001",
-    )),
-    ("/suppliers", "Fornecedores de produto", (
-        "fornecedores do 10080001",
-        "quem fornece o produto 10080001",
-        "forncedores do 10080001 em tabela",
-    )),
-    ("/customers", "Clientes de produto", (
-        "clientes do produto 10080001",
-        "quem compra o 10080001",
-    )),
-    ("/structure", "Estrutura (BOM)", (
-        "estrutura do produto 10080001",
-        "componentes do 10080001",
-        "bom do 10080001",
-    )),
-    ("/parents", "Onde o produto é usado (pais)", (
-        "onde o 10080001 é usado",
-        "produtos pai do 10080001",
-        "pai do 10080001",
-    )),
-    ("/purchases", "Compras de produto", (
-        "compras do produto 10080001",
-        "historico de compras do 10080001",
-    )),
-    ("/sales", "Vendas de produto", (
-        "vendas do produto 10080001",
-        "faturamento do 10080001",
-    )),
-    ("/prices", "Preços / tabelas", (
-        "preço do produto 10080001",
-        "tabela de preço do 10080001",
-        "quanto custa o 10080001",
-    )),
-    ("/guide", "Roteiro de produção", (
-        "roteiro do produto 10080001",
-        "etapas do 10080001",
-    )),
-    ("/inspection", "Inspeção / qualidade", (
-        "inspeção do produto 10080001",
-        "plano de inspeção do 10080001",
-    )),
-    ("/internal-movements", "Movimentações internas", (
-        "movimentações internas do 10080001",
-        "transferências do 10080001",
-    )),
-    ("/inbound-invoice", "Notas fiscais de entrada", (
-        "notas de entrada do 10080001",
-        "nfe entrada do 10080001",
-    )),
-    ("/outbound-invoice", "Notas fiscais de saída", (
-        "notas de saída do 10080001",
-        "nfe saída do 10080001",
-    )),
-    ("/search", "Busca de produtos", (
-        "buscar produto por descrição parafuso",
-        "pesquisar produto bandeira",
-    )),
-    ("/analyser", "Ficha / descrição do produto", (
-        "descrição do produto 10080001",
-        "me fala do produto 10080001",
-        "dados cadastrais do 10080001",
-    )),
-    ("/engineering/lmps", "LMP / listas de materiais de projeto", (
-        "listar lmps",
-        "lmps da filial 01",
-        "detalhe da lmp ov 12345",
-    )),
-    ("/lmps/", "Detalhe de LMP", (
-        "lmp ov 12345",
-        "detalhes da ov 12345",
-    )),
-    ("/supplies/stock-value", "Valor total de estoque (empresa)", (
-        "valor total de estoque",
-        "quanto vale o estoque",
-    )),
-    ("/inventory-turnover", "Giro de estoque (IDD)", (
-        "giro de estoque",
-        "idd do estoque",
-    )),
-    ("/cpv", "Indicador CPV", ("cpv de suprimentos", "indicador cpv")),
-    ("/otd", "Indicador OTD", ("otd de entregas", "indicador otd")),
-    ("/data/sql", "Consulta SQL (leitura)", (
-        "consulta sql autorizada",
-        "select somente leitura",
-    )),
-    ("/sale-order", "Ordens de venda", (
-        "ordens de venda do período",
-        "listar ovs",
-    )),
-    ("/commercial/", "Indicadores comerciais", ("indicadores comerciais do mês",)),
-    ("/financial/", "Indicadores financeiros", ("indicadores financeiros",)),
-    ("/production/", "Indicadores de produção", ("indicadores de produção",)),
-    ("/hr/", "Indicadores de RH", ("indicadores de rh", "snapshot rh")),
-    ("/quality/", "Indicadores de qualidade", ("indicadores de qualidade",)),
-)
 
-# Exemplos gerais quando não há agente (chat comum)
-_COMMON_CHAT_EXAMPLES: tuple[str, ...] = (
-    "estoque do produto 10080001",
-    "fornecedores do 10080001 em tabela",
-    "estrutura do 10080001",
-    "preço do 10080001",
-    "listar lmps da filial",
-    "o que você pode fazer",
-    "quais apps tenho acesso",
-)
+def _sections() -> dict:
+    return _capabilities_content().get("sections") or {}
+
+
+def _skills_texts() -> dict:
+    return _capabilities_content().get("skills") or {}
+
+
+def _catalog_texts() -> dict:
+    return _capabilities_content().get("catalog") or {}
+
+
+def _detection() -> dict:
+    return _capabilities_content().get("detection") or {}
+
+
+@lru_cache(maxsize=1)
+def _path_rules() -> tuple[tuple[str, str, tuple[str, ...]], ...]:
+    data = _capabilities_content()
+    rules = data.get("pathRules") or []
+    parsed: list[tuple[str, str, tuple[str, ...]]] = []
+    for item in rules:
+        if not isinstance(item, dict):
+            continue
+        token = str(item.get("token") or "").strip()
+        category = str(item.get("category") or "").strip()
+        examples = item.get("examples") or []
+        if token and category:
+            parsed.append((token, category, tuple(str(ex) for ex in examples)))
+    return tuple(parsed)
+
+
+@lru_cache(maxsize=1)
+def _path_rule_default() -> tuple[str, tuple[str, ...]]:
+    data = _capabilities_content()
+    default = data.get("pathRuleDefault") or {}
+    if not isinstance(default, dict):
+        return "Outras APIs", ("consulta conforme rota habilitada", "dados operacionais autorizados")
+    category = str(default.get("category") or "Outras APIs")
+    examples = tuple(str(item) for item in (default.get("examples") or ()))
+    return category, examples
+
+
+@lru_cache(maxsize=1)
+def _common_chat_examples() -> tuple[str, ...]:
+    data = _capabilities_content()
+    return tuple(str(item) for item in (data.get("commonExamples") or ()))
 
 
 class ChatCapabilitiesService:
@@ -188,31 +68,27 @@ class ChatCapabilitiesService:
 
     @classmethod
     def is_capabilities_question(cls, message: str) -> bool:
+        detection = _detection()
+        max_length = int(detection.get("maxMessageLength") or 280)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        if len(normalized) > 280:
+        if len(normalized) > max_length:
             return False
 
-        if ChatMessageNormalizationService.contains_any(message, _CAPABILITIES_QUESTION_TERMS):
+        question_terms = tuple(str(item) for item in (detection.get("questionTerms") or ()))
+        if ChatMessageNormalizationService.contains_any(message, question_terms):
             return True
 
-        short_help = (
-            "ajuda",
-            "help",
-            "comandos",
-            "capacidades",
-            "funcionalidades",
-            "menu",
-        )
+        short_help = tuple(str(item) for item in (detection.get("shortHelp") or ()))
         if normalized in short_help:
             return True
 
-        if normalized.startswith(("ajuda ", "help ")) and len(normalized) < 80:
+        help_prefix_max = int(detection.get("helpPrefixMaxLength") or 80)
+        if normalized.startswith(("ajuda ", "help ")) and len(normalized) < help_prefix_max:
             return True
 
-        if "capaz" in normalized and any(
-            token in normalized for token in ("fazer", "consultar", "ajudar", "oferecer")
-        ):
+        capaz_tokens = tuple(str(item) for item in (detection.get("capazTokens") or ()))
+        if "capaz" in normalized and any(token in normalized for token in capaz_tokens):
             return True
 
         return False
@@ -225,28 +101,25 @@ class ChatCapabilitiesService:
         allowed_action_ids: list[str] | None = None,
         action_catalog: list[dict] | None = None,
     ) -> str | None:
+        content = _capabilities_content()
+        sections = _sections()
         lines: list[str] = [
-            "Posso ajudar você nestes formatos:",
+            str(content.get("intro") or "Posso ajudar você nestes formatos:"),
             "",
-            "**Sempre disponíveis (chat comum e agentes)**",
+            str(sections.get("alwaysAvailableTitle") or "**Sempre disponíveis (chat comum e agentes)**"),
         ]
 
-        for _tool, description in _PLATFORM_TOOLS:
-            lines.append(f"- {description}")
+        for tool in sections.get("platformTools") or []:
+            if isinstance(tool, dict) and tool.get("description"):
+                lines.append(f"- {tool['description']}")
 
-        lines.extend(
-            [
-                "- Respostas com base na **documentação e conhecimento** autorizado (RAG).",
-                "- Anexos e fontes da conversa ou do projeto, quando enviados.",
-                "- Entendo perguntas com **pequenos erros de digitação** (ex.: *forncedores*, "
-                "*estoq*, *preco*, *estrutur*).",
-            ]
-        )
+        for item in sections.get("alwaysAvailableItems") or []:
+            lines.append(f"- {item}")
 
         skills = workspace_context.get("skills") or {}
         skill_lines = cls._format_skills_section(skills, workspace_context.get("allowedActionIds"))
         if skill_lines:
-            lines.extend(["", "**Skills (comportamento do assistente)**"])
+            lines.extend(["", str(sections.get("skillsTitle") or "**Skills (comportamento do assistente)**")])
             lines.extend(skill_lines)
 
         agent = workspace_context.get("agent") or {}
@@ -254,35 +127,33 @@ class ChatCapabilitiesService:
         allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
 
         if allowed and action_catalog:
-            lines.extend(["", f"**Consultas operacionais — agente {agent_name or 'atual'}**"])
-            lines.append(
-                "Com as APIs/actions abaixo habilitadas neste agente, busco dados reais na "
-                "api-delpi e apresento em **texto**, **tabela** ou **gráfico** (quando fizer sentido):"
+            title_template = str(
+                sections.get("operationalWithAgentTitle")
+                or "**Consultas operacionais — agente {agent_name}**"
             )
+            lines.extend(["", title_template.format(agent_name=agent_name or "atual")])
+            lines.append(str(sections.get("operationalWithAgentIntro") or ""))
             lines.append("")
             lines.extend(cls._format_action_catalog(action_catalog, allowed))
         else:
             lines.extend(
                 [
                     "",
-                    "**Consultas operacionais (produto, estoque, LMP, fornecedores…)**",
-                    "- No **chat comum**, selecione um **agente especializado** com as actions "
-                    "OpenAPI habilitadas para a consulta desejada.",
-                    "- Exemplos de perguntas que funcionam com um agente configurado:",
+                    str(
+                        sections.get("operationalCommonTitle")
+                        or "**Consultas operacionais (produto, estoque, LMP, fornecedores…)**"
+                    ),
                 ]
             )
-            for example in _COMMON_CHAT_EXAMPLES:
-                lines.append(f"  - *{example}*")
+            for item in sections.get("operationalCommonItems") or []:
+                lines.append(f"- {item}")
+            prefix = str(_catalog_texts().get("examplePrefix") or "  - Ex.: *{example}*")
+            for example in _common_chat_examples():
+                lines.append(prefix.format(example=example))
 
-        lines.extend(
-            [
-                "",
-                "**Dicas**",
-                "- Inclua **código do produto** (ex.: 10080001) ou **número da OV** quando souber.",
-                "- Peça formato: *em tabela*, *em gráfico* ou *só texto*.",
-                "- Se faltar contexto, pergunto o que você precisa em vez de inventar dados.",
-            ]
-        )
+        lines.extend(["", str(sections.get("tipsTitle") or "**Dicas**")])
+        for item in sections.get("tipsItems") or []:
+            lines.append(f"- {item}")
 
         return "\n".join(lines)
 
@@ -292,44 +163,31 @@ class ChatCapabilitiesService:
         skills: dict,
         allowed_action_ids: list[str] | None,
     ) -> list[str]:
+        texts = _skills_texts()
         lines: list[str] = []
         allowed = allowed_action_ids or []
 
         if skills.get("sqlAuthoring"):
-            lines.append(
-                "- **SQL (elaborar consultas)**: posso montar e explicar queries `SELECT` em "
-                "blocos de código, como um assistente SQL (skill)."
-            )
+            lines.append(str(texts.get("sqlAuthoringOn") or ""))
         else:
-            lines.append(
-                "- **SQL (elaborar consultas)**: desligado nesta sessão — habilite a skill no "
-                "agente ou use o chat comum (padrão global)."
-            )
+            lines.append(str(texts.get("sqlAuthoringOff") or ""))
 
         if skills.get("sqlExecutionAvailable"):
-            lines.append(
-                "- **SQL (executar)**: action `POST /data/sql` habilitada — consigo rodar "
-                "consultas somente leitura autorizadas e mostrar o resultado."
-            )
+            lines.append(str(texts.get("sqlExecutionOn") or ""))
         elif allowed:
-            lines.append(
-                "- **SQL (executar)**: não há action de execução SQL habilitada; só elaboro "
-                "o texto da query se a skill estiver ativa."
-            )
+            lines.append(str(texts.get("sqlExecutionOffWithActions") or ""))
         else:
-            lines.append(
-                "- **SQL (executar)**: requer agente com action `POST /data/sql` configurada "
-                "(diferente da skill de elaboração)."
-            )
+            lines.append(str(texts.get("sqlExecutionOff") or ""))
 
-        lines.append(
-            "- **Skills ≠ Actions**: skills orientam *como* respondo; actions *executam* APIs."
-        )
+        skills_vs_actions = texts.get("skillsVsActions")
+        if skills_vs_actions:
+            lines.append(str(skills_vs_actions))
 
         return lines
 
     @classmethod
     def _format_action_catalog(cls, catalog: list[dict], allowed_ids: list[str]) -> list[str]:
+        catalog_texts = _catalog_texts()
         allowed_set = set(allowed_ids)
         by_category: dict[str, list[dict]] = {}
 
@@ -359,10 +217,19 @@ class ChatCapabilitiesService:
             )
 
         if not by_category:
-            return ["- Nenhuma action detalhada no catálogo; verifique a configuração do agente."]
+            empty = catalog_texts.get("emptyActions")
+            return [str(empty or "- Nenhuma action detalhada no catálogo; verifique a configuração do agente.")]
 
         output: list[str] = []
         max_per_category = 8
+        line_with_path = str(
+            catalog_texts.get("actionLineWithPath") or "- {summary} — `{method} {path}`"
+        )
+        line_plain = str(catalog_texts.get("actionLine") or "- {summary}")
+        example_prefix = str(catalog_texts.get("examplePrefix") or "  - Ex.: *{example}*")
+        more_actions = str(
+            catalog_texts.get("moreActions") or "- … e mais {count} action(s) nesta categoria"
+        )
 
         for category in sorted(by_category.keys()):
             items = by_category[category]
@@ -373,16 +240,19 @@ class ChatCapabilitiesService:
                 summary = item["summary"]
                 path = item["path"]
                 method = item["method"]
-                line = f"- {summary} — `{method} {path}`" if path else f"- {summary}"
+                if path:
+                    line = line_with_path.format(summary=summary, method=method, path=path)
+                else:
+                    line = line_plain.format(summary=summary)
                 output.append(line)
 
                 for ex in item.get("examples") or ():
                     if ex not in shown_examples and len(shown_examples) < 3:
-                        output.append(f"  - Ex.: *{ex}*")
+                        output.append(example_prefix.format(example=ex))
                         shown_examples.add(ex)
 
             if len(items) > max_per_category:
-                output.append(f"- … e mais {len(items) - max_per_category} action(s) nesta categoria")
+                output.append(more_actions.format(count=len(items) - max_per_category))
             output.append("")
 
         return output
@@ -390,13 +260,10 @@ class ChatCapabilitiesService:
     @classmethod
     def _resolve_path_rule(cls, path: str) -> tuple[str, tuple[str, ...]]:
         lowered = path.lower()
-        for token, category, examples in _PATH_RULES:
+        for token, category, examples in _path_rules():
             if token in lowered:
                 return category, examples
-        return "Outras APIs", (
-            "consulta conforme rota habilitada",
-            "dados operacionais autorizados",
-        )
+        return _path_rule_default()
 
     @classmethod
     def load_action_catalog_for_agent(

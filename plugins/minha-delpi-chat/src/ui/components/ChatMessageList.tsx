@@ -23,6 +23,7 @@ import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatRichPresentation } from "./ChatRichPresentation";
+import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
@@ -519,6 +520,8 @@ export function ChatMessageList({
     const isUser = message.role === "user";
     const messageTime = formatMessageTime(message.created_at);
     const isPending = Boolean(message.metadata?.optimistic);
+    const messageToolCalls = getMessageToolCalls(message);
+    const messagePresentation = getPresentationPairFromToolCalls(messageToolCalls);
 
     return (
       <article
@@ -673,8 +676,10 @@ export function ChatMessageList({
 
           {!isUser ? (
             <>
-              {renderPresentation(getMessageToolCalls(message), onReuseMessage)}
-              <ChatActionResults toolCalls={getMessageToolCalls(message)} />
+              {renderPresentation(messageToolCalls, onReuseMessage)}
+              {!messagePresentation.primary ? (
+                <ChatActionResults toolCalls={messageToolCalls} />
+              ) : null}
               <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
             </>
           ) : null}
@@ -767,7 +772,9 @@ export function ChatMessageList({
               )}
 
               {renderPresentation(streamingToolCalls, onReuseMessage)}
-              <ChatActionResults toolCalls={streamingToolCalls} />
+              {!getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
+                <ChatActionResults toolCalls={streamingToolCalls} />
+              ) : null}
               <ChatSources sources={filterVisibleChatSources(streamingSources)} />
             </div>
           </article>

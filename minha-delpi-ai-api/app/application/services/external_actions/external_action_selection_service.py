@@ -3,6 +3,7 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -154,10 +155,11 @@ class ExternalActionSelectionService:
                 return selected
 
         if self._looks_like_sql_or_data_query(message):
-            return self._select_sql_or_data_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-            )
+            if ChatSqlIntentService.should_auto_execute_sql(message):
+                return self._select_sql_or_data_action(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                )
 
         return self._select_generic_allowed_action(
             message,
@@ -634,9 +636,11 @@ class ExternalActionSelectionService:
             for term in [
                 "sql",
                 "consulta sql",
+                "consulta no banco",
                 "rodar sql",
                 "executar sql",
                 "execute o sql",
+                "execute essa consulta",
                 "data/sql",
                 "query",
                 "select ",

@@ -8,6 +8,9 @@ import type {
   ChatAgentActionProvider,
   ChatAgentExportBundle,
   ChatAgentAction,
+  ChatAgentSkillBinding,
+  ChatSkillCatalogItem,
+  UpsertChatAgentSkillPayload,
   ChatAgentPreviewResponse,
   ChatAgentShare,
   ChatAgentStats,
@@ -1106,6 +1109,42 @@ export async function listChatAgentActions(
   return parseJsonResponse<ChatAgentAction[]>(response);
 }
 
+export async function listChatSkillCatalog(
+  options: ChatApiOptions = {},
+): Promise<ChatSkillCatalogItem[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/skills`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatSkillCatalogItem[]>(response);
+}
+
+export async function listChatAgentSkills(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentSkillBinding[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentSkillBinding[]>(response);
+}
+
+export async function upsertChatAgentSkill(
+  agentId: string,
+  payload: UpsertChatAgentSkillPayload,
+  options: ChatApiOptions = {},
+): Promise<{ ok: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/skills`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ ok: boolean }>(response);
+}
 
 export async function listActionProviders(
   options: ChatApiOptions = {},

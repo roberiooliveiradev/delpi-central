@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
+import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
 
 import "./ChatAgentsPage.css";
 
@@ -145,6 +146,7 @@ export function ChatAgentsPage({
     agent: ChatAgent;
     providerKey?: string | null;
   } | null>(null);
+  const [skillsEditor, setSkillsEditor] = useState<ChatAgent | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const onReloadAgentsRef = useRef(onReloadAgents);
   onReloadAgentsRef.current = onReloadAgents;
@@ -192,6 +194,20 @@ export function ChatAgentsPage({
     }
   }, [agents, editAgentKey, editRequestKey, canManageAgents, canManageOfficialAgents]);
 
+  if (skillsEditor) {
+    return (
+      <ChatAgentSkillsPage
+        agent={skillsEditor}
+        onBack={() => setSkillsEditor(null)}
+        onOpenActions={(target) => {
+          setSkillsEditor(null);
+          setActionEditor({ agent: target, providerKey: null });
+        }}
+        getAccessToken={getAccessToken}
+      />
+    );
+  }
+
   if (actionEditor) {
     return (
       <ChatAgentActionsPage
@@ -220,6 +236,14 @@ export function ChatAgentsPage({
           editingAgent
             ? (_agent, providerKey) => {
                 setActionEditor({ agent: editingAgent, providerKey });
+                setEditingAgent(undefined);
+              }
+            : undefined
+        }
+        onConfigureSkills={
+          editingAgent
+            ? () => {
+                setSkillsEditor(editingAgent);
                 setEditingAgent(undefined);
               }
             : undefined

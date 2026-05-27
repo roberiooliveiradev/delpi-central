@@ -65,6 +65,9 @@
 | GET | `/chat/agents/{agentId}/providers/{providerKey}` | `chat.access` |
 | PATCH | `/chat/agents/{agentId}/providers/{providerKey}` | `tools.manage`; `chat.admin` para oficial |
 | POST | `/chat/agents/{agentId}/providers/{providerKey}/import` | `tools.manage`; `chat.admin` para oficial |
+| GET | `/chat/skills` | `chat.access` |
+| GET | `/chat/agents/{agentId}/skills` | `chat.access` |
+| PUT | `/chat/agents/{agentId}/skills` | `tools.manage`; `chat.admin` para oficial |
 | GET | `/chat/agents/{agentId}/actions` | `chat.access` |
 | PUT | `/chat/agents/{agentId}/actions` | `tools.manage`; `chat.admin` para oficial |
 | POST | `/chat/agents/{agentId}/providers/{providerKey}/actions/{actionId}/test` | `chat.access` |

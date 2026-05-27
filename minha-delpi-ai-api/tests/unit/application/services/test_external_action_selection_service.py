@@ -180,3 +180,52 @@ def test_generic_fallback_returns_none_without_semantic_score():
     )
 
     assert selected is None
+
+
+def test_monte_query_does_not_auto_select_sql_action():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "sql-action",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "operationId": "execute_sql",
+                    "summary": "Executar SQL",
+                    "parametersSchema": [{"name": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "monte uma query que liste os produtos que vão ser produzidos hoje",
+        allowed_action_ids=["sql-action"],
+    )
+
+    assert selected is None
+
+
+def test_execute_query_selects_sql_action():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "sql-action",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "operationId": "execute_sql",
+                    "summary": "Executar SQL",
+                    "parametersSchema": [{"name": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "execute essa consulta no banco",
+        allowed_action_ids=["sql-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "sql-action"

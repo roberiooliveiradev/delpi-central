@@ -1,6 +1,8 @@
 from functools import lru_cache
 from pathlib import Path
 
+from app.infrastructure.content.content_service import ContentService
+
 
 class PromptPolicyService:
     POLICY_DIR = Path(__file__).resolve().parents[1] / "prompt_policies"
@@ -171,7 +173,7 @@ Comportamento esperado:
             tool_context="",
         )
 
-    SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore consultas SELECT em blocos ```sql``` quando pedido; execução requer action /data/sql."""
+    SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore e revise consultas SELECT (SQL genérico) em blocos ```sql```; identifique erros quando o usuário colar SQL ou mensagens de erro; execução requer action /data/sql."""
 
     def build_contextual_prompt(
         self,
@@ -184,22 +186,24 @@ Comportamento esperado:
         sections: list[str] = [self.build_system_prompt()]
         resolved_skills = skills or {}
 
+        stream_texts = ContentService.stream()
+        rag_header = str(stream_texts.get("ragContextHeader") or "Contexto documental autorizado:")
+        rag_empty = str(
+            stream_texts.get("ragEmptyContext")
+            or "Nenhum trecho documental relevante foi encontrado."
+        )
+        tool_header = str(
+            stream_texts.get("toolContextHeader")
+            or "Resultados de ferramentas internas autorizadas:"
+        )
+
         if rag_context:
-            sections.append(
-                "Contexto documental autorizado:\n"
-                f"{rag_context}"
-            )
+            sections.append(f"{rag_header}\n{rag_context}")
         else:
-            sections.append(
-                "Contexto documental autorizado:\n"
-                "Nenhum trecho documental relevante foi encontrado."
-            )
+            sections.append(f"{rag_header}\n{rag_empty}")
 
         if tool_context:
-            sections.append(
-                "Resultados de ferramentas internas autorizadas:\n"
-                f"{tool_context}"
-            )
+            sections.append(f"{tool_header}\n{tool_context}")
 
         sections.extend(
             self._response_policy_sections(
