@@ -1390,7 +1390,12 @@ export function ChatAgentBuilderPage({
                 placeholder="Explique quando este agente deve ser usado..."
               />
             </label>
+          </section>
 
+          <section
+            className="mdc-chat-agent-builder__section mdc-chat-agent-builder__identity-section"
+            aria-label="Identificador e visibilidade do agente"
+          >
             <h2 className="mdc-chat-ws-section-head">Identificador e visibilidade</h2>
 
             <div className="mdc-chat-agent-builder__grid">

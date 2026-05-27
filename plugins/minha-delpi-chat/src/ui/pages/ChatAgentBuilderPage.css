@@ -1108,8 +1108,15 @@
   border-top: 0;
 }
 
-.mdc-chat-agent-builder__section--flat .mdc-chat-ws-section-head {
-  margin: 0.35rem 0 0;
+.mdc-chat-agent-builder__identity-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.mdc-chat-agent-builder__identity-section .mdc-chat-ws-field select,
+.mdc-chat-agent-builder__identity-section .mdc-chat-ws-field input {
+  display: block;
+  width: 100%;
 }
 
 .mdc-chat-agent-builder__section:not(.mdc-chat-agent-builder__section--flat) {
