@@ -49,31 +49,33 @@ export function ChatContextTopbar({
 
   return (
     <header className="mdc-chat-context-topbar">
-      {onOpenSidebar ? (
-        <button
-          type="button"
-          className="mdc-chat-context-topbar__menu-trigger mdc-chat-context-topbar__menu-trigger--sidebar"
-          onClick={onOpenSidebar}
-          aria-label="Abrir menu de conversas"
-        >
-          <PanelLeft size={18} aria-hidden="true" />
-        </button>
-      ) : null}
+      <div className="mdc-chat-context-topbar__start">
+        {onOpenSidebar ? (
+          <button
+            type="button"
+            className="mdc-chat-context-topbar__menu-trigger mdc-chat-context-topbar__menu-trigger--sidebar"
+            onClick={onOpenSidebar}
+            aria-label="Abrir menu de conversas"
+          >
+            <PanelLeft size={18} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
 
-      <div className="mdc-chat-context-topbar__identity">
+      <div className="mdc-chat-context-topbar__center">
         <span className="mdc-chat-context-topbar__icon">
           <Icon size={18} aria-hidden="true" />
         </span>
 
-        <div>
+        <div className="mdc-chat-context-topbar__titles">
           <strong>{title}</strong>
           {subtitle ? <small>{subtitle}</small> : null}
         </div>
 
-        {badge ? <em>{badge}</em> : null}
+        {badge ? <em className="mdc-chat-context-topbar__badge">{badge}</em> : null}
       </div>
 
-      <div className="mdc-chat-context-topbar__actions">
+      <div className="mdc-chat-context-topbar__end">
         {onOpenAdmin && mode === "general" ? (
           <button type="button" onClick={onOpenAdmin}>
             Administração

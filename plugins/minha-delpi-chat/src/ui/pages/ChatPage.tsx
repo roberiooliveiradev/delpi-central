@@ -38,16 +38,6 @@ import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
 
-function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | null } | null | undefined): number {
-  const value = agent?.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return 0;
-  }
-
-  return value.filter((item) => typeof item === "string" && item.trim()).length;
-}
-
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   pathname?: string;
@@ -915,9 +905,7 @@ export function ChatPage({
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
-                : conversationAgent
-                  ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
-                  : undefined
+                : undefined
             }
             onOpenAdmin={openAdmin}
             onRenameProject={async () => {
