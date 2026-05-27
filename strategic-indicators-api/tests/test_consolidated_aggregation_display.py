@@ -35,12 +35,18 @@ def test_build_realized_payload_for_consolidated_departments() -> None:
     calculator = StrategicIndicatorsCalculator()
     raw = {"consolidated": 50.0, "02": 50.0}
 
-    for department_id in ("engineering", "financial", "commercial"):
+    for department_id in ("engineering", "financial"):
         assert calculator.build_realized_payload(
             unit_values=raw,
             value=50.0,
             department_id=department_id,
         ) == {"consolidated": 50.0}
+
+    assert calculator.build_realized_payload(
+        unit_values=raw,
+        value=50.0,
+        department_id="commercial",
+    ) == raw
 
 
 def test_financial_provider_exposes_consolidated_unit_values_on_branch_view() -> None:
@@ -89,9 +95,19 @@ def test_financial_provider_exposes_consolidated_unit_values_on_branch_view() ->
     )
 
 
-def test_commercial_provider_exposes_consolidated_unit_values_on_branch_view() -> None:
+def test_commercial_provider_exposes_branch_unit_values_on_branch_view() -> None:
     service = MagicMock()
-    service.get_snapshot.return_value = CommercialMetricsSnapshot(
+    base_snapshot = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=100.0,
+        branch_rol_value=80.0,
+        sales_conversion_rate_pct=55.0,
+        sales_order_otd_pct=90.0,
+        new_business_rol_pct=12.0,
+        requested_branch=None,
+    )
+    branch_snapshot = CommercialMetricsSnapshot(
         start_date="01-04-2026",
         end_date="30-04-2026",
         matrix_rol_value=100.0,
@@ -101,6 +117,13 @@ def test_commercial_provider_exposes_consolidated_unit_values_on_branch_view() -
         new_business_rol_pct=15.0,
         requested_branch="02",
     )
+
+    def snapshot_side_effect(*, start_date, end_date, branch=None):
+        if branch == "02":
+            return branch_snapshot
+        return base_snapshot
+
+    service.get_snapshot.side_effect = snapshot_side_effect
 
     provider = CommercialIndicatorsSnapshotProvider(
         commercial_metrics_snapshot_service=service,
@@ -115,9 +138,67 @@ def test_commercial_provider_exposes_consolidated_unit_values_on_branch_view() -
         item for item in result["items"] if item["indicator_id"] == "commercial-closing-rate"
     )
     assert closing["value"] == 62.0
-    assert closing["unit_values"] == {"consolidated": 62.0}
-    service.get_snapshot.assert_called_with(
+    assert closing["unit_values"] == {"02": 62.0}
+
+    rol = next(item for item in result["items"] if item["indicator_id"] == "commercial-rol")
+    assert rol["unit_values"] == {"01": 100.0, "02": 80.0}
+    assert rol["value"] == 80.0
+
+
+def test_commercial_provider_consolidated_view_lists_both_units() -> None:
+    service = MagicMock()
+    service.get_snapshot.return_value = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=100.0,
+        branch_rol_value=80.0,
+        sales_conversion_rate_pct=55.0,
+        sales_order_otd_pct=90.0,
+        new_business_rol_pct=12.0,
+        requested_branch=None,
+    )
+    branch_02 = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=100.0,
+        branch_rol_value=80.0,
+        sales_conversion_rate_pct=62.0,
+        sales_order_otd_pct=91.0,
+        new_business_rol_pct=15.0,
+        requested_branch="02",
+    )
+
+    branch_01 = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=100.0,
+        branch_rol_value=80.0,
+        sales_conversion_rate_pct=50.0,
+        sales_order_otd_pct=88.0,
+        new_business_rol_pct=10.0,
+        requested_branch="01",
+    )
+
+    def snapshot_side_effect(*, start_date, end_date, branch=None):
+        if branch == "02":
+            return branch_02
+        if branch == "01":
+            return branch_01
+        return base_snapshot
+
+    service.get_snapshot.side_effect = snapshot_side_effect
+
+    provider = CommercialIndicatorsSnapshotProvider(
+        commercial_metrics_snapshot_service=service,
+    )
+    result = provider.get_commercial_indicators_snapshot(
         start_date="01-04-2026",
         end_date="30-04-2026",
         branch=None,
     )
+
+    closing = next(
+        item for item in result["items"] if item["indicator_id"] == "commercial-closing-rate"
+    )
+    assert closing["unit_values"] == {"01": 50.0, "02": 62.0}
+    assert closing["value"] is None

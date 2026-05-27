@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from si_app.application.services.strategic_indicators.indicator_source_key_validation import (
+    normalize_indicator_source_key,
+    validate_indicator_source_key,
+)
 from si_app.domain.ports.strategic_indicators.department_indicators_repository_port import (
     StrategicIndicatorsDepartmentIndicatorsRepositoryPort,
 )
@@ -52,6 +56,9 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
         if value_decimals < 0 or value_decimals > 6:
             raise ValueError("value_decimals deve estar entre 0 e 6.")
 
+        source_key = normalize_indicator_source_key(body.get("source_key"))
+        validate_indicator_source_key(source_key, is_active=True)
+
         return self._repository.create_department_indicator(
             department_id=department_id.strip(),
             indicator_id=indicator_id,
@@ -60,7 +67,7 @@ class CreateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             scope_type=scope_type,
             performance_direction=performance_direction,
             strategic_description=(body.get("strategic_description") or "").strip(),
-            source_key=(body.get("source_key") or None),
+            source_key=source_key,
             value_unit=(body.get("value_unit") or None),
             value_prefix=(body.get("value_prefix") or None),
             value_suffix=(body.get("value_suffix") or None),

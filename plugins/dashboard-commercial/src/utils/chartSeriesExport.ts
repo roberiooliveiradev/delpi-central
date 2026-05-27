@@ -1,3 +1,4 @@
+import { COMMERCIAL_ROL_SERIES_LABELS } from "../constants/commercialIndicators";
 import { downloadCsv } from "./csv";
 
 export function downloadRolSeriesCsv(
@@ -12,7 +13,11 @@ export function downloadRolSeriesCsv(
 
   downloadCsv(
     filename,
-    ["Período", "ROL Matriz (01)", "ROL Filial (02)"],
+    [
+      "Período",
+      COMMERCIAL_ROL_SERIES_LABELS.filial01,
+      COMMERCIAL_ROL_SERIES_LABELS.filial02,
+    ],
     points.map((point) => [
       point.periodo,
       String(point.rolMatrix),

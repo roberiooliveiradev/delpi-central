@@ -243,6 +243,12 @@
   color: var(--text-muted);
 }
 
+.si-admin-form-field__hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
 .si-admin-form-field input,
 .si-admin-form-field select,
 .si-admin-form-field textarea {

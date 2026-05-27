@@ -34,6 +34,7 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
+import { COMMERCIAL_KPI_TITLES } from "../constants/commercialIndicators";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
   formatInteger,
@@ -97,6 +98,10 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     [dateStart, dateEnd]
   );
 
+  const branchLabel = branch
+    ? `Filial ${branch}`
+    : "Consolidado (média das filiais)";
+
   const isBusy = loading || refreshing;
   const hasData = headOfficeRol !== null || branchRol !== null;
   const isChartBusy = rolSeries.loading;
@@ -133,7 +138,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   }, [rolSeries.points]);
 
   const chartHint =
-    "Clique em um ponto para filtrar o período ao intervalo. Matriz (01) e filial (02).";
+    "Clique em um ponto para filtrar o período ao intervalo. Séries por filial 01 e 02.";
 
   return (
     <div className="dashboard-commercial dashboard-page dc-print-root">
@@ -189,21 +194,19 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
 
       <section className="dc-kpi-grid" aria-busy={isBusy}>
         <KpiCard
-          title="ROL — Matriz (01)"
+          title={COMMERCIAL_KPI_TITLES.rolFilial01}
           value={formatCurrency(headOfficeRol?.rol)}
           {...buildKpiGoalPresentation(
-            periodLabel,
+            `Filial 01 · ${periodLabel}`,
             headOfficeRol,
             formatCurrency,
             { realizedValue: headOfficeRol?.rol },
           )}
-          goalScopeBadge={null}
-          goalScopeHint={null}
           icon={<Banknote size={22} />}
           loading={isBusy && !headOfficeRol}
         />
         <KpiCard
-          title="ROL — Filial (02)"
+          title={COMMERCIAL_KPI_TITLES.rolFilial02}
           value={formatCurrency(branchRol?.rol)}
           {...buildKpiGoalPresentation(
             `Filial 02 · ${periodLabel}`,
@@ -211,28 +214,14 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             formatCurrency,
             { realizedValue: branchRol?.rol },
           )}
-          goalScopeBadge={null}
-          goalScopeHint={null}
           icon={<Building2 size={22} />}
           loading={isBusy && !branchRol}
         />
         <KpiCard
-          title="Taxa de conversão"
-          value={formatPercent(closingRate?.sales_conversion_rate_pct)}
-          {...buildKpiGoalPresentation(
-            `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${periodLabel}`,
-            closingRate,
-            formatPercent,
-            { realizedValue: closingRate?.sales_conversion_rate_pct },
-          )}
-          icon={<Percent size={22} />}
-          loading={isBusy && !closingRate}
-        />
-        <KpiCard
-          title="OTD — pedidos de venda"
+          title={COMMERCIAL_KPI_TITLES.salesOrderOtd}
           value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
           {...buildKpiGoalPresentation(
-            `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${periodLabel}`,
+            `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel} · ${periodLabel}`,
             salesOrderOtd,
             formatPercent,
             { realizedValue: salesOrderOtd?.sales_order_otd_pct },
@@ -241,10 +230,22 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           loading={isBusy && !salesOrderOtd}
         />
         <KpiCard
-          title="% ROL — novos negócios"
+          title={COMMERCIAL_KPI_TITLES.closingRate}
+          value={formatPercent(closingRate?.sales_conversion_rate_pct)}
+          {...buildKpiGoalPresentation(
+            `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel} · ${periodLabel}`,
+            closingRate,
+            formatPercent,
+            { realizedValue: closingRate?.sales_conversion_rate_pct },
+          )}
+          icon={<Percent size={22} />}
+          loading={isBusy && !closingRate}
+        />
+        <KpiCard
+          title={COMMERCIAL_KPI_TITLES.newBusinessRol}
           value={formatPercent(newBusinessRol?.new_business_rol_pct)}
           {...buildKpiGoalPresentation(
-            `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${periodLabel}`,
+            `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${branchLabel} · ${periodLabel}`,
             newBusinessRol,
             formatPercent,
             { realizedValue: newBusinessRol?.new_business_rol_pct },
@@ -327,10 +328,11 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             <h2 className="dc-summary-card__title">Como ler os indicadores</h2>
           </div>
           <p className="dc-summary-card__description">
-            <strong>ROL</strong> é valor monetário (R$) com IPI. Matriz usa filial
-            01 e comparativo de filial 02. Use dia, semana, mês ou ano no gráfico
-            de evolução. Taxa de conversão, OTD e % ROL de novos negócios
-            respeitam o filtro de filial quando informado.
+            <strong>ROL</strong> (R$ com IPI) segue o indicador único{" "}
+            <code>commercial-rol</code> no SI, com metas por filial 01 e 02. O
+            gráfico de evolução mostra as duas séries; conversão, OTD e novos
+            negócios usam metas <em>per unit</em> do catálogo SI e respeitam o
+            filtro de filial quando informado (senão, média consolidada).
           </p>
         </article>
       </section>

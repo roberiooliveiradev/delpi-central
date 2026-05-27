@@ -18,6 +18,7 @@ import {
   getPerformanceDirectionLabel,
   getScopeTypeLabel,
 } from "../presentation/labels";
+import { validateIndicatorSourceKey } from "../utils/indicatorSourceKeyValidation";
 import "./AdminDepartmentsWorkspace.css";
 
 type AdminDepartmentsWorkspaceProps = {
@@ -107,6 +108,7 @@ export function AdminDepartmentsWorkspace({
     useState<DepartmentFormState>(emptyDepartmentForm);
 
   const [indicatorDrawerOpen, setIndicatorDrawerOpen] = useState(false);
+  const [indicatorFormError, setIndicatorFormError] = useState<string | null>(null);
   const [indicatorMode, setIndicatorMode] = useState<"create" | "edit">("create");
   const [editingIndicatorId, setEditingIndicatorId] = useState<string | null>(null);
   const [indicatorForm, setIndicatorForm] =
@@ -221,6 +223,16 @@ export function AdminDepartmentsWorkspace({
 
   async function handleSubmitIndicator() {
     if (!selectedDepartmentId) return;
+
+    const sourceKeyError = validateIndicatorSourceKey(
+      indicatorForm.source_key,
+      indicatorMode === "create" ? true : indicatorForm.is_active,
+    );
+    if (sourceKeyError) {
+      setIndicatorFormError(sourceKeyError);
+      return;
+    }
+    setIndicatorFormError(null);
 
     if (indicatorMode === "create") {
       const payload: CreateAdminDepartmentIndicatorRequest = {
@@ -699,7 +711,10 @@ export function AdminDepartmentsWorkspace({
 
       <DrawerPanel
         open={indicatorDrawerOpen}
-        onClose={() => setIndicatorDrawerOpen(false)}
+        onClose={() => {
+          setIndicatorDrawerOpen(false);
+          setIndicatorFormError(null);
+        }}
         title={indicatorMode === "create" ? "Novo indicador estrutural" : "Editar indicador estrutural"}
         description="Defina a estrutura oficial do indicador dentro do departamento."
         size="xl"
@@ -708,7 +723,10 @@ export function AdminDepartmentsWorkspace({
             <button
               type="button"
               className="si-settings-editor__button si-settings-editor__button--secondary"
-              onClick={() => setIndicatorDrawerOpen(false)}
+              onClick={() => {
+                setIndicatorDrawerOpen(false);
+                setIndicatorFormError(null);
+              }}
             >
               Cancelar
             </button>
@@ -803,9 +821,10 @@ export function AdminDepartmentsWorkspace({
           </label>
 
           <label className="si-admin-form-field">
-            <span>Chave da fonte</span>
+            <span>Chave da fonte (obrigatória se ativo)</span>
             <input
               value={indicatorForm.source_key}
+              placeholder="ex.: commercial_rol, production_otd"
               onChange={(event) =>
                 setIndicatorForm((current) => ({
                   ...current,
@@ -813,7 +832,17 @@ export function AdminDepartmentsWorkspace({
                 }))
               }
             />
+            <small className="si-admin-form-field__hint">
+              Liga o indicador às medições do SI e às metas nos dashboards
+              departamentais. Use letras minúsculas e underscore.
+            </small>
           </label>
+
+          {indicatorFormError ? (
+            <p className="si-settings-editor__alert si-settings-editor__alert--error">
+              {indicatorFormError}
+            </p>
+          ) : null}
 
           <label className="si-admin-form-field">
             <span>Unidade</span>
