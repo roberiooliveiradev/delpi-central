@@ -22,6 +22,14 @@ class ProcessoUpdateBody(ProcessoCreateBody):
     pass
 
 
+class ProcessoDuplicateBody(BaseModel):
+    nome_processo: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Nome do processo cópia. Padrão: nome original + ' (cópia)'.",
+    )
+
+
 class RevisaoBody(BaseModel):
     processo_id: str
     versao_revisao: str = Field(min_length=1, max_length=32)

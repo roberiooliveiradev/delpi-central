@@ -39,6 +39,10 @@ from tm_app.application.services.dashboard_live_service import DashboardLiveServ
 from tm_app.application.services.process_revision_compare_service import (
     ProcessRevisionCompareService,
 )
+from tm_app.application.services.processo_duplicate_service import (
+    ProcessoDuplicateService,
+    ProcessoNotFoundError,
+)
 from tm_app.application.services.revisao_rateio_diagnostic_service import (
     RevisaoRateioDiagnosticService,
 )
@@ -48,6 +52,7 @@ from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoUpdateBody,
     MedicaoBody,
     ProcessoCreateBody,
+    ProcessoDuplicateBody,
     ProcessoUpdateBody,
     RecursoBody,
     RecursoCustoBody,
@@ -189,6 +194,44 @@ def delete_processo(processo_id: str, request: Request):
         return fail("Processo não encontrado.", 404)
     _audit(request, "processo", processo_id, "delete", {})
     return ok(message="Processo excluído.")
+
+
+@router.post("/processos/{processo_id}/duplicar")
+def duplicate_processo(
+    processo_id: str,
+    request: Request,
+    body: ProcessoDuplicateBody | None = None,
+):
+    try:
+        result = ProcessoDuplicateService().duplicate(
+            processo_id,
+            nome_processo=body.nome_processo if body else None,
+        )
+    except ProcessoNotFoundError as exc:
+        return fail(str(exc), 404)
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    new_id = str(result["processo"]["processo_id"])
+    _audit(
+        request,
+        "processo",
+        new_id,
+        "duplicate",
+        {
+            "origem_processo_id": processo_id,
+            "copiados": result["copiados"],
+        },
+    )
+    return ok(
+        {
+            "processo": row_to_json(result["processo"]),
+            "origem_processo_id": processo_id,
+            "copiados": result["copiados"],
+        },
+        "Processo duplicado com revisões e vínculos.",
+        201,
+    )
 
 
 # --- Revisões ---

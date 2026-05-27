@@ -171,7 +171,7 @@ class VinculoRepository(PluginBaseRepository):
             (vinculo_id,),
         )
 
-    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         row = self.execute_returning_one(
             """
             INSERT INTO transformometro.revisao_recursos_compartilhados (
@@ -189,6 +189,7 @@ class VinculoRepository(PluginBaseRepository):
                 data.get("peso_rateio"),
                 data.get("observacoes"),
             ),
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar vínculo.")
