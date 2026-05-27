@@ -37,6 +37,13 @@
 
 .si-settings-form-field input,
 .si-settings-form-field textarea,
+.si-monthly-targets-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--si-text-muted);
+  line-height: 1.45;
+}
+
 .si-settings-form-field select {
   width: 100%;
   border-radius: 12px;

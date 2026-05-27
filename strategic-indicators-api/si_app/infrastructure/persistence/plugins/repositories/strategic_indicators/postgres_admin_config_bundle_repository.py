@@ -390,18 +390,25 @@ class PostgresStrategicIndicatorsAdminConfigBundleRepository(PluginBaseRepositor
         if existing:
             return False
 
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            resolve_persisted_goal_value,
+        )
         from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_indicator_goals_repository import (
             PostgresStrategicIndicatorsIndicatorGoalsRepository,
         )
 
+        goal_mode = str(row.get("goal_mode") or "standard")
         goals_repo = PostgresStrategicIndicatorsIndicatorGoalsRepository(self.connection)
         goals_repo.create_indicator_goal(
             indicator_id=indicator_id,
             goal_year=goal_year,
             goal_label=str(row.get("goal_label") or "").strip(),
-            goal_value=float(row.get("goal_value") or 0),
+            goal_value=resolve_persisted_goal_value(
+                goal_mode=goal_mode,
+                goal_value=float(row.get("goal_value") or 0),
+            ),
             goal_periodicity=str(row.get("goal_periodicity") or "monthly"),
-            goal_mode=str(row.get("goal_mode") or "standard"),
+            goal_mode=goal_mode,
             goal_scope_branch=goal_scope_branch,
             monthly_targets=row.get("monthly_targets") or [],
             valid_from=row.get("valid_from"),

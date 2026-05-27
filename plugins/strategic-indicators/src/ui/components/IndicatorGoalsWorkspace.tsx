@@ -6,6 +6,10 @@ import { DataTable } from "./DataTable";
 import { ActionButtons } from "./ActionButtons";
 import { useStrategicIndicatorGoals } from "../../state/hooks/useStrategicIndicatorGoals";
 import type { StrategicIndicatorGoalItem } from "../../data/types/indicatorGoals";
+import {
+  formatAdminGoalMeta,
+  formatAdminGoalValueOnly,
+} from "../utils/goalValuePolicy";
 import "./IndicatorGoalsWorkspace.css";
 
 type IndicatorGoalsWorkspaceProps = {
@@ -77,7 +81,8 @@ export function IndicatorGoalsWorkspace({
       {
         key: "value",
         header: "Valor",
-        render: (row: StrategicIndicatorGoalItem) => row.goal_value,
+        render: (row: StrategicIndicatorGoalItem) =>
+          formatAdminGoalValueOnly(row),
       },
       {
         key: "periodicity",
@@ -283,8 +288,8 @@ export function IndicatorGoalsWorkspace({
                 </div>
 
                 <div className="si-history-card__meta">
-                  <span>Meta: {item.goal_label}</span>
-                  <span>Valor: {item.goal_value}</span>
+                  <span>Meta: {formatAdminGoalMeta(item)}</span>
+                  <span>Valor: {formatAdminGoalValueOnly(item)}</span>
                   <span>
                     Periodicidade: {translatePeriodicity(item.goal_periodicity)}
                   </span>

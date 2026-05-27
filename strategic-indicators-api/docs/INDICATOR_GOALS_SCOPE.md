@@ -93,7 +93,9 @@ Detalhes: [MFE.md](./MFE.md) — seção *Rótulos da visão*.
 
 ## Metas `monthly_curve` (Comercial)
 
-- Meta comparável do período = soma dos `indicator_goal_monthly_targets` do mês da competência.
-- Se a curva não vier no catálogo (lista vazia) e `goal_value > 0`, o calculador usa **fallback** para meta padrão do período (evita IDD/nota `0` indevidos).
+- A meta vive em `indicator_goal_monthly_targets` (12 pontos com periodicidade mensal).
+- `goal_value` permanece **0** no banco — não há consolidado; evita confundir soma anual com meta percentual.
+- Meta comparável do período = soma dos alvos mensais **do intervalo consultado** (um mês na competência mensal).
+- Sem pontos na curva, a meta comparável é **0** (nota sem meta válida).
 - Medições da Produção com valor `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
 - Depois de deploy com correção no calculador, execute `scripts/refresh_period_scores.py` para atualizar `period_scores` que ainda guardam IDD zerado.

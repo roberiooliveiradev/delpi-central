@@ -19,6 +19,7 @@ import {
   getGoalPeriodicityLabel,
   getGoalScopeBranchLabel,
 } from "../presentation/labels";
+import { resolveGoalValueForApi } from "../utils/goalValuePolicy";
 import "./AnnualGoalsWorkspace.css";
 
 type AnnualGoalsWorkspaceMode =
@@ -177,7 +178,10 @@ export function AnnualGoalsWorkspace({
         .map((item) => ({
           indicator_id: item.indicator_id.trim(),
           goal_label: item.goal_label.trim(),
-          goal_value: Number(item.goal_value || 0),
+          goal_value: resolveGoalValueForApi(
+            item.goal_mode,
+            Number(item.goal_value || 0),
+          ),
           goal_periodicity: item.goal_periodicity,
           goal_mode: item.goal_mode,
           goal_scope_branch: item.goal_scope_branch,
@@ -411,23 +415,25 @@ export function AnnualGoalsWorkspace({
                     }
                   />
 
-                  <input
-                    type="number"
-                    placeholder="Valor da meta"
-                    value={row.goal_value}
-                    onChange={(event) =>
-                      setBulkRows((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? {
-                                ...item,
-                                goal_value: Number(event.target.value || 0),
-                              }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
+                  {row.goal_mode === "standard" ? (
+                    <input
+                      type="number"
+                      placeholder="Valor da meta"
+                      value={row.goal_value}
+                      onChange={(event) =>
+                        setBulkRows((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  goal_value: Number(event.target.value || 0),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  ) : null}
 
                   <select
                     value={row.goal_periodicity}
