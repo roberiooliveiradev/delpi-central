@@ -196,22 +196,6 @@ class ChatProductQueryIntentService:
         *,
         intent: str,
     ) -> str | None:
-        lines = [
-            str(line).strip()
-            for line in (humanized.get("linhas") or [])
-            if str(line).strip()
-        ]
-
-        if not lines:
-            return None
-
-        title = str(humanized.get("titulo") or "").strip()
-
-        if intent == ChatProductQueryIntent.DESCRIPTION:
-            parts = [title] if title else []
-            parts.append(lines[0])
-            return "\n\n".join(parts)
-
         if intent == ChatProductQueryIntent.STRUCTURE:
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,
@@ -227,6 +211,22 @@ class ChatProductQueryIntentService:
 
                 if formatted:
                     return formatted
+
+        lines = [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line).strip()
+        ]
+
+        if not lines:
+            return None
+
+        title = str(humanized.get("titulo") or "").strip()
+
+        if intent == ChatProductQueryIntent.DESCRIPTION:
+            parts = [title] if title else []
+            parts.append(lines[0])
+            return "\n\n".join(parts)
 
         if intent == ChatProductQueryIntent.STOCK:
             stock_lines = cls._filter_stock_lines(lines)

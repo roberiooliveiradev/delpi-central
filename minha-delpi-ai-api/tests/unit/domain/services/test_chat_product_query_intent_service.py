@@ -83,3 +83,49 @@ def test_format_direct_answer_full_filters_zero_records():
 
     assert "Roteiro: 0 registro(s)." not in answer
     assert "Tipo MP" in answer
+
+
+def test_format_direct_answer_structure_uses_hierarchical_markdown():
+    answer = ChatProductQueryIntentService.format_direct_answer(
+        {
+            "titulo": "Estrutura do produto 90260077",
+            "linhas": [],
+            "dados": {
+                "root": {
+                    "code": "90260077",
+                    "description": "CHICOTE DE LIGACAO",
+                    "type": "PA",
+                    "unit": "MI",
+                    "quantity": 1,
+                },
+                "items": [
+                    {
+                        "code": "50230002",
+                        "description": "CB14AMAR-00180/25/07-0000-0914",
+                        "type": "PI",
+                        "unit": "MI",
+                        "quantity": 1,
+                        "components": [
+                            {
+                                "code": "10030048",
+                                "description": "CABO EPR 14AWG",
+                                "type": "MP",
+                                "unit": "MT",
+                                "quantity": 180,
+                            },
+                        ],
+                    },
+                ],
+            },
+            "sourcePath": "/products/90260077/structure",
+        },
+        intent=ChatProductQueryIntent.STRUCTURE,
+    )
+
+    assert answer is not None
+    assert "**Produto pai**" in answer
+    assert "**Componentes nível 1**" in answer
+    assert "**Estrutura detalhada**" in answer
+    assert "90260077" in answer
+    assert "50230002" in answer
+    assert "10030048" in answer
