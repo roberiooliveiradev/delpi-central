@@ -229,3 +229,34 @@ def test_execute_query_selects_sql_action():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "sql-action"
+
+
+def test_comparison_request_does_not_select_structure_action():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "product-structure",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "summary": "Estrutura do produto",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "compare as duas estruturas e traga insights",
+        allowed_action_ids=["product-structure"],
+        conversation_context=(
+            "user: estrutura do 90260077\n"
+            "user: estrutura do 90260088\n"
+            "assistant: Estrutura do produto 90260088"
+        ),
+    )
+
+    assert selected is None

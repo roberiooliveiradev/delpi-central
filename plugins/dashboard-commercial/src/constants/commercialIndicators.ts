@@ -3,8 +3,8 @@
  * Pesos usados apenas em textos de ajuda; pontuação é calculada no strategic-indicators-api.
  */
 export const COMMERCIAL_KPI_TITLES = {
-  rolFilial01: "ROL — Filial 01",
-  rolFilial02: "ROL — Filial 02",
+  /** Indicador único `commercial-rol` (scope per_unit) no SI. */
+  rol: "ROL",
   salesOrderOtd: "OTD — pedidos de venda",
   closingRate: "Taxa de conversão",
   newBusinessRol: "% ROL — novos negócios",

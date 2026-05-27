@@ -2,6 +2,9 @@ from uuid import UUID
 
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.services.agent_specialization_service import AgentSpecializationService
+from app.application.services.chat_intelligence_pipeline_service import (
+    ChatIntelligencePipelineService,
+)
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
@@ -80,12 +83,17 @@ class AdminAgentSimulateUseCase:
         )
         history = self._load_session_history(session_id=session_id, user_id=user_id)
 
-        tool_context, planned_tool_calls = self._build_tool_context(
+        tool_context_payload, planned_tool_calls = self._build_tool_context(
             question=normalized_question,
             user_id=user_id,
             access_token=access_token,
             specialization=specialization,
             execute_tools_in_sandbox=execute_tools_in_sandbox,
+            previous_messages=history,
+        )
+        tool_context = str(tool_context_payload.get("context") or "")
+        analysis_mode = ChatIntelligencePipelineService.analysis_mode_from_tool_context(
+            tool_context_payload,
         )
 
         full_messages = self.prompt_builder_service.build_messages(
@@ -95,6 +103,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt=guidelines_prompt,
+            analysis_mode=analysis_mode,
         )
 
         without_guidelines_messages = self.prompt_builder_service.build_messages(
@@ -104,6 +113,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt="",
+            analysis_mode=analysis_mode,
         )
 
         without_rag_messages = self.prompt_builder_service.build_messages(
@@ -113,6 +123,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt=guidelines_prompt,
+            analysis_mode=analysis_mode,
         )
 
         system_prompt = self._system_prompt_from_messages(full_messages)
@@ -177,8 +188,11 @@ class AdminAgentSimulateUseCase:
             },
             "sessionHistory": [
                 {
-                    "role": item.get("role"),
-                    "contentPreview": self._safe_preview(str(item.get("content") or ""), limit=240),
+                    "role": getattr(item, "role", None),
+                    "contentPreview": self._safe_preview(
+                        str(getattr(item, "content", None) or ""),
+                        limit=240,
+                    ),
                 }
                 for item in history
             ],
@@ -237,11 +251,7 @@ class AdminAgentSimulateUseCase:
         messages = repository.list_messages_by_session(UUID(str(session_id)))
         tail = messages[-Settings.CHAT_HISTORY_MAX_MESSAGES :]
 
-        return [
-            {"role": message.role, "content": message.content}
-            for message in tail
-            if message.role in {"user", "assistant"}
-        ]
+        return [message for message in tail if message.role in {"user", "assistant"}]
 
     def _build_tool_context(
         self,
@@ -251,7 +261,8 @@ class AdminAgentSimulateUseCase:
         access_token: str | None,
         specialization: dict | None = None,
         execute_tools_in_sandbox: bool = False,
-    ) -> tuple[str, list[dict]]:
+        previous_messages: list | None = None,
+    ) -> tuple[dict, list[dict]]:
         if (
             execute_tools_in_sandbox
             and self.chat_tool_context_service
@@ -266,6 +277,7 @@ class AdminAgentSimulateUseCase:
                 message=question,
                 actions_enabled=True,
                 allowed_tool_names=allowed_tool_names,
+                previous_messages=previous_messages,
             )
 
             tool_calls = [
@@ -280,9 +292,9 @@ class AdminAgentSimulateUseCase:
                 for item in (result.get("toolCalls") or [])
             ]
 
-            return str(result.get("context") or ""), tool_calls
+            return result, tool_calls
 
-        return "", self._planned_tool_calls(question)
+        return {"context": ""}, self._planned_tool_calls(question)
 
     def _resolve_agent(
         self,

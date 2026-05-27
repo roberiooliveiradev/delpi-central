@@ -223,6 +223,7 @@ Comportamento esperado:
         tool_context: str,
         *,
         operational_mode: bool = False,
+        analysis_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
@@ -262,6 +263,14 @@ Comportamento esperado:
                 self._load_policy(
                     "operational-agent.md",
                     "Modo operacional: respostas curtas com base nas ferramentas autorizadas.",
+                )
+            )
+
+        if analysis_mode:
+            sections.append(
+                self._load_policy(
+                    "chat-analysis-insights.md",
+                    "Modo análise: compare dados do histórico e traga insights objetivos.",
                 )
             )
 

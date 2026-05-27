@@ -3,7 +3,7 @@ from app.application.use_cases.admin_agent_simulate_use_case import AdminAgentSi
 
 
 class FakeGuidelineRepository:
-    def list_active(self, environment=None):
+    def list_active(self, environment=None, categories=None):
         return [
             {
                 "id": "g1",
@@ -33,7 +33,7 @@ class FakeRagContextService:
 
 
 class FakeChatToolContextService:
-    def build_context(self, user_id, access_token, message, actions_enabled=True):
+    def build_context(self, user_id, access_token, message, actions_enabled=True, **kwargs):
         return {
             "context": "Ferramenta get_current_user: Nome: Usuário Real; E-mail: real@delpi.com.br",
             "toolCalls": [
@@ -75,6 +75,7 @@ def test_admin_agent_simulate_executes_tools_with_access_token():
         question="Quem sou eu?",
         user_id="00000000-0000-0000-0000-000000000001",
         access_token="token-test",
+        execute_tools_in_sandbox=True,
     )
 
     assert result["plannedToolCalls"][0]["name"] == "get_current_user"

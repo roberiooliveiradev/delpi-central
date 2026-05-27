@@ -20,6 +20,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Módulos api-delpi | [`../../../api-delpi/docs/api/06-modulos-departamentais.md`](../../../api-delpi/docs/api/06-modulos-departamentais.md) |
 | Policy injetada em runtime | [`../../app/domain/prompt_policies/api-delpi-routes.md`](../../app/domain/prompt_policies/api-delpi-routes.md) |
 | Inteligência (ondas 1–10) | [`../roadmap/README.md`](../roadmap/README.md) |
+| Arquitetura chat base | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
 
 ## Como anexar a um agente
 

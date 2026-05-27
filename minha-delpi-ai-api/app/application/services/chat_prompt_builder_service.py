@@ -80,6 +80,7 @@ class ChatPromptBuilderService:
         attachment_context: str | None = None,
         history_summary: str | None = None,
         operational_mode: bool = False,
+        analysis_mode: bool = False,
         user_context: str | None = None,
         skills: dict | None = None,
     ) -> list[dict]:
@@ -87,6 +88,7 @@ class ChatPromptBuilderService:
             rag_context=rag_context,
             tool_context=tool_context,
             operational_mode=operational_mode,
+            analysis_mode=analysis_mode,
             skills=skills,
         )
         base_prompt += self._assistant_identity_policy_addon(current_message)

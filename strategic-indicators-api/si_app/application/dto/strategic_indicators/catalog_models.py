@@ -67,6 +67,7 @@ class StrategicIndicatorCalculatedValue:
     trend: str = "stable"
     classification: str = ""
     unit_values: dict[str, float | None] | None = None
+    unit_goals: dict[str, float | None] | None = None
     unit_gaps: dict[str, float | None] | None = None
     value_unit: str | None = None
     value_prefix: str | None = None

@@ -12,6 +12,9 @@ from app.application.services.chat_intelligence_metadata_service import (
 )
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
+from app.application.services.chat_intelligence_pipeline_service import (
+    ChatIntelligencePipelineService,
+)
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_assistant_identity_service import (
@@ -37,9 +40,6 @@ from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_fast_path_service import ChatFastPathService
-from app.domain.services.chat_operational_pipeline_service import (
-    ChatOperationalPipelineService,
-)
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 
@@ -169,11 +169,13 @@ class StreamChatMessageUseCase:
         history_source = history_messages if resend_from_message_id else previous_messages
         attachment_ids = getattr(request, "attachment_ids", None)
         allowed_action_ids = workspace_context.get("allowedActionIds") or []
-        operational_optimize = ChatOperationalPipelineService.should_optimize(
+        pre_tool = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
             message,
             allowed_action_ids,
             attachment_ids=attachment_ids,
         )
+        operational_optimize = pre_tool.operational_optimize
+        analysis_mode = pre_tool.analysis_mode
 
         if operational_optimize:
             keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
@@ -190,21 +192,26 @@ class StreamChatMessageUseCase:
             attachment_ids=attachment_ids,
         )
 
-        conversation_context = self._build_conversation_context(history_source)
-
         tool_context = self._build_tool_context(
             request,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             capabilities=workspace_context.get("capabilities") or {},
             specialization=workspace_context.get("specialization"),
             fast_path=fast_path,
-            conversation_context=conversation_context,
+            previous_messages=history_source,
         )
         tool_context = self._maybe_extend_tool_context(
             request=request,
             workspace_context=workspace_context,
             tool_context=tool_context,
         )
+        post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+            message,
+            history_source,
+            tool_context,
+        )
+        tool_context = post_tool.tool_context
+        analysis_mode = post_tool.analysis_mode
         tool_calls = tool_context["toolCalls"]
         pipeline_timings.mark("tools_done")
 
@@ -219,7 +226,10 @@ class StreamChatMessageUseCase:
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
-        direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
+        direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
+            tool_context,
+            analysis_mode=analysis_mode,
+        )
 
         if not direct_answer and ChatUserContextService.is_user_identity_question(message):
             user_direct = self._resolve_user_identity_answer(request.access_token, message)
@@ -268,6 +278,7 @@ class StreamChatMessageUseCase:
                 operational_optimize=operational_optimize,
                 tool_context=tool_context,
                 skip_rag=skip_rag,
+                analysis_mode=analysis_mode,
             ),
         )
 
@@ -327,6 +338,7 @@ class StreamChatMessageUseCase:
                 ),
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
+                analysis_mode=analysis_mode,
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
             )
@@ -379,6 +391,7 @@ class StreamChatMessageUseCase:
                 operational_optimize=operational_optimize,
                 tool_context=tool_context,
                 skip_rag=skip_rag,
+                analysis_mode=analysis_mode,
             ),
         )
         latency_ms = int((time.perf_counter() - started_at) * 1000)
@@ -762,18 +775,6 @@ class StreamChatMessageUseCase:
         except Exception:
             return None
 
-    def _build_conversation_context(self, previous_messages, limit: int = 8) -> str:
-        parts: list[str] = []
-
-        for item in previous_messages[-limit:]:
-            role = str(getattr(item, "role", "") or "user").strip()
-            content = str(getattr(item, "content", "") or "").strip()
-
-            if content:
-                parts.append(f"{role}: {content}")
-
-        return "\n".join(parts)
-
     def _build_tool_context(
         self,
         request: SendChatMessageRequest,
@@ -781,7 +782,7 @@ class StreamChatMessageUseCase:
         capabilities: dict | None = None,
         specialization: dict | None = None,
         fast_path: bool = False,
-        conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -806,7 +807,7 @@ class StreamChatMessageUseCase:
             actions_enabled=actions_enabled,
             allowed_tool_names=allowed_tool_names,
             fast_path=fast_path,
-            conversation_context=conversation_context,
+            previous_messages=previous_messages,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

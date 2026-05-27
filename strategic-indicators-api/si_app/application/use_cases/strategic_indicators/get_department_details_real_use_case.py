@@ -145,6 +145,11 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 gap=current.gap,
                 department_id=current.department_id,
             ),
+            "goals": self._calculator.build_goals_payload(
+                unit_goals=getattr(current, "unit_goals", None),
+                goal_value=current.goal_value,
+                department_id=current.department_id,
+            ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),
             "value_prefix": getattr(current, "value_prefix", None),

@@ -44,6 +44,7 @@ export type IndicatorViewItem = {
   realized: Record<string, number | null>;
   score: number | null;
   gap: number | null;
+  goals: Record<string, number | null>;
   gaps: Record<string, number | null>;
   hasValue: boolean;
   trend: TrendDirection;
@@ -81,6 +82,7 @@ export type StrategicIndicatorsResponse = {
     realized?: Record<string, number | null>;
     score: number | null;
     gap: number | null;
+    goals?: Record<string, number | null>;
     gaps?: Record<string, number | null>;
     has_value: boolean;
     trend: string;

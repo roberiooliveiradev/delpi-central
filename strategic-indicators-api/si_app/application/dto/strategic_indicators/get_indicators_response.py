@@ -21,6 +21,7 @@ class IndicatorItemResponse:
     realized: dict[str, float | None] = field(default_factory=dict)
     score: float | None = None
     gap: float | None = None
+    goals: dict[str, float | None] = field(default_factory=dict)
     gaps: dict[str, float | None] = field(default_factory=dict)
     has_value: bool = False
     trend: str = "stable"

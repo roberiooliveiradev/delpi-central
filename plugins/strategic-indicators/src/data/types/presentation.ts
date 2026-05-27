@@ -98,6 +98,7 @@ export type PresentationDepartmentIndicatorSnapshot = {
   hasValue: boolean;
   score: number | null;
   gap: number | null;
+  goals: Record<string, number | null>;
   gaps: Record<string, number | null>;
   trend: "up" | "down" | "stable";
   trendLabel: string;
@@ -462,6 +463,7 @@ function buildDepartmentFocus(
         fallbackIndicator?.value !== null,
       score: indicator.score,
       gap: indicator.gap,
+      goals: fallbackIndicator?.goals ?? indicator.goals ?? {},
       gaps: fallbackIndicator?.gaps ?? indicator.gaps ?? {},
       trend: normalizeDirection(indicator.trend),
       trendLabel: getTrendLabel(indicator.trend),

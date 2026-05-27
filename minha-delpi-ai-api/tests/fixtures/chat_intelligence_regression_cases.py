@@ -33,6 +33,12 @@ PRODUCT_CODE_CASES = [
     ),
 ]
 
+ANALYSIS_INTENT_CASES = [
+    ("compare as duas estruturas e traga insights", True),
+    ("quais as diferenças entre os produtos?", True),
+    ("estrutura do produto 90260088", False),
+]
+
 OPERATIONAL_FAST_PATH_CASES = [
     ("estoque do produto 10080047", True),
     ("descrição do produto 10080047", True),
