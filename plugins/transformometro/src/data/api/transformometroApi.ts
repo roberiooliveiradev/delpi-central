@@ -129,6 +129,26 @@ export function createProcesso(
   });
 }
 
+export function updateProcesso(
+  processoId: string,
+  payload: Partial<Processo>,
+  getAccessToken?: () => string | undefined
+) {
+  return request<Processo>(`/processos/${processoId}`, getAccessToken, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteProcesso(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<null>(`/processos/${processoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function fetchRevisoes(
   processoId: string,
   getAccessToken?: () => string | undefined
@@ -162,35 +182,6 @@ export function updateRevisao(
   return request<Revisao>(`/revisoes/${revisaoId}`, getAccessToken, {
     method: "PUT",
     body: JSON.stringify(payload),
-  });
-}
-
-export function submeterRevisaoAprovacao(
-  revisaoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/submeter`, getAccessToken, {
-    method: "POST",
-  });
-}
-
-export function aprovarRevisao(
-  revisaoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/aprovar`, getAccessToken, {
-    method: "POST",
-  });
-}
-
-export function rejeitarRevisao(
-  revisaoId: string,
-  motivo: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<Revisao>(`/revisoes/${revisaoId}/workflow/rejeitar`, getAccessToken, {
-    method: "POST",
-    body: JSON.stringify({ motivo }),
   });
 }
 

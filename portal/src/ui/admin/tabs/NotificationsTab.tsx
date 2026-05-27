@@ -46,7 +46,6 @@ const NOTIFICATION_CATEGORIES: { value: NotificationCategory; label: string }[] 
   { value: "announcement", label: "Comunicado" },
   { value: "custom", label: "Personalizada" },
   { value: "controle_mp", label: "Controle MP" },
-  { value: "transformometro", label: "Transformômetro" },
 ];
 
 const PRESENTATION_MODES: {

@@ -44,23 +44,6 @@ class Settings:
     PLUGINS_DB_SSLMODE: str = _get_env("PLUGINS_DB_SSLMODE", default="prefer")
 
     GOOGLE_SHEETS_TIMEOUT: str = _get_env("GOOGLE_SHEETS_TIMEOUT", default="15")
-
-    TM_NOTIFICATIONS_ENABLED: bool = (
-        str(_get_env("TM_NOTIFICATIONS_ENABLED", default="false") or "false").lower()
-        in {"1", "true", "yes", "on"}
-    )
-    TM_CORE_API_URL: str | None = _get_env(
-        "TM_CORE_API_URL",
-        "DELPI_CORE_API_URL",
-        "DELPI_CORE_API_INTERNAL_URL",
-        "CORE_API_BASE_URL",
-    )
-    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str | None = _get_env(
-        "CORE_API_INTEGRATIONS_SERVICE_TOKEN"
-    )
-    TM_PORTAL_ROUTE: str = _get_env("TM_PORTAL_ROUTE", default="/apps/transformometro")
-    TM_WORKFLOW_APPROVER_EMAILS: str = _get_env("TM_WORKFLOW_APPROVER_EMAILS", default="")
-    TM_WORKFLOW_APPROVER_ROLE_IDS: str = _get_env("TM_WORKFLOW_APPROVER_ROLE_IDS", default="")
     TRANSFORMA_MAIS_SHEET_ID: str | None = _get_env("TRANSFORMA_MAIS_SHEET_ID")
     TRANSFORMA_MAIS_GID_PROCESSOS: str | None = _get_env("TRANSFORMA_MAIS_GID_PROCESSOS")
     TRANSFORMA_MAIS_GID_REVISAO: str | None = _get_env("TRANSFORMA_MAIS_GID_REVISAO")

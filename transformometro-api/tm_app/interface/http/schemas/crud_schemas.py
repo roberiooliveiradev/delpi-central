@@ -35,10 +35,6 @@ class RevisaoBody(BaseModel):
     observacoes: Optional[str] = None
 
 
-class RevisaoRejeitarBody(BaseModel):
-    motivo: str = Field(min_length=1, max_length=2000)
-
-
 class MedicaoBody(BaseModel):
     revisao_id: str
     volume_mensal: float = 0

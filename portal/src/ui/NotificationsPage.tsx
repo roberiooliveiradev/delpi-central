@@ -50,7 +50,6 @@ const CATEGORY_OPTIONS: { value: NotificationCategory | ""; label: string }[] = 
   { value: "announcement", label: "Comunicado" },
   { value: "custom", label: "Personalizada" },
   { value: "controle_mp", label: "Controle MP" },
-  { value: "transformometro", label: "Transformômetro" },
 ];
 
 export function NotificationsPage() {

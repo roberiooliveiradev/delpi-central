@@ -24,7 +24,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
-import { RevisaoWorkflowToolbar } from "../revisao/cadastro/RevisaoWorkflowToolbar";
+import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
 import { RevisaoMedicaoSection } from "../revisao/cadastro/RevisaoMedicaoSection";
 import { RevisaoRecursosSection } from "../revisao/cadastro/RevisaoRecursosSection";
 import {
@@ -177,13 +177,7 @@ export function RevisaoCadastroPanel({
 
   return (
     <div className="ds-cadastro-panel">
-      <RevisaoWorkflowToolbar
-        revisao={revisao}
-        getAccessToken={getAccessToken}
-        onError={onError}
-        onUpdated={onRevisaoUpdated}
-        onActivate={handleActivate}
-      />
+      <RevisaoAtivarToolbar revisao={revisao} onError={onError} onActivate={handleActivate} />
 
       {rateioDiag ? (
         <div

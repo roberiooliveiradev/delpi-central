@@ -11,7 +11,6 @@ ALLOWED_NOTIFICATION_CATEGORIES = frozenset({
     "access",
     "custom",
     "controle_mp",
-    "transformometro",
 })
 
 ALLOWED_PRESENTATION_MODES = frozenset({"text", "html", "template"})
@@ -27,5 +26,4 @@ CATEGORY_DEFAULT_ICONS = {
     "access": "key-round",
     "custom": "bell",
     "controle_mp": "message-circle",
-    "transformometro": "gauge",
 }

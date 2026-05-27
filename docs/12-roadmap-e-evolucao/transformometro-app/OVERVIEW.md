@@ -1,6 +1,6 @@
 # Visão geral — Transformômetro App
 
-**Última atualização:** 2026-05-21 (URLs processo/revisão, notificações workflow, deep link portal)
+**Última atualização:** 2026-05-21 (URLs processo/revisão; ativar revisão sem workflow de aprovação)
 
 ## O que é
 
@@ -37,11 +37,7 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
 | `/apps/transformometro/import` | Importação planilha (admin) |
 
-No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e toolbar de **workflow** (submeter → aprovar/rejeitar → ativar).
-
-### Notificações (portal)
-
-Com `TM_NOTIFICATIONS_ENABLED=true`, submeter/aprovar/rejeitar gera alerta no sino (categoria `transformometro`). Detalhes: [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md).
+No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e botão **Definir como ativa** (como na planilha legado — sem etapa de aprovação).
 
 ## Fluxo do usuário
 
@@ -61,7 +57,7 @@ Portal MinhaDelpi
 Tudo gira em torno de **`revisao_id`**:
 
 - `processos` = cadastro mestre
-- `revisoes` = cenários (baseline, melhoria, automacao, correcao) + workflow (`rascunho` → `em_analise` → `aprovada` / `rejeitada`)
+- `revisoes` = cenários (baseline, melhoria, automacao, correcao); uma pode estar **ativa** por processo
 - `medicoes`, `investimentos`, vínculos de recurso = dados da revisão
 - `dashboard_calculos` = tabela **derivada** (nunca editada manualmente)
 
@@ -130,4 +126,3 @@ O app novo deve seguir a **especificação** (incluindo `economia_recursos_compa
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [ROADMAP.md](./ROADMAP.md)
 - [ESPECIFICACAO.md](./ESPECIFICACAO.md)
-- [NOTIFICACOES-WORKFLOW.md](./NOTIFICACOES-WORKFLOW.md)

@@ -51,7 +51,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("revisao_ativa", False),
                 data.get("observacoes"),
-                data.get("status_aprovacao", "rascunho"),
+                data.get("status_aprovacao", "aprovada"),
             ),
         )
         if row is None:
