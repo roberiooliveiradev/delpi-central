@@ -4,7 +4,6 @@ import {
   Check,
   Copy,
   Download,
-  FileText,
   Upload,
   Plus,
   Send,
@@ -58,7 +57,9 @@ import {
 } from "../../domain/agentSystemPromptTemplates";
 
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
+import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
 
+import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
 import "./ChatAgentBuilderPage.css";
 
 type AgentPayload = {
@@ -232,6 +233,7 @@ export function ChatAgentBuilderPage({
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
   const [isSavingSource, setIsSavingSource] = useState(false);
+  const [sourceNotice, setSourceNotice] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -336,16 +338,41 @@ export function ChatAgentBuilderPage({
 
 
 
-  async function uploadAgentKnowledgeFile(file: File | null | undefined) {
-    if (!agent || !file) {
+  async function uploadAgentKnowledgeFiles(files: File[]) {
+    if (!agent || files.length === 0) {
       return;
     }
 
     setIsSavingSource(true);
+    setSourceNotice(null);
 
+    const duplicateNames: string[] = [];
+    let uploadedCount = 0;
     try {
-      await uploadAgentSource(agent.id, file, { getAccessToken });
+      for (const file of files) {
+        const result = await uploadAgentSource(agent.id, file, { getAccessToken });
+
+        if (result.duplicate) {
+          duplicateNames.push(result.original_filename || result.title || file.name);
+          continue;
+        }
+
+        uploadedCount += 1;
+      }
+
       setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
+
+      if (duplicateNames.length > 0 && uploadedCount === 0) {
+        setSourceNotice(
+          duplicateNames.length === 1
+            ? `"${duplicateNames[0]}" já está neste agente (mesmo conteúdo).`
+            : `${duplicateNames.length} arquivo(s) ignorado(s): conteúdo já existente.`,
+        );
+      } else if (duplicateNames.length > 0) {
+        setSourceNotice(
+          `${uploadedCount} arquivo(s) adicionado(s). ${duplicateNames.length} duplicado(s) ignorado(s).`,
+        );
+      }
     } finally {
       setIsSavingSource(false);
     }
@@ -359,7 +386,7 @@ export function ChatAgentBuilderPage({
     setIsSavingSource(true);
 
     try {
-      await createAgentTextSource(
+      const result = await createAgentTextSource(
         agent.id,
         {
           title: sourceTitle.trim() || "Nota do agente",
@@ -371,8 +398,14 @@ export function ChatAgentBuilderPage({
         { getAccessToken },
       );
 
-      setSourceTitle("");
-      setSourceContent("");
+      if (result.duplicate) {
+        setSourceNotice("Esta nota tem o mesmo conteúdo de uma fonte já vinculada ao agente.");
+      } else {
+        setSourceNotice(null);
+        setSourceTitle("");
+        setSourceContent("");
+      }
+
       setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
     } finally {
       setIsSavingSource(false);
@@ -1532,78 +1565,48 @@ export function ChatAgentBuilderPage({
                   </button>
                 ) : null}
 
-                <label className="mdc-chat-ws-outline-btn">
-                  <Plus size={16} aria-hidden="true" />
-                  <span>{isSavingSource ? "Enviando..." : "Adicionar fontes"}</span>
-                  <input
-                    type="file"
-                    disabled={isSavingSource}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      void uploadAgentKnowledgeFile(file);
-                      event.target.value = "";
-                    }}
-                  />
-                </label>
-
-                {agentSources.length > 0 ? (
-                  <div className="mdc-chat-ws-list">
-                    {agentSources.map((source) => (
-                      <article key={source.id} className="mdc-chat-ws-list-row">
-                        <span className="mdc-chat-ws-list-row__icon">
-                          <FileText size={18} aria-hidden="true" />
-                        </span>
-                        <div className="mdc-chat-ws-list-row__copy">
-                          <strong>{source.title}</strong>
-                          <small>
-                            {source.original_filename ||
-                              source.source_ref ||
-                              source.source_type}
-                          </small>
+                <AgentKnowledgeSourcesPanel
+                  sources={agentSources}
+                  isUploading={isSavingSource}
+                  notice={sourceNotice}
+                  onUploadFiles={uploadAgentKnowledgeFiles}
+                  onLocalDuplicatesSkipped={(count) =>
+                    setSourceNotice(
+                      count === 1
+                        ? "Este arquivo já está neste agente (mesmo conteúdo)."
+                        : `${count} arquivo(s) ignorado(s): conteúdo já existente.`,
+                    )
+                  }
+                  onRemoveSource={removeAgentSource}
+                  noteSlot={
+                    <details className="mdc-chat-ws-details">
+                      <summary>Adicionar nota de texto</summary>
+                      <div className="mdc-chat-ws-details-body">
+                        <div className="mdc-chat-agent-builder__source-note">
+                          <input
+                            value={sourceTitle}
+                            onChange={(event) => setSourceTitle(event.target.value)}
+                            placeholder="Título da nota"
+                          />
+                          <textarea
+                            value={sourceContent}
+                            onChange={(event) => setSourceContent(event.target.value)}
+                            rows={4}
+                            placeholder="Cole contexto, políticas ou conhecimento do agente..."
+                          />
+                          <button
+                            type="button"
+                            className="mdc-chat-ws-outline-btn"
+                            disabled={isSavingSource || !sourceContent.trim()}
+                            onClick={() => void createAgentKnowledgeNote()}
+                          >
+                            Adicionar nota
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => void removeAgentSource(source.id)}
-                          title="Remover fonte"
-                          aria-label={`Remover ${source.title}`}
-                        >
-                          <Trash2 size={16} aria-hidden="true" />
-                        </button>
-                      </article>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mdc-chat-ws-empty">
-                    Nenhuma fonte adicionada. Use o botão acima para enviar arquivos.
-                  </p>
-                )}
-
-                <details className="mdc-chat-ws-details">
-                  <summary>Adicionar nota de texto</summary>
-                  <div className="mdc-chat-ws-details-body">
-                    <div className="mdc-chat-agent-builder__source-note">
-                      <input
-                        value={sourceTitle}
-                        onChange={(event) => setSourceTitle(event.target.value)}
-                        placeholder="Título da nota"
-                      />
-                      <textarea
-                        value={sourceContent}
-                        onChange={(event) => setSourceContent(event.target.value)}
-                        rows={4}
-                        placeholder="Cole contexto, políticas ou conhecimento do agente..."
-                      />
-                      <button
-                        type="button"
-                        className="mdc-chat-ws-outline-btn"
-                        disabled={isSavingSource || !sourceContent.trim()}
-                        onClick={() => void createAgentKnowledgeNote()}
-                      >
-                        Adicionar nota
-                      </button>
-                    </div>
-                  </div>
-                </details>
+                      </div>
+                    </details>
+                  }
+                />
               </>
             ) : (
               <p className="mdc-chat-ws-empty">Salve o agente para adicionar arquivos e notas.</p>

@@ -21,3 +21,4 @@ class ChatSourceResponse:
     indexed: bool | None = None
     extractor: dict | None = None
     index_reason: str | dict | None = None
+    duplicate: bool = False

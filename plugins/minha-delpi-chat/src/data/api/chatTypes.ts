@@ -397,6 +397,7 @@ export type ChatWorkspaceSource = {
   created_at: string;
   updated_at: string;
   chunk_count: number | null;
+  duplicate?: boolean;
 };
 
 export type ChatActionCatalogItem = {
