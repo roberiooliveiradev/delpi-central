@@ -1108,6 +1108,10 @@
   border-top: 0;
 }
 
+.mdc-chat-agent-builder__section--flat .mdc-chat-ws-section-head {
+  margin: 0.35rem 0 0;
+}
+
 .mdc-chat-agent-builder__section:not(.mdc-chat-agent-builder__section--flat) {
   padding-top: 1.35rem;
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);

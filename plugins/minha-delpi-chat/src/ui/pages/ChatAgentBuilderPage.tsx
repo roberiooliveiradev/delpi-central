@@ -1391,59 +1391,61 @@ export function ChatAgentBuilderPage({
               />
             </label>
 
-            <details className="mdc-chat-ws-details">
-              <summary>Identificador e visibilidade</summary>
-              <div className="mdc-chat-ws-details-body">
-                <div className="mdc-chat-agent-builder__grid">
-                  <label className="mdc-chat-ws-field">
-                    <span>Chave</span>
-                    <input
-                      value={key}
-                      maxLength={80}
-                      disabled={isEditing}
-                      onChange={(event) => setKey(event.target.value)}
-                      placeholder="especialista-produtos"
-                    />
-                  </label>
+            <h2 className="mdc-chat-ws-section-head">Identificador e visibilidade</h2>
 
-                  <label className="mdc-chat-ws-field">
-                    <span>Visibilidade</span>
-                    <select
-                      value={visibility}
-                      onChange={(event) => setVisibility(event.target.value)}
-                    >
-                      <option value="private">Privado</option>
-                      <option value="public">Público interno</option>
-                      {canManageOfficialAgents ? (
-                        <option value="system">Oficial</option>
-                      ) : null}
-                    </select>
-                  </label>
-                </div>
+            <div className="mdc-chat-agent-builder__grid">
+              <label className="mdc-chat-ws-field">
+                <span>Chave</span>
+                <input
+                  value={key}
+                  maxLength={80}
+                  disabled={isEditing}
+                  onChange={(event) => setKey(event.target.value)}
+                  placeholder="especialista-produtos"
+                />
+                <small>Identificador único do agente (não altera após criar).</small>
+              </label>
 
-                <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
-                  <label className="mdc-chat-ws-field">
-                    <span>Categoria</span>
-                    <input
-                      value={category}
-                      maxLength={80}
-                      onChange={(event) => setCategory(event.target.value)}
-                      placeholder="Produtos"
-                    />
-                  </label>
+              <label className="mdc-chat-ws-field">
+                <span>Visibilidade</span>
+                <select
+                  value={visibility}
+                  onChange={(event) => setVisibility(event.target.value)}
+                >
+                  <option value="private">Privado</option>
+                  <option value="public">Público interno</option>
+                  {canManageOfficialAgents ? (
+                    <option value="system">Oficial</option>
+                  ) : null}
+                </select>
+                <small>
+                  Privado: só quem tem acesso. Público interno: visível na lista para a
+                  empresa. Oficial: agente corporativo padrão (requer permissão).
+                </small>
+              </label>
+            </div>
 
-                  <label className="mdc-chat-ws-field">
-                    <span>Ícone</span>
-                    <input
-                      value={icon}
-                      maxLength={60}
-                      onChange={(event) => setIcon(event.target.value)}
-                      placeholder="bot"
-                    />
-                  </label>
-                </div>
-              </div>
-            </details>
+            <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
+              <label className="mdc-chat-ws-field">
+                <span>Categoria</span>
+                <input
+                  value={category}
+                  maxLength={80}
+                  onChange={(event) => setCategory(event.target.value)}
+                  placeholder="Produtos"
+                />
+              </label>
+
+              <label className="mdc-chat-ws-field">
+                <span>Ícone</span>
+                <input
+                  value={icon}
+                  maxLength={60}
+                  onChange={(event) => setIcon(event.target.value)}
+                  placeholder="bot"
+                />
+              </label>
+            </div>
           </section>
 
           <section className="mdc-chat-agent-builder__section">
