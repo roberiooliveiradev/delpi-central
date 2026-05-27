@@ -35,7 +35,7 @@ Mensagem → Segurança → Workspace (projeto/agente/capabilities)
          → ChatPromptBuilderService → LLM stream
 ```
 
-**Regra de arquitetura:** melhorias de inteligência (comparação, insights, contexto de ferramentas no histórico, supressão de resposta direta) ficam em serviços **base do chat** (`ChatIntelligencePipelineService`, `ChatToolContextService`, policies em `prompt_policies/`). Use cases (`Send`/`Stream`), **agentes** e **simulação admin** apenas consomem esse pipeline — não duplicar lógica por agente.
+**Regra de arquitetura (obrigatória):** melhorias de inteligência ficam no **chat base** e são herdadas por agentes, projetos e simulação. Documentação canônica: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md). Regra Cursor: `.cursor/rules/chat-intelligence-base.mdc`.
 
 Pontos fracos que a Onda 1 corrige:
 

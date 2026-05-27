@@ -1,6 +1,8 @@
 # 03 — Agentes
 
-Agentes são contextos especializados do Minha DELPI Chat. Actions externas/OpenAPI pertencem aos agentes, não ao chat comum.
+Agentes são **chats com camadas extras**: prompt de sistema, skills, actions OpenAPI autorizadas e escopo de conhecimento. A **inteligência transversal** (intenção, pipeline, tools, comparações, resposta direta) vive no **chat base** e é **herdada** por todos os agentes — ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+
+Actions externas/OpenAPI são **configuradas por agente** (subset permitido); a execução e o pipeline seguem o mesmo motor do chat.
 
 Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) (ondas 1–7 concluídas).
 

@@ -23,11 +23,11 @@ Usuário
 | **Mensagem** | Turno user/assistant; pode ter tool calls, fontes, apresentação rica | Stream `.../messages/stream` ou send síncrono |
 | **Projeto** | Agrupador opcional de sessões e contexto | `05-projetos-fontes-anexos-artefatos.md` |
 
-O chat resolve em runtime: permissões (`/chat/capabilities`), contexto RAG, tools/actions permitidas e skills ativas.
+O chat resolve em runtime: permissões (`/chat/capabilities`), **pipeline base de inteligência**, contexto RAG, tools/actions permitidas e skills ativas. Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 ## Agente
 
-Assistente configurável com identidade, prompt de sistema e capacidades.
+Assistente configurável com identidade, prompt de sistema e capacidades — **herda** o pipeline do chat; adiciona restrições e contexto, não um motor de IA separado.
 
 | Campo / aspecto | Função |
 |---|---|
