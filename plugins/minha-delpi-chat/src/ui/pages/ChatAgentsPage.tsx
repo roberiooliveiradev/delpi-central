@@ -372,6 +372,7 @@ export function ChatAgentsPage({
           <ul className="mdc-chat-ws-directory__list">
             {filteredAgents.map((agent) => {
               const icebreakerCount = getAgentIcebreakerCount(agent);
+              const isPrivateAgent = agent.visibility === "private";
               const capabilities = getAgentCapabilities(agent);
               const editable = canEditAgent(
                 agent,
@@ -413,8 +414,10 @@ export function ChatAgentsPage({
                     <div className="mdc-chat-ws-directory__card-meta">
                       {!agent.enabled ? <span>Inativo</span> : null}
                       <span>{getOwnerLabel(agent)}</span>
-                      <span>{icebreakerCount} quebra-gelos</span>
-                      {capabilities.length > 0 ? (
+                      {!isPrivateAgent && icebreakerCount > 0 ? (
+                        <span>{icebreakerCount} quebra-gelos</span>
+                      ) : null}
+                      {!isPrivateAgent && capabilities.length > 0 ? (
                         <span>{capabilities.length} recursos</span>
                       ) : null}
                       {typeof agent.sessions_in_window === "number" ? (

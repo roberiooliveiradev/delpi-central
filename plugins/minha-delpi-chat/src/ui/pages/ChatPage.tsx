@@ -804,7 +804,7 @@ export function ChatPage({
           className="mdc-chat-view-host"
         >
         {currentView === "projects" ? (
-          <section className="mdc-chat-main" aria-label="Projetos">
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Projetos">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
                 <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
@@ -838,7 +838,7 @@ export function ChatPage({
             />
           </section>
         ) : currentView === "agents" ? (
-          <section className="mdc-chat-main" aria-label="Gerenciar agentes">
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Gerenciar agentes">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
                 <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
