@@ -17,6 +17,28 @@ class ExternalActionSelectionService:
         self.repository = repository
         self.semantic_ranker = semantic_ranker
 
+    def select_action_for_product(
+        self,
+        message: str,
+        *,
+        product_code: str,
+        allowed_action_ids: list[str] | None = None,
+        intent: str | None = None,
+    ) -> dict | None:
+        code = ChatProductQueryIntentService.normalize_product_code(product_code)
+
+        if not code:
+            return None
+
+        resolved_intent = intent or ChatProductQueryIntentService.detect(message)
+
+        return self._select_product_action(
+            message,
+            code,
+            allowed_action_ids=allowed_action_ids or [],
+            intent=resolved_intent,
+        )
+
     def select_action(
         self,
         message: str,

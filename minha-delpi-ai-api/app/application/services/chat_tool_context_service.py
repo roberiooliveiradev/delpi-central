@@ -42,6 +42,7 @@ class ChatToolContextService:
         fast_path: bool = False,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        max_external_action_calls: int | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -134,21 +135,32 @@ class ChatToolContextService:
         selected_external_action_meta = None
 
         if self.external_action_selection_service and actions_enabled:
-            selected_external_action = self.external_action_selection_service.select_action(
-                message,
-                allowed_action_ids=allowed_action_ids or [],
-                conversation_context=conversation_context,
+            from app.application.services.chat_external_action_orchestration_service import (
+                ChatExternalActionOrchestrationService,
             )
 
-            if selected_external_action and self._is_external_action_allowed(
-                selected_external_action,
-                allowed_action_ids,
-            ):
-                selected_tools.append(selected_external_action)
-                arguments = selected_external_action.get("arguments") or {}
+            planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
+                self.external_action_selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids or [],
+                conversation_context=conversation_context,
+                max_calls=max_external_action_calls,
+            )
+
+            if planned_external_actions:
+                selected_tools = [
+                    item
+                    for item in selected_tools
+                    if str(item.get("name") or "") != "execute_external_action"
+                ]
+                selected_tools.extend(planned_external_actions)
+                first = planned_external_actions[0]
+                arguments = first.get("arguments") or {}
+                selected_external_action = first
                 selected_external_action_meta = {
                     "actionId": arguments.get("actionId") or arguments.get("action_id"),
-                    "reason": selected_external_action.get("reason"),
+                    "reason": first.get("reason"),
+                    "plannedCount": len(planned_external_actions),
                 }
 
         if (
@@ -186,6 +198,7 @@ class ChatToolContextService:
         direct_answer: str | None = None
         skip_rag = False
         last_external_action_data = None
+        external_action_results: list = []
 
         for selected_tool in selected_tools:
             try:
@@ -208,6 +221,18 @@ class ChatToolContextService:
                 if tool_name == "execute_external_action":
                     error_metadata["responsePreview"] = self._build_response_preview(
                         error_metadata
+                    )
+
+                    from app.application.services.chat_composite_direct_answer_service import (
+                        ExternalActionExecutionResult,
+                    )
+
+                    external_action_results.append(
+                        ExternalActionExecutionResult(
+                            metadata=error_metadata,
+                            data=None,
+                            reason=selected_tool.get("reason"),
+                        )
                     )
 
                 safe_tool_calls.append(
@@ -245,6 +270,18 @@ class ChatToolContextService:
             if result.name == "execute_external_action":
                 skip_rag = True
 
+                from app.application.services.chat_composite_direct_answer_service import (
+                    ExternalActionExecutionResult,
+                )
+
+                external_action_results.append(
+                    ExternalActionExecutionResult(
+                        metadata=safe_metadata,
+                        data=result.data,
+                        reason=selected_tool.get("reason"),
+                    )
+                )
+
                 if self._is_successful_external_action(safe_metadata):
                     last_external_action_data = result.data
 
@@ -262,8 +299,19 @@ class ChatToolContextService:
         context = "\n\n".join(context_blocks)
         context = context[: Settings.MAX_CONTEXT_CHARS]
 
+        if external_action_results:
+            from app.application.services.chat_composite_direct_answer_service import (
+                ChatCompositeDirectAnswerService,
+            )
+
+            direct_answer = ChatCompositeDirectAnswerService.build(
+                message,
+                external_action_results,
+            )
+
         if (
-            len(safe_tool_calls) == 1
+            not direct_answer
+            and len(safe_tool_calls) == 1
             and safe_tool_calls[0].get("name") == "execute_external_action"
             and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
         ):
