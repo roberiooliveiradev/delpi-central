@@ -16,6 +16,7 @@ import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import {
   createRevisao,
   deleteProcesso,
+  deleteRevisao,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
@@ -165,6 +166,23 @@ export function ProcessoDetailPage({
     }
   }
 
+  async function handleDeleteRevisao(revisao: Revisao) {
+    const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
+    if (!window.confirm(`Excluir a revisão ${label}?`)) {
+      return;
+    }
+    setError(null);
+    try {
+      await deleteRevisao(revisao.revisao_id, getAccessToken);
+      if (revisaoId === revisao.revisao_id) {
+        onRevisaoChange(null);
+      }
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir revisão");
+    }
+  }
+
   async function handleCreateRevisao(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -253,8 +271,34 @@ export function ProcessoDetailPage({
             "—"
           ),
       },
+      {
+        key: "acoes",
+        header: "",
+        render: (r) => (
+          <div
+            className="ds-table__actions"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => onRevisaoChange(r.revisao_id)}
+            >
+              Abrir
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              onClick={() => void handleDeleteRevisao(r)}
+            >
+              Excluir
+            </button>
+          </div>
+        ),
+      },
     ],
-    []
+    [onRevisaoChange]
   );
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
@@ -565,6 +609,10 @@ export function ProcessoDetailPage({
           getAccessToken={getAccessToken}
           onError={setError}
           onRevisaoUpdated={load}
+          onRevisaoDeleted={() => {
+            onRevisaoChange(null);
+            void load();
+          }}
         />
       ) : null}
     </TransformometroShell>

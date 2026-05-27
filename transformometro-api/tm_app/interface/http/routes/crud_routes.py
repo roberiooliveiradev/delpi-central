@@ -41,6 +41,7 @@ from tm_app.application.services.revisao_rateio_diagnostic_service import (
 from tm_app.infrastructure.persistence.repositories.revisao_repository import RevisaoRepository
 from tm_app.interface.http.schemas.crud_schemas import (
     InvestimentoBody,
+    InvestimentoUpdateBody,
     MedicaoBody,
     ProcessoCreateBody,
     ProcessoUpdateBody,
@@ -280,6 +281,24 @@ def create_investimento(body: InvestimentoBody, request: Request):
     iid = str(row["investimento_id"])
     _audit(request, "investimento", iid, "create", body.model_dump())
     return ok(row_to_json(row), "Investimento criado.", 201)
+
+
+@router.put("/investimentos/{investimento_id}")
+def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, request: Request):
+    try:
+        assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        if body.categoria_investimento:
+            assert_in(body.categoria_investimento, CATEGORIAS, "categoria_investimento")
+        row = InvestimentoRepository().update(investimento_id, body.model_dump())
+    except ValueError as exc:
+        return fail(str(exc), 400)
+
+    if not row:
+        return fail("Investimento não encontrado.", 404)
+
+    _audit(request, "investimento", investimento_id, "update", body.model_dump())
+    return ok(row_to_json(row), "Investimento atualizado.")
 
 
 @router.delete("/investimentos/{investimento_id}")

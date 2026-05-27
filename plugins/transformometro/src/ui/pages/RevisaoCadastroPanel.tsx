@@ -7,6 +7,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import {
   activateRevisao,
+  deleteRevisao,
   fetchInvestimentos,
   fetchMedicao,
   fetchRecursos,
@@ -52,6 +53,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   options: OptionsData;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
+  onRevisaoDeleted?: () => void;
 };
 
 export function RevisaoCadastroPanel({
@@ -60,6 +62,7 @@ export function RevisaoCadastroPanel({
   getAccessToken,
   onError,
   onRevisaoUpdated,
+  onRevisaoDeleted,
 }: Props) {
   const [activeTab, setActiveTab] = useState<CadastroTabId>("vigencia");
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
@@ -74,6 +77,8 @@ export function RevisaoCadastroPanel({
     setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
   }, [
     revisao.revisao_id,
+    revisao.versao_revisao,
+    revisao.cenario_tipo,
     revisao.data_inicio_vigencia,
     revisao.data_implantacao,
     revisao.data_fim_vigencia,
@@ -127,8 +132,6 @@ export function RevisaoCadastroPanel({
         revisao.revisao_id,
         {
           processo_id: revisao.processo_id,
-          versao_revisao: revisao.versao_revisao,
-          cenario_tipo: revisao.cenario_tipo,
           revisao_ativa: revisao.revisao_ativa,
           ...revisaoPayloadFromVigenciaForm(revisaoVigencia),
         },
@@ -161,6 +164,20 @@ export function RevisaoCadastroPanel({
     }
   }
 
+  async function handleDeleteRevisao() {
+    const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
+    if (!window.confirm(`Excluir a revisão ${label}?`)) {
+      return;
+    }
+    onError(null);
+    try {
+      await deleteRevisao(revisao.revisao_id, getAccessToken);
+      onRevisaoDeleted?.();
+    } catch (err) {
+      onError(err instanceof Error ? err.message : "Erro ao excluir revisão");
+    }
+  }
+
   const cadastroFetchProgress = useTrackedSingleFetchProgress(loading);
   const cadastroLoadingProgress = useLoadingProgress(loading, cadastroFetchProgress);
 
@@ -177,7 +194,12 @@ export function RevisaoCadastroPanel({
 
   return (
     <div className="ds-cadastro-panel">
-      <RevisaoAtivarToolbar revisao={revisao} onError={onError} onActivate={handleActivate} />
+      <RevisaoAtivarToolbar
+        revisao={revisao}
+        onError={onError}
+        onActivate={handleActivate}
+        onDelete={handleDeleteRevisao}
+      />
 
       {rateioDiag ? (
         <div
@@ -204,6 +226,7 @@ export function RevisaoCadastroPanel({
         {activeTab === "vigencia" ? (
           <RevisaoVigenciaSection
             revisaoVigencia={revisaoVigencia}
+            options={options}
             onChange={setRevisaoVigencia}
             onSubmit={handleSaveRevisaoDatas}
           />

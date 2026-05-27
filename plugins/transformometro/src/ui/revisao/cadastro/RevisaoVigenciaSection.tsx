@@ -1,8 +1,10 @@
-import type { Revisao } from "../../../data/api/transformometroApi";
+import type { OptionsData, Revisao } from "../../../data/api/transformometroApi";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
 
 export type RevisaoVigenciaForm = {
+  versao_revisao: string;
+  cenario_tipo: string;
   data_inicio_vigencia: string;
   data_implantacao: string;
   data_fim_vigencia: string;
@@ -13,19 +15,42 @@ export type RevisaoVigenciaForm = {
 
 type Props = {
   revisaoVigencia: RevisaoVigenciaForm;
+  options: OptionsData;
   onChange: (value: RevisaoVigenciaForm) => void;
   onSubmit: (e: React.FormEvent) => void;
 };
 
-export function RevisaoVigenciaSection({ revisaoVigencia, onChange, onSubmit }: Props) {
+export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onSubmit }: Props) {
   return (
     <CadastroSection
       embedded
       title="Vigência e identificação"
-      hint="Período de cálculo no dashboard e texto de apoio à revisão. Deixe fim vazio para vigência aberta."
+      hint="Versão, cenário e período usados no dashboard. Deixe fim vazio para vigência aberta."
     >
       <form onSubmit={onSubmit}>
         <div className="ds-filters-row">
+          <label className="ds-filter-box">
+            Versão *
+            <input
+              required
+              value={revisaoVigencia.versao_revisao}
+              onChange={(e) => onChange({ ...revisaoVigencia, versao_revisao: e.target.value })}
+            />
+          </label>
+          <label className="ds-filter-box">
+            Cenário *
+            <select
+              required
+              value={revisaoVigencia.cenario_tipo}
+              onChange={(e) => onChange({ ...revisaoVigencia, cenario_tipo: e.target.value })}
+            >
+              {options.cenario_tipo.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="ds-filter-box">
             Início vigência *
             <input
@@ -96,6 +121,8 @@ export function RevisaoVigenciaSection({ revisaoVigencia, onChange, onSubmit }: 
 
 export function buildRevisaoVigenciaFromRevisao(revisao: Revisao): RevisaoVigenciaForm {
   return {
+    versao_revisao: revisao.versao_revisao ?? "",
+    cenario_tipo: revisao.cenario_tipo ?? "baseline",
     data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
     data_implantacao: toDateInputValue(revisao.data_implantacao),
     data_fim_vigencia: toDateInputValue(revisao.data_fim_vigencia),
@@ -107,6 +134,8 @@ export function buildRevisaoVigenciaFromRevisao(revisao: Revisao): RevisaoVigenc
 
 export function revisaoPayloadFromVigenciaForm(form: RevisaoVigenciaForm) {
   return {
+    versao_revisao: form.versao_revisao.trim(),
+    cenario_tipo: form.cenario_tipo,
     data_inicio_vigencia: form.data_inicio_vigencia,
     data_implantacao: optionalDateField(form.data_implantacao),
     data_fim_vigencia: optionalDateField(form.data_fim_vigencia),

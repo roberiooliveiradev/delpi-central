@@ -1,14 +1,14 @@
 import { useState } from "react";
-import type { AppProps } from "../../../App";
 import type { Revisao } from "../../../data/api/transformometroApi";
 
-type Props = Pick<AppProps, "getAccessToken"> & {
+type Props = {
   revisao: Revisao;
   onError: (message: string | null) => void;
   onActivate?: () => void | Promise<void>;
+  onDelete?: () => void | Promise<void>;
 };
 
-export function RevisaoAtivarToolbar({ revisao, onError, onActivate }: Props) {
+export function RevisaoAtivarToolbar({ revisao, onError, onActivate, onDelete }: Props) {
   const [busy, setBusy] = useState(false);
 
   async function handleActivate() {
@@ -33,8 +33,8 @@ export function RevisaoAtivarToolbar({ revisao, onError, onActivate }: Props) {
         ) : null}
       </span>
 
-      {!revisao.revisao_ativa && onActivate ? (
-        <div className="ds-cadastro-panel__workflow-actions">
+      <div className="ds-cadastro-panel__workflow-actions">
+        {!revisao.revisao_ativa && onActivate ? (
           <button
             type="button"
             className="ds-primary-btn"
@@ -43,8 +43,18 @@ export function RevisaoAtivarToolbar({ revisao, onError, onActivate }: Props) {
           >
             Definir como ativa
           </button>
-        </div>
-      ) : null}
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            disabled={busy}
+            onClick={() => void onDelete()}
+          >
+            Excluir revisão
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

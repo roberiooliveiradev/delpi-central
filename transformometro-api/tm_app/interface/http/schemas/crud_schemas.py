@@ -65,6 +65,19 @@ class InvestimentoBody(BaseModel):
     observacoes: Optional[str] = None
 
 
+class InvestimentoUpdateBody(BaseModel):
+    tipo_investimento: str
+    descricao_item: str
+    quantidade: float = 1
+    valor_unitario: float = 0
+    recorrencia: str = "unico"
+    categoria_investimento: Optional[str] = None
+    data_investimento: Optional[str] = None
+    meses_vigencia: Optional[int] = None
+    centro_custo: Optional[str] = None
+    observacoes: Optional[str] = None
+
+
 class RecursoBody(BaseModel):
     nome_recurso: str
     tipo_custo: str

@@ -40,6 +40,18 @@ export function RevisaoMedicaoSection({ medicao, onChange, onSubmit }: Props) {
             />
           </label>
           <label className="ds-filter-box">
+            Tempo retrabalho (min)
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={medicao.tempo_retrabalho_min}
+              onChange={(e) =>
+                onChange({ ...medicao, tempo_retrabalho_min: Number(e.target.value) })
+              }
+            />
+          </label>
+          <label className="ds-filter-box">
             Custo hora MO (R$)
             <input
               type="number"
@@ -74,6 +86,42 @@ export function RevisaoMedicaoSection({ medicao, onChange, onSubmit }: Props) {
             />
           </label>
           <label className="ds-filter-box">
+            Qtd. erros/mês
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={medicao.quantidade_erros_mes}
+              onChange={(e) =>
+                onChange({ ...medicao, quantidade_erros_mes: Number(e.target.value) })
+              }
+            />
+          </label>
+          <label className="ds-filter-box">
+            Custo unit. erro (R$)
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={medicao.custo_unitario_erro}
+              onChange={(e) =>
+                onChange({ ...medicao, custo_unitario_erro: Number(e.target.value) })
+              }
+            />
+          </label>
+          <label className="ds-filter-box">
+            Custo unit. retrabalho (R$)
+            <input
+              type="number"
+              min={0}
+              step="any"
+              value={medicao.custo_unitario_retrabalho}
+              onChange={(e) =>
+                onChange({ ...medicao, custo_unitario_retrabalho: Number(e.target.value) })
+              }
+            />
+          </label>
+          <label className="ds-filter-box">
             Outros desperdícios (R$/mês)
             <input
               type="number"
@@ -99,6 +147,19 @@ export function RevisaoMedicaoSection({ medicao, onChange, onSubmit }: Props) {
             />
           </label>
         </div>
+        <label className="ds-filter-box ds-filter-box--wide">
+          Observações
+          <textarea
+            rows={2}
+            value={medicao.observacoes ?? ""}
+            onChange={(e) =>
+              onChange({
+                ...medicao,
+                observacoes: e.target.value.trim() || undefined,
+              })
+            }
+          />
+        </label>
         <button type="submit" className="ds-primary-btn">
           Salvar medição
         </button>

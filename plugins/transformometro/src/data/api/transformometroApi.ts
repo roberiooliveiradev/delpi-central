@@ -185,6 +185,15 @@ export function updateRevisao(
   });
 }
 
+export function deleteRevisao(
+  revisaoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<null>(`/revisoes/${revisaoId}`, getAccessToken, {
+    method: "DELETE",
+  });
+}
+
 export function activateRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
@@ -299,6 +308,20 @@ export function createInvestimento(
 ) {
   return request<Investimento>("/investimentos", getAccessToken, {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateInvestimento(
+  investimentoId: string,
+  payload: Partial<Investimento> & {
+    tipo_investimento: string;
+    descricao_item: string;
+  },
+  getAccessToken?: () => string | undefined
+) {
+  return request<Investimento>(`/investimentos/${investimentoId}`, getAccessToken, {
+    method: "PUT",
     body: JSON.stringify(payload),
   });
 }
