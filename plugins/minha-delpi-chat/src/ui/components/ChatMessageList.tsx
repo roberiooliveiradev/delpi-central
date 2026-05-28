@@ -34,7 +34,6 @@ import {
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
-import { ChatThinkingDots } from "./ChatThinkingDots";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
@@ -43,6 +42,7 @@ import "./ChatRichChart.css";
 
 const SCROLL_NEAR_BOTTOM_THRESHOLD_PX = 96;
 const PIN_USER_MESSAGE_TOP_PADDING_PX = 12;
+const NEAR_RESPONSE_VIEWPORT_SLACK_PX = 120;
 
 type ChatMessageListProps = {
   messages: ChatMessage[];
@@ -232,6 +232,88 @@ function scrollMessageToTopOfList(
   list.scrollTo({ top: targetTop, behavior });
 }
 
+function scrollElementToAlignTop(
+  list: HTMLDivElement,
+  node: HTMLElement,
+  padding = PIN_USER_MESSAGE_TOP_PADDING_PX,
+  behavior: ScrollBehavior = "auto",
+) {
+  const listTop = list.getBoundingClientRect().top;
+  const nodeTop = node.getBoundingClientRect().top;
+  const targetTop = nodeTop - listTop + list.scrollTop - padding;
+
+  list.scrollTo({ top: Math.max(0, targetTop), behavior });
+}
+
+function isViewportNearResponse(
+  list: HTMLDivElement,
+  pinnedId: string | null,
+): boolean {
+  if (isElementNearBottom(list)) {
+    return true;
+  }
+
+  const streaming = list.querySelector(".mdc-chat-message--streaming");
+
+  if (streaming instanceof HTMLElement) {
+    const listRect = list.getBoundingClientRect();
+    const nodeRect = streaming.getBoundingClientRect();
+    const visibleTop = Math.max(listRect.top, nodeRect.top);
+    const visibleBottom = Math.min(listRect.bottom, nodeRect.bottom);
+
+    if (visibleBottom - visibleTop > 24) {
+      return true;
+    }
+
+    const distanceBelow = nodeRect.top - listRect.bottom;
+    const distanceAbove = listRect.top - nodeRect.bottom;
+
+    if (
+      distanceBelow > -NEAR_RESPONSE_VIEWPORT_SLACK_PX &&
+      distanceAbove < list.clientHeight
+    ) {
+      return true;
+    }
+  }
+
+  if (!pinnedId) {
+    return false;
+  }
+
+  const pinnedTop = getMessageScrollTop(list, pinnedId, 0);
+
+  if (pinnedTop === null) {
+    return false;
+  }
+
+  const viewTop = list.scrollTop;
+  const viewBottom = viewTop + list.clientHeight;
+
+  return (
+    viewBottom >= pinnedTop - NEAR_RESPONSE_VIEWPORT_SLACK_PX &&
+    viewTop <= list.scrollHeight + NEAR_RESPONSE_VIEWPORT_SLACK_PX
+  );
+}
+
+function scrollResponseStartIntoView(list: HTMLDivElement): boolean {
+  const streaming = list.querySelector(".mdc-chat-message--streaming");
+
+  if (streaming instanceof HTMLElement) {
+    scrollElementToAlignTop(list, streaming, 12);
+    return true;
+  }
+
+  const assistants = list.querySelectorAll(".mdc-chat-message--assistant");
+  const lastAssistant = assistants[assistants.length - 1];
+
+  if (lastAssistant instanceof HTMLElement) {
+    scrollElementToAlignTop(list, lastAssistant, 12);
+    return true;
+  }
+
+  return false;
+}
+
 export function ChatMessageList({
   messages,
   conversationKey,
@@ -258,6 +340,7 @@ export function ChatMessageList({
   const pinUserMessageIdRef = useRef<string | null>(null);
   const pinAlignmentAppliedForRef = useRef<string | null>(null);
   const userScrollIntentRef = useRef(false);
+  const pendingScrollToResponseRef = useRef(false);
 
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -420,11 +503,59 @@ export function ChatMessageList({
   ]);
 
   useEffect(() => {
-    if (!isActiveStream || pinUserMessageIdRef.current) {
+    if (!isActiveStream || userScrollIntentRef.current) {
       return;
     }
 
-    if (!followStreamRef.current || userScrollIntentRef.current) {
+    const list = listRef.current;
+
+    if (!list) {
+      return;
+    }
+
+    const pinnedId = pinUserMessageIdRef.current;
+    const shouldFollow = pinnedId
+      ? isViewportNearResponse(list, pinnedId)
+      : followStreamRef.current;
+
+    if (!shouldFollow) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      if (userScrollIntentRef.current) {
+        return;
+      }
+
+      const currentList = listRef.current;
+
+      if (!currentList) {
+        return;
+      }
+
+      const streaming = currentList.querySelector(".mdc-chat-message--streaming");
+
+      if (streaming instanceof HTMLElement) {
+        scrollElementToAlignTop(currentList, streaming, 12);
+        return;
+      }
+
+      if (!pinUserMessageIdRef.current && followStreamRef.current) {
+        scrollElementToBottom(currentList, "auto");
+      }
+    });
+  }, [
+    isActiveStream,
+    isGeneratingAnswer,
+    revealedStreamingAnswer,
+    streamingActivityLog,
+    streamingAnswer,
+    streamingStatus,
+    streamingToolCalls,
+  ]);
+
+  useEffect(() => {
+    if (!pendingScrollToResponseRef.current || isActiveStream) {
       return;
     }
 
@@ -435,13 +566,18 @@ export function ChatMessageList({
     }
 
     requestAnimationFrame(() => {
-      if (!followStreamRef.current || userScrollIntentRef.current) {
+      const currentList = listRef.current;
+
+      if (!currentList) {
         return;
       }
 
-      scrollElementToBottom(list, "auto");
+      if (scrollResponseStartIntoView(currentList)) {
+        pendingScrollToResponseRef.current = false;
+        updateScrollAffordances();
+      }
     });
-  }, [isActiveStream, streamingAnswer, streamingStatus]);
+  }, [isActiveStream, messages, updateScrollAffordances]);
 
   useEffect(() => {
     const list = listRef.current;
@@ -494,19 +630,43 @@ export function ChatMessageList({
     const wasStreaming = wasStreamingRef.current;
 
     if (wasStreaming && !isActiveStream) {
+      const list = listRef.current;
+      const pinnedId = pinUserMessageIdRef.current;
+      const shouldScroll =
+        list !== null &&
+        (!userScrollIntentRef.current ||
+          isViewportNearResponse(list, pinnedId));
+
       pinUserMessageIdRef.current = null;
       pinAlignmentAppliedForRef.current = null;
-      userScrollIntentRef.current = false;
 
-      if (followStreamRef.current) {
+      if (shouldScroll) {
+        pendingScrollToResponseRef.current = true;
+        userScrollIntentRef.current = false;
+
         requestAnimationFrame(() => {
-          scrollToBottom("auto");
+          requestAnimationFrame(() => {
+            const currentList = listRef.current;
+
+            if (!currentList) {
+              return;
+            }
+
+            if (scrollResponseStartIntoView(currentList)) {
+              pendingScrollToResponseRef.current = false;
+            }
+
+            updateScrollAffordances();
+          });
         });
+      } else {
+        userScrollIntentRef.current = false;
+        updateScrollAffordances();
       }
     }
 
     wasStreamingRef.current = isActiveStream;
-  }, [isActiveStream, scrollToBottom]);
+  }, [isActiveStream, updateScrollAffordances]);
 
   async function handleSaveAndResend(messageId: string) {
     const updated = await onEditAndResendMessage?.(messageId, editingContent);
@@ -808,21 +968,23 @@ export function ChatMessageList({
               </div>
 
               <div className="mdc-chat-message-streaming-body">
-                {!isGeneratingAnswer ? (
-                  <ChatStreamingActivityPanel
-                    status={streamingStatus}
-                    entries={streamingActivityLog}
-                    isActive
-                  />
-                ) : (
-                  <ChatThinkingDots
-                    label={
-                      streamingStatus?.trim() || "Gerando resposta em linguagem natural..."
-                    }
-                  />
-                )}
+                <ChatStreamingActivityPanel
+                  status={streamingStatus}
+                  entries={streamingActivityLog}
+                  isActive
+                  isAnswering={isGeneratingAnswer}
+                />
                 {streamingAnswer && !suppressStreamingMarkdown ? (
-                  <ChatMarkdown content={revealedStreamingAnswer} />
+                  <div
+                    className={[
+                      "mdc-chat-stream-answer",
+                      isGeneratingAnswer ? "is-visible" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <ChatMarkdown content={revealedStreamingAnswer} />
+                  </div>
                 ) : null}
               </div>
 

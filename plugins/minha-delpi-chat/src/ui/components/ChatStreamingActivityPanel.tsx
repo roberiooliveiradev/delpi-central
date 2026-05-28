@@ -5,7 +5,6 @@ import {
   activityPhaseKey,
   compactActivityLogForDisplay,
   formatActivityLogLine,
-  resolveCurrentActivityLine,
   resolveStreamingHeadline,
 } from "../../state/utils/streamingActivityLog";
 
@@ -17,14 +16,17 @@ type ChatStreamingActivityPanelProps = {
   status: string | null;
   entries: ChatStreamActivityEntry[];
   isActive?: boolean;
+  isAnswering?: boolean;
 };
+
+const RISING_LOG_VISIBLE_LINES = 4;
 
 function ActivityLogLine({
   entry,
-  compact = false,
+  isRising,
 }: {
   entry: ChatStreamActivityEntry;
-  compact?: boolean;
+  isRising: boolean;
 }) {
   const isActive = entry.state === "active";
   const levelClass =
@@ -42,7 +44,7 @@ function ActivityLogLine({
         "mdc-chat-stream-activity__log-line",
         levelClass,
         isActive ? "is-active" : "",
-        compact ? "is-compact" : "",
+        isRising ? "is-rising" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -50,10 +52,46 @@ function ActivityLogLine({
       <span className="mdc-chat-stream-activity__log-text">
         {formatActivityLogLine(entry)}
       </span>
-      {entry.detail && !compact ? (
-        <span className="mdc-chat-stream-activity__log-detail">{entry.detail}</span>
-      ) : null}
     </li>
+  );
+}
+
+function RisingLogFeed({
+  lines,
+  risingIds,
+}: {
+  lines: ChatStreamActivityEntry[];
+  risingIds: Set<string>;
+}) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const tail = lines.slice(-RISING_LOG_VISIBLE_LINES);
+
+  useEffect(() => {
+    const node = viewportRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    node.scrollTop = node.scrollHeight;
+  }, [lines]);
+
+  if (tail.length === 0) {
+    return null;
+  }
+
+  return (
+    <div ref={viewportRef} className="mdc-chat-stream-activity__rise-viewport">
+      <ul className="mdc-chat-stream-activity__log-lines mdc-chat-stream-activity__log-lines--rising">
+        {tail.map((entry) => (
+          <ActivityLogLine
+            key={`${activityPhaseKey(entry)}-${entry.id}`}
+            entry={entry}
+            isRising={risingIds.has(entry.id)}
+          />
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -61,97 +99,98 @@ export function ChatStreamingActivityPanel({
   status,
   entries,
   isActive = false,
+  isAnswering = false,
 }: ChatStreamingActivityPanelProps) {
-  const hasIssues = useMemo(
-    () => entries.some((entry) => entry.level === "warning" || entry.level === "error"),
-    [entries],
-  );
-
   const compactLines = useMemo(() => compactActivityLogForDisplay(entries), [entries]);
-  const currentLine = useMemo(() => resolveCurrentActivityLine(entries), [entries]);
   const headline = resolveStreamingHeadline(status, entries);
+  const dotsLabel = isAnswering
+    ? status?.trim() || "Gerando resposta..."
+    : headline;
 
-  const [showLog, setShowLog] = useState(false);
-  const groupsRef = useRef<HTMLDivElement | null>(null);
-  const previousLineIdRef = useRef<string | null>(null);
-  const [linePulse, setLinePulse] = useState(false);
-
-  useEffect(() => {
-    if (hasIssues || isActive) {
-      setShowLog(false);
-    }
-  }, [hasIssues, isActive]);
+  const [showAllSteps, setShowAllSteps] = useState(false);
+  const expandedRef = useRef<HTMLDivElement | null>(null);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const [risingIds, setRisingIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    const lineId = currentLine?.id ?? null;
+    const nextRising = new Set<string>();
 
-    if (lineId && lineId !== previousLineIdRef.current) {
-      previousLineIdRef.current = lineId;
-      setLinePulse(true);
-      const timer = window.setTimeout(() => setLinePulse(false), 320);
-      return () => window.clearTimeout(timer);
+    for (const entry of compactLines) {
+      if (!knownIdsRef.current.has(entry.id)) {
+        nextRising.add(entry.id);
+      }
     }
 
-    previousLineIdRef.current = lineId;
-    return undefined;
-  }, [currentLine?.id]);
+    knownIdsRef.current = new Set(compactLines.map((entry) => entry.id));
+    setRisingIds(nextRising);
+
+    if (nextRising.size === 0) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => setRisingIds(new Set()), 480);
+
+    return () => window.clearTimeout(timer);
+  }, [compactLines]);
 
   useEffect(() => {
-    if (!showLog || !groupsRef.current) {
+    if (!showAllSteps || !expandedRef.current) {
       return;
     }
 
-    groupsRef.current.scrollTop = groupsRef.current.scrollHeight;
-  }, [compactLines, showLog]);
+    expandedRef.current.scrollTop = expandedRef.current.scrollHeight;
+  }, [compactLines, showAllSteps]);
 
   const hasLog = compactLines.length > 0;
+  const canExpand = compactLines.length > RISING_LOG_VISIBLE_LINES;
 
   return (
-    <div className="mdc-chat-stream-activity" role="status" aria-live="polite">
-      {isActive ? <ChatThinkingDots label={headline} /> : null}
-
-      {currentLine ? (
-        <p
-          key={currentLine.id}
-          className={[
-            "mdc-chat-stream-activity__current-line",
-            linePulse ? "is-updating" : "",
-            currentLine.state === "active" ? "is-active" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {formatActivityLogLine(currentLine)}
-        </p>
-      ) : isActive ? (
-        <p className="mdc-chat-stream-activity__current-line is-active">{headline}</p>
-      ) : null}
+    <div
+      className={[
+        "mdc-chat-stream-activity",
+        isActive ? "is-active" : "",
+        isAnswering ? "is-answering" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      role="status"
+      aria-live="polite"
+    >
+      {isActive ? <ChatThinkingDots label={dotsLabel} /> : null}
 
       {hasLog ? (
         <>
-          <button
-            type="button"
-            className="mdc-chat-stream-activity__collapse"
-            aria-expanded={showLog}
-            onClick={() => setShowLog((current) => !current)}
-          >
-            {showLog ? "Ocultar etapas" : `Ver etapas (${compactLines.length})`}
-          </button>
+          <RisingLogFeed lines={compactLines} risingIds={risingIds} />
 
-          {showLog ? (
-            <div ref={groupsRef} className="mdc-chat-stream-activity__log">
+          {canExpand ? (
+            <button
+              type="button"
+              className="mdc-chat-stream-activity__collapse"
+              aria-expanded={showAllSteps}
+              onClick={() => setShowAllSteps((current) => !current)}
+            >
+              {showAllSteps
+                ? "Ocultar etapas"
+                : `Ver todas as etapas (${compactLines.length})`}
+            </button>
+          ) : null}
+
+          {showAllSteps && canExpand ? (
+            <div ref={expandedRef} className="mdc-chat-stream-activity__log">
               <ul className="mdc-chat-stream-activity__log-lines">
                 {compactLines.map((entry) => (
                   <ActivityLogLine
-                    key={activityPhaseKey(entry)}
+                    key={`${activityPhaseKey(entry)}-${entry.id}`}
                     entry={entry}
-                    compact
+                    isRising={false}
                   />
                 ))}
               </ul>
             </div>
           ) : null}
         </>
+      ) : isActive ? (
+        <p className="mdc-chat-stream-activity__placeholder">{headline}</p>
       ) : null}
     </div>
   );

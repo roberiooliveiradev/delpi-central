@@ -678,7 +678,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          setStreamingStatus("Gerando resposta...");
+          setStreamingStatus("Gerando resposta em linguagem natural...");
           setStreamingShowPresentation(false);
         },
         onPlayback: (payload) => {
@@ -705,7 +705,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          setStreamingStatus(null);
           setStreamingShowPresentation(true);
           setStreamingAnswer((current) => current + token);
         },
