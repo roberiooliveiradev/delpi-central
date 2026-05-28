@@ -41,6 +41,8 @@ class ChatToolContextService:
         allowed_tool_names: list[str] | None = None,
         fast_path: bool = False,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
+        max_external_action_calls: int | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -49,9 +51,33 @@ class ChatToolContextService:
                 "nativeToolCalling": {"used": False, "providerSupports": False},
             }
 
-        message = ChatMessageNormalizationService.normalize_for_matching(message) or str(
-            message or ""
-        ).strip()
+        from app.application.services.chat_intelligence_pipeline_service import (
+            ChatIntelligencePipelineService,
+        )
+
+        raw_message = str(message or "").strip()
+
+        from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+        from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+
+        if ChatCapabilitiesService.is_capability_inquiry(raw_message):
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "currentMessage": raw_message,
+                },
+            )
+
+        if conversation_context is None and previous_messages:
+            conversation_context = ChatIntelligencePipelineService.build_conversation_context(
+                previous_messages,
+            )
+
+        message = ChatMessageNormalizationService.normalize_for_matching(raw_message) or raw_message
 
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
@@ -110,21 +136,33 @@ class ChatToolContextService:
         selected_external_action_meta = None
 
         if self.external_action_selection_service and actions_enabled:
-            selected_external_action = self.external_action_selection_service.select_action(
-                message,
-                allowed_action_ids=allowed_action_ids or [],
-                conversation_context=conversation_context,
+            from app.application.services.chat_external_action_orchestration_service import (
+                ChatExternalActionOrchestrationService,
             )
 
-            if selected_external_action and self._is_external_action_allowed(
-                selected_external_action,
-                allowed_action_ids,
-            ):
-                selected_tools.append(selected_external_action)
-                arguments = selected_external_action.get("arguments") or {}
+            planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
+                self.external_action_selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids or [],
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+                max_calls=max_external_action_calls,
+            )
+
+            if planned_external_actions:
+                selected_tools = [
+                    item
+                    for item in selected_tools
+                    if str(item.get("name") or "") != "execute_external_action"
+                ]
+                selected_tools.extend(planned_external_actions)
+                first = planned_external_actions[0]
+                arguments = first.get("arguments") or {}
+                selected_external_action = first
                 selected_external_action_meta = {
                     "actionId": arguments.get("actionId") or arguments.get("action_id"),
-                    "reason": selected_external_action.get("reason"),
+                    "reason": first.get("reason"),
+                    "plannedCount": len(planned_external_actions),
                 }
 
         if (
@@ -146,17 +184,23 @@ class ChatToolContextService:
             )
 
         if not selected_tools:
-            return {
-                "context": "",
-                "toolCalls": [],
-                "nativeToolCalling": native_meta,
-            }
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": native_meta,
+                    "currentMessage": raw_message,
+                },
+            )
 
         context_blocks: list[str] = []
         safe_tool_calls: list[dict] = []
         direct_answer: str | None = None
         skip_rag = False
         last_external_action_data = None
+        external_action_results: list = []
 
         for selected_tool in selected_tools:
             try:
@@ -179,6 +223,18 @@ class ChatToolContextService:
                 if tool_name == "execute_external_action":
                     error_metadata["responsePreview"] = self._build_response_preview(
                         error_metadata
+                    )
+
+                    from app.application.services.chat_composite_direct_answer_service import (
+                        ExternalActionExecutionResult,
+                    )
+
+                    external_action_results.append(
+                        ExternalActionExecutionResult(
+                            metadata=error_metadata,
+                            data=None,
+                            reason=selected_tool.get("reason"),
+                        )
                     )
 
                 safe_tool_calls.append(
@@ -216,6 +272,18 @@ class ChatToolContextService:
             if result.name == "execute_external_action":
                 skip_rag = True
 
+                from app.application.services.chat_composite_direct_answer_service import (
+                    ExternalActionExecutionResult,
+                )
+
+                external_action_results.append(
+                    ExternalActionExecutionResult(
+                        metadata=safe_metadata,
+                        data=result.data,
+                        reason=selected_tool.get("reason"),
+                    )
+                )
+
                 if self._is_successful_external_action(safe_metadata):
                     last_external_action_data = result.data
 
@@ -233,8 +301,20 @@ class ChatToolContextService:
         context = "\n\n".join(context_blocks)
         context = context[: Settings.MAX_CONTEXT_CHARS]
 
+        if external_action_results:
+            from app.application.services.chat_composite_direct_answer_service import (
+                ChatCompositeDirectAnswerService,
+            )
+
+            if not ChatAnalysisIntentService.is_comparison_or_insight_request(raw_message):
+                direct_answer = ChatCompositeDirectAnswerService.build(
+                    message,
+                    external_action_results,
+                )
+
         if (
-            len(safe_tool_calls) == 1
+            not direct_answer
+            and len(safe_tool_calls) == 1
             and safe_tool_calls[0].get("name") == "execute_external_action"
             and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
         ):
@@ -250,15 +330,69 @@ class ChatToolContextService:
         if requested_format:
             self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
 
-        return {
-            "context": context,
-            "toolCalls": safe_tool_calls,
-            "nativeToolCalling": native_meta,
-            "directAnswer": direct_answer,
-            "skipRag": skip_rag,
-            "selectedExternalAction": selected_external_action_meta,
-        }
+        if direct_answer and requested_format != "table":
+            self._suppress_redundant_structure_presentations(safe_tool_calls)
 
+        return self._finalize_tool_context_result(
+            message=raw_message,
+            previous_messages=previous_messages,
+            result={
+                "context": context,
+                "toolCalls": safe_tool_calls,
+                "nativeToolCalling": native_meta,
+                "directAnswer": direct_answer,
+                "skipRag": skip_rag,
+                "selectedExternalAction": selected_external_action_meta,
+                "currentMessage": raw_message,
+            },
+        )
+
+
+    def _finalize_tool_context_result(
+        self,
+        *,
+        message: str,
+        previous_messages: list | None,
+        result: dict,
+    ) -> dict:
+        from app.application.services.chat_intelligence_pipeline_service import (
+            ChatIntelligencePipelineService,
+        )
+
+        post_tool = ChatIntelligencePipelineService.finalize_after_tools(
+            message,
+            previous_messages,
+            result,
+        )
+        finalized = post_tool.tool_context
+
+        return finalized
+
+    @classmethod
+    def _suppress_redundant_structure_presentations(cls, safe_tool_calls: list[dict]) -> None:
+        """Evita card de tabela duplicado quando o markdown da resposta direta já traz as tabelas."""
+
+        for tool_call in safe_tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if "/structure" not in path:
+                continue
+
+            presentation = metadata.get("presentation")
+
+            if isinstance(presentation, dict) and presentation.get("type") == "table":
+                metadata["presentation"] = None
+
+            if metadata.get("tablePresentation"):
+                metadata["tablePresentation"] = None
 
     _FORMAT_TABLE_HINTS = (
         "em tabela", "formato tabela", "em formato de tabela",

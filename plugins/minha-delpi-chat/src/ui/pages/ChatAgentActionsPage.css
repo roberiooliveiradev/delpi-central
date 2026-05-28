@@ -1,6 +1,7 @@
 @import "../layout/workspace-responsive.css";
 @import "../layout/agent-workspace-layout.css";
 @import "../layout/agent-actions-layout.css";
+@import "../layout/chat-workspace-shared.css";
 
 .mdc-chat-agent-actions-page {
   display: grid;
@@ -12,97 +13,7 @@
 }
 
 .mdc-chat-agent-actions-page__topbar {
-  position: sticky;
-  top: 0;
   z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-height: 3.35rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 64%, transparent);
-  background: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
-  backdrop-filter: blur(16px);
-  padding: 0.45rem clamp(0.9rem, 2vw, 1.35rem);
-}
-
-.mdc-chat-agent-actions-page__topbar-start {
-  flex: 0 0 auto;
-}
-
-.mdc-chat-agent-actions-page__topbar-start > button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-  padding: 0.55rem 0.78rem;
-  white-space: nowrap;
-}
-
-.mdc-chat-agent-actions-page__topbar-start > button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-  color: var(--mdc-primary);
-}
-
-.mdc-chat-agent-actions-page__topbar-title {
-  flex: 1 1 10rem;
-  min-width: 0;
-  display: grid;
-  justify-items: center;
-  gap: 0.05rem;
-  text-align: center;
-}
-
-.mdc-chat-agent-actions-page__topbar-title span,
-.mdc-chat-agent-actions-page__topbar-title small {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mdc-chat-agent-actions-page__topbar-title span {
-  color: var(--mdc-title);
-  font-weight: 900;
-}
-
-.mdc-chat-agent-actions-page__topbar-title small {
-  color: var(--mdc-text-muted);
-  font-size: 0.72rem;
-}
-
-.mdc-chat-agent-actions-page__topbar-actions {
-  flex: 0 1 auto;
-  display: flex;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
-.mdc-chat-agent-actions-page__primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  width: fit-content;
-  border: 0;
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: white;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 800;
-  padding: 0.55rem 0.78rem;
-  white-space: nowrap;
-}
-
-.mdc-chat-agent-actions-page__primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .mdc-chat-agent-actions-page__editor {
@@ -126,13 +37,18 @@
 .mdc-chat-agent-actions-page__round-back button {
   display: inline-grid;
   place-items: center;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.4rem;
+  height: 2.4rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
   border-radius: 999px;
   background: transparent;
+  box-shadow: none;
   color: var(--mdc-text-muted);
   cursor: pointer;
+}
+
+.mdc-chat-agent-actions-page__round-back button svg {
+  display: block;
 }
 
 .mdc-chat-agent-actions-page__headline h1 {
@@ -173,6 +89,10 @@
 }
 
 .mdc-chat-agent-actions-page__block-title svg {
+  flex-shrink: 0;
+  display: block;
+  align-self: start;
+  margin-top: 0.12rem;
   color: var(--mdc-primary);
 }
 
@@ -187,7 +107,9 @@
   color: var(--mdc-text-muted);
 }
 
-.mdc-chat-agent-actions-page label {
+.mdc-chat-agent-actions-page label:not(.mdc-chat-agent-actions-page__auth-card label):not(
+    .mdc-chat-agent-actions-page__permissions label
+  ) {
   display: grid;
   gap: 0.36rem;
 }
@@ -244,8 +166,11 @@
 .mdc-chat-agent-actions-page__auth-card label,
 .mdc-chat-agent-actions-page__permissions label {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.38rem;
+  gap: 0.42rem;
+  width: auto;
+  margin: 0;
   color: var(--mdc-text-muted);
   font-weight: 750;
 }
@@ -428,7 +353,7 @@
 /* Clean UX layer — single action editor */
 .mdc-chat-agent-actions-page {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--mdc-bg) 96%, #ffffff 4%), var(--mdc-bg));
+    linear-gradient(180deg, color-mix(in srgb, var(--mdc-bg) 96%, var(--mdc-card-bg) 4%), var(--mdc-bg));
 }
 
 .mdc-chat-agent-actions-page__topbar {

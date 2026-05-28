@@ -57,13 +57,13 @@ function DistributionList({
   emptyLabel: string;
 }) {
   return (
-    <article className="mdc-admin-metrics-card">
+    <article className="mdc-admin-kpi-card">
       <h3>{title}</h3>
 
       {!items || items.length === 0 ? (
         <p>{emptyLabel}</p>
       ) : (
-        <ul className="mdc-admin-metrics-tab__distribution">
+        <ul className="mdc-admin-distribution-list">
           {items.map((item) => (
             <li key={item.key}>
               <span title={item.key}>{item.key}</span>
@@ -94,7 +94,7 @@ function CostTablePanel({
   }, [items]);
 
   return (
-    <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
+    <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
       <h3>Tabela de custo por provider/modelo</h3>
       <p>Valores por 1.000 tokens (prompt e completion). Persistida no banco ou via env.</p>
 
@@ -188,7 +188,7 @@ function CostTablePanel({
       {editable && onSave ? (
         <button
           type="button"
-          className="mdc-admin-metrics-tab__save-cost"
+          className="mdc-admin-btn mdc-admin-btn--primary"
           disabled={isSaving}
           onClick={() => void onSave(draft)}
         >
@@ -201,7 +201,7 @@ function CostTablePanel({
 
 function CostBreakdownPanel({ items }: { items: AdminLlmCostBreakdownItem[] }) {
   return (
-    <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
+    <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
       <h3>Custo estimado por provider/modelo (24h)</h3>
       <p>Agregado a partir das mensagens instrumentadas na auditoria.</p>
 
@@ -270,7 +270,7 @@ export function AdminMetricsTab({
   if (!metricsSummary) {
     return (
       <section className="mdc-admin-metrics-tab">
-        <article className="mdc-admin-metrics-tab__hero">
+        <article className="mdc-admin-panel">
           <p className="mdc-chat-muted">Carregando métricas...</p>
         </article>
       </section>
@@ -300,45 +300,47 @@ export function AdminMetricsTab({
 
   return (
     <section className="mdc-admin-metrics-tab">
-      <article className="mdc-admin-metrics-tab__hero">
-        <div>
-          <p className="mdc-chat-eyebrow">Métricas avançadas</p>
-          <h2>Observabilidade do Minha DELPI Chat</h2>
-          <p>
-            Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por
-            agente e usuário.
-          </p>
-        </div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Métricas avançadas</p>
+            <h2>Observabilidade do Minha DELPI Chat</h2>
+            <p>
+              Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por
+              agente e usuário.
+            </p>
+          </div>
 
-        {onMetricsHoursChange ? (
-          <label className="mdc-admin-metrics-tab__window">
-            <span>Janela</span>
-            <select
-              value={metricsHours}
-              onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
-            >
-              <option value={24}>24 horas</option>
-              <option value={168}>7 dias</option>
-              <option value={720}>30 dias</option>
-            </select>
-          </label>
-        ) : null}
+          {onMetricsHoursChange ? (
+            <label className="mdc-admin-field mdc-admin-metrics-tab__window">
+              <span>Janela</span>
+              <select
+                value={metricsHours}
+                onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+              >
+                <option value={24}>24 horas</option>
+                <option value={168}>7 dias</option>
+                <option value={720}>30 dias</option>
+              </select>
+            </label>
+          ) : null}
+        </header>
       </article>
 
-      <div className="mdc-admin-metrics-tab__grid">
-        <article className="mdc-admin-metrics-card">
+      <div className="mdc-admin-kpi-grid">
+        <article className="mdc-admin-kpi-card">
           <h3>Sessões</h3>
           <strong>{formatNumber(metricsSummary.sessions)}</strong>
           <p>Total de conversas registradas.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Mensagens</h3>
           <strong>{formatNumber(metricsSummary.messages)}</strong>
           <p>Total de mensagens armazenadas.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Base global</h3>
           <strong>{formatNumber(metricsSummary.activeKnowledgeDocuments)}</strong>
           <p>
@@ -347,13 +349,13 @@ export function AdminMetricsTab({
           </p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Eventos ({windowLabel}h)</h3>
           <strong>{formatNumber(metricsSummary.recentAuditLogs24h)}</strong>
           <p>Total de eventos auditáveis na janela selecionada.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Uso de tools</h3>
           <strong>{formatPercent(metricsSummary.toolUsageRate24h)}</strong>
           <p>
@@ -362,7 +364,7 @@ export function AdminMetricsTab({
           </p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Taxa de erro</h3>
           <strong>{formatPercent(metricsSummary.errorRate24h)}</strong>
           <p>
@@ -370,31 +372,31 @@ export function AdminMetricsTab({
           </p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Latência média</h3>
           <strong>{formatNumber(advanced?.latencyAvgMs)}ms</strong>
           <p>{formatNumber(advanced?.instrumentedMessages)} mensagem(ns) instrumentada(s).</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Tokens estimados</h3>
           <strong>{formatNumber(advanced?.tokensUsed)}</strong>
           <p>Total estimado nas mensagens instrumentadas das últimas 24h.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Custo estimado</h3>
           <strong>{formatCost(advanced?.estimatedCost)}</strong>
           <p>Soma das mensagens instrumentadas conforme tabela de custo.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Falhas RAG</h3>
           <strong>{formatNumber(advanced?.ragFailures)}</strong>
           <p>Mensagens com RAG ativo, mas sem fontes recuperadas nas últimas 24h.</p>
         </article>
 
-        <article className="mdc-admin-metrics-card">
+        <article className="mdc-admin-kpi-card">
           <h3>Assertividade RAG</h3>
           <strong>{formatPercent(advanced?.assertivenessRate)}</strong>
           <p>
@@ -416,9 +418,9 @@ export function AdminMetricsTab({
       ) : null}
 
       {timeseries && timeseries.buckets.length > 0 ? (
-        <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
+        <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
           <h3>Série histórica ({timeseries.windowHours}h)</h3>
-          <ul className="mdc-admin-metrics-tab__timeseries">
+          <ul className="mdc-admin-distribution-list mdc-admin-metrics-tab__timeseries">
             {timeseries.buckets.map((bucket) => (
               <li key={bucket.start}>
                 <span>
@@ -470,7 +472,7 @@ export function AdminMetricsTab({
         />
       </div>
 
-      <article className="mdc-admin-metrics-card">
+      <article className="mdc-admin-kpi-card">
         <h3>Observações</h3>
 
         {advanced?.notes?.length ? (

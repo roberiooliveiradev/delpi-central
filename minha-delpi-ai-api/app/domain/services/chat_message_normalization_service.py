@@ -19,6 +19,16 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bestoquee\b", r"estoque"),
     (r"\bestok\b", r"estoque"),
     (r"\bsaldo\b", r"saldo"),
+    # KPIs / departamentos
+    (r"\bebita\b", r"ebitda"),
+    (r"\bkaisen\b", r"kaizen"),
+    (r"\bnao conformidade\b", r"nao conformidade"),
+    (r"\bnao-conformidade\b", r"nao conformidade"),
+    (r"\bestqoue\b", r"estoque"),
+    # Capacidades / perguntas ao assistente
+    (r"\bcoonsegue\b", r"consegue"),
+    (r"\bconsigue\b", r"consegue"),
+    (r"\bconsege\b", r"consegue"),
     # Produto
     (r"\bprodt?\b", r"produto"),
     (r"\bprduto\b", r"produto"),
@@ -77,10 +87,10 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bnota de entrada\b", r"nota de entrada"),
     (r"\bnota de saida\b", r"nota de saida"),
     (r"\bnota de saída\b", r"nota de saida"),
-    # Compras / vendas
+    # Compras / vendas (não usar \bcompr\b — quebra «comparar», «compare», «comprare»)
     (r"\bcompras\b", r"compras"),
     (r"\bcompra\b", r"compra"),
-    (r"\bcompr\b", r"compra"),
+    (r"\bcomprare\b", r"compare"),
     (r"\bvendas\b", r"vendas"),
     (r"\bvenda\b", r"venda"),
     (r"\bfaturamento\b", r"faturamento"),

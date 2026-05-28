@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  buildYearSelectOptions,
+  pickSourceYearForTarget,
+  suggestYearBeforeLatest,
+  clampGoalYear,
+} from "../utils/goalYearHelpers";
 import type {
   BulkCreateStrategicIndicatorGoalsRequest,
   DuplicateStrategicIndicatorGoalsYearRequest,
@@ -13,12 +19,19 @@ import {
   getGoalPeriodicityLabel,
   getGoalScopeBranchLabel,
 } from "../presentation/labels";
+import { buildEmptyCurveTargets } from "../utils/curveTargets";
+import { resolveGoalValueForApi } from "../utils/goalValuePolicy";
 import "./AnnualGoalsWorkspace.css";
 
 type AnnualGoalsWorkspaceMode =
   | "create_year"
   | "duplicate_into_year"
   | "fill_missing_for_year";
+
+type IndicatorOption = {
+  value: string;
+  label: string;
+};
 
 type AnnualGoalsWorkspaceProps = {
   open: boolean;
@@ -28,6 +41,10 @@ type AnnualGoalsWorkspaceProps = {
   getAccessToken?: () => string | undefined;
   /** Renderiza o formulário inline (sem modal), para painéis administrativos. */
   embedded?: boolean;
+  existingYears?: number[];
+  indicatorOptions?: IndicatorOption[];
+  /** Origem fixa ao abrir duplicação (ex.: clicou em 2026 na lista). */
+  initialSourceYear?: number | null;
 };
 
 type BulkGoalRow = {
@@ -60,36 +77,66 @@ export function AnnualGoalsWorkspace({
   onClose,
   getAccessToken,
   embedded = false,
+  existingYears = [],
+  indicatorOptions = [],
+  initialSourceYear = null,
 }: AnnualGoalsWorkspaceProps) {
   const goals = useStrategicIndicatorGoals({ getAccessToken });
   const yearsOverview = useStrategicIndicatorsGoalYearsOverview({ getAccessToken });
 
+  const catalogYears = useMemo(() => {
+    const fromOverview = yearsOverview.items.map((item) => item.goal_year);
+    return [...new Set([...existingYears, ...fromOverview])];
+  }, [existingYears, yearsOverview.items]);
+
+  const suggestedNewYear = useMemo(
+    () => suggestYearBeforeLatest(catalogYears) ?? clampGoalYear(new Date().getFullYear()),
+    [catalogYears],
+  );
+
+  const yearSelectOptions = useMemo(
+    () =>
+      buildYearSelectOptions(catalogYears, [
+        suggestedNewYear,
+        typeof fixedTargetYear === "number" ? fixedTargetYear : suggestedNewYear,
+      ]),
+    [catalogYears, fixedTargetYear, suggestedNewYear],
+  );
+
   const [targetYear, setTargetYear] = useState<number>(
-    fixedTargetYear ?? new Date().getFullYear(),
+    fixedTargetYear ?? suggestedNewYear,
   );
   const [bulkRows, setBulkRows] = useState<BulkGoalRow[]>([emptyBulkRow]);
-  const [sourceYear, setSourceYear] = useState<number>(new Date().getFullYear() - 1);
+  const [sourceYear, setSourceYear] = useState<number>(
+    pickSourceYearForTarget(catalogYears, suggestedNewYear),
+  );
   const [overwriteExisting, setOverwriteExisting] = useState(false);
   const [copyFromYear, setCopyFromYear] = useState<number | "">(
-    new Date().getFullYear() - 1,
+    pickSourceYearForTarget(catalogYears, fixedTargetYear ?? suggestedNewYear),
   );
 
   useEffect(() => {
     if (!open && !embedded) return;
 
-    if (typeof fixedTargetYear === "number") {
-      if (mode === "duplicate_into_year") {
-        setSourceYear(fixedTargetYear);
-        setTargetYear(fixedTargetYear + 1);
-      } else {
-        setTargetYear(fixedTargetYear);
-      }
+    if (mode === "duplicate_into_year" && typeof fixedTargetYear === "number") {
+      setTargetYear(fixedTargetYear);
+      setSourceYear(
+        typeof initialSourceYear === "number"
+          ? initialSourceYear
+          : pickSourceYearForTarget(catalogYears, fixedTargetYear),
+      );
+    } else if (typeof fixedTargetYear === "number") {
+      setTargetYear(fixedTargetYear);
+    } else if (mode === "create_year") {
+      setTargetYear(suggestedNewYear);
     } else {
-      setTargetYear(new Date().getFullYear());
+      setTargetYear(clampGoalYear(new Date().getFullYear()));
     }
 
     if (mode === "fill_missing_for_year") {
-      setCopyFromYear(new Date().getFullYear() - 1);
+      const target =
+        typeof fixedTargetYear === "number" ? fixedTargetYear : suggestedNewYear;
+      setCopyFromYear(pickSourceYearForTarget(catalogYears, target));
     }
 
     if (mode === "create_year") {
@@ -97,7 +144,22 @@ export function AnnualGoalsWorkspace({
     }
 
     setOverwriteExisting(false);
-  }, [open, embedded, mode, fixedTargetYear]);
+  }, [
+    open,
+    embedded,
+    mode,
+    fixedTargetYear,
+    initialSourceYear,
+    catalogYears,
+    suggestedNewYear,
+  ]);
+
+  function indicatorLabelForValue(value: string) {
+    const match = indicatorOptions.find((option) => option.value === value);
+    if (!match) return "";
+    const [name] = match.label.split(" · ");
+    return name?.trim() ?? match.label;
+  }
 
   const resolvedTargetYear = useMemo(
     () =>
@@ -117,7 +179,10 @@ export function AnnualGoalsWorkspace({
         .map((item) => ({
           indicator_id: item.indicator_id.trim(),
           goal_label: item.goal_label.trim(),
-          goal_value: Number(item.goal_value || 0),
+          goal_value: resolveGoalValueForApi(
+            item.goal_mode,
+            Number(item.goal_value || 0),
+          ),
           goal_periodicity: item.goal_periodicity,
           goal_mode: item.goal_mode,
           goal_scope_branch: item.goal_scope_branch,
@@ -206,41 +271,71 @@ export function AnnualGoalsWorkspace({
         {mode === "duplicate_into_year" ? (
           <>
             <label className="si-admin-form-field">
-              <span>Ano de origem</span>
-              <input type="number" value={sourceYear} readOnly />
+              <span>Ano de origem (copiar de)</span>
+              <select
+                value={sourceYear}
+                onChange={(event) => setSourceYear(Number(event.target.value))}
+              >
+                {yearSelectOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="si-admin-form-field">
-              <span>Ano de destino</span>
-              <input
-                type="number"
-                value={targetYear}
-                onChange={(event) => setTargetYear(Number(event.target.value || 0))}
-              />
+              <span>Ano de destino (criar/atualizar)</span>
+              {typeof fixedTargetYear === "number" ? (
+                <input type="number" value={resolvedTargetYear} readOnly />
+              ) : (
+                <select
+                  value={targetYear}
+                  onChange={(event) => setTargetYear(Number(event.target.value))}
+                >
+                  {yearSelectOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
           </>
         ) : (
           <label className="si-admin-form-field">
             <span>Ano de destino</span>
-            <input
-              type="number"
-              value={resolvedTargetYear}
-              readOnly={typeof fixedTargetYear === "number"}
-              onChange={(event) => setTargetYear(Number(event.target.value || 0))}
-            />
+            {typeof fixedTargetYear === "number" ? (
+              <input type="number" value={resolvedTargetYear} readOnly />
+            ) : (
+              <select
+                value={resolvedTargetYear}
+                onChange={(event) => setTargetYear(Number(event.target.value))}
+              >
+                {yearSelectOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                    {catalogYears.includes(year) ? "" : " (novo)"}
+                  </option>
+                ))}
+              </select>
+            )}
           </label>
         )}
 
         {mode === "fill_missing_for_year" ? (
           <label className="si-admin-form-field">
-            <span>Copiar de</span>
-            <input
-              type="number"
+            <span>Copiar estrutura de</span>
+            <select
               value={copyFromYear}
-              onChange={(event) =>
-                setCopyFromYear(Number(event.target.value || 0))
-              }
-            />
+              onChange={(event) => setCopyFromYear(Number(event.target.value))}
+            >
+              {yearSelectOptions.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
           </label>
         ) : null}
 
@@ -264,19 +359,48 @@ export function AnnualGoalsWorkspace({
             <div className="si-bulk-goals-form">
               {bulkRows.map((row, index) => (
                 <div key={index} className="si-bulk-goals-form__row">
-                  <input
-                    placeholder="ID do indicador"
-                    value={row.indicator_id}
-                    onChange={(event) =>
-                      setBulkRows((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? { ...item, indicator_id: event.target.value }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
+                  {indicatorOptions.length > 0 ? (
+                    <select
+                      value={row.indicator_id}
+                      aria-label="Indicador estrutural"
+                      onChange={(event) => {
+                        const nextId = event.target.value;
+                        const labelHint = indicatorLabelForValue(nextId);
+                        setBulkRows((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  indicator_id: nextId,
+                                  goal_label: item.goal_label || labelHint,
+                                }
+                              : item,
+                          ),
+                        );
+                      }}
+                    >
+                      <option value="">Selecione o indicador</option>
+                      {indicatorOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      placeholder="ID do indicador"
+                      value={row.indicator_id}
+                      onChange={(event) =>
+                        setBulkRows((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, indicator_id: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  )}
 
                   <input
                     placeholder="Nome da meta"
@@ -292,23 +416,25 @@ export function AnnualGoalsWorkspace({
                     }
                   />
 
-                  <input
-                    type="number"
-                    placeholder="Valor da meta"
-                    value={row.goal_value}
-                    onChange={(event) =>
-                      setBulkRows((current) =>
-                        current.map((item, itemIndex) =>
-                          itemIndex === index
-                            ? {
-                                ...item,
-                                goal_value: Number(event.target.value || 0),
-                              }
-                            : item,
-                        ),
-                      )
-                    }
-                  />
+                  {row.goal_mode === "standard" ? (
+                    <input
+                      type="number"
+                      placeholder="Valor da meta"
+                      value={row.goal_value}
+                      onChange={(event) =>
+                        setBulkRows((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? {
+                                  ...item,
+                                  goal_value: Number(event.target.value || 0),
+                                }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  ) : null}
 
                   <select
                     value={row.goal_periodicity}
@@ -345,10 +471,7 @@ export function AnnualGoalsWorkspace({
                                 goal_mode: event.target.value as "standard" | "monthly_curve",
                                 monthly_targets:
                                   event.target.value === "monthly_curve"
-                                    ? Array.from({ length: 12 }, (_, monthIndex) => ({
-                                        month_number: monthIndex + 1,
-                                        target_value: 0,
-                                      }))
+                                    ? buildEmptyCurveTargets(item.goal_periodicity)
                                     : [],
                               }
                             : item,
@@ -414,14 +537,14 @@ export function AnnualGoalsWorkspace({
     mode === "create_year"
       ? "Novo ano"
       : mode === "duplicate_into_year"
-        ? `Duplicar metas de ${sourceYear} para outro ano`
+        ? `Duplicar metas de ${sourceYear} para ${resolvedTargetYear}`
         : `Preencher metas faltantes de ${resolvedTargetYear}`;
 
   const modalDescription =
     mode === "create_year"
       ? "Crie um novo ciclo anual e, se quiser, já adicione metas iniciais."
       : mode === "duplicate_into_year"
-        ? "Use o ano selecionado como origem e informe o ano de destino."
+        ? "Copie metas ativas do ano de origem para o ciclo de destino (ex.: 2026 → 2025)."
         : "Complete metas ausentes do ano selecionado usando outro ciclo como referência.";
 
   return (

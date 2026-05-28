@@ -30,7 +30,9 @@ import type {
   AdminResponseEvaluationContext,
   AdminResponseEvaluationSummary,
   UpdateKnowledgeDocumentMetadataPayload,
+  AdminChatSkill,
   AdminChatIntelligenceSettings,
+  UpsertAdminChatSkillPayload,
   AdminLlmCostTableEntry,
   AdminLlmCostTableResponse,
   AdminLlmStatus,
@@ -1010,4 +1012,65 @@ export async function exportAdminAuditLogsCsv(
   }
 
   return response.blob();
+}
+
+export async function listAdminChatSkills(
+  params: { includeInactive?: boolean } = {},
+  options: AdminApiOptions = {},
+): Promise<AdminChatSkill[]> {
+  const query = new URLSearchParams();
+
+  if (params.includeInactive === false) {
+    query.set("includeInactive", "false");
+  }
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+
+  const response = await fetch(`${API_BASE_URL}/admin/skills${suffix}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminChatSkill[]>(response);
+}
+
+export async function createAdminChatSkill(
+  payload: UpsertAdminChatSkillPayload,
+  options: AdminApiOptions = {},
+): Promise<AdminChatSkill> {
+  const response = await fetch(`${API_BASE_URL}/admin/skills`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminChatSkill>(response);
+}
+
+export async function updateAdminChatSkill(
+  skillId: string,
+  payload: UpsertAdminChatSkillPayload,
+  options: AdminApiOptions = {},
+): Promise<AdminChatSkill> {
+  const response = await fetch(`${API_BASE_URL}/admin/skills/${skillId}`, {
+    method: "PUT",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminChatSkill>(response);
+}
+
+export async function deactivateAdminChatSkill(
+  skillId: string,
+  options: AdminApiOptions = {},
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/admin/skills/${skillId}`, {
+    method: "DELETE",
+    headers: await getAuthHeaders(options),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Falha ao desativar skill (${response.status})`);
+  }
 }

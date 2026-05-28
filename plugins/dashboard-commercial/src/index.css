@@ -279,6 +279,25 @@
   color: var(--dc-title);
 }
 
+.dashboard-commercial .dc-kpi-value--per-unit {
+  font-size: clamp(17px, 1.35vw, 24px);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.dashboard-commercial .dc-kpi-goal--per-unit {
+  font-size: clamp(14px, 1.15vw, 22px);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.dashboard-commercial .dc-kpi-badge-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
 .dashboard-commercial .dc-kpi-subtitle,
 .dashboard-commercial .dc-kpi-context {
   display: block;

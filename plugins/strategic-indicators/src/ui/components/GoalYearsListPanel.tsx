@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { suggestYearBeforeLatest } from "../utils/goalYearHelpers";
 import { InfoState } from "./InfoState";
 import { DataTable, type DataTableColumn } from "./DataTable";
 import { ActionButtons } from "./ActionButtons";
@@ -19,7 +20,15 @@ export function GoalYearsListPanel({
 
   const [openedYear, setOpenedYear] = useState<GoalYearOverviewItem | null>(null);
   const [createYearOpen, setCreateYearOpen] = useState(false);
-  const [duplicateTargetYearOpen, setDuplicateTargetYearOpen] = useState<number | null>(null);
+  const [duplicateYears, setDuplicateYears] = useState<{
+    source: number;
+    target: number;
+  } | null>(null);
+
+  const catalogYears = useMemo(
+    () => yearsOverview.items.map((item) => item.goal_year),
+    [yearsOverview.items],
+  );
   const [fillMissingToYearOpen, setFillMissingToYearOpen] = useState<number | null>(null);
 
   const columns: DataTableColumn<GoalYearOverviewItem>[] = [
@@ -49,7 +58,11 @@ export function GoalYearsListPanel({
       render: (row) => (
         <ActionButtons
           onOpen={() => setOpenedYear(row)}
-          onDuplicate={() => setDuplicateTargetYearOpen(row.goal_year)}
+          onDuplicate={() => {
+            const target =
+              suggestYearBeforeLatest(catalogYears) ?? row.goal_year - 1;
+            setDuplicateYears({ source: row.goal_year, target });
+          }}
           onFillMissing={() => setFillMissingToYearOpen(row.goal_year)}
         />
       ),
@@ -101,6 +114,7 @@ export function GoalYearsListPanel({
         open={createYearOpen}
         mode="create_year"
         fixedTargetYear={null}
+        existingYears={catalogYears}
         onClose={() => {
           setCreateYearOpen(false);
           void yearsOverview.reload();
@@ -109,11 +123,13 @@ export function GoalYearsListPanel({
       />
 
       <AnnualGoalsWorkspace
-        open={typeof duplicateTargetYearOpen === "number"}
+        open={!!duplicateYears}
         mode="duplicate_into_year"
-        fixedTargetYear={duplicateTargetYearOpen}
+        fixedTargetYear={duplicateYears?.target ?? null}
+        initialSourceYear={duplicateYears?.source ?? null}
+        existingYears={catalogYears}
         onClose={() => {
-          setDuplicateTargetYearOpen(null);
+          setDuplicateYears(null);
           void yearsOverview.reload();
         }}
         getAccessToken={getAccessToken}

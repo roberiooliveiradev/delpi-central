@@ -1,26 +1,12 @@
-.mdc-knowledge-ingestion {
-  display: grid;
-  gap: var(--mdc-space-4);
-  min-width: 0;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow);
-  padding: var(--mdc-space-5);
+.mdc-knowledge-ingestion.mdc-admin-panel {
+  align-content: start;
 }
 
 .mdc-knowledge-ingestion__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mdc-space-4);
-}
-
-.mdc-knowledge-ingestion__header h2 {
-  margin: 0;
-  color: var(--mdc-primary);
-  font-size: 1.08rem;
-  line-height: 1.2;
+  gap: var(--mdc-space-3);
 }
 
 .mdc-knowledge-ingestion__header > span {
@@ -31,7 +17,7 @@
   background: var(--mdc-badge-bg);
   color: var(--mdc-badge-text);
   font-size: 0.72rem;
-  font-weight: 900;
+  font-weight: 750;
   padding: 0.32rem 0.58rem;
   white-space: nowrap;
 }
@@ -39,7 +25,8 @@
 .mdc-knowledge-ingestion__description {
   margin: 0;
   color: var(--mdc-text-muted);
-  line-height: 1.55;
+  font-size: 0.86rem;
+  line-height: 1.45;
 }
 
 .mdc-knowledge-ingestion__form {
@@ -50,113 +37,29 @@
 .mdc-knowledge-ingestion__mode {
   display: inline-flex;
   width: fit-content;
+  max-width: 100%;
   border: 1px solid var(--mdc-card-border);
   border-radius: 999px;
   background: var(--mdc-bg-muted);
-  padding: 0.25rem;
+  padding: 0.22rem;
 }
 
 .mdc-knowledge-ingestion__mode button {
-  min-height: 2.15rem;
+  min-height: 2rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--mdc-text-muted);
-  font-weight: 800;
-  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  padding: 0.4rem 0.75rem;
 }
 
 .mdc-knowledge-ingestion__mode button.is-active {
   background: var(--mdc-primary);
-  color: var(--mdc-bg);
-}
-
-.mdc-knowledge-ingestion__form label {
-  display: grid;
-  gap: var(--mdc-space-2);
-  color: var(--mdc-title-soft);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.mdc-knowledge-ingestion__form input,
-.mdc-knowledge-ingestion__form select,
-.mdc-knowledge-ingestion__form textarea {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  outline: 0;
-  padding: 0.75rem 0.85rem;
-}
-
-.mdc-knowledge-ingestion__form input:focus,
-.mdc-knowledge-ingestion__form select:focus,
-.mdc-knowledge-ingestion__form textarea:focus {
-  border-color: var(--mdc-primary);
-  box-shadow: var(--mdc-focus-ring);
-}
-
-.mdc-knowledge-ingestion__form textarea {
-  resize: vertical;
-}
-
-.mdc-knowledge-ingestion__dropzone {
-  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 46%, var(--mdc-card-border));
-  border-radius: var(--mdc-radius-lg);
-  background: color-mix(in srgb, var(--mdc-primary) 7%, var(--mdc-card-bg));
-  padding: var(--mdc-space-4);
-}
-
-.mdc-knowledge-ingestion__dropzone.is-dragging {
-  border-color: var(--mdc-primary);
-  background: color-mix(in srgb, var(--mdc-primary) 13%, var(--mdc-card-bg));
-}
-
-.mdc-knowledge-ingestion__dropzone input {
-  margin-top: var(--mdc-space-2);
-}
-
-.mdc-knowledge-ingestion__dropzone strong,
-.mdc-knowledge-ingestion__dropzone small {
-  display: block;
-}
-
-.mdc-knowledge-ingestion__dropzone strong {
-  margin-top: var(--mdc-space-3);
-  color: var(--mdc-title);
-}
-
-.mdc-knowledge-ingestion__dropzone small {
-  margin-top: var(--mdc-space-1);
-  color: var(--mdc-text-muted);
-}
-
-.mdc-knowledge-ingestion__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
-  gap: var(--mdc-space-3);
-}
-
-.mdc-knowledge-ingestion__future {
-  display: grid;
-  gap: var(--mdc-space-1);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-3);
-}
-
-.mdc-knowledge-ingestion__future strong {
-  color: var(--mdc-title);
-}
-
-.mdc-knowledge-ingestion__future small {
-  color: var(--mdc-text-muted);
-  line-height: 1.45;
+  color: var(--mdc-on-primary);
 }
 
 .mdc-knowledge-ingestion__actions {
@@ -165,20 +68,13 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-knowledge-ingestion__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.9rem;
-}
-
 .mdc-knowledge-ingestion__preview {
   display: grid;
   gap: var(--mdc-space-3);
   border: 1px dashed var(--mdc-card-border);
   border-radius: var(--mdc-radius-lg);
   background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-4);
+  padding: var(--mdc-space-3);
 }
 
 .mdc-knowledge-ingestion__preview ul {
@@ -199,29 +95,17 @@
 .mdc-knowledge-ingestion__preview li span {
   display: block;
   font-size: 0.78rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--mdc-text-muted);
 }
 
 .mdc-knowledge-ingestion__preview li p {
   margin: var(--mdc-space-2) 0 0;
   color: var(--mdc-title);
+  font-size: 0.86rem;
   overflow-wrap: anywhere;
 }
 
 .mdc-knowledge-ingestion__form button[type="submit"] {
-  justify-self: start;
-  min-height: 2.35rem;
-  border-color: var(--mdc-primary);
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
-@media (max-width: 640px) {
-  .mdc-knowledge-ingestion__grid {
-    grid-template-columns: 1fr;
-  }
+  /* primário via admin-shared */
 }

@@ -16,6 +16,14 @@ _catalog_cache: TtlCache[Any] = TtlCache(
     ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
 )
 
+_catalog_fingerprint_cache: TtlCache[str] = TtlCache(
+    ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
+)
+
+_rol_cache: TtlCache[dict] = TtlCache(
+    ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
+)
+
 
 def measurements_cache_key(
     *,
@@ -35,6 +43,38 @@ def measurements_cache_key(
             branch or "",
         ]
     )
+
+
+def get_catalog_fingerprint(cache_key: str) -> str | None:
+    return _catalog_fingerprint_cache.get(cache_key)
+
+
+def set_catalog_fingerprint(cache_key: str, fingerprint: str) -> None:
+    _catalog_fingerprint_cache.set(cache_key, fingerprint)
+
+
+def rol_cache_key(
+    *,
+    branch: str | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> str:
+    return "|".join(
+        [
+            "rol",
+            branch or "",
+            start_date or "",
+            end_date or "",
+        ]
+    )
+
+
+def get_cached_rol(cache_key: str) -> dict | None:
+    return _rol_cache.get(cache_key)
+
+
+def set_cached_rol(cache_key: str, payload: dict) -> None:
+    _rol_cache.set(cache_key, payload)
 
 
 def catalog_cache_key(
@@ -79,7 +119,9 @@ def invalidate_strategic_indicators_snapshot_cache(
     )
 
     _measurements_cache.invalidate_all()
+    _rol_cache.invalidate_all()
     _catalog_cache.invalidate_all()
+    _catalog_fingerprint_cache.invalidate_all()
     invalidate_lmp_dashboard_cache()
     invalidate_lmp_dashboard_summary_cache()
 

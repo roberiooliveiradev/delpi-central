@@ -1,3 +1,5 @@
+@import "./rich-presentation-shared.css";
+
 .mdc-chat-action-results {
   margin-top: var(--mdc-space-4);
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 76%, transparent);
@@ -98,21 +100,6 @@
 
 .mdc-chat-action-result-card__copy-btn {
   flex: 0 0 auto;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.72rem;
-  font-weight: 500;
-  border: 1px solid var(--mdc-card-border, #e6e6e6);
-  border-radius: 4px;
-  background: var(--mdc-control-bg, transparent);
-  color: var(--mdc-text-muted, #64748b);
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.mdc-chat-action-result-card__copy-btn:hover {
-  background: var(--mdc-primary, #089bdb);
-  color: #fff;
-  border-color: var(--mdc-primary, #089bdb);
 }
 
 .mdc-chat-action-result-card__path {

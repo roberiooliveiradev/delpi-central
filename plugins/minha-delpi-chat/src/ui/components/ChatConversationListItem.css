@@ -17,8 +17,9 @@
   text-align: left;
   text-decoration: none;
   transition:
-    background 0.14s ease,
-    color 0.14s ease;
+    background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    color var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    box-shadow var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
 }
 
 .mdc-chat-conversation-item:hover {

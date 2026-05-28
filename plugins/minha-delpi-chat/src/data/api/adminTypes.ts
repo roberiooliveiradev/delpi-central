@@ -663,6 +663,37 @@ export type AdminSecurityScanResponse = {
   config: AdminSecurityConfig;
 };
 
+export type AdminChatSkill = {
+  id: string;
+  skillKey: string;
+  label: string;
+  description: string;
+  policyContent?: string | null;
+  policyFile?: string | null;
+  metadataFlag: string;
+  legacyMetadataFlag?: string | null;
+  executionPathHint?: string | null;
+  executionDerivedKey?: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type UpsertAdminChatSkillPayload = {
+  skillKey?: string;
+  label?: string;
+  description?: string;
+  policyContent?: string | null;
+  policyFile?: string | null;
+  metadataFlag?: string;
+  legacyMetadataFlag?: string | null;
+  executionPathHint?: string | null;
+  executionDerivedKey?: string | null;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
 export type AdminRbacSummary = {
   userId?: string | null;
   isSuperadmin: boolean;

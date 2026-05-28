@@ -66,21 +66,30 @@ class ChatAgenticToolLoopService:
                     continue
 
                 executed_names.add(tool_name)
+                tool_arguments = plan.get("arguments", {}).get(tool_name) or {}
+                resolved_tool_name = tool_name
+
+                if tool_name.startswith("action:"):
+                    resolved_tool_name = "execute_external_action"
+                    tool_arguments = {
+                        "actionId": tool_name.split(":", 1)[1],
+                        **tool_arguments,
+                    }
 
                 try:
                     result = self.execute_tool_use_case.execute(
                         ExecuteToolRequest(
                             user_id=user_id,
                             access_token=access_token,
-                            tool_name=tool_name,
-                            arguments=plan.get("arguments", {}).get(tool_name) or {},
+                            tool_name=resolved_tool_name,
+                            arguments=tool_arguments,
                         )
                     )
                 except Exception as exc:
                     safe_tool_calls.append(
                         {
-                            "name": tool_name,
-                            "arguments": plan.get("arguments", {}).get(tool_name) or {},
+                            "name": resolved_tool_name,
+                            "arguments": tool_arguments,
                             "reason": "Loop agentic: execução da ferramenta.",
                             "metadata": {
                                 "ok": False,
@@ -94,7 +103,7 @@ class ChatAgenticToolLoopService:
                 safe_tool_calls.append(
                     {
                         "name": result.name,
-                        "arguments": plan.get("arguments", {}).get(tool_name) or {},
+                        "arguments": tool_arguments,
                         "reason": "Loop agentic: ferramenta selecionada pelo planejador.",
                         "metadata": {
                             **(result.metadata or {}),
@@ -183,7 +192,7 @@ class ChatAgenticToolLoopService:
                         "content": (
                             "Planeje ferramentas para responder a pergunta. "
                             'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
-                            "Use apenas nomes do catálogo sem prefixo tool:."
+                            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:."
                         ),
                     },
                     {
@@ -204,17 +213,31 @@ class ChatAgenticToolLoopService:
         if not isinstance(payload, dict):
             return {"tools": [], "done": True}
 
-        allowed = {
+        allowed_tools = {
             item.split(":", 1)[1]
             for item in catalog
             if item.startswith("tool:")
         }
+        allowed_actions = {
+            item
+            for item in catalog
+            if item.startswith("action:")
+        }
 
-        tools = [
-            str(name).strip()
-            for name in (payload.get("tools") or [])
-            if str(name).strip() in allowed
-        ]
+        tools: list[str] = []
+
+        for name in payload.get("tools") or []:
+            normalized = str(name).strip()
+
+            if not normalized:
+                continue
+
+            if normalized in allowed_tools:
+                tools.append(normalized)
+            elif normalized in allowed_actions:
+                tools.append(normalized)
+            elif f"action:{normalized}" in allowed_actions:
+                tools.append(f"action:{normalized}")
 
         return {
             "tools": tools,

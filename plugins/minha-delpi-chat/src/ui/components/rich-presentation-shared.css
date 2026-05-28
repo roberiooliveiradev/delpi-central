@@ -1,0 +1,110 @@
+/* Superfície compartilhada — tabelas, gráficos e KPIs no chat */
+
+.mdc-rich-table,
+.mdc-rich-chart {
+  margin: 0.75rem 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm);
+  overflow: hidden;
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+  transition: box-shadow var(--mdc-motion-duration) var(--mdc-motion-ease);
+}
+
+.mdc-rich-table:hover,
+.mdc-rich-chart:hover {
+  box-shadow: var(--mdc-elevation-2);
+}
+
+@keyframes mdc-rich-presentation-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mdc-rich-presentation--enter .mdc-rich-table,
+.mdc-rich-presentation--enter .mdc-rich-chart,
+.mdc-rich-presentation--enter .mdc-rich-kpi-grid {
+  animation: mdc-rich-presentation-enter var(--mdc-motion-duration-slow) var(--mdc-motion-ease-out)
+    both;
+}
+
+.mdc-rich-table__header,
+.mdc-rich-chart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  background: var(--mdc-bg-soft);
+  border-bottom: 1px solid var(--mdc-card-border);
+}
+
+.mdc-rich-table__title,
+.mdc-rich-chart__title {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--mdc-title);
+}
+
+.mdc-rich-table__actions,
+.mdc-rich-chart__actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.mdc-rich-table__btn,
+.mdc-rich-chart__btn,
+.mdc-rich-chart__toggle-btn,
+.mdc-chat-action-result-card__copy-btn,
+.mdc-expand-modal__tool-btn {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm);
+  background: var(--mdc-control-bg);
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mdc-rich-chart__btn,
+.mdc-expand-modal__tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.mdc-rich-table__btn:hover,
+.mdc-rich-chart__btn:hover,
+.mdc-rich-chart__toggle-btn:hover,
+.mdc-chat-action-result-card__copy-btn:hover {
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary);
+  border-color: var(--mdc-primary);
+}
+
+.mdc-rich-chart__toggle-btn--active {
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary);
+  border-color: var(--mdc-primary);
+}
+
+.mdc-rich-chart__toggle-btn:hover {
+  border-color: var(--mdc-primary);
+  color: var(--mdc-primary);
+  background: var(--mdc-control-bg);
+}
+
+.mdc-rich-chart__toggle-btn--active:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 88%, var(--mdc-text));
+  color: var(--mdc-on-primary);
+}

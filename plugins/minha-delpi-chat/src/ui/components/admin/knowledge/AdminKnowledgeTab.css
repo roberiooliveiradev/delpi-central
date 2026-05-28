@@ -1,25 +1,4 @@
-.mdc-admin-knowledge {
-  display: grid;
-  grid-template-columns: minmax(22rem, 0.42fr) minmax(0, 1fr);
-  gap: var(--mdc-space-5);
-  align-items: start;
-}
-
-.mdc-admin-knowledge > :first-child {
-  position: sticky;
-  top: var(--mdc-space-5);
-  max-height: calc(100vh - 2 * var(--mdc-space-5));
-  overflow: auto;
-}
-
-@media (max-width: 1360px) {
-  .mdc-admin-knowledge {
-    grid-template-columns: 1fr;
-  }
-
-  .mdc-admin-knowledge > :first-child {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
+/* Layout split — mesmo padrão de agentes (admin-shared .mdc-admin-split) */
+.mdc-admin-knowledge.mdc-admin-split {
+  min-height: 28rem;
 }

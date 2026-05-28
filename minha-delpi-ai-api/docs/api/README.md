@@ -35,7 +35,7 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 | [`../roadmap/admin-minha-delpi-chat.md`](../roadmap/admin-minha-delpi-chat.md) | Itens 1–15 do painel admin (concluídos) |
 | [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) | Gestão de agentes — ondas 1–7 (concluídas) |
 | [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
-| [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–5) |
+| [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–10) |
 
 Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/minha-delpi-chat/README.md).
 
@@ -52,7 +52,10 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `12-modelo-conceitual.md` | Definições: chat, agente, skill, action, knowledge e demais entidades. |
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |
-| [`../knowledge/README.md`](../knowledge/README.md) | Documentos prontos para anexar à inteligência do agente (ex.: rotas api-delpi). |
+| [`../knowledge/README.md`](../knowledge/README.md) | Documentos RAG para agentes (ex.: [`api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md)). |
+| [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) | Pipeline, identidade do assistente (RAG+LLM), `adminDebug`, roteamento api-delpi. |
+| [`../roadmap/rag-context-min-score-calibracao.md`](../roadmap/rag-context-min-score-calibracao.md) | Calibração de `RAG_CONTEXT_MIN_SCORE` e `RAG_IDENTITY_QUESTION_MIN_SCORE`. |
+| [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria de rotas, regressão e erros conhecidos. |
 | `07-tools.md` | Execução de tools internas. |
 | `08-admin.md` | Endpoints administrativos, métricas, LLM, auditoria e knowledge admin. |
 | `09-deploy-migrations-schema.md` | Migrações, schema audit e fluxo de deploy. |
@@ -72,8 +75,9 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 
 ## Observações importantes
 
-- O chat comum não deve executar external actions; actions ficam atreladas a agentes.
-- **Skills** orientam o prompt; **actions** executam APIs. Veja `12-modelo-conceitual.md`.
+- O chat comum não executa external actions OpenAPI; actions ficam atreladas a agentes publicados.
+- **Skills** orientam o prompt (injeção automática no chat comum via env); **actions** executam APIs. Veja `12-modelo-conceitual.md`.
+- Agentes exigem **publicação** (`published_version >= 1`) para uso por visitantes — ver `03-agentes.md`.
 - Agentes próprios podem ser gerenciados com `tools.manage`.
 - Agentes oficiais/system exigem `chat.admin` ou superadmin para criar, editar e excluir.
 - O frontend deve usar `GET /chat/capabilities` para decidir exibição de botões de gestão; não deve inferir permissões pelo JWT.

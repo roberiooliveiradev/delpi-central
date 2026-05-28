@@ -10,7 +10,12 @@ from app.infrastructure.db.models.chat_agent_action_model import AiChatAgentActi
 from app.infrastructure.db.models.chat_agent_action_provider_model import AiChatAgentActionProviderModel
 from app.infrastructure.db.models.external_action_model import ExternalActionModel
 from app.infrastructure.db.models.external_action_provider_model import ExternalActionProviderModel
+from app.application.services.chat_agent_config_snapshot_service import (
+    apply_snapshot_to_agent,
+    build_agent_config_snapshot,
+)
 from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
+from app.infrastructure.db.models.chat_agent_version_model import AiChatAgentVersionModel
 from app.infrastructure.db.models.chat_agent_share_model import AiChatAgentShareModel
 from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
 from app.infrastructure.db.models.chat_session_model import AiChatSessionModel
@@ -50,7 +55,16 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         result: list[tuple[ChatAgent, str]] = []
 
         for model in models:
-            result.append((self._to_entity(model), self._access_role(model, user_id)))
+            access_role = self._access_role(model, user_id)
+
+            if int(model.published_version or 0) < 1 and access_role not in {
+                "owner",
+                "editor",
+                "system",
+            }:
+                continue
+
+            result.append((self._to_entity(model), access_role))
 
         return result
 
@@ -107,7 +121,90 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if user_id and not self._can_access(model, user_id):
             return None
 
+        entity = self._to_entity(model)
+
+        if int(model.published_version or 0) < 1:
+            if user_id and self._can_edit(model, user_id):
+                return entity
+            return None
+
+        if model.published_config and isinstance(model.published_config, dict):
+            return apply_snapshot_to_agent(entity, model.published_config)
+
+        return entity
+
+    def get_for_preview(self, agent_id: UUID, user_id: UUID) -> ChatAgent | None:
+        record = self.get_accessible_by_id(agent_id, user_id)
+
+        if not record:
+            return None
+
+        return record[0]
+
+    def publish(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        *,
+        can_manage_official_agents: bool = False,
+    ) -> ChatAgent | None:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
+            return None
+
+        entity = self._to_entity(model)
+        snapshot = build_agent_config_snapshot(entity)
+        next_version = int(model.published_version or 0) + 1
+        snapshot["version"] = next_version
+
+        now = datetime.now(timezone.utc)
+        model.published_version = next_version
+        model.published_at = now
+        model.published_config = snapshot
+        model.updated_at = now
+
+        db.session.add(
+            AiChatAgentVersionModel(
+                agent_id=model.id,
+                version=next_version,
+                event="published",
+                snapshot=snapshot,
+                created_by=user_id,
+                created_at=now,
+            )
+        )
+        db.session.flush()
+
         return self._to_entity(model)
+
+    def list_versions(self, agent_id: UUID, user_id: UUID) -> list[dict]:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_access(model, user_id):
+            return []
+
+        rows = (
+            AiChatAgentVersionModel.query.filter(AiChatAgentVersionModel.agent_id == agent_id)
+            .order_by(AiChatAgentVersionModel.version.desc())
+            .limit(30)
+            .all()
+        )
+
+        return [
+            {
+                "id": str(row.id),
+                "version": row.version,
+                "event": row.event,
+                "createdAt": row.created_at.isoformat() if row.created_at else None,
+                "createdBy": str(row.created_by) if row.created_by else None,
+            }
+            for row in rows
+        ]
 
     def create(
         self,
@@ -952,6 +1049,9 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             response_style=model.response_style,
             max_tool_calls=model.max_tool_calls,
             requires_confirmation_for_write=model.requires_confirmation_for_write,
+            published_version=int(model.published_version or 0),
+            published_at=model.published_at,
+            published_config=model.published_config,
             created_at=model.created_at,
             updated_at=model.updated_at,
         )

@@ -45,8 +45,8 @@ export function CommercialFilters({
           onChange={(e) => onBranchChange(e.target.value)}
         >
           <option value="">Todas</option>
-          <option value="01">01 — Matriz</option>
-          <option value="02">02 — Filial</option>
+          <option value="01">01 — Filial 01</option>
+          <option value="02">02 — Filial 02</option>
         </select>
       </div>
     </section>

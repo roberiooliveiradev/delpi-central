@@ -11,6 +11,7 @@ import {
 } from "recharts";
 
 import { CHART_COLORS } from "../constants/chartColors";
+import { COMMERCIAL_ROL_SERIES_LABELS } from "../constants/commercialIndicators";
 import type { RolSeriesPoint } from "../hooks/useCommercialRolSeries";
 import { formatChartCurrency } from "../utils/format";
 
@@ -87,7 +88,7 @@ export function RolEvolutionChart({
         <Line
           type="monotone"
           dataKey="rolMatrix"
-          name="ROL Matriz (01)"
+          name={COMMERCIAL_ROL_SERIES_LABELS.filial01}
           stroke={CHART_COLORS[0]}
           strokeWidth={2}
           dot={{ r: 4, cursor: "pointer" }}
@@ -96,7 +97,7 @@ export function RolEvolutionChart({
         <Line
           type="monotone"
           dataKey="rolBranch"
-          name="ROL Filial (02)"
+          name={COMMERCIAL_ROL_SERIES_LABELS.filial02}
           stroke={CHART_COLORS[1]}
           strokeWidth={2}
           dot={{ r: 4, cursor: "pointer" }}

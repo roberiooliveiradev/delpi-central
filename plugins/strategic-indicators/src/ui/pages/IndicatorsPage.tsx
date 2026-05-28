@@ -14,7 +14,11 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
-import { getFilterViewScopeLabel } from "../shared/strategicIndicatorsFilters";
+import {
+  getFilterViewScopeLabel,
+  resolveStrategicIndicatorsBranch,
+} from "../shared/strategicIndicatorsFilters";
+import { formatIndicatorMetaGoalLine } from "../shared/indicatorValueFormatter";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
@@ -144,6 +148,14 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
     [viewMode, branch],
   );
 
+  const goalDisplayContext = useMemo(
+    () => ({
+      filterViewScopeLabel: viewScopeLabel,
+      activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+    }),
+    [viewScopeLabel, viewMode, branch],
+  );
+
   const analyticsItems = useMemo<IndicatorAnalyticsViewItem[]>(
     () =>
       items.map((item) => ({
@@ -151,7 +163,21 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         departmentId: item.departmentId,
         departmentName: item.departmentName,
         indicatorName: item.name,
-        strategicDescription: `${viewScopeLabel} · ${formatMetaSource(item.source)} · Meta ${item.goalLabel}`,
+        strategicDescription: `${viewScopeLabel} · ${formatMetaSource(item.source)} · ${formatIndicatorMetaGoalLine(
+          {
+            goalLabel: item.goalLabel,
+            goalValue: item.goalValue,
+            goalMode: item.goalMode,
+            monthlyTargets: item.monthlyTargets,
+            goals: item.goals,
+            valueUnit: item.valueUnit,
+            valuePrefix: item.valuePrefix,
+            valueSuffix: item.valueSuffix,
+            valueDecimals: item.valueDecimals,
+          },
+          referenceMonth,
+          goalDisplayContext,
+        )}`,
         scopeType: item.scopeType,
         viewScopeLabel,
         weightPct: item.weightPct,
@@ -168,6 +194,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         realized: item.realized,
         score: item.score,
         gap: item.gap,
+        goals: item.goals,
         gaps: item.gaps,
         hasValue: item.hasValue,
         trend: item.trend,
@@ -178,7 +205,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         valueSuffix: item.valueSuffix,
         valueDecimals: item.valueDecimals,
       })),
-    [items, viewScopeLabel],
+    [items, viewScopeLabel, referenceMonth, goalDisplayContext],
   );
 
   const departmentOptions = useMemo(
@@ -336,7 +363,11 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
             title="Prioridades imediatas"
             description="Indicadores em faixa de atenção para leitura operacional rápida."
           >
-            <IndicatorPriorityList indicators={filteredIndicators} />
+            <IndicatorPriorityList
+              indicators={filteredIndicators}
+              competence={referenceMonth}
+              displayContext={goalDisplayContext}
+            />
           </SectionBlock>
 
           <SectionBlock
@@ -348,6 +379,8 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
                 indicators={filteredIndicators}
                 selectedIndicatorId={resolvedSelectedIndicator?.id}
                 competence={referenceMonth}
+                viewMode={viewMode}
+                branch={branch}
                 onSelectIndicator={(indicator) =>
                   setSelectedIndicatorId(indicator.id)
                 }

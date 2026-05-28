@@ -75,6 +75,8 @@ from app.composition.chat_composer import (
     make_list_chat_agent_shares_use_case,
     make_list_chat_agents_use_case,
     make_preview_chat_agent_use_case,
+    make_publish_chat_agent_use_case,
+    make_list_chat_agent_versions_use_case,
     make_revoke_chat_agent_share_use_case,
     make_share_chat_agent_use_case,
     make_list_chat_project_shares_use_case,
@@ -177,10 +179,17 @@ def _get_chat_capabilities_from_request() -> dict:
         or CHAT_ADMIN_PERMISSION in permissions
     )
     can_manage_tools = can_manage_own_agents
+    can_open_admin = (
+        is_superadmin
+        or CHAT_ADMIN_PERMISSION in permissions
+        or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+    )
 
     return {
         "permissions": sorted(permissions),
         "isSuperadmin": is_superadmin,
+        "canOpenAdmin": can_open_admin,
         "canManageAgents": can_manage_own_agents,
         "canManageOwnAgents": can_manage_own_agents,
         "canManageOfficialAgents": can_manage_official_agents,
@@ -670,6 +679,34 @@ def revoke_agent_share(agent_id: str, target_user_id: str):
     return "", 204
 
 
+@chat_bp.post("/agents/preview")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def preview_agent_draft():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    access_token = request.headers.get("Authorization", "").removeprefix("Bearer ").strip() or None
+    use_case = make_preview_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=None,
+            message=payload.get("message") or payload.get("question") or "",
+            access_token=access_token,
+            generate_answer=bool(payload.get("generateAnswer", True)),
+            draft=payload.get("draft"),
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        return bad_request(str(exc))
+
+    return jsonify(result), 200
+
+
 @chat_bp.post("/agents/<agent_id>/preview")
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def preview_agent(agent_id: str):
@@ -688,6 +725,7 @@ def preview_agent(agent_id: str):
             message=payload.get("message") or payload.get("question") or "",
             access_token=access_token,
             generate_answer=bool(payload.get("generateAnswer", True)),
+            draft=payload.get("draft"),
         )
     except ChatAgentPermissionDeniedError as exc:
         return forbidden(str(exc))
@@ -695,6 +733,42 @@ def preview_agent(agent_id: str):
         return bad_request(str(exc))
 
     return jsonify(result), 200
+
+
+@chat_bp.post("/agents/<agent_id>/publish")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def publish_agent(agent_id: str):
+    use_case = make_publish_chat_agent_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            can_manage_official_agents=_can_manage_official_agents(),
+        )
+    except ChatAgentPermissionDeniedError as exc:
+        return forbidden(str(exc))
+    except InvalidChatSessionInputError as exc:
+        return bad_request(str(exc))
+
+    if not result:
+        return _not_found_response()
+
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(asdict(result)), 200
+
+
+@chat_bp.get("/agents/<agent_id>/versions")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def list_agent_versions(agent_id: str):
+    use_case = make_list_chat_agent_versions_use_case()
+    versions = use_case.execute(user_id=g.current_user.sub, agent_id=agent_id)
+    return jsonify(versions), 200
 
 
 def _find_linked_agent_provider(agent_id: str, provider_key: str):
@@ -2027,7 +2101,20 @@ def get_history(session_id: str):
         session_id=session_id,
     )
 
-    return jsonify([asdict(message) for message in result]), 200
+    allow_admin_debug = _can_use_admin_debug()
+    payload = []
+
+    for message in result:
+        item = asdict(message)
+        if not allow_admin_debug:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict) and metadata.get("adminDebug") is not None:
+                metadata = dict(metadata)
+                metadata.pop("adminDebug", None)
+                item["metadata"] = metadata
+        payload.append(item)
+
+    return jsonify(payload), 200
 
 
 @chat_bp.put("/sessions/<session_id>/messages/<message_id>/feedback")
@@ -2081,6 +2168,8 @@ def send_message(session_id: str):
     use_case = make_send_chat_message_use_case()
 
     try:
+        # admin_debug: expõe diagnóstico na resposta; persistência no DB é em todo turno.
+        admin_debug = _can_use_admin_debug()
         result = use_case.execute(
             SendChatMessageRequest(
                 user_id=g.current_user.sub,
@@ -2090,6 +2179,7 @@ def send_message(session_id: str):
                 access_token=g.access_token,
                 attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
                 agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+                admin_debug=admin_debug,
             )
         )
 
@@ -2118,6 +2208,7 @@ def resend_message_stream(session_id: str, message_id: str):
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
         resend_from_message_id=message_id,
+        admin_debug=_can_use_admin_debug(),
     )
 
     return _stream_chat_response(session_id, request_dto)
@@ -2140,6 +2231,7 @@ def stream_message(session_id: str):
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
         agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+        admin_debug=_can_use_admin_debug(),
     )
 
     return _stream_chat_response(session_id, request_dto)
@@ -2152,6 +2244,9 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     @stream_with_context
     def generate():
         try:
+            # Comentário SSE para abrir o stream cedo (evita buffering em proxy/nginx).
+            yield ": connected\n\n"
+
             for event in stream_chat_events_with_background_completion(
                 app,
                 lambda: use_case.stream(request_dto),
@@ -2174,16 +2269,48 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                 elif event_type == "token":
                     yield _sse("token", {"content": event.get("content", "")})
 
-                elif event_type == "done":
+                elif event_type == "assistant_pending":
                     yield _sse(
-                        "done",
+                        "assistant_pending",
+                        {"messageId": event.get("messageId")},
+                    )
+
+                elif event_type == "playback":
+                    yield _sse(
+                        "playback",
                         {
                             "messageId": event.get("messageId"),
                             "answer": event.get("answer", ""),
                             "sources": event.get("sources", []),
                             "toolCalls": event.get("toolCalls", []),
+                            "adminDebug": event.get("adminDebug"),
                         },
                     )
+
+                elif event_type == "canvas_open":
+                    yield _sse(
+                        "canvas_open",
+                        {
+                            "title": event.get("title", ""),
+                            "markdown": event.get("markdown", ""),
+                            "sourceMessageId": event.get("sourceMessageId"),
+                            "messageId": event.get("messageId"),
+                        },
+                    )
+
+                elif event_type == "done":
+                    done_payload = {
+                        "messageId": event.get("messageId"),
+                        "answer": event.get("answer", ""),
+                        "sources": event.get("sources", []),
+                        "toolCalls": event.get("toolCalls", []),
+                        "playback": event.get("playback"),
+                        "adminDebug": event.get("adminDebug"),
+                    }
+                    if event.get("canvasOpen"):
+                        done_payload["canvasOpen"] = event.get("canvasOpen")
+
+                    yield _sse("done", done_payload)
 
             yield _sse("close", {"ok": True})
 
@@ -2224,3 +2351,36 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     response.headers["X-Accel-Buffering"] = "no"
 
     return response
+
+
+def _can_use_admin_debug() -> bool:
+    """Gating: só usuários admin/superadmin podem receber payloads de debug."""
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
+    if core_user:
+        if bool(core_user.get("is_superadmin")):
+            return True
+
+        permissions = set(core_user.get("permissions") or [])
+        return bool(
+            CHAT_ADMIN_PERMISSION in permissions
+            or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+            or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+        )
+
+    user = getattr(g, "current_user", None)
+
+    if not user:
+        return False
+
+    if bool(getattr(user, "is_superadmin", False)):
+        return True
+
+    permissions = set(getattr(user, "permissions", []) or [])
+
+    return bool(
+        CHAT_ADMIN_PERMISSION in permissions
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+        or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+    )

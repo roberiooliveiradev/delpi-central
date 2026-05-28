@@ -9,9 +9,12 @@ import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 import { ChatAgentsPage } from "./ChatAgentsPage";
+import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
   createChatArtifact,
   createProjectTextSource,
@@ -36,16 +39,6 @@ import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
 const SIDEBAR_COLLAPSED_STORAGE_KEY = "minha-delpi-chat.sidebar-collapsed";
 
 
-function getAgentIcebreakerCount(agent: { metadata: Record<string, unknown> | null } | null | undefined): number {
-  const value = agent?.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return 0;
-  }
-
-  return value.filter((item) => typeof item === "string" && item.trim()).length;
-}
-
 type ChatPageProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   pathname?: string;
@@ -59,6 +52,7 @@ export function ChatPage({
   pathname,
   onOpenAdmin,
 }: ChatPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
   const [agentEditRequest, setAgentEditRequest] = useState<{
@@ -68,6 +62,7 @@ export function ChatPage({
   const [canManageAgents, setCanManageAgents] = useState(false);
   const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
+  const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
@@ -77,7 +72,6 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-
   const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
 
   const {
@@ -89,7 +83,9 @@ export function ChatPage({
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingAdminDebug,
     streamingStatus,
+    streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
@@ -119,6 +115,17 @@ export function ChatPage({
     agentKey: requestedAgentKey,
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
+    },
+    onOpenCanvas: (payload) => {
+      if (!payload.markdown.trim()) {
+        return;
+      }
+
+      setCanvasDocument({
+        title: payload.title || "Conteúdo do chat",
+        markdown: payload.markdown,
+        messageId: payload.sourceMessageId ?? payload.messageId ?? null,
+      });
     },
   });
 
@@ -156,7 +163,7 @@ export function ChatPage({
     return projects.find((project) => project.id === projectId)?.default_agent_key ?? null;
   }
 
-  const { isDesktop, isLandscape } = useChatLayout();
+  const { isDesktop, isLandscape, isNarrow } = useChatLayout();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
@@ -292,6 +299,16 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
+        case "projects": {
+          if (currentView === "projects") {
+            closeMobileSidebar();
+            return;
+          }
+
+          setCurrentView("projects");
+          closeMobileSidebar();
+          break;
+        }
         default:
           break;
       }
@@ -366,6 +383,18 @@ export function ChatPage({
     }
   }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
 
+  function openAgentsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("agents");
+    navigateChatHref(buildChatHref({ kind: "agents" }));
+  }
+
+  function openProjectsDirectory() {
+    clearWorkspaceError();
+    setCurrentView("projects");
+    navigateChatHref(buildChatHref({ kind: "projects" }));
+  }
+
 
   useEffect(() => {
     let isMounted = true;
@@ -399,11 +428,15 @@ export function ChatPage({
         if (isMounted) {
           setCanManageAgents(capabilities.canManageAgents);
           setCanManageOfficialAgents(capabilities.canManageOfficialAgents);
+          setCanOpenAdmin(
+            capabilities.canOpenAdmin === true || capabilities.isSuperadmin === true,
+          );
         }
       } catch {
         if (isMounted) {
           setCanManageAgents(false);
           setCanManageOfficialAgents(false);
+          setCanOpenAdmin(false);
         }
       } finally {
         if (isMounted) {
@@ -418,8 +451,6 @@ export function ChatPage({
       isMounted = false;
     };
   }, [getAccessToken]);
-
-
 
   async function loadProjectSources(projectId: string) {
     setIsLoadingProjectSources(true);
@@ -625,6 +656,22 @@ export function ChatPage({
   const isConversationEmpty = !hasActiveConversation;
 
   function getComposerPlaceholder() {
+    if (isNarrow) {
+      if (selectedProject && contextAgent) {
+        return `Chat em ${selectedProject.name}`;
+      }
+
+      if (selectedProject) {
+        return `Chat no projeto`;
+      }
+
+      if (contextAgent || conversationAgent) {
+        return "Pergunte ao agente";
+      }
+
+      return "Pergunte algo";
+    }
+
     if (selectedProject && contextAgent) {
       return `Novo chat em ${selectedProject.name} usando ${contextAgent.name}`;
     }
@@ -695,10 +742,13 @@ export function ChatPage({
     .filter(Boolean)
     .join(" ");
 
+  const openAdmin = canOpenAdmin && onOpenAdmin ? () => onOpenAdmin() : undefined;
+
   const rootClassName = [
     "minha-delpi-chat",
     isDraggingFile ? "minha-delpi-chat--dragging" : "",
     isMobileSidebarOpen ? "minha-delpi-chat--mobile-nav-open" : "",
+    isNarrow ? "minha-delpi-chat--narrow" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -711,6 +761,7 @@ export function ChatPage({
       onDragLeaveCapture={handleChatDragLeave}
       onDropCapture={handleChatDrop}
     >
+      {confirmDialog}
       {isDraggingFile ? (
         <div className="mdc-chat-drop-overlay" aria-hidden="true">
           <div>
@@ -742,6 +793,7 @@ export function ChatPage({
           isLoadingAgents={isLoadingAgents}
           isLoadingProjects={isLoadingProjects}
           canManageAgents={canManageAgents}
+          onOpenAdmin={openAdmin}
           onNewSession={handleStartGeneralSession}
           onSelectSession={handleSelectSession}
           onRenameSession={renameSession}
@@ -775,10 +827,51 @@ export function ChatPage({
           onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
           onViewChange={setCurrentView}
+          onOpenAgentsDirectory={openAgentsDirectory}
+          onOpenProjectsDirectory={openProjectsDirectory}
         />
 
-        {currentView === "agents" ? (
-          <section className="mdc-chat-main" aria-label="Gerenciar agentes">
+        <ChatAnimatedPanel
+          panelKey={currentView}
+          variant="page"
+          className="mdc-chat-view-host"
+        >
+        {currentView === "projects" ? (
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Projetos">
+            {!isDesktop ? (
+              <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
+                <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
+                  Menu
+                </button>
+              </div>
+            ) : null}
+            <ChatProjectsPage
+              projects={projects}
+              sessions={sessions}
+              selectedProjectId={selectedProjectId}
+              isLoading={isLoadingProjects}
+              onBack={() => {
+                clearWorkspaceError();
+                setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
+              }}
+              onSelectProject={(projectId) => {
+                clearWorkspaceError();
+                clearError();
+                setCanvasDocument(null);
+                setActiveAgentPageKey(null);
+                setContextAgentKey(null);
+                setSelectedProjectId(projectId);
+                setCurrentView("chat");
+                navigateChatHref(buildChatProjectHref(projectId));
+              }}
+              onCreateProject={addProject}
+              onRenameProject={(projectId, name) => editProject(projectId, { name })}
+              onDeleteProject={removeProject}
+            />
+          </section>
+        ) : currentView === "agents" ? (
+          <section className="mdc-chat-main mdc-chat-main--workspace" aria-label="Gerenciar agentes">
             {!isDesktop ? (
               <div className="mdc-chat-mobile-nav" role="toolbar" aria-label="Navegação">
                 <button type="button" onClick={openMobileSidebar} aria-label="Abrir menu de conversas">
@@ -798,6 +891,7 @@ export function ChatPage({
                 clearWorkspaceError();
                 setAgentEditRequest(null);
                 setCurrentView("chat");
+                navigateChatHref(buildChatHref({ kind: "home" }));
               }}
               onSelectAgent={(agentKey) => {
                 clearWorkspaceError();
@@ -816,7 +910,7 @@ export function ChatPage({
                 void loadAgents(false, true);
               }}
               onReloadAgents={loadAgents}
-              onOpenRagAdmin={onOpenAdmin}
+              onOpenRagAdmin={openAdmin}
               getAccessToken={getAccessToken}
             />
           </section>
@@ -844,11 +938,9 @@ export function ChatPage({
             badge={
               selectedProject
                 ? `${selectedProjectSessions.length} chats`
-                : conversationAgent
-                  ? `${getAgentIcebreakerCount(conversationAgent)} quebra-gelos`
-                  : undefined
+                : undefined
             }
-            onOpenAdmin={onOpenAdmin}
+            onOpenAdmin={openAdmin}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;
@@ -871,9 +963,13 @@ export function ChatPage({
                 return;
               }
 
-              const confirmed = window.confirm(
-                `Excluir o projeto "${selectedProject.name}"?`,
-              );
+              const confirmed = await confirm({
+                title: "Excluir projeto",
+                description: `Excluir o projeto "${selectedProject.name}"?`,
+                confirmLabel: "Excluir",
+                cancelLabel: "Cancelar",
+                danger: true,
+              });
 
               if (!confirmed) {
                 return;
@@ -887,14 +983,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={
-              canManageAgents
-                ? () => {
-                    clearWorkspaceError();
-                    setCurrentView("agents");
-                  }
-                : undefined
-            }
+            onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
             onClearAgent={() => {
               setActiveAgentPageKey(null);
               setContextAgentKey(null);
@@ -1028,10 +1117,7 @@ export function ChatPage({
                       }}
                     />
                   ) : (
-                    <ChatEmptyState
-                      displayName={userDisplayName}
-                      onUseSuggestion={setDraft}
-                    />
+                    <ChatEmptyState displayName={userDisplayName} />
                   )}
 
                   <ChatInput
@@ -1057,10 +1143,11 @@ export function ChatPage({
                 streamingAnswer={streamingAnswer}
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
+                streamingAdminDebug={streamingAdminDebug}
                 streamingStatus={streamingStatus}
+                streamingShowPresentation={streamingShowPresentation}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
-                onUseSuggestion={setDraft}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}
@@ -1082,6 +1169,7 @@ export function ChatPage({
           )}
         </section>
         )}
+        </ChatAnimatedPanel>
 
         <ChatCanvas
           document={canvasDocument}

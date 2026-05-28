@@ -1,6 +1,6 @@
 # Metas por escopo (consolidado / filial)
 
-**Última atualização:** 2026-05-21
+**Última atualização:** 2026-05-27
 
 **Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada), `V021` (metas por filial em `per_unit`)
 
@@ -11,7 +11,19 @@
 | `consolidated` | Consolidado (`''`) + filial `01` + filial `02` |
 | `per_unit` | Consolidado (`''`) + filial `01` + filial `02` (realizado por unidade; meta por filial na mesma estrutura) |
 
-Indicadores separados por unidade (ex.: ROL Matriz / ROL Filial no Comercial) continuam válidos quando cada unidade precisa de **fonte de dado** distinta, não apenas meta distinta.
+**Comercial (V026):** um indicador `commercial-rol` (`per_unit`) com metas por filial `01`/`02`; `commercial-rol-matrix` e `commercial-rol-branch` ficam inativos.
+
+## Exibição no painel (Meta / Realizado / Gap)
+
+Para indicadores com metas por filial, a API expõe:
+
+| Campo | Formato na UI |
+|-------|----------------|
+| `goals` | `01: … \| 02: …` (meta comparável do período, inclusive curva mensal) |
+| `realized` | `01: … \| 02: …` |
+| `gaps` | `01: … \| 02: …` |
+
+`goal_label` permanece como rótulo cadastral (ex.: `01: Curva R$ \| 02: Curva R$`); o valor numérico da meta vem de `goals`.
 
 **Migration V021 (Produção):** metas consolidadas ativas de indicadores `per_unit` do departamento Produção são desativadas e recriadas em duplicata para `goal_scope_branch` `01` e `02` (mesmo `goal_label`, valor e curva mensal). Ajuste valores por filial depois no admin, se necessário.
 
@@ -54,7 +66,14 @@ Regras de implementação (`goal_scope.py`, `StrategicIndicatorsCalculator`):
 
 ## Cadastro (admin)
 
-No formulário de metas, escolher **Escopo da meta**: Consolidado, Filial 01 ou Filial 02.
+No formulário de metas (`/apps/strategic-indicators/settings` → **Metas**):
+
+| Campo | Descrição |
+|-------|-----------|
+| **Modo** | **Padrão** (`standard`) ou **Curva** (`monthly_curve`) — ver [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md) |
+| **Periodicidade** | Mensal, trimestral, semanal ou anual; em **Curva**, define quantos pontos na grade |
+| **Escopo da meta** | Consolidado, Filial 01 ou Filial 02 |
+| **Valor** | Apenas no modo **Padrão**; curvas usam os pontos da grade (`goal_value` = 0 no banco) |
 
 `supports_branch_goals` em `department_indicators` é sincronizado automaticamente: `TRUE` quando `scope_type` é `consolidated` ou `per_unit`.
 
@@ -91,9 +110,14 @@ Se o catálogo/metas mudarem (ex.: V021 desativa meta consolidada e cria metas `
 
 Detalhes: [MFE.md](./MFE.md) — seção *Rótulos da visão*.
 
-## Metas `monthly_curve` (Comercial)
+## Metas em modo **Curva** (`monthly_curve`)
 
-- Meta comparável do período = soma dos `indicator_goal_monthly_targets` do mês da competência.
-- Se a curva não vier no catálogo (lista vazia) e `goal_value > 0`, o calculador usa **fallback** para meta padrão do período (evita IDD/nota `0` indevidos).
-- Medições da Produção com valor `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
-- Depois de deploy com correção no calculador, execute `scripts/refresh_period_scores.py` para atualizar `period_scores` que ainda guardam IDD zerado.
+Detalhes completos (periodicidade, export/import, duplicar ano): [ADMIN_GOALS_AND_CONFIG.md](./ADMIN_GOALS_AND_CONFIG.md).
+
+- Pontos em `indicator_goal_monthly_targets`; quantidade conforme `goal_periodicity` (12 / 4 / 52 / 1).
+- `goal_value` permanece **0** no banco — não há consolidado (evita confundir soma anual com meta %).
+- Meta comparável do período = soma dos `target_value` dos pontos do intervalo (competência mensal → um ponto; YTD → soma dos pontos do período).
+- Sem pontos na curva → meta comparável **0**.
+- Casos comerciais (ROL em R$, % novos negócios) e qualidade (Kaizen) usam o mesmo modo **Curva** com unidades distintas por indicador.
+- Medições com `null` na fonte permanecem **sem dado** (não viram `0.0` artificial).
+- Após mudanças no catálogo ou metas, execute `scripts/refresh_period_scores.py` se `period_scores` estiver desatualizado.

@@ -201,6 +201,17 @@ class StrategicIndicatorsCalculator:
                     score, gap, realized_value = branch_indicator_score
                     unit_values = measurement.unit_values or {}
                     display_branch = active_branch
+                    comparable_goal = self._comparable_goal_for_branch_view(
+                        indicator=indicator,
+                        branch_code=scoring_branch,
+                        start_date=start_date,
+                        end_date=end_date,
+                        competence=competence,
+                    )
+                    unit_goals = None
+                    if comparable_goal is not None:
+                        rounded_goal = round(float(comparable_goal), 2)
+                        unit_goals = {display_branch: rounded_goal}
                     unit_gaps = (
                         {display_branch: gap}
                         if gap is not None
@@ -213,7 +224,11 @@ class StrategicIndicatorsCalculator:
                             indicator_name=indicator.indicator_name,
                             weight_pct=indicator.weight_pct,
                             goal_label=indicator.goal_label,
-                            goal_value=indicator.goal_value,
+                            goal_value=(
+                                round(float(comparable_goal), 2)
+                                if comparable_goal is not None
+                                else indicator.goal_value
+                            ),
                             goal_periodicity=indicator.goal_periodicity,
                             goal_mode=getattr(indicator, "goal_mode", "standard"),
                             monthly_targets=getattr(indicator, "monthly_targets", None),
@@ -237,6 +252,7 @@ class StrategicIndicatorsCalculator:
                             }
                             or None,
                             unit_gaps=unit_gaps,
+                            unit_goals=unit_goals,
                             value_unit=indicator.value_unit,
                             value_prefix=indicator.value_prefix,
                             value_suffix=indicator.value_suffix,
@@ -304,6 +320,13 @@ class StrategicIndicatorsCalculator:
                 end_date=end_date,
                 competence=competence,
             )
+            unit_goals = self._build_unit_goals(
+                indicator=indicator,
+                measurement=measurement,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
 
             calculated.append(
                 StrategicIndicatorCalculatedValue(
@@ -330,6 +353,7 @@ class StrategicIndicatorsCalculator:
                     trend="stable",
                     classification=self.classify_score(score),
                     unit_values=measurement.unit_values,
+                    unit_goals=unit_goals,
                     unit_gaps=unit_gaps,
                     value_unit=indicator.value_unit,
                     value_prefix=indicator.value_prefix,
@@ -445,23 +469,13 @@ class StrategicIndicatorsCalculator:
         normalized_goal_mode = (goal_mode or "standard").strip().lower()
 
         if normalized_goal_mode == "monthly_curve":
-            curve_goal = self._calculate_monthly_curve_goal(
+            return self._calculate_monthly_curve_goal(
                 monthly_targets=monthly_targets or [],
+                goal_periodicity=goal_periodicity,
                 start_date=start_date,
                 end_date=end_date,
                 competence=competence,
             )
-            if curve_goal > 0:
-                return curve_goal
-            if goal_value > 0:
-                return self._calculate_standard_period_goal(
-                    goal_value=goal_value,
-                    goal_periodicity=goal_periodicity,
-                    start_date=start_date,
-                    end_date=end_date,
-                    competence=competence,
-                )
-            return 0.0
 
         return self._calculate_standard_period_goal(
             goal_value=goal_value,
@@ -1013,6 +1027,50 @@ class StrategicIndicatorsCalculator:
 
         return gaps
 
+    def _build_unit_goals(
+        self,
+        *,
+        indicator: StrategicIndicatorCatalogItem,
+        measurement: StrategicIndicatorMeasuredValue,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None] | None:
+        unit_values = measurement.unit_values
+        branch_keys = [
+            branch_code
+            for branch_code in BRANCH_UNIT_CODES
+            if branch_code in (indicator.branch_goals or {})
+        ]
+        if not branch_keys and unit_values:
+            branch_keys = [
+                branch_code
+                for branch_code in BRANCH_UNIT_CODES
+                if branch_code in unit_values
+            ]
+
+        if not branch_keys:
+            return None
+
+        goals: dict[str, float | None] = {}
+        for branch_code in branch_keys:
+            comparable_goal = self._comparable_goal_for_branch_view(
+                indicator=indicator,
+                branch_code=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
+            )
+            if comparable_goal is None:
+                goals[branch_code] = None
+                continue
+            if comparable_goal <= 0 and getattr(indicator, "goal_mode", "standard") != "monthly_curve":
+                goals[branch_code] = None
+                continue
+            goals[branch_code] = round(float(comparable_goal), 2)
+
+        return goals if goals else None
+
     def build_realized_payload(
         self,
         *,
@@ -1052,6 +1110,128 @@ class StrategicIndicatorsCalculator:
             return {}
 
         return {"consolidated": gap}
+
+    def _stored_unit_goals_for_response(
+        self,
+        stored: dict[str, float | None] | None,
+        *,
+        department_id: str | None,
+        unit_values: dict[str, float | None] | None,
+    ) -> dict[str, float | None] | None:
+        if not stored:
+            return None
+
+        if is_consolidated_aggregation_department(department_id):
+            return stored
+
+        branch_keys = [code for code in BRANCH_UNIT_CODES if code in stored]
+        if branch_keys:
+            return stored
+
+        unit_branch_keys = [
+            code for code in BRANCH_UNIT_CODES if code in (unit_values or {})
+        ]
+        if len(unit_branch_keys) >= 2 and set(stored.keys()) <= {"consolidated"}:
+            return None
+
+        return stored
+
+    def resolve_unit_goals_for_response(
+        self,
+        *,
+        calculated: StrategicIndicatorCalculatedValue,
+        catalog_item: StrategicIndicatorCatalogItem | None,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None] | None:
+        unit_values = calculated.unit_values
+        stored = self._stored_unit_goals_for_response(
+            getattr(calculated, "unit_goals", None),
+            department_id=calculated.department_id,
+            unit_values=unit_values,
+        )
+        if stored:
+            return stored
+
+        if not catalog_item or not (catalog_item.branch_goals or {}):
+            return None
+
+        if not unit_values:
+            return None
+
+        measurement = StrategicIndicatorMeasuredValue(
+            indicator_id=calculated.indicator_id,
+            department_id=calculated.department_id,
+            value=calculated.value,
+            source=getattr(calculated, "source", "") or "",
+            unit_values=unit_values,
+        )
+        return self._build_unit_goals(
+            indicator=catalog_item,
+            measurement=measurement,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+
+    def resolve_goals_payload_for_calculated(
+        self,
+        *,
+        calculated: StrategicIndicatorCalculatedValue,
+        catalog_item: StrategicIndicatorCatalogItem | None,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+    ) -> dict[str, float | None]:
+        unit_goals = self.resolve_unit_goals_for_response(
+            calculated=calculated,
+            catalog_item=catalog_item,
+            start_date=start_date,
+            end_date=end_date,
+            competence=competence,
+        )
+        if unit_goals is None and catalog_item is not None:
+            unit_values = calculated.unit_values or {}
+            single_branch = next(
+                (code for code in BRANCH_UNIT_CODES if code in unit_values),
+                None,
+            )
+            if single_branch and sum(1 for code in BRANCH_UNIT_CODES if code in unit_values) == 1:
+                comparable_goal = self._comparable_goal_for_branch_view(
+                    indicator=catalog_item,
+                    branch_code=single_branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+                if comparable_goal is not None:
+                    unit_goals = {single_branch: round(float(comparable_goal), 2)}
+        return self.build_goals_payload(
+            unit_goals=unit_goals,
+            goal_value=calculated.goal_value,
+            department_id=calculated.department_id,
+        )
+
+    def build_goals_payload(
+        self,
+        *,
+        unit_goals: dict[str, float | None] | None,
+        goal_value: float | None,
+        department_id: str | None = None,
+    ) -> dict[str, float | None]:
+        if is_consolidated_aggregation_department(department_id):
+            if goal_value is None:
+                return {}
+            return {"consolidated": goal_value}
+
+        if unit_goals:
+            return dict(unit_goals)
+
+        if goal_value is None:
+            return {}
+
+        return {"consolidated": goal_value}
 
     def indicator_has_value(self, value: float | None) -> bool:
         return value is not None
@@ -1184,6 +1364,7 @@ class StrategicIndicatorsCalculator:
         self,
         *,
         monthly_targets: list[dict],
+        goal_periodicity: str,
         start_date: str | None,
         end_date: str | None,
         competence: str | None,
@@ -1191,22 +1372,39 @@ class StrategicIndicatorsCalculator:
         if not monthly_targets:
             return 0.0
 
-        targets_by_month: dict[int, float] = {}
-        for item in monthly_targets:
-            month_number = int(item.get("month_number") or 0)
-            if month_number < 1 or month_number > 12:
-                continue
-            targets_by_month[month_number] = float(item.get("target_value") or 0)
+        from si_app.application.services.strategic_indicators.goal_value_policy import (
+            curve_point_indices_for_calendar_months,
+            expected_monthly_curve_points,
+            parse_year_from_competence,
+        )
 
-        month_numbers = self._resolve_period_month_numbers(
+        max_points = expected_monthly_curve_points(goal_periodicity)
+        targets_by_point: dict[int, float] = {}
+        for item in monthly_targets:
+            point_number = int(item.get("month_number") or 0)
+            if point_number < 1 or point_number > max_points:
+                continue
+            targets_by_point[point_number] = float(item.get("target_value") or 0)
+
+        calendar_months = self._resolve_period_month_numbers(
             start_date=start_date,
             end_date=end_date,
             competence=competence,
         )
+        year = parse_year_from_competence(competence)
+        if year is None and start_date:
+            parsed_start = self._parse_date(start_date)
+            if parsed_start is not None:
+                year = parsed_start.year
+
+        point_indices = curve_point_indices_for_calendar_months(
+            goal_periodicity,
+            calendar_months,
+            year=year or 2026,
+        )
 
         comparable_goal = sum(
-            targets_by_month.get(month_number, 0.0)
-            for month_number in month_numbers
+            targets_by_point.get(point_number, 0.0) for point_number in point_indices
         )
         return round(comparable_goal, 2)
 

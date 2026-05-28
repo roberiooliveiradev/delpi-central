@@ -31,6 +31,18 @@ import type {
 
 import "./AdminToolsTab.css";
 
+function healthStatusClass(status: string): string {
+  if (status === "ok") {
+    return "mdc-admin-badge--success";
+  }
+
+  if (status === "warning") {
+    return "mdc-admin-badge--muted";
+  }
+
+  return "mdc-admin-badge--danger";
+}
+
 type AdminToolsTabProps = {
   llmStatus?: AdminLlmStatus | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -171,30 +183,34 @@ export function AdminToolsTab({
 
   return (
     <section className="mdc-admin-tools-tab">
-      <header className="mdc-admin-tools-tab__hero">
-        <div>
-          <p className="mdc-chat-eyebrow">Ferramentas</p>
-          <h2>Operação de tools e actions</h2>
-          <p>
-            Monitore providers, actions, saúde operacional e permissões preparadas para o uso seguro pelo chat.
-          </p>
-        </div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Ferramentas</p>
+            <h2>Operação de tools e actions</h2>
+            <p>
+              Monitore providers, actions, saúde operacional e permissões preparadas para o uso
+              seguro pelo chat.
+            </p>
+          </div>
 
-        <button
-          type="button"
-          disabled={isLoading || !canUseTools}
-          title={
-            canUseTools
-              ? "Atualizar ferramentas"
-              : "Você não tem permissão para visualizar/usar ferramentas."
-          }
-          onClick={() => {
-            void loadTools();
-          }}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            disabled={isLoading || !canUseTools}
+            title={
+              canUseTools
+                ? "Atualizar ferramentas"
+                : "Você não tem permissão para visualizar/usar ferramentas."
+            }
+            onClick={() => {
+              void loadTools();
+            }}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar"}
+          </button>
+        </header>
+      </article>
 
       {error ? (
         <div className="mdc-admin-tools-tab__error" role="alert">
@@ -202,125 +218,126 @@ export function AdminToolsTab({
         </div>
       ) : null}
 
-      <div className="mdc-admin-tools-tab__grid">
-        <article className="mdc-admin-tools-card">
-          <div>
-            <p className="mdc-chat-eyebrow">LLM</p>
-            <h3>Status do modelo</h3>
-          </div>
-
+      <div className="mdc-admin-tools-tab__llm-row">
+        <article className="mdc-admin-kpi-card">
+          <p className="mdc-chat-eyebrow">LLM</p>
+          <h3>Status do modelo</h3>
           <strong>{llmStatus?.provider || llmStatus?.model ? "Configurado" : "Indisponível"}</strong>
           <p>
             {llmStatus?.provider ?? "Provider não informado"} ·{" "}
             {llmStatus?.model ?? "Modelo não informado"}
           </p>
         </article>
-
-        <article className="mdc-admin-tools-card">
-          <div>
-            <p className="mdc-chat-eyebrow">Health checks</p>
-            <h3>Saúde das ferramentas</h3>
-          </div>
-
-          {!health || health.items.length === 0 ? (
-            <p>Nenhum health check retornado.</p>
-          ) : (
-            <ul>
-              {health.items.map((item) => (
-                <li key={item.id}>
-                  <div>
-                    <strong>{item.label}</strong>
-                    <small>{item.description}</small>
-                  </div>
-                  <span className={`is-${item.status}`}>{item.status}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </article>
       </div>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel">
+        <h3 className="mdc-admin-tools-tab__section-title">Saúde das ferramentas</h3>
+
+        {!health || health.items.length === 0 ? (
+          <p className="mdc-chat-muted">Nenhum health check retornado.</p>
+        ) : (
+          <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list">
+            {health.items.map((item) => (
+              <article key={item.id} className="mdc-admin-entity-row">
+                <div className="mdc-admin-entity-row__body">
+                  <div className="mdc-admin-entity-row__title-line">
+                    <strong>{item.label}</strong>
+                    <span className={`mdc-admin-badge ${healthStatusClass(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="mdc-admin-entity-row__detail">{item.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </article>
+
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Providers OpenAPI</p>
-          <h3>Providers cadastrados</h3>
-        </div>
+          <h2>Providers cadastrados</h2>
+        </header>
 
         {chatProviders.length === 0 ? (
-          <p>Nenhum provider real retornado pelo backend.</p>
+          <p className="mdc-chat-muted">Nenhum provider real retornado pelo backend.</p>
         ) : (
-          <div className="mdc-admin-tools-tab__providers">
+          <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list">
             {chatProviders.map((provider) => (
-              <section key={provider.providerKey}>
-                <div>
-                  <strong>{provider.name}</strong>
-                  <small>{provider.providerKey}</small>
-                </div>
-
-                <dl>
-                  <div>
-                    <dt>Tipo</dt>
-                    <dd>{provider.type ?? "openapi"}</dd>
-                  </div>
-                  <div>
-                    <dt>Status</dt>
-                    <dd className={provider.enabled ? "is-ok" : "is-warning"}>
+              <article key={provider.providerKey} className="mdc-admin-entity-row">
+                <div className="mdc-admin-entity-row__body">
+                  <div className="mdc-admin-entity-row__title-line">
+                    <strong>{provider.name}</strong>
+                    <span
+                      className={`mdc-admin-badge ${
+                        provider.enabled ? "mdc-admin-badge--success" : "mdc-admin-badge--muted"
+                      }`}
+                    >
                       {provider.enabled ? "ativo" : "inativo"}
-                    </dd>
+                    </span>
                   </div>
-                  <div>
-                    <dt>Base URL</dt>
-                    <dd>{provider.baseUrl ?? "não informado"}</dd>
+                  <div className="mdc-admin-entity-row__meta">
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {provider.type ?? "openapi"}
+                    </span>
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {provider.providerKey}
+                    </span>
                   </div>
-                </dl>
-              </section>
+                  <p className="mdc-admin-entity-row__detail">
+                    {provider.baseUrl ?? "Base URL não informada"}
+                  </p>
+                </div>
+              </article>
             ))}
           </div>
         )}
       </article>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Catálogo real</p>
-          <h3>Actions disponíveis</h3>
-        </div>
+          <h2>Actions disponíveis</h2>
+          <p className="mdc-chat-muted">
+            Rotas OpenAPI registradas no backend ({chatActions.length} action(s)).
+          </p>
+        </header>
 
         {chatActions.length === 0 ? (
-          <p>Nenhuma action real retornada pelo backend.</p>
+          <p className="mdc-chat-muted">Nenhuma action real retornada pelo backend.</p>
         ) : (
-          <div className="mdc-admin-tools-tab__actions">
+          <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list mdc-admin-tools-tab__entity-list--tall">
             {chatActions.map((action) => (
-              <section key={action.id}>
-                <div>
-                  <strong>{action.summary ?? action.operationId ?? action.actionId}</strong>
-                  <small>{action.actionId}</small>
+              <article key={action.id} className="mdc-admin-entity-row">
+                <div className="mdc-admin-entity-row__body">
+                  <div className="mdc-admin-entity-row__title-line">
+                    <strong>
+                      {action.summary ?? action.operationId ?? action.actionId}
+                    </strong>
+                  </div>
+                  <div className="mdc-admin-entity-row__meta">
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {action.method ?? "—"}
+                    </span>
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {action.sensitivity ?? "—"}
+                    </span>
+                  </div>
+                  <p className="mdc-admin-entity-row__detail">{action.path ?? "—"}</p>
+                  <small className="mdc-admin-entity-row__detail">{action.actionId}</small>
                 </div>
-
-                <dl>
-                  <div>
-                    <dt>Método</dt>
-                    <dd>{action.method ?? "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Path</dt>
-                    <dd>{action.path ?? "—"}</dd>
-                  </div>
-                  <div>
-                    <dt>Risco</dt>
-                    <dd>{action.sensitivity ?? "não informado"}</dd>
-                  </div>
-                </dl>
-              </section>
+              </article>
             ))}
           </div>
         )}
       </article>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Por agente</p>
-          <h3>Providers e actions vinculadas</h3>
-        </div>
+          <h2>Providers e actions vinculadas</h2>
+        </header>
 
         {!canManageTools ? (
           <div className="mdc-admin-tools-tab__error" role="note">
@@ -328,7 +345,7 @@ export function AdminToolsTab({
           </div>
         ) : null}
 
-        <label className="mdc-admin-tools-tab__agent-select">
+        <label className="mdc-admin-field mdc-admin-tools-tab__agent-select">
           <span>Agente</span>
           <select
             value={selectedAgentId}
@@ -354,42 +371,65 @@ export function AdminToolsTab({
               <section>
                 <h4>Providers do agente</h4>
                 {agentProviders.length === 0 ? (
-                  <p>Nenhum provider vinculado.</p>
+                  <p className="mdc-chat-muted">Nenhum provider vinculado.</p>
                 ) : (
-                  <ul>
+                  <div className="mdc-admin-entity-list">
                     {agentProviders.map((provider) => (
-                      <li key={provider.providerKey}>
-                        <div>
-                          <strong>{provider.providerName ?? provider.providerKey}</strong>
-                          <small>{provider.providerKey}</small>
+                      <article key={provider.providerKey} className="mdc-admin-entity-row">
+                        <div className="mdc-admin-entity-row__body">
+                          <div className="mdc-admin-entity-row__title-line">
+                            <strong>{provider.providerName ?? provider.providerKey}</strong>
+                            <span
+                              className={`mdc-admin-badge ${
+                                provider.enabled
+                                  ? "mdc-admin-badge--success"
+                                  : "mdc-admin-badge--muted"
+                              }`}
+                            >
+                              {provider.enabled ? "ativo" : "inativo"}
+                            </span>
+                          </div>
+                          <small className="mdc-admin-entity-row__detail">
+                            {provider.providerKey}
+                          </small>
                         </div>
-                        <span className={provider.enabled ? "is-ok" : "is-warning"}>
-                          {provider.enabled ? "ativo" : "inativo"}
-                        </span>
-                      </li>
+                      </article>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </section>
 
               <section>
                 <h4>Actions do agente</h4>
                 {agentActions.length === 0 ? (
-                  <p>Nenhuma action vinculada.</p>
+                  <p className="mdc-chat-muted">Nenhuma action vinculada.</p>
                 ) : (
-                  <ul>
+                  <div className="mdc-admin-entity-list">
                     {agentActions.map((action) => (
-                      <li key={`${action.providerKey}:${action.actionId}`}>
-                        <div>
-                          <strong>{action.actionId}</strong>
-                          <small>{action.providerKey}</small>
+                      <article
+                        key={`${action.providerKey}:${action.actionId}`}
+                        className="mdc-admin-entity-row"
+                      >
+                        <div className="mdc-admin-entity-row__body">
+                          <div className="mdc-admin-entity-row__title-line">
+                            <strong>{action.actionId}</strong>
+                            <span
+                              className={`mdc-admin-badge ${
+                                action.enabled
+                                  ? "mdc-admin-badge--success"
+                                  : "mdc-admin-badge--muted"
+                              }`}
+                            >
+                              {action.enabled ? "ativa" : "inativa"}
+                            </span>
+                          </div>
+                          <small className="mdc-admin-entity-row__detail">
+                            {action.providerKey}
+                          </small>
                         </div>
-                        <span className={action.enabled ? "is-ok" : "is-warning"}>
-                          {action.enabled ? "ativa" : "inativa"}
-                        </span>
-                      </li>
+                      </article>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </section>
             </div>
@@ -400,7 +440,7 @@ export function AdminToolsTab({
                 <p>Consulte os últimos testes registrados para uma action vinculada ao agente.</p>
               </div>
 
-              <label className="mdc-admin-tools-tab__agent-select">
+              <label className="mdc-admin-field mdc-admin-tools-tab__agent-select">
                 <span>Action</span>
                 <select
                   value={selectedAgentActionKey}
@@ -428,36 +468,32 @@ export function AdminToolsTab({
               ) : null}
 
               {actionLogs.length > 0 ? (
-                <div className="mdc-admin-tools-tab__log-list">
+                <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list">
                   {actionLogs.map((log) => (
-                    <article key={log.id}>
-                      <div>
-                        <strong className={log.ok ? "is-ok" : "is-error"}>
-                          {log.ok ? "OK" : "Erro"}
-                        </strong>
-                        <span>{log.statusCode ?? "sem status"}</span>
+                    <article key={log.id} className="mdc-admin-entity-row">
+                      <div className="mdc-admin-entity-row__body">
+                        <div className="mdc-admin-entity-row__title-line">
+                          <strong>
+                            {log.providerKey} · {log.actionId}
+                          </strong>
+                          <span
+                            className={`mdc-admin-badge ${
+                              log.ok ? "mdc-admin-badge--success" : "mdc-admin-badge--danger"
+                            }`}
+                          >
+                            {log.ok ? "OK" : "Erro"} · {log.statusCode ?? "—"}
+                          </span>
+                        </div>
+                        <p className="mdc-admin-entity-row__detail">
+                          {log.durationMs}ms ·{" "}
+                          {log.createdAt
+                            ? new Date(log.createdAt).toLocaleString("pt-BR")
+                            : "sem data"}
+                        </p>
+                        {log.errorMessage ? (
+                          <p className="mdc-admin-entity-row__detail">{log.errorMessage}</p>
+                        ) : null}
                       </div>
-
-                      <dl>
-                        <div>
-                          <dt>Provider</dt>
-                          <dd>{log.providerKey}</dd>
-                        </div>
-                        <div>
-                          <dt>Action</dt>
-                          <dd>{log.actionId}</dd>
-                        </div>
-                        <div>
-                          <dt>Duração</dt>
-                          <dd>{log.durationMs}ms</dd>
-                        </div>
-                        <div>
-                          <dt>Data</dt>
-                          <dd>{log.createdAt ?? "sem data"}</dd>
-                        </div>
-                      </dl>
-
-                      {log.errorMessage ? <p>{log.errorMessage}</p> : null}
                     </article>
                   ))}
                 </div>
@@ -467,76 +503,77 @@ export function AdminToolsTab({
         ) : null}
       </article>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Actions</p>
-          <h3>Catálogo operacional</h3>
-        </div>
+          <h2>Catálogo operacional</h2>
+          <p className="mdc-chat-muted">Uso e status das actions externas no período recente.</p>
+        </header>
 
         {actions.length === 0 ? (
-          <p>Nenhuma action externa cadastrada ou disponível.</p>
+          <p className="mdc-chat-muted">Nenhuma action externa cadastrada ou disponível.</p>
         ) : (
-          <div className="mdc-admin-tools-tab__actions">
+          <div className="mdc-admin-entity-list mdc-admin-tools-tab__entity-list">
             {actions.map((action) => (
-              <section key={action.id}>
-                <div>
-                  <strong>{action.name}</strong>
-                  <small>{action.provider}</small>
+              <article key={action.id} className="mdc-admin-entity-row">
+                <div className="mdc-admin-entity-row__body">
+                  <div className="mdc-admin-entity-row__title-line">
+                    <strong>{action.name}</strong>
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {action.status}
+                    </span>
+                  </div>
+                  <div className="mdc-admin-entity-row__meta">
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {action.provider}
+                    </span>
+                    <span className="mdc-admin-badge mdc-admin-badge--muted">
+                      {action.calls24h} chamada(s) / 24h
+                    </span>
+                  </div>
+                  <p className="mdc-admin-entity-row__detail">
+                    Última execução: {action.lastRunAt ?? "sem registro"}
+                  </p>
                 </div>
-
-                <dl>
-                  <div>
-                    <dt>Status</dt>
-                    <dd className={`is-${action.status}`}>{action.status}</dd>
-                  </div>
-                  <div>
-                    <dt>Chamadas 24h</dt>
-                    <dd>{action.calls24h}</dd>
-                  </div>
-                  <div>
-                    <dt>Última execução</dt>
-                    <dd>{action.lastRunAt ?? "Sem registro"}</dd>
-                  </div>
-                </dl>
-              </section>
+              </article>
             ))}
           </div>
         )}
       </article>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Permissões</p>
-          <h3>Capacidades do usuário atual</h3>
-        </div>
+          <h2>Capacidades do usuário atual</h2>
+        </header>
 
         {!capabilities ? (
-          <p>Capacidades ainda não carregadas.</p>
+          <p className="mdc-chat-muted">Capacidades ainda não carregadas.</p>
         ) : (
           <>
             <div className="mdc-admin-tools-tab__permission-grid">
-              <section>
+              <article>
                 <strong>{capabilities.canManageTools ? "Sim" : "Não"}</strong>
                 <span>Gerencia tools</span>
-              </section>
+              </article>
 
-              <section>
+              <article>
                 <strong>{capabilities.canUseTools ? "Sim" : "Não"}</strong>
                 <span>Usa tools</span>
-              </section>
+              </article>
 
-              <section>
+              <article>
                 <strong>{capabilities.canManageAgents ? "Sim" : "Não"}</strong>
                 <span>Gerencia agentes</span>
-              </section>
+              </article>
 
-              <section>
+              <article>
                 <strong>{capabilities.canManageOfficialAgents ? "Sim" : "Não"}</strong>
                 <span>Agentes oficiais</span>
-              </section>
+              </article>
             </div>
 
-            <ul>
+            <ul className="mdc-admin-tools-tab__capabilities-list">
               <li>
                 <strong>Permissões detectadas</strong>
                 <small>

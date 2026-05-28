@@ -7,6 +7,7 @@ from app.infrastructure.content.content_service import ContentService
 
 SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
+COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
 
 
 @dataclass(frozen=True)
@@ -21,10 +22,16 @@ class ChatSkillDefinition:
     legacy_metadata_flag: str | None = None
     execution_path_hint: str | None = None
     execution_derived_key: str | None = None
+    policy_content: str | None = None
+    catalog_id: str | None = None
+    is_active: bool = True
 
 
-@lru_cache(maxsize=1)
-def _skills() -> tuple[ChatSkillDefinition, ...]:
+def invalidate_skill_cache() -> None:
+    _skills.cache_clear()
+
+
+def _skills_from_json() -> tuple[ChatSkillDefinition, ...]:
     catalog = ContentService.skills_catalog()
     items = catalog.get("skills") or []
     parsed: list[ChatSkillDefinition] = []
@@ -59,6 +66,65 @@ def _skills() -> tuple[ChatSkillDefinition, ...]:
     return tuple(parsed)
 
 
+def _definition_from_row(row: dict) -> ChatSkillDefinition:
+    return ChatSkillDefinition(
+        key=str(row.get("skillKey") or "").strip().lower(),
+        label=str(row.get("label") or ""),
+        description=str(row.get("description") or ""),
+        policy_file=str(row.get("policyFile") or ""),
+        metadata_flag=str(row.get("metadataFlag") or "enabled"),
+        legacy_metadata_flag=row.get("legacyMetadataFlag"),
+        execution_path_hint=row.get("executionPathHint"),
+        execution_derived_key=row.get("executionDerivedKey"),
+        policy_content=row.get("policyContent"),
+        catalog_id=row.get("id"),
+        is_active=bool(row.get("isActive", True)),
+    )
+
+
+@lru_cache(maxsize=1)
+def _skills() -> tuple[ChatSkillDefinition, ...]:
+    try:
+        from flask import has_app_context
+
+        if has_app_context():
+            from app.infrastructure.persistence.postgres_chat_skill_repository import (
+                PostgresChatSkillRepository,
+            )
+
+            rows = PostgresChatSkillRepository().list_active()
+
+            # Importante: o catálogo no banco pode estar incompleto em ambientes novos.
+            # Para manter defaults (ex.: `company-knowledge`) e evitar regressões,
+            # fazemos merge com o catálogo embarcado (JSON). O DB tem precedência.
+            json_defs = list(_skills_from_json())
+            json_by_key = {d.key: d for d in json_defs}
+
+            db_defs = [_definition_from_row(row) for row in (rows or []) if isinstance(row, dict)]
+            db_by_key = {d.key: d for d in db_defs if d.key}
+
+            merged: list[ChatSkillDefinition] = []
+            seen: set[str] = set()
+
+            # Preserva a ordem do DB (sort_order/label) e complementa com JSON.
+            for d in db_defs:
+                if d.key and d.key not in seen:
+                    merged.append(d)
+                    seen.add(d.key)
+
+            for key, d in json_by_key.items():
+                if key and key not in seen:
+                    merged.append(d)
+                    seen.add(key)
+
+            if merged:
+                return tuple(merged)
+    except Exception:
+        pass
+
+    return _skills_from_json()
+
+
 class ChatSkillRegistry:
     @classmethod
     def list_catalog(cls) -> list[dict]:
@@ -73,6 +139,23 @@ class ChatSkillRegistry:
                 return item
 
         return None
+
+    @classmethod
+    def get_policy_content(cls, skill_key: str) -> str:
+        definition = cls.get(skill_key)
+
+        if not definition:
+            return ""
+
+        if definition.policy_content and definition.policy_content.strip():
+            return definition.policy_content.strip()
+
+        if definition.policy_file:
+            from app.domain.services.prompt_policy_service import PromptPolicyService
+
+            return PromptPolicyService._load_policy(definition.policy_file, "")
+
+        return ""
 
     @classmethod
     def list_known_keys(cls) -> list[str]:
@@ -115,6 +198,7 @@ class ChatSkillRegistry:
         allowed_action_ids: list[str] | None = None,
         has_agent: bool = False,
         default_sql_authoring: bool = False,
+        default_company_knowledge: bool = True,
     ) -> list[dict]:
         allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
         bindings: list[dict] = []
@@ -129,6 +213,13 @@ class ChatSkillRegistry:
                 definition,
             ):
                 enabled = False
+            elif definition.key == COMPANY_KNOWLEDGE_SKILL_KEY and not has_agent:
+                enabled = default_company_knowledge
+            elif definition.key == COMPANY_KNOWLEDGE_SKILL_KEY and has_agent and not cls._has_explicit_config(
+                agent_metadata,
+                definition,
+            ):
+                enabled = default_company_knowledge
 
             derived: dict[str, bool] = {}
 
@@ -157,17 +248,20 @@ class ChatSkillRegistry:
         allowed_action_ids: list[str] | None = None,
         has_agent: bool = False,
         default_sql_authoring: bool = False,
+        default_company_knowledge: bool = True,
     ) -> dict:
         bindings = cls.list_agent_bindings(
             agent_metadata=agent_metadata,
             allowed_action_ids=allowed_action_ids,
             has_agent=has_agent,
             default_sql_authoring=default_sql_authoring,
+            default_company_knowledge=default_company_knowledge,
         )
 
         resolved = {
             "sqlAuthoring": False,
             "sqlExecutionAvailable": False,
+            "companyKnowledge": False,
         }
 
         for item in bindings:
@@ -176,12 +270,14 @@ class ChatSkillRegistry:
                 resolved["sqlExecutionAvailable"] = bool(
                     (item.get("derived") or {}).get("sqlExecutionAvailable")
                 )
+            if item["skillKey"] == COMPANY_KNOWLEDGE_SKILL_KEY:
+                resolved["companyKnowledge"] = bool(item["enabled"])
 
         return resolved
 
     @classmethod
     def _definition_to_catalog(cls, definition: ChatSkillDefinition) -> dict:
-        return {
+        payload = {
             "skillKey": definition.key,
             "label": definition.label,
             "description": definition.description,
@@ -189,6 +285,11 @@ class ChatSkillRegistry:
             "metadataFlag": definition.metadata_flag,
             "executionHint": definition.execution_path_hint,
         }
+
+        if definition.catalog_id:
+            payload["id"] = definition.catalog_id
+
+        return payload
 
     @classmethod
     def _read_enabled(cls, agent_metadata: dict | None, definition: ChatSkillDefinition) -> bool:

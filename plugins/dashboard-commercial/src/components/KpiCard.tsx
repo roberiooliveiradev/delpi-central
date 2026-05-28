@@ -5,11 +5,14 @@ import type { GoalPerformanceBadge, GoalScopeBadge } from "../utils/goalDisplay"
 type KpiCardProps = {
   title: string;
   value: string;
+  valueVariant?: "default" | "per-unit";
   contextLabel?: string;
   goalLabel?: string | null;
   goalScopeBadge?: GoalScopeBadge | null;
   goalScopeHint?: string | null;
   goalPerformanceBadge?: GoalPerformanceBadge | null;
+  goalPerformanceBadges?: GoalPerformanceBadge[];
+  goalVariant?: "default" | "per-unit";
   subtitle?: string;
   icon: ReactNode;
   loading?: boolean;
@@ -18,11 +21,14 @@ type KpiCardProps = {
 export function KpiCard({
   title,
   value,
+  valueVariant = "default",
   contextLabel,
   goalLabel = null,
   goalScopeBadge = null,
   goalScopeHint = null,
   goalPerformanceBadge = null,
+  goalPerformanceBadges = [],
+  goalVariant = "default",
   subtitle,
   icon,
   loading = false,
@@ -30,16 +36,32 @@ export function KpiCard({
   const resolvedGoal = goalLabel ?? null;
   const resolvedContext = subtitle ?? contextLabel ?? "";
   const resolvedScopeHint = goalScopeHint?.trim() || null;
-  const hasBadges = Boolean(goalScopeBadge || resolvedScopeHint || goalPerformanceBadge);
+  const performanceBadges =
+    goalPerformanceBadges.length > 0
+      ? goalPerformanceBadges
+      : goalPerformanceBadge
+        ? [goalPerformanceBadge]
+        : [];
+  const hasBadges = Boolean(
+    goalScopeBadge || resolvedScopeHint || performanceBadges.length > 0,
+  );
+  const valueClassName =
+    valueVariant === "per-unit"
+      ? "dc-kpi-value dc-kpi-value--per-unit"
+      : "dc-kpi-value";
+  const goalClassName =
+    goalVariant === "per-unit"
+      ? "dc-kpi-goal dc-kpi-goal--per-unit"
+      : "dc-kpi-goal";
 
   return (
     <article className="dc-card dc-kpi-card">
       <div className="dc-kpi-header">
         <div>
           <p className="dc-kpi-title">{title}</p>
-          <h3 className="dc-kpi-value">{loading ? "…" : value}</h3>
+          <h3 className={valueClassName}>{loading ? "…" : value}</h3>
           {resolvedGoal ? (
-            <p className="dc-kpi-goal">
+            <p className={goalClassName}>
               <span className="dc-kpi-goal-prefix">Meta</span> {resolvedGoal}
             </p>
           ) : null}
@@ -55,18 +77,18 @@ export function KpiCard({
               {resolvedScopeHint ? (
                 <span className="dc-kpi-badge dc-kpi-badge--info">{resolvedScopeHint}</span>
               ) : null}
-              {goalPerformanceBadge ? (
-                <>
+              {performanceBadges.map((badge, index) => (
+                <span key={`${badge.statusLabel}-${index}`} className="dc-kpi-badge-group">
                   <span
-                    className={`dc-kpi-badge dc-kpi-badge--${goalPerformanceBadge.tone}`}
+                    className={`dc-kpi-badge dc-kpi-badge--${badge.tone}`}
                   >
-                    {goalPerformanceBadge.statusLabel}
+                    {badge.statusLabel}
                   </span>
                   <span className="dc-kpi-badge dc-kpi-badge--direction">
-                    {goalPerformanceBadge.directionLabel}
+                    {badge.directionLabel}
                   </span>
-                </>
-              ) : null}
+                </span>
+              ))}
             </div>
           ) : null}
           <span className="dc-kpi-context">{resolvedContext}</span>

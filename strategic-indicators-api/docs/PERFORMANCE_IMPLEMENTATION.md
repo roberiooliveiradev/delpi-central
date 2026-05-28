@@ -2,7 +2,9 @@
 
 Documento de referência para implementação incremental. Atualizar **Status** e **Checklist** a cada entrega.
 
-**Última atualização:** 2026-05-18 (doc SI consolidada)  
+**Última atualização:** 2026-05-28 (mapa de gargalos api-delpi)
+
+**Mapa de gargalos (refresh / api-delpi):** `docs/SI_BOTTLENECK_MAP.md`  
 **Baseline medido:** `GET /strategic-indicators/executive-summary?competence=2026-05` ≈ **19s** → **~10s** (2 períodos em paralelo com providers isolados).  
 **Trends (3 meses):** ~28s (série sequencial por dept) → **~9–10s** (períodos em paralelo com factory, até 3 workers).
 
@@ -171,6 +173,7 @@ PROIBIDO:
 | `SI_PERIOD_SCORES_ENABLED` | `true` | Lê/grava `period_scores` nas rotas de leitura |
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Scheduler recalcula scores a cada N segundos |
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (mín. 60s) |
+| `SI_PERSIST_CALCULATION_SNAPSHOTS_ON_READ` | `false` | Em leituras HTTP, grava só `period_scores` (refresh materializa `calculation_snapshots`) |
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (consolidado) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `true` | Mês atual por departamento |
 | `SI_PERIOD_SCORES_REFRESH_INCLUDE_PREVIOUS` | `true` | Garante comparativo mês anterior |

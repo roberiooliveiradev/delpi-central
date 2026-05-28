@@ -12,6 +12,8 @@ import type {
   AdminResponseCandidate,
 } from "../../../../data/api/adminTypes";
 
+import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+
 import "./AdminEvaluationsTab.css";
 
 type AdminEvaluationsTabProps = {
@@ -117,47 +119,50 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
   return (
     <section className="mdc-admin-evaluations">
-      <header className="mdc-admin-evaluations__header">
-        <div>
-          <h2>Avaliação de respostas</h2>
-          <p className="mdc-chat-muted">
-            Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para
-            conhecimento e diretrizes.
-          </p>
-        </div>
-
-        {summary ? (
-          <div className="mdc-admin-evaluations__summary">
-            <article>
-              <span>Total</span>
-              <strong>{summary.total}</strong>
-            </article>
-            <article>
-              <span>Média</span>
-              <strong>{summary.averageScore ?? "—"}</strong>
-            </article>
-            <article>
-              <span>Úteis</span>
-              <strong>
-                {summary.helpfulRate !== null && summary.helpfulRate !== undefined
-                  ? `${Math.round(summary.helpfulRate * 100)}%`
-                  : "—"}
-              </strong>
-            </article>
-            <article>
-              <span>Hoje</span>
-              <strong>{summary.recent24h}</strong>
-            </article>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Qualidade</p>
+            <h2>Avaliação de respostas</h2>
+            <p>
+              Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para
+              conhecimento e diretrizes.
+            </p>
           </div>
-        ) : null}
-      </header>
+
+          {summary ? (
+            <div className="mdc-admin-kpi-grid mdc-admin-evaluations__summary">
+              <article className="mdc-admin-kpi-card">
+                <h3>Total</h3>
+                <strong>{summary.total}</strong>
+              </article>
+              <article className="mdc-admin-kpi-card">
+                <h3>Média</h3>
+                <strong>{summary.averageScore ?? "—"}</strong>
+              </article>
+              <article className="mdc-admin-kpi-card">
+                <h3>Úteis</h3>
+                <strong>
+                  {summary.helpfulRate !== null && summary.helpfulRate !== undefined
+                    ? `${Math.round(summary.helpfulRate * 100)}%`
+                    : "—"}
+                </strong>
+              </article>
+              <article className="mdc-admin-kpi-card">
+                <h3>Hoje</h3>
+                <strong>{summary.recent24h}</strong>
+              </article>
+            </div>
+          ) : null}
+        </header>
+      </article>
 
       {error ? <p className="mdc-admin-evaluations__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-evaluations__success">{successMessage}</p> : null}
 
-      <div className="mdc-admin-evaluations__layout">
-        <aside className="mdc-admin-evaluations__candidates">
-          <label>
+      <div className="mdc-admin-evaluations__layout mdc-admin-split">
+        <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-evaluations__candidates">
+          <label className="mdc-admin-field">
             <span>Buscar respostas</span>
             <input
               value={search}
@@ -166,38 +171,51 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
             />
           </label>
 
-          <button type="button" disabled={isLoading} onClick={() => void loadCandidates()}>
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            disabled={isLoading}
+            onClick={() => void loadCandidates()}
+          >
             {isLoading ? "Carregando..." : "Atualizar lista"}
           </button>
 
-          <ul>
+          <div className="mdc-admin-entity-list mdc-admin-evaluations__candidate-list">
             {candidates.map((candidate) => (
-              <li key={candidate.messageId}>
-                <button
-                  type="button"
-                  className={
-                    selectedMessageId === candidate.messageId
-                      ? "is-selected"
-                      : undefined
-                  }
-                  onClick={() => {
-                    setSelectedMessageId(candidate.messageId);
-                    setScore(candidate.evaluation?.score ?? 3);
-                    setComment(candidate.evaluation?.comment ?? "");
-                  }}
-                >
-                  <strong>{candidate.evaluation ? `★ ${candidate.evaluation.score}` : "Sem nota"}</strong>
-                  <p>{candidate.contentPreview}</p>
-                  <small>
+              <button
+                key={candidate.messageId}
+                type="button"
+                className={[
+                  "mdc-admin-evaluations__candidate",
+                  selectedMessageId === candidate.messageId ? "is-selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => {
+                  setSelectedMessageId(candidate.messageId);
+                  setScore(candidate.evaluation?.score ?? 3);
+                  setComment(candidate.evaluation?.comment ?? "");
+                }}
+              >
+                <div className="mdc-admin-entity-row__body">
+                  <div className="mdc-admin-entity-row__title-line">
+                    <strong>
+                      {candidate.evaluation
+                        ? `★ ${candidate.evaluation.score}`
+                        : "Sem nota"}
+                    </strong>
+                  </div>
+                  <p className="mdc-admin-entity-row__detail">{candidate.contentPreview}</p>
+                  <small className="mdc-admin-entity-row__detail">
                     {candidate.sourceCount} fonte(s) · {candidate.guidelineCount} diretriz(es)
                   </small>
-                </button>
-              </li>
+                </div>
+              </button>
             ))}
-          </ul>
+          </div>
         </aside>
 
-        <article className="mdc-admin-evaluations__detail">
+        <article className="mdc-admin-split__main mdc-admin-panel mdc-admin-evaluations__detail">
           {!selectedMessageId || !context ? (
             <p className="mdc-chat-muted">Selecione uma resposta do assistente para avaliar.</p>
           ) : (
@@ -228,7 +246,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                 </div>
               </div>
 
-              <label>
+              <label className="mdc-admin-field">
                 <span>Comentário (opcional)</span>
                 <textarea
                   value={comment}
@@ -238,14 +256,12 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                 />
               </label>
 
-              <label className="mdc-admin-evaluations__llm-toggle">
-                <input
-                  type="checkbox"
-                  checked={useLlmSuggestions}
-                  onChange={(event) => setUseLlmSuggestions(event.target.checked)}
-                />
-                <span>Enriquecer sugestões com LLM (mais lento)</span>
-              </label>
+              <AdminFormCheckbox
+                title="Enriquecer sugestões com LLM"
+                hint="Mais lento; gera sugestões adicionais com base no contexto da resposta."
+                checked={useLlmSuggestions}
+                onChange={(event) => setUseLlmSuggestions(event.target.checked)}
+              />
 
               <div className="mdc-admin-evaluations__suggestions">
                 <h3>Sugestões automáticas</h3>
@@ -272,7 +288,12 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
                 ))}
               </div>
 
-              <button type="button" disabled={isSaving} onClick={() => void handleSave()}>
+              <button
+                type="button"
+                className="mdc-admin-btn mdc-admin-btn--primary"
+                disabled={isSaving}
+                onClick={() => void handleSave()}
+              >
                 {isSaving ? "Salvando..." : "Salvar avaliação"}
               </button>
             </>

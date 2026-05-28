@@ -2,6 +2,9 @@ from uuid import UUID
 
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.services.agent_specialization_service import AgentSpecializationService
+from app.application.services.chat_intelligence_pipeline_service import (
+    ChatIntelligencePipelineService,
+)
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
@@ -38,17 +41,31 @@ class AdminAgentSimulateUseCase:
         execute_tools_in_sandbox: bool = False,
         user_id: str | None = None,
         access_token: str | None = None,
+        agent_prompt_override: str | None = None,
+        agent_metadata_override: dict | None = None,
+        skip_enabled_check: bool = False,
     ) -> dict:
         normalized_question = str(question or "").strip()
 
         if not normalized_question:
             raise ValueError("question is required")
 
-        agent_prompt, agent_meta, specialization = self._resolve_agent(
-            agent_id=agent_id,
-            agent_key=agent_key,
-            user_id=user_id,
-        )
+        if agent_prompt_override is not None or agent_metadata_override is not None:
+            agent_prompt = agent_prompt_override
+            agent_meta = {
+                "id": agent_id,
+                "key": agent_key,
+            }
+            specialization = self.specialization_service.parse(
+                (agent_metadata_override or {}).get("specialization")
+            )
+        else:
+            agent_prompt, agent_meta, specialization = self._resolve_agent(
+                agent_id=agent_id,
+                agent_key=agent_key,
+                user_id=user_id,
+                skip_enabled_check=skip_enabled_check,
+            )
 
         filters: dict = {"include_global": True}
 
@@ -66,12 +83,17 @@ class AdminAgentSimulateUseCase:
         )
         history = self._load_session_history(session_id=session_id, user_id=user_id)
 
-        tool_context, planned_tool_calls = self._build_tool_context(
+        tool_context_payload, planned_tool_calls = self._build_tool_context(
             question=normalized_question,
             user_id=user_id,
             access_token=access_token,
             specialization=specialization,
             execute_tools_in_sandbox=execute_tools_in_sandbox,
+            previous_messages=history,
+        )
+        tool_context = str(tool_context_payload.get("context") or "")
+        analysis_mode = ChatIntelligencePipelineService.analysis_mode_from_tool_context(
+            tool_context_payload,
         )
 
         full_messages = self.prompt_builder_service.build_messages(
@@ -81,6 +103,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt=guidelines_prompt,
+            analysis_mode=analysis_mode,
         )
 
         without_guidelines_messages = self.prompt_builder_service.build_messages(
@@ -90,6 +113,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt="",
+            analysis_mode=analysis_mode,
         )
 
         without_rag_messages = self.prompt_builder_service.build_messages(
@@ -99,6 +123,7 @@ class AdminAgentSimulateUseCase:
             tool_context=tool_context,
             agent_prompt=agent_prompt,
             admin_guidelines_prompt=guidelines_prompt,
+            analysis_mode=analysis_mode,
         )
 
         system_prompt = self._system_prompt_from_messages(full_messages)
@@ -163,8 +188,11 @@ class AdminAgentSimulateUseCase:
             },
             "sessionHistory": [
                 {
-                    "role": item.get("role"),
-                    "contentPreview": self._safe_preview(str(item.get("content") or ""), limit=240),
+                    "role": getattr(item, "role", None),
+                    "contentPreview": self._safe_preview(
+                        str(getattr(item, "content", None) or ""),
+                        limit=240,
+                    ),
                 }
                 for item in history
             ],
@@ -223,11 +251,7 @@ class AdminAgentSimulateUseCase:
         messages = repository.list_messages_by_session(UUID(str(session_id)))
         tail = messages[-Settings.CHAT_HISTORY_MAX_MESSAGES :]
 
-        return [
-            {"role": message.role, "content": message.content}
-            for message in tail
-            if message.role in {"user", "assistant"}
-        ]
+        return [message for message in tail if message.role in {"user", "assistant"}]
 
     def _build_tool_context(
         self,
@@ -237,7 +261,8 @@ class AdminAgentSimulateUseCase:
         access_token: str | None,
         specialization: dict | None = None,
         execute_tools_in_sandbox: bool = False,
-    ) -> tuple[str, list[dict]]:
+        previous_messages: list | None = None,
+    ) -> tuple[dict, list[dict]]:
         if (
             execute_tools_in_sandbox
             and self.chat_tool_context_service
@@ -252,6 +277,7 @@ class AdminAgentSimulateUseCase:
                 message=question,
                 actions_enabled=True,
                 allowed_tool_names=allowed_tool_names,
+                previous_messages=previous_messages,
             )
 
             tool_calls = [
@@ -266,9 +292,9 @@ class AdminAgentSimulateUseCase:
                 for item in (result.get("toolCalls") or [])
             ]
 
-            return str(result.get("context") or ""), tool_calls
+            return result, tool_calls
 
-        return "", self._planned_tool_calls(question)
+        return {"context": ""}, self._planned_tool_calls(question)
 
     def _resolve_agent(
         self,
@@ -276,6 +302,7 @@ class AdminAgentSimulateUseCase:
         agent_id: str | None,
         agent_key: str | None,
         user_id: str | None,
+        skip_enabled_check: bool = False,
     ) -> tuple[str | None, dict | None, dict | None]:
         from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
         from app.infrastructure.persistence.postgres_chat_agent_repository import (
@@ -287,18 +314,26 @@ class AdminAgentSimulateUseCase:
 
         if agent_id:
             try:
-                model = AiChatAgentModel.query.filter(
+                query = AiChatAgentModel.query.filter(
                     AiChatAgentModel.id == UUID(str(agent_id)),
-                    AiChatAgentModel.enabled.is_(True),
-                ).first()
+                )
+
+                if not skip_enabled_check:
+                    query = query.filter(AiChatAgentModel.enabled.is_(True))
+
+                model = query.first()
             except ValueError:
                 model = None
 
         if not model and agent_key:
-            model = AiChatAgentModel.query.filter(
+            query = AiChatAgentModel.query.filter(
                 AiChatAgentModel.key == str(agent_key).strip(),
-                AiChatAgentModel.enabled.is_(True),
-            ).first()
+            )
+
+            if not skip_enabled_check:
+                query = query.filter(AiChatAgentModel.enabled.is_(True))
+
+            model = query.first()
 
         if not model:
             return None, None, None

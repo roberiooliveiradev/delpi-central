@@ -20,6 +20,14 @@ import {
   getGoalPeriodicityLabel,
   getGoalScopeBranchLabel,
 } from "../presentation/labels";
+import { formatAdminGoalMeta } from "../utils/goalValuePolicy";
+import {
+  buildYearSelectOptions,
+  pickSourceYearForTarget,
+  suggestYearBeforeLatest,
+} from "../utils/goalYearHelpers";
+import { buildGoalDuplicateSeed } from "../utils/goalDuplicateHelpers";
+import type { ScopeType } from "../../data/types/settings";
 import "./AdminGoalsWorkspace.css";
 
 type AdminGoalsWorkspaceProps = {
@@ -33,6 +41,7 @@ type CatalogIndicatorOption = {
   indicatorName: string;
   departmentId: string;
   departmentName: string;
+  scopeType: ScopeType;
 };
 
 export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps) {
@@ -52,9 +61,12 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
   const [bulkTool, setBulkTool] = useState<BulkToolMode>(null);
   const [goalDrawerOpen, setGoalDrawerOpen] = useState(false);
   const [editingGoal, setEditingGoal] = useState<StrategicIndicatorGoalItem | null>(null);
+  const [duplicatingGoal, setDuplicatingGoal] =
+    useState<StrategicIndicatorGoalItem | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
   const [sourceYear, setSourceYear] = useState(new Date().getFullYear() - 1);
+  const [duplicateTargetYear, setDuplicateTargetYear] = useState<number | null>(null);
   const [overwriteExisting, setOverwriteExisting] = useState(false);
   const [copyFromYear, setCopyFromYear] = useState(new Date().getFullYear() - 1);
 
@@ -106,6 +118,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
               departmentName:
                 departmentById.get(department.department_id) ??
                 department.department_name,
+              scopeType: indicator.scope_type,
             });
           });
         });
@@ -186,26 +199,71 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
     indicatorFilterOptions,
   ]);
 
+  const catalogYears = useMemo(
+    () => yearsOverview.items.map((item) => item.goal_year),
+    [yearsOverview.items],
+  );
+
+  const yearSelectOptions = useMemo(
+    () =>
+      buildYearSelectOptions(catalogYears, [
+        suggestYearBeforeLatest(catalogYears) ?? new Date().getFullYear(),
+        typeof selectedYear === "number" ? selectedYear : null,
+      ].filter((year): year is number => typeof year === "number")),
+    [catalogYears, selectedYear],
+  );
+
+  const indicatorCatalog = useMemo(
+    () =>
+      catalogIndicators.map((item) => ({
+        indicatorId: item.indicatorId,
+        scopeType: item.scopeType,
+      })),
+    [catalogIndicators],
+  );
+
   const selectedYearOverview = useMemo(
     () =>
       yearsOverview.items.find((item) => item.goal_year === selectedYear) ?? null,
     [yearsOverview.items, selectedYear],
   );
 
+  useEffect(() => {
+    if (typeof selectedYear !== "number") return;
+    const source = pickSourceYearForTarget(catalogYears, selectedYear);
+    setSourceYear(source);
+    setCopyFromYear(source);
+  }, [selectedYear, catalogYears]);
+
+  const suggestedDuplicateTarget = useMemo(
+    () => suggestYearBeforeLatest(catalogYears),
+    [catalogYears],
+  );
+
+  useEffect(() => {
+    if (bulkTool !== "duplicate" || typeof selectedYear !== "number") return;
+
+    const preferredTarget = suggestedDuplicateTarget ?? selectedYear;
+    setDuplicateTargetYear(preferredTarget);
+    setSourceYear(pickSourceYearForTarget(catalogYears, preferredTarget));
+  }, [bulkTool, selectedYear, catalogYears, suggestedDuplicateTarget]);
+
   function selectYear(year: number) {
     setSelectedYear(year);
     setBulkTool(null);
     setShowHistory(false);
     setEditingGoal(null);
+    setDuplicatingGoal(null);
     setGoalDrawerOpen(false);
   }
 
   async function handleDuplicateYear() {
-    if (typeof selectedYear !== "number") return;
+    const targetYear = duplicateTargetYear ?? selectedYear;
+    if (typeof targetYear !== "number") return;
 
     const payload: DuplicateStrategicIndicatorGoalsYearRequest = {
       source_year: sourceYear,
-      target_year: selectedYear,
+      target_year: targetYear,
       overwrite_existing: overwriteExisting,
     };
 
@@ -231,6 +289,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
     await goals.createGoal(payload);
     setGoalDrawerOpen(false);
     setEditingGoal(null);
+    setDuplicatingGoal(null);
   }
 
   async function handleUpdate(
@@ -291,6 +350,8 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
             embedded
             mode="create_year"
             fixedTargetYear={null}
+            existingYears={catalogYears}
+            indicatorOptions={indicatorOptions}
             onClose={() => {
               setBulkTool(null);
               void yearsOverview.reload();
@@ -348,6 +409,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       className="si-settings-editor__button"
                       onClick={() => {
                         setEditingGoal(null);
+                        setDuplicatingGoal(null);
                         setGoalDrawerOpen(true);
                       }}
                     >
@@ -389,7 +451,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
               {bulkTool === "duplicate" ? (
                 <AdminInlineToolPanel
                   title="Duplicar metas de outro ano"
-                  description={`Copia metas ativas para o ciclo ${selectedYear}.`}
+                  description={`Copia metas ativas de ${sourceYear} para o ciclo de destino (ex.: 2026 → 2025).`}
                   open
                   onClose={() => setBulkTool(null)}
                   footer={
@@ -414,12 +476,35 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                 >
                   <div className="si-admin-form-grid">
                     <label className="si-admin-form-field">
-                      <span>Ano de origem</span>
-                      <input
-                        type="number"
+                      <span>Ano de origem (copiar de)</span>
+                      <select
                         value={sourceYear}
-                        onChange={(e) => setSourceYear(Number(e.target.value || 0))}
-                      />
+                        onChange={(e) => setSourceYear(Number(e.target.value))}
+                      >
+                        {yearSelectOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="si-admin-form-field">
+                      <span>Ano de destino (criar/atualizar)</span>
+                      <select
+                        value={duplicateTargetYear ?? selectedYear}
+                        onChange={(e) => {
+                          const nextTarget = Number(e.target.value);
+                          setDuplicateTargetYear(nextTarget);
+                          setSourceYear(pickSourceYearForTarget(catalogYears, nextTarget));
+                        }}
+                      >
+                        {yearSelectOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                            {catalogYears.includes(year) ? "" : " (novo)"}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <label className="si-admin-form-field si-admin-form-field--full">
                       <span>
@@ -428,7 +513,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                           checked={overwriteExisting}
                           onChange={(e) => setOverwriteExisting(e.target.checked)}
                         />{" "}
-                        Sobrescrever metas existentes em {selectedYear}
+                        Sobrescrever metas existentes no ano de destino
                       </span>
                     </label>
                   </div>
@@ -464,11 +549,16 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   <div className="si-admin-form-grid">
                     <label className="si-admin-form-field">
                       <span>Copiar estrutura de</span>
-                      <input
-                        type="number"
+                      <select
                         value={copyFromYear}
-                        onChange={(e) => setCopyFromYear(Number(e.target.value || 0))}
-                      />
+                        onChange={(e) => setCopyFromYear(Number(e.target.value))}
+                      >
+                        {yearSelectOptions.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                   </div>
                 </AdminInlineToolPanel>
@@ -543,6 +633,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                   actionLabel="Nova meta"
                   onAction={() => {
                     setEditingGoal(null);
+                    setDuplicatingGoal(null);
                     setGoalDrawerOpen(true);
                   }}
                 />
@@ -566,7 +657,7 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                       </div>
                       <span>{getGoalScopeBranchLabel(item.goal_scope_branch)}</span>
                       <span>
-                        {item.goal_label} · {item.goal_value}
+                        {formatAdminGoalMeta(item)}
                       </span>
                       <span>
                         {getGoalPeriodicityLabel(item.goal_periodicity)} ·{" "}
@@ -586,11 +677,24 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
                           type="button"
                           className="si-settings-editor__button si-settings-editor__button--secondary"
                           onClick={() => {
+                            setDuplicatingGoal(null);
                             setEditingGoal(item);
                             setGoalDrawerOpen(true);
                           }}
                         >
                           Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="si-settings-editor__button si-settings-editor__button--secondary"
+                          onClick={() => {
+                            setEditingGoal(null);
+                            setDuplicatingGoal(buildGoalDuplicateSeed(item));
+                            setGoalDrawerOpen(true);
+                          }}
+                          disabled={goals.saving}
+                        >
+                          Duplicar
                         </button>
                         <button
                           type="button"
@@ -675,20 +779,38 @@ export function AdminGoalsWorkspace({ getAccessToken }: AdminGoalsWorkspaceProps
         onClose={() => {
           setGoalDrawerOpen(false);
           setEditingGoal(null);
+          setDuplicatingGoal(null);
         }}
-        title={editingGoal ? "Editar meta analítica" : "Nova meta analítica"}
-        description="Meta por indicador, ano e escopo (consolidado ou filial 01/02)."
+        title={
+          editingGoal
+            ? "Editar meta analítica"
+            : duplicatingGoal
+              ? "Duplicar meta analítica"
+              : "Nova meta analítica"
+        }
+        description={
+          duplicatingGoal
+            ? "Revise os dados e salve. Mesmo indicador, ano e escopo substituem a meta ativa anterior por uma nova versão."
+            : "Meta por indicador, ano e escopo (consolidado ou filial 01/02)."
+        }
         size="xl"
       >
         <IndicatorGoalForm
           saving={goals.saving}
           initialValue={editingGoal}
+          duplicateFrom={duplicatingGoal}
           indicatorOptions={indicatorOptions}
+          indicatorCatalog={indicatorCatalog}
+          defaultGoalYear={selectedYear ?? undefined}
+          lockGoalYear={
+            typeof selectedYear === "number" && !editingGoal && !duplicatingGoal
+          }
           onCreate={handleCreate}
           onUpdate={handleUpdate}
           onCancel={() => {
             setGoalDrawerOpen(false);
             setEditingGoal(null);
+            setDuplicatingGoal(null);
           }}
         />
       </DrawerPanel>

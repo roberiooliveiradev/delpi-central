@@ -29,10 +29,13 @@ Aumentar a qualidade das respostas do chat com **baixo risco** e **sem mudança 
 
 ```
 Mensagem → Segurança → Workspace (projeto/agente/capabilities)
+         → ChatIntelligencePipelineService (decisões base: operacional, análise, contexto)
          → RAG (embedding + pgvector, até 6 chunks)
-         → Tools heurísticas + execute_external_action (pré-LLM)
+         → ChatToolContextService (tools + finalize inteligência base)
          → ChatPromptBuilderService → LLM stream
 ```
+
+**Regra de arquitetura (obrigatória):** melhorias de inteligência ficam no **chat base** e são herdadas por agentes, projetos e simulação. Documentação canônica: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md). Regra Cursor: `.cursor/rules/chat-intelligence-base.mdc`.
 
 Pontos fracos que a Onda 1 corrige:
 

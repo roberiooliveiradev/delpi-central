@@ -1,59 +1,10 @@
 .mdc-audit-filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: var(--mdc-space-3);
-  align-items: end;
-}
-
-.mdc-audit-filters label {
-  display: grid;
-  gap: var(--mdc-space-2);
-  color: var(--mdc-title-soft);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.mdc-audit-filters input {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  outline: 0;
-  padding: 0.75rem 0.85rem;
-}
-
-.mdc-audit-filters input:focus {
-  border-color: var(--mdc-primary);
-  box-shadow: var(--mdc-focus-ring);
 }
 
 .mdc-audit-filters__actions {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--mdc-space-2);
-}
-
-.mdc-audit-filters__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
-@media (max-width: 1180px) {
-  .mdc-audit-filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mdc-audit-filters__actions {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 640px) {
-  .mdc-audit-filters {
-    grid-template-columns: 1fr;
-  }
 }

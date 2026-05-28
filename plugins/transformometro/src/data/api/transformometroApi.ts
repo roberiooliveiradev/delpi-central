@@ -149,6 +149,32 @@ export function deleteProcesso(
   });
 }
 
+export type ProcessoDuplicateResult = {
+  processo: Processo;
+  origem_processo_id: string;
+  copiados: {
+    revisoes: number;
+    medicoes: number;
+    investimentos: number;
+    vinculos: number;
+  };
+};
+
+export function duplicateProcesso(
+  processoId: string,
+  payload?: { nome_processo?: string },
+  getAccessToken?: () => string | undefined
+) {
+  return request<ProcessoDuplicateResult>(
+    `/processos/${processoId}/duplicar`,
+    getAccessToken,
+    {
+      method: "POST",
+      body: JSON.stringify(payload ?? {}),
+    }
+  );
+}
+
 export function fetchRevisoes(
   processoId: string,
   getAccessToken?: () => string | undefined

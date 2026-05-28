@@ -71,11 +71,6 @@
       "suas capacidades",
       "suas funcionalidades",
       "quais funcionalidades",
-      "o que faz",
-      "o que voce faz",
-      "o que vc faz",
-      "o que você faz",
-      "para que serve",
       "como pode me ajudar",
       "como voce pode ajudar",
       "como voce pode me ajudar",
@@ -123,8 +118,57 @@
       "ajudar",
       "oferecer"
     ],
+    "inquiryVerbs": [
+      "consegue",
+      "pode",
+      "da pra",
+      "dá pra",
+      "e possivel",
+      "é possivel",
+      "sabe",
+      "tem como",
+      "ha como",
+      "há como"
+    ],
+    "inquiryTopics": [
+      "buscar",
+      "pesquisar",
+      "consultar",
+      "filtrar",
+      "listar",
+      "grupo",
+      "estoque",
+      "estrutura",
+      "fornecedor",
+      "cliente",
+      "preco",
+      "preço",
+      "sql",
+      "lmp",
+      "comparar",
+      "bom"
+    ],
     "maxMessageLength": 280,
     "helpPrefixMaxLength": 80
+  },
+  "featureAnswers": {
+    "productSearchByGroup": {
+      "title": "**Busca de produtos por grupo (código de grupo)**",
+      "supported": "Sim. Neste agente posso usar `GET /products/search` com o parâmetro **`group_code`** — informe o **código cadastral do grupo** (campo de grupo do produto no ERP).\n\n**Exemplos de pedido:**\n- «Liste produtos do grupo *01*»\n- «Busque produtos com group_code *MP*»\n\nTambém aceito busca por **descrição/termo** (`description`) ou **código do produto** (`code`), como na consulta «liste 3 exemplos de TERM».",
+      "unsupportedAction": "Não encontrei a action de **busca de produtos** habilitada neste agente. Habilite `GET /products/search` no builder para consultar por grupo, descrição ou código.",
+      "unsupportedParam": "A busca de produtos está habilitada, mas o contrato exposto ao chat **não inclui** o parâmetro `group_code`. Posso buscar por **descrição** ou **código**; para grupo, ajuste o schema da action no catálogo.",
+      "commonChat": "No **chat comum**, escolha um **agente especializado** (ex.: Especialista em Produtos) com a action de busca. A API DELPI aceita `group_code`, `description` e `code` em `/products/search`."
+    },
+    "productSearchByDescription": {
+      "title": "**Busca de produtos por descrição ou termo**",
+      "supported": "Sim. Uso `GET /products/search` com **`description`** (ou parâmetro equivalente no schema).\n\n**Exemplos:** «liste 3 exemplos de TERM», «busque produtos parafuso m8».",
+      "unsupportedAction": "Não há action de busca de produtos habilitada neste agente.",
+      "commonChat": "Selecione um agente com busca de produtos para pesquisar por descrição ou termo."
+    },
+    "genericInquiry": {
+      "title": "**Sobre esta consulta**",
+      "body": "Entendi que você quer saber **se eu consigo** executar algo — não que eu execute agora.\n\n{hint}\n\nPara ver tudo que está liberado nesta sessão, pergunte também: *o que você pode fazer?*"
+    }
   },
   "pathRules": [
     {

@@ -20,12 +20,15 @@ class ChatKnowledgeScopeService:
         project = workspace_context.get("project") or {}
         project_id = project.get("id") or session.project_id
 
+        skills = workspace_context.get("skills") or {}
+        include_global = bool(skills.get("companyKnowledge", True))
+
         filters = {
             "user_id": str(user_id),
             "session_id": str(session.id),
             "project_id": str(project_id) if project_id else None,
             "agent_key": workspace_context.get("agentKey"),
-            "include_global": True,
+            "include_global": include_global,
         }
 
         cleaned_attachment_ids = [

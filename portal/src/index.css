@@ -415,10 +415,12 @@ body,
 }
 
 /*
- * Configurações (MFE): `.content` vira coluna com scroll vertical único.
- * Sem isso, o host federado (height: 100%) esticava além do viewport e
- * criava barra fantasma ou scroll duplo a cada mudança de estado no plugin.
+ * Configurações (MFE): scroll único em `.content`.
+ * O host federado usa height:100% por padrão (telas imersivas); na settings
+ * o plugin marca `html.si-settings-active` e anulamos altura fixa — evita
+ * espaço em branco / scroll duplo ao selecionar departamento ou toggles.
  */
+html.si-settings-active .content,
 .content:has(.si-settings-page) {
   flex-direction: column;
   align-items: stretch;
@@ -426,6 +428,9 @@ body,
   overflow-y: auto;
 }
 
+html.si-settings-active .content > .app-host,
+html.si-settings-active .content > .app-host-federated,
+html.si-settings-active .app-host-federated > div,
 .content:has(.si-settings-page) > .app-host,
 .content:has(.si-settings-page) > .app-host-federated,
 .content:has(.si-settings-page) > div,
@@ -434,8 +439,8 @@ body,
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  height: auto;
-  min-height: 0;
+  height: auto !important;
+  min-height: 0 !important;
   flex: 0 0 auto;
   overflow-x: clip;
 }

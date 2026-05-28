@@ -27,7 +27,7 @@ class InvestimentoRepository(PluginBaseRepository):
             (investimento_id,),
         )
 
-    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         qty = float(data.get("quantidade") or 1)
         unit = float(data.get("valor_unitario") or 0)
         total = round(qty * unit, 2)
@@ -54,6 +54,7 @@ class InvestimentoRepository(PluginBaseRepository):
                 data.get("centro_custo"),
                 data.get("observacoes"),
             ),
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar investimento.")

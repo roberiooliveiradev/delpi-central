@@ -9,10 +9,14 @@ class ChatIntelligenceMetadataService:
         operational_optimize: bool,
         tool_context: dict,
         skip_rag: bool,
+        analysis_mode: bool = False,
     ) -> dict:
         return {
             "fastPath": bool(fast_path),
             "operationalFastPath": bool(operational_optimize),
+            "analysisMode": bool(
+                analysis_mode or tool_context.get("analysisMode")
+            ),
             "directResponse": bool(tool_context.get("directAnswer")),
             "skipRag": bool(skip_rag),
         }

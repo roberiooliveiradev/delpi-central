@@ -39,6 +39,7 @@ export type DepartmentIndicator = {
   classification: string;
   score: number | null;
   gap: number | null;
+  goals: Record<string, number | null>;
   gaps: Record<string, number | null>;
   trend: TrendDirection;
   valueUnit: IndicatorValueUnit | null;
@@ -111,6 +112,7 @@ export type StrategicIndicatorsDepartmentDetailsResponse = {
     classification: string;
     score: number | null;
     gap: number | null;
+    goals?: Record<string, number | null>;
     gaps?: Record<string, number | null>;
     trend: string;
     value_unit?: IndicatorValueUnit | null;

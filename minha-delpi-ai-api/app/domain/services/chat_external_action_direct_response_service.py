@@ -1,3 +1,4 @@
+import re
 import time
 
 from app.infrastructure.config.settings import Settings
@@ -33,6 +34,30 @@ class ChatExternalActionDirectResponseService:
         return normalized or None
 
     @staticmethod
+    def _iter_char_chunks(text: str, chunk_size: int):
+        for index in range(0, len(text), chunk_size):
+            yield text[index : index + chunk_size]
+
+    @staticmethod
+    def _iter_word_chunks(text: str, target_chars: int):
+        parts = re.findall(r"\S+\s*|\s+", text)
+        buffer = ""
+
+        for part in parts:
+            if not part:
+                continue
+
+            if len(buffer) + len(part) <= target_chars or not buffer.strip():
+                buffer += part
+                continue
+
+            yield buffer
+            buffer = part
+
+        if buffer:
+            yield buffer
+
+    @staticmethod
     def iter_stream_chunks(answer: str):
         text = answer.strip()
 
@@ -42,8 +67,15 @@ class ChatExternalActionDirectResponseService:
         chunk_size = max(1, Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS)
         delay_seconds = max(0.0, Settings.CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS) / 1000.0
 
-        for index in range(0, len(text), chunk_size):
+        use_words = len(text) >= 120 and chunk_size >= 8
+        chunks = (
+            ChatExternalActionDirectResponseService._iter_word_chunks(text, chunk_size)
+            if use_words
+            else ChatExternalActionDirectResponseService._iter_char_chunks(text, chunk_size)
+        )
+
+        for index, chunk in enumerate(chunks):
             if index > 0 and delay_seconds > 0:
                 time.sleep(delay_seconds)
 
-            yield text[index : index + chunk_size]
+            yield chunk

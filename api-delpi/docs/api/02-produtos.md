@@ -30,6 +30,24 @@ GET /apps/api-delpi/products/search?description=parafuso&page=1&page_size=20
 
 ---
 
+## GET /products/{code}
+
+Dados cadastrais do produto (leve, sem o payload completo do analyser).
+
+Campos típicos: `code`, `description`, `type`, `unit`, `group_code`, `active`, `default_warehouse`, `last_purchase_price`, `standard_cost`, `last_revision_date`, `ncm_ipi_position`.
+
+**Uso no chat:** perguntas de descrição, “o que é o produto X”, dados cadastrais — preferir esta rota antes do `/analyser` quando não precisar de todas as dimensões.
+
+---
+
+## GET /products/{code}/summary
+
+Consolida cadastro + estoque (top locais) + preços em uma única chamada.
+
+**Uso no chat:** visão geral rápida sem múltiplas requisições.
+
+---
+
 ## GET /products/{code}/structure
 
 Estrutura (BOM) do produto.

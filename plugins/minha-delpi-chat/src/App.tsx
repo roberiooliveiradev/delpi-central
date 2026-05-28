@@ -4,6 +4,7 @@ import "./App.css";
 
 import { buildChatHref, parseChatRoute } from "./navigation/chatRoutes";
 import { navigateChatHref } from "./navigation/chatNavigation";
+import { ChatAnimatedPanel } from "./ui/components/ChatAnimatedPanel";
 import { ChatPage } from "./ui/pages/ChatPage";
 
 const ChatAdminPage = lazy(() =>
@@ -30,10 +31,12 @@ export default function App({ getAccessToken, pathname }: AppProps) {
           </div>
         }
       >
-        <ChatAdminPage
-          getAccessToken={getAccessToken}
-          onBack={() => navigateChatHref(buildChatHref({ kind: "home" }))}
-        />
+        <ChatAnimatedPanel panelKey="admin" variant="page" className="mdc-chat-page-panel--fill">
+          <ChatAdminPage
+            getAccessToken={getAccessToken}
+            onBack={() => navigateChatHref(buildChatHref({ kind: "home" }))}
+          />
+        </ChatAnimatedPanel>
       </Suspense>
     );
   }

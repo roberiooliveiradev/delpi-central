@@ -34,6 +34,10 @@ class Settings:
             os.getenv("RAG_ASSERTIVENESS_MIN_SCORE", "0.35"),
         )
     )
+    # Perguntas meta («quem te criou», «o que você é») costumam ter score semântico mais baixo.
+    RAG_IDENTITY_QUESTION_MIN_SCORE = float(
+        os.getenv("RAG_IDENTITY_QUESTION_MIN_SCORE", "0.22"),
+    )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
@@ -89,7 +93,7 @@ class Settings:
         os.getenv("KNOWLEDGE_SOURCE_REF_MAX_CHARS", "500")
     )
     KNOWLEDGE_DOCUMENT_MAX_CHARS = int(
-        os.getenv("KNOWLEDGE_DOCUMENT_MAX_CHARS", "50000")
+        os.getenv("KNOWLEDGE_DOCUMENT_MAX_CHARS", "2000000")
     )
     KNOWLEDGE_CHUNK_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_SIZE", "1400"))
     KNOWLEDGE_CHUNK_MIN_SIZE = int(os.getenv("KNOWLEDGE_CHUNK_MIN_SIZE", "800"))
@@ -137,10 +141,13 @@ class Settings:
         == "true"
     )
     CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS = int(
-        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "4")
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "2")
     )
     CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS = float(
-        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "20")
+        os.getenv("CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS", "45")
+    )
+    CHAT_PERSIST_BEFORE_PLAYBACK = (
+        os.getenv("CHAT_PERSIST_BEFORE_PLAYBACK", "true").lower() == "true"
     )
     CHAT_OPERATIONAL_FAST_PATH_ENABLED = (
         os.getenv("CHAT_OPERATIONAL_FAST_PATH_ENABLED", "true").lower() == "true"
@@ -150,6 +157,9 @@ class Settings:
     )
     CHAT_DEFAULT_SQL_AUTHORING_SKILL = (
         os.getenv("CHAT_DEFAULT_SQL_AUTHORING_SKILL", "true").lower() == "true"
+    )
+    CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL = (
+        os.getenv("CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL", "true").lower() == "true"
     )
     CHAT_TOOL_ROUTER_MAX_ACTIONS = int(os.getenv("CHAT_TOOL_ROUTER_MAX_ACTIONS", "20"))
 
@@ -191,10 +201,15 @@ class Settings:
     EMBEDDING_CACHE_MAX_ENTRIES = int(os.getenv("EMBEDDING_CACHE_MAX_ENTRIES", "500"))
     REDIS_URL = os.getenv("REDIS_URL", "").strip() or None
 
-    CHAT_AGENTIC_LOOP_ENABLED = (
-        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
+    CHAT_MULTI_ACTION_ENABLED = (
+        os.getenv("CHAT_MULTI_ACTION_ENABLED", "true").lower() == "true"
     )
-    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
+    CHAT_MULTI_ACTION_MAX_CALLS = int(os.getenv("CHAT_MULTI_ACTION_MAX_CALLS", "5"))
+
+    CHAT_AGENTIC_LOOP_ENABLED = (
+        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "true").lower() == "true"
+    )
+    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "3"))
 
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"

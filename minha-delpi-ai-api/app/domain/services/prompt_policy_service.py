@@ -175,12 +175,55 @@ Comportamento esperado:
 
     SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore e revise consultas SELECT (SQL genérico) em blocos ```sql```; identifique erros quando o usuário colar SQL ou mensagens de erro; execução requer action /data/sql."""
 
+    COMPANY_KNOWLEDGE_SKILL_FALLBACK = """Skill Conhecimento da empresa: priorize a base documental global (RAG e search_knowledge_base); cite fontes; não invente políticas."""
+
+    def build_active_skill_policy_sections(self, skills: dict | None) -> list[str]:
+        """Políticas de skills ativas no runtime (chat comum ou agente), sem ação do usuário."""
+        resolved_skills = skills or {}
+        sections: list[str] = []
+
+        if resolved_skills.get("sqlAuthoring"):
+            from app.domain.skills.chat_skill_registry import ChatSkillRegistry, SQL_SKILL_KEY
+
+            sql_policy = ChatSkillRegistry.get_policy_content(SQL_SKILL_KEY)
+            sections.append(
+                sql_policy
+                or self._load_policy(
+                    "sql-assistant-skill.md",
+                    self.SQL_ASSISTANT_SKILL_FALLBACK,
+                )
+            )
+
+        if resolved_skills.get("companyKnowledge"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                COMPANY_KNOWLEDGE_SKILL_KEY,
+            )
+
+            company_policy = ChatSkillRegistry.get_policy_content(
+                COMPANY_KNOWLEDGE_SKILL_KEY
+            )
+            sections.append(
+                company_policy
+                or self._load_policy(
+                    "company-knowledge-skill.md",
+                    self.COMPANY_KNOWLEDGE_SKILL_FALLBACK,
+                )
+            )
+
+        return [
+            section.strip()
+            for section in sections
+            if section and section.strip()
+        ]
+
     def build_contextual_prompt(
         self,
         rag_context: str,
         tool_context: str,
         *,
         operational_mode: bool = False,
+        analysis_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
@@ -213,19 +256,21 @@ Comportamento esperado:
             )
         )
 
-        if resolved_skills.get("sqlAuthoring"):
-            sections.append(
-                self._load_policy(
-                    "sql-assistant-skill.md",
-                    self.SQL_ASSISTANT_SKILL_FALLBACK,
-                )
-            )
+        sections.extend(self.build_active_skill_policy_sections(resolved_skills))
 
         if operational_mode:
             sections.append(
                 self._load_policy(
                     "operational-agent.md",
                     "Modo operacional: respostas curtas com base nas ferramentas autorizadas.",
+                )
+            )
+
+        if analysis_mode:
+            sections.append(
+                self._load_policy(
+                    "chat-analysis-insights.md",
+                    "Modo análise: compare dados do histórico e traga insights objetivos.",
                 )
             )
 

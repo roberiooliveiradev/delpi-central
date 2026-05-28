@@ -34,7 +34,7 @@ export function KnowledgeCuratorialFields({
   return (
     <div className="mdc-knowledge-curatorial">
       <div className="mdc-knowledge-curatorial__grid">
-        <label>
+        <label className="mdc-admin-field">
           <span>Categoria</span>
           <input
             value={category}
@@ -44,7 +44,7 @@ export function KnowledgeCuratorialFields({
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Namespace</span>
           <input
             value={namespace}
@@ -54,7 +54,7 @@ export function KnowledgeCuratorialFields({
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Domínio</span>
           <input
             value={domain}
@@ -64,7 +64,7 @@ export function KnowledgeCuratorialFields({
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Prioridade (1-5)</span>
           <input
             type="number"
@@ -76,7 +76,7 @@ export function KnowledgeCuratorialFields({
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Pontuação de qualidade (0-100)</span>
           <input
             type="number"
@@ -89,7 +89,7 @@ export function KnowledgeCuratorialFields({
         </label>
       </div>
 
-      <label>
+      <label className="mdc-admin-field">
         <span>Tags (vírgula)</span>
         <input
           value={tags}

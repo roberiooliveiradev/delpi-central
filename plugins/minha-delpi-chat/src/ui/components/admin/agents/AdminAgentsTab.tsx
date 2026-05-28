@@ -230,7 +230,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
             Configure domínio, escopo de RAG, diretrizes e tools permitidas por agente oficial.
           </p>
         </div>
-        <button type="button" disabled={isLoading} onClick={() => void loadData()}>
+        <button
+          type="button"
+          className="mdc-admin-btn"
+          disabled={isLoading}
+          onClick={() => void loadData()}
+        >
           {isLoading ? "Carregando..." : "Atualizar"}
         </button>
       </header>
@@ -238,8 +243,8 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
       {error ? <p className="mdc-admin-agents__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-agents__success">{successMessage}</p> : null}
 
-      <div className="mdc-admin-agents__layout">
-        <aside className="mdc-admin-agents__list">
+      <div className="mdc-admin-agents__layout mdc-admin-split">
+        <aside className="mdc-admin-split__aside mdc-admin-agents__list">
           <ul>
             {agents.map((agent) => (
               <li key={agent.id}>
@@ -257,7 +262,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
           </ul>
         </aside>
 
-        <article className="mdc-admin-agents__editor">
+        <article className="mdc-admin-split__main mdc-admin-agents__editor">
           {!selectedAgent ? (
             <p className="mdc-chat-muted">Selecione um agente para configurar a especialização.</p>
           ) : (
@@ -417,7 +422,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                 </>
               ) : null}
 
-              <button type="button" disabled={isSaving} onClick={() => void handleSave()}>
+              <button
+                type="button"
+                className="mdc-admin-btn mdc-admin-btn--primary"
+                disabled={isSaving}
+                onClick={() => void handleSave()}
+              >
                 {isSaving ? "Salvando..." : "Salvar especialização"}
               </button>
             </>

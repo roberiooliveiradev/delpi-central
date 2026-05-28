@@ -6,11 +6,24 @@ Para executar dados externos, use **Actions** (OpenAPI). Veja também [`12-model
 
 ## Catálogo global
 
-Skills disponíveis na plataforma vêm de um **registry em código** (`ChatSkillRegistry`). Novas skills exigem deploy com:
+Skills disponíveis na plataforma ficam na tabela `ai_chat_skill_catalog` e são gerenciadas pelo **admin do chat** (aba **Skills**) ou pela API admin abaixo.
 
-1. Arquivo de policy em `app/domain/prompt_policies/<skill>.md`
-2. Entrada no registry
-3. (Opcional) testes e documentação
+Fallback: se o banco estiver vazio, o `ChatSkillRegistry` usa `app/content/pt-BR/skills/catalog.json` e policies em `app/domain/prompt_policies/*.md`.
+
+**Bootstrap no admin:** `GET /admin/skills` sincroniza skills embutidas do catálogo (ex.: `company-knowledge`) para o banco quando ainda não existem, para a aba **Skills** do admin listar o mesmo conjunto que o runtime do chat usa.
+
+### Admin — CRUD de catálogo
+
+**Permissão:** `minha-delpi.chat.tools.manage` (gestores de ferramentas/agentes; aba **Skills** no admin do chat)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/admin/skills` | Lista catálogo (`?includeInactive=false` para só ativas) |
+| POST | `/admin/skills` | Cria skill |
+| PUT | `/admin/skills/{skillId}` | Atualiza skill (policy, flags, ordem) |
+| DELETE | `/admin/skills/{skillId}` | Desativa skill (`is_active=false`) |
+
+Campos principais: `skillKey`, `label`, `description`, `policyContent` (Markdown), `metadataFlag`, `executionPathHint`, `executionDerivedKey`, `sortOrder`, `isActive`.
 
 ### GET `/chat/skills`
 
@@ -70,7 +83,7 @@ Retorna o catálogo mesclado com o estado do agente e capacidades derivadas.
 
 Ativa ou desativa uma skill.
 
-**Permissão:** `minha-delpi.chat.tools.manage` (e permissão de edição do agente; agentes oficiais exigem `chat.admin`)
+**Permissão:** `minha-delpi.chat.tools.manage` (gestores de ferramentas/agentes; aba **Skills** no admin do chat) (e permissão de edição do agente; agentes oficiais exigem `chat.admin`)
 
 **Body:**
 
@@ -105,11 +118,20 @@ Formato legado ainda lido: `skills.sqlAuthoring`.
 
 ## Chat comum (sem agente)
 
-Quando não há agente selecionado, a skill SQL de elaboração segue a variável de ambiente:
+Quando não há agente selecionado, os padrões globais seguem variáveis de ambiente:
 
-- `CHAT_DEFAULT_SQL_AUTHORING_SKILL` (default `true`)
+- `CHAT_DEFAULT_SQL_AUTHORING_SKILL` (default `true`) — skill `sql`
+
+As skills ativas são aplicadas automaticamente no prompt (e no escopo RAG, quando for `company-knowledge`); o usuário não precisa pedir nem clicar em atalhos na home do chat. Configure por agente em **Skills** no builder ou pelos defaults do chat comum via env acima.
+- `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) — skill `company-knowledge` (base documental global / RAG)
 
 Execução SQL no chat comum **não** é permitida via external actions.
+
+### Skill `company-knowledge`
+
+- **Comportamento:** prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais), injeta policy no prompt e controla `include_global` no escopo RAG.
+- **Ferramenta relacionada:** `search_knowledge_base` (quando autorizada ao usuário).
+- **Agente:** segue `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (default `true`) quando a skill não foi configurada no builder. Para desativar, use `PUT /chat/agents/{id}/skills` com `skillKey: "company-knowledge"` e `enabled: false`.
 
 ## Skill SQL — elaborar vs executar
 

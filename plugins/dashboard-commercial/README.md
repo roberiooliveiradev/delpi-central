@@ -1,6 +1,6 @@
 # Dashboard Comercial
 
-Microfrontend para indicadores comerciais (ROL, conversão, clientes novos) via **api-delpi** `/commercial/*`.
+Microfrontend para indicadores comerciais (ROL por filial 01/02, OTD, conversão, novos negócios) via **api-delpi** `/commercial/*`, com metas do catálogo SI.
 
 ## Documentação
 

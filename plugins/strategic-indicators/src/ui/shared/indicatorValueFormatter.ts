@@ -127,15 +127,13 @@ type MonthlyTargetLike = {
   targetValue?: number;
 };
 
-export type IndicatorGoalDisplayInput = {
+export type IndicatorGoalDisplayInput = IndicatorValueFormat & {
   goalLabel: string;
   goalValue?: number | null;
   goalMode?: string | null;
   monthlyTargets?: MonthlyTargetLike[] | null;
-  valueUnit?: string | null;
-  valuePrefix?: string | null;
-  valueSuffix?: string | null;
-  valueDecimals?: number | null;
+  /** Metas comparáveis por filial (01/02) ou consolidado — espelha `gaps` / `realized`. */
+  goals?: Record<string, number | null> | null;
 };
 
 function resolveCompetenceMonth(competence?: string | null): number | null {
@@ -201,6 +199,19 @@ function listBranchScopeKeys(values: Record<string, number | null>): string[] {
   return Object.keys(values)
     .filter((key) => key.trim() !== "" && key !== "consolidated")
     .sort();
+}
+
+/** Com filtro de filial ativo, exibe só a unidade selecionada (sem `01 | 02`). */
+function filterScopedValuesByActiveBranch(
+  values: Record<string, number | null>,
+  activeBranch?: string,
+): Record<string, number | null> {
+  const branch = (activeBranch ?? "").trim();
+  if (!branch || !(branch in values)) {
+    return values;
+  }
+
+  return { [branch]: values[branch] };
 }
 
 /** Deptos consolidados (Engenharia, etc.): mesmo valor em filial e consolidado → só rótulo Consolidado. */
@@ -276,6 +287,8 @@ export function formatScopeAwareMetric(
   if (!values || !Object.keys(values).length) {
     return options.fallback ?? MISSING_VALUE_LABEL;
   }
+
+  values = filterScopedValuesByActiveBranch(values, options.activeBranch);
 
   const consolidatedOnly = consolidatedOnlyDisplayValues(values);
   if (consolidatedOnly) {
@@ -423,10 +436,36 @@ export function formatIndicatorRealizedDisplay(
   return "—";
 }
 
+/** Linha de contexto (subtítulo) alinhada à coluna Meta. */
+export function formatIndicatorMetaGoalLine(
+  indicator: IndicatorGoalDisplayInput,
+  competence?: string | null,
+  displayContext?: IndicatorDisplayContext,
+): string {
+  return `Meta ${formatIndicatorGoalValue(indicator, competence, displayContext)}`;
+}
+
 export function formatIndicatorGoalValue(
   indicator: IndicatorGoalDisplayInput,
   competence?: string | null,
+  displayContext?: IndicatorDisplayContext,
 ): string {
+  const valueFormat: IndicatorValueFormat = {
+    valueUnit: indicator.valueUnit,
+    valuePrefix: indicator.valuePrefix,
+    valueSuffix: indicator.valueSuffix,
+    valueDecimals: indicator.valueDecimals,
+  };
+  const scopedOptions = mergeDisplayContext({}, displayContext);
+  const goals = filterScopedValuesByActiveBranch(
+    indicator.goals ?? {},
+    scopedOptions.activeBranch,
+  );
+
+  if (hasScopedMetricMap(goals)) {
+    return formatScopeAwareMetric(goals, valueFormat, scopedOptions);
+  }
+
   if (indicator.goalMode !== "monthly_curve") {
     return indicator.goalLabel;
   }
@@ -441,10 +480,5 @@ export function formatIndicatorGoalValue(
     return indicator.goalLabel;
   }
 
-  return formatIndicatorValue(monthlyTarget, {
-    valueUnit: indicator.valueUnit,
-    valuePrefix: indicator.valuePrefix,
-    valueSuffix: indicator.valueSuffix,
-    valueDecimals: indicator.valueDecimals,
-  });
+  return formatIndicatorValue(monthlyTarget, valueFormat);
 }

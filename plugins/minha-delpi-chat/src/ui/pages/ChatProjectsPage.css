@@ -1,0 +1,18 @@
+@import "../layout/workspace-responsive.css";
+@import "../layout/chat-workspace-shared.css";
+
+.mdc-chat-projects-page__empty {
+  gap: 0.65rem;
+}
+
+.mdc-chat-projects-page__empty .mdc-chat-ws-toolbar-btn {
+  margin-top: 0.35rem;
+}
+
+.mdc-chat-projects-page__role {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+  color: var(--mdc-primary);
+  font-weight: 750;
+  padding: 0.1rem 0.45rem;
+}

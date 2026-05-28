@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
     StrategicIndicatorsSnapshotService,
 )
+from si_app.domain.services.strategic_indicators_calculator import (
+    StrategicIndicatorsCalculator,
+)
 from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
@@ -26,9 +29,11 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         *,
         snapshot_service: StrategicIndicatorsSnapshotService,
         alerts_summary_port: StrategicIndicatorsAlertsSummaryPort,
+        calculator: StrategicIndicatorsCalculator | None = None,
     ) -> None:
         self._snapshot_service = snapshot_service
         self._alerts_summary_port = alerts_summary_port
+        self._calculator = calculator or StrategicIndicatorsCalculator()
 
     def execute(
         self,
@@ -68,6 +73,9 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         indicator_alerts = self._build_indicator_alerts(
             current_snapshot.calculated_departments,
             catalog_by_indicator_id,
+            start_date=current_snapshot.period.start_date,
+            end_date=current_snapshot.period.end_date,
+            competence=current_snapshot.period.competence,
         )
 
         return {
@@ -129,6 +137,10 @@ class GetStrategicIndicatorsAlertsRealUseCase:
         self,
         departments,
         catalog_by_indicator_id: dict,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
     ) -> list[dict]:
         candidates: list[dict] = []
 
@@ -142,6 +154,18 @@ class GetStrategicIndicatorsAlertsRealUseCase:
 
                 severity = "high" if indicator.score < 7 else "medium"
                 catalog_item = catalog_by_indicator_id.get(indicator.indicator_id)
+
+                goals = (
+                    self._calculator.resolve_goals_payload_for_calculated(
+                        calculated=indicator,
+                        catalog_item=catalog_item,
+                        start_date=start_date,
+                        end_date=end_date,
+                        competence=competence,
+                    )
+                    if catalog_item is not None
+                    else {}
+                )
 
                 candidates.append(
                     {
@@ -169,6 +193,7 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                             if catalog_item
                             else []
                         ),
+                        "goals": goals,
                         "performance_direction": (
                             getattr(
                                 catalog_item,
@@ -178,6 +203,18 @@ class GetStrategicIndicatorsAlertsRealUseCase:
                             if catalog_item
                             else "higher_is_better"
                         ),
+                        "value_unit": getattr(catalog_item, "value_unit", None)
+                        if catalog_item
+                        else None,
+                        "value_prefix": getattr(catalog_item, "value_prefix", None)
+                        if catalog_item
+                        else None,
+                        "value_suffix": getattr(catalog_item, "value_suffix", None)
+                        if catalog_item
+                        else None,
+                        "value_decimals": int(getattr(catalog_item, "value_decimals", 2) or 2)
+                        if catalog_item
+                        else 2,
                         "message": (
                             f"{indicator.indicator_name} está abaixo do esperado em "
                             f"{department.department_name}."

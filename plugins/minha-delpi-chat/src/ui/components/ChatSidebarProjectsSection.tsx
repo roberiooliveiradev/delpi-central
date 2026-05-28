@@ -9,6 +9,7 @@ import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "./ChatProjectCard";
+import { useConfirmDialog } from "./useConfirmDialog";
 
 const PROJECT_SESSION_LIMIT = 5;
 const PROJECT_LIST_LIMIT = 5;
@@ -21,6 +22,7 @@ type ChatSidebarProjectsSectionProps = {
   isLoading?: boolean;
   onSelectProject?: (projectId: string | null) => void;
   onSelectSession?: (session: ChatSession) => void;
+  onOpenProjectsDirectory?: () => void;
   onNewProject: () => void;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
@@ -35,11 +37,13 @@ export function ChatSidebarProjectsSection({
   isLoading,
   onSelectProject,
   onSelectSession: _onSelectSession,
+  onOpenProjectsDirectory,
   onNewProject,
   onRenameProject,
   onDeleteProject,
   isSessionProcessing,
 }: ChatSidebarProjectsSectionProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllByProject, setShowAllByProject] = useState<Record<string, boolean>>({});
@@ -103,19 +107,30 @@ export function ChatSidebarProjectsSection({
 
   return (
     <>
+      {confirmDialog}
       <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
-        <button
-          type="button"
-          onClick={() => setIsExpanded((current) => !current)}
-          aria-expanded={isExpanded}
-        >
-          {isExpanded ? (
-            <ChevronDown size={13} aria-hidden="true" />
-          ) : (
-            <ChevronRight size={13} aria-hidden="true" />
-          )}
-          <span>Projetos</span>
-        </button>
+        <div className="mdc-chat-sidebar__section-heading">
+          <button
+            type="button"
+            className="mdc-chat-sidebar__section-chevron"
+            onClick={() => setIsExpanded((current) => !current)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Recolher projetos" : "Expandir projetos"}
+          >
+            {isExpanded ? (
+              <ChevronDown size={13} aria-hidden="true" />
+            ) : (
+              <ChevronRight size={13} aria-hidden="true" />
+            )}
+          </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__section-link"
+            onClick={() => onOpenProjectsDirectory?.()}
+          >
+            Projetos
+          </button>
+        </div>
 
         <small>{projects.length}</small>
       </div>
@@ -171,13 +186,17 @@ export function ChatSidebarProjectsSection({
                         }}
                         onOpenSettings={() => onSelectProject?.(project.id)}
                         onDelete={() => {
-                          const confirmed = window.confirm(
-                            `Excluir o projeto "${project.name}"?`,
-                          );
-
-                          if (confirmed) {
-                            void onDeleteProject?.(project.id);
-                          }
+                          void confirm({
+                            title: "Excluir projeto",
+                            description: `Excluir o projeto "${project.name}"?`,
+                            confirmLabel: "Excluir",
+                            cancelLabel: "Cancelar",
+                            danger: true,
+                          }).then((confirmed) => {
+                            if (confirmed) {
+                              void onDeleteProject?.(project.id);
+                            }
+                          });
                         }}
                       />
 

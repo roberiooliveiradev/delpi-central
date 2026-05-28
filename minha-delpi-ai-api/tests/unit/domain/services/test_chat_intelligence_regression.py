@@ -6,6 +6,7 @@ from app.application.services.external_actions.external_action_selection_service
 from app.domain.services.chat_external_action_direct_answer_service import (
     ChatExternalActionDirectAnswerService,
 )
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_operational_pipeline_service import (
     ChatOperationalPipelineService,
 )
@@ -13,6 +14,7 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from tests.fixtures.chat_intelligence_regression_cases import (
+    ANALYSIS_INTENT_CASES,
     DIRECT_ANSWER_CASES,
     INTENT_CASES,
     OPERATIONAL_FAST_PATH_CASES,
@@ -45,6 +47,13 @@ def test_product_code_regression(case):
     assert ChatProductQueryIntentService.resolve_product_code(message, context) == expected
 
 
+@pytest.mark.parametrize("message,expected", ANALYSIS_INTENT_CASES)
+def test_analysis_intent_regression(message, expected):
+    assert (
+        ChatAnalysisIntentService.is_comparison_or_insight_request(message) is expected
+    )
+
+
 @pytest.mark.parametrize("message,expected", OPERATIONAL_FAST_PATH_CASES)
 def test_operational_fast_path_regression(message, expected):
     assert (
@@ -65,6 +74,14 @@ def test_action_selection_regression(case):
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == case["expected_action_id"]
+
+    expected_parameters = case.get("expected_parameters")
+
+    if expected_parameters:
+        params = selected["arguments"].get("parameters") or {}
+
+        for key, value in expected_parameters.items():
+            assert params.get(key) == value
 
 
 @pytest.mark.parametrize("case", DIRECT_ANSWER_CASES)

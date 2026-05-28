@@ -186,6 +186,8 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
         self,
         current: StrategicIndicatorsPeriodSnapshot | None,
         previous: StrategicIndicatorsPeriodSnapshot | None,
+        *,
+        catalog=None,
     ) -> dict:
         if current is None:
             return {"items": [], "errors": [], "partial_success": False}
@@ -193,12 +195,16 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
         response = self._indicators_use_case.build_from_period_snapshot(
             current,
             previous_snapshot=previous,
+            catalog=catalog,
+            compact=True,
         )
-        return self._serialize_indicators_response(response)
+        return self._serialize_indicators_response(response, compact=True)
 
     @staticmethod
     def _serialize_indicators_response(
         result: GetStrategicIndicatorsResponse,
+        *,
+        compact: bool = False,
     ) -> dict:
         return {
             "items": [
@@ -214,17 +220,23 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                     else None,
                     "goal_periodicity": item.goal_periodicity,
                     "goal_mode": getattr(item, "goal_mode", "standard"),
-                    "monthly_targets": [
-                        {
-                            **target,
-                            "target_value": float(target["target_value"])
-                            if target.get("target_value") is not None
-                            else None,
+                    **(
+                        {}
+                        if compact
+                        else {
+                            "monthly_targets": [
+                                {
+                                    **target,
+                                    "target_value": float(target["target_value"])
+                                    if target.get("target_value") is not None
+                                    else None,
+                                }
+                                if isinstance(target, dict)
+                                else target
+                                for target in (getattr(item, "monthly_targets", []) or [])
+                            ],
                         }
-                        if isinstance(target, dict)
-                        else target
-                        for target in (getattr(item, "monthly_targets", []) or [])
-                    ],
+                    ),
                     "scope_type": item.scope_type,
                     "performance_direction": getattr(
                         item,
@@ -241,6 +253,10 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                     "gaps": {
                         key: float(value) if value is not None else None
                         for key, value in (item.gaps or {}).items()
+                    },
+                    "goals": {
+                        key: float(value) if value is not None else None
+                        for key, value in (getattr(item, "goals", None) or {}).items()
                     },
                     "has_value": item.has_value,
                     "trend": item.trend,

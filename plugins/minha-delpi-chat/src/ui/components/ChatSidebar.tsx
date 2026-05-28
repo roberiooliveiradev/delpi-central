@@ -6,6 +6,7 @@ import {
   Folder,
   MessageSquarePlus,
   Search,
+  Settings2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -27,10 +28,8 @@ import "./ChatSidebarAgentsSection.css";
 import "./ChatSidebarProjectsSection.css";
 import "./ChatSidebarSessionList.css";
 import "./ChatSidebarArchivedDialog.css";
-import "./ChatProjectCreateModal.css";
-import "./ChatProjectCard.css";
 
-export type ChatSidebarView = "chat" | "agents";
+export type ChatSidebarView = "chat" | "agents" | "projects";
 
 type ChatSidebarProps = {
   sessions: ChatSession[];
@@ -50,6 +49,9 @@ type ChatSidebarProps = {
   onCloseMobile?: () => void;
   onToggleCollapsed?: () => void;
   onViewChange?: (view: ChatSidebarView) => void;
+  onOpenAgentsDirectory?: () => void;
+  onOpenProjectsDirectory?: () => void;
+  onOpenAdmin?: () => void;
   onNewSession: () => void;
   onSelectSession: (session: ChatSession) => void;
   onRenameSession: (sessionId: string, title: string) => Promise<ChatSession | null>;
@@ -89,6 +91,9 @@ export function ChatSidebar({
   onCloseMobile,
   onToggleCollapsed,
   onViewChange,
+  onOpenAgentsDirectory,
+  onOpenProjectsDirectory,
+  onOpenAdmin,
   onNewSession,
   onSelectSession,
   onRenameSession,
@@ -182,75 +187,132 @@ export function ChatSidebar({
     }
   }
 
+  const sidebarOverlays = (
+    <>
+      <ChatProjectCreateModal
+        open={isProjectsModalOpen}
+        onClose={() => setIsProjectsModalOpen(false)}
+        onCreateProject={onCreateProject}
+        onSelectProject={onSelectProject}
+      />
+
+      <ChatConfirmDialog
+        open={Boolean(deleteTargetSession)}
+        danger
+        title="Excluir conversa?"
+        description={`A conversa "${
+          deleteTargetSession?.title || "sem título"
+        }" será removida com todo o histórico de mensagens.`}
+        confirmLabel="Excluir"
+        cancelLabel="Cancelar"
+        onConfirm={confirmDeleteSession}
+        onCancel={() => setDeleteTargetSession(null)}
+      />
+
+      <ChatSidebarArchivedDialog
+        open={isArchivedOpen}
+        archivedSessions={archivedSessions}
+        isLoading={isLoadingArchivedSessions}
+        onClose={() => setIsArchivedOpen(false)}
+        onRestoreSession={(session) => void restoreArchivedSession(session)}
+      />
+    </>
+  );
+
+  function openAgentsDirectory() {
+    onOpenAgentsDirectory?.();
+    onViewChange?.("agents");
+  }
+
+  function openProjectsDirectory() {
+    onOpenProjectsDirectory?.();
+    onViewChange?.("projects");
+  }
+
   if (isCollapsed) {
     return (
-      <aside
-        className="mdc-chat-sidebar mdc-chat-sidebar--collapsed"
-        aria-label="Conversas"
-      >
-        <button
-          type="button"
-          className="mdc-chat-sidebar__collapse-button"
-          onClick={onToggleCollapsed}
-          aria-label="Expandir barra lateral"
-          title="Expandir"
+      <>
+        <aside
+          className="mdc-chat-sidebar mdc-chat-sidebar--collapsed"
+          aria-label="Conversas"
         >
-          <ChevronRight size={18} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__collapse-button"
+            onClick={onToggleCollapsed}
+            aria-label="Expandir barra lateral"
+            title="Expandir"
+          >
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__rail-button"
-          onClick={onNewSession}
-          aria-label="Nova conversa"
-          title="Nova conversa"
-        >
-          <MessageSquarePlus size={19} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button"
+            onClick={onNewSession}
+            aria-label="Nova conversa"
+            title="Nova conversa"
+          >
+            <MessageSquarePlus size={19} aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__rail-button"
-          onClick={() => {
-            onToggleCollapsed?.();
-            setIsSearchOpen(true);
-          }}
-          aria-label="Buscar conversas"
-          title="Buscar conversas"
-        >
-          <Search size={19} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button"
+            onClick={() => {
+              onToggleCollapsed?.();
+              setIsSearchOpen(true);
+            }}
+            aria-label="Buscar conversas"
+            title="Buscar conversas"
+          >
+            <Search size={19} aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__rail-button"
-          onClick={() => void openArchivedSessions()}
-          aria-label="Arquivadas"
-          title="Arquivadas"
-        >
-          <Archive size={19} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button"
+            onClick={() => void openArchivedSessions()}
+            aria-label="Arquivadas"
+            title="Arquivadas"
+          >
+            <Archive size={19} aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__rail-button"
-          onClick={() => onViewChange?.("agents")}
-          aria-label="Apps"
-          title="Apps"
-        >
-          <Box size={19} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button"
+            onClick={openAgentsDirectory}
+            aria-label="Apps e agentes"
+            title="Apps e agentes"
+          >
+            <Box size={19} aria-hidden="true" />
+          </button>
 
-        <button
-          type="button"
-          className="mdc-chat-sidebar__rail-button"
-          onClick={() => setIsProjectsModalOpen(true)}
-          aria-label="Projetos"
-          title="Projetos"
-        >
-          <Folder size={19} aria-hidden="true" />
-        </button>
-      </aside>
+          <button
+            type="button"
+            className="mdc-chat-sidebar__rail-button"
+            onClick={openProjectsDirectory}
+            aria-label="Projetos"
+            title="Projetos"
+          >
+            <Folder size={19} aria-hidden="true" />
+          </button>
+
+          {onOpenAdmin ? (
+            <button
+              type="button"
+              className="mdc-chat-sidebar__rail-button mdc-chat-sidebar__rail-button--admin"
+              onClick={onOpenAdmin}
+              aria-label="Administração"
+              title="Administração"
+            >
+              <Settings2 size={19} aria-hidden="true" />
+            </button>
+          ) : null}
+        </aside>
+        {sidebarOverlays}
+      </>
     );
   }
 
@@ -274,6 +336,7 @@ export function ChatSidebar({
           searchTerm={searchTerm}
           searchInputRef={searchInputRef}
           onNewSession={onNewSession}
+          onOpenAdmin={onOpenAdmin}
           onToggleSearch={() => {
             setIsSearchOpen((current) => !current);
             setSearchTerm("");
@@ -285,18 +348,28 @@ export function ChatSidebar({
 
       <div className="mdc-chat-sidebar__agents-pane">
         <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
-          <button
-            type="button"
-            onClick={() => setIsAgentsSectionOpen((current) => !current)}
-            aria-expanded={isAgentsSectionOpen}
-          >
-            {isAgentsSectionOpen ? (
-              <ChevronDown size={13} aria-hidden="true" />
-            ) : (
-              <ChevronRight size={13} aria-hidden="true" />
-            )}
-            <span>Apps e agentes</span>
-          </button>
+          <div className="mdc-chat-sidebar__section-heading">
+            <button
+              type="button"
+              className="mdc-chat-sidebar__section-chevron"
+              onClick={() => setIsAgentsSectionOpen((current) => !current)}
+              aria-expanded={isAgentsSectionOpen}
+              aria-label={isAgentsSectionOpen ? "Recolher apps e agentes" : "Expandir apps e agentes"}
+            >
+              {isAgentsSectionOpen ? (
+                <ChevronDown size={13} aria-hidden="true" />
+              ) : (
+                <ChevronRight size={13} aria-hidden="true" />
+              )}
+            </button>
+            <button
+              type="button"
+              className="mdc-chat-sidebar__section-link"
+              onClick={openAgentsDirectory}
+            >
+              Apps e agentes
+            </button>
+          </div>
 
           <small>{agents.length}</small>
         </div>
@@ -308,7 +381,7 @@ export function ChatSidebar({
             isLoading={isLoadingAgents}
             onSelectAgent={onSelectAgent}
             canManageAgents={canManageAgents}
-            onManageAgents={() => onViewChange?.("agents")}
+            onManageAgents={openAgentsDirectory}
             hideTitle
           />
         ) : null}
@@ -324,6 +397,7 @@ export function ChatSidebar({
           isSessionProcessing={isSessionProcessing}
           onSelectProject={onSelectProject}
           onSelectSession={onSelectSession}
+          onOpenProjectsDirectory={openProjectsDirectory}
           onNewProject={() => setIsProjectsModalOpen(true)}
           onRenameProject={onRenameProject}
           onDeleteProject={onDeleteProject}
@@ -383,37 +457,21 @@ export function ChatSidebar({
       </div>
 
       <div className="mdc-chat-sidebar__footer">
+        {onOpenAdmin ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar__footer-admin"
+            onClick={onOpenAdmin}
+          >
+            <Settings2 size={16} aria-hidden="true" />
+            <span>Administração</span>
+          </button>
+        ) : null}
         <span>DELPI Central</span>
         <small>APIs, conhecimento e ações autorizadas</small>
       </div>
 
-      <ChatProjectCreateModal
-        open={isProjectsModalOpen}
-        onClose={() => setIsProjectsModalOpen(false)}
-        onCreateProject={onCreateProject}
-        onSelectProject={onSelectProject}
-      />
-
-      <ChatConfirmDialog
-        open={Boolean(deleteTargetSession)}
-        danger
-        title="Excluir conversa?"
-        description={`A conversa "${
-          deleteTargetSession?.title || "sem título"
-        }" será removida com todo o histórico de mensagens.`}
-        confirmLabel="Excluir"
-        cancelLabel="Cancelar"
-        onConfirm={confirmDeleteSession}
-        onCancel={() => setDeleteTargetSession(null)}
-      />
-
-      <ChatSidebarArchivedDialog
-        open={isArchivedOpen}
-        archivedSessions={archivedSessions}
-        isLoading={isLoadingArchivedSessions}
-        onClose={() => setIsArchivedOpen(false)}
-        onRestoreSession={(session) => void restoreArchivedSession(session)}
-      />
+      {sidebarOverlays}
     </aside>
   );
 }

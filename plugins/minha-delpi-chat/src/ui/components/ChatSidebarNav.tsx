@@ -1,4 +1,4 @@
-import { MessageSquarePlus, Search, X } from "lucide-react";
+import { MessageSquarePlus, Search, Settings2, X } from "lucide-react";
 import type { RefObject } from "react";
 
 import { buildChatHref } from "../../navigation/chatRoutes";
@@ -9,6 +9,7 @@ type ChatSidebarNavProps = {
   searchTerm: string;
   searchInputRef: RefObject<HTMLInputElement | null>;
   onNewSession: () => void;
+  onOpenAdmin?: () => void;
   onToggleSearch: () => void;
   onClearSearch: () => void;
   onSearchChange: (value: string) => void;
@@ -19,6 +20,7 @@ export function ChatSidebarNav({
   searchTerm,
   searchInputRef,
   onNewSession: _onNewSession,
+  onOpenAdmin,
   onToggleSearch,
   onClearSearch,
   onSearchChange,
@@ -41,6 +43,19 @@ export function ChatSidebarNav({
           <span>Buscar conversas</span>
           <kbd>Ctrl K</kbd>
         </button>
+
+        {onOpenAdmin ? (
+          <a
+            href={buildChatHref({ kind: "admin" })}
+            onClick={(event) => {
+              handleChatNavClick(event, buildChatHref({ kind: "admin" }));
+              onOpenAdmin();
+            }}
+          >
+            <Settings2 size={17} aria-hidden="true" />
+            <span>Administração</span>
+          </a>
+        ) : null}
       </nav>
 
       {isSearchOpen ? (

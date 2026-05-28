@@ -23,11 +23,11 @@ Usuário
 | **Mensagem** | Turno user/assistant; pode ter tool calls, fontes, apresentação rica | Stream `.../messages/stream` ou send síncrono |
 | **Projeto** | Agrupador opcional de sessões e contexto | `05-projetos-fontes-anexos-artefatos.md` |
 
-O chat resolve em runtime: permissões (`/chat/capabilities`), contexto RAG, tools/actions permitidas e skills ativas.
+O chat resolve em runtime: permissões (`/chat/capabilities`), **pipeline base de inteligência**, contexto RAG, tools/actions permitidas e skills ativas. Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 ## Agente
 
-Assistente configurável com identidade, prompt de sistema e capacidades.
+Assistente configurável com identidade, prompt de sistema e capacidades — **herda** o pipeline do chat; adiciona restrições e contexto, não um motor de IA separado.
 
 | Campo / aspecto | Função |
 |---|---|
@@ -35,11 +35,19 @@ Assistente configurável com identidade, prompt de sistema e capacidades.
 | `system_prompt` | Instruções base do personagem |
 | `metadata` | Icebreakers, capabilities, **skills**, legado `allowed_actions` |
 | `visibility` | `private`, `public`, `system` (oficial) |
+| `published_version` / `published_config` | Snapshot em produção após **Publicar** no builder |
 | Actions (tabelas) | Providers e overrides de rotas por agente |
 
 **API:** `03-agentes.md`
 
 Duplicar agente pode copiar actions (`copyActions`); skills ficam no `metadata` exportado.
+
+### Rascunho e publicação
+
+1. O dono/editor altera instruções, skills, actions e metadados no builder (**rascunho**).
+2. `POST /chat/agents/{id}/publish` grava snapshot em `published_config` e incrementa `published_version`.
+3. Conversas com `agent_key` usam o snapshot publicado; agentes com `published_version < 1` não aparecem para usuários finais.
+4. `POST .../preview` e `POST /chat/agents/preview` testam rascunho sem publicar.
 
 ## Skill
 
@@ -56,7 +64,9 @@ Duplicar agente pode copiar actions (`copyActions`); skills ficam no `metadata` 
 
 **API:** `11-skills.md`
 
-**Chat comum:** skill SQL default via env `CHAT_DEFAULT_SQL_AUTHORING_SKILL`.
+**Chat comum:** skills padrão via env (`CHAT_DEFAULT_SQL_AUTHORING_SKILL`, `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL`) — injetadas automaticamente no prompt; não há atalhos na home para o usuário ligar/desligar.
+
+**Por agente:** configure em **Skills** no builder ou `PUT .../skills`.
 
 ## Action
 

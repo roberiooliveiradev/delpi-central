@@ -1,6 +1,11 @@
 .si-admin-workspace {
   display: grid;
   gap: 20px;
+  min-height: 0;
+}
+
+.si-admin-workspace > .si-section-block {
+  margin-bottom: 0;
 }
 
 .si-admin-master-detail {
@@ -235,6 +240,12 @@
 
 .si-admin-form-field span {
   font-size: 13px;
+  color: var(--text-muted);
+}
+
+.si-admin-form-field__hint {
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--text-muted);
 }
 

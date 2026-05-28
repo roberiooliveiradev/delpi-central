@@ -1,6 +1,6 @@
 # Status Atual — Minha DELPI Chat
 
-> Atualizado após **Onda 9** (concluída) — colunas preferenciais por rota, build corrigido (shared/delpi_auth), modal expandir, botão copiar API, estabilidade de memória (maio/2026).
+> Atualizado em **maio/2026** — Onda 10, lousa por intent no chat base, persistência antes do playback e cadência de respostas prontas.
 
 ## Visão geral
 
@@ -26,9 +26,12 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 ### Chat (usuário final)
 
-- Sessões, histórico, streaming, pin/arquivo, edição de mensagem
+- Sessões, histórico, streaming SSE (`assistant_pending`, `playback`, `canvas_open`), pin/arquivo, edição de mensagem
+- **Lousa (canvas):** painel lateral editável; pedidos como «coloque na lousa/canvas/canva» reutilizam a última resposta do assistente (não confunde com Canva.com)
+- **Playback:** resposta persistida no banco antes da animação de escrita (`CHAT_PERSIST_BEFORE_PLAYBACK`, default `true`)
 - RAG com fontes, tools, anexos, projetos e agentes
-- **Gestão de agentes** (builder, shares, stats, duplicate, export/import, transfer) — ondas 1–7
+- **Gestão de agentes** (builder, publicar/versões, preview rascunho, shares, stats, duplicate, export/import, transfer) — ondas 1–7 + publicação
+- **Skills** injetadas automaticamente no chat comum (sem atalhos na home); por agente no builder
 - **Feedback** thumbs up/down nas respostas do assistente
 - Segurança de entrada (sanitização, anti-injection, modo enforce/monitor)
 - Inteligência configurável: RAG híbrido, rerank, loop agentic, cache de embeddings (admin)
@@ -53,10 +56,11 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 - **Admin itens 1–15:** concluídos — ver `admin-minha-delpi-chat.md`
 - **Gestão de agentes ondas 1–7:** concluídas — ver `agentes-gestao-melhorias.md`
-- **Inteligência do chat ondas 1–6:** concluídas — ver `roadmap/README.md` e `inteligencia-chat-onda-6.md` em `minha-delpi-ai-api`
+- **Inteligência do chat ondas 1–10:** concluídas — ver `roadmap/README.md` e ondas 6–10 em `minha-delpi-ai-api`
 - **Inteligência Onda 7:** concluída — templates (7.1), OpenAPI CPV/OTD/vendas (7.2), regressão (7.3), calibração RAG (7.4), homologação latência em prod (7.5), seleção OVs vs LMP (7.6), busca por descrição + roteamento (7.7), fix associação agent_key via context bar (7.8)
 - **Inteligência Onda 8:** concluída — modelo 3b, features ativadas, apresentação inteligente, formato sob demanda
 - **Inteligência Onda 9:** concluída — colunas preferenciais por tipo de dado, build com shared/delpi_auth, modal expandir, copiar API, streaming direct response, estabilidade memória (ctx 2048)
+- **Inteligência Onda 10:** concluída — rotas `/products/{code}` e `/summary`, vocabulário e scoring de intent, fix OVs vs produto, títulos contextuais no presenter, doc RAG `api-delpi-rotas-agente.md` revisado
 - **Melhorias futuras:** concluídas neste repositório — ver `melhorias-futuras.md`
 - **Pendente externo:** RBAC com perfis formais no `core-api`
 
@@ -144,6 +148,18 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 | Flattening de objetos complexos em tabelas | Concluído |
 | Todas as rotas de produto testadas e corrigidas | Concluído |
 
+## Inteligência do chat (Onda 10) — concluída
+
+Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-10.md).
+
+| Entrega | Status |
+|---------|--------|
+| Rotas `GET /products/{code}` e `/summary` na api-delpi | Concluído |
+| Scoring de intent (descrição, parents, pricing, NF, OVs) | Concluído |
+| Suite 36 cenários de seleção de rota (100%) | Concluído |
+| Títulos contextuais no presenter por path | Concluído |
+| Documentação RAG `api-delpi-rotas-agente.md` alinhada ao OpenAPI | Concluído |
+
 ## Inteligência do chat (Onda 9) — concluída
 
 | Entrega | Status |
@@ -156,7 +172,9 @@ Roadmap: [`inteligencia-chat-onda-6.md`](../../../minha-delpi-ai-api/docs/roadma
 | Botão "Copiar" na resposta bruta da API | Concluído |
 | Dockerfile.prod: build context `.` + `shared/delpi_auth` | Concluído |
 | Dependência `python-jose` adicionada (necessária para delpi_auth) | Concluído |
-| Streaming em direct responses: 4 chars/chunk, 20ms delay (efeito de escrita) | Concluído |
+| Streaming em direct responses: 2 chars/chunk, 45ms delay (efeito de escrita) | Concluído |
+| Intent «coloque na lousa» + SSE `canvas_open` (chat base, herda em agentes) | Concluído |
+| Persistir resposta antes do playback (reload não perde texto em geração) | Concluído |
 | `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
 | Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
 | Normalização de mensagens (typos/acentos) para seleção de actions | Concluído |
@@ -179,8 +197,9 @@ MAX_CONTEXT_CHUNKS=8
 MAX_CONTEXT_CHARS=12000
 CHAT_OPERATIONAL_FAST_PATH_ENABLED=true
 CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
-CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS=4
-CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS=20
+CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS=2
+CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS=45
+CHAT_PERSIST_BEFORE_PLAYBACK=true
 ```
 
 **Após deploy da api-delpi:** reimportar OpenAPI no provider do agente e reindexar o documento de rotas na base de conhecimento.
@@ -191,6 +210,8 @@ CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS=20
 
 - Metadados OpenAPI centralizados em `api-delpi/app/interface/http/openapi_agent_metadata.py`
 - Guia técnico: [`api-delpi/docs/api/11-guia-agente-chat.md`](../../../api-delpi/docs/api/11-guia-agente-chat.md)
+- Documento RAG (ingestão): [`api-delpi-rotas-agente.md`](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md)
+- Onda 10: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadmap/inteligencia-chat-onda-10.md)
 
 ## Próximas evoluções sugeridas
 

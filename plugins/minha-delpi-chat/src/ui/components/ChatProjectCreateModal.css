@@ -1,24 +1,28 @@
+@import "../layout/chat-workspace-shared.css";
+
 .mdc-chat-project-create-backdrop {
   position: fixed;
   inset: 0;
   z-index: 120;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.52);
-  backdrop-filter: blur(4px);
+  background: var(--mdc-overlay-backdrop);
+  backdrop-filter: blur(6px);
   padding: var(--mdc-space-4);
 }
 
 .mdc-chat-project-create-modal {
   display: grid;
   gap: 1rem;
-  width: min(100%, 42rem);
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 82%, transparent);
-  border-radius: 1.35rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
+  width: min(100%, 34rem);
+  max-height: min(92dvh, 100%);
+  overflow-y: auto;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
   color: var(--mdc-text);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-  padding: 1.25rem;
+  box-shadow: var(--mdc-shadow-lg);
+  padding: 1.35rem;
 }
 
 .mdc-chat-project-create-modal header {
@@ -31,120 +35,160 @@
 .mdc-chat-project-create-modal header h2 {
   margin: 0;
   color: var(--mdc-title);
-  font-size: 1.45rem;
-  letter-spacing: -0.03em;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .mdc-chat-project-create-modal header div {
   display: inline-flex;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .mdc-chat-project-create-modal header button {
   display: inline-grid;
   place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2.3rem;
+  height: 2.3rem;
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: 999px;
   background: transparent;
-  color: var(--mdc-text);
+  box-shadow: none;
+  color: var(--mdc-text-muted);
   cursor: pointer;
 }
 
+.mdc-chat-project-create-modal header button svg {
+  display: block;
+}
+
 .mdc-chat-project-create-modal header button:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 9%, transparent);
+  background: color-mix(in srgb, var(--mdc-text) 10%, transparent);
+  color: var(--mdc-text);
 }
 
-.mdc-chat-project-create-modal label {
+.mdc-chat-project-create-modal__field {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
-.mdc-chat-project-create-modal label span {
-  color: var(--mdc-title);
-  font-weight: 760;
+.mdc-chat-project-create-modal__field span {
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  font-weight: 700;
 }
 
-.mdc-chat-project-create-modal input,
-.mdc-chat-project-create-modal textarea {
-  width: 100%;
-  border: 1px solid var(--mdc-card-border);
+.mdc-chat-project-create-modal__input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
   border-radius: 0.85rem;
-  background: color-mix(in srgb, var(--mdc-bg) 86%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+  padding: 0 0.75rem;
+}
+
+.mdc-chat-project-create-modal__input-wrap svg {
+  flex-shrink: 0;
+  display: block;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-project-create-modal__input-wrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
   color: var(--mdc-text);
   font: inherit;
-  padding: 0.75rem 0.85rem;
+  padding: 0.72rem 0;
   outline: none;
 }
 
-.mdc-chat-project-create-modal textarea {
+.mdc-chat-project-create-modal__field input:not(.mdc-chat-project-create-modal__input-wrap input),
+.mdc-chat-project-create-modal__field textarea {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 62%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
+  color: var(--mdc-text);
+  font: inherit;
+  padding: 0.72rem 0.8rem;
+  outline: none;
+}
+
+.mdc-chat-project-create-modal__field textarea {
   resize: vertical;
 }
 
-.mdc-chat-project-create-modal input:focus,
-.mdc-chat-project-create-modal textarea:focus {
-  border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
+.mdc-chat-project-create-modal__details summary {
+  cursor: pointer;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.mdc-chat-project-create-modal__details summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdc-chat-project-create-modal__details-body {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
 }
 
 .mdc-chat-project-create-modal__hint {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.75rem;
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
-  padding: 1rem;
+  gap: 0.7rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+  padding: 0.9rem;
+}
+
+.mdc-chat-project-create-modal__hint svg {
+  flex-shrink: 0;
+  display: block;
+  align-self: start;
+  color: var(--mdc-text-muted);
+  margin-top: 0.1rem;
 }
 
 .mdc-chat-project-create-modal__hint p {
   margin: 0;
-  color: var(--mdc-text);
-  line-height: 1.42;
+  color: color-mix(in srgb, var(--mdc-text) 88%, var(--mdc-text-muted));
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .mdc-chat-project-create-modal footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-}
-
-.mdc-chat-project-create-modal footer button {
-  border: 0;
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: white;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 820;
-  padding: 0.75rem 1.15rem;
-}
-
-.mdc-chat-project-create-modal footer button:disabled {
-  cursor: not-allowed;
-  opacity: 0.48;
-}
-
-.mdc-chat-project-create-modal {
-  max-height: min(92dvh, 100%);
-  overflow-y: auto;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 @media (max-width: 767px) {
-  .mdc-chat-project-create-modal {
-    border-radius: 1.25rem 1.25rem 0 0;
-    padding: var(--mdc-space-4);
-    padding-bottom: calc(var(--mdc-space-4) + env(safe-area-inset-bottom, 0px));
+  .mdc-chat-project-create-backdrop {
+    align-items: end;
+    padding: 0;
   }
 
-  .mdc-chat-project-create-modal header h2 {
-    font-size: 1.2rem;
+  .mdc-chat-project-create-modal {
+    width: 100%;
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding-bottom: calc(1.35rem + env(safe-area-inset-bottom, 0px));
   }
 
   .mdc-chat-project-create-modal footer {
-    justify-content: stretch;
+    flex-direction: column-reverse;
   }
 
-  .mdc-chat-project-create-modal footer button {
+  .mdc-chat-project-create-modal footer .mdc-chat-ws-toolbar-btn {
     width: 100%;
-    text-align: center;
+    justify-content: center;
   }
 }

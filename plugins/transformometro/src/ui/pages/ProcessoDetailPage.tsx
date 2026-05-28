@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -17,6 +17,7 @@ import {
   createRevisao,
   deleteProcesso,
   deleteRevisao,
+  duplicateProcesso,
   fetchOptions,
   fetchProcesso,
   fetchProcessoComparativo,
@@ -129,6 +130,25 @@ export function ProcessoDetailPage({
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
     } finally {
       setSavingProcesso(false);
+    }
+  }
+
+  async function handleDuplicateProcesso() {
+    if (!processo) return;
+    const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
+    if (
+      !window.confirm(
+        `Duplicar ${label}? Serão copiadas todas as revisões, medições, investimentos e vínculos de recursos.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    try {
+      const result = await duplicateProcesso(processoId, undefined, getAccessToken);
+      onNavigate(`/processos/${result.processo.processo_id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao duplicar processo");
     }
   }
 
@@ -356,6 +376,15 @@ export function ProcessoDetailPage({
             >
               <Pencil size={16} />
               Editar processo
+            </button>
+            <button
+              type="button"
+              className="ds-ghost-btn"
+              disabled={refreshing}
+              onClick={() => void handleDuplicateProcesso()}
+            >
+              <Copy size={16} />
+              Duplicar
             </button>
             <button
               type="button"

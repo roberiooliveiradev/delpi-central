@@ -1,9 +1,16 @@
 import type { IndicatorAlertViewItem } from "../../data/types/alerts";
 import { StatusBadge } from "./StatusBadge";
+import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
+import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
+import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./CriticalIndicatorList.css";
 
 type CriticalIndicatorListProps = {
   alerts: IndicatorAlertViewItem[];
+  competence?: string | null;
+  viewMode?: StrategicIndicatorsViewMode;
+  branch?: string;
 };
 
 function getVariant(severity: IndicatorAlertViewItem["severity"]) {
@@ -20,6 +27,9 @@ function getLabel(severity: IndicatorAlertViewItem["severity"]) {
 
 export function CriticalIndicatorList({
   alerts,
+  competence,
+  viewMode = "consolidated",
+  branch = "01",
 }: CriticalIndicatorListProps) {
   if (!alerts.length) {
     return (
@@ -49,7 +59,29 @@ export function CriticalIndicatorList({
 
           <div className="si-critical-item__metrics">
             <span>Nota: {alert.simulatedScore.toFixed(1)}</span>
-            <span>Meta: {alert.goalLabel}</span>
+            <span>
+              Meta:{" "}
+              <ScopeMetricBadges
+                values={alert.goals}
+                format={{
+                  valueUnit: alert.valueUnit,
+                  valuePrefix: alert.valuePrefix,
+                  valueSuffix: alert.valueSuffix,
+                  valueDecimals: alert.valueDecimals,
+                }}
+                displayContext={{
+                  filterViewScopeLabel:
+                    viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
+                  activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+                }}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(alert, competence, {
+                  filterViewScopeLabel:
+                    viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
+                  activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+                })}
+              />
+            </span>
           </div>
 
           <p className="si-critical-item__recommendation">

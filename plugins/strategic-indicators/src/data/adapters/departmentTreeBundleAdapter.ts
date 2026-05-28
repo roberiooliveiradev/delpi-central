@@ -1,5 +1,9 @@
 import { adaptDepartmentsToView } from "./departmentsAdapter";
 import { adaptIndicatorsToView } from "./indicatorsAdapter";
+import {
+  adaptAlertsSummaryToView,
+  adaptMeasurementIssuesToView,
+} from "./measurementIssuesAdapter";
 import { adaptTrendsToView } from "./trendsAdapter";
 import { buildDepartmentTreeModel } from "../builders/buildDepartmentTreeModel";
 import { enrichDepartmentTreeWithTrends } from "../builders/enrichDepartmentTreeWithTrends";
@@ -65,12 +69,23 @@ export function adaptTreeSnapshotToModel(
     indicators: adaptIndicatorsToView(scope.indicators),
   }));
 
+  const partialSuccess = Boolean(response.partial_success);
+  const errors = adaptMeasurementIssuesToView(response.errors);
+
   return buildDepartmentTreeModel({
     competence: response.competence,
     igd: response.igd,
     igdExact: response.igd_exact,
     classification: response.classification,
     scopePayloads,
+    dataQuality:
+      partialSuccess || errors.length > 0
+        ? {
+            partialSuccess,
+            errors,
+            alertsSummary: adaptAlertsSummaryToView(response.alerts_summary),
+          }
+        : undefined,
   });
 }
 

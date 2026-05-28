@@ -2,100 +2,139 @@
 
 Este documento orienta a **seleção automática de rotas** quando um agente do chat usa a api-delpi via **actions OpenAPI** importadas no `minha-delpi-ai-api`.
 
+**Versão expandida para RAG (recomendada na base de conhecimento):**  
+[`minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`](../../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md)
+
+**Última revisão:** maio/2026 (Onda 10 inteligência + rotas comercial/qualidade/RH/dashboard LMP).
+
+---
+
 ## Como o agente escolhe a rota
 
-1. O provider do agente aponta para `GET /apps/api-delpi/openapi.json`.
-2. Cada operação vira uma **action** com `summary`, `description`, `path`, `operationId` e `tags`.
-3. O chat filtra candidatos por palavras-chave e ranqueia por path + metadados (+ embeddings, se habilitado).
-4. Após alterar este guia ou o OpenAPI, **reimporte** o schema no agente (`POST .../providers/{key}/import`).
+1. Provider do agente aponta para `GET /apps/api-delpi/openapi.json` com `authMode: user_token`.
+2. Cada operação vira **action** com `summary`, `description`, `path`, `operationId` e `tags`.
+3. O pipeline filtra candidatos por palavras-chave, scoring por path/intent e ranking semântico (se habilitado).
+4. Após mudar API ou este guia: **reimporte** o schema (`POST .../providers/{key}/import`) e **reindexe** o documento RAG.
 
-Campos OpenAPI mais importantes para acertar a rota:
-
-| Campo | Uso |
+| Campo OpenAPI | Uso |
 |---|---|
-| `summary` | Título curto em PT — entra no filtro SQL e no embedding |
-| `description` | Quando usar / quando **não** usar (evita confusão estoque item vs valor total) |
-| `operationId` | Identificador estável (`get_product_stock`, `list_lmps`, …) |
-| `tags` | Primeira tag vira namespace da action (`api_delpi.engenharia.list_lmps`) |
-| Parâmetros `code`, `sale_number` | Mapeados automaticamente a partir da mensagem |
+| `summary` | Título curto em PT — filtro e embedding |
+| `description` | Quando usar / quando **não** usar |
+| `path` | Principal para heurísticas (produto vs KPI vs OV) |
+| `operationId` | Identificador estável quando definido em `openapi_agent_metadata.py`; caso contrário pode ser auto-gerado pelo FastAPI |
 
-## Mapa de intenção → rota preferida
+Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 
-### Produtos (`/products`)
+---
 
-| O usuário quer… | Método e rota | `operationId` |
+## Produtos (`/products`)
+
+| O usuário quer… | Rota preferida | `operationId` (ref.) |
 |---|---|---|
-| Achar produto sem código exato | `GET /products/search` | `search_products` |
-| Descrição / ficha resumida / visão geral do item | `GET /products/{code}/analyser` | `get_product_analyser` |
-| Saldo, estoque, disponível **de um código** | `GET /products/{code}/stock` | `get_product_stock` |
-| Estrutura / BOM / componentes | `GET /products/{code}/structure` | `get_product_structure` |
-| Histórico de compras | `GET /products/{code}/purchases` | `purchases` (legado EN) |
-| Vendas / carteira / faturamento | `GET /products/{code}/sales*` | ver OpenAPI |
+| Busca sem código exato | `GET /products/search` | `search_products` |
+| Dados cadastrais (leve) | `GET /products/{code}` | `get_product_detail` |
+| Resumo produto + estoque + preços | `GET /products/{code}/summary` | `get_product_summary` |
+| Ficha analítica completa | `GET /products/{code}/analyser` | `get_product_analyser` |
+| Estoque/saldo **do item** | `GET /products/{code}/stock` | `get_product_stock` |
+| Estrutura / BOM | `GET /products/{code}/structure` | `get_product_structure` |
+| Onde é usado / produto pai | `GET /products/{code}/parents` | path `parents` |
+| Preço / tabela | `GET /products/{code}/pricing` | path `pricing` |
+| Fornecedores / clientes | `.../suppliers`, `.../customers` | path |
+| Compras / vendas / carteira / faturamento | `.../purchases`, `.../sales`, `.../open-orders`, `.../billing` | ver OpenAPI |
+| Roteiro / inspeção / movimentações / NF | `guide`, `inspection`, `internal-movements`, `inbound|outbound-invoice-items` | path |
 
-**Código do produto:** aceitar máscara (`10.080.055` → normalizado para a API). Em follow-up (“estoque **desse** produto”), o chat pode recuperar o código do histórico da conversa.
+**Não confundir:** estoque do item → `/products/{code}/stock`; valor total da empresa → `/supplies/stock-value`.
 
-**Não confundir:**
+Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** produto”) usa contexto da conversa.
 
-| Pergunta | Rota correta | Rota errada comum |
+---
+
+## Engenharia — LMP (`/engineering`)
+
+| O usuário quer… | Rota | Notas |
 |---|---|---|
-| Estoque do item 10080047 | `/products/{code}/stock` | `/supplies/stock-value` |
-| Valor total de estoque da empresa | `/supplies/stock-value` | `/products/{code}/stock` |
+| Listar LMPs / amostras | `GET /engineering/lmps` | `list_lmps` |
+| KPIs do painel | `GET /engineering/lmps/dashboard/summary` | Preferir no chat vs dashboard completo |
+| Itens paginados do painel | `GET /engineering/lmps/dashboard/items` | MFE / tabelas grandes |
+| Gráficos do painel | `GET /engineering/lmps/dashboard/charts` | MFE |
+| Dashboard legado (tudo) | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
+| Detalhe por OV | `GET /engineering/lmps/{sale_number}` | OV ≠ código de produto |
+| Transforma Mais | `GET /engineering/transforma-mais/processes` (+ `/summary`) | Melhoria contínua |
 
-### Engenharia — LMP (`/engineering`)
+---
 
-| O usuário quer… | Método e rota | `operationId` |
-|---|---|---|
-| Listar / filtrar várias LMPs ou amostras | `GET /engineering/lmps` | `list_lmps` |
-| Painel / dashboard / resumo gerencial | `GET /engineering/lmps/dashboard` | `list_lmps_dashboard` |
-| Uma LMP pela ordem de venda (OV) | `GET /engineering/lmps/{sale_number}` | `get_lmp_by_sale_number` |
+## Vendas, comercial, financeiro, produção, RH
 
-Parâmetros úteis na listagem: `listing_type` (`LMP`, `Amostra`, `Outro`), `date_start`, `date_end`, `branch`, `page`, `page_size`.
+| Domínio | Exemplos de rota |
+|---|---|
+| Ordens de venda (lista) | `GET /sales/` — não confundir com `/products/{code}/sales` |
+| KPI comercial | `/commercial/closing-rate`, `/commercial/rol/series`, metas ROL, OTD, novos clientes/negócios |
+| Financeiro | `GET /financial/rol`, `/financial/ebitda_pct`, `/financial/pmr`, `/financial/fixed_cost_pct` (também legado `/finacial/*`) |
+| Produção | `/production/on_time_delivery_pct`, OEE, custos, `depreciation_pct` |
+| RH | `/hr/branches`, `/hr/snapshot`, PDIs, avaliações |
 
-### Dados — SQL (`/data`)
+---
 
-| O usuário quer… | Método e rota | `operationId` |
-|---|---|---|
-| Rodar SELECT / consulta analítica | `POST /data/sql` | `execute_readonly_sql` |
+## Suprimentos (`/supplies`)
 
-Corpo: JSON `{ "sql": "SELECT ..." }` ou `text/plain` com a query. Somente leitura; validador bloqueia DML.
+| Rota | Uso |
+|---|---|
+| `/supplies/stock-value` | KPI valor total — sem datas: atual; com `start_date`+`end_date`: histórico estimado |
+| `/supplies/inventory-turnover` | Giro (IDD) |
+| `/supplies/cpv`, `/supplies/otd` | CPV e OTD compras |
 
-Permissão: `api-delpi.data` ou `api-delpi.access.full`.
+Detalhes histórico: [supplies-estoque-historico.md](./supplies-estoque-historico.md).
 
-### Suprimentos — indicadores (`/supplies`)
+---
 
-| O usuário quer… | Método e rota | `operationId` |
-|---|---|---|
-| Valor total de estoque (KPI) | `GET /supplies/stock-value` | `get_supplies_stock_value` — sem datas: SB2 atual; com `start_date`+`end_date`: estimativa SB9+SD3 ([detalhes](./supplies-estoque-historico.md)) |
-| Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | (ver OpenAPI) |
-| CPV / OTD compras | `/supplies/cpv`, `/supplies/otd` | (ver OpenAPI) |
+## Qualidade (`/quality`)
 
-## Vocabulário recomendado nos metadados OpenAPI
+Métricas TOTVS (não confundir com NC PostgreSQL — [07-qualidade-nc.md](./07-qualidade-nc.md)).
 
-Incluir no `summary` ou `description` (PT):
+| Rota | Uso |
+|---|---|
+| `/quality/branches` | Filiais |
+| `/quality/nonconformities` (+ `/series`) | NC Protheus |
+| `/quality/ppm/internal|external/summary` | PPM resumo |
+| `/quality/ppm/internal|external` | PPM detalhado (+ `/series`) |
+| `/quality/audit-5s/summary`, `/quality/kaizens/summary` | 5S e kaizens |
 
-- **Produto:** produto, item, código, referência, SKU, descrição, estoque, saldo, disponível, estrutura, BOM.
-- **LMP:** LMP, lista de materiais de projeto, amostra, ordem de venda, OV.
-- **SQL:** SQL, consulta, SELECT, dados, query.
-- **Suprimentos (KPI):** valor total de estoque, indicador, suprimentos (evitar só “estoque” sem contexto).
+Permissão: `api-delpi.quality.access` ou `dashboard-quality.view`.
 
-Implementação centralizada em `app/interface/http/openapi_agent_metadata.py`.
+---
+
+## SQL e sistema
+
+| Rota | Uso |
+|---|---|
+| `POST /data/sql` | SELECT somente leitura — `execute_readonly_sql` |
+| `GET /system/tables/search` | Buscar tabelas por descrição |
+| `GET /system/tables/{tableName}/schema` | Schema agregado |
+| `GET /system/columns/search` | Busca global de colunas |
+
+Permissão SQL: `api-delpi.data` ou `api-delpi.access.full`. Sistema: `api-delpi.system` ou `api-delpi.access.full`.
+
+---
+
+## Financeiro — prefixos
+
+Em `main.py` o router financeiro está montado em **`/financial`** (preferido) e **`/finacial`** (legado, typo). Ex.: `GET /financial/rol` e `GET /finacial/rol`.
+
+---
 
 ## Checklist após mudar a API
 
-1. Subir api-delpi e conferir `/apps/api-delpi/openapi.json`.
-2. Reimportar provider no agente do chat.
-3. (Opcional) Reindexar embeddings das actions no admin do chat.
-4. Testar frases reais: estoque do 10.080.055, listar LMPs da semana, OV 123456, SELECT TOP 10…
+1. Deploy api-delpi → conferir `/apps/api-delpi/openapi.json`.
+2. Reimportar provider no agente.
+3. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento.
+4. Testar: estoque item, valor total estoque, OV LMP, listar OVs, PPM resumo, SELECT simples.
 
-## Documento para anexar ao agente (RAG)
-
-Versão expandida para ingestão na base de conhecimento do chat:
-
-`minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md`
+---
 
 ## Referências
 
-- [02-produtos.md](./02-produtos.md) — detalhes humanos das rotas de produto
-- [04-sistema-e-dados.md](./04-sistema-e-dados.md) — SQL e metadados Protheus
-- [06-modulos-departamentais.md](./06-modulos-departamentais.md) — LMP e suprimentos
-- `minha-delpi-ai-api/docs/api/04-actions-openapi.md` — import e permissões do agente
+- [02-produtos.md](./02-produtos.md)
+- [04-sistema-e-dados.md](./04-sistema-e-dados.md)
+- [06-modulos-departamentais.md](./06-modulos-departamentais.md)
+- [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md)
+- `minha-delpi-ai-api/docs/api/04-actions-openapi.md`

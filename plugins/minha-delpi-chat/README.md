@@ -8,6 +8,7 @@ Microfrontend React do **Minha DELPI Chat**, carregado pelo Portal via Module Fe
 |------|---------|
 | API backend | [../../minha-delpi-ai-api/docs/api/README.md](../../minha-delpi-ai-api/docs/api/README.md) |
 | Modelo conceitual (chat, skills, actions…) | [../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md](../../minha-delpi-ai-api/docs/api/12-modelo-conceitual.md) |
+| Inteligência no chat base (agentes herdam) | [../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md](../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md) |
 | Skills (API) | [../../minha-delpi-ai-api/docs/api/11-skills.md](../../minha-delpi-ai-api/docs/api/11-skills.md) |
 | Admin (componentes) | [src/ui/components/admin/README.md](src/ui/components/admin/README.md) |
 | Roadmap admin | [../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md](../../minha-delpi-ai-api/docs/roadmap/admin-minha-delpi-chat.md) |
@@ -53,6 +54,8 @@ src/
 
 - Sessões com pin, arquivo e renomear
 - Mensagens com streaming, fontes, tool calls e anexos
+- **Lousa (canvas):** painel lateral com markdown editável; comando «coloque na lousa/canvas» após uma resposta do assistente
+- Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Feedback** (thumbs up/down) em respostas do assistente
 - Agentes, projetos, fontes e anexos por contexto
 - Notificações (sino) quando habilitado na Core API
@@ -63,15 +66,16 @@ Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comport
 
 | Recurso | Descrição |
 |---------|-----------|
-| Builder | Instruções, execução, quebra-gelos, compartilhamento, stats, duplicar |
-| Skills | Ativar comportamentos de prompt (ex.: Especialista SQL); ver badge de execução SQL |
+| Builder | Instruções, visibilidade, quebra-gelos, **publicar** rascunho, preview, compartilhamento, stats, duplicar |
+| Skills | Comportamentos de prompt por agente (ex.: Especialista SQL, company-knowledge); badge de execução SQL quando action `/data/sql` habilitada |
 | Actions | Providers OpenAPI, rotas, teste e logs |
 | Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |
 | Transferir | Dono pode transferir propriedade |
 | Export / Import | JSON portável da configuração + actions |
 | Duplicate | `copyActions` e `copySources` opcionais |
 | Lista | Métricas de uso (7 dias), inativos, badges de papel |
-| Preview | Simulação real antes de publicar |
+| Preview | Simulação com rascunho (`POST /chat/agents/preview` ou `.../{id}/preview`) antes de publicar |
+| Publicar | `POST /chat/agents/{id}/publish` — visitantes só veem versão publicada |
 
 Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md).
 

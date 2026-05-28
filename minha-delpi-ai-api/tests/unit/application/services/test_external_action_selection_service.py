@@ -77,6 +77,44 @@ def test_select_product_action_normalizes_masked_code():
     assert selected["arguments"]["parameters"]["code"] == "10080055"
 
 
+def test_select_product_search_by_group_not_analyser():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Busca de produtos",
+                    "parametersSchema": [
+                        {"name": "group_code"},
+                        {"name": "page_size"},
+                    ],
+                },
+                {
+                    "actionId": "analyser",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "summary": "Analisador",
+                    "parametersSchema": [{"name": "code"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "busque 3 produtos do grupo 1008",
+        allowed_action_ids=["search", "analyser"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "search"
+    assert selected["arguments"]["parameters"]["group_code"] == "1008"
+    assert selected["arguments"]["parameters"]["page_size"] == 3
+
+
 def test_select_lmp_by_sale_number_prefers_detail_route():
     service = ExternalActionSelectionService(
         FakeRepository(
@@ -229,3 +267,34 @@ def test_execute_query_selects_sql_action():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "sql-action"
+
+
+def test_comparison_request_does_not_select_structure_action():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "product-structure",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "summary": "Estrutura do produto",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "compare as duas estruturas e traga insights",
+        allowed_action_ids=["product-structure"],
+        conversation_context=(
+            "user: estrutura do 90260077\n"
+            "user: estrutura do 90260088\n"
+            "assistant: Estrutura do produto 90260088"
+        ),
+    )
+
+    assert selected is None

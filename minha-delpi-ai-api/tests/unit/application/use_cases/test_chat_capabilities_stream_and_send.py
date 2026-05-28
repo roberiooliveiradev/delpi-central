@@ -12,7 +12,6 @@ from app.application.use_cases.stream_chat_message_use_case import StreamChatMes
 from app.domain.entities.chat_session import ChatSession
 
 _CAPABILITY_PHRASES = (
-    "o que vc faz?",
     "o que vc é capaz de fazer?",
     "ajuda",
     "o que você pode fazer?",
@@ -131,6 +130,7 @@ def patch_chat_settings(monkeypatch):
         monkeypatch.setattr(
             f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000
         )
+        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", False)
 
 
 @pytest.fixture(autouse=True)
@@ -214,3 +214,44 @@ def test_stream_capabilities_direct_answer_without_llm(
     else:
         assert "Especialista em Produtos" in answer
         assert "Consultas operacionais" in answer
+
+
+def test_stream_group_capability_inquiry_without_llm(mock_action_catalog, monkeypatch):
+    search_catalog = [
+        {
+            "actionId": "act.search",
+            "method": "GET",
+            "path": "/products/search",
+            "summary": "Busca de produtos",
+            "parametersSchema": [
+                {"name": "description"},
+                {"name": "group_code"},
+            ],
+        },
+    ]
+
+    monkeypatch.setattr(
+        "app.application.use_cases.stream_chat_message_use_case.ChatCapabilitiesService.load_action_catalog_for_agent",
+        lambda allowed: search_catalog if allowed else [],
+    )
+
+    session, _, stream_use_case = _build_use_cases(common=False)
+    stream_use_case.workspace_context_service.build_context.return_value = {
+        **_workspace(common=False),
+        "allowedActionIds": ["act.search"],
+    }
+    request = SendChatMessageRequest(
+        user_id=str(session.user_id),
+        session_id=str(session.id),
+        message="vc coonsegue buscar um produto pelo seu grupo?",
+        access_token=None,
+    )
+
+    events = list(stream_use_case.stream(request))
+    answer = _collect_stream_answer(events)
+
+    assert "group_code" in answer
+    assert "Atenção — problemas" not in answer
+    assert events
+    tool_event = next(event for event in events if event.get("type") == "tool_calls")
+    assert tool_event.get("toolCalls") == []

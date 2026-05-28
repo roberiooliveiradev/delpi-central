@@ -1,0 +1,85 @@
+.mdc-chat-admin-debug {
+  margin-top: 10px;
+}
+
+.mdc-chat-admin-debug__open-btn {
+  border: 1px solid rgba(27, 31, 35, 0.12);
+  border-radius: 10px;
+  background: rgba(248, 249, 251, 0.9);
+  overflow: hidden;
+  width: 100%;
+  cursor: pointer;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-weight: 600;
+  user-select: none;
+  text-align: left;
+}
+
+.mdc-chat-admin-debug__details[open] > .mdc-chat-admin-debug__open-btn {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-color: rgba(27, 31, 35, 0.12);
+}
+
+.mdc-chat-admin-debug__open-btn:hover {
+  background: rgba(248, 249, 251, 1);
+  border-color: rgba(27, 31, 35, 0.18);
+}
+
+.mdc-chat-admin-debug__summary-hint {
+  font-weight: 500;
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.mdc-chat-admin-debug__details {
+  border: 0;
+}
+
+.mdc-chat-admin-debug__details > summary {
+  list-style: none;
+}
+
+.mdc-chat-admin-debug__details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.mdc-chat-admin-debug__toolbar {
+  padding: 10px 12px 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mdc-chat-admin-debug__content {
+  border-left: 1px solid rgba(27, 31, 35, 0.12);
+  border-right: 1px solid rgba(27, 31, 35, 0.12);
+  border-bottom: 1px solid rgba(27, 31, 35, 0.12);
+  border-radius: 0 0 10px 10px;
+  background: rgba(248, 249, 251, 0.9);
+  overflow: hidden;
+}
+
+.mdc-chat-admin-debug__body {
+  margin: 0;
+  padding: 0 12px 12px;
+  max-height: 420px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mdc-chat-admin-debug__copy-btn {
+  border: 1px solid rgba(27, 31, 35, 0.18);
+  background: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+

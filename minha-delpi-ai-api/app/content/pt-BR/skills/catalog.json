@@ -1,6 +1,15 @@
 {
   "skills": [
     {
+      "key": "company-knowledge",
+      "label": "Conhecimento da empresa",
+      "description": "Prioriza a base documental global da empresa (políticas, diretrizes, glossário e manuais). Orienta o uso do RAG e da ferramenta search_knowledge_base, com citação de fontes quando aplicável.",
+      "policyFile": "company-knowledge-skill.md",
+      "metadataFlag": "enabled",
+      "legacyMetadataFlag": "companyKnowledge",
+      "executionPathHint": "search_knowledge_base"
+    },
+    {
       "key": "sql",
       "label": "Especialista SQL",
       "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro. A execução no banco depende da action POST /data/sql habilitada no agente.",

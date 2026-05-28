@@ -61,6 +61,11 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             item.indicator_id: item
             for item in (previous_department.indicators if previous_department else [])
         }
+        catalog_by_indicator_id = {
+            item.indicator_id: item
+            for item in snapshot.catalog.indicators_catalog
+        }
+        period = snapshot.current.period
 
         previous_score = (
             previous_department.score
@@ -97,6 +102,10 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 self._map_indicator(
                     current=indicator,
                     previous=previous_indicators_by_id.get(indicator.indicator_id),
+                    catalog_item=catalog_by_indicator_id.get(indicator.indicator_id),
+                    start_date=period.start_date,
+                    end_date=period.end_date,
+                    competence=period.competence,
                 )
                 for indicator in current_department.indicators
             ],
@@ -104,7 +113,16 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "partial_success": len(snapshot.current.measurement_errors) > 0,
         }
 
-    def _map_indicator(self, *, current, previous) -> dict:
+    def _map_indicator(
+        self,
+        *,
+        current,
+        previous,
+        catalog_item=None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        competence: str | None = None,
+    ) -> dict:
         previous_score = previous.score if previous is not None else current.score
         trend = (
             "stable"
@@ -144,6 +162,13 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
                 unit_gaps=current.unit_gaps,
                 gap=current.gap,
                 department_id=current.department_id,
+            ),
+            "goals": self._calculator.resolve_goals_payload_for_calculated(
+                calculated=current,
+                catalog_item=catalog_item,
+                start_date=start_date,
+                end_date=end_date,
+                competence=competence,
             ),
             "trend": trend,
             "value_unit": getattr(current, "value_unit", None),

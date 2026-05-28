@@ -1,4 +1,13 @@
 @import "../layout/workspace-responsive.css";
+@import "../layout/chat-workspace-shared.css";
+@import "../components/admin/shared/admin-shared.css";
+@import "../components/admin/shared/AdminFileDropzone.css";
+
+.mdc-admin-tools-page {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+}
 
 .minha-delpi-chat.mdc-admin-root {
   width: 100%;
@@ -17,9 +26,9 @@
 .mdc-admin-shell {
   display: grid;
   gap: var(--mdc-space-5);
-  width: min(100%, 1720px);
+  width: min(100%, 1920px);
   margin: 0 auto;
-  padding: clamp(var(--mdc-space-4), 1.6vw, var(--mdc-space-6));
+  padding: clamp(var(--mdc-space-3), 1.2vw, var(--mdc-space-5));
 }
 
 @media (max-width: 767px) {

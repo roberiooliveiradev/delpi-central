@@ -53,6 +53,10 @@ from app.composition.admin_composer import (
     make_reindex_knowledge_document_use_case,
     make_restore_admin_guideline_version_use_case,
     make_save_admin_guideline_use_case,
+    make_list_admin_chat_skills_use_case,
+    make_create_admin_chat_skill_use_case,
+    make_update_admin_chat_skill_use_case,
+    make_deactivate_admin_chat_skill_use_case,
     make_admin_agent_simulate_use_case,
     make_get_admin_response_evaluation_context_use_case,
     make_get_admin_agent_specialization_use_case,
@@ -98,6 +102,84 @@ def get_admin_rbac_summary():
 
     use_case = make_get_admin_rbac_summary_use_case()
     return jsonify(use_case.execute(g.current_user, core_user=core_user)), 200
+
+
+@admin_bp.get("/skills")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def list_admin_chat_skills():
+    include_inactive = request.args.get("includeInactive", "true").lower() != "false"
+    use_case = make_list_admin_chat_skills_use_case()
+    return jsonify(use_case.execute(include_inactive=include_inactive)), 200
+
+
+@admin_bp.post("/skills")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def create_admin_chat_skill():
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    use_case = make_create_admin_chat_skill_use_case()
+
+    try:
+        result = use_case.execute(payload)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.put("/skills/<skill_id>")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def update_admin_chat_skill(skill_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return jsonify({"errors": [{"code": "invalid_request", "message": "Request body must be a JSON object", "path": "_global"}]}), 400
+
+    use_case = make_update_admin_chat_skill_use_case()
+
+    try:
+        result = use_case.execute(skill_id, payload)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return jsonify({"errors": [{"code": "invalid_request", "message": str(exc), "path": "_global"}]}), 400
+    except Exception:
+        db.session.rollback()
+        raise
+
+    if not result:
+        return jsonify({"errors": [{"code": "not_found", "message": "Skill not found", "path": "skillId"}]}), 404
+
+    return jsonify(result), 200
+
+
+@admin_bp.delete("/skills/<skill_id>")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+@rate_limit("admin_actions", Settings.RATE_LIMIT_ADMIN_ACTIONS_PER_WINDOW)
+def deactivate_admin_chat_skill(skill_id: str):
+    use_case = make_deactivate_admin_chat_skill_use_case()
+
+    try:
+        deleted = use_case.execute(skill_id)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    if not deleted:
+        return jsonify({"errors": [{"code": "not_found", "message": "Skill not found", "path": "skillId"}]}), 404
+
+    return jsonify({"ok": True}), 200
 
 
 @admin_bp.get("/guidelines")

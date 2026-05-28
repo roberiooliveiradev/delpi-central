@@ -51,6 +51,12 @@ class ExternalActionResultPresenter:
             if sql_result:
                 return sql_result
 
+        if isinstance(root, dict) and "/structure" in str(path or "").lower():
+            structure_result = self._present_product_structure(root, path)
+
+            if structure_result:
+                return structure_result
+
         items = root.get("items") if isinstance(root, dict) else None
 
         if isinstance(items, list):
@@ -469,6 +475,26 @@ class ExternalActionResultPresenter:
             "dados": {"rows": rows[:100]},
         }
 
+    def _present_product_structure(self, root: dict, path: str) -> dict | None:
+        root_node = root.get("root")
+
+        if not isinstance(root_node, dict):
+            return None
+
+        items = root.get("items")
+
+        if not isinstance(items, list):
+            return None
+
+        code = str(root_node.get("code") or "").strip()
+
+        return {
+            "titulo": f"Estrutura do produto {code}" if code else "Estrutura do produto",
+            "linhas": [],
+            "dados": root,
+            "sourcePath": path,
+        }
+
     def _present_product_search(self, root: dict, items: list, *, title: str | None = None) -> dict:
         titulo = title or "Busca de produtos"
         total = root.get("total")
@@ -659,6 +685,23 @@ class ExternalActionResultPresenter:
             if detail_list:
                 return self._build_product_detail_table(product, detail_list, root)
             return self._build_product_table(product, root)
+
+        if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            markdown = ChatProductStructurePresentationService.format_markdown(
+                root,
+                source_path=path,
+            )
+
+            if markdown:
+                return {
+                    "type": "markdown",
+                    "title": f"Estrutura do produto {root['root'].get('code', '')}",
+                    "markdown": markdown,
+                }
 
         items = root.get("items")
         if isinstance(items, list) and items and isinstance(items[0], dict):

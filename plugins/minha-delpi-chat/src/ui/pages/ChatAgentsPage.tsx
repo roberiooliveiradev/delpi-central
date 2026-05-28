@@ -1,18 +1,10 @@
-import {
-  ArrowLeft,
-  BarChart3,
-  Bot,
-  ChevronRight,
-  Pencil,
-  Plus,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-} from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Bot, ChevronRight, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
@@ -140,16 +132,20 @@ export function ChatAgentsPage({
   onOpenRagAdmin,
   getAccessToken,
 }: ChatAgentsPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [showInactive, setShowInactive] = useState(false);
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
+  const [resumeBuilderAgent, setResumeBuilderAgent] = useState<ChatAgent | null>(null);
   const [actionEditor, setActionEditor] = useState<{
     agent: ChatAgent;
     providerKey?: string | null;
+    returnToBuilder?: boolean;
   } | null>(null);
-  const [skillsEditor, setSkillsEditor] = useState<ChatAgent | null>(null);
+  const [skillsEditor, setSkillsEditor] = useState<{
+    agent: ChatAgent;
+    returnToBuilder?: boolean;
+  } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const onReloadAgentsRef = useRef(onReloadAgents);
-  onReloadAgentsRef.current = onReloadAgents;
 
   const filteredAgents = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase();
@@ -175,9 +171,9 @@ export function ChatAgentsPage({
 
   useEffect(() => {
     if (canManageAgents) {
-      void onReloadAgentsRef.current?.(false, true);
+      void onReloadAgents?.(false, true);
     }
-  }, [canManageAgents]);
+  }, [canManageAgents, onReloadAgents]);
 
   useEffect(() => {
     if (!editAgentKey) {
@@ -196,55 +192,96 @@ export function ChatAgentsPage({
 
   if (skillsEditor) {
     return (
+      <ChatAnimatedPanel panelKey="agent-skills" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentSkillsPage
-        agent={skillsEditor}
-        onBack={() => setSkillsEditor(null)}
-        onOpenActions={(target) => {
+        agent={skillsEditor.agent}
+        backLabel={
+          skillsEditor.returnToBuilder ? "Voltar ao agente" : "Voltar para agentes"
+        }
+        onBack={() => {
+          if (skillsEditor.returnToBuilder) {
+            setEditingAgent(skillsEditor.agent);
+            setResumeBuilderAgent(null);
+          }
+
           setSkillsEditor(null);
-          setActionEditor({ agent: target, providerKey: null });
+        }}
+        onOpenActions={(target) => {
+          setResumeBuilderAgent(skillsEditor.returnToBuilder ? skillsEditor.agent : null);
+          setSkillsEditor(null);
+          setActionEditor({
+            agent: target,
+            providerKey: null,
+            returnToBuilder: skillsEditor.returnToBuilder,
+          });
         }}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   if (actionEditor) {
     return (
+      <ChatAnimatedPanel panelKey="agent-actions" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentActionsPage
         agent={actionEditor.agent}
         providerKey={actionEditor.providerKey}
-        onBack={() => setActionEditor(null)}
+        backLabel={
+          actionEditor.returnToBuilder ? "Voltar ao agente" : "Voltar para agentes"
+        }
+        onBack={() => {
+          if (actionEditor.returnToBuilder) {
+            setEditingAgent(resumeBuilderAgent ?? actionEditor.agent);
+          }
+
+          setResumeBuilderAgent(null);
+          setActionEditor(null);
+        }}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   if (editingAgent !== undefined && (editingAgent !== null || canManageAgents)) {
     return (
+      <ChatAnimatedPanel panelKey="agent-builder" variant="page" className="mdc-chat-page-panel--fill">
       <ChatAgentBuilderPage
         agent={editingAgent}
         onBack={() => setEditingAgent(undefined)}
         onCreateAction={
           editingAgent
             ? () => {
-                setActionEditor({ agent: editingAgent, providerKey: null });
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setActionEditor({
+                  agent: editingAgent,
+                  providerKey: null,
+                  returnToBuilder: true,
+                });
               }
             : undefined
         }
         onConfigureAction={
           editingAgent
             ? (_agent, providerKey) => {
-                setActionEditor({ agent: editingAgent, providerKey });
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setActionEditor({
+                  agent: editingAgent,
+                  providerKey,
+                  returnToBuilder: true,
+                });
               }
             : undefined
         }
         onConfigureSkills={
           editingAgent
             ? () => {
-                setSkillsEditor(editingAgent);
+                setResumeBuilderAgent(editingAgent);
                 setEditingAgent(undefined);
+                setSkillsEditor({ agent: editingAgent, returnToBuilder: true });
               }
             : undefined
         }
@@ -260,131 +297,113 @@ export function ChatAgentsPage({
         onOpenRagAdmin={onOpenRagAdmin}
         getAccessToken={getAccessToken}
       />
+      </ChatAnimatedPanel>
     );
   }
 
   return (
-    <section className="mdc-chat-agents-directory" aria-label="Agentes">
-      <header className="mdc-chat-agents-directory__topbar">
-        <button type="button" onClick={onBack}>
-          <ArrowLeft size={18} aria-hidden="true" />
-          <span>Voltar ao chat</span>
-        </button>
-
-        <div>
-          <Bot size={18} aria-hidden="true" />
-          <span>Agentes</span>
+    <ChatAnimatedPanel panelKey="agents-directory" variant="page" className="mdc-chat-page-panel--fill">
+    {confirmDialog}
+    <section className="mdc-chat-ws-directory" aria-label="Agentes">
+      <header className="mdc-chat-ws-topbar mdc-chat-ws-directory__topbar">
+        <div className="mdc-chat-ws-topbar__start">
+          <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
+            <ArrowLeft size={18} aria-hidden="true" />
+            <span>Voltar ao chat</span>
+          </button>
         </div>
+
+        <div className="mdc-chat-ws-topbar__title mdc-chat-ws-directory__title">
+          <Bot size={18} aria-hidden="true" />
+          <span>Apps e agentes</span>
+        </div>
+
+        {canManageAgents ? (
+          <div className="mdc-chat-ws-topbar__actions">
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              onClick={() => setEditingAgent(null)}
+            >
+              <Plus size={16} aria-hidden="true" />
+              <span>Criar agente</span>
+            </button>
+          </div>
+        ) : null}
       </header>
 
-      <main className="mdc-chat-agents-directory__main">
-        <section className="mdc-chat-agents-directory__hero">
-          <p className="mdc-chat-eyebrow">Especialistas da Minha DELPI</p>
-          <h1>Agentes</h1>
-          <p>
-            Crie especialistas com instruções, conhecimento, quebra-gelos e actions
-            OpenAPI configuradas por agente.
+      <main className="mdc-chat-ws-directory__main">
+        <div className="mdc-chat-ws-directory__toolbar">
+          <p className="mdc-chat-ws-directory__lead">
+            Especialistas com instruções, conhecimento, quebra-gelos e actions OpenAPI.
           </p>
 
-          <div className="mdc-chat-agents-directory__search">
-            <Search size={18} aria-hidden="true" />
+          <label className="mdc-chat-ws-directory__search">
+            <Search size={17} aria-hidden="true" />
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Buscar agentes"
             />
+          </label>
+        </div>
+
+        <div className="mdc-chat-ws-directory__meta-row">
+          <span>{agents.length} agente(s)</span>
+          {canManageAgents ? (
+            <AgentBuilderCheckbox
+              checked={showInactive}
+              onChange={(event) => {
+                const includeDisabled = event.target.checked;
+                setShowInactive(includeDisabled);
+                void onReloadAgents?.(includeDisabled, canManageAgents);
+              }}
+              label="Mostrar inativos"
+            />
+          ) : null}
+        </div>
+
+        {isLoading ? (
+          <p className="mdc-chat-ws-empty">Carregando agentes...</p>
+        ) : filteredAgents.length === 0 ? (
+          <div className="mdc-chat-ws-directory__empty">
+            <Bot size={22} aria-hidden="true" />
+            <strong>Nenhum agente encontrado</strong>
+            <p>Crie um especialista ou ajuste a busca.</p>
           </div>
-        </section>
+        ) : (
+          <ul className="mdc-chat-ws-directory__list">
+            {filteredAgents.map((agent) => {
+              const icebreakerCount = getAgentIcebreakerCount(agent);
+              const isPrivateAgent = agent.visibility === "private";
+              const capabilities = getAgentCapabilities(agent);
+              const editable = canEditAgent(
+                agent,
+                canManageAgents,
+                canManageOfficialAgents,
+              );
 
-        <section className="mdc-chat-agents-directory__mine">
-          <div className="mdc-chat-agents-directory__section-header">
-            <div>
-              <h2>Agentes disponíveis</h2>
-              <p>{agents.length} agente(s) disponível(is)</p>
-            </div>
-
-            {canManageAgents ? (
-              <label className="mdc-chat-agents-directory__inactive-toggle">
-                <input
-                  type="checkbox"
-                  checked={showInactive}
-                  onChange={(event) => {
-                    const includeDisabled = event.target.checked;
-                    setShowInactive(includeDisabled);
-                    void onReloadAgents?.(includeDisabled, canManageAgents);
-                  }}
-                />
-                <span>Mostrar inativos</span>
-              </label>
-            ) : null}
-          </div>
-
-          <div className="mdc-chat-agents-directory__list">
-            {canManageAgents ? (
-              <article
-                className="mdc-chat-agents-directory__item mdc-chat-agents-directory__item--create"
-                role="button"
-                tabIndex={0}
-                onClick={() => setEditingAgent(null)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setEditingAgent(null);
-                  }
-                }}
-              >
-                <span className="mdc-chat-agents-directory__avatar mdc-chat-agents-directory__avatar--create">
-                  <Plus size={20} aria-hidden="true" />
-                </span>
-
-                <span className="mdc-chat-agents-directory__item-copy">
-                  <strong>Criar um agente</strong>
-                  <small>Configure um especialista para um processo, API ou área específica.</small>
-                </span>
-
-                <span className="mdc-chat-agents-directory__item-arrow">
-                  <ChevronRight size={18} aria-hidden="true" />
-                </span>
-              </article>
-            ) : null}
-
-            {isLoading ? (
-              <p className="mdc-chat-muted">Carregando agentes...</p>
-            ) : filteredAgents.length === 0 ? (
-              <div className="mdc-chat-agents-directory__empty">
-                <Bot size={22} aria-hidden="true" />
-                <strong>Nenhum agente encontrado</strong>
-                <p>Crie um especialista ou ajuste a busca.</p>
-              </div>
-            ) : (
-              filteredAgents.map((agent) => {
-                const icebreakerCount = getAgentIcebreakerCount(agent);
-                const capabilities = getAgentCapabilities(agent);
-                const editable = canEditAgent(
-                  agent,
-                  canManageAgents,
-                  canManageOfficialAgents,
-                );
-
-                return (
+              return (
+                <li key={agent.id}>
                   <article
-                    key={agent.id}
-                    className={
+                    className={[
+                      "mdc-chat-ws-directory__card",
                       agent.key === selectedAgentKey
-                        ? "mdc-chat-agents-directory__item mdc-chat-agents-directory__item--active"
-                        : "mdc-chat-agents-directory__item"
-                    }
+                        ? "mdc-chat-ws-directory__card--active"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                   >
                     <button
                       type="button"
-                      className="mdc-chat-agents-directory__item-main"
+                      className="mdc-chat-ws-directory__card-main"
                       onClick={() => onSelectAgent?.(agent.key)}
                     >
-                      <span className="mdc-chat-agents-directory__avatar">
-                        <Bot size={20} aria-hidden="true" />
+                      <span className="mdc-chat-ws-directory__card-icon">
+                        <Bot size={18} aria-hidden="true" />
                       </span>
-
-                      <span className="mdc-chat-agents-directory__item-copy">
+                      <span className="mdc-chat-ws-directory__card-copy">
                         <strong>{agent.name}</strong>
                         <small>
                           {agent.description ||
@@ -392,86 +411,74 @@ export function ChatAgentsPage({
                             "Especialista configurável"}
                         </small>
                       </span>
+                      <ChevronRight size={16} aria-hidden="true" />
                     </button>
 
-                    <div className="mdc-chat-agents-directory__meta">
-                      {!agent.enabled ? <span className="mdc-chat-agents-directory__badge">Inativo</span> : null}
-                      <span className="mdc-chat-agents-directory__badge">{agent.access_role}</span>
-                      <span>
-                        <Sparkles size={14} aria-hidden="true" />
-                        {icebreakerCount} quebra-gelos
-                      </span>
-
-                      <span>
-                        <ShieldCheck size={14} aria-hidden="true" />
-                        {getOwnerLabel(agent)}
-                      </span>
-
-                      {capabilities.length > 0 ? (
+                    <div className="mdc-chat-ws-directory__card-meta">
+                      {!agent.enabled ? <span>Inativo</span> : null}
+                      <span>{getOwnerLabel(agent)}</span>
+                      {!isPrivateAgent && icebreakerCount > 0 ? (
+                        <span>{icebreakerCount} quebra-gelos</span>
+                      ) : null}
+                      {!isPrivateAgent && capabilities.length > 0 ? (
                         <span>{capabilities.length} recursos</span>
                       ) : null}
-
                       {typeof agent.sessions_in_window === "number" ? (
-                        <span>
-                          <BarChart3 size={14} aria-hidden="true" />
-                          {agent.sessions_in_window} conversas (7d)
-                        </span>
-                      ) : null}
-
-                      {typeof agent.total_sessions === "number" && agent.total_sessions > 0 ? (
-                        <span>{agent.total_sessions} conversas no total</span>
+                        <span>{agent.sessions_in_window} conversas (7d)</span>
                       ) : null}
                     </div>
 
-                    <div className="mdc-chat-agents-directory__actions">
+                    <div className="mdc-chat-ws-directory__card-actions">
                       <button
                         type="button"
-                        className="mdc-chat-agents-directory__action-primary"
+                        className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
                         onClick={() => onSelectAgent?.(agent.key)}
                       >
                         Usar
                       </button>
 
                       {editable ? (
-                        <>
-                          <button
-                            type="button"
-                            className="mdc-chat-agents-directory__action-pill"
-                            onClick={() => setEditingAgent(agent)}
-                            title="Configurar agente"
-                          >
-                            <Pencil size={15} aria-hidden="true" />
-                            <span>Configurar</span>
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          className="mdc-chat-ws-toolbar-btn"
+                          onClick={() => setEditingAgent(agent)}
+                        >
+                          <Pencil size={16} aria-hidden="true" />
+                          <span>Configurar</span>
+                        </button>
                       ) : null}
 
                       {canDeleteAgent(agent, canManageAgents, canManageOfficialAgents) ? (
                         <button
                           type="button"
-                          className="mdc-chat-agents-directory__danger"
+                          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                           onClick={() => {
-                            const confirmed = window.confirm(
-                              `Excluir o agente "${agent.name}"?`,
-                            );
-
-                            if (confirmed) {
-                              void onDeleteAgent?.(agent.id);
-                            }
+                            void confirm({
+                              title: "Excluir agente",
+                              description: `Excluir o agente "${agent.name}"?`,
+                              confirmLabel: "Excluir",
+                              cancelLabel: "Cancelar",
+                              danger: true,
+                            }).then((confirmed) => {
+                              if (confirmed) {
+                                void onDeleteAgent?.(agent.id);
+                              }
+                            });
                           }}
-                          title="Excluir agente"
                         >
                           <Trash2 size={16} aria-hidden="true" />
+                          <span>Excluir</span>
                         </button>
                       ) : null}
                     </div>
                   </article>
-                );
-              })
-            )}
-          </div>
-        </section>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </main>
     </section>
+    </ChatAnimatedPanel>
   );
 }

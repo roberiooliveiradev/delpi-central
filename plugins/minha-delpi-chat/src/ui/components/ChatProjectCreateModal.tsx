@@ -1,4 +1,4 @@
-import { Settings, X } from "lucide-react";
+import { Folder, Lightbulb, Plus, Settings, X } from "lucide-react";
 import { useState } from "react";
 
 import type { ChatProject } from "../../data/api/chatTypes";
@@ -72,73 +72,96 @@ export function ChatProjectCreateModal({
           }
         }}
       >
-      <section
-        className="mdc-chat-project-create-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Criar projeto"
-      >
-        <header>
-          <h2>Criar projeto</h2>
+        <section
+          className="mdc-chat-project-create-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Criar projeto"
+        >
+          <header>
+            <h2>Criar projeto</h2>
 
-          <div>
-            <button type="button" aria-label="Configurações de memória">
-              <Settings size={19} aria-hidden="true" />
-            </button>
+            <div>
+              <button type="button" aria-label="Configurações de memória" title="Em breve">
+                <Settings size={19} aria-hidden="true" />
+              </button>
 
-            <button type="button" onClick={onClose} aria-label="Fechar">
-              <X size={20} aria-hidden="true" />
-            </button>
+              <button type="button" onClick={onClose} aria-label="Fechar">
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+          </header>
+
+          <label className="mdc-chat-project-create-modal__field">
+            <span>Nome do projeto</span>
+            <span className="mdc-chat-project-create-modal__input-wrap">
+              <Folder size={18} aria-hidden="true" />
+              <input
+                value={name}
+                autoFocus
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Ex.: Qualidade, Engenharia..."
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && canSubmit) {
+                    event.preventDefault();
+                    void handleSubmit();
+                  }
+                }}
+              />
+            </span>
+          </label>
+
+          <details className="mdc-chat-project-create-modal__details">
+            <summary>Mais opções</summary>
+            <div className="mdc-chat-project-create-modal__details-body">
+              <label className="mdc-chat-project-create-modal__field">
+                <span>Descrição</span>
+                <input
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Explique o objetivo deste projeto..."
+                />
+              </label>
+
+              <label className="mdc-chat-project-create-modal__field">
+                <span>Instruções</span>
+                <textarea
+                  value={instructions}
+                  onChange={(event) => setInstructions(event.target.value)}
+                  placeholder="Contexto e regras usadas nas conversas deste projeto..."
+                  rows={4}
+                />
+              </label>
+            </div>
+          </details>
+
+          <div className="mdc-chat-project-create-modal__hint">
+            <Lightbulb size={18} aria-hidden="true" />
+            <p>
+              Os projetos mantêm conversas e arquivos em um só lugar. Use-os para
+              colaborar em equipe e manter as coisas organizadas.
+            </p>
           </div>
-        </header>
 
-        <label>
-          <span>Nome do projeto</span>
-          <input
-            value={name}
-            autoFocus
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Ex.: Qualidade, Engenharia, Viagem..."
-          />
-        </label>
-
-        <label>
-          <span>Descrição</span>
-          <input
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Explique o objetivo deste projeto..."
-          />
-        </label>
-
-        <label>
-          <span>Contexto e instruções</span>
-          <textarea
-            value={instructions}
-            onChange={(event) => setInstructions(event.target.value)}
-            placeholder="Defina regras, escopo, preferências e contexto usado nas conversas deste projeto..."
-            rows={4}
-          />
-        </label>
-
-        <div className="mdc-chat-project-create-modal__hint">
-          <span>💡</span>
-          <p>
-            Os projetos mantêm chats, documentos, agentes e instruções em um só
-            lugar. Use-os para trabalhos em andamento ou para separar contextos.
-          </p>
-        </div>
-
-        <footer>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!canSubmit}
-          >
-            {isSaving ? "Criando..." : "Criar projeto"}
-          </button>
-        </footer>
-      </section>
+          <footer>
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn"
+              onClick={onClose}
+            >
+              <span>Cancelar</span>
+            </button>
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              onClick={() => void handleSubmit()}
+              disabled={!canSubmit}
+            >
+              <Plus size={16} aria-hidden="true" />
+              <span>{isSaving ? "Criando..." : "Criar projeto"}</span>
+            </button>
+          </footer>
+        </section>
       </div>
     </ModalPortal>
   );

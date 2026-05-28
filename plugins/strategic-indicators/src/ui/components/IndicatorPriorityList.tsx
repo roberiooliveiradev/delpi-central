@@ -1,10 +1,17 @@
 import type { IndicatorAnalyticsViewItem } from "../../data/types/indicatorAnalyticsView";
-import { formatIndicatorScore } from "../shared/indicatorValueFormatter";
+import {
+  formatIndicatorGoalValue,
+  formatIndicatorScore,
+  type IndicatorDisplayContext,
+} from "../shared/indicatorValueFormatter";
 import { StatusBadge } from "./StatusBadge";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorPriorityList.css";
 
 type IndicatorPriorityListProps = {
   indicators: IndicatorAnalyticsViewItem[];
+  competence?: string | null;
+  displayContext?: IndicatorDisplayContext;
 };
 
 function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
@@ -16,6 +23,8 @@ function getStatusLabel(status: IndicatorAnalyticsViewItem["status"]) {
 
 export function IndicatorPriorityList({
   indicators,
+  competence,
+  displayContext,
 }: IndicatorPriorityListProps) {
   const prioritized = [...indicators]
     .filter(
@@ -57,7 +66,21 @@ export function IndicatorPriorityList({
 
           <div className="si-indicator-priority-item__meta">
             <span>Peso interno: {indicator.weightPct}%</span>
-            <span>Meta: {indicator.goalLabel}</span>
+            <span>
+              Meta:{" "}
+              <ScopeMetricBadges
+                values={indicator.goals}
+                format={{
+                  valueUnit: indicator.valueUnit,
+                  valuePrefix: indicator.valuePrefix,
+                  valueSuffix: indicator.valueSuffix,
+                  valueDecimals: indicator.valueDecimals,
+                }}
+                displayContext={displayContext}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
+              />
+            </span>
             <span>Nota: {formatIndicatorScore(indicator.score)}</span>
           </div>
 

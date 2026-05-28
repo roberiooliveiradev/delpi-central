@@ -84,8 +84,11 @@ Acesso na listagem: oficiais/públicos, próprios e compartilhados (`ai_chat_age
 ### Agente na conversa
 
 - Sessão com `agent_key` (ou projeto com `default_agent_key`).
-- Cada mensagem monta contexto com `system_prompt`, especialização RAG, `allowedActionIds` e limites do agente.
-- O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes.
+- Agentes precisam estar **publicados** (`published_version >= 1`) para uso por visitantes; o runtime aplica `published_config` (snapshot).
+- Cada mensagem monta contexto com `system_prompt`, especialização RAG, skills ativas, `allowedActionIds` e limites do agente.
+- O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes; skills globais (SQL, `company-knowledge`) seguem env defaults.
+- Perguntas sobre o **assistente** («quem te criou») passam por RAG filtrado (`RAG_IDENTITY_QUESTION_MIN_SCORE`); com chunks relevantes → LLM; sem contexto útil → resposta canônica — ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+- Turnos persistem `metadata.adminDebug` no banco; a API só devolve esse campo a usuários admin — ver `02-chat-sessoes-mensagens.md`.
 
 ## Capabilities
 
@@ -119,6 +122,9 @@ Eventos esperados:
 |---|---|
 | `sources` | `{ "sources": [...] }` |
 | `tool_calls` | `{ "toolCalls": [...] }` |
-| `token` | `{ "content": "..." }` |
-| `done` | payload compatível com `SendChatMessageResponse` |
+| `assistant_pending` | `{ "messageId": "..." }` |
+| `token` | `{ "content": "..." }` (modo legado sem persist-before-playback) |
+| `canvas_open` | `{ "title", "markdown", "sourceMessageId", "messageId" }` |
+| `playback` | `{ "messageId", "answer", "sources", "toolCalls" }` |
+| `done` | payload compatível com `SendChatMessageResponse` (`playback`, `canvasOpen` opcionais) |
 | `error` | `{ "message": "..." }` |

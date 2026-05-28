@@ -36,6 +36,27 @@
 | Campo | Descrição |
 |-------|-----------|
 | `user_feedback` | Presente em mensagens `assistant` do histórico do usuário: `1` (útil), `-1` (não útil) ou omitido/`null` se não avaliada. |
+| `adminDebug` | Diagnóstico do turno (pipeline, RAG, tools, LLM). **Persistido** em toda mensagem `assistant`; **retornado** no JSON só para admin (ver abaixo). |
+
+### `metadata.adminDebug` (diagnóstico de turno)
+
+Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `ChatMessage.metadata`.
+
+| Quem vê | Comportamento |
+|---------|----------------|
+| Usuário comum | Campo **omitido** em `GET /chat/sessions/{id}/messages` e nas respostas de envio |
+| Admin (`minha-delpi.chat.admin` ou superadmin) | Presente em `POST .../messages`, evento SSE `done` e histórico |
+
+Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+
+Validação de identidade do assistente («quem te criou?»):
+
+- `pipeline.skipRag === false` (RAG foi consultado).
+- `rag.ragContextText` preenchido **ou** `pipeline` com resposta direta (`directResponse` / sem chamada LLM no histórico).
+- `rag.sources` pode estar **vazio** mesmo com texto no prompt: fontes globais/admin não são expostas ao cliente; nesse caso pode aparecer `rag.sourcesNote`.
+- Se `ragContextText` trouxer só normas de produto, o filtro de identidade descarta os chunks — espere fallback canônico (sem narrativa ChatGPT/2019).
+
+Arquitetura: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#diagnóstico-admin-admindebug).
 
 ---
 
@@ -138,9 +159,34 @@ Envia mensagem sem streaming.
   "messageId": "uuid",
   "answer": "Resposta do assistente",
   "sources": [],
-  "toolCalls": []
+  "toolCalls": [],
+  "canvasOpen": null,
+  "adminDebug": null
 }
 ```
+
+| Campo | Descrição |
+|-------|-----------|
+| `canvasOpen` | Opcional: `{ "title", "markdown", "sourceMessageId" }` quando o usuário pede envio à lousa. |
+| `adminDebug` | Objeto de diagnóstico; **só preenchido** para solicitante admin. Demais usuários recebem `null` ou campo ausente. |
+
+---
+
+## POST `/chat/sessions/{sessionId}/messages/{messageId}/resend/stream`
+
+Reenvia uma mensagem do usuário existente com streaming SSE (útil após falha ou para regenerar resposta).
+
+### Permissão
+
+`minha-delpi.chat.ask`
+
+### Body
+
+Opcional (mesmo formato do envio normal, se o backend aceitar override de contexto).
+
+### Resposta
+
+Mesmos eventos SSE de `messages/stream` (ver lista abaixo).
 
 ---
 
@@ -166,22 +212,55 @@ Mesmo de envio normal:
 
 ### Eventos SSE
 
+| Evento | Quando | Payload principal |
+|--------|--------|-------------------|
+| `status` | Etapas intermediárias | `message` |
+| `sources` | Após RAG | `sources` |
+| `tool_calls` | Após tools | `toolCalls`, `adminGuidelines` |
+| `admin_guidelines` | Diretrizes ativas | `adminGuidelines` |
+| `assistant_pending` | Resposta persistida vazia, antes do LLM/playback | `messageId` |
+| `token` | Streaming legado (`CHAT_PERSIST_BEFORE_PLAYBACK=false`) | `content` |
+| `canvas_open` | Pedido de lousa («coloque na lousa/canvas/canva») | `title`, `markdown`, `sourceMessageId`, `messageId` |
+| `playback` | Resposta final já no banco; front anima texto | `messageId`, `answer`, `sources`, `toolCalls` |
+| `done` | Fim do turno | `messageId`, `answer`, `sources`, `toolCalls`, `playback?`, `canvasOpen?`, `adminDebug?` (admin) |
+| `error` | Falha | `detail` ou `message` |
+
+Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
+
 ```text
 event: sources
 data: {"sources": [...]}
 
-
 event: tool_calls
 data: {"toolCalls": [...]}
 
+event: assistant_pending
+data: {"messageId": "..."}
 
-event: token
-data: {"content": "Olá"}
+event: canvas_open
+data: {"title": "Perfil", "markdown": "...", "sourceMessageId": "...", "messageId": "..."}
 
+event: playback
+data: {"messageId": "...", "answer": "Coloquei ... na lousa", "sources": [], "toolCalls": []}
 
 event: done
-data: {"messageId": "...", "answer": "...", "sources": [], "toolCalls": []}
+data: {"messageId": "...", "answer": "...", "playback": true, "canvasOpen": {...}}
 ```
+
+Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `done`.
+
+**Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente. O conteúdo vem da **última mensagem `assistant`** do histórico.
+
+### Comportamento do pipeline (referência)
+
+| Tipo de pergunta | RAG | Resposta típica |
+|------------------|-----|-----------------|
+| Operacional (produto, estoque, KPI) | Pode ser omitido (fast path) | Action direta ou LLM curto |
+| Identidade do **usuário** («quem sou eu») | Não | Resposta direta via Core API / contexto |
+| Identidade do **assistente** («quem te criou») | **Sim** (`RAG_IDENTITY_QUESTION_MIN_SCORE` + filtro `is_identity_relevant_chunk`) | LLM + policy se houver chunks sobre o chat; senão resposta canônica `identity.json` |
+| Capacidades («consegue buscar por grupo?») | Não | Resposta direta `ChatCapabilitiesService` |
+
+Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 ---
 
@@ -351,3 +430,25 @@ Ao remover:
 | `403` | Sessão de outro usuário |
 
 Persistência: tabela `ai_chat_message_feedback` (único por `message_id` + `user_id`).
+
+---
+
+## Inteligência transversal (comportamento do assistente)
+
+O envio de mensagens (`POST .../messages` e `.../stream`) passa pelo **mesmo pipeline** para chat livre, sessão com agente ou simulação admin. Regras de roteamento, comparação de estruturas, capacidades e typos estão na **camada base** — não duplicadas no JSON do agente.
+
+| Tema | Comportamento |
+|------|----------------|
+| Agente com actions **api-delpi** | `ExternalActionSelectionService` escolhe a rota antes do LLM (fast path operacional). |
+| Busca por **grupo** | `GET /products/search` com `group_code`; o número após «grupo» não é tratado como código de produto. |
+| Pergunta **«consegue…?»** | Resposta de capacidades sem executar API (`ChatCapabilitiesService`). |
+| **Comparação** de estruturas | Múltiplas consultas + síntese; não reutiliza só o histórico. |
+| Documentos na base | Limite configurável `KNOWLEDGE_DOCUMENT_MAX_CHARS` (default 2.000.000 caracteres). |
+| Typos leves | Normalização (ex.: ebita→ebitda, coonsegue→consegue) na seleção de rotas. |
+
+Documentação detalhada:
+
+- [Camadas de preparação antes do LLM](../architecture/chat-pre-llm-layers.md)
+- [Arquitetura — inteligência no chat base](../architecture/chat-intelligence-base.md)
+- [Mapa de rotas api-delpi para agentes](../knowledge/api-delpi-rotas-agente.md)
+- [Auditoria e testes de regressão](../roadmap/api-delpi-chat-intelligence-audit.md)

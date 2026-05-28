@@ -1,6 +1,6 @@
 # Status atual — Transformômetro
 
-Atualizado: 2026-05-21 (sem workflow de aprovação; ativar revisão direto).
+Atualizado: 2026-05-27 (duplicar processo; sem workflow de aprovação).
 
 ## Entregue
 
@@ -8,6 +8,7 @@ Atualizado: 2026-05-21 (sem workflow de aprovação; ativar revisão direto).
 |------|--------|
 | API + migrations V001–V006 | ✅ Repo |
 | CRUD processos, revisões, medições, investimentos, recursos, vínculos | ✅ |
+| Duplicar processo (`POST /processos/{id}/duplicar`) — revisões, medições, investimentos, vínculos | ✅ |
 | UI navegação | Início, Dashboard, Processos, **Recursos**, Importar |
 | Cadastro revisão (abas) | Vigência/identificação, Medição, Investimentos, Recursos (vínculos + edição inline) |
 | Revisão ativa | `POST /revisoes/{id}/ativar` — sem etapa de aprovação (como planilha legado) |

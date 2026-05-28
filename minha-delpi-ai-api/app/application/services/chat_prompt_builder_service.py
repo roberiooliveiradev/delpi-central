@@ -10,6 +10,22 @@ class ChatPromptBuilderService:
     def __init__(self, prompt_policy_service):
         self.prompt_policy_service = prompt_policy_service
 
+    def _assistant_identity_policy_addon(self, current_message: str) -> str:
+        from app.application.services.chat_assistant_identity_service import (
+            ChatAssistantIdentityService,
+        )
+
+        if not ChatAssistantIdentityService.is_assistant_identity_question(current_message):
+            return ""
+
+        return (
+            "\n\n"
+            + self.prompt_policy_service._load_policy(
+                "chat-assistant-identity.md",
+                "Apresente-se de forma humana; não peça e-mail só por quem você é.",
+            )
+        )
+
     def _capabilities_policy_addon(self, current_message: str) -> str:
         from app.application.services.chat_capabilities_service import (
             ChatCapabilitiesService,
@@ -31,8 +47,17 @@ class ChatPromptBuilderService:
         *,
         current_message: str,
         history: list | None = None,
+        skills: dict | None = None,
     ) -> list[dict]:
-        messages = [{"role": "system", "content": _FAST_PATH_SYSTEM_PROMPT}]
+        system_prompt = _FAST_PATH_SYSTEM_PROMPT
+        skill_sections = self.prompt_policy_service.build_active_skill_policy_sections(
+            skills
+        )
+
+        if skill_sections:
+            system_prompt = f"{system_prompt}\n\n" + "\n\n".join(skill_sections)
+
+        messages = [{"role": "system", "content": system_prompt}]
 
         for item in history or []:
             if item.role in {"user", "assistant"}:
@@ -55,6 +80,7 @@ class ChatPromptBuilderService:
         attachment_context: str | None = None,
         history_summary: str | None = None,
         operational_mode: bool = False,
+        analysis_mode: bool = False,
         user_context: str | None = None,
         skills: dict | None = None,
     ) -> list[dict]:
@@ -62,8 +88,10 @@ class ChatPromptBuilderService:
             rag_context=rag_context,
             tool_context=tool_context,
             operational_mode=operational_mode,
+            analysis_mode=analysis_mode,
             skills=skills,
         )
+        base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
 
         if user_context:

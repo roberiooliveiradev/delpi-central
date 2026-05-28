@@ -10,6 +10,7 @@ import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShellTypes";
+import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
 import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
@@ -17,6 +18,7 @@ import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
 import { useChatAdmin } from "../../state/hooks/useChatAdmin";
+import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 
 import "./ChatAdminPage.css";
 
@@ -31,6 +33,7 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
+  { key: "skills", label: "Skills" },
   { key: "simulate", label: "Simulação" },
   { key: "evaluations", label: "Avaliações" },
   { key: "agents", label: "Agentes" },
@@ -79,6 +82,11 @@ export function ChatAdminPage({
           successMessage={admin.successMessage}
         />
 
+        <ChatAnimatedPanel
+          panelKey={activeTab}
+          variant="tab"
+          className="mdc-admin-shell__panel"
+        >
         {activeTab === "knowledge" ? (
           <AdminKnowledgeTab
             documents={admin.documents}
@@ -145,6 +153,10 @@ export function ChatAdminPage({
           />
         ) : null}
 
+        {activeTab === "skills" ? (
+          <AdminSkillsTab getAccessToken={getAccessToken} rbac={adminRbac} />
+        ) : null}
+
         {activeTab === "simulate" ? (
           <AdminSimulateTab getAccessToken={getAccessToken} />
         ) : null}
@@ -164,19 +176,21 @@ export function ChatAdminPage({
           <AdminSecurityTab getAccessToken={getAccessToken} />
         ) : null}
 
-        {activeTab === "tools" ? <AdminRbacPanel rbac={adminRbac} /> : null}
-
         {activeTab === "tools" ? (
-          <AdminToolsTab
-            llmStatus={admin.llmStatus}
-            getAccessToken={getAccessToken}
-            rbac={adminRbac}
-          />
+          <div className="mdc-admin-tools-page">
+            <AdminRbacPanel rbac={adminRbac} />
+            <AdminToolsTab
+              llmStatus={admin.llmStatus}
+              getAccessToken={getAccessToken}
+              rbac={adminRbac}
+            />
+          </div>
         ) : null}
 
         {activeTab === "audit" ? (
           <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
         ) : null}
+        </ChatAnimatedPanel>
       </section>
     </main>
   );

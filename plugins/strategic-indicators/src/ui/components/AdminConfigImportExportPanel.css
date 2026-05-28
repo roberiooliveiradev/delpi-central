@@ -1,0 +1,51 @@
+.si-config-io-panel {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.si-config-io-panel__header h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  color: var(--si-title, var(--text));
+}
+
+.si-config-io-panel__header p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--si-text-muted, var(--text-muted));
+}
+
+.si-config-io-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.si-config-io-panel__import {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.si-config-io-panel__import input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.si-config-io-panel__checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--si-text-muted, var(--text-muted));
+  cursor: pointer;
+}

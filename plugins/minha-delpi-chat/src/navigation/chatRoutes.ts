@@ -6,6 +6,7 @@ export type ChatRoute =
   | { kind: "project"; projectId: string }
   | { kind: "agent"; agentKey: string }
   | { kind: "agents" }
+  | { kind: "projects" }
   | { kind: "admin" };
 
 function normalizeBasePath(pathname: string) {
@@ -34,7 +35,7 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
     case "conversas":
       return id ? { kind: "session", sessionId: id } : { kind: "home" };
     case "projetos":
-      return id ? { kind: "project", projectId: id } : { kind: "home" };
+      return id ? { kind: "project", projectId: id } : { kind: "projects" };
     case "agentes":
       return id ? { kind: "agent", agentKey: id } : { kind: "agents" };
     case "admin":
@@ -56,6 +57,8 @@ export function buildChatHref(route: ChatRoute): string {
       return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}`;
     case "agents":
       return `${CHAT_BASE_PATH}/agentes`;
+    case "projects":
+      return `${CHAT_BASE_PATH}/projetos`;
     case "admin":
       return `${CHAT_BASE_PATH}/admin`;
   }

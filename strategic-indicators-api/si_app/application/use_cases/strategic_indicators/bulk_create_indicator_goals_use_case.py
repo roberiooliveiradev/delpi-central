@@ -3,6 +3,12 @@ from __future__ import annotations
 from si_app.application.services.strategic_indicators.goal_scope_validation import (
     validate_goal_scope_branch,
 )
+from si_app.application.services.strategic_indicators.goal_curve_validation import (
+    validate_curve_targets,
+)
+from si_app.application.services.strategic_indicators.goal_value_policy import (
+    resolve_persisted_goal_value,
+)
 from si_app.application.services.strategic_indicators.indicator_goal_validation_error import (
     StrategicIndicatorsIndicatorGoalValidationError,
 )
@@ -52,8 +58,12 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                 raise ValueError("goal_label é obrigatório em todas as metas.")
 
             goal_value = float(item.get("goal_value") or 0)
-            if goal_value < 0:
+            if goal_mode != "monthly_curve" and goal_value < 0:
                 raise ValueError("goal_value não pode ser negativo.")
+            goal_value = resolve_persisted_goal_value(
+                goal_mode=goal_mode,
+                goal_value=goal_value,
+            )
 
             if goal_periodicity not in self.VALID_PERIODICITIES:
                 raise ValueError("goal_periodicity inválido.")
@@ -62,23 +72,7 @@ class BulkCreateStrategicIndicatorsIndicatorGoalsUseCase:
                 raise ValueError("goal_mode inválido.")
 
             if goal_mode == "monthly_curve":
-                if len(monthly_targets) != 12:
-                    raise ValueError(
-                        "monthly_targets deve conter exatamente 12 meses para goal_mode=monthly_curve."
-                    )
-
-                months = sorted(
-                    int(target.get("month_number") or 0)
-                    for target in monthly_targets
-                )
-                if months != list(range(1, 13)):
-                    raise ValueError(
-                        "monthly_targets deve conter os meses de 1 a 12 sem repetição."
-                    )
-
-                for target in monthly_targets:
-                    if float(target.get("target_value") or 0) < 0:
-                        raise ValueError("target_value não pode ser negativo.")
+                validate_curve_targets(monthly_targets, goal_periodicity)
             else:
                 if monthly_targets:
                     raise ValueError(

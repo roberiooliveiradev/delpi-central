@@ -27,7 +27,7 @@ class RevisaoRepository(PluginBaseRepository):
             (revisao_id,),
         )
 
-    def create(self, data: dict[str, Any]) -> dict[str, Any]:
+    def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
         chave = f"{data['processo_id']}|{data['versao_revisao']}"
         row = self.execute_returning_one(
             """
@@ -53,6 +53,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("observacoes"),
                 data.get("status_aprovacao", "aprovada"),
             ),
+            auto_commit=auto_commit,
         )
         if row is None:
             raise RuntimeError("Falha ao criar revisão.")

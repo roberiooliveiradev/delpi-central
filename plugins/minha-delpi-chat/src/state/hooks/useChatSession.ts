@@ -16,11 +16,17 @@ import {
 } from "../../data/api/chatApi";
 import type {
   ChatAttachment,
+  ChatCanvasOpenPayload,
   ChatMessage,
   ChatSession,
   ChatSource,
   ChatToolCall,
 } from "../../data/api/chatTypes";
+import {
+  isAssistantGenerating,
+  sessionAwaitingAssistantResponse,
+} from "../chatMessageDelivery";
+import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 
 type UseChatSessionOptions = {
@@ -28,6 +34,7 @@ type UseChatSessionOptions = {
   projectId?: string | null;
   agentKey?: string | null;
   onSessionActivated?: (sessionId: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
 
 function createOptimisticUserMessage(
@@ -61,6 +68,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
+  const [streamingShowPresentation, setStreamingShowPresentation] = useState(true);
+  const [playbackPayload, setPlaybackPayload] = useState<ChatPlaybackPayload | null>(
+    null,
+  );
+  const awaitingPlaybackRef = useRef(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -83,6 +95,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingSources([]);
     setStreamingToolCalls([]);
     setStreamingStatus(null);
+    setStreamingShowPresentation(true);
+    setPlaybackPayload(null);
+    awaitingPlaybackRef.current = false;
   }, []);
 
   const markSessionPending = useCallback((sessionId: string) => {
@@ -247,6 +262,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
 
         setMessages(data);
+
+        if (!sessionAwaitingAssistantResponse(data)) {
+          unmarkSessionPending(sessionId);
+        }
       } catch (err) {
         if (activeSessionIdRef.current !== sessionId) {
           return;
@@ -259,8 +278,44 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [options.getAccessToken],
+    [options.getAccessToken, unmarkSessionPending],
   );
+
+  const finishPlayback = useCallback(() => {
+    const sessionId = activeSessionIdRef.current;
+
+    setPlaybackPayload(null);
+    awaitingPlaybackRef.current = false;
+
+    if (!sessionId) {
+      resetStreamingUi();
+      return;
+    }
+
+    void loadMessages(sessionId).then(() => {
+      if (activeSessionIdRef.current !== sessionId) {
+        return;
+      }
+
+      setDraft("");
+      setPendingUserMessage(null);
+      resetStreamingUi();
+    });
+  }, [loadMessages, resetStreamingUi]);
+
+  const { displayedAnswer: playbackAnswer, showPresentation: playbackShowPresentation } =
+    useChatMessagePlayback(playbackPayload, finishPlayback);
+
+  const streamingAdminDebug = playbackPayload?.adminDebug ?? null;
+
+  useEffect(() => {
+    if (!playbackPayload) {
+      return;
+    }
+
+    setStreamingAnswer(playbackAnswer);
+    setStreamingShowPresentation(playbackShowPresentation);
+  }, [playbackAnswer, playbackPayload, playbackShowPresentation]);
 
   const deleteSession = useCallback(
     async (sessionId: string) => {
@@ -574,11 +629,39 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingToolCalls(toolCalls);
+          setStreamingShowPresentation(false);
           setStreamingStatus(
             toolCalls.length > 0
               ? "Consultando sistemas autorizados..."
               : "Gerando resposta...",
           );
+        },
+        onAssistantPending: () => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          setStreamingStatus("Gerando resposta...");
+          setStreamingShowPresentation(false);
+        },
+        onPlayback: (payload) => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          awaitingPlaybackRef.current = true;
+          setStreamingStatus(null);
+          setStreamingSources(payload.sources);
+          setStreamingToolCalls(payload.toolCalls);
+          setStreamingShowPresentation(false);
+          setPlaybackPayload(payload);
+        },
+        onCanvasOpen: (payload) => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          options.onOpenCanvas?.(payload);
         },
         onToken: (token: string) => {
           if (!isStreamForActiveSession(sessionId)) {
@@ -586,9 +669,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingStatus(null);
+          setStreamingShowPresentation(true);
           setStreamingAnswer((current) => current + token);
         },
-        onDone: async () => {
+        onDone: async (response) => {
           finishSending(sessionId);
 
           try {
@@ -598,6 +682,31 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          if (response.canvasOpen?.markdown) {
+            options.onOpenCanvas?.({
+              title: response.canvasOpen.title,
+              markdown: response.canvasOpen.markdown,
+              messageId: response.messageId,
+              sourceMessageId: response.canvasOpen.sourceMessageId ?? null,
+            });
+          }
+
+          if (response.playback || awaitingPlaybackRef.current) {
+            setPlaybackPayload((current) =>
+              current ??
+              (response.answer
+                ? {
+                    messageId: response.messageId,
+                    answer: response.answer,
+                    sources: response.sources ?? [],
+                    toolCalls: response.toolCalls ?? [],
+                    adminDebug: response.adminDebug ?? null,
+                  }
+                : null),
+            );
             return;
           }
 
@@ -624,6 +733,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isStreamForActiveSession,
       loadMessages,
       loadSessions,
+      options.onOpenCanvas,
+      playbackPayload,
       resetStreamingUi,
     ],
   );
@@ -742,6 +853,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingShowPresentation(false);
     setStreamingStatus(
       activeSession
         ? "Preparando sua pergunta..."
@@ -917,11 +1029,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   useEffect(() => {
     const sessionId = activeSession?.id;
 
-    if (!sessionId || !isSessionPending(sessionId) || isSessionStreaming(sessionId)) {
+    if (!sessionId || isSessionStreaming(sessionId) || playbackPayload) {
       return;
     }
 
-    if (pendingUserMessage) {
+    const awaitingBackground =
+      (isSessionPending(sessionId) && !pendingUserMessage) ||
+      sessionAwaitingAssistantResponse(messages);
+
+    if (!awaitingBackground) {
+      setStreamingStatus((current) =>
+        current === "Finalizando resposta em segundo plano..." ? null : current,
+      );
       return;
     }
 
@@ -939,20 +1058,36 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionPending,
     isSessionStreaming,
     loadMessages,
+    messages,
     pendingUserMessage,
+    playbackPayload,
   ]);
 
   const visibleMessages = useMemo(() => {
+    let list = messages;
+
+    const hideGeneratingPlaceholder =
+      Boolean(activeSession) &&
+      (isSessionStreaming(activeSession.id) ||
+        isSessionPending(activeSession.id) ||
+        playbackPayload) &&
+      list.length > 0 &&
+      isAssistantGenerating(list[list.length - 1]);
+
+    if (hideGeneratingPlaceholder) {
+      list = list.slice(0, -1);
+    }
+
     if (!pendingUserMessage) {
-      return messages;
+      return list;
     }
 
-    if (messages.some((message) => message.id === pendingUserMessage.id)) {
-      return messages;
+    if (list.some((message) => message.id === pendingUserMessage.id)) {
+      return list;
     }
 
-    return [...messages, pendingUserMessage];
-  }, [messages, pendingUserMessage]);
+    return [...list, pendingUserMessage];
+  }, [activeSession, isSessionPending, isSessionStreaming, messages, pendingUserMessage, playbackPayload]);
 
   const isComposerBusy = isActiveSessionBusy();
   const isStreamingActiveSession =
@@ -968,7 +1103,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingAdminDebug,
     streamingStatus,
+    streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,

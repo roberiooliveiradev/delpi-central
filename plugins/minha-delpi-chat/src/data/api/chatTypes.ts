@@ -146,11 +146,29 @@ export type SendChatMessagePayload = {
   agentKey?: string | null;
 };
 
+export type ChatCanvasOpenPayload = {
+  title: string;
+  markdown: string;
+  messageId?: string | null;
+  sourceMessageId?: string | null;
+};
+
 export type SendChatMessageResponse = {
   messageId: string;
   answer: string;
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
+  playback?: boolean;
+  canvasOpen?: ChatCanvasOpenPayload | null;
+  adminDebug?: Record<string, unknown> | null;
+};
+
+export type ChatPlaybackEvent = {
+  messageId: string;
+  answer: string;
+  sources: ChatSource[];
+  toolCalls: ChatToolCall[];
+  adminDebug?: Record<string, unknown> | null;
 };
 
 export type ChatArtifact = {
@@ -200,6 +218,30 @@ export type ChatAgent = {
   updated_at: string;
   sessions_in_window?: number | null;
   total_sessions?: number | null;
+  published_version?: number;
+  published_at?: string | null;
+  has_unpublished_changes?: boolean;
+};
+
+export type ChatAgentVersion = {
+  id: string;
+  version: number;
+  event: string;
+  createdAt: string | null;
+  createdBy: string | null;
+};
+
+export type ChatAgentPreviewDraft = {
+  key?: string | null;
+  name: string;
+  description?: string | null;
+  systemPrompt?: string | null;
+  responseStyle?: string | null;
+  category?: string | null;
+  icon?: string | null;
+  maxToolCalls?: number;
+  requiresConfirmationForWrite?: boolean;
+  metadata?: Record<string, unknown> | null;
 };
 
 export type ChatProject = {
@@ -373,6 +415,7 @@ export type ChatWorkspaceSource = {
   created_at: string;
   updated_at: string;
   chunk_count: number | null;
+  duplicate?: boolean;
 };
 
 export type ChatActionCatalogItem = {
@@ -489,6 +532,7 @@ export type ChatActionTestLog = ChatActionTestResult & {
 export type ChatCapabilities = {
   permissions: string[];
   isSuperadmin: boolean;
+  canOpenAdmin: boolean;
   canManageAgents: boolean;
   canManageOwnAgents: boolean;
   canManageOfficialAgents: boolean;

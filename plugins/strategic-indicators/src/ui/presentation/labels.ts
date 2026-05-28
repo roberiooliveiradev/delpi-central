@@ -16,9 +16,9 @@ export function getGoalPeriodicityLabel(value: string | null | undefined): strin
 export function getGoalModeLabel(value: string | null | undefined): string {
   switch (value) {
     case "standard":
-      return "Meta padrão";
+      return "Padrão";
     case "monthly_curve":
-      return "Curva mensal";
+      return "Curva";
     default:
       return value ?? "—";
   }

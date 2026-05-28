@@ -4,7 +4,7 @@
   z-index: 120;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.58);
+  background: var(--mdc-overlay-backdrop);
   backdrop-filter: blur(5px);
   padding: var(--mdc-space-4);
 }
@@ -15,7 +15,7 @@
   border-radius: var(--mdc-radius-xl);
   background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
   color: var(--mdc-text);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--mdc-shadow-lg);
   overflow: hidden;
 }
 

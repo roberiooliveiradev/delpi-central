@@ -1,0 +1,41 @@
+---
+description: Inteligência do chat na camada base; agentes e projetos herdam, não duplicam
+alwaysApply: true
+---
+
+# Chat base — inteligência herdada
+
+## Princípio
+
+O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats com camadas adicionais (prompt, skills, actions, especialização RAG). **Projetos**, simulação admin e demais fluxos **herdam** o pipeline do chat — não reimplementam.
+
+## Onde implementar melhorias
+
+| Camada | Responsabilidade | Exemplos no código |
+|--------|-------------------|-------------------|
+| **Chat base** | Intenção, pipeline, tools, policies, contexto de histórico | `ChatIntelligencePipelineService`, `ChatToolContextService`, `ChatAnalysisIntentService`, `ChatCanvasIntentService`, `ChatCanvasContentService`, `prompt_policies/*.md`, `ExternalActionSelectionService` |
+| **Agente** | Identidade, allowed actions, skills, escopo RAG | `system_prompt`, `metadata.skills`, providers/actions do agente |
+| **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
+| **Use cases** | Orquestração fina (stream/send/simulate) | Apenas **consumir** o pipeline base; sem lógica de inteligência duplicada |
+
+## O que NÃO fazer
+
+- Lógica de comparação, insights, seleção operacional ou resposta direta **só** no prompt de um agente.
+- Copiar o mesmo `if` em `SendChatMessageUseCase` e `StreamChatMessageUseCase` sem extrair para serviço base.
+- Bypass do pipeline em preview/simulate sem `previous_messages` quando o histórico importa.
+
+## O que fazer
+
+1. Alterar ou estender serviços em `minha-delpi-ai-api/app/application/services/` e `app/domain/services/` usados por **todos** os chats.
+2. Novas policies em `app/domain/prompt_policies/`; registrar em `PromptPolicyService` quando for modo global (ex.: `analysis_mode`).
+3. Testes em `tests/unit/` do pacote base + casos em `tests/fixtures/chat_intelligence_regression_cases.py`.
+4. Documentar em `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`.
+
+## Pipeline (referência)
+
+```
+Mensagem → ChatIntelligencePipelineService → ChatToolContextService → Prompt + LLM
+                ↑ histórico / análise              ↑ agente só filtra actions/skills
+```
+
+Agentes **adicionam** contexto e restrições; a **inteligência transversal** evolui no chat base.

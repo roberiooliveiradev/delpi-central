@@ -10,13 +10,22 @@ from app.application.services.chat_intelligence_metadata_service import (
 )
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
+from app.application.services.chat_intelligence_pipeline_service import (
+    ChatIntelligencePipelineService,
+)
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
+from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
+from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
+from app.application.services.chat_turn.chat_turn_preparation_service import (
+    ChatTurnPreparationService,
+)
+from app.application.services.chat_admin_debug_service import ChatAdminDebugService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -30,9 +39,6 @@ from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_fast_path_service import ChatFastPathService
-from app.domain.services.chat_operational_pipeline_service import (
-    ChatOperationalPipelineService,
-)
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 
@@ -66,6 +72,9 @@ class SendChatMessageUseCase:
         self.knowledge_scope_service = ChatKnowledgeScopeService()
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
+        self.turn_preparation_service = ChatTurnPreparationService(
+            rag_context_service=rag_context_service,
+        )
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
         self.chat_attachment_context_service = chat_attachment_context_service
@@ -104,80 +113,51 @@ class SendChatMessageUseCase:
         attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        agent_meta = workspace_context.get("agent")
+        max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
         attachment_ids = getattr(request, "attachment_ids", None)
-        allowed_action_ids = workspace_context.get("allowedActionIds") or []
-        operational_optimize = ChatOperationalPipelineService.should_optimize(
-            message,
-            allowed_action_ids,
-            attachment_ids=attachment_ids,
-        )
 
-        if operational_optimize:
-            keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
-            history_summary, history = "", list(previous_messages[-keep:])
-        else:
-            history_summary, history = self._prepare_history(previous_messages)
-
-        pipeline_timings = ChatPipelineTimings()
-
-        fast_path = ChatFastPathService.should_use(
-            message,
-            enabled=Settings.CHAT_FAST_PATH_ENABLED,
-            max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-            attachment_ids=attachment_ids,
-        )
-
-        conversation_context = self._build_conversation_context(previous_messages)
-
-        tool_context = self._build_tool_context(
-            request,
-            allowed_action_ids=workspace_context.get("allowedActionIds"),
-            capabilities=workspace_context.get("capabilities") or {},
-            specialization=workspace_context.get("specialization"),
-            fast_path=fast_path,
-            conversation_context=conversation_context,
-        )
-        tool_context = self._maybe_extend_tool_context(
+        prepared = self.turn_preparation_service.prepare(
+            message=message,
             request=request,
+            session=session,
+            user_id=user_id,
             workspace_context=workspace_context,
-            tool_context=tool_context,
+            attachments=attachments,
+            previous_messages=previous_messages,
+            history_source=previous_messages,
+            build_tool_context=self._build_tool_context,
+            maybe_extend_tool_context=self._maybe_extend_tool_context,
+            prepare_history=self._prepare_history,
+            history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+            fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+            fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
+            resolve_user_identity_answer=lambda msg: (
+                self._resolve_user_identity_answer(request.access_token, msg)
+                if request.access_token and ChatUserContextService.is_user_identity_question(msg)
+                else None
+            ),
+            resolve_capabilities_answer=lambda msg: (
+                self._resolve_capabilities_answer(workspace_context, msg)
+                if ChatCapabilitiesService.is_capability_inquiry(msg)
+                else None
+            ),
+            max_external_action_calls=max_tool_calls,
         )
-        tool_calls = tool_context["toolCalls"]
-        pipeline_timings.mark("tools_done")
 
-        skip_rag = (
-            fast_path
-            or operational_optimize
-            or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
-        )
-        direct_answer = ChatExternalActionDirectResponseService.resolve_answer(tool_context)
-
-        if not direct_answer and ChatUserContextService.is_user_identity_question(message):
-            user_direct = self._resolve_user_identity_answer(request.access_token, message)
-            if user_direct:
-                direct_answer = user_direct
-                skip_rag = True
-
-        if not direct_answer and ChatCapabilitiesService.is_capabilities_question(message):
-            caps_direct = self._resolve_capabilities_answer(workspace_context)
-            if caps_direct:
-                direct_answer = caps_direct
-                skip_rag = True
-
-        if skip_rag:
-            rag = {"context": "", "sources": []}
-        else:
-            rag = self.rag_context_service.build_context(
-                message,
-                filters=self.knowledge_scope_service.build_filters(
-                    user_id=user_id,
-                    session=session,
-                    workspace_context=workspace_context,
-                    attachment_ids=attachment_ids,
-                ),
-            )
-        sources = rag["sources"]
-        pipeline_timings.mark("rag_done")
+        operational_optimize = prepared.operational_optimize
+        analysis_mode = prepared.analysis_mode
+        fast_path = prepared.fast_path
+        skip_rag = prepared.skip_rag
+        history_summary = prepared.history_summary
+        history = prepared.history
+        tool_context = prepared.tool_context
+        tool_calls = prepared.tool_calls
+        direct_answer = prepared.direct_answer
+        rag = prepared.rag
+        sources = prepared.sources
+        pipeline_timings = prepared.pipeline_timings
+        canvas_open_payload = prepared.canvas_open_payload
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
@@ -188,6 +168,7 @@ class SendChatMessageUseCase:
                 operational_optimize=operational_optimize,
                 tool_context=tool_context,
                 skip_rag=skip_rag,
+                analysis_mode=analysis_mode,
             ),
         )
 
@@ -225,10 +206,15 @@ class SendChatMessageUseCase:
 
         if direct_answer:
             llm_messages = []
-        elif fast_path and Settings.CHAT_FAST_PATH_SLIM_PROMPT:
+        elif (
+            fast_path
+            and Settings.CHAT_FAST_PATH_SLIM_PROMPT
+            and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
+        ):
             llm_messages = self.prompt_builder_service.build_fast_path_messages(
                 current_message=message,
                 history=history[-2:] if history else [],
+                skills=resolved_skills,
             )
         else:
             user_context = self._build_user_context(request.access_token)
@@ -248,9 +234,23 @@ class SendChatMessageUseCase:
                 ),
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
+                analysis_mode=analysis_mode,
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
             )
+
+        admin_debug_payload = ChatAdminDebugService.build_for_turn(
+            request,
+            workspace_context=workspace_context,
+            tool_context=tool_context,
+            rag=rag,
+            llm_messages=llm_messages,
+            history_summary=history_summary,
+            operational_optimize=operational_optimize,
+            analysis_mode=analysis_mode,
+            fast_path=fast_path,
+            skip_rag=skip_rag,
+        )
 
         started_at = time.perf_counter()
 
@@ -270,6 +270,7 @@ class SendChatMessageUseCase:
                 operational_optimize=operational_optimize,
                 tool_context=tool_context,
                 skip_rag=skip_rag,
+                analysis_mode=analysis_mode,
             ),
         )
         latency_ms = int((time.perf_counter() - started_at) * 1000)
@@ -281,33 +282,48 @@ class SendChatMessageUseCase:
             completion_tokens=completion_tokens_estimated,
         )
 
+        assistant_metadata = {
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentKey": workspace_context.get("agentKey"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "toolCalls": tool_calls,
+            "rag": {
+                "enabled": True,
+                "sourceCount": len(sources),
+            },
+            "intelligence": intelligence_metadata,
+            "adminGuidelines": self._guideline_metadata(active_guidelines),
+            "metrics": {
+                "latencyMs": latency_ms,
+                "promptTokensEstimated": prompt_tokens_estimated,
+                "completionTokensEstimated": completion_tokens_estimated,
+                "totalTokensEstimated": total_tokens_estimated,
+                "estimatedCost": estimated_cost,
+            },
+            "directResponse": bool(direct_answer),
+        }
+
+        ChatAdminDebugService.attach_to_assistant_metadata(
+            assistant_metadata,
+            admin_debug_payload,
+        )
+
+        if canvas_open_payload:
+            assistant_metadata["canvasOpen"] = {
+                "title": canvas_open_payload.title,
+                "markdown": canvas_open_payload.markdown,
+                "sourceMessageId": canvas_open_payload.source_message_id,
+            }
+
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
             role="assistant",
             content=answer,
-            metadata={
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentKey": workspace_context.get("agentKey"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "toolCalls": tool_calls,
-                "rag": {
-                    "enabled": True,
-                    "sourceCount": len(sources),
-                },
-                "intelligence": intelligence_metadata,
-                "adminGuidelines": self._guideline_metadata(active_guidelines),
-                "metrics": {
-                    "latencyMs": latency_ms,
-                    "promptTokensEstimated": prompt_tokens_estimated,
-                    "completionTokensEstimated": completion_tokens_estimated,
-                    "totalTokensEstimated": total_tokens_estimated,
-                    "estimatedCost": estimated_cost,
-                },
-            },
+            metadata=assistant_metadata,
         )
 
         self.audit_repository.log(
@@ -342,6 +358,19 @@ class SendChatMessageUseCase:
             answer=answer,
             sources=sources,
             toolCalls=tool_calls,
+            canvasOpen=(
+                {
+                    "title": canvas_open_payload.title,
+                    "markdown": canvas_open_payload.markdown,
+                    "sourceMessageId": canvas_open_payload.source_message_id,
+                }
+                if canvas_open_payload
+                else None
+            ),
+            adminDebug=ChatAdminDebugService.payload_for_client(
+                request,
+                admin_debug_payload,
+            ),
         )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
@@ -399,18 +428,6 @@ class SendChatMessageUseCase:
         except Exception:
             return None
 
-    def _build_conversation_context(self, previous_messages, limit: int = 8) -> str:
-        parts: list[str] = []
-
-        for item in previous_messages[-limit:]:
-            role = str(getattr(item, "role", "") or "user").strip()
-            content = str(getattr(item, "content", "") or "").strip()
-
-            if content:
-                parts.append(f"{role}: {content}")
-
-        return "\n".join(parts)
-
     def _build_tool_context(
         self,
         request: SendChatMessageRequest,
@@ -418,7 +435,8 @@ class SendChatMessageUseCase:
         capabilities: dict | None = None,
         specialization: dict | None = None,
         fast_path: bool = False,
-        conversation_context: str | None = None,
+        previous_messages: list | None = None,
+        max_external_action_calls: int | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -443,7 +461,8 @@ class SendChatMessageUseCase:
             actions_enabled=actions_enabled,
             allowed_tool_names=allowed_tool_names,
             fast_path=fast_path,
-            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+            max_external_action_calls=max_external_action_calls,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
@@ -614,10 +633,15 @@ class SendChatMessageUseCase:
             "metadata": agent.metadata,
         }
 
-    def _resolve_capabilities_answer(self, workspace_context: dict) -> str | None:
+    def _resolve_capabilities_answer(
+        self,
+        workspace_context: dict,
+        message: str,
+    ) -> str | None:
         allowed = workspace_context.get("allowedActionIds") or []
         catalog = ChatCapabilitiesService.load_action_catalog_for_agent(allowed)
-        return ChatCapabilitiesService.build_direct_answer(
+        return ChatCapabilitiesService.resolve_capability_answer(
+            message=message,
             workspace_context=workspace_context,
             allowed_action_ids=allowed,
             action_catalog=catalog,

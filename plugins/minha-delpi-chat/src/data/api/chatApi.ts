@@ -12,7 +12,9 @@ import type {
   ChatSkillCatalogItem,
   UpsertChatAgentSkillPayload,
   ChatAgentPreviewResponse,
+  ChatAgentPreviewDraft,
   ChatAgentShare,
+  ChatAgentVersion,
   ChatAgentStats,
   ChatProjectShare,
   ChatDirectoryUser,
@@ -27,6 +29,8 @@ import type {
   CreateChatArtifactPayload,
   CreateChatProjectPayload,
   CreateChatSessionPayload,
+  ChatCanvasOpenPayload,
+  ChatPlaybackEvent,
   SendChatMessagePayload,
   SendChatMessageResponse,
   ShareChatAgentPayload,
@@ -50,6 +54,9 @@ type StreamCallbacks = {
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
+  onAssistantPending?: (messageId: string) => void;
+  onPlayback?: (payload: ChatPlaybackEvent) => void;
+  onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
   onDone?: (response: SendChatMessageResponse) => void;
   onError?: (message: string) => void;
 };
@@ -300,6 +307,36 @@ async function consumeChatMessageStream(
 
       if (event === "token") {
         callbacks.onToken?.(typeof data.content === "string" ? data.content : "");
+      }
+
+      if (event === "assistant_pending") {
+        const messageId =
+          typeof data.messageId === "string" ? data.messageId : "";
+
+        if (messageId) {
+          callbacks.onAssistantPending?.(messageId);
+        }
+      }
+
+      if (event === "playback") {
+        callbacks.onPlayback?.({
+          messageId: String(data.messageId ?? ""),
+          answer: typeof data.answer === "string" ? data.answer : "",
+          sources: (data.sources as SendChatMessageResponse["sources"]) ?? [],
+          toolCalls: (data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? [],
+          adminDebug:
+            (data.adminDebug as Record<string, unknown> | null | undefined) ?? null,
+        });
+      }
+
+      if (event === "canvas_open") {
+        callbacks.onCanvasOpen?.({
+          title: typeof data.title === "string" ? data.title : "",
+          markdown: typeof data.markdown === "string" ? data.markdown : "",
+          messageId: typeof data.messageId === "string" ? data.messageId : null,
+          sourceMessageId:
+            typeof data.sourceMessageId === "string" ? data.sourceMessageId : null,
+        });
       }
 
       if (event === "done") {
@@ -794,7 +831,11 @@ export async function getChatAgentStats(
 
 export async function previewChatAgent(
   agentId: string,
-  payload: { message: string; generateAnswer?: boolean },
+  payload: {
+    message: string;
+    generateAnswer?: boolean;
+    draft?: ChatAgentPreviewDraft;
+  },
   options: ChatApiOptions = {},
 ): Promise<ChatAgentPreviewResponse> {
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/preview`, {
@@ -804,6 +845,47 @@ export async function previewChatAgent(
   });
 
   return parseJsonResponse(response);
+}
+
+export async function previewChatAgentDraft(
+  payload: {
+    message: string;
+    generateAnswer?: boolean;
+    draft: ChatAgentPreviewDraft;
+  },
+  options: ChatApiOptions = {},
+): Promise<ChatAgentPreviewResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/preview`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function publishChatAgent(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgent> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/publish`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgent>(response);
+}
+
+export async function listChatAgentVersions(
+  agentId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatAgentVersion[]> {
+  const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/versions`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatAgentVersion[]>(response);
 }
 
 export async function upsertChatAgentAction(

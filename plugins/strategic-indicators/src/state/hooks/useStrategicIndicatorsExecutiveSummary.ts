@@ -119,7 +119,7 @@ export function useStrategicIndicatorsExecutiveSummary({
           branch,
           startDate,
           endDate,
-          months: 6,
+          months: 3,
           getAccessToken: getAccessTokenRef.current,
         });
       } catch (err) {

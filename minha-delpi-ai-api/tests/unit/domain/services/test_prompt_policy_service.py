@@ -98,6 +98,18 @@ def test_contextual_prompt_includes_operational_policy_when_operational_mode_ena
     assert "Modo operacional" in prompt
 
 
+def test_contextual_prompt_includes_analysis_policy_when_analysis_mode_enabled():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        analysis_mode=True,
+    )
+
+    assert "análise comparativa" in prompt.lower()
+
+
 def test_contextual_prompt_includes_api_delpi_routes_policy_when_tool_context_mentions_api_delpi():
     service = PromptPolicyService()
 

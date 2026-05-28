@@ -138,7 +138,7 @@
   overflow: auto;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   border-radius: 0.85rem;
-  background: color-mix(in srgb, #000 18%, var(--mdc-card-bg));
+  background: color-mix(in srgb, var(--mdc-text) 18%, var(--mdc-card-bg));
   color: var(--mdc-text);
   font-size: 0.8rem;
   line-height: 1.45;

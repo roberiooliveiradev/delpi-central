@@ -1,18 +1,6 @@
 .mdc-admin-rbac-panel {
   display: grid;
   gap: var(--mdc-space-4);
-  min-width: 0;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow);
-  padding: var(--mdc-space-5);
-}
-
-.mdc-admin-rbac-panel h2 {
-  margin: 0;
-  color: var(--mdc-primary);
-  font-size: 1.08rem;
 }
 
 .mdc-admin-rbac-panel__roles {
@@ -21,65 +9,13 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-admin-rbac-panel__roles span,
-.mdc-admin-rbac-panel__roles strong {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 999px;
-  background: var(--mdc-bg-muted);
-  color: var(--mdc-title);
-  font-size: 0.78rem;
-  font-weight: 900;
-  padding: 0.35rem 0.65rem;
-}
-
-.mdc-admin-rbac-panel__roles strong {
-  border-color: var(--mdc-primary);
-  color: var(--mdc-primary);
-}
-
 .mdc-admin-rbac-panel__matrix {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mdc-space-3);
+  max-height: min(28rem, 50vh);
 }
 
-.mdc-admin-rbac-panel__matrix section {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--mdc-space-3);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-lg);
-  background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-4);
-}
-
-.mdc-admin-rbac-panel__matrix section > div {
-  display: grid;
-  gap: var(--mdc-space-1);
-}
-
-.mdc-admin-rbac-panel__matrix strong {
-  color: var(--mdc-title);
-}
-
-.mdc-admin-rbac-panel__matrix small,
 .mdc-admin-rbac-panel__permissions {
   color: var(--mdc-text-muted);
-}
-
-.mdc-admin-rbac-panel__matrix span {
-  white-space: nowrap;
-  font-size: 0.78rem;
-  font-weight: 900;
-}
-
-.mdc-admin-rbac-panel__matrix .is-allowed {
-  color: var(--mdc-success);
-}
-
-.mdc-admin-rbac-panel__matrix .is-denied {
-  color: var(--mdc-danger);
+  font-size: 0.88rem;
 }
 
 .mdc-admin-rbac-panel__permissions summary {
@@ -90,13 +26,8 @@
 
 .mdc-admin-rbac-panel__permissions ul {
   display: grid;
-  gap: var(--mdc-space-2);
+  gap: 0.35rem;
   margin: var(--mdc-space-3) 0 0;
-  padding-left: var(--mdc-space-5);
-}
-
-@media (max-width: 880px) {
-  .mdc-admin-rbac-panel__matrix {
-    grid-template-columns: 1fr;
-  }
+  padding-left: 1.25rem;
+  line-height: 1.45;
 }

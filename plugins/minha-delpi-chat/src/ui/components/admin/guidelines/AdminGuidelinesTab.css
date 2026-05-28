@@ -1,19 +1,16 @@
 .mdc-admin-guidelines {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--mdc-space-5);
+  gap: var(--mdc-space-4);
   align-items: start;
 }
 
-.mdc-admin-guidelines__workbench {
+.mdc-admin-guidelines__workbench.mdc-admin-split {
+  align-items: stretch;
+}
+
+.mdc-admin-guidelines__workbench .mdc-admin-split__aside,
+.mdc-admin-guidelines__workbench .mdc-admin-split__main {
   display: grid;
-  grid-template-columns: minmax(20rem, 0.85fr) minmax(24rem, 1.15fr);
-  gap: var(--mdc-space-5);
-  align-items: start;
-}
-
-@media (max-width: 1120px) {
-  .mdc-admin-guidelines__workbench {
-    grid-template-columns: 1fr;
-  }
+  gap: var(--mdc-space-4);
+  align-content: start;
 }

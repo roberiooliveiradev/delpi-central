@@ -195,6 +195,8 @@ export function DepartmentDetailsPage({
         <IndicatorDetailGrid
           indicators={data.indicators}
           competence={referenceMonth}
+          viewMode={viewMode}
+          branch={branch}
         />
       </SectionBlock>
     </div>

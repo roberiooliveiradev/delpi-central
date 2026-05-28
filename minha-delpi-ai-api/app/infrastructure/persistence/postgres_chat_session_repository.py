@@ -327,6 +327,34 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return self._to_message_entity(model)
 
+    def update_assistant_message(
+        self,
+        message_id: UUID,
+        content: str,
+        metadata: dict | None = None,
+    ) -> ChatMessage | None:
+        model = AiChatMessageModel.query.filter(
+            AiChatMessageModel.id == message_id,
+            AiChatMessageModel.role == "assistant",
+        ).first()
+
+        if not model:
+            return None
+
+        model.content = content
+        model.message_metadata = metadata
+
+        session = AiChatSessionModel.query.filter(
+            AiChatSessionModel.id == model.session_id
+        ).first()
+
+        if session:
+            session.updated_at = datetime.now(timezone.utc)
+
+        db.session.flush()
+
+        return self._to_message_entity(model)
+
     def _to_session_entity(self, model: AiChatSessionModel) -> ChatSession:
         return ChatSession(
             id=model.id,

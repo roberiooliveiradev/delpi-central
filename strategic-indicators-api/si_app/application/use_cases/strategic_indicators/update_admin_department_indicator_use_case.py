@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from si_app.application.services.strategic_indicators.indicator_source_key_validation import (
+    normalize_indicator_source_key,
+    validate_indicator_source_key,
+)
 from si_app.domain.ports.strategic_indicators.department_indicators_repository_port import (
     StrategicIndicatorsDepartmentIndicatorsRepositoryPort,
 )
@@ -50,6 +54,9 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             raise ValueError("value_decimals deve estar entre 0 e 6.")
 
         new_indicator_id = (body.get("new_indicator_id") or "").strip() or None
+        is_active = bool(body.get("is_active", True))
+        source_key = normalize_indicator_source_key(body.get("source_key"))
+        validate_indicator_source_key(source_key, is_active=is_active)
 
         return self._repository.update_department_indicator(
             indicator_id=indicator_id.strip(),
@@ -59,12 +66,12 @@ class UpdateStrategicIndicatorsAdminDepartmentIndicatorUseCase:
             scope_type=scope_type,
             performance_direction=performance_direction,
             strategic_description=(body.get("strategic_description") or "").strip(),
-            source_key=(body.get("source_key") or None),
+            source_key=source_key,
             value_unit=(body.get("value_unit") or None),
             value_prefix=(body.get("value_prefix") or None),
             value_suffix=(body.get("value_suffix") or None),
             value_decimals=value_decimals,
-            is_active=bool(body.get("is_active", True)),
+            is_active=is_active,
             display_order=int(body.get("display_order") or 0),
             actor_user_id=actor_user_id,
         )

@@ -37,6 +37,13 @@
 
 .si-settings-form-field input,
 .si-settings-form-field textarea,
+.si-monthly-targets-hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--si-text-muted);
+  line-height: 1.45;
+}
+
 .si-settings-form-field select {
   width: 100%;
   border-radius: 12px;
@@ -162,9 +169,17 @@
   }
 }
 
+.si-monthly-targets-grid--weekly {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
 @media (max-width: 900px) {
   .si-monthly-targets-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .si-monthly-targets-grid--weekly {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

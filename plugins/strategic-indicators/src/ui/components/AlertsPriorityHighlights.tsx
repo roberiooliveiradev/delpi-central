@@ -1,16 +1,30 @@
 import type { AlertsDashboardViewData } from "../../data/types/alerts";
+import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
+import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
+import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { StatusBadge } from "./StatusBadge";
 import "./AlertsPriorityHighlights.css";
 
 type AlertsPriorityHighlightsProps = {
   data: AlertsDashboardViewData;
+  competence?: string | null;
+  viewMode?: StrategicIndicatorsViewMode;
+  branch?: string;
 };
 
 export function AlertsPriorityHighlights({
   data,
+  competence,
+  viewMode = "consolidated",
+  branch = "01",
 }: AlertsPriorityHighlightsProps) {
   const topDepartment = data.departmentAlerts[0] ?? null;
   const topIndicator = data.indicatorAlerts[0] ?? null;
+  const displayContext = {
+    filterViewScopeLabel: viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+  };
 
   return (
     <div className="si-alert-highlights">
@@ -54,7 +68,18 @@ export function AlertsPriorityHighlights({
             </p>
             <p className="si-alert-highlight-card__meta">
               Nota: {topIndicator.simulatedScore.toFixed(1)} · Meta:{" "}
-              {topIndicator.goalLabel}
+              <ScopeMetricBadges
+                values={topIndicator.goals}
+                format={{
+                  valueUnit: topIndicator.valueUnit,
+                  valuePrefix: topIndicator.valuePrefix,
+                  valueSuffix: topIndicator.valueSuffix,
+                  valueDecimals: topIndicator.valueDecimals,
+                }}
+                displayContext={displayContext}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(topIndicator, competence, displayContext)}
+              />
             </p>
           </>
         ) : null}

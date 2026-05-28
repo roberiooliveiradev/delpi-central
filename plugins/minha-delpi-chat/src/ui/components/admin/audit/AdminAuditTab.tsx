@@ -220,18 +220,22 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
   return (
     <section className="mdc-admin-audit-tab">
-      <header className="mdc-admin-audit-hero">
-        <div>
-          <p className="mdc-chat-eyebrow">Auditoria</p>
-          <h2>Eventos administrativos</h2>
-          <p>
-            Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade
-            operacional.
-          </p>
-        </div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Auditoria</p>
+            <h2>Eventos administrativos</h2>
+            <p>
+              Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade
+              operacional.
+            </p>
+          </div>
 
-        <strong>{response?.pagination.total ?? 0} evento(s)</strong>
-      </header>
+          <span className="mdc-admin-badge mdc-admin-badge--muted">
+            {response?.pagination.total ?? 0} evento(s)
+          </span>
+        </header>
+      </article>
 
       {error ? <p className="mdc-admin-audit-error">{error}</p> : null}
 
@@ -284,7 +288,7 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
       ) : null}
 
       {selectedLog ? (
-        <article className="mdc-admin-audit-detail">
+        <article className="mdc-admin-panel mdc-admin-audit-detail">
           <header>
             <p className="mdc-chat-eyebrow">Detalhe do evento</p>
             <h3>{selectedLog.log.action}</h3>

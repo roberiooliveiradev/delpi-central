@@ -1,6 +1,8 @@
 # 03 — Agentes
 
-Agentes são contextos especializados do Minha DELPI Chat. Actions externas/OpenAPI pertencem aos agentes, não ao chat comum.
+Agentes são **chats com camadas extras**: prompt de sistema, skills, actions OpenAPI autorizadas e escopo de conhecimento. A **inteligência transversal** (intenção, pipeline, tools, comparações, resposta direta) vive no **chat base** e é **herdada** por todos os agentes — ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+
+Actions externas/OpenAPI são **configuradas por agente** (subset permitido); a execução e o pipeline seguem o mesmo motor do chat.
 
 Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhorias.md`](../roadmap/agentes-gestao-melhorias.md) (ondas 1–7 concluídas).
 
@@ -37,10 +39,25 @@ Metadados da resposta podem incluir `intelligence` (RAG, tools, timings). Ver on
   "max_tool_calls": 3,
   "requires_confirmation_for_write": true,
   "access_role": "system|owner|editor|viewer",
+  "published_version": 0,
+  "published_at": "datetime|null",
+  "has_unpublished_changes": false,
   "created_at": "datetime",
   "updated_at": "datetime"
 }
 ```
+
+### Publicação (rascunho vs produção)
+
+| Campo | Função |
+|---|---|
+| `published_version` | Número da versão publicada (`0` = nunca publicado) |
+| `published_at` | Data/hora da última publicação |
+| `has_unpublished_changes` | `true` quando o rascunho no builder difere do snapshot publicado |
+
+**Runtime no chat:** usuários finais só conversam com agentes que tenham `published_version >= 1`. O backend aplica `published_config` (snapshot de instruções, metadados, skills e limites) na resolução por `agent_key`. Editores veem o rascunho no builder; visitantes usam apenas a versão publicada.
+
+---
 
 ## Regras de permissão
 
@@ -277,6 +294,34 @@ Revoga compartilhamento (somente `owner`).
 
 ---
 
+## POST `/chat/agents/preview`
+
+Simula um agente **ainda não salvo** (rascunho do builder).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage`
+
+### Body
+
+```json
+{
+  "message": "O que você consegue fazer?",
+  "generateAnswer": true,
+  "draft": {
+    "name": "Meu agente",
+    "systemPrompt": "...",
+    "metadata": { "skills": { "sql": { "authoring": true } } }
+  }
+}
+```
+
+### Resposta `200`
+
+Mesmo formato de `POST /admin/agent/simulate`.
+
+---
+
 ## POST `/chat/agents/{agentId}/preview`
 
 Simula uma pergunta ao agente (instruções, RAG de especialização, diretrizes e tools planejadas).
@@ -290,13 +335,64 @@ Simula uma pergunta ao agente (instruções, RAG de especialização, diretrizes
 ```json
 {
   "message": "O que você consegue fazer?",
-  "generateAnswer": true
+  "generateAnswer": true,
+  "draft": {}
 }
 ```
+
+O campo opcional `draft` sobrescreve temporariamente instruções/metadados do agente salvo (útil para testar antes de publicar).
 
 ### Resposta `200`
 
 Mesmo formato de `POST /admin/agent/simulate` (`answerPreview`, `chunks`, `plannedToolCalls`, etc.).
+
+---
+
+## POST `/chat/agents/{agentId}/publish`
+
+Publica o rascunho atual do agente: incrementa `published_version`, grava `published_config` e registra entrada em `ai_chat_agent_versions`.
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + papel `owner`, `editor` ou `system`; agentes oficiais exigem `chat.admin` ou superadmin.
+
+### Body
+
+Nenhum (ou `{}`).
+
+### Resposta `200`
+
+`ChatAgent` com `published_version`, `published_at`, `has_unpublished_changes: false` e `system_prompt` quando editável.
+
+### Erros
+
+| Status | Situação |
+|--------|----------|
+| `404` | Agente inexistente ou sem permissão de edição |
+
+---
+
+## GET `/chat/agents/{agentId}/versions`
+
+Lista histórico de publicações (últimas 30 versões).
+
+### Permissão
+
+`minha-delpi.chat.tools.manage` + acesso de edição ao agente
+
+### Resposta `200`
+
+```json
+[
+  {
+    "id": "uuid",
+    "version": 3,
+    "event": "published",
+    "createdAt": "2026-05-27T12:00:00+00:00",
+    "createdBy": "uuid"
+  }
+]
+```
 
 ---
 

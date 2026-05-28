@@ -7,10 +7,16 @@ Backend Flask do **Minha DELPI Chat**: conversas, RAG, agentes, tools, conhecime
 | Área | Caminho |
 |------|---------|
 | **API (referência completa)** | [docs/api/README.md](docs/api/README.md) |
+| **Conhecimento para agentes (RAG)** | [docs/knowledge/README.md](docs/knowledge/README.md) |
+| **Rotas api-delpi (agente)** | [docs/knowledge/api-delpi-rotas-agente.md](docs/knowledge/api-delpi-rotas-agente.md) |
 | Deploy e migrations | [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md) |
 | Roadmap admin (itens 1–15) | [docs/roadmap/admin-minha-delpi-chat.md](docs/roadmap/admin-minha-delpi-chat.md) |
 | Gestão de agentes (ondas 1–7) | [docs/roadmap/agentes-gestao-melhorias.md](docs/roadmap/agentes-gestao-melhorias.md) |
-| Inteligência do chat (ondas 1–5) | [docs/roadmap/README.md](docs/roadmap/README.md) |
+| Inteligência do chat (ondas 1–10) | [docs/roadmap/README.md](docs/roadmap/README.md) |
+| Arquitetura inteligência base | [docs/architecture/chat-intelligence-base.md](docs/architecture/chat-intelligence-base.md) |
+| Camadas pré-LLM (preparação do turno) | [docs/architecture/chat-pre-llm-layers.md](docs/architecture/chat-pre-llm-layers.md) |
+| Calibração `RAG_CONTEXT_MIN_SCORE` | [docs/roadmap/rag-context-min-score-calibracao.md](docs/roadmap/rag-context-min-score-calibracao.md) |
+| Auditoria rotas api-delpi (chat) | [docs/roadmap/api-delpi-chat-intelligence-audit.md](docs/roadmap/api-delpi-chat-intelligence-audit.md) |
 | Melhorias futuras (fechadas) | [docs/roadmap/melhorias-futuras.md](docs/roadmap/melhorias-futuras.md) |
 | Plugin (UI) | [../plugins/minha-delpi-chat/README.md](../plugins/minha-delpi-chat/README.md) |
 
@@ -65,9 +71,11 @@ docs/              # documentação técnica
 
 ## Funcionalidades principais
 
-- Chat com histórico, streaming SSE, anexos e artefatos
+- Chat com histórico, streaming SSE (`playback`, `canvas_open`), lousa por intent, anexos e artefatos
 - RAG documental (pgvector) com fontes na resposta; RAG híbrido, rerank e loop agentic (configurável)
-- **Agentes** com instruções, compartilhamento, stats, duplicate/export/import, fontes e actions OpenAPI por agente
+- Perguntas sobre o assistente («quem te criou», «o que você é») com **RAG + LLM** e policy dedicada (sem resposta enlatada no pipeline)
+- Diagnóstico **`adminDebug`** persistido em todo turno; visível na API/UI só para admin
+- **Agentes** com rascunho/publicação (`published_config`, histórico de versões), preview, instruções, compartilhamento, stats, duplicate/export/import, skills, fontes e actions OpenAPI
 - **Projetos** com instruções, agente padrão e compartilhamento
 - Base global de conhecimento com pipeline de ingestão
 - Painel admin: diretrizes, métricas, auditoria, simulação, avaliações, segurança, especialização de agentes
@@ -84,6 +92,8 @@ docs/              # documentação técnica
 | `LLM_COST_TABLE_JSON` | Tabela de custo fallback (env) |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG (admin) |
 | `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
+| `RAG_IDENTITY_QUESTION_MIN_SCORE` | Score mínimo para perguntas de identidade do assistente (default `0.22`); chunks passam por `is_identity_relevant_chunk` |
+| `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
 | `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
 | `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
@@ -102,4 +112,11 @@ Lista completa: `app/infrastructure/config/settings.py` e `infra/docker-compose.
 
 ```bash
 pytest tests/unit -q
+```
+
+Smoke local (identidade + RAG, dentro do container com DB):
+
+```bash
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
 ```

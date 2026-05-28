@@ -8,7 +8,27 @@ import type {
   StrategicIndicatorGoalItem,
   UpdateStrategicIndicatorGoalRequest,
 } from "../../data/types/indicatorGoals";
-import { getGoalScopeBranchLabel } from "../presentation/labels";
+import {
+  getGoalModeLabel,
+  getGoalPeriodicityLabel,
+  getGoalScopeBranchLabel,
+} from "../presentation/labels";
+import { clampGoalYear, MIN_GOAL_YEAR, MAX_GOAL_YEAR } from "../utils/goalYearHelpers";
+import {
+  buildEmptyCurveTargets,
+  getCurveHintText,
+  getCurvePointLabels,
+  getCurveSectionTitle,
+  normalizeCurveTargets,
+} from "../utils/curveTargets";
+import {
+  validateIndicatorGoalForm,
+  type IndicatorGoalCatalogEntry,
+} from "../utils/goalFormValidation";
+import {
+  expectedMonthlyCurvePointCount,
+  resolveGoalValueForApi,
+} from "../utils/goalValuePolicy";
 import "./IndicatorGoalForm.css";
 
 type IndicatorOption = {
@@ -19,7 +39,12 @@ type IndicatorOption = {
 type IndicatorGoalFormProps = {
   saving: boolean;
   initialValue?: StrategicIndicatorGoalItem | null;
+  /** Pré-preenche o formulário para criar uma cópia (não edita o registro de origem). */
+  duplicateFrom?: StrategicIndicatorGoalItem | null;
   indicatorOptions?: Array<string | IndicatorOption>;
+  indicatorCatalog?: IndicatorGoalCatalogEntry[];
+  defaultGoalYear?: number;
+  lockGoalYear?: boolean;
   onCreate?: (payload: CreateStrategicIndicatorGoalRequest) => Promise<void>;
   onUpdate?: (
     goalId: string,
@@ -27,28 +52,6 @@ type IndicatorGoalFormProps = {
   ) => Promise<void>;
   onCancel?: () => void;
 };
-
-const MONTH_LABELS = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
-];
-
-function buildEmptyMonthlyTargets(): MonthlyTargetItem[] {
-  return Array.from({ length: 12 }, (_, index) => ({
-    month_number: index + 1,
-    target_value: 0,
-  }));
-}
 
 function normalizeIndicatorOptions(
   options: Array<string | IndicatorOption>,
@@ -60,32 +63,14 @@ function normalizeIndicatorOptions(
   );
 }
 
-function normalizeMonthlyTargets(
-  input?: MonthlyTargetItem[] | null,
-): MonthlyTargetItem[] {
-  const base = buildEmptyMonthlyTargets();
-
-  if (!input?.length) return base;
-
-  const byMonth = new Map<number, number>();
-  input.forEach((item) => {
-    byMonth.set(item.month_number, Number(item.target_value || 0));
-  });
-
-  return base.map((item) => ({
-    month_number: item.month_number,
-    target_value: byMonth.get(item.month_number) ?? 0,
-  }));
-}
-
-function formatGoalModeLabel(value: GoalMode) {
-  return value === "monthly_curve" ? "Curva mensal" : "Meta padrão";
-}
-
 export function IndicatorGoalForm({
   saving,
   initialValue,
+  duplicateFrom = null,
   indicatorOptions = [],
+  indicatorCatalog = [],
+  defaultGoalYear,
+  lockGoalYear = false,
   onCreate,
   onUpdate,
   onCancel,
@@ -99,29 +84,39 @@ export function IndicatorGoalForm({
   const [goalMode, setGoalMode] = useState<GoalMode>("standard");
   const [goalScopeBranch, setGoalScopeBranch] = useState<GoalScopeBranch | string>("");
   const [monthlyTargets, setMonthlyTargets] = useState<MonthlyTargetItem[]>(
-    buildEmptyMonthlyTargets(),
+    buildEmptyCurveTargets("monthly"),
   );
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
   const [notes, setNotes] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const isEditing = useMemo(() => !!initialValue, [initialValue]);
+  const formSeed = duplicateFrom ?? initialValue;
+  const isEditing = useMemo(
+    () => !!initialValue && !duplicateFrom,
+    [initialValue, duplicateFrom],
+  );
   const normalizedIndicatorOptions = useMemo(
     () => normalizeIndicatorOptions(indicatorOptions),
     [indicatorOptions],
   );
+  const curvePointLabels = useMemo(
+    () => getCurvePointLabels(goalPeriodicity),
+    [goalPeriodicity],
+  );
 
   useEffect(() => {
-    if (!initialValue) {
+    if (!formSeed) {
       setIndicatorId("");
-      setGoalYear(new Date().getFullYear());
+      setGoalYear(
+        clampGoalYear(defaultGoalYear ?? new Date().getFullYear()),
+      );
       setGoalLabel("");
       setGoalValue(0);
       setGoalPeriodicity("monthly");
       setGoalMode("standard");
       setGoalScopeBranch("");
-      setMonthlyTargets(buildEmptyMonthlyTargets());
+      setMonthlyTargets(buildEmptyCurveTargets("monthly"));
       setValidFrom("");
       setValidTo("");
       setNotes("");
@@ -129,19 +124,24 @@ export function IndicatorGoalForm({
       return;
     }
 
-    setIndicatorId(initialValue.indicator_id);
-    setGoalYear(initialValue.goal_year);
-    setGoalLabel(initialValue.goal_label);
-    setGoalValue(initialValue.goal_value);
-    setGoalPeriodicity(initialValue.goal_periodicity);
-    setGoalMode(initialValue.goal_mode);
-    setGoalScopeBranch(initialValue.goal_scope_branch ?? "");
-    setMonthlyTargets(normalizeMonthlyTargets(initialValue.monthly_targets));
-    setValidFrom(initialValue.valid_from ?? "");
-    setValidTo(initialValue.valid_to ?? "");
-    setNotes(initialValue.notes ?? "");
+    setIndicatorId(formSeed.indicator_id);
+    setGoalYear(formSeed.goal_year);
+    setGoalLabel(formSeed.goal_label);
+    setGoalValue(formSeed.goal_value);
+    setGoalPeriodicity(formSeed.goal_periodicity);
+    setGoalMode(formSeed.goal_mode);
+    setGoalScopeBranch(formSeed.goal_scope_branch ?? "");
+    setMonthlyTargets(
+      normalizeCurveTargets(
+        formSeed.monthly_targets,
+        formSeed.goal_periodicity,
+      ),
+    );
+    setValidFrom(formSeed.valid_from ?? "");
+    setValidTo(formSeed.valid_to ?? "");
+    setNotes(formSeed.notes ?? "");
     setLocalError(null);
-  }, [initialValue]);
+  }, [formSeed, defaultGoalYear]);
 
   function updateMonthlyTarget(monthNumber: number, targetValue: number) {
     setMonthlyTargets((current) =>
@@ -153,43 +153,25 @@ export function IndicatorGoalForm({
     );
   }
 
-  function buildResolvedGoalValue() {
-    if (goalMode === "monthly_curve") {
-      return monthlyTargets.reduce(
-        (sum, item) => sum + Number(item.target_value || 0),
-        0,
-      );
-    }
-
-    return Number(goalValue || 0);
-  }
-
   async function handleSubmit() {
     setLocalError(null);
 
-    if (!goalLabel.trim()) {
-      setLocalError("O nome da meta é obrigatório.");
+    const validationError = validateIndicatorGoalForm({
+      indicatorId,
+      goalYear,
+      goalLabel,
+      goalScopeBranch,
+      goalMode,
+      goalPeriodicity,
+      goalValue,
+      monthlyTargets,
+      indicatorOptions: normalizedIndicatorOptions,
+      indicatorCatalog,
+      isEditing,
+    });
+    if (validationError) {
+      setLocalError(validationError);
       return;
-    }
-
-    if (!isEditing && !indicatorId.trim()) {
-      setLocalError("Selecione um indicador.");
-      return;
-    }
-
-    if (goalMode === "standard" && goalValue < 0) {
-      setLocalError("O valor da meta não pode ser negativo.");
-      return;
-    }
-
-    if (goalMode === "monthly_curve") {
-      const hasInvalidMonthlyValue = monthlyTargets.some(
-        (item) => Number(item.target_value) < 0,
-      );
-      if (hasInvalidMonthlyValue) {
-        setLocalError("Os valores mensais não podem ser negativos.");
-        return;
-      }
     }
 
     if (validFrom && validTo && validFrom > validTo) {
@@ -197,7 +179,7 @@ export function IndicatorGoalForm({
       return;
     }
 
-    const resolvedGoalValue = buildResolvedGoalValue();
+    const resolvedGoalValue = resolveGoalValueForApi(goalMode, goalValue);
     const resolvedMonthlyTargets =
       goalMode === "monthly_curve" ? monthlyTargets : [];
 
@@ -258,7 +240,19 @@ export function IndicatorGoalForm({
           {normalizedIndicatorOptions.length > 0 ? (
             <select
               value={indicatorId}
-              onChange={(e) => setIndicatorId(e.target.value)}
+              onChange={(e) => {
+                const nextId = e.target.value;
+                setIndicatorId(nextId);
+                if (!isEditing && !goalLabel.trim()) {
+                  const match = normalizedIndicatorOptions.find(
+                    (option) => option.value === nextId,
+                  );
+                  if (match) {
+                    const [name] = match.label.split(" · ");
+                    setGoalLabel(name?.trim() ?? match.label);
+                  }
+                }
+              }}
               autoFocus={!isEditing}
             >
               <option value="">Selecione</option>
@@ -280,8 +274,11 @@ export function IndicatorGoalForm({
         <Field label="Ano da meta">
           <input
             type="number"
+            min={MIN_GOAL_YEAR}
+            max={MAX_GOAL_YEAR}
             value={goalYear}
-            onChange={(e) => setGoalYear(Number(e.target.value))}
+            readOnly={lockGoalYear}
+            onChange={(e) => setGoalYear(clampGoalYear(Number(e.target.value)))}
           />
         </Field>
 
@@ -295,10 +292,16 @@ export function IndicatorGoalForm({
         <Field label="Modo da meta">
           <select
             value={goalMode}
-            onChange={(e) => setGoalMode(e.target.value as GoalMode)}
+            onChange={(e) => {
+              const nextMode = e.target.value as GoalMode;
+              setGoalMode(nextMode);
+              if (nextMode === "monthly_curve") {
+                setMonthlyTargets(buildEmptyCurveTargets(goalPeriodicity));
+              }
+            }}
           >
-            <option value="standard">Meta padrão</option>
-            <option value="monthly_curve">Curva mensal</option>
+            <option value="standard">{getGoalModeLabel("standard")}</option>
+            <option value="monthly_curve">{getGoalModeLabel("monthly_curve")}</option>
           </select>
         </Field>
 
@@ -316,9 +319,15 @@ export function IndicatorGoalForm({
         <Field label="Periodicidade">
           <select
             value={goalPeriodicity}
-            onChange={(e) =>
-              setGoalPeriodicity(e.target.value as GoalPeriodicity)
-            }
+            onChange={(e) => {
+              const nextPeriodicity = e.target.value as GoalPeriodicity;
+              setGoalPeriodicity(nextPeriodicity);
+              if (goalMode === "monthly_curve") {
+                setMonthlyTargets((current) =>
+                  normalizeCurveTargets(current, nextPeriodicity),
+                );
+              }
+            }}
           >
             <option value="monthly">Mensal</option>
             <option value="annual">Anual</option>
@@ -336,11 +345,7 @@ export function IndicatorGoalForm({
               onChange={(e) => setGoalValue(Number(e.target.value))}
             />
           </Field>
-        ) : (
-          <Field label="Valor consolidado da curva">
-            <input value={buildResolvedGoalValue()} readOnly />
-          </Field>
-        )}
+        ) : null}
 
         <Field label="Vigência inicial">
           <input
@@ -361,25 +366,33 @@ export function IndicatorGoalForm({
         {goalMode === "monthly_curve" ? (
           <div className="si-settings-form-field si-settings-form-field--full">
             <span className="si-settings-form-field__label">
-              Curva mensal da meta
+              {getCurveSectionTitle(goalPeriodicity)}
             </span>
 
             <div className="si-monthly-targets-toolbar">
               <span className="si-monthly-targets-toolbar__badge">
-                {formatGoalModeLabel(goalMode)}
+                {getGoalModeLabel(goalMode)}
               </span>
               <span className="si-monthly-targets-toolbar__summary">
-                Soma anual: {buildResolvedGoalValue().toLocaleString("pt-BR")}
+                {expectedMonthlyCurvePointCount(goalPeriodicity)} pontos ·{" "}
+                {getGoalPeriodicityLabel(goalPeriodicity)}
               </span>
             </div>
+            <p className="si-monthly-targets-hint">{getCurveHintText(goalPeriodicity)}</p>
 
-            <div className="si-monthly-targets-grid">
+            <div
+              className={`si-monthly-targets-grid ${
+                goalPeriodicity === "weekly"
+                  ? "si-monthly-targets-grid--weekly"
+                  : ""
+              }`}
+            >
               {monthlyTargets.map((item, index) => (
                 <label
                   key={item.month_number}
                   className="si-monthly-targets-grid__item"
                 >
-                  <span>{MONTH_LABELS[index]}</span>
+                  <span>{curvePointLabels[index] ?? `#${item.month_number}`}</span>
                   <input
                     type="number"
                     step="0.0001"
@@ -427,7 +440,9 @@ export function IndicatorGoalForm({
             ? "Salvando..."
             : isEditing
               ? "Salvar alterações"
-              : "Criar meta"}
+              : duplicateFrom
+                ? "Salvar cópia"
+                : "Criar meta"}
         </button>
       </div>
     </div>

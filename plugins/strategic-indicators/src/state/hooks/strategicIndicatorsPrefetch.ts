@@ -18,34 +18,47 @@ type PrefetchParams = {
   getAccessToken?: () => string | undefined;
 };
 
+/** Evita competir com a requisição principal (executive-summary / árvore). */
+const PREFETCH_DELAY_MS = 3000;
+
+function schedulePrefetch(run: () => void): void {
+  const timeoutId = window.setTimeout(run, PREFETCH_DELAY_MS);
+  const cancel = () => window.clearTimeout(timeoutId);
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", cancel, { once: true });
+  }
+}
+
 export function prefetchStrategicIndicatorsDepartments(
   params: PrefetchParams,
 ): void {
-  void fetchStrategicIndicatorsDepartments({
+  schedulePrefetch(() => {
+    void fetchStrategicIndicatorsDepartments({
     competence: params.competence,
     branch: params.branch,
     startDate: params.startDate,
     endDate: params.endDate,
-    getAccessToken: params.getAccessToken,
-  })
-    .then((response) => {
-      writeDepartmentsReadCache(
-        {
-          competence: params.competence,
-          startDate: params.startDate,
-          endDate: params.endDate,
-        },
-        params.branch,
-        adaptDepartmentsToView(response),
-      );
+      getAccessToken: params.getAccessToken,
     })
-    .catch(() => undefined);
+      .then((response) => {
+        writeDepartmentsReadCache(
+          {
+            competence: params.competence,
+            startDate: params.startDate,
+            endDate: params.endDate,
+          },
+          params.branch,
+          adaptDepartmentsToView(response),
+        );
+      })
+      .catch(() => undefined);
+  });
 }
 
 export function prefetchStrategicIndicatorsTrends(
   params: PrefetchParams,
 ): void {
-  const months = params.months ?? 6;
+  const months = params.months ?? 3;
   const cacheKey = buildStrategicIndicatorsCacheKey("trends", {
     competence: params.competence,
     branch: params.branch,
@@ -54,20 +67,22 @@ export function prefetchStrategicIndicatorsTrends(
     months,
   });
 
-  void fetchStrategicIndicatorsTrends({
+  schedulePrefetch(() => {
+    void fetchStrategicIndicatorsTrends({
     competence: params.competence,
     branch: params.branch,
     startDate: params.startDate,
     endDate: params.endDate,
     months,
-    getAccessToken: params.getAccessToken,
-  })
-    .then((response) => {
-      const viewData = adaptTrendsToView(response);
-      setStrategicIndicatorsCachedValue<TrendsDashboardViewData>(
-        cacheKey,
-        viewData,
-      );
+      getAccessToken: params.getAccessToken,
     })
-    .catch(() => undefined);
+      .then((response) => {
+        const viewData = adaptTrendsToView(response);
+        setStrategicIndicatorsCachedValue<TrendsDashboardViewData>(
+          cacheKey,
+          viewData,
+        );
+      })
+      .catch(() => undefined);
+  });
 }

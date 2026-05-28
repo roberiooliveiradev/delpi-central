@@ -6,12 +6,11 @@ import {
   Folder,
   Paperclip,
   Plus,
-  Sparkles,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
 
@@ -82,6 +81,43 @@ export function ChatInput({
 }: ChatInputProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const plusMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const closeMenu = () => setIsMenuOpen(false);
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (plusMenuRef.current?.contains(target)) {
+        return;
+      }
+
+      closeMenu();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeMenu();
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMenuOpen]);
 
   const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
@@ -179,7 +215,7 @@ export function ChatInput({
           </div>
         ) : null}
 
-        <div className="mdc-chat-input__plus-wrap">
+        <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef}>
           <button
             type="button"
             className="mdc-chat-input__plus"
@@ -291,15 +327,6 @@ export function ChatInput({
                     <span>{project.name}</span>
                   </button>
                 ))}
-              </div>
-
-              <div className="mdc-chat-input__menu-section">
-                <strong>Em breve</strong>
-
-                <button type="button" disabled>
-                  <Sparkles size={16} aria-hidden="true" />
-                  <span>Escolher action</span>
-                </button>
               </div>
             </div>
           ) : null}
