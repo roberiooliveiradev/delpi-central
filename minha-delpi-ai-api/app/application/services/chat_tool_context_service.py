@@ -624,10 +624,10 @@ class ChatToolContextService:
                 continue
 
             if requested_format == "text":
-                meta["presentation"] = None
-                meta["tablePresentation"] = None
+                meta["preferredFormat"] = "text"
 
             elif requested_format == "table":
+                meta["preferredFormat"] = "table"
                 table_pres = meta.get("tablePresentation") or meta.get("presentation")
                 if table_pres and table_pres.get("type") == "table":
                     meta["presentation"] = table_pres
@@ -642,6 +642,7 @@ class ChatToolContextService:
                         meta["tablePresentation"] = None
 
             elif requested_format == "chart":
+                meta["preferredFormat"] = "chart"
                 chart_pres = meta.get("presentation")
                 if chart_pres and chart_pres.get("type") == "chart":
                     pass

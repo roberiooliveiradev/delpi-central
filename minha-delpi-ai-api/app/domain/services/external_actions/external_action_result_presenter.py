@@ -670,6 +670,63 @@ class ExternalActionResultPresenter:
         return None
 
 
+    def build_text_presentation(self, data, *, path: str = "") -> dict | None:
+        """Markdown legível para a aba Texto do chat (complementa tabela/gráfico)."""
+        root = self._unwrap_data(data)
+
+        if (
+            isinstance(root, dict)
+            and isinstance(root.get("root"), dict)
+            and isinstance(root.get("items"), list)
+        ):
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            markdown = ChatProductStructurePresentationService.format_markdown(
+                root,
+                source_path=path,
+            )
+
+            if markdown:
+                code = str(root["root"].get("code") or "").strip()
+                title = f"Estrutura do produto {code}".strip() if code else "Estrutura do produto"
+
+                return {
+                    "type": "markdown",
+                    "title": title,
+                    "markdown": markdown,
+                }
+
+        humanized = self.present(data, path=path)
+
+        if not isinstance(humanized, dict):
+            return None
+
+        lines = humanized.get("linhas") or []
+        title = str(humanized.get("titulo") or "").strip()
+        body_parts = [str(line).strip() for line in lines if str(line).strip()]
+
+        if not body_parts and not title:
+            return None
+
+        markdown_parts: list[str] = []
+
+        if title:
+            markdown_parts.append(f"### {title}")
+
+        markdown_parts.extend(body_parts)
+        markdown = "\n\n".join(markdown_parts).strip()
+
+        if not markdown:
+            return None
+
+        return {
+            "type": "markdown",
+            "title": title or self._fallback_title(path) or "Resultado",
+            "markdown": markdown,
+        }
+
     def build_presentation(self, data, *, path: str = "") -> dict | None:
         root = self._unwrap_data(data)
 

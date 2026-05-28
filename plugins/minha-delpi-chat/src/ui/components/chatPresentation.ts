@@ -5,6 +5,8 @@ export type PresentationPair = {
   table: ChatPresentation | null;
 };
 
+export type ViewFormat = "text" | "chart" | "table";
+
 function getPresentationFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatPresentation | null {
@@ -20,7 +22,11 @@ function getPresentationFromToolCalls(
       typeof presentation === "object" &&
       "type" in presentation
     ) {
-      return presentation as ChatPresentation;
+      const presentationType = (presentation as ChatPresentation).type;
+
+      if (presentationType !== "markdown") {
+        return presentation as ChatPresentation;
+      }
     }
   }
 
@@ -47,6 +53,93 @@ function getTablePresentationFromToolCalls(
   }
 
   return null;
+}
+
+export function getAvailableFormatsFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string[] {
+  if (!Array.isArray(toolCalls)) {
+    return [];
+  }
+
+  for (const toolCall of toolCalls) {
+    const formats = (toolCall.metadata as Record<string, unknown>)?.availableFormats;
+
+    if (Array.isArray(formats)) {
+      return formats.map((format) => String(format));
+    }
+  }
+
+  return [];
+}
+
+export function getPreferredFormatFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ViewFormat | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const preferred = (toolCall.metadata as Record<string, unknown>)?.preferredFormat;
+
+    if (preferred === "text" || preferred === "chart" || preferred === "table") {
+      return preferred;
+    }
+  }
+
+  return null;
+}
+
+export function getTextMarkdownFromToolCalls(toolCalls?: ChatToolCall[]): string {
+  if (!Array.isArray(toolCalls)) {
+    return "";
+  }
+
+  for (const toolCall of toolCalls) {
+    const textPresentation = (toolCall.metadata as Record<string, unknown>)?.textPresentation;
+
+    if (
+      textPresentation &&
+      typeof textPresentation === "object" &&
+      (textPresentation as { type?: string }).type === "markdown"
+    ) {
+      const markdown = (textPresentation as { markdown?: string }).markdown;
+
+      if (typeof markdown === "string" && markdown.trim()) {
+        return markdown.trim();
+      }
+    }
+
+    const presentation = toolCall.metadata?.presentation;
+
+    if (
+      presentation &&
+      typeof presentation === "object" &&
+      (presentation as { type?: string }).type === "markdown"
+    ) {
+      const markdown = (presentation as { markdown?: string }).markdown;
+
+      if (typeof markdown === "string" && markdown.trim()) {
+        return markdown.trim();
+      }
+    }
+  }
+
+  return "";
+}
+
+export function resolveRichTextContent(
+  messageContent: string | null | undefined,
+  toolCalls?: ChatToolCall[],
+): string {
+  const fromMessage = String(messageContent || "").trim();
+
+  if (fromMessage) {
+    return fromMessage;
+  }
+
+  return getTextMarkdownFromToolCalls(toolCalls);
 }
 
 export function getPresentationPairFromToolCalls(
@@ -94,11 +187,41 @@ export function hasRichPresentation(pair: PresentationPair): boolean {
   return Boolean(tableType && RICH_PRESENTATION_TYPES.has(tableType));
 }
 
-/** Não renderiza markdown textual quando o painel rico já exibe os mesmos dados. */
+export function hasMultiFormatPresentation(toolCalls?: ChatToolCall[]): boolean {
+  const formats = getAvailableFormatsFromToolCalls(toolCalls);
+  const unique = new Set(formats);
+
+  if (unique.size >= 2) {
+    return true;
+  }
+
+  const pair = getPresentationPairFromToolCalls(toolCalls);
+  const flags = [
+    Boolean(resolveRichTextContent("", toolCalls)),
+    pair.primary?.type === "chart" || pair.table?.type === "table",
+    pair.primary?.type === "table" || pair.table?.type === "table",
+  ];
+
+  return flags.filter(Boolean).length >= 2;
+}
+
+/** Não renderiza markdown duplicado quando o painel rico exibe a aba Texto. */
 export function shouldSuppressMarkdownForPresentation(
   content: string | null | undefined,
   pair: PresentationPair,
+  toolCalls?: ChatToolCall[],
 ): boolean {
+  if (!hasRichPresentation(pair) && !getTextMarkdownFromToolCalls(toolCalls)) {
+    return false;
+  }
+
+  const formats = getAvailableFormatsFromToolCalls(toolCalls);
+  const richText = resolveRichTextContent(content, toolCalls);
+
+  if (formats.includes("text") && richText) {
+    return true;
+  }
+
   if (!hasRichPresentation(pair)) {
     return false;
   }

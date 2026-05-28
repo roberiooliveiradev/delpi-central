@@ -92,10 +92,20 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
 
 function renderPresentation(
   toolCalls: ChatToolCall[],
+  textContent: string | null | undefined,
   onDrillDown?: (query: string) => void,
 ) {
-  if (!toolCalls || !toolCalls.length) return null;
-  return <ChatRichPresentation toolCalls={toolCalls} onDrillDown={onDrillDown} />;
+  if (!toolCalls || !toolCalls.length) {
+    return null;
+  }
+
+  return (
+    <ChatRichPresentation
+      toolCalls={toolCalls}
+      textContent={textContent}
+      onDrillDown={onDrillDown}
+    />
+  );
 }
 
 type MessageAttachment = {
@@ -393,6 +403,7 @@ export function ChatMessageList({
   const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(
     streamingAnswer,
     streamingPresentation,
+    streamingToolCalls,
   );
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled: isGeneratingAnswer && !suppressStreamingMarkdown,
@@ -709,6 +720,7 @@ export function ChatMessageList({
     const suppressMessageMarkdown = shouldSuppressMarkdownForPresentation(
       message.content,
       messagePresentation,
+      messageToolCalls,
     );
 
     return (
@@ -873,7 +885,7 @@ export function ChatMessageList({
 
           {!isUser && !isAssistantGenerating(message) ? (
             <>
-              {renderPresentation(messageToolCalls, onReuseMessage)}
+              {renderPresentation(messageToolCalls, message.content, onReuseMessage)}
               {!messagePresentation.primary ? (
                 <ChatActionResults toolCalls={messageToolCalls} />
               ) : null}
@@ -989,7 +1001,7 @@ export function ChatMessageList({
               </div>
 
               {streamingShowPresentation
-                ? renderPresentation(streamingToolCalls, onReuseMessage)
+                ? renderPresentation(streamingToolCalls, streamingAnswer, onReuseMessage)
                 : null}
               {streamingShowPresentation &&
               !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (

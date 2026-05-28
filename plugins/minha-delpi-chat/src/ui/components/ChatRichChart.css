@@ -10,6 +10,10 @@
   margin-left: 0.5rem;
 }
 
+.mdc-rich-presentation__text {
+  margin-top: 0.35rem;
+}
+
 .mdc-rich-presentation__actions {
   display: flex;
   align-items: center;

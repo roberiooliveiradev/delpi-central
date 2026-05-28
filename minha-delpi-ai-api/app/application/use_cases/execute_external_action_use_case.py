@@ -64,10 +64,22 @@ class ExecuteExternalActionUseCase:
 
         sanitized_data = self.policy.sanitize_response(result["data"])
         action_path = action.get("path") or ""
+        text_presentation = self.presenter.build_text_presentation(
+            sanitized_data,
+            path=action_path,
+        )
         presentation = self.presenter.build_presentation(sanitized_data, path=action_path)
         chart_presentation = self.presenter.build_chart_presentation(
             sanitized_data, path=action_path,
         )
+
+        table_presentation = None
+        if isinstance(presentation, dict) and presentation.get("type") == "markdown":
+            if not text_presentation:
+                text_presentation = presentation
+            presentation = None
+        elif presentation:
+            table_presentation = presentation
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -98,17 +110,22 @@ class ExecuteExternalActionUseCase:
             },
         )
 
-        available_formats = ["text"]
-        if presentation:
+        available_formats: list[str] = []
+        if text_presentation:
+            available_formats.append("text")
+        if table_presentation:
             available_formats.append("table")
         if chart_presentation:
             available_formats.append("chart")
-        elif presentation and not chart_presentation:
+        elif table_presentation:
             forced_chart = self.presenter.build_chart_presentation(
                 sanitized_data, path=action_path, force=True
             )
             if forced_chart:
+                chart_presentation = forced_chart
                 available_formats.append("chart")
+
+        primary_presentation = chart_presentation or table_presentation
 
         return {
             "provider": provider["providerKey"],
@@ -121,8 +138,9 @@ class ExecuteExternalActionUseCase:
             "metadata": {
                 "durationMs": result["durationMs"],
                 "sensitivity": action["sensitivity"],
-                "presentation": chart_presentation or presentation,
-                "tablePresentation": presentation if chart_presentation else None,
+                "presentation": primary_presentation,
+                "tablePresentation": table_presentation if chart_presentation else None,
+                "textPresentation": text_presentation,
                 "availableFormats": available_formats,
             },
         }

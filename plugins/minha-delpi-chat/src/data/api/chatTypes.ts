@@ -67,6 +67,11 @@ export type ChatPresentation =
       type: "json";
       title: string;
       data: unknown;
+    }
+  | {
+      type: "markdown";
+      title: string;
+      markdown: string;
     };
 
 export type ChatStreamActivityEntry = {
