@@ -6,25 +6,38 @@ type StrategicIndicatorsErrorStateProps = {
   error: StrategicIndicatorsErrorView;
   actionLabel?: string;
   onAction?: () => void;
+  /** Corpo do modal: sem card, título e resumo duplicados. */
+  embedded?: boolean;
 };
 
 export function StrategicIndicatorsErrorState({
   error,
   actionLabel,
   onAction,
+  embedded = false,
 }: StrategicIndicatorsErrorStateProps) {
-  const shouldRenderAction = Boolean(actionLabel && onAction);
+  const shouldRenderAction = Boolean(actionLabel && onAction && !embedded);
   const location = formatStrategicIndicatorsErrorLocation(error);
 
   return (
-    <div className="si-error-state">
-      <div className="si-error-state__icon" aria-hidden>
-        !
-      </div>
+    <div
+      className={
+        embedded ? "si-error-state si-error-state--embedded" : "si-error-state"
+      }
+    >
+      {embedded ? null : (
+        <div className="si-error-state__icon" aria-hidden>
+          !
+        </div>
+      )}
 
       <div className="si-error-state__content">
-        <h3 className="si-error-state__title">{error.title}</h3>
-        <p className="si-error-state__summary">{error.summary}</p>
+        {embedded ? null : (
+          <>
+            <h3 className="si-error-state__title">{error.title}</h3>
+            <p className="si-error-state__summary">{error.summary}</p>
+          </>
+        )}
 
         <dl className="si-error-state__meta">
           <div className="si-error-state__meta-row">

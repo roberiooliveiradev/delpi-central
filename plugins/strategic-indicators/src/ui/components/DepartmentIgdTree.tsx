@@ -40,8 +40,6 @@ import { getScopeTypeLabel } from "../presentation/labels";
 import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
 import { TreeMapFloatingControls } from "./TreeMapFloatingControls";
-import { InfoState } from "./InfoState";
-import { buildMeasurementIssuesDescription } from "../../data/adapters/measurementIssuesAdapter";
 import { resolveIndicatorSparklineDirection } from "../../data/utils/resolveScoreTrendDirection";
 import { TreeSparkline } from "./TreeSparkline";
 import {
@@ -778,20 +776,6 @@ export function DepartmentIgdTree({
 
   const departmentCount = model.departmentOrder.length;
 
-  const dataQuality = model.dataQuality;
-  const dataQualityDescription = useMemo(() => {
-    if (!dataQuality?.errors.length) {
-      return "";
-    }
-
-    const issueLines = buildMeasurementIssuesDescription(dataQuality.errors);
-    const alertLines = dataQuality.alertsSummary
-      .map((alert) => `${alert.title}\n${alert.impact}`)
-      .join("\n\n");
-
-    return [alertLines, issueLines].filter(Boolean).join("\n\n");
-  }, [dataQuality]);
-
   const chartStyle = {
     "--si-org-chart-cols": "1",
     "--si-dept-count": String(departmentCount),
@@ -867,15 +851,6 @@ export function DepartmentIgdTree({
         className="si-org-chart si-org-chart--single-scope"
         style={chartStyle}
       >
-        {dataQuality?.partialSuccess && dataQuality.errors.length > 0 ? (
-          <div className="si-departments-page__refresh-banner">
-            <InfoState
-              title="Coleta incompleta — leitura do período pode estar incorreta"
-              description={dataQualityDescription}
-            />
-          </div>
-        ) : null}
-
         <section className="si-org-chart__level si-org-chart__level--igd">
           <span className="si-org-chart__level-tag">IGD</span>
           <TreeIgdCard

@@ -1,4 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
+import { buildDataQualityErrorView } from "../../data/adapters/measurementIssuesAdapter";
 import { Minus, Plus, Maximize2, RotateCcw } from "lucide-react";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import {
@@ -9,6 +11,7 @@ import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
+import { StrategicIndicatorsErrorModal } from "../components/StrategicIndicatorsErrorModal";
 import { InfoState } from "../components/InfoState";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
@@ -59,8 +62,25 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       getAccessToken,
     });
 
+  const [dataQualityModalOpen, setDataQualityModalOpen] = useState(false);
+
   const loadingProgress = useLoadingProgress(loading && !model, requestProgress);
   const refreshingProgress = useLoadingProgress(Boolean(refreshing && model), requestProgress);
+
+  const dataQualityError = useMemo(() => {
+    const dataQuality = model?.dataQuality;
+    if (!dataQuality?.partialSuccess || dataQuality.errors.length === 0) {
+      return null;
+    }
+
+    return buildDataQualityErrorView(dataQuality, {
+      surface: "Árvore de departamentos",
+      route: "/departments/tree/snapshot",
+      method: "GET",
+      competence: referenceMonth,
+      branch: viewMode === "branch" ? branch : null,
+    });
+  }, [model, referenceMonth, viewMode, branch]);
 
   const statusBadge =
     loading || refreshing ? (
@@ -178,6 +198,36 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
                 onAction={() => void reload()}
               />
             </div>
+          ) : null}
+
+          {dataQualityError ? (
+            <div className="si-departments-page__refresh-banner">
+              <button
+                type="button"
+                className="si-departments-page__data-quality-trigger"
+                onClick={() => setDataQualityModalOpen(true)}
+              >
+                <AlertTriangle size={18} aria-hidden />
+                <span>
+                  Coleta incompleta (
+                  {model?.dataQuality?.errors.length ?? 0} falha
+                  {(model?.dataQuality?.errors.length ?? 0) === 1 ? "" : "s"})
+                  — ver detalhes
+                </span>
+              </button>
+            </div>
+          ) : null}
+
+          {dataQualityError ? (
+            <StrategicIndicatorsErrorModal
+              open={dataQualityModalOpen}
+              onClose={() => setDataQualityModalOpen(false)}
+              error={dataQualityError}
+              onAction={() => {
+                setDataQualityModalOpen(false);
+                void reload();
+              }}
+            />
           ) : null}
 
           {error ? (

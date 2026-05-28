@@ -8,6 +8,18 @@
   box-shadow: var(--shadow, 0 12px 30px rgba(0, 0, 0, 0.12));
 }
 
+.si-error-state--embedded {
+  padding: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  gap: 0;
+}
+
+.si-error-state--embedded .si-error-state__meta {
+  margin-top: 0;
+}
+
 .si-error-state__icon {
   flex: 0 0 auto;
   width: 40px;
