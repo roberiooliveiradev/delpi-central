@@ -6,6 +6,11 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
 from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
     StrategicIndicatorsAlertsSummaryPort,
 )
+from si_app.application.services.strategic_indicators.measurements_cache_policy import (
+    DEPARTMENT_LABELS,
+    MISSING_DEPARTMENT_ERROR_CODE,
+    format_measurement_errors_summary,
+)
 from si_app.shared.indicator_scoring import iter_scored_indicators
 
 
@@ -182,25 +187,59 @@ class CalculatedStrategicIndicatorsAlertsSummaryProvider(
         if not measurement_errors:
             return None
 
-        affected_departments = sorted(
-            {item["department_id"] for item in measurement_errors if item.get("department_id")}
+        missing_departments = sorted(
+            {
+                str(item.get("department_id") or "").strip()
+                for item in measurement_errors
+                if item.get("code") == MISSING_DEPARTMENT_ERROR_CODE
+                and item.get("department_id")
+            }
         )
-        affected_sources = sorted(
-            {item["source"] for item in measurement_errors if item.get("source")}
-        )
+        fetch_failures = [
+            item
+            for item in measurement_errors
+            if item.get("code") != MISSING_DEPARTMENT_ERROR_CODE
+        ]
 
-        departments_label = ", ".join(affected_departments) if affected_departments else "módulo"
-        sources_label = ", ".join(affected_sources[:3]) if affected_sources else "fontes"
+        if missing_departments and len(missing_departments) >= 3:
+            severity = "high"
+            title = "Coleta incompleta — vários departamentos sem medições"
+        elif measurement_errors:
+            severity = "high" if len(measurement_errors) >= 3 else "medium"
+            title = "Falhas na coleta de indicadores do período"
+        else:
+            return None
+
+        missing_labels = [
+            DEPARTMENT_LABELS.get(dept_id, dept_id) for dept_id in missing_departments
+        ]
+        impact_parts: list[str] = []
+
+        if missing_labels:
+            impact_parts.append(
+                "Departamentos sem medições no período: "
+                + ", ".join(missing_labels)
+                + ". O IGD pode aparecer próximo de zero nessas áreas."
+            )
+
+        if fetch_failures:
+            impact_parts.append(
+                "Detalhes das falhas de integração:\n"
+                + format_measurement_errors_summary(fetch_failures, limit=6)
+            )
+        elif not missing_labels:
+            impact_parts.append(
+                "Detalhes:\n"
+                + format_measurement_errors_summary(measurement_errors, limit=8)
+            )
 
         return {
-            "title": "Parte das fontes falhou na coleta do período",
-            "severity": "medium",
-            "impact": (
-                f"Foram identificadas falhas parciais em {departments_label}, o que "
-                f"pode reduzir a cobertura analítica do painel."
-            ),
+            "title": title,
+            "severity": severity,
+            "impact": "\n\n".join(impact_parts),
             "recommendation": (
-                f"Validar as fontes {sources_label} e repetir a leitura após corrigir "
-                "as integrações com erro."
+                "Aguarde o término do refresh materializado ou execute "
+                "`refresh_period_scores` após validar api-delpi e planilhas. "
+                "Recarregue o painel em seguida."
             ),
         }

@@ -45,11 +45,28 @@ export type StrategicIndicatorsTreeSnapshotScopeApi = {
   };
 };
 
+export type StrategicIndicatorsMeasurementIssueApi = {
+  department_id?: string;
+  source?: string;
+  message?: string;
+  code?: string;
+};
+
+export type StrategicIndicatorsAlertSummaryApi = {
+  title: string;
+  severity: string;
+  impact: string;
+  recommendation: string;
+};
+
 export type StrategicIndicatorsTreeSnapshotResponse = {
   competence: string;
   igd: number | null;
   igd_exact: number | null;
   classification: string | null;
+  errors?: StrategicIndicatorsMeasurementIssueApi[];
+  partial_success?: boolean;
+  alerts_summary?: StrategicIndicatorsAlertSummaryApi[];
   scopes: StrategicIndicatorsTreeSnapshotScopeApi[];
   meta?: { source?: string; scope_count?: number };
 };

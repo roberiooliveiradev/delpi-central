@@ -2,6 +2,7 @@ import type { DepartmentOverviewViewItem } from "../types/departments";
 import type { IndicatorViewItem } from "../types/indicators";
 import type {
   DepartmentTreeColumn,
+  DepartmentTreeDataQuality,
   DepartmentTreeDepartmentNode,
   DepartmentTreeModel,
   DepartmentTreeScopeConfig,
@@ -63,12 +64,14 @@ export function buildDepartmentTreeModel({
   igdExact,
   classification,
   scopePayloads,
+  dataQuality,
 }: {
   competence: string;
   igd: number | null;
   igdExact: number | null;
   classification: string | null;
   scopePayloads: DepartmentTreeScopePayload[];
+  dataQuality?: DepartmentTreeDataQuality;
 }): DepartmentTreeModel {
   const consolidatedPayload = scopePayloads.find(
     (item) => item.scope.key === "consolidated",
@@ -102,5 +105,6 @@ export function buildDepartmentTreeModel({
     igdSeries: [],
     columns,
     departmentOrder,
+    dataQuality,
   };
 }

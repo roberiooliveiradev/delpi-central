@@ -36,6 +36,15 @@ from si_app.domain.ports.strategic_indicators.financial_indicators_snapshot_port
 from si_app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
 )
+from si_app.application.services.strategic_indicators.measurements_cache_policy import (
+    enrich_measurement_errors,
+    should_cache_measurements,
+    should_use_cached_measurements,
+)
+from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
+    _measurements_cache as shared_measurements_cache,
+    measurements_cache_key,
+)
 
 
 class RealStrategicIndicatorsMeasurementsProvider(
@@ -60,7 +69,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         self._financial_snapshot_port = financial_snapshot_port
         self._supplies_snapshot_port = supplies_snapshot_port
         self._cache: dict[
-            tuple[str | None, str | None, str | None, str | None],
+            str,
             tuple[list[StrategicIndicatorMeasuredValue], list[dict]],
         ] = {}
         self._cache_lock = threading.Lock()
@@ -77,6 +86,7 @@ class RealStrategicIndicatorsMeasurementsProvider(
         return self.get_indicator_measurements(
             start_date=start_date,
             end_date=end_date,
+            competence=competence,
             department_id=department_id,
             branch=branch,
         )
@@ -86,14 +96,35 @@ class RealStrategicIndicatorsMeasurementsProvider(
         *,
         start_date: str | None = None,
         end_date: str | None = None,
+        competence: str | None = None,
         department_id: str | None = None,
         branch: str | None = None,
     ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
-        cache_key = (start_date, end_date, department_id, branch)
+        cache_key = measurements_cache_key(
+            start_date=start_date or "",
+            end_date=end_date or "",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+        )
         with self._cache_lock:
             cached = self._cache.get(cache_key)
         if cached is not None:
-            return cached
+            items, errors = cached
+            if should_use_cached_measurements(
+                items, errors, department_id=department_id
+            ):
+                return cached
+
+        cached = shared_measurements_cache.get(cache_key)
+        if cached is not None:
+            items, errors = cached
+            if should_use_cached_measurements(
+                items, errors, department_id=department_id
+            ):
+                with self._cache_lock:
+                    self._cache[cache_key] = cached
+                return cached
 
         collectors = self._build_collectors(
             start_date=start_date,
@@ -114,9 +145,18 @@ class RealStrategicIndicatorsMeasurementsProvider(
                 errors=errors,
             )
 
+        errors = enrich_measurement_errors(
+            items,
+            errors,
+            department_id=department_id,
+            competence=competence,
+            branch=branch,
+        )
         final_result = (items, errors)
-        with self._cache_lock:
-            self._cache[cache_key] = final_result
+        if should_cache_measurements(items, errors, department_id=department_id):
+            with self._cache_lock:
+                self._cache[cache_key] = final_result
+            shared_measurements_cache.set(cache_key, final_result)
         return final_result
 
     def get_indicator_measurements_series(
