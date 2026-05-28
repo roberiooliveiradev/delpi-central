@@ -174,6 +174,27 @@ def patch_llm_cost(monkeypatch):
     )
 
 
+def test_send_identity_uses_direct_answer_when_rag_empty():
+    session, send_use_case, _, rag_context_service, llm_gateway = _build_use_cases(
+        common=True
+    )
+    rag_context_service.build_context.return_value = {"context": "", "sources": []}
+
+    response = send_use_case.execute(
+        SendChatMessageRequest(
+            user_id=str(session.user_id),
+            session_id=str(session.id),
+            message="quem te criou?",
+            access_token=None,
+        )
+    )
+
+    rag_context_service.build_context.assert_called()
+    llm_gateway.generate.assert_not_called()
+    assert "modelo de linguagem" in response.answer.lower()
+    assert "2019" not in response.answer
+
+
 @pytest.mark.parametrize("message", _IDENTITY_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
 def test_send_identity_uses_rag_and_llm(message: str, common: bool):
@@ -193,6 +214,28 @@ def test_send_identity_uses_rag_and_llm(message: str, common: bool):
     llm_gateway.generate.assert_called()
     assert response.answer == "Resposta com base na documentação autorizada."
     assert response.sources
+
+
+def test_stream_identity_uses_direct_answer_when_rag_empty():
+    session, _, stream_use_case, rag_context_service, llm_gateway = _build_use_cases(
+        common=True
+    )
+    rag_context_service.build_context.return_value = {"context": "", "sources": []}
+
+    request = SendChatMessageRequest(
+        user_id=str(session.user_id),
+        session_id=str(session.id),
+        message="quem te criou?",
+        access_token=None,
+    )
+
+    events = list(stream_use_case.stream(request))
+    answer = _collect_stream_answer(events)
+
+    rag_context_service.build_context.assert_called()
+    llm_gateway.stream.assert_not_called()
+    assert "modelo de linguagem" in answer.lower()
+    assert "2019" not in answer
 
 
 @pytest.mark.parametrize("message", ("quem te criou?",))

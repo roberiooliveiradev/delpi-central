@@ -20,7 +20,7 @@ Após a busca RAG (FTS e/ou vetor), chunks com score abaixo do limiar são **des
 
 Motivo: embeddings de perguntas meta costumam pontuar ~0.25–0.35 em documentos de arquitetura; com `ragContextMinScore` 0.35+ o contexto vinha vazio e o modelo respondia sem base documental.
 
-A query de busca é **expandida** com termos de recall (`Minha DELPI`, `origem`, `criação`, `arquitetura`, …). Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#identidade-do-assistente-maio2026).
+A query usa `ChatAssistantIdentityService.build_rag_query` (foco em chat/plataforma; **sem** sufixo `empresa` que puxa normas técnicas). Chunks passam por `is_identity_relevant_chunk` antes de montar o prompt. Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#identidade-do-assistente-maio2026).
 
 ## Valores recomendados por ambiente
 

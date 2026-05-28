@@ -87,7 +87,7 @@ Acesso na listagem: oficiais/públicos, próprios e compartilhados (`ai_chat_age
 - Agentes precisam estar **publicados** (`published_version >= 1`) para uso por visitantes; o runtime aplica `published_config` (snapshot).
 - Cada mensagem monta contexto com `system_prompt`, especialização RAG, skills ativas, `allowedActionIds` e limites do agente.
 - O chat **sem agente** não executa external actions OpenAPI vinculadas a agentes; skills globais (SQL, `company-knowledge`) seguem env defaults.
-- Perguntas sobre o **assistente** («quem te criou») passam por RAG com limiar `RAG_IDENTITY_QUESTION_MIN_SCORE` e LLM — ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+- Perguntas sobre o **assistente** («quem te criou») passam por RAG filtrado (`RAG_IDENTITY_QUESTION_MIN_SCORE`); com chunks relevantes → LLM; sem contexto útil → resposta canônica — ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 - Turnos persistem `metadata.adminDebug` no banco; a API só devolve esse campo a usuários admin — ver `02-chat-sessoes-mensagens.md`.
 
 ## Capabilities

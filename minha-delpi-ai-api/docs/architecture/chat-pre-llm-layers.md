@@ -66,7 +66,7 @@ No Minha DELPI, **send** e **stream** compartilham `ChatTurnPreparationService` 
 | Resposta direta API | `ChatExternalActionDirectResponseService` | pipeline |
 | Comparação estruturas | `ChatStructureComparisonService` | pipeline |
 | Identidade do **usuário** | `ChatUserContextService.build_direct_answer` | use cases (short-circuit, token) |
-| Identidade do **assistente** | `ChatAssistantIdentityService` + policy + RAG com `RAG_IDENTITY_QUESTION_MIN_SCORE` | `ChatTurnPreparationService` → **LLM** (sem `build_direct_answer` no turno) |
+| Identidade do **assistente** | `ChatAssistantIdentityService` + RAG filtrado (`is_identity_relevant_chunk`) + policy; fallback `build_direct_answer` se contexto vazio | `ChatTurnPreparationService` → **LLM** ou resposta canônica |
 | RAG | `RagContextService.build_context(..., min_score=)` + `KnowledgeScopeService` | `ChatTurnPreparationService` |
 | Prompt | `ChatPromptBuilderService` + `PromptPolicyService` | use cases |
 | LLM | gateway Ollama/vLLM | use cases |
