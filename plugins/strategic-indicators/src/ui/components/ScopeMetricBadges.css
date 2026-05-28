@@ -23,6 +23,31 @@
   line-height: 1;
 }
 
+.si-scope-badge--branch-01 {
+  background: rgba(0, 116, 206, 0.10);
+  border-color: rgba(0, 116, 206, 0.28);
+}
+
+.si-scope-badge--branch-02 {
+  background: rgba(0, 163, 81, 0.10);
+  border-color: rgba(0, 163, 81, 0.28);
+}
+
+.si-scope-badge--branch-03 {
+  background: rgba(255, 159, 10, 0.12);
+  border-color: rgba(255, 159, 10, 0.30);
+}
+
+.si-scope-badge--branch-04 {
+  background: rgba(175, 82, 222, 0.12);
+  border-color: rgba(175, 82, 222, 0.30);
+}
+
+.si-scope-badge--branch-05 {
+  background: rgba(255, 69, 58, 0.10);
+  border-color: rgba(255, 69, 58, 0.26);
+}
+
 .si-scope-badge__key {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
