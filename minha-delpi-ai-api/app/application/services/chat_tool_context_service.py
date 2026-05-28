@@ -428,6 +428,12 @@ class ChatToolContextService:
         if direct_answer and requested_format != "table":
             self._suppress_redundant_structure_presentations(safe_tool_calls)
 
+        if direct_answer and requested_format != "text":
+            direct_answer = self._compact_direct_answer_for_rich_presentation(
+                direct_answer,
+                safe_tool_calls,
+            )
+
         return self._finalize_tool_context_result(
             message=raw_message,
             previous_messages=previous_messages,
@@ -462,6 +468,93 @@ class ChatToolContextService:
         finalized = post_tool.tool_context
 
         return finalized
+
+    @classmethod
+    def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:
+        for key in ("presentation", "tablePresentation"):
+            presentation = metadata.get(key)
+
+            if isinstance(presentation, dict):
+                presentation_type = str(presentation.get("type") or "").strip().lower()
+
+                if presentation_type in {"table", "chart", "kpi"}:
+                    return presentation
+
+        return None
+
+    @classmethod
+    def _has_rich_presentation(cls, safe_tool_calls: list[dict]) -> bool:
+        for tool_call in safe_tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            if cls._rich_presentation_from_metadata(metadata):
+                return True
+
+        return False
+
+    @classmethod
+    def _presentation_titles(cls, safe_tool_calls: list[dict]) -> list[str]:
+        titles: list[str] = []
+
+        for tool_call in safe_tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            presentation = cls._rich_presentation_from_metadata(metadata)
+
+            if not presentation:
+                continue
+
+            title = str(presentation.get("title") or "").strip()
+
+            if title and title not in titles:
+                titles.append(title)
+
+        return titles
+
+    @classmethod
+    def _compact_direct_answer_for_rich_presentation(
+        cls,
+        direct_answer: str | None,
+        safe_tool_calls: list[dict],
+    ) -> str | None:
+        """Evita repetir em markdown o mesmo conteúdo já exibido em tabela/gráfico/KPI."""
+
+        if not direct_answer or not cls._has_rich_presentation(safe_tool_calls):
+            return direct_answer
+
+        normalized = str(direct_answer).strip()
+
+        if not normalized:
+            return None
+
+        if (
+            len(normalized) <= 180
+            and "|" not in normalized
+            and normalized.count("\n") <= 3
+        ):
+            return normalized
+
+        titles = cls._presentation_titles(safe_tool_calls)
+
+        if titles:
+            if len(titles) == 1:
+                return titles[0]
+
+            return "\n".join(f"- {title}" for title in titles)
+
+        return None
 
     @classmethod
     def _suppress_redundant_structure_presentations(cls, safe_tool_calls: list[dict]) -> None:

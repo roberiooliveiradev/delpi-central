@@ -214,6 +214,7 @@ Mesmo de envio normal:
 | Evento | Quando | Payload principal |
 |--------|--------|-------------------|
 | `status` | Etapas intermediárias | `message` |
+| `activity` | Durante prepare/tools/RAG (log em tempo real) | `entry` (`id`, `phase`, `group`, `verb`, `target`, `state`, `message`, …) — mesma `id` atualiza a linha no painel |
 | `sources` | Após RAG | `sources` |
 | `tool_calls` | Após tools | `toolCalls`, `adminGuidelines` |
 | `admin_guidelines` | Diretrizes ativas | `adminGuidelines` |
@@ -249,6 +250,8 @@ data: {"messageId": "...", "answer": "...", "playback": true, "canvasOpen": {...
 Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `done`.
 
 **Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente. O conteúdo vem da **última mensagem `assistant`** do histórico.
+
+**Apresentação rica:** `toolCalls[].metadata.presentation` (e `tablePresentation` quando o primário é gráfico) alimenta `ChatRichPresentation` no plugin. O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver compactação em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 ### Comportamento do pipeline (referência)
 

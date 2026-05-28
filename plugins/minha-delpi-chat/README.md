@@ -54,6 +54,8 @@ src/
 
 - Sessões com pin, arquivo e renomear
 - Mensagens com streaming, fontes, tool calls e anexos
+- Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
+- Tabelas/gráficos/KPI via `ChatRichPresentation` sem duplicar o mesmo conteúdo em markdown
 - **Lousa (canvas):** painel lateral com markdown editável; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Feedback** (thumbs up/down) em respostas do assistente

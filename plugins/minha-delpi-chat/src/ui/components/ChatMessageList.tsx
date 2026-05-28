@@ -28,7 +28,10 @@ import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
-import { getPresentationPairFromToolCalls } from "./chatPresentation";
+import {
+  getPresentationPairFromToolCalls,
+  shouldSuppressMarkdownForPresentation,
+} from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatThinkingDots } from "./ChatThinkingDots";
@@ -303,8 +306,13 @@ export function ChatMessageList({
 
   const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
+  const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
+  const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(
+    streamingAnswer,
+    streamingPresentation,
+  );
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
-    enabled: isGeneratingAnswer,
+    enabled: isGeneratingAnswer && !suppressStreamingMarkdown,
     charsPerFrame: 2,
   });
 
@@ -538,6 +546,10 @@ export function ChatMessageList({
     const isPending = Boolean(message.metadata?.optimistic);
     const messageToolCalls = getMessageToolCalls(message);
     const messagePresentation = getPresentationPairFromToolCalls(messageToolCalls);
+    const suppressMessageMarkdown = shouldSuppressMarkdownForPresentation(
+      message.content,
+      messagePresentation,
+    );
 
     return (
       <article
@@ -693,7 +705,9 @@ export function ChatMessageList({
           ) : (
             <>
               <ChatMessageAttachments attachments={getMessageAttachments(message)} />
-              <ChatMarkdown content={message.content} compact={isUser} />
+              {suppressMessageMarkdown ? null : (
+                <ChatMarkdown content={message.content} compact={isUser} />
+              )}
             </>
           )}
 
@@ -807,7 +821,7 @@ export function ChatMessageList({
                     }
                   />
                 )}
-                {streamingAnswer ? (
+                {streamingAnswer && !suppressStreamingMarkdown ? (
                   <ChatMarkdown content={revealedStreamingAnswer} />
                 ) : null}
               </div>

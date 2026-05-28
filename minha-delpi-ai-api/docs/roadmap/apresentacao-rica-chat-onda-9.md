@@ -43,6 +43,8 @@ Frontend (minha-delpi-chat)
 **Resultado esperado:**  
 Perguntas como "estoque do 10080001" ou "lista as LMPs da semana" renderizam tabela interativa com botão de download.
 
+**Anti-duplicação (maio/2026):** com `presentation`/`tablePresentation` ativos, a mensagem assistant não repete os mesmos dados em markdown — ver `ChatToolContextService._compact_direct_answer_for_rich_presentation` e `shouldSuppressMarkdownForPresentation` no plugin.
+
 ---
 
 ### Fase 2 — Gráficos e Visualizações (médio prazo)

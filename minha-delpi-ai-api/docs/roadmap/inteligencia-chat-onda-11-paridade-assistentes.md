@@ -140,8 +140,9 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | ⬜ | `humanizedSummary` + `skip_llm` quando dados completos |
+| 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | 🟡 | `directAnswer` + `skip_rag`; apresentação rica sem markdown duplicado |
 | 11.4.2 | Fase 6 Onda 9: drill-down na tabela («detalhe linha X») | ⬜ | Ver [apresentacao-rica-chat-onda-9.md](./apresentacao-rica-chat-onda-9.md) §9.6 |
+| 11.4.3 | Apresentação rica sem texto duplicado (tabela/gráfico + markdown) | ✅ | `_compact_direct_answer_for_rich_presentation` + `shouldSuppressMarkdownForPresentation` |
 
 ### 11.5 — Observabilidade e operação
 

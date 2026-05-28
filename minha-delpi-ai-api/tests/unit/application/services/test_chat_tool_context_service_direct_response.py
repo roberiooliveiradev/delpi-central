@@ -41,7 +41,13 @@ class FakeExternalActionExecuteToolUseCase:
 
 
 class FakeExternalActionSelectionService:
-    def select_action(self, message, allowed_action_ids=None, conversation_context=None):
+    def select_action(
+        self,
+        message,
+        allowed_action_ids=None,
+        conversation_context=None,
+        previous_messages=None,
+    ):
         return {
             "name": "execute_external_action",
             "arguments": {
@@ -71,3 +77,54 @@ def test_build_context_sets_direct_answer_for_successful_external_action():
     assert "TERM. FASTON" in result["directAnswer"]
     assert "Tipo ME" not in result["directAnswer"]
     assert len(result["toolCalls"]) == 1
+
+
+def test_compact_direct_answer_for_rich_presentation_keeps_title_only():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "presentation": {
+                    "type": "chart",
+                    "title": "CPV por filial",
+                },
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "CPV por filial",
+                },
+            },
+        }
+    ]
+
+    markdown_body = (
+        "### CPV por filial\n\n"
+        "| Filial | Valor |\n"
+        "|---|---|\n"
+        "| 01 | 100 |\n"
+        "| 02 | 200 |\n"
+    )
+
+    compact = ChatToolContextService._compact_direct_answer_for_rich_presentation(
+        markdown_body,
+        tool_calls,
+    )
+
+    assert compact == "CPV por filial"
+
+
+def test_compact_direct_answer_for_rich_presentation_keeps_short_text():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "presentation": {"type": "table", "title": "Estoque"},
+            },
+        }
+    ]
+
+    compact = ChatToolContextService._compact_direct_answer_for_rich_presentation(
+        "Saldo disponível na filial 02.",
+        tool_calls,
+    )
+
+    assert compact == "Saldo disponível na filial 02."

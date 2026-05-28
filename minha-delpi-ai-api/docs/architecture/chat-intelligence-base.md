@@ -57,7 +57,7 @@ Mensagem do usuário
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
 | `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
 | `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV) |
-| `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados |
+| `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados; `entry_id` estável para atualizar a mesma linha no painel |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
@@ -176,6 +176,30 @@ O dígito após «grupo» **não** é código de produto (`ChatProductQueryInten
 ### Perguntas de capacidade
 
 «Consegue buscar por grupo?», «coonsegue…» → `ChatCapabilitiesService.is_capability_inquiry`: resposta direta com método/rota, **sem** `execute_external_action`.
+
+### Streaming — log de atividade e carregamento (maio/2026)
+
+Turnos em `POST .../messages/stream` expõem progresso antes do texto final:
+
+| Camada | Comportamento |
+|--------|----------------|
+| **API** | Após `status` «Conectado…», o prepare roda em thread com `app_context` Flask; eventos `activity` são emitidos durante carga de sessão, tools e RAG (não só no fim). |
+| **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). |
+| **Plugin** | `ChatThinkingDots` (três pontos pulsando); log **uma linha por fase** que substitui a anterior (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |
+| **Resposta** | Texto revelado aos poucos (`useStreamingTextReveal`); durante o prepare não substitui o painel de etapas. |
+
+Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_message_use_case` (fila + thread), `ChatStreamingActivityPanel`, `streamingActivityLog.ts`.
+
+### Apresentação rica sem duplicar markdown (maio/2026)
+
+Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`) traz **tabela**, **gráfico** ou **KPI**:
+
+| Camada | Regra |
+|--------|--------|
+| **API** | `ChatToolContextService._compact_direct_answer_for_rich_presentation` encurta ou anula `directAnswer` tabular; mantém só título ou texto curto não tabular. Estrutura `/structure` com markdown completo continua usando `_suppress_redundant_structure_presentations` (só card, sem tabela duplicada). |
+| **Plugin** | `shouldSuppressMarkdownForPresentation` oculta `ChatMarkdown` se o corpo repete tabela/gráfico; `ChatRichPresentation` é a fonte visual (toggle gráfico/tabela). |
+
+Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
 
 ### Paridade ChatGPT/Gemini (roteamento e velocidade) — maio/2026
 
