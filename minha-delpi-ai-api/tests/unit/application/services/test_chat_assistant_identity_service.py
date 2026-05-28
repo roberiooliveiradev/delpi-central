@@ -71,3 +71,7 @@ def test_who_answer_platform_without_agent():
 
 def test_user_identity_not_assistant():
     assert ChatAssistantIdentityService.classify("quem sou eu") is None
+
+
+def test_what_identity_detects_o_que_vc_e():
+    assert ChatAssistantIdentityService.classify("o que vc é?") == "what"

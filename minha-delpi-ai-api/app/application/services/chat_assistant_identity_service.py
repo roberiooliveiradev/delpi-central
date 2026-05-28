@@ -65,7 +65,7 @@ _IDENTITY_DOC_TITLE_HINTS: tuple[str, ...] = (
 
 
 class ChatAssistantIdentityService:
-    """Classificação de perguntas sobre o assistente (policy + RAG + LLM no pipeline)."""
+    """Classificação e respostas canônicas sobre o assistente (evita LLM pesado em CPU)."""
 
     @classmethod
     def is_assistant_identity_question(cls, message: str) -> bool:
@@ -126,6 +126,10 @@ class ChatAssistantIdentityService:
         filename = str(metadata.get("originalFilename") or chunk.get("title") or "").lower()
         content = str(chunk.get("content") or "").lower()
         combined = f"{title} {filename} {content[:800]}"
+
+        if "normas_tecnicas" in filename or "normas tecnicas" in title:
+            if not any(hint in title or hint in filename for hint in _IDENTITY_DOC_TITLE_HINTS):
+                return False
 
         if any(hint in title or hint in filename for hint in _IDENTITY_DOC_TITLE_HINTS):
             return True

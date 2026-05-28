@@ -69,14 +69,11 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | Etapa | Comportamento |
 |-------|----------------|
 | Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
-| Policy no prompt | `chat-assistant-identity.md` via `ChatPromptBuilderService._assistant_identity_policy_addon` |
-| RAG | **Sempre executado** (`skip_rag = false`), mesmo em fast path operacional |
-| Query RAG | `ChatAssistantIdentityService.build_rag_query` — foco em chat/plataforma (sem sufixo `empresa` que puxa normas técnicas) |
-| Score mínimo | `Settings.RAG_IDENTITY_QUESTION_MIN_SCORE` (env, default **0.22**), passado a `RagContextService.build_context(..., min_score=...)` — mais baixo que `ragContextMinScore` global (~0.35) porque embeddings de perguntas meta costumam pontuar menos |
-| Filtro RAG | `is_identity_relevant_chunk` descarta normas de produto e docs sem sinal de identidade do assistente |
-| Resposta | **LLM** quando o RAG traz trechos relevantes; **fallback** `build_direct_answer` quando o contexto fica vazio após o filtro |
+| Resposta | **`build_direct_answer`** (texto em `identity.json`) quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` (default) — **sem RAG nem LLM** (latência baixa em CPU) |
+| Desligar atalho | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=false` — volta RAG + LLM + policy `chat-assistant-identity.md` |
+| RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
 
-`build_direct_answer` é usado no turno quando o RAG filtrado não retorna contexto útil (ex.: só normas técnicas na base).
+Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com perfil RBAC completo nem chamam o Ollama.
 
 **Skill `company-knowledge`:** necessária para incluir documentos globais no escopo RAG. Agentes sem skill explícita herdam o default quando `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL=true`.
 
