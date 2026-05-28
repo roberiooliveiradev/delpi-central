@@ -11,13 +11,21 @@ import {
   formatIndicatorRealizedDisplay,
   formatIndicatorScore,
   isMissingValueClassification,
+  type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
+import {
+  getFilterViewScopeLabel,
+  resolveStrategicIndicatorsBranch,
+  type StrategicIndicatorsViewMode,
+} from "../shared/strategicIndicatorsFilters";
 import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorDetailCard.css";
 
 type IndicatorDetailCardProps = {
   indicator: DepartmentIndicator;
   competence?: string | null;
+  viewMode?: StrategicIndicatorsViewMode;
+  branch?: string;
 };
 
 function getValueFormat(indicator: DepartmentIndicator) {
@@ -32,7 +40,14 @@ function getValueFormat(indicator: DepartmentIndicator) {
 export function IndicatorDetailCard({
   indicator,
   competence,
+  viewMode = "consolidated",
+  branch = "",
 }: IndicatorDetailCardProps) {
+  const displayContext: IndicatorDisplayContext = {
+    filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+  };
+
   return (
     <article className="si-indicator-card">
       <div className="si-indicator-card__header">
@@ -48,8 +63,13 @@ export function IndicatorDetailCard({
           <ScopeMetricBadges
             values={indicator.goals}
             format={getValueFormat(indicator)}
+            displayContext={displayContext}
             maxVisible={3}
-            emptyLabel={formatIndicatorGoalValue(indicator, competence)}
+            emptyLabel={formatIndicatorGoalValue(
+              indicator,
+              competence,
+              displayContext,
+            )}
           />
         </strong>
       </div>
@@ -97,10 +117,12 @@ export function IndicatorDetailCard({
           <ScopeMetricBadges
             values={indicator.realized}
             format={getValueFormat(indicator)}
+            displayContext={displayContext}
             maxVisible={3}
             emptyLabel={formatIndicatorRealizedDisplay(
               indicator,
               getValueFormat(indicator),
+              displayContext,
             )}
           />
         </strong>
@@ -127,8 +149,13 @@ export function IndicatorDetailCard({
           <ScopeMetricBadges
             values={indicator.gaps}
             format={getValueFormat(indicator)}
+            displayContext={displayContext}
             maxVisible={3}
-            emptyLabel={formatIndicatorGapDisplay(indicator, getValueFormat(indicator))}
+            emptyLabel={formatIndicatorGapDisplay(
+              indicator,
+              getValueFormat(indicator),
+              displayContext,
+            )}
           />
         </strong>
       </div>

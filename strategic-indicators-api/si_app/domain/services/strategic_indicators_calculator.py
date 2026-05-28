@@ -201,6 +201,17 @@ class StrategicIndicatorsCalculator:
                     score, gap, realized_value = branch_indicator_score
                     unit_values = measurement.unit_values or {}
                     display_branch = active_branch
+                    comparable_goal = self._comparable_goal_for_branch_view(
+                        indicator=indicator,
+                        branch_code=scoring_branch,
+                        start_date=start_date,
+                        end_date=end_date,
+                        competence=competence,
+                    )
+                    unit_goals = None
+                    if comparable_goal is not None:
+                        rounded_goal = round(float(comparable_goal), 2)
+                        unit_goals = {display_branch: rounded_goal}
                     unit_gaps = (
                         {display_branch: gap}
                         if gap is not None
@@ -213,7 +224,11 @@ class StrategicIndicatorsCalculator:
                             indicator_name=indicator.indicator_name,
                             weight_pct=indicator.weight_pct,
                             goal_label=indicator.goal_label,
-                            goal_value=indicator.goal_value,
+                            goal_value=(
+                                round(float(comparable_goal), 2)
+                                if comparable_goal is not None
+                                else indicator.goal_value
+                            ),
                             goal_periodicity=indicator.goal_periodicity,
                             goal_mode=getattr(indicator, "goal_mode", "standard"),
                             monthly_targets=getattr(indicator, "monthly_targets", None),
@@ -237,6 +252,7 @@ class StrategicIndicatorsCalculator:
                             }
                             or None,
                             unit_gaps=unit_gaps,
+                            unit_goals=unit_goals,
                             value_unit=indicator.value_unit,
                             value_prefix=indicator.value_prefix,
                             value_suffix=indicator.value_suffix,
@@ -1033,7 +1049,7 @@ class StrategicIndicatorsCalculator:
                 if branch_code in unit_values
             ]
 
-        if len(branch_keys) < 2:
+        if not branch_keys:
             return None
 
         goals: dict[str, float | None] = {}
@@ -1175,6 +1191,22 @@ class StrategicIndicatorsCalculator:
             end_date=end_date,
             competence=competence,
         )
+        if unit_goals is None and catalog_item is not None:
+            unit_values = calculated.unit_values or {}
+            single_branch = next(
+                (code for code in BRANCH_UNIT_CODES if code in unit_values),
+                None,
+            )
+            if single_branch and sum(1 for code in BRANCH_UNIT_CODES if code in unit_values) == 1:
+                comparable_goal = self._comparable_goal_for_branch_view(
+                    indicator=catalog_item,
+                    branch_code=single_branch,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
+                if comparable_goal is not None:
+                    unit_goals = {single_branch: round(float(comparable_goal), 2)}
         return self.build_goals_payload(
             unit_goals=unit_goals,
             goal_value=calculated.goal_value,

@@ -94,8 +94,31 @@ def _skills() -> tuple[ChatSkillDefinition, ...]:
 
             rows = PostgresChatSkillRepository().list_active()
 
-            if rows:
-                return tuple(_definition_from_row(row) for row in rows)
+            # Importante: o catálogo no banco pode estar incompleto em ambientes novos.
+            # Para manter defaults (ex.: `company-knowledge`) e evitar regressões,
+            # fazemos merge com o catálogo embarcado (JSON). O DB tem precedência.
+            json_defs = list(_skills_from_json())
+            json_by_key = {d.key: d for d in json_defs}
+
+            db_defs = [_definition_from_row(row) for row in (rows or []) if isinstance(row, dict)]
+            db_by_key = {d.key: d for d in db_defs if d.key}
+
+            merged: list[ChatSkillDefinition] = []
+            seen: set[str] = set()
+
+            # Preserva a ordem do DB (sort_order/label) e complementa com JSON.
+            for d in db_defs:
+                if d.key and d.key not in seen:
+                    merged.append(d)
+                    seen.add(d.key)
+
+            for key, d in json_by_key.items():
+                if key and key not in seen:
+                    merged.append(d)
+                    seen.add(key)
+
+            if merged:
+                return tuple(merged)
     except Exception:
         pass
 

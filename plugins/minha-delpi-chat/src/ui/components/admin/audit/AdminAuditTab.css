@@ -64,7 +64,7 @@
 
 .mdc-admin-audit-tab {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -82,7 +82,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 22px;
+  padding: 18px;
 }
 
 .mdc-admin-audit-hero h2,
@@ -116,7 +116,7 @@
 }
 
 .mdc-admin-audit-empty {
-  padding: 22px;
+  padding: 18px;
 }
 
 .mdc-admin-audit-list {
@@ -127,7 +127,7 @@
 .mdc-admin-audit-card {
   display: grid;
   gap: 16px;
-  padding: 22px;
+  padding: 18px;
   min-width: 0;
 }
 

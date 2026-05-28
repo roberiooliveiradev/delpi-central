@@ -469,3 +469,71 @@ def test_scope_branch_02_department_average_of_units_single_branch() -> None:
 
     assert len(departments) == 1
     assert departments[0].score == 6.25
+
+
+def test_branch_view_per_unit_goals_payload_uses_active_branch_key() -> None:
+    calculator = StrategicIndicatorsCalculator()
+    indicator = StrategicIndicatorCatalogItem(
+        indicator_id="commercial-rol",
+        department_id="commercial",
+        indicator_name="ROL",
+        weight_pct=40,
+        goal_label="Meta",
+        goal_value=0.0,
+        goal_periodicity="monthly",
+        goal_mode="monthly_curve",
+        monthly_targets=[{"month_number": 5, "target_value": 1_006_000.0}],
+        scope_type="per_unit",
+        performance_direction="higher_is_better",
+        branch_goals={
+            "01": {
+                "goal_label": "Meta",
+                "goal_value": 1_006_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [{"month_number": 5, "target_value": 1_006_000.0}],
+            },
+            "02": {
+                "goal_label": "Meta",
+                "goal_value": 3_466_000.0,
+                "goal_periodicity": "monthly",
+                "goal_mode": "monthly_curve",
+                "monthly_targets": [{"month_number": 5, "target_value": 3_466_000.0}],
+            },
+        },
+        resolved_goal_scope_branch="01",
+        has_resolved_goal=True,
+        value_unit="currency",
+    )
+    measurement = StrategicIndicatorMeasuredValue(
+        indicator_id="commercial-rol",
+        department_id="commercial",
+        value=651_977.42,
+        source="commercial",
+        unit_values={"01": 651_977.42, "02": 3_275_114.46},
+    )
+
+    calculated = calculator.calculate_indicators(
+        indicators_catalog=[indicator],
+        measurements=[measurement],
+        competence="2026-05",
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+        scope_branch="01",
+    )
+
+    assert len(calculated) == 1
+    item = calculated[0]
+    assert item.unit_goals == {"01": 1_006_000.0}
+    assert item.unit_gaps == {"01": 354_022.58}
+
+    goals_payload = calculator.resolve_goals_payload_for_calculated(
+        calculated=item,
+        catalog_item=indicator,
+        start_date="01-05-2026",
+        end_date="31-05-2026",
+        competence="2026-05",
+    )
+
+    assert goals_payload == {"01": 1_006_000.0}
+    assert "consolidated" not in goals_payload

@@ -10,7 +10,7 @@
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
   box-shadow: var(--mdc-card-shadow);
-  padding: var(--mdc-space-5);
+  padding: var(--mdc-space-4);
 }
 
 .mdc-admin-metrics-tab__hero h2,
@@ -35,6 +35,12 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--mdc-space-4);
+}
+
+@media (min-width: 1500px) {
+  .mdc-admin-metrics-tab__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .mdc-admin-metrics-card {

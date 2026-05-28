@@ -29,7 +29,12 @@ import {
   formatIndicatorRealizedDisplay,
   formatIndicatorScore,
   isMissingValueClassification,
+  type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
+import {
+  getFilterViewScopeLabel,
+  resolveStrategicIndicatorsBranch,
+} from "../shared/strategicIndicatorsFilters";
 import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { getScopeTypeLabel } from "../presentation/labels";
 import { StatusBadge } from "./StatusBadge";
@@ -295,6 +300,8 @@ function IndicatorTreeCard({
   indicatorNode,
   competence,
   monthsToCompare,
+  viewMode,
+  branch,
   href,
   cardId,
   isActive,
@@ -303,12 +310,18 @@ function IndicatorTreeCard({
   indicatorNode: DepartmentTreeIndicatorNode;
   competence: string;
   monthsToCompare: number;
+  viewMode: StrategicIndicatorsViewMode;
+  branch: string;
   href: string;
   cardId: string;
   isActive: boolean;
   onActivate: (cardId: string) => void;
 }) {
   const { indicator, series } = indicatorNode;
+  const displayContext: IndicatorDisplayContext = {
+    filterViewScopeLabel: getFilterViewScopeLabel(viewMode, branch),
+    activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
+  };
   const valueFormat = getIndicatorValueFormat(indicator);
   const badgeVariant = indicator.hasValue
     ? mapScoreToBadgeVariant(indicator.score ?? 0)
@@ -352,8 +365,13 @@ function IndicatorTreeCard({
               <ScopeMetricBadges
                 values={indicator.goals}
                 format={valueFormat}
+                displayContext={displayContext}
                 maxVisible={2}
-                emptyLabel={formatIndicatorGoalValue(indicator, competence)}
+                emptyLabel={formatIndicatorGoalValue(
+                  indicator,
+                  competence,
+                  displayContext,
+                )}
               />
             </strong>
           </div>
@@ -369,8 +387,13 @@ function IndicatorTreeCard({
               <ScopeMetricBadges
                 values={indicator.realized}
                 format={valueFormat}
+                displayContext={displayContext}
                 maxVisible={2}
-                emptyLabel={formatIndicatorRealizedDisplay(indicator, valueFormat)}
+                emptyLabel={formatIndicatorRealizedDisplay(
+                  indicator,
+                  valueFormat,
+                  displayContext,
+                )}
               />
             </strong>
           </div>
@@ -398,8 +421,13 @@ function IndicatorTreeCard({
               <ScopeMetricBadges
                 values={indicator.gaps}
                 format={valueFormat}
+                displayContext={displayContext}
                 maxVisible={2}
-                emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat)}
+                emptyLabel={formatIndicatorGapDisplay(
+                  indicator,
+                  valueFormat,
+                  displayContext,
+                )}
               />
             </strong>
           </div>
@@ -439,6 +467,8 @@ function DepartmentTreeCard({
   filterState,
   competence,
   monthsToCompare,
+  viewMode,
+  branch,
   expanded,
   indicatorListLayout,
   isSoloExpandedDepartment,
@@ -451,6 +481,8 @@ function DepartmentTreeCard({
   filterState: StrategicIndicatorsFilterState;
   competence: string;
   monthsToCompare: number;
+  viewMode: StrategicIndicatorsViewMode;
+  branch: string;
   expanded: boolean;
   indicatorListLayout: IndicatorListLayout;
   isSoloExpandedDepartment: boolean;
@@ -623,6 +655,8 @@ function DepartmentTreeCard({
                   indicatorNode={indicatorNode}
                   competence={competence}
                   monthsToCompare={monthsToCompare}
+                  viewMode={viewMode}
+                  branch={branch}
                   href={detailHref}
                   cardId={indicatorCardId}
                   isActive={activeCardId === indicatorCardId}
@@ -877,6 +911,8 @@ export function DepartmentIgdTree({
                         filterState={filterState}
                         competence={model.competence}
                         monthsToCompare={filterControls.monthsToCompare}
+                        viewMode={filterControls.viewMode}
+                        branch={filterControls.branch}
                         expanded={isDepartmentExpanded}
                         indicatorListLayout={
                           soloExpandedDepartmentId === departmentId
