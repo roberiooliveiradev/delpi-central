@@ -3,41 +3,8 @@
   gap: var(--mdc-space-4);
 }
 
-.mdc-admin-evaluations__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--mdc-space-4);
-}
-
-.mdc-admin-evaluations__header h2 {
-  margin: 0;
-  color: var(--mdc-primary);
-}
-
 .mdc-admin-evaluations__summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--mdc-space-2);
-}
-
-.mdc-admin-evaluations__summary article {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-3);
-  display: grid;
-  gap: 0.25rem;
-}
-
-.mdc-admin-evaluations__summary span {
-  font-size: 0.75rem;
-  color: var(--mdc-text-muted);
-}
-
-.mdc-admin-evaluations__summary strong {
-  font-size: 1.1rem;
-  color: var(--mdc-title);
+  min-width: min(100%, 28rem);
 }
 
 .mdc-admin-evaluations__error {
@@ -50,70 +17,41 @@
   margin: 0;
 }
 
-.mdc-admin-evaluations__layout {
-  display: grid;
-  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
-  gap: var(--mdc-space-4);
-  min-height: 28rem;
-}
-
-.mdc-admin-evaluations__candidates,
-.mdc-admin-evaluations__detail {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  padding: var(--mdc-space-4);
+.mdc-admin-evaluations__candidates {
   display: grid;
   gap: var(--mdc-space-3);
   align-content: start;
 }
 
-.mdc-admin-evaluations__candidates label {
+.mdc-admin-evaluations__candidate-list {
+  max-height: min(36rem, calc(100vh - 16rem));
+}
+
+.mdc-admin-evaluations__candidate {
   display: grid;
-  gap: 0.35rem;
-}
-
-.mdc-admin-evaluations__candidates input,
-.mdc-admin-evaluations__detail textarea {
   width: 100%;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  padding: 0.75rem 0.85rem;
-}
-
-.mdc-admin-evaluations__candidates ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--mdc-space-2);
-  max-height: 32rem;
-  overflow: auto;
-}
-
-.mdc-admin-evaluations__candidates li button {
-  width: 100%;
-  text-align: left;
   border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-md);
-  background: var(--mdc-bg-muted);
+  background: color-mix(in srgb, var(--mdc-bg-muted) 88%, var(--mdc-card-bg));
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
   padding: var(--mdc-space-3);
-  display: grid;
-  gap: 0.35rem;
 }
 
-.mdc-admin-evaluations__candidates li button.is-selected {
+.mdc-admin-evaluations__candidate:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+}
+
+.mdc-admin-evaluations__candidate.is-selected {
   border-color: var(--mdc-primary);
-  box-shadow: var(--mdc-focus-ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdc-primary) 14%, transparent);
 }
 
-.mdc-admin-evaluations__candidates li p,
-.mdc-admin-evaluations__candidates li small {
-  margin: 0;
-  color: var(--mdc-text-muted);
+.mdc-admin-evaluations__detail {
+  display: grid;
+  gap: var(--mdc-space-3);
+  align-content: start;
 }
 
 .mdc-admin-evaluations__question,
@@ -190,28 +128,8 @@
   color: var(--mdc-text-muted);
 }
 
-.mdc-admin-evaluations__detail > button {
-  justify-self: start;
-}
-
-@media (max-width: 1023px) {
-  .mdc-admin-evaluations__header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
+@media (max-width: 1180px) {
   .mdc-admin-evaluations__summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
-  }
-
-  .mdc-admin-evaluations__layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .mdc-admin-evaluations__summary {
-    grid-template-columns: 1fr;
   }
 }

@@ -77,14 +77,14 @@ export function ChatIntelligenceSettingsPanel({
   }
 
   return (
-    <article className="mdc-admin-metrics-card mdc-admin-metrics-card--wide">
+    <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
       <h3>Inteligência do chat</h3>
       <p className="mdc-chat-muted">
         Limiares e recursos de inteligência (RAG, actions, router, loop agentic).
       </p>
 
       <div className="mdc-admin-metrics-tab__intelligence-form">
-        <label>
+        <label className="mdc-admin-field">
           <span>Score mínimo RAG</span>
           <input
             type="number"
@@ -101,7 +101,7 @@ export function ChatIntelligenceSettingsPanel({
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Score mínimo action semântica</span>
           <input
             type="number"
@@ -206,7 +206,7 @@ export function ChatIntelligenceSettingsPanel({
           }
         />
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Máx. passos do loop agentic</span>
           <input
             type="number"
@@ -225,10 +225,20 @@ export function ChatIntelligenceSettingsPanel({
       </div>
 
       <div className="mdc-admin-metrics-tab__intelligence-actions">
-        <button type="button" disabled={isSaving} onClick={() => void handleSave()}>
+        <button
+          type="button"
+          className="mdc-admin-btn mdc-admin-btn--primary"
+          disabled={isSaving}
+          onClick={() => void handleSave()}
+        >
           {isSaving ? "Salvando..." : "Salvar configurações"}
         </button>
-        <button type="button" disabled={isReindexing} onClick={() => void handleReindex()}>
+        <button
+          type="button"
+          className="mdc-admin-btn"
+          disabled={isReindexing}
+          onClick={() => void handleReindex()}
+        >
           {isReindexing ? "Reindexando..." : "Reindexar embeddings das actions"}
         </button>
       </div>

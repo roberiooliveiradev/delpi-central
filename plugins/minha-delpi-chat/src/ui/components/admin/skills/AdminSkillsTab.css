@@ -4,24 +4,11 @@
   min-width: 0;
 }
 
-.mdc-admin-skills__layout {
-  display: grid;
-  grid-template-columns: minmax(14rem, 22rem) minmax(0, 1fr);
-  gap: var(--mdc-space-4);
-  align-items: start;
-}
-
-@media (min-width: 1500px) {
-  .mdc-admin-skills__layout {
-    grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr);
-  }
-}
-
 .mdc-admin-skills__list-panel {
   display: grid;
   gap: 0.75rem;
-  min-height: 18rem;
-  max-height: calc(100vh - 12rem);
+  align-content: start;
+  max-height: min(42rem, calc(100vh - 14rem));
   overflow: auto;
 }
 
@@ -106,6 +93,7 @@
 }
 
 .mdc-admin-skills__editor {
+  align-content: start;
   min-height: 18rem;
 }
 
@@ -129,6 +117,10 @@
 
 .mdc-admin-skills__field-span {
   grid-column: 1 / -1;
+}
+
+.mdc-admin-split__aside .mdc-admin-skills__form-grid {
+  grid-template-columns: 1fr;
 }
 
 .mdc-admin-skills__form-actions {
@@ -168,16 +160,9 @@
   }
 }
 
-@media (max-width: 960px) {
-  .mdc-admin-skills__layout {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 1180px) {
   .mdc-admin-skills__list-panel {
     max-height: none;
-  }
-
-  .mdc-admin-skills__form-grid {
-    grid-template-columns: 1fr;
+    overflow: visible;
   }
 }

@@ -1,6 +1,6 @@
 # Camadas de preparação antes do LLM
 
-**Status:** proposta de arquitetura (maio/2026)  
+**Status:** vigente (maio/2026) — parcialmente implementado  
 **Público:** `minha-delpi-ai-api`, plugin `minha-delpi-chat`  
 **Relacionado:** [`chat-intelligence-base.md`](./chat-intelligence-base.md)
 
@@ -15,7 +15,7 @@ Chats de IA maduros **não** mandam a pergunta crua direto ao modelo. Antes do L
 - **Protegem o sistema** — sanitização, permissões, limites de contexto.
 - **Enriquecem o prompt** — só o que o turno precisa (histórico resumido, tool results, chunks RAG).
 
-No Minha DELPI isso já acontece, mas está **espalhado** no `StreamChatMessageUseCase` / `SendChatMessageUseCase`. O objetivo é tornar o fluxo **explícito, ordenado e extensível**.
+No Minha DELPI, **send** e **stream** compartilham `ChatTurnPreparationService` para tools, RAG e flags de pipeline; decisões pré-tools (canvas, capacidades) e pós-tools ainda passam por `ChatIntelligencePipelineService` nos use cases. A proposta abaixo descreve o modelo alvo (`ChatTurnContext` registrável) para evoluir sem duplicar lógica.
 
 ---
 
@@ -65,8 +65,9 @@ No Minha DELPI isso já acontece, mas está **espalhado** no `StreamChatMessageU
 | Pós-tools / modo análise | `ChatIntelligencePipelineService.finalize_after_tools` | use cases |
 | Resposta direta API | `ChatExternalActionDirectResponseService` | pipeline |
 | Comparação estruturas | `ChatStructureComparisonService` | pipeline |
-| Identidade usuário/assistente | `ChatUserContextService`, `ChatAssistantIdentityService` | use cases |
-| RAG | `RagContextService` + `KnowledgeScopeService` | use cases |
+| Identidade do **usuário** | `ChatUserContextService.build_direct_answer` | use cases (short-circuit, token) |
+| Identidade do **assistente** | `ChatAssistantIdentityService` + policy + RAG com `RAG_IDENTITY_QUESTION_MIN_SCORE` | `ChatTurnPreparationService` → **LLM** (sem `build_direct_answer` no turno) |
+| RAG | `RagContextService.build_context(..., min_score=)` + `KnowledgeScopeService` | `ChatTurnPreparationService` |
 | Prompt | `ChatPromptBuilderService` + `PromptPolicyService` | use cases |
 | LLM | gateway Ollama/vLLM | use cases |
 

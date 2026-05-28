@@ -1,5 +1,6 @@
-import { type DragEvent, useRef, useState } from "react";
+import { useState } from "react";
 
+import { AdminFileDropzone } from "../shared/AdminFileDropzone";
 import { KnowledgeCuratorialFields } from "./KnowledgeCuratorialFields";
 import type {
   KnowledgeIngestionActions,
@@ -48,7 +49,6 @@ export function KnowledgeIngestionPanel({
   const [priority, setPriority] = useState("");
   const [qualityScore, setQualityScore] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const canSubmitDocument =
     title.trim().length > 0 &&
@@ -101,10 +101,6 @@ export function KnowledgeIngestionPanel({
     setQualityScore("");
     setSelectedFile(null);
     setIsDragging(false);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   }
 
   function selectFile(file: File | null) {
@@ -112,51 +108,6 @@ export function KnowledgeIngestionPanel({
 
     if (file && !title.trim()) {
       setTitle(file.name);
-    }
-  }
-
-  function hasDraggedFiles(event: DragEvent<HTMLElement>) {
-    return Array.from(event.dataTransfer.types).includes("Files");
-  }
-
-  function handleDragOver(event: DragEvent<HTMLElement>) {
-    if (!hasDraggedFiles(event)) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = "copy";
-    setIsDragging(true);
-  }
-
-  function handleDragLeave(event: DragEvent<HTMLElement>) {
-    if (!hasDraggedFiles(event)) {
-      return;
-    }
-
-    const relatedTarget = event.relatedTarget;
-
-    if (relatedTarget instanceof Node && event.currentTarget.contains(relatedTarget)) {
-      return;
-    }
-
-    setIsDragging(false);
-  }
-
-  function handleDrop(event: DragEvent<HTMLElement>) {
-    if (!hasDraggedFiles(event)) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    setIsDragging(false);
-
-    const file = Array.from(event.dataTransfer.files ?? [])[0] ?? null;
-
-    if (file) {
-      selectFile(file);
     }
   }
 
@@ -209,7 +160,7 @@ export function KnowledgeIngestionPanel({
   }
 
   return (
-    <article className="mdc-knowledge-ingestion">
+    <article className="mdc-admin-panel mdc-knowledge-ingestion">
       <div className="mdc-knowledge-ingestion__header">
         <div>
           <p className="mdc-chat-eyebrow">Base global</p>
@@ -249,39 +200,33 @@ export function KnowledgeIngestionPanel({
         </div>
 
         {ingestMode === "file" ? (
-          <label
-            className={
-              isDragging
-                ? "mdc-knowledge-ingestion__dropzone is-dragging"
-                : "mdc-knowledge-ingestion__dropzone"
-            }
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <span>Arquivo de conhecimento</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              disabled={isMutating || !canManageKnowledge}
-              accept={ACCEPTED_KNOWLEDGE_EXTENSIONS}
-              onChange={(event) => {
-                selectFile(event.target.files?.[0] ?? null);
-              }}
-            />
-
-            <strong>
-              {selectedFile ? selectedFile.name : "Selecionar ou arrastar arquivo"}
-            </strong>
-
-            <small>
-              {selectedFile
+          <AdminFileDropzone
+            label="Arquivo de conhecimento"
+            accept={ACCEPTED_KNOWLEDGE_EXTENSIONS}
+            disabled={isMutating || !canManageKnowledge}
+            isBusy={isMutating}
+            isDragActive={isDragging}
+            title={selectedFile ? selectedFile.name : "Arraste arquivos aqui"}
+            hint={
+              selectedFile
                 ? formatFileSize(selectedFile.size)
-                : "Formatos: txt, md, csv, json, docx, xlsx e pdf."}
-            </small>
-          </label>
+                : "ou clique para selecionar · txt, md, csv, json, docx, xlsx e pdf"
+            }
+            actionLabel={selectedFile ? "Trocar" : "Selecionar"}
+            onDragActiveChange={setIsDragging}
+            onFilesSelected={(files) => {
+              selectFile(files[0] ?? null);
+            }}
+            footerSlot={
+              selectedFile ? (
+                <p className="mdc-admin-file-dropzone-field__meta">
+                  Arquivo pronto para ingestão na base global.
+                </p>
+              ) : null
+            }
+          />
         ) : (
-          <label>
+          <label className="mdc-admin-field">
             <span>Conteúdo</span>
             <textarea
               value={content}
@@ -293,34 +238,32 @@ export function KnowledgeIngestionPanel({
           </label>
         )}
 
-        <div className="mdc-knowledge-ingestion__grid">
-          <label>
-            <span>Título</span>
-            <input
-              value={title}
-              disabled={isMutating || !canManageKnowledge}
-              placeholder="Ex.: Diretrizes gerais do atendimento"
-              onChange={(event) => setTitle(event.target.value)}
-            />
-          </label>
+        <label className="mdc-admin-field">
+          <span>Título</span>
+          <input
+            value={title}
+            disabled={isMutating || !canManageKnowledge}
+            placeholder="Ex.: Diretrizes gerais do atendimento"
+            onChange={(event) => setTitle(event.target.value)}
+          />
+        </label>
 
-          <label>
-            <span>Tipo</span>
-            <select
-              value={sourceType}
-              disabled={isMutating || !canManageKnowledge}
-              onChange={(event) => setSourceType(event.target.value)}
-            >
-              <option value="diretriz">Diretriz</option>
-              <option value="glossario">Glossário</option>
-              <option value="manual">Manual</option>
-              <option value="politica">Política</option>
-              <option value="admin_upload">Upload admin</option>
-            </select>
-          </label>
-        </div>
+        <label className="mdc-admin-field">
+          <span>Tipo</span>
+          <select
+            value={sourceType}
+            disabled={isMutating || !canManageKnowledge}
+            onChange={(event) => setSourceType(event.target.value)}
+          >
+            <option value="diretriz">Diretriz</option>
+            <option value="glossario">Glossário</option>
+            <option value="manual">Manual</option>
+            <option value="politica">Política</option>
+            <option value="admin_upload">Upload admin</option>
+          </select>
+        </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Referência</span>
           <input
             value={sourceRef}
@@ -349,6 +292,7 @@ export function KnowledgeIngestionPanel({
         <div className="mdc-knowledge-ingestion__actions">
           <button
             type="button"
+            className="mdc-admin-btn"
             disabled={!canManageKnowledge || !canPreviewPipeline || isMutating}
             onClick={() => {
               void handlePreviewPipeline();
@@ -359,6 +303,7 @@ export function KnowledgeIngestionPanel({
 
           <button
             type="submit"
+            className="mdc-admin-btn mdc-admin-btn--primary"
             disabled={!canManageKnowledge || !canSubmitDocument || isMutating}
             title={
               canManageKnowledge

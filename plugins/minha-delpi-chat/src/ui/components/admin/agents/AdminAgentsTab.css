@@ -26,9 +26,6 @@
 }
 
 .mdc-admin-agents__layout {
-  display: grid;
-  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
-  gap: var(--mdc-space-4);
   min-height: 28rem;
 }
 
@@ -38,6 +35,7 @@
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
   padding: var(--mdc-space-4);
+  min-width: 0;
 }
 
 .mdc-admin-agents__list ul {
@@ -149,7 +147,7 @@
 }
 
 @media (max-width: 1023px) {
-  .mdc-admin-agents__layout {
+  .mdc-admin-agents__layout.mdc-admin-split {
     grid-template-columns: 1fr;
     min-height: 0;
   }

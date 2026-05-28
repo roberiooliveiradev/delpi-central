@@ -43,15 +43,19 @@ export function AdminGuidelinesTab({
         canArchiveGuidelines={canArchiveGuidelines}
       />
 
-      <div className="mdc-admin-guidelines__workbench">
-        <GuidelineEditorPanel
-          editingGuideline={editingGuideline}
-          onCancelEdit={() => setEditingGuideline(null)}
-          onSave={saveGuideline}
-          canCreateGuidelines={canCreateGuidelines}
-        />
+      <div className="mdc-admin-guidelines__workbench mdc-admin-split">
+        <div className="mdc-admin-split__aside">
+          <GuidelineEditorPanel
+            editingGuideline={editingGuideline}
+            onCancelEdit={() => setEditingGuideline(null)}
+            onSave={saveGuideline}
+            canCreateGuidelines={canCreateGuidelines}
+          />
+        </div>
 
-        <GuidelineTestPanel testGuidelines={testGuidelines} />
+        <div className="mdc-admin-split__main">
+          <GuidelineTestPanel testGuidelines={testGuidelines} />
+        </div>
       </div>
 
       <GuidelineVersionPanel

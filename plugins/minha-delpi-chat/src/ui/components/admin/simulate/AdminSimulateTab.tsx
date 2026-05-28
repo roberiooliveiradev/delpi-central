@@ -74,18 +74,22 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
 
   return (
     <section className="mdc-admin-simulate">
-      <header className="mdc-admin-simulate__hero">
-        <div>
-          <p className="mdc-chat-eyebrow">Simulação</p>
-          <h2>Simulação completa do agente</h2>
-          <p>
-            Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
-          </p>
-        </div>
-      </header>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Simulação</p>
+            <h2>Simulação completa do agente</h2>
+            <p>
+              Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
+            </p>
+          </div>
+        </header>
+      </article>
 
-      <article className="mdc-admin-simulate__form">
-        <label>
+      <div className="mdc-admin-simulate__layout mdc-admin-split">
+        <div className="mdc-admin-split__aside">
+          <article className="mdc-admin-panel mdc-admin-simulate__form">
+        <label className="mdc-admin-field">
           <span>Pergunta de teste</span>
           <textarea
             value={question}
@@ -95,7 +99,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           />
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Agente (opcional)</span>
           <select value={agentId} onChange={(event) => setAgentId(event.target.value)}>
             <option value="">Padrão do chat</option>
@@ -107,7 +111,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           </select>
         </label>
 
-        <label>
+        <label className="mdc-admin-field">
           <span>Sessão real (opcional)</span>
           <select value={sessionId} onChange={(event) => setSessionId(event.target.value)}>
             <option value="">Sem histórico de sessão</option>
@@ -137,16 +141,29 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           <span>Gerar resposta com LLM (mais lento)</span>
         </label>
 
-        <button type="button" disabled={isLoading} onClick={() => void handleSimulate()}>
+        <button
+          type="button"
+          className="mdc-admin-btn mdc-admin-btn--primary"
+          disabled={isLoading}
+          onClick={() => void handleSimulate()}
+        >
           {isLoading ? "Simulando..." : "Simular agente"}
         </button>
-      </article>
+          </article>
+        </div>
 
+        <div className="mdc-admin-split__main mdc-admin-simulate__results-pane">
       {error ? <p className="mdc-admin-simulate__error">{error}</p> : null}
+
+      {!result && !error ? (
+        <p className="mdc-chat-muted mdc-admin-simulate__placeholder">
+          Execute uma simulação para ver prompt, RAG, tools e resposta prevista.
+        </p>
+      ) : null}
 
       {result ? (
         <div className="mdc-admin-simulate__results">
-          <article className="mdc-admin-simulate__card">
+          <article className="mdc-admin-panel mdc-admin-simulate__card">
             <h3>Resposta</h3>
             {result.agent ? (
               <p className="mdc-chat-muted">
@@ -156,13 +173,13 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
             <pre>{result.answerPreview}</pre>
           </article>
 
-          <article className="mdc-admin-simulate__card">
+          <article className="mdc-admin-panel mdc-admin-simulate__card">
             <h3>Prompt final (system)</h3>
             <pre>{result.finalPrompt?.preview || result.finalPrompt?.systemPrompt || "—"}</pre>
           </article>
 
           <div className="mdc-admin-simulate__grid">
-            <article className="mdc-admin-simulate__card">
+            <article className="mdc-admin-panel mdc-admin-simulate__card">
               <h3>Diretrizes aplicadas ({result.appliedGuidelines?.length ?? 0})</h3>
               <ul>
                 {(result.appliedGuidelines ?? []).map((item) => (
@@ -171,7 +188,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
               </ul>
             </article>
 
-            <article className="mdc-admin-simulate__card">
+            <article className="mdc-admin-panel mdc-admin-simulate__card">
               <h3>Chunks usados ({result.chunks?.length ?? 0})</h3>
               <ul>
                 {(result.chunks ?? []).map((chunk) => (
@@ -184,7 +201,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
               </ul>
             </article>
 
-            <article className="mdc-admin-simulate__card">
+            <article className="mdc-admin-panel mdc-admin-simulate__card">
               <h3>Tools ({result.plannedToolCalls?.length ?? 0})</h3>
               <p className="mdc-chat-muted">
                 Com token válido, tools como <code>get_current_user</code> são executadas via
@@ -211,7 +228,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           </div>
 
           {result.comparison ? (
-            <article className="mdc-admin-simulate__card">
+            <article className="mdc-admin-panel mdc-admin-simulate__card">
               <h3>Comparação de contexto</h3>
               <div className="mdc-admin-simulate__comparison">
                 <div>
@@ -235,6 +252,8 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
           ) : null}
         </div>
       ) : null}
+        </div>
+      </div>
     </section>
   );
 }

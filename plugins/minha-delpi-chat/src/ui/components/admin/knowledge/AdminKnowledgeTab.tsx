@@ -64,17 +64,20 @@ export function AdminKnowledgeTab({
   );
 
   return (
-    <section className="mdc-admin-knowledge">
-      <KnowledgeIngestionPanel
-        isMutating={isMutating}
-        createDocument={createDocument}
-        uploadDocumentFile={uploadDocumentFile}
-        previewIngestion={previewIngestion}
-        ingestionPreview={ingestionPreview}
-        canManageKnowledge={canManageKnowledge}
-      />
+    <section className="mdc-admin-knowledge mdc-admin-split">
+      <div className="mdc-admin-split__aside">
+        <KnowledgeIngestionPanel
+          isMutating={isMutating}
+          createDocument={createDocument}
+          uploadDocumentFile={uploadDocumentFile}
+          previewIngestion={previewIngestion}
+          ingestionPreview={ingestionPreview}
+          canManageKnowledge={canManageKnowledge}
+        />
+      </div>
 
-      <KnowledgeDocumentsPanel
+      <div className="mdc-admin-split__main">
+        <KnowledgeDocumentsPanel
         documents={documents}
         documentsPagination={documentsPagination}
         documentSearch={documentSearch}
@@ -106,7 +109,8 @@ export function AdminKnowledgeTab({
         canManageMetadata={canManageKnowledge}
         canDeleteKnowledgeDocuments={canDeleteKnowledgeDocuments}
         canReindexKnowledgeDocuments={canReindexKnowledgeDocuments}
-      />
+        />
+      </div>
     </section>
   );
 }

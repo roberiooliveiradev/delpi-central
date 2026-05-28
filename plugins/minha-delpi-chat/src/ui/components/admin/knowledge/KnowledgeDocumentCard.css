@@ -1,53 +1,11 @@
-.mdc-knowledge-document-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--mdc-space-4);
-  align-items: center;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-lg);
-  background: var(--mdc-bg-muted);
-  padding: var(--mdc-space-4);
-}
-
-.mdc-knowledge-document-card__title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-knowledge-document-card__title strong {
-  color: var(--mdc-title);
-}
-
-.mdc-knowledge-document-card__title span {
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 900;
-  padding: 0.25rem 0.5rem;
-}
-
-.mdc-knowledge-document-card__title span.is-active {
-  background: color-mix(in srgb, var(--mdc-success) 14%, transparent);
-  color: var(--mdc-success);
-}
-
-.mdc-knowledge-document-card__title span.is-inactive {
-  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
-  color: var(--mdc-danger);
-}
-
-.mdc-knowledge-document-card__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-  margin-top: var(--mdc-space-2);
-}
-
+/* Badges de curadoria — específicos do domínio conhecimento */
 .mdc-knowledge-badge {
+  display: inline-flex;
+  align-items: center;
   border-radius: 999px;
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 750;
+  line-height: 1;
   padding: 0.2rem 0.55rem;
 }
 
@@ -74,9 +32,9 @@
 .mdc-knowledge-badge--category,
 .mdc-knowledge-badge--namespace,
 .mdc-knowledge-badge--domain {
+  border: 1px solid var(--mdc-card-border);
   background: var(--mdc-bg-muted);
   color: var(--mdc-title);
-  border: 1px solid var(--mdc-card-border);
 }
 
 .mdc-knowledge-badge--tag {
@@ -91,48 +49,13 @@
 }
 
 .mdc-knowledge-document-card__editor {
-  margin-top: var(--mdc-space-3);
+  margin-top: var(--mdc-space-2);
   padding-top: var(--mdc-space-3);
   border-top: 1px dashed var(--mdc-card-border);
 }
 
 .mdc-knowledge-document-card__editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--mdc-space-2);
-  margin-top: var(--mdc-space-3);
-}
-
-.mdc-knowledge-document-card p,
-.mdc-knowledge-document-card small {
-  margin: 0;
-  color: var(--mdc-text-muted);
-}
-
-.mdc-knowledge-document-card p {
   margin-top: var(--mdc-space-2);
-  overflow-wrap: anywhere;
-}
-
-.mdc-knowledge-document-card small {
-  display: block;
-  margin-top: var(--mdc-space-1);
-}
-
-.mdc-knowledge-document-card__actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--mdc-space-2);
-}
-
-@media (max-width: 920px) {
-  .mdc-knowledge-document-card {
-    align-items: stretch;
-    grid-template-columns: 1fr;
-  }
-
-  .mdc-knowledge-document-card__actions {
-    justify-content: flex-start;
-  }
+  max-width: none;
+  justify-content: flex-start;
 }

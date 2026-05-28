@@ -70,12 +70,17 @@ export function KnowledgeDocumentCard({
   }
 
   return (
-    <article className="mdc-knowledge-document-card">
+    <article className="mdc-admin-entity-row mdc-knowledge-document-card">
       {confirmDialog}
-      <div>
-        <div className="mdc-knowledge-document-card__title">
+
+      <div className="mdc-admin-entity-row__body">
+        <div className="mdc-admin-entity-row__title-line">
           <strong>{document.title}</strong>
-          <span className={document.active ? "is-active" : "is-inactive"}>
+          <span
+            className={`mdc-admin-badge ${
+              document.active ? "mdc-admin-badge--success" : "mdc-admin-badge--danger"
+            }`}
+          >
             {document.active ? "Ativo" : "Inativo"}
           </span>
           <span className={`mdc-knowledge-badge ${sourceBadgeClass}`}>
@@ -83,7 +88,7 @@ export function KnowledgeDocumentCard({
           </span>
         </div>
 
-        <div className="mdc-knowledge-document-card__meta">
+        <div className="mdc-admin-entity-row__meta mdc-knowledge-document-card__meta">
           {document.category ? (
             <span className="mdc-knowledge-badge mdc-knowledge-badge--category">
               {document.category}
@@ -116,11 +121,11 @@ export function KnowledgeDocumentCard({
           ))}
         </div>
 
-        <p>
+        <p className="mdc-admin-entity-row__detail">
           {document.sourceRef || "sem referência"} · {document.chunkCount} chunk(s)
         </p>
 
-        <small>
+        <small className="mdc-admin-entity-row__detail">
           Atualizado em {new Date(document.updatedAt).toLocaleString()}
         </small>
 
@@ -141,9 +146,10 @@ export function KnowledgeDocumentCard({
               onPriorityChange={setPriority}
               onQualityScoreChange={setQualityScore}
             />
-            <div className="mdc-knowledge-document-card__editor-actions">
+            <div className="mdc-admin-entity-row__actions mdc-knowledge-document-card__editor-actions">
               <button
                 type="button"
+                className="mdc-admin-btn mdc-admin-btn--primary"
                 disabled={isMutating || !canManageMetadata}
                 onClick={() => {
                   void handleSaveMetadata();
@@ -153,6 +159,7 @@ export function KnowledgeDocumentCard({
               </button>
               <button
                 type="button"
+                className="mdc-admin-btn"
                 disabled={isMutating}
                 onClick={() => setIsEditingMetadata(false)}
               >
@@ -163,10 +170,11 @@ export function KnowledgeDocumentCard({
         ) : null}
       </div>
 
-      <div className="mdc-knowledge-document-card__actions">
+      <div className="mdc-admin-entity-row__actions">
         {canManageMetadata ? (
           <button
             type="button"
+            className="mdc-admin-btn"
             disabled={isMutating}
             onClick={() => setIsEditingMetadata((current) => !current)}
           >
@@ -176,6 +184,7 @@ export function KnowledgeDocumentCard({
 
         <button
           type="button"
+          className="mdc-admin-btn"
           disabled={isMutating || !testDocument}
           title={testDocument ? "Testar documento" : "Aguardando endpoint de teste RAG"}
           onClick={() => {
@@ -188,6 +197,7 @@ export function KnowledgeDocumentCard({
         {document.active ? (
           <button
             type="button"
+            className="mdc-admin-btn"
             disabled={isMutating || !canDeleteKnowledgeDocuments}
             title={
               canDeleteKnowledgeDocuments
@@ -201,6 +211,7 @@ export function KnowledgeDocumentCard({
         ) : (
           <button
             type="button"
+            className="mdc-admin-btn"
             disabled={isMutating || !canDeleteKnowledgeDocuments}
             title={
               canDeleteKnowledgeDocuments
@@ -215,6 +226,7 @@ export function KnowledgeDocumentCard({
 
         <button
           type="button"
+          className="mdc-admin-btn"
           disabled={isMutating || !canReindexKnowledgeDocuments}
           title={
             canReindexKnowledgeDocuments
@@ -228,7 +240,7 @@ export function KnowledgeDocumentCard({
 
         <button
           type="button"
-          className="mdc-knowledge-document-card__danger"
+          className="mdc-admin-btn mdc-admin-btn--danger mdc-admin-entity-row__danger"
           disabled={isMutating || !canDeleteKnowledgeDocuments}
           title={
             canDeleteKnowledgeDocuments

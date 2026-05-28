@@ -219,8 +219,8 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
         </p>
       </header>
 
-      <div className="mdc-admin-skills__layout">
-        <aside className="mdc-admin-skills__list-panel mdc-admin-card">
+      <div className="mdc-admin-skills__layout mdc-admin-split">
+        <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-skills__list-panel">
           <div className="mdc-admin-skills__list-toolbar">
             <strong>Catálogo</strong>
             <div className="mdc-admin-skills__list-actions">
@@ -274,7 +274,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
           )}
         </aside>
 
-        <div className="mdc-admin-skills__editor mdc-admin-card">
+        <div className="mdc-admin-split__main mdc-admin-panel mdc-admin-skills__editor">
           {!canManage ? (
             <p className="mdc-admin-skills__muted">
               Você não tem permissão para gerenciar skills (`minha-delpi.chat.tools.manage`).

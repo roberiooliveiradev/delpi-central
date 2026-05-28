@@ -30,7 +30,7 @@ function FacetSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label>
+    <label className="mdc-admin-field">
       <span>{label}</span>
       <select value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)}>
         <option value="">Todos</option>
@@ -82,32 +82,39 @@ export function KnowledgeDocumentsPanel({
   );
 
   return (
-    <article className="mdc-knowledge-documents">
-      <div className="mdc-knowledge-documents__header">
-        <div>
-          <h2>Base global de conhecimento</h2>
-          <p className="mdc-chat-muted">
-            Lista apenas documentos globais. Fontes de conversas, agentes e projetos ficam fora deste contexto.
-          </p>
-        </div>
+    <article className="mdc-admin-panel mdc-knowledge-documents">
+      <header className="mdc-admin-panel__intro">
+        <h2>Base global de conhecimento</h2>
+        <p className="mdc-chat-muted">
+          Lista apenas documentos globais. Fontes de conversas, agentes e projetos ficam fora deste
+          contexto.
+        </p>
+      </header>
 
-        <div className="mdc-knowledge-documents__filters">
+      <div className="mdc-admin-filter-bar" aria-label="Filtros da base global">
+        <label className="mdc-admin-field mdc-admin-filter-bar__search">
+          <span>Buscar</span>
           <input
             value={documentSearch}
-            placeholder="Buscar por título, categoria, tags..."
+            placeholder="Título, categoria, tags..."
             onChange={(event) => setDocumentSearch(event.target.value)}
           />
+        </label>
 
-          <select
-            value={documentStatus}
-            onChange={(event) =>
-              setDocumentStatus(event.target.value as DocumentStatusFilter)
-            }
-          >
-            <option value="all">Todos</option>
-            <option value="active">Ativos</option>
-            <option value="inactive">Inativos</option>
-          </select>
+        <div className="mdc-admin-filter-bar__row">
+          <label className="mdc-admin-field">
+            <span>Status</span>
+            <select
+              value={documentStatus}
+              onChange={(event) =>
+                setDocumentStatus(event.target.value as DocumentStatusFilter)
+              }
+            >
+              <option value="all">Todos</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+            </select>
+          </label>
 
           <FacetSelect
             label="Categoria"
@@ -152,11 +159,11 @@ export function KnowledgeDocumentsPanel({
           {hasCuratorialFilters ? (
             <button
               type="button"
-              className="mdc-knowledge-documents__clear-filters"
+              className="mdc-admin-btn mdc-admin-filter-bar__clear"
               disabled={isLoading}
               onClick={resetDocumentCuratorialFilters}
             >
-              Limpar filtros curadoriais
+              Limpar filtros
             </button>
           ) : null}
         </div>
@@ -165,7 +172,7 @@ export function KnowledgeDocumentsPanel({
       {documents.length === 0 ? (
         <p className="mdc-chat-muted">Nenhum documento global encontrado.</p>
       ) : (
-        <div className="mdc-knowledge-documents__list">
+        <div className="mdc-admin-entity-list mdc-knowledge-documents__list">
           {documents.map((document) => (
             <KnowledgeDocumentCard
               key={document.id}
@@ -185,14 +192,15 @@ export function KnowledgeDocumentsPanel({
         </div>
       )}
 
-      <div className="mdc-knowledge-documents__pagination">
+      <footer className="mdc-admin-panel__footer">
         <span>
           Exibindo {documents.length} de {documentsPagination.total} documento(s)
         </span>
 
-        <div>
+        <div className="mdc-admin-panel__footer-actions">
           <button
             type="button"
+            className="mdc-admin-btn"
             disabled={!documentsPagination.hasPrevious || isLoading}
             onClick={goToPreviousDocumentsPage}
           >
@@ -200,13 +208,14 @@ export function KnowledgeDocumentsPanel({
           </button>
           <button
             type="button"
+            className="mdc-admin-btn mdc-admin-btn--primary"
             disabled={!documentsPagination.hasNext || isLoading}
             onClick={goToNextDocumentsPage}
           >
             Próxima
           </button>
         </div>
-      </div>
+      </footer>
     </article>
   );
 }
