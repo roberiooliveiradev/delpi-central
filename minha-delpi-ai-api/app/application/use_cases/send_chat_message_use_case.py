@@ -217,7 +217,11 @@ class SendChatMessageUseCase:
                 skills=resolved_skills,
             )
         else:
-            user_context = self._build_user_context(request.access_token)
+            user_context = self._resolve_llm_user_context(
+                request.access_token,
+                message,
+                operational_optimize=operational_optimize,
+            )
             llm_messages = self.prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
@@ -569,6 +573,23 @@ class SendChatMessageUseCase:
             session_id=session_id,
             attachment_ids=attachment_ids,
         )
+
+    def _resolve_llm_user_context(
+        self,
+        access_token: str | None,
+        message: str,
+        *,
+        operational_optimize: bool,
+    ) -> str | None:
+        if (
+            operational_optimize
+            and Settings.CHAT_OPERATIONAL_SLIM_USER_CONTEXT
+            and not ChatUserContextService.is_user_identity_question(message)
+        ):
+            return None
+
+        block = self._build_user_context(access_token)
+        return block or None
 
     def _build_user_context(self, access_token: str | None) -> str:
         if not access_token:

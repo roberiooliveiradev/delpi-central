@@ -237,6 +237,10 @@ class Settings:
     CHAT_FAST_PATH_SLIM_PROMPT = (
         os.getenv("CHAT_FAST_PATH_SLIM_PROMPT", "true").lower() == "true"
     )
+    # Modo operacional: não injeta perfil RBAC completo no system prompt (menos tokens/latência).
+    CHAT_OPERATIONAL_SLIM_USER_CONTEXT = (
+        os.getenv("CHAT_OPERATIONAL_SLIM_USER_CONTEXT", "true").lower() == "true"
+    )
 
     LGPD_REQUIRE_AI_CONSENT = (
         os.getenv("LGPD_REQUIRE_AI_CONSENT", "false").lower() == "true"

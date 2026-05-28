@@ -100,6 +100,36 @@ class ChatAnalysisIntentService:
         return ordered
 
     @classmethod
+    def extract_product_codes_for_action_planning(
+        cls,
+        message: str,
+        conversation_context: str | None = None,
+    ) -> list[str]:
+        """Códigos para planejar consultas paralelas à API.
+
+        Se a mensagem atual já traz código(s), não puxa códigos extras do histórico
+        (evita N× estoque quando o usuário pergunta só de um produto).
+        """
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        codes_in_message = cls.extract_all_product_codes(message)
+
+        if codes_in_message:
+            return codes_in_message
+
+        if ChatProductQueryIntentService.references_previous_product(message):
+            code = ChatProductQueryIntentService.resolve_product_code(
+                message,
+                conversation_context,
+            )
+
+            return [code] if code else []
+
+        return []
+
+    @classmethod
     def extract_product_code_from_tool_path(cls, path: str | None) -> str | None:
         if not path:
             return None

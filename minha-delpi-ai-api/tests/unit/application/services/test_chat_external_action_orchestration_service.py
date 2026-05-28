@@ -101,3 +101,38 @@ def test_plan_actions_single_code_uses_select_action():
     assert len(planned) == 1
     assert planned[0]["arguments"]["actionId"] == "product-stock"
     assert not service.product_calls
+
+
+def test_plan_actions_ignores_history_codes_when_message_names_product():
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="estoque do produto 10080099",
+        allowed_action_ids=["product-stock"],
+        conversation_context=(
+            "assistant: Produto 10080001: CABO A\n"
+            "assistant: Produto 10080002: CABO B\n"
+            "assistant: Produto 10080003: CABO C\n"
+        ),
+        max_calls=5,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["arguments"]["actionId"] == "product-stock"
+    assert len(service.product_calls) == 0
+
+
+def test_plan_actions_followup_uses_single_code_from_context():
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="busque o estoque desse produto",
+        allowed_action_ids=["product-stock"],
+        conversation_context="assistant: Produto 10080047: TERM. PINO RETO.",
+        max_calls=5,
+    )
+
+    assert len(planned) == 1
+    assert not service.product_calls

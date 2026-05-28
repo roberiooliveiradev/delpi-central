@@ -43,7 +43,6 @@ QUESTIONS: list[tuple[str, dict]] = [
         {
             "action_contains": "product_stock",
             "max_tool_calls": 1,
-            "isolated_history": True,
         },
     ),
     (
@@ -105,9 +104,6 @@ def main() -> int:
         previous = chat_repo.list_messages_by_session(UUID(session_id))
 
         for message, expectations in QUESTIONS:
-            history_source = previous
-            if expectations.get("isolated_history"):
-                history_source = []
             request = SendChatMessageRequest(
                 user_id=user_id,
                 session_id=session_id,
@@ -139,8 +135,8 @@ def main() -> int:
                 user_id=UUID(user_id),
                 workspace_context=workspace,
                 attachments=[],
-                previous_messages=history_source,
-                history_source=history_source,
+                previous_messages=previous,
+                history_source=previous,
                 build_tool_context=build_tool_context,
                 maybe_extend_tool_context=maybe_extend,
                 prepare_history=lambda h: ("", list(h[-6:])),

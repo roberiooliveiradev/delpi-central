@@ -138,6 +138,12 @@ Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
 
 Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem descritas.
 
+### Multi-action e histórico (maio/2026)
+
+`ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.
+
+`CHAT_OPERATIONAL_SLIM_USER_CONTEXT` (default `true`): em modo operacional, o prompt LLM não inclui o bloco completo de perfil RBAC (reduz tokens), exceto perguntas sobre o **usuário** («quem sou eu»).
+
 ### Regras críticas (produtos)
 
 | Situação | Rota correta | Erro comum |

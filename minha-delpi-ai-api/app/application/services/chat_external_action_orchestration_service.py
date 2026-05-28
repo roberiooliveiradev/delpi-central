@@ -68,7 +68,7 @@ class ChatExternalActionOrchestrationService:
 
         limit = cls._resolve_max_calls(max_calls)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        codes = ChatAnalysisIntentService.extract_all_product_codes(
+        codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
             message,
             conversation_context,
         )
