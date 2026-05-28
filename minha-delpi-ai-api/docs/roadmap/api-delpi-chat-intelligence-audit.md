@@ -260,6 +260,8 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 
 ## Próximos passos (backlog)
 
+Itens 1–5 abaixo estão consolidados na **Onda 11** — [inteligencia-chat-onda-11-paridade-assistentes.md](./inteligencia-chat-onda-11-paridade-assistentes.md).
+
 1. Parâmetros de data automáticos (`start_date`/`end_date`) para KPIs e OV.
 2. Heurística explícita `GET /products/{code}/summary` vs analyser.
 3. Montar rotas NC PostgreSQL e importar no catálogo.

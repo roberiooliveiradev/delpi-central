@@ -173,6 +173,14 @@ O dígito após «grupo» **não** é código de produto (`ChatProductQueryInten
 
 «Consegue buscar por grupo?», «coonsegue…» → `ChatCapabilitiesService.is_capability_inquiry`: resposta direta com método/rota, **sem** `execute_external_action`.
 
+### Paridade ChatGPT/Gemini (roteamento e velocidade) — maio/2026
+
+Pesquisa e plano de produto (28/mai/2026): decisão de rota **antes** do LLM, catálogo pequeno se usar loop agentic, respostas diretas sem inferência quando possível.
+
+| Recurso | Caminho |
+|---------|---------|
+| Roadmap Onda 11 (feito / falta / critérios) | [`../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md`](../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md) |
+
 ### Documentos e testes
 
 | Recurso | Caminho |

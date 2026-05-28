@@ -16,6 +16,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [inteligencia-chat-onda-8.md](./inteligencia-chat-onda-8.md) | Inteligência do chat — Onda 8 (concluída: sub-rotas structure/parents, despacho por intent, scoring dedicado). |
 | [apresentacao-rica-chat-onda-9.md](./apresentacao-rica-chat-onda-9.md) | Inteligência do chat — Onda 9 (concluída: tabelas ricas, gráficos, cards KPI, canvas expandível, export XLSX/PDF/PNG). |
 | [inteligencia-chat-onda-10.md](./inteligencia-chat-onda-10.md) | Inteligência do chat — Onda 10 (concluída: novas rotas api-delpi, 100% route selection, títulos contextuais, vocabulário expandido). |
+| [inteligencia-chat-onda-11-paridade-assistentes.md](./inteligencia-chat-onda-11-paridade-assistentes.md) | **Onda 11 (em andamento):** paridade ChatGPT/Gemini — roteamento determinístico, velocidade, assertividade; pesquisa 28/mai/2026. |
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
 | [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) | Calibração `RAG_CONTEXT_MIN_SCORE` e checklist de latência. |
 | [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
@@ -25,4 +26,4 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 
 Antes de criar funcionalidades, alterar layout, endpoints, migrations ou comportamento do agente, consultar estes documentos e a documentação da API em `docs/api/`.
 
-**Inteligência do chat:** ondas 1–10 concluídas. Onda 10 entregou novas rotas na api-delpi (`/products/{code}`, `/products/{code}/summary`), títulos contextuais no presenter, vocabulário expandido para detecção de intent, fix na seleção de OVs, e alcançou 100% de acerto em suite de 36 cenários reais. Onda 9 entregou apresentação rica de dados: tabelas interativas com sort/CSV, gráficos Recharts com toggle tabela↔gráfico, cards KPI com tendência, canvas expandível com exportação XLSX/PDF/PNG.
+**Inteligência do chat:** ondas 1–10 concluídas; **Onda 11 em andamento** ([paridade ChatGPT/Gemini](./inteligencia-chat-onda-11-paridade-assistentes.md)). Onda 10 entregou novas rotas na api-delpi (`/products/{code}`, `/products/{code}/summary`), títulos contextuais no presenter, vocabulário expandido para detecção de intent, fix na seleção de OVs, e alcançou 100% de acerto em suite de 36 cenários reais. Onda 9 entregou apresentação rica de dados: tabelas interativas com sort/CSV, gráficos Recharts com toggle tabela↔gráfico, cards KPI com tendência, canvas expandível com exportação XLSX/PDF/PNG.
