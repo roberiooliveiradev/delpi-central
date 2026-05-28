@@ -2,7 +2,9 @@
 
 Documento de referência para implementação incremental. Atualizar **Status** e **Checklist** a cada entrega.
 
-**Última atualização:** 2026-05-18 (doc SI consolidada)  
+**Última atualização:** 2026-05-28 (mapa de gargalos api-delpi)
+
+**Mapa de gargalos (refresh / api-delpi):** `docs/SI_BOTTLENECK_MAP.md`  
 **Baseline medido:** `GET /strategic-indicators/executive-summary?competence=2026-05` ≈ **19s** → **~10s** (2 períodos em paralelo com providers isolados).  
 **Trends (3 meses):** ~28s (série sequencial por dept) → **~9–10s** (períodos em paralelo com factory, até 3 workers).
 

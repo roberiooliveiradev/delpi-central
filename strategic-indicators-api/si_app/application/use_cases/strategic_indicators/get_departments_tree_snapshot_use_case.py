@@ -19,6 +19,9 @@ from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_
     GetStrategicIndicatorsDepartmentsTreeUseCase,
     _TreeScopeConfig,
 )
+from si_app.domain.ports.strategic_indicators.alerts_summary_port import (
+    StrategicIndicatorsAlertsSummaryPort,
+)
 
 
 @dataclass(frozen=True)
@@ -38,9 +41,11 @@ class GetDepartmentsTreeSnapshotUseCase:
         *,
         tree_use_case: GetStrategicIndicatorsDepartmentsTreeUseCase,
         snapshot_service: StrategicIndicatorsSnapshotService,
+        alerts_summary_port: StrategicIndicatorsAlertsSummaryPort,
     ) -> None:
         self._tree = tree_use_case
         self._snapshot_service = snapshot_service
+        self._alerts_summary_port = alerts_summary_port
 
     def execute(self, request: GetDepartmentsTreeSnapshotRequest) -> dict:
         scopes = self._tree._resolve_scopes(request.view_mode, request.branch)
@@ -65,6 +70,12 @@ class GetDepartmentsTreeSnapshotUseCase:
         current_snapshot = (
             primary.get("current_snapshot") if primary is not None else None
         )
+        measurement_errors = (
+            list(current_snapshot.measurement_errors) if current_snapshot else []
+        )
+        calculated_departments = (
+            current_snapshot.calculated_departments if current_snapshot else []
+        )
 
         return {
             "competence": (
@@ -76,6 +87,12 @@ class GetDepartmentsTreeSnapshotUseCase:
             "igd_exact": current_snapshot.igd_exact if current_snapshot else None,
             "classification": (
                 current_snapshot.classification if current_snapshot else None
+            ),
+            "errors": measurement_errors,
+            "partial_success": len(measurement_errors) > 0,
+            "alerts_summary": self._alerts_summary_port.get_alerts_summary(
+                departments=calculated_departments,
+                measurement_errors=measurement_errors,
             ),
             "scopes": [
                 {

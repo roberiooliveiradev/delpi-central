@@ -57,6 +57,12 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
 from si_app.application.services.strategic_indicators.measurement_errors import (
     has_transformometro_auth_error,
 )
+from si_app.application.services.strategic_indicators.measurements_cache_policy import (
+    enrich_measurement_errors,
+    format_measurement_errors_summary,
+    should_cache_measurements,
+    should_use_cached_measurements,
+)
 from si_app.config import settings
 from si_app.domain.ports.strategic_indicators.calculation_snapshots_repository_port import (
     StrategicIndicatorsCalculationSnapshotsRepositoryPort,
@@ -1116,14 +1122,18 @@ class StrategicIndicatorsSnapshotService:
 
         cached = self._measurements_cache.get(key)
         if cached is not None:
-            _items, errors = cached
-            if not has_transformometro_auth_error(errors):
+            items, errors = cached
+            if should_use_cached_measurements(
+                items, errors, department_id=department_id
+            ):
                 return cached
 
         cached = shared_measurements_cache.get(key)
         if cached is not None:
-            _items, errors = cached
-            if not has_transformometro_auth_error(errors):
+            items, errors = cached
+            if should_use_cached_measurements(
+                items, errors, department_id=department_id
+            ):
                 self._measurements_cache[key] = cached
                 return cached
 
@@ -1136,9 +1146,43 @@ class StrategicIndicatorsSnapshotService:
             department_id=department_id,
             branch=branch,
         )
-        self._measurements_cache[key] = result
-        shared_measurements_cache.set(key, result)
         items, errors = result
+        errors = enrich_measurement_errors(
+            items,
+            errors,
+            department_id=department_id,
+            competence=competence,
+            branch=branch,
+        )
+        result = (items, errors)
+        if should_cache_measurements(items, errors, department_id=department_id):
+            self._measurements_cache[key] = result
+            shared_measurements_cache.set(key, result)
+        elif errors:
+            logger.warning(
+                (
+                    "si_measurements_not_cached competence=%s department_id=%s "
+                    "branch=%s items=%d errors=%d detail=%s"
+                ),
+                competence,
+                department_id,
+                branch,
+                len(items),
+                len(errors),
+                format_measurement_errors_summary(errors, limit=3),
+            )
+        if errors:
+            logger.warning(
+                (
+                    "si_measurements_quality_issues competence=%s department_id=%s "
+                    "branch=%s errors=%d\n%s"
+                ),
+                competence,
+                department_id,
+                branch,
+                len(errors),
+                format_measurement_errors_summary(errors),
+            )
         logger.info(
             (
                 "si_measurements_loaded competence=%s department_id=%s branch=%s "

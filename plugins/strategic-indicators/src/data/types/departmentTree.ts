@@ -32,6 +32,26 @@ export type DepartmentTreeColumn = {
   hasData: boolean;
 };
 
+export type DepartmentTreeMeasurementIssue = {
+  departmentId: string;
+  source: string;
+  message: string;
+  code?: string;
+};
+
+export type DepartmentTreeAlertSummary = {
+  title: string;
+  severity: string;
+  impact: string;
+  recommendation: string;
+};
+
+export type DepartmentTreeDataQuality = {
+  partialSuccess: boolean;
+  errors: DepartmentTreeMeasurementIssue[];
+  alertsSummary: DepartmentTreeAlertSummary[];
+};
+
 export type DepartmentTreeModel = {
   competence: string;
   igd: number | null;
@@ -41,4 +61,5 @@ export type DepartmentTreeModel = {
   igdSeries: DepartmentTreeSparkPoint[];
   columns: DepartmentTreeColumn[];
   departmentOrder: string[];
+  dataQuality?: DepartmentTreeDataQuality;
 };

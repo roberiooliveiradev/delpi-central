@@ -55,9 +55,13 @@ def test_snapshot_uses_comparative_snapshot_not_period_series() -> None:
     tree_use_case._map_departments.return_value = {"items": []}
     tree_use_case._map_indicators.return_value = {"items": []}
 
+    alerts_port = MagicMock()
+    alerts_port.get_alerts_summary.return_value = []
+
     result = GetDepartmentsTreeSnapshotUseCase(
         tree_use_case=tree_use_case,
         snapshot_service=snapshot_service,
+        alerts_summary_port=alerts_port,
     ).execute(
         GetDepartmentsTreeSnapshotRequest(
             view_mode="consolidated",

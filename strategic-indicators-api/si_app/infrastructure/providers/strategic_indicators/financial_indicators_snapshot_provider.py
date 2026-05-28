@@ -36,7 +36,7 @@ class FinancialIndicatorsSnapshotProvider(
             snapshot = self._financial_metrics_snapshot_service.get_snapshot(
                 start_date=start_date,
                 end_date=end_date,
-                branch=None,
+                branch=branch,
             )
         except Exception as exc:
             scope = branch or "consolidated"
@@ -65,7 +65,7 @@ class FinancialIndicatorsSnapshotProvider(
         try:
             snapshots = self._financial_metrics_snapshot_service.get_snapshot_series(
                 periods=periods,
-                branch=None,
+                branch=branch,
             )
         except Exception as exc:
             scope = branch or "consolidated"
