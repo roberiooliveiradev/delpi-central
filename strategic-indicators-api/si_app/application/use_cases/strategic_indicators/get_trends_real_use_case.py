@@ -46,12 +46,36 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             periods=periods,
             department_id=request.department_id,
             branch=request.branch,
+            prefer_materialized_only=True,
         )
 
     def build_response_from_snapshots(
         self,
         snapshots: list[StrategicIndicatorsPeriodSnapshot],
     ) -> dict:
+        if not snapshots:
+            return {
+                "competence": "",
+                "current_igd": 0.0,
+                "previous_igd": 0.0,
+                "current_classification": "",
+                "igd_series": [],
+                "departments": [],
+                "indicator_series_by_department_id": {},
+                "errors": [
+                    {
+                        "competence": "",
+                        "department_id": "",
+                        "source": "si_trends_materialized",
+                        "message": (
+                            "Nenhum período materializado em period_scores para "
+                            "esta competência. Execute o refresh ou aguarde o job."
+                        ),
+                    }
+                ],
+                "partial_success": True,
+            }
+
         monthly_points: list[dict] = []
         monthly_departments: dict[str, list[dict]] = {}
         errors: list[dict] = []
@@ -157,7 +181,7 @@ class GetStrategicIndicatorsTrendsRealUseCase:
             "departments": departments,
             "indicator_series_by_department_id": indicator_series_by_department_id,
             "errors": errors,
-            "partial_success": len(errors) > 0,
+            "partial_success": len(errors) > 0 or len(snapshots) < 2,
         }
 
     def _build_indicator_series_by_department_id(

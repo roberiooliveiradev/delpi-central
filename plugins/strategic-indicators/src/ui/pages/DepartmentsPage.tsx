@@ -9,6 +9,7 @@ import type { DepartmentTreeScopeKey } from "../../data/types/departmentTree";
 import { useStrategicIndicatorsFilters } from "../../state/hooks/useStrategicIndicatorsFilters";
 import { DepartmentIgdTree } from "../components/DepartmentIgdTree";
 import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsPageError";
+import { InfoState } from "../components/InfoState";
 import { StatusBadge } from "../components/StatusBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
@@ -47,7 +48,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     [setViewMode, setBranch],
   );
 
-  const { model, loading, refreshing, requestProgress, error, reload } =
+  const { model, loading, refreshing, requestProgress, error, loadWarning, reload } =
     useStrategicIndicatorsDepartmentTree({
       viewMode,
       branch,
@@ -164,6 +165,17 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
                 variant="compact"
                 tone="info"
                 progressPercent={refreshingProgress}
+              />
+            </div>
+          ) : null}
+
+          {loadWarning ? (
+            <div className="si-departments-page__refresh-banner">
+              <InfoState
+                title="Sparklines indisponíveis — estrutura do período carregada"
+                description={`${loadWarning.summary}\n\n${loadWarning.suggestions.join(" ")}`}
+                actionLabel="Tentar carregar séries"
+                onAction={() => void reload()}
               />
             </div>
           ) : null}

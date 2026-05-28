@@ -589,6 +589,7 @@ class StrategicIndicatorsSnapshotService:
         department_id: str | None = None,
         branch: str | None = None,
         force_compute: bool = False,
+        prefer_materialized_only: bool = False,
     ) -> list[StrategicIndicatorsPeriodSnapshot]:
         started = time.perf_counter()
         scope_branch = normalize_scope_branch(branch)
@@ -624,6 +625,18 @@ class StrategicIndicatorsSnapshotService:
             for period in periods
             if period.competence not in stored_snapshots
         ]
+
+        if prefer_materialized_only and periods_to_compute:
+            logger.info(
+                (
+                    "si_series_snapshot_materialized_only_skip_compute "
+                    "missing=%s department_id=%s branch=%s"
+                ),
+                [period.competence for period in periods_to_compute],
+                department_id,
+                branch,
+            )
+            periods_to_compute = []
 
         measurements_started = time.perf_counter()
         measurements_by_period: dict[
@@ -677,6 +690,9 @@ class StrategicIndicatorsSnapshotService:
             cached_snapshot = stored_snapshots.get(period.competence)
             if cached_snapshot is not None:
                 snapshots.append(cached_snapshot)
+                continue
+
+            if prefer_materialized_only:
                 continue
 
             indicators_catalog = (
@@ -743,6 +759,7 @@ class StrategicIndicatorsSnapshotService:
             build_ms,
             total_ms,
         )
+        snapshots.sort(key=lambda item: item.period.competence)
         return snapshots
 
     def _load_stored_period_snapshot(
