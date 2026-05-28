@@ -146,6 +146,10 @@
   font-size: 0.88rem;
 }
 
+.ef-efficiency-legend--warning {
+  color: color-mix(in srgb, var(--ef-danger) 75%, var(--ef-muted));
+}
+
 .ef-alert {
   display: flex;
   align-items: center;

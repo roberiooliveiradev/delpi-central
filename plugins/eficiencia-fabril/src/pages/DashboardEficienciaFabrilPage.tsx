@@ -108,6 +108,10 @@ export function DashboardEficienciaFabrilPage() {
         Eficiência &gt; 100% indica produção mais rápida que o tempo previsto (referência
         visual em 100% no gráfico diário).
       </p>
+      <p className="ef-efficiency-legend ef-efficiency-legend--warning">
+        Atenção: apontamentos com eficiência acima de 500% são desconsiderados no indicador de
+        eficiência (KPIs e gráficos) e aparecem na tabela como &quot;Verificar&quot;.
+      </p>
 
       {error || exportError ? (
         <div className="ef-alert ef-alert--error" role="alert">
