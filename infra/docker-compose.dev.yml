@@ -547,6 +547,7 @@ services:
 
     volumes:
       - ../api-delpi:/app
+      - ../shared:/shared
 
     depends_on:
       - keycloak
@@ -620,6 +621,7 @@ services:
 
     volumes:
       - ../strategic-indicators-api:/app
+      - ../shared:/shared
 
     depends_on:
       - keycloak
@@ -672,6 +674,7 @@ services:
 
     volumes:
       - ../transformometro-api:/app
+      - ../shared:/shared
 
     depends_on:
       - keycloak
