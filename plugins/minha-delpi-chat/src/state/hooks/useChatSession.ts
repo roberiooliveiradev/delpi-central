@@ -81,6 +81,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     null,
   );
   const awaitingPlaybackRef = useRef(false);
+  const [lastSentUserText, setLastSentUserText] = useState("");
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -272,6 +273,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
 
         setMessages(data);
+
+        const lastUserMessage = [...data]
+          .reverse()
+          .find((item) => item.role === "user");
+
+        if (lastUserMessage?.content?.trim()) {
+          setLastSentUserText("");
+        }
 
         if (!sessionAwaitingAssistantResponse(data)) {
           unmarkSessionPending(sessionId);
@@ -888,6 +897,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    setLastSentUserText(message);
     const optimisticId = `optimistic-${Date.now()}`;
     let sessionForMessage = activeSession;
 
@@ -1152,6 +1162,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingActivityLog,
     streamingShowPresentation,
     streamingCanvasOpen,
+    lastSentUserText,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,

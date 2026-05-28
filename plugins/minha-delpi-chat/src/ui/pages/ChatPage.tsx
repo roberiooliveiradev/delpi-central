@@ -102,6 +102,7 @@ export function ChatPage({
     streamingActivityLog,
     streamingShowPresentation,
     streamingCanvasOpen,
+    lastSentUserText,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
@@ -1160,6 +1161,7 @@ export function ChatPage({
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}
                 onOpenCanvas={openCanvasPanel}
+                lastSentUserText={lastSentUserText}
               />
 
               <ChatInput

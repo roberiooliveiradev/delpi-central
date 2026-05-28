@@ -4,6 +4,7 @@ import {
   getAvailableFormatsFromToolCalls,
   resolveRichTextContent,
   shouldSuppressMarkdownForPresentation,
+  tablePresentationToMarkdown,
   type PresentationPair,
 } from "./chatPresentation";
 
@@ -23,7 +24,7 @@ describe("shouldSuppressMarkdownForPresentation", () => {
     },
   ];
 
-  it("suprime markdown tabular quando há gráfico e aba texto", () => {
+  it("suprime markdown tabular quando há texto exibível no painel", () => {
     const pair: PresentationPair = {
       primary: { type: "chart", title: "Indicador" },
       table: { type: "table", title: "Indicador" },
@@ -38,7 +39,25 @@ describe("shouldSuppressMarkdownForPresentation", () => {
     ).toBe(true);
   });
 
-  it("mantém texto curto sem apresentação rica nem aba texto", () => {
+  it("não suprime quando aba texto ficaria vazia", () => {
+    const pair: PresentationPair = {
+      primary: { type: "chart", title: "Indicador" },
+      table: {
+        type: "table",
+        title: "Estoque",
+        columns: [{ key: "a", label: "A" }],
+        rows: [{ a: "1" }],
+      },
+    };
+
+    expect(
+      shouldSuppressMarkdownForPresentation("", pair, [
+        { metadata: { availableFormats: ["text", "chart", "table"] } },
+      ]),
+    ).toBe(false);
+  });
+
+  it("mantém texto curto sem apresentação rica", () => {
     const pair: PresentationPair = {
       primary: { type: "chart", title: "Indicador" },
       table: null,
@@ -67,6 +86,44 @@ describe("resolveRichTextContent", () => {
         },
       ]),
     ).toBe("### Estoque\n\n10 unidades.");
+  });
+
+  it("gera markdown a partir da tabela quando não há texto", () => {
+    const markdown = resolveRichTextContent("", [
+      {
+        metadata: {
+          presentation: { type: "chart", title: "Estoque", chartType: "bar", data: [] },
+          tablePresentation: {
+            type: "table",
+            title: "Estoque",
+            columns: [{ key: "qtd", label: "Qtd" }],
+            rows: [{ qtd: 10 }],
+          },
+        },
+      },
+    ]);
+
+    expect(markdown).toContain("### Estoque");
+    expect(markdown).toContain("| Qtd |");
+    expect(markdown).toContain("| 10 |");
+  });
+});
+
+describe("tablePresentationToMarkdown", () => {
+  it("monta tabela markdown", () => {
+    const markdown = tablePresentationToMarkdown({
+      type: "table",
+      title: "Produtos",
+      columns: [
+        { key: "code", label: "Código" },
+        { key: "qty", label: "Qtd" },
+      ],
+      rows: [{ code: "100", qty: 2 }],
+    });
+
+    expect(markdown).toContain("### Produtos");
+    expect(markdown).toContain("| Código | Qtd |");
+    expect(markdown).toContain("| 100 | 2 |");
   });
 });
 

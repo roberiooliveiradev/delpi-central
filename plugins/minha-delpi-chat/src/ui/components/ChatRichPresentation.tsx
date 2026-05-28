@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChatToolCall } from "../../data/api/chatTypes";
 import {
-  getAvailableFormatsFromToolCalls,
   getPreferredFormatFromToolCalls,
   getPresentationPairFromToolCalls,
+  hasDisplayableRichText,
   resolveRichTextContent,
   type ViewFormat,
 } from "./chatPresentation";
@@ -39,6 +39,10 @@ function resolveDefaultViewMode(
 
   if (preferred === "table" && hasTable) {
     return "table";
+  }
+
+  if (hasText) {
+    return "text";
   }
 
   if (hasChart) {
@@ -81,31 +85,32 @@ export function ChatRichPresentation({
     () => getPresentationPairFromToolCalls(toolCalls),
     [toolCalls],
   );
-  const availableFormats = useMemo(
-    () => getAvailableFormatsFromToolCalls(toolCalls),
-    [toolCalls],
-  );
   const resolvedText = useMemo(
     () => resolveRichTextContent(textContent, toolCalls),
     [textContent, toolCalls],
   );
 
-  const hasChart =
-    primary?.type === "chart" || availableFormats.includes("chart");
-  const hasTable =
-    primary?.type === "table" ||
-    table?.type === "table" ||
-    availableFormats.includes("table");
-  const hasText = availableFormats.includes("text") || Boolean(resolvedText);
+  const chartPresentation =
+    primary?.type === "chart" ? primary : null;
+  const tablePresentation =
+    table?.type === "table"
+      ? table
+      : primary?.type === "table"
+        ? primary
+        : null;
 
-  const formatCount = [hasText, hasChart, hasTable].filter(Boolean).length;
+  const hasText = hasDisplayableRichText(resolvedText);
+  const hasChartView = Boolean(chartPresentation);
+  const hasTableView = Boolean(tablePresentation);
+
+  const formatCount = [hasText, hasChartView, hasTableView].filter(Boolean).length;
   const showToggle = formatCount >= 2;
 
   const defaultMode = resolveDefaultViewMode(
     toolCalls,
     hasText,
-    hasChart,
-    hasTable,
+    hasChartView,
+    hasTableView,
   );
 
   const [viewMode, setViewMode] = useState<ViewFormat>(defaultMode);
@@ -129,15 +134,6 @@ export function ChatRichPresentation({
     );
   }
 
-  const chartPresentation =
-    primary?.type === "chart" ? primary : null;
-  const tablePresentation =
-    table?.type === "table"
-      ? table
-      : primary?.type === "table"
-        ? primary
-        : null;
-
   const expandTarget =
     viewMode === "chart"
       ? chartPresentation
@@ -156,14 +152,14 @@ export function ChatRichPresentation({
               onClick={() => setViewMode("text")}
             />
           ) : null}
-          {hasChart ? (
+          {hasChartView ? (
             <FormatToggle
               active={viewMode === "chart"}
               label="Gráfico"
               onClick={() => setViewMode("chart")}
             />
           ) : null}
-          {hasTable ? (
+          {hasTableView ? (
             <FormatToggle
               active={viewMode === "table"}
               label="Tabela"
@@ -184,11 +180,11 @@ export function ChatRichPresentation({
         </div>
       ) : null}
 
-      {viewMode === "chart" && chartPresentation ? (
+      {viewMode === "chart" && hasChartView && chartPresentation ? (
         <ChatRichChart presentation={chartPresentation} />
       ) : null}
 
-      {viewMode === "table" && tablePresentation ? (
+      {viewMode === "table" && hasTableView && tablePresentation ? (
         <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
       ) : null}
     </div>

@@ -67,7 +67,30 @@ type ChatMessageListProps = {
   ) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
   onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
+  lastSentUserText?: string;
 };
+
+function resolveUserMessageContent(
+  message: ChatMessage,
+  lastSentUserText: string | undefined,
+  isLatestUserMessage: boolean,
+): string {
+  const content = String(message.content ?? "").trim();
+
+  if (content) {
+    return content;
+  }
+
+  if (
+    message.role === "user" &&
+    isLatestUserMessage &&
+    lastSentUserText?.trim()
+  ) {
+    return lastSentUserText.trim();
+  }
+
+  return "";
+}
 
 function getMessageSources(message: ChatMessage): ChatSource[] {
   const directSources = message.metadata?.sources;
@@ -346,6 +369,7 @@ export function ChatMessageList({
   onReuseMessage,
   onMessageFeedback,
   onOpenCanvas,
+  lastSentUserText = "",
 }: ChatMessageListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -365,6 +389,15 @@ export function ChatMessageList({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
+  const latestUserMessageId = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      if (messages[index]?.role === "user") {
+        return messages[index].id;
+      }
+    }
+
+    return null;
+  }, [messages]);
 
   const updateScrollAffordances = useCallback(() => {
     const list = listRef.current;
@@ -724,8 +757,15 @@ export function ChatMessageList({
     const isPending = Boolean(message.metadata?.optimistic);
     const messageToolCalls = getMessageToolCalls(message);
     const messagePresentation = getPresentationPairFromToolCalls(messageToolCalls);
+    const displayContent = isUser
+      ? resolveUserMessageContent(
+          message,
+          lastSentUserText,
+          message.id === latestUserMessageId,
+        )
+      : String(message.content ?? "").trim();
     const suppressMessageMarkdown = shouldSuppressMarkdownForPresentation(
-      message.content,
+      displayContent || message.content,
       messagePresentation,
       messageToolCalls,
     );
@@ -772,7 +812,7 @@ export function ChatMessageList({
                     <button
                       className="mdc-chat-message-action"
                       type="button"
-                      onClick={() => onReuseMessage?.(message.content)}
+                      onClick={() => onReuseMessage?.(displayContent)}
                       aria-label="Reutilizar mensagem"
                       title="Reutilizar mensagem"
                     >
@@ -885,8 +925,8 @@ export function ChatMessageList({
           ) : (
             <>
               <ChatMessageAttachments attachments={getMessageAttachments(message)} />
-              {suppressMessageMarkdown ? null : (
-                <ChatMarkdown content={message.content} compact={isUser} />
+              {suppressMessageMarkdown || !displayContent ? null : (
+                <ChatMarkdown content={displayContent} compact={isUser} />
               )}
               {!isUser && messageCanvasOpen ? (
                 <ChatInlineCanvas
@@ -899,7 +939,7 @@ export function ChatMessageList({
 
           {!isUser && !isAssistantGenerating(message) ? (
             <>
-              {renderPresentation(messageToolCalls, message.content, onReuseMessage)}
+              {renderPresentation(messageToolCalls, displayContent, onReuseMessage)}
               {!messagePresentation.primary ? (
                 <ChatActionResults toolCalls={messageToolCalls} />
               ) : null}

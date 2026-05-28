@@ -129,6 +129,58 @@ export function getTextMarkdownFromToolCalls(toolCalls?: ChatToolCall[]): string
   return "";
 }
 
+function escapeMarkdownCell(value: unknown): string {
+  return String(value ?? "")
+    .replace(/\|/g, "\\|")
+    .replace(/\n/g, " ");
+}
+
+export function tablePresentationToMarkdown(
+  presentation: Extract<ChatPresentation, { type: "table" }>,
+): string {
+  const { title, columns, rows } = presentation;
+
+  if (!columns.length) {
+    return title ? `### ${title}` : "";
+  }
+
+  const header = columns.map((column) => column.label).join(" | ");
+  const separator = columns.map(() => "---").join(" | ");
+  const body = rows.map((row) =>
+    columns.map((column) => escapeMarkdownCell(row[column.key])).join(" | "),
+  );
+
+  return [
+    title ? `### ${title}` : "",
+    "",
+    `| ${header} |`,
+    `| ${separator} |`,
+    ...body.map((line) => `| ${line} |`),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function getTableMarkdownFallback(toolCalls?: ChatToolCall[]): string {
+  const pair = getPresentationPairFromToolCalls(toolCalls);
+  const table =
+    pair.table?.type === "table"
+      ? pair.table
+      : pair.primary?.type === "table"
+        ? pair.primary
+        : null;
+
+  if (!table) {
+    return "";
+  }
+
+  return tablePresentationToMarkdown(table);
+}
+
+export function hasDisplayableRichText(text: string | null | undefined): boolean {
+  return String(text || "").trim().length > 0;
+}
+
 export function resolveRichTextContent(
   messageContent: string | null | undefined,
   toolCalls?: ChatToolCall[],
@@ -139,7 +191,13 @@ export function resolveRichTextContent(
     return fromMessage;
   }
 
-  return getTextMarkdownFromToolCalls(toolCalls);
+  const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
+
+  if (fromMetadata) {
+    return fromMetadata;
+  }
+
+  return getTableMarkdownFallback(toolCalls);
 }
 
 export function getPresentationPairFromToolCalls(
@@ -205,24 +263,19 @@ export function hasMultiFormatPresentation(toolCalls?: ChatToolCall[]): boolean 
   return flags.filter(Boolean).length >= 2;
 }
 
-/** Não renderiza markdown duplicado quando o painel rico exibe a aba Texto. */
+/** Não renderiza markdown duplicado quando o painel rico já exibe o mesmo conteúdo na aba Texto. */
 export function shouldSuppressMarkdownForPresentation(
   content: string | null | undefined,
   pair: PresentationPair,
   toolCalls?: ChatToolCall[],
 ): boolean {
-  if (!hasRichPresentation(pair) && !getTextMarkdownFromToolCalls(toolCalls)) {
+  if (!hasRichPresentation(pair)) {
     return false;
   }
 
-  const formats = getAvailableFormatsFromToolCalls(toolCalls);
-  const richText = resolveRichTextContent(content, toolCalls);
+  const panelText = resolveRichTextContent(content, toolCalls);
 
-  if (formats.includes("text") && richText) {
-    return true;
-  }
-
-  if (!hasRichPresentation(pair)) {
+  if (!hasDisplayableRichText(panelText)) {
     return false;
   }
 
@@ -230,6 +283,13 @@ export function shouldSuppressMarkdownForPresentation(
 
   if (!trimmed) {
     return false;
+  }
+
+  const normalizedPanel = panelText.trim();
+  const normalizedContent = trimmed;
+
+  if (normalizedContent === normalizedPanel) {
+    return true;
   }
 
   if (trimmed.includes("|") && trimmed.includes("-")) {
