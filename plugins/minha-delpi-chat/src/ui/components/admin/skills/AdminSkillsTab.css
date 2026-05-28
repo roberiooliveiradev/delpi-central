@@ -11,6 +11,12 @@
   align-items: start;
 }
 
+@media (min-width: 1500px) {
+  .mdc-admin-skills__layout {
+    grid-template-columns: minmax(16rem, 26rem) minmax(0, 1fr);
+  }
+}
+
 .mdc-admin-skills__list-panel {
   display: grid;
   gap: 0.75rem;
