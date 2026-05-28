@@ -43,6 +43,7 @@ class ChatToolContextService:
         conversation_context: str | None = None,
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
+        on_stream_activity=None,
     ) -> dict:
         if fast_path:
             return {
@@ -140,6 +141,22 @@ class ChatToolContextService:
                 ChatExternalActionOrchestrationService,
             )
 
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                on_stream_activity(
+                    ChatStreamActivityService.plan_step(
+                        step=1,
+                        total=1,
+                        target="consultas OpenAPI",
+                        verb="Planejando",
+                        state="active",
+                        detail="Selecionando rotas e parâmetros para a pergunta.",
+                    )
+                )
+
             planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
                 self.external_action_selection_service,
                 message=message,
@@ -147,6 +164,7 @@ class ChatToolContextService:
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
                 max_calls=max_external_action_calls,
+                on_stream_activity=on_stream_activity,
             )
 
             if planned_external_actions:
@@ -201,8 +219,53 @@ class ChatToolContextService:
         skip_rag = False
         last_external_action_data = None
         external_action_results: list = []
+        external_planned = [
+            item
+            for item in selected_tools
+            if str(item.get("name") or "") == "execute_external_action"
+        ]
+        external_total = len(external_planned)
+        external_index = 0
+
+        if on_stream_activity and external_total > 0:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.entry(
+                    verb="Executando",
+                    target=f"{external_total} consulta(s) DELPI",
+                    phase="tools",
+                    state="active",
+                    message=f"Executando {external_total} consulta(s) à API DELPI...",
+                )
+            )
 
         for selected_tool in selected_tools:
+            tool_name = str(selected_tool.get("name") or "")
+            arguments = selected_tool.get("arguments") or {}
+            action_id = str(arguments.get("actionId") or arguments.get("action_id") or "")
+            path_hint = str(arguments.get("path") or "")
+
+            if tool_name == "execute_external_action":
+                external_index += 1
+
+                if on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.tool_started(
+                            index=external_index,
+                            total=external_total,
+                            path=path_hint or None,
+                            action_id=action_id or None,
+                            reason=selected_tool.get("reason"),
+                        )
+                    )
+
             try:
                 result = self.execute_tool_use_case.execute(
                     ExecuteToolRequest(
@@ -219,6 +282,21 @@ class ChatToolContextService:
                     "error": str(exc),
                     "errorType": exc.__class__.__name__,
                 }
+
+                if tool_name == "execute_external_action" and on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.tool_finished(
+                            index=external_index,
+                            total=external_total,
+                            metadata=error_metadata,
+                            path=path_hint or None,
+                            action_id=action_id or None,
+                        )
+                    )
 
                 if tool_name == "execute_external_action":
                     error_metadata["responsePreview"] = self._build_response_preview(
@@ -271,6 +349,23 @@ class ChatToolContextService:
 
             if result.name == "execute_external_action":
                 skip_rag = True
+
+                if on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.tool_finished(
+                            index=external_index,
+                            total=external_total,
+                            metadata=safe_metadata,
+                            path=str(safe_metadata.get("path") or path_hint or "") or None,
+                            action_id=str(safe_metadata.get("actionId") or action_id or "")
+                            or None,
+                            data=result.data,
+                        )
+                    )
 
                 from app.application.services.chat_composite_direct_answer_service import (
                     ExternalActionExecutionResult,

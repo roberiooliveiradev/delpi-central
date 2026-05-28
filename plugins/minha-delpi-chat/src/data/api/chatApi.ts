@@ -24,6 +24,7 @@ import type {
   ChatMessageFeedbackResponse,
   ChatProject,
   ChatSession,
+  ChatStreamActivityEntry,
   ChatWorkspaceSource,
   CreateChatAgentPayload,
   CreateChatArtifactPayload,
@@ -51,6 +52,7 @@ type ChatApiOptions = {
 
 type StreamCallbacks = {
   onStatus?: (message: string) => void;
+  onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
@@ -295,6 +297,14 @@ async function consumeChatMessageStream(
         callbacks.onStatus?.(
           typeof data.message === "string" ? data.message : "",
         );
+      }
+
+      if (event === "activity") {
+        const entry = data.entry;
+
+        if (entry && typeof entry === "object" && typeof (entry as { message?: unknown }).message === "string") {
+          callbacks.onActivity?.(entry as ChatStreamActivityEntry);
+        }
       }
 
       if (event === "sources") {

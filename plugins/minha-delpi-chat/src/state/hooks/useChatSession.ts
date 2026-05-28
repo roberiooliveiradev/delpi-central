@@ -20,6 +20,7 @@ import type {
   ChatMessage,
   ChatSession,
   ChatSource,
+  ChatStreamActivityEntry,
   ChatToolCall,
 } from "../../data/api/chatTypes";
 import {
@@ -68,6 +69,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [streamingSources, setStreamingSources] = useState<ChatSource[]>([]);
   const [streamingToolCalls, setStreamingToolCalls] = useState<ChatToolCall[]>([]);
   const [streamingStatus, setStreamingStatus] = useState<string | null>(null);
+  const [streamingActivityLog, setStreamingActivityLog] = useState<ChatStreamActivityEntry[]>(
+    [],
+  );
   const [streamingShowPresentation, setStreamingShowPresentation] = useState(true);
   const [playbackPayload, setPlaybackPayload] = useState<ChatPlaybackPayload | null>(
     null,
@@ -95,6 +99,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingSources([]);
     setStreamingToolCalls([]);
     setStreamingStatus(null);
+    setStreamingActivityLog([]);
     setStreamingShowPresentation(true);
     setPlaybackPayload(null);
     awaitingPlaybackRef.current = false;
@@ -611,6 +616,27 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             setStreamingStatus(statusMessage);
           }
         },
+        onActivity: (entry: ChatStreamActivityEntry) => {
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          if (entry.state === "active") {
+            if (entry.phase === "think") {
+              setStreamingStatus("Pensando...");
+            } else if (entry.phase === "plan") {
+              setStreamingStatus("Planejando novos passos...");
+            }
+          }
+
+          setStreamingActivityLog((current) => {
+            if (current.some((item) => item.id === entry.id)) {
+              return current;
+            }
+
+            return [...current, entry];
+          });
+        },
         onSources: (sources: ChatSource[]) => {
           if (!isStreamForActiveSession(sessionId)) {
             return;
@@ -853,6 +879,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);
+    setStreamingActivityLog([]);
     setStreamingShowPresentation(false);
     setStreamingStatus(
       activeSession
@@ -1105,6 +1132,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingToolCalls,
     streamingAdminDebug,
     streamingStatus,
+    streamingActivityLog,
     streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,

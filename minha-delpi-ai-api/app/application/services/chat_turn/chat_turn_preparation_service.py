@@ -92,6 +92,7 @@ class ChatTurnPreparationService:
         resolve_user_identity_answer,
         resolve_capabilities_answer,
         max_external_action_calls: int | None = None,
+        on_stream_activity=None,
     ) -> ChatTurnPreparationResult:
         """Prepara tools, resposta direta e RAG.
 
@@ -101,6 +102,18 @@ class ChatTurnPreparationService:
 
         history_source = history_source or previous_messages or []
         previous_messages = previous_messages or []
+
+        if on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.think(
+                    target="pergunta e histórico",
+                    message="Pensando sobre a pergunta e o histórico...",
+                )
+            )
 
         canvas_action = ChatCanvasContentService.resolve(
             message,
@@ -122,6 +135,34 @@ class ChatTurnPreparationService:
         )
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
+
+        if on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            if analysis_mode:
+                on_stream_activity(
+                    ChatStreamActivityService.think(
+                        target="comparação ou insights",
+                        detail="Modo análise: síntese com base em consultas e histórico.",
+                    )
+                )
+            elif operational_optimize:
+                on_stream_activity(
+                    ChatStreamActivityService.think(
+                        target="resposta operacional direta",
+                        detail="Fast path operacional sem RAG completo.",
+                    )
+                )
+            else:
+                on_stream_activity(
+                    ChatStreamActivityService.think(
+                        target="intenção e rota OpenAPI",
+                        detail="Identificando se a pergunta exige dados DELPI ou conhecimento documental.",
+                        state="done",
+                    )
+                )
 
         if canvas_action:
             operational_optimize = False
@@ -193,6 +234,7 @@ class ChatTurnPreparationService:
                 fast_path=fast_path,
                 previous_messages=history_source,
                 max_external_action_calls=max_external_action_calls,
+                on_stream_activity=on_stream_activity,
             )
             tool_context = maybe_extend_tool_context(
                 request=request,
@@ -200,6 +242,7 @@ class ChatTurnPreparationService:
                 tool_context=tool_context,
                 conversation_context=conversation_context,
                 previous_messages=history_source,
+                on_stream_activity=on_stream_activity,
             )
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,
@@ -282,6 +325,21 @@ class ChatTurnPreparationService:
             direct_answer = missing_product_code_answer
             skip_rag = True
 
+        if on_stream_activity and not skip_rag:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.entry(
+                    verb="Buscando",
+                    target="base de conhecimento",
+                    phase="rag",
+                    state="active",
+                    message="Consultando base de conhecimento autorizada...",
+                )
+            )
+
         if skip_rag:
             rag = {"context": "", "sources": []}
         else:
@@ -309,6 +367,41 @@ class ChatTurnPreparationService:
 
         sources = rag["sources"]
         pipeline_timings.mark("rag_done")
+
+        if on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            if skip_rag:
+                on_stream_activity(
+                    ChatStreamActivityService.entry(
+                        verb="Ignorado",
+                        target="base de conhecimento",
+                        phase="rag",
+                        state="done",
+                        message="Base de conhecimento não necessária neste turno.",
+                    )
+                )
+            else:
+                on_stream_activity(
+                    ChatStreamActivityService.entry(
+                        verb="Encontrado" if sources else "Sem trechos",
+                        target=(
+                            f"{len(sources)} trecho(s) relevante(s)"
+                            if sources
+                            else "nenhum trecho adicional"
+                        ),
+                        phase="rag",
+                        level="success" if sources else "warning",
+                        state="done",
+                        message=(
+                            f"Base de conhecimento: {len(sources)} trecho(s) relevante(s) encontrado(s)."
+                            if sources
+                            else "Base de conhecimento consultada; nenhum trecho adicional aplicável."
+                        ),
+                    )
+                )
 
         return ChatTurnPreparationResult(
             operational_optimize=bool(operational_optimize),

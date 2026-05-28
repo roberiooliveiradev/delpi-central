@@ -5,6 +5,7 @@ import type {
   ChatCanvasOpenPayload,
   ChatPlaybackEvent,
   ChatSource,
+  ChatStreamActivityEntry,
   ChatToolCall,
   SendChatMessageResponse,
 } from "../../data/api/chatTypes";
@@ -20,6 +21,7 @@ type StreamMessageParams = {
   attachmentIds?: string[];
   agentKey?: string | null;
   onStatus?: (message: string) => void;
+  onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
@@ -76,6 +78,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
         callbacks: Pick<
           StreamMessageParams,
           | "onStatus"
+          | "onActivity"
           | "onSources"
           | "onToolCalls"
           | "onToken"
@@ -90,6 +93,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       callbacks: Pick<
         StreamMessageParams,
         | "onStatus"
+        | "onActivity"
         | "onSources"
         | "onToolCalls"
         | "onToken"
@@ -122,6 +126,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       attachmentIds,
       agentKey,
       onStatus,
+      onActivity,
       onSources,
       onToolCalls,
       onToken,
@@ -150,6 +155,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           ),
         {
           onStatus,
+          onActivity,
           onSources,
           onToolCalls,
           onToken,
@@ -171,6 +177,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content,
       context,
       onStatus,
+      onActivity,
       onSources,
       onToolCalls,
       onToken,
@@ -185,6 +192,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content: string;
       context?: string;
       onStatus?: (message: string) => void;
+      onActivity?: (entry: ChatStreamActivityEntry) => void;
       onSources?: (sources: ChatSource[]) => void;
       onToolCalls?: (toolCalls: ChatToolCall[]) => void;
       onToken?: (token: string) => void;
@@ -204,6 +212,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
           }),
         {
           onStatus,
+          onActivity,
           onSources,
           onToolCalls,
           onToken,

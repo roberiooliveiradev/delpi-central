@@ -15,6 +15,7 @@ import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal
 import type {
   ChatMessage,
   ChatSource,
+  ChatStreamActivityEntry,
   ChatToolCall,
 } from "../../data/api/chatTypes";
 import {
@@ -29,6 +30,7 @@ import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
+import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
@@ -46,6 +48,7 @@ type ChatMessageListProps = {
   streamingToolCalls?: ChatToolCall[];
   streamingAdminDebug?: Record<string, unknown> | null;
   streamingStatus?: string | null;
+  streamingActivityLog?: ChatStreamActivityEntry[];
   streamingShowPresentation?: boolean;
   isStreaming?: boolean;
   isLoading?: boolean;
@@ -233,6 +236,7 @@ export function ChatMessageList({
   streamingToolCalls,
   streamingAdminDebug,
   streamingStatus,
+  streamingActivityLog = [],
   streamingShowPresentation = true,
   isStreaming,
   isLoading,
@@ -790,12 +794,11 @@ export function ChatMessageList({
               {streamingAnswer ? (
                 <ChatMarkdown content={revealedStreamingAnswer} />
               ) : (
-                <div className="mdc-chat-thinking" role="status" aria-live="polite">
-                  <span className="mdc-chat-thinking__dot" />
-                  <span className="mdc-chat-thinking__dot" />
-                  <span className="mdc-chat-thinking__dot" />
-                  <p>{streamingStatus || "Processando sua solicitação..."}</p>
-                </div>
+                <ChatStreamingActivityPanel
+                  status={streamingStatus}
+                  entries={streamingActivityLog}
+                  isActive
+                />
               )}
 
               {streamingShowPresentation

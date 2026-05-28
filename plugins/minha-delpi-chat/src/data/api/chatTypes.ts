@@ -69,6 +69,22 @@ export type ChatPresentation =
       data: unknown;
     };
 
+export type ChatStreamActivityEntry = {
+  id: string;
+  at?: number;
+  level?: "info" | "success" | "warning" | "error" | string;
+  phase?: string;
+  group?: string;
+  verb?: string;
+  target?: string;
+  state?: "active" | "done" | "failed" | string;
+  message: string;
+  detail?: string;
+  path?: string;
+  statusCode?: number;
+  actionId?: string;
+};
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;

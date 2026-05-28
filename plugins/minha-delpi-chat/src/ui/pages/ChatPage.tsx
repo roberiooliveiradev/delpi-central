@@ -85,6 +85,7 @@ export function ChatPage({
     streamingToolCalls,
     streamingAdminDebug,
     streamingStatus,
+    streamingActivityLog,
     streamingShowPresentation,
     isLoadingSessions,
     isLoadingArchivedSessions,
@@ -328,6 +329,7 @@ export function ChatPage({
       sessions,
       startSession,
       streamingStatus,
+    streamingActivityLog,
     ],
   );
 
@@ -1145,6 +1147,7 @@ export function ChatPage({
                 streamingToolCalls={streamingToolCalls}
                 streamingAdminDebug={streamingAdminDebug}
                 streamingStatus={streamingStatus}
+                streamingActivityLog={streamingActivityLog}
                 streamingShowPresentation={streamingShowPresentation}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}

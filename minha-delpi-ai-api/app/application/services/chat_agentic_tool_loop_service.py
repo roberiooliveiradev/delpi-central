@@ -42,6 +42,7 @@ class ChatAgenticToolLoopService:
         allowed_action_ids: list[str] | None,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        on_stream_activity=None,
     ) -> dict:
         settings = self._resolve_settings()
 
@@ -75,10 +76,57 @@ class ChatAgenticToolLoopService:
         }
 
         for step in range(max_steps):
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                on_stream_activity(
+                    ChatStreamActivityService.plan_step(
+                        step=step + 1,
+                        total=max_steps,
+                        target="ferramentas adicionais",
+                        verb="Planejando",
+                        state="active",
+                        detail="Loop agentic: avaliando se faltam consultas.",
+                    )
+                )
+
             plan = self._plan_tools(message, catalog, step=step)
 
             if not plan.get("tools"):
+                if on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.plan_step(
+                            step=step + 1,
+                            total=max_steps,
+                            target="nenhuma ferramenta extra",
+                            verb="Planejado",
+                            state="done",
+                        )
+                    )
                 break
+
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                for tool_index, tool_name in enumerate(plan["tools"], start=1):
+                    on_stream_activity(
+                        ChatStreamActivityService.plan_step(
+                            step=tool_index,
+                            total=len(plan["tools"]),
+                            target=str(tool_name),
+                            verb="Passo",
+                            state="done",
+                            detail=f"Passo agentic {step + 1}",
+                        )
+                    )
 
             for tool_name in plan["tools"]:
                 if tool_name in executed_names:

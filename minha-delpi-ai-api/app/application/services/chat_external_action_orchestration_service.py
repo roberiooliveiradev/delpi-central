@@ -37,9 +37,23 @@ class ChatExternalActionOrchestrationService:
         conversation_context: str | None = None,
         previous_messages: list | None = None,
         max_calls: int | None = None,
+        on_stream_activity=None,
     ) -> list[dict]:
         if not selection_service or not allowed_action_ids:
             return []
+
+        def _return_planned(planned: list[dict]) -> list[dict]:
+            if on_stream_activity and planned:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                ChatStreamActivityService.emit_planned_actions(
+                    on_stream_activity,
+                    planned,
+                )
+
+            return planned
 
         if not Settings.CHAT_MULTI_ACTION_ENABLED:
             selected = selection_service.select_action(
@@ -48,9 +62,25 @@ class ChatExternalActionOrchestrationService:
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
             )
-            return [selected] if selected else []
+
+            return _return_planned([selected] if selected else [])
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                on_stream_activity(
+                    ChatStreamActivityService.plan_step(
+                        step=1,
+                        total=1,
+                        target="estruturas para comparação",
+                        verb="Planejando",
+                        detail="Buscando fichas/estruturas dos produtos citados.",
+                    )
+                )
+
             from app.application.services.chat_structure_comparison_orchestration_service import (
                 ChatStructureComparisonOrchestrationService,
             )
@@ -65,7 +95,7 @@ class ChatExternalActionOrchestrationService:
             )
 
             if planned:
-                return planned
+                return _return_planned(planned)
 
         if ChatCanvasIntentService.is_canvas_placement_request(message):
             return []
@@ -109,7 +139,7 @@ class ChatExternalActionOrchestrationService:
                     planned.append(selected)
 
             if planned:
-                return planned
+                return _return_planned(planned)
 
         limit = cls._resolve_max_calls(max_calls)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -169,7 +199,7 @@ class ChatExternalActionOrchestrationService:
                     planned.append(selected)
 
             if planned:
-                return planned
+                return _return_planned(planned)
 
         selected = selection_service.select_action(
             message,
@@ -178,7 +208,7 @@ class ChatExternalActionOrchestrationService:
             previous_messages=previous_messages,
         )
 
-        return [selected] if selected else []
+        return _return_planned([selected] if selected else [])
 
     @classmethod
     def _resolve_max_calls(cls, max_calls: int | None) -> int:

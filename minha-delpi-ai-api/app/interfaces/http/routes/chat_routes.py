@@ -2260,6 +2260,12 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         {"message": event.get("message", "")},
                     )
 
+                elif event_type == "activity":
+                    yield _sse(
+                        "activity",
+                        {"entry": event.get("entry", {})},
+                    )
+
                 elif event_type == "sources":
                     yield _sse("sources", {"sources": event.get("sources", [])})
 

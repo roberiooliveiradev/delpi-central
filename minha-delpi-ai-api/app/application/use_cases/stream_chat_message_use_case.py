@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import queue
 import threading
 import time
 from collections.abc import Iterator
@@ -176,33 +177,68 @@ class StreamChatMessageUseCase:
         agent_meta = workspace_context.get("agent")
         max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
 
-        prepared = self.turn_preparation_service.prepare(
-            message=message,
-            request=request,
-            session=session,
-            user_id=user_id,
-            workspace_context=workspace_context,
-            attachments=attachments,
-            previous_messages=previous_messages,
-            history_source=history_source,
-            build_tool_context=self._build_tool_context,
-            maybe_extend_tool_context=self._maybe_extend_tool_context,
-            prepare_history=self._prepare_history,
-            history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
-            fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
-            fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-            resolve_user_identity_answer=lambda msg: (
-                self._resolve_user_identity_answer(request.access_token, msg)
-                if request.access_token and ChatUserContextService.is_user_identity_question(msg)
-                else None
-            ),
-            resolve_capabilities_answer=lambda msg: (
-                self._resolve_capabilities_answer(workspace_context, msg)
-                if ChatCapabilitiesService.is_capability_inquiry(msg)
-                else None
-            ),
-            max_external_action_calls=max_tool_calls,
-        )
+        activity_queue: queue.Queue = queue.Queue()
+        prepared_box: dict = {}
+        prepare_error_box: dict = {}
+
+        def _on_stream_activity(entry: dict) -> None:
+            activity_queue.put(("activity", entry))
+
+        def _prepare_worker() -> None:
+            try:
+                prepared_box["value"] = self.turn_preparation_service.prepare(
+                    message=message,
+                    request=request,
+                    session=session,
+                    user_id=user_id,
+                    workspace_context=workspace_context,
+                    attachments=attachments,
+                    previous_messages=previous_messages,
+                    history_source=history_source,
+                    build_tool_context=self._build_tool_context,
+                    maybe_extend_tool_context=self._maybe_extend_tool_context,
+                    prepare_history=self._prepare_history,
+                    history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+                    fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+                    fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
+                    resolve_user_identity_answer=lambda msg: (
+                        self._resolve_user_identity_answer(request.access_token, msg)
+                        if request.access_token
+                        and ChatUserContextService.is_user_identity_question(msg)
+                        else None
+                    ),
+                    resolve_capabilities_answer=lambda msg: (
+                        self._resolve_capabilities_answer(workspace_context, msg)
+                        if ChatCapabilitiesService.is_capability_inquiry(msg)
+                        else None
+                    ),
+                    max_external_action_calls=max_tool_calls,
+                    on_stream_activity=_on_stream_activity,
+                )
+            except Exception as exc:
+                prepare_error_box["error"] = exc
+            finally:
+                activity_queue.put(("done", None))
+
+        threading.Thread(target=_prepare_worker, daemon=True).start()
+
+        while True:
+            kind, payload = activity_queue.get()
+
+            if kind == "activity":
+                yield {
+                    "type": "activity",
+                    "entry": payload,
+                }
+                continue
+
+            if kind == "done":
+                break
+
+        if prepare_error_box.get("error"):
+            raise prepare_error_box["error"]
+
+        prepared = prepared_box["value"]
 
         operational_optimize = prepared.operational_optimize
         analysis_mode = prepared.analysis_mode
@@ -355,6 +391,10 @@ class StreamChatMessageUseCase:
             }
 
         if direct_answer:
+            yield {
+                "type": "status",
+                "message": "Montando resposta a partir dos dados consultados...",
+            }
             answer_parts.append(direct_answer)
             if not persist_before_playback:
                 for chunk in ChatExternalActionDirectResponseService.iter_stream_chunks(
@@ -365,6 +405,11 @@ class StreamChatMessageUseCase:
                         "content": chunk,
                     }
         else:
+            yield {
+                "type": "status",
+                "message": "Gerando resposta em linguagem natural...",
+            }
+
             for token in self.llm_gateway.stream(llm_messages):
                 answer_parts.append(token)
                 if not persist_before_playback:
@@ -809,6 +854,7 @@ class StreamChatMessageUseCase:
         tool_context: dict,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        on_stream_activity=None,
     ) -> dict:
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
@@ -819,6 +865,18 @@ class StreamChatMessageUseCase:
         if isinstance(specialization, dict):
             allowed_tool_names = specialization.get("allowedTools")
 
+        if on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.think(
+                    target="passos adicionais (agentic)",
+                    detail="Verificando se ainda faltam ferramentas para responder.",
+                )
+            )
+
         return self.chat_agentic_tool_loop_service.extend_tool_context(
             user_id=request.user_id,
             access_token=request.access_token,
@@ -828,6 +886,7 @@ class StreamChatMessageUseCase:
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             conversation_context=conversation_context,
             previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
         )
 
     def _embedding_cache_stats(self) -> dict | None:
@@ -847,6 +906,7 @@ class StreamChatMessageUseCase:
         fast_path: bool = False,
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
+        on_stream_activity=None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -873,6 +933,7 @@ class StreamChatMessageUseCase:
             fast_path=fast_path,
             previous_messages=previous_messages,
             max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
