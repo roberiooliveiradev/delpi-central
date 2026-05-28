@@ -2351,6 +2351,20 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
 
 def _can_use_admin_debug() -> bool:
     """Gating: só usuários admin/superadmin podem receber payloads de debug."""
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
+    if core_user:
+        if bool(core_user.get("is_superadmin")):
+            return True
+
+        permissions = set(core_user.get("permissions") or [])
+        return bool(
+            CHAT_ADMIN_PERMISSION in permissions
+            or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+            or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+        )
+
     user = getattr(g, "current_user", None)
 
     if not user:
