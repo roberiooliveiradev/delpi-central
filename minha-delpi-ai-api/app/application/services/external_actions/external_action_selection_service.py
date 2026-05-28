@@ -226,6 +226,17 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if product_code and product_intent == ChatProductQueryIntent.ANALYSER:
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.ANALYSER,
+            )
+
+            if selected:
+                return selected
+
         if product_code and product_intent == ChatProductQueryIntent.DESCRIPTION:
             selected = self._select_product_action(
                 message,
@@ -1676,6 +1687,25 @@ class ExternalActionSelectionService:
 
                 if path == "/products/{code}":
                     value += 30
+
+                if "stock" in path or "structure" in path or "parents" in path:
+                    value -= 90
+
+                if "search" in path:
+                    value -= 100
+
+            elif intent == ChatProductQueryIntent.ANALYSER:
+                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
+                    value += 280
+
+                if "analyser" in haystack or "analyzer" in haystack:
+                    value += 60
+
+                if "/summary" in path:
+                    value -= 100
+
+                if path == "/products/{code}":
+                    value += 40
 
                 if "stock" in path or "structure" in path or "parents" in path:
                     value -= 90

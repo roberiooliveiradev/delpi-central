@@ -31,6 +31,7 @@ class ProductStructureSnapshot:
     product_code: str
     model: ProductStructureModel | None = None
     lines: list[BomComponentLine] = field(default_factory=list)
+    profile_lines: list[str] = field(default_factory=list)
 
 
 class ChatStructureComparisonService:
@@ -89,15 +90,23 @@ class ChatStructureComparisonService:
                 selected[1].model,
             )
 
+        if (
+            len(selected) >= 2
+            and selected[0].profile_lines
+            and selected[1].profile_lines
+        ):
+            return cls._render_profile_comparison(selected[0], selected[1])
+
         return cls._render_comparison(selected)
 
     @classmethod
     def _insufficient_data_answer(cls, codes: list[str], *, found: int) -> str:
         missing = ", ".join(codes[:4])
         return (
-            f"Para comparar com precisão, preciso das estruturas (BOM) de **{missing}** "
-            f"nesta conversa. Encontrei dados completos de {found} produto(s) no histórico. "
-            "Consulte cada código (ex.: «estrutura do 90260077») e peça a comparação novamente."
+            f"Para comparar com precisão, preciso da **ficha completa** ou da **estrutura (BOM)** "
+            f"de **{missing}** nesta conversa. Encontrei dados utilizáveis de {found} produto(s) "
+            "no histórico. Consulte cada código (ex.: «ficha completa do 10080047») e peça a "
+            "comparação novamente."
         )
 
     @classmethod
@@ -130,13 +139,13 @@ class ChatStructureComparisonService:
             if role != "assistant":
                 continue
 
-            for product_code, model, lines in cls._extract_from_assistant_message(
+            for product_code, model, lines, profile_lines in cls._extract_from_assistant_message(
                 message,
                 pending_product_code,
             ):
                 key = ChatProductQueryIntentService.normalize_product_code(product_code)
 
-                if not key or (not model and not lines):
+                if not key or (not model and not lines and not profile_lines):
                     continue
 
                 previous = snapshots.get(key)
@@ -148,10 +157,14 @@ class ChatStructureComparisonService:
                     if not lines and previous.lines:
                         lines = previous.lines
 
+                    if not profile_lines and previous.profile_lines:
+                        profile_lines = previous.profile_lines
+
                 snapshots[key] = ProductStructureSnapshot(
                     product_code=key,
                     model=model,
                     lines=lines,
+                    profile_lines=profile_lines,
                 )
 
                 if key not in snapshot_order:
@@ -180,9 +193,9 @@ class ChatStructureComparisonService:
             if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
                 continue
 
-            path = str(tool_meta.get("path") or "")
+            path = str(tool_meta.get("path") or "").lower()
 
-            if "/structure" not in path.lower():
+            if "/structure" not in path and "/analyser" not in path:
                 continue
 
             product_code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
@@ -190,10 +203,15 @@ class ChatStructureComparisonService:
             if not product_code:
                 continue
 
-            model = cls._model_from_tool_metadata(tool_meta)
-            lines = cls._lines_from_tool_metadata(tool_meta)
+            model = cls._model_from_tool_metadata(tool_meta) if "/structure" in path else None
+            lines = cls._lines_from_tool_metadata(tool_meta) if "/structure" in path else []
+            profile_lines = (
+                cls._profile_lines_from_tool_metadata(tool_meta)
+                if "/analyser" in path
+                else []
+            )
 
-            if not model and not lines:
+            if not model and not lines and not profile_lines:
                 continue
 
             key = ChatProductQueryIntentService.normalize_product_code(product_code)
@@ -206,10 +224,14 @@ class ChatStructureComparisonService:
                 if not lines and previous.lines:
                     lines = previous.lines
 
+                if not profile_lines and previous.profile_lines:
+                    profile_lines = previous.profile_lines
+
             snapshots[key] = ProductStructureSnapshot(
                 product_code=key,
                 model=model,
                 lines=lines,
+                profile_lines=profile_lines,
             )
 
             if key not in snapshot_order:
@@ -220,8 +242,10 @@ class ChatStructureComparisonService:
         cls,
         message,
         pending_product_code: str | None = None,
-    ) -> list[tuple[str, ProductStructureModel | None, list[BomComponentLine]]]:
-        results: list[tuple[str, ProductStructureModel | None, list[BomComponentLine]]] = []
+    ) -> list[tuple[str, ProductStructureModel | None, list[BomComponentLine], list[str]]]:
+        results: list[
+            tuple[str, ProductStructureModel | None, list[BomComponentLine], list[str]]
+        ] = []
         metadata = cls._message_metadata(message)
         tool_calls = metadata.get("toolCalls") or []
 
@@ -241,14 +265,23 @@ class ChatStructureComparisonService:
                 path = str(tool_meta.get("path") or "")
                 product_code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
 
-                if not product_code or "/structure" not in path.lower():
+                path_lower = path.lower()
+
+                if not product_code or (
+                    "/structure" not in path_lower and "/analyser" not in path_lower
+                ):
                     continue
 
-                model = cls._model_from_tool_metadata(tool_meta)
-                lines = cls._lines_from_tool_metadata(tool_meta)
+                model = cls._model_from_tool_metadata(tool_meta) if "/structure" in path_lower else None
+                lines = cls._lines_from_tool_metadata(tool_meta) if "/structure" in path_lower else []
+                profile_lines = (
+                    cls._profile_lines_from_tool_metadata(tool_meta)
+                    if "/analyser" in path_lower
+                    else []
+                )
 
-                if model or lines:
-                    results.append((product_code, model, lines))
+                if model or lines or profile_lines:
+                    results.append((product_code, model, lines, profile_lines))
 
         content = cls._message_field(message, "content")
 
@@ -263,9 +296,76 @@ class ChatStructureComparisonService:
                     product_code = user_codes[0] if len(user_codes) == 1 else None
 
                 if product_code:
-                    results.append((product_code, None, lines))
+                    results.append((product_code, None, lines, []))
 
         return results
+
+    @classmethod
+    def _profile_lines_from_tool_metadata(cls, metadata: dict) -> list[str]:
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            title = str(humanized.get("titulo") or "").strip()
+            lines = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line).strip()
+            ]
+
+            if title:
+                return [title, *lines]
+
+            if lines:
+                return lines
+
+        preview = str(metadata.get("responsePreview") or "").strip()
+
+        if preview and not preview.startswith("{"):
+            return [line.strip() for line in preview.splitlines() if line.strip()]
+
+        return []
+
+    @classmethod
+    def _render_profile_comparison(
+        cls,
+        left: ProductStructureSnapshot,
+        right: ProductStructureSnapshot,
+    ) -> str:
+        parts = [
+            "## Comparação entre produtos",
+            "",
+            f"### Produto {left.product_code}",
+            *[f"- {line}" for line in left.profile_lines[:12]],
+            "",
+            f"### Produto {right.product_code}",
+            *[f"- {line}" for line in right.profile_lines[:12]],
+            "",
+            "### Destaques",
+        ]
+
+        left_text = " ".join(left.profile_lines).lower()
+        right_text = " ".join(right.profile_lines).lower()
+
+        if left.product_code != right.product_code:
+            parts.append(
+                f"- Códigos comparados: **{left.product_code}** e **{right.product_code}**."
+            )
+
+        for label, token in (
+            ("Tipo", "tipo "),
+            ("Unidade", "unidade "),
+            ("Grupo", "grupo "),
+            ("Custo", "custo"),
+            ("Preço de compra", "preço de compra"),
+        ):
+            if token in left_text and token in right_text:
+                parts.append(f"- Ambos trazem informação de **{label}** na ficha.")
+
+        parts.append(
+            "\n_Comparação gerada a partir das fichas completas já consultadas nesta conversa._"
+        )
+
+        return "\n".join(parts)
 
     @classmethod
     def _model_from_tool_metadata(cls, metadata: dict) -> ProductStructureModel | None:

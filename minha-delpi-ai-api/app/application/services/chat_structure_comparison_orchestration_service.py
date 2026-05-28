@@ -49,7 +49,8 @@ class ChatStructureComparisonOrchestrationService:
         complete = [
             code
             for code in codes
-            if (snap := snapshots.get(code)) and snap.model is not None
+            if (snap := snapshots.get(code))
+            and (snap.model is not None or snap.profile_lines)
         ]
 
         if len(complete) >= 2:

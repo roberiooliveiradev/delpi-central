@@ -8,6 +8,7 @@ from app.domain.services.chat_message_normalization_service import (
 class ChatProductQueryIntent:
     DESCRIPTION = "description"
     SUMMARY = "summary"
+    ANALYSER = "analyser"
     STOCK = "stock"
     STRUCTURE = "structure"
     PARENTS = "parents"
@@ -38,6 +39,9 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_product_summary_question(normalized):
             return ChatProductQueryIntent.SUMMARY
+
+        if cls._looks_like_full_analyser_question(normalized):
+            return ChatProductQueryIntent.ANALYSER
 
         if cls._looks_like_description_question(normalized):
             return ChatProductQueryIntent.DESCRIPTION
@@ -271,6 +275,7 @@ class ChatProductQueryIntentService:
         segment_to_intent = {
             "stock": ChatProductQueryIntent.STOCK,
             "summary": ChatProductQueryIntent.SUMMARY,
+            "analyser": ChatProductQueryIntent.ANALYSER,
             "structure": ChatProductQueryIntent.STRUCTURE,
             "parents": ChatProductQueryIntent.PARENTS,
         }
@@ -517,6 +522,22 @@ class ChatProductQueryIntentService:
         ]
 
         return any(term in normalized for term in terms)
+
+    @classmethod
+    def _looks_like_full_analyser_question(cls, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in (
+                "ficha completa",
+                "analise completa",
+                "análise completa",
+                "analisador completo",
+                "analisador do produto",
+                "informacoes completas",
+                "informações completas",
+                "tudo sobre o produto",
+            )
+        )
 
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:

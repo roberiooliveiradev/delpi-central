@@ -43,6 +43,15 @@ def test_detect_full_analyser_not_summary():
     )
 
 
+def test_detect_analyser_intent():
+    assert (
+        ChatProductQueryIntentService.detect(
+            "traga a analise completa dos produtos 10080047 e 10080055"
+        )
+        == ChatProductQueryIntent.ANALYSER
+    )
+
+
 def test_resolve_product_code_from_conversation_context():
     code = ChatProductQueryIntentService.resolve_product_code(
         "busque o estoque desse produto",

@@ -20,9 +20,6 @@ class ChatAnalysisIntentService:
         "diferenc",
         "insight",
         "apontament",
-        "analis",
-        "analise",
-        "análise",
         "contrast",
         "semelhan",
         "similaridad",
@@ -60,6 +57,9 @@ class ChatAnalysisIntentService:
         if not normalized:
             return False
 
+        if cls._looks_like_single_product_fetch(normalized):
+            return False
+
         if any(term in normalized for term in cls._COMPARISON_TERMS):
             return True
 
@@ -75,6 +75,24 @@ class ChatAnalysisIntentService:
             )
         ):
             return True
+
+        return False
+
+    @classmethod
+    def _looks_like_single_product_fetch(cls, normalized: str) -> bool:
+        if any(
+            term in normalized
+            for term in (
+                "ficha completa",
+                "analise completa",
+                "análise completa",
+                "informacoes completas",
+                "informações completas",
+                "analisador do produto",
+                "analisador completo",
+            )
+        ):
+            return "compar" not in normalized and "versus" not in normalized
 
         return False
 
