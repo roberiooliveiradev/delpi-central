@@ -39,3 +39,7 @@ build/
 # OS
 .DS_Store
 Thumbs.dbdist/
+
+# Infra — overrides locais por desenvolvedor (não commitar)
+infra/docker-compose.local.yml
+infra/docker-compose.override.yml

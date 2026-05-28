@@ -165,21 +165,22 @@ page, page_size          (tabela de items)
 
 ---
 
-### Fase 2 — Plugin MFE (esqueleto deployável)
+### Fase 2 — Plugin MFE (esqueleto deployável) ✅
 
 **Objetivo:** plugin visível no Portal com página mínima consumindo a API.
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
-| Pasta `plugins/eficiencia-fabril/` | Scaffold a partir de `dashboard-lmps` | Pendente |
-| Vite + Federation | `base: /apps/eficiencia-fabril/`, `remoteEntry.js` | Pendente |
-| `bootstrap.tsx` | `mount` / `unmount` / `updateRoute` | Pendente |
-| `httpClient.ts` | JWT via `getAccessToken` | Pendente |
-| `eficienciaFabrilApi.ts` | cliente do endpoint dashboard | Pendente |
-| Manifesto | `eficiencia-fabril.manifest.json` v `0.1.0` | Pendente |
-| Dockerfile | build nginx (padrão dashboards) | Pendente |
-| Compose dev | serviço `eficiencia-fabril`, container `delpi-eficiencia-fabril` | Pendente |
-| Script registro | `scripts/register-manifest.sh` | Pendente |
+| Pasta `plugins/eficiencia-fabril/` | Scaffold a partir de `dashboard-production` | ✅ |
+| Vite + Federation | `base: /apps/eficiencia-fabril/`, `remoteEntry.js` | ✅ |
+| `bootstrap.tsx` | `mount` / `unmount` / `updateRoute` | ✅ |
+| `httpClient.ts` | JWT via `getAccessToken` | ✅ |
+| `eficienciaFabrilApi.ts` | cliente do endpoint dashboard | ✅ |
+| Manifesto | `eficiencia-fabril.manifest.json` v `0.1.0` | ✅ |
+| Dockerfile | build nginx (padrão dashboards) | ✅ |
+| Compose dev | serviço `eficiencia-fabril`, container `delpi-eficiencia-fabril` | ✅ |
+| Script registro | `plugins/eficiencia-fabril/scripts/register-manifest.sh` | ✅ |
+| CI / homologação | `scripts/ci/build-eficiencia-fabril.sh`, `check-eficiencia-fabril.sh` | ✅ |
 
 **Critério de pronto:**
 

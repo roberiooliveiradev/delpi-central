@@ -33,6 +33,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
 | `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
+| `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
@@ -47,6 +48,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 |---|---|
 | Indicadores Estratégicos | `/apps/strategic-indicators-api/strategic-indicators/*` |
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
+| Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (PPM, kaizen, 5S, NC TOTVS) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
