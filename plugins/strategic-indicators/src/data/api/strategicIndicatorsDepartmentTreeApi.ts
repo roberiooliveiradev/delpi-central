@@ -2,6 +2,8 @@ import type {
   StrategicIndicatorsDepartmentTreeResponse,
   StrategicIndicatorsTreeSnapshotResponse,
   StrategicIndicatorsTreeTrendsResponse,
+  StrategicIndicatorsTreeLoadJobCreateResponse,
+  StrategicIndicatorsTreeLoadJobStatusResponse,
 } from "../types/departmentTreeBundle";
 import { buildStrategicIndicatorsApiError } from "./strategicIndicatorsApiErrors";
 import { STRATEGIC_INDICATORS_API_BASE } from "./strategicIndicatorsApiBase";
@@ -165,4 +167,67 @@ export async function fetchDepartmentTreeTrends({
   }
 
   return response.json() as Promise<StrategicIndicatorsTreeTrendsResponse>;
+}
+
+export type CreateTreeLoadJobParams = FetchStrategicIndicatorsDepartmentTreeParams;
+
+export async function createDepartmentTreeLoadJob({
+  viewMode = "consolidated",
+  branch,
+  competence,
+  startDate,
+  endDate,
+  months = 3,
+  getAccessToken,
+  signal,
+}: CreateTreeLoadJobParams): Promise<StrategicIndicatorsTreeLoadJobCreateResponse> {
+  const response = await fetch(`${BASE_URL}/departments/tree/load-job`, {
+    method: "POST",
+    headers: buildHeaders(getAccessToken),
+    signal,
+    body: JSON.stringify({
+      view_mode: viewMode,
+      branch,
+      competence,
+      start_date: startDate,
+      end_date: endDate,
+      months,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await buildStrategicIndicatorsApiError(response, {
+      surface: "Snapshot da árvore",
+      route: "/departments/tree/load-job",
+      method: "POST",
+    });
+  }
+
+  return response.json() as Promise<StrategicIndicatorsTreeLoadJobCreateResponse>;
+}
+
+export async function fetchStrategicIndicatorsJobStatus({
+  jobId,
+  getAccessToken,
+  signal,
+}: {
+  jobId: string;
+  getAccessToken?: GetToken;
+  signal?: AbortSignal;
+}): Promise<StrategicIndicatorsTreeLoadJobStatusResponse> {
+  const response = await fetch(`${BASE_URL}/jobs/${jobId}`, {
+    method: "GET",
+    headers: buildHeaders(getAccessToken),
+    signal,
+  });
+
+  if (!response.ok) {
+    throw await buildStrategicIndicatorsApiError(response, {
+      surface: "Snapshot da árvore",
+      route: "/jobs/{job_id}",
+      method: "GET",
+    });
+  }
+
+  return response.json() as Promise<StrategicIndicatorsTreeLoadJobStatusResponse>;
 }

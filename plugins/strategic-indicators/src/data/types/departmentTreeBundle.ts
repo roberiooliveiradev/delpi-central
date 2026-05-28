@@ -67,3 +67,19 @@ export type StrategicIndicatorsTreeTrendsResponse = {
   scopes: StrategicIndicatorsTreeTrendsScopeApi[];
   meta?: { source?: string; scope_count?: number };
 };
+
+export type StrategicIndicatorsTreeLoadJobCreateResponse = {
+  job_id: string;
+  state: "queued" | "running" | "succeeded" | "failed";
+  phase: "snapshot" | "trends" | "done" | "error";
+  progress_pct: number;
+  message: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StrategicIndicatorsTreeLoadJobStatusResponse = StrategicIndicatorsTreeLoadJobCreateResponse & {
+  snapshot?: StrategicIndicatorsTreeSnapshotResponse | null;
+  trends?: StrategicIndicatorsTreeTrendsResponse | null;
+  error?: string | null;
+};

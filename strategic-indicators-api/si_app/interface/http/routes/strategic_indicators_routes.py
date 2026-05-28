@@ -1,11 +1,14 @@
 import logging
 
-from fastapi import APIRouter, HTTPException, Request, Query
+from fastapi import APIRouter, HTTPException, Request, Query, Body
 
 from delpi_auth.authorization import require_permission
 
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
     invalidate_strategic_indicators_snapshot_cache,
+)
+from si_app.application.services.strategic_indicators.tree_load_jobs_service import (
+    get_tree_load_jobs_service,
 )
 from si_app.interface.http.si_read_route_support import run_logged_read_route
 
@@ -1081,6 +1084,93 @@ def get_strategic_indicators_departments_tree_snapshot(
             status_code=500,
             detail=f"Falha ao carregar snapshot da árvore de departamentos: {exc}",
         ) from exc
+
+
+@router.post("/departments/tree/load-job")
+@require_permission("strategic-indicators.view")
+def create_departments_tree_load_job(
+    view_mode: str = Body("consolidated"),
+    branch: str | None = Body(None),
+    competence: str | None = Body(None),
+    start_date: str | None = Body(None),
+    end_date: str | None = Body(None),
+    months: int = Body(3, ge=2, le=12),
+):
+    """
+    Cria job assíncrono para carregar árvore (snapshot → trends) com progresso.
+
+    Retorna job_id e status inicial; o frontend faz polling em /jobs/{job_id}.
+    """
+    try:
+        from si_app.application.use_cases.strategic_indicators.get_departments_tree_snapshot_use_case import (
+            GetDepartmentsTreeSnapshotRequest,
+        )
+        from si_app.application.use_cases.strategic_indicators.get_departments_tree_trends_use_case import (
+            GetDepartmentsTreeTrendsRequest,
+        )
+
+        jobs = get_tree_load_jobs_service()
+
+        snapshot_uc = build_get_departments_tree_snapshot_use_case()
+        trends_uc = build_get_departments_tree_trends_use_case()
+
+        status = jobs.create_and_start(
+            snapshot_fn=lambda: snapshot_uc.execute(
+                GetDepartmentsTreeSnapshotRequest(
+                    view_mode=view_mode,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            ),
+            trends_fn=lambda: trends_uc.execute(
+                GetDepartmentsTreeTrendsRequest(
+                    view_mode=view_mode,
+                    branch=branch,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
+                    months=months,
+                )
+            ),
+        )
+
+        return {
+            "job_id": status.job_id,
+            "state": status.state,
+            "phase": status.phase,
+            "progress_pct": status.progress_pct,
+            "message": status.message,
+            "created_at": status.created_at,
+            "updated_at": status.updated_at,
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Falha ao iniciar job da árvore de departamentos: {exc}",
+        ) from exc
+
+
+@router.get("/jobs/{job_id}")
+@require_permission("strategic-indicators.view")
+def get_strategic_indicators_job_status(job_id: str):
+    jobs = get_tree_load_jobs_service()
+    status = jobs.get(job_id)
+    if status is None:
+        raise HTTPException(status_code=404, detail="Job não encontrado.")
+    return {
+        "job_id": status.job_id,
+        "state": status.state,
+        "phase": status.phase,
+        "progress_pct": status.progress_pct,
+        "message": status.message,
+        "created_at": status.created_at,
+        "updated_at": status.updated_at,
+        "snapshot": status.snapshot,
+        "trends": status.trends,
+        "error": status.error,
+    }
 
 
 @router.get("/departments/tree/trends")
