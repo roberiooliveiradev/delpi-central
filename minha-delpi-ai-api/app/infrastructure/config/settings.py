@@ -152,6 +152,9 @@ class Settings:
     CHAT_OPERATIONAL_FAST_PATH_ENABLED = (
         os.getenv("CHAT_OPERATIONAL_FAST_PATH_ENABLED", "true").lower() == "true"
     )
+    CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED = (
+        os.getenv("CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED", "true").lower() == "true"
+    )
     CHAT_USER_CONTEXT_ENABLED = (
         os.getenv("CHAT_USER_CONTEXT_ENABLED", "true").lower() == "true"
     )

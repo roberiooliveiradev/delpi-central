@@ -30,6 +30,12 @@ def _arquiteto_chunk() -> dict:
     }
 
 
+def test_normas_tecnicas_filename_rejected_even_with_delpi_in_content():
+    chunk = _normas_chunk()
+    chunk["content"] = "**Fonte:** DELPI\n**Origem:** ENGENHARIA\n## 1012 · Tubo Isolante"
+    assert ChatAssistantIdentityService.is_identity_relevant_chunk(chunk) is False
+
+
 @pytest.mark.parametrize(
     "chunk,expected",
     [

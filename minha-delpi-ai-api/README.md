@@ -92,7 +92,9 @@ docs/              # documentação técnica
 | `LLM_COST_TABLE_JSON` | Tabela de custo fallback (env) |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Limiar de assertividade nos testes RAG (admin) |
 | `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
-| `RAG_IDENTITY_QUESTION_MIN_SCORE` | Score mínimo para perguntas de identidade do assistente (default `0.22`); chunks passam por `is_identity_relevant_chunk` |
+| `RAG_IDENTITY_QUESTION_MIN_SCORE` | Score mínimo para perguntas de identidade (modo RAG+LLM legado) |
+| `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — identidade do assistente via `identity.json`, sem LLM |
+| `CHAT_PERSIST_BEFORE_PLAYBACK` | `false` recomendado em CPU — primeiro token SSE mais cedo |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
 | `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |

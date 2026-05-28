@@ -194,6 +194,15 @@ class ChatTurnPreparationService:
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
         )
+        assistant_identity_direct = None
+        if (
+            assistant_identity_question
+            and Settings.CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED
+        ):
+            assistant_identity_direct = ChatAssistantIdentityService.build_direct_answer(
+                message=message,
+                workspace_context=workspace_context,
+            )
 
         skip_rag = (
             (
@@ -202,10 +211,8 @@ class ChatTurnPreparationService:
             )
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
+            or bool(assistant_identity_direct)
         )
-
-        if assistant_identity_question:
-            skip_rag = False
 
         if canvas_action:
             direct_answer = canvas_action.answer
@@ -246,6 +253,10 @@ class ChatTurnPreparationService:
                 direct_answer = caps_direct
                 skip_rag = True
 
+        if not direct_answer and assistant_identity_direct:
+            direct_answer = assistant_identity_direct
+            skip_rag = True
+
         if skip_rag:
             rag = {"context": "", "sources": []}
         else:
@@ -270,19 +281,6 @@ class ChatTurnPreparationService:
                     else None
                 ),
             )
-
-        if (
-            assistant_identity_question
-            and not direct_answer
-            and not str(rag.get("context") or "").strip()
-        ):
-            identity_direct = ChatAssistantIdentityService.build_direct_answer(
-                message=message,
-                workspace_context=workspace_context,
-            )
-            if identity_direct:
-                direct_answer = identity_direct
-                rag = {"context": "", "sources": []}
 
         sources = rag["sources"]
         pipeline_timings.mark("rag_done")

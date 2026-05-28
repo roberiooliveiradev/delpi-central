@@ -49,12 +49,11 @@ Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `Chat
 
 Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
 
-Validação de identidade do assistente («quem te criou?»):
+Validação de identidade do assistente («quem te criou?»), com atalho direto (default):
 
-- `pipeline.skipRag === false` (RAG foi consultado).
-- `rag.ragContextText` preenchido **ou** `pipeline` com resposta direta (`directResponse` / sem chamada LLM no histórico).
-- `rag.sources` pode estar **vazio** mesmo com texto no prompt: fontes globais/admin não são expostas ao cliente; nesse caso pode aparecer `rag.sourcesNote`.
-- Se `ragContextText` trouxer só normas de produto, o filtro de identidade descarta os chunks — espere fallback canônico (sem narrativa ChatGPT/2019).
+- `pipeline.skipRag === true`, `rag.ragContextText` vazio, resposta em poucos segundos.
+- `directResponse: true` no evento `done` (stream) ou metadado equivalente.
+- Para homologar RAG+LLM: `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=false` no `.env` da API.
 
 Arquitetura: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#diagnóstico-admin-admindebug).
 
@@ -257,7 +256,7 @@ Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `
 |------------------|-----|-----------------|
 | Operacional (produto, estoque, KPI) | Pode ser omitido (fast path) | Action direta ou LLM curto |
 | Identidade do **usuário** («quem sou eu») | Não | Resposta direta via Core API / contexto |
-| Identidade do **assistente** («quem te criou») | **Sim** (`RAG_IDENTITY_QUESTION_MIN_SCORE` + filtro `is_identity_relevant_chunk`) | LLM + policy se houver chunks sobre o chat; senão resposta canônica `identity.json` |
+| Identidade do **assistente** («quem te criou») | **Não** (default) | Resposta canônica `identity.json` via `build_direct_answer`; `pipeline.skipRag: true`, `directResponse: true` |
 | Capacidades («consegue buscar por grupo?») | Não | Resposta direta `ChatCapabilitiesService` |
 
 Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
