@@ -55,6 +55,7 @@ class GetStrategicIndicatorsUseCase:
         *,
         previous_snapshot: StrategicIndicatorsPeriodSnapshot | None = None,
         catalog=None,
+        compact: bool = False,
     ) -> GetStrategicIndicatorsResponse:
         departments_by_id = {
             item.department_id: item
@@ -81,7 +82,9 @@ class GetStrategicIndicatorsUseCase:
                     goal_value=float(item.goal_value) if item.goal_value is not None else 0.0,
                     goal_periodicity=item.goal_periodicity,
                     goal_mode=getattr(item, "goal_mode", "standard"),
-                    monthly_targets=getattr(item, "monthly_targets", []) or [],
+                    monthly_targets=[]
+                    if compact
+                    else (getattr(item, "monthly_targets", []) or []),
                     scope_type=item.scope_type,
                     performance_direction=getattr(
                         item,

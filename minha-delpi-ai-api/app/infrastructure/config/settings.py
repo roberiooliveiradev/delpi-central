@@ -34,6 +34,10 @@ class Settings:
             os.getenv("RAG_ASSERTIVENESS_MIN_SCORE", "0.35"),
         )
     )
+    # Perguntas meta («quem te criou», «o que você é») costumam ter score semântico mais baixo.
+    RAG_IDENTITY_QUESTION_MIN_SCORE = float(
+        os.getenv("RAG_IDENTITY_QUESTION_MIN_SCORE", "0.22"),
+    )
 
     OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")

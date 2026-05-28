@@ -11,9 +11,12 @@ import {
   resolveDepartmentTreeScopes,
 } from "../../data/departmentTreeScopes";
 import {
+  createDepartmentTreeLoadJob,
   fetchDepartmentTreeSnapshot,
   fetchDepartmentTreeTrends,
+  fetchStrategicIndicatorsJobStatus,
 } from "../../data/api/strategicIndicatorsDepartmentTreeApi";
+import type { StrategicIndicatorsTreeSnapshotResponse } from "../../data/types/departmentTreeBundle";
 import {
   writeDepartmentsReadCache,
   writeIndicatorsReadCache,
@@ -35,18 +38,41 @@ import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
 import { StrategicIndicatorsApiError } from "../../data/errors/strategicIndicatorsError";
 
+const TREE_JOB_POLL_MS = 1500;
+const TREE_JOB_MAX_POLLS = 400;
+
 function isGatewayTimeoutError(error: unknown): boolean {
   if (error instanceof StrategicIndicatorsApiError) {
     const status = error.view.context.httpStatus;
-    if (status === 504) return true;
+    if (status === 504 || status === 524) return true;
     const raw = (error.view.rawMessage ?? "").toLowerCase();
-    return raw.includes("504") || raw.includes("timed out") || raw.includes("timeout");
+    return (
+      raw.includes("504") ||
+      raw.includes("524") ||
+      raw.includes("timed out") ||
+      raw.includes("timeout")
+    );
   }
   if (error instanceof Error) {
     const raw = error.message.toLowerCase();
-    return raw.includes("504") || raw.includes("timed out") || raw.includes("timeout");
+    return (
+      raw.includes("504") ||
+      raw.includes("524") ||
+      raw.includes("timed out") ||
+      raw.includes("timeout")
+    );
   }
   return false;
+}
+
+function jobProgressToRequest(progressPct: number): RequestProgress {
+  if (progressPct >= 100) {
+    return { completed: 2, total: 2 };
+  }
+  if (progressPct >= 55) {
+    return { completed: 1, total: 2 };
+  }
+  return { completed: 0, total: 2 };
 }
 
 async function sleep(ms: number, signal?: AbortSignal) {
@@ -214,11 +240,94 @@ export function useStrategicIndicatorsDepartmentTree({
       setRequestProgress({ completed: 1, total: 2 });
     };
 
+    const finishWithTrends = (
+      snapshot: StrategicIndicatorsTreeSnapshotResponse,
+      trends: Awaited<ReturnType<typeof fetchDepartmentTreeTrends>>,
+    ) => {
+      setError(null);
+      const enrichedModel = narrowDepartmentTreeModel(
+        mergeTreeTrendsIntoModel(adaptTreeSnapshotToModel(snapshot), trends),
+        viewMode,
+        branch,
+      );
+      setModel(enrichedModel);
+      setStrategicIndicatorsCachedValue(cacheKey, { model: enrichedModel });
+      setRequestProgress({ completed: 2, total: 2 });
+    };
+
+    const loadViaBackgroundJob = async (): Promise<boolean> => {
+      const created = await createDepartmentTreeLoadJob({
+        ...fetchParams,
+        months,
+      });
+
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
+        return true;
+      }
+
+      let snapshotApplied = false;
+      let lastSnapshot: StrategicIndicatorsTreeSnapshotResponse | null = null;
+
+      for (let poll = 0; poll < TREE_JOB_MAX_POLLS; poll += 1) {
+        if (controller.signal.aborted) {
+          return true;
+        }
+
+        if (poll > 0) {
+          await sleep(TREE_JOB_POLL_MS, controller.signal);
+        }
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return true;
+        }
+
+        const status = await fetchStrategicIndicatorsJobStatus({
+          jobId: created.job_id,
+          getAccessToken: token,
+          signal: controller.signal,
+        });
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return true;
+        }
+
+        setRequestProgress(jobProgressToRequest(status.progress_pct));
+
+        if (status.snapshot) {
+          lastSnapshot = status.snapshot;
+          if (!snapshotApplied) {
+            snapshotApplied = true;
+            applySnapshotToUi(status.snapshot);
+          }
+        }
+
+        if (status.state === "succeeded") {
+          const snapshotPayload = status.snapshot ?? lastSnapshot;
+          if (!snapshotPayload) {
+            throw new Error("Job concluído sem snapshot da árvore.");
+          }
+          if (status.trends) {
+            finishWithTrends(snapshotPayload, status.trends);
+          }
+          return true;
+        }
+
+        if (status.state === "failed") {
+          throw new Error(
+            status.error ?? status.message ?? "Falha no job da árvore departamental.",
+          );
+        }
+      }
+
+      throw new Error(
+        "Tempo esgotado aguardando o processamento da árvore departamental.",
+      );
+    };
+
     try {
       let snapshotApplied = false;
 
-      let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
-        null;
+      let snapshot: StrategicIndicatorsTreeSnapshotResponse | null = null;
       let lastSnapshotError: unknown = null;
 
       for (let attempt = 0; attempt < 2; attempt++) {
@@ -232,6 +341,13 @@ export function useStrategicIndicatorsDepartmentTree({
             break;
           }
           await sleep(1200, controller.signal);
+        }
+      }
+
+      if (!snapshot && isGatewayTimeoutError(lastSnapshotError)) {
+        const handled = await loadViaBackgroundJob();
+        if (handled) {
+          return;
         }
       }
 
@@ -258,6 +374,12 @@ export function useStrategicIndicatorsDepartmentTree({
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;
         }
+        if (isGatewayTimeoutError(trendsErr)) {
+          const handled = await loadViaBackgroundJob();
+          if (handled) {
+            return;
+          }
+        }
         setRequestProgress({ completed: 2, total: 2 });
         setError(
           captureStrategicIndicatorsError(trendsErr, {
@@ -268,40 +390,14 @@ export function useStrategicIndicatorsDepartmentTree({
             branch: branch ?? null,
           }),
         );
+        return;
       }
 
       if (requestId !== requestIdRef.current || controller.signal.aborted) {
         return;
       }
 
-      if (trends) {
-        setRequestProgress({ completed: 2, total: 2 });
-      }
-
-      if (requestId !== requestIdRef.current) return;
-
-      if (!snapshot) {
-        throw new Error("Falha ao carregar snapshot da árvore.");
-      }
-
-      if (!snapshotApplied) {
-        applySnapshotToUi(snapshot);
-      }
-
-      if (!trends) {
-        return;
-      }
-
-      setError(null);
-
-      const enrichedModel = narrowDepartmentTreeModel(
-        mergeTreeTrendsIntoModel(adaptTreeSnapshotToModel(snapshot), trends),
-        viewMode,
-        branch,
-      );
-
-      setModel(enrichedModel);
-      setStrategicIndicatorsCachedValue(cacheKey, { model: enrichedModel });
+      finishWithTrends(snapshot, trends);
     } catch (err) {
       if (requestId !== requestIdRef.current || controller.signal.aborted) {
         return;

@@ -16,6 +16,10 @@ _catalog_cache: TtlCache[Any] = TtlCache(
     ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
 )
 
+_catalog_fingerprint_cache: TtlCache[str] = TtlCache(
+    ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
+)
+
 
 def measurements_cache_key(
     *,
@@ -35,6 +39,14 @@ def measurements_cache_key(
             branch or "",
         ]
     )
+
+
+def get_catalog_fingerprint(cache_key: str) -> str | None:
+    return _catalog_fingerprint_cache.get(cache_key)
+
+
+def set_catalog_fingerprint(cache_key: str, fingerprint: str) -> None:
+    _catalog_fingerprint_cache.set(cache_key, fingerprint)
 
 
 def catalog_cache_key(
@@ -80,6 +92,7 @@ def invalidate_strategic_indicators_snapshot_cache(
 
     _measurements_cache.invalidate_all()
     _catalog_cache.invalidate_all()
+    _catalog_fingerprint_cache.invalidate_all()
     invalidate_lmp_dashboard_cache()
     invalidate_lmp_dashboard_summary_cache()
 

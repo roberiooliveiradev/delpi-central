@@ -83,6 +83,12 @@ class Settings:
         str(_get_env("SI_CALCULATION_SNAPSHOTS_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    SI_PERSIST_CALCULATION_SNAPSHOTS_ON_READ: bool = (
+        str(
+            _get_env("SI_PERSIST_CALCULATION_SNAPSHOTS_ON_READ", default="false") or "false"
+        ).lower()
+        in {"1", "true", "yes", "on"}
+    )
     SI_RUN_MIGRATIONS_ON_STARTUP: bool = (
         str(_get_env("SI_RUN_MIGRATIONS_ON_STARTUP", default="false") or "false").lower()
         in {"1", "true", "yes", "on"}

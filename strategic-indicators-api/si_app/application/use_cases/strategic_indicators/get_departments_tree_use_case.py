@@ -196,12 +196,15 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
             current,
             previous_snapshot=previous,
             catalog=catalog,
+            compact=True,
         )
-        return self._serialize_indicators_response(response)
+        return self._serialize_indicators_response(response, compact=True)
 
     @staticmethod
     def _serialize_indicators_response(
         result: GetStrategicIndicatorsResponse,
+        *,
+        compact: bool = False,
     ) -> dict:
         return {
             "items": [
@@ -217,17 +220,23 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
                     else None,
                     "goal_periodicity": item.goal_periodicity,
                     "goal_mode": getattr(item, "goal_mode", "standard"),
-                    "monthly_targets": [
-                        {
-                            **target,
-                            "target_value": float(target["target_value"])
-                            if target.get("target_value") is not None
-                            else None,
+                    **(
+                        {}
+                        if compact
+                        else {
+                            "monthly_targets": [
+                                {
+                                    **target,
+                                    "target_value": float(target["target_value"])
+                                    if target.get("target_value") is not None
+                                    else None,
+                                }
+                                if isinstance(target, dict)
+                                else target
+                                for target in (getattr(item, "monthly_targets", []) or [])
+                            ],
                         }
-                        if isinstance(target, dict)
-                        else target
-                        for target in (getattr(item, "monthly_targets", []) or [])
-                    ],
+                    ),
                     "scope_type": item.scope_type,
                     "performance_direction": getattr(
                         item,

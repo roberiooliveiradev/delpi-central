@@ -59,6 +59,12 @@ function detectCauses(technicalDetail: string): string[] {
     causes.push("A requisição excedeu o tempo limite de resposta da API.");
   }
 
+  if (normalized.includes("524")) {
+    causes.push(
+      "O gateway (Cloudflare) encerrou a conexão antes da API terminar o cálculo; o carregamento em segundo plano deve retomar automaticamente.",
+    );
+  }
+
   if (
     normalized.includes("connection") ||
     normalized.includes("network") ||
@@ -75,8 +81,12 @@ function detectCauses(technicalDetail: string): string[] {
     causes.push("Usuário sem permissão para acessar este recurso do módulo.");
   }
 
-  if (normalized.includes("502") || normalized.includes("503")) {
-    causes.push("API Indicadores Estratégicos indisponível ou reiniciando.");
+  if (
+    normalized.includes("502") ||
+    normalized.includes("503") ||
+    normalized.includes("504")
+  ) {
+    causes.push("API Indicadores Estratégicos indisponível, reiniciando ou com resposta lenta.");
   }
 
   if (
