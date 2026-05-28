@@ -31,10 +31,15 @@ export function AdminShellTopbar({
         </div>
 
         <div className="mdc-admin-topbar__actions">
-          <button type="button" onClick={onRefresh} disabled={isLoading}>
+          <button
+            type="button"
+            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
             Atualizar
           </button>
-          <button type="button" onClick={onBack}>
+          <button type="button" className="mdc-chat-ws-outline-btn" onClick={onBack}>
             Voltar ao chat
           </button>
         </div>

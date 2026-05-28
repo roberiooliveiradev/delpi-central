@@ -155,18 +155,7 @@
 
 .mdc-admin-metrics-tab__intelligence-form label {
   display: grid;
-  gap: var(--mdc-space-2);
-  font-size: 0.875rem;
-  color: var(--mdc-text-muted);
-}
-
-.mdc-admin-metrics-tab__intelligence-form input[type="number"] {
-  width: 100%;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-surface);
-  color: var(--mdc-text);
+  gap: 0.4rem;
 }
 
 .mdc-admin-metrics-tab__checkbox {

@@ -86,13 +86,6 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-knowledge-documents__pagination button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
 @media (max-width: 920px) {
   .mdc-knowledge-documents__header {
     align-items: stretch;

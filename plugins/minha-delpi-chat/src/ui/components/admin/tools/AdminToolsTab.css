@@ -39,16 +39,6 @@
   line-height: 1.45;
 }
 
-.mdc-admin-tools-tab__hero button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  border-color: var(--mdc-primary);
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.9rem;
-}
-
 .mdc-admin-tools-tab__error {
   border: 1px solid var(--mdc-danger);
   border-radius: var(--mdc-radius-lg);

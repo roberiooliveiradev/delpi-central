@@ -36,19 +36,6 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-admin-topbar__actions button {
-  min-height: 2.25rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.45rem 0.85rem;
-}
-
-.mdc-admin-topbar__actions button:first-child {
-  border-color: var(--mdc-primary);
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-}
-
 .mdc-admin-tabs {
   display: flex;
   align-items: center;
@@ -72,7 +59,10 @@
   border-radius: 999px;
   background: transparent;
   color: var(--mdc-text-muted);
-  font-weight: 800;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
   line-height: 1;
   padding: 0.45rem 0.78rem;
   white-space: nowrap;
@@ -80,14 +70,14 @@
 
 .mdc-admin-tabs button:hover:not(:disabled) {
   color: var(--mdc-primary);
-  background: var(--mdc-bg-soft);
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
   box-shadow: none;
 }
 
 .mdc-admin-tabs button.is-active {
   background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  box-shadow: var(--mdc-elevation-tab-active);
+  color: var(--mdc-on-primary);
+  box-shadow: none;
 }
 
 @media (max-width: 1023px) {
@@ -100,7 +90,8 @@
     width: 100%;
   }
 
-  .mdc-admin-topbar__actions button {
+  .mdc-admin-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-admin-topbar__actions .mdc-chat-ws-outline-btn {
     flex: 1 1 auto;
     min-width: 0;
   }
@@ -130,7 +121,8 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .mdc-admin-topbar__actions button {
+  .mdc-admin-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-admin-topbar__actions .mdc-chat-ws-outline-btn {
     width: 100%;
   }
 }

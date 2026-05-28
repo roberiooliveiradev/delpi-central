@@ -145,14 +145,25 @@
 .mdc-admin-evaluations__score button {
   min-width: 2.4rem;
   min-height: 2.4rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
   border-radius: 999px;
-  font-weight: 800;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+.mdc-admin-evaluations__score button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
+  color: var(--mdc-primary);
 }
 
 .mdc-admin-evaluations__score button.is-active {
-  background: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
-  border-color: var(--mdc-primary);
-  color: var(--mdc-primary);
+  border-color: transparent;
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary);
 }
 
 .mdc-admin-evaluations__suggestions {
@@ -181,10 +192,6 @@
 
 .mdc-admin-evaluations__detail > button {
   justify-self: start;
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.9rem;
 }
 
 @media (max-width: 1023px) {

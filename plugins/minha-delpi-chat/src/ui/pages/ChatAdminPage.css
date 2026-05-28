@@ -1,4 +1,5 @@
 @import "../layout/workspace-responsive.css";
+@import "../layout/chat-workspace-shared.css";
 @import "../components/admin/shared/admin-shared.css";
 
 .minha-delpi-chat.mdc-admin-root {

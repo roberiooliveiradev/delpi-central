@@ -28,29 +28,14 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-admin-simulate__form textarea,
-.mdc-admin-simulate__form select {
-  width: 100%;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  padding: 0.75rem;
-  font: inherit;
-}
-
 .mdc-admin-simulate__checkbox {
   display: flex !important;
   align-items: center;
   gap: 0.5rem;
 }
 
-.mdc-admin-simulate__form button {
+.mdc-admin-simulate__form > button {
   justify-self: start;
-  border: 0;
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-primary);
-  color: var(--mdc-on-primary);
-  padding: 0.7rem 1rem;
-  cursor: pointer;
 }
 
 .mdc-admin-simulate__error {

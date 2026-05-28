@@ -41,15 +41,8 @@
   resize: vertical;
 }
 
-.mdc-guideline-editor-panel button {
+.mdc-guideline-editor-panel > button {
   justify-self: start;
-  min-height: 2.35rem;
-  border-color: var(--mdc-primary);
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
 }
 
 .mdc-guideline-editor-panel__header {
@@ -57,14 +50,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--mdc-space-3);
-}
-
-.mdc-guideline-editor-panel__ghost {
-  min-height: 2rem;
-  border-color: var(--mdc-card-border);
-  background: transparent;
-  color: var(--mdc-text-muted);
-  padding: 0.4rem 0.7rem;
 }
 
 .mdc-guideline-editor-panel__notice {
