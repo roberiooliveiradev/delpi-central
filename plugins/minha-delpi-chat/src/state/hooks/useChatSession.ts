@@ -302,6 +302,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const { displayedAnswer: playbackAnswer, showPresentation: playbackShowPresentation } =
     useChatMessagePlayback(playbackPayload, finishPlayback);
 
+  const streamingAdminDebug = playbackPayload?.adminDebug ?? null;
+
   useEffect(() => {
     if (!playbackPayload) {
       return;
@@ -697,6 +699,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
                     answer: response.answer,
                     sources: response.sources ?? [],
                     toolCalls: response.toolCalls ?? [],
+                    adminDebug: response.adminDebug ?? null,
                   }
                 : null),
             );
@@ -1093,6 +1096,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingAdminDebug,
     streamingStatus,
     streamingShowPresentation,
     isLoadingSessions,

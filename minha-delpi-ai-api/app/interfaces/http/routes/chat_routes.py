@@ -2101,7 +2101,20 @@ def get_history(session_id: str):
         session_id=session_id,
     )
 
-    return jsonify([asdict(message) for message in result]), 200
+    allow_admin_debug = _can_use_admin_debug()
+    payload = []
+
+    for message in result:
+        item = asdict(message)
+        if not allow_admin_debug:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict) and metadata.get("adminDebug") is not None:
+                metadata = dict(metadata)
+                metadata.pop("adminDebug", None)
+                item["metadata"] = metadata
+        payload.append(item)
+
+    return jsonify(payload), 200
 
 
 @chat_bp.put("/sessions/<session_id>/messages/<message_id>/feedback")

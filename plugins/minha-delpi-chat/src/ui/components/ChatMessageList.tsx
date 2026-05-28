@@ -22,6 +22,7 @@ import {
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
+import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import { getPresentationPairFromToolCalls } from "./chatPresentation";
@@ -41,6 +42,7 @@ type ChatMessageListProps = {
   streamingAnswer?: string;
   streamingSources?: ChatSource[];
   streamingToolCalls?: ChatToolCall[];
+  streamingAdminDebug?: Record<string, unknown> | null;
   streamingStatus?: string | null;
   streamingShowPresentation?: boolean;
   isStreaming?: boolean;
@@ -227,6 +229,7 @@ export function ChatMessageList({
   streamingAnswer,
   streamingSources,
   streamingToolCalls,
+  streamingAdminDebug,
   streamingStatus,
   streamingShowPresentation = true,
   isStreaming,
@@ -688,6 +691,12 @@ export function ChatMessageList({
               {!messagePresentation.primary ? (
                 <ChatActionResults toolCalls={messageToolCalls} />
               ) : null}
+              <ChatAdminDebugPanel
+                debug={
+                  (message.metadata?.adminDebug as Record<string, unknown> | null) ??
+                  null
+                }
+              />
               <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
             </>
           ) : null}
@@ -788,6 +797,9 @@ export function ChatMessageList({
               !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
                 <ChatActionResults toolCalls={streamingToolCalls} />
               ) : null}
+              <ChatAdminDebugPanel
+                debug={(streamingAdminDebug as Record<string, unknown> | null) ?? null}
+              />
               <ChatSources sources={filterVisibleChatSources(streamingSources)} />
             </div>
           </article>

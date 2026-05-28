@@ -7,6 +7,7 @@ export type ChatPlaybackPayload = {
   answer: string;
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
+  adminDebug?: Record<string, unknown> | null;
 };
 
 const TEXT_CHUNK_CHARS = 2;

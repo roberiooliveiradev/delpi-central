@@ -160,6 +160,7 @@ export type SendChatMessageResponse = {
   toolCalls: ChatToolCall[];
   playback?: boolean;
   canvasOpen?: ChatCanvasOpenPayload | null;
+  adminDebug?: Record<string, unknown> | null;
 };
 
 export type ChatPlaybackEvent = {
@@ -167,6 +168,7 @@ export type ChatPlaybackEvent = {
   answer: string;
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
+  adminDebug?: Record<string, unknown> | null;
 };
 
 export type ChatArtifact = {

@@ -324,6 +324,8 @@ async function consumeChatMessageStream(
           answer: typeof data.answer === "string" ? data.answer : "",
           sources: (data.sources as SendChatMessageResponse["sources"]) ?? [],
           toolCalls: (data.toolCalls as SendChatMessageResponse["toolCalls"]) ?? [],
+          adminDebug:
+            (data.adminDebug as Record<string, unknown> | null | undefined) ?? null,
         });
       }
 

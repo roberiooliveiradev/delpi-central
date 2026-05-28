@@ -81,6 +81,7 @@ export function ChatPage({
     streamingAnswer,
     streamingSources,
     streamingToolCalls,
+    streamingAdminDebug,
     streamingStatus,
     streamingShowPresentation,
     isLoadingSessions,
@@ -1135,6 +1136,7 @@ export function ChatPage({
                 streamingAnswer={streamingAnswer}
                 streamingSources={streamingSources}
                 streamingToolCalls={streamingToolCalls}
+                streamingAdminDebug={streamingAdminDebug}
                 streamingStatus={streamingStatus}
                 streamingShowPresentation={streamingShowPresentation}
                 isStreaming={isStreamingActiveSession}
