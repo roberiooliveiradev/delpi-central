@@ -8,3 +8,4 @@ class SendChatMessageResponse:
     sources: list
     toolCalls: list
     canvasOpen: dict | None = None
+    adminDebug: dict | None = None

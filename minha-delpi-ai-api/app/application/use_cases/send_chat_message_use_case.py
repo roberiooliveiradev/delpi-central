@@ -28,6 +28,7 @@ from app.application.services.rag_context_service import RagContextService
 from app.application.services.chat_turn.chat_turn_preparation_service import (
     ChatTurnPreparationService,
 )
+from app.application.services.chat_admin_debug_service import ChatAdminDebugService
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -249,6 +250,20 @@ class SendChatMessageUseCase:
                 skills=workspace_context.get("skills"),
             )
 
+        admin_debug_payload = None
+        if getattr(request, "admin_debug", False):
+            admin_debug_payload = ChatAdminDebugService.build(
+                workspace_context=workspace_context,
+                tool_context=tool_context,
+                rag=rag,
+                llm_messages=llm_messages,
+                history_summary=history_summary,
+                operational_optimize=operational_optimize,
+                analysis_mode=analysis_mode,
+                fast_path=fast_path,
+                skip_rag=skip_rag,
+            )
+
         started_at = time.perf_counter()
 
         if direct_answer:
@@ -359,6 +374,7 @@ class SendChatMessageUseCase:
                 if canvas_open_payload
                 else None
             ),
+            adminDebug=admin_debug_payload,
         )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:

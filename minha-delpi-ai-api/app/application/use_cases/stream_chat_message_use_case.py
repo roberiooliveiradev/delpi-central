@@ -47,6 +47,7 @@ from app.domain.services.chat_message_delivery_service import ChatMessageDeliver
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
+from app.application.services.chat_admin_debug_service import ChatAdminDebugService
 
 
 logger = logging.getLogger("minha-delpi-ai-api.stream_chat")
@@ -302,6 +303,20 @@ class StreamChatMessageUseCase:
                 skills=workspace_context.get("skills"),
             )
 
+        admin_debug_payload = None
+        if getattr(request, "admin_debug", False):
+            admin_debug_payload = ChatAdminDebugService.build(
+                workspace_context=workspace_context,
+                tool_context=tool_context,
+                rag=rag,
+                llm_messages=llm_messages,
+                history_summary=history_summary,
+                operational_optimize=operational_optimize,
+                analysis_mode=analysis_mode,
+                fast_path=fast_path,
+                skip_rag=skip_rag,
+            )
+
         answer_parts: list[str] = []
         started_at = time.perf_counter()
         # Respostas diretas não precisam de placeholder/playback; manter streaming de tokens
@@ -491,6 +506,7 @@ class StreamChatMessageUseCase:
                 "answer": answer,
                 "sources": sources,
                 "toolCalls": tool_calls,
+                "adminDebug": admin_debug_payload,
             }
 
         done_event = {
@@ -500,6 +516,7 @@ class StreamChatMessageUseCase:
             "sources": sources,
             "toolCalls": tool_calls,
             "playback": persist_before_playback,
+            "adminDebug": admin_debug_payload,
         }
 
         if canvas_open_payload:
