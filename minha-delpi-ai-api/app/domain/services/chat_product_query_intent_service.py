@@ -268,39 +268,24 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def infer_intent_from_recent_tool(cls, previous_messages: list | None) -> str | None:
-        from app.domain.services.chat_analysis_intent_service import (
-            ChatAnalysisIntentService,
+        from app.domain.services.chat_route_context_service import (
+            ChatRouteContextService,
         )
 
-        segment_to_intent = {
-            "stock": ChatProductQueryIntent.STOCK,
-            "summary": ChatProductQueryIntent.SUMMARY,
-            "analyser": ChatProductQueryIntent.ANALYSER,
-            "structure": ChatProductQueryIntent.STRUCTURE,
-            "parents": ChatProductQueryIntent.PARENTS,
-        }
+        segment = ChatRouteContextService.infer_product_route_segment_from_recent_tool(
+            previous_messages
+        )
 
-        for item in reversed((previous_messages or [])[-12:]):
-            metadata = cls._message_metadata(item)
+        if not segment:
+            return None
 
-            for tool_call in reversed(metadata.get("toolCalls") or []):
-                if not isinstance(tool_call, dict):
-                    continue
+        intent = ChatRouteContextService.intent_for_product_segment(segment)
 
-                if str(tool_call.get("name") or "") != "execute_external_action":
-                    continue
+        if intent:
+            return intent
 
-                tool_meta = tool_call.get("metadata")
-
-                if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
-                    continue
-
-                segment = ChatAnalysisIntentService.extract_product_path_segment(
-                    str(tool_meta.get("path") or "")
-                )
-
-                if segment in segment_to_intent:
-                    return segment_to_intent[segment]
+        if ChatRouteContextService.is_product_route_segment(segment):
+            return ChatProductQueryIntent.FULL
 
         return None
 
@@ -346,6 +331,10 @@ class ChatProductQueryIntentService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_route_context_service import (
+            ChatRouteContextService,
+        )
+
         if not (
             cls.references_previous_product(message)
             or cls._looks_like_stock_question(normalized)
@@ -355,6 +344,11 @@ class ChatProductQueryIntentService:
             or cls._looks_like_structure_question(normalized)
             or cls._looks_like_parents_question(normalized)
             or cls._looks_like_product_sub_intent(normalized)
+            or ChatRouteContextService.segment_from_message(message)
+            or ChatRouteContextService.resolve_product_route_segment(
+                message,
+                previous_messages=previous_messages,
+            )
         ):
             return None
 

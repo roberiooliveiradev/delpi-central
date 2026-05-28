@@ -54,7 +54,8 @@ Mensagem do usuário
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
-| `ChatOperationalRefinementService` | Follow-up de estoque (filial/armazém) reutilizando código do histórico |
+| `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
+| `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
@@ -151,7 +152,8 @@ Após uma consulta de estoque bem-sucedida, mensagens como «filtre filial 02» 
 
 | Etapa | Comportamento |
 |-------|----------------|
-| `ChatOperationalRefinementService` | Detecta refinamento; recupera código do produto do histórico; extrai filial/armazém |
+| `ChatOperationalRefinementService` | Detecta refinamento; recupera código/rota do histórico; extrai filial/armazém |
+| `ChatRouteContextService` | Mapeia segmentos de path e lote recente de tools para `resolve_product_route_segment` |
 | `ExternalActionSelectionService` | Reexecuta `get_product_stock` com `branch`/`warehouse` nos parâmetros |
 | `ChatIntelligencePipelineService` | Liga `operational_optimize` e `skip_rag` mesmo sem código na mensagem atual |
 

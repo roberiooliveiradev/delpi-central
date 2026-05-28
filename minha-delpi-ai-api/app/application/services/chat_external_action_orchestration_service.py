@@ -23,6 +23,7 @@ class ChatExternalActionOrchestrationService:
             ChatProductQueryIntent.ANALYSER,
             ChatProductQueryIntent.DESCRIPTION,
             ChatProductQueryIntent.PARENTS,
+            ChatProductQueryIntent.FULL,
         }
     )
 
@@ -72,24 +73,37 @@ class ChatExternalActionOrchestrationService:
         from app.domain.services.chat_operational_refinement_service import (
             ChatOperationalRefinementService,
         )
+        from app.domain.services.chat_route_context_service import (
+            ChatRouteContextService,
+        )
 
-        stock_follow_ups = ChatOperationalRefinementService.plan_stock_follow_ups(
+        operational_follow_ups = ChatOperationalRefinementService.plan_operational_follow_ups(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
         )
 
-        if stock_follow_ups:
+        if operational_follow_ups:
             limit = cls._resolve_max_calls(max_calls)
             planned: list[dict] = []
 
-            for refinement in stock_follow_ups[:limit]:
-                selected = selection_service.select_action_for_product(
-                    message,
-                    product_code=refinement.product_code,
-                    allowed_action_ids=allowed_action_ids,
-                    intent=ChatProductQueryIntent.STOCK,
-                )
+            for refinement in operational_follow_ups[:limit]:
+                if refinement.kind in {"stock_refinement", "stock_reset"}:
+                    selected = selection_service.select_action_for_product(
+                        message,
+                        product_code=str(refinement.product_code or ""),
+                        allowed_action_ids=allowed_action_ids,
+                        intent=ChatProductQueryIntent.STOCK,
+                    )
+                elif refinement.kind in {"metric_refinement", "metric_reset"}:
+                    selected = selection_service.select_action(
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                        conversation_context=conversation_context,
+                        previous_messages=previous_messages,
+                    )
+                else:
+                    selected = None
 
                 if selected:
                     planned.append(selected)
@@ -107,11 +121,39 @@ class ChatExternalActionOrchestrationService:
             message,
             previous_messages=previous_messages,
         )
+        route_segment = ChatRouteContextService.resolve_product_route_segment(
+            message,
+            previous_messages=previous_messages,
+        )
 
         if intent == ChatProductQueryIntent.FULL:
             intent = cls._resolve_product_intent(message, normalized)
 
-        if len(codes) > 1 and intent in cls._MULTI_PRODUCT_INTENTS:
+        recent_batch = ChatRouteContextService.collect_recent_product_route_batch(
+            previous_messages,
+            route_segment=route_segment,
+        )
+
+        if (
+            not codes
+            and recent_batch
+            and ChatProductQueryIntentService.references_previous_product(message)
+        ):
+            codes = list(recent_batch.product_codes)
+            route_segment = route_segment or recent_batch.route_segment
+            inherited_intent = ChatRouteContextService.intent_for_product_segment(
+                recent_batch.route_segment
+            )
+
+            if inherited_intent:
+                intent = inherited_intent
+
+        multi_product = len(codes) > 1 and (
+            intent in cls._MULTI_PRODUCT_INTENTS
+            or ChatRouteContextService.is_product_route_segment(route_segment)
+        )
+
+        if multi_product:
             planned: list[dict] = []
 
             for code in codes[:limit]:
@@ -120,6 +162,7 @@ class ChatExternalActionOrchestrationService:
                     product_code=code,
                     allowed_action_ids=allowed_action_ids,
                     intent=intent,
+                    route_segment=route_segment,
                 )
 
                 if selected:

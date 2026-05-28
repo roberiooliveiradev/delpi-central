@@ -145,6 +145,33 @@ def test_plan_stock_reset_for_multiple_products():
     assert all(item.branch is None for item in planned)
 
 
+def test_plan_metric_follow_up_after_cpv():
+    history = [
+        {"role": "user", "content": "qual o cpv"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/cpv"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "filtre filial 02",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "metric_refinement"
+    assert planned[0].metric_kind == "supplies"
+    assert planned[0].branch == "02"
+
+
 def test_is_operational_follow_up_enables_fast_path():
     history = [
         {"role": "user", "content": "estoque do produto 10080022"},

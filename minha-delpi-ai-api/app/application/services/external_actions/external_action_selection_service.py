@@ -12,6 +12,7 @@ from app.domain.services.chat_department_kpi_intent_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
+from app.domain.services.chat_route_context_service import ChatRouteContextService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -30,6 +31,7 @@ class ExternalActionSelectionService:
         product_code: str,
         allowed_action_ids: list[str] | None = None,
         intent: str | None = None,
+        route_segment: str | None = None,
     ) -> dict | None:
         code = ChatProductQueryIntentService.normalize_product_code(product_code)
 
@@ -37,12 +39,16 @@ class ExternalActionSelectionService:
             return None
 
         resolved_intent = intent or ChatProductQueryIntentService.detect(message)
+        resolved_segment = route_segment or ChatRouteContextService.resolve_product_route_segment(
+            message
+        )
 
         return self._select_product_action(
             message,
             code,
             allowed_action_ids=allowed_action_ids or [],
             intent=resolved_intent,
+            route_segment=resolved_segment,
         )
 
     def select_action(
@@ -69,9 +75,19 @@ class ExternalActionSelectionService:
         if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
             selected = self._select_product_action(
                 message,
-                refinement.product_code,
+                str(refinement.product_code or ""),
                 allowed_action_ids=allowed_action_ids,
                 intent=ChatProductQueryIntent.STOCK,
+            )
+
+            if selected:
+                return selected
+
+        if refinement and refinement.kind in {"metric_refinement", "metric_reset"}:
+            selected = self._select_metric_refinement_action(
+                message,
+                refinement,
+                allowed_action_ids=allowed_action_ids,
             )
 
             if selected:
@@ -96,6 +112,10 @@ class ExternalActionSelectionService:
             previous_messages=previous_messages,
         )
         product_intent = ChatProductQueryIntentService.resolve_product_intent(
+            message,
+            previous_messages=previous_messages,
+        )
+        product_route_segment = ChatRouteContextService.resolve_product_route_segment(
             message,
             previous_messages=previous_messages,
         )
@@ -251,12 +271,14 @@ class ExternalActionSelectionService:
         if product_code and (
             self._looks_like_product_question(normalized)
             or ChatProductQueryIntentService.extract_product_code(message)
+            or product_route_segment
         ):
             return self._select_product_action(
                 message,
                 product_code,
                 allowed_action_ids=allowed_action_ids,
                 intent=ChatProductQueryIntent.FULL,
+                route_segment=product_route_segment,
             )
 
         if not product_code and self._looks_like_product_search(normalized):
@@ -414,6 +436,41 @@ class ExternalActionSelectionService:
 
         return any(term in value for term in terms)
 
+    def _select_metric_refinement_action(
+        self,
+        message: str,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        if refinement.metric_kind == "supplies" and refinement.metric_path_token:
+            return self._select_supplies_metric_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                path_token=str(refinement.metric_path_token),
+                operation_token=str(refinement.metric_path_token),
+                reason=refinement.reason or "Refino de indicador de suprimentos.",
+            )
+
+        if refinement.metric_kind == "department_kpi" and refinement.metric_path_token:
+            from app.domain.services.chat_department_kpi_intent_service import (
+                DepartmentKpiMatch,
+            )
+
+            match = DepartmentKpiMatch(
+                path_token=str(refinement.metric_path_token),
+                domain_prefix=str(refinement.metric_domain_prefix or ""),
+                reason=refinement.reason or "Refino de KPI departamental.",
+            )
+
+            return self._select_department_kpi_action(
+                message,
+                allowed_action_ids,
+                match=match,
+            )
+
+        return None
+
     def _select_department_kpi_action(
         self,
         message: str,
@@ -504,11 +561,16 @@ class ExternalActionSelectionService:
             if path_token not in path and operation_token not in operation_id:
                 continue
 
+            parameters = self._build_date_branch_parameters(action, message)
+
+            if not parameters:
+                parameters = self._build_supplies_stock_parameters(action)
+
             return {
                 "name": "execute_external_action",
                 "arguments": {
                     "actionId": action["actionId"],
-                    "parameters": self._build_supplies_stock_parameters(action),
+                    "parameters": parameters,
                 },
                 "reason": reason,
             }
@@ -1214,6 +1276,7 @@ class ExternalActionSelectionService:
         product_code: str,
         allowed_action_ids: list[str],
         intent: str = ChatProductQueryIntent.FULL,
+        route_segment: str | None = None,
     ) -> dict | None:
         candidates = []
 
@@ -1243,6 +1306,7 @@ class ExternalActionSelectionService:
             candidates,
             intent=intent,
             message=message,
+            route_segment=route_segment,
         ):
             parameters = self._build_product_parameters(
                 action,
@@ -1451,8 +1515,10 @@ class ExternalActionSelectionService:
         *,
         intent: str = ChatProductQueryIntent.FULL,
         message: str | None = None,
+        route_segment: str | None = None,
     ) -> list[dict]:
         normalized = str(message or "").lower()
+        inherited_segment = str(route_segment or "").strip().lower()
         wants_purchases = any(
             term in normalized
             for term in (
@@ -1566,6 +1632,29 @@ class ExternalActionSelectionService:
             term in normalized
             for term in ("inspeção", "inspecao", "inspection", "qualidade")
         )
+
+        if inherited_segment == "purchases":
+            wants_purchases = True
+        elif inherited_segment == "suppliers":
+            wants_suppliers = True
+        elif inherited_segment == "sales":
+            wants_sales = True
+        elif inherited_segment == "pricing":
+            wants_pricing = True
+        elif inherited_segment == "guide":
+            wants_guide = True
+        elif inherited_segment == "customers":
+            wants_customers = True
+        elif inherited_segment == "internal-movements":
+            wants_movements = True
+        elif inherited_segment == "inspection":
+            wants_inspection = True
+        elif inherited_segment == "inbound-invoice":
+            wants_invoices = True
+            wants_inbound = True
+        elif inherited_segment == "outbound-invoice":
+            wants_invoices = True
+            wants_outbound = True
 
         has_specific_sub_intent = (
             wants_purchases or wants_sales or wants_open_orders or wants_structure

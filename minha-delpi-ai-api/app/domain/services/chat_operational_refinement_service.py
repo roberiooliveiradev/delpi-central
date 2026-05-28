@@ -13,19 +13,26 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_route_context_service import (
+    ChatRouteContextService,
+)
 
 
 @dataclass(frozen=True)
 class OperationalRefinement:
     kind: str
-    product_code: str
+    product_code: str | None = None
     branch: str | None = None
     warehouse: str | None = None
     reason: str = ""
+    route_segment: str | None = None
+    metric_domain_prefix: str | None = None
+    metric_path_token: str | None = None
+    metric_kind: str | None = None
 
     @property
     def clears_branch_filter(self) -> bool:
-        return self.kind == "stock_reset"
+        return self.kind in {"stock_reset", "metric_reset"}
 
 
 class ChatOperationalRefinementService:
@@ -76,6 +83,71 @@ class ChatOperationalRefinementService:
     @classmethod
     def looks_like_stock_scope_reset(cls, normalized: str) -> bool:
         return any(term in normalized for term in cls._STOCK_RESET_TERMS)
+
+    @classmethod
+    def plan_operational_follow_ups(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> list[OperationalRefinement]:
+        planned = cls.plan_stock_follow_ups(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
+
+        if planned:
+            return planned
+
+        return cls.plan_metric_follow_ups(
+            message,
+            previous_messages=previous_messages,
+        )
+
+    @classmethod
+    def plan_metric_follow_ups(
+        cls,
+        message: str,
+        *,
+        previous_messages: list[Any] | None = None,
+    ) -> list[OperationalRefinement]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        recent = ChatRouteContextService.collect_recent_metric_route(previous_messages)
+
+        if not recent:
+            return []
+
+        branch = cls.extract_branch_code(normalized)
+
+        if ChatRouteContextService.looks_like_metric_scope_reset(normalized):
+            return [
+                OperationalRefinement(
+                    kind="metric_reset",
+                    metric_kind=recent.kind,
+                    metric_domain_prefix=recent.domain_prefix,
+                    metric_path_token=recent.path_token,
+                    reason=recent.reason,
+                )
+            ]
+
+        if not cls.looks_like_operational_refinement(normalized):
+            return []
+
+        if not branch and not cls._requires_stock_refinement(normalized):
+            return []
+
+        return [
+            OperationalRefinement(
+                kind="metric_refinement",
+                branch=branch,
+                metric_kind=recent.kind,
+                metric_domain_prefix=recent.domain_prefix,
+                metric_path_token=recent.path_token,
+                reason=recent.reason,
+            )
+        ]
 
     @classmethod
     def plan_stock_follow_ups(
@@ -148,7 +220,7 @@ class ChatOperationalRefinementService:
         conversation_context: str | None = None,
         previous_messages: list[Any] | None = None,
     ) -> OperationalRefinement | None:
-        planned = cls.plan_stock_follow_ups(
+        planned = cls.plan_operational_follow_ups(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
@@ -180,7 +252,7 @@ class ChatOperationalRefinementService:
         conversation_context: str | None = None,
         previous_messages: list[Any] | None = None,
     ) -> bool:
-        if cls.plan_stock_follow_ups(
+        if cls.plan_operational_follow_ups(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
@@ -192,9 +264,17 @@ class ChatOperationalRefinementService:
         if not ChatProductQueryIntentService.references_previous_product(message):
             return False
 
-        return cls._has_recent_stock_context(
+        if cls._has_recent_stock_context(
             conversation_context=conversation_context,
             previous_messages=previous_messages,
+        ):
+            return True
+
+        if ChatRouteContextService.collect_recent_metric_route(previous_messages):
+            return True
+
+        return bool(
+            ChatRouteContextService.collect_recent_product_route_batch(previous_messages)
         )
 
     @classmethod
