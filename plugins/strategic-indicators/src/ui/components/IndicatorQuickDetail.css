@@ -62,8 +62,14 @@
 }
 
 .si-indicator-quick-detail__meta-item strong {
+  display: block;
+  min-width: 0;
   font-size: 15px;
   color: var(--si-title);
+}
+
+.si-indicator-quick-detail__meta-item--wide {
+  grid-column: 1 / -1;
 }
 
 .si-indicator-quick-detail__body {

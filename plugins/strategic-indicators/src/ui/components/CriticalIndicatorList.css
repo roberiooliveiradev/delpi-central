@@ -51,6 +51,11 @@
   color: var(--si-text-muted);
 }
 
+.si-critical-item__metrics > span {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .si-critical-item__recommendation {
   margin: 0;
   font-size: 14px;

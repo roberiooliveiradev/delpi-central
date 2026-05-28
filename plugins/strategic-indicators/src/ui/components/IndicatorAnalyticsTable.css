@@ -1,18 +1,37 @@
+.si-indicator-table__scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
 .si-indicator-table {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: min(100%, 920px);
 }
 
 .si-indicator-table__row {
   display: grid;
-  grid-template-columns: minmax(100px, 2fr) 110px 90px 70px 120px 80px minmax(100px, 1fr);
-  gap: 16px;
-  align-items: center;
+  grid-template-columns:
+    minmax(180px, 2.2fr)
+    minmax(92px, 1fr)
+    minmax(76px, 0.75fr)
+    52px
+    minmax(148px, 1.25fr)
+    60px
+    minmax(112px, max-content);
+  gap: 12px 16px;
+  align-items: start;
   padding: 16px 18px;
   border-radius: 18px;
   background: var(--si-card-bg);
   border: 1px solid var(--si-card-border);
+}
+
+.si-indicator-table__row > * {
+  min-width: 0;
 }
 
 .si-indicator-table__row--head {
@@ -24,6 +43,7 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  align-items: center;
 }
 
 .si-indicator-table__row--interactive {
@@ -61,9 +81,22 @@
   color: var(--si-text-muted);
 }
 
+.si-indicator-table__metrics {
+  display: block;
+}
+
 .si-indicator-table__score {
   font-size: 16px;
   color: var(--si-title);
+  align-self: center;
+}
+
+.si-indicator-table__status {
+  display: flex;
+  justify-content: flex-end;
+  align-self: start;
+  flex-shrink: 0;
+  min-width: max-content;
 }
 
 .si-indicator-table__empty {
@@ -75,11 +108,19 @@
 }
 
 @media (max-width: 1280px) {
+  .si-indicator-table {
+    min-width: 0;
+  }
+
   .si-indicator-table__row {
     grid-template-columns: 1fr;
   }
 
   .si-indicator-table__row--head {
     display: none;
+  }
+
+  .si-indicator-table__status {
+    justify-content: flex-start;
   }
 }

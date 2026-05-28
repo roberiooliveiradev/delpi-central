@@ -83,13 +83,14 @@ export function IndicatorQuickDetail({
           <strong>{indicator.weightPct}%</strong>
         </div>
 
-        <div className="si-indicator-quick-detail__meta-item">
+        <div className="si-indicator-quick-detail__meta-item si-indicator-quick-detail__meta-item--wide">
           <span>Meta</span>
           <strong>
             <ScopeMetricBadges
               values={indicator.goals}
               format={valueFormat}
               displayContext={displayContext}
+              layout="compact"
               maxVisible={3}
               emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
             />
@@ -118,13 +119,14 @@ export function IndicatorQuickDetail({
           <strong>{formatIndicatorScore(indicator.score)}</strong>
         </div>
 
-        <div className="si-indicator-quick-detail__meta-item">
+        <div className="si-indicator-quick-detail__meta-item si-indicator-quick-detail__meta-item--wide">
           <span>Valor atual</span>
           <strong>
             <ScopeMetricBadges
               values={indicator.realized}
               format={valueFormat}
               displayContext={displayContext}
+              layout="compact"
               maxVisible={3}
               emptyLabel={formatIndicatorRealizedDisplay(
                 indicator,
@@ -135,13 +137,14 @@ export function IndicatorQuickDetail({
           </strong>
         </div>
 
-        <div className="si-indicator-quick-detail__meta-item">
+        <div className="si-indicator-quick-detail__meta-item si-indicator-quick-detail__meta-item--wide">
           <span>Gap</span>
           <strong>
             <ScopeMetricBadges
               values={indicator.gaps}
               format={valueFormat}
               displayContext={displayContext}
+              layout="compact"
               maxVisible={3}
               emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat, displayContext)}
             />

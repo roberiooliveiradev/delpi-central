@@ -722,6 +722,15 @@
   gap: 10px;
 }
 
+.si-tree-indicator-card__goals .si-indicator-card__goal {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.si-tree-indicator-card__goals .si-indicator-card__goal-value {
+  width: 100%;
+}
+
 .si-tree-indicator-card__footer {
   display: flex;
   align-items: center;

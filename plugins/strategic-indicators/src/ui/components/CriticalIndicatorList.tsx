@@ -74,6 +74,7 @@ export function CriticalIndicatorList({
                     viewMode === "branch" ? `Filial ${branch}` : "Consolidado",
                   activeBranch: resolveStrategicIndicatorsBranch(viewMode, branch),
                 }}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(alert, competence, {
                   filterViewScopeLabel:

@@ -50,16 +50,17 @@ export function IndicatorAnalyticsTable({
   }
 
   return (
-    <div className="si-indicator-table">
-      <div className="si-indicator-table__row si-indicator-table__row--head">
-        <span>Indicador</span>
-        <span>Departamento</span>
-        <span>Escopo</span>
-        <span>Peso</span>
-        <span>Meta</span>
-        <span>Nota</span>
-        <span>Status</span>
-      </div>
+    <div className="si-indicator-table__scroll">
+      <div className="si-indicator-table">
+        <div className="si-indicator-table__row si-indicator-table__row--head">
+          <span>Indicador</span>
+          <span>Departamento</span>
+          <span>Escopo</span>
+          <span>Peso</span>
+          <span>Meta</span>
+          <span>Nota</span>
+          <span>Status</span>
+        </div>
 
       {indicators.map((indicator) => {
         const isSelected = indicator.id === selectedIndicatorId;
@@ -81,7 +82,7 @@ export function IndicatorAnalyticsTable({
             <span>{indicator.departmentName}</span>
             <span>{indicator.viewScopeLabel}</span>
             <span>{indicator.weightPct}%</span>
-            <span>
+            <span className="si-indicator-table__metrics">
               <ScopeMetricBadges
                 values={indicator.goals}
                 format={{
@@ -91,6 +92,7 @@ export function IndicatorAnalyticsTable({
                   valueDecimals: indicator.valueDecimals,
                 }}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
               />
@@ -102,13 +104,16 @@ export function IndicatorAnalyticsTable({
             >
               {formatIndicatorScore(indicator.score)}
             </strong>
-            <StatusBadge
-              label={getStatusLabel(indicator.status)}
-              variant={indicator.status}
-            />
+            <span className="si-indicator-table__status">
+              <StatusBadge
+                label={getStatusLabel(indicator.status)}
+                variant={indicator.status}
+              />
+            </span>
           </button>
         );
       })}
+      </div>
     </div>
   );
 }
