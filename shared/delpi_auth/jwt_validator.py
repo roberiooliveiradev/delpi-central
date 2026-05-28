@@ -10,26 +10,33 @@ KEYCLOAK_REALM = os.getenv("KEYCLOAK_REALM", "delpi")
 DISCOVERY_URL = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/.well-known/openid-configuration"
 
 _jwks_cache = None
-_jwks_uri = None
+
+
+def _resolve_jwks_url() -> str:
+    configured = (os.getenv("KEYCLOAK_JWKS_URL") or "").strip()
+    if configured:
+        return configured
+
+    discovery = requests.get(DISCOVERY_URL, timeout=10)
+    discovery.raise_for_status()
+    jwks_uri = discovery.json()["jwks_uri"]
+
+    if "localhost:8080" in jwks_uri or "127.0.0.1:8080" in jwks_uri:
+        return (
+            f"{KEYCLOAK_URL.rstrip('/')}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
+        )
+
+    return jwks_uri
 
 
 def _get_jwks():
 
     global _jwks_cache
-    global _jwks_uri
 
     if _jwks_cache:
         return _jwks_cache
 
-    # Descobre endpoints automaticamente
-    if not _jwks_uri:
-        discovery = requests.get(DISCOVERY_URL)
-        discovery.raise_for_status()
-
-        data = discovery.json()
-        _jwks_uri = data["jwks_uri"]
-
-    response = requests.get(_jwks_uri)
+    response = requests.get(_resolve_jwks_url(), timeout=10)
     response.raise_for_status()
 
     _jwks_cache = response.json()
