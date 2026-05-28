@@ -16,9 +16,6 @@ from app.application.services.chat_intelligence_pipeline_service import (
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
-from app.application.services.chat_assistant_identity_service import (
-    ChatAssistantIdentityService,
-)
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
@@ -138,14 +135,6 @@ class SendChatMessageUseCase:
             resolve_user_identity_answer=lambda msg: (
                 self._resolve_user_identity_answer(request.access_token, msg)
                 if request.access_token and ChatUserContextService.is_user_identity_question(msg)
-                else None
-            ),
-            resolve_assistant_identity_answer=lambda msg: (
-                ChatAssistantIdentityService.build_direct_answer(
-                    message=msg,
-                    workspace_context=workspace_context,
-                )
-                if ChatAssistantIdentityService.is_assistant_identity_question(msg)
                 else None
             ),
             resolve_capabilities_answer=lambda msg: (

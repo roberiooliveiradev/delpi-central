@@ -15,7 +15,7 @@ def _identity_content() -> dict:
 
 
 class ChatAssistantIdentityService:
-    """Respostas diretas (sem LLM) sobre quem é o assistente/agente e como usá-lo."""
+    """Classificação de perguntas sobre o assistente (policy + RAG + LLM no pipeline)."""
 
     @classmethod
     def is_assistant_identity_question(cls, message: str) -> bool:

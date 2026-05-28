@@ -9,6 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.application.services.chat_assistant_identity_service import (
+    ChatAssistantIdentityService,
+)
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
@@ -83,7 +86,6 @@ class ChatTurnPreparationService:
         fast_path_enabled: bool,
         fast_path_max_chars: int,
         resolve_user_identity_answer,
-        resolve_assistant_identity_answer,
         resolve_capabilities_answer,
         max_external_action_calls: int | None = None,
     ) -> ChatTurnPreparationResult:
@@ -188,6 +190,9 @@ class ChatTurnPreparationService:
             pipeline_timings.mark("tools_done")
 
         resolved_skills = workspace_context.get("skills") or {}
+        assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
+            message
+        )
 
         skip_rag = (
             (
@@ -197,6 +202,9 @@ class ChatTurnPreparationService:
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
         )
+
+        if assistant_identity_question:
+            skip_rag = False
 
         if canvas_action:
             direct_answer = canvas_action.answer
@@ -229,12 +237,6 @@ class ChatTurnPreparationService:
             user_direct = resolve_user_identity_answer(message)
             if user_direct:
                 direct_answer = user_direct
-                skip_rag = True
-
-        if not direct_answer:
-            assistant_direct = resolve_assistant_identity_answer(message)
-            if assistant_direct:
-                direct_answer = assistant_direct
                 skip_rag = True
 
         if not direct_answer:

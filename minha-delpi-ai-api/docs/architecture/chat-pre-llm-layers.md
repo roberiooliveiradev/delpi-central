@@ -138,8 +138,8 @@ Ordem fixa no **chat base**; agentes só alteram *dados* (skills, actions), não
 | 6 | `CapabilityStage` | answer («consegue…?») |
 | 7 | `ToolExecutionStage` | tool_context |
 | 8 | `PostToolStage` | analysis_mode, direct_answer |
-| 9 | `IdentityStage` | answer (quem é você / usuário) |
-| 10 | `RagStage` | só se `direct_answer` vazio e não `skip_rag` |
+| 9 | `IdentityStage` | answer só para **perfil do usuário**; perguntas sobre o assistente seguem para RAG+LLM |
+| 10 | `RagStage` | sempre para identidade do assistente; demais turnos se `direct_answer` vazio e não `skip_rag` |
 | 11 | `PromptAssemblyStage` | mensagens para LLM |
 
 Estágios 5–9 são os que mais evitam chamadas erradas à api-delpi **antes** do modelo “inventar” rota.

@@ -60,6 +60,8 @@ Mensagem do usuário
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
 
+**Identidade do assistente** («quem é você», «quem te criou», «o que você é»): classificação em `ChatAssistantIdentityService` + policy `chat-assistant-identity.md` + **RAG obrigatório** + LLM (sem resposta enlatada).
+
 ---
 
 ## O que o agente adiciona (e só isso)
