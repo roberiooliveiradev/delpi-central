@@ -100,9 +100,11 @@ export function PmrPage({ pathname }: PmrPageProps) {
       <FinancialStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando PMR"
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard

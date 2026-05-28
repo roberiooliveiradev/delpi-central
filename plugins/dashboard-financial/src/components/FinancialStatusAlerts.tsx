@@ -8,20 +8,30 @@ import {
 type FinancialStatusAlertsProps = {
   error: string | null;
   loading: boolean;
+  refreshing?: boolean;
   hasData: boolean;
   requestProgress?: RequestProgress;
   onRetry: () => void;
+  refreshTitle?: string;
+  refreshDescription?: string;
 };
 
 export function FinancialStatusAlerts({
   error,
   loading,
+  refreshing = false,
   hasData,
   requestProgress = EMPTY_REQUEST_PROGRESS,
   onRetry,
+  refreshTitle = "Atualizando indicadores",
+  refreshDescription = "Recalculando dados financeiros com os filtros selecionados.",
 }: FinancialStatusAlertsProps) {
   const loadingProgress = useLoadingProgress(
     loading && !hasData,
+    requestProgress
+  );
+  const refreshProgress = useLoadingProgress(
+    refreshing && hasData,
     requestProgress
   );
 
@@ -34,6 +44,16 @@ export function FinancialStatusAlerts({
             Tentar novamente
           </button>
         </div>
+      ) : null}
+
+      {refreshing && hasData ? (
+        <LoadingActivityCard
+          title={refreshTitle}
+          description={refreshDescription}
+          variant="compact"
+          sticky
+          progressPercent={refreshProgress}
+        />
       ) : null}
 
       {loading && !hasData ? (

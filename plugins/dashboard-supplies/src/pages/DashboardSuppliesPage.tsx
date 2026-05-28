@@ -100,9 +100,12 @@ export function DashboardSuppliesPage({ pathname }: DashboardSuppliesPageProps) 
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando dashboard de suprimentos"
+        refreshDescription="Recalculando CPV, OTD, estoque e giro com os filtros selecionados."
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard

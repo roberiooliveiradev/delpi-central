@@ -11,6 +11,7 @@ import { PpmEvolutionChart } from "../components/PpmEvolutionChart";
 import { PpmTypeToggle } from "../components/PpmTypeToggle";
 import { QualityFilters } from "../components/QualityFilters";
 import { QualityPageHeader } from "../components/QualityPageHeader";
+import { QualityStatusAlerts } from "../components/QualityStatusAlerts";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { getPpmChartReferenceLines } from "../constants/ppmReferenceLines";
@@ -269,14 +270,16 @@ export function PpmPage({ pathname }: PpmPageProps) {
         <PpmCompareToggle compare={compareChart} onChange={setCompareChart} />
       </div>
 
-      {error ? (
-        <div className="dq-state dq-state--error" role="alert">
-          <p>{error}</p>
-          <button className="dq-primary-btn" type="button" onClick={handleRefresh}>
-            Tentar novamente
-          </button>
-        </div>
-      ) : null}
+      <QualityStatusAlerts
+        error={error}
+        loading={loading}
+        refreshing={refreshing}
+        hasData={summary !== null || tablePage !== null}
+        onRetry={handleRefresh}
+        refreshTitle="Atualizando PPM"
+        initialTitle="Carregando PPM"
+        initialDescription="Buscando resumo e listagem de PPM para o período."
+      />
 
       <section className="dq-kpi-grid dq-kpi-grid--single-row" aria-busy={isBusy}>
         <KpiCard

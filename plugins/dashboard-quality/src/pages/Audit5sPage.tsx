@@ -17,13 +17,12 @@ import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
-import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
+import { QualityStatusAlerts } from "../components/QualityStatusAlerts";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useAudit5sSummary } from "../hooks/useQualityQueries";
-import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
 import type { ChartGranularity } from "../types/chart";
@@ -73,10 +72,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
 
   const { data, loading, requestProgress, error, reload } =
     useAudit5sSummary(summaryParams);
-  const initialLoadingProgress = useLoadingProgress(
-    loading && !data,
-    requestProgress
-  );
+  const isRefreshing = loading && Boolean(data);
   const items = data?.list_audits ?? [];
 
   useEffect(() => {
@@ -221,14 +217,17 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       />
       </div>
 
-      {error ? (
-        <div className="dq-state dq-state--error" role="alert">
-          <p>{error}</p>
-          <button className="dq-primary-btn" type="button" onClick={reload}>
-            Tentar novamente
-          </button>
-        </div>
-      ) : null}
+      <QualityStatusAlerts
+        error={error}
+        loading={loading}
+        refreshing={isRefreshing}
+        hasData={Boolean(data)}
+        requestProgress={requestProgress}
+        onRetry={reload}
+        refreshTitle="Atualizando auditorias 5S"
+        initialTitle="Carregando auditorias 5S"
+        initialDescription="Buscando registros de auditoria para o período."
+      />
 
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
@@ -326,14 +325,6 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
           )}
         </ChartCard>
       </section>
-
-      {loading && !data ? (
-        <LoadingActivityCard
-          title="Carregando auditorias 5S"
-          description="Buscando registros de auditoria para o período."
-          progressPercent={initialLoadingProgress}
-        />
-      ) : null}
 
       <DataTableSection
         title="Auditorias"

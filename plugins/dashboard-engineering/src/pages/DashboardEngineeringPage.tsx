@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { BarChart3, CircleGauge, Clock, Coins, Lightbulb, Percent } from "lucide-react";
 
 import { DataSourceBanner } from "../components/DataSourceBanner";
-import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { ModuleShortcut } from "../components/ModuleShortcut";
@@ -10,7 +9,6 @@ import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringDashboard } from "../hooks/useEngineeringDashboard";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
-import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { formatPeriodLabel } from "../utils/dates";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import {
@@ -67,7 +65,6 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
   const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
   const isBusy = loading || refreshing;
   const hasData = transforma !== null || lmpSummary !== null;
-  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
 
   return (
     <div className="dashboard-engineering dashboard-page">
@@ -88,19 +85,13 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
       <EngineeringStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando visão geral"
+        refreshDescription="Atualizando KPIs de LMP e TRANSFORMA+."
       />
-      {refreshing && hasData ? (
-        <LoadingActivityCard
-          title="Atualizando visão geral"
-          description="Atualizando KPIs de LMP e TRANSFORMA+."
-          variant="compact"
-          sticky
-          progressPercent={refreshLoadingProgress}
-        />
-      ) : null}
       {Object.keys(sectionErrors).length > 0 && hasData ? (
         <div className="ds-state ds-state--warning" role="status">
           <p>

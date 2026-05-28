@@ -221,9 +221,11 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       <EngineeringStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando TRANSFORMA+"
       />
 
       <section className="ds-filters-row">

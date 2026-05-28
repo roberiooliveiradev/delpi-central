@@ -173,9 +173,11 @@ export function StockPage({ pathname }: StockPageProps) {
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando estoque"
       />
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>

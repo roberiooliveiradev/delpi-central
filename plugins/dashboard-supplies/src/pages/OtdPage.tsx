@@ -188,9 +188,11 @@ export function OtdPage({ pathname }: OtdPageProps) {
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando OTD de compras"
       />
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>

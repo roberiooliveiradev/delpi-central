@@ -101,9 +101,11 @@ export function RolPage({ pathname }: RolPageProps) {
       <FinancialStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando ROL"
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard

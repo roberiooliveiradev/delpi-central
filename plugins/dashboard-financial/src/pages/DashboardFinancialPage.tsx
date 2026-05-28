@@ -118,9 +118,11 @@ export function DashboardFinancialPage({ pathname }: DashboardFinancialPageProps
       <FinancialStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando dashboard financeiro"
       />
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard

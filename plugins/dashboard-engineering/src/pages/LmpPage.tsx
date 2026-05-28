@@ -21,7 +21,6 @@ import { ChartToolbar } from "../components/ChartToolbar";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
-import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
@@ -30,7 +29,6 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { ENGINEERING_ROUTES } from "../constants/routes";
 import { useEngineeringFilters } from "../hooks/useEngineeringFilters";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
-import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpDashboardItem } from "../types/lmp";
 import type { ChartGranularity } from "../types/chart";
 import { buildLmpFallbackCharts } from "../utils/lmpCharts";
@@ -206,7 +204,6 @@ export function LmpPage({ pathname }: LmpPageProps) {
 
   const isBusy = loading || refreshing;
   const hasData = summary !== null || total > 0;
-  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
   const hasCharts =
     resolvedCharts.levelData.some((d) => d.value > 0) ||
     resolvedCharts.statusData.some((d) => d.value > 0);
@@ -237,20 +234,13 @@ export function LmpPage({ pathname }: LmpPageProps) {
       <EngineeringStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={hasData}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando LMPs"
+        refreshDescription="Recalculando indicadores e gráficos com os filtros atuais."
       />
-
-      {refreshing && hasData ? (
-        <LoadingActivityCard
-          title="Atualizando LMPs"
-          description="Recalculando indicadores e gráficos com os filtros atuais."
-          variant="compact"
-          sticky
-          progressPercent={refreshLoadingProgress}
-        />
-      ) : null}
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard

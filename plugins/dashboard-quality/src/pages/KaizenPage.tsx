@@ -20,14 +20,13 @@ import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
-import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KaizenFilters } from "../components/KaizenFilters";
+import { QualityStatusAlerts } from "../components/QualityStatusAlerts";
 import { KpiCard } from "../components/KpiCard";
 import { QualityPageHeader } from "../components/QualityPageHeader";
 import { CHART_COLORS } from "../constants/chartColors";
 import { QUALITY_ROUTES } from "../constants/routes";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useKaizenSummary } from "../hooks/useQualityQueries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityFilters } from "../hooks/useQualityFilters";
@@ -95,10 +94,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
   const { data, loading, requestProgress, error, reload } =
     useKaizenSummary(summaryParams);
-  const initialLoadingProgress = useLoadingProgress(
-    loading && !data,
-    requestProgress
-  );
+  const isRefreshing = loading && Boolean(data);
   const items = data?.list_kaizen ?? [];
 
   useEffect(() => {
@@ -252,14 +248,17 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       />
       </div>
 
-      {error ? (
-        <div className="dq-state dq-state--error" role="alert">
-          <p>{error}</p>
-          <button className="dq-primary-btn" type="button" onClick={reload}>
-            Tentar novamente
-          </button>
-        </div>
-      ) : null}
+      <QualityStatusAlerts
+        error={error}
+        loading={loading}
+        refreshing={isRefreshing}
+        hasData={Boolean(data)}
+        requestProgress={requestProgress}
+        onRetry={reload}
+        refreshTitle="Atualizando kaizens"
+        initialTitle="Carregando kaizens"
+        initialDescription="Buscando melhorias cadastradas para o período."
+      />
 
       <section className="dq-kpi-grid" aria-busy={loading}>
         <KpiCard
@@ -392,14 +391,6 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
           )}
         </ChartCard>
       </section>
-
-      {loading && !data ? (
-        <LoadingActivityCard
-          title="Carregando kaizens"
-          description="Buscando melhorias cadastradas para o período."
-          progressPercent={initialLoadingProgress}
-        />
-      ) : null}
 
       <DataTableSection
         title="Lista de kaizens"

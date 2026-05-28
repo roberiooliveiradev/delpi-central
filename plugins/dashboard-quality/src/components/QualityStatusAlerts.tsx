@@ -5,27 +5,31 @@ import {
   type RequestProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 
-type SuppliesStatusAlertsProps = {
-  error: string | null;
+type QualityStatusAlertsProps = {
+  error?: string | null;
   loading: boolean;
   refreshing?: boolean;
   hasData: boolean;
   requestProgress?: RequestProgress;
-  onRetry: () => void;
+  onRetry?: () => void;
   refreshTitle?: string;
   refreshDescription?: string;
+  initialTitle?: string;
+  initialDescription?: string;
 };
 
-export function SuppliesStatusAlerts({
-  error,
+export function QualityStatusAlerts({
+  error = null,
   loading,
   refreshing = false,
   hasData,
   requestProgress = EMPTY_REQUEST_PROGRESS,
   onRetry,
   refreshTitle = "Atualizando indicadores",
-  refreshDescription = "Recalculando dados de suprimentos com os filtros selecionados.",
-}: SuppliesStatusAlertsProps) {
+  refreshDescription = "Recalculando dados de qualidade com os filtros selecionados.",
+  initialTitle = "Carregando indicadores",
+  initialDescription = "Buscando dados de qualidade para o período selecionado.",
+}: QualityStatusAlertsProps) {
   const loadingProgress = useLoadingProgress(
     loading && !hasData,
     requestProgress
@@ -38,11 +42,13 @@ export function SuppliesStatusAlerts({
   return (
     <>
       {error ? (
-        <div className="ds-state ds-state--error" role="alert">
+        <div className="dq-state dq-state--error" role="alert">
           <p>{error}</p>
-          <button className="ds-primary-btn" type="button" onClick={onRetry}>
-            Tentar novamente
-          </button>
+          {onRetry ? (
+            <button className="dq-primary-btn" type="button" onClick={onRetry}>
+              Tentar novamente
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -58,8 +64,8 @@ export function SuppliesStatusAlerts({
 
       {loading && !hasData ? (
         <LoadingActivityCard
-          title="Carregando indicadores"
-          description="Buscando dados de suprimentos para o período e filial selecionados."
+          title={initialTitle}
+          description={initialDescription}
           progressPercent={loadingProgress}
         />
       ) : null}

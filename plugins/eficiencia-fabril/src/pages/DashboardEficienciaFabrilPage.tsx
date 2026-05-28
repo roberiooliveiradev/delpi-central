@@ -71,7 +71,7 @@ export function DashboardEficienciaFabrilPage() {
           disabled={loading}
         >
           <RefreshCw size={16} className={refreshing ? "ef-spin" : undefined} aria-hidden />
-          Atualizar
+          {refreshing ? "Atualizando…" : "Atualizar"}
         </button>
       </header>
 
@@ -111,6 +111,16 @@ export function DashboardEficienciaFabrilPage() {
 
       {loading && !data ? (
         <div className="ef-loading-card">Carregando dashboard…</div>
+      ) : null}
+
+      {refreshing ? (
+        <div className="ef-loading-card ef-loading-card--refresh" role="status" aria-live="polite">
+          <span className="ef-loading-card__spinner" aria-hidden />
+          <div>
+            <strong>Atualizando dashboard</strong>
+            <p>Recalculando eficiência e apontamentos com os filtros selecionados.</p>
+          </div>
+        </div>
       ) : null}
 
       <div

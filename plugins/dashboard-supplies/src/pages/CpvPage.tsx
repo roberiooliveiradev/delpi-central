@@ -153,9 +153,11 @@ export function CpvPage({ pathname }: CpvPageProps) {
       <SuppliesStatusAlerts
         error={error}
         loading={loading}
+        refreshing={refreshing}
         hasData={data !== null}
         requestProgress={requestProgress}
         onRetry={reload}
+        refreshTitle="Atualizando CPV"
       />
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
