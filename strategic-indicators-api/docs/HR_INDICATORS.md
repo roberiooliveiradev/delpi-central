@@ -26,10 +26,10 @@ Na visão **Consolidado** (`aggregation_mode = average_of_units`):
 | Indicador SI | Código Portal | Realizado |
 |--------------|---------------|-----------|
 | `hr-pdi` | `PDI_ATV` | Soma de `actual_value` (PDIs ativos) no período |
-| `hr-performance-reviews` | `AVA_DES` | `(SUM concluídas / SUM meta) * 100` |
+| `hr-performance-reviews` | `DES_AVL` (alias `AVA_DES`) | Média de `indicators_monthlyactual.actual_value` no período (% já calculado no Portal RH) |
 | Demais | `ABS_*`, `TUR_*`, `TRN_*`, `SAT_INT` | Média/agregação existente no snapshot |
 
-Se `AVA_DES` não existir no Portal RH, o indicador não entra no snapshot SI até o cadastro no banco.
+Se `DES_AVL` não existir no Portal RH (`indicators_indicator`), o indicador não entra no snapshot SI até o cadastro no banco.
 
 ## API Delpi (`/hr`)
 

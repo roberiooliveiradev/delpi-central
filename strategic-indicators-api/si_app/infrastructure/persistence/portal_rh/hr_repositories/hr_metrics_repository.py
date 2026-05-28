@@ -9,7 +9,9 @@ from si_app.infrastructure.persistence.portal_rh.portal_rh_base_repository impor
 
 
 PDI_ACTIVE_INDICATOR_CODE = "PDI_ATV"
-PERFORMANCE_REVIEWS_INDICATOR_CODE = "AVA_DES"
+# Portal RH: id=7, code DES_AVL (% avaliações no prazo, já calculado em monthlyactual).
+# AVA_DES mantido como alias legado.
+PERFORMANCE_REVIEWS_INDICATOR_CODES = ("DES_AVL", "AVA_DES")
 
 
 class HrMetricsRepository(PortalRhBaseRepository):
@@ -171,73 +173,18 @@ class HrMetricsRepository(PortalRhBaseRepository):
         start_date: str | None,
         end_date: str | None,
     ) -> dict:
-        sql = """
-            WITH params AS (
-                SELECT
-                    CAST(%(branch_code)s AS varchar) AS branch_code,
-                    TO_DATE(NULLIF(CAST(%(start_date)s AS text), ''), 'DD-MM-YYYY') AS start_date,
-                    TO_DATE(NULLIF(CAST(%(end_date)s AS text), ''), 'DD-MM-YYYY') AS end_date
-            ),
-            review_rows AS (
-                SELECT
-                    mt.branch_code,
-                    mt.year,
-                    mt.month,
-                    mt.target_value AS total_reviews,
-                    ma.actual_value AS completed_reviews,
-                    make_date(mt.year, mt.month, 1) AS measurement_date
-                FROM indicators_monthlytarget mt
-                INNER JOIN indicators_indicator i
-                    ON i.id = mt.indicator_id
-                LEFT JOIN indicators_monthlyactual ma
-                    ON ma.indicator_id = mt.indicator_id
-                AND ma.branch_code = mt.branch_code
-                AND ma.year = mt.year
-                AND ma.month = mt.month
-                CROSS JOIN params p
-                WHERE mt.branch_code = p.branch_code
-                AND i.active = TRUE
-                AND i.code = %(performance_indicator_code)s
-                AND (
-                        p.start_date IS NULL
-                        OR make_date(mt.year, mt.month, 1) >= date_trunc('month', p.start_date)::date
-                )
-                AND (
-                        p.end_date IS NULL
-                        OR make_date(mt.year, mt.month, 1) <= date_trunc('month', p.end_date)::date
-                )
-            )
-            SELECT
-                SUM(total_reviews) AS total_reviews,
-                SUM(completed_reviews) AS completed_reviews,
-                CASE
-                    WHEN SUM(total_reviews) IS NULL OR SUM(total_reviews) = 0 THEN NULL
-                    WHEN SUM(completed_reviews) IS NULL THEN NULL
-                    ELSE (SUM(completed_reviews) / SUM(total_reviews)) * 100
-                END AS completion_pct,
-                MAX(measurement_date) AS measurement_date
-            FROM review_rows
-        """
-
-        row = self.fetch_one(
-            sql,
-            {
-                "branch_code": branch_code,
-                "start_date": start_date,
-                "end_date": end_date,
-                "performance_indicator_code": PERFORMANCE_REVIEWS_INDICATOR_CODE,
-            },
+        result = self._get_branch_indicator_average_or_latest_value(
+            branch_code=branch_code,
+            start_date=start_date,
+            end_date=end_date,
+            indicator_codes=list(PERFORMANCE_REVIEWS_INDICATOR_CODES),
         )
 
-        completion_pct = self._safe_round((row or {}).get("completion_pct"))
-
         return {
-            "indicator_code": PERFORMANCE_REVIEWS_INDICATOR_CODE,
+            "indicator_code": PERFORMANCE_REVIEWS_INDICATOR_CODES[0],
             "branch_code": branch_code,
-            "total_reviews": self._safe_round((row or {}).get("total_reviews")),
-            "completed_reviews": self._safe_round((row or {}).get("completed_reviews")),
-            "value": completion_pct,
-            "measurement_date": (row or {}).get("measurement_date"),
+            "value": result.get("value"),
+            "measurement_date": result.get("measurement_date"),
         }
 
     def get_internal_satisfaction_snapshot(
