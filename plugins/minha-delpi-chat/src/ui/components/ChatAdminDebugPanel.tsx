@@ -59,11 +59,13 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           </span>
         </summary>
 
-        <div className="mdc-chat-admin-debug__toolbar">
-          <CopyButton value={json} />
-        </div>
+        <div className="mdc-chat-admin-debug__content">
+          <div className="mdc-chat-admin-debug__toolbar">
+            <CopyButton value={json} />
+          </div>
 
-        <pre className="mdc-chat-admin-debug__body">{json}</pre>
+          <pre className="mdc-chat-admin-debug__body">{json}</pre>
+        </div>
       </details>
     </section>
   );

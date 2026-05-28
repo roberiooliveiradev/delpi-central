@@ -49,25 +49,29 @@
 }
 
 .mdc-chat-admin-debug__toolbar {
-  padding: 0 12px 8px;
+  padding: 10px 12px 8px;
   display: flex;
   justify-content: flex-end;
 }
 
+.mdc-chat-admin-debug__content {
+  border-left: 1px solid rgba(27, 31, 35, 0.12);
+  border-right: 1px solid rgba(27, 31, 35, 0.12);
+  border-bottom: 1px solid rgba(27, 31, 35, 0.12);
+  border-radius: 0 0 10px 10px;
+  background: rgba(248, 249, 251, 0.9);
+  overflow: hidden;
+}
+
 .mdc-chat-admin-debug__body {
   margin: 0;
-  padding: 10px 12px 12px;
+  padding: 0 12px 12px;
   max-height: 420px;
   overflow: auto;
   font-size: 12px;
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
-  border-left: 1px solid rgba(27, 31, 35, 0.12);
-  border-right: 1px solid rgba(27, 31, 35, 0.12);
-  border-bottom: 1px solid rgba(27, 31, 35, 0.12);
-  border-radius: 0 0 10px 10px;
-  background: rgba(248, 249, 251, 0.9);
 }
 
 .mdc-chat-admin-debug__copy-btn {
