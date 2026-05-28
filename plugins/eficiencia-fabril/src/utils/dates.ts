@@ -22,3 +22,10 @@ export function formatDisplayDate(value: string | null | undefined): string {
 export function formatPeriodLabel(dateStart: string, dateEnd: string): string {
   return `${formatDisplayDate(dateStart)} — ${formatDisplayDate(dateEnd)}`;
 }
+
+/** Rótulo curto para eixo de gráficos (dd/MM). */
+export function formatChartAxisDate(value: string): string {
+  const display = formatDisplayDate(value);
+  if (display === "—") return value;
+  return display.slice(0, 5);
+}

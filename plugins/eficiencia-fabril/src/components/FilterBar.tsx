@@ -4,16 +4,17 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   branch: string;
+  op: string;
   employee: string;
   workCenter: string;
-  statusOkOnly: boolean;
   branches: readonly string[];
+  hasPendingChanges?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onBranchChange: (value: string) => void;
+  onOpChange: (value: string) => void;
   onEmployeeChange: (value: string) => void;
   onWorkCenterChange: (value: string) => void;
-  onStatusOkOnlyChange: (value: boolean) => void;
   onApply: () => void;
   loading?: boolean;
 };
@@ -22,16 +23,17 @@ export function FilterBar({
   dateStart,
   dateEnd,
   branch,
+  op,
   employee,
   workCenter,
-  statusOkOnly,
   branches,
+  hasPendingChanges = false,
   onDateStartChange,
   onDateEndChange,
   onBranchChange,
+  onOpChange,
   onEmployeeChange,
   onWorkCenterChange,
-  onStatusOkOnlyChange,
   onApply,
   loading = false,
 }: FilterBarProps) {
@@ -72,12 +74,22 @@ export function FilterBar({
         </label>
 
         <label className="ef-field">
-          <span>Operador (código ou login)</span>
+          <span>Operador (nome)</span>
           <input
             type="text"
             value={employee}
-            placeholder="Ex.: 000123"
+            placeholder="Ex.: CRISTIANE"
             onChange={(event) => onEmployeeChange(event.target.value)}
+          />
+        </label>
+
+        <label className="ef-field">
+          <span>OP</span>
+          <input
+            type="text"
+            value={op}
+            placeholder="Ex.: 24549301007"
+            onChange={(event) => onOpChange(event.target.value)}
           />
         </label>
 
@@ -91,14 +103,6 @@ export function FilterBar({
           />
         </label>
 
-        <label className="ef-field ef-field--checkbox">
-          <input
-            type="checkbox"
-            checked={statusOkOnly}
-            onChange={(event) => onStatusOkOnlyChange(event.target.checked)}
-          />
-          <span>Somente registros OK</span>
-        </label>
       </div>
 
       <button
@@ -108,7 +112,11 @@ export function FilterBar({
         disabled={loading}
       >
         <Search size={16} aria-hidden />
-        {loading ? "Carregando…" : "Aplicar filtros"}
+        {loading
+          ? "Carregando…"
+          : hasPendingChanges
+            ? "Aplicar filtros *"
+            : "Aplicar filtros"}
       </button>
     </section>
   );

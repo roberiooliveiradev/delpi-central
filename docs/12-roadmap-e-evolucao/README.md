@@ -29,6 +29,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | Arquivo | Conteúdo |
 |---|---|
 | [eficiencia-fabril/README.md](./eficiencia-fabril/README.md) | Índice do módulo |
+| [eficiencia-fabril/ESPECIFICACAO-PLUGIN.md](./eficiencia-fabril/ESPECIFICACAO-PLUGIN.md) | Funcionalidades implementadas (MVP) |
 | [eficiencia-fabril/ROADMAP.md](./eficiencia-fabril/ROADMAP.md) | Roadmap de implantação do plugin |
 | [eficiencia-fabril/ESPECIFICACAO-VIEW.md](./eficiencia-fabril/ESPECIFICACAO-VIEW.md) | View TOTVS e regras de negócio |
 | [eficiencia-fabril/FASE0-VALIDACAO.md](./eficiencia-fabril/FASE0-VALIDACAO.md) | Validação Fase 0 (TOTVS) |

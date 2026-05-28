@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 
-import type { EficienciaFabrilListFilterParams } from "../api/fetchAllEficienciaFabrilItems";
 import type { EficienciaFabrilFilterParams } from "../types/eficienciaFabril";
 import {
   getFirstDayOfMonthInputValue,
@@ -32,9 +31,10 @@ function createInitialFilters(): EficienciaFabrilFilterState {
   };
 }
 
-function toListFilterParams(
-  filters: EficienciaFabrilFilterState
-): EficienciaFabrilListFilterParams {
+function toApiFilters(
+  filters: EficienciaFabrilFilterState,
+  page: number
+): EficienciaFabrilFilterParams {
   return {
     date_start: filters.dateStart,
     date_end: filters.dateEnd,
@@ -43,15 +43,6 @@ function toListFilterParams(
     employee: filters.employee.trim() || undefined,
     work_center: filters.workCenter.trim() || undefined,
     status_ok_only: filters.statusOkOnly,
-  };
-}
-
-function toApiFilters(
-  filters: EficienciaFabrilFilterState,
-  page: number
-): EficienciaFabrilFilterParams {
-  return {
-    ...toListFilterParams(filters),
     page,
     page_size: PAGE_SIZE,
   };
@@ -65,11 +56,6 @@ export function useEficienciaFabrilFilters() {
   const apiParams = useMemo(
     () => toApiFilters(committed, page),
     [committed, page]
-  );
-
-  const listFilterParams = useMemo(
-    () => toListFilterParams(committed),
-    [committed]
   );
 
   const hasPendingChanges = useMemo(
@@ -113,6 +99,5 @@ export function useEficienciaFabrilFilters() {
     resetPage,
     applyFilters,
     apiParams,
-    listFilterParams,
   };
 }

@@ -12,3 +12,5 @@ class EficienciaFabrilQuerySettings:
     top_operators_limit: int = 15
     top_work_centers_limit: int = 15
     status_registro_ok: str = "OK"
+    # Eficiência acima deste limite não entra em KPIs/gráficos (permanece na tabela).
+    max_efficiency_indicator_pct: int = 250

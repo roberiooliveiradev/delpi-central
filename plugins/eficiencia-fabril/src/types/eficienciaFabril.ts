@@ -2,9 +2,9 @@ export type EficienciaFabrilFilterParams = {
   date_start: string;
   date_end: string;
   branch?: string;
+  op?: string;
   employee?: string;
   work_center?: string;
-  cost_center?: string;
   status_ok_only?: boolean;
   page?: number;
   page_size?: number;
@@ -16,8 +16,10 @@ export type EficienciaFabrilSummary = {
   total_mod_profit: number | null;
   total_mod_loss: number | null;
   total_hours_gained_lost: number | null;
-  appointment_count: number;
-  invalid_record_count: number;
+  /** Total de apontamentos exibidos na tabela (filtros aplicados). */
+  table_appointment_count: number;
+  /** Apontamentos com eficiência acima do limite (status Verificar na tabela). */
+  verify_appointment_count: number;
 };
 
 export type EfficiencyByDay = {
@@ -49,10 +51,17 @@ export type HoursByWorkCenter = {
   appointment_count: number;
 };
 
+export type EfficiencyByWorkCenter = {
+  work_center: string | null;
+  efficiency_pct: number | null;
+  appointment_count: number;
+};
+
 export type EficienciaFabrilCharts = {
   efficiency_by_day: EfficiencyByDay[];
   mod_result_by_day: ModResultByDay[];
   efficiency_by_operator: EfficiencyByOperator[];
+  efficiency_by_work_center: EfficiencyByWorkCenter[];
   hours_by_work_center: HoursByWorkCenter[];
 };
 
@@ -68,6 +77,7 @@ export type EficienciaFabrilItem = {
   data_producao: string | null;
   hora_inicio: string | null;
   hora_final: string | null;
+  qtd_apontada: number | null;
   tempo_real_horas: number | null;
   tempo_previsto_horas: number | null;
   eficiencia_percentual: number | null;

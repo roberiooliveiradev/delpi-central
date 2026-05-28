@@ -10,7 +10,8 @@
 Consolidar apontamentos de produção do Protheus (`SH6010`), calculando eficiência operacional, tempos previsto/real, tempo ganho ou perdido e resultado financeiro de MOD.
 
 - **Granularidade:** 1 linha = 1 apontamento
-- **Exclusão fixa na view:** recurso `CT-00`
+- **Exclusão na view:** recurso `CT-00` (na SQL da view)
+- **Exclusão na api-delpi/MFE:** `CT-00`, `CT-70`, `CT-16A`, `CT-99` (não produtivos / regras de negócio)
 
 ---
 
@@ -54,11 +55,13 @@ TEMPO_GANHO_PERDIDO_HORAS = TEMPO_PREVISTO_HORAS - TEMPO_REAL_HORAS
 RESULTADO_MOD = TEMPO_GANHO_PERDIDO_HORAS × VALOR_MOD_HORA
 ```
 
-**Agregação global de eficiência (dashboard):**
+**Agregação no dashboard (implementado no MFE):**
 
 ```text
-SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) × 100
+AVG(EFICIENCIA_PERCENTUAL)   -- média simples, registros OK, eficiência ≤ 250%
 ```
+
+*(A ponderação por `SUM(TEMPO_PREVISTO)/SUM(TEMPO_REAL)` permanece válida como referência analítica, mas não é o KPI exibido.)*
 
 | Eficiência % | Significado |
 |--------------|-------------|
@@ -130,11 +133,14 @@ SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) × 100
 
 ## Regras de negócio para a aplicação
 
-1. **Default:** `STATUS_REGISTRO = 'OK'` (toggle “incluir registros com problema”).
-2. **Eficiência agregada:** sempre ponderada por `TEMPO_REAL_HORAS`.
-3. **MOD:** somar `LUCRO_MOD` / `PREJUIZO_MOD` apenas em registros com `STATUS_MOD = 'OK'` (avaliar na Fase 1).
-4. **CT-00:** já excluído na view; validação confirma `ct00_count = 0`.
-5. **Filiais:** default `01` e `02` (mesmo padrão LMPs).
+1. **Indicadores (KPIs/gráficos):** apenas `STATUS_REGISTRO = 'OK'` e `EFICIENCIA_PERCENTUAL ≤ 250%`.
+2. **Tabela:** registros OK; eficiência &gt; 250% exibidos como **Verificar** (fora dos indicadores).
+3. **Eficiência agregada:** média simples de `EFICIENCIA_PERCENTUAL` (ver [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md)).
+4. **CTs excluídos no repository:** `CT-00`, `CT-70`, `CT-16A`, `CT-99` (`LTRIM` em `CENTRO_TRABALHO`).
+5. **Filiais:** `01` e `02` quando não há filtro de filial.
+6. **Filtros UI:** operador por nome (`LIKE`); OP parcial; sem centro de custo na interface.
+
+Detalhamento completo do plugin: [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
 
 ---
 

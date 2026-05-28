@@ -15,6 +15,7 @@ from app.composition.production_composer import (
     build_get_overall_equipment_effectiveness_pct_use_case,
     build_get_on_time_delivery_pct_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
+    build_get_eficiencia_fabril_appointments_use_case,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 
@@ -256,9 +257,9 @@ def get_eficiencia_fabril_dashboard(
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
     branch: str | None = Query(default=None),
+    op: str | None = Query(default=None),
     employee: str | None = Query(default=None),
     work_center: str | None = Query(default=None),
-    cost_center: str | None = Query(default=None),
     status_ok_only: bool = Query(default=True),
     page: int = Query(default=1, ge=1),
     page_size: int | None = Query(default=None, ge=1, le=500),
@@ -269,9 +270,9 @@ def get_eficiencia_fabril_dashboard(
             date_start=date_start,
             date_end=date_end,
             branch=branch,
+            op=op,
             employee=employee,
             work_center=work_center,
-            cost_center=cost_center,
             status_ok_only=status_ok_only,
             page=page,
             page_size=page_size,
@@ -290,5 +291,51 @@ def get_eficiencia_fabril_dashboard(
         log_error(f"Erro ao carregar dashboard eficiência fabril: {exc}")
         return error_response(
             "Erro interno ao carregar dashboard de eficiência fabril.",
+            status_code=500,
+        )
+
+
+@router.get("/eficiencia-fabril/appointments")
+@require_any_permission(
+    [
+        "api-delpi.access",
+        "eficiencia-fabril.view",
+        "dashboard-production.view",
+    ]
+)
+def get_eficiencia_fabril_appointments(
+    date_start: str | None = Query(default=None),
+    date_end: str | None = Query(default=None),
+    branch: str | None = Query(default=None),
+    op: str | None = Query(default=None),
+    employee: str | None = Query(default=None),
+    work_center: str | None = Query(default=None),
+    status_ok_only: bool = Query(default=False),
+):
+    try:
+        use_case = build_get_eficiencia_fabril_appointments_use_case()
+        result = use_case.execute(
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+            op=op,
+            employee=employee,
+            work_center=work_center,
+            status_ok_only=status_ok_only,
+        )
+
+        return success_response(
+            data=result,
+            message="Apontamentos de eficiência fabril carregados com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação nos apontamentos eficiência fabril: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao carregar apontamentos eficiência fabril: {exc}")
+        return error_response(
+            "Erro interno ao carregar apontamentos de eficiência fabril.",
             status_code=500,
         )

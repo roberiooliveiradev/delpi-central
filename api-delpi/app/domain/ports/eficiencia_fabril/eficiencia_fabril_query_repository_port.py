@@ -5,6 +5,7 @@ from app.application.dto.eficiencia_fabril.get_eficiencia_fabril_dashboard_reque
 )
 from app.application.dto.eficiencia_fabril.eficiencia_fabril_dashboard_response import (
     EficienciaFabrilDashboardResponse,
+    EficienciaFabrilDashboardItem,
 )
 
 
@@ -15,4 +16,13 @@ class EficienciaFabrilQueryRepositoryPort(ABC):
         self,
         request: GetEficienciaFabrilDashboardRequest,
     ) -> EficienciaFabrilDashboardResponse:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_appointments(
+        self,
+        request: GetEficienciaFabrilDashboardRequest,
+        *,
+        status_ok_only: bool,
+    ) -> list[EficienciaFabrilDashboardItem]:
         raise NotImplementedError

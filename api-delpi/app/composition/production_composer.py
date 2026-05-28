@@ -21,6 +21,9 @@ from app.application.use_cases.production.get_production_cost_pct_use_case impor
 from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_dashboard_use_case import (
     GetEficienciaFabrilDashboardUseCase,
 )
+from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_appointments_use_case import (
+    GetEficienciaFabrilAppointmentsUseCase,
+)
 from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_repository import (
     EficienciaFabrilQueryRepository,
 )
@@ -132,5 +135,11 @@ def build_get_on_time_delivery_pct_use_case() -> GetOnTimeDeliveryPctUseCase:
 
 def build_get_eficiencia_fabril_dashboard_use_case() -> GetEficienciaFabrilDashboardUseCase:
     return GetEficienciaFabrilDashboardUseCase(
+        repository=EficienciaFabrilQueryRepository(),
+    )
+
+
+def build_get_eficiencia_fabril_appointments_use_case() -> GetEficienciaFabrilAppointmentsUseCase:
+    return GetEficienciaFabrilAppointmentsUseCase(
         repository=EficienciaFabrilQueryRepository(),
     )

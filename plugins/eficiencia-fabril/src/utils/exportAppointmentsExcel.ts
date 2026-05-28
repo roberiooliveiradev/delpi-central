@@ -1,5 +1,3 @@
-import type { EficienciaFabrilListFilterParams } from "../api/fetchAllEficienciaFabrilItems";
-import { fetchAllEficienciaFabrilItems } from "../api/fetchAllEficienciaFabrilItems";
 import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "./dates";
@@ -47,10 +45,10 @@ function buildFilename(dateStart: string, dateEnd: string): string {
 }
 
 export async function exportAppointmentsExcel(
-  params: EficienciaFabrilListFilterParams,
-  signal?: AbortSignal
+  items: EficienciaFabrilItem[],
+  dateStart: string,
+  dateEnd: string
 ): Promise<void> {
-  const items = await fetchAllEficienciaFabrilItems(params, signal);
   const XLSX = await import("xlsx");
 
   const rows = items.map(itemToRow);
@@ -66,5 +64,5 @@ export async function exportAppointmentsExcel(
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, "Apontamentos");
-  XLSX.writeFile(workbook, buildFilename(params.date_start, params.date_end));
+  XLSX.writeFile(workbook, buildFilename(dateStart, dateEnd));
 }

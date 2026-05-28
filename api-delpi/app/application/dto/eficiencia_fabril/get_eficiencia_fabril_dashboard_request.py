@@ -8,6 +8,7 @@ class GetEficienciaFabrilDashboardRequest:
     date_start: date
     date_end: date
     branch: Optional[str] = None
+    op: Optional[str] = None
     employee: Optional[str] = None
     work_center: Optional[str] = None
     cost_center: Optional[str] = None

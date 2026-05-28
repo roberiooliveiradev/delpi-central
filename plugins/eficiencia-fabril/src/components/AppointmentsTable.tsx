@@ -1,7 +1,6 @@
 import { FileSpreadsheet } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
-import type { EficienciaFabrilListFilterParams } from "../api/fetchAllEficienciaFabrilItems";
 import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import { formatDisplayDate } from "../utils/dates";
@@ -10,10 +9,12 @@ import { formatCurrency, formatNumber, formatPercent } from "../utils/format";
 
 type AppointmentsTableProps = {
   items: EficienciaFabrilItem[];
+  exportItems: EficienciaFabrilItem[];
+  exportDateStart: string;
+  exportDateEnd: string;
   page: number;
   totalPages: number;
   total: number;
-  listFilterParams: EficienciaFabrilListFilterParams;
   onPageChange: (page: number) => void;
   onExportError?: (message: string) => void;
   disabled?: boolean;
@@ -21,42 +22,32 @@ type AppointmentsTableProps = {
 
 export function AppointmentsTable({
   items,
+  exportItems,
+  exportDateStart,
+  exportDateEnd,
   page,
   totalPages,
   total,
-  listFilterParams,
   onPageChange,
   onExportError,
   disabled = false,
 }: AppointmentsTableProps) {
   const [exporting, setExporting] = useState(false);
-  const exportAbortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => exportAbortRef.current?.abort();
-  }, []);
 
   const handleExportExcel = useCallback(async () => {
     if (exporting || total <= 0) return;
 
-    exportAbortRef.current?.abort();
-    const controller = new AbortController();
-    exportAbortRef.current = controller;
-
     setExporting(true);
     try {
-      await exportAppointmentsExcel(listFilterParams, controller.signal);
+      await exportAppointmentsExcel(exportItems, exportDateStart, exportDateEnd);
     } catch (err) {
-      if (controller.signal.aborted) return;
       const message =
         err instanceof Error ? err.message : "Não foi possível exportar o Excel.";
       onExportError?.(message);
     } finally {
-      if (exportAbortRef.current === controller) {
-        setExporting(false);
-      }
+      setExporting(false);
     }
-  }, [exporting, listFilterParams, onExportError, total]);
+  }, [exportDateEnd, exportDateStart, exportItems, exporting, onExportError, total]);
 
   return (
     <section className="ef-table-card" aria-label="Apontamentos">

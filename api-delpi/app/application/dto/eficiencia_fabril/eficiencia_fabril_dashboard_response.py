@@ -34,6 +34,7 @@ class EficienciaFabrilDashboardItem:
     data_producao: Optional[str] = None
     hora_inicio: Optional[str] = None
     hora_final: Optional[str] = None
+    qtd_apontada: Optional[float] = None
     tempo_real_horas: Optional[float] = None
     tempo_previsto_horas: Optional[float] = None
     eficiencia_percentual: Optional[float] = None

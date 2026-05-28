@@ -2,6 +2,7 @@ import type { ApiSuccessResponse } from "../types/api";
 import type {
   EficienciaFabrilDashboardData,
   EficienciaFabrilFilterParams,
+  EficienciaFabrilItem,
 } from "../types/eficienciaFabril";
 import { httpGet } from "./httpClient";
 
@@ -14,9 +15,9 @@ function buildQuery(params: EficienciaFabrilFilterParams): string {
   searchParams.set("date_end", params.date_end);
 
   if (params.branch) searchParams.set("branch", params.branch);
+  if (params.op) searchParams.set("op", params.op);
   if (params.employee) searchParams.set("employee", params.employee);
   if (params.work_center) searchParams.set("work_center", params.work_center);
-  if (params.cost_center) searchParams.set("cost_center", params.cost_center);
   if (params.status_ok_only !== undefined) {
     searchParams.set("status_ok_only", String(params.status_ok_only));
   }
@@ -37,6 +38,22 @@ export async function getEficienciaFabrilDashboard(
 
   if (response.success === false) {
     throw new Error(response.message || "Erro ao carregar dashboard");
+  }
+
+  return response.data;
+}
+
+export async function getEficienciaFabrilAppointments(
+  params: Omit<EficienciaFabrilFilterParams, "page" | "page_size">,
+  signal?: AbortSignal
+): Promise<EficienciaFabrilItem[]> {
+  const response = await httpGet<ApiSuccessResponse<EficienciaFabrilItem[]>>(
+    `${EFICIENCIA_FABRIL_API_BASE}/eficiencia-fabril/appointments${buildQuery(params)}`,
+    { signal }
+  );
+
+  if (response.success === false) {
+    throw new Error(response.message || "Erro ao carregar apontamentos");
   }
 
   return response.data;

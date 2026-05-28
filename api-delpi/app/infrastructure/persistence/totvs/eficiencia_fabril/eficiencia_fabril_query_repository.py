@@ -33,10 +33,18 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
         self,
         request: GetEficienciaFabrilDashboardRequest,
     ) -> EficienciaFabrilDashboardResponse:
-        base_where, base_params = self._build_filters(request, status_ok_only=None)
+        # Regra de sanidade:
+        # - registros com eficiência acima do limite NÃO entram em cálculos (eficiência/MOD/horas)
+        # - mas devem continuar aparecendo na tabela para conferência do líder
+        base_where, base_params = self._build_filters(
+            request,
+            status_ok_only=None,
+            efficiency_cap_pct=self.settings.max_efficiency_indicator_pct,
+        )
         items_where, items_params = self._build_filters(
             request,
             status_ok_only=request.status_ok_only,
+            efficiency_cap_pct=None,
         )
 
         view = self.settings.view_name
@@ -47,14 +55,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 f"""
                 SELECT
                     COUNT(*) AS appointment_count,
-                    CASE
-                        WHEN SUM(TEMPO_REAL_HORAS) > 0
-                        THEN ROUND(
-                            SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) * 100.0,
-                            2
-                        )
-                        ELSE NULL
-                    END AS weighted_efficiency_pct,
+                    ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS weighted_efficiency_pct,
                     ROUND(SUM(RESULTADO_MOD), 2) AS total_mod_result,
                     ROUND(SUM(LUCRO_MOD), 2) AS total_mod_profit,
                     ROUND(SUM(PREJUIZO_MOD), 2) AS total_mod_loss,
@@ -80,14 +81,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                 f"""
                 SELECT
                     DATA_PRODUCAO AS [date],
-                    CASE
-                        WHEN SUM(TEMPO_REAL_HORAS) > 0
-                        THEN ROUND(
-                            SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) * 100.0,
-                            2
-                        )
-                        ELSE NULL
-                    END AS efficiency_pct,
+                    ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS efficiency_pct,
                     COUNT(*) AS appointment_count
                 FROM {view}
                 WHERE {base_where}
@@ -120,14 +114,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                     NOME_OPERADOR AS operator_name,
                     COD_OPERADOR AS operator_code,
                     LOGIN_OPERADOR AS operator_login,
-                    CASE
-                        WHEN SUM(TEMPO_REAL_HORAS) > 0
-                        THEN ROUND(
-                            SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) * 100.0,
-                            2
-                        )
-                        ELSE NULL
-                    END AS efficiency_pct,
+                    ROUND(AVG(EFICIENCIA_PERCENTUAL), 2) AS efficiency_pct,
                     COUNT(*) AS appointment_count,
                     ROUND(SUM(RESULTADO_MOD), 2) AS mod_result
                 FROM {view}
@@ -181,6 +168,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
                     DATA_PRODUCAO,
                     HORA_INICIO,
                     HORA_FINAL,
+                    QTD_APONTADA,
                     TEMPO_REAL_HORAS,
                     TEMPO_PREVISTO_HORAS,
                     EFICIENCIA_PERCENTUAL,
@@ -221,11 +209,63 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             ),
         )
 
+    def get_appointments(
+        self,
+        request: GetEficienciaFabrilDashboardRequest,
+        *,
+        status_ok_only: bool,
+    ) -> list[EficienciaFabrilDashboardItem]:
+        where, params = self._build_filters(
+            request,
+            status_ok_only=status_ok_only,
+            efficiency_cap_pct=None,
+        )
+
+        view = self.settings.view_name
+        with self:
+            rows = self.execute_query(
+                f"""
+                SELECT
+                    FILIAL,
+                    OP,
+                    PRODUTO,
+                    CENTRO_TRABALHO,
+                    OPERACAO,
+                    COD_OPERADOR,
+                    LOGIN_OPERADOR,
+                    NOME_OPERADOR,
+                    DATA_PRODUCAO,
+                    HORA_INICIO,
+                    HORA_FINAL,
+                    QTD_APONTADA,
+                    TEMPO_REAL_HORAS,
+                    TEMPO_PREVISTO_HORAS,
+                    EFICIENCIA_PERCENTUAL,
+                    VALOR_MOD_HORA,
+                    TEMPO_GANHO_PERDIDO_HORAS,
+                    RESULTADO_MOD,
+                    LUCRO_MOD,
+                    PREJUIZO_MOD,
+                    STATUS_RESULTADO_MOD,
+                    STATUS_REGISTRO
+                FROM {view}
+                WHERE {where}
+                ORDER BY
+                    DATA_PRODUCAO DESC,
+                    HORA_INICIO DESC,
+                    HORA_FINAL DESC
+                """,
+                params,
+            )
+
+        return [self._map_item(row) for row in rows]
+
     def _build_filters(
         self,
         request: GetEficienciaFabrilDashboardRequest,
         *,
         status_ok_only: bool | None,
+        efficiency_cap_pct: int | None = None,
     ) -> Tuple[str, tuple]:
         qb = QueryBuilder()
         qb.gte("DATA_PRODUCAO", request.date_start.isoformat())
@@ -238,17 +278,35 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
 
         qb.raw("LTRIM(RTRIM(ISNULL(FILIAL, ''))) <> ''")
 
-        if request.work_center:
-            qb.eq("CENTRO_TRABALHO", request.work_center)
+        excluded_work_centers = ("CT-00", "CT-70", "CT-16A", "CT-99")
 
-        if request.cost_center:
-            qb.eq("CENTRO_CUSTO_RECURSO", request.cost_center)
+        if request.op:
+            # Busca parcial (contains) por número de OP.
+            # Ex.: "24546" deve retornar "24546401001", "24546401005", ...
+            qb.like("OP", request.op)
+
+        if request.work_center:
+            work_center = request.work_center.strip()
+            if work_center in excluded_work_centers:
+                qb.raw("1=0")
+            else:
+                qb.eq("CENTRO_TRABALHO", work_center)
+        else:
+            # TOTVS pode retornar CENTRO_TRABALHO com espaços à direita
+            for wc in excluded_work_centers:
+                qb.raw("LTRIM(RTRIM(CENTRO_TRABALHO)) <> ?")
+                qb._params.append(wc)
 
         if request.employee:
-            qb.raw(
-                "(COD_OPERADOR = ? OR LOGIN_OPERADOR = ?)"
-            )
-            qb._params.extend([request.employee, request.employee])
+            # Busca por nome do operador (contains)
+            qb.like("NOME_OPERADOR", request.employee, case_insensitive=True)
+
+        if efficiency_cap_pct is not None:
+            # Sanidade: eficiência muito alta é erro de apontamento.
+            # Importante: esse cap deve afetar apenas agregações (summary/charts),
+            # mantendo esses registros visíveis na tabela para conferência.
+            qb.raw("(EFICIENCIA_PERCENTUAL IS NULL OR EFICIENCIA_PERCENTUAL <= ?)")
+            qb._params.append(efficiency_cap_pct)
 
         effective_status_ok = (
             request.status_ok_only if status_ok_only is None else status_ok_only
@@ -293,6 +351,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             data_producao=data_producao,
             hora_inicio=row.get("HORA_INICIO"),
             hora_final=row.get("HORA_FINAL"),
+            qtd_apontada=_to_float(row.get("QTD_APONTADA")),
             tempo_real_horas=_to_float(row.get("TEMPO_REAL_HORAS")),
             tempo_previsto_horas=_to_float(row.get("TEMPO_PREVISTO_HORAS")),
             eficiencia_percentual=_to_float(row.get("EFICIENCIA_PERCENTUAL")),

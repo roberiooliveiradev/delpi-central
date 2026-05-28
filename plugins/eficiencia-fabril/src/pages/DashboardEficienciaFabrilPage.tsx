@@ -16,7 +16,8 @@ import { KpiCard } from "../components/KpiCard";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
 import { formatPeriodLabel } from "../utils/dates";
-import { formatCurrency, formatNumber, formatPercent } from "../utils/format";
+import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
+import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
 
 export function DashboardEficienciaFabrilPage() {
   const {
@@ -27,7 +28,6 @@ export function DashboardEficienciaFabrilPage() {
     op,
     employee,
     workCenter,
-    statusOkOnly,
     hasPendingChanges,
     page,
     setDateStart,
@@ -36,11 +36,9 @@ export function DashboardEficienciaFabrilPage() {
     setOp,
     setEmployee,
     setWorkCenter,
-    setStatusOkOnly,
     setPage,
     applyFilters,
     apiParams,
-    listFilterParams,
   } = useEficienciaFabrilFilters();
 
   const [exportError, setExportError] = useState<string | null>(null);
@@ -48,16 +46,13 @@ export function DashboardEficienciaFabrilPage() {
     setExportError(message);
   }, []);
 
-  const { data, loading, error, reload } = useEficienciaFabrilDashboard(apiParams);
+  const { data, allItems, loading, error, reload } = useEficienciaFabrilDashboard(apiParams);
 
   const summary = data?.summary;
   const pagination = data?.pagination;
   const charts = data?.charts;
   const refreshing = loading && Boolean(data);
-  const isEmpty =
-    Boolean(data) &&
-    (summary?.appointment_count ?? 0) === 0 &&
-    (summary?.invalid_record_count ?? 0) === 0;
+  const isEmpty = Boolean(data) && (summary?.table_appointment_count ?? 0) === 0;
 
   return (
     <div className="dashboard-eficiencia-fabril dashboard-page">
@@ -87,7 +82,6 @@ export function DashboardEficienciaFabrilPage() {
         op={op}
         employee={employee}
         workCenter={workCenter}
-        statusOkOnly={statusOkOnly}
         branches={branches}
         hasPendingChanges={hasPendingChanges}
         onDateStartChange={setDateStart}
@@ -96,7 +90,6 @@ export function DashboardEficienciaFabrilPage() {
         onOpChange={setOp}
         onEmployeeChange={setEmployee}
         onWorkCenterChange={setWorkCenter}
-        onStatusOkOnlyChange={setStatusOkOnly}
         onApply={() => {
           setExportError(null);
           applyFilters();
@@ -104,12 +97,8 @@ export function DashboardEficienciaFabrilPage() {
         loading={loading}
       />
 
-      <p className="ef-efficiency-legend">
-        Eficiência &gt; 100% indica produção mais rápida que o tempo previsto (referência
-        visual em 100% no gráfico diário).
-      </p>
       <p className="ef-efficiency-legend ef-efficiency-legend--warning">
-        Atenção: apontamentos com eficiência acima de 500% são desconsiderados no indicador de
+        Atenção: apontamentos com eficiência acima de 250% são desconsiderados no indicador de
         eficiência (KPIs e gráficos) e aparecem na tabela como &quot;Verificar&quot;.
       </p>
 
@@ -132,15 +121,21 @@ export function DashboardEficienciaFabrilPage() {
         {summary ? (
           <section className="ef-kpi-grid" aria-label="Indicadores">
             <KpiCard
-              label="Eficiência (média simples)"
+              label="Eficiência"
               value={formatPercent(summary.weighted_efficiency_pct)}
-              hint="Média de EFICIENCIA_PERCENTUAL (registros OK)"
+              hint="Média da eficiência (%)"
+              tone={
+                summary.weighted_efficiency_pct !== null &&
+                summary.weighted_efficiency_pct < EFFICIENCY_KPI_WARNING_PCT
+                  ? "negative"
+                  : "default"
+              }
               icon={<Gauge size={20} />}
             />
             <KpiCard
-              label="Apontamentos OK"
-              value={summary.appointment_count.toLocaleString("pt-BR")}
-              hint={`${summary.invalid_record_count.toLocaleString("pt-BR")} com problema no período`}
+              label="Apontamentos"
+              value={summary.table_appointment_count.toLocaleString("pt-BR")}
+              hint={`${summary.verify_appointment_count.toLocaleString("pt-BR")} a avaliar (Verificar)`}
               icon={<Factory size={20} />}
             />
             <KpiCard
@@ -151,7 +146,7 @@ export function DashboardEficienciaFabrilPage() {
             />
             <KpiCard
               label="Horas ganhas/perdidas"
-              value={formatNumber(summary.total_hours_gained_lost, 2)}
+              value={formatHoursKpi(summary.total_hours_gained_lost, 2)}
               hint="Positivo = economia de tempo"
               icon={<Clock3 size={20} />}
             />
@@ -163,8 +158,7 @@ export function DashboardEficienciaFabrilPage() {
             <Inbox size={32} aria-hidden />
             <p>Nenhum apontamento encontrado para os filtros selecionados.</p>
             <p className="ef-empty-state__hint">
-              Amplie o período ou desmarque &quot;Somente registros OK&quot; para incluir
-              registros com problema.
+              Amplie o período ou ajuste os demais filtros.
             </p>
           </div>
         ) : null}
@@ -174,10 +168,12 @@ export function DashboardEficienciaFabrilPage() {
         {data && !isEmpty ? (
           <AppointmentsTable
             items={data.items}
+            exportItems={allItems}
+            exportDateStart={apiParams.date_start}
+            exportDateEnd={apiParams.date_end}
             page={pagination?.page ?? page}
             totalPages={pagination?.total_pages ?? 1}
             total={pagination?.total ?? 0}
-            listFilterParams={listFilterParams}
             onPageChange={setPage}
             onExportError={handleExportError}
             disabled={loading}

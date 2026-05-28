@@ -19,9 +19,16 @@ Manifesto JSON (delpi.manifest.json)
 
 Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).
 
-**CI (build):** `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
+**CI (build):**
 
-**Homologação:** `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
+- `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
+- `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
+
+**Homologação:**
+
+- `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
+- `./scripts/homologacao/check-eficiencia-fabril.sh` — smoke HTTP (`remoteEntry.js` + API `/dashboard`; defina `TOKEN` para validar JWT).
+- `./scripts/homologacao/check-eficiencia-fabril-fase0.sh` — validação da view TOTVS (container `delpi-api-delpi`).
 
 ---
 

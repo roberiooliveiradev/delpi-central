@@ -1,7 +1,7 @@
 # Roadmap — Plugin Eficiência Fabril
 
 > **Arquivo:** `docs/12-roadmap-e-evolucao/eficiencia-fabril/ROADMAP.md`  
-> **Status:** documentação oficial (rascunho de implantação)  
+> **Status:** MVP implementado em dev (documentação alinhada em 2026-05-28)  
 > **Produto:** Minha DELPI  
 > **Escopo:** plano de entrega do plugin `eficiencia-fabril` + rotas em `api-delpi`
 
@@ -14,9 +14,11 @@ Disponibilizar no Portal uma **tela única de dashboard gerencial** para lídere
 - **eficiência operacional** dos apontamentos (`EFICIENCIA_PERCENTUAL`);
 - **tempo previsto vs real** e **horas ganhas/perdidas**;
 - **resultado financeiro de MOD** (`RESULTADO_MOD`, `LUCRO_MOD`, `PREJUIZO_MOD`);
-- filtros dinâmicos por **período**, **filial**, **colaborador**, **centro de trabalho** e **centro de custo**.
+- filtros por **período**, **filial**, **operador (nome)**, **OP** (parcial) e **centro de trabalho**.
 
-**Fonte de dados:** view TOTVS `dbo.vw_Apontamentos_Eficiencia` (1 linha por apontamento de `SH6010`, excluindo recurso `CT-00`).
+**Fonte de dados:** view TOTVS `dbo.vw_Apontamentos_Eficiencia`. Na aplicação, centros **CT-00, CT-70, CT-16A e CT-99** são sempre excluídos.
+
+**Especificação do que está implementado:** [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
 
 ---
 
@@ -35,9 +37,11 @@ Fluxo:
 
 ```text
 Portal → MFE eficiencia-fabril
-  → GET /apps/api-delpi/production/eficiencia-fabril/dashboard
-  → EficienciaFabrilQueryRepository
-  → dbo.vw_Apontamentos_Eficiencia
+  → GET /apps/api-delpi/production/eficiencia-fabril/appointments  (carga do período)
+  → agregação e filtros no navegador
+  → EficienciaFabrilQueryRepository → dbo.vw_Apontamentos_Eficiencia
+
+Alternativa (smoke/legado): GET .../eficiencia-fabril/dashboard (SQL agregado + paginação)
 ```
 
 ---
@@ -67,13 +71,9 @@ EFICIENCIA_PERCENTUAL = (TEMPO_PREVISTO_HORAS / TEMPO_REAL_HORAS) × 100
 | = 100% | No previsto |
 | < 100% | Mais lento que o previsto |
 
-**Agregação recomendada (KPI global):** eficiência ponderada por tempo real:
+**Agregação implementada (KPI e gráficos):** média simples de `EFICIENCIA_PERCENTUAL` nos registros OK com eficiência ≤ 250%.
 
-```text
-SUM(TEMPO_PREVISTO_HORAS) / SUM(TEMPO_REAL_HORAS) × 100
-```
-
-**Filtro default sugerido no dashboard:** `STATUS_REGISTRO = 'OK'` (registros com problema em contador separado ou toggle).
+**Tabela:** registros OK; eficiência &gt; 250% com status **Verificar** (fora dos indicadores).
 
 ---
 
@@ -121,20 +121,23 @@ Registro: `POST /core-api/admin/apps/register` com permissão `apps.manage` ou s
 | DTOs | request (filtros), summary, charts, item paginado | ✅ |
 | Use case | `GetEficienciaFabrilDashboardUseCase` | ✅ |
 | Rota | `GET /production/eficiencia-fabril/dashboard` | ✅ |
-| Composer | `build_get_eficiencia_fabril_dashboard_use_case` | ✅ |
+| Rota bulk | `GET /production/eficiencia-fabril/appointments` | ✅ |
+| Composer | dashboard + appointments use cases | ✅ |
 | Permissões | `eficiencia-fabril.view`, `api-delpi.access`, `dashboard-production.view` | ✅ |
 | Testes unitários | `tests/test_get_eficiencia_fabril_dashboard_use_case.py` | ✅ |
+| CTs excluídos | `CT-00`, `CT-70`, `CT-16A`, `CT-99` | ✅ |
+| Teto indicadores | eficiência &gt; 250% (`max_efficiency_indicator_pct`) | ✅ |
 
-**Query params previstos:**
+**Query params:**
 
 ```text
 date_start, date_end     (obrigatórios)
 branch                   (opcional)
-employee                 (COD_OPERADOR ou LOGIN_OPERADOR)
+employee                 (busca parcial em NOME_OPERADOR)
+op                       (busca parcial em OP)
 work_center              (CENTRO_TRABALHO)
-cost_center              (CENTRO_CUSTO_RECURSO)
-status_ok_only           (default true)
-page, page_size          (tabela de items)
+status_ok_only           (dashboard: default true; appointments MFE: false na carga)
+page, page_size          (somente /dashboard)
 ```
 
 **Resposta JSON (contrato alvo):**
@@ -190,22 +193,24 @@ page, page_size          (tabela de items)
 
 ---
 
-### Fase 3 — Dashboard gerencial (UI completa MVP)
+### Fase 3 — Dashboard gerencial (UI completa MVP) ✅
 
 **Objetivo:** experiência analítica para líderes na tela única.
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
-| FilterBar | datas, filial, operador, centro de trabalho, CC, toggle “somente OK” | Pendente |
-| KPI cards | eficiência ponderada, resultado MOD, lucro, prejuízo, horas ganhas/perdidas, qtd apontamentos | Pendente |
-| Gráfico linha | eficiência por dia | Pendente |
-| Gráfico barras | top operadores (eficiência ou MOD) | Pendente |
-| Gráfico empilhado | lucro vs prejuízo MOD por dia | Pendente |
-| Tabela detalhada | colunas principais da view, paginação server-side | Pendente |
-| Estados UX | loading, erro, empty, legenda eficiência \>100% | Pendente |
-| CSS | prefixo `.dashboard-eficiencia-fabril` | Pendente |
+| FilterBar | datas, filial, operador (nome), OP, centro de trabalho; aplicar sem refetch | ✅ |
+| Carga bulk + cache | `GET /appointments`; filtros locais; **Atualizar** recarrega período | ✅ |
+| KPIs | eficiência (&lt;95% vermelho), apontamentos + Verificar, MOD, horas | ✅ |
+| Gráficos (3+2) | dia, MOD, operadores, eficiência por CT (cores), horas por CT | ✅ |
+| Modal expandido | tamanho padrão 1320×700px; labels CT no expandido | ✅ |
+| Tabela | início/fim, qtd apontada; paginação local; linha Verificar | ✅ |
+| Export Excel | dados filtrados em memória | ✅ |
+| UX | aviso 250%; sem grade nos gráficos; layout 3+2 | ✅ |
 
-**Critério de pronto:** líder filtra por mês + operador; KPIs e gráficos atualizam; tabela lista apontamentos; build `npm run build` sem erro.
+Detalhe funcional: [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md).
+
+**Critério de pronto:** líder filtra por mês + operador sem nova API; KPIs/gráficos/tabela coerentes; export Excel; `npm run build` OK.
 
 ---
 
@@ -216,10 +221,11 @@ page, page_size          (tabela de items)
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
 | Role “Líder Produção” (ou equivalente) | `eficiencia-fabril.view` associada | Pendente |
-| README do plugin | `plugins/eficiencia-fabril/README.md` | Pendente |
-| Script CI build | `scripts/ci/build-eficiencia-fabril.sh` | Pendente |
-| Smoke homologação | `scripts/homologacao/check-eficiencia-fabril.sh` | Pendente |
-| Documentação OpenAPI | entrada em `api-delpi/docs/api/` (se aplicável) | Pendente |
+| README do plugin | `plugins/eficiencia-fabril/README.md` | ✅ |
+| Docs módulo | `docs/12-roadmap-e-evolucao/eficiencia-fabril/*` | ✅ |
+| Script CI build | `scripts/ci/build-eficiencia-fabril.sh` | ✅ |
+| Smoke homologação | `scripts/homologacao/check-eficiencia-fabril.sh` | ✅ |
+| Documentação OpenAPI | entrada em `api-delpi/docs/api/` | Pendente |
 
 **Critério de pronto:** usuário com role (não superadmin) acessa dashboard; CI build passa no PR.
 
@@ -245,7 +251,7 @@ page, page_size          (tabela de items)
 
 | Entrega | Prioridade | Detalhe |
 |---------|------------|---------|
-| Export CSV/Excel | Alta | botão na tabela |
+| Export CSV/Excel | — | ✅ Excel na tabela (dados em memória) |
 | Cache TTL dashboard | Média | padrão `lmp_dashboard_cache` |
 | Filtro por OP/produto/operação | Média | query params extras |
 | Drill-down operador | Média | clique no gráfico filtra tabela |
@@ -267,23 +273,25 @@ page, page_size          (tabela de items)
 
 | Risco | Mitigação |
 |-------|-----------|
-| Outliers de eficiência (ex.: 500%) | agregação ponderada; cap visual opcional |
+| Outliers de eficiência (ex.: &gt; 250%) | excluídos dos indicadores; tabela com status &quot;Verificar&quot; |
 | `TEMPO_REAL_HORAS = 0` | respeitar `STATUS_REGISTRO`; excluir na agregação |
 | `STATUS_MOD` incompleto | aviso no summary; excluir MOD do total ou flag |
 | Performance | índices na view (DBA); cache fase 6 |
-| Confusão UX eficiência \> 100% | legenda e tooltips na Fase 3 |
+| Confusão UX eficiência \> 100% | aviso 250% + status Verificar na tabela |
 
 ---
 
 ## 7. Checklist de implantação (dev)
 
-- [ ] Fase 0: view validada no TOTVS
-- [ ] Fase 1: endpoint dashboard na api-delpi
-- [ ] Fase 2: plugin no compose + manifesto registrado
-- [ ] Fase 3: UI dashboard completa
-- [ ] `npm run build` OK
-- [ ] RBAC para usuário piloto
-- [ ] PR com `plugins/eficiencia-fabril/` + `api-delpi/` + compose
+- [x] Fase 0: view validada no TOTVS
+- [x] Fase 1: endpoints dashboard + appointments na api-delpi
+- [x] Fase 2: plugin no compose + manifesto registrado
+- [x] Fase 3: UI dashboard completa (ver ESPECIFICACAO-PLUGIN.md)
+- [x] Documentação revisada (2026-05-28)
+- [ ] `npm run build` OK no ambiente do time
+- [ ] RBAC para usuário piloto (não superadmin)
+- [ ] PR / merge para homologação
+- [ ] Fase 5: produção
 
 ---
 
@@ -303,6 +311,7 @@ page, page_size          (tabela de items)
 ## 9. Documentos relacionados
 
 - [README.md](./README.md) — índice do módulo
+- [ESPECIFICACAO-PLUGIN.md](./ESPECIFICACAO-PLUGIN.md) — funcionalidades implementadas
 - [../../08-plugins/README.md](../../08-plugins/README.md) — inventário plugins
 - [../../05-plugin-system/manifesto-plugin.md](../../05-plugin-system/manifesto-plugin.md) — contrato JSON
 - [../../10-guias-operacionais/registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md) — registro
@@ -315,3 +324,4 @@ page, page_size          (tabela de items)
 | Data | Autor | Nota |
 |------|-------|------|
 | 2026-05-27 | Planejamento inicial | Roadmap criado a partir da view `vw_Apontamentos_Eficiencia` e alinhamento com padrão dashboard-lmps |
+| 2026-05-28 | Revisão MVP | ESPECIFICACAO-PLUGIN.md; fases 1–3 alinhadas ao código (filtros locais, CT-99, 250%, export Excel) |

@@ -1,8 +1,5 @@
 from typing import Optional
 
-from app.application.dto.eficiencia_fabril.eficiencia_fabril_dashboard_response import (
-    EficienciaFabrilDashboardResponse,
-)
 from app.application.dto.eficiencia_fabril.get_eficiencia_fabril_dashboard_request import (
     GetEficienciaFabrilDashboardRequest,
 )
@@ -15,8 +12,7 @@ from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_qu
 )
 
 
-class GetEficienciaFabrilDashboardUseCase:
-
+class GetEficienciaFabrilAppointmentsUseCase:
     def __init__(
         self,
         repository: EficienciaFabrilQueryRepositoryPort,
@@ -35,11 +31,8 @@ class GetEficienciaFabrilDashboardUseCase:
         op: Optional[str] = None,
         employee: Optional[str] = None,
         work_center: Optional[str] = None,
-        cost_center: Optional[str] = None,
-        status_ok_only: bool = True,
-        page: int = 1,
-        page_size: Optional[int] = None,
-    ) -> EficienciaFabrilDashboardResponse:
+        status_ok_only: bool = False,
+    ) -> list[dict]:
         if not date_start or not str(date_start).strip():
             raise ValueError("date_start é obrigatório.")
         if not date_end or not str(date_end).strip():
@@ -50,28 +43,18 @@ class GetEficienciaFabrilDashboardUseCase:
         parsed_start = self._utils.parse_date(date_start)
         parsed_end = self._utils.parse_date(date_end)
         if parsed_start is None or parsed_end is None:
-            raise ValueError(
-                "Datas inválidas. Use formatos como YYYY-MM-DD ou DD/MM/YYYY."
-            )
+            raise ValueError("Datas inválidas. Use formatos como YYYY-MM-DD ou DD/MM/YYYY.")
 
         max_days = self._settings.max_date_range_days
         if (parsed_end - parsed_start).days > max_days:
-            raise ValueError(
-                f"Intervalo máximo permitido: {max_days} dias."
-            )
+            raise ValueError(f"Intervalo máximo permitido: {max_days} dias.")
 
         if branch and branch not in self._settings.branches:
             raise ValueError(
                 f"branch inválida. Valores aceitos: {', '.join(self._settings.branches)}."
             )
 
-        resolved_page = max(page, 1)
-        resolved_page_size = page_size or self._settings.default_page_size
-        resolved_page_size = min(
-            max(resolved_page_size, 1),
-            self._settings.max_page_size,
-        )
-
+        # Reuso do request existente para aplicar os mesmos filtros de domínio.
         request = GetEficienciaFabrilDashboardRequest(
             date_start=parsed_start,
             date_end=parsed_end,
@@ -79,10 +62,11 @@ class GetEficienciaFabrilDashboardUseCase:
             op=op.strip() if op else None,
             employee=employee.strip() if employee else None,
             work_center=work_center.strip() if work_center else None,
-            cost_center=cost_center.strip() if cost_center else None,
             status_ok_only=status_ok_only,
-            page=resolved_page,
-            page_size=resolved_page_size,
+            page=1,
+            page_size=1,
         )
 
-        return self._repository.get_dashboard(request)
+        items = self._repository.get_appointments(request, status_ok_only=status_ok_only)
+        return [item.to_dict() for item in items]
+
