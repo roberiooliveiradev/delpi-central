@@ -60,7 +60,33 @@ Mensagem do usuário
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
 
-**Identidade do assistente** («quem é você», «quem te criou», «o que você é»): classificação em `ChatAssistantIdentityService` + policy `chat-assistant-identity.md` + **RAG obrigatório** + LLM (sem resposta enlatada).
+A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream.
+
+### Identidade do assistente (maio/2026)
+
+Perguntas como «quem é você», «quem te criou», «o que você é» (não confundir com «quem sou eu» / perfil do usuário):
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
+| Policy no prompt | `chat-assistant-identity.md` via `ChatPromptBuilderService._assistant_identity_policy_addon` |
+| RAG | **Sempre executado** (`skip_rag = false`), mesmo em fast path operacional |
+| Query RAG | Texto original + sufixo de recall: `Minha DELPI assistente origem criação arquitetura documentação empresa` |
+| Score mínimo | `Settings.RAG_IDENTITY_QUESTION_MIN_SCORE` (env, default **0.22**), passado a `RagContextService.build_context(..., min_score=...)` — mais baixo que `ragContextMinScore` global (~0.35) porque embeddings de perguntas meta costumam pontuar menos |
+| Resposta | **LLM** com trechos recuperados; **não** usa `ChatAssistantIdentityService.build_direct_answer` no pipeline de mensagem |
+
+O método `build_direct_answer` permanece no serviço para testes e usos pontuais, mas **não** é chamado em `ChatTurnPreparationService` nem nos use cases de chat.
+
+**Skill `company-knowledge`:** necessária para incluir documentos globais no escopo RAG. Agentes sem skill explícita herdam o default quando `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL=true`.
+
+**Validação rápida:**
+
+```bash
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
+```
+
+Testes: `tests/unit/application/services/test_chat_turn_preparation_identity_rag.py`, `tests/unit/application/use_cases/test_chat_assistant_identity_stream_and_send.py`.
 
 ---
 
@@ -130,7 +156,20 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 
 **Toda** resposta do assistente (send/stream/resend) monta e **persiste** `metadata.adminDebug` via `ChatAdminDebugService.build_for_turn(...)` — para qualquer usuário, permitindo estudo do modelo no banco.
 
-**Exposição ao cliente** (resposta HTTP, SSE, painel no chat) só quando `SendChatMessageRequest.admin_debug=True`, definido pelas rotas com `_can_use_admin_debug()`. O `GET /sessions/:id/messages` remove `adminDebug` do JSON para quem não é admin.
+**Exposição ao cliente** (resposta HTTP, SSE, painel no chat) só quando `SendChatMessageRequest.admin_debug=True`, definido pelas rotas com `_can_use_admin_debug()` (permissão `minha-delpi.chat.admin` ou superadmin). O `GET /sessions/:id/messages` remove `adminDebug` do JSON para quem não é admin.
+
+Payload típico (campos principais):
+
+| Seção | Conteúdo |
+|-------|----------|
+| `workspace` | `agentKey`, `agent`, `project`, `skills`, `specialization`, actions habilitadas |
+| `pipeline` | `operationalOptimize`, `analysisMode`, `fastPath`, **`skipRag`**, `historySummary` |
+| `tooling` | `toolCalls`, `selectedExternalAction`, texto de contexto de tools |
+| `rag` | `sources`, `ragContextText` |
+| `llm` | Mensagens enviadas ao modelo (truncadas) |
+| `recordedAt` | ISO UTC do turno |
+
+Para perguntas de identidade, espere `pipeline.skipRag: false` e `rag.sources` não vazio quando houver documentação indexada.
 
 Mensagens antigas não ganham diagnóstico retroativo.
 

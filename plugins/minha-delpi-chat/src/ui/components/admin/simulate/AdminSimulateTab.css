@@ -1,41 +1,31 @@
 .mdc-admin-simulate {
   display: grid;
-  gap: var(--mdc-space-5);
+  gap: var(--mdc-space-4);
 }
 
-.mdc-admin-simulate__hero,
-.mdc-admin-simulate__form,
-.mdc-admin-simulate__card {
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow);
-  padding: var(--mdc-space-5);
-}
-
-.mdc-admin-simulate__hero h2 {
-  margin: 0;
-  color: var(--mdc-primary);
+.mdc-admin-simulate__layout {
+  align-items: start;
 }
 
 .mdc-admin-simulate__form {
   display: grid;
-  gap: var(--mdc-space-4);
+  gap: var(--mdc-space-3);
+  align-content: start;
 }
 
-.mdc-admin-simulate__form label {
+.mdc-admin-simulate__results-pane {
   display: grid;
-  gap: var(--mdc-space-2);
+  gap: var(--mdc-space-3);
+  align-content: start;
+  min-height: 12rem;
 }
 
-.mdc-admin-simulate__checkbox {
-  display: flex !important;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.mdc-admin-simulate__form > button {
-  justify-self: start;
+.mdc-admin-simulate__placeholder {
+  margin: 0;
+  padding: var(--mdc-space-4);
+  border: 1px dashed var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: color-mix(in srgb, var(--mdc-bg-muted) 60%, transparent);
 }
 
 .mdc-admin-simulate__error {
@@ -45,24 +35,26 @@
 
 .mdc-admin-simulate__results {
   display: grid;
-  gap: var(--mdc-space-4);
+  gap: var(--mdc-space-3);
 }
 
 .mdc-admin-simulate__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mdc-space-4);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--mdc-space-3);
 }
 
 .mdc-admin-simulate__card h3,
 .mdc-admin-simulate__card h4 {
   margin: 0 0 var(--mdc-space-3);
+  color: var(--mdc-title);
+  font-size: 0.95rem;
 }
 
 .mdc-admin-simulate__card pre {
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 320px;
+  max-height: min(22rem, 40vh);
   overflow: auto;
   margin: 0;
   padding: 0.75rem;
@@ -98,23 +90,11 @@
 .mdc-admin-simulate__comparison {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--mdc-space-4);
+  gap: var(--mdc-space-3);
 }
 
 @media (max-width: 1023px) {
-  .mdc-admin-simulate__grid,
   .mdc-admin-simulate__comparison {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 767px) {
-  .mdc-admin-simulate__toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mdc-admin-simulate__toolbar > * {
-    width: 100%;
   }
 }

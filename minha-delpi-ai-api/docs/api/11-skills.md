@@ -10,6 +10,8 @@ Skills disponíveis na plataforma ficam na tabela `ai_chat_skill_catalog` e são
 
 Fallback: se o banco estiver vazio, o `ChatSkillRegistry` usa `app/content/pt-BR/skills/catalog.json` e policies em `app/domain/prompt_policies/*.md`.
 
+**Bootstrap no admin:** `GET /admin/skills` sincroniza skills embutidas do catálogo (ex.: `company-knowledge`) para o banco quando ainda não existem, para a aba **Skills** do admin listar o mesmo conjunto que o runtime do chat usa.
+
 ### Admin — CRUD de catálogo
 
 **Permissão:** `minha-delpi.chat.tools.manage` (gestores de ferramentas/agentes; aba **Skills** no admin do chat)

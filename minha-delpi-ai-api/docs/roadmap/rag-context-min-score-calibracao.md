@@ -4,11 +4,23 @@ Guia da **Onda 7.4** para ajustar o score mínimo de chunks no contexto do chat.
 
 ## O que a variável faz
 
-Após a busca RAG (FTS e/ou vetor), chunks com `score < RAG_CONTEXT_MIN_SCORE` são **descartados** antes de montar o prompt. Isso reduz ruído e alucinação em perguntas documentais.
+Após a busca RAG (FTS e/ou vetor), chunks com score abaixo do limiar são **descartados** antes de montar o prompt. Isso reduz ruído e alucinação em perguntas documentais.
 
-- **Código:** `RagContextService` + `Settings.RAG_CONTEXT_MIN_SCORE`
+- **Código:** `RagContextService.build_context(..., min_score=)` + `Settings.RAG_CONTEXT_MIN_SCORE`
 - **Admin:** pode sobrescrever via runtime `ragContextMinScore` (`ChatIntelligenceSettingsService`)
 - **Fallback:** se `RAG_CONTEXT_MIN_SCORE` não estiver no `.env`, usa `RAG_ASSERTIVENESS_MIN_SCORE` (default `0.35`)
+
+### Perguntas de identidade do assistente (exceção)
+
+«Quem te criou?», «o que você é?» usam limiar **próprio**, não o global:
+
+| Variável | Default | Quando |
+|----------|---------|--------|
+| `RAG_IDENTITY_QUESTION_MIN_SCORE` | `0.22` | `ChatAssistantIdentityService` detectou pergunta sobre o assistente em `ChatTurnPreparationService` |
+
+Motivo: embeddings de perguntas meta costumam pontuar ~0.25–0.35 em documentos de arquitetura; com `ragContextMinScore` 0.35+ o contexto vinha vazio e o modelo respondia sem base documental.
+
+A query de busca é **expandida** com termos de recall (`Minha DELPI`, `origem`, `criação`, `arquitetura`, …). Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#identidade-do-assistente-maio2026).
 
 ## Valores recomendados por ambiente
 

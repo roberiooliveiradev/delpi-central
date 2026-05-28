@@ -155,15 +155,18 @@
     .mdc-admin-metrics-tab__save-cost,
     .mdc-admin-simulate__form > button,
     .mdc-admin-tools-tab__hero button,
-    .mdc-admin-security__header button,
+    .mdc-admin-tab-header > .mdc-admin-btn,
+    .mdc-admin-security__scan > .mdc-admin-btn,
     .mdc-admin-security__scan > button,
     .mdc-guideline-editor-panel > button,
     .mdc-guideline-test-panel button,
     .mdc-guideline-version-panel__compare button,
     .mdc-guideline-version-panel__list footer button,
     .mdc-guideline-list-panel__actions button,
+    .mdc-admin-entity-row__actions button,
     .mdc-knowledge-document-card__actions button,
     .mdc-knowledge-documents__pagination button,
+    .mdc-admin-filter-bar__clear,
     .mdc-knowledge-ingestion__actions button,
     .mdc-knowledge-ingestion__form button[type="submit"],
     .mdc-audit-filters__actions button,
@@ -204,15 +207,18 @@
     .mdc-admin-metrics-tab__save-cost,
     .mdc-admin-simulate__form > button,
     .mdc-admin-tools-tab__hero button,
-    .mdc-admin-security__header button,
+    .mdc-admin-tab-header > .mdc-admin-btn,
+    .mdc-admin-security__scan > .mdc-admin-btn,
     .mdc-admin-security__scan > button,
     .mdc-guideline-editor-panel > button,
     .mdc-guideline-test-panel button,
     .mdc-guideline-version-panel__compare button,
     .mdc-guideline-version-panel__list footer button,
     .mdc-guideline-list-panel__actions button,
+    .mdc-admin-entity-row__actions button,
     .mdc-knowledge-document-card__actions button,
     .mdc-knowledge-documents__pagination button,
+    .mdc-admin-filter-bar__clear,
     .mdc-knowledge-ingestion__actions button,
     .mdc-knowledge-ingestion__form button[type="submit"],
     .mdc-audit-filters__actions button,
@@ -237,15 +243,18 @@
     .mdc-admin-metrics-tab__save-cost,
     .mdc-admin-simulate__form > button,
     .mdc-admin-tools-tab__hero button,
-    .mdc-admin-security__header button,
+    .mdc-admin-tab-header > .mdc-admin-btn,
+    .mdc-admin-security__scan > .mdc-admin-btn,
     .mdc-admin-security__scan > button,
     .mdc-guideline-editor-panel > button,
     .mdc-guideline-test-panel button,
     .mdc-guideline-version-panel__compare button,
     .mdc-guideline-version-panel__list footer button,
     .mdc-guideline-list-panel__actions button,
+    .mdc-admin-entity-row__actions button,
     .mdc-knowledge-document-card__actions button,
     .mdc-knowledge-documents__pagination button,
+    .mdc-admin-filter-bar__clear,
     .mdc-knowledge-ingestion__actions button,
     .mdc-knowledge-ingestion__form button[type="submit"],
     .mdc-audit-filters__actions button,
@@ -313,11 +322,13 @@
   color: var(--mdc-danger);
 }
 
+.mdc-admin-entity-row__actions .mdc-admin-entity-row__danger,
 .mdc-knowledge-document-card__actions .mdc-knowledge-document-card__danger {
   border-color: color-mix(in srgb, var(--mdc-danger) 35%, transparent) !important;
   color: var(--mdc-danger) !important;
 }
 
+.mdc-admin-entity-row__actions .mdc-admin-entity-row__danger:hover:not(:disabled),
 .mdc-knowledge-document-card__actions .mdc-knowledge-document-card__danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
   color: var(--mdc-danger) !important;
@@ -339,4 +350,295 @@
 .mdc-guideline-editor-panel__ghost:hover:not(:disabled) {
   background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
   color: var(--mdc-text);
+}
+
+/* Layout admin — padrão agentes (split + painéis + listas) */
+
+.mdc-admin-split {
+  display: grid;
+  grid-template-columns: minmax(22rem, 30rem) minmax(0, 1fr);
+  gap: var(--mdc-space-4);
+  align-items: start;
+  min-width: 0;
+}
+
+.mdc-admin-split__aside .mdc-knowledge-curatorial__grid,
+.mdc-admin-split__aside .mdc-knowledge-ingestion__grid {
+  grid-template-columns: 1fr;
+}
+
+.mdc-admin-split__aside,
+.mdc-admin-split__main {
+  min-width: 0;
+}
+
+.mdc-admin-panel {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-admin-panel__intro {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-admin-panel__intro h2 {
+  margin: 0;
+  color: var(--mdc-primary);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.mdc-admin-panel__intro p {
+  margin: 0;
+}
+
+.mdc-admin-panel__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+}
+
+.mdc-admin-panel__footer-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-filter-bar {
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-filter-bar__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: var(--mdc-space-3);
+  align-items: end;
+}
+
+.mdc-admin-filter-bar__search {
+  width: 100%;
+}
+
+.mdc-admin-filter-bar__clear {
+  align-self: end;
+  justify-self: start;
+}
+
+.mdc-admin-entity-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  max-height: min(42rem, calc(100vh - 14rem));
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.mdc-admin-entity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mdc-space-3);
+  align-items: start;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-bg-muted) 88%, var(--mdc-card-bg));
+  padding: var(--mdc-space-3);
+}
+
+.mdc-admin-entity-row__body {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.mdc-admin-entity-row__title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-entity-row__title-line strong {
+  color: var(--mdc-title);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-entity-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-admin-entity-row__detail,
+.mdc-admin-entity-row__detail small {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-entity-row__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--mdc-space-2);
+  max-width: 22rem;
+}
+
+.mdc-admin-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0.22rem 0.55rem;
+  white-space: nowrap;
+}
+
+.mdc-admin-badge--success {
+  background: color-mix(in srgb, var(--mdc-success) 14%, transparent);
+  color: var(--mdc-success);
+}
+
+.mdc-admin-badge--danger {
+  background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
+  color: var(--mdc-danger);
+}
+
+.mdc-admin-badge--muted {
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-bg-muted);
+  color: var(--mdc-text-muted);
+}
+
+@media (max-width: 1180px) {
+  .mdc-admin-split {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-entity-list {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Cabeçalho de aba (título + controles) */
+.mdc-admin-tab-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-4);
+}
+
+.mdc-admin-tab-header .mdc-admin-panel__intro h2 {
+  color: var(--mdc-primary);
+  font-size: 1.15rem;
+}
+
+/* KPIs / cards numéricos */
+.mdc-admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-kpi-card {
+  display: grid;
+  gap: var(--mdc-space-2);
+  min-width: 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+  padding: var(--mdc-space-4);
+}
+
+.mdc-admin-kpi-card h3 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.mdc-admin-kpi-card strong {
+  color: var(--mdc-primary);
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.mdc-admin-kpi-card p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.mdc-admin-kpi-card--wide {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-distribution-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-admin-distribution-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-bg-muted) 88%, var(--mdc-card-bg));
+  padding: var(--mdc-space-2) var(--mdc-space-3);
+}
+
+.mdc-admin-distribution-list span {
+  min-width: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-distribution-list strong {
+  color: var(--mdc-title);
+  font-size: 0.92rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .mdc-admin-entity-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-entity-row__actions {
+    justify-content: flex-start;
+    max-width: none;
+  }
+
+  .mdc-admin-filter-bar__row {
+    grid-template-columns: 1fr;
+  }
 }

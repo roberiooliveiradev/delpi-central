@@ -35,15 +35,17 @@ export function GuidelineListPanel({
   canArchiveGuidelines,
 }: GuidelineListPanelProps) {
   return (
-    <article className="mdc-guideline-list-panel">
-      <div className="mdc-guideline-list-panel__header">
-        <div>
+    <article className="mdc-admin-panel mdc-guideline-list-panel">
+      <header className="mdc-guideline-list-panel__header">
+        <div className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Comportamento global</p>
           <h2>Diretrizes globais</h2>
         </div>
 
-        <span>{guidelines.length} regra(s)</span>
-      </div>
+        <span className="mdc-admin-badge mdc-admin-badge--muted">
+          {guidelines.length} regra(s)
+        </span>
+      </header>
 
       <p className="mdc-chat-muted">
         Diretrizes que moldam o comportamento geral do chat, antes de agentes, projetos e anexos de conversa.
@@ -57,24 +59,28 @@ export function GuidelineListPanel({
           </p>
         </div>
       ) : (
-        <div className="mdc-guideline-list-panel__list">
+        <div className="mdc-admin-entity-list">
           {guidelines.map((guideline) => (
-            <article key={guideline.id} className="mdc-guideline-list-panel__item">
-              <div>
-                <strong>{guideline.title}</strong>
-                <p>{guideline.description || guideline.content}</p>
-                <small>
+            <article key={guideline.id} className="mdc-admin-entity-row mdc-guideline-list-panel__item">
+              <div className="mdc-admin-entity-row__body">
+                <div className="mdc-admin-entity-row__title-line">
+                  <strong>{guideline.title}</strong>
+                  <span className={`mdc-admin-badge is-${guideline.status}`}>
+                    {STATUS_LABEL[guideline.status]}
+                  </span>
+                </div>
+                <p className="mdc-admin-entity-row__detail">
+                  {guideline.description || guideline.content}
+                </p>
+                <small className="mdc-admin-entity-row__detail">
                   Ambiente: {ENVIRONMENT_LABEL[guideline.environment ?? "global"] ?? "Global"}
                 </small>
               </div>
 
-              <div className="mdc-guideline-list-panel__actions">
-                <span className={`is-${guideline.status}`}>
-                  {STATUS_LABEL[guideline.status]}
-                </span>
-
+              <div className="mdc-admin-entity-row__actions mdc-guideline-list-panel__actions">
                 <button
                   type="button"
+                  className="mdc-admin-btn"
                   disabled={!canCreateGuidelines}
                   title={
                     canCreateGuidelines
@@ -90,6 +96,7 @@ export function GuidelineListPanel({
 
                 <button
                   type="button"
+                  className="mdc-admin-btn mdc-admin-btn--primary"
                   disabled={guideline.status === "active" || !canPublishGuidelines}
                   title={
                     canPublishGuidelines
@@ -105,6 +112,7 @@ export function GuidelineListPanel({
 
                 <button
                   type="button"
+                  className="mdc-admin-btn"
                   disabled={guideline.status === "archived" || !canArchiveGuidelines}
                   title={
                     canArchiveGuidelines

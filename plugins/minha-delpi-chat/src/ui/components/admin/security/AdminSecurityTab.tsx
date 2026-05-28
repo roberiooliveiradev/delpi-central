@@ -75,48 +75,64 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
 
   return (
     <section className="mdc-admin-security">
-      <header className="mdc-admin-security__header">
-        <div>
-          <h2>Segurança operacional</h2>
-          <p className="mdc-chat-muted">
-            Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas.
-          </p>
-        </div>
-        <button type="button" disabled={isLoading} onClick={() => void loadData()}>
-          {isLoading ? "Carregando..." : "Atualizar"}
-        </button>
-      </header>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Segurança</p>
+            <h2>Segurança operacional</h2>
+            <p>
+              Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            disabled={isLoading}
+            onClick={() => void loadData()}
+          >
+            {isLoading ? "Carregando..." : "Atualizar"}
+          </button>
+        </header>
+      </article>
 
       {error ? <p className="mdc-admin-security__error">{error}</p> : null}
 
-      <div className="mdc-admin-security__cards">
-        <article className="mdc-admin-security__card">
-          <span>Bloqueios (24h)</span>
+      <div className="mdc-admin-kpi-grid">
+        <article className="mdc-admin-kpi-card">
+          <h3>Bloqueios (24h)</h3>
           <strong>{summary?.blockedCount ?? 0}</strong>
         </article>
-        <article className="mdc-admin-security__card">
-          <span>Sinalizados (24h)</span>
+        <article className="mdc-admin-kpi-card">
+          <h3>Sinalizados (24h)</h3>
           <strong>{summary?.flaggedCount ?? 0}</strong>
         </article>
-        <article className="mdc-admin-security__card">
-          <span>Scans admin (24h)</span>
+        <article className="mdc-admin-kpi-card">
+          <h3>Scans admin (24h)</h3>
           <strong>{summary?.scannedCount ?? 0}</strong>
         </article>
-        <article className="mdc-admin-security__card">
-          <span>Total eventos</span>
+        <article className="mdc-admin-kpi-card">
+          <h3>Total eventos</h3>
           <strong>{summary?.totalEvents ?? 0}</strong>
         </article>
       </div>
 
-      <div className="mdc-admin-security__layout">
-        <article className="mdc-admin-security__panel mdc-admin-security__scan">
+      <div className="mdc-admin-security__layout mdc-admin-split">
+        <article className="mdc-admin-split__aside mdc-admin-panel mdc-admin-security__scan">
           <h3>Testar mensagem</h3>
-          <textarea
+          <label className="mdc-admin-field">
+            <span>Mensagem</span>
+            <textarea
             value={scanMessage}
             onChange={(event) => setScanMessage(event.target.value)}
-            placeholder="Cole uma mensagem para avaliar risco de prompt injection..."
-          />
-          <button type="button" disabled={isScanning} onClick={() => void handleScan()}>
+              placeholder="Cole uma mensagem para avaliar risco de prompt injection..."
+            />
+          </label>
+          <button
+            type="button"
+            className="mdc-admin-btn mdc-admin-btn--primary"
+            disabled={isScanning}
+            onClick={() => void handleScan()}
+          >
             {isScanning ? "Analisando..." : "Analisar"}
           </button>
 
@@ -145,7 +161,7 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
           ) : null}
         </article>
 
-        <article className="mdc-admin-security__panel mdc-admin-security__config">
+        <article className="mdc-admin-split__main mdc-admin-panel mdc-admin-security__config">
           <h3>Configuração ativa</h3>
           {config ? (
             <dl>
@@ -199,7 +215,7 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
         </article>
       </div>
 
-      <article className="mdc-admin-security__panel mdc-admin-security__events">
+      <article className="mdc-admin-panel mdc-admin-security__events">
         <h3>Eventos recentes</h3>
         <table>
           <thead>

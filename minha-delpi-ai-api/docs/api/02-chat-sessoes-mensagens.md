@@ -36,6 +36,22 @@
 | Campo | Descrição |
 |-------|-----------|
 | `user_feedback` | Presente em mensagens `assistant` do histórico do usuário: `1` (útil), `-1` (não útil) ou omitido/`null` se não avaliada. |
+| `adminDebug` | Diagnóstico do turno (pipeline, RAG, tools, LLM). **Persistido** em toda mensagem `assistant`; **retornado** no JSON só para admin (ver abaixo). |
+
+### `metadata.adminDebug` (diagnóstico de turno)
+
+Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `ChatMessage.metadata`.
+
+| Quem vê | Comportamento |
+|---------|----------------|
+| Usuário comum | Campo **omitido** em `GET /chat/sessions/{id}/messages` e nas respostas de envio |
+| Admin (`minha-delpi.chat.admin` ou superadmin) | Presente em `POST .../messages`, evento SSE `done` e histórico |
+
+Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`), `llm.messages`, `recordedAt`.
+
+Útil para validar, por exemplo, se «quem te criou?» passou por RAG (`pipeline.skipRag === false` e `rag.sources.length > 0`).
+
+Arquitetura: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md#diagnóstico-admin-admindebug).
 
 ---
 
@@ -139,11 +155,15 @@ Envia mensagem sem streaming.
   "answer": "Resposta do assistente",
   "sources": [],
   "toolCalls": [],
-  "canvasOpen": null
+  "canvasOpen": null,
+  "adminDebug": null
 }
 ```
 
-`canvasOpen` (opcional): `{ "title", "markdown", "sourceMessageId" }` quando o usuário pede envio à lousa.
+| Campo | Descrição |
+|-------|-----------|
+| `canvasOpen` | Opcional: `{ "title", "markdown", "sourceMessageId" }` quando o usuário pede envio à lousa. |
+| `adminDebug` | Objeto de diagnóstico; **só preenchido** para solicitante admin. Demais usuários recebem `null` ou campo ausente. |
 
 ---
 
@@ -197,7 +217,7 @@ Mesmo de envio normal:
 | `token` | Streaming legado (`CHAT_PERSIST_BEFORE_PLAYBACK=false`) | `content` |
 | `canvas_open` | Pedido de lousa («coloque na lousa/canvas/canva») | `title`, `markdown`, `sourceMessageId`, `messageId` |
 | `playback` | Resposta final já no banco; front anima texto | `messageId`, `answer`, `sources`, `toolCalls` |
-| `done` | Fim do turno | `messageId`, `answer`, `sources`, `toolCalls`, `playback?`, `canvasOpen?` |
+| `done` | Fim do turno | `messageId`, `answer`, `sources`, `toolCalls`, `playback?`, `canvasOpen?`, `adminDebug?` (admin) |
 | `error` | Falha | `detail` ou `message` |
 
 Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
@@ -225,6 +245,17 @@ data: {"messageId": "...", "answer": "...", "playback": true, "canvasOpen": {...
 Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `done`.
 
 **Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente. O conteúdo vem da **última mensagem `assistant`** do histórico.
+
+### Comportamento do pipeline (referência)
+
+| Tipo de pergunta | RAG | Resposta típica |
+|------------------|-----|-----------------|
+| Operacional (produto, estoque, KPI) | Pode ser omitido (fast path) | Action direta ou LLM curto |
+| Identidade do **usuário** («quem sou eu») | Não | Resposta direta via Core API / contexto |
+| Identidade do **assistente** («quem te criou») | **Sim** (score mínimo `RAG_IDENTITY_QUESTION_MIN_SCORE`) | LLM + policy `chat-assistant-identity.md` + chunks |
+| Capacidades («consegue buscar por grupo?») | Não | Resposta direta `ChatCapabilitiesService` |
+
+Detalhes: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 ---
 

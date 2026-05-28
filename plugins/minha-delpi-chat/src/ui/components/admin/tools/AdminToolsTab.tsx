@@ -171,30 +171,34 @@ export function AdminToolsTab({
 
   return (
     <section className="mdc-admin-tools-tab">
-      <header className="mdc-admin-tools-tab__hero">
-        <div>
-          <p className="mdc-chat-eyebrow">Ferramentas</p>
-          <h2>Operação de tools e actions</h2>
-          <p>
-            Monitore providers, actions, saúde operacional e permissões preparadas para o uso seguro pelo chat.
-          </p>
-        </div>
+      <article className="mdc-admin-panel">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-panel__intro">
+            <p className="mdc-chat-eyebrow">Ferramentas</p>
+            <h2>Operação de tools e actions</h2>
+            <p>
+              Monitore providers, actions, saúde operacional e permissões preparadas para o uso
+              seguro pelo chat.
+            </p>
+          </div>
 
-        <button
-          type="button"
-          disabled={isLoading || !canUseTools}
-          title={
-            canUseTools
-              ? "Atualizar ferramentas"
-              : "Você não tem permissão para visualizar/usar ferramentas."
-          }
-          onClick={() => {
-            void loadTools();
-          }}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            disabled={isLoading || !canUseTools}
+            title={
+              canUseTools
+                ? "Atualizar ferramentas"
+                : "Você não tem permissão para visualizar/usar ferramentas."
+            }
+            onClick={() => {
+              void loadTools();
+            }}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar"}
+          </button>
+        </header>
+      </article>
 
       {error ? (
         <div className="mdc-admin-tools-tab__error" role="alert">
@@ -202,13 +206,10 @@ export function AdminToolsTab({
         </div>
       ) : null}
 
-      <div className="mdc-admin-tools-tab__grid">
-        <article className="mdc-admin-tools-card">
-          <div>
-            <p className="mdc-chat-eyebrow">LLM</p>
-            <h3>Status do modelo</h3>
-          </div>
-
+      <div className="mdc-admin-kpi-grid mdc-admin-tools-tab__grid">
+        <article className="mdc-admin-kpi-card">
+          <p className="mdc-chat-eyebrow">LLM</p>
+          <h3>Status do modelo</h3>
           <strong>{llmStatus?.provider || llmStatus?.model ? "Configurado" : "Indisponível"}</strong>
           <p>
             {llmStatus?.provider ?? "Provider não informado"} ·{" "}
@@ -216,11 +217,9 @@ export function AdminToolsTab({
           </p>
         </article>
 
-        <article className="mdc-admin-tools-card">
-          <div>
-            <p className="mdc-chat-eyebrow">Health checks</p>
-            <h3>Saúde das ferramentas</h3>
-          </div>
+        <article className="mdc-admin-kpi-card">
+          <p className="mdc-chat-eyebrow">Health checks</p>
+          <h3>Saúde das ferramentas</h3>
 
           {!health || health.items.length === 0 ? (
             <p>Nenhum health check retornado.</p>
@@ -240,10 +239,10 @@ export function AdminToolsTab({
         </article>
       </div>
 
-      <article className="mdc-admin-tools-card">
-        <div>
+      <article className="mdc-admin-panel mdc-admin-kpi-card--wide">
+        <div className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">Providers OpenAPI</p>
-          <h3>Providers cadastrados</h3>
+          <h2>Providers cadastrados</h2>
         </div>
 
         {chatProviders.length === 0 ? (
