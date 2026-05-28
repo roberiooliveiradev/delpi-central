@@ -62,6 +62,7 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
   const refreshButton = (
     <RefreshSnapshotButton
       getAccessToken={getAccessToken}
+      competence={referenceMonth}
       onRefreshed={() => void reload()}
       disabled={loading || refreshing}
     />

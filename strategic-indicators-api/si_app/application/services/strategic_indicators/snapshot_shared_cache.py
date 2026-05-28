@@ -97,18 +97,29 @@ def catalog_cache_key(
     )
 
 
+def clear_in_process_snapshot_cache() -> None:
+    """Limpa apenas caches em memória (TTL). Não altera period_scores no Postgres."""
+    from si_app.application.services.lmp.lmp_dashboard_cache import (
+        invalidate_lmp_dashboard_cache,
+    )
+    from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
+        invalidate_lmp_dashboard_summary_cache,
+    )
+
+    _measurements_cache.invalidate_all()
+    _rol_cache.invalidate_all()
+    _catalog_cache.invalidate_all()
+    _catalog_fingerprint_cache.invalidate_all()
+    invalidate_lmp_dashboard_cache()
+    invalidate_lmp_dashboard_summary_cache()
+
+
 def invalidate_strategic_indicators_snapshot_cache(
     *,
     schedule_materialized_refresh: bool = True,
 ) -> None:
-    from si_app.application.services.lmp.lmp_dashboard_cache import (
-        invalidate_lmp_dashboard_cache,
-    )
     from si_app.application.services.strategic_indicators.snapshot_refresh_coordinator import (
         schedule_period_scores_refresh_after_config_change,
-    )
-    from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
-        invalidate_lmp_dashboard_summary_cache,
     )
     from si_app.config import settings
     from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_calculation_snapshots_repository import (
@@ -118,12 +129,7 @@ def invalidate_strategic_indicators_snapshot_cache(
         PostgresStrategicIndicatorsPeriodScoresRepository,
     )
 
-    _measurements_cache.invalidate_all()
-    _rol_cache.invalidate_all()
-    _catalog_cache.invalidate_all()
-    _catalog_fingerprint_cache.invalidate_all()
-    invalidate_lmp_dashboard_cache()
-    invalidate_lmp_dashboard_summary_cache()
+    clear_in_process_snapshot_cache()
 
     if settings.SI_PERIOD_SCORES_ENABLED:
         PostgresStrategicIndicatorsPeriodScoresRepository().delete_all()

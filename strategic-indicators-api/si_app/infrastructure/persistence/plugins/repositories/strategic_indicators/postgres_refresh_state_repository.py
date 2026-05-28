@@ -6,6 +6,21 @@ from si_app.infrastructure.persistence.plugins.plugin_base_repository import (
 
 
 class PostgresStrategicIndicatorsRefreshStateRepository(PluginBaseRepository):
+    def get_status(self) -> dict | None:
+        return self.fetch_one(
+            """
+            SELECT
+                last_started_at,
+                last_completed_at,
+                last_duration_ms,
+                last_periods_upserted,
+                last_error,
+                updated_at
+            FROM strategic_indicators.refresh_state
+            WHERE id = 'default'
+            """
+        )
+
     def mark_started(self) -> None:
         self.execute(
             """

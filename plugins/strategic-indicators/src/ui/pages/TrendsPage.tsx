@@ -50,6 +50,7 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
   const refreshButton = (
     <RefreshSnapshotButton
       getAccessToken={getAccessToken}
+      competence={referenceMonth}
       onRefreshed={() => void reload()}
       disabled={loading || refreshing}
     />

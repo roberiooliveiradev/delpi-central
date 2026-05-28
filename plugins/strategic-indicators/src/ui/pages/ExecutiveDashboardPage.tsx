@@ -51,6 +51,7 @@ export function ExecutiveDashboardPage({
   const refreshButton = (
     <RefreshSnapshotButton
       getAccessToken={getAccessToken}
+      competence={referenceMonth}
       onRefreshed={() => void reload()}
       disabled={loading || refreshing}
     />

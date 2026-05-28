@@ -207,10 +207,74 @@ def strategic_indicators_health():
 
 
 @router.post("/cache/invalidate")
-@require_permission("strategic-indicators.view")
+@require_permission("strategic-indicators.settings.manage")
 def invalidate_cache():
+    """
+    Invalidação total (admin): apaga period_scores/calculation_snapshots e
+    dispara refresh. Usado após mudanças de configuração estrutural.
+  """
     invalidate_strategic_indicators_snapshot_cache()
     return {"status": "ok", "message": "Cache invalidado com sucesso."}
+
+
+@router.post("/cache/refresh")
+@require_permission("strategic-indicators.view")
+def refresh_materialized_cache(
+    competence: str | None = Body(None),
+    trends_months: int | None = Body(None),
+):
+    """
+    Atualização pelo usuário (botão Atualizar): recalcula fontes e grava nova
+    versão em period_scores sem apagar as existentes. Enquanto isso, leituras
+    continuam servindo a última versão limpa (até 3 versões por escopo).
+    """
+    from si_app.application.services.strategic_indicators.user_period_scores_refresh import (
+        schedule_user_period_scores_refresh,
+    )
+
+    outcome = schedule_user_period_scores_refresh(
+        reference_competence=competence,
+        trends_months=trends_months,
+    )
+    if outcome == "disabled":
+        raise HTTPException(
+            status_code=503,
+            detail="Materialização de period_scores desabilitada no servidor.",
+        )
+    if outcome == "already_running":
+        return {
+            "status": "already_running",
+            "message": "Já existe uma atualização em andamento. Os dados atuais permanecem visíveis.",
+        }
+    return {
+        "status": "accepted",
+        "message": (
+            "Atualização iniciada em segundo plano. "
+            "Os dados atuais permanecem até a nova versão estar disponível."
+        ),
+    }
+
+
+@router.get("/cache/refresh/status")
+@require_permission("strategic-indicators.view")
+def refresh_materialized_cache_status():
+    from si_app.application.services.strategic_indicators.user_period_scores_refresh import (
+        is_period_scores_refresh_in_progress,
+    )
+    from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators.postgres_refresh_state_repository import (
+        PostgresStrategicIndicatorsRefreshStateRepository,
+    )
+
+    row = PostgresStrategicIndicatorsRefreshStateRepository().get_status()
+    running = is_period_scores_refresh_in_progress()
+    return {
+        "running": running,
+        "last_started_at": row.get("last_started_at") if row else None,
+        "last_completed_at": row.get("last_completed_at") if row else None,
+        "last_duration_ms": row.get("last_duration_ms") if row else None,
+        "last_periods_upserted": row.get("last_periods_upserted") if row else None,
+        "last_error": row.get("last_error") if row else None,
+    }
 
 
 @router.get("/executive-summary")

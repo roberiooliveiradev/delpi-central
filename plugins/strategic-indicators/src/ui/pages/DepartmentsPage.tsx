@@ -138,6 +138,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
       headerActions={
         <RefreshSnapshotButton
           getAccessToken={getAccessToken}
+          competence={referenceMonth}
           onRefreshed={() => void reload()}
           disabled={loading || refreshing}
         />
@@ -270,6 +271,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
             extraActions={
               <RefreshSnapshotButton
                 getAccessToken={getAccessToken}
+                competence={referenceMonth}
                 onRefreshed={() => void reload()}
                 disabled={loading || refreshing}
               />

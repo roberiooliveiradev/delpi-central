@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 import time
 
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
@@ -22,6 +23,8 @@ from si_app.infrastructure.persistence.plugins.repositories.strategic_indicators
 )
 
 logger = logging.getLogger("strategic_indicators.period_scores_refresh")
+
+_refresh_materialized_lock = threading.Lock()
 
 
 def _parse_branch_scopes() -> list[str | None]:
@@ -77,6 +80,10 @@ def refresh_period_scores_materialized(
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
         logger.info("si_period_scores_refresh_skipped disabled")
+        return 0
+
+    if not _refresh_materialized_lock.acquire(blocking=False):
+        logger.info("si_period_scores_refresh_skipped already_running")
         return 0
 
     resolved_trends_months = max(
@@ -196,3 +203,5 @@ def refresh_period_scores_materialized(
         state_repo.mark_failed(error_message=str(exc))
         logger.exception("si_period_scores_refresh_failed")
         raise
+    finally:
+        _refresh_materialized_lock.release()

@@ -274,6 +274,7 @@ export function IndicatorsPage({ getAccessToken }: IndicatorsPageProps) {
         actions={
           <RefreshSnapshotButton
             getAccessToken={getAccessToken}
+            competence={referenceMonth}
             onRefreshed={() => void reload()}
             disabled={loading || refreshing}
           />

@@ -1,20 +1,29 @@
 import { useCallback, useRef, useState } from "react";
-import { invalidateStrategicIndicatorsCache } from "../../data/api/strategicIndicatorsCacheApi";
+import {
+  refreshStrategicIndicatorsSnapshots,
+  waitForStrategicIndicatorsRefresh,
+} from "../../data/api/strategicIndicatorsCacheApi";
+import { clearAllStrategicIndicatorsCache } from "../../data/cache/strategicIndicatorsReadCache";
 import "./RefreshSnapshotButton.css";
 
 type RefreshSnapshotButtonProps = {
   onRefreshed: () => void;
   getAccessToken?: () => string | undefined;
   disabled?: boolean;
+  /** Competência YYYY-MM dos filtros da página (opcional). */
+  competence?: string;
 };
 
 export function RefreshSnapshotButton({
   onRefreshed,
   getAccessToken,
   disabled = false,
+  competence,
 }: RefreshSnapshotButtonProps) {
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<"success" | "error" | null>(null);
+  const [feedback, setFeedback] = useState<"success" | "error" | "background" | null>(
+    null,
+  );
   const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleClick = useCallback(async () => {
@@ -25,16 +34,34 @@ export function RefreshSnapshotButton({
     clearTimeout(feedbackTimer.current);
 
     try {
-      await invalidateStrategicIndicatorsCache(getAccessToken);
-      setFeedback("success");
+      const started = await refreshStrategicIndicatorsSnapshots({
+        getAccessToken,
+        competence,
+      });
+
+      clearAllStrategicIndicatorsCache();
       onRefreshed();
+
+      if (started.status === "already_running") {
+        setFeedback("background");
+      }
+
+      const finalStatus = await waitForStrategicIndicatorsRefresh(getAccessToken);
+
+      if (finalStatus.last_error) {
+        throw new Error(finalStatus.last_error);
+      }
+
+      clearAllStrategicIndicatorsCache();
+      onRefreshed();
+      setFeedback("success");
     } catch {
       setFeedback("error");
     } finally {
       setBusy(false);
-      feedbackTimer.current = setTimeout(() => setFeedback(null), 4000);
+      feedbackTimer.current = setTimeout(() => setFeedback(null), 5000);
     }
-  }, [busy, getAccessToken, onRefreshed]);
+  }, [busy, competence, getAccessToken, onRefreshed]);
 
   return (
     <span className="si-refresh-snapshot">
@@ -43,7 +70,7 @@ export function RefreshSnapshotButton({
         className="si-refresh-snapshot__button"
         onClick={() => void handleClick()}
         disabled={disabled || busy}
-        title="Atualizar dados do backend e recarregar a página"
+        title="Buscar nova versão dos dados. A versão atual permanece até a nova estar pronta."
         aria-label="Atualizar snapshot"
       >
         <svg
@@ -68,6 +95,12 @@ export function RefreshSnapshotButton({
       {feedback === "success" ? (
         <span className="si-refresh-snapshot__feedback is-success">
           Dados atualizados
+        </span>
+      ) : null}
+
+      {feedback === "background" ? (
+        <span className="si-refresh-snapshot__feedback is-success">
+          Atualização em andamento…
         </span>
       ) : null}
 

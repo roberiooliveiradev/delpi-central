@@ -15,6 +15,32 @@ Documentação interativa: `/apps/strategic-indicators-api/docs`
 
 ---
 
+## Cache e atualização materializada
+
+### POST `/cache/refresh`
+
+**Permissão:** `strategic-indicators.view`
+
+Botão **Atualizar** do MFE. Recalcula fontes e grava **nova versão** em `period_scores` **sem apagar** versões anteriores (até 3 por escopo). Enquanto o job roda, leituras continuam servindo a **última versão limpa** (`is_clean`).
+
+Body JSON opcional: `{ "competence": "2026-05", "trends_months": 6 }`.
+
+Resposta: `{ "status": "accepted" | "already_running", "message": "..." }`.
+
+### GET `/cache/refresh/status`
+
+**Permissão:** `strategic-indicators.view`
+
+Estado do refresh (`running`, `last_started_at`, `last_completed_at`, `last_error`, …).
+
+### POST `/cache/invalidate`
+
+**Permissão:** `strategic-indicators.settings.manage`
+
+Invalidação **total** (admin / mudança estrutural): apaga `period_scores` e dispara refresh. Não usar no botão Atualizar do painel.
+
+---
+
 ## Filtros globais (leitura)
 
 | Query | Descrição |
