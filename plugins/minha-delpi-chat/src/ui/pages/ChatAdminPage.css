@@ -3,6 +3,12 @@
 @import "../components/admin/shared/admin-shared.css";
 @import "../components/admin/shared/AdminFileDropzone.css";
 
+.mdc-admin-tools-page {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+}
+
 .minha-delpi-chat.mdc-admin-root {
   width: 100%;
   height: auto;
