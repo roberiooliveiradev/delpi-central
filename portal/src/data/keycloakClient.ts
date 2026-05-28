@@ -26,9 +26,8 @@ export const initKeycloak = () => {
     initPromise = keycloak.init({
       onLoad: "check-sso",
       pkceMethod: "S256",
-      checkLoginIframe: true,
-      // silentCheckSsoRedirectUri:
-      //   window.location.origin + "/silent-check-sso.html",
+      // Iframe de SSO quebra fácil em localhost (cookies/third-party) e gera loop de login.
+      checkLoginIframe: import.meta.env.PROD,
     });
   }
 

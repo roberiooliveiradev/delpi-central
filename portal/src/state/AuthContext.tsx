@@ -132,7 +132,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const favoritesLoadInFlightRef = useRef(false);
   const unauthorizedHandledRef = useRef(false);
 
-  const getCurrentRedirectUri = () => window.location.href;
+  const getCurrentRedirectUri = () => {
+    const configured = import.meta.env.VITE_KC_REDIRECT_URI as string | undefined;
+
+    if (configured?.trim()) {
+      return configured.trim();
+    }
+
+    return `${window.location.origin}/`;
+  };
 
   const getAccessToken = useCallback(() => tokenRef.current, []);
 
