@@ -28,6 +28,7 @@
 - **Demais:** `unit_values` por filial quando a visão é consolidada; valor único quando `branch=01|02` na leitura.
 - Visão **Consolidado:** nota de cada indicador = média das notas 01 e 02 (com metas por filial).
 - Visão **Filial 01/02:** meta estrita no escopo; realizado da unidade correspondente.
+- **Realizado consolidado (exibição):** regra por indicador em `si_app/shared/consolidated_value_aggregation.py` — ROL **soma** 01+02; percentuais com `unit_values` usam **média** das filiais; OTD/conversão/% novos no dashboard também podem vir da api-delpi **sem** `branch` (agregação SQL no período).
 
 ## Dashboard Comercial (`plugins/dashboard-commercial`)
 

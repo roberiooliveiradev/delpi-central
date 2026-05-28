@@ -21,3 +21,10 @@ export const COMMERCIAL_ROL_SERIES_LABELS = {
   filial01: "ROL Filial 01",
   filial02: "ROL Filial 02",
 } as const;
+
+/** Como o realizado consolidado é agregado na UI (metas continuam por filial). */
+export const COMMERCIAL_CONSOLIDATED_BRANCH_LABELS = {
+  sum: "Consolidado (soma das filiais)",
+  average: "Consolidado (média das filiais)",
+  allBranches: "Consolidado (todas as filiais)",
+} as const;

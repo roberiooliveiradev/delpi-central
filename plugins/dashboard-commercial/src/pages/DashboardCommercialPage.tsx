@@ -33,7 +33,10 @@ import type { ChartGranularity } from "../types/chart";
 import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
-import { COMMERCIAL_KPI_TITLES } from "../constants/commercialIndicators";
+import {
+  COMMERCIAL_CONSOLIDATED_BRANCH_LABELS,
+  COMMERCIAL_KPI_TITLES,
+} from "../constants/commercialIndicators";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { buildRolPerUnitKpiView } from "../utils/rolPerUnitPresentation";
 import {
@@ -98,11 +101,14 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     [dateStart, dateEnd]
   );
 
-  const branchLabel = branch
-    ? `Filial ${branch}`
-    : "Consolidado (média das filiais)";
+  const branchLabel = branch ? `Filial ${branch}` : null;
 
-  const rolContextLabel = `${branchLabel} · ${periodLabel}`;
+  const rolContextLabel = branch
+    ? `Filial ${branch} · ${periodLabel}`
+    : `${COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.sum} · ${periodLabel}`;
+
+  const consolidatedOtherKpisLabel =
+    COMMERCIAL_CONSOLIDATED_BRANCH_LABELS.allBranches;
 
   const rolKpi = useMemo(
     () =>
@@ -225,7 +231,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           title={COMMERCIAL_KPI_TITLES.salesOrderOtd}
           value={formatPercent(salesOrderOtd?.sales_order_otd_pct)}
           {...buildKpiGoalPresentation(
-            `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel} · ${periodLabel}`,
+            `${formatInteger(salesOrderOtd?.on_time_lines)} no prazo / ${formatInteger(salesOrderOtd?.total_lines)} linhas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             salesOrderOtd,
             formatPercent,
             { realizedValue: salesOrderOtd?.sales_order_otd_pct },
@@ -237,7 +243,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           title={COMMERCIAL_KPI_TITLES.closingRate}
           value={formatPercent(closingRate?.sales_conversion_rate_pct)}
           {...buildKpiGoalPresentation(
-            `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel} · ${periodLabel}`,
+            `${formatInteger(closingRate?.qtd_won)} ganhas / ${formatInteger(closingRate?.qtd_proposals)} propostas · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             closingRate,
             formatPercent,
             { realizedValue: closingRate?.sales_conversion_rate_pct },
@@ -249,7 +255,7 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           title={COMMERCIAL_KPI_TITLES.newBusinessRol}
           value={formatPercent(newBusinessRol?.new_business_rol_pct)}
           {...buildKpiGoalPresentation(
-            `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${branchLabel} · ${periodLabel}`,
+            `${formatCurrency(newBusinessRol?.new_business_rol)} não-WEG · ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`,
             newBusinessRol,
             formatPercent,
             { realizedValue: newBusinessRol?.new_business_rol_pct },
@@ -334,8 +340,10 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
           <p className="dc-summary-card__description">
             <strong>ROL</strong> (R$ com IPI) segue o indicador{" "}
             <code>commercial-rol</code> no SI. Com filial <strong>Todas</strong>,
-            o card mostra média consolidada e metas por filial via filtro (como
-            OTD e conversão). O gráfico mantém as séries 01 e 02.
+            o ROL é a <strong>soma</strong> das filiais 01 e 02; OTD, conversão e
+            % novos negócios vêm consolidados da api-delpi (todas as filiais no
+            período). Metas continuam por filial no filtro. O gráfico mantém as
+            séries 01 e 02.
           </p>
         </article>
       </section>

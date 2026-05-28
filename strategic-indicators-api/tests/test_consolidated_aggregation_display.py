@@ -145,9 +145,35 @@ def test_commercial_provider_exposes_branch_unit_values_on_branch_view() -> None
     assert rol["value"] == 80.0
 
 
-def test_commercial_provider_consolidated_view_lists_both_units() -> None:
+def test_commercial_provider_consolidated_rol_value_is_sum() -> None:
     service = MagicMock()
     service.get_snapshot.return_value = CommercialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        matrix_rol_value=665_029.86,
+        branch_rol_value=3_290_935.50,
+        sales_conversion_rate_pct=55.0,
+        sales_order_otd_pct=90.0,
+        new_business_rol_pct=12.0,
+        requested_branch=None,
+    )
+
+    provider = CommercialIndicatorsSnapshotProvider(
+        commercial_metrics_snapshot_service=service,
+    )
+    result = provider.get_commercial_indicators_snapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        branch=None,
+    )
+
+    rol = next(item for item in result["items"] if item["indicator_id"] == "commercial-rol")
+    assert rol["value"] == 3_955_965.36
+
+
+def test_commercial_provider_consolidated_view_lists_both_units() -> None:
+    service = MagicMock()
+    base_snapshot = CommercialMetricsSnapshot(
         start_date="01-04-2026",
         end_date="30-04-2026",
         matrix_rol_value=100.0,

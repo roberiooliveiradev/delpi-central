@@ -14,6 +14,10 @@ from si_app.shared.branch_filter import (
     consolidated_measurement_value,
     is_consolidated_aggregation_department,
 )
+from si_app.shared.consolidated_value_aggregation import (
+    aggregate_unit_branch_values,
+    resolve_consolidated_value_aggregation,
+)
 from si_app.shared.goal_scope import (
     BRANCH_UNIT_CODES,
     indicator_uses_branch_unit_measurement,
@@ -668,7 +672,14 @@ class StrategicIndicatorsCalculator:
             if branch_gaps
             else None
         )
-        realized_value = round(sum(branch_values) / len(branch_values), 2)
+        aggregation = resolve_consolidated_value_aggregation(
+            indicator_id=indicator.indicator_id,
+            value_unit=getattr(indicator, "value_unit", None),
+        )
+        realized_value = aggregate_unit_branch_values(
+            branch_values,
+            aggregation=aggregation,
+        )
         return score, gap, realized_value
 
     def _score_indicator_for_branch(
