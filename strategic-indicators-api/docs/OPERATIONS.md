@@ -44,6 +44,25 @@ python strategic-indicators-api/scripts/bench_si_routes.py --competence 2026-05
 
 Baseline documentado: executive ~19s → ~10s após otimizações — ver [PERFORMANCE_IMPLEMENTATION.md](./PERFORMANCE_IMPLEMENTATION.md).
 
+## Migrations em produção
+
+O serviço `strategic-indicators-api` em produção **não monta** o código do host — migrations vêm da **imagem Docker**. Após `git pull`, é obrigatório **rebuild + restart** antes de `run_migrations.py up`:
+
+```bash
+cd infra
+docker compose build strategic-indicators-api
+docker compose up -d strategic-indicators-api
+docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
+```
+
+Confirme que o container tem o SQL novo:
+
+```bash
+docker exec delpi-strategic-indicators-api grep -A2 "pg_indexes" /app/migrations/V028__period_scores_versions.sql
+```
+
+Se `period_scores` já tiver colunas `version_number` / `is_clean` e o índice `uq_si_period_scores_scope_version`, a V028 só registra o que falta (idempotente).
+
 ## Health checks
 
 | URL | Esperado |

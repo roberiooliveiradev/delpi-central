@@ -25,15 +25,24 @@ WHERE is_clean IS DISTINCT FROM (
 ALTER TABLE strategic_indicators.period_scores
     DROP CONSTRAINT IF EXISTS uq_si_period_scores_scope;
 
+-- Constraint UNIQUE cria índice com o mesmo nome; em alguns ambientes só o índice
+-- já existe (tentativa anterior), o que gerava DuplicateTable no ADD CONSTRAINT.
 DO $$
 BEGIN
-    IF NOT EXISTS (
+    IF EXISTS (
         SELECT 1
         FROM pg_constraint c
         INNER JOIN pg_namespace n ON n.oid = c.connamespace
         WHERE c.conname = 'uq_si_period_scores_scope_version'
           AND n.nspname = 'strategic_indicators'
+    ) OR EXISTS (
+        SELECT 1
+        FROM pg_indexes
+        WHERE schemaname = 'strategic_indicators'
+          AND indexname = 'uq_si_period_scores_scope_version'
     ) THEN
+        NULL;
+    ELSE
         ALTER TABLE strategic_indicators.period_scores
             ADD CONSTRAINT uq_si_period_scores_scope_version
                 UNIQUE (competence, scope_branch, scope_department_id, version_number);
