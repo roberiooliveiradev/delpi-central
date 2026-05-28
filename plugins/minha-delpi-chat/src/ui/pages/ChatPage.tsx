@@ -12,6 +12,7 @@ import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -51,6 +52,7 @@ export function ChatPage({
   pathname,
   onOpenAdmin,
 }: ChatPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
   const [agentEditRequest, setAgentEditRequest] = useState<{
@@ -759,6 +761,7 @@ export function ChatPage({
       onDragLeaveCapture={handleChatDragLeave}
       onDropCapture={handleChatDrop}
     >
+      {confirmDialog}
       {isDraggingFile ? (
         <div className="mdc-chat-drop-overlay" aria-hidden="true">
           <div>
@@ -960,9 +963,13 @@ export function ChatPage({
                 return;
               }
 
-              const confirmed = window.confirm(
-                `Excluir o projeto "${selectedProject.name}"?`,
-              );
+              const confirmed = await confirm({
+                title: "Excluir projeto",
+                description: `Excluir o projeto "${selectedProject.name}"?`,
+                confirmLabel: "Excluir",
+                cancelLabel: "Cancelar",
+                danger: true,
+              });
 
               if (!confirmed) {
                 return;

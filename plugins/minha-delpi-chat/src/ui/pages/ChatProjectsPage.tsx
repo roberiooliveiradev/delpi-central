@@ -12,6 +12,7 @@ import { useMemo, useState } from "react";
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/ChatProjectCreateModal";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 import "./ChatProjectsPage.css";
 
 type ChatProjectsPageProps = {
@@ -62,6 +63,7 @@ export function ChatProjectsPage({
   onRenameProject,
   onDeleteProject,
 }: ChatProjectsPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -96,6 +98,7 @@ export function ChatProjectsPage({
       variant="page"
       className="mdc-chat-page-panel--fill"
     >
+    {confirmDialog}
     <section
       className="mdc-chat-ws-directory mdc-chat-projects-page"
       aria-label="Projetos"
@@ -245,13 +248,17 @@ export function ChatProjectsPage({
                           type="button"
                           className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                           onClick={() => {
-                            const confirmed = window.confirm(
-                              `Excluir o projeto "${project.name}"?`,
-                            );
-
-                            if (confirmed) {
-                              void onDeleteProject?.(project.id);
-                            }
+                            void confirm({
+                              title: "Excluir projeto",
+                              description: `Excluir o projeto "${project.name}"?`,
+                              confirmLabel: "Excluir",
+                              cancelLabel: "Cancelar",
+                              danger: true,
+                            }).then((confirmed) => {
+                              if (confirmed) {
+                                void onDeleteProject?.(project.id);
+                              }
+                            });
                           }}
                         >
                           <Trash2 size={16} aria-hidden="true" />

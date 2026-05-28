@@ -10,6 +10,7 @@ import {
   formatSourceTypeLabel,
   sourceTypeBadgeClass,
 } from "./knowledgeCuratorialUtils";
+import { useConfirmDialog } from "../../useConfirmDialog";
 
 import "./KnowledgeDocumentCard.css";
 
@@ -39,6 +40,7 @@ export function KnowledgeDocumentCard({
   canDeleteKnowledgeDocuments,
   canReindexKnowledgeDocuments,
 }: KnowledgeDocumentCardProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [isEditingMetadata, setIsEditingMetadata] = useState(false);
   const [category, setCategory] = useState(document.category ?? "");
   const [tags, setTags] = useState(tagsToInput(document.tags));
@@ -69,6 +71,7 @@ export function KnowledgeDocumentCard({
 
   return (
     <article className="mdc-knowledge-document-card">
+      {confirmDialog}
       <div>
         <div className="mdc-knowledge-document-card__title">
           <strong>{document.title}</strong>
@@ -233,13 +236,17 @@ export function KnowledgeDocumentCard({
               : "Você não tem permissão para excluir documentos."
           }
           onClick={() => {
-            if (
-              window.confirm(
-                `Excluir definitivamente "${document.title}" da base de conhecimento?`,
-              )
-            ) {
-              void deleteDocument(document.id);
-            }
+            void confirm({
+              title: "Excluir documento",
+              description: `Excluir definitivamente "${document.title}" da base de conhecimento?`,
+              confirmLabel: "Excluir",
+              cancelLabel: "Cancelar",
+              danger: true,
+            }).then((confirmed) => {
+              if (confirmed) {
+                void deleteDocument(document.id);
+              }
+            });
           }}
         >
           Excluir

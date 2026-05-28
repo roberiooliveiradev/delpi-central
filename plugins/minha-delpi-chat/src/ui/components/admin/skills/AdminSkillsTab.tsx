@@ -9,6 +9,7 @@ import {
 } from "../../../../data/api/adminApi";
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import { useConfirmDialog } from "../../useConfirmDialog";
 
 import "./AdminSkillsTab.css";
 
@@ -63,6 +64,7 @@ function draftFromSkill(skill: AdminChatSkill): SkillDraft {
 
 export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
   const canManage = Boolean(rbac?.capabilities.canManageTools);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
 
   const [skills, setSkills] = useState<AdminChatSkill[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -177,7 +179,15 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
       return;
     }
 
-    if (!window.confirm("Desativar esta skill? Agentes deixarão de vê-la no catálogo.")) {
+    const confirmed = await confirm({
+      title: "Desativar skill",
+      description: "Desativar esta skill? Agentes deixarão de vê-la no catálogo.",
+      confirmLabel: "Desativar",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -200,6 +210,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
 
   return (
     <section className="mdc-admin-skills" aria-label="Catálogo de skills">
+      {confirmDialog}
       <header className="mdc-admin-page-header">
         <h2>Skills do chat</h2>
         <p>

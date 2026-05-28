@@ -28,6 +28,7 @@ import type {
   ChatWorkspaceSource,
 } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
+import { useConfirmDialog } from "./useConfirmDialog";
 import { ChatUserSearchField } from "./ChatUserSearchField";
 import { buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationMenu } from "./ChatConversationMenu";
@@ -134,6 +135,7 @@ export function ChatProjectHome({
   settingsRequestKey,
   isSessionProcessing,
 }: ChatProjectHomeProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -318,7 +320,13 @@ export function ChatProjectHome({
   }
 
   async function deleteProject() {
-    const confirmed = window.confirm(`Excluir o projeto "${project.name}"?`);
+    const confirmed = await confirm({
+      title: "Excluir projeto",
+      description: `Excluir o projeto "${project.name}"?`,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
 
     if (!confirmed) {
       return;
@@ -345,9 +353,13 @@ export function ChatProjectHome({
   }
 
   async function deleteSession(session: ChatSession) {
-    const confirmed = window.confirm(
-      `Excluir a conversa "${session.title || "sem título"}"?`,
-    );
+    const confirmed = await confirm({
+      title: "Excluir conversa",
+      description: `Excluir a conversa "${session.title || "sem título"}"?`,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
 
     if (!confirmed) {
       return;
@@ -365,6 +377,7 @@ export function ChatProjectHome({
       }
       aria-label={`Projeto ${project.name}`}
     >
+      {confirmDialog}
       <header className="mdc-chat-project-home__hero">
         <div className="mdc-chat-project-home__hero-title">
           <span

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChatAgent } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
@@ -131,6 +132,7 @@ export function ChatAgentsPage({
   onOpenRagAdmin,
   getAccessToken,
 }: ChatAgentsPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [showInactive, setShowInactive] = useState(false);
   const [editingAgent, setEditingAgent] = useState<ChatAgent | null | undefined>(undefined);
   const [resumeBuilderAgent, setResumeBuilderAgent] = useState<ChatAgent | null>(null);
@@ -301,6 +303,7 @@ export function ChatAgentsPage({
 
   return (
     <ChatAnimatedPanel panelKey="agents-directory" variant="page" className="mdc-chat-page-panel--fill">
+    {confirmDialog}
     <section className="mdc-chat-ws-directory" aria-label="Agentes">
       <header className="mdc-chat-ws-topbar mdc-chat-ws-directory__topbar">
         <div className="mdc-chat-ws-topbar__start">
@@ -450,13 +453,17 @@ export function ChatAgentsPage({
                           type="button"
                           className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                           onClick={() => {
-                            const confirmed = window.confirm(
-                              `Excluir o agente "${agent.name}"?`,
-                            );
-
-                            if (confirmed) {
-                              void onDeleteAgent?.(agent.id);
-                            }
+                            void confirm({
+                              title: "Excluir agente",
+                              description: `Excluir o agente "${agent.name}"?`,
+                              confirmLabel: "Excluir",
+                              cancelLabel: "Cancelar",
+                              danger: true,
+                            }).then((confirmed) => {
+                              if (confirmed) {
+                                void onDeleteAgent?.(agent.id);
+                              }
+                            });
                           }}
                         >
                           <Trash2 size={16} aria-hidden="true" />
