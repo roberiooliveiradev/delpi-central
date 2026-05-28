@@ -399,7 +399,6 @@ services:
     build:
       context: ../plugins/eficiencia-fabril
       dockerfile: Dockerfile
-      target: production
 
     container_name: delpi-eficiencia-fabril
     restart: unless-stopped
