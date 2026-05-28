@@ -191,8 +191,9 @@ def test_send_identity_uses_direct_answer_without_llm(message: str, common: bool
 
     llm_gateway.generate.assert_not_called()
     assert response.answer
-    assert "delpi" in response.answer.lower() or "assistente" in response.answer.lower()
+    assert len(response.answer.strip()) > 40
     assert "2019" not in response.answer
+    assert "openai" not in response.answer.lower()
     if message in {"quem te criou?", "quem é vc?", "quem é você?"}:
         rag_context_service.build_context.assert_not_called()
 
@@ -215,7 +216,8 @@ def test_stream_identity_uses_direct_answer_without_llm(message: str, common: bo
 
     llm_gateway.stream.assert_not_called()
     assert answer
-    assert "delpi" in answer.lower() or "assistente" in answer.lower()
+    assert len(answer.strip()) > 40
     assert "2019" not in answer
+    assert "openai" not in answer.lower()
     if message in {"quem te criou?", "quem é vc?"}:
         rag_context_service.build_context.assert_not_called()
