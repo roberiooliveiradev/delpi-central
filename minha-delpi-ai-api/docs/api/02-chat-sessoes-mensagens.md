@@ -412,6 +412,7 @@ O envio de mensagens (`POST .../messages` e `.../stream`) passa pelo **mesmo pip
 
 Documentação detalhada:
 
+- [Camadas de preparação antes do LLM](../architecture/chat-pre-llm-layers.md)
 - [Arquitetura — inteligência no chat base](../architecture/chat-intelligence-base.md)
 - [Mapa de rotas api-delpi para agentes](../knowledge/api-delpi-rotas-agente.md)
 - [Auditoria e testes de regressão](../roadmap/api-delpi-chat-intelligence-audit.md)

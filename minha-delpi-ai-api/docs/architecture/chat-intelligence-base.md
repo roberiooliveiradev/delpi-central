@@ -36,6 +36,8 @@ Mensagem do usuário
   → LLM (stream ou send)
 ```
 
+**Camadas antes do LLM (modelo completo, short-circuit, implementação por fases):** [`chat-pre-llm-layers.md`](./chat-pre-llm-layers.md).
+
 ### Serviços centrais
 
 | Serviço | Função |

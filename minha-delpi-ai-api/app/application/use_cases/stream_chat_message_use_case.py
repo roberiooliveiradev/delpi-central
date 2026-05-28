@@ -26,6 +26,9 @@ from app.application.services.chat_user_context_service import ChatUserContextSe
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
+from app.application.services.chat_turn.chat_turn_preparation_service import (
+    ChatTurnPreparationService,
+)
 from app.infrastructure.content.content_service import ContentService
 from app.domain.exceptions.chat_exceptions import (
     ChatMessageNotFoundError,
@@ -78,6 +81,9 @@ class StreamChatMessageUseCase:
         self.knowledge_scope_service = ChatKnowledgeScopeService()
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
+        self.turn_preparation_service = ChatTurnPreparationService(
+            rag_context_service=rag_context_service,
+        )
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
         self.chat_attachment_context_service = chat_attachment_context_service
@@ -169,184 +175,58 @@ class StreamChatMessageUseCase:
             )
 
         history_source = history_messages if resend_from_message_id else previous_messages
-        canvas_action = ChatCanvasContentService.resolve(
-            message,
-            history_source,
-            workspace_context,
-        )
-        canvas_open_payload = (
-            canvas_action.open_payload if canvas_action and canvas_action.open_payload else None
-        )
-        attachment_ids = getattr(request, "attachment_ids", None)
-        allowed_action_ids = workspace_context.get("allowedActionIds") or []
-        pre_tool = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
-            message,
-            allowed_action_ids,
-            attachment_ids=attachment_ids,
-        )
-        operational_optimize = pre_tool.operational_optimize
-        analysis_mode = pre_tool.analysis_mode
+        agent_meta = workspace_context.get("agent")
+        max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
 
-        if canvas_action:
-            operational_optimize = False
-            analysis_mode = False
-
-        if operational_optimize:
-            keep = max(1, Settings.CHAT_HISTORY_MAX_MESSAGES)
-            history_summary, history = "", list(history_source[-keep:])
-        else:
-            history_summary, history = self._prepare_history(history_source)
-
-        pipeline_timings = ChatPipelineTimings()
-
-        pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
+        prepared = self.turn_preparation_service.prepare(
             message=message,
+            request=request,
+            session=session,
+            user_id=user_id,
             workspace_context=workspace_context,
-            allowed_action_ids=allowed_action_ids,
-            action_catalog=ChatCapabilitiesService.load_action_catalog_for_agent(
-                allowed_action_ids,
+            attachments=attachments,
+            previous_messages=previous_messages,
+            history_source=history_source,
+            build_tool_context=self._build_tool_context,
+            maybe_extend_tool_context=self._maybe_extend_tool_context,
+            prepare_history=self._prepare_history,
+            history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+            fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+            fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
+            resolve_user_identity_answer=lambda msg: (
+                self._resolve_user_identity_answer(request.access_token, msg)
+                if request.access_token and ChatUserContextService.is_user_identity_question(msg)
+                else None
             ),
-        )
-
-        fast_path = ChatFastPathService.should_use(
-            message,
-            enabled=Settings.CHAT_FAST_PATH_ENABLED,
-            max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-            attachment_ids=attachment_ids,
-        )
-
-        if canvas_action:
-            fast_path = True
-            tool_context = {
-                "context": "",
-                "toolCalls": [],
-                "nativeToolCalling": {},
-            }
-            tool_calls = []
-            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-                message,
-                history_source,
-                tool_context,
-            )
-            tool_context = post_tool.tool_context
-            analysis_mode = post_tool.analysis_mode
-            pipeline_timings.mark("tools_done")
-        elif pre_capability_answer:
-            fast_path = True
-            tool_context = {
-                "context": "",
-                "toolCalls": [],
-                "nativeToolCalling": {},
-            }
-            tool_calls = []
-            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-                message,
-                history_source,
-                tool_context,
-            )
-            tool_context = post_tool.tool_context
-            pipeline_timings.mark("tools_done")
-        else:
-            agent_meta = workspace_context.get("agent")
-            max_tool_calls = (
-                agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
-            )
-            tool_context = self._build_tool_context(
-                request,
-                allowed_action_ids=workspace_context.get("allowedActionIds"),
-                capabilities=workspace_context.get("capabilities") or {},
-                specialization=workspace_context.get("specialization"),
-                fast_path=fast_path,
-                previous_messages=history_source,
-                max_external_action_calls=max_tool_calls,
-            )
-            tool_context = self._maybe_extend_tool_context(
-                request=request,
-                workspace_context=workspace_context,
-                tool_context=tool_context,
-            )
-            post_tool = ChatIntelligencePipelineService.finalize_after_tools(
-                message,
-                history_source,
-                tool_context,
-            )
-            tool_context = post_tool.tool_context
-            analysis_mode = post_tool.analysis_mode
-            tool_calls = tool_context["toolCalls"]
-            pipeline_timings.mark("tools_done")
-
-        from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
-
-        resolved_skills = workspace_context.get("skills") or {}
-        skip_rag = (
-            (
-                fast_path
-                and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
-            )
-            or operational_optimize
-            or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
-        )
-        if canvas_action:
-            direct_answer = canvas_action.answer
-        elif pre_capability_answer:
-            direct_answer = pre_capability_answer
-        elif analysis_mode:
-            direct_answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
-                message,
-                history_source,
-                current_tool_calls=tool_calls,
-            )
-            if not direct_answer:
-                direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
-                    tool_context,
-                    analysis_mode=analysis_mode,
-                )
-        else:
-            direct_answer = ChatIntelligencePipelineService.resolve_direct_answer(
-                tool_context,
-                analysis_mode=analysis_mode,
-            )
-
-        if canvas_action or pre_capability_answer or (analysis_mode and direct_answer):
-            skip_rag = True
-
-        if not direct_answer and ChatUserContextService.is_user_identity_question(message):
-            user_direct = self._resolve_user_identity_answer(request.access_token, message)
-            if user_direct:
-                direct_answer = user_direct
-                skip_rag = True
-
-        if not direct_answer and ChatAssistantIdentityService.is_assistant_identity_question(
-            message
-        ):
-            identity_direct = ChatAssistantIdentityService.build_direct_answer(
-                message=message,
-                workspace_context=workspace_context,
-            )
-            if identity_direct:
-                direct_answer = identity_direct
-                skip_rag = True
-
-        if not direct_answer and ChatCapabilitiesService.is_capability_inquiry(message):
-            caps_direct = self._resolve_capabilities_answer(workspace_context, message)
-            if caps_direct:
-                direct_answer = caps_direct
-                skip_rag = True
-
-        if skip_rag:
-            rag = {"context": "", "sources": []}
-        else:
-            rag = self.rag_context_service.build_context(
-                message,
-                filters=self.knowledge_scope_service.build_filters(
-                    user_id=user_id,
-                    session=session,
+            resolve_assistant_identity_answer=lambda msg: (
+                ChatAssistantIdentityService.build_direct_answer(
+                    message=msg,
                     workspace_context=workspace_context,
-                    attachment_ids=attachment_ids,
-                ),
-            )
-        sources = rag["sources"]
-        pipeline_timings.mark("rag_done")
+                )
+                if ChatAssistantIdentityService.is_assistant_identity_question(msg)
+                else None
+            ),
+            resolve_capabilities_answer=lambda msg: (
+                self._resolve_capabilities_answer(workspace_context, msg)
+                if ChatCapabilitiesService.is_capability_inquiry(msg)
+                else None
+            ),
+            max_external_action_calls=max_tool_calls,
+        )
+
+        operational_optimize = prepared.operational_optimize
+        analysis_mode = prepared.analysis_mode
+        fast_path = prepared.fast_path
+        skip_rag = prepared.skip_rag
+        history_summary = prepared.history_summary
+        history = prepared.history
+        tool_context = prepared.tool_context
+        tool_calls = prepared.tool_calls
+        direct_answer = prepared.direct_answer
+        rag = prepared.rag
+        sources = prepared.sources
+        pipeline_timings = prepared.pipeline_timings
+        canvas_open_payload = prepared.canvas_open_payload
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,
@@ -424,7 +304,14 @@ class StreamChatMessageUseCase:
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
-        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK
+        # Respostas diretas não precisam de placeholder/playback; manter streaming de tokens
+        # mesmo quando o modo persist-before-playback está habilitado.
+        #
+        # Exceção: quando há `canvas_open_payload`, o frontend espera playback para
+        # persistir a mensagem e abrir a lousa com referência ao `messageId`.
+        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK and not (
+            bool(direct_answer) and not canvas_open_payload
+        )
         assistant_placeholder = None
 
         yield {
