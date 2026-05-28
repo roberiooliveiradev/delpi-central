@@ -7,7 +7,7 @@ from si_app.infrastructure.providers.strategic_indicators.financial_indicators_s
 )
 
 
-def test_get_financial_snapshot_passes_branch_to_service() -> None:
+def test_get_financial_snapshot_always_fetches_consolidated_snapshot() -> None:
     service = MagicMock()
     service.get_snapshot.return_value = MagicMock(branches=[])
     provider = FinancialIndicatorsSnapshotProvider(
@@ -23,11 +23,11 @@ def test_get_financial_snapshot_passes_branch_to_service() -> None:
     service.get_snapshot.assert_called_once_with(
         start_date="01-05-2026",
         end_date="31-05-2026",
-        branch="01",
+        branch=None,
     )
 
 
-def test_get_financial_snapshot_series_passes_branch_to_service() -> None:
+def test_get_financial_snapshot_series_always_fetches_consolidated_snapshot() -> None:
     service = MagicMock()
     service.get_snapshot_series.return_value = {}
     provider = FinancialIndicatorsSnapshotProvider(
@@ -42,5 +42,5 @@ def test_get_financial_snapshot_series_passes_branch_to_service() -> None:
 
     service.get_snapshot_series.assert_called_once_with(
         periods=[period],
-        branch="02",
+        branch=None,
     )
