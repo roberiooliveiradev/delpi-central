@@ -260,13 +260,7 @@ export function isShortPresentationCaption(
 
   const title = getPresentationTitle(trimmed, toolCalls);
 
-  if (trimmed === title || trimmed === `### ${title}`) {
-    return true;
-  }
-
-  const pair = getPresentationPairFromToolCalls(toolCalls);
-
-  return hasRichPresentation(pair);
+  return trimmed === title || trimmed === `### ${title}`;
 }
 
 export function hasDisplayableRichText(text: string | null | undefined): boolean {
@@ -297,6 +291,21 @@ export function resolveRichTextBody(
   }
 
   return tableBody;
+}
+
+/** Texto completo para copiar/compartilhar respostas com apresentação rica. */
+export function buildAssistantCopyText(
+  messageContent: string | null | undefined,
+  toolCalls?: ChatToolCall[],
+): string {
+  const title = getPresentationTitle(messageContent, toolCalls);
+  const body = resolveRichTextBody(messageContent, toolCalls);
+
+  if (title && body) {
+    return `${title}\n\n${body}`;
+  }
+
+  return body || title || String(messageContent || "").trim();
 }
 
 /** Compat: título + corpo (legado). Preferir getPresentationTitle + resolveRichTextBody. */

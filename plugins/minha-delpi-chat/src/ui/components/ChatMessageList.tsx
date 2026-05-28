@@ -30,6 +30,7 @@ import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
+  buildAssistantCopyText,
   getPresentationPairFromToolCalls,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
@@ -261,6 +262,13 @@ function scrollMessageToTopOfList(
   messageId: string,
   behavior: ScrollBehavior = "auto",
 ) {
+  const node = list.querySelector(`[data-message-id="${messageId}"]`);
+
+  if (node instanceof HTMLElement) {
+    node.scrollIntoView({ behavior, block: "start" });
+    return;
+  }
+
   const targetTop = getMessageScrollTop(list, messageId);
 
   if (targetTop === null) {
@@ -858,7 +866,12 @@ export function ChatMessageList({
                     <button
                       className="mdc-chat-message-action"
                       type="button"
-                      onClick={() => void handleCopy(message.id, message.content)}
+                      onClick={() =>
+                        void handleCopy(
+                          message.id,
+                          buildAssistantCopyText(message.content, messageToolCalls),
+                        )
+                      }
                       aria-label={
                         copiedMessageId === message.id
                           ? "Resposta copiada"
@@ -925,8 +938,10 @@ export function ChatMessageList({
           ) : (
             <>
               <ChatMessageAttachments attachments={getMessageAttachments(message)} />
-              {suppressMessageMarkdown || !displayContent ? null : (
-                <ChatMarkdown content={displayContent} compact={isUser} />
+              {suppressMessageMarkdown || !displayContent ? null : isUser ? (
+                <p className="mdc-chat-message-user-text">{displayContent}</p>
+              ) : (
+                <ChatMarkdown content={displayContent} />
               )}
               {!isUser && messageCanvasOpen ? (
                 <ChatInlineCanvas

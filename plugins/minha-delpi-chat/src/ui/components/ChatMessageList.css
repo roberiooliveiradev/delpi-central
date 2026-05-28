@@ -150,7 +150,7 @@
   justify-self: end;
   width: fit-content;
   max-width: min(46rem, 100%);
-  min-width: 0;
+  min-width: min(8rem, 100%);
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-xl);
   background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
@@ -213,6 +213,16 @@
 
 .mdc-chat-message--user .mdc-chat-message-meta {
   order: -1;
+}
+
+.mdc-chat-message-user-text {
+  margin: 0;
+  color: var(--mdc-text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mdc-chat-message-header strong {

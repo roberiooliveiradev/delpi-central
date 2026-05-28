@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
   getPresentationTitle,
   isShortPresentationCaption,
@@ -58,6 +59,25 @@ describe("isShortPresentationCaption", () => {
     expect(
       isShortPresentationCaption("Estoque por filial/armazém", stockToolCalls),
     ).toBe(true);
+  });
+
+  it("não trata pergunta do usuário como legenda só por ter toolCalls", () => {
+    expect(
+      isShortPresentationCaption("estoque do produto 10080015", stockToolCalls),
+    ).toBe(false);
+  });
+});
+
+describe("buildAssistantCopyText", () => {
+  it("inclui título e tabela markdown na cópia", () => {
+    const text = buildAssistantCopyText(
+      "Estoque por filial/armazém",
+      stockToolCalls,
+    );
+
+    expect(text).toContain("Estoque por filial/armazém");
+    expect(text).toContain("| Filial | Qtd. atual |");
+    expect(text).toContain("| 01 | 4 |");
   });
 });
 
