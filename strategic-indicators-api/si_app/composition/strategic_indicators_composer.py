@@ -361,7 +361,7 @@ def build_get_departments_tree_snapshot_use_case():
     tree_uc = build_get_strategic_indicators_departments_tree_use_case()
     return GetDepartmentsTreeSnapshotUseCase(
         tree_use_case=tree_uc,
-        trends_use_case=tree_uc._trends_use_case,
+        snapshot_service=build_strategic_indicators_snapshot_service(),
     )
 
 

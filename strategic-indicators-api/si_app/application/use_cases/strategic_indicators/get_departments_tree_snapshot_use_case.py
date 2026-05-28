@@ -1,7 +1,10 @@
 """Use case leve para a Fase 1 do carregamento progressivo da árvore.
 
-Retorna IGD, departamentos e indicadores apenas para o período atual
-(competência + mês anterior para variação), **sem** séries históricas.
+Retorna IGD, departamentos e indicadores do período atual com variação
+em relação ao mês anterior, **sem** séries históricas (sparklines).
+
+Usa `get_current_and_previous_snapshot` em vez de `load_period_snapshots` para
+evitar o custo de montar N períodos e agregações de trends na fase snapshot.
 """
 
 from __future__ import annotations
@@ -9,15 +12,12 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 
-from si_app.application.dto.strategic_indicators.get_trends_real_request import (
-    GetStrategicIndicatorsTrendsRealRequest,
+from si_app.application.services.strategic_indicators.strategic_indicators_snapshot_service import (
+    StrategicIndicatorsSnapshotService,
 )
 from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
     GetStrategicIndicatorsDepartmentsTreeUseCase,
     _TreeScopeConfig,
-)
-from si_app.application.use_cases.strategic_indicators.get_trends_real_use_case import (
-    GetStrategicIndicatorsTrendsRealUseCase,
 )
 
 
@@ -30,9 +30,6 @@ class GetDepartmentsTreeSnapshotRequest:
     end_date: str | None = None
 
 
-_SNAPSHOT_MONTHS = 2
-
-
 class GetDepartmentsTreeSnapshotUseCase:
     """Fase 1: estrutura da árvore (IGD + departamentos + indicadores)."""
 
@@ -40,10 +37,10 @@ class GetDepartmentsTreeSnapshotUseCase:
         self,
         *,
         tree_use_case: GetStrategicIndicatorsDepartmentsTreeUseCase,
-        trends_use_case: GetStrategicIndicatorsTrendsRealUseCase,
+        snapshot_service: StrategicIndicatorsSnapshotService,
     ) -> None:
         self._tree = tree_use_case
-        self._trends = trends_use_case
+        self._snapshot_service = snapshot_service
 
     def execute(self, request: GetDepartmentsTreeSnapshotRequest) -> dict:
         scopes = self._tree._resolve_scopes(request.view_mode, request.branch)
@@ -101,21 +98,15 @@ class GetDepartmentsTreeSnapshotUseCase:
         request: GetDepartmentsTreeSnapshotRequest,
         scope: _TreeScopeConfig,
     ) -> dict:
-        trends_request = GetStrategicIndicatorsTrendsRealRequest(
-            branch=scope.branch,
+        comparative = self._snapshot_service.get_current_and_previous_snapshot(
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
-            months=_SNAPSHOT_MONTHS,
+            branch=scope.branch,
         )
-        snapshots = self._trends.load_period_snapshots(trends_request)
 
-        current_snapshot = snapshots[-1] if snapshots else None
-        previous_snapshot = (
-            snapshots[-2]
-            if len(snapshots) >= 2
-            else (snapshots[-1] if snapshots else None)
-        )
+        current_snapshot = comparative.current
+        previous_snapshot = comparative.previous
 
         return {
             "scope_key": scope.scope_key,
@@ -123,9 +114,12 @@ class GetDepartmentsTreeSnapshotUseCase:
             "branch": scope.branch,
             "current_snapshot": current_snapshot,
             "departments": self._tree._map_departments(
-                current_snapshot, previous_snapshot
+                current_snapshot,
+                previous_snapshot,
             ),
             "indicators": self._tree._map_indicators(
-                current_snapshot, previous_snapshot
+                current_snapshot,
+                previous_snapshot,
+                catalog=comparative.catalog,
             ),
         }

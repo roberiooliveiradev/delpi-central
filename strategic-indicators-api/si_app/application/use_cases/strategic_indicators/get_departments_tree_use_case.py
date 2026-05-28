@@ -186,6 +186,8 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
         self,
         current: StrategicIndicatorsPeriodSnapshot | None,
         previous: StrategicIndicatorsPeriodSnapshot | None,
+        *,
+        catalog=None,
     ) -> dict:
         if current is None:
             return {"items": [], "errors": [], "partial_success": False}
@@ -193,6 +195,7 @@ class GetStrategicIndicatorsDepartmentsTreeUseCase:
         response = self._indicators_use_case.build_from_period_snapshot(
             current,
             previous_snapshot=previous,
+            catalog=catalog,
         )
         return self._serialize_indicators_response(response)
 
