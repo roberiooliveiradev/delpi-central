@@ -2259,12 +2259,14 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         "status",
                         {"message": event.get("message", "")},
                     )
+                    yield ": \n\n"
 
                 elif event_type == "activity":
                     yield _sse(
                         "activity",
                         {"entry": event.get("entry", {})},
                     )
+                    yield ": \n\n"
 
                 elif event_type == "sources":
                     yield _sse("sources", {"sources": event.get("sources", [])})

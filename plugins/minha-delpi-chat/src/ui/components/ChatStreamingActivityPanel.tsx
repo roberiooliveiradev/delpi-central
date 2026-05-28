@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
+import { resolveStreamingHeadline } from "../../state/utils/streamingActivityLog";
 
 import "./ChatStreamingActivityPanel.css";
 
@@ -85,7 +86,13 @@ function groupEntries(entries: ChatStreamActivityEntry[]): ActivityGroup[] {
   return groups;
 }
 
-function ActivityRow({ entry }: { entry: ChatStreamActivityEntry }) {
+function ActivityRow({
+  entry,
+  isNew,
+}: {
+  entry: ChatStreamActivityEntry;
+  isNew?: boolean;
+}) {
   const verb = resolveVerb(entry);
   const target = resolveTarget(entry);
   const isActive = entry.state === "active";
@@ -100,7 +107,7 @@ function ActivityRow({ entry }: { entry: ChatStreamActivityEntry }) {
 
   return (
     <li
-      className={`mdc-chat-stream-activity__row ${levelClass}${isActive ? " is-active" : ""}`}
+      className={`mdc-chat-stream-activity__row ${levelClass}${isActive ? " is-active" : ""}${isNew ? " is-new" : ""}`}
     >
       <span className="mdc-chat-stream-activity__verb">{verb}</span>
       <span className="mdc-chat-stream-activity__target" title={target}>
@@ -128,6 +135,9 @@ export function ChatStreamingActivityPanel({
 
   const groups = useMemo(() => groupEntries(entries), [entries]);
   const [showLog, setShowLog] = useState(true);
+  const groupsRef = useRef<HTMLDivElement | null>(null);
+  const previousCountRef = useRef(0);
+  const newestEntryId = entries[entries.length - 1]?.id;
 
   useEffect(() => {
     if (hasIssues || isActive) {
@@ -135,12 +145,28 @@ export function ChatStreamingActivityPanel({
     }
   }, [hasIssues, isActive]);
 
-  const headline = status?.trim() || "Processando sua solicitação...";
+  useEffect(() => {
+    if (!showLog || !groupsRef.current) {
+      return;
+    }
+
+    groupsRef.current.scrollTop = groupsRef.current.scrollHeight;
+  }, [entries, showLog]);
+
+  useEffect(() => {
+    previousCountRef.current = entries.length;
+  }, [entries.length]);
+
+  const headline = resolveStreamingHeadline(status, entries);
   const hasLog = entries.length > 0;
+  const showWaitingPulse = isActive && entries.length === 0;
 
   return (
     <div className="mdc-chat-stream-activity" role="status" aria-live="polite">
-      <p className="mdc-chat-stream-activity__summary">{headline}</p>
+      <p className="mdc-chat-stream-activity__summary">
+        {isActive ? <span className="mdc-chat-stream-activity__pulse" aria-hidden="true" /> : null}
+        <span>{headline}</span>
+      </p>
 
       {hasLog ? (
         <>
@@ -154,13 +180,20 @@ export function ChatStreamingActivityPanel({
           </button>
 
           {showLog ? (
-            <div className="mdc-chat-stream-activity__groups">
+            <div ref={groupsRef} className="mdc-chat-stream-activity__groups">
               {groups.map((group) => (
                 <section key={group.key} className="mdc-chat-stream-activity__group">
                   <h4 className="mdc-chat-stream-activity__group-title">{group.label}</h4>
                   <ul className="mdc-chat-stream-activity__rows">
                     {group.items.map((entry) => (
-                      <ActivityRow key={entry.id} entry={entry} />
+                      <ActivityRow
+                        key={entry.id}
+                        entry={entry}
+                        isNew={
+                          entry.id === newestEntryId &&
+                          entries.length > previousCountRef.current
+                        }
+                      />
                     ))}
                   </ul>
                 </section>
@@ -168,11 +201,8 @@ export function ChatStreamingActivityPanel({
             </div>
           ) : null}
         </>
-      ) : isActive ? (
-        <p className="mdc-chat-stream-activity__waiting">
-          <span className="mdc-chat-stream-activity__pulse" aria-hidden="true" />
-          Aguardando etapas...
-        </p>
+      ) : showWaitingPulse ? (
+        <p className="mdc-chat-stream-activity__waiting">Aguardando etapas...</p>
       ) : null}
     </div>
   );

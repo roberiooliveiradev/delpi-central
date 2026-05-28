@@ -125,61 +125,11 @@ class StreamChatMessageUseCase:
             ),
         }
 
-        workspace_context = self._build_workspace_context(session, user_id)
-        attachments = self._get_message_attachments(request, user_id, session_id)
-
         resend_from_message_id = request.resend_from_message_id
-        existing_user_message = None
-
-        if resend_from_message_id:
-            existing_user_message = self.chat_repository.update_user_message(
-                message_id=UUID(resend_from_message_id),
-                user_id=user_id,
-                content=message,
-                metadata_patch={"editMode": "resend"},
-            )
-
-            if not existing_user_message:
-                raise ChatMessageNotFoundError()
-
-            if existing_user_message.session_id != session_id:
-                raise ChatSessionAccessDeniedError()
-
-            self.chat_repository.delete_messages_after(
-                session_id=session_id,
-                message_id=existing_user_message.id,
-                user_id=user_id,
-            )
-
-            all_messages = self.chat_repository.list_messages_by_session(session_id)
-            history_messages = [
-                item
-                for item in all_messages
-                if item.id != existing_user_message.id
-            ]
-            previous_messages = all_messages
-        else:
-            history_messages = None
-            previous_messages = self.chat_repository.list_messages_by_session(session_id)
-
-        should_generate_session_title = (
-            not resend_from_message_id
-            and self._should_generate_session_title(session, previous_messages)
-        )
-        if should_generate_session_title:
-            self.chat_repository.rename_session(
-                session_id=session_id,
-                user_id=user_id,
-                title=self._fallback_title_from_message(message),
-            )
-
-        history_source = history_messages if resend_from_message_id else previous_messages
-        agent_meta = workspace_context.get("agent")
-        max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
-
         activity_queue: queue.Queue = queue.Queue()
         prepared_box: dict = {}
         prepare_error_box: dict = {}
+        context_box: dict = {}
 
         from flask import current_app, has_app_context
 
@@ -189,6 +139,92 @@ class StreamChatMessageUseCase:
             activity_queue.put(("activity", entry))
 
         def _run_prepare() -> None:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            _on_stream_activity(
+                ChatStreamActivityService.entry(
+                    verb="Carregando",
+                    target="contexto da sessão",
+                    phase="prepare",
+                    state="active",
+                    message="Carregando agente, histórico e anexos...",
+                    entry_id="prepare-session-context",
+                )
+            )
+
+            workspace_context = self._build_workspace_context(session, user_id)
+            attachments = self._get_message_attachments(request, user_id, session_id)
+            existing_user_message = None
+            history_messages = None
+
+            if resend_from_message_id:
+                existing_user_message = self.chat_repository.update_user_message(
+                    message_id=UUID(resend_from_message_id),
+                    user_id=user_id,
+                    content=message,
+                    metadata_patch={"editMode": "resend"},
+                )
+
+                if not existing_user_message:
+                    raise ChatMessageNotFoundError()
+
+                if existing_user_message.session_id != session_id:
+                    raise ChatSessionAccessDeniedError()
+
+                self.chat_repository.delete_messages_after(
+                    session_id=session_id,
+                    message_id=existing_user_message.id,
+                    user_id=user_id,
+                )
+
+                all_messages = self.chat_repository.list_messages_by_session(session_id)
+                history_messages = [
+                    item
+                    for item in all_messages
+                    if item.id != existing_user_message.id
+                ]
+                previous_messages = all_messages
+            else:
+                previous_messages = self.chat_repository.list_messages_by_session(session_id)
+
+            should_generate_session_title = (
+                not resend_from_message_id
+                and self._should_generate_session_title(session, previous_messages)
+            )
+            if should_generate_session_title:
+                self.chat_repository.rename_session(
+                    session_id=session_id,
+                    user_id=user_id,
+                    title=self._fallback_title_from_message(message),
+                )
+
+            history_source = history_messages if resend_from_message_id else previous_messages
+            agent_meta = workspace_context.get("agent")
+            max_tool_calls = (
+                agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+            )
+
+            context_box["workspace_context"] = workspace_context
+            context_box["attachments"] = attachments
+            context_box["previous_messages"] = previous_messages
+            context_box["history_source"] = history_source
+            context_box["existing_user_message"] = existing_user_message
+            context_box["should_generate_session_title"] = should_generate_session_title
+
+            _on_stream_activity(
+                ChatStreamActivityService.entry(
+                    verb="Pronto",
+                    target="contexto da sessão",
+                    phase="prepare",
+                    state="done",
+                    level="success",
+                    message="Contexto da sessão carregado.",
+                    entry_id="prepare-session-context",
+                )
+            )
+
             prepared_box["value"] = self.turn_preparation_service.prepare(
                 message=message,
                 request=request,
@@ -250,6 +286,13 @@ class StreamChatMessageUseCase:
             raise prepare_error_box["error"]
 
         prepared = prepared_box["value"]
+        workspace_context = context_box["workspace_context"]
+        attachments = context_box["attachments"]
+        previous_messages = context_box["previous_messages"]
+        existing_user_message = context_box.get("existing_user_message")
+        should_generate_session_title = bool(
+            context_box.get("should_generate_session_title")
+        )
 
         operational_optimize = prepared.operational_optimize
         analysis_mode = prepared.analysis_mode

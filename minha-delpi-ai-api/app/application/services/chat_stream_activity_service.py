@@ -38,12 +38,13 @@ class ChatStreamActivityService:
         status_code: int | None = None,
         action_id: str | None = None,
         message: str | None = None,
+        entry_id: str | None = None,
     ) -> dict[str, Any]:
         group = _PHASE_GROUPS.get(str(phase or "").strip(), "Atividade")
         summary = message or f"{verb} {target}".strip()
 
         payload: dict[str, Any] = {
-            "id": str(uuid.uuid4()),
+            "id": entry_id or str(uuid.uuid4()),
             "at": time.time(),
             "level": level,
             "phase": phase,
@@ -78,6 +79,7 @@ class ChatStreamActivityService:
         detail: str | None = None,
         message: str | None = None,
         level: str = "info",
+        entry_id: str | None = None,
     ) -> dict[str, Any]:
         return cls.entry(
             verb=verb,
@@ -87,6 +89,7 @@ class ChatStreamActivityService:
             level=level,
             detail=detail,
             message=message or f"{verb} {target}".strip(),
+            entry_id=entry_id,
         )
 
     @classmethod

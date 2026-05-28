@@ -112,6 +112,8 @@ class ChatTurnPreparationService:
                 ChatStreamActivityService.think(
                     target="pergunta e histórico",
                     message="Pensando sobre a pergunta e o histórico...",
+                    entry_id="think-question-history",
+                    state="active",
                 )
             )
 
@@ -160,7 +162,8 @@ class ChatTurnPreparationService:
                     ChatStreamActivityService.think(
                         target="intenção e rota OpenAPI",
                         detail="Identificando se a pergunta exige dados DELPI ou conhecimento documental.",
-                        state="done",
+                        entry_id="think-openapi-route",
+                        state="active",
                     )
                 )
 
@@ -172,7 +175,66 @@ class ChatTurnPreparationService:
             keep = max(1, int(history_keep))
             history_summary, history = "", list(history_source[-keep:])
         else:
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                on_stream_activity(
+                    ChatStreamActivityService.think(
+                        target="histórico da conversa",
+                        message="Resumindo histórico longo, se necessário...",
+                        entry_id="think-history-summary",
+                        state="active",
+                    )
+                )
+
             history_summary, history = prepare_history(history_source)
+
+            if on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                on_stream_activity(
+                    ChatStreamActivityService.think(
+                        target="histórico da conversa",
+                        message="Histórico pronto para o turno.",
+                        entry_id="think-history-summary",
+                        state="done",
+                        level="success",
+                    )
+                )
+
+        if on_stream_activity and not analysis_mode and not operational_optimize and not canvas_action:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.think(
+                    target="intenção e rota OpenAPI",
+                    detail="Rota operacional e modo de resposta definidos.",
+                    entry_id="think-openapi-route",
+                    state="done",
+                    level="success",
+                )
+            )
+
+        if on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.think(
+                    target="pergunta e histórico",
+                    message="Contexto da pergunta analisado.",
+                    entry_id="think-question-history",
+                    state="done",
+                    level="success",
+                )
+            )
 
         pipeline_timings = ChatPipelineTimings()
 
@@ -337,6 +399,7 @@ class ChatTurnPreparationService:
                     phase="rag",
                     state="active",
                     message="Consultando base de conhecimento autorizada...",
+                    entry_id="rag-search",
                 )
             )
 
@@ -381,6 +444,7 @@ class ChatTurnPreparationService:
                         phase="rag",
                         state="done",
                         message="Base de conhecimento não necessária neste turno.",
+                        entry_id="rag-search",
                     )
                 )
             else:
@@ -400,6 +464,7 @@ class ChatTurnPreparationService:
                             if sources
                             else "Base de conhecimento consultada; nenhum trecho adicional aplicável."
                         ),
+                        entry_id="rag-search",
                     )
                 )
 

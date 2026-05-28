@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import {
   archiveChatSession,
@@ -29,6 +30,7 @@ import {
 } from "../chatMessageDelivery";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
+import { upsertStreamingActivityEntry } from "../utils/streamingActivityLog";
 
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -621,20 +623,29 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          if (entry.state === "active") {
-            if (entry.phase === "think") {
-              setStreamingStatus("Pensando...");
-            } else if (entry.phase === "plan") {
-              setStreamingStatus("Planejando novos passos...");
-            }
-          }
+          flushSync(() => {
+            setStreamingActivityLog((current) =>
+              upsertStreamingActivityEntry(current, entry),
+            );
 
-          setStreamingActivityLog((current) => {
-            if (current.some((item) => item.id === entry.id)) {
-              return current;
-            }
+            if (entry.state === "active") {
+              const headline = entry.message?.trim();
 
-            return [...current, entry];
+              if (headline) {
+                setStreamingStatus(headline);
+                return;
+              }
+
+              if (entry.phase === "think") {
+                setStreamingStatus("Pensando...");
+              } else if (entry.phase === "plan") {
+                setStreamingStatus("Planejando novos passos...");
+              } else if (entry.phase === "prepare") {
+                setStreamingStatus("Preparando contexto...");
+              } else if (entry.phase === "rag") {
+                setStreamingStatus("Consultando base de conhecimento...");
+              }
+            }
           });
         },
         onSources: (sources: ChatSource[]) => {

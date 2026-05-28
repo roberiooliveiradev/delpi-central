@@ -10,11 +10,20 @@
 }
 
 .mdc-chat-stream-activity__summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0;
   color: var(--mdc-text);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.5;
+}
+
+.mdc-chat-message-streaming-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .mdc-chat-stream-activity__collapse {
@@ -98,6 +107,22 @@
   align-items: baseline;
   gap: 0.35rem 0.5rem;
   color: var(--mdc-text-muted);
+}
+
+.mdc-chat-stream-activity__row.is-new {
+  animation: mdc-chat-stream-activity-row-in 0.28s ease-out;
+}
+
+@keyframes mdc-chat-stream-activity-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .mdc-chat-stream-activity__row.is-active .mdc-chat-stream-activity__verb {

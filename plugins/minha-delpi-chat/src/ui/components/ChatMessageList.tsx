@@ -791,15 +791,16 @@ export function ChatMessageList({
                 </div>
               </div>
 
-              {streamingAnswer ? (
-                <ChatMarkdown content={revealedStreamingAnswer} />
-              ) : (
+              <div className="mdc-chat-message-streaming-body">
                 <ChatStreamingActivityPanel
                   status={streamingStatus}
                   entries={streamingActivityLog}
                   isActive
                 />
-              )}
+                {streamingAnswer ? (
+                  <ChatMarkdown content={revealedStreamingAnswer} />
+                ) : null}
+              </div>
 
               {streamingShowPresentation
                 ? renderPresentation(streamingToolCalls, onReuseMessage)
