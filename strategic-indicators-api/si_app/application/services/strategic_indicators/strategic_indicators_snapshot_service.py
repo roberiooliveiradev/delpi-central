@@ -50,7 +50,9 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
     _catalog_cache as shared_catalog_cache,
     _measurements_cache as shared_measurements_cache,
     catalog_cache_key,
+    get_catalog_fingerprint,
     measurements_cache_key,
+    set_catalog_fingerprint,
 )
 from si_app.application.services.strategic_indicators.measurement_errors import (
     has_transformometro_auth_error,
@@ -114,6 +116,7 @@ class StrategicIndicatorsSnapshotService:
         )
         cached = self._catalog_cache.get(cache_key)
         if cached is not None:
+            self._ensure_catalog_fingerprint_cached(cache_key, cached)
             logger.debug(
                 "si_catalog_cache_hit scope=request competence=%s department_id=%s",
                 competence,
@@ -124,6 +127,7 @@ class StrategicIndicatorsSnapshotService:
         cached = shared_catalog_cache.get(cache_key)
         if cached is not None:
             self._catalog_cache[cache_key] = cached
+            self._ensure_catalog_fingerprint_cached(cache_key, cached)
             logger.debug(
                 "si_catalog_cache_hit scope=shared competence=%s department_id=%s",
                 competence,
@@ -166,6 +170,7 @@ class StrategicIndicatorsSnapshotService:
         )
         self._catalog_cache[cache_key] = snapshot
         shared_catalog_cache.set(cache_key, snapshot)
+        set_catalog_fingerprint(cache_key, build_catalog_inputs_fingerprint(snapshot))
         logger.info(
             (
                 "si_catalog_loaded competence=%s department_id=%s "
@@ -255,6 +260,7 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=measurement_errors,
             department_id=department_id,
             branch=branch,
+            on_read_path=True,
         )
         self._persist_period_snapshot(
             snapshot=snapshot,
@@ -323,6 +329,17 @@ class StrategicIndicatorsSnapshotService:
                     catalog=catalog,
                     current=stored_current,
                     previous=stored_previous,
+                )
+
+            if stored_current is not None or stored_previous is not None:
+                return self._get_comparative_with_partial_stored(
+                    started=started,
+                    current_period=current_period,
+                    previous_period_resolved=previous_period_resolved,
+                    stored_current=stored_current,
+                    stored_previous=stored_previous,
+                    department_id=department_id,
+                    branch=branch,
                 )
 
         measurements_started = time.perf_counter()
@@ -410,6 +427,7 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=errors_current,
             department_id=department_id,
             branch=branch,
+            on_read_path=True,
         )
         self._persist_calculation_snapshot(
             period=previous_period_resolved,
@@ -418,6 +436,7 @@ class StrategicIndicatorsSnapshotService:
             measurement_errors=errors_previous,
             department_id=department_id,
             branch=branch,
+            on_read_path=True,
         )
         self._persist_period_snapshot(
             snapshot=current,
@@ -651,7 +670,7 @@ class StrategicIndicatorsSnapshotService:
         for period in periods:
             cached_snapshot = stored_snapshots.get(period.competence)
             if cached_snapshot is not None:
-                snapshots.append(self._reconcile_stored_period_snapshot(cached_snapshot))
+                snapshots.append(cached_snapshot)
                 continue
 
             indicators_catalog = (
@@ -690,6 +709,7 @@ class StrategicIndicatorsSnapshotService:
                 measurement_errors=measurement_errors,
                 department_id=department_id,
                 branch=branch,
+                on_read_path=True,
             )
             self._persist_period_snapshot(
                 snapshot=snapshot,
@@ -749,18 +769,7 @@ class StrategicIndicatorsSnapshotService:
         ):
             return None
 
-        catalog = self.get_catalog_snapshot(
-            competence=period.competence,
-            start_date=period.start_date,
-            end_date=period.end_date,
-            department_id=department_id,
-            branch=branch,
-        )
-        return self._reconcile_stored_period_snapshot(
-            entry.snapshot,
-            indicators_catalog=catalog.indicators_catalog,
-            branch=branch,
-        )
+        return entry.snapshot
 
     def _period_scores_cache_is_current(
         self,
@@ -783,14 +792,13 @@ class StrategicIndicatorsSnapshotService:
             )
             return False
 
-        catalog = self.get_catalog_snapshot(
+        current_hash = self._resolve_catalog_fingerprint(
             competence=period.competence,
             start_date=period.start_date,
             end_date=period.end_date,
             department_id=department_id,
             branch=branch,
         )
-        current_hash = build_catalog_inputs_fingerprint(catalog)
         if stored_hash == current_hash:
             return True
 
@@ -807,6 +815,162 @@ class StrategicIndicatorsSnapshotService:
             current_hash,
         )
         return False
+
+    @staticmethod
+    def _ensure_catalog_fingerprint_cached(
+        cache_key: str,
+        catalog: StrategicIndicatorsCatalogSnapshot,
+    ) -> None:
+        if get_catalog_fingerprint(cache_key) is None:
+            set_catalog_fingerprint(cache_key, build_catalog_inputs_fingerprint(catalog))
+
+    def _resolve_catalog_fingerprint(
+        self,
+        *,
+        competence: str | None,
+        start_date: str | None,
+        end_date: str | None,
+        department_id: str | None,
+        branch: str | None,
+    ) -> str:
+        cache_key = catalog_cache_key(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+            branch=branch,
+        )
+        cached = get_catalog_fingerprint(cache_key)
+        if cached is not None:
+            return cached
+
+        catalog = self.get_catalog_snapshot(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=department_id,
+            branch=branch,
+        )
+        fingerprint = build_catalog_inputs_fingerprint(catalog)
+        set_catalog_fingerprint(cache_key, fingerprint)
+        return fingerprint
+
+    def _get_comparative_with_partial_stored(
+        self,
+        *,
+        started: float,
+        current_period: ResolvedPeriod,
+        previous_period_resolved: ResolvedPeriod,
+        stored_current: StrategicIndicatorsPeriodSnapshot | None,
+        stored_previous: StrategicIndicatorsPeriodSnapshot | None,
+        department_id: str | None,
+        branch: str | None,
+    ) -> StrategicIndicatorsComparativeSnapshot:
+        if stored_current is not None and stored_previous is None:
+            previous = self._compute_and_persist_period(
+                period=previous_period_resolved,
+                department_id=department_id,
+                branch=branch,
+            )
+            catalog = self.get_catalog_snapshot(
+                competence=current_period.competence,
+                start_date=current_period.start_date,
+                end_date=current_period.end_date,
+                department_id=department_id,
+                branch=branch,
+            )
+            logger.info(
+                (
+                    "si_period_scores_hit_comparative_partial current=cached "
+                    "previous=%s department_id=%s branch=%s ms=%.0f"
+                ),
+                previous_period_resolved.competence,
+                department_id,
+                branch,
+                (time.perf_counter() - started) * 1000,
+            )
+            return StrategicIndicatorsComparativeSnapshot(
+                catalog=catalog,
+                current=stored_current,
+                previous=previous,
+            )
+
+        if stored_previous is not None and stored_current is None:
+            current = self._compute_and_persist_period(
+                period=current_period,
+                department_id=department_id,
+                branch=branch,
+            )
+            catalog = self.get_catalog_snapshot(
+                competence=current_period.competence,
+                start_date=current_period.start_date,
+                end_date=current_period.end_date,
+                department_id=department_id,
+                branch=branch,
+            )
+            logger.info(
+                (
+                    "si_period_scores_hit_comparative_partial current=%s "
+                    "previous=cached department_id=%s branch=%s ms=%.0f"
+                ),
+                current_period.competence,
+                department_id,
+                branch,
+                (time.perf_counter() - started) * 1000,
+            )
+            return StrategicIndicatorsComparativeSnapshot(
+                catalog=catalog,
+                current=current,
+                previous=stored_previous,
+            )
+
+        raise RuntimeError("partial comparative requires one stored period")
+
+    def _compute_and_persist_period(
+        self,
+        *,
+        period: ResolvedPeriod,
+        department_id: str | None,
+        branch: str | None,
+    ) -> StrategicIndicatorsPeriodSnapshot:
+        catalog = self.get_catalog_snapshot(
+            competence=period.competence,
+            start_date=period.start_date,
+            end_date=period.end_date,
+            department_id=department_id,
+            branch=branch,
+        )
+        measurements, measurement_errors = self._get_measurements(
+            start_date=period.start_date,
+            end_date=period.end_date,
+            competence=period.competence,
+            department_id=department_id,
+            branch=branch,
+        )
+        snapshot = self._build_period_snapshot(
+            period=period,
+            catalog=catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
+            department_id=department_id,
+            branch=branch,
+        )
+        self._persist_calculation_snapshot(
+            period=period,
+            catalog=catalog,
+            measurements=measurements,
+            measurement_errors=measurement_errors,
+            department_id=department_id,
+            branch=branch,
+            on_read_path=True,
+        )
+        self._persist_period_snapshot(
+            snapshot=snapshot,
+            department_id=department_id,
+            branch=branch,
+            catalog=catalog,
+        )
+        return snapshot
 
     def _reconcile_stored_period_snapshot(
         self,
@@ -849,7 +1013,10 @@ class StrategicIndicatorsSnapshotService:
         measurement_errors: list[dict],
         department_id: str | None,
         branch: str | None,
+        on_read_path: bool = False,
     ) -> None:
+        if on_read_path and not settings.SI_PERSIST_CALCULATION_SNAPSHOTS_ON_READ:
+            return
         if not settings.SI_CALCULATION_SNAPSHOTS_ENABLED:
             return
         if self._calculation_snapshots_repository is None:
