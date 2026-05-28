@@ -5,6 +5,7 @@ import {
   type IndicatorDisplayContext,
 } from "../shared/indicatorValueFormatter";
 import { StatusBadge } from "./StatusBadge";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorPriorityList.css";
 
 type IndicatorPriorityListProps = {
@@ -66,7 +67,19 @@ export function IndicatorPriorityList({
           <div className="si-indicator-priority-item__meta">
             <span>Peso interno: {indicator.weightPct}%</span>
             <span>
-              Meta: {formatIndicatorGoalValue(indicator, competence, displayContext)}
+              Meta:{" "}
+              <ScopeMetricBadges
+                values={indicator.goals}
+                format={{
+                  valueUnit: indicator.valueUnit,
+                  valuePrefix: indicator.valuePrefix,
+                  valueSuffix: indicator.valueSuffix,
+                  valueDecimals: indicator.valueDecimals,
+                }}
+                displayContext={displayContext}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
+              />
             </span>
             <span>Nota: {formatIndicatorScore(indicator.score)}</span>
           </div>

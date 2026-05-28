@@ -10,6 +10,7 @@ import {
   formatIndicatorRealizedDisplay,
   formatIndicatorScore,
 } from "../shared/indicatorValueFormatter";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./PresentationDepartmentSlideScene.css";
 
 type PresentationDepartmentSlideSceneProps = {
@@ -287,19 +288,36 @@ export function PresentationDepartmentSlideScene({
                 <div>
                   <span>Valor atual</span>
                   <strong>
-                    {formatIndicatorRealizedDisplay(indicator, valueFormat)}
+                    <ScopeMetricBadges
+                      values={indicator.realized}
+                      format={valueFormat}
+                      maxVisible={2}
+                      emptyLabel={formatIndicatorRealizedDisplay(indicator, valueFormat)}
+                    />
                   </strong>
                 </div>
 
                 <div>
                   <span>Meta</span>
-                  <strong>{formatIndicatorGoalValue(indicator, competence)}</strong>
+                  <strong>
+                    <ScopeMetricBadges
+                      values={indicator.goals}
+                      format={valueFormat}
+                      maxVisible={2}
+                      emptyLabel={formatIndicatorGoalValue(indicator, competence)}
+                    />
+                  </strong>
                 </div>
 
                 <div>
                   <span>Gap</span>
                   <strong>
-                    {formatIndicatorGapDisplay(indicator, valueFormat)}
+                    <ScopeMetricBadges
+                      values={indicator.gaps}
+                      format={valueFormat}
+                      maxVisible={2}
+                      emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat)}
+                    />
                   </strong>
                 </div>
 
