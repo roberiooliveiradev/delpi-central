@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "eficiencia-fabril",
+  "name": "Eficiência Fabril",
+  "description": "Dashboard gerencial de apontamentos de produção — eficiência operacional e resultado MOD",
+  "icon": "factory-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/eficiencia-fabril",
+  "entry": "/apps/eficiencia-fabril/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "eficiencia-fabril.view",
+      "name": "Acesso ao dashboard Eficiência Fabril",
+      "description": "Permite visualizar eficiência de apontamentos e resultado MOD",
+      "module": "eficiencia-fabril"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/eficiencia-fabril",
+      "label": "Eficiência Fabril",
+      "permission": "eficiencia-fabril.view",
+      "icon": "factory-icon",
+      "order": 17,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}
