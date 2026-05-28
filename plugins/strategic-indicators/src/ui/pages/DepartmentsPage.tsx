@@ -133,7 +133,7 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
           <div className="si-departments-page__overlay">
             <LoadingActivityInline
               title="Carregando mapa departamental"
-              description="Buscando IGD, departamentos e indicadores do período atual…"
+              description="Carregando estrutura (IGD e departamentos). Em seguida, séries históricas…"
               variant="panel"
               tone="info"
               progressPercent={loadingProgress}

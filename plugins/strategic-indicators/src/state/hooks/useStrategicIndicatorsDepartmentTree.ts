@@ -13,8 +13,6 @@ import {
 import {
   fetchDepartmentTreeSnapshot,
   fetchDepartmentTreeTrends,
-  createDepartmentTreeLoadJob,
-  fetchStrategicIndicatorsJobStatus,
 } from "../../data/api/strategicIndicatorsDepartmentTreeApi";
 import {
   writeDepartmentsReadCache,
@@ -64,51 +62,6 @@ async function sleep(ms: number, signal?: AbortSignal) {
       { once: true },
     );
   });
-}
-
-async function pollTreeLoadJob({
-  jobId,
-  getAccessToken,
-  signal,
-  onProgress,
-  onSnapshot,
-}: {
-  jobId: string;
-  getAccessToken?: () => string | undefined;
-  signal: AbortSignal;
-  onProgress: (value: { completed: number; total: number }) => void;
-  onSnapshot: (snapshot: unknown) => void;
-}) {
-  let hasAppliedSnapshot = false;
-
-  while (!signal.aborted) {
-    const status = await fetchStrategicIndicatorsJobStatus({
-      jobId,
-      getAccessToken,
-      signal,
-    });
-
-    const pct = Math.max(0, Math.min(100, Number(status.progress_pct ?? 0)));
-    onProgress({ completed: pct, total: 100 });
-
-    if (!hasAppliedSnapshot && status.snapshot) {
-      hasAppliedSnapshot = true;
-      onSnapshot(status.snapshot);
-    }
-
-    if (status.state === "succeeded") {
-      return status;
-    }
-
-    if (status.state === "failed") {
-      throw new Error(status.error || "Falha ao carregar dados da árvore.");
-    }
-
-    await sleep(600, signal);
-  }
-
-  // Abort: o chamador deve ignorar resultados.
-  return undefined;
 }
 
 type UseStrategicIndicatorsDepartmentTreeParams = {
@@ -217,104 +170,24 @@ export function useStrategicIndicatorsDepartmentTree({
     });
 
     setError(null);
-    setRequestProgress({ completed: 0, total: 100 });
+    setRequestProgress({ completed: 0, total: 2 });
 
     const token = getAccessTokenRef.current;
     const branchParam = viewMode === "branch" ? branch : undefined;
 
-    try {
-      let jobId: string | null = null;
-      try {
-        const job = await createDepartmentTreeLoadJob({
-          viewMode,
-          branch: branchParam,
-          competence,
-          startDate,
-          endDate,
-          months,
-          getAccessToken: token,
-          signal: controller.signal,
-        });
-        jobId = job.job_id;
-      } catch {
-        jobId = null;
-      }
+    const fetchParams = {
+      viewMode,
+      branch: branchParam,
+      competence,
+      startDate,
+      endDate,
+      getAccessToken: token,
+      signal: controller.signal,
+    } as const;
 
-      if (jobId) {
-        const jobStatus = await pollTreeLoadJob({
-          jobId,
-          getAccessToken: token,
-          signal: controller.signal,
-          onProgress: (value) => setRequestProgress(value),
-          onSnapshot: (snapshotPayload) => {
-            const snapshotModel = narrowDepartmentTreeModel(
-              adaptTreeSnapshotToModel(snapshotPayload as any),
-              viewMode,
-              branch,
-            );
-            setModel(snapshotModel);
-            setLoading(false);
-            setRefreshing(true);
-            hasLoadedOnceRef.current = true;
-          },
-        });
-
-        if (requestId !== requestIdRef.current) return;
-
-        if (jobStatus && jobStatus.trends && jobStatus.snapshot) {
-          const enrichedModel = narrowDepartmentTreeModel(
-            mergeTreeTrendsIntoModel(
-              adaptTreeSnapshotToModel(jobStatus.snapshot as any),
-              jobStatus.trends as any,
-            ),
-            viewMode,
-            branch,
-          );
-          setModel(enrichedModel);
-          setStrategicIndicatorsCachedValue(cacheKey, { model: enrichedModel });
-          setRequestProgress({ completed: 100, total: 100 });
-          return;
-        }
-      }
-
-      let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
-        null;
-      let lastSnapshotError: unknown = null;
-
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          snapshot = await fetchDepartmentTreeSnapshot({
-            viewMode,
-            branch: branchParam,
-            competence,
-            startDate,
-            endDate,
-            getAccessToken: token,
-            signal: controller.signal,
-          });
-          lastSnapshotError = null;
-          break;
-        } catch (snapshotErr) {
-          lastSnapshotError = snapshotErr;
-          if (!isGatewayTimeoutError(snapshotErr) || controller.signal.aborted) {
-            break;
-          }
-          await sleep(1200, controller.signal);
-        }
-      }
-
-      if (!snapshot) {
-        throw lastSnapshotError ?? new Error("Falha ao carregar snapshot da árvore.");
-      }
-
-      if (requestId !== requestIdRef.current) return;
-
-      const snapshotModel = narrowDepartmentTreeModel(
-        adaptTreeSnapshotToModel(snapshot),
-        viewMode,
-        branch,
-      );
-
+    const applySnapshotToUi = (
+      snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>>,
+    ) => {
       for (const scope of snapshot.scopes) {
         writeDepartmentsReadCache(
           query,
@@ -328,37 +201,115 @@ export function useStrategicIndicatorsDepartmentTree({
         );
       }
 
+      const snapshotModel = narrowDepartmentTreeModel(
+        adaptTreeSnapshotToModel(snapshot),
+        viewMode,
+        branch,
+      );
+
       setModel(snapshotModel);
       setLoading(false);
       setRefreshing(true);
       hasLoadedOnceRef.current = true;
-      setRequestProgress({ completed: 50, total: 100 });
+      setRequestProgress({ completed: 1, total: 2 });
+    };
 
-      const trends = await fetchDepartmentTreeTrends({
-        viewMode,
-        branch: branchParam,
-        competence,
-        startDate,
-        endDate,
+    try {
+      let snapshotApplied = false;
+
+      const snapshotTask = (async () => {
+        let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
+          null;
+        let lastSnapshotError: unknown = null;
+
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            snapshot = await fetchDepartmentTreeSnapshot(fetchParams);
+            lastSnapshotError = null;
+            break;
+          } catch (snapshotErr) {
+            lastSnapshotError = snapshotErr;
+            if (!isGatewayTimeoutError(snapshotErr) || controller.signal.aborted) {
+              break;
+            }
+            await sleep(1200, controller.signal);
+          }
+        }
+
+        if (!snapshot) {
+          throw lastSnapshotError ?? new Error("Falha ao carregar snapshot da árvore.");
+        }
+
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return null;
+        }
+
+        if (!snapshotApplied) {
+          snapshotApplied = true;
+          applySnapshotToUi(snapshot);
+        }
+
+        return snapshot;
+      })();
+
+      const trendsPromise = fetchDepartmentTreeTrends({
+        ...fetchParams,
         months,
-        getAccessToken: token,
-        signal: controller.signal,
       });
+
+      const snapshot = await snapshotTask;
+
+      let trends: Awaited<ReturnType<typeof fetchDepartmentTreeTrends>> | null = null;
+      try {
+        trends = await trendsPromise;
+      } catch (trendsErr) {
+        if (requestId !== requestIdRef.current || controller.signal.aborted) {
+          return;
+        }
+        setRequestProgress({ completed: 2, total: 2 });
+        setError(
+          captureStrategicIndicatorsError(trendsErr, {
+            surface: "Árvore de departamentos",
+            route: "/departments/tree/trends",
+            method: "GET",
+            competence: competence ?? null,
+            branch: branch ?? null,
+          }),
+        );
+      }
+
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
+      }
+
+      if (trends) {
+        setRequestProgress({ completed: 2, total: 2 });
+      }
 
       if (requestId !== requestIdRef.current) return;
 
+      if (!snapshot) {
+        throw new Error("Falha ao carregar snapshot da árvore.");
+      }
+
+      if (!snapshotApplied) {
+        applySnapshotToUi(snapshot);
+      }
+
+      if (!trends) {
+        return;
+      }
+
+      setError(null);
+
       const enrichedModel = narrowDepartmentTreeModel(
-        mergeTreeTrendsIntoModel(
-          adaptTreeSnapshotToModel(snapshot),
-          trends,
-        ),
+        mergeTreeTrendsIntoModel(adaptTreeSnapshotToModel(snapshot), trends),
         viewMode,
         branch,
       );
 
       setModel(enrichedModel);
       setStrategicIndicatorsCachedValue(cacheKey, { model: enrichedModel });
-      setRequestProgress({ completed: 100, total: 100 });
     } catch (err) {
       if (requestId !== requestIdRef.current || controller.signal.aborted) {
         return;
@@ -376,7 +327,9 @@ export function useStrategicIndicatorsDepartmentTree({
     } finally {
       if (requestId === requestIdRef.current) {
         setRequestProgress((prev) =>
-          prev.total === 100 ? prev : { completed: 100, total: 100 },
+          prev.total > 0 && prev.completed >= prev.total
+            ? prev
+            : { completed: prev.total || 2, total: prev.total || 2 },
         );
         setLoading(false);
         setRefreshing(false);
