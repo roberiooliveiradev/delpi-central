@@ -124,6 +124,18 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 
 ---
 
+## Diagnóstico admin (`adminDebug`)
+
+Para usuários com permissão de admin (`_can_use_admin_debug()` nas rotas de mensagem), **toda** resposta do assistente em **send**, **stream** e **resend/stream** deve:
+
+1. Montar o payload via `ChatAdminDebugService.build_for_turn(...)` quando `SendChatMessageRequest.admin_debug=True`.
+2. Persistir em `metadata.adminDebug` da mensagem assistant no banco (histórico).
+3. Incluir o mesmo payload nos eventos SSE `playback` / `done` (stream).
+
+Mensagens antigas não ganham diagnóstico retroativo. O histórico só expõe `adminDebug` para quem passa no gate de permissão.
+
+---
+
 ## Checklist para novas features de inteligência
 
 - [ ] Implementação em serviço/domain compartilhado (não só no JSON do agente).
@@ -132,6 +144,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 - [ ] Testes unitários + caso em `chat_intelligence_regression_cases.py` quando aplicável.
 - [ ] Sem duplicar lógica entre stream e send.
 - [ ] Simulação admin recebe `previous_messages` quando depender de histórico.
+- [ ] Rotas de mensagem passam `admin_debug=_can_use_admin_debug()` para persistir diagnóstico admin.
 
 ---
 

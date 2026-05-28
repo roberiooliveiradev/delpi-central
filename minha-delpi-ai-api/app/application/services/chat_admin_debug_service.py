@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -18,6 +19,52 @@ class ChatAdminDebugService:
     Importante: este payload pode conter contexto amplo (RAG, tools, prompt).
     Deve ser exposto apenas quando o backend determinar que o usuário é admin.
     """
+
+    @staticmethod
+    def should_collect(request) -> bool:
+        return bool(getattr(request, "admin_debug", False))
+
+    @classmethod
+    def build_for_turn(
+        cls,
+        request,
+        *,
+        workspace_context: dict,
+        tool_context: dict,
+        rag: dict,
+        llm_messages: list[dict],
+        history_summary: str,
+        operational_optimize: bool,
+        analysis_mode: bool,
+        fast_path: bool,
+        skip_rag: bool,
+        limits: ChatAdminDebugLimits | None = None,
+    ) -> dict | None:
+        if not cls.should_collect(request):
+            return None
+
+        payload = cls.build(
+            workspace_context=workspace_context,
+            tool_context=tool_context,
+            rag=rag,
+            llm_messages=llm_messages,
+            history_summary=history_summary,
+            operational_optimize=operational_optimize,
+            analysis_mode=analysis_mode,
+            fast_path=fast_path,
+            skip_rag=skip_rag,
+            limits=limits,
+        )
+        payload["recordedAt"] = datetime.now(timezone.utc).isoformat()
+        return payload
+
+    @staticmethod
+    def attach_to_assistant_metadata(
+        metadata: dict,
+        admin_debug_payload: dict | None,
+    ) -> None:
+        if admin_debug_payload is not None:
+            metadata["adminDebug"] = admin_debug_payload
 
     @classmethod
     def build(

@@ -303,19 +303,18 @@ class StreamChatMessageUseCase:
                 skills=workspace_context.get("skills"),
             )
 
-        admin_debug_payload = None
-        if getattr(request, "admin_debug", False):
-            admin_debug_payload = ChatAdminDebugService.build(
-                workspace_context=workspace_context,
-                tool_context=tool_context,
-                rag=rag,
-                llm_messages=llm_messages,
-                history_summary=history_summary,
-                operational_optimize=operational_optimize,
-                analysis_mode=analysis_mode,
-                fast_path=fast_path,
-                skip_rag=skip_rag,
-            )
+        admin_debug_payload = ChatAdminDebugService.build_for_turn(
+            request,
+            workspace_context=workspace_context,
+            tool_context=tool_context,
+            rag=rag,
+            llm_messages=llm_messages,
+            history_summary=history_summary,
+            operational_optimize=operational_optimize,
+            analysis_mode=analysis_mode,
+            fast_path=fast_path,
+            skip_rag=skip_rag,
+        )
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
@@ -431,8 +430,10 @@ class StreamChatMessageUseCase:
             "directResponse": bool(direct_answer),
         }
 
-        if admin_debug_payload is not None:
-            assistant_metadata["adminDebug"] = admin_debug_payload
+        ChatAdminDebugService.attach_to_assistant_metadata(
+            assistant_metadata,
+            admin_debug_payload,
+        )
 
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
