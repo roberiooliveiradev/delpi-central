@@ -262,6 +262,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
 
         setMessages(data);
+
+        if (!sessionAwaitingAssistantResponse(data)) {
+          unmarkSessionPending(sessionId);
+        }
       } catch (err) {
         if (activeSessionIdRef.current !== sessionId) {
           return;
@@ -274,7 +278,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [options.getAccessToken],
+    [options.getAccessToken, unmarkSessionPending],
   );
 
   const finishPlayback = useCallback(() => {
@@ -1034,6 +1038,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       sessionAwaitingAssistantResponse(messages);
 
     if (!awaitingBackground) {
+      setStreamingStatus((current) =>
+        current === "Finalizando resposta em segundo plano..." ? null : current,
+      );
       return;
     }
 
