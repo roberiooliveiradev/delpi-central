@@ -18,6 +18,12 @@ from app.application.use_cases.production.get_overall_equipment_effectiveness_pc
 from app.application.use_cases.production.get_production_cost_pct_use_case import (
     GetProductionCostPctUseCase,
 )
+from app.application.use_cases.eficiencia_fabril.get_eficiencia_fabril_dashboard_use_case import (
+    GetEficienciaFabrilDashboardUseCase,
+)
+from app.infrastructure.persistence.totvs.eficiencia_fabril.eficiencia_fabril_query_repository import (
+    EficienciaFabrilQueryRepository,
+)
 from app.infrastructure.persistence.google_sheets.production.depreciation_repository import (
     DepreciationRepository,
 )
@@ -121,4 +127,10 @@ def build_get_overall_equipment_effectiveness_pct_use_case() -> GetOverallEquipm
 def build_get_on_time_delivery_pct_use_case() -> GetOnTimeDeliveryPctUseCase:
     return GetOnTimeDeliveryPctUseCase(
         on_time_delivery_repository=OnTimeDeliveryRepository()
+    )
+
+
+def build_get_eficiencia_fabril_dashboard_use_case() -> GetEficienciaFabrilDashboardUseCase:
+    return GetEficienciaFabrilDashboardUseCase(
+        repository=EficienciaFabrilQueryRepository(),
     )

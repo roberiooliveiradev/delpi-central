@@ -110,20 +110,20 @@ Registro: `POST /core-api/admin/apps/register` com permissão `apps.manage` ou s
 
 ---
 
-### Fase 1 — Backend api-delpi (MVP leitura)
+### Fase 1 — Backend api-delpi (MVP leitura) ✅
 
 **Objetivo:** endpoint agregado pronto para consumo pelo MFE.
 
 | Entrega | Detalhe | Status |
 |---------|---------|--------|
-| Port + settings | `EficienciaFabrilQueryRepositoryPort`, `EficienciaFabrilQuerySettings` (nome view, campos) | Pendente |
-| Repository TOTVS | `EficienciaFabrilQueryRepository` extends `BaseRepository` | Pendente |
-| DTOs | request (filtros), summary, charts, item paginado | Pendente |
-| Use case | `GetEficienciaFabrilDashboardUseCase` | Pendente |
-| Rota | `GET /production/eficiencia-fabril/dashboard` | Pendente |
-| Composer | `build_get_eficiencia_fabril_dashboard_use_case` | Pendente |
-| Permissões | `@require_any_permission([...])` | Pendente |
-| Testes unitários | use case com repository mock | Pendente |
+| Port + settings | `EficienciaFabrilQueryRepositoryPort`, `EficienciaFabrilQuerySettings` | ✅ |
+| Repository TOTVS | `EficienciaFabrilQueryRepository` extends `BaseRepository` | ✅ |
+| DTOs | request (filtros), summary, charts, item paginado | ✅ |
+| Use case | `GetEficienciaFabrilDashboardUseCase` | ✅ |
+| Rota | `GET /production/eficiencia-fabril/dashboard` | ✅ |
+| Composer | `build_get_eficiencia_fabril_dashboard_use_case` | ✅ |
+| Permissões | `eficiencia-fabril.view`, `api-delpi.access`, `dashboard-production.view` | ✅ |
+| Testes unitários | `tests/test_get_eficiencia_fabril_dashboard_use_case.py` | ✅ |
 
 **Query params previstos:**
 

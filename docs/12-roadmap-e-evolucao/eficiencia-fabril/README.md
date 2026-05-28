@@ -27,5 +27,5 @@ Dashboard gerencial de apontamentos de produção (eficiência operacional e res
 | `id` | `eficiencia-fabril` |
 | `basePath` | `/apps/eficiencia-fabril` |
 | Container Docker | `delpi-eficiencia-fabril` |
-| API (gateway) | `/apps/api-delpi/production/eficiencia-fabril/*` |
+| API (gateway) | `GET /apps/api-delpi/production/eficiencia-fabril/dashboard` |
 | Fonte de dados | `dbo.vw_Apontamentos_Eficiencia` (SQL Server / Protheus) |
