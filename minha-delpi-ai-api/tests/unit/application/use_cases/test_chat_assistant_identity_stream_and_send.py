@@ -1,4 +1,4 @@
-"""Resposta direta de identidade do assistente (stream + send), sem LLM."""
+"""Perguntas de identidade do assistente usam RAG + LLM (sem resposta enlatada)."""
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -13,6 +13,8 @@ from app.domain.entities.chat_session import ChatSession
 
 _IDENTITY_PHRASES = (
     "quem é vc?",
+    "quem te criou?",
+    "o que vc é?",
     "o que vc faz?",
     "como te usar",
 )
@@ -42,6 +44,7 @@ def _workspace(*, common: bool) -> dict:
             "allowedActionIds": [],
             "capabilities": {},
             "specialization": None,
+            "skills": {"companyKnowledge": True},
         }
 
     return {
@@ -57,6 +60,7 @@ def _workspace(*, common: bool) -> dict:
         "allowedActionIds": [],
         "capabilities": {},
         "specialization": None,
+        "skills": {"companyKnowledge": True},
     }
 
 
@@ -77,20 +81,25 @@ def _build_use_cases(*, common: bool):
     workspace_context_service = MagicMock()
     workspace_context_service.build_context.return_value = workspace
 
+    llm_answer = "Resposta com base na documentação autorizada."
     llm_gateway = MagicMock()
-    llm_gateway.generate.side_effect = AssertionError("LLM não deve ser chamado para identidade")
-    llm_gateway.stream.side_effect = AssertionError("LLM stream não deve ser chamado para identidade")
+    llm_gateway.generate.return_value = llm_answer
+    llm_gateway.stream.return_value = iter([llm_answer])
 
     tool_context = {"context": "", "toolCalls": [], "nativeToolCalling": {}}
     chat_tool_context_service = MagicMock()
     chat_tool_context_service.build_context.return_value = tool_context
 
     rag_context_service = MagicMock()
-    rag_context_service.build_context.return_value = {"context": "", "sources": []}
+    rag_context_service.build_context.return_value = {
+        "context": "O assistente foi descrito no Arquiteto do Código.",
+        "sources": [{"title": "O Arquiteto do Código"}],
+    }
 
     prompt_policy_service = MagicMock()
     prompt_policy_service.build_contextual_prompt.return_value = "system"
     prompt_policy_service._load_policy.return_value = ""
+    prompt_policy_service.build_active_skill_policy_sections.return_value = []
 
     message_security_service = MagicMock()
     message_security_service.secure_message.side_effect = lambda message, **_: message
@@ -106,15 +115,31 @@ def _build_use_cases(*, common: bool):
         workspace_context_service=workspace_context_service,
     )
 
-    return session, SendChatMessageUseCase(**kwargs), StreamChatMessageUseCase(**kwargs)
+    return (
+        session,
+        SendChatMessageUseCase(**kwargs),
+        StreamChatMessageUseCase(**kwargs),
+        rag_context_service,
+        llm_gateway,
+    )
 
 
 def _collect_stream_answer(events: list[dict]) -> str:
-    return "".join(
+    streamed = "".join(
         event.get("content", "")
         for event in events
         if event.get("type") == "token"
     )
+    if streamed:
+        return streamed
+
+    for event in reversed(events):
+        if event.get("type") in {"playback", "done"}:
+            answer = event.get("answer")
+            if isinstance(answer, str) and answer.strip():
+                return answer
+
+    return streamed
 
 
 @pytest.fixture(autouse=True)
@@ -134,6 +159,7 @@ def patch_chat_settings(monkeypatch):
         monkeypatch.setattr(
             f"{module}.Settings.CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", 2000
         )
+        monkeypatch.setattr(f"{module}.Settings.CHAT_PERSIST_BEFORE_PLAYBACK", False)
 
 
 @pytest.fixture(autouse=True)
@@ -150,8 +176,10 @@ def patch_llm_cost(monkeypatch):
 
 @pytest.mark.parametrize("message", _IDENTITY_PHRASES)
 @pytest.mark.parametrize("common", [True, False], ids=["chat_comum", "agente"])
-def test_send_identity_direct_answer_without_llm(message: str, common: bool):
-    session, send_use_case, _ = _build_use_cases(common=common)
+def test_send_identity_uses_rag_and_llm(message: str, common: bool):
+    session, send_use_case, _, rag_context_service, llm_gateway = _build_use_cases(
+        common=common
+    )
     request = SendChatMessageRequest(
         user_id=str(session.user_id),
         session_id=str(session.id),
@@ -161,20 +189,18 @@ def test_send_identity_direct_answer_without_llm(message: str, common: bool):
 
     response = send_use_case.execute(request)
 
-    assert "Posso ajudar você nestes formatos" not in response.answer
-    assert "forneça seu nome e email" not in response.answer.lower()
-    if message == "quem é vc?":
-        assert "e-mail" in response.answer.lower() or "email" in response.answer.lower()
-    if common and message == "quem é vc?":
-        assert "Especialista em Produtos" not in response.answer
-    if not common and message == "quem é vc?":
-        assert "Especialista em Produtos" in response.answer
+    rag_context_service.build_context.assert_called()
+    llm_gateway.generate.assert_called()
+    assert response.answer == "Resposta com base na documentação autorizada."
+    assert response.sources
 
 
-@pytest.mark.parametrize("message", ("quem é vc?",))
+@pytest.mark.parametrize("message", ("quem te criou?",))
 @pytest.mark.parametrize("common", [False], ids=["agente"])
-def test_stream_identity_direct_answer_without_llm(message: str, common: bool):
-    session, _, stream_use_case = _build_use_cases(common=common)
+def test_stream_identity_uses_rag_and_llm(message: str, common: bool):
+    session, _, stream_use_case, rag_context_service, llm_gateway = _build_use_cases(
+        common=common
+    )
     request = SendChatMessageRequest(
         user_id=str(session.user_id),
         session_id=str(session.id),
@@ -185,5 +211,6 @@ def test_stream_identity_direct_answer_without_llm(message: str, common: bool):
     events = list(stream_use_case.stream(request))
     answer = _collect_stream_answer(events)
 
-    assert "Especialista em Produtos" in answer
-    assert "nome ou e-mail" in answer.lower() or "e-mail" in answer.lower()
+    rag_context_service.build_context.assert_called()
+    llm_gateway.stream.assert_called()
+    assert "documentação autorizada" in answer
