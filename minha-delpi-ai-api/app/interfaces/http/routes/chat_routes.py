@@ -2168,6 +2168,7 @@ def send_message(session_id: str):
     use_case = make_send_chat_message_use_case()
 
     try:
+        # admin_debug: expõe diagnóstico na resposta; persistência no DB é em todo turno.
         admin_debug = _can_use_admin_debug()
         result = use_case.execute(
             SendChatMessageRequest(

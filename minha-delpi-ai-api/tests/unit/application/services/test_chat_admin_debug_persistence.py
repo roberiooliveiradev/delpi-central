@@ -1,4 +1,4 @@
-"""Garante que adminDebug é montado e persistido em metadata quando admin_debug=True."""
+"""adminDebug: sempre persiste; exposição ao cliente só com admin_debug=True."""
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
@@ -119,32 +119,11 @@ def _assistant_metadata(chat_repository) -> dict:
     return assistant_call.kwargs.get("metadata") or assistant_call[1].get("metadata")
 
 
-def test_send_persists_admin_debug_in_assistant_metadata():
+def test_send_always_persists_admin_debug_even_without_expose_flag():
     kwargs, chat_repository, session = _build_use_cases()
     use_case = SendChatMessageUseCase(**kwargs)
 
-    use_case.execute(
-        SendChatMessageRequest(
-            user_id=str(session.user_id),
-            session_id=str(session.id),
-            message="ola",
-            admin_debug=True,
-        )
-    )
-
-    metadata = _assistant_metadata(chat_repository)
-
-    assert isinstance(metadata, dict)
-    assert "adminDebug" in metadata
-    assert metadata["adminDebug"].get("pipeline") is not None
-    assert metadata["adminDebug"].get("recordedAt")
-
-
-def test_send_skips_admin_debug_when_flag_false():
-    kwargs, chat_repository, session = _build_use_cases()
-    use_case = SendChatMessageUseCase(**kwargs)
-
-    use_case.execute(
+    response = use_case.execute(
         SendChatMessageRequest(
             user_id=str(session.user_id),
             session_id=str(session.id),
@@ -155,15 +134,60 @@ def test_send_skips_admin_debug_when_flag_false():
 
     metadata = _assistant_metadata(chat_repository)
 
-    assert isinstance(metadata, dict)
-    assert "adminDebug" not in metadata
+    assert "adminDebug" in metadata
+    assert metadata["adminDebug"].get("recordedAt")
+    assert response.adminDebug is None
 
 
-def test_stream_persists_admin_debug_in_assistant_metadata():
+def test_send_exposes_admin_debug_when_flag_true():
+    kwargs, chat_repository, session = _build_use_cases()
+    use_case = SendChatMessageUseCase(**kwargs)
+
+    response = use_case.execute(
+        SendChatMessageRequest(
+            user_id=str(session.user_id),
+            session_id=str(session.id),
+            message="ola",
+            admin_debug=True,
+        )
+    )
+
+    metadata = _assistant_metadata(chat_repository)
+
+    assert response.adminDebug is not None
+    assert response.adminDebug == metadata["adminDebug"]
+
+
+def test_stream_persists_always_exposes_only_with_flag():
     kwargs, chat_repository, session = _build_use_cases()
     use_case = StreamChatMessageUseCase(**kwargs)
 
-    events = list(
+    events_hidden = list(
+        use_case.stream(
+            SendChatMessageRequest(
+                user_id=str(session.user_id),
+                session_id=str(session.id),
+                message="ola",
+                admin_debug=False,
+            )
+        )
+    )
+    done_hidden = next(e for e in events_hidden if e.get("type") == "done")
+    metadata_hidden = _assistant_metadata(chat_repository)
+
+    assert "adminDebug" in metadata_hidden
+    assert done_hidden.get("adminDebug") is None
+
+    chat_repository.reset_mock()
+    chat_repository.get_session_by_id.return_value = session
+    chat_repository.list_messages_by_session.return_value = []
+    user_message = MagicMock()
+    user_message.id = uuid4()
+    assistant_message = MagicMock()
+    assistant_message.id = uuid4()
+    chat_repository.create_message.side_effect = [user_message, assistant_message]
+
+    events_visible = list(
         use_case.stream(
             SendChatMessageRequest(
                 user_id=str(session.user_id),
@@ -173,11 +197,7 @@ def test_stream_persists_admin_debug_in_assistant_metadata():
             )
         )
     )
+    done_visible = next(e for e in events_visible if e.get("type") == "done")
+    metadata_visible = _assistant_metadata(chat_repository)
 
-    done = next(e for e in events if e.get("type") == "done")
-    assert done.get("adminDebug") is not None
-
-    metadata = _assistant_metadata(chat_repository)
-
-    assert isinstance(metadata, dict)
-    assert metadata.get("adminDebug") == done.get("adminDebug")
+    assert done_visible.get("adminDebug") == metadata_visible["adminDebug"]
