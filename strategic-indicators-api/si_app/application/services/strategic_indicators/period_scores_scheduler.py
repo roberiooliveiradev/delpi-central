@@ -20,7 +20,9 @@ def run_period_scores_refresh_once() -> None:
         return
 
     try:
-        refresh_period_scores_materialized()
+        # Não apaga period_scores a cada ciclo — só invalida cache in-process em
+        # mudanças de config (snapshot_shared_cache.invalidate_*).
+        refresh_period_scores_materialized(invalidate_cache=False)
     except Exception:
         logger.exception("si_period_scores_refresh_cycle_failed")
 

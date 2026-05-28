@@ -21,7 +21,7 @@ O diretório `api-delpi/migrations/plugins/strategic-indicators/` é legado — 
 | V008 | change_request_comments | Comentários |
 | V009 | seed admin | Estrutura padrão + metas (ano corrente no seed) |
 | V010 | period_scores | Scores por competência/escopo (indicadores materializados) |
-| V027 | period_scores_versions | Até 3 versões por escopo/competência (`version_number`, `is_clean`) |
+| V028 | period_scores_versions | Até 3 versões por escopo/competência (`version_number`, `is_clean`) |
 | V011 | refresh_state | Estado do job periódico de refresh (5 min) |
 | V012 | calculation_snapshots | Insumos do cálculo (catálogo, metas, medições) por competência/escopo |
 | V013 | indicator_goals unique | Uma meta ativa por indicador/ano (índice parcial) |

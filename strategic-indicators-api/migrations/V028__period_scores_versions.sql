@@ -1,4 +1,5 @@
 -- Até 3 versões materializadas por competência/escopo; leitura prioriza versão limpa.
+-- (V027 no banco legado pode ser outra migration; esta é V028.)
 
 BEGIN;
 
