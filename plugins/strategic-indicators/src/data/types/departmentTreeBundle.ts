@@ -59,6 +59,14 @@ export type StrategicIndicatorsAlertSummaryApi = {
   recommendation: string;
 };
 
+export type MeasurementVersionsMetaApi = {
+  serving_version: number;
+  latest_version: number;
+  version_count: number;
+  serving_fallback_from_previous_clean: boolean;
+  is_clean: boolean;
+};
+
 export type StrategicIndicatorsTreeSnapshotResponse = {
   competence: string;
   igd: number | null;
@@ -68,7 +76,11 @@ export type StrategicIndicatorsTreeSnapshotResponse = {
   partial_success?: boolean;
   alerts_summary?: StrategicIndicatorsAlertSummaryApi[];
   scopes: StrategicIndicatorsTreeSnapshotScopeApi[];
-  meta?: { source?: string; scope_count?: number };
+  meta?: {
+    source?: string;
+    scope_count?: number;
+    measurement_versions?: MeasurementVersionsMetaApi | null;
+  };
 };
 
 export type StrategicIndicatorsTreeTrendsScopeApi = {

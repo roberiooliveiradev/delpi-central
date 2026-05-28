@@ -59,11 +59,11 @@ from si_app.application.services.strategic_indicators.measurement_errors import 
 from si_app.application.services.strategic_indicators.measurements_cache_policy import (
     enrich_measurement_errors,
     format_measurement_errors_summary,
-    has_measurement_errors,
     should_cache_measurements,
 )
 from si_app.application.services.strategic_indicators.versioned_measurements_cache import (
     get_versioned_measurements,
+    measurement_version_meta_dict,
     record_versioned_measurements,
 )
 from si_app.config import settings
@@ -216,10 +216,8 @@ class StrategicIndicatorsSnapshotService:
                 department_id=department_id,
                 branch=branch,
             )
-            if (
-                stored is not None
-                and not has_transformometro_auth_error(stored.measurement_errors)
-                and not has_measurement_errors(stored.measurement_errors)
+            if stored is not None and not has_transformometro_auth_error(
+                stored.measurement_errors
             ):
                 logger.info(
                     "si_period_scores_hit competence=%s department_id=%s branch=%s ms=%.0f",
@@ -1077,21 +1075,40 @@ class StrategicIndicatorsSnapshotService:
             return
         if not is_standard_competence_period(snapshot.period):
             return
-        if not should_cache_measurements(
+        catalog_inputs_hash = (
+            build_catalog_inputs_fingerprint(catalog) if catalog is not None else None
+        )
+        is_clean = should_cache_measurements(
             snapshot.measurements,
             snapshot.measurement_errors,
             department_id=department_id,
-        ):
-            return
-
-        catalog_inputs_hash = (
-            build_catalog_inputs_fingerprint(catalog) if catalog is not None else None
         )
         self._period_scores_repository.upsert_period_snapshot(
             snapshot=snapshot,
             scope_branch=normalize_scope_branch(branch),
             scope_department_id=normalize_scope_department_id(department_id),
             catalog_inputs_hash=catalog_inputs_hash,
+            is_clean=is_clean,
+        )
+
+    def peek_measurement_version_meta(
+        self,
+        *,
+        start_date: str | None,
+        end_date: str | None,
+        competence: str | None,
+        department_id: str | None,
+        branch: str | None,
+    ) -> dict[str, int | bool] | None:
+        key = measurements_cache_key(
+            start_date=start_date or "",
+            end_date=end_date or "",
+            competence=competence,
+            department_id=department_id,
+            branch=branch,
+        )
+        return measurement_version_meta_dict(
+            get_versioned_measurements(key, department_id=department_id),
         )
 
     def _load_measurements_by_period_parallel(

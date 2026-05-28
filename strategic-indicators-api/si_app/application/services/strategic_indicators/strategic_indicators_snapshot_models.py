@@ -37,6 +37,8 @@ class StrategicIndicatorsPeriodSnapshot:
 class PeriodScoresCacheEntry:
     snapshot: StrategicIndicatorsPeriodSnapshot
     catalog_inputs_hash: str | None = None
+    version_number: int = 1
+    is_clean: bool = True
 
 
 @dataclass(frozen=True)

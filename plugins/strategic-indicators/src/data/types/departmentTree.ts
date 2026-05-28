@@ -46,10 +46,19 @@ export type DepartmentTreeAlertSummary = {
   recommendation: string;
 };
 
+export type DepartmentTreeSnapshotVersions = {
+  servingVersion: number;
+  latestVersion: number;
+  versionCount: number;
+  servingFallbackFromPreviousClean: boolean;
+  isClean: boolean;
+};
+
 export type DepartmentTreeDataQuality = {
   partialSuccess: boolean;
   errors: DepartmentTreeMeasurementIssue[];
   alertsSummary: DepartmentTreeAlertSummary[];
+  snapshotVersions?: DepartmentTreeSnapshotVersions;
 };
 
 export type DepartmentTreeModel = {

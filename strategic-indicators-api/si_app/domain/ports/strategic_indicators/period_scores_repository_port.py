@@ -32,6 +32,16 @@ class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_period_snapshot_versions(
+        self,
+        *,
+        competence: str,
+        scope_branch: str,
+        scope_department_id: str,
+    ) -> list[PeriodScoresCacheEntry]:
+        raise NotImplementedError
+
+    @abstractmethod
     def upsert_period_snapshot(
         self,
         *,
@@ -39,6 +49,7 @@ class StrategicIndicatorsPeriodScoresRepositoryPort(ABC):
         scope_branch: str,
         scope_department_id: str,
         catalog_inputs_hash: str | None = None,
+        is_clean: bool = True,
     ) -> None:
         raise NotImplementedError
 

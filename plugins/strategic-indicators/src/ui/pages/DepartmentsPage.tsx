@@ -211,8 +211,11 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
                 <span>
                   Coleta incompleta (
                   {model?.dataQuality?.errors.length ?? 0} falha
-                  {(model?.dataQuality?.errors.length ?? 0) === 1 ? "" : "s"})
-                  — ver detalhes
+                  {(model?.dataQuality?.errors.length ?? 0) === 1 ? "" : "s"}
+                  {model?.dataQuality?.snapshotVersions
+                    ? ` · v${model.dataQuality.snapshotVersions.servingVersion}/${model.dataQuality.snapshotVersions.latestVersion}`
+                    : ""}
+                  ) — ver detalhes
                 </span>
               </button>
             </div>

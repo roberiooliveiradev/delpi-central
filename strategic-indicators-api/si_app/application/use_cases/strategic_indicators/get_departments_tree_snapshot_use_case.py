@@ -77,6 +77,15 @@ class GetDepartmentsTreeSnapshotUseCase:
             current_snapshot.calculated_departments if current_snapshot else []
         )
 
+        primary_branch = primary.get("branch") if primary is not None else None
+        measurement_versions = self._snapshot_service.peek_measurement_version_meta(
+            start_date=request.start_date,
+            end_date=request.end_date,
+            competence=request.competence,
+            department_id=None,
+            branch=primary_branch,
+        )
+
         return {
             "competence": (
                 current_snapshot.period.competence
@@ -107,6 +116,7 @@ class GetDepartmentsTreeSnapshotUseCase:
             "meta": {
                 "source": "snapshot",
                 "scope_count": len(scope_payloads),
+                "measurement_versions": measurement_versions,
             },
         }
 

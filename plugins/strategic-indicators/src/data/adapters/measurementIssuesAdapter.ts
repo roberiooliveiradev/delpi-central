@@ -3,11 +3,13 @@ import type { StrategicIndicatorsErrorView } from "../errors/strategicIndicators
 import type {
   StrategicIndicatorsAlertSummaryApi,
   StrategicIndicatorsMeasurementIssueApi,
+  MeasurementVersionsMetaApi,
 } from "../types/departmentTreeBundle";
 import type {
   DepartmentTreeAlertSummary,
   DepartmentTreeDataQuality,
   DepartmentTreeMeasurementIssue,
+  DepartmentTreeSnapshotVersions,
 } from "../types/departmentTree";
 
 export function adaptMeasurementIssuesToView(
@@ -65,6 +67,22 @@ const DEPARTMENT_LABELS: Record<string, string> = {
 
 function departmentLabel(departmentId: string) {
   return DEPARTMENT_LABELS[departmentId] ?? departmentId;
+}
+
+export function adaptMeasurementVersionsMeta(
+  meta: MeasurementVersionsMetaApi | null | undefined,
+): DepartmentTreeSnapshotVersions | undefined {
+  if (!meta) {
+    return undefined;
+  }
+
+  return {
+    servingVersion: meta.serving_version,
+    latestVersion: meta.latest_version,
+    versionCount: meta.version_count,
+    servingFallbackFromPreviousClean: meta.serving_fallback_from_previous_clean,
+    isClean: meta.is_clean,
+  };
 }
 
 export function buildDataQualityErrorView(

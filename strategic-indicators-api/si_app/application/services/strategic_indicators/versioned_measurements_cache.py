@@ -83,3 +83,18 @@ def record_versioned_measurements(
         )
 
     return resolved
+
+
+def measurement_version_meta_dict(
+    resolved: MeasurementSnapshotServeResult | None,
+) -> dict[str, int | bool] | None:
+    if resolved is None:
+        return None
+
+    return {
+        "serving_version": resolved.serving_version_number,
+        "latest_version": resolved.latest_version_number,
+        "version_count": resolved.version_count,
+        "serving_fallback_from_previous_clean": resolved.serving_fallback_from_previous_clean,
+        "is_clean": resolved.is_clean,
+    }

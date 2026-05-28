@@ -3,6 +3,7 @@ import { adaptIndicatorsToView } from "./indicatorsAdapter";
 import {
   adaptAlertsSummaryToView,
   adaptMeasurementIssuesToView,
+  adaptMeasurementVersionsMeta,
 } from "./measurementIssuesAdapter";
 import { adaptTrendsToView } from "./trendsAdapter";
 import { buildDepartmentTreeModel } from "../builders/buildDepartmentTreeModel";
@@ -71,6 +72,7 @@ export function adaptTreeSnapshotToModel(
 
   const partialSuccess = Boolean(response.partial_success);
   const errors = adaptMeasurementIssuesToView(response.errors);
+  const snapshotVersions = adaptMeasurementVersionsMeta(response.meta?.measurement_versions);
 
   return buildDepartmentTreeModel({
     competence: response.competence,
@@ -79,11 +81,12 @@ export function adaptTreeSnapshotToModel(
     classification: response.classification,
     scopePayloads,
     dataQuality:
-      partialSuccess || errors.length > 0
+      partialSuccess || errors.length > 0 || snapshotVersions
         ? {
             partialSuccess,
             errors,
             alertsSummary: adaptAlertsSummaryToView(response.alerts_summary),
+            snapshotVersions,
           }
         : undefined,
   });
