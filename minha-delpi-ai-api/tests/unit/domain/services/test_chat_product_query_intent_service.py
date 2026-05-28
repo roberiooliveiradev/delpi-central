@@ -4,6 +4,15 @@ from app.domain.services.chat_product_query_intent_service import (
 )
 
 
+def test_extract_product_code_ignores_date_tokens():
+    assert ChatProductQueryIntentService.extract_product_code(
+        "cpv de 01/04/2026 a 30/04/2026"
+    ) is None
+    assert ChatProductQueryIntentService.extract_product_code(
+        "qual o cpv do mes passado"
+    ) is None
+
+
 def test_detect_description_intent():
     assert (
         ChatProductQueryIntentService.detect("descrição do produto 10080047")

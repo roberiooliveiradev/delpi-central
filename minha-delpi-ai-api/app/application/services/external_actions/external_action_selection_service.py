@@ -511,11 +511,16 @@ class ExternalActionSelectionService:
         return None
 
     def _build_date_branch_parameters(self, action: dict, message: str) -> dict:
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
         parameters: dict = {}
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         branch_match = re.search(r"\bfilial\s+(\d{2})\b", normalized)
         branch = branch_match.group(1) if branch_match else None
+        date_range = ChatDateRangeIntentService.resolve(message)
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -527,6 +532,20 @@ class ExternalActionSelectionService:
 
             if lowered in {"branch", "filial", "branch_code"} and branch:
                 parameters[name] = branch
+            elif date_range and lowered in {
+                "start_date",
+                "startdate",
+                "data_inicio",
+                "data_inicial",
+            }:
+                parameters[name] = date_range.start_date
+            elif date_range and lowered in {
+                "end_date",
+                "enddate",
+                "data_fim",
+                "data_final",
+            }:
+                parameters[name] = date_range.end_date
             elif lowered in {"page"}:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
@@ -709,12 +728,12 @@ class ExternalActionSelectionService:
             "name": "execute_external_action",
             "arguments": {
                 "actionId": best["actionId"],
-                "parameters": self._build_sale_orders_parameters(best),
+                "parameters": self._build_sale_orders_parameters(best, message),
             },
             "reason": "A pergunta solicita listagem de ordens de venda.",
         }
 
-    def _build_sale_orders_parameters(self, action: dict) -> dict:
+    def _build_sale_orders_parameters(self, action: dict, message: str) -> dict:
         parameters = {}
 
         for parameter in action.get("parametersSchema") or []:
@@ -730,7 +749,7 @@ class ExternalActionSelectionService:
             elif lowered in {"page_size", "pagesize", "limit"}:
                 parameters[name] = 50
 
-        return parameters
+        return self._merge_date_parameters(action, message, parameters)
 
     def _looks_like_transforma_question(self, value: str) -> bool:
         return "transforma" in value
@@ -1507,7 +1526,44 @@ class ExternalActionSelectionService:
         if not parameters:
             parameters = {"page": 1, "page_size": 50}
 
-        return parameters
+        return self._merge_date_parameters(action, message, parameters)
+
+    def _merge_date_parameters(self, action: dict, message: str, parameters: dict) -> dict:
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
+        date_range = ChatDateRangeIntentService.resolve(message)
+
+        if not date_range:
+            return parameters
+
+        merged = dict(parameters)
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {
+                "start_date",
+                "startdate",
+                "data_inicio",
+                "data_inicial",
+            }:
+                merged[name] = date_range.start_date
+            elif lowered in {
+                "end_date",
+                "enddate",
+                "data_fim",
+                "data_final",
+            }:
+                merged[name] = date_range.end_date
+
+        return merged
 
     def _rank_product_actions(
         self,

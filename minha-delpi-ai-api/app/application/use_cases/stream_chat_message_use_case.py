@@ -181,40 +181,51 @@ class StreamChatMessageUseCase:
         prepared_box: dict = {}
         prepare_error_box: dict = {}
 
+        from flask import current_app, has_app_context
+
+        flask_app = current_app._get_current_object() if has_app_context() else None
+
         def _on_stream_activity(entry: dict) -> None:
             activity_queue.put(("activity", entry))
 
+        def _run_prepare() -> None:
+            prepared_box["value"] = self.turn_preparation_service.prepare(
+                message=message,
+                request=request,
+                session=session,
+                user_id=user_id,
+                workspace_context=workspace_context,
+                attachments=attachments,
+                previous_messages=previous_messages,
+                history_source=history_source,
+                build_tool_context=self._build_tool_context,
+                maybe_extend_tool_context=self._maybe_extend_tool_context,
+                prepare_history=self._prepare_history,
+                history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
+                fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
+                fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
+                resolve_user_identity_answer=lambda msg: (
+                    self._resolve_user_identity_answer(request.access_token, msg)
+                    if request.access_token
+                    and ChatUserContextService.is_user_identity_question(msg)
+                    else None
+                ),
+                resolve_capabilities_answer=lambda msg: (
+                    self._resolve_capabilities_answer(workspace_context, msg)
+                    if ChatCapabilitiesService.is_capability_inquiry(msg)
+                    else None
+                ),
+                max_external_action_calls=max_tool_calls,
+                on_stream_activity=_on_stream_activity,
+            )
+
         def _prepare_worker() -> None:
             try:
-                prepared_box["value"] = self.turn_preparation_service.prepare(
-                    message=message,
-                    request=request,
-                    session=session,
-                    user_id=user_id,
-                    workspace_context=workspace_context,
-                    attachments=attachments,
-                    previous_messages=previous_messages,
-                    history_source=history_source,
-                    build_tool_context=self._build_tool_context,
-                    maybe_extend_tool_context=self._maybe_extend_tool_context,
-                    prepare_history=self._prepare_history,
-                    history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
-                    fast_path_enabled=Settings.CHAT_FAST_PATH_ENABLED,
-                    fast_path_max_chars=Settings.CHAT_FAST_PATH_MAX_CHARS,
-                    resolve_user_identity_answer=lambda msg: (
-                        self._resolve_user_identity_answer(request.access_token, msg)
-                        if request.access_token
-                        and ChatUserContextService.is_user_identity_question(msg)
-                        else None
-                    ),
-                    resolve_capabilities_answer=lambda msg: (
-                        self._resolve_capabilities_answer(workspace_context, msg)
-                        if ChatCapabilitiesService.is_capability_inquiry(msg)
-                        else None
-                    ),
-                    max_external_action_calls=max_tool_calls,
-                    on_stream_activity=_on_stream_activity,
-                )
+                if flask_app is not None:
+                    with flask_app.app_context():
+                        _run_prepare()
+                else:
+                    _run_prepare()
             except Exception as exc:
                 prepare_error_box["error"] = exc
             finally:

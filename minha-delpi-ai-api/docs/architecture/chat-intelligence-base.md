@@ -56,6 +56,7 @@ Mensagem do usuário
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
 | `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
+| `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV) |
 | `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |

@@ -20,6 +20,10 @@ class ChatProductQueryIntentService:
     _PRODUCT_CODE_RE = re.compile(
         r"\b(?:\d[\d.\-/]{2,}\d|\d{4,})\b",
     )
+    _DATE_TOKEN_RE = re.compile(
+        r"^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$",
+        re.IGNORECASE,
+    )
 
     @classmethod
     def detect(cls, message: str) -> str:
@@ -168,9 +172,16 @@ class ChatProductQueryIntentService:
             if cls._is_group_code_numeric_token(raw, match):
                 continue
 
+            if cls._is_date_numeric_token(match.group(0)):
+                continue
+
             return cls.normalize_product_code(match.group(0))
 
         return None
+
+    @classmethod
+    def _is_date_numeric_token(cls, token: str) -> bool:
+        return bool(cls._DATE_TOKEN_RE.match(str(token or "").strip()))
 
     @classmethod
     def _is_group_code_numeric_token(cls, text: str, match: re.Match[str]) -> bool:

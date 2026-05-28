@@ -113,9 +113,9 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
 | 11.1.1 | Estender refinamento operacional além de estoque (estrutura, parents, KPI com filial) | 🟡 | CPV/suprimentos e KPIs departamentais com «filial 02»; sub-rotas produto (`purchases`, `suppliers`, …) com herança de segmento; estoque multi-produto mantido |
-| 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ⬜ | «CPV mês passado» resolve período sem LLM |
+| 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ✅ | `ChatDateRangeIntentService` + merge em suprimentos/KPIs e listagem `/sales`; datas `DD/MM/YYYY` não viram código de produto |
 | 11.1.3 | Heurística explícita `summary` vs `analyser` | ✅ | Intent `SUMMARY` + rank dedicado; regressão «resumo do produto 10080047» |
-| 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | ⬜ | Casos em `chat_intelligence_regression_cases.py` + smoke verde |
+| 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | 🟡 | Casos multi-turno/refino em pytest; falta smoke send/stream com histórico real |
 | 11.1.5 | Reimport OpenAPI + reindexar `api-delpi-rotas-agente.md` pós-deploy api-delpi | ⬜ | Catálogo alinhado às rotas reais |
 
 ### 11.2 — Velocidade e prompt (prioridade alta)

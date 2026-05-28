@@ -204,6 +204,8 @@ class SendChatMessageUseCase:
                 workspace_context,
             )
 
+        resolved_skills = workspace_context.get("skills") or {}
+
         if direct_answer:
             llm_messages = []
         elif (
@@ -447,6 +449,7 @@ class SendChatMessageUseCase:
         fast_path: bool = False,
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
+        on_stream_activity=None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -473,6 +476,7 @@ class SendChatMessageUseCase:
             fast_path=fast_path,
             previous_messages=previous_messages,
             max_external_action_calls=max_external_action_calls,
+            on_stream_activity=on_stream_activity,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

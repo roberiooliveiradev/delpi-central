@@ -22,9 +22,13 @@ from app.domain.services.chat_product_query_intent_service import (
 from tests.fixtures.chat_intelligence_regression_cases import (
     AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
+    DATE_RANGE_SELECTION_CASES,
     DIRECT_ANSWER_CASES,
     INTENT_CASES,
+    METRIC_REFINEMENT_SELECTION_CASES,
     MISSING_PRODUCT_CODE_CASES,
+    MULTI_TURN_INTENT_CASES,
+    MULTI_TURN_PRODUCT_CODE_CASES,
     OPERATIONAL_FAST_PATH_CASES,
     OPERATIONAL_REFINEMENT_FAST_PATH_CASES,
     PRODUCT_CODE_CASES,
@@ -104,7 +108,12 @@ def test_agentic_skip_on_stock_refinement_regression(message, expected, history)
     )
 
 
-@pytest.mark.parametrize("case", SELECTION_CASES + STOCK_REFINEMENT_SELECTION_CASES)
+@pytest.mark.parametrize(
+    "case",
+    SELECTION_CASES
+    + STOCK_REFINEMENT_SELECTION_CASES
+    + METRIC_REFINEMENT_SELECTION_CASES,
+)
 def test_action_selection_regression(case):
     service = ExternalActionSelectionService(FakeRepository(case["actions"]))
     allowed = [action["actionId"] for action in case["actions"]]
@@ -125,6 +134,45 @@ def test_action_selection_regression(case):
 
         for key, value in expected_parameters.items():
             assert params.get(key) == value
+
+
+@pytest.mark.parametrize("case", DATE_RANGE_SELECTION_CASES)
+def test_date_range_selection_regression(case):
+    service = ExternalActionSelectionService(FakeRepository(case["actions"]))
+    allowed = [action["actionId"] for action in case["actions"]]
+
+    selected = service.select_action(
+        case["message"],
+        allowed_action_ids=allowed,
+    )
+
+    assert selected is not None
+    params = selected["arguments"].get("parameters") or {}
+
+    for key, value in case["expected_parameters"].items():
+        assert params.get(key) == value
+
+
+@pytest.mark.parametrize("message,expected_code,history", MULTI_TURN_PRODUCT_CODE_CASES)
+def test_multi_turn_product_code_regression(message, expected_code, history):
+    assert (
+        ChatProductQueryIntentService.resolve_product_code(
+            message,
+            previous_messages=history,
+        )
+        == expected_code
+    )
+
+
+@pytest.mark.parametrize("message,expected_intent,history", MULTI_TURN_INTENT_CASES)
+def test_multi_turn_intent_regression(message, expected_intent, history):
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            message,
+            previous_messages=history,
+        )
+        == expected_intent
+    )
 
 
 @pytest.mark.parametrize("case", DIRECT_ANSWER_CASES)

@@ -680,3 +680,136 @@ AGENTIC_SKIP_REFINEMENT_CASES = [
     ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
     ("filtre filial 02", False, []),
 ]
+
+DATE_RANGE_SELECTION_CASES = [
+    {
+        "message": "cpv de 01/04/2026 a 30/04/2026",
+        "actions": [
+            {
+                "actionId": "supplies-cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "summary": "CPV suprimentos",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query"},
+                    {"name": "end_date", "in": "query"},
+                    {"name": "branch", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "supplies-cpv",
+        "expected_parameters": {
+            "start_date": "01-04-2026",
+            "end_date": "30-04-2026",
+        },
+    },
+    {
+        "message": "listar ov de 01/04/2026 a 30/04/2026",
+        "actions": [
+            {
+                "actionId": "sales-list",
+                "method": "GET",
+                "path": "/sales",
+                "operationId": "list_sale_orders",
+                "summary": "Ordens de venda",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query"},
+                    {"name": "end_date", "in": "query"},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "sales-list",
+        "expected_parameters": {
+            "start_date": "01-04-2026",
+            "end_date": "30-04-2026",
+            "page": 1,
+            "page_size": 50,
+        },
+    },
+]
+
+_SUMMARY_HISTORY = [
+    {"role": "user", "content": "resumo do produto 10080047"},
+    {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/10080047/summary",
+                    },
+                }
+            ]
+        },
+    },
+]
+
+MULTI_TURN_PRODUCT_CODE_CASES = [
+    (
+        "ultimas compras",
+        "10080047",
+        _SUMMARY_HISTORY,
+    ),
+    (
+        "estoque do produto",
+        "10080055",
+        [
+            {"role": "assistant", "content": "Produto 10080047: A"},
+            {"role": "assistant", "content": "Produto 10080055: B"},
+        ],
+    ),
+]
+
+MULTI_TURN_INTENT_CASES = [
+    (
+        "ultimas compras",
+        ChatProductQueryIntent.FULL,
+        _SUMMARY_HISTORY,
+    ),
+    (
+        "estoque do produto",
+        ChatProductQueryIntent.STOCK,
+        _STOCK_CONVERSATION_HISTORY,
+    ),
+]
+
+METRIC_REFINEMENT_SELECTION_CASES = [
+    {
+        "message": "filtre filial 02",
+        "previous_messages": [
+            {"role": "user", "content": "qual o cpv"},
+            {
+                "role": "assistant",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "metadata": {"ok": True, "path": "/supplies/cpv"},
+                        }
+                    ]
+                },
+            },
+        ],
+        "actions": [
+            {
+                "actionId": "supplies-cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "summary": "CPV",
+                "parametersSchema": [
+                    {"name": "start_date"},
+                    {"name": "end_date"},
+                    {"name": "branch"},
+                ],
+            },
+        ],
+        "expected_action_id": "supplies-cpv",
+        "expected_parameters": {"branch": "02"},
+    },
+]
