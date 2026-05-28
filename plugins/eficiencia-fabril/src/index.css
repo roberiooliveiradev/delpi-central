@@ -62,7 +62,6 @@
 .ef-filter-bar,
 .ef-kpi-card,
 .ef-table-card,
-.ef-preview-card,
 .ef-loading-card {
   background: var(--ef-surface);
   border: 1px solid var(--ef-border);
@@ -211,40 +210,178 @@
   color: var(--ef-danger);
 }
 
-.ef-preview-grid {
+.ef-dashboard-body {
+  position: relative;
+}
+
+.ef-dashboard-body--refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.ef-spin {
+  animation: ef-spin 0.9s linear infinite;
+}
+
+@keyframes ef-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ef-charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: var(--ef-gap);
   margin-bottom: 20px;
 }
 
-.ef-preview-card {
+.ef-chart-card {
+  background: var(--ef-surface);
+  border: 1px solid var(--ef-border);
+  border-radius: var(--ef-radius);
   padding: 16px;
+  min-width: 0;
 }
 
-.ef-preview-card h2 {
-  margin: 0 0 12px;
+.ef-chart-card__header h2 {
+  margin: 0;
   font-size: 1rem;
   color: var(--ef-title);
 }
 
-.ef-preview-card ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.ef-preview-card li {
+.ef-chart-card__header-row {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ef-border);
+}
+
+.ef-chart-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ef-chart-card__subtitle {
+  margin: 4px 0 0;
+  color: var(--ef-muted);
+  font-size: 0.82rem;
+}
+
+.ef-chart-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--ef-border);
+  background: transparent;
+  color: var(--ef-text);
+  cursor: pointer;
+}
+
+.ef-chart-action:hover {
+  background: color-mix(in srgb, var(--ef-accent) 10%, white);
+  border-color: color-mix(in srgb, var(--ef-accent) 35%, var(--ef-border));
+}
+
+.ef-chart-card__body {
+  margin-top: 12px;
+  min-height: 320px;
+}
+
+.ef-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  margin: 0;
+  color: var(--ef-muted);
+  text-align: center;
   font-size: 0.9rem;
 }
 
-.ef-preview-card li:last-child {
-  border-bottom: none;
+.ef-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+  background: var(--ef-surface);
+  border: 1px dashed var(--ef-border);
+  border-radius: var(--ef-radius);
+  color: var(--ef-muted);
+}
+
+.ef-empty-state__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  max-width: 420px;
+}
+
+.ef-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.ef-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  padding: 0;
+}
+
+.ef-modal__panel {
+  position: relative;
+  width: min(1100px, calc(100vw - 24px));
+  max-height: min(92vh, 920px);
+  background: var(--ef-surface);
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--ef-border) 70%, black);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ef-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 16px 10px;
+  border-bottom: 1px solid var(--ef-border);
+}
+
+.ef-modal__header h2 {
+  margin: 0;
+  color: var(--ef-title);
+  font-size: 1.05rem;
+}
+
+.ef-modal__header p {
+  margin: 4px 0 0;
+  color: var(--ef-muted);
+  font-size: 0.86rem;
+}
+
+.ef-modal__close {
+  height: 36px;
+  padding: 0 10px;
+}
+
+.ef-modal__body {
+  padding: 14px 16px 16px;
+  overflow: auto;
 }
 
 .ef-table-card {
@@ -257,6 +394,14 @@
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 12px;
+}
+
+.ef-table-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .ef-table-card__header h2 {
@@ -314,4 +459,19 @@
   background: color-mix(in srgb, var(--ef-accent) 12%, white);
   color: var(--ef-title);
   font-size: 0.75rem;
+}
+
+.ef-badge--danger {
+  background: color-mix(in srgb, var(--ef-danger) 12%, white);
+  color: var(--ef-danger);
+  border: 1px solid color-mix(in srgb, var(--ef-danger) 35%, var(--ef-border));
+}
+
+.ef-row--verify,
+.ef-row--verify td {
+  color: var(--ef-danger);
+}
+
+.ef-row--verify td {
+  font-weight: 600;
 }

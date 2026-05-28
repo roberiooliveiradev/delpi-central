@@ -1,0 +1,70 @@
+import type { EficienciaFabrilListFilterParams } from "../api/fetchAllEficienciaFabrilItems";
+import { fetchAllEficienciaFabrilItems } from "../api/fetchAllEficienciaFabrilItems";
+import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
+import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
+import { formatDisplayDate } from "./dates";
+
+const HEADERS = [
+  "Data",
+  "Início",
+  "Fim",
+  "Qtd. apontada",
+  "Filial",
+  "OP",
+  "CT",
+  "Operador",
+  "Eficiência (%)",
+  "Resultado MOD",
+  "Status",
+] as const;
+
+function displayStatus(item: EficienciaFabrilItem): string {
+  if ((item.eficiencia_percentual ?? 0) > VERIFY_EFFICIENCY_THRESHOLD_PCT) {
+    return "Verificar";
+  }
+  return item.status_registro ?? "";
+}
+
+function itemToRow(item: EficienciaFabrilItem): (string | number)[] {
+  return [
+    formatDisplayDate(item.data_producao),
+    item.hora_inicio ?? "",
+    item.hora_final ?? "",
+    item.qtd_apontada ?? "",
+    item.filial ?? "",
+    item.op ?? "",
+    item.centro_trabalho ?? "",
+    item.nome_operador ?? item.login_operador ?? "",
+    item.eficiencia_percentual ?? "",
+    item.resultado_mod ?? "",
+    displayStatus(item),
+  ];
+}
+
+function buildFilename(dateStart: string, dateEnd: string): string {
+  const safe = (value: string) => value.replace(/[^\d-]/g, "");
+  return `eficiencia-fabril-apontamentos_${safe(dateStart)}_${safe(dateEnd)}.xlsx`;
+}
+
+export async function exportAppointmentsExcel(
+  params: EficienciaFabrilListFilterParams,
+  signal?: AbortSignal
+): Promise<void> {
+  const items = await fetchAllEficienciaFabrilItems(params, signal);
+  const XLSX = await import("xlsx");
+
+  const rows = items.map(itemToRow);
+  const worksheet = XLSX.utils.aoa_to_sheet([HEADERS.slice(), ...rows]);
+
+  worksheet["!cols"] = HEADERS.map((header, columnIndex) => {
+    const maxLen = Math.max(
+      header.length,
+      ...rows.map((row) => String(row[columnIndex] ?? "").length)
+    );
+    return { wch: Math.min(maxLen + 2, 40) };
+  });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Apontamentos");
+  XLSX.writeFile(workbook, buildFilename(params.date_start, params.date_end));
+}
