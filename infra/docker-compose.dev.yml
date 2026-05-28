@@ -41,7 +41,8 @@ services:
 
 
   keycloak:
-    image: quay.io/keycloak/keycloak:24.0
+    image: quay.io/keycloak/keycloak:26.0.7
+    platform: linux/amd64
     container_name: delpi-keycloak
     command: ["start-dev"]
 
@@ -394,6 +395,25 @@ services:
     networks:
       - delpi-network
 
+  eficiencia-fabril:
+    build:
+      context: ../plugins/eficiencia-fabril
+      dockerfile: Dockerfile
+      target: static
+
+    container_name: delpi-eficiencia-fabril
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    volumes:
+      - ../plugins/eficiencia-fabril:/app
+      - /app/node_modules
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     build:
       context: ../plugins/dashboard-supplies
@@ -699,6 +719,7 @@ services:
       - dashboard-quality
       - dashboard-commercial
       - dashboard-production
+      - eficiencia-fabril
       - dashboard-supplies
       - dashboard-financial
       - dashboard-engineering

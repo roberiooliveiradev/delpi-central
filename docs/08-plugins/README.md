@@ -19,9 +19,16 @@ Manifesto JSON (delpi.manifest.json)
 
 Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plugin-system/manifesto-plugin.md).
 
-**CI (build):** `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
+**CI (build):**
 
-**Homologação:** `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
+- `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
+- `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
+
+**Homologação:**
+
+- `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
+- `./scripts/homologacao/check-eficiencia-fabril.sh` — smoke HTTP (`remoteEntry.js` + API `/dashboard`; defina `TOKEN` para validar JWT).
+- `./scripts/homologacao/check-eficiencia-fabril-fase0.sh` — validação da view TOTVS (container `delpi-api-delpi`).
 
 ---
 
@@ -33,6 +40,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
 | `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
+| `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
@@ -47,6 +55,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 |---|---|
 | Indicadores Estratégicos | `/apps/strategic-indicators-api/strategic-indicators/*` |
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
+| Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (PPM, kaizen, 5S, NC TOTVS) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |

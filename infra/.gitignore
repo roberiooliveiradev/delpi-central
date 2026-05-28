@@ -1,0 +1,11 @@
+# Variáveis de ambiente com credenciais — não versionar
+.env
+.env.*
+env
+env.prod
+env.dev
+env.local
+
+# Exemplos (sem secrets reais) podem ser commitados
+!.env.example
+!env.*.example
