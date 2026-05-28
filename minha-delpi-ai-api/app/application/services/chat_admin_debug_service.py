@@ -104,6 +104,18 @@ class ChatAdminDebugService:
                 }
             )
 
+        rag_sources = rag.get("sources") or []
+        rag_context_raw = str(rag.get("context") or "")
+        rag_debug: dict[str, Any] = {
+            "sources": rag_sources,
+            "ragContextText": rag_context_text,
+        }
+        if rag_context_raw.strip() and not rag_sources:
+            rag_debug["sourcesNote"] = (
+                "Fontes globais/admin não são expostas ao cliente; o texto do RAG "
+                "ainda foi injetado no prompt."
+            )
+
         payload = {
             "workspace": {
                 "agentKey": workspace_context.get("agentKey"),
@@ -127,10 +139,7 @@ class ChatAdminDebugService:
                 "selectedExternalAction": tool_context.get("selectedExternalAction"),
                 "toolContextText": tool_context_text,
             },
-            "rag": {
-                "sources": rag.get("sources") or [],
-                "ragContextText": rag_context_text,
-            },
+            "rag": rag_debug,
             "llm": {
                 "messages": compact_llm_messages,
             },

@@ -252,10 +252,7 @@ class ChatTurnPreparationService:
             rag_query = message
             rag_min_score = None
             if assistant_identity_question:
-                rag_query = (
-                    f"{message} Minha DELPI assistente origem criação "
-                    "arquitetura documentação empresa"
-                )
+                rag_query = ChatAssistantIdentityService.build_rag_query(message)
                 rag_min_score = Settings.RAG_IDENTITY_QUESTION_MIN_SCORE
 
             rag = self.rag_context_service.build_context(
@@ -267,7 +264,26 @@ class ChatTurnPreparationService:
                     attachment_ids=attachment_ids,
                 ),
                 min_score=rag_min_score,
+                chunk_filter=(
+                    ChatAssistantIdentityService.identity_chunk_filter()
+                    if assistant_identity_question
+                    else None
+                ),
             )
+
+        if (
+            assistant_identity_question
+            and not direct_answer
+            and not str(rag.get("context") or "").strip()
+        ):
+            identity_direct = ChatAssistantIdentityService.build_direct_answer(
+                message=message,
+                workspace_context=workspace_context,
+            )
+            if identity_direct:
+                direct_answer = identity_direct
+                rag = {"context": "", "sources": []}
+
         sources = rag["sources"]
         pipeline_timings.mark("rag_done")
 

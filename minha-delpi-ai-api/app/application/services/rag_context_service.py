@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable
 
 from app.application.dto.search_knowledge_request import SearchKnowledgeRequest
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
@@ -32,6 +33,7 @@ class RagContextService:
         filters: dict | None = None,
         *,
         min_score: float | None = None,
+        chunk_filter: Callable[[dict], bool] | None = None,
     ) -> dict:
         chunks = self.search_knowledge_use_case.execute(
             SearchKnowledgeRequest(
@@ -62,6 +64,22 @@ class RagContextService:
                 len(chunks),
                 len(filtered_chunks),
             )
+
+        if not filtered_chunks:
+            return {
+                "context": "",
+                "sources": [],
+            }
+
+        if chunk_filter is not None:
+            before = len(filtered_chunks)
+            filtered_chunks = [chunk for chunk in filtered_chunks if chunk_filter(chunk)]
+            if before != len(filtered_chunks):
+                logger.debug(
+                    "RAG chunks filtered by custom predicate: %s -> %s",
+                    before,
+                    len(filtered_chunks),
+                )
 
         if not filtered_chunks:
             return {

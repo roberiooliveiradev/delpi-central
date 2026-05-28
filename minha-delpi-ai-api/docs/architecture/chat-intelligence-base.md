@@ -71,11 +71,12 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
 | Policy no prompt | `chat-assistant-identity.md` via `ChatPromptBuilderService._assistant_identity_policy_addon` |
 | RAG | **Sempre executado** (`skip_rag = false`), mesmo em fast path operacional |
-| Query RAG | Texto original + sufixo de recall: `Minha DELPI assistente origem criação arquitetura documentação empresa` |
+| Query RAG | `ChatAssistantIdentityService.build_rag_query` — foco em chat/plataforma (sem sufixo `empresa` que puxa normas técnicas) |
 | Score mínimo | `Settings.RAG_IDENTITY_QUESTION_MIN_SCORE` (env, default **0.22**), passado a `RagContextService.build_context(..., min_score=...)` — mais baixo que `ragContextMinScore` global (~0.35) porque embeddings de perguntas meta costumam pontuar menos |
-| Resposta | **LLM** com trechos recuperados; **não** usa `ChatAssistantIdentityService.build_direct_answer` no pipeline de mensagem |
+| Filtro RAG | `is_identity_relevant_chunk` descarta normas de produto e docs sem sinal de identidade do assistente |
+| Resposta | **LLM** quando o RAG traz trechos relevantes; **fallback** `build_direct_answer` quando o contexto fica vazio após o filtro |
 
-O método `build_direct_answer` permanece no serviço para testes e usos pontuais, mas **não** é chamado em `ChatTurnPreparationService` nem nos use cases de chat.
+`build_direct_answer` é usado no turno quando o RAG filtrado não retorna contexto útil (ex.: só normas técnicas na base).
 
 **Skill `company-knowledge`:** necessária para incluir documentos globais no escopo RAG. Agentes sem skill explícita herdam o default quando `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL=true`.
 
@@ -86,7 +87,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   python scripts/smoke_identity_rag.py <user_id> <session_id> "quem te criou?"
 ```
 
-Testes: `tests/unit/application/services/test_chat_turn_preparation_identity_rag.py`, `tests/unit/application/use_cases/test_chat_assistant_identity_stream_and_send.py`.
+Testes: `test_chat_turn_preparation_identity_rag.py`, `test_chat_assistant_identity_rag_filter.py`, `test_chat_assistant_identity_stream_and_send.py`, `test_chat_admin_debug_service.py`.
 
 ---
 
@@ -169,7 +170,7 @@ Payload típico (campos principais):
 | `llm` | Mensagens enviadas ao modelo (truncadas) |
 | `recordedAt` | ISO UTC do turno |
 
-Para perguntas de identidade, espere `pipeline.skipRag: false` e `rag.sources` não vazio quando houver documentação indexada.
+Para perguntas de identidade, espere `pipeline.skipRag: false`. `rag.sources` pode vir vazio no JSON exposto (fontes globais ocultas) — use `rag.ragContextText` e `rag.sourcesNote`. Se só houver normas técnicas na base, o filtro esvazia o contexto e a resposta vem do fallback canônico (sem LLM).
 
 Mensagens antigas não ganham diagnóstico retroativo.
 
