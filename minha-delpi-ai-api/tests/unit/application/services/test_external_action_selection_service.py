@@ -382,3 +382,74 @@ def test_select_stock_refinement_reuses_product_and_branch():
     assert selected["arguments"]["parameters"]["code"] == "10080022"
     assert selected["arguments"]["parameters"]["branch"] == "02"
     assert "filial 02" in selected["reason"]
+
+
+def test_select_product_summary_not_analyser():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "summary-action",
+                    "method": "GET",
+                    "path": "/products/{code}/summary",
+                    "operationId": "get_product_summary",
+                    "summary": "Resumo do produto",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+                {
+                    "actionId": "analyser-action",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "summary": "Analisador do produto",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "resumo do produto 10080047",
+        allowed_action_ids=["summary-action", "analyser-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "summary-action"
+    assert selected["arguments"]["parameters"]["code"] == "10080047"
+
+
+def test_select_product_full_analyser_not_summary():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "summary-action",
+                    "method": "GET",
+                    "path": "/products/{code}/summary",
+                    "operationId": "get_product_summary",
+                    "summary": "Resumo",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+                {
+                    "actionId": "analyser-action",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "summary": "Analisador",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "ficha completa do produto 10080047",
+        allowed_action_ids=["summary-action", "analyser-action"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "analyser-action"

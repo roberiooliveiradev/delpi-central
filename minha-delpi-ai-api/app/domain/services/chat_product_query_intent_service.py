@@ -7,6 +7,7 @@ from app.domain.services.chat_message_normalization_service import (
 
 class ChatProductQueryIntent:
     DESCRIPTION = "description"
+    SUMMARY = "summary"
     STOCK = "stock"
     STRUCTURE = "structure"
     PARENTS = "parents"
@@ -34,6 +35,9 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
+
+        if cls._looks_like_product_summary_question(normalized):
+            return ChatProductQueryIntent.SUMMARY
 
         if cls._looks_like_description_question(normalized):
             return ChatProductQueryIntent.DESCRIPTION
@@ -347,6 +351,65 @@ class ChatProductQueryIntentService:
         ]
 
         return any(term in normalized for term in terms)
+
+    @classmethod
+    def _looks_like_product_summary_question(cls, normalized: str) -> bool:
+        if any(
+            term in normalized
+            for term in (
+                "resumo de venda",
+                "resumo de vendas",
+                "resumo de kaizen",
+                "resumo de kaizens",
+                "resumo do kaizen",
+                "kaizens do mes",
+                "kaizens do mês",
+            )
+        ):
+            return False
+
+        if any(
+            term in normalized
+            for term in (
+                "resumo do produto",
+                "resumo sintetico",
+                "resumo sintético",
+                "visao resumida do produto",
+                "visão resumida do produto",
+                "visao resumida do item",
+                "visão resumida do item",
+            )
+        ):
+            return True
+
+        if "resumo" not in normalized:
+            return False
+
+        if any(
+            term in normalized
+            for term in (
+                "ficha completa",
+                "analisador",
+                "analyzer",
+                "analise completa",
+                "análise completa",
+                "informacoes completas",
+                "informações completas",
+                "tudo sobre o produto",
+            )
+        ):
+            return False
+
+        return any(
+            term in normalized
+            for term in (
+                "produto",
+                "item",
+                "material",
+                "codigo",
+                "código",
+            )
+        )
 
     @classmethod
     def _looks_like_description_question(cls, normalized: str) -> bool:

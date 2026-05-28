@@ -18,6 +18,31 @@ def test_detect_stock_intent():
     )
 
 
+def test_detect_summary_intent():
+    assert (
+        ChatProductQueryIntentService.detect("resumo do produto 10080047")
+        == ChatProductQueryIntent.SUMMARY
+    )
+
+
+def test_detect_summary_not_kaizen_or_sales():
+    assert (
+        ChatProductQueryIntentService.detect("resumo de vendas do mês")
+        != ChatProductQueryIntent.SUMMARY
+    )
+    assert (
+        ChatProductQueryIntentService.detect("resumo de kaizens do mês")
+        != ChatProductQueryIntent.SUMMARY
+    )
+
+
+def test_detect_full_analyser_not_summary():
+    assert (
+        ChatProductQueryIntentService.detect("ficha completa do produto 10080047")
+        != ChatProductQueryIntent.SUMMARY
+    )
+
+
 def test_resolve_product_code_from_conversation_context():
     code = ChatProductQueryIntentService.resolve_product_code(
         "busque o estoque desse produto",

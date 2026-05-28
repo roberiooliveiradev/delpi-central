@@ -113,7 +113,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 |---|------|--------|-------------------|
 | 11.1.1 | Estender refinamento operacional além de estoque (estrutura, parents, KPI com filial) | ⬜ | Follow-up «filial 02» após `/structure` reconsulta com parâmetros |
 | 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ⬜ | «CPV mês passado» resolve período sem LLM |
-| 11.1.3 | Heurística explícita `summary` vs `analyser` | ⬜ | «Resumo do 10080047» → `/summary`, não `/analyser` |
+| 11.1.3 | Heurística explícita `summary` vs `analyser` | ✅ | Intent `SUMMARY` + rank dedicado; regressão «resumo do produto 10080047» |
 | 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | ⬜ | Casos em `chat_intelligence_regression_cases.py` + smoke verde |
 | 11.1.5 | Reimport OpenAPI + reindexar `api-delpi-rotas-agente.md` pós-deploy api-delpi | ⬜ | Catálogo alinhado às rotas reais |
 

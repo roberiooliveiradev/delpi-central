@@ -210,6 +210,17 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.SUMMARY:
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.SUMMARY,
+            )
+
+            if selected:
+                return selected
+
         if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.DESCRIPTION:
             selected = self._select_product_action(
                 message,
@@ -1635,15 +1646,42 @@ class ExternalActionSelectionService:
                 if "search" in path:
                     value -= 80
 
+            elif intent == ChatProductQueryIntent.SUMMARY:
+                if "/products/{code}/summary" in path or path.endswith("/summary"):
+                    value += 260
+
+                if "summary" in haystack and "product" in haystack:
+                    value += 40
+
+                if "analyser" in haystack or "analyzer" in haystack:
+                    value -= 120
+
+                if path == "/products/{code}":
+                    value += 30
+
+                if "stock" in path or "structure" in path or "parents" in path:
+                    value -= 90
+
+                if "search" in path:
+                    value -= 100
+
             elif intent == ChatProductQueryIntent.DESCRIPTION:
                 if path == "/products/{code}":
                     value += 200
 
-                if "/products/{code}/analyser" in haystack:
+                if wants_product_summary and "/summary" in path:
+                    value += 80
+
+                if wants_full_analyser and "/products/{code}/analyser" in haystack:
                     value += 180
+                elif not wants_product_summary and "/products/{code}/analyser" in haystack:
+                    value += 120
 
                 if "/description" in path:
                     value += 150
+
+                if wants_product_summary and "analyser" in haystack:
+                    value -= 80
 
                 if "stock" in path or "structure" in path or "parents" in path:
                     value -= 80
