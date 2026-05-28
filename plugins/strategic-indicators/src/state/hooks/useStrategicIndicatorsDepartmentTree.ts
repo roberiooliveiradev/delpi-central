@@ -33,6 +33,36 @@ import {
 } from "../utils/loadingProgress";
 import { beginStrategicIndicatorsLoad } from "./strategicIndicatorsLoadState";
 import { captureStrategicIndicatorsError } from "./strategicIndicatorsCaptureError";
+import { StrategicIndicatorsApiError } from "../../data/errors/strategicIndicatorsError";
+
+function isGatewayTimeoutError(error: unknown): boolean {
+  if (error instanceof StrategicIndicatorsApiError) {
+    const status = error.view.context.httpStatus;
+    if (status === 504) return true;
+    const raw = (error.view.rawMessage ?? "").toLowerCase();
+    return raw.includes("504") || raw.includes("timed out") || raw.includes("timeout");
+  }
+  if (error instanceof Error) {
+    const raw = error.message.toLowerCase();
+    return raw.includes("504") || raw.includes("timed out") || raw.includes("timeout");
+  }
+  return false;
+}
+
+async function sleep(ms: number, signal?: AbortSignal) {
+  if (signal?.aborted) return;
+  await new Promise<void>((resolve) => {
+    const id = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(id);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
 
 type UseStrategicIndicatorsDepartmentTreeParams = {
   viewMode: StrategicIndicatorsViewMode;
@@ -146,15 +176,35 @@ export function useStrategicIndicatorsDepartmentTree({
     const branchParam = viewMode === "branch" ? branch : undefined;
 
     try {
-      const snapshot = await fetchDepartmentTreeSnapshot({
-        viewMode,
-        branch: branchParam,
-        competence,
-        startDate,
-        endDate,
-        getAccessToken: token,
-        signal: controller.signal,
-      });
+      let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
+        null;
+      let lastSnapshotError: unknown = null;
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          snapshot = await fetchDepartmentTreeSnapshot({
+            viewMode,
+            branch: branchParam,
+            competence,
+            startDate,
+            endDate,
+            getAccessToken: token,
+            signal: controller.signal,
+          });
+          lastSnapshotError = null;
+          break;
+        } catch (snapshotErr) {
+          lastSnapshotError = snapshotErr;
+          if (!isGatewayTimeoutError(snapshotErr) || controller.signal.aborted) {
+            break;
+          }
+          await sleep(1200, controller.signal);
+        }
+      }
+
+      if (!snapshot) {
+        throw lastSnapshotError ?? new Error("Falha ao carregar snapshot da árvore.");
+      }
 
       if (requestId !== requestIdRef.current) return;
 
