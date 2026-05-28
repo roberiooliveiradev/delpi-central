@@ -24,6 +24,7 @@ from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_fast_path_service import ChatFastPathService
+from app.infrastructure.config.settings import Settings
 
 
 @dataclass(frozen=True)
@@ -248,14 +249,24 @@ class ChatTurnPreparationService:
         if skip_rag:
             rag = {"context": "", "sources": []}
         else:
+            rag_query = message
+            rag_min_score = None
+            if assistant_identity_question:
+                rag_query = (
+                    f"{message} Minha DELPI assistente origem criação "
+                    "arquitetura documentação empresa"
+                )
+                rag_min_score = Settings.RAG_IDENTITY_QUESTION_MIN_SCORE
+
             rag = self.rag_context_service.build_context(
-                message,
+                rag_query,
                 filters=self.knowledge_scope_service.build_filters(
                     user_id=user_id,
                     session=session,
                     workspace_context=workspace_context,
                     attachment_ids=attachment_ids,
                 ),
+                min_score=rag_min_score,
             )
         sources = rag["sources"]
         pipeline_timings.mark("rag_done")

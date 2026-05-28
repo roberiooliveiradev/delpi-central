@@ -26,7 +26,13 @@ class RagContextService:
 
         self.intelligence_settings_service = intelligence_settings_service
 
-    def build_context(self, query: str, filters: dict | None = None) -> dict:
+    def build_context(
+        self,
+        query: str,
+        filters: dict | None = None,
+        *,
+        min_score: float | None = None,
+    ) -> dict:
         chunks = self.search_knowledge_use_case.execute(
             SearchKnowledgeRequest(
                 query=query,
@@ -41,7 +47,8 @@ class RagContextService:
                 "sources": [],
             }
 
-        min_score = self.intelligence_settings_service.resolve().rag_context_min_score
+        if min_score is None:
+            min_score = self.intelligence_settings_service.resolve().rag_context_min_score
         filtered_chunks = [
             chunk
             for chunk in chunks
