@@ -217,51 +217,43 @@ export function useStrategicIndicatorsDepartmentTree({
     try {
       let snapshotApplied = false;
 
-      const snapshotTask = (async () => {
-        let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
-          null;
-        let lastSnapshotError: unknown = null;
+      let snapshot: Awaited<ReturnType<typeof fetchDepartmentTreeSnapshot>> | null =
+        null;
+      let lastSnapshotError: unknown = null;
 
-        for (let attempt = 0; attempt < 2; attempt++) {
-          try {
-            snapshot = await fetchDepartmentTreeSnapshot(fetchParams);
-            lastSnapshotError = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          snapshot = await fetchDepartmentTreeSnapshot(fetchParams);
+          lastSnapshotError = null;
+          break;
+        } catch (snapshotErr) {
+          lastSnapshotError = snapshotErr;
+          if (!isGatewayTimeoutError(snapshotErr) || controller.signal.aborted) {
             break;
-          } catch (snapshotErr) {
-            lastSnapshotError = snapshotErr;
-            if (!isGatewayTimeoutError(snapshotErr) || controller.signal.aborted) {
-              break;
-            }
-            await sleep(1200, controller.signal);
           }
+          await sleep(1200, controller.signal);
         }
+      }
 
-        if (!snapshot) {
-          throw lastSnapshotError ?? new Error("Falha ao carregar snapshot da árvore.");
-        }
+      if (!snapshot) {
+        throw lastSnapshotError ?? new Error("Falha ao carregar snapshot da árvore.");
+      }
 
-        if (requestId !== requestIdRef.current || controller.signal.aborted) {
-          return null;
-        }
+      if (requestId !== requestIdRef.current || controller.signal.aborted) {
+        return;
+      }
 
-        if (!snapshotApplied) {
-          snapshotApplied = true;
-          applySnapshotToUi(snapshot);
-        }
-
-        return snapshot;
-      })();
-
-      const trendsPromise = fetchDepartmentTreeTrends({
-        ...fetchParams,
-        months,
-      });
-
-      const snapshot = await snapshotTask;
+      if (!snapshotApplied) {
+        snapshotApplied = true;
+        applySnapshotToUi(snapshot);
+      }
 
       let trends: Awaited<ReturnType<typeof fetchDepartmentTreeTrends>> | null = null;
       try {
-        trends = await trendsPromise;
+        trends = await fetchDepartmentTreeTrends({
+          ...fetchParams,
+          months,
+        });
       } catch (trendsErr) {
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;

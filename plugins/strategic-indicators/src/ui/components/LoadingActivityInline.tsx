@@ -26,7 +26,15 @@ export function LoadingActivityInline({
     ? Math.min(100, Math.max(0, Math.round(progressPercent)))
     : null;
   const remainingPercent =
-    clampedProgress !== null ? Math.max(0, 100 - clampedProgress) : null;
+    clampedProgress !== null && clampedProgress > 0
+      ? Math.max(0, 100 - clampedProgress)
+      : null;
+  const progressLabel =
+    clampedProgress !== null && clampedProgress <= 0
+      ? "Iniciando…"
+      : remainingPercent !== null
+        ? `Faltam ${remainingPercent}%`
+        : null;
   return (
     <div
       className={[
@@ -57,9 +65,9 @@ export function LoadingActivityInline({
         </div>
 
         <div className="si-loading-activity-inline__progress-wrap">
-          {remainingPercent !== null ? (
+          {progressLabel ? (
             <span className="si-loading-activity-inline__progress-label">
-              Faltam {remainingPercent}%
+              {progressLabel}
             </span>
           ) : null}
 
@@ -70,8 +78,8 @@ export function LoadingActivityInline({
             aria-valuemax={100}
             aria-valuenow={clampedProgress ?? undefined}
             aria-label={
-              remainingPercent !== null
-                ? `Carregamento: faltam ${remainingPercent} por cento`
+              progressLabel
+                ? `Carregamento: ${progressLabel}`
                 : "Carregamento em andamento"
             }
           >
