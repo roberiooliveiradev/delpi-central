@@ -48,7 +48,6 @@ from si_app.application.services.strategic_indicators.strategic_indicators_snaps
 )
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
     _catalog_cache as shared_catalog_cache,
-    _measurements_cache as shared_measurements_cache,
     catalog_cache_key,
     get_catalog_fingerprint,
     measurements_cache_key,
@@ -60,8 +59,12 @@ from si_app.application.services.strategic_indicators.measurement_errors import 
 from si_app.application.services.strategic_indicators.measurements_cache_policy import (
     enrich_measurement_errors,
     format_measurement_errors_summary,
+    has_measurement_errors,
     should_cache_measurements,
-    should_use_cached_measurements,
+)
+from si_app.application.services.strategic_indicators.versioned_measurements_cache import (
+    get_versioned_measurements,
+    record_versioned_measurements,
 )
 from si_app.config import settings
 from si_app.domain.ports.strategic_indicators.calculation_snapshots_repository_port import (
@@ -213,8 +216,10 @@ class StrategicIndicatorsSnapshotService:
                 department_id=department_id,
                 branch=branch,
             )
-            if stored is not None and not has_transformometro_auth_error(
-                stored.measurement_errors
+            if (
+                stored is not None
+                and not has_transformometro_auth_error(stored.measurement_errors)
+                and not has_measurement_errors(stored.measurement_errors)
             ):
                 logger.info(
                     "si_period_scores_hit competence=%s department_id=%s branch=%s ms=%.0f",
@@ -1072,6 +1077,12 @@ class StrategicIndicatorsSnapshotService:
             return
         if not is_standard_competence_period(snapshot.period):
             return
+        if not should_cache_measurements(
+            snapshot.measurements,
+            snapshot.measurement_errors,
+            department_id=department_id,
+        ):
+            return
 
         catalog_inputs_hash = (
             build_catalog_inputs_fingerprint(catalog) if catalog is not None else None
@@ -1139,20 +1150,13 @@ class StrategicIndicatorsSnapshotService:
 
         cached = self._measurements_cache.get(key)
         if cached is not None:
-            items, errors = cached
-            if should_use_cached_measurements(
-                items, errors, department_id=department_id
-            ):
-                return cached
+            return cached
 
-        cached = shared_measurements_cache.get(key)
-        if cached is not None:
-            items, errors = cached
-            if should_use_cached_measurements(
-                items, errors, department_id=department_id
-            ):
-                self._measurements_cache[key] = cached
-                return cached
+        versioned = get_versioned_measurements(key, department_id=department_id)
+        if versioned is not None:
+            result = (versioned.items, versioned.errors)
+            self._measurements_cache[key] = result
+            return result
 
         port = measurements_port or self._measurements_port
         measurements_started = time.perf_counter()
@@ -1171,14 +1175,18 @@ class StrategicIndicatorsSnapshotService:
             competence=competence,
             branch=branch,
         )
-        result = (items, errors)
-        if should_cache_measurements(items, errors, department_id=department_id):
-            self._measurements_cache[key] = result
-            shared_measurements_cache.set(key, result)
-        elif errors:
+        served = record_versioned_measurements(
+            key,
+            items=items,
+            errors=errors,
+            department_id=department_id,
+        )
+        result = (served.items, served.errors)
+        self._measurements_cache[key] = result
+        if not served.is_clean and errors:
             logger.warning(
                 (
-                    "si_measurements_not_cached competence=%s department_id=%s "
+                    "si_measurements_not_clean competence=%s department_id=%s "
                     "branch=%s items=%d errors=%d detail=%s"
                 ),
                 competence,

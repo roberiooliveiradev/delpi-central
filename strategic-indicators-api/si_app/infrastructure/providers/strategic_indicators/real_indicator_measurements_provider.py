@@ -36,14 +36,17 @@ from si_app.domain.ports.strategic_indicators.financial_indicators_snapshot_port
 from si_app.domain.ports.strategic_indicators.supplies_indicators_snapshot_port import (
     StrategicIndicatorsSuppliesIndicatorsSnapshotPort,
 )
+from si_app.application.services.strategic_indicators.measurement_snapshot_versions import (
+    failed_department_ids_from_errors,
+)
 from si_app.application.services.strategic_indicators.measurements_cache_policy import (
     enrich_measurement_errors,
-    should_cache_measurements,
-    should_use_cached_measurements,
 )
 from si_app.application.services.strategic_indicators.snapshot_shared_cache import (
-    _measurements_cache as shared_measurements_cache,
     measurements_cache_key,
+)
+from si_app.application.services.strategic_indicators.versioned_measurements_cache import (
+    get_versioned_measurements,
 )
 
 
@@ -110,21 +113,14 @@ class RealStrategicIndicatorsMeasurementsProvider(
         with self._cache_lock:
             cached = self._cache.get(cache_key)
         if cached is not None:
-            items, errors = cached
-            if should_use_cached_measurements(
-                items, errors, department_id=department_id
-            ):
-                return cached
+            return cached
 
-        cached = shared_measurements_cache.get(cache_key)
-        if cached is not None:
-            items, errors = cached
-            if should_use_cached_measurements(
-                items, errors, department_id=department_id
-            ):
-                with self._cache_lock:
-                    self._cache[cache_key] = cached
-                return cached
+        versioned = get_versioned_measurements(cache_key, department_id=department_id)
+        if versioned is not None:
+            final_result = (versioned.items, versioned.errors)
+            with self._cache_lock:
+                self._cache[cache_key] = final_result
+            return final_result
 
         collectors = self._build_collectors(
             start_date=start_date,
@@ -133,30 +129,18 @@ class RealStrategicIndicatorsMeasurementsProvider(
             branch=branch,
         )
 
-        raw_results = self._collect_parallel(collectors)
-
-        items: list[StrategicIndicatorMeasuredValue] = []
-        errors: list[dict] = []
-
-        for result in raw_results:
-            self._append_result(
-                result=result,
-                items=items,
-                errors=errors,
-            )
-
-        errors = enrich_measurement_errors(
-            items,
-            errors,
+        items, errors = self._collect_measurements_from_collectors(
+            collectors,
             department_id=department_id,
             competence=competence,
             branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
+
         final_result = (items, errors)
-        if should_cache_measurements(items, errors, department_id=department_id):
-            with self._cache_lock:
-                self._cache[cache_key] = final_result
-            shared_measurements_cache.set(cache_key, final_result)
+        with self._cache_lock:
+            self._cache[cache_key] = final_result
         return final_result
 
     def get_indicator_measurements_series(
@@ -606,6 +590,86 @@ class RealStrategicIndicatorsMeasurementsProvider(
             )
 
         return collectors
+
+    def _collect_measurements_from_collectors(
+        self,
+        collectors: list[tuple[str, Callable[[], dict]]],
+        *,
+        department_id: str | None,
+        competence: str | None,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> tuple[list[StrategicIndicatorMeasuredValue], list[dict]]:
+        raw_results = self._collect_parallel(collectors)
+
+        items: list[StrategicIndicatorMeasuredValue] = []
+        errors: list[dict] = []
+
+        for result in raw_results:
+            self._append_result(
+                result=result,
+                items=items,
+                errors=errors,
+            )
+
+        errors = enrich_measurement_errors(
+            items,
+            errors,
+            department_id=department_id,
+            competence=competence,
+            branch=branch,
+        )
+
+        failed_departments = failed_department_ids_from_errors(errors)
+        if failed_departments and department_id in (None, ""):
+            retry_collectors = [
+                (name, fetcher)
+                for name, fetcher in collectors
+                if name in failed_departments
+            ]
+            if retry_collectors:
+                retry_results = self._collect_parallel(retry_collectors)
+                for (name, _fetcher), result in zip(
+                    retry_collectors,
+                    retry_results,
+                    strict=True,
+                ):
+                    self._replace_department_measurements(
+                        department_id=name,
+                        result=result,
+                        items=items,
+                        errors=errors,
+                    )
+                errors = enrich_measurement_errors(
+                    items,
+                    errors,
+                    department_id=department_id,
+                    competence=competence,
+                    branch=branch,
+                )
+
+        return items, errors
+
+    def _replace_department_measurements(
+        self,
+        *,
+        department_id: str,
+        result: dict,
+        items: list[StrategicIndicatorMeasuredValue],
+        errors: list[dict],
+    ) -> None:
+        items[:] = [
+            item
+            for item in items
+            if (item.department_id or "").strip() != department_id
+        ]
+        errors[:] = [
+            entry
+            for entry in errors
+            if str(entry.get("department_id") or "").strip() != department_id
+        ]
+        self._append_result(result=result, items=items, errors=errors)
 
     def _collect_parallel(
         self,

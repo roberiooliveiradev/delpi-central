@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from si_app.application.dto.strategic_indicators.catalog_models import (
-    StrategicIndicatorMeasuredValue,
+from si_app.application.services.strategic_indicators.measurement_snapshot_versions import (
+    MeasurementSnapshotVersion,
 )
 from si_app.config import settings
 from si_app.infrastructure.cache.ttl_cache import TtlCache
 
-_measurements_cache: TtlCache[
-    tuple[list[StrategicIndicatorMeasuredValue], list[dict]]
-] = TtlCache(ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS)
+_measurements_cache: TtlCache[list[MeasurementSnapshotVersion]] = TtlCache(
+    ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
+)
 
 _catalog_cache: TtlCache[Any] = TtlCache(
     ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,

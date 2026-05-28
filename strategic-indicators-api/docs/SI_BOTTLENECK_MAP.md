@@ -180,6 +180,7 @@ Multiplicadores atuais (config padrão produção após ajuste):
 | 2 | Operação | `SI_PERIOD_SCORES_REFRESH_BRANCHES=consolidated` até filial rápida | ÷3 no refresh | `.env` |
 | 3 | api-delpi | Otimizar `/supplies/stock-value` e `/inventory-turnover` (TOTVS/cache) | −minutos no P0 | `api-delpi` supplies |
 | 4 | SI | ~~Cache TTL medições (7 dept., zero erros)~~ **feito** | Menos duplicata parcial | `measurements_cache_policy.py` |
+| 4b | SI | ~~Versões de snapshot (até 3, serve limpa)~~ **feito** | Não substituir boa coleta por falha | `measurement_snapshot_versions.py`, `versioned_measurements_cache.py` |
 | 5 | SI | ~~Financial: ROL por escopo de filial + cache TTL `get_rol`~~ **feito** | Menos P1 | `financial_indicators_snapshot_provider`, `delpi_financial_gateway` |
 | 6 | SI | Suprimentos: paralelizar 4 use cases dentro do mês | −latência por mês | `supplies_metrics_snapshot_service._build_snapshot` |
 | 7 | api-delpi | Endpoints “série” com `branch` opcional (quality ppm, commercial) | Menos GET por filial | respectivos módulos api-delpi |

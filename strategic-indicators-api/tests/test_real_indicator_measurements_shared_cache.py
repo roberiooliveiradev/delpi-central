@@ -6,12 +6,15 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorMeasuredValue,
 )
 from si_app.application.services.strategic_indicators import snapshot_shared_cache
+from si_app.application.services.strategic_indicators.versioned_measurements_cache import (
+    record_versioned_measurements,
+)
 from si_app.infrastructure.providers.strategic_indicators.real_indicator_measurements_provider import (
     RealStrategicIndicatorsMeasurementsProvider,
 )
 
 
-def test_get_indicator_measurements_uses_shared_cache(monkeypatch) -> None:
+def test_get_indicator_measurements_uses_versioned_shared_cache(monkeypatch) -> None:
     snapshot_shared_cache._measurements_cache.invalidate_all()
 
     provider = RealStrategicIndicatorsMeasurementsProvider(
@@ -21,19 +24,15 @@ def test_get_indicator_measurements_uses_shared_cache(monkeypatch) -> None:
         quality_snapshot_port=MagicMock(),
     )
 
-    expected = (
-        [
-            StrategicIndicatorMeasuredValue(
-                department_id="engineering",
-                indicator_id="eng-1",
-                value=1.0,
-                source="test",
-            )
-        ],
-        [],
-    )
-    provider._build_collectors = MagicMock(return_value={})  # type: ignore[method-assign]
-    provider._collect_parallel = MagicMock(return_value=[])  # type: ignore[method-assign]
+    expected_items = [
+        StrategicIndicatorMeasuredValue(
+            department_id="engineering",
+            indicator_id="eng-1",
+            value=1.0,
+            source="test",
+        )
+    ]
+    expected = (expected_items, [])
 
     cache_key = snapshot_shared_cache.measurements_cache_key(
         start_date="01-05-2026",
@@ -42,7 +41,15 @@ def test_get_indicator_measurements_uses_shared_cache(monkeypatch) -> None:
         department_id="engineering",
         branch=None,
     )
-    snapshot_shared_cache._measurements_cache.set(cache_key, expected)
+    record_versioned_measurements(
+        cache_key,
+        items=expected_items,
+        errors=[],
+        department_id="engineering",
+    )
+
+    provider._build_collectors = MagicMock(return_value=[])  # type: ignore[method-assign]
+    provider._collect_parallel = MagicMock(return_value=[])  # type: ignore[method-assign]
 
     result = provider.get_indicator_measurements(
         start_date="01-05-2026",
