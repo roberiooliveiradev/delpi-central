@@ -65,6 +65,26 @@ function isGatewayTimeoutError(error: unknown): boolean {
   return false;
 }
 
+/** Timeout de gateway ou falha de rede (trends costuma estourar antes do snapshot). */
+function isTrendsRetriableError(error: unknown): boolean {
+  if (isGatewayTimeoutError(error)) {
+    return true;
+  }
+  if (error instanceof TypeError) {
+    return true;
+  }
+  if (error instanceof Error) {
+    const raw = error.message.toLowerCase();
+    return (
+      raw.includes("networkerror") ||
+      raw.includes("failed to fetch") ||
+      raw.includes("network error") ||
+      raw.includes("load failed")
+    );
+  }
+  return false;
+}
+
 function jobProgressToRequest(progressPct: number): RequestProgress {
   if (progressPct >= 100) {
     return { completed: 2, total: 2 };
@@ -135,6 +155,8 @@ export function useStrategicIndicatorsDepartmentTree({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<StrategicIndicatorsErrorView | null>(null);
+  const [loadWarning, setLoadWarning] =
+    useState<StrategicIndicatorsErrorView | null>(null);
   const [requestProgress, setRequestProgress] = useState<RequestProgress>(
     EMPTY_REQUEST_PROGRESS
   );
@@ -196,6 +218,7 @@ export function useStrategicIndicatorsDepartmentTree({
     });
 
     setError(null);
+    setLoadWarning(null);
     setRequestProgress({ completed: 0, total: 2 });
 
     const token = getAccessTokenRef.current;
@@ -245,6 +268,7 @@ export function useStrategicIndicatorsDepartmentTree({
       trends: Awaited<ReturnType<typeof fetchDepartmentTreeTrends>>,
     ) => {
       setError(null);
+      setLoadWarning(null);
       const enrichedModel = narrowDepartmentTreeModel(
         mergeTreeTrendsIntoModel(adaptTreeSnapshotToModel(snapshot), trends),
         viewMode,
@@ -374,20 +398,22 @@ export function useStrategicIndicatorsDepartmentTree({
         if (requestId !== requestIdRef.current || controller.signal.aborted) {
           return;
         }
-        if (isGatewayTimeoutError(trendsErr)) {
+        if (isTrendsRetriableError(trendsErr)) {
           const handled = await loadViaBackgroundJob();
           if (handled) {
             return;
           }
         }
         setRequestProgress({ completed: 2, total: 2 });
-        setError(
+        setLoading(false);
+        setRefreshing(false);
+        setLoadWarning(
           captureStrategicIndicatorsError(trendsErr, {
             surface: "Árvore de departamentos",
             route: "/departments/tree/trends",
             method: "GET",
             competence: competence ?? null,
-            branch: branch ?? null,
+            branch: branchParam ?? null,
           }),
         );
         return;
@@ -444,8 +470,9 @@ export function useStrategicIndicatorsDepartmentTree({
       refreshing,
       requestProgress,
       error,
+      loadWarning,
       reload,
     }),
-    [model, loading, refreshing, requestProgress, error, reload],
+    [model, loading, refreshing, requestProgress, error, loadWarning, reload],
   );
 }
