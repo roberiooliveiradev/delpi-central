@@ -10,9 +10,11 @@ type SortConfig = {
 
 export function ChatRichTable({
   presentation,
+  hideTitle = false,
   onDrillDown,
 }: {
   presentation: TablePresentation;
+  hideTitle?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
   const { title, columns, rows } = presentation;
@@ -102,7 +104,11 @@ export function ChatRichTable({
   return (
     <div className="mdc-rich-table">
       <div className="mdc-rich-table__header">
-        <span className="mdc-rich-table__title">{title}</span>
+        {hideTitle ? (
+          <span className="mdc-rich-table__title" aria-hidden="true" />
+        ) : (
+          <span className="mdc-rich-table__title">{title}</span>
+        )}
         <div className="mdc-rich-table__actions">
           <button
             className="mdc-rich-table__btn"

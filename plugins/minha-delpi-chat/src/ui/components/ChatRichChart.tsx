@@ -23,8 +23,10 @@ type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
 export function ChatRichChart({
   presentation,
+  hideTitle = false,
 }: {
   presentation: ChartPresentation;
+  hideTitle?: boolean;
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
@@ -69,7 +71,11 @@ export function ChatRichChart({
   return (
     <div className="mdc-rich-chart">
       <div className="mdc-rich-chart__header">
-        <span className="mdc-rich-chart__title">{title}</span>
+        {hideTitle ? (
+          <span className="mdc-rich-chart__title" aria-hidden="true" />
+        ) : (
+          <span className="mdc-rich-chart__title">{title}</span>
+        )}
         <div className="mdc-rich-chart__actions">
           <button
             className="mdc-rich-chart__btn"

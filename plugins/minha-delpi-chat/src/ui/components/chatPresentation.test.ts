@@ -2,128 +2,114 @@ import { describe, expect, it } from "vitest";
 
 import {
   getAvailableFormatsFromToolCalls,
+  getPresentationTitle,
+  isShortPresentationCaption,
+  resolveRichTextBody,
   resolveRichTextContent,
   shouldSuppressMarkdownForPresentation,
   tablePresentationToMarkdown,
   type PresentationPair,
 } from "./chatPresentation";
 
-describe("shouldSuppressMarkdownForPresentation", () => {
-  const toolCallsWithText = [
-    {
-      metadata: {
-        availableFormats: ["text", "table", "chart"],
-        textPresentation: {
-          type: "markdown",
-          title: "Indicador",
-          markdown: "### Indicador\n\nLinha resumo.",
-        },
-        presentation: { type: "chart", title: "Indicador" },
-        tablePresentation: { type: "table", title: "Indicador" },
+const stockToolCalls = [
+  {
+    metadata: {
+      availableFormats: ["text", "table", "chart"],
+      presentation: {
+        type: "chart",
+        title: "Estoque por filial/armazém",
+        chartType: "bar",
+        data: [],
+      },
+      tablePresentation: {
+        type: "table",
+        title: "Estoque do produto",
+        columns: [
+          { key: "branch", label: "Filial" },
+          { key: "qty", label: "Qtd. atual" },
+        ],
+        rows: [
+          { branch: "01", qty: 4 },
+          { branch: "02", qty: 2 },
+        ],
       },
     },
-  ];
+  },
+];
 
-  it("suprime markdown tabular quando há texto exibível no painel", () => {
+describe("resolveRichTextBody", () => {
+  it("gera tabela markdown quando a mensagem é só o título compactado", () => {
+    const body = resolveRichTextBody("Estoque por filial/armazém", stockToolCalls);
+
+    expect(body).toContain("| Filial | Qtd. atual |");
+    expect(body).toContain("| 01 | 4 |");
+    expect(body).not.toContain("### Estoque por filial");
+  });
+
+  it("usa título do gráfico no cabeçalho compartilhado", () => {
+    expect(getPresentationTitle("Estoque por filial/armazém", stockToolCalls)).toBe(
+      "Estoque por filial/armazém",
+    );
+  });
+});
+
+describe("isShortPresentationCaption", () => {
+  it("detecta legenda curta do presenter", () => {
+    expect(
+      isShortPresentationCaption("Estoque por filial/armazém", stockToolCalls),
+    ).toBe(true);
+  });
+});
+
+describe("shouldSuppressMarkdownForPresentation", () => {
+  it("suprime legenda curta quando o painel exibe tabela em markdown", () => {
     const pair: PresentationPair = {
-      primary: { type: "chart", title: "Indicador" },
-      table: { type: "table", title: "Indicador" },
+      primary: { type: "chart", title: "Estoque por filial/armazém" },
+      table: stockToolCalls[0].metadata.tablePresentation as PresentationPair["table"],
     };
 
     expect(
       shouldSuppressMarkdownForPresentation(
-        "| A | B |\n|---|---|\n| 1 | 2 |",
+        "Estoque por filial/armazém",
         pair,
-        toolCallsWithText,
+        stockToolCalls,
       ),
     ).toBe(true);
   });
 
-  it("não suprime quando aba texto ficaria vazia", () => {
-    const pair: PresentationPair = {
-      primary: { type: "chart", title: "Indicador" },
-      table: {
+  it("mantém texto curto sem apresentação rica", () => {
+    expect(
+      shouldSuppressMarkdownForPresentation("Consulta concluída.", {
+        primary: null,
+        table: null,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("tablePresentationToMarkdown", () => {
+  it("omite título quando solicitado", () => {
+    const markdown = tablePresentationToMarkdown(
+      {
         type: "table",
         title: "Estoque",
         columns: [{ key: "a", label: "A" }],
         rows: [{ a: "1" }],
       },
-    };
+      { includeTitle: false },
+    );
 
-    expect(
-      shouldSuppressMarkdownForPresentation("", pair, [
-        { metadata: { availableFormats: ["text", "chart", "table"] } },
-      ]),
-    ).toBe(false);
-  });
-
-  it("mantém texto curto sem apresentação rica", () => {
-    const pair: PresentationPair = {
-      primary: { type: "chart", title: "Indicador" },
-      table: null,
-    };
-
-    expect(
-      shouldSuppressMarkdownForPresentation("Consulta concluída.", pair),
-    ).toBe(false);
+    expect(markdown).not.toContain("###");
+    expect(markdown).toContain("| A |");
   });
 });
 
 describe("resolveRichTextContent", () => {
-  it("prioriza conteúdo da mensagem e cai para textPresentation", () => {
-    expect(resolveRichTextContent("Resposta curta", [])).toBe("Resposta curta");
+  it("combina título e corpo para compatibilidade", () => {
+    const markdown = resolveRichTextContent("Estoque por filial/armazém", stockToolCalls);
 
-    expect(
-      resolveRichTextContent("", [
-        {
-          metadata: {
-            textPresentation: {
-              type: "markdown",
-              title: "Estoque",
-              markdown: "### Estoque\n\n10 unidades.",
-            },
-          },
-        },
-      ]),
-    ).toBe("### Estoque\n\n10 unidades.");
-  });
-
-  it("gera markdown a partir da tabela quando não há texto", () => {
-    const markdown = resolveRichTextContent("", [
-      {
-        metadata: {
-          presentation: { type: "chart", title: "Estoque", chartType: "bar", data: [] },
-          tablePresentation: {
-            type: "table",
-            title: "Estoque",
-            columns: [{ key: "qtd", label: "Qtd" }],
-            rows: [{ qtd: 10 }],
-          },
-        },
-      },
-    ]);
-
-    expect(markdown).toContain("### Estoque");
-    expect(markdown).toContain("| Qtd |");
-    expect(markdown).toContain("| 10 |");
-  });
-});
-
-describe("tablePresentationToMarkdown", () => {
-  it("monta tabela markdown", () => {
-    const markdown = tablePresentationToMarkdown({
-      type: "table",
-      title: "Produtos",
-      columns: [
-        { key: "code", label: "Código" },
-        { key: "qty", label: "Qtd" },
-      ],
-      rows: [{ code: "100", qty: 2 }],
-    });
-
-    expect(markdown).toContain("### Produtos");
-    expect(markdown).toContain("| Código | Qtd |");
-    expect(markdown).toContain("| 100 | 2 |");
+    expect(markdown).toContain("### Estoque por filial/armazém");
+    expect(markdown).toContain("| Filial |");
   });
 });
 

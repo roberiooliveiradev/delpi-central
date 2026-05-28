@@ -35,6 +35,11 @@
     both;
 }
 
+.mdc-rich-table__header:has(.mdc-rich-table__title[aria-hidden="true"]),
+.mdc-rich-chart__header:has(.mdc-rich-chart__title[aria-hidden="true"]) {
+  justify-content: flex-end;
+}
+
 .mdc-rich-table__header,
 .mdc-rich-chart__header {
   display: flex;

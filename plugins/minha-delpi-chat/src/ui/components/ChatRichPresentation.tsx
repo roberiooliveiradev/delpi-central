@@ -3,8 +3,10 @@ import type { ChatToolCall } from "../../data/api/chatTypes";
 import {
   getPreferredFormatFromToolCalls,
   getPresentationPairFromToolCalls,
+  getPresentationTitle,
+  getTablePresentationFromPair,
   hasDisplayableRichText,
-  resolveRichTextContent,
+  resolveRichTextBody,
   type ViewFormat,
 } from "./chatPresentation";
 import { ChatMarkdown } from "./ChatMarkdown";
@@ -85,21 +87,23 @@ export function ChatRichPresentation({
     () => getPresentationPairFromToolCalls(toolCalls),
     [toolCalls],
   );
-  const resolvedText = useMemo(
-    () => resolveRichTextContent(textContent, toolCalls),
+  const presentationTitle = useMemo(
+    () => getPresentationTitle(textContent, toolCalls),
+    [textContent, toolCalls],
+  );
+  const textBody = useMemo(
+    () => resolveRichTextBody(textContent, toolCalls),
     [textContent, toolCalls],
   );
 
   const chartPresentation =
     primary?.type === "chart" ? primary : null;
-  const tablePresentation =
-    table?.type === "table"
-      ? table
-      : primary?.type === "table"
-        ? primary
-        : null;
+  const tablePresentation = useMemo(
+    () => getTablePresentationFromPair({ primary, table }),
+    [primary, table],
+  );
 
-  const hasText = hasDisplayableRichText(resolvedText);
+  const hasText = hasDisplayableRichText(textBody) || Boolean(tablePresentation);
   const hasChartView = Boolean(chartPresentation);
   const hasTableView = Boolean(tablePresentation);
 
@@ -119,7 +123,7 @@ export function ChatRichPresentation({
     setViewMode(defaultMode);
   }, [defaultMode, toolCalls]);
 
-  if (!primary && !table && !resolvedText) {
+  if (!primary && !table && !textBody && !presentationTitle) {
     return null;
   }
 
@@ -141,8 +145,14 @@ export function ChatRichPresentation({
         ? tablePresentation
         : null;
 
+  const showSharedTitle = Boolean(presentationTitle);
+
   return (
     <div className="mdc-rich-presentation mdc-rich-presentation--enter">
+      {showSharedTitle ? (
+        <h3 className="mdc-rich-presentation__heading">{presentationTitle}</h3>
+      ) : null}
+
       {showToggle ? (
         <div className="mdc-rich-presentation__actions">
           {hasText ? (
@@ -174,18 +184,22 @@ export function ChatRichPresentation({
         </div>
       ) : null}
 
-      {viewMode === "text" && hasText ? (
+      {viewMode === "text" && hasText && textBody ? (
         <div className="mdc-rich-presentation__text">
-          <ChatMarkdown content={resolvedText} />
+          <ChatMarkdown content={textBody} />
         </div>
       ) : null}
 
       {viewMode === "chart" && hasChartView && chartPresentation ? (
-        <ChatRichChart presentation={chartPresentation} />
+        <ChatRichChart presentation={chartPresentation} hideTitle={showSharedTitle} />
       ) : null}
 
       {viewMode === "table" && hasTableView && tablePresentation ? (
-        <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
+        <ChatRichTable
+          presentation={tablePresentation}
+          hideTitle={showSharedTitle}
+          onDrillDown={onDrillDown}
+        />
       ) : null}
     </div>
   );
