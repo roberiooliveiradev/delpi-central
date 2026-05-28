@@ -436,6 +436,15 @@ export function formatIndicatorRealizedDisplay(
   return "—";
 }
 
+/** Linha de contexto (subtítulo) alinhada à coluna Meta. */
+export function formatIndicatorMetaGoalLine(
+  indicator: IndicatorGoalDisplayInput,
+  competence?: string | null,
+  displayContext?: IndicatorDisplayContext,
+): string {
+  return `Meta ${formatIndicatorGoalValue(indicator, competence, displayContext)}`;
+}
+
 export function formatIndicatorGoalValue(
   indicator: IndicatorGoalDisplayInput,
   competence?: string | null,

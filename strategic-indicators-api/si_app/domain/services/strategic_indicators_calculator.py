@@ -1045,7 +1045,10 @@ class StrategicIndicatorsCalculator:
                 end_date=end_date,
                 competence=competence,
             )
-            if comparable_goal is None or comparable_goal <= 0:
+            if comparable_goal is None:
+                goals[branch_code] = None
+                continue
+            if comparable_goal <= 0 and getattr(indicator, "goal_mode", "standard") != "monthly_curve":
                 goals[branch_code] = None
                 continue
             goals[branch_code] = round(float(comparable_goal), 2)
@@ -1092,6 +1095,31 @@ class StrategicIndicatorsCalculator:
 
         return {"consolidated": gap}
 
+    def _stored_unit_goals_for_response(
+        self,
+        stored: dict[str, float | None] | None,
+        *,
+        department_id: str | None,
+        unit_values: dict[str, float | None] | None,
+    ) -> dict[str, float | None] | None:
+        if not stored:
+            return None
+
+        if is_consolidated_aggregation_department(department_id):
+            return stored
+
+        branch_keys = [code for code in BRANCH_UNIT_CODES if code in stored]
+        if branch_keys:
+            return stored
+
+        unit_branch_keys = [
+            code for code in BRANCH_UNIT_CODES if code in (unit_values or {})
+        ]
+        if len(unit_branch_keys) >= 2 and set(stored.keys()) <= {"consolidated"}:
+            return None
+
+        return stored
+
     def resolve_unit_goals_for_response(
         self,
         *,
@@ -1101,14 +1129,18 @@ class StrategicIndicatorsCalculator:
         end_date: str | None,
         competence: str | None,
     ) -> dict[str, float | None] | None:
-        stored = getattr(calculated, "unit_goals", None)
+        unit_values = calculated.unit_values
+        stored = self._stored_unit_goals_for_response(
+            getattr(calculated, "unit_goals", None),
+            department_id=calculated.department_id,
+            unit_values=unit_values,
+        )
         if stored:
             return stored
 
         if not catalog_item or not (catalog_item.branch_goals or {}):
             return None
 
-        unit_values = calculated.unit_values
         if not unit_values:
             return None
 
