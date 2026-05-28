@@ -1,6 +1,6 @@
 .mdc-admin-knowledge {
   display: grid;
-  grid-template-columns: minmax(22rem, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: minmax(20rem, 0.34fr) minmax(0, 1fr);
   gap: var(--mdc-space-5);
   align-items: start;
 }

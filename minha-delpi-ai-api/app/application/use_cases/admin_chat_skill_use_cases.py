@@ -3,6 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.domain.skills.chat_skill_registry import invalidate_skill_cache
+from app.infrastructure.content.content_service import ContentService
 from app.infrastructure.persistence.postgres_chat_skill_repository import PostgresChatSkillRepository
 
 
@@ -11,6 +12,46 @@ class ListAdminChatSkillsUseCase:
         self.repository = repository or PostgresChatSkillRepository()
 
     def execute(self, *, include_inactive: bool = True) -> list[dict]:
+        # Bootstrapa skills "built-in" do catálogo embarcado (ex.: `company-knowledge`)
+        # quando o banco ainda não foi populado (ambiente novo / migração pendente).
+        # Isso garante consistência do runtime e permite gerenciar as skills via UI.
+        existing = self.repository.list_all(include_inactive=True) or []
+        existing_keys = {
+            str(item.get("skillKey") or "").strip().lower()
+            for item in existing
+            if isinstance(item, dict)
+        }
+
+        catalog = ContentService.skills_catalog()
+        for item in (catalog.get("skills") or []):
+            if not isinstance(item, dict):
+                continue
+            key = str(item.get("key") or "").strip().lower()
+            if not key or key in existing_keys:
+                continue
+
+            payload = {
+                "skillKey": key,
+                "label": item.get("label") or key,
+                "description": item.get("description") or "",
+                "policyFile": item.get("policyFile") or "",
+                "metadataFlag": item.get("metadataFlag") or "enabled",
+                "legacyMetadataFlag": item.get("legacyMetadataFlag"),
+                "executionPathHint": item.get("executionPathHint"),
+                "executionDerivedKey": item.get("executionDerivedKey"),
+                "isActive": True,
+                "sortOrder": int(item.get("sortOrder") or 0),
+            }
+            try:
+                created = self.repository.create(payload)
+                existing_keys.add(str(created.get("skillKey") or "").strip().lower())
+            except Exception:
+                # Ambiente pode ter concorrência/seed paralelo; ignore se já existir.
+                pass
+
+        if existing_keys:
+            invalidate_skill_cache()
+
         return self.repository.list_all(include_inactive=include_inactive)
 
 
