@@ -29,22 +29,33 @@
   padding: clamp(0.9rem, 1.5vw, 1.15rem);
 }
 
+/* Checkbox / radio — alinhado ao agent builder */
 .mdc-admin-form-row {
-  display: flex !important;
-  align-items: flex-start;
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 0.65rem;
-  cursor: pointer;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
+  padding: 0.4rem 0;
+  cursor: pointer;
 }
 
 .mdc-admin-form-row input[type="checkbox"],
 .mdc-admin-form-row input[type="radio"] {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   width: 1.05rem;
   height: 1.05rem;
-  margin: 0.2rem 0 0;
+  margin: 0;
   accent-color: var(--mdc-primary);
   cursor: pointer;
+}
+
+.mdc-admin-form-row:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .mdc-admin-form-row__copy {
@@ -56,7 +67,7 @@
 .mdc-admin-form-row__title {
   color: var(--mdc-text);
   font-size: 0.9rem;
-  font-weight: 780;
+  font-weight: 500;
   line-height: 1.35;
 }
 
@@ -66,96 +77,266 @@
   line-height: 1.4;
 }
 
-.mdc-admin-field {
+/* Campos — mesmo padrão de .mdc-chat-ws-field + builder */
+.mdc-admin-field,
+.mdc-chat-ws-field.mdc-admin-field {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
-.mdc-admin-field > span {
+.mdc-admin-field > span,
+.mdc-admin-shell .mdc-admin-simulate__form label > span,
+.mdc-admin-shell .mdc-admin-metrics-tab__intelligence-form label > span,
+.mdc-admin-shell .mdc-admin-agents__editor label > span,
+.mdc-admin-shell .mdc-guideline-editor-panel label > span,
+.mdc-admin-shell .mdc-guideline-test-panel label > span,
+.mdc-admin-shell .mdc-knowledge-ingestion__form label > span,
+.mdc-admin-shell .mdc-admin-evaluations__candidates label > span {
   color: var(--mdc-text-muted);
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .mdc-admin-field input,
 .mdc-admin-field textarea,
-.mdc-admin-field select {
+.mdc-admin-field select,
+.mdc-admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="reset"]),
+.mdc-admin-shell textarea,
+.mdc-admin-shell select {
   width: 100%;
   min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
-  border-radius: var(--mdc-radius-md);
-  background: color-mix(in srgb, var(--mdc-bg) 88%, var(--mdc-card-bg));
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
+  border-radius: 0.78rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 90%, transparent);
   color: var(--mdc-text);
   font: inherit;
   line-height: 1.45;
-  padding: 0.55rem 0.7rem;
   outline: none;
-  box-sizing: border-box;
+  padding: 0.74rem 0.85rem;
 }
 
-.mdc-admin-field textarea {
+.mdc-admin-field textarea,
+.mdc-admin-shell textarea {
   min-height: 6rem;
   resize: vertical;
 }
 
+.mdc-admin-field input:hover,
+.mdc-admin-field textarea:hover,
+.mdc-admin-field select:hover,
+.mdc-admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):hover,
+.mdc-admin-shell textarea:hover,
+.mdc-admin-shell select:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+}
+
 .mdc-admin-field input:focus,
 .mdc-admin-field textarea:focus,
-.mdc-admin-field select:focus {
-  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+.mdc-admin-field select:focus,
+.mdc-admin-shell input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):focus,
+.mdc-admin-shell textarea:focus,
+.mdc-admin-shell select:focus {
+  border-color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-card-border));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mdc-primary) 12%, transparent);
 }
 
-.mdc-admin-btn {
+/* Botões — alias do workspace (.mdc-chat-ws-toolbar-btn) */
+.mdc-admin-btn,
+.mdc-admin-shell :where(
+    .mdc-admin-topbar__actions button,
+    .mdc-admin-agents__header button,
+    .mdc-admin-agents__editor > button,
+    .mdc-admin-evaluations__candidates > button,
+    .mdc-admin-evaluations__detail > button,
+    .mdc-admin-metrics-tab__intelligence-actions button,
+    .mdc-admin-metrics-tab__save-cost,
+    .mdc-admin-simulate__form > button,
+    .mdc-admin-tools-tab__hero button,
+    .mdc-admin-security__header button,
+    .mdc-admin-security__scan > button,
+    .mdc-guideline-editor-panel > button,
+    .mdc-guideline-test-panel button,
+    .mdc-guideline-version-panel__compare button,
+    .mdc-guideline-version-panel__list footer button,
+    .mdc-guideline-list-panel__actions button,
+    .mdc-knowledge-document-card__actions button,
+    .mdc-knowledge-documents__pagination button,
+    .mdc-knowledge-ingestion__actions button,
+    .mdc-knowledge-ingestion__form button[type="submit"],
+    .mdc-audit-filters__actions button,
+    .mdc-audit-pagination button,
+    .mdc-tool-health-panel button,
+    .mdc-external-actions-panel button,
+    .mdc-external-actions-panel__actions button
+  ) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  width: fit-content;
+  min-height: 2.3rem;
+  margin: 0;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mdc-card-bg) 90%, transparent);
+  background: transparent;
+  box-shadow: none;
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
-  padding: 0.48rem 0.9rem;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+  font-size: 0.84rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0 0.85rem;
+  white-space: nowrap;
 }
 
-.mdc-admin-btn:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
-  color: var(--mdc-primary);
+.mdc-admin-btn:hover:not(:disabled),
+.mdc-admin-shell :where(
+    .mdc-admin-topbar__actions button,
+    .mdc-admin-agents__header button,
+    .mdc-admin-agents__editor > button,
+    .mdc-admin-evaluations__candidates > button,
+    .mdc-admin-evaluations__detail > button,
+    .mdc-admin-metrics-tab__intelligence-actions button,
+    .mdc-admin-metrics-tab__save-cost,
+    .mdc-admin-simulate__form > button,
+    .mdc-admin-tools-tab__hero button,
+    .mdc-admin-security__header button,
+    .mdc-admin-security__scan > button,
+    .mdc-guideline-editor-panel > button,
+    .mdc-guideline-test-panel button,
+    .mdc-guideline-version-panel__compare button,
+    .mdc-guideline-version-panel__list footer button,
+    .mdc-guideline-list-panel__actions button,
+    .mdc-knowledge-document-card__actions button,
+    .mdc-knowledge-documents__pagination button,
+    .mdc-knowledge-ingestion__actions button,
+    .mdc-knowledge-ingestion__form button[type="submit"],
+    .mdc-audit-filters__actions button,
+    .mdc-audit-pagination button,
+    .mdc-tool-health-panel button,
+    .mdc-external-actions-panel button,
+    .mdc-external-actions-panel__actions button
+  ):hover:not(:disabled) {
   background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
+  color: var(--mdc-primary);
 }
 
-.mdc-admin-btn:disabled {
-  opacity: 0.5;
+.mdc-admin-btn:disabled,
+.mdc-admin-shell :where(
+    .mdc-admin-topbar__actions button,
+    .mdc-admin-agents__header button,
+    .mdc-admin-agents__editor > button,
+    .mdc-admin-evaluations__candidates > button,
+    .mdc-admin-evaluations__detail > button,
+    .mdc-admin-metrics-tab__intelligence-actions button,
+    .mdc-admin-metrics-tab__save-cost,
+    .mdc-admin-simulate__form > button,
+    .mdc-admin-tools-tab__hero button,
+    .mdc-admin-security__header button,
+    .mdc-admin-security__scan > button,
+    .mdc-guideline-editor-panel > button,
+    .mdc-guideline-test-panel button,
+    .mdc-guideline-version-panel__compare button,
+    .mdc-guideline-version-panel__list footer button,
+    .mdc-guideline-list-panel__actions button,
+    .mdc-knowledge-document-card__actions button,
+    .mdc-knowledge-documents__pagination button,
+    .mdc-knowledge-ingestion__actions button,
+    .mdc-knowledge-ingestion__form button[type="submit"],
+    .mdc-audit-filters__actions button,
+    .mdc-audit-pagination button,
+    .mdc-tool-health-panel button,
+    .mdc-external-actions-panel button,
+    .mdc-external-actions-panel__actions button
+  ):disabled {
   cursor: not-allowed;
+  opacity: 0.55;
 }
 
-.mdc-admin-btn--primary {
+.mdc-admin-btn--primary,
+.mdc-admin-btn.mdc-admin-btn--primary,
+.mdc-admin-shell :where(
+    .mdc-admin-simulate__form > button,
+    .mdc-admin-tools-tab__hero button,
+    .mdc-guideline-editor-panel > button:not(.mdc-guideline-editor-panel__ghost),
+    .mdc-guideline-test-panel button,
+    .mdc-guideline-version-panel__compare button,
+    .mdc-guideline-version-panel__list footer button,
+    .mdc-knowledge-ingestion__form button[type="submit"],
+    .mdc-admin-agents__editor > button,
+    .mdc-admin-evaluations__detail > button,
+    .mdc-admin-security__scan > button,
+    .mdc-admin-metrics-tab__intelligence-actions button:first-child,
+    .mdc-admin-metrics-tab__save-cost,
+    .mdc-audit-filters__actions button:first-child
+  ) {
   border-color: transparent;
   background: var(--mdc-primary);
   color: var(--mdc-on-primary);
 }
 
-.mdc-admin-btn--primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--mdc-primary) 85%, var(--mdc-text));
+.mdc-admin-btn--primary:hover:not(:disabled),
+.mdc-admin-btn.mdc-admin-btn--primary:hover:not(:disabled),
+.mdc-admin-shell :where(
+    .mdc-admin-simulate__form > button,
+    .mdc-admin-tools-tab__hero button,
+    .mdc-guideline-editor-panel > button:not(.mdc-guideline-editor-panel__ghost),
+    .mdc-guideline-test-panel button,
+    .mdc-guideline-version-panel__compare button,
+    .mdc-guideline-version-panel__list footer button,
+    .mdc-knowledge-ingestion__form button[type="submit"],
+    .mdc-admin-agents__editor > button,
+    .mdc-admin-evaluations__detail > button,
+    .mdc-admin-security__scan > button,
+    .mdc-admin-metrics-tab__intelligence-actions button:first-child,
+    .mdc-admin-metrics-tab__save-cost,
+    .mdc-audit-filters__actions button:first-child
+  ):hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-primary) 88%, var(--mdc-text));
   color: var(--mdc-on-primary);
 }
 
-.mdc-admin-btn--danger {
+.mdc-admin-btn--danger,
+.mdc-admin-btn.mdc-admin-btn--danger {
+  border-color: color-mix(in srgb, var(--mdc-danger) 35%, transparent);
   color: var(--mdc-danger);
 }
 
-.mdc-admin-shell label.mdc-admin-form-row {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap;
-  align-items: center;
+.mdc-admin-btn--danger:hover:not(:disabled),
+.mdc-admin-btn.mdc-admin-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
+  color: var(--mdc-danger);
+}
+
+.mdc-knowledge-document-card__actions .mdc-knowledge-document-card__danger {
+  border-color: color-mix(in srgb, var(--mdc-danger) 35%, transparent) !important;
+  color: var(--mdc-danger) !important;
+}
+
+.mdc-knowledge-document-card__actions .mdc-knowledge-document-card__danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-danger) 10%, transparent) !important;
+  color: var(--mdc-danger) !important;
+}
+
+.mdc-guideline-editor-panel__ghost {
+  min-height: 2.3rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 750;
+  padding: 0 0.85rem;
+  cursor: pointer;
+}
+
+.mdc-guideline-editor-panel__ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+  color: var(--mdc-text);
 }

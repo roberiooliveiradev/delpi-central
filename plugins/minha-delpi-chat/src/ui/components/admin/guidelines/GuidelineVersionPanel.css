@@ -116,17 +116,6 @@
   align-items: end;
 }
 
-.mdc-guideline-version-panel__compare button,
-.mdc-guideline-version-panel__list footer button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  border-color: var(--mdc-primary);
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
 .mdc-guideline-version-panel__diff ul {
   display: grid;
   gap: var(--mdc-space-3);

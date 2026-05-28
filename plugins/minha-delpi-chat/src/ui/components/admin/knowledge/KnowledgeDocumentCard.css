@@ -126,18 +126,6 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-knowledge-document-card__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
-.mdc-knowledge-document-card__danger {
-  border-color: color-mix(in srgb, var(--mdc-danger) 45%, var(--mdc-card-border)) !important;
-  color: var(--mdc-danger) !important;
-}
-
 @media (max-width: 920px) {
   .mdc-knowledge-document-card {
     align-items: stretch;

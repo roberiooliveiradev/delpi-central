@@ -68,40 +68,12 @@
 
 .mdc-knowledge-ingestion__mode button.is-active {
   background: var(--mdc-primary);
-  color: var(--mdc-bg);
+  color: var(--mdc-on-primary);
 }
 
 .mdc-knowledge-ingestion__form label {
   display: grid;
-  gap: var(--mdc-space-2);
-  color: var(--mdc-title-soft);
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.mdc-knowledge-ingestion__form input,
-.mdc-knowledge-ingestion__form select,
-.mdc-knowledge-ingestion__form textarea {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  outline: 0;
-  padding: 0.75rem 0.85rem;
-}
-
-.mdc-knowledge-ingestion__form input:focus,
-.mdc-knowledge-ingestion__form select:focus,
-.mdc-knowledge-ingestion__form textarea:focus {
-  border-color: var(--mdc-primary);
-  box-shadow: var(--mdc-focus-ring);
-}
-
-.mdc-knowledge-ingestion__form textarea {
-  resize: vertical;
+  gap: 0.4rem;
 }
 
 .mdc-knowledge-ingestion__dropzone {
@@ -165,13 +137,6 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-knowledge-ingestion__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.9rem;
-}
-
 .mdc-knowledge-ingestion__preview {
   display: grid;
   gap: var(--mdc-space-3);
@@ -211,13 +176,6 @@
 
 .mdc-knowledge-ingestion__form button[type="submit"] {
   justify-self: start;
-  min-height: 2.35rem;
-  border-color: var(--mdc-primary);
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
 }
 
 @media (max-width: 640px) {

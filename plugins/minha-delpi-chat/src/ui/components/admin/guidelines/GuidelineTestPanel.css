@@ -56,13 +56,6 @@
 
 .mdc-guideline-test-panel button {
   justify-self: start;
-  min-height: 2.35rem;
-  border-color: var(--mdc-primary);
-  border-radius: 999px;
-  background: var(--mdc-primary);
-  color: var(--mdc-bg);
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
 }
 
 .mdc-guideline-test-panel__error {

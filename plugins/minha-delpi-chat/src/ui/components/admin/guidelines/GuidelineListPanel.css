@@ -68,13 +68,6 @@
   justify-content: flex-end;
 }
 
-.mdc-guideline-list-panel__actions button {
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.8rem;
-}
-
 .mdc-guideline-list-panel__actions .is-active {
   color: var(--mdc-success);
 }

@@ -137,23 +137,6 @@
   gap: 0.35rem;
 }
 
-.mdc-admin-agents__editor label span {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--mdc-text-muted);
-}
-
-.mdc-admin-agents__editor input,
-.mdc-admin-agents__editor select {
-  width: 100%;
-  border: 1px solid var(--mdc-control-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-control-bg);
-  color: var(--mdc-control-text);
-  font: inherit;
-  padding: 0.75rem 0.85rem;
-}
-
 .mdc-admin-agents__toggle {
   display: inline-flex !important;
   align-items: center;
@@ -163,10 +146,6 @@
 
 .mdc-admin-agents__editor > button {
   justify-self: start;
-  min-height: 2.35rem;
-  border-radius: 999px;
-  font-weight: 800;
-  padding: 0.5rem 0.9rem;
 }
 
 @media (max-width: 1023px) {
