@@ -422,6 +422,75 @@ def test_select_product_summary_not_analyser():
     assert selected["arguments"]["parameters"]["code"] == "10080047"
 
 
+def test_select_stock_follow_up_uses_last_product_from_context():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Estoque",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "estoque do produto",
+        allowed_action_ids=["stock-action"],
+        conversation_context=(
+            "assistant: Produto 10080047: A\nassistant: Produto 10080055: B"
+        ),
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["parameters"]["code"] == "10080055"
+
+
+def test_select_stock_for_shorthand_code_after_previous_stock():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Estoque",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080047/stock"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "e do 10080055?",
+        allowed_action_ids=["stock-action"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "stock-action"
+    assert selected["arguments"]["parameters"]["code"] == "10080055"
+
+
 def test_select_product_full_analyser_not_summary():
     service = ExternalActionSelectionService(
         FakeRepository(

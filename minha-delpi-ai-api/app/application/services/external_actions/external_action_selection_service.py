@@ -93,6 +93,11 @@ class ExternalActionSelectionService:
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,
+            previous_messages=previous_messages,
+        )
+        product_intent = ChatProductQueryIntentService.resolve_product_intent(
+            message,
+            previous_messages=previous_messages,
         )
 
         if self._looks_like_sale_orders_list_question(normalized):
@@ -177,7 +182,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.PARENTS:
+        if product_code and product_intent == ChatProductQueryIntent.PARENTS:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -188,7 +193,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STRUCTURE:
+        if product_code and product_intent == ChatProductQueryIntent.STRUCTURE:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -199,7 +204,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.STOCK:
+        if product_code and product_intent == ChatProductQueryIntent.STOCK:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -210,7 +215,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.SUMMARY:
+        if product_code and product_intent == ChatProductQueryIntent.SUMMARY:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -221,7 +226,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and ChatProductQueryIntentService.detect(message) == ChatProductQueryIntent.DESCRIPTION:
+        if product_code and product_intent == ChatProductQueryIntent.DESCRIPTION:
             selected = self._select_product_action(
                 message,
                 product_code,
@@ -232,7 +237,10 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if product_code and self._looks_like_product_question(normalized):
+        if product_code and (
+            self._looks_like_product_question(normalized)
+            or ChatProductQueryIntentService.extract_product_code(message)
+        ):
             return self._select_product_action(
                 message,
                 product_code,
@@ -1436,7 +1444,17 @@ class ExternalActionSelectionService:
         normalized = str(message or "").lower()
         wants_purchases = any(
             term in normalized
-            for term in ("compra", "compras", "fornecedor comprou", "histórico de compra", "historico de compra")
+            for term in (
+                "compra",
+                "compras",
+                "ultimas compras",
+                "últimas compras",
+                "ultima compra",
+                "última compra",
+                "fornecedor comprou",
+                "histórico de compra",
+                "historico de compra",
+            )
         )
         wants_billing = any(
             term in normalized for term in ("faturamento", "billing", "faturado")

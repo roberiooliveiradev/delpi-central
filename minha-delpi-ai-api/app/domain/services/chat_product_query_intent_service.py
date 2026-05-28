@@ -211,7 +211,129 @@ class ChatProductQueryIntentService:
         )
 
     @classmethod
-    def resolve_product_code(cls, message: str, conversation_context: str | None = None) -> str | None:
+    def extract_last_product_code(cls, text: str | None) -> str | None:
+        raw = str(text or "")
+        last_code: str | None = None
+
+        for match in cls._PRODUCT_CODE_RE.finditer(raw):
+            if cls._is_group_code_numeric_token(raw, match):
+                continue
+
+            last_code = cls.normalize_product_code(match.group(0))
+
+        return last_code
+
+    @classmethod
+    def extract_last_product_code_from_messages(
+        cls,
+        previous_messages: list | None,
+    ) -> str | None:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        for item in reversed((previous_messages or [])[-16:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+                    continue
+
+                code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
+                    str(tool_meta.get("path") or "")
+                )
+
+                if code:
+                    return code
+
+            content = cls._message_content(item)
+            code = cls.extract_product_code(content)
+
+            if code:
+                return code
+
+        return None
+
+    @classmethod
+    def infer_intent_from_recent_tool(cls, previous_messages: list | None) -> str | None:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        segment_to_intent = {
+            "stock": ChatProductQueryIntent.STOCK,
+            "summary": ChatProductQueryIntent.SUMMARY,
+            "structure": ChatProductQueryIntent.STRUCTURE,
+            "parents": ChatProductQueryIntent.PARENTS,
+        }
+
+        for item in reversed((previous_messages or [])[-12:]):
+            metadata = cls._message_metadata(item)
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+                    continue
+
+                segment = ChatAnalysisIntentService.extract_product_path_segment(
+                    str(tool_meta.get("path") or "")
+                )
+
+                if segment in segment_to_intent:
+                    return segment_to_intent[segment]
+
+        return None
+
+    @classmethod
+    def resolve_product_intent(
+        cls,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+    ) -> str:
+        intent = cls.detect(message)
+
+        if intent != ChatProductQueryIntent.FULL:
+            return intent
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if cls._looks_like_product_sub_intent(normalized):
+            return intent
+
+        inherited = cls.infer_intent_from_recent_tool(previous_messages)
+
+        if not inherited:
+            return intent
+
+        if cls.extract_product_code(message) or cls.references_previous_product(message):
+            return inherited
+
+        return inherited
+
+    @classmethod
+    def resolve_product_code(
+        cls,
+        message: str,
+        conversation_context: str | None = None,
+        *,
+        previous_messages: list | None = None,
+    ) -> str | None:
         code = cls.extract_product_code(message)
 
         if code:
@@ -223,13 +345,40 @@ class ChatProductQueryIntentService:
             cls.references_previous_product(message)
             or cls._looks_like_stock_question(normalized)
             or cls._looks_like_description_question(normalized)
+            or cls._looks_like_product_summary_question(normalized)
             or cls._looks_like_structure_question(normalized)
             or cls._looks_like_parents_question(normalized)
             or cls._looks_like_product_sub_intent(normalized)
         ):
             return None
 
-        return cls.extract_product_code(conversation_context)
+        if previous_messages:
+            code = cls.extract_last_product_code_from_messages(previous_messages)
+
+            if code:
+                return code
+
+        if conversation_context:
+            return cls.extract_last_product_code(conversation_context)
+
+        return None
+
+    @classmethod
+    def _message_metadata(cls, message) -> dict:
+        if isinstance(message, dict):
+            metadata = message.get("metadata")
+            return metadata if isinstance(metadata, dict) else {}
+
+        metadata = getattr(message, "metadata", None)
+
+        return metadata if isinstance(metadata, dict) else {}
+
+    @classmethod
+    def _message_content(cls, message) -> str:
+        if isinstance(message, dict):
+            return str(message.get("content") or "")
+
+        return str(getattr(message, "content", "") or "")
 
     @classmethod
     def format_direct_answer(

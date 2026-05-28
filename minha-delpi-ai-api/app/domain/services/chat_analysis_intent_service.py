@@ -48,6 +48,10 @@ class ChatAnalysisIntentService:
         r"/products/(?P<code>[^/]+)/structure",
         re.IGNORECASE,
     )
+    _PRODUCT_PATH_RE = re.compile(
+        r"/products/(?P<code>[^/]+)(?:/(?P<segment>[^/?]+))?",
+        re.IGNORECASE,
+    )
 
     @classmethod
     def is_comparison_or_insight_request(cls, message: str) -> bool:
@@ -134,9 +138,21 @@ class ChatAnalysisIntentService:
         if not path:
             return None
 
-        match = cls._STRUCTURE_PATH_RE.search(str(path))
+        match = cls._PRODUCT_PATH_RE.search(str(path))
 
         if not match:
             return None
 
         return ChatProductQueryIntentService.normalize_product_code(match.group("code"))
+
+    @classmethod
+    def extract_product_path_segment(cls, path: str | None) -> str | None:
+        if not path:
+            return None
+
+        match = cls._PRODUCT_PATH_RE.search(str(path))
+
+        if not match or not match.group("segment"):
+            return None
+
+        return str(match.group("segment")).strip().lower()

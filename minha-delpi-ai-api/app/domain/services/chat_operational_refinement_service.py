@@ -79,7 +79,9 @@ class ChatOperationalRefinementService:
             )
 
         if not product_code and previous_messages:
-            product_code = cls._product_code_from_messages(previous_messages)
+            product_code = ChatProductQueryIntentService.extract_last_product_code_from_messages(
+                previous_messages,
+            ) or cls._product_code_from_messages(previous_messages)
 
         if not product_code:
             return None

@@ -34,3 +34,20 @@ def test_extract_product_code_from_structure_path():
     )
 
     assert code == "90260077"
+
+
+def test_extract_product_code_from_stock_path():
+    code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
+        "/products/10080047/stock"
+    )
+
+    assert code == "10080047"
+
+
+def test_extract_product_path_segment():
+    assert (
+        ChatAnalysisIntentService.extract_product_path_segment(
+            "/products/10080047/purchases"
+        )
+        == "purchases"
+    )

@@ -31,6 +31,11 @@ PRODUCT_CODE_CASES = [
         "10080047",
         "assistant: Produto 10080047: TERM. PINO RETO",
     ),
+    (
+        "estoque do produto",
+        "10080055",
+        "assistant: Produto 10080047: A\nassistant: Produto 10080055: B",
+    ),
 ]
 
 ANALYSIS_INTENT_CASES = [

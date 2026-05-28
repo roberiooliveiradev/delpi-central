@@ -52,6 +52,91 @@ def test_resolve_product_code_from_conversation_context():
     assert code == "10080047"
 
 
+def test_resolve_product_code_uses_last_code_in_context():
+    code = ChatProductQueryIntentService.resolve_product_code(
+        "estoque do produto",
+        "assistant: Produto 10080047: A\nassistant: Produto 10080055: B",
+    )
+
+    assert code == "10080055"
+
+
+def test_resolve_product_code_from_tool_metadata_in_history():
+    history = [
+        {"role": "user", "content": "resumo do produto 10080047"},
+        {
+            "role": "assistant",
+            "content": "ok",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080047/summary",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    code = ChatProductQueryIntentService.resolve_product_code(
+        "ultimas compras",
+        previous_messages=history,
+    )
+
+    assert code == "10080047"
+
+
+def test_resolve_product_intent_inherits_stock_from_history():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080047/stock"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            "e do 10080055?",
+            previous_messages=history,
+        )
+        == ChatProductQueryIntent.STOCK
+    )
+
+
+def test_resolve_product_intent_keeps_purchases_over_inherited_summary():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080047/summary"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert (
+        ChatProductQueryIntentService.resolve_product_intent(
+            "ultimas compras",
+            previous_messages=history,
+        )
+        == ChatProductQueryIntent.FULL
+    )
+
+
 def test_format_direct_answer_description_keeps_only_main_line():
     answer = ChatProductQueryIntentService.format_direct_answer(
         {
