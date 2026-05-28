@@ -176,14 +176,15 @@ export function ChatAdminPage({
           <AdminSecurityTab getAccessToken={getAccessToken} />
         ) : null}
 
-        {activeTab === "tools" ? <AdminRbacPanel rbac={adminRbac} /> : null}
-
         {activeTab === "tools" ? (
-          <AdminToolsTab
-            llmStatus={admin.llmStatus}
-            getAccessToken={getAccessToken}
-            rbac={adminRbac}
-          />
+          <div className="mdc-admin-tools-page">
+            <AdminRbacPanel rbac={adminRbac} />
+            <AdminToolsTab
+              llmStatus={admin.llmStatus}
+              getAccessToken={getAccessToken}
+              rbac={adminRbac}
+            />
+          </div>
         ) : null}
 
         {activeTab === "audit" ? (
