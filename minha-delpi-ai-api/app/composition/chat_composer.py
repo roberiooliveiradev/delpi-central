@@ -177,6 +177,7 @@ def make_chat_agentic_tool_loop_service() -> ChatAgenticToolLoopService:
         llm_gateway=make_llm_gateway(),
         execute_tool_use_case=make_execute_tool_use_case(),
         intelligence_settings_service=make_chat_intelligence_settings_service(),
+        external_action_repository=make_postgres_external_action_repository(),
     )
 
 

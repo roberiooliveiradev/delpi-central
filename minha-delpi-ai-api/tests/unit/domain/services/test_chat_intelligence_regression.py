@@ -7,6 +7,9 @@ from app.domain.services.chat_external_action_direct_answer_service import (
     ChatExternalActionDirectAnswerService,
 )
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_operational_parameter_service import (
+    ChatOperationalParameterService,
+)
 from app.domain.services.chat_operational_pipeline_service import (
     ChatOperationalPipelineService,
 )
@@ -17,6 +20,7 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     ANALYSIS_INTENT_CASES,
     DIRECT_ANSWER_CASES,
     INTENT_CASES,
+    MISSING_PRODUCT_CODE_CASES,
     OPERATIONAL_FAST_PATH_CASES,
     PRODUCT_CODE_CASES,
     SELECTION_CASES,
@@ -51,6 +55,13 @@ def test_product_code_regression(case):
 def test_analysis_intent_regression(message, expected):
     assert (
         ChatAnalysisIntentService.is_comparison_or_insight_request(message) is expected
+    )
+
+
+@pytest.mark.parametrize("message,expected", MISSING_PRODUCT_CODE_CASES)
+def test_missing_product_code_regression(message, expected):
+    assert (
+        ChatOperationalParameterService.should_skip_tools(message) is expected
     )
 
 

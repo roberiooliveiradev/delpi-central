@@ -39,6 +39,13 @@ ANALYSIS_INTENT_CASES = [
     ("estrutura do produto 90260088", False),
 ]
 
+MISSING_PRODUCT_CODE_CASES = [
+    ("estoque do produto", True),
+    ("estouque do produto", True),
+    ("estoque do produto 10080099", False),
+    ("qual o valor total de estoque da empresa", False),
+]
+
 OPERATIONAL_FAST_PATH_CASES = [
     ("estoque do produto 10080047", True),
     ("descrição do produto 10080047", True),

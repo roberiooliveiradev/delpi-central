@@ -8,6 +8,9 @@ from app.application.services.chat_intelligence_settings_service import (
 )
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
+from app.domain.services.chat_operational_parameter_service import (
+    ChatOperationalParameterService,
+)
 from app.infrastructure.config.settings import Settings
 
 logger = logging.getLogger("minha-delpi-ai-api.chat.agentic")
@@ -19,12 +22,14 @@ class ChatAgenticToolLoopService:
         llm_gateway: LlmGatewayPort,
         execute_tool_use_case: ExecuteToolUseCase,
         intelligence_settings_service: ChatIntelligenceSettingsService | None = None,
+        external_action_repository=None,
     ):
         self.llm_gateway = llm_gateway
         self.execute_tool_use_case = execute_tool_use_case
         self.intelligence_settings_service = (
             intelligence_settings_service or ChatIntelligenceSettingsService()
         )
+        self.external_action_repository = external_action_repository
 
     def extend_tool_context(
         self,
@@ -35,14 +40,26 @@ class ChatAgenticToolLoopService:
         tool_context: dict,
         allowed_tool_names: list[str] | None,
         allowed_action_ids: list[str] | None,
+        conversation_context: str | None = None,
     ) -> dict:
         settings = self._resolve_settings()
 
         if not settings["enabled"]:
             return tool_context
 
+        if ChatOperationalParameterService.should_skip_agentic_loop(
+            message,
+            conversation_context=conversation_context,
+            tool_context=tool_context,
+        ):
+            return tool_context
+
         max_steps = settings["max_steps"]
-        catalog = self._build_catalog(allowed_tool_names, allowed_action_ids)
+        catalog = self._build_catalog(
+            message,
+            allowed_tool_names,
+            allowed_action_ids,
+        )
 
         if not catalog:
             return tool_context
@@ -167,6 +184,7 @@ class ChatAgenticToolLoopService:
 
     def _build_catalog(
         self,
+        message: str,
         allowed_tool_names: list[str] | None,
         allowed_action_ids: list[str] | None,
     ) -> list[str]:
@@ -178,10 +196,41 @@ class ChatAgenticToolLoopService:
             if normalized:
                 catalog.append(f"tool:{normalized}")
 
-        for action_id in (allowed_action_ids or [])[:10]:
+        action_ids = self._resolve_action_ids_for_catalog(message, allowed_action_ids)
+
+        for action_id in action_ids:
             catalog.append(f"action:{action_id}")
 
         return catalog
+
+    def _resolve_action_ids_for_catalog(
+        self,
+        message: str,
+        allowed_action_ids: list[str] | None,
+    ) -> list[str]:
+        allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
+
+        if not allowed:
+            return []
+
+        limit = max(1, Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS)
+
+        if self.external_action_repository:
+            candidates = self.external_action_repository.find_candidate_actions(
+                message,
+                limit=limit,
+                allowed_action_ids=allowed,
+            )
+            ranked = [
+                str(action.get("actionId") or "").strip()
+                for action in candidates
+                if str(action.get("actionId") or "").strip()
+            ]
+
+            if ranked:
+                return ranked[:limit]
+
+        return allowed[:limit]
 
     def _plan_tools(self, message: str, catalog: list[str], *, step: int) -> dict:
         try:
@@ -190,8 +239,9 @@ class ChatAgenticToolLoopService:
                     {
                         "role": "system",
                         "content": (
-                            "Planeje ferramentas para responder a pergunta. "
+                            "Planeje ferramentas para responder à pergunta. "
                             'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
+                            "Use no máximo UMA action por passo, somente se necessário. "
                             "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:."
                         ),
                     },
@@ -238,6 +288,9 @@ class ChatAgenticToolLoopService:
                 tools.append(normalized)
             elif f"action:{normalized}" in allowed_actions:
                 tools.append(f"action:{normalized}")
+
+        if len(tools) > 1:
+            tools = tools[:1]
 
         return {
             "tools": tools,

@@ -17,6 +17,7 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bestoq(u|ue)?\b", r"estoque"),
     (r"\bestq\b", r"estoque"),
     (r"\bestoquee\b", r"estoque"),
+    (r"\bestouque\b", r"estoque"),
     (r"\bestok\b", r"estoque"),
     (r"\bsaldo\b", r"saldo"),
     # KPIs / departamentos
