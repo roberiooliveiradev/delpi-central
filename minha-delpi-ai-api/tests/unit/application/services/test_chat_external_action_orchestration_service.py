@@ -28,7 +28,13 @@ class FakeSelectionService:
             "reason": f"estrutura {product_code}",
         }
 
-    def select_action(self, message, allowed_action_ids=None, conversation_context=None):
+    def select_action(
+        self,
+        message,
+        allowed_action_ids=None,
+        conversation_context=None,
+        previous_messages=None,
+    ):
         return {
             "name": "execute_external_action",
             "arguments": {"actionId": "product-stock"},

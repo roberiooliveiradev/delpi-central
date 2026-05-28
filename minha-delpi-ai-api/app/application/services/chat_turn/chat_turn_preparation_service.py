@@ -118,6 +118,7 @@ class ChatTurnPreparationService:
             message,
             allowed_action_ids,
             attachment_ids=attachment_ids,
+            previous_messages=history_source,
         )
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
@@ -198,6 +199,7 @@ class ChatTurnPreparationService:
                 workspace_context=workspace_context,
                 tool_context=tool_context,
                 conversation_context=conversation_context,
+                previous_messages=history_source,
             )
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,

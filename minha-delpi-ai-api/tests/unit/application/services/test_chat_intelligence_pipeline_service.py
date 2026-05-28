@@ -76,6 +76,36 @@ def test_resolve_analysis_direct_answer_with_history():
     assert "90260077" in answer
 
 
+def test_pre_tool_decisions_enable_operational_fast_path_on_stock_refinement():
+    messages = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    decisions = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
+        "filtre filial 02",
+        ["stock-action"],
+        previous_messages=messages,
+    )
+
+    assert decisions.operational_optimize
+    assert not decisions.analysis_mode
+
+
 def test_resolve_direct_answer_returns_none_in_analysis_mode():
     answer = ChatIntelligencePipelineService.resolve_direct_answer(
         {"directAnswer": "resposta operacional"},

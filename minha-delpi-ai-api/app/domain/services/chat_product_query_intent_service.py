@@ -69,6 +69,16 @@ class ChatProductQueryIntentService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         terms = [
+            "filtre",
+            "filtro",
+            "filtrar",
+            "filtra ",
+            "mostre só",
+            "mostre so",
+            "só a filial",
+            "so a filial",
+            "apenas filial",
+            "somente filial",
             "desse produto",
             "deste produto",
             "esse produto",

@@ -615,3 +615,63 @@ DIRECT_ANSWER_CASES = [
         "must_contain": ["**Detalhe", "OV 123456"],
     },
 ]
+
+_STOCK_CONVERSATION_HISTORY = [
+    {"role": "user", "content": "estoque do produto 10080022"},
+    {
+        "role": "assistant",
+        "content": "Estoque do produto 10080022",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/10080022/stock",
+                        "actionId": "stock",
+                    },
+                }
+            ]
+        },
+    },
+]
+
+STOCK_REFINEMENT_SELECTION_CASES = [
+    {
+        "message": "filtre filial 02",
+        "previous_messages": _STOCK_CONVERSATION_HISTORY,
+        "actions": [
+            {
+                "actionId": "stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "summary": "Estoque do produto",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "branch", "in": "query"},
+                ],
+            },
+            {
+                "actionId": "analyser",
+                "method": "GET",
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "summary": "Analisador",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "stock",
+        "expected_parameters": {"code": "10080022", "branch": "02"},
+    },
+]
+
+OPERATIONAL_REFINEMENT_FAST_PATH_CASES = [
+    ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
+    ("filtre filial 02", False, []),
+]
+
+AGENTIC_SKIP_REFINEMENT_CASES = [
+    ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
+    ("filtre filial 02", False, []),
+]

@@ -54,6 +54,7 @@ Mensagem do usuário
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
+| `ChatOperationalRefinementService` | Follow-up de estoque (filial/armazém) reutilizando código do histórico |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
@@ -143,6 +144,18 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 `ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.
 
 `CHAT_OPERATIONAL_SLIM_USER_CONTEXT` (default `true`): em modo operacional, o prompt LLM não inclui o bloco completo de perfil RBAC (reduz tokens), exceto perguntas sobre o **usuário** («quem sou eu»).
+
+### Refinamento operacional (follow-up de estoque) — maio/2026
+
+Após uma consulta de estoque bem-sucedida, mensagens como «filtre filial 02» ou «somente armazém 99»:
+
+| Etapa | Comportamento |
+|-------|----------------|
+| `ChatOperationalRefinementService` | Detecta refinamento; recupera código do produto do histórico; extrai filial/armazém |
+| `ExternalActionSelectionService` | Reexecuta `get_product_stock` com `branch`/`warehouse` nos parâmetros |
+| `ChatIntelligencePipelineService` | Liga `operational_optimize` e `skip_rag` mesmo sem código na mensagem atual |
+
+Evita RAG irrelevante (ex. anexo SQL) e mantém o contexto da conversa em vez de tratar o follow-up como pergunta nova.
 
 ### Regras críticas (produtos)
 

@@ -15,6 +15,9 @@ from app.domain.services.chat_external_action_direct_response_service import (
 from app.domain.services.chat_operational_pipeline_service import (
     ChatOperationalPipelineService,
 )
+from app.domain.services.chat_operational_refinement_service import (
+    ChatOperationalRefinementService,
+)
 
 
 @dataclass(frozen=True)
@@ -39,6 +42,7 @@ class ChatIntelligencePipelineService:
         allowed_action_ids: list[str] | None,
         *,
         attachment_ids: list[str] | None = None,
+        previous_messages: list[Any] | None = None,
     ) -> ChatPreToolDecisions:
         operational_optimize = ChatOperationalPipelineService.should_optimize(
             message,
@@ -49,6 +53,21 @@ class ChatIntelligencePipelineService:
 
         if analysis_mode:
             operational_optimize = False
+        elif (
+            not operational_optimize
+            and previous_messages
+            and ChatOperationalPipelineService.is_enabled()
+            and not attachment_ids
+            and allowed_action_ids
+        ):
+            conversation_context = cls.build_conversation_context(previous_messages)
+
+            if ChatOperationalRefinementService.is_operational_follow_up(
+                message,
+                conversation_context=conversation_context or None,
+                previous_messages=previous_messages,
+            ):
+                operational_optimize = True
 
         return ChatPreToolDecisions(
             operational_optimize=operational_optimize,

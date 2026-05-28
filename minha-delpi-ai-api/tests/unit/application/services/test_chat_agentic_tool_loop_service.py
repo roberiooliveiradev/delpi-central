@@ -87,3 +87,52 @@ def test_agentic_catalog_uses_semantic_candidates_not_first_ids(monkeypatch):
 
     assert calls
     assert calls[0]["limit"] == Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS
+
+
+def test_agentic_skipped_on_stock_branch_refinement(monkeypatch):
+    service = ChatAgenticToolLoopService(
+        llm_gateway=FakeLlm(),
+        execute_tool_use_case=FakeExecuteTool(),
+        external_action_repository=FakeRepository(
+            [
+                {"actionId": "commercial-rol"},
+                {"actionId": "stock-action"},
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "_resolve_settings",
+        lambda: {"enabled": True, "max_steps": 1},
+    )
+
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "content": "Estoque",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    result = service.extend_tool_context(
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token",
+        message="filtre filial 02",
+        tool_context={"context": "", "toolCalls": []},
+        allowed_tool_names=None,
+        allowed_action_ids=["commercial-rol", "stock-action"],
+        previous_messages=history,
+    )
+
+    assert result["toolCalls"] == []

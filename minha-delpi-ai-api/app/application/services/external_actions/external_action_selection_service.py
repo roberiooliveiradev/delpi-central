@@ -9,6 +9,9 @@ from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_department_kpi_intent_service import (
     ChatDepartmentKpiIntentService,
 )
+from app.domain.services.chat_operational_refinement_service import (
+    ChatOperationalRefinementService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -47,6 +50,7 @@ class ExternalActionSelectionService:
         message: str,
         allowed_action_ids: list[str] | None = None,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
 
@@ -55,6 +59,23 @@ class ExternalActionSelectionService:
 
         if ChatCanvasIntentService.is_canvas_placement_request(message):
             return None
+
+        refinement = ChatOperationalRefinementService.detect(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
+
+        if refinement and refinement.kind == "stock_refinement":
+            selected = self._select_product_action(
+                message,
+                refinement.product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.STOCK,
+            )
+
+            if selected:
+                return selected
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         group_search_code = self._extract_search_group_code(message, normalized)
@@ -1193,16 +1214,32 @@ class ExternalActionSelectionService:
             intent=intent,
             message=message,
         ):
-            parameters = self._build_product_parameters(action, product_code)
+            parameters = self._build_product_parameters(
+                action,
+                product_code,
+                message=message,
+            )
 
             if parameters:
+                reason = "A pergunta solicita informações operacionais de produto via OpenAPI."
+
+                if branch_code := (
+                    ChatOperationalRefinementService.extract_branch_code(
+                        ChatMessageNormalizationService.normalize_for_matching(message)
+                    )
+                ):
+                    reason = (
+                        f"A mensagem refina o estoque do produto {product_code} "
+                        f"para a filial {branch_code}."
+                    )
+
                 return {
                     "name": "execute_external_action",
                     "arguments": {
                         "actionId": action["actionId"],
                         "parameters": parameters,
                     },
-                    "reason": "A pergunta solicita informações operacionais de produto via OpenAPI.",
+                    "reason": reason,
                 }
 
         return None
@@ -1643,10 +1680,26 @@ class ExternalActionSelectionService:
 
         return sorted(candidates, key=score, reverse=True)
 
-    def _build_product_parameters(self, action: dict, code: str) -> dict:
+    def _build_product_parameters(self, action: dict, code: str, *, message: str | None = None) -> dict:
         parameters = {}
         path = (action.get("path") or "").lower()
         is_full_listing = "/structure" in path or "/parents" in path
+        normalized = (
+            ChatMessageNormalizationService.normalize_for_matching(message)
+            if message
+            else ""
+        )
+
+        branch_code = (
+            ChatOperationalRefinementService.extract_branch_code(normalized)
+            if normalized
+            else None
+        )
+        warehouse_code = (
+            ChatOperationalRefinementService.extract_warehouse_code(normalized)
+            if normalized
+            else None
+        )
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -1686,6 +1739,19 @@ class ExternalActionSelectionService:
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
                 parameters[name] = 99 if is_full_listing else 10
+
+            elif lowered in {"branch", "filial", "branch_code", "branchcode"} and branch_code:
+                parameters[name] = branch_code
+
+            elif lowered in {
+                "warehouse",
+                "armazem",
+                "armazém",
+                "warehouse_code",
+                "deposito",
+                "depósito",
+            } and warehouse_code:
+                parameters[name] = warehouse_code
 
         return parameters
 

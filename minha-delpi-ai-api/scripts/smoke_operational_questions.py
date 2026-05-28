@@ -22,6 +22,26 @@ from app.infrastructure.persistence.postgres_chat_session_repository import (
 )
 
 
+_STOCK_HISTORY = [
+    {"role": "user", "content": "estoque do produto 10080022"},
+    {
+        "role": "assistant",
+        "content": "Estoque do produto 10080022",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/10080022/stock",
+                        "actionId": "get_product_stock",
+                    },
+                }
+            ]
+        },
+    },
+]
+
 QUESTIONS: list[tuple[str, dict]] = [
     (
         "estoque do produto",
@@ -57,6 +77,17 @@ QUESTIONS: list[tuple[str, dict]] = [
         "olá",
         {
             "max_tool_calls": 0,
+        },
+    ),
+    (
+        "filtre filial 02",
+        {
+            "synthetic_history": _STOCK_HISTORY,
+            "skip_rag": True,
+            "operational_optimize": True,
+            "action_contains": "stock",
+            "max_tool_calls": 1,
+            "branch_param": "02",
         },
     ),
 ]
@@ -104,6 +135,8 @@ def main() -> int:
         previous = chat_repo.list_messages_by_session(UUID(session_id))
 
         for message, expectations in QUESTIONS:
+            history_for_turn = expectations.get("synthetic_history") or previous
+
             request = SendChatMessageRequest(
                 user_id=user_id,
                 session_id=session_id,
@@ -135,8 +168,8 @@ def main() -> int:
                 user_id=UUID(user_id),
                 workspace_context=workspace,
                 attachments=[],
-                previous_messages=previous,
-                history_source=previous,
+                previous_messages=history_for_turn,
+                history_source=history_for_turn,
                 build_tool_context=build_tool_context,
                 maybe_extend_tool_context=maybe_extend,
                 prepare_history=lambda h: ("", list(h[-6:])),
@@ -171,6 +204,13 @@ def main() -> int:
                     errors,
                 )
 
+            if expectations.get("operational_optimize") is not None:
+                _check(
+                    prepared.operational_optimize is expectations["operational_optimize"],
+                    f"operational_optimize={expectations['operational_optimize']}",
+                    errors,
+                )
+
             max_tools = expectations.get("max_tool_calls")
             if max_tools is not None:
                 _check(
@@ -184,6 +224,24 @@ def main() -> int:
                 _check(
                     any(needle in aid for aid in action_ids),
                     f"actionId deve conter «{needle}»",
+                    errors,
+                )
+
+            if "branch_param" in expectations:
+                branch = expectations["branch_param"]
+                stock_calls = [
+                    call
+                    for call in tool_calls
+                    if call.get("name") == "execute_external_action"
+                ]
+                params = (
+                    (stock_calls[0].get("arguments") or {}).get("parameters") or {}
+                    if stock_calls
+                    else {}
+                )
+                _check(
+                    str(params.get("branch") or "") == branch,
+                    f"parameters.branch={branch}",
                     errors,
                 )
 

@@ -43,6 +43,7 @@ class ChatExternalActionOrchestrationService:
                 message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
+                previous_messages=previous_messages,
             )
             return [selected] if selected else []
 
@@ -95,6 +96,7 @@ class ChatExternalActionOrchestrationService:
             message,
             allowed_action_ids=allowed_action_ids,
             conversation_context=conversation_context,
+            previous_messages=previous_messages,
         )
 
         return [selected] if selected else []

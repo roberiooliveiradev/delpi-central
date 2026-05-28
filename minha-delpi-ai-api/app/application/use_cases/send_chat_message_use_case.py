@@ -406,6 +406,7 @@ class SendChatMessageUseCase:
         workspace_context: dict,
         tool_context: dict,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
@@ -424,6 +425,7 @@ class SendChatMessageUseCase:
             allowed_tool_names=allowed_tool_names,
             allowed_action_ids=workspace_context.get("allowedActionIds"),
             conversation_context=conversation_context,
+            previous_messages=previous_messages,
         )
 
     def _embedding_cache_stats(self) -> dict | None:

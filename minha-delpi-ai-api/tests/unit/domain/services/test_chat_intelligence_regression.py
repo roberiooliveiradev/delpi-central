@@ -1,5 +1,8 @@
 import pytest
 
+from app.application.services.chat_intelligence_pipeline_service import (
+    ChatIntelligencePipelineService,
+)
 from app.application.services.external_actions.external_action_selection_service import (
     ExternalActionSelectionService,
 )
@@ -17,13 +20,16 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 from tests.fixtures.chat_intelligence_regression_cases import (
+    AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
     DIRECT_ANSWER_CASES,
     INTENT_CASES,
     MISSING_PRODUCT_CODE_CASES,
     OPERATIONAL_FAST_PATH_CASES,
+    OPERATIONAL_REFINEMENT_FAST_PATH_CASES,
     PRODUCT_CODE_CASES,
     SELECTION_CASES,
+    STOCK_REFINEMENT_SELECTION_CASES,
 )
 
 
@@ -76,12 +82,38 @@ def test_operational_fast_path_regression(message, expected):
     )
 
 
-@pytest.mark.parametrize("case", SELECTION_CASES)
+@pytest.mark.parametrize("message,expected,history", OPERATIONAL_REFINEMENT_FAST_PATH_CASES)
+def test_operational_refinement_fast_path_regression(message, expected, history):
+    decisions = ChatIntelligencePipelineService.resolve_pre_tool_decisions(
+        message,
+        ["stock-action"],
+        previous_messages=history,
+    )
+
+    assert decisions.operational_optimize is expected
+
+
+@pytest.mark.parametrize("message,expected,history", AGENTIC_SKIP_REFINEMENT_CASES)
+def test_agentic_skip_on_stock_refinement_regression(message, expected, history):
+    assert (
+        ChatOperationalParameterService.should_skip_agentic_loop(
+            message,
+            previous_messages=history,
+        )
+        is expected
+    )
+
+
+@pytest.mark.parametrize("case", SELECTION_CASES + STOCK_REFINEMENT_SELECTION_CASES)
 def test_action_selection_regression(case):
     service = ExternalActionSelectionService(FakeRepository(case["actions"]))
     allowed = [action["actionId"] for action in case["actions"]]
 
-    selected = service.select_action(case["message"], allowed_action_ids=allowed)
+    selected = service.select_action(
+        case["message"],
+        allowed_action_ids=allowed,
+        previous_messages=case.get("previous_messages"),
+    )
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == case["expected_action_id"]

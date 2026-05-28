@@ -37,6 +37,28 @@ def test_missing_intent_is_stock():
     assert intent == ChatProductQueryIntent.STOCK
 
 
+def test_should_skip_agentic_for_stock_branch_refinement():
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080022/stock"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "filtre filial 02",
+        previous_messages=history,
+    )
+
+
 def test_should_skip_agentic_for_incomplete_stock_question():
     assert ChatOperationalParameterService.should_skip_agentic_loop(
         "estoque do produto",

@@ -41,6 +41,7 @@ class ChatAgenticToolLoopService:
         allowed_tool_names: list[str] | None,
         allowed_action_ids: list[str] | None,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict:
         settings = self._resolve_settings()
 
@@ -51,6 +52,7 @@ class ChatAgenticToolLoopService:
             message,
             conversation_context=conversation_context,
             tool_context=tool_context,
+            previous_messages=previous_messages,
         ):
             return tool_context
 

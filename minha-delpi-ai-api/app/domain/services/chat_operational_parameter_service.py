@@ -7,6 +7,9 @@ from functools import lru_cache
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_operational_refinement_service import (
+    ChatOperationalRefinementService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -80,8 +83,16 @@ class ChatOperationalParameterService:
         *,
         conversation_context: str | None = None,
         tool_context: dict | None = None,
+        previous_messages: list | None = None,
     ) -> bool:
-        return cls.should_skip_tools(message, conversation_context=conversation_context)
+        if cls.should_skip_tools(message, conversation_context=conversation_context):
+            return True
+
+        return ChatOperationalRefinementService.is_operational_follow_up(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
 
     @classmethod
     def should_block_semantic_action_fallback(
