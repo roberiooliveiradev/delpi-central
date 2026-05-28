@@ -31,14 +31,24 @@
   z-index: 25;
 }
 
-.si-departments-page__refresh-banner {
+.si-departments-page__feedback-stack {
   position: absolute;
   left: 12px;
-  right: 12px;
   bottom: 12px;
   z-index: 12;
-  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(520px, calc(100% - 24px));
+  max-height: min(50vh, 360px);
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.si-departments-page__feedback-stack > .si-departments-page__feedback-item {
   pointer-events: auto;
+  flex-shrink: 0;
 }
 
 .si-departments-page__data-quality-trigger {
@@ -73,11 +83,10 @@
     padding: 16px;
   }
 
-  .si-departments-page__refresh-banner {
+  .si-departments-page__feedback-stack {
     left: 8px;
-    right: 8px;
     bottom: 8px;
-    max-width: none;
+    width: min(520px, calc(100% - 16px));
   }
 }
 

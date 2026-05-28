@@ -173,51 +173,69 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
         </>
       ) : model ? (
         <>
-          {refreshing ? (
-            <div className="si-departments-page__refresh-banner">
-              <LoadingActivityInline
-                title="Atualizando mapa"
-                description={
-                  requestProgress.completed < requestProgress.total
-                    ? "Carregando séries históricas (sparklines)…"
-                    : "Recalculando escopos para o novo filtro."
-                }
-                variant="compact"
-                tone="info"
-                progressPercent={refreshingProgress}
-              />
-            </div>
-          ) : null}
+          {refreshing || loadWarning || dataQualityError || error ? (
+            <div
+              className="si-departments-page__feedback-stack"
+              role="status"
+              aria-live="polite"
+            >
+              {refreshing ? (
+                <div className="si-departments-page__feedback-item">
+                  <LoadingActivityInline
+                    title="Atualizando mapa"
+                    description={
+                      requestProgress.completed < requestProgress.total
+                        ? "Carregando séries históricas (sparklines)…"
+                        : "Recalculando escopos para o novo filtro."
+                    }
+                    variant="compact"
+                    tone="info"
+                    progressPercent={refreshingProgress}
+                  />
+                </div>
+              ) : null}
 
-          {loadWarning ? (
-            <div className="si-departments-page__refresh-banner">
-              <InfoState
-                title="Sparklines indisponíveis — estrutura do período carregada"
-                description={`${loadWarning.summary}\n\n${loadWarning.suggestions.join(" ")}`}
-                actionLabel="Tentar carregar séries"
-                onAction={() => void reload()}
-              />
-            </div>
-          ) : null}
+              {loadWarning ? (
+                <div className="si-departments-page__feedback-item">
+                  <InfoState
+                    title="Sparklines indisponíveis — estrutura do período carregada"
+                    description={`${loadWarning.summary}\n\n${loadWarning.suggestions.join(" ")}`}
+                    actionLabel="Tentar carregar séries"
+                    onAction={() => void reload()}
+                  />
+                </div>
+              ) : null}
 
-          {dataQualityError ? (
-            <div className="si-departments-page__refresh-banner">
-              <button
-                type="button"
-                className="si-departments-page__data-quality-trigger"
-                onClick={() => setDataQualityModalOpen(true)}
-              >
-                <AlertTriangle size={18} aria-hidden />
-                <span>
-                  Coleta incompleta (
-                  {model?.dataQuality?.errors.length ?? 0} falha
-                  {(model?.dataQuality?.errors.length ?? 0) === 1 ? "" : "s"}
-                  {model?.dataQuality?.snapshotVersions
-                    ? ` · v${model.dataQuality.snapshotVersions.servingVersion}/${model.dataQuality.snapshotVersions.latestVersion}`
-                    : ""}
-                  ) — ver detalhes
-                </span>
-              </button>
+              {dataQualityError ? (
+                <div className="si-departments-page__feedback-item">
+                  <button
+                    type="button"
+                    className="si-departments-page__data-quality-trigger"
+                    onClick={() => setDataQualityModalOpen(true)}
+                  >
+                    <AlertTriangle size={18} aria-hidden />
+                    <span>
+                      Coleta incompleta (
+                      {model?.dataQuality?.errors.length ?? 0} falha
+                      {(model?.dataQuality?.errors.length ?? 0) === 1 ? "" : "s"}
+                      {model?.dataQuality?.snapshotVersions
+                        ? ` · v${model.dataQuality.snapshotVersions.servingVersion}/${model.dataQuality.snapshotVersions.latestVersion}`
+                        : ""}
+                      ) — ver detalhes
+                    </span>
+                  </button>
+                </div>
+              ) : null}
+
+              {error ? (
+                <div className="si-departments-page__feedback-item">
+                  <StrategicIndicatorsPageError
+                    error={error}
+                    mode="refresh"
+                    onAction={() => void reload()}
+                  />
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -231,16 +249,6 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
                 void reload();
               }}
             />
-          ) : null}
-
-          {error ? (
-            <div className="si-departments-page__refresh-banner">
-              <StrategicIndicatorsPageError
-                error={error}
-                mode="refresh"
-                onAction={() => void reload()}
-              />
-            </div>
           ) : null}
 
           <DepartmentIgdTree
