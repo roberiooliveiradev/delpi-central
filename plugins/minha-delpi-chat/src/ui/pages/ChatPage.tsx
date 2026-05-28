@@ -32,6 +32,7 @@ import {
 } from "../../navigation/chatRoutes";
 import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
+import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
@@ -73,6 +74,19 @@ export function ChatPage({
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
+  const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
+
+  const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
+    if (!payload.markdown.trim()) {
+      return;
+    }
+
+    setCanvasDocument({
+      title: payload.title || "Conteúdo do chat",
+      markdown: payload.markdown,
+      messageId: payload.sourceMessageId ?? payload.messageId ?? null,
+    });
+  }, []);
 
   const {
     sessions,
@@ -87,6 +101,7 @@ export function ChatPage({
     streamingStatus,
     streamingActivityLog,
     streamingShowPresentation,
+    streamingCanvasOpen,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
@@ -117,17 +132,7 @@ export function ChatPage({
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
-    onOpenCanvas: (payload) => {
-      if (!payload.markdown.trim()) {
-        return;
-      }
-
-      setCanvasDocument({
-        title: payload.title || "Conteúdo do chat",
-        markdown: payload.markdown,
-        messageId: payload.sourceMessageId ?? payload.messageId ?? null,
-      });
-    },
+    onOpenCanvas: openCanvasPanel,
   });
 
   const {
@@ -146,7 +151,6 @@ export function ChatPage({
     loadAgents,
   } = useChatWorkspace({ getAccessToken });
 
-  const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
   const conversationAgentKey = activeSession?.agent_key ?? activeAgentPageKey;
@@ -1149,11 +1153,13 @@ export function ChatPage({
                 streamingStatus={streamingStatus}
                 streamingActivityLog={streamingActivityLog}
                 streamingShowPresentation={streamingShowPresentation}
+                streamingCanvasOpen={streamingCanvasOpen}
                 isStreaming={isStreamingActiveSession}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
                 onMessageFeedback={setMessageFeedback}
+                onOpenCanvas={openCanvasPanel}
               />
 
               <ChatInput

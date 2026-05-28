@@ -75,6 +75,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [],
   );
   const [streamingShowPresentation, setStreamingShowPresentation] = useState(true);
+  const [streamingCanvasOpen, setStreamingCanvasOpen] =
+    useState<ChatCanvasOpenPayload | null>(null);
   const [playbackPayload, setPlaybackPayload] = useState<ChatPlaybackPayload | null>(
     null,
   );
@@ -103,6 +105,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingStatus(null);
     setStreamingActivityLog([]);
     setStreamingShowPresentation(true);
+    setStreamingCanvasOpen(null);
     setPlaybackPayload(null);
     awaitingPlaybackRef.current = false;
   }, []);
@@ -698,6 +701,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          setStreamingCanvasOpen(payload);
           options.onOpenCanvas?.(payload);
         },
         onToken: (token: string) => {
@@ -722,12 +726,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           if (response.canvasOpen?.markdown) {
-            options.onOpenCanvas?.({
+            const canvasPayload: ChatCanvasOpenPayload = {
               title: response.canvasOpen.title,
               markdown: response.canvasOpen.markdown,
               messageId: response.messageId,
               sourceMessageId: response.canvasOpen.sourceMessageId ?? null,
-            });
+            };
+
+            setStreamingCanvasOpen(canvasPayload);
+            options.onOpenCanvas?.(canvasPayload);
           }
 
           if (response.playback || awaitingPlaybackRef.current) {
@@ -1144,6 +1151,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     streamingStatus,
     streamingActivityLog,
     streamingShowPresentation,
+    streamingCanvasOpen,
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,

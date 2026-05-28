@@ -13,6 +13,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal";
 
 import type {
+  ChatCanvasOpenPayload,
   ChatMessage,
   ChatSource,
   ChatStreamActivityEntry,
@@ -34,6 +35,8 @@ import {
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
+import { ChatInlineCanvas } from "./ChatInlineCanvas";
+import { getCanvasOpenFromMetadata } from "./chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
@@ -54,8 +57,10 @@ type ChatMessageListProps = {
   streamingStatus?: string | null;
   streamingActivityLog?: ChatStreamActivityEntry[];
   streamingShowPresentation?: boolean;
+  streamingCanvasOpen?: ChatCanvasOpenPayload | null;
   isStreaming?: boolean;
   isLoading?: boolean;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   onEditAndResendMessage?: (
     messageId: string,
     content: string,
@@ -334,11 +339,13 @@ export function ChatMessageList({
   streamingStatus,
   streamingActivityLog = [],
   streamingShowPresentation = true,
+  streamingCanvasOpen = null,
   isStreaming,
   isLoading,
   onEditAndResendMessage,
   onReuseMessage,
   onMessageFeedback,
+  onOpenCanvas,
 }: ChatMessageListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -722,6 +729,7 @@ export function ChatMessageList({
       messagePresentation,
       messageToolCalls,
     );
+    const messageCanvasOpen = getCanvasOpenFromMetadata(message.metadata);
 
     return (
       <article
@@ -880,6 +888,12 @@ export function ChatMessageList({
               {suppressMessageMarkdown ? null : (
                 <ChatMarkdown content={message.content} compact={isUser} />
               )}
+              {!isUser && messageCanvasOpen ? (
+                <ChatInlineCanvas
+                  payload={messageCanvasOpen}
+                  onOpen={onOpenCanvas}
+                />
+              ) : null}
             </>
           )}
 
@@ -997,6 +1011,12 @@ export function ChatMessageList({
                   >
                     <ChatMarkdown content={revealedStreamingAnswer} />
                   </div>
+                ) : null}
+                {streamingCanvasOpen ? (
+                  <ChatInlineCanvas
+                    payload={streamingCanvasOpen}
+                    onOpen={onOpenCanvas}
+                  />
                 ) : null}
               </div>
 

@@ -106,9 +106,17 @@ export type ChatToolCall = {
   }) | null;
 };
 
+export type ChatCanvasOpenPayload = {
+  title: string;
+  markdown: string;
+  messageId?: string | null;
+  sourceMessageId?: string | null;
+};
+
 export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];
+  canvasOpen?: ChatCanvasOpenPayload | null;
   rag?: {
     enabled?: boolean;
     sourceCount?: number;
@@ -165,13 +173,6 @@ export type SendChatMessagePayload = {
   context?: string;
   attachmentIds?: string[];
   agentKey?: string | null;
-};
-
-export type ChatCanvasOpenPayload = {
-  title: string;
-  markdown: string;
-  messageId?: string | null;
-  sourceMessageId?: string | null;
 };
 
 export type SendChatMessageResponse = {
