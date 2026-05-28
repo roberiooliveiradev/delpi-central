@@ -25,9 +25,20 @@ WHERE is_clean IS DISTINCT FROM (
 ALTER TABLE strategic_indicators.period_scores
     DROP CONSTRAINT IF EXISTS uq_si_period_scores_scope;
 
-ALTER TABLE strategic_indicators.period_scores
-    ADD CONSTRAINT uq_si_period_scores_scope_version
-        UNIQUE (competence, scope_branch, scope_department_id, version_number);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint c
+        INNER JOIN pg_namespace n ON n.oid = c.connamespace
+        WHERE c.conname = 'uq_si_period_scores_scope_version'
+          AND n.nspname = 'strategic_indicators'
+    ) THEN
+        ALTER TABLE strategic_indicators.period_scores
+            ADD CONSTRAINT uq_si_period_scores_scope_version
+                UNIQUE (competence, scope_branch, scope_department_id, version_number);
+    END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_si_period_scores_scope_versions
     ON strategic_indicators.period_scores (
