@@ -209,7 +209,9 @@ export type StrategicIndicatorsPresentationApiResponse = {
         month_number: number;
         target_value: number;
       }>;
+      goals?: Record<string, number | null>;
       performance_direction: string;
+    } & IndicatorValueFormatApiFields & {
       message: string;
     }>;
     errors: Array<{

@@ -38,7 +38,12 @@ export type IndicatorAlertViewItem = {
   goalPeriodicity: string | null;
   goalMode: GoalMode;
   monthlyTargets: MonthlyTargetItem[];
+  goals: Record<string, number | null>;
   performanceDirection: PerformanceDirection;
+  valueUnit?: string | null;
+  valuePrefix?: string | null;
+  valueSuffix?: string | null;
+  valueDecimals?: number | null;
   severity: AlertSeverity;
   reason: string;
   recommendation: string;
@@ -93,7 +98,12 @@ export type StrategicIndicatorsAlertsResponse = {
     goal_periodicity?: string | null;
     goal_mode?: GoalMode;
     monthly_targets?: MonthlyTargetItem[];
+    goals?: Record<string, number | null>;
     performance_direction?: PerformanceDirection;
+    value_unit?: string | null;
+    value_prefix?: string | null;
+    value_suffix?: string | null;
+    value_decimals?: number | null;
   }>;
   errors?: Array<{
     department_id: string;

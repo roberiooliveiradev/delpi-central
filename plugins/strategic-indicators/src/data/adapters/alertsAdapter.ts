@@ -56,7 +56,12 @@ export function adaptAlertsToView(
       goalPeriodicity: item.goal_periodicity ?? null,
       goalMode: item.goal_mode ?? "standard",
       monthlyTargets: item.monthly_targets ?? [],
+      goals: item.goals ?? {},
       performanceDirection: item.performance_direction ?? "higher_is_better",
+      valueUnit: item.value_unit ?? null,
+      valuePrefix: item.value_prefix ?? null,
+      valueSuffix: item.value_suffix ?? null,
+      valueDecimals: Number(item.value_decimals ?? 2),
       severity: item.severity,
       reason: item.message,
       recommendation:

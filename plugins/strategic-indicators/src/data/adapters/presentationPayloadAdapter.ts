@@ -201,9 +201,11 @@ function buildAlerts(
       goalPeriodicity: alert.goal_periodicity ?? null,
       goalMode: normalizeGoalMode(alert.goal_mode),
       monthlyTargets: normalizeMonthlyTargets(alert.monthly_targets),
+      goals: alert.goals ?? {},
       performanceDirection: normalizePerformanceDirection(
         alert.performance_direction,
       ),
+      ...getValueFormatFields(alert),
       severity: alert.severity,
       reason: alert.message,
       recommendation: "Atuar na causa do indicador e monitorar no próximo fechamento.",

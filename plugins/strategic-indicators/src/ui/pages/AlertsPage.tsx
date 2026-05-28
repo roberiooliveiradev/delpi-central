@@ -210,7 +210,12 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
         title="Destaques de priorização"
         description="Recorte direto da área e do indicador que mais exigem ação no cenário atual."
       >
-        <AlertsPriorityHighlights data={data} />
+        <AlertsPriorityHighlights
+          data={data}
+          competence={referenceMonth}
+          viewMode={viewMode}
+          branch={branch}
+        />
       </SectionBlock>
 
       <SectionBlock
@@ -231,7 +236,12 @@ export function AlertsPage({ getAccessToken }: AlertsPageProps) {
         title="Indicadores prioritários"
         description="Indicadores com maior necessidade de atenção no recorte analítico atual."
       >
-        <CriticalIndicatorList alerts={data.indicatorAlerts} />
+        <CriticalIndicatorList
+          alerts={data.indicatorAlerts}
+          competence={referenceMonth}
+          viewMode={viewMode}
+          branch={branch}
+        />
       </SectionBlock>
     </div>
   );
