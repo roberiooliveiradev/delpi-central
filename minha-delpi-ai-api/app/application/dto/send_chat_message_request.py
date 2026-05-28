@@ -11,3 +11,4 @@ class SendChatMessageRequest:
     attachment_ids: list[str] | None = None
     resend_from_message_id: str | None = None
     agent_key: str | None = None
+    admin_debug: bool = False

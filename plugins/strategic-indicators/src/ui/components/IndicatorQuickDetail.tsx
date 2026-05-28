@@ -13,6 +13,7 @@ import {
   formatIndicatorRealizedDisplay,
   formatIndicatorScore,
 } from "../shared/indicatorValueFormatter";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorQuickDetail.css";
 
 type IndicatorQuickDetailProps = {
@@ -85,7 +86,13 @@ export function IndicatorQuickDetail({
         <div className="si-indicator-quick-detail__meta-item">
           <span>Meta</span>
           <strong>
-            {formatIndicatorGoalValue(indicator, competence, displayContext)}
+            <ScopeMetricBadges
+              values={indicator.goals}
+              format={valueFormat}
+              displayContext={displayContext}
+              maxVisible={3}
+              emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
+            />
           </strong>
         </div>
 
@@ -114,13 +121,31 @@ export function IndicatorQuickDetail({
         <div className="si-indicator-quick-detail__meta-item">
           <span>Valor atual</span>
           <strong>
-            {formatIndicatorRealizedDisplay(indicator, valueFormat, displayContext)}
+            <ScopeMetricBadges
+              values={indicator.realized}
+              format={valueFormat}
+              displayContext={displayContext}
+              maxVisible={3}
+              emptyLabel={formatIndicatorRealizedDisplay(
+                indicator,
+                valueFormat,
+                displayContext,
+              )}
+            />
           </strong>
         </div>
 
         <div className="si-indicator-quick-detail__meta-item">
           <span>Gap</span>
-          <strong>{formatIndicatorGapDisplay(indicator, valueFormat, displayContext)}</strong>
+          <strong>
+            <ScopeMetricBadges
+              values={indicator.gaps}
+              format={valueFormat}
+              displayContext={displayContext}
+              maxVisible={3}
+              emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat, displayContext)}
+            />
+          </strong>
         </div>
 
         {indicator.goalMode === "monthly_curve" ? (

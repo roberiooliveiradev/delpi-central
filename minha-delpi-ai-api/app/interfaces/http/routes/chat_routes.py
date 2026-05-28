@@ -2155,6 +2155,7 @@ def send_message(session_id: str):
     use_case = make_send_chat_message_use_case()
 
     try:
+        admin_debug = _can_use_admin_debug()
         result = use_case.execute(
             SendChatMessageRequest(
                 user_id=g.current_user.sub,
@@ -2164,6 +2165,7 @@ def send_message(session_id: str):
                 access_token=g.access_token,
                 attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
                 agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+                admin_debug=admin_debug,
             )
         )
 
@@ -2192,6 +2194,7 @@ def resend_message_stream(session_id: str, message_id: str):
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
         resend_from_message_id=message_id,
+        admin_debug=_can_use_admin_debug(),
     )
 
     return _stream_chat_response(session_id, request_dto)
@@ -2214,6 +2217,7 @@ def stream_message(session_id: str):
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
         agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+        admin_debug=_can_use_admin_debug(),
     )
 
     return _stream_chat_response(session_id, request_dto)
@@ -2265,6 +2269,7 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                             "answer": event.get("answer", ""),
                             "sources": event.get("sources", []),
                             "toolCalls": event.get("toolCalls", []),
+                            "adminDebug": event.get("adminDebug"),
                         },
                     )
 
@@ -2286,6 +2291,7 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                         "sources": event.get("sources", []),
                         "toolCalls": event.get("toolCalls", []),
                         "playback": event.get("playback"),
+                        "adminDebug": event.get("adminDebug"),
                     }
                     if event.get("canvasOpen"):
                         done_payload["canvasOpen"] = event.get("canvasOpen")
@@ -2331,3 +2337,22 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     response.headers["X-Accel-Buffering"] = "no"
 
     return response
+
+
+def _can_use_admin_debug() -> bool:
+    """Gating: só usuários admin/superadmin podem receber payloads de debug."""
+    user = getattr(g, "current_user", None)
+
+    if not user:
+        return False
+
+    if bool(getattr(user, "is_superadmin", False)):
+        return True
+
+    permissions = set(getattr(user, "permissions", []) or [])
+
+    return bool(
+        CHAT_ADMIN_PERMISSION in permissions
+        or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+        or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+    )

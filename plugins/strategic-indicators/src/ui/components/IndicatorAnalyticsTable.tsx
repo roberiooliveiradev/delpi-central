@@ -10,6 +10,7 @@ import {
   resolveStrategicIndicatorsBranch,
   type StrategicIndicatorsViewMode,
 } from "../shared/strategicIndicatorsFilters";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorAnalyticsTable.css";
 
 type IndicatorAnalyticsTableProps = {
@@ -81,7 +82,18 @@ export function IndicatorAnalyticsTable({
             <span>{indicator.viewScopeLabel}</span>
             <span>{indicator.weightPct}%</span>
             <span>
-              {formatIndicatorGoalValue(indicator, competence, displayContext)}
+              <ScopeMetricBadges
+                values={indicator.goals}
+                format={{
+                  valueUnit: indicator.valueUnit,
+                  valuePrefix: indicator.valuePrefix,
+                  valueSuffix: indicator.valueSuffix,
+                  valueDecimals: indicator.valueDecimals,
+                }}
+                displayContext={displayContext}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
+              />
             </span>
             <strong
               className={`si-indicator-table__score${

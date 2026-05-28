@@ -30,6 +30,7 @@ import {
   formatIndicatorScore,
   isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { getScopeTypeLabel } from "../presentation/labels";
 import { StatusBadge } from "./StatusBadge";
 import { PanZoomCanvas } from "./PanZoomCanvas";
@@ -348,7 +349,12 @@ function IndicatorTreeCard({
           <div className="si-indicator-card__goal">
             <span className="si-indicator-card__goal-label">Meta</span>
             <strong className="si-indicator-card__goal-value">
-              {formatIndicatorGoalValue(indicator, competence)}
+              <ScopeMetricBadges
+                values={indicator.goals}
+                format={valueFormat}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(indicator, competence)}
+              />
             </strong>
           </div>
           <div className="si-indicator-card__goal">
@@ -360,7 +366,12 @@ function IndicatorTreeCard({
                   : ""
               }`}
             >
-              {formatIndicatorRealizedDisplay(indicator, valueFormat)}
+              <ScopeMetricBadges
+                values={indicator.realized}
+                format={valueFormat}
+                maxVisible={2}
+                emptyLabel={formatIndicatorRealizedDisplay(indicator, valueFormat)}
+              />
             </strong>
           </div>
           <div className="si-indicator-card__goal">
@@ -384,7 +395,12 @@ function IndicatorTreeCard({
                   : ""
               }`}
             >
-              {formatIndicatorGapDisplay(indicator, valueFormat)}
+              <ScopeMetricBadges
+                values={indicator.gaps}
+                format={valueFormat}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat)}
+              />
             </strong>
           </div>
         </div>

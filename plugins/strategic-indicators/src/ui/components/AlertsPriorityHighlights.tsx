@@ -2,6 +2,7 @@ import type { AlertsDashboardViewData } from "../../data/types/alerts";
 import { formatIndicatorGoalValue } from "../shared/indicatorValueFormatter";
 import { resolveStrategicIndicatorsBranch } from "../shared/strategicIndicatorsFilters";
 import type { StrategicIndicatorsViewMode } from "../shared/strategicIndicatorsFilters";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import { StatusBadge } from "./StatusBadge";
 import "./AlertsPriorityHighlights.css";
 
@@ -67,7 +68,18 @@ export function AlertsPriorityHighlights({
             </p>
             <p className="si-alert-highlight-card__meta">
               Nota: {topIndicator.simulatedScore.toFixed(1)} · Meta:{" "}
-              {formatIndicatorGoalValue(topIndicator, competence, displayContext)}
+              <ScopeMetricBadges
+                values={topIndicator.goals}
+                format={{
+                  valueUnit: topIndicator.valueUnit,
+                  valuePrefix: topIndicator.valuePrefix,
+                  valueSuffix: topIndicator.valueSuffix,
+                  valueDecimals: topIndicator.valueDecimals,
+                }}
+                displayContext={displayContext}
+                maxVisible={2}
+                emptyLabel={formatIndicatorGoalValue(topIndicator, competence, displayContext)}
+              />
             </p>
           </>
         ) : null}

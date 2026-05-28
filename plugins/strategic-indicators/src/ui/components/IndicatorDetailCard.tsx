@@ -12,6 +12,7 @@ import {
   formatIndicatorScore,
   isMissingValueClassification,
 } from "../shared/indicatorValueFormatter";
+import { ScopeMetricBadges } from "./ScopeMetricBadges";
 import "./IndicatorDetailCard.css";
 
 type IndicatorDetailCardProps = {
@@ -44,7 +45,12 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Meta</span>
         <strong className="si-indicator-card__goal-value">
-          {formatIndicatorGoalValue(indicator, competence)}
+          <ScopeMetricBadges
+            values={indicator.goals}
+            format={getValueFormat(indicator)}
+            maxVisible={3}
+            emptyLabel={formatIndicatorGoalValue(indicator, competence)}
+          />
         </strong>
       </div>
 
@@ -88,7 +94,15 @@ export function IndicatorDetailCard({
       <div className="si-indicator-card__goal">
         <span className="si-indicator-card__goal-label">Realizado</span>
         <strong className="si-indicator-card__goal-value">
-          {formatIndicatorRealizedDisplay(indicator, getValueFormat(indicator))}
+          <ScopeMetricBadges
+            values={indicator.realized}
+            format={getValueFormat(indicator)}
+            maxVisible={3}
+            emptyLabel={formatIndicatorRealizedDisplay(
+              indicator,
+              getValueFormat(indicator),
+            )}
+          />
         </strong>
       </div>
 
@@ -110,7 +124,12 @@ export function IndicatorDetailCard({
             !indicator.hasValue ? " si-indicator-card__goal-value--missing" : ""
           }`}
         >
-          {formatIndicatorGapDisplay(indicator, getValueFormat(indicator))}
+          <ScopeMetricBadges
+            values={indicator.gaps}
+            format={getValueFormat(indicator)}
+            maxVisible={3}
+            emptyLabel={formatIndicatorGapDisplay(indicator, getValueFormat(indicator))}
+          />
         </strong>
       </div>
 

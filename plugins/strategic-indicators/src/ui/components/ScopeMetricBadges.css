@@ -1,0 +1,50 @@
+.si-scope-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.si-scope-badges__single,
+.si-scope-badges__empty {
+  display: inline-block;
+}
+
+.si-scope-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 116, 206, 0.08);
+  border: 1px solid rgba(0, 116, 206, 0.18);
+  color: #0b2d4a;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.si-scope-badge__key {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+}
+
+.si-scope-badge__value {
+  font-weight: 800;
+}
+
+.si-scope-badge--more {
+  cursor: pointer;
+  background: rgba(2, 38, 65, 0.06);
+  border-color: rgba(2, 38, 65, 0.14);
+}
+
+.si-scope-badges__collapse {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #0b2d4a;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
