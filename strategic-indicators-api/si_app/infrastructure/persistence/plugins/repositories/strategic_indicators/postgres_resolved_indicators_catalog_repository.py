@@ -87,23 +87,27 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
                         goal.get("goal_year"),
                     )
 
+        per_unit_indicator_ids = [
+            item.indicator_id
+            for item in structural_items
+            if (item.scope_type or "").strip() == "per_unit"
+        ]
+
+        # Sempre carrega branch_goals para indicadores per_unit. Na visão por filial
+        # eles podem ser a ÚNICA fonte de meta (e sem isso a UI cai em 0,00).
         branch_goals_by_indicator: dict[str, dict[str, dict]] = {}
-        if not normalize_goal_scope_branch(branch):
-            per_unit_indicator_ids = [
-                item.indicator_id
-                for item in structural_items
-                if (item.scope_type or "").strip() == "per_unit"
-            ]
-            if per_unit_indicator_ids:
-                branch_goals_by_indicator = (
-                    self._indicator_goals_repository.list_branch_scoped_goals_map(
-                        indicator_ids=per_unit_indicator_ids,
-                        department_id=department_id,
-                        competence=competence,
-                        start_date=start_date,
-                        end_date=end_date,
-                    )
+        if per_unit_indicator_ids:
+            branch_goals_by_indicator = (
+                self._indicator_goals_repository.list_branch_scoped_goals_map(
+                    indicator_ids=per_unit_indicator_ids,
+                    department_id=department_id,
+                    competence=competence,
+                    start_date=start_date,
+                    end_date=end_date,
                 )
+            )
+
+        if not normalize_goal_scope_branch(branch):
 
             still_missing = [
                 item.indicator_id
@@ -189,6 +193,23 @@ class PostgresStrategicIndicatorsResolvedIndicatorsCatalogRepository(
             goal = goals_by_indicator.get(item.indicator_id)
             branch_goals = branch_goals_by_indicator.get(item.indicator_id, {})
             scope_type = (item.scope_type or "").strip()
+
+            if (
+                is_branch_unit_scope(view_branch)
+                and scope_type == "per_unit"
+                and branch_goals
+                and view_branch in branch_goals
+            ):
+                view_goal = dict(branch_goals[view_branch] or {})
+                view_goal["goal_scope_branch"] = view_branch
+                resolved.append(
+                    self._catalog_item_from_goal(
+                        item,
+                        view_goal,
+                        branch_goals={view_branch: branch_goals[view_branch]},
+                    )
+                )
+                continue
 
             if branch_goals and scope_type == "per_unit":
                 resolved.append(self._catalog_item_from_branch_goals(item, branch_goals))
