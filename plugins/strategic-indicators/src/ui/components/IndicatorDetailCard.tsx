@@ -64,6 +64,7 @@ export function IndicatorDetailCard({
             values={indicator.goals}
             format={getValueFormat(indicator)}
             displayContext={displayContext}
+            layout="compact"
             maxVisible={3}
             emptyLabel={formatIndicatorGoalValue(
               indicator,
@@ -118,6 +119,7 @@ export function IndicatorDetailCard({
             values={indicator.realized}
             format={getValueFormat(indicator)}
             displayContext={displayContext}
+            layout="compact"
             maxVisible={3}
             emptyLabel={formatIndicatorRealizedDisplay(
               indicator,
@@ -150,6 +152,7 @@ export function IndicatorDetailCard({
             values={indicator.gaps}
             format={getValueFormat(indicator)}
             displayContext={displayContext}
+            layout="compact"
             maxVisible={3}
             emptyLabel={formatIndicatorGapDisplay(
               indicator,

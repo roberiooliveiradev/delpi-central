@@ -130,7 +130,7 @@ class Settings:
     )
 
     CHAT_TOOL_ROUTER_ENABLED = (
-        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "true").lower() == "true"
+        os.getenv("CHAT_TOOL_ROUTER_ENABLED", "false").lower() == "true"
     )
     CHAT_FAST_PATH_ENABLED = (
         os.getenv("CHAT_FAST_PATH_ENABLED", "true").lower() == "true"
@@ -210,9 +210,12 @@ class Settings:
     CHAT_MULTI_ACTION_MAX_CALLS = int(os.getenv("CHAT_MULTI_ACTION_MAX_CALLS", "5"))
 
     CHAT_AGENTIC_LOOP_ENABLED = (
-        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "true").lower() == "true"
+        os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
     )
-    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "3"))
+    CHAT_AGENTIC_LOOP_MAX_STEPS = int(os.getenv("CHAT_AGENTIC_LOOP_MAX_STEPS", "2"))
+    CHAT_AGENTIC_CATALOG_MAX_ACTIONS = int(
+        os.getenv("CHAT_AGENTIC_CATALOG_MAX_ACTIONS", "12")
+    )
 
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"

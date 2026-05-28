@@ -3,58 +3,73 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .si-scope-badges__single,
 .si-scope-badges__empty {
   display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .si-scope-badge {
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  max-width: 100%;
+  min-width: 0;
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(0, 116, 206, 0.08);
   border: 1px solid rgba(0, 116, 206, 0.18);
   color: #0b2d4a;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
+  box-sizing: border-box;
 }
 
 .si-scope-badge--branch-01 {
-  background: rgba(0, 116, 206, 0.10);
+  background: rgba(0, 116, 206, 0.1);
   border-color: rgba(0, 116, 206, 0.28);
 }
 
 .si-scope-badge--branch-02 {
-  background: rgba(0, 163, 81, 0.10);
+  background: rgba(0, 163, 81, 0.1);
   border-color: rgba(0, 163, 81, 0.28);
 }
 
 .si-scope-badge--branch-03 {
   background: rgba(255, 159, 10, 0.12);
-  border-color: rgba(255, 159, 10, 0.30);
+  border-color: rgba(255, 159, 10, 0.3);
 }
 
 .si-scope-badge--branch-04 {
   background: rgba(175, 82, 222, 0.12);
-  border-color: rgba(175, 82, 222, 0.30);
+  border-color: rgba(175, 82, 222, 0.3);
 }
 
 .si-scope-badge--branch-05 {
-  background: rgba(255, 69, 58, 0.10);
+  background: rgba(255, 69, 58, 0.1);
   border-color: rgba(255, 69, 58, 0.26);
 }
 
 .si-scope-badge__key {
+  flex-shrink: 0;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
 }
 
 .si-scope-badge__value {
+  min-width: 0;
+  font-size: 12px;
   font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .si-scope-badge--more {
@@ -73,3 +88,41 @@
   padding: 0 4px;
 }
 
+/* Layout compacto: células estreitas (tabela, cards da árvore, painéis) */
+.si-scope-badges--compact,
+.si-indicator-card__goal-value .si-scope-badges,
+.si-indicator-table__metrics .si-scope-badges,
+.si-indicator-quick-detail__meta-item strong .si-scope-badges,
+.si-tree-indicator-card__goals .si-scope-badges,
+.si-critical-item__metrics .si-scope-badges,
+.si-indicator-priority-item__meta .si-scope-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 6px;
+}
+
+.si-scope-badges--compact .si-scope-badge,
+.si-indicator-card__goal-value .si-scope-badge,
+.si-indicator-table__metrics .si-scope-badge,
+.si-indicator-quick-detail__meta-item strong .si-scope-badge,
+.si-tree-indicator-card__goals .si-scope-badge,
+.si-critical-item__metrics .si-scope-badge,
+.si-indicator-priority-item__meta .si-scope-badge {
+  width: 100%;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+}
+
+.si-scope-badges--compact .si-scope-badge__value,
+.si-indicator-card__goal-value .si-scope-badge__value,
+.si-indicator-table__metrics .si-scope-badge__value,
+.si-indicator-quick-detail__meta-item strong .si-scope-badge__value,
+.si-tree-indicator-card__goals .si-scope-badge__value,
+.si-critical-item__metrics .si-scope-badge__value,
+.si-indicator-priority-item__meta .si-scope-badge__value {
+  flex: 1 1 auto;
+  text-align: right;
+}

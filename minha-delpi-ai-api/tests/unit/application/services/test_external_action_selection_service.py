@@ -11,6 +11,38 @@ class FakeRepository:
         return self.actions
 
 
+def test_select_stock_without_code_does_not_use_semantic_fallback():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "commercial-rol",
+                    "method": "GET",
+                    "path": "/commercial/new-business-rol-pct",
+                    "operationId": "get_new_business_rol_pct",
+                    "summary": "ROL novos negocios",
+                    "selectionScore": 0.99,
+                },
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Product stock",
+                    "selectionScore": 0.1,
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "estoque do produto",
+        allowed_action_ids=["commercial-rol", "stock-action"],
+    )
+
+    assert selected is None
+
+
 def test_select_stock_action_uses_code_from_conversation_context():
     service = ExternalActionSelectionService(
         FakeRepository(

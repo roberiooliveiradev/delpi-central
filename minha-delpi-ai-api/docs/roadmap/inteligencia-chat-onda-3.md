@@ -30,7 +30,9 @@ Melhorar recall do RAG, reduzir latência de embeddings e permitir rodadas extra
 | `EMBEDDING_CACHE_ENABLED` | `true` |
 | `EMBEDDING_CACHE_TTL_SECONDS` | `3600` |
 | `EMBEDDING_CACHE_MAX_ENTRIES` | `500` |
-| `CHAT_AGENTIC_LOOP_ENABLED` | `false` |
+| `CHAT_AGENTIC_LOOP_ENABLED` | `false` (default em `settings.py` e compose) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `false` |
+| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` |
 | `CHAT_AGENTIC_LOOP_MAX_STEPS` | `2` |
 
 Admin (`chat_intelligence_settings`): `ragHybridEnabled`, `agenticLoopEnabled`, `agenticLoopMaxSteps`.

@@ -50,8 +50,12 @@
 }
 
 .si-indicator-card__goal-value {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
   font-size: 15px;
   color: var(--si-title);
+  overflow: hidden;
 }
 
 .si-indicator-card__goal-value--missing,

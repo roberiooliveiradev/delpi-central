@@ -225,6 +225,16 @@ class ExternalActionSelectionService:
                     allowed_action_ids=allowed_action_ids,
                 )
 
+        from app.domain.services.chat_operational_parameter_service import (
+            ChatOperationalParameterService,
+        )
+
+        if ChatOperationalParameterService.should_block_semantic_action_fallback(
+            message,
+            conversation_context=conversation_context,
+        ):
+            return None
+
         department_kpi = ChatDepartmentKpiIntentService.resolve(message)
 
         if department_kpi and not product_code:

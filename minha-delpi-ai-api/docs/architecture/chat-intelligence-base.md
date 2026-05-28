@@ -53,6 +53,7 @@ Mensagem do usuário
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise) |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
+| `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
@@ -112,7 +113,30 @@ O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fa
 4. **Produto por código** (estoque, estrutura, pais, descrição, …) por intent.
 5. **Busca por grupo ou descrição** → `GET /products/search` (prioridade sobre analyser quando há «grupo X»).
 6. **KPI departamental** via `ChatDepartmentKpiIntentService`.
-7. Fallback semântico (se ranker configurado).
+7. Fallback semântico (se ranker configurado) — **bloqueado** quando a intenção é produto (estoque/estrutura/etc.) **sem código** (`ChatOperationalParameterService`).
+
+### Parâmetro obrigatório (estoque sem código) — maio/2026
+
+Perguntas como «estoque do produto» (sem código) **não** disparam API nem loop agentic:
+
+| Etapa | Comportamento |
+|-------|----------------|
+| `ChatOperationalParameterService` | Detecta intent STOCK/STRUCTURE/PARENTS/DESCRIPTION sem código |
+| `ChatTurnPreparationService` | `direct_answer` canônico (`operational_parameters.json`), `skip_rag`, **sem** `build_tool_context` |
+| `ExternalActionSelectionService` | Retorna `None` (evita fallback semântico → ROL comercial) |
+| `ChatAgenticToolLoopService` | Não executa se `should_skip_agentic_loop` |
+
+Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
+
+### Loop agentic e router LLM — defaults conservadores
+
+| Variável | Default | Motivo |
+|----------|---------|--------|
+| `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita 2ª/3ª inferência e disparo de actions irrelevantes (ex. KPIs ROL) |
+| `CHAT_TOOL_ROUTER_ENABLED` | `false` | Roteamento determinístico (`ExternalActionSelectionService`) já cobre o caso |
+| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Quando agentic ligado, catálogo vem de `find_candidate_actions`, não `allowedActionIds[:10]` |
+
+Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem descritas.
 
 ### Regras críticas (produtos)
 

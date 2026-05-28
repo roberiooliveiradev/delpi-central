@@ -14,6 +14,8 @@ type ScopeMetricBadgesProps = {
   displayContext?: IndicatorDisplayContext;
   maxVisible?: number;
   emptyLabel?: string;
+  /** inline = chips em linha; compact = pilha vertical (tabelas e cards estreitos) */
+  layout?: "inline" | "compact";
 };
 
 function listBranchKeys(values: Record<string, number | null>): string[] {
@@ -37,6 +39,7 @@ export function ScopeMetricBadges({
   displayContext,
   maxVisible = 4,
   emptyLabel = MISSING_VALUE_LABEL,
+  layout = "inline",
 }: ScopeMetricBadgesProps) {
   const activeBranch = displayContext?.activeBranch;
 
@@ -84,8 +87,13 @@ export function ScopeMetricBadges({
   const visibleKeys = expanded ? branchKeys : branchKeys.slice(0, maxVisible);
   const hiddenCount = Math.max(0, branchKeys.length - visibleKeys.length);
 
+  const rootClassName =
+    layout === "compact"
+      ? "si-scope-badges si-scope-badges--compact"
+      : "si-scope-badges";
+
   return (
-    <span className="si-scope-badges">
+    <span className={rootClassName}>
       {visibleKeys.map((key) => (
         <span
           key={key}

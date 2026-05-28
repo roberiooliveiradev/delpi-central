@@ -1,0 +1,9 @@
+{
+  "missingProductCode": {
+    "stock": "Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Com o código, consulto filial, armazém e quantidade disponível na plataforma.",
+    "structure": "Para consultar a **estrutura (BOM)** do item, informe o **código do produto** (ex.: 10080099).",
+    "parents": "Para ver onde o produto é usado, informe o **código do produto** (ex.: 10080099).",
+    "description": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, texto).",
+    "default": "Para consultar dados operacionais do produto, informe o **código do produto** (ex.: 10080099)."
+  }
+}

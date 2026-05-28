@@ -368,6 +368,7 @@ function IndicatorTreeCard({
                 values={indicator.goals}
                 format={valueFormat}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(
                   indicator,
@@ -390,6 +391,7 @@ function IndicatorTreeCard({
                 values={indicator.realized}
                 format={valueFormat}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorRealizedDisplay(
                   indicator,
@@ -424,6 +426,7 @@ function IndicatorTreeCard({
                 values={indicator.gaps}
                 format={valueFormat}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGapDisplay(
                   indicator,

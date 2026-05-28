@@ -24,6 +24,9 @@ from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
 from app.domain.services.chat_fast_path_service import ChatFastPathService
+from app.domain.services.chat_operational_parameter_service import (
+    ChatOperationalParameterService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -150,7 +153,22 @@ class ChatTurnPreparationService:
         if canvas_action:
             fast_path = True
 
-        if canvas_action or pre_capability_answer:
+        conversation_context = (
+            ChatIntelligencePipelineService.build_conversation_context(history_source)
+            if history_source
+            else None
+        )
+        missing_product_code_answer = None
+
+        if not canvas_action and not pre_capability_answer and not analysis_mode:
+            missing_product_code_answer = (
+                ChatOperationalParameterService.resolve_missing_product_code_answer(
+                    message,
+                    conversation_context=conversation_context,
+                )
+            )
+
+        if canvas_action or pre_capability_answer or missing_product_code_answer:
             tool_context = {
                 "context": "",
                 "toolCalls": [],
@@ -179,6 +197,7 @@ class ChatTurnPreparationService:
                 request=request,
                 workspace_context=workspace_context,
                 tool_context=tool_context,
+                conversation_context=conversation_context,
             )
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,
@@ -255,6 +274,10 @@ class ChatTurnPreparationService:
 
         if not direct_answer and assistant_identity_direct:
             direct_answer = assistant_identity_direct
+            skip_rag = True
+
+        if not direct_answer and missing_product_code_answer:
+            direct_answer = missing_product_code_answer
             skip_rag = True
 
         if skip_rag:

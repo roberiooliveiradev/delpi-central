@@ -77,6 +77,7 @@ export function AlertsPriorityHighlights({
                   valueDecimals: topIndicator.valueDecimals,
                 }}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(topIndicator, competence, displayContext)}
               />

@@ -291,6 +291,7 @@ export function PresentationDepartmentSlideScene({
                     <ScopeMetricBadges
                       values={indicator.realized}
                       format={valueFormat}
+                      layout="compact"
                       maxVisible={2}
                       emptyLabel={formatIndicatorRealizedDisplay(indicator, valueFormat)}
                     />
@@ -303,6 +304,7 @@ export function PresentationDepartmentSlideScene({
                     <ScopeMetricBadges
                       values={indicator.goals}
                       format={valueFormat}
+                      layout="compact"
                       maxVisible={2}
                       emptyLabel={formatIndicatorGoalValue(indicator, competence)}
                     />
@@ -315,6 +317,7 @@ export function PresentationDepartmentSlideScene({
                     <ScopeMetricBadges
                       values={indicator.gaps}
                       format={valueFormat}
+                      layout="compact"
                       maxVisible={2}
                       emptyLabel={formatIndicatorGapDisplay(indicator, valueFormat)}
                     />

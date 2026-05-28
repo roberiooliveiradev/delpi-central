@@ -77,6 +77,7 @@ export function IndicatorPriorityList({
                   valueDecimals: indicator.valueDecimals,
                 }}
                 displayContext={displayContext}
+                layout="compact"
                 maxVisible={2}
                 emptyLabel={formatIndicatorGoalValue(indicator, competence, displayContext)}
               />
