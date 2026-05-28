@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
-import { resolveStreamingHeadline } from "../../state/utils/streamingActivityLog";
+import {
+  activityPhaseKey,
+  compactActivityLogForDisplay,
+  formatActivityLogLine,
+  resolveCurrentActivityLine,
+  resolveStreamingHeadline,
+} from "../../state/utils/streamingActivityLog";
+
+import { ChatThinkingDots } from "./ChatThinkingDots";
 
 import "./ChatStreamingActivityPanel.css";
 
@@ -11,90 +19,13 @@ type ChatStreamingActivityPanelProps = {
   isActive?: boolean;
 };
 
-type ActivityGroup = {
-  key: string;
-  label: string;
-  items: ChatStreamActivityEntry[];
-};
-
-function resolveVerb(entry: ChatStreamActivityEntry): string {
-  if (entry.verb?.trim()) {
-    return entry.verb.trim();
-  }
-
-  const message = entry.message.trim();
-
-  if (message.includes(":")) {
-    return message.split(":")[0]?.trim() || "Processando";
-  }
-
-  return message.split(" ")[0] || "Processando";
-}
-
-function resolveTarget(entry: ChatStreamActivityEntry): string {
-  if (entry.target?.trim()) {
-    return entry.target.trim();
-  }
-
-  if (entry.path?.trim()) {
-    return entry.path.trim();
-  }
-
-  const message = entry.message.trim();
-  const colonIndex = message.indexOf(":");
-
-  if (colonIndex >= 0) {
-    return message.slice(colonIndex + 1).trim();
-  }
-
-  return message;
-}
-
-function groupEntries(entries: ChatStreamActivityEntry[]): ActivityGroup[] {
-  const groups: ActivityGroup[] = [];
-  const indexByKey = new Map<string, number>();
-
-  for (const entry of entries) {
-    const key = entry.group || entry.phase || "atividade";
-    const label =
-      entry.group ||
-      (entry.phase === "think"
-        ? "Pensar"
-        : entry.phase === "plan"
-          ? "Planejar novos passos"
-          : entry.phase === "prepare"
-            ? "Preparando"
-            : entry.phase === "tools"
-              ? "Consultando"
-              : entry.phase === "rag"
-                ? "Conhecimento"
-                : entry.phase === "response"
-                  ? "Respondendo"
-                  : "Atividade");
-
-    const existingIndex = indexByKey.get(key);
-
-    if (existingIndex === undefined) {
-      indexByKey.set(key, groups.length);
-      groups.push({ key, label, items: [entry] });
-      continue;
-    }
-
-    groups[existingIndex]?.items.push(entry);
-  }
-
-  return groups;
-}
-
-function ActivityRow({
+function ActivityLogLine({
   entry,
-  isNew,
+  compact = false,
 }: {
   entry: ChatStreamActivityEntry;
-  isNew?: boolean;
+  compact?: boolean;
 }) {
-  const verb = resolveVerb(entry);
-  const target = resolveTarget(entry);
   const isActive = entry.state === "active";
   const levelClass =
     entry.level === "error"
@@ -107,17 +38,20 @@ function ActivityRow({
 
   return (
     <li
-      className={`mdc-chat-stream-activity__row ${levelClass}${isActive ? " is-active" : ""}${isNew ? " is-new" : ""}`}
+      className={[
+        "mdc-chat-stream-activity__log-line",
+        levelClass,
+        isActive ? "is-active" : "",
+        compact ? "is-compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
-      <span className="mdc-chat-stream-activity__verb">{verb}</span>
-      <span className="mdc-chat-stream-activity__target" title={target}>
-        {target}
+      <span className="mdc-chat-stream-activity__log-text">
+        {formatActivityLogLine(entry)}
       </span>
-      {entry.statusCode ? (
-        <span className="mdc-chat-stream-activity__http">{entry.statusCode}</span>
-      ) : null}
-      {entry.detail ? (
-        <p className="mdc-chat-stream-activity__detail">{entry.detail}</p>
+      {entry.detail && !compact ? (
+        <span className="mdc-chat-stream-activity__log-detail">{entry.detail}</span>
       ) : null}
     </li>
   );
@@ -133,17 +67,34 @@ export function ChatStreamingActivityPanel({
     [entries],
   );
 
-  const groups = useMemo(() => groupEntries(entries), [entries]);
-  const [showLog, setShowLog] = useState(true);
+  const compactLines = useMemo(() => compactActivityLogForDisplay(entries), [entries]);
+  const currentLine = useMemo(() => resolveCurrentActivityLine(entries), [entries]);
+  const headline = resolveStreamingHeadline(status, entries);
+
+  const [showLog, setShowLog] = useState(false);
   const groupsRef = useRef<HTMLDivElement | null>(null);
-  const previousCountRef = useRef(0);
-  const newestEntryId = entries[entries.length - 1]?.id;
+  const previousLineIdRef = useRef<string | null>(null);
+  const [linePulse, setLinePulse] = useState(false);
 
   useEffect(() => {
     if (hasIssues || isActive) {
-      setShowLog(true);
+      setShowLog(false);
     }
   }, [hasIssues, isActive]);
+
+  useEffect(() => {
+    const lineId = currentLine?.id ?? null;
+
+    if (lineId && lineId !== previousLineIdRef.current) {
+      previousLineIdRef.current = lineId;
+      setLinePulse(true);
+      const timer = window.setTimeout(() => setLinePulse(false), 320);
+      return () => window.clearTimeout(timer);
+    }
+
+    previousLineIdRef.current = lineId;
+    return undefined;
+  }, [currentLine?.id]);
 
   useEffect(() => {
     if (!showLog || !groupsRef.current) {
@@ -151,22 +102,30 @@ export function ChatStreamingActivityPanel({
     }
 
     groupsRef.current.scrollTop = groupsRef.current.scrollHeight;
-  }, [entries, showLog]);
+  }, [compactLines, showLog]);
 
-  useEffect(() => {
-    previousCountRef.current = entries.length;
-  }, [entries.length]);
-
-  const headline = resolveStreamingHeadline(status, entries);
-  const hasLog = entries.length > 0;
-  const showWaitingPulse = isActive && entries.length === 0;
+  const hasLog = compactLines.length > 0;
 
   return (
     <div className="mdc-chat-stream-activity" role="status" aria-live="polite">
-      <p className="mdc-chat-stream-activity__summary">
-        {isActive ? <span className="mdc-chat-stream-activity__pulse" aria-hidden="true" /> : null}
-        <span>{headline}</span>
-      </p>
+      {isActive ? <ChatThinkingDots label={headline} /> : null}
+
+      {currentLine ? (
+        <p
+          key={currentLine.id}
+          className={[
+            "mdc-chat-stream-activity__current-line",
+            linePulse ? "is-updating" : "",
+            currentLine.state === "active" ? "is-active" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {formatActivityLogLine(currentLine)}
+        </p>
+      ) : isActive ? (
+        <p className="mdc-chat-stream-activity__current-line is-active">{headline}</p>
+      ) : null}
 
       {hasLog ? (
         <>
@@ -176,33 +135,23 @@ export function ChatStreamingActivityPanel({
             aria-expanded={showLog}
             onClick={() => setShowLog((current) => !current)}
           >
-            {showLog ? "Ocultar etapas" : `Ver etapas (${entries.length})`}
+            {showLog ? "Ocultar etapas" : `Ver etapas (${compactLines.length})`}
           </button>
 
           {showLog ? (
-            <div ref={groupsRef} className="mdc-chat-stream-activity__groups">
-              {groups.map((group) => (
-                <section key={group.key} className="mdc-chat-stream-activity__group">
-                  <h4 className="mdc-chat-stream-activity__group-title">{group.label}</h4>
-                  <ul className="mdc-chat-stream-activity__rows">
-                    {group.items.map((entry) => (
-                      <ActivityRow
-                        key={entry.id}
-                        entry={entry}
-                        isNew={
-                          entry.id === newestEntryId &&
-                          entries.length > previousCountRef.current
-                        }
-                      />
-                    ))}
-                  </ul>
-                </section>
-              ))}
+            <div ref={groupsRef} className="mdc-chat-stream-activity__log">
+              <ul className="mdc-chat-stream-activity__log-lines">
+                {compactLines.map((entry) => (
+                  <ActivityLogLine
+                    key={activityPhaseKey(entry)}
+                    entry={entry}
+                    compact
+                  />
+                ))}
+              </ul>
             </div>
           ) : null}
         </>
-      ) : showWaitingPulse ? (
-        <p className="mdc-chat-stream-activity__waiting">Aguardando etapas...</p>
       ) : null}
     </div>
   );

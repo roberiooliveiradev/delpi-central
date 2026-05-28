@@ -31,6 +31,7 @@ import { ChatRichPresentation } from "./ChatRichPresentation";
 import { getPresentationPairFromToolCalls } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
+import { ChatThinkingDots } from "./ChatThinkingDots";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
@@ -301,9 +302,10 @@ export function ChatMessageList({
   }, []);
 
   const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
+  const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
-    enabled: isActiveStream,
-    charsPerFrame: 4,
+    enabled: isGeneratingAnswer,
+    charsPerFrame: 2,
   });
 
   useEffect(() => {
@@ -792,11 +794,19 @@ export function ChatMessageList({
               </div>
 
               <div className="mdc-chat-message-streaming-body">
-                <ChatStreamingActivityPanel
-                  status={streamingStatus}
-                  entries={streamingActivityLog}
-                  isActive
-                />
+                {!isGeneratingAnswer ? (
+                  <ChatStreamingActivityPanel
+                    status={streamingStatus}
+                    entries={streamingActivityLog}
+                    isActive
+                  />
+                ) : (
+                  <ChatThinkingDots
+                    label={
+                      streamingStatus?.trim() || "Gerando resposta em linguagem natural..."
+                    }
+                  />
+                )}
                 {streamingAnswer ? (
                   <ChatMarkdown content={revealedStreamingAnswer} />
                 ) : null}
