@@ -503,6 +503,11 @@ class StreamChatMessageUseCase:
                 "messageId": str(assistant_message.id),
             }
 
+        client_admin_debug = ChatAdminDebugService.payload_for_client(
+            request,
+            admin_debug_payload,
+        )
+
         if persist_before_playback:
             yield {
                 "type": "playback",
@@ -510,7 +515,7 @@ class StreamChatMessageUseCase:
                 "answer": answer,
                 "sources": sources,
                 "toolCalls": tool_calls,
-                "adminDebug": admin_debug_payload,
+                "adminDebug": client_admin_debug,
             }
 
         done_event = {
@@ -520,7 +525,7 @@ class StreamChatMessageUseCase:
             "sources": sources,
             "toolCalls": tool_calls,
             "playback": persist_before_playback,
-            "adminDebug": admin_debug_payload,
+            "adminDebug": client_admin_debug,
         }
 
         if canvas_open_payload:

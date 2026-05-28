@@ -14,15 +14,22 @@ class ChatAdminDebugLimits:
 
 
 class ChatAdminDebugService:
-    """Monta payload de diagnóstico para admins.
+    """Monta payload de diagnóstico do turno (RAG, tools, prompt, pipeline).
 
-    Importante: este payload pode conter contexto amplo (RAG, tools, prompt).
-    Deve ser exposto apenas quando o backend determinar que o usuário é admin.
+    O payload é **sempre** persistido em `metadata.adminDebug` para análise interna.
+    A **exposição** ao cliente (resposta HTTP/SSE/histórico) depende de permissão admin.
     """
 
     @staticmethod
-    def should_collect(request) -> bool:
+    def should_expose_to_client(request) -> bool:
+        """True quando a rota autorizou envio do diagnóstico na resposta (usuário admin)."""
         return bool(getattr(request, "admin_debug", False))
+
+    @classmethod
+    def payload_for_client(cls, request, payload: dict | None) -> dict | None:
+        if payload is None or not cls.should_expose_to_client(request):
+            return None
+        return payload
 
     @classmethod
     def build_for_turn(
@@ -39,9 +46,8 @@ class ChatAdminDebugService:
         fast_path: bool,
         skip_rag: bool,
         limits: ChatAdminDebugLimits | None = None,
-    ) -> dict | None:
-        if not cls.should_collect(request):
-            return None
+    ) -> dict:
+        _ = request  # reservado; persistência não depende de permissão do solicitante
 
         payload = cls.build(
             workspace_context=workspace_context,

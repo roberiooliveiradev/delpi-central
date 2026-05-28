@@ -378,7 +378,10 @@ class SendChatMessageUseCase:
                 if canvas_open_payload
                 else None
             ),
-            adminDebug=admin_debug_payload,
+            adminDebug=ChatAdminDebugService.payload_for_client(
+                request,
+                admin_debug_payload,
+            ),
         )
 
     def _build_admin_guidelines_prompt(self, workspace_context: dict) -> tuple[str, list[dict]]:
