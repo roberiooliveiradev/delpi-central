@@ -344,6 +344,7 @@ class ChatProductQueryIntentService:
         if not (
             cls.references_previous_product(message)
             or cls._looks_like_stock_question(normalized)
+            or cls._looks_like_stock_scope_reset_question(normalized)
             or cls._looks_like_description_question(normalized)
             or cls._looks_like_product_summary_question(normalized)
             or cls._looks_like_structure_question(normalized)
@@ -470,6 +471,22 @@ class ChatProductQueryIntentService:
                 stock_lines.append(line)
 
         return stock_lines
+
+    @classmethod
+    def _looks_like_stock_scope_reset_question(cls, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in (
+                "completo de novo",
+                "estoque completo",
+                "todas as filiais",
+                "todas filiais",
+                "mostre completo",
+                "mostra completo",
+                "sem filtro",
+                "sem filial",
+            )
+        )
 
     @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:

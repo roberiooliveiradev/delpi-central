@@ -19,6 +19,7 @@ class ChatExternalActionOrchestrationService:
         {
             ChatProductQueryIntent.STRUCTURE,
             ChatProductQueryIntent.STOCK,
+            ChatProductQueryIntent.SUMMARY,
             ChatProductQueryIntent.DESCRIPTION,
             ChatProductQueryIntent.PARENTS,
         }
@@ -67,13 +68,47 @@ class ChatExternalActionOrchestrationService:
         if ChatCanvasIntentService.is_canvas_placement_request(message):
             return []
 
+        from app.domain.services.chat_operational_refinement_service import (
+            ChatOperationalRefinementService,
+        )
+
+        stock_follow_ups = ChatOperationalRefinementService.plan_stock_follow_ups(
+            message,
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        )
+
+        if stock_follow_ups:
+            limit = cls._resolve_max_calls(max_calls)
+            planned: list[dict] = []
+
+            for refinement in stock_follow_ups[:limit]:
+                selected = selection_service.select_action_for_product(
+                    message,
+                    product_code=refinement.product_code,
+                    allowed_action_ids=allowed_action_ids,
+                    intent=ChatProductQueryIntent.STOCK,
+                )
+
+                if selected:
+                    planned.append(selected)
+
+            if planned:
+                return planned
+
         limit = cls._resolve_max_calls(max_calls)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
             message,
             conversation_context,
         )
-        intent = cls._resolve_product_intent(message, normalized)
+        intent = ChatProductQueryIntentService.resolve_product_intent(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if intent == ChatProductQueryIntent.FULL:
+            intent = cls._resolve_product_intent(message, normalized)
 
         if len(codes) > 1 and intent in cls._MULTI_PRODUCT_INTENTS:
             planned: list[dict] = []

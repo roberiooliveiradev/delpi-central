@@ -23,6 +23,10 @@ class OperationalRefinement:
     warehouse: str | None = None
     reason: str = ""
 
+    @property
+    def clears_branch_filter(self) -> bool:
+        return self.kind == "stock_reset"
+
 
 class ChatOperationalRefinementService:
     _FILTER_TERMS = (
@@ -50,6 +54,91 @@ class ChatOperationalRefinementService:
         r"\b(?:armaz[eé]m|arm\.?|deposito|depósito)\s*[_-]?\s*(\d{1,3})\b",
         re.IGNORECASE,
     )
+    _STOCK_RESET_TERMS = (
+        "completo de novo",
+        "estoque completo",
+        "completo novamente",
+        "tudo de novo",
+        "todas as filiais",
+        "todas filiais",
+        "todas as filial",
+        "sem filtro",
+        "sem filial",
+        "remova o filtro",
+        "remover filtro",
+        "tire o filtro",
+        "mostre completo",
+        "mostra completo",
+        "visao completa",
+        "visão completa",
+    )
+
+    @classmethod
+    def looks_like_stock_scope_reset(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._STOCK_RESET_TERMS)
+
+    @classmethod
+    def plan_stock_follow_ups(
+        cls,
+        message: str,
+        *,
+        conversation_context: str | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> list[OperationalRefinement]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not cls._has_recent_stock_context(
+            conversation_context=conversation_context,
+            previous_messages=previous_messages,
+        ):
+            return []
+
+        product_codes = cls._collect_recent_stock_product_codes(previous_messages)
+
+        if not product_codes:
+            code = ChatProductQueryIntentService.resolve_product_code(
+                message,
+                conversation_context,
+                previous_messages=previous_messages,
+            )
+
+            if code:
+                product_codes = [code]
+
+        if not product_codes:
+            return []
+
+        if cls.looks_like_stock_scope_reset(normalized):
+            return [
+                OperationalRefinement(
+                    kind="stock_reset",
+                    product_code=code,
+                    reason=(
+                        "A mensagem pede o estoque completo novamente, sem filtro de filial."
+                    ),
+                )
+                for code in product_codes
+            ]
+
+        if not cls.looks_like_operational_refinement(normalized):
+            return []
+
+        branch = cls.extract_branch_code(normalized)
+        warehouse = cls.extract_warehouse_code(normalized)
+
+        if not branch and not warehouse and not cls._requires_stock_refinement(normalized):
+            return []
+
+        return [
+            OperationalRefinement(
+                kind="stock_refinement",
+                product_code=code,
+                branch=branch,
+                warehouse=warehouse,
+                reason="A mensagem refina a consulta de estoque já feita nesta conversa.",
+            )
+            for code in product_codes
+        ]
 
     @classmethod
     def detect(
@@ -59,46 +148,16 @@ class ChatOperationalRefinementService:
         conversation_context: str | None = None,
         previous_messages: list[Any] | None = None,
     ) -> OperationalRefinement | None:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-
-        if not cls.looks_like_operational_refinement(normalized):
-            return None
-
-        if not cls._has_recent_stock_context(
+        planned = cls.plan_stock_follow_ups(
+            message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
-        ):
+        )
+
+        if not planned:
             return None
 
-        product_code = ChatProductQueryIntentService.extract_product_code(message)
-
-        if not product_code:
-            product_code = ChatProductQueryIntentService.resolve_product_code(
-                message,
-                conversation_context,
-            )
-
-        if not product_code and previous_messages:
-            product_code = ChatProductQueryIntentService.extract_last_product_code_from_messages(
-                previous_messages,
-            ) or cls._product_code_from_messages(previous_messages)
-
-        if not product_code:
-            return None
-
-        branch = cls.extract_branch_code(normalized)
-        warehouse = cls.extract_warehouse_code(normalized)
-
-        if branch or warehouse or cls._requires_stock_refinement(normalized):
-            return OperationalRefinement(
-                kind="stock_refinement",
-                product_code=product_code,
-                branch=branch,
-                warehouse=warehouse,
-                reason="A mensagem refina a consulta de estoque já feita nesta conversa.",
-            )
-
-        return None
+        return planned[0]
 
     @classmethod
     def looks_like_operational_refinement(cls, normalized: str) -> bool:
@@ -121,7 +180,7 @@ class ChatOperationalRefinementService:
         conversation_context: str | None = None,
         previous_messages: list[Any] | None = None,
     ) -> bool:
-        if cls.detect(
+        if cls.plan_stock_follow_ups(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
@@ -200,6 +259,46 @@ class ChatOperationalRefinementService:
                 return True
 
         return False
+
+    @classmethod
+    def _collect_recent_stock_product_codes(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> list[str]:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        for item in reversed((previous_messages or [])[-14:]):
+            batch_codes: list[str] = []
+
+            for tool_call in cls._message_metadata(item).get("toolCalls") or []:
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if not tool_meta.get("ok"):
+                    continue
+
+                path = str(tool_meta.get("path") or "").lower()
+                action_id = str(tool_meta.get("actionId") or "").lower()
+
+                if "/stock" not in path and "product_stock" not in action_id:
+                    continue
+
+                code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
+
+                if code and code not in batch_codes:
+                    batch_codes.append(code)
+
+            if batch_codes:
+                return batch_codes
+
+        return []
 
     @classmethod
     def _product_code_from_messages(cls, previous_messages: list[Any]) -> str | None:

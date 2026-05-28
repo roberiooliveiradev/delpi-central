@@ -66,7 +66,7 @@ class ExternalActionSelectionService:
             previous_messages=previous_messages,
         )
 
-        if refinement and refinement.kind == "stock_refinement":
+        if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
             selected = self._select_product_action(
                 message,
                 refinement.product_code,
