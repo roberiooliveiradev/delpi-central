@@ -62,6 +62,9 @@ def _department_scopes(
 def refresh_period_scores_materialized(
     *,
     reference_competence: str | None = None,
+    trends_months: int | None = None,
+    per_department: bool | None = None,
+    invalidate_cache: bool = True,
 ) -> int:
     """
     Recalcula e persiste period_scores e calculation_snapshots para os escopos configurados.
@@ -69,10 +72,27 @@ def refresh_period_scores_materialized(
 
     `reference_competence`: competência YYYY-MM de referência para a janela de tendência
     (default: mês atual do servidor).
+    `trends_months` / `per_department`: sobrescrevem env (útil no script CLI sem recriar container).
+    `invalidate_cache`: quando False, não apaga period_scores existentes (refresh incremental).
     """
     if not settings.SI_PERIOD_SCORES_ENABLED:
         logger.info("si_period_scores_refresh_skipped disabled")
         return 0
+
+    resolved_trends_months = max(
+        2,
+        min(
+            trends_months
+            if trends_months is not None
+            else settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
+            12,
+        ),
+    )
+    resolved_per_department = (
+        settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT
+        if per_department is None
+        else per_department
+    )
 
     state_repo = PostgresStrategicIndicatorsRefreshStateRepository()
     state_repo.mark_started()
@@ -86,26 +106,34 @@ def refresh_period_scores_materialized(
     )
 
     logger.info(
-        "si_period_scores_refresh_start competence=%s trends_months=%d",
+        (
+            "si_period_scores_refresh_start competence=%s trends_months=%d "
+            "per_department=%s invalidate_cache=%s"
+        ),
         resolved_reference,
-        settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
+        resolved_trends_months,
+        resolved_per_department,
+        invalidate_cache,
     )
 
     try:
-        invalidate_strategic_indicators_snapshot_cache(
-            schedule_materialized_refresh=False,
-        )
+        if invalidate_cache:
+            invalidate_strategic_indicators_snapshot_cache(
+                schedule_materialized_refresh=False,
+            )
+        else:
+            logger.info("si_period_scores_refresh_skip_invalidate")
 
         snapshot_service = build_strategic_indicators_snapshot_service()
         reference_competence = resolved_reference
         trend_periods = build_trend_periods(
             reference_competence=reference_competence,
-            months=settings.SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS,
+            months=resolved_trends_months,
         )
 
         branch_scopes = _parse_branch_scopes()
         department_scopes = _department_scopes(
-            include_per_department=settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT,
+            include_per_department=resolved_per_department,
             reference_competence=reference_competence,
         )
 
@@ -126,7 +154,7 @@ def refresh_period_scores_materialized(
 
         for branch in branch_scopes:
             for department_id in department_scopes:
-                if department_id and not settings.SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT:
+                if department_id and not resolved_per_department:
                     continue
 
                 target_periods = periods
