@@ -46,6 +46,7 @@ QUESTIONS: list[tuple[str, dict]] = [
     (
         "estoque do produto",
         {
+            "synthetic_history": [],
             "direct_answer_contains": "código",
             "max_tool_calls": 0,
             "skip_rag": True,
@@ -54,6 +55,7 @@ QUESTIONS: list[tuple[str, dict]] = [
     (
         "estouque do produto",
         {
+            "synthetic_history": [],
             "direct_answer_contains": "código",
             "max_tool_calls": 0,
         },
@@ -135,7 +137,10 @@ def main() -> int:
         previous = chat_repo.list_messages_by_session(UUID(session_id))
 
         for message, expectations in QUESTIONS:
-            history_for_turn = expectations.get("synthetic_history") or previous
+            if "synthetic_history" in expectations:
+                history_for_turn = expectations["synthetic_history"]
+            else:
+                history_for_turn = previous
 
             request = SendChatMessageRequest(
                 user_id=user_id,
@@ -268,7 +273,8 @@ def main() -> int:
                 }
             )
 
-    print(json.dumps(results, ensure_ascii=False, indent=2))
+    sys.stdout.write(json.dumps(results, ensure_ascii=False, indent=2))
+    sys.stdout.write("\n")
     print(f"\n{len(results) - failed}/{len(results)} OK", file=sys.stderr)
     return 1 if failed else 0
 
