@@ -40,6 +40,21 @@ export function ScopeMetricBadges({
 }: ScopeMetricBadgesProps) {
   const activeBranch = displayContext?.activeBranch;
 
+  const normalizedFormat = useMemo<IndicatorValueFormat>(() => {
+    const unit = String((format as any).valueUnit ?? "").trim().toLowerCase();
+    const prefix = String((format as any).valuePrefix ?? "").trim();
+    const suffix = String((format as any).valueSuffix ?? "").trim();
+
+    // Fallbacks: alguns endpoints usam `value_unit` mas não mandam prefixo/sufixo.
+    if (unit === "currency" && !prefix) {
+      return { ...format, valuePrefix: "R$" };
+    }
+    if (unit === "percent" && !suffix) {
+      return { ...format, valueSuffix: "%" };
+    }
+    return format;
+  }, [format]);
+
   const normalizedValues = useMemo(() => {
     const base = values ?? {};
     if (!Object.keys(base).length) return null;
@@ -61,7 +76,7 @@ export function ScopeMetricBadges({
     const consolidated = normalizedValues.consolidated ?? null;
     return (
       <span className="si-scope-badges__single">
-        {formatIndicatorValue(consolidated, format)}
+        {formatIndicatorValue(consolidated, normalizedFormat)}
       </span>
     );
   }
@@ -72,10 +87,14 @@ export function ScopeMetricBadges({
   return (
     <span className="si-scope-badges">
       {visibleKeys.map((key) => (
-        <span key={key} className="si-scope-badge" title={`Filial ${key}`}>
+        <span
+          key={key}
+          className={`si-scope-badge si-scope-badge--branch-${key}`}
+          title={`Filial ${key}`}
+        >
           <span className="si-scope-badge__key">{key}</span>
           <span className="si-scope-badge__value">
-            {formatIndicatorValue(normalizedValues[key], format)}
+            {formatIndicatorValue(normalizedValues[key], normalizedFormat)}
           </span>
         </span>
       ))}

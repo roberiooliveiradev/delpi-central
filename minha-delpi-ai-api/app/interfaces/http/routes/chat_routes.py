@@ -2101,7 +2101,20 @@ def get_history(session_id: str):
         session_id=session_id,
     )
 
-    return jsonify([asdict(message) for message in result]), 200
+    allow_admin_debug = _can_use_admin_debug()
+    payload = []
+
+    for message in result:
+        item = asdict(message)
+        if not allow_admin_debug:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict) and metadata.get("adminDebug") is not None:
+                metadata = dict(metadata)
+                metadata.pop("adminDebug", None)
+                item["metadata"] = metadata
+        payload.append(item)
+
+    return jsonify(payload), 200
 
 
 @chat_bp.put("/sessions/<session_id>/messages/<message_id>/feedback")
@@ -2341,6 +2354,20 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
 
 def _can_use_admin_debug() -> bool:
     """Gating: só usuários admin/superadmin podem receber payloads de debug."""
+    authorization_header = request.headers.get("Authorization")
+    core_user = CoreMeGateway().get_me(authorization_header)
+
+    if core_user:
+        if bool(core_user.get("is_superadmin")):
+            return True
+
+        permissions = set(core_user.get("permissions") or [])
+        return bool(
+            CHAT_ADMIN_PERMISSION in permissions
+            or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+            or CHAT_KNOWLEDGE_MANAGE_PERMISSION in permissions
+        )
+
     user = getattr(g, "current_user", None)
 
     if not user:

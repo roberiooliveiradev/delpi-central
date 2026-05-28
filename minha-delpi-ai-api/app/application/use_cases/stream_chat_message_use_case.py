@@ -431,6 +431,9 @@ class StreamChatMessageUseCase:
             "directResponse": bool(direct_answer),
         }
 
+        if admin_debug_payload is not None:
+            assistant_metadata["adminDebug"] = admin_debug_payload
+
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
                 "title": canvas_open_payload.title,

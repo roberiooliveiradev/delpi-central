@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useResizablePane } from "../../state/hooks/useResizablePane";
+import { useConfirmDialog } from "../components/useConfirmDialog";
 
 import {
   createAgentTextSource,
@@ -165,6 +166,7 @@ export function ChatAgentBuilderPage({
   getAccessToken,
 }: ChatAgentBuilderPageProps) {
   const isEditing = Boolean(agent);
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [builderMode, setBuilderMode] = useState<"create" | "configure">(
     agent ? "configure" : "create",
   );
@@ -926,9 +928,14 @@ export function ChatAgentBuilderPage({
       return;
     }
 
-    const confirmed = window.confirm(
-      "Transferir a propriedade deste agente? Você perderá o papel de dono.",
-    );
+    const confirmed = await confirm({
+      title: "Transferir propriedade",
+      description:
+        "Transferir a propriedade deste agente? Você perderá o papel de dono.",
+      confirmLabel: "Transferir",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
 
     if (!confirmed) {
       return;
@@ -1065,7 +1072,13 @@ export function ChatAgentBuilderPage({
       return;
     }
 
-    const confirmed = window.confirm(`Excluir o agente "${agent.name}"?`);
+    const confirmed = await confirm({
+      title: "Excluir agente",
+      description: `Excluir o agente "${agent.name}"?`,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
 
     if (!confirmed) {
       return;
@@ -1106,6 +1119,7 @@ export function ChatAgentBuilderPage({
 
   return (
     <section className="mdc-chat-agent-builder" aria-label="Configurar agente">
+      {confirmDialog}
       <header className="mdc-chat-ws-topbar mdc-chat-agent-builder__topbar">
         <div className="mdc-chat-ws-topbar__start">
           <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
@@ -1461,7 +1475,7 @@ export function ChatAgentBuilderPage({
                 <span>Modelo de instruções</span>
                 <select
                   value={selectedPromptTemplateKey}
-                  onChange={(event) => {
+                  onChange={async (event) => {
                     const templateKey = event.target.value;
                     setSelectedPromptTemplateKey(templateKey);
 
@@ -1477,9 +1491,14 @@ export function ChatAgentBuilderPage({
 
                     const shouldReplace =
                       !systemPrompt.trim() ||
-                      window.confirm(
-                        "Substituir as instruções atuais pelo modelo selecionado?",
-                      );
+                      (await confirm({
+                        title: "Substituir instruções",
+                        description:
+                          "Substituir as instruções atuais pelo modelo selecionado?",
+                        confirmLabel: "Substituir",
+                        cancelLabel: "Cancelar",
+                        danger: true,
+                      }));
 
                     if (!shouldReplace) {
                       return;

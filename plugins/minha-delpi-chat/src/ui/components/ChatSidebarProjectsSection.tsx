@@ -9,6 +9,7 @@ import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "./ChatProjectCard";
+import { useConfirmDialog } from "./useConfirmDialog";
 
 const PROJECT_SESSION_LIMIT = 5;
 const PROJECT_LIST_LIMIT = 5;
@@ -42,6 +43,7 @@ export function ChatSidebarProjectsSection({
   onDeleteProject,
   isSessionProcessing,
 }: ChatSidebarProjectsSectionProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllByProject, setShowAllByProject] = useState<Record<string, boolean>>({});
@@ -105,6 +107,7 @@ export function ChatSidebarProjectsSection({
 
   return (
     <>
+      {confirmDialog}
       <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
         <div className="mdc-chat-sidebar__section-heading">
           <button
@@ -183,13 +186,17 @@ export function ChatSidebarProjectsSection({
                         }}
                         onOpenSettings={() => onSelectProject?.(project.id)}
                         onDelete={() => {
-                          const confirmed = window.confirm(
-                            `Excluir o projeto "${project.name}"?`,
-                          );
-
-                          if (confirmed) {
-                            void onDeleteProject?.(project.id);
-                          }
+                          void confirm({
+                            title: "Excluir projeto",
+                            description: `Excluir o projeto "${project.name}"?`,
+                            confirmLabel: "Excluir",
+                            cancelLabel: "Cancelar",
+                            danger: true,
+                          }).then((confirmed) => {
+                            if (confirmed) {
+                              void onDeleteProject?.(project.id);
+                            }
+                          });
                         }}
                       />
 

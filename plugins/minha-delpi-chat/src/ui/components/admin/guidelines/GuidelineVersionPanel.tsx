@@ -10,6 +10,7 @@ import type {
   AdminGuidelineVersion,
   AdminGuidelineVersionComparison,
 } from "../../../../data/api/adminTypes";
+import { useConfirmDialog } from "../../useConfirmDialog";
 
 import "./GuidelineVersionPanel.css";
 
@@ -26,6 +27,7 @@ export function GuidelineVersionPanel({
   onRestored,
   canCreateGuidelines,
 }: GuidelineVersionPanelProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [selectedGuidelineId, setSelectedGuidelineId] = useState("");
   const [versions, setVersions] = useState<AdminGuidelineVersion[]>([]);
   const [fromVersion, setFromVersion] = useState("");
@@ -92,9 +94,13 @@ export function GuidelineVersionPanel({
       return;
     }
 
-    const confirmed = window.confirm(
-      `Restaurar a versão ${version} como novo rascunho?`,
-    );
+    const confirmed = await confirm({
+      title: "Restaurar versão",
+      description: `Restaurar a versão ${version} como novo rascunho?`,
+      confirmLabel: "Restaurar",
+      cancelLabel: "Cancelar",
+      danger: true,
+    });
 
     if (!confirmed) {
       return;
@@ -119,6 +125,7 @@ export function GuidelineVersionPanel({
 
   return (
     <article className="mdc-guideline-version-panel">
+      {confirmDialog}
       <div>
         <p className="mdc-chat-eyebrow">Versionamento</p>
         <h2>Histórico de diretrizes</h2>

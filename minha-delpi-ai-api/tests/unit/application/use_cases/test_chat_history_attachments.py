@@ -49,11 +49,19 @@ class FakeRepository:
         ]
 
 
+class FakeFeedbackRepository:
+    def list_feedback_by_message_ids(self, *, message_ids, user_id):
+        return {}
+
+
 def test_history_returns_message_attachments_from_metadata():
     user_id = uuid4()
     session_id = uuid4()
 
-    use_case = GetChatHistoryUseCase(FakeRepository(user_id, session_id))
+    use_case = GetChatHistoryUseCase(
+        FakeRepository(user_id, session_id),
+        feedback_repository=FakeFeedbackRepository(),
+    )
 
     result = use_case.execute(user_id=str(user_id), session_id=str(session_id))
 
