@@ -794,195 +794,226 @@ export function ChatMessageList({
           {isUser ? "V" : "D"}
         </div>
 
-        <div
-          className={`mdc-chat-message-card${
-            isUser ? " mdc-chat-message-card--user" : ""
-          }${
-            isUser && editingMessageId === message.id
-              ? " mdc-chat-message-card--editing"
-              : ""
-          }`}
-        >
-          {!(isUser && editingMessageId === message.id) ? (
-          <div className="mdc-chat-message-header">
-            {!isUser ? (
-              <strong>Minha DELPI Chat</strong>
+        {isUser ? (
+          <div className="mdc-chat-message-user-stack">
+            {editingMessageId !== message.id ? (
+              <div className="mdc-chat-message-user-toolbar">
+                <div className="mdc-chat-message-actions">
+                  <button
+                    className="mdc-chat-message-action"
+                    type="button"
+                    onClick={() => startEditMessage(message)}
+                    aria-label="Editar mensagem"
+                    title="Editar mensagem"
+                  >
+                    <Pencil size={15} aria-hidden="true" />
+                  </button>
+
+                  <button
+                    className="mdc-chat-message-action"
+                    type="button"
+                    onClick={() => onReuseMessage?.(displayContent)}
+                    aria-label="Reutilizar mensagem"
+                    title="Reutilizar mensagem"
+                  >
+                    <RotateCcw size={15} aria-hidden="true" />
+                  </button>
+                </div>
+
+                {messageTime ? (
+                  <time
+                    className="mdc-chat-message-user-toolbar__time"
+                    dateTime={message.created_at}
+                  >
+                    {messageTime}
+                  </time>
+                ) : null}
+              </div>
             ) : null}
 
-            <div className="mdc-chat-message-meta">
-              {messageTime ? (
-                <time dateTime={message.created_at}>{messageTime}</time>
-              ) : null}
+            <div
+              className={`mdc-chat-message-card mdc-chat-message-card--user${
+                editingMessageId === message.id
+                  ? " mdc-chat-message-card--editing"
+                  : ""
+              }`}
+            >
+              {editingMessageId === message.id ? (
+                <div className="mdc-chat-message-edit mdc-chat-message-edit--inline">
+                  <textarea
+                    className="mdc-chat-message-edit__input"
+                    value={editingContent}
+                    rows={1}
+                    autoFocus
+                    onChange={(event) => setEditingContent(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        event.preventDefault();
+                        cancelEditMessage();
+                      }
 
-              <div className="mdc-chat-message-actions">
-                {isUser ? (
-                  <>
-                    <button
-                      className="mdc-chat-message-action"
-                      type="button"
-                      onClick={() => startEditMessage(message)}
-                      aria-label="Editar mensagem"
-                      title="Editar mensagem"
-                    >
-                      <Pencil size={15} aria-hidden="true" />
-                    </button>
+                      if (
+                        (event.ctrlKey || event.metaKey) &&
+                        event.key === "Enter"
+                      ) {
+                        event.preventDefault();
+                        void handleSaveAndResend(message.id);
+                      }
+                    }}
+                  />
 
-                    <button
-                      className="mdc-chat-message-action"
-                      type="button"
-                      onClick={() => onReuseMessage?.(displayContent)}
-                      aria-label="Reutilizar mensagem"
-                      title="Reutilizar mensagem"
-                    >
-                      <RotateCcw size={15} aria-hidden="true" />
+                  <div className="mdc-chat-message-edit-actions">
+                    <button type="button" onClick={cancelEditMessage}>
+                      Cancelar
                     </button>
-                  </>
-                ) : (
-                  <>
                     <button
-                      className={`mdc-chat-message-action${
-                        message.user_feedback === 1 ? " is-active" : ""
-                      }`}
                       type="button"
-                      aria-label="Resposta útil"
-                      title="Resposta útil"
-                      onClick={() =>
-                        void onMessageFeedback?.(
-                          message.id,
-                          message.user_feedback === 1 ? null : 1,
-                        )
-                      }
+                      className="mdc-chat-message-edit-actions__primary"
+                      disabled={Boolean(isStreaming)}
+                      onClick={() => void handleSaveAndResend(message.id)}
                     >
-                      <ThumbsUp size={15} aria-hidden="true" />
+                      Enviar
                     </button>
-
-                    <button
-                      className={`mdc-chat-message-action${
-                        message.user_feedback === -1 ? " is-active" : ""
-                      }`}
-                      type="button"
-                      aria-label="Resposta não útil"
-                      title="Resposta não útil"
-                      onClick={() =>
-                        void onMessageFeedback?.(
-                          message.id,
-                          message.user_feedback === -1 ? null : -1,
-                        )
-                      }
-                    >
-                      <ThumbsDown size={15} aria-hidden="true" />
-                    </button>
-
-                    <button
-                      className="mdc-chat-message-action"
-                      type="button"
-                      onClick={() =>
-                        void handleCopy(
-                          message.id,
-                          buildAssistantCopyText(message.content, messageToolCalls),
-                        )
-                      }
-                      aria-label={
-                        copiedMessageId === message.id
-                          ? "Resposta copiada"
-                          : "Copiar resposta"
-                      }
-                      title={
-                        copiedMessageId === message.id
-                          ? "Resposta copiada"
-                          : "Copiar resposta"
-                      }
-                    >
-                      {copiedMessageId === message.id ? (
-                        <Check size={15} aria-hidden="true" />
-                      ) : (
-                        <Copy size={15} aria-hidden="true" />
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ChatMessageAttachments
+                    attachments={getMessageAttachments(message)}
+                  />
+                  {displayContent ? (
+                    <p className="mdc-chat-message-user-text">{displayContent}</p>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
-          ) : null}
+        ) : (
+          <div className="mdc-chat-message-card">
+            <div className="mdc-chat-message-header">
+              <strong>Minha DELPI Chat</strong>
 
-          {editingMessageId === message.id ? (
-            <div className="mdc-chat-message-edit">
-              <textarea
-                className="mdc-chat-message-edit__input"
-                value={editingContent}
-                rows={1}
-                autoFocus
-                onChange={(event) => setEditingContent(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
-                    event.preventDefault();
-                    cancelEditMessage();
-                  }
+              <div className="mdc-chat-message-meta">
+                <div className="mdc-chat-message-actions">
+                  <button
+                    className={`mdc-chat-message-action${
+                      message.user_feedback === 1 ? " is-active" : ""
+                    }`}
+                    type="button"
+                    aria-label="Resposta útil"
+                    title="Resposta útil"
+                    onClick={() =>
+                      void onMessageFeedback?.(
+                        message.id,
+                        message.user_feedback === 1 ? null : 1,
+                      )
+                    }
+                  >
+                    <ThumbsUp size={15} aria-hidden="true" />
+                  </button>
 
-                  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-                    event.preventDefault();
-                    void handleSaveAndResend(message.id);
-                  }
-                }}
-              />
+                  <button
+                    className={`mdc-chat-message-action${
+                      message.user_feedback === -1 ? " is-active" : ""
+                    }`}
+                    type="button"
+                    aria-label="Resposta não útil"
+                    title="Resposta não útil"
+                    onClick={() =>
+                      void onMessageFeedback?.(
+                        message.id,
+                        message.user_feedback === -1 ? null : -1,
+                      )
+                    }
+                  >
+                    <ThumbsDown size={15} aria-hidden="true" />
+                  </button>
 
-              <div className="mdc-chat-message-edit-actions">
-                <button type="button" onClick={cancelEditMessage}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="mdc-chat-message-edit-actions__primary"
-                  disabled={Boolean(isStreaming)}
-                  onClick={() => void handleSaveAndResend(message.id)}
-                >
-                  Enviar
-                </button>
+                  <button
+                    className="mdc-chat-message-action"
+                    type="button"
+                    onClick={() =>
+                      void handleCopy(
+                        message.id,
+                        buildAssistantCopyText(message.content, messageToolCalls),
+                      )
+                    }
+                    aria-label={
+                      copiedMessageId === message.id
+                        ? "Resposta copiada"
+                        : "Copiar resposta"
+                    }
+                    title={
+                      copiedMessageId === message.id
+                        ? "Resposta copiada"
+                        : "Copiar resposta"
+                    }
+                  >
+                    {copiedMessageId === message.id ? (
+                      <Check size={15} aria-hidden="true" />
+                    ) : (
+                      <Copy size={15} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+
+                {messageTime ? (
+                  <time dateTime={message.created_at}>{messageTime}</time>
+                ) : null}
               </div>
             </div>
-          ) : isAssistantGenerating(message) ? (
-            <div className="mdc-chat-thinking" role="status" aria-live="polite">
-              <span className="mdc-chat-thinking__dot" />
-              <span className="mdc-chat-thinking__dot" />
-              <span className="mdc-chat-thinking__dot" />
-              <p>Gerando resposta...</p>
-            </div>
-          ) : (
-            <>
-              <ChatMessageAttachments attachments={getMessageAttachments(message)} />
-              {suppressMessageMarkdown || !displayContent ? null : isUser ? (
-                <p className="mdc-chat-message-user-text">{displayContent}</p>
-              ) : (
-                <ChatMarkdown content={displayContent} />
-              )}
-              {!isUser && messageCanvasOpen ? (
-                <ChatInlineCanvas
-                  payload={messageCanvasOpen}
-                  onOpen={onOpenCanvas}
-                />
-              ) : null}
-            </>
-          )}
 
-          {!isUser && !isAssistantGenerating(message) ? (
-            <>
-              {shouldShowRichPresentation(displayContent, messageToolCalls)
-                ? renderPresentation(messageToolCalls, displayContent, onDrillDown)
-                : null}
-              {!messagePresentation.primary ? (
-                <ChatActionResults toolCalls={messageToolCalls} />
-              ) : null}
-              <ChatAdminDebugPanel
-                debug={
-                  (message.metadata?.adminDebug as Record<string, unknown> | null) ??
-                  null
-                }
-              />
-              <ChatSources sources={filterVisibleChatSources(getMessageSources(message))} />
-            </>
-          ) : null}
-        </div>
+            {isAssistantGenerating(message) ? (
+              <div className="mdc-chat-thinking" role="status" aria-live="polite">
+                <span className="mdc-chat-thinking__dot" />
+                <span className="mdc-chat-thinking__dot" />
+                <span className="mdc-chat-thinking__dot" />
+                <p>Gerando resposta...</p>
+              </div>
+            ) : (
+              <>
+                <ChatMessageAttachments
+                  attachments={getMessageAttachments(message)}
+                />
+                {suppressMessageMarkdown || !displayContent ? null : (
+                  <ChatMarkdown content={displayContent} />
+                )}
+                {messageCanvasOpen ? (
+                  <ChatInlineCanvas
+                    payload={messageCanvasOpen}
+                    onOpen={onOpenCanvas}
+                  />
+                ) : null}
+              </>
+            )}
+
+            {!isAssistantGenerating(message) ? (
+              <>
+                {shouldShowRichPresentation(displayContent, messageToolCalls)
+                  ? renderPresentation(
+                      messageToolCalls,
+                      displayContent,
+                      onDrillDown,
+                    )
+                  : null}
+                {!messagePresentation.primary ? (
+                  <ChatActionResults toolCalls={messageToolCalls} />
+                ) : null}
+                <ChatAdminDebugPanel
+                  debug={
+                    (message.metadata?.adminDebug as Record<
+                      string,
+                      unknown
+                    > | null) ?? null
+                  }
+                />
+                <ChatSources
+                  sources={filterVisibleChatSources(getMessageSources(message))}
+                />
+              </>
+            ) : null}
+          </div>
+        )}
       </article>
     );
   }
