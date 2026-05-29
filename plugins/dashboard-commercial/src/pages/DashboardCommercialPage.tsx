@@ -6,18 +6,8 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
 import { ChartCard } from "../components/ChartCard";
+import { ConversionFunnelChart } from "../components/ConversionFunnelChart";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import type { DataTableColumn } from "../components/DataTable";
@@ -27,7 +17,6 @@ import { KpiCard } from "../components/KpiCard";
 import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
-import { CHART_COLORS } from "../constants/chartColors";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
 import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -52,8 +41,6 @@ import {
   formatCurrency,
   formatPercent,
 } from "../utils/format";
-
-const CHART_HEIGHT = 280;
 
 export function DashboardCommercialPage() {
   const {
@@ -141,17 +128,6 @@ export function DashboardCommercialPage() {
   const isChartBusy = rolSeries.loading;
   const initialLoadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
   const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
-
-  const conversionChartData = useMemo(
-    () =>
-      closingRate
-        ? [
-            { name: "Propostas", value: closingRate.qtd_proposals },
-            { name: "Ganhas", value: closingRate.qtd_won },
-          ]
-        : [],
-    [closingRate]
-  );
 
   const hasChartValues = rolSeries.points.some(
     (point) => point.rolMatrix > 0 || point.rolBranch > 0
@@ -458,18 +434,13 @@ export function DashboardCommercialPage() {
       <section className="dc-charts-grid">
         <ChartCard
           title="Funil de conversão"
-          hint="Propostas versus vendas ganhas no período."
+          hint="Volume de propostas, ganhas e perdas no período — alinhado ao KPI de conversão."
+          className="dc-chart-card--funnel"
         >
-          <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-            <BarChart data={conversionChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" name="Quantidade" fill={CHART_COLORS[0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <ConversionFunnelChart
+            data={closingRate}
+            loading={isBusy && !closingRate}
+          />
         </ChartCard>
       </section>
 

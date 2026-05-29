@@ -4,14 +4,15 @@ type ChartCardProps = {
   title: string;
   children: ReactNode;
   hint?: string;
+  className?: string;
 };
 
-export function ChartCard({ title, children, hint }: ChartCardProps) {
+export function ChartCard({ title, children, hint, className }: ChartCardProps) {
   const titleId = useId();
 
   return (
     <section
-      className="dc-card dc-chart-card"
+      className={["dc-card", "dc-chart-card", className].filter(Boolean).join(" ")}
       aria-labelledby={titleId}
       role="region"
     >
