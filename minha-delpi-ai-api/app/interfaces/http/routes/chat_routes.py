@@ -742,12 +742,13 @@ def preview_agent(agent_id: str):
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def publish_agent(agent_id: str):
     use_case = make_publish_chat_agent_use_case()
+    capabilities = _get_chat_capabilities_from_request()
 
     try:
         result = use_case.execute(
             user_id=g.current_user.sub,
             agent_id=agent_id,
-            can_manage_official_agents=_can_manage_official_agents(),
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
         )
     except ChatAgentPermissionDeniedError as exc:
         return forbidden(str(exc))
