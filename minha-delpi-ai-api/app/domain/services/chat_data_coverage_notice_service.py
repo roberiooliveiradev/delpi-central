@@ -7,6 +7,9 @@ class ChatDataCoverageNoticeService:
     """Detecta respostas parciais (paginação, profundidade, prévia) para o chat."""
 
     MAX_TABLE_ROWS = 100
+    _INTERMEDIATE_PRODUCT_TYPES = frozenset(
+        {"PA", "PI", "AI", "SP", "ME", "MC", "GR", "EM", "BN"}
+    )
 
     @classmethod
     def build(
@@ -53,7 +56,19 @@ class ChatDataCoverageNoticeService:
                     messages.append(stock_notice["message"])
                     details["stockPagination"] = stock_notice
 
-        depth_notice = cls._depth_notice(path=path, parameters=parameters)
+        depth_root = root if isinstance(root, dict) else None
+
+        if isinstance(depth_root, dict) and "/analyser" in str(path or "").lower():
+            structure = depth_root.get("structure")
+
+            if isinstance(structure, dict):
+                depth_root = structure
+
+        depth_notice = cls._depth_notice(
+            path=path,
+            parameters=parameters,
+            root=depth_root,
+        )
 
         if depth_notice:
             messages.append(depth_notice["message"])
@@ -162,11 +177,20 @@ class ChatDataCoverageNoticeService:
         return None
 
     @classmethod
-    def _depth_notice(cls, *, path: str, parameters: dict | None) -> dict | None:
+    def _depth_notice(
+        cls,
+        *,
+        path: str,
+        parameters: dict | None,
+        root: dict | None = None,
+    ) -> dict | None:
         params = parameters or {}
         max_depth = cls._as_int(params.get("max_depth"))
 
         if max_depth is None or max_depth >= 999:
+            return None
+
+        if not cls._depth_likely_truncated(root, max_depth=max_depth):
             return None
 
         lowered = str(path or "").lower()
@@ -196,6 +220,53 @@ class ChatDataCoverageNoticeService:
             ),
             "maxDepth": max_depth,
         }
+
+    @classmethod
+    def _depth_likely_truncated(cls, root: dict | None, *, max_depth: int) -> bool:
+        if not isinstance(root, dict):
+            return False
+
+        for flag in ("depth_limit_reached", "truncated_by_depth", "has_more_levels"):
+            if root.get(flag):
+                return True
+
+        items = root.get("items")
+
+        if not isinstance(items, list) or not items:
+            return False
+
+        return cls._tree_has_truncated_branch(items, depth=1, max_depth=max_depth)
+
+    @classmethod
+    def _tree_has_truncated_branch(
+        cls,
+        items: list,
+        *,
+        depth: int,
+        max_depth: int,
+    ) -> bool:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            item_type = str(item.get("type") or "").upper()
+            components = item.get("components")
+
+            if (
+                depth >= max_depth
+                and item_type in cls._INTERMEDIATE_PRODUCT_TYPES
+            ):
+                return True
+
+            if isinstance(components, list) and components:
+                if cls._tree_has_truncated_branch(
+                    components,
+                    depth=depth + 1,
+                    max_depth=max_depth,
+                ):
+                    return True
+
+        return False
 
     @classmethod
     def _table_preview_notice(

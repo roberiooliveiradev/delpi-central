@@ -36,14 +36,64 @@ def test_pagination_notice_when_total_exceeds_items_without_page():
 
 def test_depth_notice_for_structure_max_depth():
     notice = ChatDataCoverageNoticeService.build(
-        {"root": {"code": "1"}, "items": [], "total": 0},
+        {
+            "root": {"code": "90260148", "type": "PA"},
+            "items": [
+                {
+                    "code": "50220013",
+                    "type": "PI",
+                    "components": [],
+                }
+            ],
+            "total": 1,
+        },
         path="/products/90260148/structure",
-        parameters={"max_depth": 3},
+        parameters={"max_depth": 1},
     )
 
     assert notice is not None
     assert notice["kind"] == "depth"
-    assert "max_depth=3" in notice["message"]
+    assert "max_depth=1" in notice["message"]
+
+
+def test_no_depth_notice_for_complete_flat_mp_structure():
+    notice = ChatDataCoverageNoticeService.build(
+        {
+            "root": {
+                "code": "90260047",
+                "description": "CHICOTE DE LIGACAO",
+                "type": "PA",
+                "unit": "MI",
+                "quantity": 1,
+            },
+            "items": [
+                {
+                    "code": "10070085",
+                    "description": "CABO PP CIRCULAR",
+                    "type": "MP",
+                    "unit": "MT",
+                    "quantity": 2015.0,
+                    "components": [],
+                },
+                {
+                    "code": "10150006",
+                    "description": "PRENSA CABO PLASTICO",
+                    "type": "MP",
+                    "unit": "PC",
+                    "quantity": 1000.0,
+                    "components": [],
+                },
+            ],
+            "page": 1,
+            "page_size": 200,
+            "total": 2,
+            "total_pages": 1,
+        },
+        path="/products/90260047/structure",
+        parameters={"max_depth": 99, "page": 1, "page_size": 200},
+    )
+
+    assert notice is None
 
 
 def test_table_preview_notice_when_rows_are_truncated():
