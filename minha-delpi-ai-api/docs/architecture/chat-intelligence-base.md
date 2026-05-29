@@ -182,9 +182,11 @@ Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
 |----------|---------|--------|
 | `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita 2ª/3ª inferência e disparo de actions irrelevantes (ex. KPIs ROL) |
 | `CHAT_TOOL_ROUTER_ENABLED` | `false` | Roteamento determinístico (`ExternalActionSelectionService`) já cobre o caso |
-| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Quando agentic ligado, catálogo vem de `find_candidate_actions`, não `allowedActionIds[:10]` |
+| `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Loop agentic: catálogo via `ChatAgenticCatalogService` + `find_candidate_actions`, ranqueado por intent |
 
 Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem descritas.
+
+**Catálogo agentic (11.3.1):** com `CHAT_AGENTIC_LOOP_ENABLED=true`, `ChatAgenticCatalogService` monta no máximo `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` (default 12) a partir de `find_candidate_actions`, reordenando por intent (`/stock`, `/structure`, …). O planner LLM **só** pode escolher actions desse catálogo; metadados em `toolCalls[].metadata.agentic` / `intelligence.agentic` (`catalogSize`, `catalogMaxActions`).
 
 ### Multi-action e histórico (maio/2026)
 

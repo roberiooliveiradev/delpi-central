@@ -134,7 +134,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.3.1 | Catálogo por intent (≤12 actions) no loop agentic | 🟡 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` + `find_candidate_actions` |
+| 11.3.1 | Catálogo por intent (≤12 actions) no loop agentic | ✅ | `ChatAgenticCatalogService` + `find_candidate_actions` ranqueado por intent; metadados `catalogSize` |
 | 11.3.2 | Schemas OpenAPI enxutos por action (descrição + exemplos) | ⬜ | Melhora ranker e planner quando agentic ligado |
 | 11.3.3 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` só em agentes piloto | ⬜ | Tools internas via LLM; OpenAPI continua heurístico |
 | 11.3.4 | Métricas `intelligence.timings` por turno no admin | 🟡 | Já existe Onda 5; validar em homologação |
@@ -229,6 +229,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-29 | Consolidação paginada (11.4.4): total/completo/continuar em tabela, árvore e demais listagens; docs + variáveis `CHAT_PAGINATION_*`. |
 | 2026-05-29 | 11.1.5: `sync_api_delpi_openapi.py`, catálogo gerado 83 rotas, guia RAG revisado (ROL, produção, propostas). |
 | 2026-05-29 | 11.2.2/11.4.1/11.5.1: `CHAT_LLM_LATENCY_PROFILE`, `prefer_presentation_direct_answer`, `run_onda11_validation.sh`. |
+| 2026-05-29 | 11.3.1: `ChatAgenticCatalogService` — catálogo ≤12 por intent no loop agentic. |
 
 ---
 

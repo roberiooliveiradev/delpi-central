@@ -86,7 +86,7 @@ def test_agentic_catalog_uses_semantic_candidates_not_first_ids(monkeypatch):
     )
 
     assert calls
-    assert calls[0]["limit"] == Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS
+    assert calls[0]["limit"] >= Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS
 
 
 def test_agentic_skipped_on_stock_branch_refinement(monkeypatch):

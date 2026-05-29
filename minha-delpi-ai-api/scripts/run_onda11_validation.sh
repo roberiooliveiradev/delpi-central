@@ -25,6 +25,8 @@ pytest \
   tests/unit/application/services/test_chat_turn_preparation_direct_answer_skip_rag.py \
   tests/unit/application/services/test_chat_tool_context_service_direct_response.py \
   tests/unit/application/use_cases/test_chat_stock_refinement_stream_send.py \
+  tests/unit/domain/services/test_chat_agentic_catalog_service.py \
+  tests/unit/application/services/test_chat_agentic_tool_loop_service.py \
   -q
 
 echo ""

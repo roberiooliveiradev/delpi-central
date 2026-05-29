@@ -67,6 +67,12 @@ class ChatAgenticToolLoopService:
         if not catalog:
             return tool_context
 
+        catalog_action_ids = [
+            item.split(":", 1)[1]
+            for item in catalog
+            if item.startswith("action:")
+        ]
+
         context_blocks: list[str] = []
         safe_tool_calls = list(tool_context.get("toolCalls") or [])
         executed_names = {
@@ -204,6 +210,17 @@ class ChatAgenticToolLoopService:
                 break
 
         if not context_blocks:
+            if catalog_action_ids:
+                return {
+                    **tool_context,
+                    "agentic": {
+                        "stepsRun": max_steps,
+                        "toolsAdded": 0,
+                        "catalogSize": len(catalog_action_ids),
+                        "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,
+                    },
+                }
+
             return tool_context
 
         existing_context = str(tool_context.get("context") or "").strip()
@@ -217,6 +234,8 @@ class ChatAgenticToolLoopService:
             "agentic": {
                 "stepsRun": max_steps,
                 "toolsAdded": len(context_blocks),
+                "catalogSize": len(catalog_action_ids),
+                "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,
             },
         }
 
@@ -284,29 +303,15 @@ class ChatAgenticToolLoopService:
         message: str,
         allowed_action_ids: list[str] | None,
     ) -> list[str]:
-        allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
+        from app.domain.services.chat_agentic_catalog_service import (
+            ChatAgenticCatalogService,
+        )
 
-        if not allowed:
-            return []
-
-        limit = max(1, Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS)
-
-        if self.external_action_repository:
-            candidates = self.external_action_repository.find_candidate_actions(
-                message,
-                limit=limit,
-                allowed_action_ids=allowed,
-            )
-            ranked = [
-                str(action.get("actionId") or "").strip()
-                for action in candidates
-                if str(action.get("actionId") or "").strip()
-            ]
-
-            if ranked:
-                return ranked[:limit]
-
-        return allowed[:limit]
+        return ChatAgenticCatalogService.build_action_ids(
+            message,
+            allowed_action_ids,
+            self.external_action_repository,
+        )
 
     def _plan_tools(self, message: str, catalog: list[str], *, step: int) -> dict:
         try:
