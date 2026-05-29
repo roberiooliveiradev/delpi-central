@@ -145,16 +145,7 @@ function NumberSettingCard({
       </div>
 
       <p className="mdc-chat-intelligence-setting__summary">{meta.summary}</p>
-      <SettingProsCons
-        meta={{
-          title: meta.title,
-          summary: meta.summary,
-          pros: meta.pros,
-          cons: meta.cons,
-          speedWhenEnabled: "neutral",
-          qualityWhenEnabled: "neutral",
-        }}
-      />
+      <SettingProsCons meta={{ pros: meta.pros, cons: meta.cons }} />
 
       <div className="mdc-chat-intelligence-setting__notes">
         <p>
