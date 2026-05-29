@@ -157,6 +157,7 @@ class SendChatMessageUseCase:
         rag = prepared.rag
         sources = prepared.sources
         pipeline_timings = prepared.pipeline_timings
+        pipeline_stages = prepared.pipeline_stages
         canvas_open_payload = prepared.canvas_open_payload
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
@@ -169,6 +170,7 @@ class SendChatMessageUseCase:
                 tool_context=tool_context,
                 skip_rag=skip_rag,
                 analysis_mode=analysis_mode,
+                stages=pipeline_stages,
             ),
         )
 
@@ -277,6 +279,7 @@ class SendChatMessageUseCase:
                 tool_context=tool_context,
                 skip_rag=skip_rag,
                 analysis_mode=analysis_mode,
+                stages=pipeline_stages,
             ),
         )
         latency_ms = int((time.perf_counter() - started_at) * 1000)

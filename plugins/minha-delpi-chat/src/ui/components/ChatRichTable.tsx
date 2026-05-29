@@ -188,14 +188,26 @@ function buildDrillDownQuery(
   columns: { key: string; label: string }[],
 ): string | null {
   const codeCol = columns.find((c) =>
-    /^(code|codigo|cod|id|numero|number|nropor)$/i.test(c.key)
+    /^(code|codigo|cod|id|numero|number|nropor|sku|produto|product)$/i.test(c.key),
   );
   const descCol = columns.find((c) =>
-    /^(description|descricao|descri|nome|name|produto|product)$/i.test(c.key)
+    /^(description|descricao|descri|nome|name)$/i.test(c.key),
+  );
+  const branchCol = columns.find((c) =>
+    /^(branch|filial|armazem|warehouse|loja|store)$/i.test(c.key),
   );
 
-  const code = codeCol ? String(row[codeCol.key] ?? "") : "";
-  const desc = descCol ? String(row[descCol.key] ?? "") : "";
+  const code = codeCol ? String(row[codeCol.key] ?? "").trim() : "";
+  const desc = descCol ? String(row[descCol.key] ?? "").trim() : "";
+  const branch = branchCol ? String(row[branchCol.key] ?? "").trim() : "";
+
+  if (branch) {
+    const branchLabel = branchCol?.label ?? "filial";
+    if (code) {
+      return `filtre ${branchLabel.toLowerCase()} ${branch} do produto ${code}`;
+    }
+    return `filtre ${branchLabel.toLowerCase()} ${branch}`;
+  }
 
   if (code) {
     return `Detalhe do item ${code}${desc ? ` (${desc})` : ""}`;
@@ -203,7 +215,7 @@ function buildDrillDownQuery(
   if (desc) {
     return `Mais informações sobre ${desc}`;
   }
-  const firstVal = String(row[columns[0]?.key] ?? "");
+  const firstVal = String(row[columns[0]?.key] ?? "").trim();
   return firstVal ? `Detalhe de ${firstVal}` : null;
 }
 

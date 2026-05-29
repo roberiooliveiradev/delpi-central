@@ -19,6 +19,7 @@ def test_build_includes_selected_external_action_and_pipeline():
             operational_optimize=True,
             tool_context={"directAnswer": "Resposta direta"},
             skip_rag=True,
+            stages=["ingress", "tools", "direct_answer", "skip_rag"],
         ),
     )
 
@@ -26,3 +27,9 @@ def test_build_includes_selected_external_action_and_pipeline():
     assert metadata["pipeline"]["operationalFastPath"] is True
     assert metadata["pipeline"]["directResponse"] is True
     assert metadata["pipeline"]["skipRag"] is True
+    assert metadata["pipeline"]["stages"] == [
+        "ingress",
+        "tools",
+        "direct_answer",
+        "skip_rag",
+    ]

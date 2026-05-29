@@ -115,14 +115,14 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | 11.1.1 | Estender refinamento operacional além de estoque (estrutura, parents, KPI com filial) | 🟡 | CPV/suprimentos e KPIs departamentais com «filial 02»; sub-rotas produto (`purchases`, `suppliers`, …) com herança de segmento; estoque multi-produto mantido |
 | 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ✅ | `ChatDateRangeIntentService` + merge em suprimentos/KPIs e listagem `/sales`; datas `DD/MM/YYYY` não viram código de produto |
 | 11.1.3 | Heurística explícita `summary` vs `analyser` | ✅ | Intent `SUMMARY` + rank dedicado; regressão «resumo do produto 10080047» |
-| 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | 🟡 | Casos multi-turno/refino em pytest; falta smoke send/stream com histórico real |
+| 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | ✅ | `test_chat_stock_refinement_stream_send.py` + `test_chat_turn_preparation_stock_refinement.py` |
 | 11.1.5 | Reimport OpenAPI + reindexar `api-delpi-rotas-agente.md` pós-deploy api-delpi | ⬜ | Catálogo alinhado às rotas reais |
 
 ### 11.2 — Velocidade e prompt (prioridade alta)
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.2.1 | Garantir `skip_rag` + sem LLM em todos os direct answers operacionais | 🟡 | Revisar turnos que ainda montam prompt gigante |
+| 11.2.1 | Garantir `skip_rag` + sem LLM em todos os direct answers operacionais | ✅ | Guarda `direct_answer` → `skip_rag`; teste `test_chat_turn_preparation_direct_answer_skip_rag.py` |
 | 11.2.2 | Calibrar `LLM_MAX_TOKENS` / `OLLAMA_NUM_CTX` por ambiente (homologação &lt; 15s) | 🟡 | Checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) |
 | 11.2.3 | Portal: bootstrap sem `login()` em loop se `/me` falhar (guard + `stripOAuthHash`) | ⬜ | 401 no bootstrap não redireciona ao SSO de novo |
 | 11.2.4 | Compose dev: volume `../shared:/shared` no `core-api` | ⬜ | Fix JWT sobrevive a `recreate` sem `docker cp` |
@@ -141,7 +141,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
 | 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | 🟡 | `directAnswer` + `skip_rag`; apresentação rica sem markdown duplicado |
-| 11.4.2 | Fase 6 Onda 9: drill-down na tabela («detalhe linha X») | ⬜ | Ver [apresentacao-rica-chat-onda-9.md](./apresentacao-rica-chat-onda-9.md) §9.6 |
+| 11.4.2 | Fase 6 Onda 9: drill-down na tabela («detalhe linha X») | ✅ | `onDrillDown` em `ChatPage`/`ChatMessageList`; `sendMessage({ content })`; queries filial/código |
 | 11.4.3 | Apresentação rica sem texto duplicado (tabela/gráfico + markdown) | ✅ | `_compact_direct_answer_for_rich_presentation` + `shouldSuppressMarkdownForPresentation` |
 
 ### 11.5 — Observabilidade e operação

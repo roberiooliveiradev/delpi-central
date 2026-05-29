@@ -68,6 +68,7 @@ type ChatMessageListProps = {
     content: string,
   ) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
+  onDrillDown?: (query: string) => void;
   onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
   lastSentUserText?: string;
 };
@@ -376,6 +377,7 @@ export function ChatMessageList({
   isLoading,
   onEditAndResendMessage,
   onReuseMessage,
+  onDrillDown,
   onMessageFeedback,
   onOpenCanvas,
   lastSentUserText = "",
@@ -956,7 +958,7 @@ export function ChatMessageList({
           {!isUser && !isAssistantGenerating(message) ? (
             <>
               {shouldShowRichPresentation(displayContent, messageToolCalls)
-                ? renderPresentation(messageToolCalls, displayContent, onReuseMessage)
+                ? renderPresentation(messageToolCalls, displayContent, onDrillDown)
                 : null}
               {!messagePresentation.primary ? (
                 <ChatActionResults toolCalls={messageToolCalls} />
@@ -1080,7 +1082,7 @@ export function ChatMessageList({
 
               {streamingShowPresentation &&
               shouldShowRichPresentation(streamingAnswer, streamingToolCalls)
-                ? renderPresentation(streamingToolCalls, streamingAnswer, onReuseMessage)
+                ? renderPresentation(streamingToolCalls, streamingAnswer, onDrillDown)
                 : null}
               {streamingShowPresentation &&
               !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (

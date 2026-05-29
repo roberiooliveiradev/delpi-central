@@ -80,6 +80,8 @@ def test_stock_branch_refinement_skips_rag_and_keeps_operational_mode():
     build_tool_context.assert_called_once()
     assert prepared.operational_optimize is True
     assert prepared.skip_rag is True
+    assert "skip_rag" in prepared.pipeline_stages
+    assert "tools" in prepared.pipeline_stages
     rag_context_service.build_context.assert_not_called()
     params = (prepared.tool_calls[0].get("arguments") or {}).get("parameters") or {}
     assert params.get("branch") == "02"

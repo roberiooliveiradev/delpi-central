@@ -890,8 +890,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ],
   );
 
-  const sendMessage = useCallback(async (params: { attachments?: File[] } = {}) => {
-    const message = draft.trim();
+  const sendMessage = useCallback(async (params: { attachments?: File[]; content?: string } = {}) => {
+    const message = (params.content ?? draft).trim();
+    const fromDraft = params.content == null;
 
     if (!message || isActiveSessionBusy()) {
       return;
@@ -902,7 +903,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     let sessionForMessage = activeSession;
 
     setError(null);
-    setDraft("");
+    if (fromDraft) {
+      setDraft("");
+    }
     setStreamingAnswer("");
     setStreamingSources([]);
     setStreamingToolCalls([]);

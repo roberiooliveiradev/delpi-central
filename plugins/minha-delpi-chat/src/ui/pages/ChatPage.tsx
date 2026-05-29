@@ -655,6 +655,16 @@ export function ChatPage({
     await sendMessage({ attachments: files });
   }
 
+  async function handleDrillDown(query: string) {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    await sendMessage({ content: trimmed });
+  }
+
   const hasActiveConversation =
     messages.length > 0 ||
     isStreamingActiveSession ||
@@ -1159,6 +1169,7 @@ export function ChatPage({
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}
+                onDrillDown={handleDrillDown}
                 onMessageFeedback={setMessageFeedback}
                 onOpenCanvas={openCanvasPanel}
                 lastSentUserText={lastSentUserText}

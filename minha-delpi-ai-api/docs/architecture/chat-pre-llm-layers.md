@@ -195,7 +195,7 @@ LLM                    → só síntese; não re-executa APIs sem necessidade
 ### Fase 1 — Documentação + telemetria (sem refactor grande)
 
 - [x] Este documento.
-- [ ] Garantir `metadata.pipeline.stages` no assistant (lista de estágios executados).
+- [x] Garantir `metadata.pipeline.stages` no assistant (lista de estágios executados).
 - [ ] Expandir `ChatPipelineTimings` com chaves por estágio.
 
 ### Fase 2 — Extrair estágios do use case

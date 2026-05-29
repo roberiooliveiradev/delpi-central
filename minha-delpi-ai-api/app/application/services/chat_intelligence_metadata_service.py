@@ -10,8 +10,9 @@ class ChatIntelligenceMetadataService:
         tool_context: dict,
         skip_rag: bool,
         analysis_mode: bool = False,
+        stages: list[str] | None = None,
     ) -> dict:
-        return {
+        flags = {
             "fastPath": bool(fast_path),
             "operationalFastPath": bool(operational_optimize),
             "analysisMode": bool(
@@ -20,6 +21,9 @@ class ChatIntelligenceMetadataService:
             "directResponse": bool(tool_context.get("directAnswer")),
             "skipRag": bool(skip_rag),
         }
+        if stages:
+            flags["stages"] = list(stages)
+        return flags
 
     @staticmethod
     def build(

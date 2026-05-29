@@ -59,6 +59,7 @@ class ChatTurnPreparationResult:
 
     # Métricas / debug
     pipeline_timings: ChatPipelineTimings
+    pipeline_stages: list[str]
 
 
 class ChatTurnPreparationService:
@@ -238,6 +239,7 @@ class ChatTurnPreparationService:
             )
 
         pipeline_timings = ChatPipelineTimings()
+        pipeline_stages: list[str] = ["ingress"]
 
         pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
             message=message,
@@ -284,6 +286,14 @@ class ChatTurnPreparationService:
             or missing_product_code_answer
             or skip_tools_for_user_identity
         ):
+            if skip_tools_for_user_identity:
+                pipeline_stages.append("identity_shortcut")
+            elif canvas_action:
+                pipeline_stages.append("canvas")
+            elif pre_capability_answer:
+                pipeline_stages.append("capabilities")
+            elif missing_product_code_answer:
+                pipeline_stages.append("operational_parameter")
             tool_context = {
                 "context": "",
                 "toolCalls": [],
@@ -299,6 +309,7 @@ class ChatTurnPreparationService:
             analysis_mode = post_tool.analysis_mode
             pipeline_timings.mark("tools_done")
         else:
+            pipeline_stages.append("tools")
             tool_context = build_tool_context(
                 request,
                 allowed_action_ids=workspace_context.get("allowedActionIds"),
@@ -326,6 +337,8 @@ class ChatTurnPreparationService:
             analysis_mode = post_tool.analysis_mode
             tool_calls = tool_context["toolCalls"]
             pipeline_timings.mark("tools_done")
+
+        pipeline_stages.append("post_tool")
 
         resolved_skills = workspace_context.get("skills") or {}
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
@@ -398,6 +411,11 @@ class ChatTurnPreparationService:
             direct_answer = missing_product_code_answer
             skip_rag = True
 
+        if direct_answer:
+            skip_rag = True
+            if "direct_answer" not in pipeline_stages:
+                pipeline_stages.append("direct_answer")
+
         if on_stream_activity and not skip_rag:
             from app.application.services.chat_stream_activity_service import (
                 ChatStreamActivityService,
@@ -416,7 +434,9 @@ class ChatTurnPreparationService:
 
         if skip_rag:
             rag = {"context": "", "sources": []}
+            pipeline_stages.append("skip_rag")
         else:
+            pipeline_stages.append("rag")
             rag_query = message
             rag_min_score = None
             if assistant_identity_question:
@@ -493,5 +513,6 @@ class ChatTurnPreparationService:
             sources=sources,
             canvas_open_payload=canvas_open_payload,
             pipeline_timings=pipeline_timings,
+            pipeline_stages=pipeline_stages,
         )
 
