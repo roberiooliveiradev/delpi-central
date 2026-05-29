@@ -1,0 +1,20 @@
+# Contexto monorepo (core-api, api-delpi, *-api com context: ..)
+.git
+.gitignore
+**/.git
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/.cursor
+**/coverage
+**/.idea
+**/.vscode
+*.md
+!shared/**/*.md
