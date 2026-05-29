@@ -37,6 +37,24 @@
 }
 
 /* ——— Topbar workspace (agentes, projetos, builder, actions) ——— */
+@media (max-width: 1024px) {
+  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span {
+    display: none;
+  }
+
+  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn {
+    width: 2.35rem;
+    min-width: 2.35rem;
+    max-width: 2.35rem;
+    height: 2.35rem;
+    justify-content: center;
+    padding: 0;
+    gap: 0;
+  }
+}
+
 @media (max-width: 767px) {
   .mdc-chat-ws-topbar {
     display: grid;
@@ -78,16 +96,18 @@
     display: none;
   }
 
-  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn span {
+  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span {
     display: none;
   }
 
   .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn {
     width: 2.15rem;
     min-width: 2.15rem;
+    max-width: 2.15rem;
     height: 2.15rem;
     justify-content: center;
     padding: 0;
+    gap: 0;
   }
 
   .mdc-chat-ws-directory__lead {
@@ -209,6 +229,24 @@
   .mdc-chat-rich-table-wrap {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn > span,
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn > span {
+    display: none;
+  }
+
+  .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn,
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn {
+    width: 2.35rem;
+    min-width: 2.35rem;
+    max-width: 2.35rem;
+    height: 2.35rem;
+    justify-content: center;
+    padding: 0;
+    gap: 0;
   }
 }
 
