@@ -2,6 +2,17 @@
 
 Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`POST /knowledge/documents` ou upload no painel admin) e vinculação ao escopo RAG do agente.
 
+**Changelog recente (maio/2026):** [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md).
+
+## Estrutura de pastas
+
+| Pasta | Escopo RAG | Conteúdo |
+|-------|------------|----------|
+| [`domains/global/`](./domains/global/) | `global` / `company-knowledge` | Normas Técnicas, GPT_instructions, O Arquiteto |
+| [`domains/agents/minha-delpi-chat/`](./domains/agents/minha-delpi-chat/) | `agent_source` | Bundle exportável do agente (12 fontes + manifest) |
+| [`domains/gpt-instructions/`](./domains/gpt-instructions/) | ingestão agente | Markdown adaptado da pasta `GPT_instructions` (api-delpi-py) |
+| Raiz (`api-delpi-rotas-agente.md`, …) | agente / global | Guias curados e mapas |
+
 ## Documentos disponíveis
 
 | Arquivo | Uso |
@@ -27,6 +38,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Inteligência (ondas 1–11) | [`../roadmap/README.md`](../roadmap/README.md) |
 | Análise de desenhos PDF (backlog) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 | Arquitetura chat base | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
+| Changelog maio/2026 | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) |
 
 ## Como anexar a um agente
 

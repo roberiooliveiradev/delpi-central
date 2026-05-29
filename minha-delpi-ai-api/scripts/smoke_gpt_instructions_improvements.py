@@ -85,6 +85,39 @@ QUESTIONS: list[tuple[str, dict, str]] = [
         "#G5 regressão busca catálogo (não confundir com SQL produção)",
     ),
     (
+        "quais ordens de produção estão programadas para hoje?",
+        {
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 1,
+            "action_must_not_contain": ["search_products"],
+            "action_contains": "sql",
+        },
+        "#G9 ordens de produção hoje → fast path SQL",
+    ),
+    (
+        "liste a produção do dia na SC2010",
+        {
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 1,
+            "action_must_not_contain": ["search_products"],
+            "action_contains": "sql",
+        },
+        "#G11 SC2010 explícito → SQL produção",
+    ),
+    (
+        "monte o SQL da programação de produção de hoje sem executar",
+        {
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 0,
+            "action_must_not_contain": ["search_products"],
+            "direct_answer_contains": ["```sql", "SC2010"],
+        },
+        "#G12 autoria SQL produção sem executar",
+    ),
+    (
         "qual rota da API DELPI retorna a ficha analyser completa?",
         {
             "rag_only": True,
@@ -103,6 +136,81 @@ QUESTIONS: list[tuple[str, dict, str]] = [
             "rag_min_length": 150,
         },
         "#G7 RAG system_api ingerido",
+    ),
+    (
+        "quais campos usar no POST /data/sql para consulta de produção?",
+        {
+            "rag_only": True,
+            "rag_query": "data sql api SC2010 produção campos payload",
+            "rag_context_any": ["consulta", "producao", "produção", "campo", "payload", "sc2010"],
+            "rag_min_length": 150,
+        },
+        "#G13 RAG data_sql_api_instructions",
+    ),
+    (
+        "quais regras de validação de desenho técnico existem?",
+        {
+            "rag_only": True,
+            "rag_query": "drawing validation rules desenho conformidade",
+            "rag_context_any": ["drawing", "validation", "desenho", "conformidade"],
+            "rag_min_length": 100,
+        },
+        "#G14 RAG drawing/validation agente",
+    ),
+    (
+        "como descrever um terminal?",
+        {
+            "skip_rag": False,
+            "operational_optimize": False,
+            "max_tool_calls": 0,
+            "action_must_not_contain": ["search_products", "search"],
+            "rag_min_length": 80,
+            "rag_context_any": ["1008", "terminal", "normas", "descri"],
+        },
+        "#N1 normas terminais → RAG global, sem search",
+    ),
+    (
+        "normas técnicas DELPI para terminais pino",
+        {
+            "skip_rag": False,
+            "operational_optimize": False,
+            "max_tool_calls": 0,
+            "action_must_not_contain": ["search"],
+            "rag_min_length": 80,
+            "rag_context_any": ["1008", "pino", "terminal", "normas"],
+        },
+        "#N3 normas terminais pino",
+    ),
+    (
+        "como descrever um cabo PP?",
+        {
+            "skip_rag": False,
+            "operational_optimize": False,
+            "max_tool_calls": 0,
+            "action_must_not_contain": ["search"],
+            "rag_min_length": 80,
+            "rag_context_any": ["cabo", "1001", "1005", "normas", "pp"],
+        },
+        "#N5 normas cabos PP",
+    ),
+    (
+        "qual a descrição do produto 10080047",
+        {
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 1,
+            "action_must_not_contain": ["search_products"],
+        },
+        "#N4 regressão descrição cadastral (REST, não Normas)",
+    ),
+    (
+        "busque terminal m8",
+        {
+            "skip_rag": True,
+            "max_tool_calls": 1,
+            "action_contains": "search",
+        },
+        "#X3 busca catálogo terminal (não Normas)",
     ),
 ]
 
@@ -299,6 +407,12 @@ def main() -> int:
                 _check(
                     any(needle in aid.lower() for aid in action_ids),
                     f"actionId contém «{needle}» (foi {action_ids})",
+                    errors,
+                )
+            elif expectations.get("max_tool_calls") == 1 and not expectations.get("action_contains"):
+                _check(
+                    len(action_ids) >= 1,
+                    f"esperava ao menos 1 action (foi {action_ids})",
                     errors,
                 )
 

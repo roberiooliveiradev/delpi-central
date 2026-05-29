@@ -65,7 +65,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 
 **Herança:** agentes de engenharia/qualidade incluem `drawing-analyser` em `metadata.skills`. Agentes operacionais (estoque, vendas) não herdam por default.
 
-**Dependência de conhecimento global:** ingerir `Normas_Tecnicas_DELPI.md` na base **global** (`company-knowledge`), não como `agent_source` — ver [coverage map](../knowledge/gpt-instructions-coverage-map.md).
+**Dependência de conhecimento global:** `Normas_Tecnicas_DELPI.md` está em [`domains/global/normas-tecnicas-delpi.md`](../knowledge/domains/global/normas-tecnicas-delpi.md) (`company-knowledge`, maio/2026). Intent de descrição técnica: `ChatTechnicalDescriptionIntentService`.
 
 ---
 

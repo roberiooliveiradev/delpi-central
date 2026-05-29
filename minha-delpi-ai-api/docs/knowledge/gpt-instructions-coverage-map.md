@@ -74,8 +74,8 @@ Gerado a partir de `GptInstructionsCoverageService`. Reindexe com `scripts/sync_
 
 ### `Normas_Tecnicas_DELPI.md`
 - **Cobertura:** indexed_global
-- **Indexado:** `normas-tecnicas-delpi.md`
-- **Notas:** Normas técnicas DELPI; base global (company-knowledge), não agent_source.
+- **Indexado:** `normas-tecnicas-delpi.md` em `domains/global/`
+- **Notas:** Descrição técnica de matérias-primas; intent `ChatTechnicalDescriptionIntentService`; checklist N1–N4 no smoke manual.
 - **Tags:** normas, produtos, engenharia
 
 ### `drawing_analyser_instructions.md`
