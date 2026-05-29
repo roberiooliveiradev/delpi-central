@@ -6,6 +6,8 @@ Checklist de perguntas para validar o chat operacional após deploy ou alteraç�
 
 **Agente recomendado** para os cenários GPT/SQL (#G1–G8): **Minha DELPI Chat** (`agent_key=minha-delpi-chat`).
 
+**Configuração do chat:** antes do smoke, alinhe toggles do admin ao perfil **dev** ou **prod** — [`../knowledge/chat-intelligence-settings-profiles.md`](../knowledge/chat-intelligence-settings-profiles.md).
+
 Se algo falhar após deploy, reinicie a API:
 
 ```bash

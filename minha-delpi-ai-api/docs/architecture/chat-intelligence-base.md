@@ -234,6 +234,8 @@ Com código (`10080099`), o fluxo normal seleciona `GET /products/{code}/stock`.
 
 ### Loop agentic e router LLM — defaults conservadores
 
+**Perfis dev/prod (admin):** [`../knowledge/chat-intelligence-settings-profiles.md`](../knowledge/chat-intelligence-settings-profiles.md).
+
 | Variável | Default | Motivo |
 |----------|---------|--------|
 | `CHAT_AGENTIC_LOOP_ENABLED` | `false` | Evita 2ª/3ª inferência e disparo de actions irrelevantes (ex. KPIs ROL) |
