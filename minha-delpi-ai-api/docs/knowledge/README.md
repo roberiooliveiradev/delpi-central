@@ -46,6 +46,6 @@ Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeli
 1. Deploy da api-delpi
 2. **Sincronizar OpenAPI:** `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (reimport + embeddings + [`_generated/api-delpi-openapi-catalog.md`](./_generated/api-delpi-openapi-catalog.md))
 3. **Sincronizar GPT_instructions:** `PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py --source-dir …/api-delpi-py/GPT_instructions --agent-key minha-delpi-chat --user-id <uuid> --ingest`
-4. **Smoke melhorias GPT/SQL:** `PYTHONPATH=/app python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]`
+4. **Smoke melhorias GPT/SQL:** ver perguntas G1–G8 em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); script `PYTHONPATH=/app python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]`
 5. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
 6. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

@@ -4,6 +4,8 @@ Checklist de perguntas para validar o chat operacional após deploy ou alteraç�
 
 **Dica:** para testes multi-turno, use a **mesma conversa** — o histórico importa.
 
+**Agente recomendado** para os cenários GPT/SQL (#G1–G8): **Minha DELPI Chat** (`agent_key=minha-delpi-chat`).
+
 Se algo falhar após deploy, reinicie a API:
 
 ```bash
@@ -206,6 +208,60 @@ Use o agente **Especialista em Produtos** (ou agente com actions `api-delpi`).
 
 ---
 
+## GPT_instructions + SQL produção (agente minha-delpi-chat)
+
+Valida sync dos docs `GPT_instructions`, roteamento SQL de produção (não confundir com busca de catálogo) e visibilidade de fontes RAG.
+
+**Smoke automatizado (preparação do turno, sem LLM lento):**
+
+```bash
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api \
+  python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]
+```
+
+**Teste manual no chat (E2E com stream):** mesmas perguntas abaixo; observe resposta, tools no `adminDebug` (admin) e badges de fontes.
+
+### Produção / SQL — não deve ir para `/products/search`
+
+| ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
+|----|----------|----------------------------|----------------------------------|
+| G1 | quais produtos serão produzidos hoje? | RAG ligado; **sem** `search_products`; contexto com SC2010/SD4010/`data_sql` | Resposta orientada a SQL/`POST /data/sql`; **não** lista genérica de catálogo |
+| G2 | me traga a programação de produção de hoje | Idem G1; RAG com programação/ordem de produção | Menção a ordens/programação; consulta analítica, não busca por descrição |
+| G3 | monte uma query que liste os produtos que vão ser produzidos hoje | RAG ligado; **sem** auto-action (`search` nem `data/sql`) | Bloco SQL ou passos claros; usuário/LLM executa depois se quiser |
+
+### Regressão — rotas REST que devem continuar funcionando
+
+| ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
+|----|----------|----------------------------|----------------------------------|
+| G4 | estoque do produto 10080047 | Fast path; 1 tool `stock`; `skipRag` | Tabela/gráfico de estoque do código |
+| G5 | busque parafuso m8 | 1 tool `search`; `skipRag` | Resultado de catálogo (`GET /products/search`); **não** confundir com G1–G3 |
+
+### RAG documental — docs GPT ingeridos no agente
+
+| ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
+|----|----------|----------------------------|----------------------------------|
+| G6 | qual rota da API DELPI retorna a ficha analyser completa? | RAG com `analyser`, `/products/`, `product_api` | Cita `GET /products/{code}/analyser` |
+| G7 | como listar tabelas do dicionário de dados protheus na API? | RAG com `system`, `SX2`, `/system/` | Cita rotas de metadados (`/system/…`) antes de SQL |
+
+### Visibilidade de fontes (UI)
+
+| ID | Como testar | O que esperar |
+|----|-------------|---------------|
+| G8 | Faça G1 ou G7 com admin logado; veja badges de fontes na mensagem | Contexto RAG usa docs do agente internamente; **badges visíveis só** para anexos de **sessão** e **projeto** — **não** exibir `agent_source` |
+| G8b | Anexe um PDF/txt na conversa e pergunte sobre o anexo | Badge de fonte **session** aparece; docs internos do agente continuam ocultos |
+
+### Perguntas extras úteis (manual / homologação)
+
+| # | Pergunta | Objetivo |
+|---|----------|----------|
+| 61 | quais ordens de produção estão abertas na SC2010? | RAG + SQL; vocabulário produção |
+| 62 | como consulto apontamento de produção via API? | Doc `data_sql_api_instructions` no contexto |
+| 63 | busque produtos com descrição parafuso m8 | Regressão: pede código ou usa search com parâmetro correto (não SQL produção) |
+| 64 | liste 3 produtos do grupo 1008 | Regressão: `search_products` com filtro de grupo |
+| 65 | ficha completa do produto 90264130 | RAG drawing + rota analyser (pré-Onda 12 PDF) |
+
+---
+
 ## Referência — testes automatizados
 
 Estes cenários têm cobertura em pytest / scripts do repositório:
@@ -213,6 +269,9 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Área | Onde rodar |
 |------|------------|
 | Smoke operacional | `scripts/smoke_operational_questions.py` |
+| GPT_instructions + SQL produção + fontes | `scripts/smoke_gpt_instructions_improvements.py` |
+| Regressão unitária SQL operacional | `tests/unit/domain/services/test_chat_sql_operational_intent_service.py` |
+| Sync / ingest GPT_instructions | `scripts/sync_gpt_instructions_knowledge.py --ingest` |
 | Refinamento paginação | `tests/unit/domain/services/test_chat_operational_refinement_service.py` |
 | Turn preparation paginação | `tests/unit/application/services/test_chat_turn_preparation_pagination_refinement.py` |
 | Consolidação paginada | `tests/unit/domain/services/test_chat_pagination_consolidation_service.py`, `tests/unit/application/services/test_chat_paginated_external_action_service.py` |
@@ -223,6 +282,10 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | OV / datas | `tests/unit/domain/services/test_chat_analysis_intent_action_planning.py` |
 
 ```bash
+# GPT/SQL + visibilidade (8 casos G1–G8)
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api \
+  python scripts/smoke_gpt_instructions_improvements.py
+
 # Backend (no container)
 docker exec delpi-minha-delpi-ai-api pytest \
   tests/unit/domain/services/test_chat_operational_refinement_service.py \
@@ -243,6 +306,12 @@ Use esta seção para marcar o que passou/falhou durante a validação manual.
 
 | # | OK | Observação |
 |---|:--:|------------|
-| 1 | ☐ | |
-| 2 | ☐ | |
+| G1 | ☐ | |
+| G2 | ☐ | |
+| G3 | ☐ | |
+| G4 | ☐ | |
+| G5 | ☐ | |
+| G6 | ☐ | |
+| G7 | ☐ | |
+| G8 | ☐ | |
 | … | ☐ | |
