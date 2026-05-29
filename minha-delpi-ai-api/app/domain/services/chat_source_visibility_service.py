@@ -4,14 +4,17 @@ def should_hide_source_from_client(source: dict | None) -> bool:
 
     scope = str(source.get("scope") or "").strip().lower()
 
-    if scope == "global":
+    if scope in {"global", "agent_source"}:
         return True
 
-    if scope in {"agent_source", "project_source", "session_source"}:
+    if scope in {"project_source", "session_source"}:
         return False
 
-    if any(source.get(key) for key in ("agentKey", "projectId", "sessionId", "attachmentId")):
+    if any(source.get(key) for key in ("projectId", "sessionId", "attachmentId")):
         return False
+
+    if source.get("agentKey"):
+        return True
 
     source_type = str(source.get("sourceType") or "").strip().lower()
 

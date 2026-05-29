@@ -21,7 +21,17 @@ describe("chatSourcesFilter", () => {
     ).toBe(true);
   });
 
-  it("mantém fontes do agente, projeto e sessão visíveis", () => {
+  it("oculta fontes globais e memória do agente", () => {
+    expect(
+      isGeneralChatSource({
+        scope: "agent_source",
+        title: "Manual do agente",
+        agentKey: "rh",
+      }),
+    ).toBe(true);
+  });
+
+  it("mantém fontes do projeto e da sessão visíveis", () => {
     const sources: ChatSource[] = [
       { scope: "global", title: "Base global" },
       { scope: "agent_source", title: "Manual do agente", agentKey: "rh" },
@@ -30,7 +40,6 @@ describe("chatSourcesFilter", () => {
     ];
 
     expect(filterVisibleChatSources(sources)).toEqual([
-      { scope: "agent_source", title: "Manual do agente", agentKey: "rh" },
       { scope: "project_source", title: "Briefing", projectId: "p1" },
       { scope: "session_source", title: "Anexo", sessionId: "s1" },
     ]);

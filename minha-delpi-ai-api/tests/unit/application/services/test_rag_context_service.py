@@ -130,10 +130,8 @@ def test_build_context_limits_chunks_per_document_and_deduplicates_sources():
     assert "Trecho 2" in result["context"]
     assert "Trecho 3" not in result["context"]
 
-    assert len(result["sources"]) == 1
-    assert result["sources"][0]["documentId"] == "doc-1"
-    assert result["sources"][0]["chunks"] == [1, 2]
-    assert result["sources"][0]["score"] == 0.60
+    # Fontes do agente entram no contexto do LLM, mas não na lista exibida ao usuário.
+    assert result["sources"] == []
 
 
 def test_build_context_returns_empty_sources_when_no_chunks():
