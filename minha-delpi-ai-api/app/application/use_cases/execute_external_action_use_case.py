@@ -179,18 +179,6 @@ class ExecuteExternalActionUseCase:
             table_presentation=table_presentation,
         )
 
-        if isinstance(text_presentation, dict) and data_coverage_notice:
-            markdown = text_presentation.get("markdown")
-
-            if isinstance(markdown, str) and markdown.strip():
-                text_presentation = {
-                    **text_presentation,
-                    "markdown": ChatDataCoverageNoticeService.append_to_markdown(
-                        markdown,
-                        data_coverage_notice,
-                    ),
-                }
-
         return {
             "provider": provider["providerKey"],
             "actionId": action["actionId"],

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatSource, ChatToolCall } from "../../data/api/chatTypes";
+import { shouldShowRichPresentation } from "../../ui/components/chatPresentation";
 
 export type ChatPlaybackPayload = {
   messageId: string;
@@ -26,11 +27,59 @@ export function useChatMessagePlayback(
   onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (!payload?.answer) {
+    if (!payload) {
       setDisplayedAnswer("");
       setShowPresentation(false);
       setIsPlaying(false);
       return;
+    }
+
+    const hasRichPresentation = shouldShowRichPresentation(
+      payload.answer,
+      payload.toolCalls,
+    );
+
+    if (!payload.answer.trim()) {
+      setDisplayedAnswer("");
+
+      if (hasRichPresentation) {
+        setShowPresentation(true);
+        setIsPlaying(true);
+
+        const timer = window.setTimeout(() => {
+          setIsPlaying(false);
+          onCompleteRef.current?.();
+        }, 120);
+
+        return () => {
+          window.clearTimeout(timer);
+        };
+      }
+
+      setShowPresentation(false);
+      setIsPlaying(false);
+
+      const timer = window.setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+
+    if (hasRichPresentation) {
+      setDisplayedAnswer(payload.answer);
+      setShowPresentation(true);
+      setIsPlaying(false);
+
+      const timer = window.setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 120);
+
+      return () => {
+        window.clearTimeout(timer);
+      };
     }
 
     const fullText = payload.answer;
@@ -77,7 +126,7 @@ export function useChatMessagePlayback(
     return () => {
       cancelled = true;
     };
-  }, [payload?.messageId, payload?.answer]);
+  }, [payload?.messageId, payload?.answer, payload?.toolCalls]);
 
   return {
     displayedAnswer,

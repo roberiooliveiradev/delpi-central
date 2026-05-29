@@ -284,12 +284,30 @@ class ChatProductQueryIntentService:
                     return code
 
             content = cls._message_content(item)
+
+            if cls._message_field_role(item) == "assistant":
+                lowered = ChatMessageNormalizationService.normalize_for_matching(content)
+
+                if (
+                    "informe o codigo" in lowered
+                    or "informe o codigo do produto" in lowered
+                    or ("codigo do produto" in lowered and "ex." in lowered)
+                ):
+                    continue
+
             code = cls.extract_product_code(content)
 
             if code:
                 return code
 
         return None
+
+    @classmethod
+    def _message_field_role(cls, message) -> str:
+        if isinstance(message, dict):
+            return str(message.get("role") or "").strip().lower()
+
+        return str(getattr(message, "role", "") or "").strip().lower()
 
     @classmethod
     def infer_intent_from_recent_tool(cls, previous_messages: list | None) -> str | None:

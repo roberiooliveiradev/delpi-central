@@ -51,8 +51,13 @@ class ChatOperationalParameterService:
         message: str,
         *,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> str | None:
-        intent = cls._missing_product_code_intent(message, conversation_context)
+        intent = cls._missing_product_code_intent(
+            message,
+            conversation_context,
+            previous_messages=previous_messages,
+        )
 
         if not intent:
             return None
@@ -73,8 +78,13 @@ class ChatOperationalParameterService:
         message: str,
         *,
         conversation_context: str | None = None,
+        previous_messages: list | None = None,
     ) -> bool:
-        return cls._missing_product_code_intent(message, conversation_context) is not None
+        return cls._missing_product_code_intent(
+            message,
+            conversation_context,
+            previous_messages=previous_messages,
+        ) is not None
 
     @classmethod
     def should_skip_agentic_loop(
@@ -108,6 +118,8 @@ class ChatOperationalParameterService:
         cls,
         message: str,
         conversation_context: str | None,
+        *,
+        previous_messages: list | None = None,
     ) -> str | None:
         message = ChatMessageNormalizationService.normalize_for_matching(message) or message
         normalized = message
@@ -123,6 +135,14 @@ class ChatOperationalParameterService:
         if not cls._requires_explicit_product_context(normalized, intent):
             return None
 
+        if previous_messages:
+            code = ChatProductQueryIntentService.extract_last_product_code_from_messages(
+                previous_messages,
+            )
+
+            if code:
+                return None
+
         # «estoque do produto» sem código explícito não herda exemplo do assistente.
         if not ChatProductQueryIntentService.references_previous_product(message):
             return intent
@@ -130,6 +150,7 @@ class ChatOperationalParameterService:
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,
+            previous_messages=previous_messages,
         )
 
         if product_code:

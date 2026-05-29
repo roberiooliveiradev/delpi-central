@@ -140,6 +140,13 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bnº\b", r"numero"),
     (r"\bcod\b", r"codigo"),
     (r"\bcód\b", r"codigo"),
+    # Filial / armazém (refinamento operacional)
+    (r"\bfilail\b", r"filial"),
+    (r"\bfilal\b", r"filial"),
+    (r"\bfilila\b", r"filial"),
+    (r"\bfilia\b", r"filial"),
+    (r"\barmazen\b", r"armazem"),
+    (r"\bdeposito\b", r"deposito"),
 )
 
 _TYPO_PATTERNS = [

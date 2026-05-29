@@ -8,6 +8,8 @@ import {
   isShortPresentationCaption,
   resolveRichTextBody,
   resolveCommentaryTextBody,
+  getPaginationStateFromToolCalls,
+  stripCoverageNoticeFromMarkdown,
   resolvePresentationLayoutMode,
   resolveRichTextContent,
   shouldShowRichPresentation,
@@ -355,6 +357,67 @@ describe("tree presentation", () => {
     expect(stripRedundantStructureFromMarkdown(markdown)).toBe(
       "Perfil do produto.\n\n**Insights**\n\n- Item 1.",
     );
+  });
+
+  it("remove bloco de cobertura duplicado do comentário", () => {
+    const markdown =
+      "Produtos pai (onde é usado)\n\n> **Cobertura dos dados:** Exibindo página 1 de 3.";
+
+    expect(stripCoverageNoticeFromMarkdown(markdown)).toBe("Produtos pai (onde é usado)");
+    expect(
+      resolveCommentaryTextBody(
+        markdown,
+        [
+          {
+            name: "execute_external_action",
+            metadata: {
+              ok: true,
+              dataCoverageNotice: {
+                kind: "pagination",
+                message: "Exibindo página 1 de 3.",
+              },
+              treePresentation: {
+                type: "tree",
+                title: "Onde é usado",
+                root: { id: "1", label: "10080022", children: [] },
+              },
+            },
+          },
+        ],
+      ),
+    ).toBe("Produtos pai (onde é usado)");
+  });
+
+  it("extrai estado de paginação dos metadados da ferramenta", () => {
+    const state = getPaginationStateFromToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          dataCoverageNotice: {
+            kind: "pagination",
+            message: "Parcial",
+            details: {
+              pagination: {
+                page: 1,
+                pageSize: 25,
+                total: 419,
+                totalPages: 17,
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    expect(state).toEqual({
+      page: 1,
+      pageSize: 25,
+      total: 419,
+      totalPages: 17,
+      hasPrevious: false,
+      hasNext: true,
+    });
   });
 
   it("suprime legenda curta duplicada quando a resposta é empilhada", () => {

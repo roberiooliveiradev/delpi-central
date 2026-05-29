@@ -57,7 +57,7 @@ class ChatCompositeDirectAnswerService:
                 operation_id=str(metadata.get("operationId") or ""),
             )
 
-            if cls._is_empty_result(humanized, execution.data):
+            if cls._is_empty_result(humanized, execution.data, path=path):
                 issues.append(
                     f"- **{label}:** consulta concluída, mas a API não retornou registros."
                 )
@@ -134,7 +134,18 @@ class ChatCompositeDirectAnswerService:
         return "a consulta não foi concluída com sucesso."
 
     @classmethod
-    def _is_empty_result(cls, humanized: dict, data: object) -> bool:
+    def _is_empty_result(
+        cls,
+        humanized: dict,
+        data: object,
+        *,
+        path: str = "",
+    ) -> bool:
+        lowered_path = str(path or "").lower()
+
+        if cls._has_product_payload(data):
+            return False
+
         linhas = [
             str(line).strip()
             for line in (humanized.get("linhas") or [])
@@ -161,15 +172,35 @@ class ChatCompositeDirectAnswerService:
                 if isinstance(items, list) and len(items) == 0:
                     return True
 
-                structure = root.get("structure")
+                if "/structure" in lowered_path and "/analyser" not in lowered_path:
+                    structure = root.get("structure")
 
-                if isinstance(structure, dict):
-                    structure_items = structure.get("items")
+                    if isinstance(structure, dict):
+                        structure_items = structure.get("items")
 
-                    if isinstance(structure_items, list) and len(structure_items) == 0:
-                        return True
+                        if isinstance(structure_items, list) and len(structure_items) == 0:
+                            return True
 
         return len(linhas) == 0 and humanized.get("titulo") is None
+
+    @classmethod
+    def _has_product_payload(cls, data: object) -> bool:
+        if not isinstance(data, dict):
+            return False
+
+        root = data.get("data", data)
+
+        if not isinstance(root, dict):
+            return False
+
+        product = root.get("product")
+
+        if not isinstance(product, dict):
+            return False
+
+        return bool(
+            str(product.get("code") or product.get("description") or "").strip()
+        )
 
     @classmethod
     def _action_label(cls, path: str, action_id: str, index: int) -> str:

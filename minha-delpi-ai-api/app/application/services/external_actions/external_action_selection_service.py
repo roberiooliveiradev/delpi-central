@@ -111,6 +111,17 @@ class ExternalActionSelectionService:
             selected = self._select_pagination_refinement_action(
                 refinement,
                 allowed_action_ids=allowed_action_ids,
+                message=message,
+            )
+
+            if selected:
+                return selected
+
+        if refinement and refinement.kind == "depth_refinement":
+            selected = self._select_depth_refinement_action(
+                refinement,
+                allowed_action_ids=allowed_action_ids,
+                message=message,
             )
 
             if selected:
@@ -538,12 +549,203 @@ class ExternalActionSelectionService:
         refinement,
         *,
         allowed_action_ids: list[str],
+        message: str = "",
     ) -> dict | None:
         action_id = str(refinement.action_id or "").strip()
+        allowed = set(allowed_action_ids or [])
 
-        if not action_id or action_id not in set(allowed_action_ids or []):
+        if action_id and action_id in allowed:
+            selected = self._build_pagination_refinement_action(
+                refinement,
+                action_id=action_id,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
+        product_code = str(refinement.product_code or "").strip()
+        route_segment = str(refinement.route_segment or "").strip()
+
+        if not product_code or not route_segment:
             return None
 
+        intent_by_segment = {
+            "parents": ChatProductQueryIntent.PARENTS,
+            "structure": ChatProductQueryIntent.STRUCTURE,
+            "stock": ChatProductQueryIntent.STOCK,
+        }
+        intent = intent_by_segment.get(route_segment)
+
+        if not intent:
+            return None
+
+        selected = self._select_product_action(
+            message or "paginação",
+            product_code,
+            allowed_action_ids=allowed_action_ids,
+            intent=intent,
+        )
+
+        if not selected:
+            return None
+
+        resolved_action_id = str(
+            (selected.get("arguments") or {}).get("actionId") or ""
+        ).strip()
+
+        if not resolved_action_id:
+            return None
+
+        return self._build_pagination_refinement_action(
+            refinement,
+            action_id=resolved_action_id,
+            allowed_action_ids=allowed_action_ids,
+            base_parameters=dict(
+                refinement.previous_parameters
+                or (selected.get("arguments") or {}).get("parameters")
+                or {}
+            ),
+            fallback_reason=selected.get("reason"),
+        )
+
+    def _select_depth_refinement_action(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+        message: str = "",
+    ) -> dict | None:
+        action_id = str(refinement.action_id or "").strip()
+        allowed = set(allowed_action_ids or [])
+
+        if action_id and action_id in allowed:
+            selected = self._build_depth_refinement_action(
+                refinement,
+                action_id=action_id,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
+        product_code = str(refinement.product_code or "").strip()
+        route_segment = str(refinement.route_segment or "").strip()
+
+        if not product_code or route_segment not in {"parents", "structure"}:
+            return None
+
+        intent_by_segment = {
+            "parents": ChatProductQueryIntent.PARENTS,
+            "structure": ChatProductQueryIntent.STRUCTURE,
+        }
+        intent = intent_by_segment.get(route_segment)
+
+        if not intent:
+            return None
+
+        selected = self._select_product_action(
+            message or "profundidade",
+            product_code,
+            allowed_action_ids=allowed_action_ids,
+            intent=intent,
+        )
+
+        if not selected:
+            return None
+
+        resolved_action_id = str(
+            (selected.get("arguments") or {}).get("actionId") or ""
+        ).strip()
+
+        if not resolved_action_id:
+            return None
+
+        return self._build_depth_refinement_action(
+            refinement,
+            action_id=resolved_action_id,
+            allowed_action_ids=allowed_action_ids,
+            base_parameters=dict(
+                refinement.previous_parameters
+                or (selected.get("arguments") or {}).get("parameters")
+                or {}
+            ),
+            fallback_reason=selected.get("reason"),
+        )
+
+    def _build_depth_refinement_action(
+        self,
+        refinement,
+        *,
+        action_id: str,
+        allowed_action_ids: list[str],
+        base_parameters: dict | None = None,
+        fallback_reason: str | None = None,
+    ) -> dict | None:
+        selected = self._build_pagination_refinement_action(
+            refinement,
+            action_id=action_id,
+            allowed_action_ids=allowed_action_ids,
+            base_parameters=base_parameters,
+            fallback_reason=fallback_reason,
+        )
+
+        if not selected or refinement.max_depth is None:
+            return selected
+
+        candidates = self.repository.find_candidate_actions(
+            "",
+            limit=80,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+        action = next(
+            (
+                item
+                for item in candidates
+                if str(item.get("actionId") or "") == action_id
+            ),
+            None,
+        )
+
+        if not action:
+            return selected
+
+        parameters = dict((selected.get("arguments") or {}).get("parameters") or {})
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
+                parameters[name] = refinement.max_depth
+
+        reason = fallback_reason or refinement.reason or (
+            "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa."
+        )
+
+        return {
+            **selected,
+            "arguments": {
+                **(selected.get("arguments") or {}),
+                "parameters": parameters,
+            },
+            "reason": reason,
+        }
+
+    def _build_pagination_refinement_action(
+        self,
+        refinement,
+        *,
+        action_id: str,
+        allowed_action_ids: list[str],
+        base_parameters: dict | None = None,
+        fallback_reason: str | None = None,
+    ) -> dict | None:
         candidates = self.repository.find_candidate_actions(
             "",
             limit=80,
@@ -562,7 +764,7 @@ class ExternalActionSelectionService:
         if not action:
             return None
 
-        parameters = dict(refinement.previous_parameters or {})
+        parameters = dict(base_parameters or refinement.previous_parameters or {})
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -581,7 +783,7 @@ class ExternalActionSelectionService:
             elif refinement.page is not None and lowered == "page":
                 parameters[name] = refinement.page
 
-        reason = refinement.reason or (
+        reason = fallback_reason or refinement.reason or (
             "A mensagem ajusta paginação da consulta operacional já feita nesta conversa."
         )
 
@@ -2106,6 +2308,8 @@ class ExternalActionSelectionService:
                 "warehouse_code",
                 "deposito",
                 "depósito",
+                "location",
+                "local",
             } and warehouse_code:
                 parameters[name] = warehouse_code
 

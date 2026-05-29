@@ -272,6 +272,7 @@ class ChatTurnPreparationService:
                 ChatOperationalParameterService.resolve_missing_product_code_answer(
                     message,
                     conversation_context=conversation_context,
+                    previous_messages=history_source,
                 )
             )
 
@@ -315,7 +316,7 @@ class ChatTurnPreparationService:
                 allowed_action_ids=workspace_context.get("allowedActionIds"),
                 capabilities=workspace_context.get("capabilities") or {},
                 specialization=workspace_context.get("specialization"),
-                fast_path=fast_path,
+                fast_path=fast_path and not operational_optimize,
                 previous_messages=history_source,
                 max_external_action_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,

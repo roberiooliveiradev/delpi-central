@@ -679,11 +679,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingToolCalls(toolCalls);
-          setStreamingShowPresentation(shouldShowRichPresentation("", toolCalls));
+          const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
+          setStreamingShowPresentation(hasRichPresentation);
           setStreamingStatus(
-            toolCalls.length > 0
-              ? "Consultando sistemas autorizados..."
-              : "Gerando resposta...",
+            hasRichPresentation
+              ? null
+              : toolCalls.length > 0
+                ? "Consultando sistemas autorizados..."
+                : "Gerando resposta...",
           );
         },
         onAssistantPending: () => {
@@ -702,7 +705,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus(null);
           setStreamingSources(payload.sources);
           setStreamingToolCalls(payload.toolCalls);
-          setStreamingShowPresentation(false);
+          setStreamingShowPresentation(
+            shouldShowRichPresentation(payload.answer, payload.toolCalls),
+          );
           setPlaybackPayload(payload);
         },
         onCanvasOpen: (payload) => {
@@ -748,16 +753,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
           if (response.playback || awaitingPlaybackRef.current) {
             setPlaybackPayload((current) =>
-              current ??
-              (response.answer
-                ? {
-                    messageId: response.messageId,
-                    answer: response.answer,
-                    sources: response.sources ?? [],
-                    toolCalls: response.toolCalls ?? [],
-                    adminDebug: response.adminDebug ?? null,
-                  }
-                : null),
+              current ?? {
+                messageId: response.messageId,
+                answer: response.answer ?? "",
+                sources: response.sources ?? [],
+                toolCalls: response.toolCalls ?? [],
+                adminDebug: response.adminDebug ?? null,
+              },
             );
             return;
           }

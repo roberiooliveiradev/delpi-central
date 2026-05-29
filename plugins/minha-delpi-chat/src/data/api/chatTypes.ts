@@ -93,6 +93,25 @@ export type ChatDataCoverageNotice = {
   message: string;
   messages?: string[];
   details?: Record<string, unknown>;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
+  total?: number;
+  maxDepth?: number;
+};
+
+export type ChatPaginationState = {
+  page: number;
+  pageSize: number;
+  totalPages?: number;
+  total?: number;
+  hasPrevious: boolean;
+  hasNext: boolean;
+};
+
+export type ChatDepthState = {
+  maxDepth: number;
+  canIncrease: boolean;
 };
 
 export type ChatStreamActivityEntry = {

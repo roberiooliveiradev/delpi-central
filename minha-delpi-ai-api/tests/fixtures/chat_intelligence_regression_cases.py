@@ -748,18 +748,41 @@ STOCK_REFINEMENT_SELECTION_CASES = [
     },
 ]
 
+_STOCK_VALUE_HISTORY = [
+    {"role": "user", "content": "qual o valor total de estoque da empresa"},
+    {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                }
+            ]
+        },
+    },
+]
+
 OPERATIONAL_REFINEMENT_FAST_PATH_CASES = [
     ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
     ("filtre filial 02", False, []),
+    ("filial 01", True, _STOCK_VALUE_HISTORY),
+    ("filial 01", False, []),
     ("aumente para 50 linhas", True, _PARENTS_CONVERSATION_HISTORY),
     ("aumente para 50 linhas", False, []),
+    ("proxima pagina", True, _PARENTS_CONVERSATION_HISTORY),
+    ("proxima pagina", False, []),
 ]
 
 AGENTIC_SKIP_REFINEMENT_CASES = [
     ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
     ("filtre filial 02", False, []),
+    ("filial 01", True, _STOCK_VALUE_HISTORY),
+    ("filial 01", False, []),
     ("aumente para 50 linhas", True, _PARENTS_CONVERSATION_HISTORY),
     ("aumente para 50 linhas", False, []),
+    ("proxima pagina", True, _PARENTS_CONVERSATION_HISTORY),
+    ("proxima pagina", False, []),
 ]
 
 PAGINATION_REFINEMENT_SELECTION_CASES = [
@@ -782,6 +805,49 @@ PAGINATION_REFINEMENT_SELECTION_CASES = [
         ],
         "expected_action_id": "parents",
         "expected_parameters": {"code": "10080022", "page": 1, "page_size": 50},
+    },
+    {
+        "message": "proxima pagina",
+        "previous_messages": _PARENTS_CONVERSATION_HISTORY,
+        "actions": [
+            {
+                "actionId": "parents",
+                "method": "GET",
+                "path": "/products/{code}/parents",
+                "operationId": "get_product_parents",
+                "summary": "Produtos pai",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "parents",
+        "expected_parameters": {"code": "10080022", "page": 2, "page_size": 25},
+    },
+    {
+        "message": "proxima pagina",
+        "previous_messages": [
+            {"role": "user", "content": "onde é usado o 10080022"},
+            {"role": "assistant", "content": "Produtos pai", "metadata": {}},
+        ],
+        "actions": [
+            {
+                "actionId": "parents",
+                "method": "GET",
+                "path": "/products/{code}/parents",
+                "operationId": "get_product_parents",
+                "summary": "Produtos pai",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "parents",
+        "expected_parameters": {"code": "10080022", "page": 2, "page_size": 25},
     },
 ]
 
@@ -915,5 +981,24 @@ METRIC_REFINEMENT_SELECTION_CASES = [
         ],
         "expected_action_id": "supplies-cpv",
         "expected_parameters": {"branch": "02"},
+    },
+    {
+        "message": "filial 01",
+        "previous_messages": _STOCK_VALUE_HISTORY,
+        "actions": [
+            {
+                "actionId": "stock-value",
+                "method": "GET",
+                "path": "/supplies/stock-value",
+                "operationId": "get_supplies_stock_value",
+                "summary": "Valor total estoque",
+                "parametersSchema": [
+                    {"name": "branch"},
+                    {"name": "top_limit"},
+                ],
+            },
+        ],
+        "expected_action_id": "stock-value",
+        "expected_parameters": {"branch": "01"},
     },
 ]

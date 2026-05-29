@@ -59,6 +59,28 @@ def test_should_skip_agentic_for_stock_branch_refinement():
     )
 
 
+def test_should_skip_agentic_for_stock_value_bare_branch():
+    history = [
+        {"role": "user", "content": "qual o valor total de estoque da empresa"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "filial 01",
+        previous_messages=history,
+    )
+
+
 def test_should_skip_agentic_for_incomplete_stock_question():
     assert ChatOperationalParameterService.should_skip_agentic_loop(
         "estoque do produto",
@@ -84,4 +106,19 @@ def test_should_skip_tools_after_missing_code_prompt_with_example():
             conversation_context=context,
         )
         is not None
+    )
+
+
+def test_should_not_skip_tools_when_previous_messages_have_real_products():
+    history = [
+        {"role": "user", "content": "resumo dos produtos 10080047 e 10080055"},
+        {
+            "role": "assistant",
+            "content": "Produto 10080047: A\nProduto 10080055: B",
+        },
+    ]
+
+    assert not ChatOperationalParameterService.should_skip_tools(
+        "estoque do produto",
+        previous_messages=history,
     )

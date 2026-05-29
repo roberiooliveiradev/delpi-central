@@ -450,7 +450,12 @@ export function ChatMessageList({
     setShowScrollToBottom(true);
   }, []);
 
-  const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
+  const isActiveStream = Boolean(
+    isStreaming ||
+      streamingAnswer ||
+      streamingStatus ||
+      (isStreaming && streamingToolCalls.length > 0),
+  );
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
   const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
   const showStreamingPresentation =

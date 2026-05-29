@@ -208,6 +208,81 @@ def test_plan_metric_follow_up_after_cpv():
     assert planned[0].branch == "02"
 
 
+def test_plan_metric_follow_up_after_stock_value_bare_branch():
+    history = [
+        {"role": "user", "content": "qual o valor total de estoque da empresa"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "filial 01",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "metric_refinement"
+    assert planned[0].metric_path_token == "stock-value"
+    assert planned[0].branch == "01"
+
+
+def test_is_operational_follow_up_for_stock_value_bare_branch():
+    history = [
+        {"role": "user", "content": "qual o valor total de estoque da empresa"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert ChatOperationalRefinementService.is_operational_follow_up(
+        "filial 01",
+        previous_messages=history,
+    )
+
+
+def test_plan_metric_follow_up_with_filial_typo():
+    history = [
+        {"role": "user", "content": "qual o valor total de estoque da empresa"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "filail 01",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "metric_refinement"
+    assert planned[0].branch == "01"
+
+
 def test_is_operational_follow_up_enables_fast_path():
     history = [
         {"role": "user", "content": "estoque do produto 10080022"},
@@ -341,3 +416,143 @@ def test_is_operational_follow_up_for_pagination_request():
         "aumente para 50 linhas",
         previous_messages=history,
     )
+
+
+def test_plan_pagination_follow_up_without_tool_calls_in_history():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "content": "Produtos pai (onde é usado)",
+            "metadata": {},
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "aumente para 50 linhas",
+        conversation_context="path=/products/10080022/parents",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "pagination_refinement"
+    assert planned[0].product_code == "10080022"
+    assert planned[0].route_segment == "parents"
+    assert planned[0].page_size == 50
+    assert planned[0].action_id is None
+
+
+def test_is_operational_follow_up_for_pagination_without_tool_calls():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {"role": "assistant", "content": "Produtos pai (onde é usado)", "metadata": {}},
+    ]
+
+    assert ChatOperationalRefinementService.is_operational_follow_up(
+        "aumente para 50 linhas",
+        conversation_context="path=/products/10080022/parents",
+        previous_messages=history,
+    )
+
+
+def test_plan_next_page_follow_up():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "parameters": {
+                                "code": "10080022",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                            "dataCoverageNotice": {
+                                "kind": "pagination",
+                                "details": {
+                                    "pagination": {
+                                        "page": 1,
+                                        "pageSize": 25,
+                                        "total": 419,
+                                        "totalPages": 17,
+                                    }
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "proxima pagina",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].page == 2
+    assert planned[0].page_size is None
+
+
+def test_plan_next_page_follow_up_without_tool_calls():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {"role": "assistant", "content": "Produtos pai (onde é usado)", "metadata": {}},
+        {"role": "user", "content": "aumente para 50 linhas"},
+        {"role": "assistant", "content": "Produtos pai (onde é usado)", "metadata": {}},
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "proxima pagina",
+        conversation_context="path=/products/10080022/parents",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].page == 2
+    assert planned[0].route_segment == "parents"
+
+
+def test_plan_prev_page_follow_up():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "parameters": {
+                                "code": "10080022",
+                                "page": 2,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "pagina anterior",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].page == 1

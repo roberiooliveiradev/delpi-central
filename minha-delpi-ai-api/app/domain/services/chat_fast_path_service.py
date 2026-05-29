@@ -30,6 +30,16 @@ _OPERATIONAL_HINT_RE = re.compile(
     r"\b(\d{5,}|[A-Z]{2,}\d{3,})\b"
 )
 
+_REFINEMENT_HINT_RE = re.compile(
+    r"\b("
+    r"proxima pagina|pagina anterior|pagina seguinte|"
+    r"filial|armazem|filtre|filtro|filtrar|"
+    r"aumente para|mais linhas|mais registros|"
+    r"completo de novo|estoque completo|mostre completo"
+    r")\b",
+    re.IGNORECASE,
+)
+
 
 def _normalize_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value.strip().lower())
@@ -68,6 +78,9 @@ class ChatFastPathService:
             return False
 
         if _OPERATIONAL_HINT_RE.search(text):
+            return False
+
+        if _REFINEMENT_HINT_RE.search(normalized):
             return False
 
         if normalized in {"ajuda", "help", "comandos", "capacidades", "funcionalidades"}:

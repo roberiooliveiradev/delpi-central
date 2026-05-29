@@ -1,6 +1,8 @@
 import type {
   ChatDataCoverageNotice,
+  ChatDepthState,
   ChatMessage,
+  ChatPaginationState,
   ChatPresentation,
   ChatToolCall,
 } from "../../data/api/chatTypes";
@@ -682,6 +684,101 @@ export function stripRedundantHierarchyListFromMarkdown(markdown: string): strin
   return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+export function stripCoverageNoticeFromMarkdown(markdown: string): string {
+  const trimmed = String(markdown || "").trim();
+
+  if (!trimmed) {
+    return "";
+  }
+
+  const coverageBlockPattern =
+    /(?:^|\n\n)> \*\*Cobertura dos dados:\*\*[^\n]*(?:\n> [^\n]*)*/gu;
+
+  return trimmed.replace(coverageBlockPattern, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function readPaginationDetail(details: Record<string, unknown>): Record<string, unknown> | null {
+  for (const key of ["pagination", "structurePagination", "stockPagination"]) {
+    const candidate = details[key];
+
+    if (candidate && typeof candidate === "object") {
+      return candidate as Record<string, unknown>;
+    }
+  }
+
+  return null;
+}
+
+export function getPaginationStateFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatPaginationState | null {
+  const notice = getDataCoverageNoticeFromToolCalls(toolCalls);
+
+  if (!notice) {
+    return null;
+  }
+
+  const details =
+    notice.details && typeof notice.details === "object"
+      ? notice.details
+      : null;
+  const pagination = details ? readPaginationDetail(details) : null;
+
+  const page = Number(pagination?.page ?? notice.page);
+  const pageSize = Number(pagination?.pageSize ?? notice.pageSize);
+  const totalPages = Number(pagination?.totalPages ?? notice.totalPages);
+  const total = Number(pagination?.total ?? notice.total);
+
+  if (!Number.isFinite(page) || page < 1 || !Number.isFinite(pageSize) || pageSize < 1) {
+    return null;
+  }
+
+  const resolvedTotalPages =
+    Number.isFinite(totalPages) && totalPages > 0
+      ? totalPages
+      : Number.isFinite(total) && total > 0
+        ? Math.max(1, Math.ceil(total / pageSize))
+        : undefined;
+
+  return {
+    page,
+    pageSize,
+    totalPages: resolvedTotalPages,
+    total: Number.isFinite(total) && total >= 0 ? total : undefined,
+    hasPrevious: page > 1,
+    hasNext: resolvedTotalPages ? page < resolvedTotalPages : true,
+  };
+}
+
+export function getDepthStateFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatDepthState | null {
+  const notice = getDataCoverageNoticeFromToolCalls(toolCalls);
+
+  if (!notice) {
+    return null;
+  }
+
+  const details =
+    notice.details && typeof notice.details === "object"
+      ? notice.details
+      : null;
+  const depth =
+    details?.depth && typeof details.depth === "object"
+      ? (details.depth as Record<string, unknown>)
+      : null;
+  const maxDepth = Number(depth?.maxDepth ?? notice.maxDepth);
+
+  if (!Number.isFinite(maxDepth) || maxDepth < 1 || maxDepth >= 99) {
+    return null;
+  }
+
+  return {
+    maxDepth,
+    canIncrease: maxDepth < 99,
+  };
+}
+
 export function getPathFromToolCalls(toolCalls?: ChatToolCall[]): string {
   if (!Array.isArray(toolCalls)) {
     return "";
@@ -764,6 +861,8 @@ export function resolveCommentaryTextBody(
     body = stripRedundantStructureFromMarkdown(body);
     body = stripRedundantHierarchyListFromMarkdown(body);
   }
+
+  body = stripCoverageNoticeFromMarkdown(body);
 
   return body.trim();
 }

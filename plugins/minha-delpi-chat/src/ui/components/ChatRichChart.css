@@ -56,6 +56,51 @@
   color: #b45309;
 }
 
+.mdc-rich-presentation__navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0 0 0.65rem;
+}
+
+.mdc-rich-presentation__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.mdc-rich-presentation__pagination-label {
+  font-size: 0.78rem;
+  color: var(--mdc-muted);
+}
+
+.mdc-rich-presentation__nav-btn {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.mdc-rich-presentation__nav-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-accent) 45%, var(--mdc-card-border));
+  color: var(--mdc-accent);
+}
+
+.mdc-rich-presentation__nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mdc-rich-presentation__nav-btn--secondary {
+  margin-left: auto;
+}
+
 .mdc-rich-presentation--stacked .mdc-rich-presentation__stack {
   display: flex;
   flex-direction: column;

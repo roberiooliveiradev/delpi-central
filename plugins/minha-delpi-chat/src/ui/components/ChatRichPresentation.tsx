@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ChatToolCall } from "../../data/api/chatTypes";
+import type { ChatDepthState, ChatPaginationState, ChatToolCall } from "../../data/api/chatTypes";
 import {
   getDataCoverageNoticeFromToolCalls,
+  getDepthStateFromToolCalls,
+  getPaginationStateFromToolCalls,
   getPreferredFormatFromToolCalls,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
@@ -100,6 +102,69 @@ function FormatToggle({
   );
 }
 
+function CoverageNavigation({
+  pagination,
+  depth,
+  onNavigate,
+}: {
+  pagination: ChatPaginationState | null;
+  depth: ChatDepthState | null;
+  onNavigate?: (query: string) => void;
+}) {
+  if (!onNavigate || (!pagination && !depth)) {
+    return null;
+  }
+
+  const showPagination =
+    pagination && (pagination.hasPrevious || pagination.hasNext || (pagination.totalPages ?? 0) > 1);
+
+  if (!showPagination && !depth?.canIncrease) {
+    return null;
+  }
+
+  return (
+    <div className="mdc-rich-presentation__navigation" role="navigation" aria-label="Navegação dos dados">
+      {showPagination && pagination ? (
+        <div className="mdc-rich-presentation__pagination">
+          <button
+            type="button"
+            className="mdc-rich-presentation__nav-btn"
+            disabled={!pagination.hasPrevious}
+            onClick={() => onNavigate("página anterior")}
+          >
+            Anterior
+          </button>
+          <span className="mdc-rich-presentation__pagination-label">
+            Página {pagination.page}
+            {pagination.totalPages ? ` de ${pagination.totalPages}` : ""}
+            {pagination.total !== undefined
+              ? ` · ${pagination.total} registro(s)`
+              : ""}
+          </span>
+          <button
+            type="button"
+            className="mdc-rich-presentation__nav-btn"
+            disabled={!pagination.hasNext}
+            onClick={() => onNavigate("próxima página")}
+          >
+            Próxima
+          </button>
+        </div>
+      ) : null}
+
+      {depth?.canIncrease ? (
+        <button
+          type="button"
+          className="mdc-rich-presentation__nav-btn mdc-rich-presentation__nav-btn--secondary"
+          onClick={() => onNavigate("aumente a profundidade para 99")}
+        >
+          Ampliar níveis
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChatRichPresentation({
   toolCalls,
   textContent,
@@ -116,6 +181,14 @@ export function ChatRichPresentation({
   );
   const dataCoverageNotice = useMemo(
     () => getDataCoverageNoticeFromToolCalls(toolCalls),
+    [toolCalls],
+  );
+  const paginationState = useMemo(
+    () => getPaginationStateFromToolCalls(toolCalls),
+    [toolCalls],
+  );
+  const depthState = useMemo(
+    () => getDepthStateFromToolCalls(toolCalls),
     [toolCalls],
   );
   const presentationTitle = useMemo(
@@ -190,6 +263,14 @@ export function ChatRichPresentation({
     </div>
   ) : null;
 
+  const coverageNavigation = (
+    <CoverageNavigation
+      pagination={paginationState}
+      depth={depthState}
+      onNavigate={onDrillDown}
+    />
+  );
+
   const showSharedTitle = Boolean(presentationTitle) && !isCommentaryVisual;
 
   const formatToolbar = showVisualToggle ? (
@@ -235,6 +316,7 @@ export function ChatRichPresentation({
     return (
       <div className="mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
         {coverageBanner}
+        {coverageNavigation}
 
         {hasCommentary ? (
           <div className="mdc-rich-presentation__text mdc-rich-presentation__text--commentary">
@@ -283,6 +365,7 @@ export function ChatRichPresentation({
   return (
     <div className="mdc-rich-presentation mdc-rich-presentation--enter">
       {coverageBanner}
+      {coverageNavigation}
       {formatToolbar}
 
       {showSharedTitle ? (

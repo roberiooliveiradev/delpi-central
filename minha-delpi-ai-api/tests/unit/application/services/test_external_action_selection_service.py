@@ -384,6 +384,56 @@ def test_select_stock_refinement_reuses_product_and_branch():
     assert "filial 02" in selected["reason"]
 
 
+def test_select_stock_refinement_maps_warehouse_to_location():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Product stock",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "branch", "in": "query"},
+                        {"name": "location", "in": "query"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/stock",
+                            "actionId": "get_product_stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "filtre filial 02 armazém 01",
+        allowed_action_ids=["stock-action"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["parameters"]["branch"] == "02"
+    assert selected["arguments"]["parameters"]["location"] == "01"
+
+
 def test_select_stock_refinement_with_unresolved_path_template():
     service = ExternalActionSelectionService(
         FakeRepository(

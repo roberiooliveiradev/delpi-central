@@ -32,6 +32,11 @@ def test_normalize_more_typos():
     assert "quantidade" in ChatMessageNormalizationService.normalize_for_matching("qtd em estoque")
 
 
+def test_normalize_filial_typos():
+    assert ChatMessageNormalizationService.normalize_for_matching("filail 01") == "filial 01"
+    assert ChatMessageNormalizationService.normalize_for_matching("filal 02") == "filial 02"
+
+
 def test_expand_query_terms():
     terms = ChatMessageNormalizationService.expand_query_terms("Estoque do 10080001?")
     assert "estoque do 10080001" in terms
