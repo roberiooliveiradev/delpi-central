@@ -1,6 +1,12 @@
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
 
+def test_monte_query_is_authoring():
+    assert ChatSqlIntentService.is_authoring_request(
+        "monte uma query que liste os produtos que vão ser produzidos hoje"
+    )
+
+
 def test_monte_query_does_not_auto_execute():
     assert ChatSqlIntentService.should_auto_execute_sql(
         "monte uma query que liste os produtos que vão ser produzidos hoje"

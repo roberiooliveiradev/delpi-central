@@ -19,6 +19,8 @@ import {
   createChatArtifact,
   createProjectTextSource,
   deleteChatSource,
+  downloadChatAttachment,
+  downloadChatSource,
   getChatCapabilities,
   listProjectSources,
   updateChatArtifact,
@@ -1064,6 +1066,9 @@ export function ChatPage({
                     await deleteChatSource(sourceId, { getAccessToken });
                     await loadProjectSources(selectedProject.id);
                   }}
+                  onDownloadSource={async (sourceId) => {
+                    await downloadChatSource(sourceId, { getAccessToken });
+                  }}
                   onUpdateProject={editProject}
                   getAccessToken={getAccessToken}
                   onUseAgent={handleSelectContextAgent}
@@ -1175,6 +1180,9 @@ export function ChatPage({
                 onReuseMessage={reuseMessage}
                 onDrillDown={handleDrillDown}
                 onMessageFeedback={setMessageFeedback}
+                onDownloadAttachment={async (attachmentId) => {
+                  await downloadChatAttachment(attachmentId, { getAccessToken });
+                }}
                 onOpenCanvas={openCanvasPanel}
                 lastSentUserText={lastSentUserText}
               />

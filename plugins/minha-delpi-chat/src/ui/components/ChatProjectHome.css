@@ -513,7 +513,13 @@
   font-size: 0.78rem;
 }
 
-.mdc-chat-project-source-row > button {
+.mdc-chat-project-source-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.mdc-chat-project-source-row__actions button {
   display: inline-grid;
   place-items: center;
   width: 2rem;
@@ -525,9 +531,14 @@
   cursor: pointer;
 }
 
-.mdc-chat-project-source-row > button:hover {
+.mdc-chat-project-source-row__actions button:hover {
   background: color-mix(in srgb, var(--mdc-danger) 12%, transparent);
   color: var(--mdc-danger);
+}
+
+.mdc-chat-project-source-row__actions button:first-child:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-project-sources__note {

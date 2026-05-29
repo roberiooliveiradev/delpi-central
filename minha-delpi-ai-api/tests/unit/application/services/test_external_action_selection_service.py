@@ -309,7 +309,10 @@ def test_production_schedule_question_does_not_select_product_search():
         allowed_action_ids=["search-products", "sql-action"],
     )
 
-    assert selected is None
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "sql-action"
+    assert "SC2010" in selected["arguments"]["body"]["sql"]
+    assert "search" not in selected["arguments"]["actionId"]
 
 
 def test_execute_query_selects_sql_action():

@@ -1,6 +1,7 @@
 import {
   ArrowUpRight,
   Bot,
+  Download,
   FileText,
   Folder,
   Loader2,
@@ -99,6 +100,7 @@ type ChatProjectHomeProps = {
   onUploadSource?: (file: File) => Promise<ChatWorkspaceSource>;
   onCreateTextSource?: (payload: { title: string; content: string; metadata?: Record<string, unknown> | null }) => Promise<ChatWorkspaceSource>;
   onDeleteSource?: (sourceId: string) => Promise<void>;
+  onDownloadSource?: (sourceId: string) => Promise<void>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onClearProject?: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -128,6 +130,7 @@ export function ChatProjectHome({
   onUploadSource,
   onCreateTextSource,
   onDeleteSource,
+  onDownloadSource,
   onDeleteProject,
   onClearProject,
   getAccessToken,
@@ -693,14 +696,26 @@ export function ChatProjectHome({
                           : ""}
                       </small>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => void onDeleteSource?.(source.id)}
-                      title="Remover fonte"
-                      aria-label={`Remover ${source.title}`}
-                    >
-                      <Trash2 size={16} aria-hidden="true" />
-                    </button>
+                    <div className="mdc-chat-project-source-row__actions">
+                      {onDownloadSource ? (
+                        <button
+                          type="button"
+                          onClick={() => void onDownloadSource(source.id)}
+                          title="Baixar arquivo"
+                          aria-label={`Baixar ${source.title}`}
+                        >
+                          <Download size={16} aria-hidden="true" />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => void onDeleteSource?.(source.id)}
+                        title="Remover fonte"
+                        aria-label={`Remover ${source.title}`}
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>

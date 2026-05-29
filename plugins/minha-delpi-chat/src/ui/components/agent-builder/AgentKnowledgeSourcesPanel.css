@@ -135,6 +135,13 @@
   display: block;
 }
 
+.mdc-agent-knowledge__card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mdc-agent-knowledge__card-download,
 .mdc-agent-knowledge__card-remove {
   display: inline-grid;
   place-items: center;
@@ -151,8 +158,14 @@
   line-height: 0;
 }
 
+.mdc-agent-knowledge__card-download svg,
 .mdc-agent-knowledge__card-remove svg {
   display: block;
+}
+
+.mdc-agent-knowledge__card-download:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
 }
 
 .mdc-agent-knowledge__card-remove:hover {

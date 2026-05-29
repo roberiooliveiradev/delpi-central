@@ -98,9 +98,11 @@
 | GET | `/chat/agents/{agentId}/sources` | `chat.access` |
 | POST | `/chat/agents/{agentId}/sources` | `chat.ask` |
 | DELETE | `/chat/sources/{sourceId}` | `chat.ask` |
+| GET | `/chat/sources/{sourceId}/download` | `chat.access` |
 | POST | `/chat/attachments` | `chat.ask` |
 | POST | `/chat/sessions/{sessionId}/attachments` | `chat.ask` |
 | GET | `/chat/sessions/{sessionId}/attachments` | `chat.access` |
+| GET | `/chat/attachments/{attachmentId}/download` | `chat.access` |
 | DELETE | `/chat/attachments/{attachmentId}` | `chat.ask` |
 | GET | `/chat/sessions/{sessionId}/artifacts` | `chat.access` |
 | POST | `/chat/sessions/{sessionId}/artifacts` | `chat.ask` |

@@ -1,4 +1,4 @@
-import { FileText, Plus, Trash2, Upload } from "lucide-react";
+import { FileText, Plus, Trash2, Upload, Download } from "lucide-react";
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 
 import type { ChatWorkspaceSource } from "../../../data/api/chatTypes";
@@ -12,6 +12,7 @@ type AgentKnowledgeSourcesPanelProps = {
   notice?: string | null;
   onUploadFiles: (files: File[]) => Promise<void>;
   onRemoveSource: (sourceId: string) => Promise<void>;
+  onDownloadSource?: (sourceId: string) => Promise<void>;
   onLocalDuplicatesSkipped?: (count: number) => void;
   noteSlot?: ReactNode;
 };
@@ -48,6 +49,7 @@ export function AgentKnowledgeSourcesPanel({
   notice,
   onUploadFiles,
   onRemoveSource,
+  onDownloadSource,
   onLocalDuplicatesSkipped,
   noteSlot,
 }: AgentKnowledgeSourcesPanelProps) {
@@ -227,17 +229,33 @@ export function AgentKnowledgeSourcesPanel({
                     <span className="mdc-agent-knowledge__card-icon">
                       <FileText size={18} aria-hidden="true" />
                     </span>
-                    <button
-                      type="button"
-                      className="mdc-agent-knowledge__card-remove"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        void onRemoveSource(source.id);
-                      }}
-                      aria-label={`Remover ${getSourceLabel(source)}`}
-                    >
-                      <Trash2 size={14} aria-hidden="true" />
-                    </button>
+                    <div className="mdc-agent-knowledge__card-actions">
+                      {onDownloadSource ? (
+                        <button
+                          type="button"
+                          className="mdc-agent-knowledge__card-download"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void onDownloadSource(source.id);
+                          }}
+                          aria-label={`Baixar ${getSourceLabel(source)}`}
+                          title="Baixar arquivo"
+                        >
+                          <Download size={14} aria-hidden="true" />
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="mdc-agent-knowledge__card-remove"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void onRemoveSource(source.id);
+                        }}
+                        aria-label={`Remover ${getSourceLabel(source)}`}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
                   <div className="mdc-agent-knowledge__card-copy">
                     <strong>{getSourceLabel(source)}</strong>

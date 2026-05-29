@@ -1168,6 +1168,45 @@ export async function deleteChatSource(
   }
 }
 
+async function downloadBinaryFromChat(
+  path: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  const { parseContentDispositionFilename, triggerBlobDownload } = await import(
+    "../../utils/downloadBlob"
+  );
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "GET",
+    headers: await getAuthOnlyHeaders(options),
+  });
+
+  if (!response.ok) {
+    await parseJsonResponse<unknown>(response);
+  }
+
+  const blob = await response.blob();
+  const filename =
+    parseContentDispositionFilename(response.headers.get("Content-Disposition")) ||
+    "download";
+
+  triggerBlobDownload(blob, filename);
+}
+
+export async function downloadChatAttachment(
+  attachmentId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  await downloadBinaryFromChat(`/chat/attachments/${attachmentId}/download`, options);
+}
+
+export async function downloadChatSource(
+  sourceId: string,
+  options: ChatApiOptions = {},
+): Promise<void> {
+  await downloadBinaryFromChat(`/chat/sources/${sourceId}/download`, options);
+}
+
 export async function listChatActions(
   options: ChatApiOptions & { providerKey?: string | null } = {},
 ): Promise<ChatActionCatalogItem[]> {

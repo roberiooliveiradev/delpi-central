@@ -55,6 +55,10 @@ from app.application.use_cases.chat_attachments_use_cases import (
     DeleteChatAttachmentUseCase,
     ListChatAttachmentsUseCase,
 )
+from app.application.use_cases.download_chat_file_use_cases import (
+    DownloadChatAttachmentUseCase,
+    DownloadChatSourceUseCase,
+)
 from app.application.use_cases.chat_artifacts_use_cases import (
     CreateChatArtifactUseCase,
     DeleteChatArtifactUseCase,
@@ -549,4 +553,15 @@ def make_delete_chat_source_use_case() -> DeleteChatSourceUseCase:
         knowledge_repository=PostgresKnowledgeRepository(),
         project_repository=PostgresChatProjectRepository(),
         agent_repository=PostgresChatAgentRepository(),
+    )
+
+
+def make_download_chat_attachment_use_case() -> DownloadChatAttachmentUseCase:
+    return DownloadChatAttachmentUseCase(PostgresChatAttachmentRepository())
+
+
+def make_download_chat_source_use_case() -> DownloadChatSourceUseCase:
+    return DownloadChatSourceUseCase(
+        knowledge_repository=PostgresKnowledgeRepository(),
+        access_checker=make_delete_chat_source_use_case(),
     )

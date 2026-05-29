@@ -196,6 +196,16 @@ Permissão: `minha-delpi.chat.ask`
 
 Resposta: `204 No Content`
 
+### GET `/chat/sources/{sourceId}/download`
+
+Baixa o arquivo da fonte (agente, projeto ou nota de texto).
+
+Permissão: `minha-delpi.chat.access`
+
+Resposta `200`: arquivo binário com header `Content-Disposition: attachment; filename="..."`.
+
+Notas de texto são exportadas como `.md` quando não há arquivo no storage.
+
 ---
 
 ## Anexos
@@ -273,6 +283,14 @@ Remove anexo.
 Permissão: `minha-delpi.chat.ask`
 
 Resposta: `204 No Content`
+
+### GET `/chat/attachments/{attachmentId}/download`
+
+Baixa o arquivo anexado à conversa.
+
+Permissão: `minha-delpi.chat.access`
+
+Resposta `200`: arquivo binário com header `Content-Disposition: attachment; filename="..."`.
 
 ---
 

@@ -23,6 +23,7 @@ import { useConfirmDialog } from "../components/useConfirmDialog";
 import {
   createAgentTextSource,
   deleteChatSource,
+  downloadChatSource,
   duplicateChatAgent,
   exportChatAgent,
   getChatAgent,
@@ -425,6 +426,10 @@ export function ChatAgentBuilderPage({
     if (agent) {
       setAgentSources(await listAgentSources(agent.id, { getAccessToken }));
     }
+  }
+
+  async function downloadAgentSource(sourceId: string) {
+    await downloadChatSource(sourceId, { getAccessToken });
   }
 
   const normalizedIcebreakers = useMemo(
@@ -1631,6 +1636,7 @@ export function ChatAgentBuilderPage({
                     )
                   }
                   onRemoveSource={removeAgentSource}
+                  onDownloadSource={downloadAgentSource}
                   noteSlot={
                     <details className="mdc-chat-ws-details">
                       <summary>Adicionar nota de texto</summary>

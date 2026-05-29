@@ -35,36 +35,35 @@ QUESTIONS: list[tuple[str, dict, str]] = [
     (
         "quais produtos serão produzidos hoje?",
         {
-            "skip_rag": False,
-            "operational_optimize": False,
-            "max_tool_calls": 0,
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 1,
             "action_must_not_contain": ["search_products"],
-            "rag_min_length": 500,
-            "rag_context_any": ["sd4010", "sc2010", "ordem de produ", "data_sql", "requisi"],
+            "action_contains": "sql",
         },
-        "#G1 produção hoje → RAG SQL, sem search",
+        "#G1 produção hoje → fast path SQL, sem search",
     ),
     (
         "me traga a programação de produção de hoje",
         {
-            "skip_rag": False,
-            "operational_optimize": False,
-            "max_tool_calls": 0,
+            "skip_rag": True,
+            "operational_optimize": True,
+            "max_tool_calls": 1,
             "action_must_not_contain": ["search_products"],
-            "rag_min_length": 400,
-            "rag_context_any": ["sd4010", "sc2010", "programacao", "ordem de produ", "data_sql"],
+            "action_contains": "sql",
         },
-        "#G2 programação produção → RAG",
+        "#G2 programação produção → fast path SQL",
     ),
     (
         "monte uma query que liste os produtos que vão ser produzidos hoje",
         {
-            "skip_rag": False,
-            "operational_optimize": False,
+            "skip_rag": True,
+            "operational_optimize": True,
             "max_tool_calls": 0,
             "action_must_not_contain": ["search_products", "data/sql"],
+            "direct_answer_contains": ["```sql", "SC2010"],
         },
-        "#G3 elaborar SQL → sem auto-action",
+        "#G3 elaborar SQL → resposta direta com query, sem LLM",
     ),
     (
         "estoque do produto 10080047",
@@ -325,6 +324,15 @@ def main() -> int:
                 _check(
                     any(term.lower() in rag_context for term in rag_any),
                     f"rag context contém um de {rag_any}",
+                    errors,
+                )
+
+            direct_any = expectations.get("direct_answer_contains")
+            if direct_any:
+                direct_text = (prepared.direct_answer or "").lower()
+                _check(
+                    all(term.lower() in direct_text for term in direct_any),
+                    f"direct_answer contém {direct_any} (preview: {(prepared.direct_answer or '')[:120]})",
                     errors,
                 )
 

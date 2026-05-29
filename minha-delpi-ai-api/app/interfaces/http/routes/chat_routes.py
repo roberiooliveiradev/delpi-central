@@ -12,7 +12,7 @@ import logging
 from uuid import UUID
 from dataclasses import asdict
 
-from flask import Blueprint, Response, current_app, g, jsonify, request, stream_with_context
+from flask import Blueprint, Response, current_app, g, jsonify, request, send_file, stream_with_context
 from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.config.settings import Settings
@@ -50,6 +50,8 @@ from app.composition.chat_composer import (
     make_create_chat_artifact_use_case,
     make_create_chat_attachment_use_case,
     make_delete_chat_attachment_use_case,
+    make_download_chat_attachment_use_case,
+    make_download_chat_source_use_case,
     make_list_chat_attachments_use_case,
     make_create_chat_session_use_case,
     make_delete_chat_artifact_use_case,
@@ -1371,6 +1373,38 @@ def delete_chat_source(source_id: str):
     return "", 204
 
 
+@chat_bp.get("/sources/<source_id>/download")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def download_chat_source(source_id: str):
+    from io import BytesIO
+
+    from app.domain.exceptions.chat_exceptions import (
+        ChatSessionAccessDeniedError,
+        ChatSessionNotFoundError,
+    )
+
+    use_case = make_download_chat_source_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            source_id=source_id,
+        )
+    except ChatSessionNotFoundError:
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        return forbidden("Access denied")
+    except FileNotFoundError:
+        return _not_found_response()
+
+    return send_file(
+        BytesIO(result.content),
+        mimetype=result.content_type,
+        as_attachment=True,
+        download_name=result.filename,
+    )
+
+
 @chat_bp.get("/projects")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_projects():
@@ -1674,6 +1708,38 @@ def delete_attachment(attachment_id: str):
         raise
 
     return "", 204
+
+
+@chat_bp.get("/attachments/<attachment_id>/download")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def download_attachment(attachment_id: str):
+    from io import BytesIO
+
+    from app.domain.exceptions.chat_exceptions import (
+        ChatSessionAccessDeniedError,
+        ChatSessionNotFoundError,
+    )
+
+    use_case = make_download_chat_attachment_use_case()
+
+    try:
+        result = use_case.execute(
+            user_id=g.current_user.sub,
+            attachment_id=attachment_id,
+        )
+    except ChatSessionNotFoundError:
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        return forbidden("Access denied")
+    except FileNotFoundError:
+        return _not_found_response()
+
+    return send_file(
+        BytesIO(result.content),
+        mimetype=result.content_type,
+        as_attachment=True,
+        download_name=result.filename,
+    )
 
 
 @chat_bp.get("/sessions/<session_id>/artifacts")

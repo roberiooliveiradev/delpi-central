@@ -1,0 +1,116 @@
+{
+  "agentKey": "minha-delpi-chat",
+  "exportedAt": "2026-05-29T19:12:10.671271+00:00",
+  "outputDir": "/app/docs/knowledge/domains/agents/minha-delpi-chat",
+  "fileCount": 12,
+  "files": [
+    {
+      "canonicalFilename": "api-delpi-rotas-agente.md",
+      "originalFilename": "api-delpi-rotas-agente.md",
+      "title": "api-delpi-rotas-agente.md",
+      "documentId": "5534acaf-87b2-49dd-94ee-a7273b00039d",
+      "chunkCount": 5,
+      "sizeBytes": 5977
+    },
+    {
+      "canonicalFilename": "api-product-instructions.md",
+      "originalFilename": "product_api_instructions.md",
+      "title": "product_api_instructions.md",
+      "documentId": "8784a854-969f-4d63-a957-c0d7d90ccecd",
+      "chunkCount": 10,
+      "sizeBytes": 11861
+    },
+    {
+      "canonicalFilename": "api-system-instructions.md",
+      "originalFilename": "system_api_instructions.md",
+      "title": "system_api_instructions.md",
+      "documentId": "fac4f664-9a8b-4077-8a2e-58181f71c266",
+      "chunkCount": 4,
+      "sizeBytes": 4550
+    },
+    {
+      "canonicalFilename": "drawing-analyser-instructions.md",
+      "originalFilename": "drawing_analyser_instructions.md",
+      "title": "drawing_analyser_instructions.md",
+      "documentId": "c107ad54-1015-4091-a146-c910b9269055",
+      "chunkCount": 16,
+      "sizeBytes": 17578
+    },
+    {
+      "canonicalFilename": "drawing-requirements-delpi.md",
+      "originalFilename": "drawing_requirements_delpi.md",
+      "title": "drawing_requirements_delpi.md",
+      "documentId": "f83cffe9-82c0-4ee4-ad02-7c0d9aed671c",
+      "chunkCount": 9,
+      "sizeBytes": 10251
+    },
+    {
+      "canonicalFilename": "drawing-rules-delpi.md",
+      "originalFilename": "drawing_rules_delpi.md",
+      "title": "drawing_rules_delpi.md",
+      "documentId": "7cd1da52-32c8-4904-ad55-91a052cf71ab",
+      "chunkCount": 7,
+      "sizeBytes": 8132
+    },
+    {
+      "canonicalFilename": "drawing-validation-rules-delpi.md",
+      "originalFilename": "validation_rules_delpi.md",
+      "title": "validation_rules_delpi.md",
+      "documentId": "f4f31b7c-9bbc-4479-aa28-a8ee365aaa6e",
+      "chunkCount": 7,
+      "sizeBytes": 7912
+    },
+    {
+      "canonicalFilename": "engenharia-codigos-intermediarios-delpi.md",
+      "originalFilename": "Understanding DELPI Intermediate Product Codes.md",
+      "title": "Understanding DELPI Intermediate Product Codes.md",
+      "documentId": "d44110cc-4ebe-4c1f-94db-5eb713b2161e",
+      "chunkCount": 5,
+      "sizeBytes": 5483
+    },
+    {
+      "canonicalFilename": "produto-diretrizes-criacao-descricao.md",
+      "originalFilename": "diretrizes_criacao_de_descricao.md",
+      "title": "diretrizes_criacao_de_descricao.md",
+      "documentId": "90e85d8f-52ed-40e7-bd4d-125b2919faf1",
+      "chunkCount": 2,
+      "sizeBytes": 2489
+    },
+    {
+      "canonicalFilename": "sql-data-api-instructions.md",
+      "originalFilename": "data_sql_api_instructions.md",
+      "title": "data_sql_api_instructions.md",
+      "documentId": "45321123-0c71-49e2-89af-362b983f9b1a",
+      "chunkCount": 59,
+      "sizeBytes": 75176
+    },
+    {
+      "canonicalFilename": "sql-playbook-lmp-oportunidades-processos.txt",
+      "originalFilename": "Analista SQL DELPI — Oportunidades, Processos e Estágios LMP.txt",
+      "title": "Analista SQL DELPI — Oportunidades, Processos e Estágios LMP.txt",
+      "documentId": "3cbf3167-b691-467b-9d6d-d45b66584a26",
+      "chunkCount": 53,
+      "sizeBytes": 65315
+    },
+    {
+      "canonicalFilename": "sql-playbook-producao-suprimentos-perdas.txt",
+      "originalFilename": "Analista SQL DELPI — Produção, Suprimentos e Perdas.txt",
+      "title": "Analista SQL DELPI — Produção, Suprimentos e Perdas.txt",
+      "documentId": "8fe025dc-6ef7-4736-9831-6301e941df7e",
+      "chunkCount": 19,
+      "sizeBytes": 24920
+    }
+  ],
+  "errors": [],
+  "namingConvention": {
+    "pattern": "{categoria}-{topico}[-detalhe].{ext}",
+    "categories": [
+      "api",
+      "sql",
+      "drawing",
+      "produto",
+      "engenharia"
+    ],
+    "note": "Nomes normalizados por AgentKnowledgeFilenameService para facilitar RAG e reimportação."
+  }
+}

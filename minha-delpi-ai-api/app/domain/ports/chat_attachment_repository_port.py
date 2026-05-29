@@ -42,6 +42,15 @@ class ChatAttachmentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_attachment_by_id(
+        self,
+        *,
+        user_id: UUID,
+        attachment_id: UUID,
+    ) -> ChatAttachment | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def attach_to_message(
         self,
         *,

@@ -6,6 +6,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
+from app.domain.services.chat_sql_production_query_service import (
+    ChatSqlProductionQueryService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -73,7 +76,10 @@ class ChatOperationalPipelineService:
             return False
 
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
-            return False
+            return ChatSqlProductionQueryService.can_fast_path(
+                message,
+                allowed_action_ids,
+            )
 
         if not allowed_action_ids:
             return False

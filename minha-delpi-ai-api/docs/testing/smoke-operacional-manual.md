@@ -221,13 +221,13 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 **Teste manual no chat (E2E com stream):** mesmas perguntas abaixo; observe resposta, tools no `adminDebug` (admin) e badges de fontes.
 
-### Produção / SQL — não deve ir para `/products/search`
+### Produção / SQL — fast path (POST /data/sql), não `/products/search`
 
 | ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
 |----|----------|----------------------------|----------------------------------|
-| G1 | quais produtos serão produzidos hoje? | RAG ligado; **sem** `search_products`; contexto com SC2010/SD4010/`data_sql` | Resposta orientada a SQL/`POST /data/sql`; **não** lista genérica de catálogo |
-| G2 | me traga a programação de produção de hoje | Idem G1; RAG com programação/ordem de produção | Menção a ordens/programação; consulta analítica, não busca por descrição |
-| G3 | monte uma query que liste os produtos que vão ser produzidos hoje | RAG ligado; **sem** auto-action (`search` nem `data/sql`) | Bloco SQL ou passos claros; usuário/LLM executa depois se quiser |
+| G1 | quais produtos serão produzidos hoje? | Fast path; 1 tool `POST /data/sql`; **sem** `search_products`; `skipRag` | Tabela com produtos programados (~segundos, como estoque) |
+| G2 | me traga a programação de produção de hoje | Idem G1 — execução SQL direta | Dados de programação/OPs do dia |
+| G3 | monte uma query que liste os produtos que vão ser produzidos hoje | Resposta direta com bloco SQL; **sem** tool; `skipRag` | Markdown com ` ```sql ` pronto para executar |
 
 ### Regressão — rotas REST que devem continuar funcionando
 

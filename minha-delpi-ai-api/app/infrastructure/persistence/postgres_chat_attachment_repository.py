@@ -77,6 +77,24 @@ class PostgresChatAttachmentRepository(ChatAttachmentRepositoryPort):
 
         return [self._to_entity(model) for model in models]
 
+    def get_attachment_by_id(
+        self,
+        *,
+        user_id: UUID,
+        attachment_id: UUID,
+    ) -> ChatAttachment | None:
+        model = (
+            AiChatAttachmentModel.query
+            .filter(AiChatAttachmentModel.user_id == user_id)
+            .filter(AiChatAttachmentModel.id == attachment_id)
+            .first()
+        )
+
+        if not model:
+            return None
+
+        return self._to_entity(model)
+
     def attach_to_message(
         self,
         *,

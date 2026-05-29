@@ -37,8 +37,8 @@ def test_should_not_optimize_long_mixed_documental_operational_question():
     )
 
 
-def test_should_not_optimize_production_sql_schedule_question():
-    assert not ChatOperationalPipelineService.should_optimize(
+def test_should_optimize_production_sql_schedule_question():
+    assert ChatOperationalPipelineService.should_optimize(
         "quais produtos serão produzidos hoje?",
-        ["action-1"],
+        ["api_delpi.data.execute_readonly_sql"],
     )

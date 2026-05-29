@@ -2,6 +2,7 @@ import {
   ArrowDown,
   Check,
   Copy,
+  Download,
   FileText,
   Pencil,
   RotateCcw,
@@ -74,6 +75,7 @@ type ChatMessageListProps = {
   onReuseMessage?: (content: string) => void;
   onDrillDown?: (query: string) => void;
   onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
+  onDownloadAttachment?: (attachmentId: string) => Promise<void>;
   lastSentUserText?: string;
 };
 
@@ -215,7 +217,13 @@ function formatAttachmentSize(size?: number): string {
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
-function ChatMessageAttachments({ attachments }: { attachments: MessageAttachment[] }) {
+function ChatMessageAttachments({
+  attachments,
+  onDownloadAttachment,
+}: {
+  attachments: MessageAttachment[];
+  onDownloadAttachment?: (attachmentId: string) => Promise<void>;
+}) {
   if (attachments.length === 0) {
     return null;
   }
@@ -228,6 +236,7 @@ function ChatMessageAttachments({ attachments }: { attachments: MessageAttachmen
           attachment.filename ||
           `Arquivo ${index + 1}`;
         const size = formatAttachmentSize(attachment.size_bytes);
+        const canDownload = Boolean(attachment.id && onDownloadAttachment);
 
         return (
           <span
@@ -238,6 +247,17 @@ function ChatMessageAttachments({ attachments }: { attachments: MessageAttachmen
             <FileText size={14} aria-hidden="true" />
             <strong>{filename}</strong>
             {size ? <small>{size}</small> : null}
+            {canDownload ? (
+              <button
+                type="button"
+                className="mdc-chat-message-attachment__download"
+                onClick={() => void onDownloadAttachment?.(attachment.id!)}
+                aria-label={`Baixar ${filename}`}
+                title="Baixar arquivo"
+              >
+                <Download size={14} aria-hidden="true" />
+              </button>
+            ) : null}
           </span>
         );
       })}
@@ -419,6 +439,7 @@ export function ChatMessageList({
   onReuseMessage,
   onDrillDown,
   onMessageFeedback,
+  onDownloadAttachment,
   onOpenCanvas,
   lastSentUserText = "",
 }: ChatMessageListProps) {
@@ -942,6 +963,7 @@ export function ChatMessageList({
                 <>
                   <ChatMessageAttachments
                     attachments={getMessageAttachments(message)}
+                    onDownloadAttachment={onDownloadAttachment}
                   />
                   {displayContent ? (
                     <p className="mdc-chat-message-user-text">{displayContent}</p>
@@ -1036,6 +1058,7 @@ export function ChatMessageList({
               <>
                 <ChatMessageAttachments
                   attachments={getMessageAttachments(message)}
+                  onDownloadAttachment={onDownloadAttachment}
                 />
                 {shouldShowRichPresentation(displayContent, messageToolCalls)
                   ? renderPresentation(

@@ -746,3 +746,19 @@
   color: var(--mdc-text-muted);
   font-size: 0.76rem;
 }
+
+.mdc-chat-message-attachment__download {
+  display: inline-grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  line-height: 0;
+}
+
+.mdc-chat-message-attachment__download:hover {
+  color: var(--mdc-primary);
+}

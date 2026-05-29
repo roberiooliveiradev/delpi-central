@@ -79,6 +79,21 @@ class ExternalActionSelectionService:
             return None
 
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            from app.domain.services.chat_sql_production_query_service import (
+                ChatSqlProductionQueryService,
+            )
+
+            if not ChatSqlIntentService.is_authoring_request(message):
+                resolution = ChatSqlProductionQueryService.resolve(message)
+                if resolution and resolution.mode == "execute":
+                    selected = self._select_sql_or_data_action(
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                        sql=resolution.sql,
+                    )
+                    if selected:
+                        return selected
+
             return None
 
         refinement = ChatOperationalRefinementService.detect(
@@ -1634,6 +1649,8 @@ class ExternalActionSelectionService:
         self,
         message: str,
         allowed_action_ids: list[str],
+        *,
+        sql: str | None = None,
     ) -> dict | None:
         if not allowed_action_ids:
             return None
@@ -1646,39 +1663,48 @@ class ExternalActionSelectionService:
             limit=120,
         )
 
-        preferred = [
-            action
-            for action in candidates
-            if any(
-                term
-                in " ".join(
-                    [
-                        str(action.get("path") or ""),
-                        str(action.get("summary") or ""),
-                        str(action.get("description") or ""),
-                        str(action.get("operationId") or ""),
-                    ]
-                ).lower()
-                for term in ["sql", "data", "query"]
-            )
-        ]
+        if (sql or "").strip():
+            action = self._resolve_data_sql_action(allowed_action_ids)
+        else:
+            preferred = [
+                action
+                for action in candidates
+                if any(
+                    term
+                    in " ".join(
+                        [
+                            str(action.get("path") or ""),
+                            str(action.get("summary") or ""),
+                            str(action.get("description") or ""),
+                            str(action.get("operationId") or ""),
+                        ]
+                    ).lower()
+                    for term in ["sql", "data", "query"]
+                )
+            ]
 
-        ranked = self._rank_candidates(
-            message,
-            preferred or candidates,
-            allowed_action_ids=allowed_action_ids,
-        )
-        action = ranked[0] if ranked else None
+            ranked = self._rank_candidates(
+                message,
+                preferred or candidates,
+                allowed_action_ids=allowed_action_ids,
+            )
+            action = ranked[0] if ranked else None
 
         if not action:
             return None
 
-        sql_query = self._extract_sql_query(message)
+        sql_query = (sql or "").strip() or self._extract_sql_query(message)
         body = {
             "query": sql_query,
             "sql": sql_query,
             "statement": sql_query,
         } if sql_query else {"message": message}
+
+        reason = (
+            "Consulta SQL de produção reconhecida — execução direta via POST /data/sql."
+            if sql
+            else "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente."
+        )
 
         return {
             "name": "execute_external_action",
@@ -1686,7 +1712,7 @@ class ExternalActionSelectionService:
                 "actionId": action["actionId"],
                 "body": body,
             },
-            "reason": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",
+            "reason": reason,
         }
 
     def _select_generic_allowed_action(
@@ -2521,6 +2547,31 @@ class ExternalActionSelectionService:
 
     def _extract_numeric_code(self, message: str) -> str | None:
         return ChatProductQueryIntentService.extract_product_code(message)
+
+    def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
+        allowed = {str(item) for item in allowed_action_ids}
+
+        list_actions = getattr(self.repository, "list_actions", None)
+        if callable(list_actions):
+            for action in list_actions():
+                if str(action.get("actionId") or "") not in allowed:
+                    continue
+                if "/data/sql" in str(action.get("path") or "").lower():
+                    return action
+
+        candidates = self.repository.find_candidate_actions(
+            "/data/sql execute readonly",
+            limit=120,
+            allowed_action_ids=list(allowed_action_ids),
+        )
+
+        for action in candidates:
+            if str(action.get("actionId") or "") not in allowed:
+                continue
+            if "/data/sql" in str(action.get("path") or "").lower():
+                return action
+
+        return None
 
     def _list_allowed_candidates(
         self,
