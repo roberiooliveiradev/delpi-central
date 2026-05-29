@@ -1104,9 +1104,10 @@ export function ChatAgentBuilderPage({
     onSplitterPointerDown,
   } = useResizablePane({
     storageKey: "minha-delpi-chat.agent-builder.preview-width",
-    defaultWidth: 420,
-    minWidth: 300,
-    maxWidthRatio: 0.55,
+    defaultWidth: 380,
+    minWidth: 260,
+    maxWidthRatio: 0.48,
+    minSplitWidth: 900,
   });
 
   const layoutClassName = [

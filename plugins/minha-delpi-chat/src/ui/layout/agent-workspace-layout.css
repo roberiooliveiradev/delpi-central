@@ -28,42 +28,96 @@
   max-width: none;
 }
 
-@container agent-workspace (max-width: 960px) {
+@container agent-workspace (max-width: 900px) {
   .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split),
   .mdc-chat-agent-actions-page__layout:not(.mdc-chat-agent-actions-page__layout--split) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .mdc-chat-agent-builder__layout--split {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
+  .mdc-chat-agent-builder__layout--split,
+  .mdc-chat-agent-actions-page__layout--split {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .mdc-chat-agent-builder__splitter {
+  .mdc-chat-agent-builder__splitter,
+  .mdc-chat-agent-actions-page__splitter {
     display: none;
   }
 
-  .mdc-chat-agent-builder__layout--split .mdc-chat-agent-builder__preview {
+  .mdc-chat-agent-builder__layout--split .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-actions-page__layout--split .mdc-chat-agent-actions-page__preview {
     flex: none;
     width: 100%;
+    max-width: none;
   }
 
   .mdc-chat-agent-builder__form,
   .mdc-chat-agent-actions-page__editor {
     order: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
   }
 
-  .mdc-chat-agent-builder__preview {
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split)
+    .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-actions-page__preview {
     order: 2;
     position: static;
     top: auto;
+    align-self: stretch;
+    justify-self: stretch;
     width: 100%;
     max-width: none;
     height: auto;
-    max-height: min(52vh, 28rem);
+    max-height: min(48vh, 26rem);
+    overflow-x: hidden;
     overflow-y: auto;
     border-left: 0;
     border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 66%, transparent);
+  }
+}
+
+@container agent-workspace (max-width: 640px) {
+  .mdc-chat-agent-builder__panel {
+    width: 100%;
+    padding-inline: 0.75rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .mdc-chat-agent-builder__preview-label {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+    max-width: none;
+    text-align: left;
+  }
+
+  .mdc-chat-agent-builder__preview-model {
+    white-space: normal;
+    line-height: 1.4;
+    font-size: 0.78rem;
+  }
+
+  .mdc-chat-agent-builder__preview-card {
+    min-height: 0;
+    padding: 0.85rem 0.5rem;
+  }
+
+  .mdc-chat-agent-builder__preview-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .mdc-chat-agent-builder__hero-name {
+    font-size: 1.45rem;
+  }
+
+  .mdc-chat-agent-builder__preview {
+    max-height: min(42vh, 22rem);
+    padding: 0.85rem 0.75rem 1rem;
   }
 }
 
@@ -73,8 +127,12 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split)
+    .mdc-chat-agent-builder__preview,
   .mdc-chat-agent-builder__preview {
     position: static;
+    align-self: stretch;
+    justify-self: stretch;
     width: 100%;
     max-width: none;
     height: auto;

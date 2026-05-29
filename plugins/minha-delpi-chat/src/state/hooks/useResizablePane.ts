@@ -5,6 +5,9 @@ type UseResizablePaneOptions = {
   defaultWidth?: number;
   minWidth?: number;
   maxWidthRatio?: number;
+  /** Largura mínima do container para painel redimensionável lado a lado */
+  minSplitWidth?: number;
+  /** @deprecated Use minSplitWidth — mantido para compatibilidade */
   enabledMediaQuery?: string;
 };
 
@@ -24,7 +27,7 @@ export function useResizablePane({
   defaultWidth = 420,
   minWidth = 300,
   maxWidthRatio = 0.52,
-  enabledMediaQuery = "(min-width: 1024px)",
+  minSplitWidth = 900,
 }: UseResizablePaneOptions) {
   const layoutRef = useRef<HTMLDivElement>(null);
   const widthRef = useRef(readStoredWidth(storageKey, defaultWidth));
@@ -33,19 +36,26 @@ export function useResizablePane({
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(enabledMediaQuery);
+    const layout = layoutRef.current;
+
+    if (!layout) {
+      return;
+    }
 
     function syncEnabled() {
-      setSplitEnabled(mediaQuery.matches);
+      const width = layout.getBoundingClientRect().width;
+      setSplitEnabled(width >= minSplitWidth);
     }
 
     syncEnabled();
-    mediaQuery.addEventListener("change", syncEnabled);
+
+    const observer = new ResizeObserver(syncEnabled);
+    observer.observe(layout);
 
     return () => {
-      mediaQuery.removeEventListener("change", syncEnabled);
+      observer.disconnect();
     };
-  }, [enabledMediaQuery]);
+  }, [minSplitWidth]);
 
   const clampWidth = useCallback(
     (nextWidth: number) => {

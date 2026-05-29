@@ -32,6 +32,7 @@ import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
   getPresentationPairFromToolCalls,
+  shouldShowRichPresentation,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
@@ -954,7 +955,9 @@ export function ChatMessageList({
 
           {!isUser && !isAssistantGenerating(message) ? (
             <>
-              {renderPresentation(messageToolCalls, displayContent, onReuseMessage)}
+              {shouldShowRichPresentation(displayContent, messageToolCalls)
+                ? renderPresentation(messageToolCalls, displayContent, onReuseMessage)
+                : null}
               {!messagePresentation.primary ? (
                 <ChatActionResults toolCalls={messageToolCalls} />
               ) : null}
@@ -1075,7 +1078,8 @@ export function ChatMessageList({
                 ) : null}
               </div>
 
-              {streamingShowPresentation
+              {streamingShowPresentation &&
+              shouldShowRichPresentation(streamingAnswer, streamingToolCalls)
                 ? renderPresentation(streamingToolCalls, streamingAnswer, onReuseMessage)
                 : null}
               {streamingShowPresentation &&

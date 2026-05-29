@@ -386,6 +386,28 @@ export function hasMultiFormatPresentation(toolCalls?: ChatToolCall[]): boolean 
   return flags.filter(Boolean).length >= 2;
 }
 
+/** Exibe tabela/gráfico/KPI ou painel multi-formato; evita repetir só markdown na aba Texto. */
+export function shouldShowRichPresentation(
+  content: string | null | undefined,
+  toolCalls?: ChatToolCall[],
+): boolean {
+  if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+    return false;
+  }
+
+  const pair = getPresentationPairFromToolCalls(toolCalls);
+
+  if (hasRichPresentation(pair)) {
+    return true;
+  }
+
+  if (hasMultiFormatPresentation(toolCalls)) {
+    return true;
+  }
+
+  return shouldSuppressMarkdownForPresentation(content, pair, toolCalls);
+}
+
 /** Não renderiza markdown duplicado quando o painel rico já exibe o mesmo conteúdo na aba Texto. */
 export function shouldSuppressMarkdownForPresentation(
   content: string | null | undefined,

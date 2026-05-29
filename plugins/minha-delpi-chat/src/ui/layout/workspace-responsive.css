@@ -317,6 +317,44 @@
 
 /* ——— Builder / actions ——— */
 @media (max-width: 760px) {
+  .mdc-chat-agent-builder__layout {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .mdc-chat-agent-builder__layout--split {
+    flex-direction: column;
+  }
+
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split)
+    .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-builder__layout--split .mdc-chat-agent-builder__preview {
+    flex: none;
+    align-self: stretch;
+    width: 100%;
+    max-width: none;
+  }
+
+  .mdc-chat-agent-builder__splitter {
+    display: none;
+  }
+
+  .mdc-chat-agent-builder__panel {
+    width: 100%;
+    padding-inline: 0.7rem;
+  }
+
+  .mdc-chat-agent-builder__preview-label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    max-width: none;
+  }
+
+  .mdc-chat-agent-builder__preview-model {
+    white-space: normal;
+  }
+
   .mdc-chat-agent-builder__stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -20,6 +20,7 @@ from app.application.services.chat_intelligence_pipeline_service import (
 )
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
+from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
@@ -272,7 +273,17 @@ class ChatTurnPreparationService:
                 )
             )
 
-        if canvas_action or pre_capability_answer or missing_product_code_answer:
+        skip_tools_for_user_identity = bool(
+            getattr(request, "access_token", None)
+            and ChatUserContextService.is_user_identity_question(message)
+        )
+
+        if (
+            canvas_action
+            or pre_capability_answer
+            or missing_product_code_answer
+            or skip_tools_for_user_identity
+        ):
             tool_context = {
                 "context": "",
                 "toolCalls": [],

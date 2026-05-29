@@ -194,7 +194,7 @@ export function ChatAgentActionsPage({
     defaultWidth: 380,
     minWidth: 280,
     maxWidthRatio: 0.5,
-    enabledMediaQuery: "(min-width: 1024px)",
+    minSplitWidth: 900,
   });
   const isPreviewVisible = splitEnabled || showPreview;
 

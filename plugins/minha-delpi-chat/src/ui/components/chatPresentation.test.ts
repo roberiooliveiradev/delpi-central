@@ -7,6 +7,7 @@ import {
   isShortPresentationCaption,
   resolveRichTextBody,
   resolveRichTextContent,
+  shouldShowRichPresentation,
   shouldSuppressMarkdownForPresentation,
   tablePresentationToMarkdown,
   type PresentationPair,
@@ -78,6 +79,30 @@ describe("buildAssistantCopyText", () => {
     expect(text).toContain("Estoque por filial/armazém");
     expect(text).toContain("| Filial | Qtd. atual |");
     expect(text).toContain("| 01 | 4 |");
+  });
+});
+
+describe("shouldShowRichPresentation", () => {
+  it("não exibe painel rico quando só há textPresentation duplicando o markdown", () => {
+    const profileAnswer =
+      "**Seu perfil na Minha DELPI:**\n\n- **Nome:** Robério\n- **Email:** rob@delpi.com";
+    const toolCalls = [
+      {
+        metadata: {
+          textPresentation: {
+            type: "markdown",
+            title: "Seu perfil na Minha DELPI",
+            markdown: profileAnswer,
+          },
+        },
+      },
+    ];
+
+    expect(shouldShowRichPresentation(profileAnswer, toolCalls)).toBe(false);
+  });
+
+  it("exibe painel rico para tabela/gráfico", () => {
+    expect(shouldShowRichPresentation("Estoque", stockToolCalls)).toBe(true);
   });
 });
 

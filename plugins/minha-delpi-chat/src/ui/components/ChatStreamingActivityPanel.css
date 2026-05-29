@@ -142,15 +142,15 @@
 
 .mdc-chat-stream-activity__log-line.is-success {
   opacity: 0.85;
-  color: #15803d;
+  color: var(--mdc-success);
 }
 
 .mdc-chat-stream-activity__log-line.is-warning {
-  color: #b45309;
+  color: var(--mdc-warning);
 }
 
 .mdc-chat-stream-activity__log-line.is-error {
-  color: #b91c1c;
+  color: var(--mdc-danger);
 }
 
 @keyframes mdc-chat-stream-activity-rise-in {
