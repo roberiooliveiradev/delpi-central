@@ -35,6 +35,9 @@ class ExternalActionResultPresenter:
         product = root.get("product") if isinstance(root, dict) else None
 
         if isinstance(product, dict):
+            if "/analyser" in str(path or "").lower():
+                return self._present_product_analyser(root, product, path)
+
             return self._present_product(root, product)
 
         if isinstance(root, dict):
@@ -653,6 +656,377 @@ class ExternalActionResultPresenter:
             },
         }
 
+    def _present_product_analyser(self, root: dict, product: dict, path: str) -> dict:
+        code = str(product.get("code") or "").strip()
+        title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
+
+        linhas = self._build_product_analyser_profile_lines(product)
+        linhas.extend(self._build_product_analyser_collection_sections(root))
+
+        structure = root.get("structure")
+
+        if isinstance(structure, dict):
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            structure_markdown = ChatProductStructurePresentationService.format_markdown(
+                structure,
+                source_path=path or f"/products/{code}/analyser",
+            )
+
+            if structure_markdown:
+                linhas.extend(["", structure_markdown])
+
+        insights = self._build_product_analyser_insights(root, product)
+
+        if insights:
+            linhas.extend(["", "**Insights**", ""])
+            linhas.extend(f"- {line}" for line in insights)
+
+        structure_table = self._build_analyser_structure_components_table(structure)
+        structure_tree = self.build_tree_presentation(root, path=path)
+
+        return {
+            "titulo": title,
+            "linhas": [line for line in linhas if line is not None],
+            "campos": self._alias_dict(
+                self._product_analyser_summary(product),
+                self.PRODUCT_ALIASES,
+            ),
+            "dados": {
+                "product": self._product_analyser_summary(product),
+                "guideTotal": self._total(root.get("guide")),
+                "inspectionTotal": self._total(root.get("inspection")),
+                "structureTotal": self._total(structure if isinstance(structure, dict) else None),
+            },
+            "apresentacao": structure_tree or structure_table,
+        }
+
+    def _product_analyser_summary(self, product: dict) -> dict:
+        return {
+            "code": product.get("code"),
+            "description": product.get("description"),
+            "type": product.get("type"),
+            "unit": product.get("unit"),
+            "groupCode": product.get("group_code"),
+            "active": product.get("active"),
+            "blocked": product.get("blocked"),
+            "defaultWarehouse": product.get("default_warehouse"),
+            "customerReference": product.get("customer_reference"),
+            "lastPurchasePrice": product.get("last_purchase_price"),
+            "standardCost": product.get("standard_cost"),
+            "lastRevisionDate": product.get("last_revision_date"),
+            "ncm": product.get("ncm_ipi_position"),
+        }
+
+    def _build_product_analyser_profile_lines(self, product: dict) -> list[str]:
+        code = product.get("code")
+        desc = product.get("description")
+
+        lines = [
+            f"Produto **{code}**: {desc}.",
+            (
+                f"Tipo {product.get('type')}, unidade {product.get('unit')}, "
+                f"grupo {product.get('group_code')}."
+            ),
+            (
+                f"Status ativo: {product.get('active')}. "
+                f"Armazém padrão: {product.get('default_warehouse')}."
+            ),
+        ]
+
+        blocked = str(product.get("blocked") or "").strip()
+
+        if blocked:
+            lines.append(f"Indicador de bloqueio: {blocked}.")
+
+        customer_reference = str(product.get("customer_reference") or "").strip()
+
+        if customer_reference:
+            lines.append(f"Referência de cliente: {customer_reference}.")
+
+        lines.append(
+            "Último preço de compra: "
+            f"{self._format_currency(product.get('last_purchase_price')) if product.get('last_purchase_price') not in (None, '') else '0'}. "
+            f"Custo padrão: R$ {self._format_currency(product.get('standard_cost'))}."
+        )
+        lines.append(
+            f"Última revisão: {product.get('last_revision_date')}. "
+            f"NCM: {product.get('ncm_ipi_position')}."
+        )
+
+        drawing_code = str(product.get("drawing_code") or "").strip()
+
+        if drawing_code:
+            lines.append(f"Código desenho: {drawing_code}.")
+
+        barcode = str(product.get("barcode") or "").strip()
+
+        if barcode:
+            lines.append(f"Código de barras: {barcode}.")
+
+        return lines
+
+    def _build_product_analyser_collection_sections(self, root: dict) -> list[str]:
+        sections: list[str] = []
+
+        guide = root.get("guide")
+
+        if isinstance(guide, dict):
+            guide_items = guide.get("items") or []
+
+            if guide_items:
+                sections.extend(["", "**Roteiro de produção**", ""])
+                sections.extend(self._format_collection_item_lines(guide_items))
+            else:
+                sections.append("Roteiro: 0 registro(s).")
+
+        inspection = root.get("inspection")
+
+        if isinstance(inspection, dict):
+            inspection_items = inspection.get("items") or []
+
+            if inspection_items:
+                sections.extend(["", "**Plano de inspeção**", ""])
+                sections.extend(self._format_collection_item_lines(inspection_items))
+            else:
+                sections.append("Inspeção: 0 registro(s).")
+
+        structure = root.get("structure")
+
+        if isinstance(structure, dict):
+            structure_total = structure.get("total")
+
+            if structure_total is not None and not structure.get("items"):
+                sections.append(f"Estrutura: {structure_total} registro(s).")
+
+        return sections
+
+    def _format_collection_item_lines(self, items: list) -> list[str]:
+        lines: list[str] = []
+
+        for item in items[:12]:
+            if not isinstance(item, dict):
+                continue
+
+            preview = ", ".join(
+                f"{self._humanize_key(key)}={value}"
+                for key, value in list(item.items())[:6]
+                if value not in (None, "")
+            )
+            lines.append(f"- {preview}")
+
+        if len(items) > 12:
+            lines.append(f"… e mais {len(items) - 12} registro(s).")
+
+        return lines
+
+    def _build_product_analyser_insights(self, root: dict, product: dict) -> list[str]:
+        insights: list[str] = []
+        code = str(product.get("code") or "").strip()
+        product_type = str(product.get("type") or "").strip()
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        items = structure.get("items") if isinstance(structure.get("items"), list) else []
+
+        mp_codes: set[str] = set()
+        mp_usage: dict[str, set[str]] = {}
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            parent_code = str(item.get("code") or "").strip()
+
+            for component in item.get("components") or []:
+                if not isinstance(component, dict):
+                    continue
+
+                component_code = str(component.get("code") or "").strip()
+
+                if not component_code:
+                    continue
+
+                if str(component.get("type") or "").upper() == "MP":
+                    mp_codes.add(component_code)
+
+                mp_usage.setdefault(component_code, set()).add(parent_code)
+
+        if items:
+            insights.append(
+                f"Estrutura com {len(items)} item(ns) de nível 1 "
+                f"e {len(mp_codes)} matéria(s)-prima(s) distinta(s)."
+            )
+
+        shared_components = sorted(
+            code
+            for code, parents in mp_usage.items()
+            if len({parent for parent in parents if parent}) > 1
+        )
+
+        if shared_components:
+            insights.append(
+                "Componente(s) reutilizado(s) em mais de uma linha: "
+                + ", ".join(shared_components)
+                + "."
+            )
+
+        last_purchase_price = product.get("last_purchase_price")
+        last_purchase_date = str(product.get("last_purchase_date") or "").strip()
+
+        if last_purchase_price in (0, 0.0, None) and not last_purchase_date:
+            insights.append(
+                "Não há histórico recente de compra registrado para o produto."
+            )
+
+        standard_cost = product.get("standard_cost")
+
+        if standard_cost not in (None, ""):
+            insights.append(
+                f"Custo padrão vigente: R$ {self._format_currency(standard_cost)}."
+            )
+
+        if self._total(root.get("guide")) == 0:
+            insights.append("Roteiro de produção ainda não cadastrado.")
+
+        if self._total(root.get("inspection")) == 0:
+            insights.append("Plano de inspeção ainda não cadastrado.")
+
+        blocked = str(product.get("blocked") or "").strip()
+
+        if blocked and blocked not in {"N", "0"}:
+            insights.append(f"Produto com indicador de bloqueio «{blocked}».")
+
+        return insights
+
+    def _flatten_analyser_structure_rows(self, structure: dict | None) -> list[dict]:
+        if not isinstance(structure, dict):
+            return []
+
+        rows: list[dict] = []
+        level1_items = structure.get("items") or []
+
+        for item in level1_items:
+            if not isinstance(item, dict):
+                continue
+
+            parent_code = item.get("code")
+            parent_description = item.get("description")
+            components = item.get("components") or []
+
+            if components:
+                for component in components:
+                    if not isinstance(component, dict):
+                        continue
+
+                    rows.append(
+                        {
+                            "parent_code": parent_code,
+                            "parent_description": parent_description,
+                            "component_code": component.get("code"),
+                            "description": component.get("description"),
+                            "type": component.get("type"),
+                            "unit": component.get("unit"),
+                            "quantity": component.get("quantity"),
+                        }
+                    )
+            else:
+                rows.append(
+                    {
+                        "parent_code": "",
+                        "parent_description": "",
+                        "component_code": item.get("code"),
+                        "description": item.get("description"),
+                        "type": item.get("type"),
+                        "unit": item.get("unit"),
+                        "quantity": item.get("quantity"),
+                    }
+                )
+
+        return rows
+
+    def _build_analyser_structure_components_table(
+        self,
+        structure: dict | None,
+    ) -> dict | None:
+        rows = self._flatten_analyser_structure_rows(structure)
+
+        if not rows:
+            return None
+
+        product_code = ""
+
+        if isinstance(structure, dict) and isinstance(structure.get("root"), dict):
+            product_code = str(structure["root"].get("code") or "").strip()
+
+        title = (
+            f"Componentes da estrutura {product_code}"
+            if product_code
+            else "Componentes da estrutura"
+        )
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": [
+                {"key": "parent_code", "label": "PI pai"},
+                {"key": "parent_description", "label": "Descrição PI"},
+                {"key": "component_code", "label": "Componente"},
+                {"key": "description", "label": "Descrição"},
+                {"key": "type", "label": "Tipo"},
+                {"key": "unit", "label": "Unid."},
+                {"key": "quantity", "label": "Qtde", "dataType": "quantity"},
+            ],
+            "rows": rows,
+        }
+
+    def _build_product_analyser_profile_table(self, product: dict, root: dict) -> dict:
+        columns = [
+            {"key": "campo", "label": "Campo"},
+            {"key": "valor", "label": "Valor"},
+        ]
+        field_map = [
+            ("code", "Código"),
+            ("description", "Descrição"),
+            ("type", "Tipo"),
+            ("unit", "Unidade"),
+            ("group_code", "Grupo"),
+            ("active", "Ativo"),
+            ("blocked", "Bloqueio"),
+            ("default_warehouse", "Armazém padrão"),
+            ("customer_reference", "Referência cliente"),
+            ("drawing_code", "Código desenho"),
+            ("barcode", "Código barras"),
+            ("last_purchase_price", "Último preço compra"),
+            ("standard_cost", "Custo padrão"),
+            ("last_revision_date", "Última revisão"),
+            ("ncm_ipi_position", "NCM"),
+        ]
+
+        rows = [
+            {"campo": label, "valor": product.get(key)}
+            for key, label in field_map
+            if product.get(key) not in (None, "")
+        ]
+
+        for key in ("guide", "inspection", "structure"):
+            value = root.get(key)
+
+            if isinstance(value, dict) and value.get("total") is not None:
+                rows.append(
+                    {
+                        "campo": self._label_collection(key),
+                        "valor": f"{value['total']} registro(s)",
+                    }
+                )
+
+        return {
+            "type": "table",
+            "title": f"Produto {product.get('code', '')}",
+            "columns": columns,
+            "rows": rows,
+        }
+
     def _extract_product_detail_list(self, root: dict) -> list | None:
         detail_keys = (
             "prices", "stock", "purchases", "sales", "billing",
@@ -1034,34 +1408,132 @@ class ExternalActionResultPresenter:
 
         return None
 
+    def _build_product_analyser_text_presentation(
+        self,
+        root: dict,
+        product: dict,
+        path: str,
+    ) -> dict | None:
+        code = str(product.get("code") or "").strip()
+        title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
+
+        body_parts = self._build_product_analyser_profile_lines(product)
+        body_parts.extend(self._build_product_analyser_collection_sections(root))
+
+        insights = self._build_product_analyser_insights(root, product)
+
+        if insights:
+            body_parts.extend(["", "**Insights**", ""])
+            body_parts.extend(f"- {line}" for line in insights)
+
+        body_parts.extend(
+            [
+                "",
+                "A **estrutura** do produto está na visualização em árvore ou tabela abaixo.",
+            ]
+        )
+
+        markdown_parts = [f"### {title}", "", *body_parts]
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": "\n".join(markdown_parts).strip(),
+        }
+
+    def _build_parents_text_presentation(self, root: dict, path: str) -> dict | None:
+        root_node = root.get("root") if isinstance(root.get("root"), dict) else {}
+        code = str(root_node.get("code") or "").strip()
+        total = root.get("total")
+        items = root.get("items") if isinstance(root.get("items"), list) else []
+        shown = len(items)
+
+        title = f"Onde é usado o produto {code}" if code else "Produtos pai (onde é usado)"
+
+        summary_parts = [
+            f"Produto consultado: **{code}** — {root_node.get('description') or 'sem descrição'}.",
+        ]
+
+        if total is not None:
+            summary_parts.append(
+                f"Foram encontrados **{total}** produto(s) pai na API."
+            )
+
+            if shown and int(total) > shown:
+                summary_parts.append(
+                    f"Esta resposta traz **{shown}** vínculo(s) nesta página/consulta."
+                )
+        elif shown:
+            summary_parts.append(f"Esta resposta traz **{shown}** vínculo(s) de produto pai.")
+
+        summary_parts.append(
+            "Use a **árvore** ou a **tabela** abaixo para explorar onde o item é usado."
+        )
+
+        markdown = "\n\n".join([f"### {title}", "", *summary_parts])
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": markdown,
+        }
+
+    def _build_structure_text_presentation(self, root: dict, path: str) -> dict | None:
+        root_node = root.get("root") if isinstance(root.get("root"), dict) else {}
+        code = str(root_node.get("code") or "").strip()
+        total = root.get("total")
+        items = root.get("items") if isinstance(root.get("items"), list) else []
+
+        title = f"Estrutura do produto {code}" if code else "Estrutura do produto"
+
+        summary_parts = [
+            f"Produto **{code}**: {root_node.get('description') or 'sem descrição'}.",
+        ]
+
+        if total is not None:
+            summary_parts.append(
+                f"A composição possui **{total}** componente(s) de nível 1."
+            )
+        elif items:
+            summary_parts.append(
+                f"A composição possui **{len(items)}** componente(s) de nível 1."
+            )
+
+        summary_parts.append(
+            "Use a **árvore** para ver a hierarquia completa ou a **tabela** para a lista plana."
+        )
+
+        markdown = "\n\n".join([f"### {title}", "", *summary_parts])
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": markdown,
+        }
 
     def build_text_presentation(self, data, *, path: str = "") -> dict | None:
         """Markdown legível para a aba Texto do chat (complementa tabela/gráfico)."""
         root = self._unwrap_data(data)
+        lowered = str(path or "").lower()
+
+        if isinstance(root, dict) and isinstance(root.get("product"), dict):
+            if "/analyser" in lowered:
+                return self._build_product_analyser_text_presentation(
+                    root,
+                    root["product"],
+                    path,
+                )
 
         if (
             isinstance(root, dict)
             and isinstance(root.get("root"), dict)
             and isinstance(root.get("items"), list)
         ):
-            from app.domain.services.chat_product_structure_presentation_service import (
-                ChatProductStructurePresentationService,
-            )
+            if "/parents" in lowered:
+                return self._build_parents_text_presentation(root, path)
 
-            markdown = ChatProductStructurePresentationService.format_markdown(
-                root,
-                source_path=path,
-            )
-
-            if markdown:
-                code = str(root["root"].get("code") or "").strip()
-                title = f"Estrutura do produto {code}".strip() if code else "Estrutura do produto"
-
-                return {
-                    "type": "markdown",
-                    "title": title,
-                    "markdown": markdown,
-                }
+            if "/structure" in lowered:
+                return self._build_structure_text_presentation(root, path)
 
         humanized = self.present(data, path=path)
 
@@ -1092,6 +1564,17 @@ class ExternalActionResultPresenter:
             "markdown": markdown,
         }
 
+    def build_tree_presentation(self, data, *, path: str = "") -> dict | None:
+        from app.domain.services.chat_product_structure_presentation_service import (
+            ChatProductStructurePresentationService,
+        )
+
+        return ChatProductStructurePresentationService.build_tree_presentation(
+            data,
+            source_path=path,
+            path=path,
+        )
+
     def build_presentation(self, data, *, path: str = "") -> dict | None:
         root = self._unwrap_data(data)
 
@@ -1104,26 +1587,30 @@ class ExternalActionResultPresenter:
         product = root.get("product")
         if isinstance(product, dict):
             detail_list = self._extract_product_detail_list(root)
+
             if detail_list:
                 return self._build_product_detail_table(product, detail_list, root)
+
+            if "/analyser" in str(path or "").lower():
+                structure_table = self._build_analyser_structure_components_table(
+                    root.get("structure"),
+                )
+
+                if structure_table:
+                    return structure_table
+
+                return self._build_product_analyser_profile_table(product, root)
+
             return self._build_product_table(product, root)
 
         if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
-            from app.domain.services.chat_product_structure_presentation_service import (
-                ChatProductStructurePresentationService,
-            )
+            lowered = str(path or "").lower()
 
-            markdown = ChatProductStructurePresentationService.format_markdown(
-                root,
-                source_path=path,
-            )
+            if "/parents" not in lowered:
+                structure_table = self._build_analyser_structure_components_table(root)
 
-            if markdown:
-                return {
-                    "type": "markdown",
-                    "title": f"Estrutura do produto {root['root'].get('code', '')}",
-                    "markdown": markdown,
-                }
+                if structure_table:
+                    return structure_table
 
         items = root.get("items")
         if isinstance(items, list) and items and isinstance(items[0], dict):

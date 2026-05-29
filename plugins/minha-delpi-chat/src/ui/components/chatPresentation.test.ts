@@ -7,10 +7,14 @@ import {
   getPresentationTitle,
   isShortPresentationCaption,
   resolveRichTextBody,
+  resolveCommentaryTextBody,
+  resolvePresentationLayoutMode,
   resolveRichTextContent,
   shouldShowRichPresentation,
   shouldShowActionResults,
+  shouldStackPresentationBlocks,
   shouldSuppressMarkdownForPresentation,
+  stripRedundantStructureFromMarkdown,
   tablePresentationToMarkdown,
   type PresentationPair,
 } from "./chatPresentation";
@@ -113,6 +117,7 @@ describe("shouldSuppressMarkdownForPresentation", () => {
     const pair: PresentationPair = {
       primary: { type: "chart", title: "Estoque por filial/armazém" },
       table: stockToolCalls[0].metadata.tablePresentation as PresentationPair["table"],
+      tree: null,
     };
 
     expect(
@@ -251,6 +256,131 @@ describe("multi-product presentation merge", () => {
 
     expect(markdown).toContain("9024");
     expect(markdown).toContain("115");
+  });
+});
+
+describe("tree presentation", () => {
+  const analyserToolCalls = [
+    {
+      name: "execute_external_action",
+      metadata: {
+        availableFormats: ["text", "tree", "table"],
+        preferredFormat: "tree",
+        presentation: {
+          type: "tree",
+          title: "Estrutura do produto 90260148",
+          root: {
+            id: "90260148",
+            label: "90260148",
+            badge: "PA",
+            children: [
+              {
+                id: "50220013",
+                label: "50220013",
+                badge: "PI",
+                children: [{ id: "10030015", label: "10030015", badge: "MP" }],
+              },
+            ],
+          },
+        },
+        tablePresentation: {
+          type: "table",
+          title: "Componentes da estrutura 90260148",
+          columns: [{ key: "component_code", label: "Componente" }],
+          rows: [{ component_code: "10030015" }],
+        },
+        textPresentation: {
+          type: "markdown",
+          title: "Informações completas do produto 90260148",
+          markdown:
+            "### Informações completas do produto 90260148\n\nProduto **90260148**: CHICOTE.\n\n**Estrutura do produto 90260148**\n\n| Código | Descrição |\n| --- | --- |\n| 50220013 | PI |\n\n**Insights**\n\n- Custo padrão vigente: R$ 272,80.",
+        },
+      },
+    },
+  ];
+
+  const structureToolCalls = [
+    {
+      name: "execute_external_action",
+      metadata: {
+        availableFormats: ["text", "tree", "table"],
+        preferredFormat: "tree",
+        presentation: {
+          type: "tree",
+          title: "Estrutura do produto 90260148",
+          root: {
+            id: "90260148",
+            label: "90260148",
+            badge: "PA",
+            children: [
+              {
+                id: "50220013",
+                label: "50220013",
+                badge: "PI",
+                children: [{ id: "10030015", label: "10030015", badge: "MP" }],
+              },
+            ],
+          },
+        },
+        tablePresentation: {
+          type: "table",
+          title: "Componentes da estrutura 90260148",
+          columns: [{ key: "component_code", label: "Componente" }],
+          rows: [{ component_code: "10030015" }],
+        },
+      },
+    },
+  ];
+
+  it("empilha blocos complementares do analyser", () => {
+    const pair = getPresentationPairFromToolCalls(analyserToolCalls);
+
+    expect(resolvePresentationLayoutMode(analyserToolCalls, pair)).toBe("commentary-visual");
+    expect(getPresentationTitle("", analyserToolCalls)).toBe(
+      "Informações completas do produto 90260148",
+    );
+
+    const commentary = resolveCommentaryTextBody("", analyserToolCalls, pair);
+
+    expect(commentary).toContain("Produto **90260148**");
+    expect(commentary).toContain("Insights");
+    expect(commentary).not.toContain("50220013 | PI");
+    expect(commentary).toContain("estrutura");
+  });
+
+  it("remove markdown duplicado da estrutura quando há árvore", () => {
+    const markdown =
+      "Perfil do produto.\n\n**Estrutura do produto 90260148**\n\n| Código | Descrição |\n| --- | --- |\n| 50220013 | PI |\n\n**Insights**\n\n- Item 1.";
+
+    expect(stripRedundantStructureFromMarkdown(markdown)).toBe(
+      "Perfil do produto.\n\n**Insights**\n\n- Item 1.",
+    );
+  });
+
+  it("suprime legenda curta duplicada quando a resposta é empilhada", () => {
+    const pair = getPresentationPairFromToolCalls(analyserToolCalls);
+
+    expect(
+      shouldSuppressMarkdownForPresentation(
+        "Componentes da estrutura 90260148",
+        pair,
+        analyserToolCalls,
+      ),
+    ).toBe(true);
+  });
+
+  it("resolve par primary/tree/table para estrutura", () => {
+    const pair = getPresentationPairFromToolCalls(structureToolCalls);
+
+    expect(pair.primary?.type).toBe("tree");
+    expect(pair.tree?.type).toBe("tree");
+    expect(pair.table?.type).toBe("table");
+    expect(getAvailableFormatsFromToolCalls(structureToolCalls)).toEqual([
+      "text",
+      "tree",
+      "table",
+    ]);
+    expect(shouldShowRichPresentation("", structureToolCalls)).toBe(true);
   });
 });
 

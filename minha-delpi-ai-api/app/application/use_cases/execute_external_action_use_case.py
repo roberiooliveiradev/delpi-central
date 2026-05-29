@@ -5,6 +5,9 @@ from app.domain.ports.audit_repository_port import AuditRepositoryPort
 from app.domain.services.external_actions.external_action_execution_policy import (
     ExternalActionExecutionPolicy,
 )
+from app.domain.services.chat_data_coverage_notice_service import (
+    ChatDataCoverageNoticeService,
+)
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -73,6 +76,10 @@ class ExecuteExternalActionUseCase:
             sanitized_data,
             path=resolved_path,
         )
+        tree_presentation = self.presenter.build_tree_presentation(
+            sanitized_data,
+            path=resolved_path,
+        )
         presentation = self.presenter.build_presentation(
             sanitized_data, path=resolved_path
         )
@@ -85,6 +92,8 @@ class ExecuteExternalActionUseCase:
             if not text_presentation:
                 text_presentation = presentation
             presentation = None
+        elif isinstance(presentation, dict) and presentation.get("type") == "table":
+            table_presentation = presentation
         elif presentation:
             table_presentation = presentation
 
@@ -120,6 +129,8 @@ class ExecuteExternalActionUseCase:
         available_formats: list[str] = []
         if text_presentation:
             available_formats.append("text")
+        if tree_presentation:
+            available_formats.append("tree")
         if table_presentation:
             available_formats.append("table")
         if chart_presentation:
@@ -132,7 +143,53 @@ class ExecuteExternalActionUseCase:
                 chart_presentation = forced_chart
                 available_formats.append("chart")
 
-        primary_presentation = chart_presentation or table_presentation
+        path_lower = str(resolved_path or "").lower()
+        structure_like = any(
+            token in path_lower for token in ("/structure", "/parents", "/analyser")
+        )
+
+        if tree_presentation and structure_like:
+            primary_presentation = tree_presentation
+        elif chart_presentation:
+            primary_presentation = chart_presentation
+        elif table_presentation:
+            primary_presentation = table_presentation
+        elif tree_presentation:
+            primary_presentation = tree_presentation
+        else:
+            primary_presentation = None
+
+        preferred_format = None
+
+        if tree_presentation and structure_like:
+            preferred_format = "tree"
+        elif text_presentation and not table_presentation and not chart_presentation and not tree_presentation:
+            preferred_format = "text"
+        elif table_presentation and not text_presentation:
+            preferred_format = "table"
+        elif chart_presentation:
+            preferred_format = "chart"
+
+        request_parameters = dict(arguments.get("parameters") or {})
+        data_coverage_notice = ChatDataCoverageNoticeService.build(
+            sanitized_data,
+            path=resolved_path,
+            parameters=request_parameters,
+            presentation=primary_presentation,
+            table_presentation=table_presentation,
+        )
+
+        if isinstance(text_presentation, dict) and data_coverage_notice:
+            markdown = text_presentation.get("markdown")
+
+            if isinstance(markdown, str) and markdown.strip():
+                text_presentation = {
+                    **text_presentation,
+                    "markdown": ChatDataCoverageNoticeService.append_to_markdown(
+                        markdown,
+                        data_coverage_notice,
+                    ),
+                }
 
         return {
             "provider": provider["providerKey"],
@@ -146,9 +203,22 @@ class ExecuteExternalActionUseCase:
                 "durationMs": result["durationMs"],
                 "sensitivity": action["sensitivity"],
                 "presentation": primary_presentation,
-                "tablePresentation": table_presentation if chart_presentation else None,
+                "tablePresentation": (
+                    table_presentation
+                    if table_presentation is not None
+                    and table_presentation is not primary_presentation
+                    else None
+                ),
+                "treePresentation": (
+                    tree_presentation
+                    if tree_presentation is not None
+                    and tree_presentation is not primary_presentation
+                    else None
+                ),
                 "textPresentation": text_presentation,
                 "availableFormats": available_formats,
+                "preferredFormat": preferred_format,
+                "dataCoverageNotice": data_coverage_notice,
             },
         }
 

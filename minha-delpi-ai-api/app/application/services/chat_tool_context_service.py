@@ -571,7 +571,12 @@ class ChatToolContextService:
 
             path = str(metadata.get("path") or "").lower()
 
-            if "/structure" not in path:
+            if "/structure" not in path and "/analyser" not in path:
+                continue
+
+            available_formats = metadata.get("availableFormats") or []
+
+            if "tree" in available_formats:
                 continue
 
             presentation = metadata.get("presentation")
@@ -597,12 +602,20 @@ class ChatToolContextService:
         "só texto", "so texto", "apenas texto", "formato simples",
         "resumo", "resumido",
     )
+    _FORMAT_TREE_HINTS = (
+        "em árvore", "em arvore", "formato árvore", "formato arvore",
+        "como árvore", "como arvore", "visualização em árvore",
+        "visualizacao em arvore", "mostra em árvore", "mostre em árvore",
+        "diagrama hierárquico", "diagrama hierarquico",
+    )
 
     def _detect_requested_format(self, message: str) -> str | None:
         """Detecta se o usuário pediu um formato específico de apresentação."""
         lowered = (message or "").lower()
         if any(h in lowered for h in self._FORMAT_TEXT_HINTS):
             return "text"
+        if any(h in lowered for h in self._FORMAT_TREE_HINTS):
+            return "tree"
         if any(h in lowered for h in self._FORMAT_TABLE_HINTS):
             return "table"
         if any(h in lowered for h in self._FORMAT_CHART_HINTS):
@@ -625,6 +638,21 @@ class ChatToolContextService:
 
             if requested_format == "text":
                 meta["preferredFormat"] = "text"
+
+            elif requested_format == "tree":
+                meta["preferredFormat"] = "tree"
+                tree_pres = meta.get("treePresentation") or meta.get("presentation")
+                if tree_pres and tree_pres.get("type") == "tree":
+                    meta["presentation"] = tree_pres
+                    meta["treePresentation"] = None
+                elif last_data:
+                    path = meta.get("path") or ""
+                    forced_tree = self.external_action_result_presenter.build_tree_presentation(
+                        last_data, path=path
+                    )
+                    if forced_tree:
+                        meta["presentation"] = forced_tree
+                        meta["treePresentation"] = None
 
             elif requested_format == "table":
                 meta["preferredFormat"] = "table"
@@ -758,6 +786,12 @@ class ChatToolContextService:
 
         humanized = self.external_action_result_presenter.present(data, path=path or "")
 
+        linhas = list(humanized.get("linhas") or [])
+        coverage = metadata.get("dataCoverageNotice")
+
+        if isinstance(coverage, dict) and coverage.get("message"):
+            linhas.append(str(coverage["message"]))
+
         payload = {
             "tool": "execute_external_action",
             "reason": reason,
@@ -768,7 +802,7 @@ class ChatToolContextService:
             "ok": ok,
             "humanizedSummary": {
                 "titulo": humanized.get("titulo"),
-                "linhas": humanized.get("linhas"),
+                "linhas": linhas,
             },
         }
 

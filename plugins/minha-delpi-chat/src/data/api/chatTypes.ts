@@ -35,6 +35,15 @@ export type ChatKpiCard = {
   color?: string;
 };
 
+export type ChatTreeNode = {
+  id: string;
+  label: string;
+  subtitle?: string;
+  badge?: string;
+  meta?: Record<string, string | number>;
+  children?: ChatTreeNode[];
+};
+
 export type ChatPresentation =
   | {
       type: "table";
@@ -64,6 +73,11 @@ export type ChatPresentation =
       cards: ChatKpiCard[];
     }
   | {
+      type: "tree";
+      title: string;
+      root: ChatTreeNode;
+    }
+  | {
       type: "json";
       title: string;
       data: unknown;
@@ -73,6 +87,13 @@ export type ChatPresentation =
       title: string;
       markdown: string;
     };
+
+export type ChatDataCoverageNotice = {
+  kind?: "pagination" | "depth" | "preview" | "partial" | string;
+  message: string;
+  messages?: string[];
+  details?: Record<string, unknown>;
+};
 
 export type ChatStreamActivityEntry = {
   id: string;

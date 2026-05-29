@@ -4,8 +4,10 @@ import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
+import { ChatRichTree } from "./ChatRichTree";
 import { ModalPortal } from "./ModalPortal";
-import { exportToXlsx, exportToPdf, exportChartToPng } from "./exportUtils";
+import { exportToXlsx, exportToPdf, exportChartToPng, exportTreeToPdf, exportTreeToXlsx } from "./exportUtils";
+import { treePresentationToClipboardText } from "./treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
   const lines = presentation.cards.map(
@@ -90,6 +92,35 @@ export function ChatExpandModal({
                   <Copy size={15} /> Copiar
                 </button>
               )}
+              {presentation.type === "tree" && (
+                <>
+                  <button
+                    className="mdc-expand-modal__tool-btn"
+                    onClick={() =>
+                      navigator.clipboard?.writeText(
+                        treePresentationToClipboardText(presentation),
+                      )
+                    }
+                    title="Copiar árvore"
+                  >
+                    <Copy size={15} /> Copiar
+                  </button>
+                  <button
+                    className="mdc-expand-modal__tool-btn"
+                    onClick={() => exportTreeToXlsx(presentation)}
+                    title="Exportar XLSX"
+                  >
+                    <FileSpreadsheet size={15} /> XLSX
+                  </button>
+                  <button
+                    className="mdc-expand-modal__tool-btn"
+                    onClick={() => exportTreeToPdf(presentation)}
+                    title="Exportar PDF"
+                  >
+                    <FileText size={15} /> PDF
+                  </button>
+                </>
+              )}
               <button
                 className="mdc-expand-modal__close"
                 onClick={onClose}
@@ -108,6 +139,13 @@ export function ChatExpandModal({
             )}
             {presentation.type === "kpi" && (
               <ChatRichKpi presentation={presentation} />
+            )}
+            {presentation.type === "tree" && (
+              <ChatRichTree
+                presentation={presentation}
+                hideToolbar
+                onDrillDown={onDrillDown}
+              />
             )}
           </div>
         </div>

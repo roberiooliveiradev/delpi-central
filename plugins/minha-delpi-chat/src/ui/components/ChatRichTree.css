@@ -1,0 +1,195 @@
+@import "./rich-presentation-shared.css";
+
+.mdc-rich-tree {
+  margin: 0.75rem 0;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm);
+  overflow: hidden;
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+}
+
+.mdc-rich-tree__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  background: var(--mdc-bg-soft);
+  border-bottom: 1px solid var(--mdc-card-border);
+}
+
+.mdc-rich-tree__header:has(.mdc-rich-tree__title[aria-hidden="true"]) {
+  justify-content: flex-end;
+}
+
+.mdc-rich-tree__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mdc-text);
+}
+
+.mdc-rich-tree__actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.mdc-rich-tree__scroll {
+  max-height: 420px;
+  overflow: auto;
+  padding: 0.35rem 0;
+}
+
+.mdc-rich-tree__list,
+.mdc-rich-tree__children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mdc-rich-tree__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem 0.35rem 0;
+}
+
+.mdc-rich-tree__row:hover {
+  background: var(--mdc-rich-hover);
+}
+
+.mdc-rich-tree__row--clickable {
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.mdc-rich-tree__row--clickable:hover {
+  background: var(--mdc-rich-hover-strong, var(--mdc-rich-hover));
+}
+
+.mdc-rich-tree__row--clickable:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
+  outline-offset: -2px;
+}
+
+.mdc-rich-tree__toggle,
+.mdc-rich-tree__toggle-spacer {
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.mdc-rich-tree__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.05rem;
+  border: 1px solid var(--mdc-card-border, #d1d5db);
+  background: var(--mdc-card-bg, #fff);
+  color: var(--mdc-text-muted, #64748b);
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.mdc-rich-tree__toggle-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+.mdc-rich-tree__toggle--expanded {
+  color: var(--mdc-primary, #2563eb);
+  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 35%, var(--mdc-card-border, #d1d5db));
+  background: color-mix(in srgb, var(--mdc-primary, #2563eb) 8%, var(--mdc-card-bg, #fff));
+}
+
+.mdc-rich-tree__toggle--collapsed {
+  color: var(--mdc-text-muted, #64748b);
+}
+
+.mdc-rich-tree__toggle:hover {
+  color: var(--mdc-primary, #2563eb);
+  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 45%, var(--mdc-card-border, #d1d5db));
+  background: color-mix(in srgb, var(--mdc-primary, #2563eb) 12%, var(--mdc-card-bg, #fff));
+}
+
+.mdc-rich-tree__toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
+  outline-offset: 1px;
+}
+
+.mdc-rich-tree__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.mdc-rich-tree__primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mdc-rich-tree__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--mdc-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdc-rich-tree__subtitle {
+  font-size: 0.78rem;
+  color: var(--mdc-text-muted);
+  margin-top: 0.1rem;
+  line-height: 1.35;
+}
+
+.mdc-rich-tree__meta {
+  font-size: 0.75rem;
+  color: var(--mdc-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.mdc-rich-tree__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.35rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--mdc-bg-soft);
+  color: var(--mdc-text-muted);
+}
+
+.mdc-rich-tree__badge--pa {
+  background: color-mix(in srgb, #2563eb 14%, transparent);
+  color: #2563eb;
+}
+
+.mdc-rich-tree__badge--pi {
+  background: color-mix(in srgb, #7c3aed 14%, transparent);
+  color: #7c3aed;
+}
+
+.mdc-rich-tree__badge--mp {
+  background: color-mix(in srgb, #059669 14%, transparent);
+  color: #059669;
+}
+
+.mdc-rich-tree__footer {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  color: var(--mdc-text-muted);
+  border-top: 1px solid var(--mdc-card-border);
+  background: var(--mdc-bg-soft);
+}
+
+.mdc-rich-presentation--enter .mdc-rich-tree {
+  animation: mdc-rich-presentation-enter var(--mdc-motion-duration-slow) var(--mdc-motion-ease-out)
+    both;
+}

@@ -1,7 +1,9 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { readMdcCssVar } from "../theme/mdcCssVars";
+import { treePresentationToTable } from "./treePresentationUtils";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
+type TreePresentation = Extract<ChatPresentation, { type: "tree" }>;
 
 export function exportToXlsx(presentation: TablePresentation) {
   import("xlsx").then((XLSX) => {
@@ -81,6 +83,14 @@ export function exportChartToPng(chartRef: HTMLDivElement | null, title: string)
     link.click();
   };
   img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
+}
+
+export function exportTreeToXlsx(presentation: TreePresentation) {
+  exportToXlsx(treePresentationToTable(presentation));
+}
+
+export function exportTreeToPdf(presentation: TreePresentation) {
+  exportToPdf(treePresentationToTable(presentation));
 }
 
 function sanitizeFilename(name: string): string {

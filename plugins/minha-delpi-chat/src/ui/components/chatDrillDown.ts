@@ -74,3 +74,20 @@ export function buildDrillDownQuery(
 
   return firstVal ? `Detalhe de ${firstVal}` : null;
 }
+
+export function buildTreeDrillDownQuery(node: {
+  id?: string;
+  label?: string;
+  subtitle?: string;
+}): string | null {
+  return buildDrillDownQuery(
+    {
+      code: node.label || node.id || "",
+      description: node.subtitle || "",
+    },
+    [
+      { key: "code", label: "Código" },
+      { key: "description", label: "Descrição" },
+    ],
+  );
+}

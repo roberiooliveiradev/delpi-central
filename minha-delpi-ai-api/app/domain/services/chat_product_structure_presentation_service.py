@@ -286,3 +286,152 @@ class ChatProductStructurePresentationService:
             f"_Fonte: API DELPI — {path}_",
             "_Status: sucesso._",
         ]
+
+    @classmethod
+    def build_tree_presentation(
+        cls,
+        data,
+        *,
+        source_path: str | None = None,
+        path: str = "",
+    ) -> dict | None:
+        """Monta apresentação em árvore para BOM, parents ou analyser."""
+        lowered = str(path or source_path or "").lower()
+        root_dict = cls._unwrap(data)
+
+        if "/analyser" in lowered and isinstance(root_dict, dict):
+            structure = root_dict.get("structure")
+
+            if isinstance(structure, dict):
+                root_dict = structure
+
+        if not isinstance(root_dict, dict) or not isinstance(root_dict.get("root"), dict):
+            return None
+
+        if "/parents" in lowered:
+            return cls._build_parents_tree(root_dict, source_path=source_path or path)
+
+        model = cls.parse_payload(root_dict)
+
+        if not model:
+            return None
+
+        children = [cls._structure_node_to_tree(item) for item in model.level1]
+
+        return {
+            "type": "tree",
+            "title": f"Estrutura do produto {model.product_code}",
+            "root": cls._serialize_tree_node(
+                model.root.code,
+                model.root.description,
+                model.root.item_type,
+                model.root.unit,
+                model.root.quantity,
+                children=children or None,
+            ),
+        }
+
+    @classmethod
+    def _build_parents_tree(cls, root_dict: dict, *, source_path: str | None) -> dict | None:
+        root_node = root_dict.get("root")
+        items = root_dict.get("items")
+
+        if not isinstance(root_node, dict) or not isinstance(items, list):
+            return None
+
+        code = str(root_node.get("code") or "").strip()
+
+        if not code:
+            return None
+
+        children = [
+            cls._parents_node_to_tree(item)
+            for item in items
+            if isinstance(item, dict)
+        ]
+
+        return {
+            "type": "tree",
+            "title": f"Onde é usado o produto {code}",
+            "root": cls._serialize_tree_node(
+                code,
+                str(root_node.get("description") or "").strip(),
+                str(root_node.get("type") or "").strip(),
+                str(root_node.get("unit") or "").strip(),
+                cls._parse_qty(root_node.get("quantity")),
+                children=children or None,
+            ),
+        }
+
+    @classmethod
+    def _structure_node_to_tree(cls, node: StructureNode) -> dict:
+        children = [cls._structure_node_to_tree(child) for child in node.components]
+
+        return cls._serialize_tree_node(
+            node.code,
+            node.description,
+            node.item_type,
+            node.unit,
+            node.quantity,
+            children=children or None,
+        )
+
+    @classmethod
+    def _parents_node_to_tree(cls, raw: dict) -> dict:
+        parents_raw = raw.get("parents") or []
+        children = [
+            cls._parents_node_to_tree(parent)
+            for parent in parents_raw
+            if isinstance(parent, dict)
+        ]
+
+        return cls._serialize_tree_node(
+            str(raw.get("code") or "").strip(),
+            str(raw.get("description") or "").strip(),
+            str(raw.get("type") or "").strip(),
+            str(raw.get("unit") or "").strip(),
+            cls._parse_qty(raw.get("quantity")),
+            children=children or None,
+        )
+
+    @classmethod
+    def _serialize_tree_node(
+        cls,
+        code: str,
+        description: str,
+        item_type: str,
+        unit: str,
+        quantity: float | None,
+        *,
+        children: list[dict] | None = None,
+    ) -> dict:
+        node: dict = {
+            "id": code or "unknown",
+            "label": code or "—",
+        }
+
+        subtitle = str(description or "").strip()
+
+        if subtitle:
+            node["subtitle"] = subtitle
+
+        badge = str(item_type or "").strip()
+
+        if badge:
+            node["badge"] = badge
+
+        meta: dict[str, str | float | int] = {}
+
+        if unit:
+            meta["unit"] = unit
+
+        if quantity is not None:
+            meta["quantity"] = quantity
+
+        if meta:
+            node["meta"] = meta
+
+        if children:
+            node["children"] = children
+
+        return node
