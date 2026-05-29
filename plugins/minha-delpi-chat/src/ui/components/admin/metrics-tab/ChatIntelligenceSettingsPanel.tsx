@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import {
   getAdminChatIntelligenceSettings,
@@ -7,10 +7,180 @@ import {
 } from "../../../../data/api/adminApi";
 import type { AdminChatIntelligenceSettings } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import {
+  CHAT_INTELLIGENCE_NUMBER_META,
+  CHAT_INTELLIGENCE_SECTIONS,
+  CHAT_INTELLIGENCE_TOGGLE_META,
+  QUALITY_IMPACT_LABELS,
+  SPEED_IMPACT_LABELS,
+  type ChatIntelligenceSettingMeta,
+  type SettingQualityImpact,
+  type SettingSpeedImpact,
+} from "./chatIntelligenceSettingMeta";
+
+import "./ChatIntelligenceSettingsPanel.css";
 
 type ChatIntelligenceSettingsPanelProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
+
+type ToggleKey = keyof typeof CHAT_INTELLIGENCE_TOGGLE_META;
+
+function ImpactBadges({
+  speed,
+  quality,
+  active,
+}: {
+  speed: SettingSpeedImpact;
+  quality: SettingQualityImpact;
+  active: boolean;
+}) {
+  if (!active) {
+    return (
+      <div className="mdc-chat-intelligence-setting__badges">
+        <span className="mdc-chat-intelligence-impact mdc-chat-intelligence-impact--speed-neutral">
+          Desligado
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mdc-chat-intelligence-setting__badges">
+      <span
+        className={`mdc-chat-intelligence-impact mdc-chat-intelligence-impact--speed-${speed}`}
+      >
+        {SPEED_IMPACT_LABELS[speed]}
+      </span>
+      <span
+        className={`mdc-chat-intelligence-impact mdc-chat-intelligence-impact--quality-${quality}`}
+      >
+        {QUALITY_IMPACT_LABELS[quality]}
+      </span>
+    </div>
+  );
+}
+
+function SettingProsCons({
+  meta,
+}: {
+  meta: Pick<ChatIntelligenceSettingMeta, "pros" | "cons">;
+}) {
+  return (
+    <div className="mdc-chat-intelligence-setting__lists">
+      <div>
+        <span className="mdc-chat-intelligence-setting__list-label">Prós</span>
+        <ul className="mdc-chat-intelligence-setting__list">
+          {meta.pros.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <span className="mdc-chat-intelligence-setting__list-label">Contras</span>
+        <ul className="mdc-chat-intelligence-setting__list">
+          {meta.cons.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function ToggleSettingCard({
+  meta,
+  checked,
+  onChange,
+}: {
+  meta: ChatIntelligenceSettingMeta;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <article className="mdc-chat-intelligence-setting">
+      <div className="mdc-chat-intelligence-setting__head">
+        <h5 className="mdc-chat-intelligence-setting__title">{meta.title}</h5>
+        <ImpactBadges
+          speed={meta.speedWhenEnabled}
+          quality={meta.qualityWhenEnabled}
+          active={checked}
+        />
+      </div>
+
+      <p className="mdc-chat-intelligence-setting__summary">{meta.summary}</p>
+      <SettingProsCons meta={meta} />
+
+      {meta.tip ? (
+        <p className="mdc-chat-intelligence-setting__tip">{meta.tip}</p>
+      ) : null}
+
+      <div className="mdc-chat-intelligence-setting__control">
+        <AdminFormCheckbox
+          title={checked ? "Ativado" : "Desativado"}
+          hint="Marque para aplicar este comportamento no pipeline do chat."
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+      </div>
+    </article>
+  );
+}
+
+function NumberSettingCard({
+  fieldKey,
+  value,
+  onChange,
+}: {
+  fieldKey: keyof typeof CHAT_INTELLIGENCE_NUMBER_META;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const meta = CHAT_INTELLIGENCE_NUMBER_META[fieldKey];
+
+  return (
+    <article className="mdc-chat-intelligence-setting">
+      <div className="mdc-chat-intelligence-setting__head">
+        <h5 className="mdc-chat-intelligence-setting__title">{meta.title}</h5>
+      </div>
+
+      <p className="mdc-chat-intelligence-setting__summary">{meta.summary}</p>
+      <SettingProsCons
+        meta={{
+          title: meta.title,
+          summary: meta.summary,
+          pros: meta.pros,
+          cons: meta.cons,
+          speedWhenEnabled: "neutral",
+          qualityWhenEnabled: "neutral",
+        }}
+      />
+
+      <div className="mdc-chat-intelligence-setting__notes">
+        <p>
+          <strong>Velocidade:</strong> {meta.speedNote}
+        </p>
+        <p>
+          <strong>Qualidade:</strong> {meta.qualityNote}
+        </p>
+      </div>
+
+      <div className="mdc-chat-intelligence-setting__control">
+        <label className="mdc-admin-field">
+          <span>Valor atual</span>
+          <input
+            type="number"
+            min={meta.min}
+            max={meta.max}
+            step={meta.step}
+            value={value}
+            onChange={(event) => onChange(Number(event.target.value))}
+          />
+        </label>
+      </div>
+    </article>
+  );
+}
 
 export function ChatIntelligenceSettingsPanel({
   getAccessToken,
@@ -32,6 +202,10 @@ export function ChatIntelligenceSettingsPanel({
 
   if (!getAccessToken || !settings) {
     return null;
+  }
+
+  function updateToggle(key: ToggleKey, checked: boolean) {
+    setSettings({ ...settings!, [key]: checked });
   }
 
   async function handleSave() {
@@ -76,152 +250,115 @@ export function ChatIntelligenceSettingsPanel({
     }
   }
 
+  const ragSection = (
+    <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.ragHybridEnabled}
+        checked={settings.ragHybridEnabled}
+        onChange={(checked) => updateToggle("ragHybridEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.ragFtsEnabled}
+        checked={settings.ragFtsEnabled}
+        onChange={(checked) => updateToggle("ragFtsEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.ragRerankEnabled}
+        checked={settings.ragRerankEnabled}
+        onChange={(checked) => updateToggle("ragRerankEnabled", checked)}
+      />
+      <NumberSettingCard
+        fieldKey="ragContextMinScore"
+        value={settings.ragContextMinScore}
+        onChange={(value) =>
+          setSettings({ ...settings, ragContextMinScore: value })
+        }
+      />
+    </>
+  );
+
+  const actionsSection = (
+    <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.externalActionSemanticRankEnabled}
+        checked={settings.externalActionSemanticRankEnabled}
+        onChange={(checked) =>
+          updateToggle("externalActionSemanticRankEnabled", checked)
+        }
+      />
+      <NumberSettingCard
+        fieldKey="externalActionSemanticMinScore"
+        value={settings.externalActionSemanticMinScore}
+        onChange={(value) =>
+          setSettings({ ...settings, externalActionSemanticMinScore: value })
+        }
+      />
+    </>
+  );
+
+  const orchestrationSection = (
+    <>
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.chatToolRouterEnabled}
+        checked={settings.chatToolRouterEnabled}
+        onChange={(checked) => updateToggle("chatToolRouterEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.nativeToolCallingEnabled}
+        checked={settings.nativeToolCallingEnabled}
+        onChange={(checked) => updateToggle("nativeToolCallingEnabled", checked)}
+      />
+      <ToggleSettingCard
+        meta={CHAT_INTELLIGENCE_TOGGLE_META.agenticLoopEnabled}
+        checked={settings.agenticLoopEnabled}
+        onChange={(checked) => updateToggle("agenticLoopEnabled", checked)}
+      />
+      <NumberSettingCard
+        fieldKey="agenticLoopMaxSteps"
+        value={settings.agenticLoopMaxSteps}
+        onChange={(value) =>
+          setSettings({ ...settings, agenticLoopMaxSteps: value })
+        }
+      />
+    </>
+  );
+
+  const contextSection = (
+    <ToggleSettingCard
+      meta={CHAT_INTELLIGENCE_TOGGLE_META.chatHistorySummaryEnabled}
+      checked={settings.chatHistorySummaryEnabled}
+      onChange={(checked) => updateToggle("chatHistorySummaryEnabled", checked)}
+    />
+  );
+
+  const sectionContent: Record<string, ReactNode> = {
+    rag: ragSection,
+    actions: actionsSection,
+    orchestration: orchestrationSection,
+    context: contextSection,
+  };
+
   return (
-    <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
+    <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide mdc-chat-intelligence-panel">
       <h3>Inteligência do chat</h3>
-      <p className="mdc-chat-muted">
-        Limiares e recursos de inteligência (RAG, actions, router, loop agentic).
+      <p className="mdc-chat-intelligence-panel__intro">
+        Cada opção abaixo altera o pipeline de RAG, seleção de actions ou orquestração
+        do LLM. Use os badges de velocidade e qualidade para decidir o que ativar em
+        produção — mudanças aqui afetam latência, custo e assertividade das respostas.
       </p>
 
-      <div className="mdc-admin-metrics-tab__intelligence-form">
-        <label className="mdc-admin-field">
-          <span>Score mínimo RAG</span>
-          <input
-            type="number"
-            min={0}
-            max={1}
-            step={0.01}
-            value={settings.ragContextMinScore}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                ragContextMinScore: Number(event.target.value),
-              })
-            }
-          />
-        </label>
-
-        <label className="mdc-admin-field">
-          <span>Score mínimo action semântica</span>
-          <input
-            type="number"
-            min={0}
-            max={1}
-            step={0.01}
-            value={settings.externalActionSemanticMinScore}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                externalActionSemanticMinScore: Number(event.target.value),
-              })
-            }
-          />
-        </label>
-
-        <AdminFormCheckbox
-          title="Ranking semântico de actions"
-          checked={settings.externalActionSemanticRankEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              externalActionSemanticRankEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Router LLM de ferramentas"
-          checked={settings.chatToolRouterEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              chatToolRouterEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Resumo de histórico longo"
-          checked={settings.chatHistorySummaryEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              chatHistorySummaryEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="RAG híbrido (vetor + palavras-chave)"
-          checked={settings.ragHybridEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              ragHybridEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Rerank pós-híbrido no RAG"
-          checked={settings.ragRerankEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              ragRerankEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Busca FTS no Postgres (keyword RAG)"
-          checked={settings.ragFtsEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              ragFtsEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Tool-calling nativo do LLM (vLLM/Ollama)"
-          checked={settings.nativeToolCallingEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              nativeToolCallingEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <AdminFormCheckbox
-          title="Loop agentic de ferramentas"
-          checked={settings.agenticLoopEnabled}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              agenticLoopEnabled: event.target.checked,
-            })
-          }
-        />
-
-        <label className="mdc-admin-field">
-          <span>Máx. passos do loop agentic</span>
-          <input
-            type="number"
-            min={1}
-            max={3}
-            step={1}
-            value={settings.agenticLoopMaxSteps}
-            onChange={(event) =>
-              setSettings({
-                ...settings,
-                agenticLoopMaxSteps: Number(event.target.value),
-              })
-            }
-          />
-        </label>
+      <div className="mdc-chat-intelligence-panel__sections">
+        {CHAT_INTELLIGENCE_SECTIONS.map((section) => (
+          <section key={section.id} className="mdc-chat-intelligence-section">
+            <header className="mdc-chat-intelligence-section__header">
+              <h4>{section.title}</h4>
+              <p>{section.description}</p>
+            </header>
+            <div className="mdc-chat-intelligence-section__grid">
+              {sectionContent[section.id]}
+            </div>
+          </section>
+        ))}
       </div>
 
       <div className="mdc-admin-metrics-tab__intelligence-actions">
@@ -242,6 +379,11 @@ export function ChatIntelligenceSettingsPanel({
           {isReindexing ? "Reindexando..." : "Reindexar embeddings das actions"}
         </button>
       </div>
+
+      <p className="mdc-chat-intelligence-panel__reindex-note">
+        Reindexar recalcula embeddings das actions no catálogo — necessário após criar,
+        editar ou importar actions quando o ranking semântico estiver ativo.
+      </p>
 
       {reindexResult ? <p className="mdc-chat-muted">{reindexResult}</p> : null}
     </article>
