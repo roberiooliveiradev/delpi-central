@@ -85,7 +85,10 @@ Mensagem
 | `3fe0cd39` | Smoke operacional com histórico isolado | 6/6 cenários |
 | `5a22ab5d` | Script `smoke_operational_questions.py` | Perguntas reais |
 
-Documentação parcial já em [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) (seções parâmetro obrigatório, loop agentic, refinamento).
+| `5d020d7b` | Consolidação paginada + datas/ROL (`ChatPaginationConsolidationService`, `ChatDateRangeIntentService`) | «traga tudo» / «sim, continue» consolidam páginas; «rol do mês de março» resolve período |
+| *(working tree)* | Formato na consolidação (tabela/árvore/gráfico) + herança de `preferredFormat` | «tabela completa» após consulta parcial |
+
+Documentação parcial já em [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) (seções parâmetro obrigatório, loop agentic, refinamento, **consolidação paginada**).
 
 ### Outras conversas relacionadas (não confundir com Onda 11)
 
@@ -124,7 +127,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 |---|------|--------|-------------------|
 | 11.2.1 | Garantir `skip_rag` + sem LLM em todos os direct answers operacionais | ✅ | Guarda `direct_answer` → `skip_rag`; teste `test_chat_turn_preparation_direct_answer_skip_rag.py` |
 | 11.2.2 | Calibrar `LLM_MAX_TOKENS` / `OLLAMA_NUM_CTX` por ambiente (homologação &lt; 15s) | 🟡 | Checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) |
-| 11.2.3 | Portal: bootstrap sem `login()` em loop se `/me` falhar (guard + `stripOAuthHash`) | ⬜ | 401 no bootstrap não redireciona ao SSO de novo |
+| 11.2.3 | Portal: bootstrap sem `login()` em loop se `/me` falhar (guard + `stripOAuthHash`) | ✅ | 401 no bootstrap limpa sessão; `stripOAuthHash` após redirect Keycloak |
 | 11.2.4 | Compose dev: volume `../shared:/shared` no `core-api` | ✅ | Fix JWT sobrevive a `recreate` sem `docker cp` |
 
 ### 11.3 — Tool-calling “estilo GPT” (prioridade média, sandbox)
@@ -143,6 +146,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | 🟡 | `directAnswer` + `skip_rag`; apresentação rica sem markdown duplicado |
 | 11.4.2 | Fase 6 Onda 9: drill-down na tabela («detalhe linha X») | ✅ | `onDrillDown` em `ChatPage`/`ChatMessageList`; `sendMessage({ content })`; queries filial/código |
 | 11.4.3 | Apresentação rica sem texto duplicado (tabela/gráfico + markdown) | ✅ | `_compact_direct_answer_for_rich_presentation` + `shouldSuppressMarkdownForPresentation` |
+| 11.4.4 | Consolidação paginada automática (total/completo/continuar) | ✅ | `ChatPaginationConsolidationService` + múltiplas chamadas API; limite por turno + confirmação; tabela/árvore/listagem |
 
 ### 11.5 — Observabilidade e operação
 
@@ -170,6 +174,8 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` | Manter on |
 | `CHAT_OPERATIONAL_SLIM_USER_CONTEXT` | `true` | Manter on em operacional |
 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Revisar com 11.3.1 |
+| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | Consolidação paginada (11.4.4) |
+| `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` | Páginas por turno antes de pedir confirmação |
 
 ---
 
@@ -211,6 +217,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 |------|-----------|
 | 2026-05-28 | Criação: consolida pesquisa ChatGPT/Gemini (28/mai), commits da branch `chat`, backlog e itens da conversa (login/JWKS). |
 | 2026-05-29 | Revisão Onda 11: regressão 145+ testes, smoke 6/6, multi-turn 9/9, E2E HTTP estoque→filial com agente; drill-down path template corrigido. |
+| 2026-05-29 | Consolidação paginada (11.4.4): total/completo/continuar em tabela, árvore e demais listagens; docs + variáveis `CHAT_PAGINATION_*`. |
 
 ---
 

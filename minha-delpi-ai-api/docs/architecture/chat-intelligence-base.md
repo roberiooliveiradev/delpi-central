@@ -60,7 +60,9 @@ Mensagem do usuário
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
 | `ChatRouteContextService` | Herança de segmento OpenAPI (`/stock`, `/purchases`, `/supplies/cpv`, KPIs departamentais) entre turnos |
-| `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV) |
+| `ChatDateRangeIntentService` | Períodos em linguagem natural («mês passado», «rol do mês de março», últimos N dias, intervalo `DD/MM/YYYY`) → `start_date`/`end_date` em `DD-MM-YYYY` (KPIs, suprimentos, listagem de OV); ambiguidade de ano pede confirmação |
+| `ChatPaginationConsolidationService` | Consolidação automática de rotas paginadas quando o usuário pede total/completo ou confirma continuação |
+| `ChatPaginatedExternalActionService` | Orquestra múltiplas chamadas API por turno e merge de payloads paginados |
 | `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados; `entry_id` estável para atualizar a mesma linha no painel |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
@@ -241,6 +243,35 @@ Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`) traz **tabel
 | **Plugin** | `shouldSuppressMarkdownForPresentation` oculta `ChatMarkdown` se o corpo repete tabela/gráfico; `ChatRichPresentation` é a fonte visual (toggle gráfico/tabela). |
 
 Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
+
+### Consolidação paginada (total / completo / continuar) — maio/2026
+
+Quando a API retorna resposta parcial (`page`, `total`, `total_pages`), o chat pode buscar **várias páginas** e consolidar numa única resposta — em **qualquer formato** (tabela, árvore, gráfico ou texto).
+
+| Gatilho | Exemplos | Comportamento |
+|---------|----------|---------------|
+| **Total/completo** | «traga tudo», «listagem completa», «tabela completa», «registros completos» | Após a 1ª página, busca páginas restantes até `CHAT_PAGINATION_MAX_PAGES_PER_TURN` |
+| **Follow-up após parcial** | «árvore completa», «tabela completa», «completo» (mesma conversa) | Reutiliza a última action paginada do histórico; refaz consulta + consolida |
+| **Continuação** | «sim, continue», «continuar», «sim» (com estado pendente) | Retoma de `metadata.toolCalls[].paginationConsolidation` |
+| **Limite por turno** | — | Ao atingir o limite, pergunta se deve continuar; confirmação do usuário dispara novo lote |
+
+| Etapa | Serviço / campo |
+|-------|-----------------|
+| Detecção de intenção | `ChatPaginationConsolidationService.looks_like_full_fetch_request` / `looks_like_continue_fetch_request` |
+| Plano de páginas | `build_fetch_plan`, `build_continue_plan`, `collect_last_paginated_reference` |
+| Execução | `ChatPaginatedExternalActionService` (`maybe_consolidate`, `fetch_full_from_history`, `fetch_continue_plan`) |
+| Integração | `ChatToolContextService` — atalho **antes** da seleção normal de tools |
+| Estado persistido | `toolCalls[].metadata.paginationConsolidation` (`fetchedPages`, `mergedCount`, `apiTotal`, `completed`, `consolidatedPayload`) |
+| Formato | `_resolve_consolidation_format` — pedido explícito («em tabela») ou herança do `preferredFormat` do turno anterior |
+
+Variáveis:
+
+| Variável | Default |
+|----------|---------|
+| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` |
+| `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` (máx. 8) |
+
+Testes: `test_chat_pagination_consolidation_service.py`, `test_chat_paginated_external_action_service.py`, cenários em `test_chat_tool_context_service_direct_response.py`.
 
 ### Paridade ChatGPT/Gemini (roteamento e velocidade) — maio/2026
 

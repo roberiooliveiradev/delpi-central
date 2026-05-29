@@ -131,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const notificationsLoadInFlightRef = useRef(false);
   const favoritesLoadInFlightRef = useRef(false);
   const unauthorizedHandledRef = useRef(false);
+  const bootstrapPhaseRef = useRef(true);
 
   const getCurrentRedirectUri = () => {
     const configured = import.meta.env.VITE_KC_REDIRECT_URI as string | undefined;
@@ -222,12 +223,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     stopTokenRefresh();
 
+    if (bootstrapPhaseRef.current) {
+      clearSessionState();
+      unauthorizedHandledRef.current = false;
+      return;
+    }
+
     try {
       await keycloak.login({ redirectUri: getCurrentRedirectUri() });
     } finally {
       unauthorizedHandledRef.current = false;
     }
-  }, [stopTokenRefresh]);
+  }, [clearSessionState, stopTokenRefresh]);
 
   const refreshTokenSilently = useCallback(async (): Promise<boolean> => {
     if (refreshPromiseRef.current) {
@@ -500,15 +507,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (authenticated && keycloak.token) {
           tokenRef.current = keycloak.token;
 
-          await loadCoreData();
-          startTokenRefresh();
+          try {
+            await loadCoreData();
+            startTokenRefresh();
+          } catch {
+            clearSessionState();
+          }
         }
 
+        bootstrapPhaseRef.current = false;
         setLoading(false);
         setInitialized(true);
       } catch {
         if (!mounted) return;
 
+        bootstrapPhaseRef.current = false;
         clearSessionState();
         setLoading(false);
         setInitialized(true);

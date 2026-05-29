@@ -21,14 +21,34 @@ const keycloak = new Keycloak({
 // 🔒 Controle interno para evitar init duplicado
 let initPromise: Promise<boolean> | null = null;
 
+/** Remove fragmento OAuth da URL após redirect do Keycloak (evita reprocessamento no refresh). */
+export function stripOAuthHash(): void {
+  const { hash, pathname, search } = window.location;
+
+  if (!hash) {
+    return;
+  }
+
+  if (!/(^#|[&#])(state|session_state|code|iss)=/.test(hash)) {
+    return;
+  }
+
+  window.history.replaceState(window.history.state, "", `${pathname}${search}`);
+}
+
 export const initKeycloak = () => {
   if (!initPromise) {
-    initPromise = keycloak.init({
-      onLoad: "check-sso",
-      pkceMethod: "S256",
-      // Iframe de SSO quebra fácil em localhost (cookies/third-party) e gera loop de login.
-      checkLoginIframe: import.meta.env.PROD,
-    });
+    initPromise = keycloak
+      .init({
+        onLoad: "check-sso",
+        pkceMethod: "S256",
+        // Iframe de SSO quebra fácil em localhost (cookies/third-party) e gera loop de login.
+        checkLoginIframe: import.meta.env.PROD,
+      })
+      .then((authenticated) => {
+        stripOAuthHash();
+        return authenticated;
+      });
   }
 
   return initPromise;

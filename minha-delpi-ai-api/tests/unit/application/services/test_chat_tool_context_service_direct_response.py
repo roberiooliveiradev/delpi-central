@@ -407,3 +407,68 @@ def test_build_context_full_fetch_from_previous_paginated_turn():
     assert consolidation.get("mergedCount") == 6
     assert result.get("skipRag") is True
 
+
+def test_build_context_full_fetch_table_from_previous_paginated_turn():
+    execute_tool = PaginatedParentsExecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=PaginatedParentsSelectionService(),
+    )
+    previous_messages = [
+        {"role": "user", "content": "onde é usado o 10080047"},
+        {
+            "role": "assistant",
+            "content": "Produtos pai parcial",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {
+                                "code": "10080047",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "statusCode": 200,
+                            "path": "/products/10080047/parents",
+                            "actionId": "parents-action",
+                            "operationId": "product_parents",
+                            "preferredFormat": "tree",
+                            "dataCoverageNotice": {
+                                "kind": "pagination",
+                                "message": "Produtos pai parcial: página 1 de 3.",
+                                "details": {
+                                    "pagination": {
+                                        "page": 1,
+                                        "pageSize": 25,
+                                        "total": 6,
+                                        "totalPages": 3,
+                                    }
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="tabela completa",
+        previous_messages=previous_messages,
+        allowed_action_ids=["parents-action"],
+    )
+
+    metadata = result["toolCalls"][0]["metadata"]
+    assert execute_tool.calls == [1, 2, 3]
+    assert metadata.get("preferredFormat") == "table"
+    assert metadata.get("presentation", {}).get("type") == "table"
+    assert metadata.get("paginationConsolidation", {}).get("completed") is True
+

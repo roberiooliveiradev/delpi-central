@@ -96,49 +96,14 @@ class ChatToolContextService:
 
         if continue_fetch:
             merged_data, merged_metadata, arguments, continue_prompt = continue_fetch
-            safe_metadata = self._build_safe_tool_metadata(
-                "execute_external_action",
-                merged_metadata,
-                merged_data,
-            )
-            safe_tool_calls = [
-                {
-                    "name": "execute_external_action",
-                    "arguments": arguments,
-                    "reason": "Continuação da consulta paginada consolidada.",
-                    "metadata": safe_metadata,
-                }
-            ]
-            direct_answer = self._build_direct_answer(
-                merged_data,
-                message=raw_message,
-                path=safe_metadata.get("path"),
-                operation_id=safe_metadata.get("operationId"),
-            )
-
-            if continue_prompt:
-                direct_answer = (
-                    f"{direct_answer}\n\n{continue_prompt}".strip()
-                    if direct_answer
-                    else continue_prompt
-                )
-
-            return self._finalize_tool_context_result(
-                message=raw_message,
+            return self._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
                 previous_messages=previous_messages,
-                result={
-                    "context": self._format_tool_context(
-                        "execute_external_action",
-                        "Continuação da consulta paginada consolidada.",
-                        merged_data,
-                        merged_metadata,
-                    ),
-                    "toolCalls": safe_tool_calls,
-                    "nativeToolCalling": {"used": False, "providerSupports": False},
-                    "directAnswer": direct_answer,
-                    "skipRag": True,
-                    "currentMessage": raw_message,
-                },
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=continue_prompt,
+                reason="Continuação da consulta paginada consolidada.",
             )
 
         full_fetch = paginated_service.fetch_full_from_history(
@@ -151,49 +116,14 @@ class ChatToolContextService:
 
         if full_fetch:
             merged_data, merged_metadata, arguments, continue_prompt = full_fetch
-            safe_metadata = self._build_safe_tool_metadata(
-                "execute_external_action",
-                merged_metadata,
-                merged_data,
-            )
-            safe_tool_calls = [
-                {
-                    "name": "execute_external_action",
-                    "arguments": arguments,
-                    "reason": "Consolidação completa da consulta paginada.",
-                    "metadata": safe_metadata,
-                }
-            ]
-            direct_answer = self._build_direct_answer(
-                merged_data,
-                message=raw_message,
-                path=safe_metadata.get("path"),
-                operation_id=safe_metadata.get("operationId"),
-            )
-
-            if continue_prompt:
-                direct_answer = (
-                    f"{direct_answer}\n\n{continue_prompt}".strip()
-                    if direct_answer
-                    else continue_prompt
-                )
-
-            return self._finalize_tool_context_result(
-                message=raw_message,
+            return self._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
                 previous_messages=previous_messages,
-                result={
-                    "context": self._format_tool_context(
-                        "execute_external_action",
-                        "Consolidação completa da consulta paginada.",
-                        merged_data,
-                        merged_metadata,
-                    ),
-                    "toolCalls": safe_tool_calls,
-                    "nativeToolCalling": {"used": False, "providerSupports": False},
-                    "directAnswer": direct_answer,
-                    "skipRag": True,
-                    "currentMessage": raw_message,
-                },
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=continue_prompt,
+                reason="Consolidação completa da consulta paginada.",
             )
 
         native_meta = {"used": False, "providerSupports": False}
@@ -563,7 +493,7 @@ class ChatToolContextService:
                 operation_id=action_metadata.get("operationId"),
             )
 
-        requested_format = self._detect_requested_format(message)
+        requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
         if requested_format:
             self._apply_format_override(safe_tool_calls, requested_format, last_external_action_data)
 
@@ -799,6 +729,8 @@ class ChatToolContextService:
         "em tabela", "formato tabela", "em formato de tabela",
         "mostra em tabela", "mostre em tabela", "como tabela",
         "exibir tabela", "exiba em tabela",
+        "tabela completa", "lista em tabela", "listagem em tabela",
+        "completa em tabela", "completo em tabela",
     )
     _FORMAT_CHART_HINTS = (
         "em gráfico", "em grafico", "formato gráfico", "formato grafico",
@@ -815,7 +747,101 @@ class ChatToolContextService:
         "como árvore", "como arvore", "visualização em árvore",
         "visualizacao em arvore", "mostra em árvore", "mostre em árvore",
         "diagrama hierárquico", "diagrama hierarquico",
+        "arvore completa", "árvore completa", "completa em arvore",
+        "completa em árvore",
     )
+
+    def _resolve_consolidation_format(
+        self,
+        message: str,
+        previous_messages: list | None,
+    ) -> str | None:
+        requested_format = self._detect_requested_format(message)
+
+        if requested_format:
+            return requested_format
+
+        from app.domain.services.chat_pagination_consolidation_service import (
+            ChatPaginationConsolidationService,
+        )
+
+        return ChatPaginationConsolidationService.collect_last_preferred_format(
+            previous_messages,
+        )
+
+    def _finalize_paginated_consolidation_result(
+        self,
+        *,
+        raw_message: str,
+        previous_messages: list | None,
+        merged_data,
+        merged_metadata: dict,
+        arguments: dict,
+        continue_prompt: str | None,
+        reason: str,
+    ) -> dict:
+        safe_metadata = self._build_safe_tool_metadata(
+            "execute_external_action",
+            merged_metadata,
+            merged_data,
+        )
+        safe_tool_calls = [
+            {
+                "name": "execute_external_action",
+                "arguments": arguments,
+                "reason": reason,
+                "metadata": safe_metadata,
+            }
+        ]
+        direct_answer = self._build_direct_answer(
+            merged_data,
+            message=raw_message,
+            path=safe_metadata.get("path"),
+            operation_id=safe_metadata.get("operationId"),
+        )
+
+        requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
+
+        if requested_format:
+            self._apply_format_override(
+                safe_tool_calls,
+                requested_format,
+                merged_data,
+            )
+
+        if direct_answer and requested_format != "table":
+            self._suppress_redundant_structure_presentations(safe_tool_calls)
+
+        if direct_answer and requested_format != "text":
+            direct_answer = self._compact_direct_answer_for_rich_presentation(
+                direct_answer,
+                safe_tool_calls,
+            )
+
+        if continue_prompt:
+            direct_answer = (
+                f"{direct_answer}\n\n{continue_prompt}".strip()
+                if direct_answer
+                else continue_prompt
+            )
+
+        return self._finalize_tool_context_result(
+            message=raw_message,
+            previous_messages=previous_messages,
+            result={
+                "context": self._format_tool_context(
+                    "execute_external_action",
+                    reason,
+                    merged_data,
+                    merged_metadata,
+                ),
+                "toolCalls": safe_tool_calls,
+                "nativeToolCalling": {"used": False, "providerSupports": False},
+                "directAnswer": direct_answer,
+                "skipRag": True,
+                "currentMessage": raw_message,
+            },
+        )
 
     def _detect_requested_format(self, message: str) -> str | None:
         """Detecta se o usuário pediu um formato específico de apresentação."""

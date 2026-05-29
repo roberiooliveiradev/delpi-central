@@ -51,8 +51,14 @@ class ChatPaginationConsolidationService:
         "completa",
         "lista completa",
         "listagem completa",
+        "listagem inteira",
+        "lista inteira",
         "arvore completa",
         "árvore completa",
+        "tabela completa",
+        "registros completos",
+        "resultado completo",
+        "resultados completos",
         "traga tudo",
         "trazer tudo",
         "buscar tudo",
@@ -65,6 +71,25 @@ class ChatPaginationConsolidationService:
         "listagem total",
         "mostre tudo",
         "todos os itens",
+        "visualizacao completa",
+        "visualização completa",
+    )
+    _FULL_FETCH_PATTERNS = (
+        re.compile(
+            r"\b(tabela|lista|listagem|registros?|resultados?|itens?)"
+            r"\s+(completo|completa|total|inteira?)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"\b(completo|completa|total|inteira?)\s+(em\s+)?"
+            r"(tabela|lista|listagem|arvore|árvore)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"\b(traga|mostre|exiba|liste|busque|traga|trazer)\s+"
+            r"(tudo|todos?|completo|completa)\b",
+            re.IGNORECASE,
+        ),
     )
     _CONTINUE_TERMS = (
         "sim continue",
@@ -99,10 +124,13 @@ class ChatPaginationConsolidationService:
         if not normalized:
             return False
 
-        return ChatMessageNormalizationService.contains_any(
+        if ChatMessageNormalizationService.contains_any(
             normalized,
             cls._FULL_FETCH_TERMS,
-        )
+        ):
+            return True
+
+        return any(pattern.search(normalized) for pattern in cls._FULL_FETCH_PATTERNS)
 
     @classmethod
     def looks_like_continue_fetch_request(cls, message: str | None) -> bool:
@@ -460,6 +488,45 @@ class ChatPaginationConsolidationService:
             "path": recent.path,
             "parameters": dict(recent.parameters),
         }
+
+    @classmethod
+    def collect_last_preferred_format(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> str | None:
+        for item in reversed(previous_messages or []):
+            metadata = cls._message_metadata(item)
+            tool_calls = metadata.get("toolCalls") or []
+
+            for tool_call in reversed(tool_calls):
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+                preferred = str(tool_meta.get("preferredFormat") or "").strip().lower()
+
+                if preferred in {"table", "tree", "chart", "text"}:
+                    return preferred
+
+                presentation = tool_meta.get("presentation")
+
+                if isinstance(presentation, dict):
+                    presentation_type = str(presentation.get("type") or "").strip().lower()
+
+                    if presentation_type in {"table", "tree", "chart", "kpi"}:
+                        return "chart" if presentation_type == "kpi" else presentation_type
+
+                table_presentation = tool_meta.get("tablePresentation")
+
+                if isinstance(table_presentation, dict):
+                    return "table"
+
+                tree_presentation = tool_meta.get("treePresentation")
+
+                if isinstance(tree_presentation, dict):
+                    return "tree"
+
+        return None
 
     @classmethod
     def collect_state(

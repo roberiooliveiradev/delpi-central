@@ -181,6 +181,16 @@ Use o agente **Especialista em Produtos** (ou agente com actions `api-delpi`).
 | 51 | *(após #50)* pagina anterior | Volta à página anterior |
 | 52 | *(alternativa)* botões **Anterior** / **Próxima** no card | Mesmo efeito de #50/#51; indicador «Página X de Y» |
 
+### Consolidação automática (total / completo)
+
+| # | Pergunta | O que esperar |
+|---|----------|---------------|
+| 56 | *(após #46 com banner parcial)* traga tudo | Várias chamadas API; lista consolidada; banner parcial some ou indica conclusão |
+| 57 | *(após #46)* tabela completa | Consolida + apresentação em **tabela** (não só árvore) |
+| 58 | *(após #46)* árvore completa | Consolida + apresentação em **árvore** |
+| 59 | *(se #56 parou no limite)* sim, continue | Novo lote de páginas; contagem consolidada aumenta |
+| 60 | *(alternativa)* listagem completa em tabela | Idem #57 — qualquer tipo de listagem paginada |
+
 ### Profundidade hierárquica
 
 | # | Pergunta / ação | O que esperar |
@@ -205,6 +215,7 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Smoke operacional | `scripts/smoke_operational_questions.py` |
 | Refinamento paginação | `tests/unit/domain/services/test_chat_operational_refinement_service.py` |
 | Turn preparation paginação | `tests/unit/application/services/test_chat_turn_preparation_pagination_refinement.py` |
+| Consolidação paginada | `tests/unit/domain/services/test_chat_pagination_consolidation_service.py`, `tests/unit/application/services/test_chat_paginated_external_action_service.py` |
 | Apresentação frontend | `plugins/minha-delpi-chat/scripts/verify-pagination-presentation.ts` |
 | Lousa / canvas | `tests/unit/application/services/test_chat_canvas_content_service.py` |
 | Small talk | `tests/unit/application/services/test_chat_small_talk_service.py` |
@@ -215,7 +226,9 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 # Backend (no container)
 docker exec delpi-minha-delpi-ai-api pytest \
   tests/unit/domain/services/test_chat_operational_refinement_service.py \
-  tests/unit/application/services/test_chat_turn_preparation_pagination_refinement.py -q
+  tests/unit/application/services/test_chat_turn_preparation_pagination_refinement.py \
+  tests/unit/domain/services/test_chat_pagination_consolidation_service.py \
+  tests/unit/application/services/test_chat_paginated_external_action_service.py -q
 
 # Frontend (script de verificação)
 docker run --rm -v "$(pwd)/plugins/minha-delpi-chat:/app" -w /app node:22-alpine \

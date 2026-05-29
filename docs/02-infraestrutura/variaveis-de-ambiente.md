@@ -134,6 +134,8 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — «quem te criou» etc. usam `identity.json` sem RAG/LLM; `false` para homologar RAG+LLM |
 | `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — grava a resposta no banco antes do SSE `playback`; o plugin anima com efeito de escrita natural (`naturalTextReveal`). Reload não perde texto em geração. Use `false` só se priorizar primeiro token SSE em CPU muito lenta |
+| `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` (default) — quando o usuário pede total/completo ou confirma continuação, o chat busca várias páginas da API e consolida (tabela, árvore, listagem) |
+| `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` (default, máx. 8) — páginas buscadas por turno antes de perguntar «deseja continuar?» |
 | `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: chars por chunk no streaming SSE legado. **Recomendado:** `4` |
 | `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: delay entre chunks SSE. **Recomendado:** `0`–`45` |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |

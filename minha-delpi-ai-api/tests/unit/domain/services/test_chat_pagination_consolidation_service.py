@@ -22,8 +22,36 @@ def test_looks_like_full_fetch_request():
     assert ChatPaginationConsolidationService.looks_like_full_fetch_request(
         "arvore completa"
     )
+    assert ChatPaginationConsolidationService.looks_like_full_fetch_request(
+        "tabela completa"
+    )
+    assert ChatPaginationConsolidationService.looks_like_full_fetch_request(
+        "listagem completa em tabela"
+    )
     assert not ChatPaginationConsolidationService.looks_like_full_fetch_request(
         "onde é usado o produto 10080047"
+    )
+
+
+def test_collect_last_preferred_format():
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "preferredFormat": "table",
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    assert (
+        ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
+        == "table"
     )
 
 
