@@ -22,7 +22,8 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Guia api-delpi (resumo) | [`../../../api-delpi/docs/api/11-guia-agente-chat.md`](../../../api-delpi/docs/api/11-guia-agente-chat.md) |
 | Módulos api-delpi | [`../../../api-delpi/docs/api/06-modulos-departamentais.md`](../../../api-delpi/docs/api/06-modulos-departamentais.md) |
 | Policy injetada em runtime | [`../../app/domain/prompt_policies/api-delpi-routes.md`](../../app/domain/prompt_policies/api-delpi-routes.md) |
-| Inteligência (ondas 1–10) | [`../roadmap/README.md`](../roadmap/README.md) |
+| Inteligência (ondas 1–11) | [`../roadmap/README.md`](../roadmap/README.md) |
+| Análise de desenhos PDF (backlog) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 | Arquitetura chat base | [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) |
 
 ## Como anexar a um agente

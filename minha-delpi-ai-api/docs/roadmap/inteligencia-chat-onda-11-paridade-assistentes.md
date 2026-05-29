@@ -237,4 +237,9 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 
 ## Próxima onda
 
-Quando 11.1–11.2 estiverem estáveis em homologação, abrir **Onda 12** para `web_search` + política de citações, ou fundir itens 11.6 conforme prioridade de produto.
+Quando 11.1–11.2 estiverem estáveis em homologação, priorizar conforme produto:
+
+| Track | Documento | Foco |
+|-------|-----------|------|
+| **12A** | [Onda 12 — Análise de desenhos PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | Skill `drawing-analyser` herdável; PDF × API DELPI × checklist (paridade ChatGPT DELPI legado) |
+| **12B** | (a definir) | `web_search` + política de citações, ou fundir itens 11.6 |

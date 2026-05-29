@@ -285,6 +285,7 @@ Pesquisa e plano de produto (28/mai/2026): decisão de rota **antes** do LLM, ca
 | Recurso | Caminho |
 |---------|---------|
 | Roadmap Onda 11 (feito / falta / critérios) | [`../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md`](../roadmap/inteligencia-chat-onda-11-paridade-assistentes.md) |
+| Roadmap Onda 12 (backlog — desenhos PDF) | [`../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md`](../roadmap/inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 
 ### Documentos e testes
 

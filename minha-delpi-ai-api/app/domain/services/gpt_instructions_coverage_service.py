@@ -103,7 +103,8 @@ GPT_INSTRUCTIONS_COVERAGE: tuple[GptInstructionEntry, ...] = (
         "drawing_analyser_instructions.md",
         GptInstructionCoverage.INDEXED_AGENT,
         "drawing_analyser_instructions.md",
-        "Analyser / desenhos técnicos; rotas /products/{code}/analyser.",
+        "Analyser / desenhos técnicos; rotas /products/{code}/analyser. "
+        "Runtime PDF: backlog Onda 12 (skill drawing-analyser herdável).",
         ingest_to_agent=True,
         tags=("engenharia", "analyser"),
     ),

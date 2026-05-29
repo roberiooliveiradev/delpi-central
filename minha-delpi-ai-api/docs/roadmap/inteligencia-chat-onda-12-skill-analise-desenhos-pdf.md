@@ -1,0 +1,178 @@
+# Inteligência do chat — Onda 12: Skill de análise de desenhos DELPI (PDF)
+
+**Status:** backlog (planejado)  
+**Criado:** 2026-05-29  
+**Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
+
+---
+
+## Objetivo
+
+Replicar no **Minha DELPI Chat** a capacidade que o **ChatGPT DELPI legado** já oferece: **analisar desenhos técnicos em PDF**, extrair cotas e metadados do carimbo (OCR/visão), confrontar com dados reais do Protheus via **API DELPI** e emitir **relatório de conformidade** conforme normas e checklist DELPI.
+
+A funcionalidade deve ser uma **skill de plataforma** (`drawing-analyser`), registrada no catálogo global e **herdável por qualquer agente** — o agente adiciona restrições (escopo, actions, RAG), mas a inteligência transversal (intent, pipeline, tools, policies) vive na **camada base do chat**.
+
+---
+
+## Situação atual vs alvo
+
+| Aspecto | Hoje (maio/2026) | Alvo (Onda 12) |
+|---------|------------------|----------------|
+| Conhecimento normativo | Docs ingeridos no RAG do agente (`drawing_analyser`, `drawing_rules`, `drawing_requirements`, `validation_rules`, códigos 50xx) | Mesmo RAG + policy da skill |
+| API operacional | `GET /products/{code}/analyser` disponível na api-delpi e no catálogo de actions | Fast path / roteamento automático quando houver código + PDF |
+| PDF anexado na sessão | Anexo vira `session_source` no RAG (texto extraído se houver) | Pipeline dedicado: visão/OCR estruturado + checklist |
+| Relatório técnico | LLM responde genericamente com contexto RAG | Formato padronizado (✅ / ⚠️ / ❌) alinhado ao GPT legado |
+| Herança por agente | Não existe skill `drawing-analyser` | Agente habilita skill; engenharia/qualidade podem ser default |
+
+**Paridade de referência:** fluxo descrito em `api-delpi-py/GPT_instructions/drawing_analyser_instructions.md` (adaptado em `docs/knowledge/domains/gpt-instructions/gpt-drawing-analyser-instructions.md`):
+
+```text
+PDF (OCR e cotas) ⇄ API DELPI (SB1010, SG1010, SG2010, QP6–QP8) ⇄ Checklist técnico automatizado
+```
+
+---
+
+## Princípio de arquitetura (chat base)
+
+Seguir a regra de inteligência herdada — **não** implementar só no `system_prompt` de um agente:
+
+```text
+Anexo PDF + mensagem
+  → ChatDrawingIntentService (intent)
+  → ChatIntelligencePipelineService (desliga fast path genérico; liga modo drawing)
+  → ChatToolContextService
+        · execute_external_action → GET /products/{code}/analyser
+        · (futuro) analyze_drawing_pdf → extração estruturada do PDF
+  → RAG (drawing_* docs + Normas_Tecnicas quando global)
+  → PromptPolicyService → drawing-analyser-skill.md
+  → LLM → relatório + apresentação rica (tabela/cards)
+```
+
+O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especialização.
+
+---
+
+## Skill `drawing-analyser` (proposta)
+
+| Campo | Valor proposto |
+|-------|----------------|
+| `skillKey` | `drawing-analyser` |
+| `label` | Análise de desenhos DELPI |
+| `description` | Analisa PDFs de desenho técnico, valida cotas e carimbo contra Protheus e normas DELPI. |
+| `policyFile` | `drawing-analyser-skill.md` |
+| `metadataFlag` | `engineering` |
+| `executionHint` | `GET /products/{code}/analyser` + anexo PDF |
+
+**Herança:** agentes de engenharia/qualidade incluem `drawing-analyser` em `metadata.skills`. Agentes operacionais (estoque, vendas) não herdam por default.
+
+**Dependência de conhecimento global:** ingerir `Normas_Tecnicas_DELPI.md` na base **global** (`company-knowledge`), não como `agent_source` — ver [coverage map](../knowledge/gpt-instructions-coverage-map.md).
+
+---
+
+## Backlog por fase
+
+### 12.1 — Intent e contrato da skill
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.1.1 | `ChatDrawingIntentService` — detecta pedido de análise de desenho + PDF anexado ou código de produto | ⬜ |
+| 12.1.2 | Policy `drawing-analyser-skill.md` + registro em `PromptPolicyService` / catálogo admin | ⬜ |
+| 12.1.3 | Skill `drawing-analyser` no `catalog.json` e bootstrap admin | ⬜ |
+| 12.1.4 | Bloqueio de roteamento incorreto (ex.: não confundir «analise o desenho 90264130» com busca catálogo) | ⬜ |
+
+### 12.2 — Extração do PDF (visão / OCR)
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.2.1 | Definir provedor: LLM multimodal (anexo) vs serviço OCR dedicado vs pipeline híbrido | ⬜ |
+| 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ⬜ |
+| 12.2.3 | Limites de tamanho/páginas; timeout; fallback quando OCR falhar | ⬜ |
+| 12.2.4 | Testes com PDFs reais anonimizados (fixtures em `tests/fixtures/drawings/`) | ⬜ |
+
+### 12.3 — Orquestração PDF × API × checklist
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.3.1 | `ChatDrawingValidationOrchestrationService` — merge PDF extraído + payload `/analyser` | ⬜ |
+| 12.3.2 | Regras de tolerância (±5% comprimento, ±1 mm decape) conforme `validation_rules_delpi` | ⬜ |
+| 12.3.3 | Classificação consolidada ✅ / ⚠️ / ❌ por seção do checklist | ⬜ |
+| 12.3.4 | Integração em `ChatToolContextService` / action `get_product_analyser` com parâmetros de profundidade | ⬜ |
+
+### 12.4 — UX e apresentação
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ⬜ |
+| 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ⬜ |
+| 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ⬜ |
+
+### 12.5 — Agentes, testes e operação
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.5.1 | Agente `minha-delpi-chat` (ou engenharia) com skill default | ⬜ |
+| 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` (PDF fixture + código conhecido) | ⬜ |
+| 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ⬜ |
+| 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ⬜ |
+
+---
+
+## Critérios de aceite (Onda 12)
+
+- [ ] Usuário anexa PDF + informa código (ou código inferido do carimbo) → relatório com checklist completo.
+- [ ] Divergências dimensionais e de estrutura aparecem como ❌ com mensagem padronizada (paridade com GPT legado).
+- [ ] Agente sem skill `drawing-analyser` **não** entra no pipeline de desenho (ou recebe resposta orientando habilitar skill).
+- [ ] Agente com skill herda comportamento sem duplicar lógica no `system_prompt`.
+- [ ] Regressão: estoque, busca de produto e SQL produção **não** quebram (`smoke_gpt_instructions_improvements.py` + novos casos drawing).
+- [ ] `adminDebug` expõe fases: intent drawing, extração PDF, action analyser, validações.
+
+---
+
+## Riscos e decisões em aberto
+
+| Tema | Opções | Nota |
+|------|--------|------|
+| OCR / visão | GPT-4o vision via anexo vs Tesseract vs serviço interno | Custo e latência vs precisão em cotas |
+| Código do produto | Obrigatório na mensagem vs OCR do carimbo | Fallback: pedir código se ambíguo |
+| PDF multipágina | Todas as páginas vs só folha principal | Limitar páginas no MVP |
+| Normas técnicas | Global vs agente | Recomendado **global** (admin knowledge) |
+| api-delpi | Só `/analyser` vs endpoints futuros de drawing | Hoje `/analyser` cobre SB1/SG1/SG2/QP |
+
+---
+
+## O que já está pronto (não repetir na implementação)
+
+- Docs GPT de desenho adaptados e ingeridos no agente ([sync script](../../scripts/sync_gpt_instructions_knowledge.py)).
+- Mapa documento a documento ([gpt-instructions-coverage-map.md](../knowledge/gpt-instructions-coverage-map.md)).
+- Action OpenAPI `get_product_analyser` no catálogo api-delpi.
+- Pipeline base de anexos (`session_source`) e RAG por agente.
+
+---
+
+## Validação prevista
+
+```bash
+# Unit (quando existir)
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest \
+  tests/unit/domain/services/test_chat_drawing_intent_service.py \
+  tests/unit/domain/services/test_chat_drawing_validation_orchestration_service.py -q
+
+# Smoke (quando existir)
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api \
+  python scripts/smoke_drawing_analyser.py
+```
+
+---
+
+## Histórico
+
+| Data | Alteração |
+|------|-----------|
+| 2026-05-29 | Criação: backlog Onda 12 a partir de paridade com ChatGPT DELPI (análise PDF); skill herdável na camada base. |
+
+---
+
+## Relação com outras ondas
+
+- **Onda 11** (paridade roteamento/velocidade) deve estar estável antes de adicionar intent drawing ao fast path.
+- **Onda 12 alternativa** mencionada na Onda 11: `web_search` + citações — priorizar conforme produto; análise de desenhos é track **independente** (engenharia/qualidade).
