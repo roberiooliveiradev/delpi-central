@@ -19,6 +19,15 @@ from app.domain.services.chat_route_context_service import (
 
 
 @dataclass(frozen=True)
+class RecentPaginatedAction:
+    action_id: str
+    path: str
+    parameters: dict[str, Any]
+    page: int | None = None
+    page_size: int | None = None
+
+
+@dataclass(frozen=True)
 class OperationalRefinement:
     kind: str
     product_code: str | None = None
@@ -29,6 +38,11 @@ class OperationalRefinement:
     metric_domain_prefix: str | None = None
     metric_path_token: str | None = None
     metric_kind: str | None = None
+    action_id: str | None = None
+    previous_parameters: dict[str, Any] | None = None
+    previous_path: str | None = None
+    page: int | None = None
+    page_size: int | None = None
 
     @property
     def clears_branch_filter(self) -> bool:
@@ -61,6 +75,56 @@ class ChatOperationalRefinementService:
         r"\b(?:armaz[eé]m|arm\.?|deposito|depósito)\s*[_-]?\s*(\d{1,3})\b",
         re.IGNORECASE,
     )
+    _PAGINATED_PATH_FRAGMENTS = (
+        "/parents",
+        "/structure",
+        "/search",
+        "/stock",
+        "/purchases",
+        "/inspection",
+        "/guide",
+        "/dashboard",
+        "/items",
+    )
+    _NEXT_PAGE_TERMS = (
+        "proxima pagina",
+        "próxima página",
+        "proxima pag",
+        "seguinte pagina",
+        "seguinte página",
+        "pagina seguinte",
+        "página seguinte",
+        "next page",
+    )
+    _MORE_RESULTS_TERMS = (
+        "mais registros",
+        "mais linhas",
+        "mais resultados",
+        "mais itens",
+        "ver mais",
+        "mostrar mais",
+        "traga mais",
+        "exiba mais",
+    )
+    _PAGE_SIZE_PATTERNS = (
+        re.compile(
+            r"\b(?:aumente|aumenta|mostre|traga|exiba|liste|coloque|mude|altere|"
+            r"passar?|colocar?)\s+(?:para\s+)?(\d{1,4})\s*"
+            r"(?:linhas?|registros?|itens?|resultados?)\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
+            r"\b(?:aumente|aumenta)\s+(?:o\s+)?(?:page[_-]?size|tamanho\s+da\s+pagina|"
+            r"tamanho\s+da\s+página)\s+(?:para\s+)?(\d{1,4})\b",
+            re.IGNORECASE,
+        ),
+        re.compile(r"\bpage[_-]?size\s*[=:]?\s*(\d{1,4})\b", re.IGNORECASE),
+        re.compile(
+            r"\b(\d{1,4})\s*(?:linhas?|registros?|itens?|resultados?)\b",
+            re.IGNORECASE,
+        ),
+    )
+    _PAGE_NUMBER_RE = re.compile(r"\bp[aá]gina\s*(\d+)\b", re.IGNORECASE)
     _STOCK_RESET_TERMS = (
         "completo de novo",
         "estoque completo",
@@ -101,10 +165,179 @@ class ChatOperationalRefinementService:
         if planned:
             return planned
 
+        planned = cls.plan_pagination_follow_ups(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if planned:
+            return planned
+
         return cls.plan_metric_follow_ups(
             message,
             previous_messages=previous_messages,
         )
+
+    @classmethod
+    def plan_pagination_follow_ups(
+        cls,
+        message: str,
+        *,
+        previous_messages: list[Any] | None = None,
+    ) -> list[OperationalRefinement]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        recent = cls.collect_recent_paginated_action(previous_messages)
+
+        if not recent or not cls.looks_like_pagination_request(normalized):
+            return []
+
+        page_size = cls.extract_requested_page_size(normalized)
+        page = cls.extract_requested_page(normalized)
+
+        if page is None and cls.looks_like_next_page_request(normalized):
+            current_page = recent.page or cls._parameter_int(recent.parameters, "page") or 1
+            page = current_page + 1
+
+        if page is None and page_size is None and cls.looks_like_more_results_request(normalized):
+            current_page = recent.page or cls._parameter_int(recent.parameters, "page") or 1
+            page = current_page + 1
+
+        if page is None and page_size is None:
+            return []
+
+        return [
+            OperationalRefinement(
+                kind="pagination_refinement",
+                action_id=recent.action_id,
+                previous_parameters=dict(recent.parameters),
+                previous_path=recent.path,
+                page=page,
+                page_size=page_size,
+                reason=(
+                    "A mensagem ajusta paginação da consulta operacional já feita nesta conversa."
+                ),
+            )
+        ]
+
+    @classmethod
+    def looks_like_pagination_request(cls, normalized: str) -> bool:
+        if cls.extract_requested_page_size(normalized) is not None:
+            return True
+
+        if cls.extract_requested_page(normalized) is not None:
+            return True
+
+        if cls.looks_like_next_page_request(normalized):
+            return True
+
+        return cls.looks_like_more_results_request(normalized)
+
+    @classmethod
+    def looks_like_next_page_request(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._NEXT_PAGE_TERMS)
+
+    @classmethod
+    def looks_like_more_results_request(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._MORE_RESULTS_TERMS)
+
+    @classmethod
+    def extract_requested_page_size(cls, normalized: str) -> int | None:
+        for pattern in cls._PAGE_SIZE_PATTERNS:
+            match = pattern.search(normalized)
+
+            if not match:
+                continue
+
+            value = int(match.group(1))
+
+            if 1 <= value <= 500:
+                return value
+
+        return None
+
+    @classmethod
+    def extract_requested_page(cls, normalized: str) -> int | None:
+        match = cls._PAGE_NUMBER_RE.search(normalized)
+
+        if not match:
+            return None
+
+        value = int(match.group(1))
+
+        if value >= 1:
+            return value
+
+        return None
+
+    @classmethod
+    def collect_recent_paginated_action(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> RecentPaginatedAction | None:
+        for item in reversed((previous_messages or [])[-14:]):
+            for tool_call in reversed(cls._message_metadata(item).get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if not tool_meta.get("ok"):
+                    continue
+
+                path = str(tool_meta.get("path") or "")
+                lowered_path = path.lower()
+                coverage = tool_meta.get("dataCoverageNotice")
+
+                has_pagination_notice = (
+                    isinstance(coverage, dict)
+                    and str(coverage.get("kind") or "").lower() == "pagination"
+                )
+
+                if not has_pagination_notice and not any(
+                    fragment in lowered_path for fragment in cls._PAGINATED_PATH_FRAGMENTS
+                ):
+                    continue
+
+                arguments = tool_call.get("arguments") or {}
+                parameters = arguments.get("parameters") or {}
+
+                if not isinstance(parameters, dict):
+                    parameters = {}
+
+                action_id = str(
+                    tool_meta.get("actionId")
+                    or arguments.get("actionId")
+                    or ""
+                ).strip()
+
+                if not action_id:
+                    continue
+
+                return RecentPaginatedAction(
+                    action_id=action_id,
+                    path=path,
+                    parameters=dict(parameters),
+                    page=cls._parameter_int(parameters, "page"),
+                    page_size=cls._parameter_int(parameters, "page_size"),
+                )
+
+        return None
+
+    @classmethod
+    def _parameter_int(cls, parameters: dict, key: str) -> int | None:
+        for name, value in parameters.items():
+            if str(name).lower() != key.lower():
+                continue
+
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+
+        return None
 
     @classmethod
     def plan_metric_follow_ups(

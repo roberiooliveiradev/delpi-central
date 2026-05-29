@@ -133,6 +133,13 @@ class ChatExternalActionOrchestrationService:
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
                     )
+                elif refinement.kind == "pagination_refinement":
+                    selected = selection_service.select_action(
+                        message,
+                        allowed_action_ids=allowed_action_ids,
+                        conversation_context=conversation_context,
+                        previous_messages=previous_messages,
+                    )
                 else:
                     selected = None
 

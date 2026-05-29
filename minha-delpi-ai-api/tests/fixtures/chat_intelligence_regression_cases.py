@@ -641,6 +641,38 @@ _STOCK_CONVERSATION_HISTORY = [
     },
 ]
 
+_PARENTS_CONVERSATION_HISTORY = [
+    {"role": "user", "content": "onde é usado o 10080022"},
+    {
+        "role": "assistant",
+        "content": "Produtos pai (onde é usado)",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "parents",
+                        "parameters": {
+                            "code": "10080022",
+                            "page": 1,
+                            "page_size": 25,
+                        },
+                    },
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/10080022/parents",
+                        "actionId": "parents",
+                        "dataCoverageNotice": {
+                            "kind": "pagination",
+                            "message": "Produtos pai parcial: página 1 de 3.",
+                        },
+                    },
+                }
+            ]
+        },
+    },
+]
+
 STOCK_REFINEMENT_SELECTION_CASES = [
     {
         "message": "filtre filial 02",
@@ -719,11 +751,38 @@ STOCK_REFINEMENT_SELECTION_CASES = [
 OPERATIONAL_REFINEMENT_FAST_PATH_CASES = [
     ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
     ("filtre filial 02", False, []),
+    ("aumente para 50 linhas", True, _PARENTS_CONVERSATION_HISTORY),
+    ("aumente para 50 linhas", False, []),
 ]
 
 AGENTIC_SKIP_REFINEMENT_CASES = [
     ("filtre filial 02", True, _STOCK_CONVERSATION_HISTORY),
     ("filtre filial 02", False, []),
+    ("aumente para 50 linhas", True, _PARENTS_CONVERSATION_HISTORY),
+    ("aumente para 50 linhas", False, []),
+]
+
+PAGINATION_REFINEMENT_SELECTION_CASES = [
+    {
+        "message": "aumente para 50 linhas",
+        "previous_messages": _PARENTS_CONVERSATION_HISTORY,
+        "actions": [
+            {
+                "actionId": "parents",
+                "method": "GET",
+                "path": "/products/{code}/parents",
+                "operationId": "get_product_parents",
+                "summary": "Produtos pai",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "parents",
+        "expected_parameters": {"code": "10080022", "page": 1, "page_size": 50},
+    },
 ]
 
 DATE_RANGE_SELECTION_CASES = [

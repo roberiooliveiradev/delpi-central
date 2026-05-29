@@ -274,3 +274,70 @@ def test_plan_product_route_follow_up_after_structure():
         "e os pais desse produto",
         previous_messages=history,
     )
+
+
+def test_plan_pagination_follow_up_increases_page_size():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {
+                                "code": "10080022",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                            "dataCoverageNotice": {"kind": "pagination"},
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "aumente para 50 linhas",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "pagination_refinement"
+    assert planned[0].action_id == "parents-action"
+    assert planned[0].page_size == 50
+    assert planned[0].page is None
+
+
+def test_is_operational_follow_up_for_pagination_request():
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert ChatOperationalRefinementService.is_operational_follow_up(
+        "aumente para 50 linhas",
+        previous_messages=history,
+    )

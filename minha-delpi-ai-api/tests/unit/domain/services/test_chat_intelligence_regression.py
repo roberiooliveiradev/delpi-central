@@ -31,6 +31,7 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     MULTI_TURN_PRODUCT_CODE_CASES,
     OPERATIONAL_FAST_PATH_CASES,
     OPERATIONAL_REFINEMENT_FAST_PATH_CASES,
+    PAGINATION_REFINEMENT_SELECTION_CASES,
     PRODUCT_CODE_CASES,
     SELECTION_CASES,
     STOCK_REFINEMENT_SELECTION_CASES,
@@ -112,7 +113,8 @@ def test_agentic_skip_on_stock_refinement_regression(message, expected, history)
     "case",
     SELECTION_CASES
     + STOCK_REFINEMENT_SELECTION_CASES
-    + METRIC_REFINEMENT_SELECTION_CASES,
+    + METRIC_REFINEMENT_SELECTION_CASES
+    + PAGINATION_REFINEMENT_SELECTION_CASES,
 )
 def test_action_selection_regression(case):
     service = ExternalActionSelectionService(FakeRepository(case["actions"]))

@@ -107,6 +107,15 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if refinement and refinement.kind == "pagination_refinement":
+            selected = self._select_pagination_refinement_action(
+                refinement,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         group_search_code = self._extract_search_group_code(message, normalized)
 
@@ -523,6 +532,75 @@ class ExternalActionSelectionService:
             }
 
         return None
+
+    def _select_pagination_refinement_action(
+        self,
+        refinement,
+        *,
+        allowed_action_ids: list[str],
+    ) -> dict | None:
+        action_id = str(refinement.action_id or "").strip()
+
+        if not action_id or action_id not in set(allowed_action_ids or []):
+            return None
+
+        candidates = self.repository.find_candidate_actions(
+            "",
+            limit=80,
+            allowed_action_ids=allowed_action_ids,
+        )
+
+        action = next(
+            (
+                item
+                for item in candidates
+                if str(item.get("actionId") or "") == action_id
+            ),
+            None,
+        )
+
+        if not action:
+            return None
+
+        parameters = dict(refinement.previous_parameters or {})
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if refinement.page_size is not None and lowered in {
+                "page_size",
+                "pagesize",
+                "limit",
+            }:
+                parameters[name] = refinement.page_size
+            elif refinement.page is not None and lowered == "page":
+                parameters[name] = refinement.page
+
+        reason = refinement.reason or (
+            "A mensagem ajusta paginação da consulta operacional já feita nesta conversa."
+        )
+
+        if refinement.page_size is not None:
+            reason = (
+                f"A mensagem aumenta o limite da consulta para "
+                f"{refinement.page_size} registro(s)."
+            )
+        elif refinement.page is not None:
+            reason = f"A mensagem solicita a página {refinement.page} da consulta anterior."
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": action_id,
+                "parameters": parameters,
+            },
+            "reason": reason,
+        }
 
     def _build_date_branch_parameters(self, action: dict, message: str) -> dict:
         from app.domain.services.chat_date_range_intent_service import (
@@ -1965,6 +2043,16 @@ class ExternalActionSelectionService:
             if normalized
             else None
         )
+        requested_page_size = (
+            ChatOperationalRefinementService.extract_requested_page_size(normalized)
+            if normalized
+            else None
+        )
+        requested_page = (
+            ChatOperationalRefinementService.extract_requested_page(normalized)
+            if normalized
+            else None
+        )
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -1997,10 +2085,13 @@ class ExternalActionSelectionService:
                 parameters[name] = code
 
             elif lowered == "page":
-                parameters[name] = 1
+                parameters[name] = requested_page or 1
 
             elif lowered in {"page_size", "pagesize", "limit"}:
-                parameters[name] = 200 if is_full_listing else 50
+                if requested_page_size is not None:
+                    parameters[name] = requested_page_size
+                else:
+                    parameters[name] = 200 if is_full_listing else 50
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
                 parameters[name] = 99 if is_full_listing else 10
