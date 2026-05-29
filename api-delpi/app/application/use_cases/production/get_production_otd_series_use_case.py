@@ -1,31 +1,31 @@
 from __future__ import annotations
 
-from app.application.dto.production.production_oee_series_request import (
-    ProductionOeeSeriesRequest,
+from app.application.dto.production.production_otd_series_request import (
+    ProductionOtdSeriesRequest,
 )
-from app.application.dto.production.production_oee_series_response import (
-    ProductionOeeSeriesPointDto,
-    ProductionOeeSeriesResponse,
+from app.application.dto.production.production_otd_series_response import (
+    ProductionOtdSeriesPointDto,
+    ProductionOtdSeriesResponse,
 )
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.shared.chart_period_buckets import build_period_buckets
 from app.application.shared.numeric_parsing import to_optional_float
-from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
-    OverallEquipmentEffectivenessRepositoryPort,
+from app.domain.ports.production.on_time_delivery_repository_port import (
+    OnTimeDeliveryRepositoryPort,
 )
 
 FILIAL_01 = "01"
 FILIAL_02 = "02"
 
 
-class GetProductionOeeSeriesUseCase:
+class GetProductionOtdSeriesUseCase:
     def __init__(
         self,
-        overall_equipment_effectiveness_repository: OverallEquipmentEffectivenessRepositoryPort,
+        on_time_delivery_repository: OnTimeDeliveryRepositoryPort,
     ):
-        self._oee_repository = overall_equipment_effectiveness_repository
+        self._otd_repository = on_time_delivery_repository
 
-    def execute(self, request: ProductionOeeSeriesRequest) -> ProductionOeeSeriesResponse:
+    def execute(self, request: ProductionOtdSeriesRequest) -> ProductionOtdSeriesResponse:
         request.validate()
 
         buckets_result = build_period_buckets(
@@ -34,16 +34,16 @@ class GetProductionOeeSeriesUseCase:
             granularity=request.granularity,
         )
 
-        points: list[ProductionOeeSeriesPointDto] = []
+        points: list[ProductionOtdSeriesPointDto] = []
 
         for bucket in buckets_result.buckets:
-            oee_01 = self._fetch_oee_pct(
+            otd_01 = self._fetch_otd_pct(
                 branch=FILIAL_01,
                 start_date=bucket.date_start,
                 end_date=bucket.date_end,
                 include=request.branch in (None, FILIAL_01),
             )
-            oee_02 = self._fetch_oee_pct(
+            otd_02 = self._fetch_otd_pct(
                 branch=FILIAL_02,
                 start_date=bucket.date_start,
                 end_date=bucket.date_end,
@@ -51,24 +51,24 @@ class GetProductionOeeSeriesUseCase:
             )
 
             points.append(
-                ProductionOeeSeriesPointDto(
+                ProductionOtdSeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
                     date_start=bucket.date_start,
                     date_end=bucket.date_end,
-                    oee_filial_01=oee_01,
-                    oee_filial_02=oee_02,
+                    otd_filial_01=otd_01,
+                    otd_filial_02=otd_02,
                 )
             )
 
-        return ProductionOeeSeriesResponse(
+        return ProductionOtdSeriesResponse(
             granularity=request.granularity,
             truncated=buckets_result.truncated,
             branch=request.branch,
             points=points,
         )
 
-    def _fetch_oee_pct(
+    def _fetch_otd_pct(
         self,
         *,
         branch: str,
@@ -79,7 +79,7 @@ class GetProductionOeeSeriesUseCase:
         if not include:
             return None
 
-        oee = self._oee_repository.get_overall_equipment_effectiveness(
+        otd = self._otd_repository.get_on_time_delivery(
             ProductionRequest(
                 branch=branch,
                 start_date=start_date,
@@ -87,14 +87,11 @@ class GetProductionOeeSeriesUseCase:
             )
         )
 
-        if oee is None:
+        if otd is None:
             return None
 
-        parsed = to_optional_float(oee.oee_pct)
+        parsed = to_optional_float(otd.on_time_delivery_pct)
         if parsed is None:
             return None
 
         return round(parsed, 2)
-
-
-from app.application.shared.numeric_parsing import to_optional_float

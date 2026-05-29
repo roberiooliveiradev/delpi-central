@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.application.dto.production.production_request import ProductionRequest
+from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.on_time_delivery_repository_port import (
     OnTimeDeliveryRepositoryPort,
 )
@@ -19,12 +20,13 @@ class GetOnTimeDeliveryPctUseCase:
                 production_request
             )
 
+            parsed = to_optional_float(
+                on_time_delivery.on_time_delivery_pct if on_time_delivery else None
+            )
+
             return {
                 "on_time_delivery_pct": (
-                    round(float(on_time_delivery.on_time_delivery_pct), 2)
-                    if on_time_delivery
-                    and on_time_delivery.on_time_delivery_pct is not None
-                    else None
+                    round(parsed, 2) if parsed is not None else None
                 )
             }
 
@@ -34,12 +36,9 @@ class GetOnTimeDeliveryPctUseCase:
 
         values = []
         for row in rows or []:
-            value = row.get("on_time_delivery_pct")
-            try:
-                if value is not None:
-                    values.append(float(value))
-            except (TypeError, ValueError):
-                continue
+            parsed = to_optional_float(row.get("on_time_delivery_pct"))
+            if parsed is not None:
+                values.append(parsed)
 
         return {
             "on_time_delivery_pct": (

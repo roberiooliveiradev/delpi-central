@@ -9,6 +9,7 @@ import type {
   ProductionCostPctData,
   ProductionFilterParams,
   ProductionOeeSeriesData,
+  ProductionOtdSeriesData,
 } from "../types/production";
 
 export const PRODUCTION_API_BASE = "/apps/api-delpi/production";
@@ -103,6 +104,17 @@ export function getProductionOeeSeries(
 ) {
   return fetchProductionData<ProductionOeeSeriesData>(
     "/oee/series",
+    params,
+    signal
+  );
+}
+
+export function getProductionOtdSeries(
+  params: ProductionFilterParams & { granularity: ChartGranularity },
+  signal?: AbortSignal
+) {
+  return fetchProductionData<ProductionOtdSeriesData>(
+    "/otd/series",
     params,
     signal
   );

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.application.dto.production.production_request import ProductionRequest
+from app.application.shared.numeric_parsing import to_optional_float
 from app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
     OverallEquipmentEffectivenessRepositoryPort,
 )
@@ -21,7 +22,7 @@ class GetOverallEquipmentEffectivenessPctUseCase:
                 production_request
             )
 
-            oee_pct = _to_optional_float(oee.oee_pct if oee else None)
+            oee_pct = to_optional_float(oee.oee_pct if oee else None)
             return {
                 "overall_equipment_effectiveness_pct": (
                     round(oee_pct, 2) if oee_pct is not None else None
@@ -34,7 +35,7 @@ class GetOverallEquipmentEffectivenessPctUseCase:
 
         values = []
         for row in rows or []:
-            parsed = _to_optional_float(row.get("oee_pct"))
+            parsed = to_optional_float(row.get("oee_pct"))
             if parsed is not None:
                 values.append(parsed)
 
@@ -45,16 +46,3 @@ class GetOverallEquipmentEffectivenessPctUseCase:
                 else None
             )
         }
-
-
-def _to_optional_float(value: object) -> float | None:
-    if value is None:
-        return None
-
-    if isinstance(value, str) and not value.strip():
-        return None
-
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None

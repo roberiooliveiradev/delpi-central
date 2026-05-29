@@ -18,6 +18,9 @@ from app.application.use_cases.production.get_overall_equipment_effectiveness_pc
 from app.application.use_cases.production.get_production_oee_series_use_case import (
     GetProductionOeeSeriesUseCase,
 )
+from app.application.use_cases.production.get_production_otd_series_use_case import (
+    GetProductionOtdSeriesUseCase,
+)
 from app.application.use_cases.production.get_production_cost_pct_use_case import (
     GetProductionCostPctUseCase,
 )
@@ -133,6 +136,12 @@ def build_get_overall_equipment_effectiveness_pct_use_case() -> GetOverallEquipm
 def build_get_production_oee_series_use_case() -> GetProductionOeeSeriesUseCase:
     return GetProductionOeeSeriesUseCase(
         overall_equipment_effectiveness_repository=OverallEquipmentEffectivenessRepository()
+    )
+
+
+def build_get_production_otd_series_use_case() -> GetProductionOtdSeriesUseCase:
+    return GetProductionOtdSeriesUseCase(
+        on_time_delivery_repository=OnTimeDeliveryRepository()
     )
 
 

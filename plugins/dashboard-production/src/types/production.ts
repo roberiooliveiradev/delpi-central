@@ -43,3 +43,19 @@ export type ProductionOeeSeriesData = {
   branch: string | null;
   points: ProductionOeeSeriesPoint[];
 };
+
+export type ProductionOtdSeriesPoint = {
+  periodo: string;
+  sort_key: string;
+  date_start: string;
+  date_end: string;
+  otd_filial_01: number | null;
+  otd_filial_02: number | null;
+};
+
+export type ProductionOtdSeriesData = {
+  granularity: string;
+  truncated: boolean;
+  branch: string | null;
+  points: ProductionOtdSeriesPoint[];
+};

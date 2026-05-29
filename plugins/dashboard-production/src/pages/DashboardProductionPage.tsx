@@ -22,16 +22,18 @@ import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
+import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
 import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
+import { useProductionOtdSeries } from "../hooks/useProductionOtdSeries";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
 import type { ChartGranularity } from "../types/chart";
-import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
+import { downloadOeeSeriesCsv, downloadOtdSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
@@ -67,6 +69,11 @@ export function DashboardProductionPage() {
   } = useProductionDashboard(apiParams);
 
   const oeeSeries = useProductionOeeSeries({
+    filters: apiParams,
+    granularity,
+  });
+
+  const otdSeries = useProductionOtdSeries({
     filters: apiParams,
     granularity,
   });
@@ -128,17 +135,23 @@ export function DashboardProductionPage() {
   const hasChartValues = comparisonChartData.some((item) => item.value > 0);
 
   const isOeeChartBusy = oeeSeries.loading;
+  const isOtdChartBusy = otdSeries.loading;
   const hasOeeChartValues = oeeSeries.points.some(
     (point) =>
       (point.oeeFilial01 != null && point.oeeFilial01 > 0) ||
       (point.oeeFilial02 != null && point.oeeFilial02 > 0)
   );
+  const hasOtdChartValues = otdSeries.points.some(
+    (point) =>
+      (point.otdFilial01 != null && point.otdFilial01 > 0) ||
+      (point.otdFilial02 != null && point.otdFilial02 > 0)
+  );
 
-  const oeeChartHint = branch
+  const temporalChartHint = branch
     ? `Clique em um ponto para filtrar o período. Série da filial ${branch}.`
     : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
 
-  const handleOeeChartDrillDown = useCallback(
+  const handleTemporalChartDrillDown = useCallback(
     (nextStart: string, nextEnd: string) => {
       setDateStart(nextStart);
       setDateEnd(nextEnd);
@@ -149,6 +162,10 @@ export function DashboardProductionPage() {
   const handleExportOeeCsv = useCallback(() => {
     downloadOeeSeriesCsv("oee-evolucao.csv", oeeSeries.points);
   }, [oeeSeries.points]);
+
+  const handleExportOtdCsv = useCallback(() => {
+    downloadOtdSeriesCsv("otd-evolucao.csv", otdSeries.points);
+  }, [otdSeries.points]);
 
   return (
     <div className="dashboard-production dashboard-page">
@@ -162,6 +179,7 @@ export function DashboardProductionPage() {
         onRefresh={() => {
           reload();
           oeeSeries.reload();
+          otdSeries.reload();
         }}
         refreshing={refreshing}
       />
@@ -266,63 +284,121 @@ export function DashboardProductionPage() {
         />
       </section>
 
-      <section className="dp-chart-section" aria-busy={isOeeChartBusy}>
-        <ChartCard
-          title="Evolução do OEE (%)"
-          hint={oeeChartHint}
-        >
-          <ChartToolbar
-            idPrefix="oee"
-            granularity={granularity}
-            onGranularityChange={setGranularity}
-            onExportCsv={handleExportOeeCsv}
-            exportDisabled={oeeSeries.points.length === 0}
-          />
-
-          {oeeSeries.error ? (
-            <div className="dp-state dp-state--error" role="alert">
-              <p>{oeeSeries.error}</p>
-              <button
-                className="dp-primary-btn"
-                type="button"
-                onClick={oeeSeries.reload}
-              >
-                Tentar novamente
-              </button>
-            </div>
-          ) : null}
-
-          {!oeeSeries.error &&
-          (oeeSeries.points.length > 0 || oeeSeries.loading) ? (
-            <OeeEvolutionChart
-              data={oeeSeries.points}
-              branch={branch || undefined}
-              loading={oeeSeries.loading}
-              onDrillDown={handleOeeChartDrillDown}
+      <section className="dp-charts-grid">
+        <div className="dp-chart-section" aria-busy={isOeeChartBusy}>
+          <ChartCard title="Evolução do OEE (%)" hint={temporalChartHint}>
+            <ChartToolbar
+              idPrefix="oee"
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+              onExportCsv={handleExportOeeCsv}
+              exportDisabled={oeeSeries.points.length === 0}
             />
-          ) : null}
 
-          {!oeeSeries.error &&
-          oeeSeries.points.length === 0 &&
-          !oeeSeries.loading ? (
-            <div className="dp-state-box">Sem dados para o gráfico no período.</div>
-          ) : null}
+            {oeeSeries.error ? (
+              <div className="dp-state dp-state--error" role="alert">
+                <p>{oeeSeries.error}</p>
+                <button
+                  className="dp-primary-btn"
+                  type="button"
+                  onClick={oeeSeries.reload}
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : null}
 
-          {oeeSeries.truncated ? (
-            <p className="dp-chart-card__hint dp-chart-card__hint--below">
-              Período limitado aos primeiros 60 intervalos para desempenho.
-            </p>
-          ) : null}
+            {!oeeSeries.error &&
+            (oeeSeries.points.length > 0 || oeeSeries.loading) ? (
+              <OeeEvolutionChart
+                data={oeeSeries.points}
+                branch={branch || undefined}
+                loading={oeeSeries.loading}
+                onDrillDown={handleTemporalChartDrillDown}
+              />
+            ) : null}
 
-          {!oeeSeries.error &&
-          oeeSeries.points.length > 0 &&
-          !hasOeeChartValues &&
-          !oeeSeries.loading ? (
-            <p className="dp-chart-card__hint dp-chart-card__hint--below">
-              Todos os intervalos retornaram OEE zero ou sem apontamento no período.
-            </p>
-          ) : null}
-        </ChartCard>
+            {!oeeSeries.error &&
+            oeeSeries.points.length === 0 &&
+            !oeeSeries.loading ? (
+              <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+            ) : null}
+
+            {oeeSeries.truncated ? (
+              <p className="dp-chart-card__hint dp-chart-card__hint--below">
+                Período limitado aos primeiros 60 intervalos para desempenho.
+              </p>
+            ) : null}
+
+            {!oeeSeries.error &&
+            oeeSeries.points.length > 0 &&
+            !hasOeeChartValues &&
+            !oeeSeries.loading ? (
+              <p className="dp-chart-card__hint dp-chart-card__hint--below">
+                Todos os intervalos retornaram OEE zero ou sem apontamento no período.
+              </p>
+            ) : null}
+          </ChartCard>
+        </div>
+
+        <div className="dp-chart-section" aria-busy={isOtdChartBusy}>
+          <ChartCard
+            title="Evolução do OTD (%)"
+            hint="Ordens finalizadas no prazo (C2_DATRF ≤ C2_DATPRF). Clique em um ponto para filtrar o período."
+          >
+            <ChartToolbar
+              idPrefix="otd"
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+              onExportCsv={handleExportOtdCsv}
+              exportDisabled={otdSeries.points.length === 0}
+            />
+
+            {otdSeries.error ? (
+              <div className="dp-state dp-state--error" role="alert">
+                <p>{otdSeries.error}</p>
+                <button
+                  className="dp-primary-btn"
+                  type="button"
+                  onClick={otdSeries.reload}
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : null}
+
+            {!otdSeries.error &&
+            (otdSeries.points.length > 0 || otdSeries.loading) ? (
+              <OtdEvolutionChart
+                data={otdSeries.points}
+                branch={branch || undefined}
+                loading={otdSeries.loading}
+                onDrillDown={handleTemporalChartDrillDown}
+              />
+            ) : null}
+
+            {!otdSeries.error &&
+            otdSeries.points.length === 0 &&
+            !otdSeries.loading ? (
+              <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+            ) : null}
+
+            {otdSeries.truncated ? (
+              <p className="dp-chart-card__hint dp-chart-card__hint--below">
+                Período limitado aos primeiros 60 intervalos para desempenho.
+              </p>
+            ) : null}
+
+            {!otdSeries.error &&
+            otdSeries.points.length > 0 &&
+            !hasOtdChartValues &&
+            !otdSeries.loading ? (
+              <p className="dp-chart-card__hint dp-chart-card__hint--below">
+                Todos os intervalos retornaram OTD zero ou sem OP finalizada no período.
+              </p>
+            ) : null}
+          </ChartCard>
+        </div>
       </section>
 
       <section className="dp-chart-section">
@@ -367,8 +443,7 @@ export function DashboardProductionPage() {
             Os três primeiros KPIs são custos médios das planilhas divididos pelo
             ROL (TOTVS) no período. <strong>OEE</strong> é a média de eficiência
             dos apontamentos (gráfico temporal por filial). <strong>OTD</strong> mede ordens de produção
-            concluídas no prazo. Sem filial, a API consolida por média entre
-            matriz e filial.
+            concluídas no prazo (gráfico temporal por filial).
           </p>
         </article>
       </section>

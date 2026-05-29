@@ -7,6 +7,9 @@ from app.utils.logger import log_error
 from app.application.dto.production.production_oee_series_request import (
     ProductionOeeSeriesRequest,
 )
+from app.application.dto.production.production_otd_series_request import (
+    ProductionOtdSeriesRequest,
+)
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.dto.financial.get_rol_request import GetRolRequest
 
@@ -17,6 +20,7 @@ from app.composition.production_composer import (
     build_get_depreciation_pct_use_case,
     build_get_overall_equipment_effectiveness_pct_use_case,
     build_get_production_oee_series_use_case,
+    build_get_production_otd_series_use_case,
     build_get_on_time_delivery_pct_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
@@ -199,6 +203,42 @@ def get_production_oee_series(
         log_error(f"Erro ao carregar série de OEE: {exc}")
         return error_response(
             "Erro interno ao carregar série temporal de OEE.",
+            status_code=500,
+        )
+
+
+@router.get("/otd/series")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+def get_production_otd_series(
+    granularity: str = Query(..., min_length=3, max_length=10),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        request = ProductionOtdSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+        )
+
+        use_case = build_get_production_otd_series_use_case()
+        result = use_case.execute(request)
+
+        return success_response(
+            data=result.to_dict(),
+            message="Série temporal de OTD carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na série de OTD: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao carregar série de OTD: {exc}")
+        return error_response(
+            "Erro interno ao carregar série temporal de OTD.",
             status_code=500,
         )
 
