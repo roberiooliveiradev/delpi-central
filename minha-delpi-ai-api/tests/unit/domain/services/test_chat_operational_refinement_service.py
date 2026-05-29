@@ -41,6 +41,42 @@ def test_detect_stock_refinement_with_branch_from_history():
     assert refinement.branch == "02"
 
 
+def test_detect_stock_refinement_with_unresolved_path_template():
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto 10080022",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "get_product_stock",
+                            "parameters": {"code": "10080022", "page": 1, "page_size": 50},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/{code}/stock",
+                            "actionId": "get_product_stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    refinement = ChatOperationalRefinementService.detect(
+        "filtre filial 02",
+        previous_messages=history,
+    )
+
+    assert refinement is not None
+    assert refinement.kind == "stock_refinement"
+    assert refinement.product_code == "10080022"
+    assert refinement.branch == "02"
+
+
 def test_detect_ignores_refinement_without_stock_context():
     refinement = ChatOperationalRefinementService.detect(
         "filtre filial 02",
@@ -180,5 +216,61 @@ def test_is_operational_follow_up_enables_fast_path():
 
     assert ChatOperationalRefinementService.is_operational_follow_up(
         "filtre filial 02",
+        previous_messages=history,
+    )
+
+
+def test_plan_metric_follow_up_after_commercial_kpi():
+    history = [
+        {"role": "user", "content": "faturamento comercial"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/commercial/billing",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "filtre filial 02",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "metric_refinement"
+    assert planned[0].metric_kind == "department_kpi"
+    assert planned[0].branch == "02"
+
+
+def test_plan_product_route_follow_up_after_structure():
+    """Follow-up operacional reutiliza lote recente de sub-rota produto."""
+    history = [
+        {"role": "user", "content": "estrutura do produto 10080047"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080047/structure",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    assert ChatOperationalRefinementService.is_operational_follow_up(
+        "e os pais desse produto",
         previous_messages=history,
     )

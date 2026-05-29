@@ -384,6 +384,124 @@ def test_select_stock_refinement_reuses_product_and_branch():
     assert "filial 02" in selected["reason"]
 
 
+def test_select_stock_refinement_with_unresolved_path_template():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Product stock",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "branch", "in": "query"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto 10080022",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"code": "10080022", "page": 1, "page_size": 50},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/{code}/stock",
+                            "actionId": "stock-action",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "filtre filial 02",
+        allowed_action_ids=["stock-action"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["parameters"]["code"] == "10080022"
+    assert selected["arguments"]["parameters"]["branch"] == "02"
+
+
+def test_select_stock_refinement_prefers_previous_action_provider():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.products.get_product_stock",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "get_product_stock",
+                    "summary": "Product stock",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "branch", "in": "query"},
+                    ],
+                },
+                {
+                    "actionId": "transforma_mais.products.stock_products_code_stock_get",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "stock_products_code_stock_get",
+                    "summary": "Stock transforma",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "branch", "in": "query"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {"role": "user", "content": "estoque do produto 10080022"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto 10080022",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/stock",
+                            "actionId": "api_delpi.products.get_product_stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "filtre filial 02",
+        allowed_action_ids=[
+            "api_delpi.products.get_product_stock",
+            "transforma_mais.products.stock_products_code_stock_get",
+        ],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "api_delpi.products.get_product_stock"
+    assert selected["arguments"]["parameters"]["branch"] == "02"
+
+
 def test_select_product_summary_not_analyser():
     service = ExternalActionSelectionService(
         FakeRepository(
@@ -522,3 +640,105 @@ def test_select_product_full_analyser_not_summary():
 
     assert selected is not None
     assert selected["arguments"]["actionId"] == "analyser-action"
+
+
+def test_select_department_kpi_refinement_with_branch():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "commercial-billing",
+                    "method": "GET",
+                    "path": "/commercial/billing",
+                    "operationId": "get_commercial_billing",
+                    "summary": "Faturamento comercial",
+                    "parametersSchema": [
+                        {"name": "branch", "in": "query"},
+                        {"name": "start_date", "in": "query"},
+                        {"name": "end_date", "in": "query"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {"role": "user", "content": "faturamento comercial"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/commercial/billing",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "filtre filial 02",
+        allowed_action_ids=["commercial-billing"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "commercial-billing"
+    assert selected["arguments"]["parameters"]["branch"] == "02"
+
+
+def test_select_parents_follow_up_after_structure():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "structure-action",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "summary": "Estrutura",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+                {
+                    "actionId": "parents-action",
+                    "method": "GET",
+                    "path": "/products/{code}/parents",
+                    "operationId": "get_product_parents",
+                    "summary": "Pais",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {"role": "user", "content": "estrutura do produto 10080047"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080047/structure",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selected = service.select_action(
+        "e os pais desse produto",
+        allowed_action_ids=["structure-action", "parents-action"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "parents-action"
+    assert selected["arguments"]["parameters"]["code"] == "10080047"

@@ -133,3 +133,14 @@ def test_drop_internal_unknown_parameters_keeps_non_internal_unknown_parameter()
         "produto": "10080014",
         "campo_incorreto": "valor",
     }
+
+
+def test_resolve_action_path_substitutes_path_parameters():
+    use_case = _use_case()
+
+    resolved = use_case._resolve_action_path(
+        "/products/{code}/stock",
+        {"code": "10080022", "branch": "02"},
+    )
+
+    assert resolved == "/products/10080022/stock"

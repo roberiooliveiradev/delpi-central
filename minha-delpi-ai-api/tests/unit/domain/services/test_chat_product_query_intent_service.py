@@ -34,6 +34,13 @@ def test_detect_summary_intent():
     )
 
 
+def test_detect_parents_intent_from_follow_up_phrase():
+    assert (
+        ChatProductQueryIntentService.detect("e os pais desse produto")
+        == ChatProductQueryIntent.PARENTS
+    )
+
+
 def test_detect_summary_not_kaizen_or_sales():
     assert (
         ChatProductQueryIntentService.detect("resumo de vendas do mês")

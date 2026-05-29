@@ -112,7 +112,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.1.1 | Estender refinamento operacional além de estoque (estrutura, parents, KPI com filial) | 🟡 | CPV/suprimentos e KPIs departamentais com «filial 02»; sub-rotas produto (`purchases`, `suppliers`, …) com herança de segmento; estoque multi-produto mantido |
+| 11.1.1 | Estender refinamento operacional além de estoque (estrutura, parents, KPI com filial) | ✅ | CPV/suprimentos e KPIs departamentais com «filial 02»; sub-rotas produto (`purchases`, `suppliers`, …) com herança de segmento; estoque multi-produto mantido |
 | 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ✅ | `ChatDateRangeIntentService` + merge em suprimentos/KPIs e listagem `/sales`; datas `DD/MM/YYYY` não viram código de produto |
 | 11.1.3 | Heurística explícita `summary` vs `analyser` | ✅ | Intent `SUMMARY` + rank dedicado; regressão «resumo do produto 10080047» |
 | 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | ✅ | `test_chat_stock_refinement_stream_send.py` + `test_chat_turn_preparation_stock_refinement.py` |
@@ -125,7 +125,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | 11.2.1 | Garantir `skip_rag` + sem LLM em todos os direct answers operacionais | ✅ | Guarda `direct_answer` → `skip_rag`; teste `test_chat_turn_preparation_direct_answer_skip_rag.py` |
 | 11.2.2 | Calibrar `LLM_MAX_TOKENS` / `OLLAMA_NUM_CTX` por ambiente (homologação &lt; 15s) | 🟡 | Checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) |
 | 11.2.3 | Portal: bootstrap sem `login()` em loop se `/me` falhar (guard + `stripOAuthHash`) | ⬜ | 401 no bootstrap não redireciona ao SSO de novo |
-| 11.2.4 | Compose dev: volume `../shared:/shared` no `core-api` | ⬜ | Fix JWT sobrevive a `recreate` sem `docker cp` |
+| 11.2.4 | Compose dev: volume `../shared:/shared` no `core-api` | ✅ | Fix JWT sobrevive a `recreate` sem `docker cp` |
 
 ### 11.3 — Tool-calling “estilo GPT” (prioridade média, sandbox)
 
@@ -149,7 +149,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
 | 11.5.1 | Smoke operacional no CI ou script pós-deploy | ⬜ | `smoke_operational_questions.py` documentado no runbook |
-| 11.5.2 | Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` | ⬜ | Front valida antes do upload |
+| 11.5.2 | Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` | ✅ | Front valida antes do upload |
 
 ### 11.6 — Fora do escopo imediato (registrar para onda futura)
 

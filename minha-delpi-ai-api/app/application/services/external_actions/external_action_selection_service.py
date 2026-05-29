@@ -32,16 +32,24 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str] | None = None,
         intent: str | None = None,
         route_segment: str | None = None,
+        previous_messages: list | None = None,
     ) -> dict | None:
         code = ChatProductQueryIntentService.normalize_product_code(product_code)
 
-        if not code:
+        if not code or ChatAnalysisIntentService.looks_like_path_placeholder(code):
             return None
 
         resolved_intent = intent or ChatProductQueryIntentService.detect(message)
         resolved_segment = route_segment or ChatRouteContextService.resolve_product_route_segment(
             message
         )
+        preferred_action_id = None
+
+        if previous_messages and resolved_intent == ChatProductQueryIntent.STOCK:
+            preferred_action_id = self._resolve_previous_external_action_id(
+                previous_messages,
+                path_fragment="/stock",
+            )
 
         return self._select_product_action(
             message,
@@ -49,6 +57,7 @@ class ExternalActionSelectionService:
             allowed_action_ids=allowed_action_ids or [],
             intent=resolved_intent,
             route_segment=resolved_segment,
+            preferred_action_id=preferred_action_id,
         )
 
     def select_action(
@@ -73,11 +82,16 @@ class ExternalActionSelectionService:
         )
 
         if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
+            previous_stock_action_id = self._resolve_previous_external_action_id(
+                previous_messages,
+                path_fragment="/stock",
+            )
             selected = self._select_product_action(
                 message,
                 str(refinement.product_code or ""),
                 allowed_action_ids=allowed_action_ids,
                 intent=ChatProductQueryIntent.STOCK,
+                preferred_action_id=previous_stock_action_id,
             )
 
             if selected:
@@ -1296,6 +1310,7 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         intent: str = ChatProductQueryIntent.FULL,
         route_segment: str | None = None,
+        preferred_action_id: str | None = None,
     ) -> dict | None:
         candidates = []
 
@@ -1321,12 +1336,31 @@ class ExternalActionSelectionService:
             if action.get("method") == "GET"
         ] or candidates
 
-        for action in self._rank_product_actions(
+        ranked = self._rank_product_actions(
             candidates,
             intent=intent,
             message=message,
             route_segment=route_segment,
-        ):
+        )
+
+        if preferred_action_id:
+            preferred = next(
+                (
+                    action
+                    for action in ranked
+                    if str(action.get("actionId") or "") == preferred_action_id
+                ),
+                None,
+            )
+
+            if preferred:
+                ranked = [preferred, *[
+                    action
+                    for action in ranked
+                    if str(action.get("actionId") or "") != preferred_action_id
+                ]]
+
+        for action in ranked:
             parameters = self._build_product_parameters(
                 action,
                 product_code,
@@ -1985,6 +2019,47 @@ class ExternalActionSelectionService:
                 parameters[name] = warehouse_code
 
         return parameters
+
+    def _resolve_previous_external_action_id(
+        self,
+        previous_messages: list | None,
+        *,
+        path_fragment: str,
+    ) -> str | None:
+        fragment = str(path_fragment or "").strip().lower()
+
+        if not fragment:
+            return None
+
+        for item in reversed((previous_messages or [])[-14:]):
+            metadata = item.get("metadata") if isinstance(item, dict) else getattr(item, "metadata", None)
+
+            if not isinstance(metadata, dict):
+                continue
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata") or {}
+
+                if not tool_meta.get("ok"):
+                    continue
+
+                path = str(tool_meta.get("path") or "").lower()
+
+                if fragment not in path:
+                    continue
+
+                action_id = tool_meta.get("actionId")
+
+                if action_id:
+                    return str(action_id)
+
+        return None
 
     def _extract_numeric_code(self, message: str) -> str | None:
         return ChatProductQueryIntentService.extract_product_code(message)

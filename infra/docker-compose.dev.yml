@@ -130,6 +130,7 @@ services:
 
     volumes:
       - ../core-api:/app
+      - ../shared:/shared
 
     depends_on:
       - postgres-core

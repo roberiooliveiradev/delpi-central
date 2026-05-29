@@ -51,7 +51,8 @@ Retorna permissões e capacidades resolvidas pelo backend, incluindo bypass de s
   "canManageOwnAgents": true,
   "canManageOfficialAgents": false,
   "canManageTools": true,
-  "canUseTools": true
+  "canUseTools": true,
+  "knowledgeDocumentMaxChars": 2000000
 }
 ```
 

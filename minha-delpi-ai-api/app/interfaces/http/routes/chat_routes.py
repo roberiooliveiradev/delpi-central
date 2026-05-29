@@ -186,6 +186,8 @@ def _get_chat_capabilities_from_request() -> dict:
         or CHAT_TOOLS_MANAGE_PERMISSION in permissions
     )
 
+    from app.infrastructure.config.settings import Settings
+
     return {
         "permissions": sorted(permissions),
         "isSuperadmin": is_superadmin,
@@ -198,6 +200,7 @@ def _get_chat_capabilities_from_request() -> dict:
             can_manage_tools
             or CHAT_TOOLS_USE_PERMISSION in permissions
         ),
+        "knowledgeDocumentMaxChars": Settings.KNOWLEDGE_DOCUMENT_MAX_CHARS,
     }
 
 

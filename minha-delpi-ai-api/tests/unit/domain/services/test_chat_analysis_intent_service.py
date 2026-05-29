@@ -50,6 +50,14 @@ def test_extract_product_code_from_stock_path():
     assert code == "10080047"
 
 
+def test_extract_product_code_ignores_unresolved_path_template():
+    code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
+        "/products/{code}/stock"
+    )
+
+    assert code is None
+
+
 def test_extract_product_path_segment():
     assert (
         ChatAnalysisIntentService.extract_product_path_segment(

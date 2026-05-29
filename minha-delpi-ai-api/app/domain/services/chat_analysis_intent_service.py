@@ -49,6 +49,7 @@ class ChatAnalysisIntentService:
         r"/products/(?P<code>[^/]+)(?:/(?P<segment>[^/?]+))?",
         re.IGNORECASE,
     )
+    _PATH_PLACEHOLDER_RE = re.compile(r"^\{[^}]+\}$")
 
     @classmethod
     def is_comparison_or_insight_request(cls, message: str) -> bool:
@@ -152,6 +153,15 @@ class ChatAnalysisIntentService:
         return []
 
     @classmethod
+    def looks_like_path_placeholder(cls, value: str | None) -> bool:
+        token = str(value or "").strip()
+
+        if not token:
+            return False
+
+        return bool(cls._PATH_PLACEHOLDER_RE.match(token))
+
+    @classmethod
     def extract_product_code_from_tool_path(cls, path: str | None) -> str | None:
         if not path:
             return None
@@ -161,7 +171,12 @@ class ChatAnalysisIntentService:
         if not match:
             return None
 
-        return ChatProductQueryIntentService.normalize_product_code(match.group("code"))
+        raw_code = str(match.group("code") or "").strip()
+
+        if cls.looks_like_path_placeholder(raw_code):
+            return None
+
+        return ChatProductQueryIntentService.normalize_product_code(raw_code)
 
     @classmethod
     def extract_product_path_segment(cls, path: str | None) -> str | None:

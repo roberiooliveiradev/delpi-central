@@ -176,11 +176,11 @@ export function ChatRichPresentation({
               onClick={() => setViewMode("table")}
             />
           ) : null}
-          {expandTarget ? <ExpandButton presentation={expandTarget} /> : null}
+          {expandTarget ? <ExpandButton presentation={expandTarget} onDrillDown={onDrillDown} /> : null}
         </div>
       ) : expandTarget ? (
         <div className="mdc-rich-presentation__actions">
-          <ExpandButton presentation={expandTarget} />
+          <ExpandButton presentation={expandTarget} onDrillDown={onDrillDown} />
         </div>
       ) : null}
 

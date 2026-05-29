@@ -1,3 +1,4 @@
+from urllib.parse import quote
 from uuid import UUID
 
 from app.domain.ports.audit_repository_port import AuditRepositoryPort
@@ -64,13 +65,19 @@ class ExecuteExternalActionUseCase:
 
         sanitized_data = self.policy.sanitize_response(result["data"])
         action_path = action.get("path") or ""
+        resolved_path = self._resolve_action_path(
+            action_path,
+            arguments.get("parameters") or {},
+        )
         text_presentation = self.presenter.build_text_presentation(
             sanitized_data,
-            path=action_path,
+            path=resolved_path,
         )
-        presentation = self.presenter.build_presentation(sanitized_data, path=action_path)
+        presentation = self.presenter.build_presentation(
+            sanitized_data, path=resolved_path
+        )
         chart_presentation = self.presenter.build_chart_presentation(
-            sanitized_data, path=action_path,
+            sanitized_data, path=resolved_path,
         )
 
         table_presentation = None
@@ -92,7 +99,7 @@ class ExecuteExternalActionUseCase:
                         "provider": provider["providerKey"],
                         "actionId": action["actionId"],
                         "method": action["method"],
-                        "path": action["path"],
+                        "path": resolved_path,
                         "statusCode": result["statusCode"],
                         "durationMs": result["durationMs"],
                         "sensitivity": action["sensitivity"],
@@ -103,7 +110,7 @@ class ExecuteExternalActionUseCase:
                 "provider": provider["providerKey"],
                 "action_id": action["actionId"],
                 "method": action["method"],
-                "path": action["path"],
+                "path": resolved_path,
                 "status_code": result["statusCode"],
                 "duration_ms": result["durationMs"],
                 "sensitivity": action["sensitivity"],
@@ -131,7 +138,7 @@ class ExecuteExternalActionUseCase:
             "provider": provider["providerKey"],
             "actionId": action["actionId"],
             "method": action["method"],
-            "path": action["path"],
+            "path": resolved_path,
             "statusCode": result["statusCode"],
             "ok": result["ok"],
             "data": sanitized_data,
@@ -144,6 +151,24 @@ class ExecuteExternalActionUseCase:
                 "availableFormats": available_formats,
             },
         }
+
+    @staticmethod
+    def _resolve_action_path(path: str, parameters: dict) -> str:
+        resolved = str(path or "")
+
+        for key, value in (parameters or {}).items():
+            if value in (None, ""):
+                continue
+
+            token = "{" + str(key) + "}"
+
+            if token in resolved:
+                resolved = resolved.replace(
+                    token,
+                    quote(str(value), safe=""),
+                )
+
+        return resolved
 
     def _drop_internal_unknown_parameters(self, action: dict, arguments: dict) -> dict:
         normalized = dict(arguments or {})

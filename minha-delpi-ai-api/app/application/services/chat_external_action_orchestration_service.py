@@ -124,6 +124,7 @@ class ChatExternalActionOrchestrationService:
                         product_code=str(refinement.product_code or ""),
                         allowed_action_ids=allowed_action_ids,
                         intent=ChatProductQueryIntent.STOCK,
+                        previous_messages=previous_messages,
                     )
                 elif refinement.kind in {"metric_refinement", "metric_reset"}:
                     selected = selection_service.select_action(

@@ -17,9 +17,11 @@ function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi
 export function ChatExpandModal({
   presentation,
   onClose,
+  onDrillDown,
 }: {
   presentation: ChatPresentation;
   onClose: () => void;
+  onDrillDown?: (query: string) => void;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -99,7 +101,7 @@ export function ChatExpandModal({
           </div>
           <div className="mdc-expand-modal__body" ref={chartRef}>
             {presentation.type === "table" && (
-              <ChatRichTable presentation={presentation} />
+              <ChatRichTable presentation={presentation} onDrillDown={onDrillDown} />
             )}
             {presentation.type === "chart" && (
               <ChatRichChart presentation={presentation} />
@@ -116,8 +118,10 @@ export function ChatExpandModal({
 
 export function ExpandButton({
   presentation,
+  onDrillDown,
 }: {
   presentation: ChatPresentation;
+  onDrillDown?: (query: string) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -134,6 +138,7 @@ export function ExpandButton({
         <ChatExpandModal
           presentation={presentation}
           onClose={() => setOpen(false)}
+          onDrillDown={onDrillDown}
         />
       )}
     </>

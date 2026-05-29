@@ -372,6 +372,33 @@ class ChatOperationalRefinementService:
 
                 code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
 
+                if not code:
+                    arguments = tool_call.get("arguments") or {}
+                    parameters = arguments.get("parameters") or {}
+
+                    if isinstance(parameters, dict):
+                        for key in (
+                            "code",
+                            "product_code",
+                            "productcode",
+                            "codigo",
+                            "cod_produto",
+                        ):
+                            raw = parameters.get(key)
+
+                            if not raw:
+                                continue
+
+                            candidate = ChatProductQueryIntentService.normalize_product_code(
+                                str(raw)
+                            )
+
+                            if candidate and not ChatAnalysisIntentService.looks_like_path_placeholder(
+                                candidate
+                            ):
+                                code = candidate
+                                break
+
                 if code and code not in batch_codes:
                     batch_codes.append(code)
 
