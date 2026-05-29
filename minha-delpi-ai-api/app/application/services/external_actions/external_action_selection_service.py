@@ -102,6 +102,7 @@ class ExternalActionSelectionService:
                 message,
                 refinement,
                 allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -167,6 +168,7 @@ class ExternalActionSelectionService:
             selected = self._select_transforma_action(
                 message,
                 allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -198,6 +200,7 @@ class ExternalActionSelectionService:
                 path_token="cpv",
                 operation_token="cpv",
                 reason="A pergunta solicita o indicador CPV de suprimentos.",
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -210,6 +213,7 @@ class ExternalActionSelectionService:
                 path_token="otd",
                 operation_token="otd",
                 reason="A pergunta solicita o indicador OTD de suprimentos.",
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -222,6 +226,7 @@ class ExternalActionSelectionService:
                 path_token="inventory-turnover",
                 operation_token="inventory_turnover",
                 reason="A pergunta solicita giro de estoque (IDD) em suprimentos.",
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -349,6 +354,7 @@ class ExternalActionSelectionService:
                 message,
                 allowed_action_ids=allowed_action_ids,
                 match=department_kpi,
+                previous_messages=previous_messages,
             )
 
             if selected:
@@ -476,6 +482,7 @@ class ExternalActionSelectionService:
         refinement,
         *,
         allowed_action_ids: list[str],
+        previous_messages: list | None = None,
     ) -> dict | None:
         if refinement.metric_kind == "supplies" and refinement.metric_path_token:
             return self._select_supplies_metric_action(
@@ -484,6 +491,7 @@ class ExternalActionSelectionService:
                 path_token=str(refinement.metric_path_token),
                 operation_token=str(refinement.metric_path_token),
                 reason=refinement.reason or "Refino de indicador de suprimentos.",
+                previous_messages=previous_messages,
             )
 
         if refinement.metric_kind == "department_kpi" and refinement.metric_path_token:
@@ -501,6 +509,7 @@ class ExternalActionSelectionService:
                 message,
                 allowed_action_ids,
                 match=match,
+                previous_messages=previous_messages,
             )
 
         return None
@@ -511,6 +520,7 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         *,
         match,
+        previous_messages: list | None = None,
     ) -> dict | None:
         candidates = self._list_allowed_candidates(
             message,
@@ -537,7 +547,11 @@ class ExternalActionSelectionService:
                 "name": "execute_external_action",
                 "arguments": {
                     "actionId": action["actionId"],
-                    "parameters": self._build_date_branch_parameters(action, message),
+                    "parameters": self._build_date_branch_parameters(
+                        action,
+                        message,
+                        previous_messages=previous_messages,
+                    ),
                 },
                 "reason": match.reason,
             }
@@ -804,7 +818,13 @@ class ExternalActionSelectionService:
             "reason": reason,
         }
 
-    def _build_date_branch_parameters(self, action: dict, message: str) -> dict:
+    def _build_date_branch_parameters(
+        self,
+        action: dict,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict:
         from app.domain.services.chat_date_range_intent_service import (
             ChatDateRangeIntentService,
         )
@@ -814,7 +834,10 @@ class ExternalActionSelectionService:
 
         branch_match = re.search(r"\bfilial\s+(\d{2})\b", normalized)
         branch = branch_match.group(1) if branch_match else None
-        date_range = ChatDateRangeIntentService.resolve(message)
+        date_range = ChatDateRangeIntentService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
 
         for parameter in action.get("parametersSchema") or []:
             name = parameter.get("name")
@@ -848,10 +871,75 @@ class ExternalActionSelectionService:
                 parameters[name] = 1
             elif lowered in {"page_size", "pagesize", "limit"}:
                 parameters[name] = 50
-            elif lowered == "granularity" and "serie" in normalized:
-                parameters[name] = "month"
+            elif lowered == "granularity":
+                inferred = self._infer_granularity(normalized, date_range)
+                if inferred:
+                    parameters[name] = inferred
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name or name in parameters:
+                continue
+
+            if name.lower() != "granularity" or not parameter.get("required"):
+                continue
+
+            parameters[name] = self._infer_granularity(normalized, date_range) or "month"
 
         return parameters
+
+    @staticmethod
+    def _infer_granularity(normalized: str, date_range) -> str | None:
+        if any(
+            term in normalized
+            for term in ("diario", "diaria", "por dia", " ao dia", " diaria")
+        ):
+            return "day"
+
+        if any(
+            term in normalized
+            for term in ("semanal", "por semana", " semana ", "semanas")
+        ):
+            return "week"
+
+        if any(
+            term in normalized
+            for term in ("anual", "por ano", " ano ", " anos ")
+        ):
+            return "year"
+
+        if any(
+            term in normalized
+            for term in (
+                "serie",
+                "series",
+                "evolucao",
+                "no tempo",
+                "temporal",
+                "mes",
+                "mensal",
+                "trimestre",
+                "marco",
+                "janeiro",
+                "fevereiro",
+                "abril",
+                "maio",
+                "junho",
+                "julho",
+                "agosto",
+                "setembro",
+                "outubro",
+                "novembro",
+                "dezembro",
+            )
+        ):
+            return "month"
+
+        if date_range:
+            return "month"
+
+        return None
 
     def _select_supplies_metric_action(
         self,
@@ -861,6 +949,7 @@ class ExternalActionSelectionService:
         path_token: str,
         operation_token: str,
         reason: str,
+        previous_messages: list | None = None,
     ) -> dict | None:
         candidates = self._list_allowed_candidates(
             message,
@@ -878,7 +967,11 @@ class ExternalActionSelectionService:
             if path_token not in path and operation_token not in operation_id:
                 continue
 
-            parameters = self._build_date_branch_parameters(action, message)
+            parameters = self._build_date_branch_parameters(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
 
             if not parameters:
                 parameters = self._build_supplies_stock_parameters(action)
@@ -1101,6 +1194,8 @@ class ExternalActionSelectionService:
         self,
         message: str,
         allowed_action_ids: list[str],
+        *,
+        previous_messages: list | None = None,
     ) -> dict | None:
         candidates = [
             action
@@ -1143,7 +1238,11 @@ class ExternalActionSelectionService:
             "name": "execute_external_action",
             "arguments": {
                 "actionId": action["actionId"],
-                "parameters": self._build_date_branch_parameters(action, message),
+                "parameters": self._build_date_branch_parameters(
+                    action,
+                    message,
+                    previous_messages=previous_messages,
+                ),
             },
             "reason": "A pergunta solicita dados do programa Transforma Mais.",
         }
@@ -1847,12 +1946,22 @@ class ExternalActionSelectionService:
 
         return self._merge_date_parameters(action, message, parameters)
 
-    def _merge_date_parameters(self, action: dict, message: str, parameters: dict) -> dict:
+    def _merge_date_parameters(
+        self,
+        action: dict,
+        message: str,
+        parameters: dict,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict:
         from app.domain.services.chat_date_range_intent_service import (
             ChatDateRangeIntentService,
         )
 
-        date_range = ChatDateRangeIntentService.resolve(message)
+        date_range = ChatDateRangeIntentService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
 
         if not date_range:
             return parameters

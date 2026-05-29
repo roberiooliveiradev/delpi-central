@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from functools import lru_cache
 
 from app.domain.services.chat_message_normalization_service import (
@@ -194,6 +195,65 @@ class ChatOperationalParameterService:
             return None
 
         return intent
+
+    @classmethod
+    def resolve_ambiguous_period_answer(
+        cls,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+        today: date | None = None,
+    ) -> str | None:
+        from datetime import date as date_cls
+
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
+        reference = today or date_cls.today()
+
+        if ChatDateRangeIntentService.is_year_clarification_reply(
+            message,
+            previous_messages,
+        ):
+            return None
+
+        if not ChatDateRangeIntentService.looks_like_period_metric_question(message):
+            return None
+
+        ambiguous = ChatDateRangeIntentService.detect_ambiguous_named_month(
+            message,
+            today=reference,
+        )
+
+        if not ambiguous:
+            return None
+
+        template = (_parameter_content().get("ambiguousPeriodYear") or "").strip()
+
+        if template:
+            return template.format(
+                month_label=ambiguous.month_label,
+                current_year=ambiguous.current_year,
+                previous_year=ambiguous.previous_year,
+            )
+
+        return ChatDateRangeIntentService.build_ambiguity_clarification(
+            message,
+            today=reference,
+        )
+
+    @classmethod
+    def should_skip_tools_for_ambiguous_period(
+        cls,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+    ) -> bool:
+        return cls.resolve_ambiguous_period_answer(
+            message,
+            previous_messages=previous_messages,
+        ) is not None
 
     @classmethod
     def _requires_explicit_product_context(cls, normalized: str, intent: str) -> bool:

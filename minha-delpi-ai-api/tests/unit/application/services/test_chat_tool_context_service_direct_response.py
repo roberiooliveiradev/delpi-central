@@ -193,3 +193,217 @@ def test_resolve_presentation_only_answer_for_tree():
         ChatToolContextService.resolve_presentation_only_answer(tool_calls)
         == "Informações completas do produto 10080055"
     )
+
+
+def _parents_page(page: int, *, page_size: int = 2, total: int = 6):
+    return {
+        "items": [{"code": f"parent-{page}-{index}", "description": f"P{page}-{index}"} for index in range(page_size)],
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total // page_size,
+    }
+
+
+class PaginatedParentsExecuteToolUseCase:
+    def __init__(self):
+        self.calls: list[int] = []
+        self.tools = {
+            "execute_external_action": type(
+                "Tool",
+                (),
+                {
+                    "use_case": type(
+                        "UseCase",
+                        (),
+                        {
+                            "build_metadata_for_data": staticmethod(
+                                lambda *, action_id, data, parameters=None: {
+                                    "ok": True,
+                                    "actionId": action_id,
+                                    "path": "/products/{code}/parents",
+                                    "operationId": "product_parents",
+                                }
+                            )
+                        },
+                    )()
+                },
+            )()
+        }
+
+    def execute(self, request):
+        page = int((request.arguments.get("parameters") or {}).get("page") or 1)
+        self.calls.append(page)
+        return ToolResult(
+            name="execute_external_action",
+            data={"data": _parents_page(page)},
+            metadata={
+                "ok": True,
+                "statusCode": 200,
+                "actionId": "parents-action",
+                "path": "/products/{code}/parents",
+                "operationId": "product_parents",
+            },
+        )
+
+
+class PaginatedParentsSelectionService:
+    def select_action(
+        self,
+        message,
+        allowed_action_ids=None,
+        conversation_context=None,
+        previous_messages=None,
+    ):
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": "parents-action",
+                "parameters": {"code": "10080047", "page": 1},
+            },
+            "reason": "Produtos pai",
+        }
+
+
+def test_build_context_consolidates_when_user_asks_for_full_list():
+    execute_tool = PaginatedParentsExecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=PaginatedParentsSelectionService(),
+    )
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="traga tudo",
+        allowed_action_ids=["parents-action"],
+    )
+
+    assert execute_tool.calls == [1, 2, 3]
+    consolidation = result["toolCalls"][0]["metadata"].get("paginationConsolidation") or {}
+    assert consolidation.get("completed") is True
+    assert consolidation.get("mergedCount") == 6
+    assert result.get("directAnswer")
+
+
+def test_build_context_continue_fetch_without_new_selection():
+    execute_tool = PaginatedParentsExecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=PaginatedParentsSelectionService(),
+    )
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "actionId": "parents-action",
+                            "path": "/products/{code}/parents",
+                            "operationId": "product_parents",
+                            "paginationConsolidation": {
+                                "actionId": "parents-action",
+                                "path": "/products/{code}/parents",
+                                "parameters": {"code": "10080047"},
+                                "fetchedPages": [1, 2],
+                                "mergedCount": 4,
+                                "apiTotal": 6,
+                                "totalPages": 3,
+                                "completed": False,
+                                "consolidatedPayload": {
+                                    "items": _parents_page(1)["items"] + _parents_page(2)["items"],
+                                    "total": 6,
+                                    "page": 1,
+                                    "page_size": 4,
+                                    "total_pages": 1,
+                                },
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="sim, continue",
+        previous_messages=previous_messages,
+        allowed_action_ids=["parents-action"],
+    )
+
+    assert execute_tool.calls == [3]
+    consolidation = result["toolCalls"][0]["metadata"].get("paginationConsolidation") or {}
+    assert consolidation.get("completed") is True
+    assert consolidation.get("mergedCount") == 6
+    assert result.get("skipRag") is True
+
+
+def test_build_context_full_fetch_from_previous_paginated_turn():
+    execute_tool = PaginatedParentsExecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=PaginatedParentsSelectionService(),
+    )
+    previous_messages = [
+        {"role": "user", "content": "onde é usado o 10080047"},
+        {
+            "role": "assistant",
+            "content": "Produtos pai parcial",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {
+                                "code": "10080047",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "statusCode": 200,
+                            "path": "/products/10080047/parents",
+                            "actionId": "parents-action",
+                            "operationId": "product_parents",
+                            "dataCoverageNotice": {
+                                "kind": "pagination",
+                                "message": "Produtos pai parcial: página 1 de 3.",
+                                "details": {
+                                    "pagination": {
+                                        "page": 1,
+                                        "pageSize": 25,
+                                        "total": 6,
+                                        "totalPages": 3,
+                                    }
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="arvore completa",
+        previous_messages=previous_messages,
+        allowed_action_ids=["parents-action"],
+    )
+
+    assert execute_tool.calls == [1, 2, 3]
+    consolidation = result["toolCalls"][0]["metadata"].get("paginationConsolidation") or {}
+    assert consolidation.get("completed") is True
+    assert consolidation.get("mergedCount") == 6
+    assert result.get("skipRag") is True
+

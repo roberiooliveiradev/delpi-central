@@ -209,6 +209,13 @@ class Settings:
     )
     CHAT_MULTI_ACTION_MAX_CALLS = int(os.getenv("CHAT_MULTI_ACTION_MAX_CALLS", "5"))
 
+    CHAT_PAGINATION_AUTO_FETCH_ENABLED = (
+        os.getenv("CHAT_PAGINATION_AUTO_FETCH_ENABLED", "true").lower() == "true"
+    )
+    CHAT_PAGINATION_MAX_PAGES_PER_TURN = int(
+        os.getenv("CHAT_PAGINATION_MAX_PAGES_PER_TURN", "5")
+    )
+
     CHAT_AGENTIC_LOOP_ENABLED = (
         os.getenv("CHAT_AGENTIC_LOOP_ENABLED", "false").lower() == "true"
     )

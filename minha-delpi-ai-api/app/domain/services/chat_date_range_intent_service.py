@@ -6,6 +6,7 @@ import re
 from calendar import monthrange
 from dataclasses import dataclass
 from datetime import date, timedelta
+from typing import Any
 
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
@@ -38,12 +39,57 @@ _MONTHS_PT = {
     "dez": 12,
 }
 
+_MONTH_LABELS_PT = {
+    1: "janeiro",
+    2: "fevereiro",
+    3: "março",
+    4: "abril",
+    5: "maio",
+    6: "junho",
+    7: "julho",
+    8: "agosto",
+    9: "setembro",
+    10: "outubro",
+    11: "novembro",
+    12: "dezembro",
+}
+
+_PERIOD_METRIC_TERMS = (
+    "rol",
+    "cpv",
+    "otd",
+    "idd",
+    "giro",
+    "kpi",
+    "indicador",
+    "ebitda",
+    "faturamento",
+    "ppm",
+    "oee",
+    "pmr",
+)
+
 
 @dataclass(frozen=True)
 class ResolvedDateRange:
     start_date: str
     end_date: str
     reason: str
+
+
+@dataclass(frozen=True)
+class NamedMonth:
+    month: int
+    label: str
+    year: int | None = None
+
+
+@dataclass(frozen=True)
+class AmbiguousNamedMonth:
+    month: int
+    month_label: str
+    current_year: int
+    previous_year: int
 
 
 class ChatDateRangeIntentService:
@@ -58,15 +104,32 @@ class ChatDateRangeIntentService:
         r"\bultim[ao]s?\s+(\d{1,3})\s+dias?\b",
         re.IGNORECASE,
     )
+    _YEAR_ONLY_RE = re.compile(r"^\s*(\d{4})\s*$")
+    _MONTH_ORDER = tuple(sorted(_MONTHS_PT.keys(), key=len, reverse=True))
 
     @classmethod
-    def resolve(cls, message: str | None, *, today: date | None = None) -> ResolvedDateRange | None:
+    def resolve(
+        cls,
+        message: str | None,
+        *,
+        today: date | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> ResolvedDateRange | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
             return None
 
         reference = today or date.today()
+
+        year_follow_up = cls._resolve_year_follow_up(
+            normalized,
+            previous_messages,
+            reference=reference,
+        )
+
+        if year_follow_up:
+            return year_follow_up
 
         explicit = cls._parse_explicit_range(normalized)
 
@@ -125,15 +188,214 @@ class ChatDateRangeIntentService:
 
         year_month = cls._YEAR_MONTH_RE.search(normalized)
 
-        if year_month and any(
-            term in normalized
-            for term in ("cpv", "otd", "idd", "giro", "kpi", "indicador", "rol", "ebitda")
-        ):
+        if year_month and any(term in normalized for term in _PERIOD_METRIC_TERMS):
             return cls._month_range(
                 int(year_month.group(1)),
                 int(year_month.group(2)),
                 reason="Período ano-mês na pergunta.",
             )
+
+        return None
+
+    @classmethod
+    def detect_ambiguous_named_month(
+        cls,
+        message: str | None,
+        *,
+        today: date | None = None,
+    ) -> AmbiguousNamedMonth | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return None
+
+        reference = today or date.today()
+        named_month = cls._extract_named_month(normalized)
+
+        if not named_month or named_month.year is not None:
+            return None
+
+        if reference.month >= named_month.month:
+            return None
+
+        return AmbiguousNamedMonth(
+            month=named_month.month,
+            month_label=named_month.label,
+            current_year=reference.year,
+            previous_year=reference.year - 1,
+        )
+
+    @classmethod
+    def build_ambiguity_clarification(
+        cls,
+        message: str | None,
+        *,
+        today: date | None = None,
+    ) -> str | None:
+        ambiguous = cls.detect_ambiguous_named_month(message, today=today)
+
+        if not ambiguous:
+            return None
+
+        return (
+            f"Para **{ambiguous.month_label}**, preciso confirmar o ano: "
+            f"você quer os dados de **{ambiguous.current_year}** (este ano) "
+            f"ou de **{ambiguous.previous_year}**?"
+        )
+
+    @classmethod
+    def is_year_clarification_reply(
+        cls,
+        message: str | None,
+        previous_messages: list[Any] | None = None,
+    ) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized or not previous_messages:
+            return False
+
+        if cls._parse_year_hint(normalized, reference=date.today()) is None:
+            return False
+
+        return cls._find_pending_ambiguous_period_question(
+            previous_messages,
+            reference=date.today(),
+        ) is not None
+
+    @classmethod
+    def looks_like_period_metric_question(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if cls._extract_named_month(normalized):
+            return True
+
+        return any(term in normalized for term in _PERIOD_METRIC_TERMS)
+
+    @classmethod
+    def _resolve_year_follow_up(
+        cls,
+        normalized: str,
+        previous_messages: list[Any] | None,
+        *,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        if not previous_messages:
+            return None
+
+        year = cls._parse_year_hint(normalized, reference=reference)
+
+        if year is None:
+            return None
+
+        pending = cls._find_pending_ambiguous_period_question(
+            previous_messages,
+            reference=reference,
+        )
+
+        if not pending:
+            return None
+
+        return cls._month_range(
+            year,
+            pending.month,
+            reason=f"Mês {pending.label} de {year} (confirmação do usuário).",
+        )
+
+    @classmethod
+    def _find_pending_ambiguous_period_question(
+        cls,
+        previous_messages: list[Any] | None,
+        *,
+        reference: date | None = None,
+    ) -> NamedMonth | None:
+        today = reference or date.today()
+
+        for item in reversed(previous_messages or []):
+            role = cls._message_role(item)
+
+            if role != "user":
+                continue
+
+            content = cls._message_content(item)
+            normalized = ChatMessageNormalizationService.normalize_for_matching(content)
+
+            if not normalized:
+                continue
+
+            named_month = cls._extract_named_month(normalized)
+
+            if not named_month or named_month.year is not None:
+                continue
+
+            if today.month >= named_month.month:
+                continue
+
+            return named_month
+
+        return None
+
+    @classmethod
+    def _parse_year_hint(cls, normalized: str, *, reference: date) -> int | None:
+        if any(
+            term in normalized
+            for term in (
+                "desse ano",
+                "deste ano",
+                "este ano",
+                "ano atual",
+                "ano corrente",
+            )
+        ):
+            return reference.year
+
+        if any(term in normalized for term in ("ano passado", "ultimo ano", "último ano")):
+            return reference.year - 1
+
+        year_match = cls._YEAR_ONLY_RE.match(normalized)
+
+        if year_match:
+            return int(year_match.group(1))
+
+        if re.fullmatch(r"\d{4}", normalized.strip()):
+            return int(normalized.strip())
+
+        return None
+
+    @classmethod
+    def _extract_named_month(cls, normalized: str) -> NamedMonth | None:
+        for name in cls._MONTH_ORDER:
+            if not cls._contains_month_name(normalized, name):
+                continue
+
+            month = _MONTHS_PT[name]
+            label = _MONTH_LABELS_PT.get(month, name)
+            year = cls._extract_year_for_month(normalized, name)
+
+            return NamedMonth(month=month, label=label, year=year)
+
+        return None
+
+    @classmethod
+    def _contains_month_name(cls, normalized: str, name: str) -> bool:
+        return re.search(rf"\b{re.escape(name)}\b", normalized) is not None
+
+    @classmethod
+    def _extract_year_for_month(cls, normalized: str, month_name: str) -> int | None:
+        patterns = (
+            rf"\b{re.escape(month_name)}\s+de\s+(\d{{4}})\b",
+            rf"\bde\s+(\d{{4}})\b[^\d]{{0,24}}\b{re.escape(month_name)}\b",
+            rf"\b{re.escape(month_name)}\s*/\s*(\d{{4}})\b",
+            rf"\b(\d{{4}})\s*/\s*{re.escape(month_name)}\b",
+        )
+
+        for pattern in patterns:
+            match = re.search(pattern, normalized)
+
+            if match:
+                return int(match.group(1))
 
         return None
 
@@ -165,20 +427,26 @@ class ChatDateRangeIntentService:
 
     @classmethod
     def _parse_named_month(cls, normalized: str, reference: date) -> ResolvedDateRange | None:
-        for name, month in _MONTHS_PT.items():
-            if name not in normalized:
-                continue
+        named_month = cls._extract_named_month(normalized)
 
-            year_match = re.search(rf"\b{re.escape(name)}\s+de\s+(\d{{4}})\b", normalized)
+        if not named_month:
+            return None
 
-            if year_match:
-                year = int(year_match.group(1))
-            else:
-                year = reference.year
+        if named_month.year is not None:
+            return cls._month_range(
+                named_month.year,
+                named_month.month,
+                reason=f"Mês {named_month.label} de {named_month.year}.",
+            )
 
-            return cls._month_range(year, month, reason=f"Mês {name}.")
+        if reference.month < named_month.month:
+            return None
 
-        return None
+        return cls._month_range(
+            reference.year,
+            named_month.month,
+            reason=f"Mês {named_month.label} de {reference.year}.",
+        )
 
     @classmethod
     def _previous_month(cls, reference: date, *, reason: str) -> ResolvedDateRange:
@@ -223,3 +491,17 @@ class ChatDateRangeIntentService:
             return date(year, month, day)
         except ValueError:
             return None
+
+    @classmethod
+    def _message_role(cls, message: Any) -> str:
+        if isinstance(message, dict):
+            return str(message.get("role") or "").strip().lower()
+
+        return str(getattr(message, "role", "") or "").strip().lower()
+
+    @classmethod
+    def _message_content(cls, message: Any) -> str:
+        if isinstance(message, dict):
+            return str(message.get("content") or "")
+
+        return str(getattr(message, "content", "") or "")

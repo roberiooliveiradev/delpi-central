@@ -72,32 +72,6 @@ class ExecuteExternalActionUseCase:
             action_path,
             arguments.get("parameters") or {},
         )
-        text_presentation = self.presenter.build_text_presentation(
-            sanitized_data,
-            path=resolved_path,
-        )
-        tree_presentation = self.presenter.build_tree_presentation(
-            sanitized_data,
-            path=resolved_path,
-        )
-        presentation = self.presenter.build_presentation(
-            sanitized_data,
-            path=resolved_path,
-            response_schema=action.get("responseSchema"),
-        )
-        chart_presentation = self.presenter.build_chart_presentation(
-            sanitized_data, path=resolved_path,
-        )
-
-        table_presentation = None
-        if isinstance(presentation, dict) and presentation.get("type") == "markdown":
-            if not text_presentation:
-                text_presentation = presentation
-            presentation = None
-        elif isinstance(presentation, dict) and presentation.get("type") == "table":
-            table_presentation = presentation
-        elif presentation:
-            table_presentation = presentation
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -128,19 +102,112 @@ class ExecuteExternalActionUseCase:
             },
         )
 
+        request_parameters = dict(arguments.get("parameters") or {})
+        presentation_metadata = self._build_presentation_metadata(
+            action=action,
+            sanitized_data=sanitized_data,
+            resolved_path=resolved_path,
+            request_parameters=request_parameters,
+        )
+
+        return {
+            "provider": provider["providerKey"],
+            "actionId": action["actionId"],
+            "method": action["method"],
+            "path": resolved_path,
+            "statusCode": result["statusCode"],
+            "ok": result["ok"],
+            "data": sanitized_data,
+            "metadata": {
+                "durationMs": result["durationMs"],
+                "sensitivity": action["sensitivity"],
+                **presentation_metadata,
+            },
+        }
+
+    def build_metadata_for_data(
+        self,
+        *,
+        action_id: str,
+        data,
+        parameters: dict | None = None,
+    ) -> dict:
+        action_bundle = self.repository.get_action_for_execution(action_id)
+
+        if not action_bundle:
+            raise ValueError("Action not found")
+
+        action = action_bundle["action"]
+        sanitized_data = self.policy.sanitize_response(data)
+        action_path = action.get("path") or ""
+        request_parameters = dict(parameters or {})
+        resolved_path = self._resolve_action_path(action_path, request_parameters)
+
+        return self._build_presentation_metadata(
+            action=action,
+            sanitized_data=sanitized_data,
+            resolved_path=resolved_path,
+            request_parameters=request_parameters,
+        )
+
+    def _build_presentation_metadata(
+        self,
+        *,
+        action: dict,
+        sanitized_data,
+        resolved_path: str,
+        request_parameters: dict,
+    ) -> dict:
+        action_path = action.get("path") or ""
+        text_presentation = self.presenter.build_text_presentation(
+            sanitized_data,
+            path=resolved_path,
+        )
+        tree_presentation = self.presenter.build_tree_presentation(
+            sanitized_data,
+            path=resolved_path,
+        )
+        presentation = self.presenter.build_presentation(
+            sanitized_data,
+            path=resolved_path,
+            response_schema=action.get("responseSchema"),
+        )
+        chart_presentation = self.presenter.build_chart_presentation(
+            sanitized_data,
+            path=resolved_path,
+        )
+
+        table_presentation = None
+
+        if isinstance(presentation, dict) and presentation.get("type") == "markdown":
+            if not text_presentation:
+                text_presentation = presentation
+            presentation = None
+        elif isinstance(presentation, dict) and presentation.get("type") == "table":
+            table_presentation = presentation
+        elif presentation:
+            table_presentation = presentation
+
         available_formats: list[str] = []
+
         if text_presentation:
             available_formats.append("text")
+
         if tree_presentation:
             available_formats.append("tree")
+
         if table_presentation:
             available_formats.append("table")
+
         if chart_presentation:
             available_formats.append("chart")
         elif table_presentation:
             forced_chart = self.presenter.build_chart_presentation(
-                sanitized_data, path=action_path, force=True
+                sanitized_data,
+                path=action_path,
+                force=True,
             )
+
             if forced_chart:
                 chart_presentation = forced_chart
                 available_formats.append("chart")
@@ -172,7 +239,6 @@ class ExecuteExternalActionUseCase:
         elif chart_presentation:
             preferred_format = "chart"
 
-        request_parameters = dict(arguments.get("parameters") or {})
         data_coverage_notice = ChatDataCoverageNoticeService.build(
             sanitized_data,
             path=resolved_path,
@@ -182,34 +248,23 @@ class ExecuteExternalActionUseCase:
         )
 
         return {
-            "provider": provider["providerKey"],
-            "actionId": action["actionId"],
-            "method": action["method"],
-            "path": resolved_path,
-            "statusCode": result["statusCode"],
-            "ok": result["ok"],
-            "data": sanitized_data,
-            "metadata": {
-                "durationMs": result["durationMs"],
-                "sensitivity": action["sensitivity"],
-                "presentation": primary_presentation,
-                "tablePresentation": (
-                    table_presentation
-                    if table_presentation is not None
-                    and table_presentation is not primary_presentation
-                    else None
-                ),
-                "treePresentation": (
-                    tree_presentation
-                    if tree_presentation is not None
-                    and tree_presentation is not primary_presentation
-                    else None
-                ),
-                "textPresentation": text_presentation,
-                "availableFormats": available_formats,
-                "preferredFormat": preferred_format,
-                "dataCoverageNotice": data_coverage_notice,
-            },
+            "presentation": primary_presentation,
+            "tablePresentation": (
+                table_presentation
+                if table_presentation is not None
+                and table_presentation is not primary_presentation
+                else None
+            ),
+            "treePresentation": (
+                tree_presentation
+                if tree_presentation is not None
+                and tree_presentation is not primary_presentation
+                else None
+            ),
+            "textPresentation": text_presentation,
+            "availableFormats": available_formats,
+            "preferredFormat": preferred_format,
+            "dataCoverageNotice": data_coverage_notice,
         }
 
     @staticmethod

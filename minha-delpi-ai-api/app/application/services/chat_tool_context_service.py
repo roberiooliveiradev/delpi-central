@@ -2,6 +2,7 @@ import json
 
 from app.application.dto.execute_tool_request import ExecuteToolRequest
 from app.application.use_cases.execute_tool_use_case import ExecuteToolUseCase
+from app.domain.entities.tool_result import ToolResult
 from app.domain.services.chat_external_action_direct_answer_service import (
     ChatExternalActionDirectAnswerService,
 )
@@ -79,6 +80,121 @@ class ChatToolContextService:
             )
 
         message = ChatMessageNormalizationService.normalize_for_matching(raw_message) or raw_message
+
+        from app.application.services.chat_paginated_external_action_service import (
+            ChatPaginatedExternalActionService,
+        )
+
+        paginated_service = ChatPaginatedExternalActionService(self.execute_tool_use_case)
+        continue_fetch = paginated_service.fetch_continue_plan(
+            user_id=user_id,
+            access_token=access_token,
+            message=raw_message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )
+
+        if continue_fetch:
+            merged_data, merged_metadata, arguments, continue_prompt = continue_fetch
+            safe_metadata = self._build_safe_tool_metadata(
+                "execute_external_action",
+                merged_metadata,
+                merged_data,
+            )
+            safe_tool_calls = [
+                {
+                    "name": "execute_external_action",
+                    "arguments": arguments,
+                    "reason": "Continuação da consulta paginada consolidada.",
+                    "metadata": safe_metadata,
+                }
+            ]
+            direct_answer = self._build_direct_answer(
+                merged_data,
+                message=raw_message,
+                path=safe_metadata.get("path"),
+                operation_id=safe_metadata.get("operationId"),
+            )
+
+            if continue_prompt:
+                direct_answer = (
+                    f"{direct_answer}\n\n{continue_prompt}".strip()
+                    if direct_answer
+                    else continue_prompt
+                )
+
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": self._format_tool_context(
+                        "execute_external_action",
+                        "Continuação da consulta paginada consolidada.",
+                        merged_data,
+                        merged_metadata,
+                    ),
+                    "toolCalls": safe_tool_calls,
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": direct_answer,
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
+        full_fetch = paginated_service.fetch_full_from_history(
+            user_id=user_id,
+            access_token=access_token,
+            message=raw_message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )
+
+        if full_fetch:
+            merged_data, merged_metadata, arguments, continue_prompt = full_fetch
+            safe_metadata = self._build_safe_tool_metadata(
+                "execute_external_action",
+                merged_metadata,
+                merged_data,
+            )
+            safe_tool_calls = [
+                {
+                    "name": "execute_external_action",
+                    "arguments": arguments,
+                    "reason": "Consolidação completa da consulta paginada.",
+                    "metadata": safe_metadata,
+                }
+            ]
+            direct_answer = self._build_direct_answer(
+                merged_data,
+                message=raw_message,
+                path=safe_metadata.get("path"),
+                operation_id=safe_metadata.get("operationId"),
+            )
+
+            if continue_prompt:
+                direct_answer = (
+                    f"{direct_answer}\n\n{continue_prompt}".strip()
+                    if direct_answer
+                    else continue_prompt
+                )
+
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": self._format_tool_context(
+                        "execute_external_action",
+                        "Consolidação completa da consulta paginada.",
+                        merged_data,
+                        merged_metadata,
+                    ),
+                    "toolCalls": safe_tool_calls,
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": direct_answer,
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
 
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
@@ -226,6 +342,7 @@ class ChatToolContextService:
         ]
         external_total = len(external_planned)
         external_index = 0
+        pagination_continue_prompt: str | None = None
 
         if on_stream_activity and external_total > 0:
             from app.application.services.chat_stream_activity_service import (
@@ -333,6 +450,33 @@ class ChatToolContextService:
                 )
                 continue
 
+            result_data = result.data
+            result_metadata = dict(result.metadata or {})
+
+            if (
+                result.name == "execute_external_action"
+                and self._is_successful_external_action(result_metadata)
+            ):
+                (
+                    result_data,
+                    result_metadata,
+                    pagination_continue_prompt,
+                ) = paginated_service.maybe_consolidate(
+                    user_id=user_id,
+                    access_token=access_token,
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    base_arguments=selected_tool.get("arguments") or {},
+                    base_metadata=result_metadata,
+                    base_data=result_data,
+                    on_stream_activity=on_stream_activity,
+                )
+                result = ToolResult(
+                    name=result.name,
+                    data=result_data,
+                    metadata=result_metadata,
+                )
+
             safe_metadata = self._build_safe_tool_metadata(
                 tool_name=result.name,
                 metadata=result.metadata,
@@ -382,8 +526,6 @@ class ChatToolContextService:
                 if self._is_successful_external_action(safe_metadata):
                     last_external_action_data = result.data
 
-            # Authorized data is only injected into the LLM context for this request.
-            # It is not returned in toolCalls[] and is not persisted in chat metadata.
             context_blocks.append(
                 self._format_tool_context(
                     name=result.name,
@@ -432,6 +574,13 @@ class ChatToolContextService:
             direct_answer = self._compact_direct_answer_for_rich_presentation(
                 direct_answer,
                 safe_tool_calls,
+            )
+
+        if pagination_continue_prompt:
+            direct_answer = (
+                f"{direct_answer}\n\n{pagination_continue_prompt}".strip()
+                if direct_answer
+                else pagination_continue_prompt
             )
 
         return self._finalize_tool_context_result(

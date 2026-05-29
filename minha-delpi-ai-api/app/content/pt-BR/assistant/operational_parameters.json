@@ -5,5 +5,6 @@
     "parents": "Para ver onde o produto é usado, informe o **código do produto** (ex.: 10080099).",
     "description": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, texto).",
     "default": "Para consultar dados operacionais do produto, informe o **código do produto** (ex.: 10080099)."
-  }
+  },
+  "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?"
 }

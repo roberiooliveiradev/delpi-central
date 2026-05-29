@@ -35,3 +35,18 @@ def test_skips_supplies_cpv():
     match = ChatDepartmentKpiIntentService.resolve("qual o cpv da filial")
 
     assert match is None
+
+
+def test_resolve_financial_rol_for_month_question():
+    match = ChatDepartmentKpiIntentService.resolve("rol do mes de marco")
+
+    assert match is not None
+    assert match.path_token == "/financial/rol"
+    assert match.domain_prefix == "/financial/"
+
+
+def test_resolve_rol_series_only_for_explicit_series():
+    match = ChatDepartmentKpiIntentService.resolve("serie de rol no tempo")
+
+    assert match is not None
+    assert "rol/series" in match.path_token

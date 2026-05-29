@@ -792,3 +792,62 @@ def test_select_parents_follow_up_after_structure():
     assert selected is not None
     assert selected["arguments"]["actionId"] == "parents-action"
     assert selected["arguments"]["parameters"]["code"] == "10080047"
+
+
+def test_select_financial_rol_for_month_question():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "financial-rol",
+                    "method": "GET",
+                    "path": "/financial/rol",
+                    "operationId": "get_rol",
+                    "summary": "ROL financeiro",
+                    "parametersSchema": [
+                        {"name": "start_date", "in": "query"},
+                        {"name": "end_date", "in": "query"},
+                    ],
+                },
+                {
+                    "actionId": "commercial-rol-series",
+                    "method": "GET",
+                    "path": "/commercial/rol/series",
+                    "operationId": "get_commercial_rol_series",
+                    "summary": "Série de ROL comercial",
+                    "parametersSchema": [
+                        {"name": "granularity", "in": "query", "required": True},
+                        {"name": "start_date", "in": "query"},
+                        {"name": "end_date", "in": "query"},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "rol do mes de marco",
+        allowed_action_ids=["financial-rol", "commercial-rol-series"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "financial-rol"
+    assert selected["arguments"]["parameters"]["start_date"] == "01-03-2026"
+    assert selected["arguments"]["parameters"]["end_date"] == "31-03-2026"
+
+
+def test_build_date_branch_parameters_infers_granularity_for_series():
+    service = ExternalActionSelectionService(FakeRepository([]))
+
+    parameters = service._build_date_branch_parameters(
+        {
+            "parametersSchema": [
+                {"name": "granularity", "in": "query", "required": True},
+                {"name": "start_date", "in": "query"},
+            ],
+        },
+        "rol do mes de marco",
+    )
+
+    assert parameters["granularity"] == "month"
+    assert parameters["start_date"]

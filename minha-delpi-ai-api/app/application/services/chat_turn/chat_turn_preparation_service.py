@@ -287,12 +287,19 @@ class ChatTurnPreparationService:
             else None
         )
         missing_product_code_answer = None
+        ambiguous_period_answer = None
 
         if not canvas_action and not pre_capability_answer and not analysis_mode:
             missing_product_code_answer = (
                 ChatOperationalParameterService.resolve_missing_product_code_answer(
                     message,
                     conversation_context=conversation_context,
+                    previous_messages=history_source,
+                )
+            )
+            ambiguous_period_answer = (
+                ChatOperationalParameterService.resolve_ambiguous_period_answer(
+                    message,
                     previous_messages=history_source,
                 )
             )
@@ -306,6 +313,7 @@ class ChatTurnPreparationService:
             canvas_action
             or pre_capability_answer
             or missing_product_code_answer
+            or ambiguous_period_answer
             or skip_tools_for_user_identity
             or small_talk_direct
         ) and not canvas_operational_update:
@@ -316,6 +324,8 @@ class ChatTurnPreparationService:
             elif pre_capability_answer:
                 pipeline_stages.append("capabilities")
             elif missing_product_code_answer:
+                pipeline_stages.append("operational_parameter")
+            elif ambiguous_period_answer:
                 pipeline_stages.append("operational_parameter")
             elif small_talk_direct:
                 pipeline_stages.append("small_talk")
@@ -467,6 +477,10 @@ class ChatTurnPreparationService:
 
         if not direct_answer and missing_product_code_answer:
             direct_answer = missing_product_code_answer
+            skip_rag = True
+
+        if not direct_answer and ambiguous_period_answer:
+            direct_answer = ambiguous_period_answer
             skip_rag = True
 
         if not direct_answer and operational_optimize and tool_calls:
