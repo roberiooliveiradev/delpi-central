@@ -152,7 +152,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.5.1 | Smoke operacional no CI ou script pós-deploy | ⬜ | `smoke_operational_questions.py` documentado no runbook |
+| 11.5.1 | Smoke operacional no CI ou script pós-deploy | 🟡 | `smoke_operational_questions.py` + checklist manual #56–60; consolidação paginada coberta em pytest |
 | 11.5.2 | Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` | ✅ | Front valida antes do upload |
 
 ### 11.6 — Fora do escopo imediato (registrar para onda futura)

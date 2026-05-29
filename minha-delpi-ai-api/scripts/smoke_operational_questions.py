@@ -99,6 +99,7 @@ _PARENTS_HISTORY = [
                     },
                     "metadata": {
                         "ok": True,
+                        "statusCode": 200,
                         "path": "/products/10080022/parents",
                         "actionId": "parents",
                         "dataCoverageNotice": {
@@ -601,6 +602,25 @@ def main() -> int:
                 _check(
                     str(params.get("end_date") or "") == expectations["date_end"],
                     f"end_date={expectations['date_end']}",
+                    errors,
+                )
+
+            if "preferred_format" in expectations:
+                tool_meta = (external_calls[0].get("metadata") or {}) if external_calls else {}
+                actual_format = str(tool_meta.get("preferredFormat") or "").lower()
+                expected_format = expectations["preferred_format"].lower()
+                _check(
+                    actual_format == expected_format,
+                    f"preferredFormat={expected_format} (foi {actual_format or '—'})",
+                    errors,
+                )
+
+            if expectations.get("pagination_consolidation"):
+                tool_meta = (external_calls[0].get("metadata") or {}) if external_calls else {}
+                consolidation = tool_meta.get("paginationConsolidation")
+                _check(
+                    isinstance(consolidation, dict),
+                    "metadata.paginationConsolidation presente",
                     errors,
                 )
 
