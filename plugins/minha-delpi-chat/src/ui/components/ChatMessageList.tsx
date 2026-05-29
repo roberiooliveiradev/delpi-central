@@ -975,6 +975,13 @@ export function ChatMessageList({
                 <ChatMessageAttachments
                   attachments={getMessageAttachments(message)}
                 />
+                {shouldShowRichPresentation(displayContent, messageToolCalls)
+                  ? renderPresentation(
+                      messageToolCalls,
+                      displayContent,
+                      onDrillDown,
+                    )
+                  : null}
                 {suppressMessageMarkdown || !displayContent ? null : (
                   <ChatMarkdown content={displayContent} />
                 )}
@@ -989,13 +996,6 @@ export function ChatMessageList({
 
             {!isAssistantGenerating(message) ? (
               <>
-                {shouldShowRichPresentation(displayContent, messageToolCalls)
-                  ? renderPresentation(
-                      messageToolCalls,
-                      displayContent,
-                      onDrillDown,
-                    )
-                  : null}
                 {!messagePresentation.primary ? (
                   <ChatActionResults toolCalls={messageToolCalls} />
                 ) : null}
@@ -1101,6 +1101,14 @@ export function ChatMessageList({
                   isActive
                   isAnswering={isGeneratingAnswer}
                 />
+                {streamingShowPresentation &&
+                shouldShowRichPresentation(streamingAnswer, streamingToolCalls)
+                  ? renderPresentation(
+                      streamingToolCalls,
+                      streamingAnswer,
+                      onDrillDown,
+                    )
+                  : null}
                 {streamingAnswer && !suppressStreamingMarkdown ? (
                   <div
                     className={[
@@ -1120,11 +1128,6 @@ export function ChatMessageList({
                   />
                 ) : null}
               </div>
-
-              {streamingShowPresentation &&
-              shouldShowRichPresentation(streamingAnswer, streamingToolCalls)
-                ? renderPresentation(streamingToolCalls, streamingAnswer, onDrillDown)
-                : null}
               {streamingShowPresentation &&
               !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
                 <ChatActionResults toolCalls={streamingToolCalls} />

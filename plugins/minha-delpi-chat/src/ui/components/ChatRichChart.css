@@ -10,8 +10,25 @@
   margin-left: 0.5rem;
 }
 
+.mdc-rich-presentation__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.35rem;
+  user-select: none;
+}
+
+.mdc-rich-presentation__format-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
 .mdc-rich-presentation__heading {
-  margin: 0.45rem 0 0.2rem;
+  margin: 0 0 0.35rem;
   font-weight: 600;
   font-size: 0.85rem;
   line-height: 1.3;
@@ -19,7 +36,7 @@
 }
 
 .mdc-rich-presentation__text {
-  margin-top: 0.35rem;
+  margin-top: 0.15rem;
 }
 
 .mdc-rich-presentation__actions {

@@ -669,6 +669,51 @@ STOCK_REFINEMENT_SELECTION_CASES = [
         "expected_action_id": "stock",
         "expected_parameters": {"code": "10080022", "branch": "02"},
     },
+    {
+        "message": "filtre filial 02",
+        "previous_messages": [
+            {"role": "user", "content": "estoque do produto 10080022"},
+            {
+                "role": "assistant",
+                "content": "Estoque do produto 10080022",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "arguments": {
+                                "actionId": "stock",
+                                "parameters": {
+                                    "code": "10080022",
+                                    "page": 1,
+                                    "page_size": 50,
+                                },
+                            },
+                            "metadata": {
+                                "ok": True,
+                                "path": "/products/{code}/stock",
+                                "actionId": "stock",
+                            },
+                        }
+                    ]
+                },
+            },
+        ],
+        "actions": [
+            {
+                "actionId": "stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "summary": "Estoque do produto",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "branch", "in": "query"},
+                ],
+            },
+        ],
+        "expected_action_id": "stock",
+        "expected_parameters": {"code": "10080022", "branch": "02"},
+    },
 ]
 
 OPERATIONAL_REFINEMENT_FAST_PATH_CASES = [

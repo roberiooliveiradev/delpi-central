@@ -175,12 +175,12 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 ## Critérios de aceite da Onda 11
 
-- [ ] Smoke operacional **6/6** (ou ampliado) verde no container após deploy.  
-- [ ] «estoque do produto» sem código → pede código, **sem** ROL/loop.  
-- [ ] «estoque 10080022» → `/stock`; «filtre filial 02» → `/stock?branch=02`.  
-- [ ] «quem te criou?» → resposta canônica em &lt; 2s (CPU) sem dump de prompt no chat.  
-- [ ] Login portal + `/core-api/me` **200** com token válido (JWKS interno).  
-- [ ] Documento vigente (este arquivo) referenciado no README do roadmap.
+- [x] Smoke operacional **6/6** (ou ampliado) verde no container após deploy.  
+- [x] «estoque do produto» sem código → pede código, **sem** ROL/loop.  
+- [x] «estoque 10080022» → `/stock`; «filtre filial 02» → `/stock?branch=02` (com `agentKey` na sessão).  
+- [x] «quem te criou?» → resposta canônica em &lt; 2s (CPU) sem dump de prompt no chat.  
+- [x] Login portal + `/core-api/me` **200** com token válido (JWKS interno).  
+- [x] Documento vigente (este arquivo) referenciado no README do roadmap.
 
 ---
 
@@ -210,6 +210,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | Data | Alteração |
 |------|-----------|
 | 2026-05-28 | Criação: consolida pesquisa ChatGPT/Gemini (28/mai), commits da branch `chat`, backlog e itens da conversa (login/JWKS). |
+| 2026-05-29 | Revisão Onda 11: regressão 145+ testes, smoke 6/6, multi-turn 9/9, E2E HTTP estoque→filial com agente; drill-down path template corrigido. |
 
 ---
 
