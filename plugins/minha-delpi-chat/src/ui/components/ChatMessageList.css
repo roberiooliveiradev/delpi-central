@@ -228,11 +228,23 @@
 }
 
 .mdc-chat-message--assistant .mdc-chat-message-header {
+  justify-content: flex-start;
   margin-bottom: 0.15rem;
 }
 
 .mdc-chat-message--assistant .mdc-chat-message-meta {
+  width: 100%;
   margin-left: 0;
+  justify-content: flex-start;
+}
+
+.mdc-chat-message--assistant .mdc-chat-message-meta time {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.mdc-chat-message--assistant .mdc-chat-message-actions {
+  margin-left: auto;
 }
 
 .mdc-chat-message-header {
@@ -258,7 +270,6 @@
 }
 
 .mdc-chat-message-meta time {
-  margin-left: auto;
   color: var(--mdc-text-muted);
   font-size: 0.72rem;
   font-weight: 700;

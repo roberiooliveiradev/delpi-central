@@ -865,6 +865,10 @@ export function ChatMessageList({
               <strong>Minha DELPI Chat</strong>
 
               <div className="mdc-chat-message-meta">
+                {messageTime ? (
+                  <time dateTime={message.created_at}>{messageTime}</time>
+                ) : null}
+
                 <div className="mdc-chat-message-actions">
                   <button
                     className={`mdc-chat-message-action${
@@ -927,10 +931,6 @@ export function ChatMessageList({
                     )}
                   </button>
                 </div>
-
-                {messageTime ? (
-                  <time dateTime={message.created_at}>{messageTime}</time>
-                ) : null}
               </div>
             </div>
 
