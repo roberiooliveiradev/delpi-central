@@ -221,6 +221,108 @@
   color: var(--dc-text-muted);
 }
 
+.dashboard-commercial .dc-table-section__meta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+}
+
+.dashboard-commercial .dc-table-toolbar {
+  margin-bottom: 12px;
+}
+
+.dashboard-commercial .dc-table-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 420px);
+  min-height: var(--dc-control-height);
+  padding: 0 12px;
+  border-radius: var(--dc-control-radius);
+  border: 1px solid var(--dc-card-border);
+  background: var(--surface, #fff);
+  color: var(--dc-text-muted);
+}
+
+.dashboard-commercial .dc-table-search__icon {
+  flex-shrink: 0;
+  color: var(--dc-text-muted);
+}
+
+.dashboard-commercial .dc-table-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--dc-text);
+  font-size: var(--dc-font-sm);
+}
+
+.dashboard-commercial .dc-proposals-section {
+  margin-bottom: var(--dc-section-gap);
+}
+
+.dashboard-commercial .dc-proposals-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.dashboard-commercial .dc-proposals-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.dashboard-commercial .dc-proposals-filter span {
+  font-size: var(--dc-font-sm);
+  font-weight: 600;
+  color: var(--dc-text-muted);
+}
+
+.dashboard-commercial .dc-proposals-filter select {
+  min-height: var(--dc-control-height);
+  border-radius: var(--dc-control-radius);
+  border: 1px solid var(--dc-card-border);
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  color: var(--dc-text);
+}
+
+.dashboard-commercial .dc-proposal-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .dc-proposal-status--won {
+  color: #0d5c2e;
+  background: color-mix(in srgb, #22c55e 18%, transparent);
+}
+
+.dashboard-commercial .dc-proposal-status--lost {
+  color: #8b1c1c;
+  background: color-mix(in srgb, #ef4444 16%, transparent);
+}
+
+.dashboard-commercial .dc-proposal-status--open {
+  color: #0c4a6e;
+  background: color-mix(in srgb, var(--dc-accent) 16%, transparent);
+}
+
+.dashboard-commercial .dc-proposal-status--other {
+  color: var(--dc-text-muted);
+  background: color-mix(in srgb, var(--dc-text-muted) 14%, transparent);
+}
+
 .dashboard-commercial .dc-filter-box {
   display: flex;
   flex-direction: column;

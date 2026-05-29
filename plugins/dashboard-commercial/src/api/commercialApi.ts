@@ -4,6 +4,7 @@ import type { ChartGranularity } from "../types/chart";
 import type {
   ClosingRateData,
   CommercialFilterParams,
+  CommercialProposalsPage,
   CommercialRolSeriesData,
   NewClientsAverageData,
   NewBusinessRolPctData,
@@ -23,6 +24,11 @@ function buildQuery(
   if (params.end_date) searchParams.set("end_date", params.end_date);
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.granularity) searchParams.set("granularity", params.granularity);
+  if (params.status) searchParams.set("status", params.status);
+  if (params.page != null) searchParams.set("page", String(params.page));
+  if (params.page_size != null) {
+    searchParams.set("page_size", String(params.page_size));
+  }
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -72,6 +78,17 @@ export function getClosingRate(
   signal?: AbortSignal
 ) {
   return fetchCommercialData<ClosingRateData>("/closing-rate", params, signal);
+}
+
+export function getCommercialProposals(
+  params: CommercialFilterParams,
+  signal?: AbortSignal
+) {
+  return fetchCommercialData<CommercialProposalsPage>(
+    "/proposals",
+    params,
+    signal
+  );
 }
 
 export function getNewClientsAverage(

@@ -4,6 +4,12 @@ from app.application.services.commercial.commercial_metrics_snapshot_service imp
 from app.application.use_cases.commercial.get_rol_target_pct_use_case import GetRolTargetPctUseCase
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import FinancialRepository
 from app.application.use_cases.commercial.get_sales_conversion_rate_use_case import GetSalesConversionRateUseCase
+from app.application.use_cases.commercial.list_commercial_proposals_use_case import (
+    ListCommercialProposalsUseCase,
+)
+from app.infrastructure.persistence.totvs.commercial_repositories.commercial_proposals_repository import (
+    CommercialProposalsRepository,
+)
 from app.infrastructure.persistence.totvs.commercial_repositories.sales_conversion_rate_repository import SalesConversionRateRepository
 from app.application.use_cases.commercial.get_new_clients_average_use_case import GetNewClientsAverageUseCase
 from app.infrastructure.persistence.totvs.commercial_repositories.new_clients_average_repository import NewClientsAverageRepository
@@ -45,6 +51,12 @@ def build_get_branch_rol_target_pct_use_case() -> GetRolTargetPctUseCase:
 def build_get_sales_conversion_rate_use_case() -> GetSalesConversionRateUseCase:
     return GetSalesConversionRateUseCase(
         sales_conversion_rate_repository=SalesConversionRateRepository()
+    )
+
+
+def build_list_commercial_proposals_use_case() -> ListCommercialProposalsUseCase:
+    return ListCommercialProposalsUseCase(
+        commercial_proposals_repository=CommercialProposalsRepository()
     )
 
 

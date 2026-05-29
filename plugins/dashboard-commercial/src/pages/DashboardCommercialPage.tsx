@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Banknote,
   PackageCheck,
@@ -20,18 +20,26 @@ import {
 import { ChartCard } from "../components/ChartCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { ChartToolbar } from "../components/ChartToolbar";
+import type { DataTableColumn } from "../components/DataTable";
+import { DataTableSection } from "../components/DataTableSection";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
+import { ProposalStatusBadge } from "../components/ProposalStatusBadge";
 import { RolEvolutionChart } from "../components/RolEvolutionChart";
 import { TotvsSourceBanner } from "../components/TotvsSourceBanner";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useCommercialDashboard } from "../hooks/useCommercialDashboard";
+import { useCommercialProposals } from "../hooks/useCommercialProposals";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useCommercialFilters } from "../hooks/useCommercialFilters";
 import { useCommercialRolSeries } from "../hooks/useCommercialRolSeries";
 import type { ChartGranularity } from "../types/chart";
+import type {
+  CommercialProposal,
+  CommercialProposalStatusFilter,
+} from "../types/commercial";
 import { downloadRolSeriesCsv } from "../utils/chartSeriesExport";
-import { formatPeriodLabel } from "../utils/dates";
+import { formatDisplayDate, formatPeriodLabel } from "../utils/dates";
 import { suggestGranularity } from "../utils/periodBuckets";
 import {
   COMMERCIAL_CONSOLIDATED_BRANCH_LABELS,
@@ -47,11 +55,7 @@ import {
 
 const CHART_HEIGHT = 280;
 
-type DashboardCommercialPageProps = {
-  pathname?: string;
-};
-
-export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
+export function DashboardCommercialPage() {
   const {
     dateStart,
     dateEnd,
@@ -64,6 +68,8 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
   } = useCommercialFilters();
 
   const [granularity, setGranularity] = useState<ChartGranularity>("month");
+  const [proposalStatusFilter, setProposalStatusFilter] =
+    useState<CommercialProposalStatusFilter>("all");
 
   const {
     headOfficeRol,
@@ -91,6 +97,14 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     filters: periodParams,
     granularity,
   });
+
+  const {
+    items: proposals,
+    total: proposalsTotal,
+    loading: proposalsLoading,
+    error: proposalsError,
+    reload: reloadProposals,
+  } = useCommercialProposals(apiParams, proposalStatusFilter);
 
   useEffect(() => {
     setGranularity(suggestGranularity(dateStart, dateEnd));
@@ -157,6 +171,67 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
     downloadRolSeriesCsv("rol-evolucao.csv", rolSeries.points);
   }, [rolSeries.points]);
 
+  const proposalColumns = useMemo<DataTableColumn<CommercialProposal>[]>(
+    () => [
+      {
+        key: "branch",
+        header: "Filial",
+        render: (row) => row.branch || "—",
+      },
+      {
+        key: "proposal",
+        header: "Nº proposta",
+        render: (row) => row.proposal_number,
+      },
+      {
+        key: "revision",
+        header: "Rev.",
+        className: "dc-table__col--numeric",
+        render: (row) => row.revision || "—",
+      },
+      {
+        key: "description",
+        header: "Descrição",
+        className: "dc-table__col--wide",
+        render: (row) => row.description ?? "—",
+      },
+      {
+        key: "proposal_date",
+        header: "Data",
+        render: (row) => formatDisplayDate(row.proposal_date),
+      },
+      {
+        key: "end_date",
+        header: "Fim",
+        render: (row) => formatDisplayDate(row.end_date),
+      },
+      {
+        key: "status",
+        header: "Status",
+        render: (row): ReactNode => (
+          <ProposalStatusBadge
+            label={row.status_label ?? row.status_code ?? "—"}
+            category={row.status_category}
+            code={row.status_code}
+          />
+        ),
+      },
+      {
+        key: "customer",
+        header: "Cliente",
+        render: (row) => row.customer_code ?? "—",
+      },
+    ],
+    []
+  );
+
+  const proposalStatusHint =
+    proposalStatusFilter === "won"
+      ? "Somente propostas ganhas (status 9)."
+      : proposalStatusFilter === "open"
+        ? "Propostas sem fechamento ganho."
+        : "Última revisão por proposta no período (data AD1_DATA).";
+
   const chartHint =
     "Clique em um ponto para filtrar o período ao intervalo. Séries por filial 01 e 02.";
 
@@ -171,7 +246,10 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
-        onRefresh={reload}
+        onRefresh={() => {
+          reload();
+          reloadProposals();
+        }}
         refreshing={refreshing}
       />
 
@@ -311,6 +389,70 @@ export function DashboardCommercialPage(_props: DashboardCommercialPageProps) {
             </p>
           ) : null}
         </ChartCard>
+      </section>
+
+      <section className="dc-proposals-section dc-no-print">
+        <div className="dc-proposals-toolbar">
+          <label className="dc-proposals-filter">
+            <span>Status da proposta</span>
+            <select
+              value={proposalStatusFilter}
+              onChange={(event) =>
+                setProposalStatusFilter(
+                  event.target.value as CommercialProposalStatusFilter
+                )
+              }
+            >
+              <option value="all">Todas</option>
+              <option value="won">Ganhas</option>
+              <option value="open">Em aberto</option>
+            </select>
+          </label>
+        </div>
+
+        {proposalsError ? (
+          <div className="dc-state dc-state--error" role="alert">
+            <p>{proposalsError}</p>
+            <button
+              className="dc-primary-btn"
+              type="button"
+              onClick={reloadProposals}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : (
+          <DataTableSection
+            title="Propostas do período"
+            hint={`${proposalStatusHint} ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}${
+              proposalsTotal > proposals.length
+                ? ` · exibindo ${proposals.length} de ${proposalsTotal}`
+                : ""
+            }`}
+            columns={proposalColumns}
+            rows={proposals}
+            rowKey={(row) =>
+              `${row.branch}-${row.proposal_number}-${row.revision}`
+            }
+            loading={proposalsLoading}
+            emptyMessage="Nenhuma proposta encontrada para os filtros selecionados."
+            searchPlaceholder="Buscar proposta, descrição, status, cliente…"
+            getSearchText={(row) =>
+              [
+                row.branch,
+                row.proposal_number,
+                row.revision,
+                row.description,
+                row.status_label,
+                row.status_code,
+                row.customer_code,
+                row.stage,
+              ]
+                .filter(Boolean)
+                .join(" ")
+            }
+          />
+        )}
       </section>
 
       <section className="dc-charts-grid">

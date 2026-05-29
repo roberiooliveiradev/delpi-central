@@ -6,6 +6,9 @@ from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
 from app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
+from app.application.dto.commercial.list_commercial_proposals_request import (
+    ListCommercialProposalsRequest,
+)
 from app.application.dto.commercial.sales_conversion_rate_request import SalesConversionRateRequest
 from app.application.dto.commercial.new_clients_average_request import NewClientsAverageRequest
 from app.application.dto.commercial.new_clients_rol_pct_request import NewClientsRolPctRequest
@@ -19,6 +22,7 @@ from app.composition.commercial_composer import (
     build_get_head_office_rol_target_pct_use_case,
     build_get_branch_rol_target_pct_use_case,
     build_get_sales_conversion_rate_use_case,
+    build_list_commercial_proposals_use_case,
     build_get_new_clients_average_use_case,
     build_get_new_clients_rol_pct_use_case,
     build_get_commercial_rol_series_use_case,
@@ -143,6 +147,50 @@ def get_commercial_rol_series(
         log_error(f"Error while fetching commercial ROL series: {exc}")
         return error_response(
             "Internal error while fetching commercial ROL series.",
+            status_code=500,
+        )
+
+
+@router.get("/proposals")
+@require_any_permission(["api-delpi.access", "dashboard-commercial.view"])
+def list_commercial_proposals(
+    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    status: Optional[str] = Query(
+        None,
+        description="Filtro: won (ganhas), open (demais) ou omitir para todas.",
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+):
+    try:
+        use_case = build_list_commercial_proposals_use_case()
+
+        request = ListCommercialProposalsRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            page=page,
+            page_size=page_size,
+        )
+
+        result = use_case.execute(request)
+
+        return success_response(
+            data=result,
+            message="Commercial proposals listed successfully.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Validation error while listing commercial proposals: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Error while listing commercial proposals: {exc}")
+        return error_response(
+            "Internal error while listing commercial proposals.",
             status_code=500,
         )
 

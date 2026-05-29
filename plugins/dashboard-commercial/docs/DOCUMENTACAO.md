@@ -18,6 +18,7 @@ Plugin **microfrontend** (Module Federation) para indicadores do departamento **
 | ROL (por unidade: 01 \| 02) | `head_office_rol_target_pct` + `branch_rol_target_pct` (agregado na UI) | `commercial_rol` |
 | OTD — pedidos de venda | `GET /commercial/sales-order-otd` | `commercial_sales_order_otd` |
 | Taxa de conversão | `GET /commercial/closing-rate` | `commercial_closing_rate` |
+| Lista de propostas | `GET /commercial/proposals` | — (detalhe da taxa de fechamento) |
 | % ROL — novos negócios | `GET /commercial/new-business-rol-pct` | `commercial_new_business_rol` |
 
 Gráficos: evolução do ROL (filiais 01 e 02) e funil propostas × ganhas.

@@ -58,6 +58,39 @@ export type CommercialFilterParams = {
   start_date?: string;
   end_date?: string;
   branch?: string;
+  status?: string;
+  page?: number;
+  page_size?: number;
+};
+
+export type CommercialProposalStatusCategory =
+  | "won"
+  | "lost"
+  | "open"
+  | "other";
+
+export type CommercialProposalStatusFilter = "all" | "won" | "open";
+
+export type CommercialProposal = {
+  branch: string;
+  proposal_number: string;
+  revision: string;
+  description?: string | null;
+  proposal_date?: string | null;
+  end_date?: string | null;
+  status_code?: string | null;
+  status_label?: string | null;
+  status_category?: CommercialProposalStatusCategory | null;
+  customer_code?: string | null;
+  stage?: string | null;
+};
+
+export type CommercialProposalsPage = {
+  items: CommercialProposal[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
 };
 
 export type CommercialRolSeriesPoint = {
