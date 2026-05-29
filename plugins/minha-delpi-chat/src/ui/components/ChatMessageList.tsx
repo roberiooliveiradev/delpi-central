@@ -169,21 +169,34 @@ function resolveEditCardMinWidth(cardEl: HTMLElement | null | undefined): number
     return null;
   }
 
-  const measuredWidth = cardEl.getBoundingClientRect().width;
+  const stackEl = cardEl.closest<HTMLElement>(".mdc-chat-message-user-stack");
+  const cardWidth = cardEl.getBoundingClientRect().width;
+  const stackWidth = stackEl?.getBoundingClientRect().width ?? 0;
+  const measuredWidth = Math.max(cardWidth, stackWidth);
 
   if (!measuredWidth || measuredWidth <= 0) {
     return null;
   }
 
-  const stackEl = cardEl.closest<HTMLElement>(".mdc-chat-message-user-stack");
   const containerWidth =
-    stackEl?.getBoundingClientRect().width ??
-    cardEl.parentElement?.getBoundingClientRect().width ??
-    window.innerWidth;
+    stackEl?.parentElement?.getBoundingClientRect().width ?? window.innerWidth;
 
   const maxWidth = Math.max(0, containerWidth - 8);
 
   return Math.min(Math.ceil(measuredWidth), Math.floor(maxWidth));
+}
+
+function buildEditCardLockStyle(widthPx: number | null | undefined) {
+  if (!widthPx || widthPx <= 0) {
+    return undefined;
+  }
+
+  const lockedWidth = `min(${widthPx}px, 100%)`;
+
+  return {
+    width: lockedWidth,
+    minWidth: lockedWidth,
+  } as const;
 }
 
 function formatAttachmentSize(size?: number): string {
@@ -860,7 +873,16 @@ export function ChatMessageList({
         </div>
 
         {isUser ? (
-          <div className="mdc-chat-message-user-stack">
+          <div
+            className={`mdc-chat-message-user-stack${
+              editingMessageId === message.id ? " mdc-chat-message-user-stack--editing" : ""
+            }`}
+            style={
+              editingMessageId === message.id
+                ? buildEditCardLockStyle(editingCardMinWidthPx)
+                : undefined
+            }
+          >
             {editingMessageId !== message.id ? (
               <div className="mdc-chat-message-user-toolbar">
                 <div className="mdc-chat-message-actions">
@@ -903,8 +925,8 @@ export function ChatMessageList({
                   : ""
               }`}
               style={
-                editingMessageId === message.id && editingCardMinWidthPx
-                  ? { minWidth: `min(${editingCardMinWidthPx}px, 100%)` }
+                editingMessageId === message.id
+                  ? buildEditCardLockStyle(editingCardMinWidthPx)
                   : undefined
               }
             >

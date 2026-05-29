@@ -210,10 +210,15 @@
   word-break: break-word;
 }
 
-.mdc-chat-message-card--user.mdc-chat-message-card--editing {
-  width: fit-content;
+.mdc-chat-message-user-stack--editing {
+  width: auto;
   max-width: min(46rem, calc(100% - 0.25rem));
-  min-width: min(14rem, 100%);
+}
+
+.mdc-chat-message-card--user.mdc-chat-message-card--editing {
+  width: auto;
+  max-width: min(46rem, calc(100% - 0.25rem));
+  box-sizing: border-box;
   padding: 0.5rem 0.65rem 0.55rem;
 }
 
@@ -422,7 +427,7 @@
 .mdc-chat-message-edit--inline {
   gap: 0.55rem;
   width: 100%;
-  min-width: 0;
+  min-width: 100%;
   box-sizing: border-box;
 }
 
@@ -430,7 +435,7 @@
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
   display: block;
   width: 100%;
-  min-width: 0;
+  min-width: 100%;
   border: none;
   border-radius: 0;
   background: transparent;
@@ -443,6 +448,8 @@
   overflow-x: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
+  white-space: pre-wrap;
+  field-sizing: fixed;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -574,10 +581,9 @@
     min-width: 0;
   }
 
+  .mdc-chat-message-user-stack--editing,
   .mdc-chat-message-card--user.mdc-chat-message-card--editing {
-    width: 100%;
     max-width: 100%;
-    min-width: 0;
   }
 
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
@@ -636,11 +642,15 @@
     justify-self: end;
   }
 
-  .mdc-chat-message-card--user.mdc-chat-message-card--editing {
-    width: 100%;
+  .mdc-chat-message-user-stack--editing {
+    width: auto;
     max-width: 100%;
-    min-width: 0;
-    justify-self: stretch;
+    align-items: flex-end;
+  }
+
+  .mdc-chat-message-card--user.mdc-chat-message-card--editing {
+    max-width: 100%;
+    justify-self: end;
   }
 
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
