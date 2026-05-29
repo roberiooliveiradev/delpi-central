@@ -1,5 +1,6 @@
 import { httpGet } from "./httpClient";
 import type { ApiSuccessResponse } from "../types/api";
+import type { ChartGranularity } from "../types/chart";
 import type {
   DepreciationPctData,
   DirectLaborCostPctData,
@@ -7,6 +8,7 @@ import type {
   OtdPctData,
   ProductionCostPctData,
   ProductionFilterParams,
+  ProductionOeeSeriesData,
 } from "../types/production";
 
 export const PRODUCTION_API_BASE = "/apps/api-delpi/production";
@@ -17,6 +19,7 @@ function buildQuery(params: ProductionFilterParams = {}): string {
   if (params.start_date) searchParams.set("start_date", params.start_date);
   if (params.end_date) searchParams.set("end_date", params.end_date);
   if (params.branch) searchParams.set("branch", params.branch);
+  if (params.granularity) searchParams.set("granularity", params.granularity);
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
@@ -89,6 +92,17 @@ export function getOnTimeDeliveryPct(
 ) {
   return fetchProductionData<OtdPctData>(
     "/on_time_delivery_pct",
+    params,
+    signal
+  );
+}
+
+export function getProductionOeeSeries(
+  params: ProductionFilterParams & { granularity: ChartGranularity },
+  signal?: AbortSignal
+) {
+  return fetchProductionData<ProductionOeeSeriesData>(
+    "/oee/series",
     params,
     signal
   );

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -19,15 +19,21 @@ import {
 } from "lucide-react";
 
 import { ChartCard } from "../components/ChartCard";
+import { ChartToolbar } from "../components/ChartToolbar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { OeeEvolutionChart } from "../components/OeeEvolutionChart";
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { CHART_COLORS } from "../constants/chartColors";
 import { useProductionDashboard } from "../hooks/useProductionDashboard";
+import { useProductionOeeSeries } from "../hooks/useProductionOeeSeries";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import { useProductionFilters } from "../hooks/useProductionFilters";
+import type { ChartGranularity } from "../types/chart";
+import { downloadOeeSeriesCsv } from "../utils/chartSeriesExport";
 import { formatPeriodLabel } from "../utils/dates";
+import { suggestGranularity } from "../utils/periodBuckets";
 import { buildKpiGoalPresentation } from "../utils/goalDisplay";
 import { formatPercent } from "../utils/format";
 
@@ -44,6 +50,8 @@ export function DashboardProductionPage() {
     apiParams,
   } = useProductionFilters();
 
+  const [granularity, setGranularity] = useState<ChartGranularity>("month");
+
   const {
     directLabor,
     productionCost,
@@ -57,6 +65,15 @@ export function DashboardProductionPage() {
     sectionErrors,
     reload,
   } = useProductionDashboard(apiParams);
+
+  const oeeSeries = useProductionOeeSeries({
+    filters: apiParams,
+    granularity,
+  });
+
+  useEffect(() => {
+    setGranularity(suggestGranularity(dateStart, dateEnd));
+  }, [dateStart, dateEnd]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -110,6 +127,29 @@ export function DashboardProductionPage() {
 
   const hasChartValues = comparisonChartData.some((item) => item.value > 0);
 
+  const isOeeChartBusy = oeeSeries.loading;
+  const hasOeeChartValues = oeeSeries.points.some(
+    (point) =>
+      (point.oeeFilial01 != null && point.oeeFilial01 > 0) ||
+      (point.oeeFilial02 != null && point.oeeFilial02 > 0)
+  );
+
+  const oeeChartHint = branch
+    ? `Clique em um ponto para filtrar o período. Série da filial ${branch}.`
+    : "Clique em um ponto para filtrar o período. Séries por filial 01 e 02.";
+
+  const handleOeeChartDrillDown = useCallback(
+    (nextStart: string, nextEnd: string) => {
+      setDateStart(nextStart);
+      setDateEnd(nextEnd);
+    },
+    [setDateStart, setDateEnd]
+  );
+
+  const handleExportOeeCsv = useCallback(() => {
+    downloadOeeSeriesCsv("oee-evolucao.csv", oeeSeries.points);
+  }, [oeeSeries.points]);
+
   return (
     <div className="dashboard-production dashboard-page">
       <FilterBar
@@ -119,7 +159,10 @@ export function DashboardProductionPage() {
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onBranchChange={setBranch}
-        onRefresh={reload}
+        onRefresh={() => {
+          reload();
+          oeeSeries.reload();
+        }}
         refreshing={refreshing}
       />
 
@@ -223,6 +266,65 @@ export function DashboardProductionPage() {
         />
       </section>
 
+      <section className="dp-chart-section" aria-busy={isOeeChartBusy}>
+        <ChartCard
+          title="Evolução do OEE (%)"
+          hint={oeeChartHint}
+        >
+          <ChartToolbar
+            idPrefix="oee"
+            granularity={granularity}
+            onGranularityChange={setGranularity}
+            onExportCsv={handleExportOeeCsv}
+            exportDisabled={oeeSeries.points.length === 0}
+          />
+
+          {oeeSeries.error ? (
+            <div className="dp-state dp-state--error" role="alert">
+              <p>{oeeSeries.error}</p>
+              <button
+                className="dp-primary-btn"
+                type="button"
+                onClick={oeeSeries.reload}
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : null}
+
+          {!oeeSeries.error &&
+          (oeeSeries.points.length > 0 || oeeSeries.loading) ? (
+            <OeeEvolutionChart
+              data={oeeSeries.points}
+              branch={branch || undefined}
+              loading={oeeSeries.loading}
+              onDrillDown={handleOeeChartDrillDown}
+            />
+          ) : null}
+
+          {!oeeSeries.error &&
+          oeeSeries.points.length === 0 &&
+          !oeeSeries.loading ? (
+            <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+          ) : null}
+
+          {oeeSeries.truncated ? (
+            <p className="dp-chart-card__hint dp-chart-card__hint--below">
+              Período limitado aos primeiros 60 intervalos para desempenho.
+            </p>
+          ) : null}
+
+          {!oeeSeries.error &&
+          oeeSeries.points.length > 0 &&
+          !hasOeeChartValues &&
+          !oeeSeries.loading ? (
+            <p className="dp-chart-card__hint dp-chart-card__hint--below">
+              Todos os intervalos retornaram OEE zero ou sem apontamento no período.
+            </p>
+          ) : null}
+        </ChartCard>
+      </section>
+
       <section className="dp-chart-section">
         <ChartCard
           title="Comparativo dos indicadores (%)"
@@ -264,7 +366,7 @@ export function DashboardProductionPage() {
           <p className="dp-summary-card__description">
             Os três primeiros KPIs são custos médios das planilhas divididos pelo
             ROL (TOTVS) no período. <strong>OEE</strong> é a média de eficiência
-            dos apontamentos. <strong>OTD</strong> mede ordens de produção
+            dos apontamentos (gráfico temporal por filial). <strong>OTD</strong> mede ordens de produção
             concluídas no prazo. Sem filial, a API consolida por média entre
             matriz e filial.
           </p>

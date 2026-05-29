@@ -710,6 +710,10 @@
   min-height: 120px;
 }
 
+.dashboard-production .dp-chart-section--wide {
+  grid-column: 1 / -1;
+}
+
 .dashboard-production .dp-state-box {
   min-height: 120px;
   display: flex;

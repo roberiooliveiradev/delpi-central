@@ -4,6 +4,9 @@ from delpi_auth.authorization import require_any_permission
 from app.core.responses import success_response, error_response
 from app.utils.logger import log_error
 
+from app.application.dto.production.production_oee_series_request import (
+    ProductionOeeSeriesRequest,
+)
 from app.application.dto.production.production_request import ProductionRequest
 from app.application.dto.financial.get_rol_request import GetRolRequest
 
@@ -13,6 +16,7 @@ from app.composition.production_composer import (
     build_get_production_cost_pct_use_case,
     build_get_depreciation_pct_use_case,
     build_get_overall_equipment_effectiveness_pct_use_case,
+    build_get_production_oee_series_use_case,
     build_get_on_time_delivery_pct_use_case,
     build_get_eficiencia_fabril_dashboard_use_case,
     build_get_eficiencia_fabril_appointments_use_case,
@@ -162,6 +166,42 @@ def get_depreciation_pct(
             status_code=500,
         )
     
+
+@router.get("/oee/series")
+@require_any_permission(["api-delpi.access", "dashboard-production.view"])
+def get_production_oee_series(
+    granularity: str = Query(..., min_length=3, max_length=10),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+    branch: str | None = Query(default=None, min_length=2, max_length=2),
+):
+    try:
+        request = ProductionOeeSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+        )
+
+        use_case = build_get_production_oee_series_use_case()
+        result = use_case.execute(request)
+
+        return success_response(
+            data=result.to_dict(),
+            message="Série temporal de OEE carregada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação na série de OEE: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao carregar série de OEE: {exc}")
+        return error_response(
+            "Erro interno ao carregar série temporal de OEE.",
+            status_code=500,
+        )
+
 
 @router.get("/overall_equipment_effectiveness_pct")
 @require_any_permission(["api-delpi.access", "dashboard-production.view"])
