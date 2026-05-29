@@ -1910,6 +1910,25 @@ class ExternalActionResultPresenter:
     ]
 
     _GUIDE_PREFERRED_COLUMNS = [
+        ("branch", "Filial"),
+        ("route_code", "Cód. roteiro"),
+        ("product_code", "Produto"),
+        ("operation_code", "Cód. operação"),
+        ("operation_description", "Descrição operação"),
+        ("resource_code", "Cód. recurso"),
+        ("work_center", "Centro de trabalho"),
+        ("setup_hours", "Setup (h)"),
+        ("standard_time_hour_mil", "Tempo padrão (mil h)"),
+        ("standard_time_hours_piece", "Tempo padrão (h/peça)"),
+        ("standard_time_minutes_piece", "Tempo padrão (min/peça)"),
+        ("operation_type", "Tipo operação"),
+        ("mandatory_operation", "Oper. obrigatória"),
+        ("mandatory_sequence", "Seq. obrigatória"),
+        ("mandatory_report", "Apont. obrigatório"),
+        ("component_code", "Cód. componente"),
+        ("component_description", "Descrição componente"),
+        ("component_sequence", "Seq. componente"),
+        ("bom_level", "Nível BOM"),
         ("sequence", "Sequência"),
         ("step", "Etapa"),
         ("step_description", "Descrição etapa"),
@@ -1970,7 +1989,10 @@ class ExternalActionResultPresenter:
 
         is_stock = "current_quantity" in first or "available_quantity" in first
         is_invoice = "invoice_number" in first
-        is_guide = "step" in first and "sequence" in first
+        is_guide = (
+            ("operation_code" in first and "operation_description" in first)
+            or ("step" in first and "sequence" in first)
+        )
         is_inspection = "inspection_type" in first or ("characteristic" in first and "specification" in first)
         is_movement = "origin_warehouse" in first or "destination_warehouse" in first
         is_price = "table_code" in first or "sale_price" in first
@@ -2106,6 +2128,27 @@ class ExternalActionResultPresenter:
         "rejected": "Rejeitado",
         "lot": "Lote",
         "lot_quantity": "Qtd. lote",
+        "route_code": "Cód. roteiro",
+        "operation_code": "Cód. operação",
+        "operation_description": "Descrição operação",
+        "resource_code": "Cód. recurso",
+        "work_center": "Centro de trabalho",
+        "setup_hours": "Setup (h)",
+        "standard_time_hour_mil": "Tempo padrão (mil h)",
+        "standard_time_hours_piece": "Tempo padrão (h/peça)",
+        "standard_time_minutes_piece": "Tempo padrão (min/peça)",
+        "operation_type": "Tipo operação",
+        "mandatory_operation": "Oper. obrigatória",
+        "mandatory_sequence": "Seq. obrigatória",
+        "mandatory_report": "Apont. obrigatório",
+        "component_code": "Cód. componente",
+        "component_description": "Descrição componente",
+        "component_sequence": "Seq. componente",
+        "bom_level": "Nível BOM",
+        "machine_code": "Cód. máquina",
+        "machine_name": "Máquina",
+        "setup_time": "Tempo setup",
+        "operation_time": "Tempo operação",
     }
 
     def _humanize_key(self, key: str) -> str:
@@ -2160,6 +2203,7 @@ class ExternalActionResultPresenter:
             "order_number", "sale_number",
             "step", "sequence", "inspection_type", "characteristic",
             "origin_warehouse", "destination_warehouse", "movement_date",
+            "operation_code", "operation_description", "route_code", "work_center",
         ]
         return any(k in row for k in tabular_markers)
 
