@@ -6,6 +6,9 @@ from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+from app.domain.services.chat_sql_operational_intent_service import (
+    ChatSqlOperationalIntentService,
+)
 from app.domain.services.chat_department_kpi_intent_service import (
     ChatDepartmentKpiIntentService,
 )
@@ -73,6 +76,9 @@ class ExternalActionSelectionService:
             return None
 
         if ChatCanvasIntentService.blocks_external_action_selection(message):
+            return None
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return None
 
         refinement = ChatOperationalRefinementService.detect(
@@ -1399,6 +1405,9 @@ class ExternalActionSelectionService:
         return parameters
 
     def _looks_like_product_search(self, value: str) -> bool:
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
+            return False
+
         search_triggers = (
             "busque", "buscar", "pesquise", "pesquisar",
             "procure", "procurar", "encontre", "encontrar",

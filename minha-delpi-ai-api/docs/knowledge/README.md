@@ -7,6 +7,8 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 | Arquivo | Uso |
 |---------|-----|
 | [api-delpi-rotas-agente.md](./api-delpi-rotas-agente.md) | Agente com provider OpenAPI **api-delpi** — mapa intenção → rota, permissões, sinônimos e exemplos (maio/2026) |
+| [gpt-instructions-coverage-map.md](./gpt-instructions-coverage-map.md) | Mapa documento a documento: GPT_instructions (api-delpi-py) × agente `minha-delpi-chat` |
+| [domains/gpt-instructions/](./domains/gpt-instructions/) | Markdown adaptado gerado por `scripts/sync_gpt_instructions_knowledge.py` |
 | [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
 
 ## Documentação técnica relacionada
@@ -42,5 +44,7 @@ Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeli
 
 1. Deploy da api-delpi
 2. **Sincronizar OpenAPI:** `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (reimport + embeddings + [`_generated/api-delpi-openapi-catalog.md`](./_generated/api-delpi-openapi-catalog.md))
-3. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
-4. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+3. **Sincronizar GPT_instructions:** `PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py --source-dir …/api-delpi-py/GPT_instructions --agent-key minha-delpi-chat --user-id <uuid> --ingest`
+4. **Smoke melhorias GPT/SQL:** `PYTHONPATH=/app python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]`
+5. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
+6. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

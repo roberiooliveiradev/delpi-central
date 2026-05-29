@@ -276,6 +276,42 @@ def test_monte_query_does_not_auto_select_sql_action():
     assert selected is None
 
 
+def test_production_schedule_question_does_not_select_product_search():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Buscar produtos",
+                    "parametersSchema": [
+                        {"name": "description"},
+                        {"name": "page"},
+                        {"name": "page_size"},
+                    ],
+                },
+                {
+                    "actionId": "sql-action",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "operationId": "execute_sql",
+                    "summary": "Executar SQL",
+                    "parametersSchema": [{"name": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "quais produtos serão produzidos hoje?",
+        allowed_action_ids=["search-products", "sql-action"],
+    )
+
+    assert selected is None
+
+
 def test_execute_query_selects_sql_action():
     service = ExternalActionSelectionService(
         FakeRepository(

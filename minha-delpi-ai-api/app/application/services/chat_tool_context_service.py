@@ -236,16 +236,21 @@ class ChatToolContextService:
             and allowed_action_ids
             and str(router_suggestion["actionId"]) in {str(item) for item in allowed_action_ids}
         ):
-            selected_tools.append(
-                {
-                    "name": "execute_external_action",
-                    "arguments": {
-                        "actionId": router_suggestion["actionId"],
-                        "body": {"message": message},
-                    },
-                    "reason": "Action sugerida pelo roteador inteligente do chat.",
-                }
+            from app.domain.services.chat_sql_operational_intent_service import (
+                ChatSqlOperationalIntentService,
             )
+
+            if not ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+                selected_tools.append(
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": router_suggestion["actionId"],
+                            "body": {"message": message},
+                        },
+                        "reason": "Action sugerida pelo roteador inteligente do chat.",
+                    }
+                )
 
         if not selected_tools:
             return self._finalize_tool_context_result(

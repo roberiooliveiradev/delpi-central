@@ -3,6 +3,9 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_sql_operational_intent_service import (
+    ChatSqlOperationalIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -67,6 +70,9 @@ class ChatOperationalPipelineService:
             return False
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+            return False
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             return False
 
         if not allowed_action_ids:

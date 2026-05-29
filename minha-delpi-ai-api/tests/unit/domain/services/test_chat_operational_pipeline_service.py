@@ -35,3 +35,10 @@ def test_should_not_optimize_long_mixed_documental_operational_question():
         message,
         ["action-1"],
     )
+
+
+def test_should_not_optimize_production_sql_schedule_question():
+    assert not ChatOperationalPipelineService.should_optimize(
+        "quais produtos serão produzidos hoje?",
+        ["action-1"],
+    )
