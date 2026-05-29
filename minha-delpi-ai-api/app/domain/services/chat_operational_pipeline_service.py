@@ -9,6 +9,9 @@ from app.domain.services.chat_sql_operational_intent_service import (
 from app.domain.services.chat_sql_production_query_service import (
     ChatSqlProductionQueryService,
 )
+from app.domain.services.chat_technical_description_intent_service import (
+    ChatTechnicalDescriptionIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -73,6 +76,9 @@ class ChatOperationalPipelineService:
             return False
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+            return False
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
             return False
 
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):

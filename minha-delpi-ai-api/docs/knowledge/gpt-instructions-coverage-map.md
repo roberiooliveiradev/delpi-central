@@ -12,7 +12,7 @@ Gerado a partir de `GptInstructionsCoverageService`. Reindexe com `scripts/sync_
 | `system_api_instructions.md` | ✅ agente | system_api_instructions.md | ingerir no agente |
 | `GPT_instructions.md` | ✅ global | GPT_instructions.md | — |
 | `O_ARQUITETO_DO_CODIGO.md` | ✅ global | O_ARQUITETO_DO_CODIGO.md | — |
-| `Normas_Tecnicas_DELPI.md` | ❌ ausente | — | — |
+| `Normas_Tecnicas_DELPI.md` | ✅ global | normas-tecnicas-delpi.md | — |
 | `drawing_analyser_instructions.md` | ✅ agente | drawing_analyser_instructions.md | ingerir no agente |
 | `drawing_analyser_instructions_full.md` | ⏭️ omitir | — | — |
 | `drawing_rules_delpi.md` | ✅ agente | drawing_rules_delpi.md | ingerir no agente |
@@ -73,14 +73,15 @@ Gerado a partir de `GptInstructionsCoverageService`. Reindexe com `scripts/sync_
 - **Tags:** plataforma
 
 ### `Normas_Tecnicas_DELPI.md`
-- **Cobertura:** missing
-- **Notas:** Normas técnicas; recomendado base global (admin), não agent_source.
-- **Tags:** normas
+- **Cobertura:** indexed_global
+- **Indexado:** `normas-tecnicas-delpi.md`
+- **Notas:** Normas técnicas DELPI; base global (company-knowledge), não agent_source.
+- **Tags:** normas, produtos, engenharia
 
 ### `drawing_analyser_instructions.md`
 - **Cobertura:** indexed_agent
 - **Indexado:** `drawing_analyser_instructions.md`
-- **Notas:** Analyser / desenhos técnicos; rotas /products/{code}/analyser.
+- **Notas:** Analyser / desenhos técnicos; rotas /products/{code}/analyser. Runtime PDF: backlog Onda 12 (skill drawing-analyser herdável).
 - **Tags:** engenharia, analyser
 
 ### `drawing_analyser_instructions_full.md`

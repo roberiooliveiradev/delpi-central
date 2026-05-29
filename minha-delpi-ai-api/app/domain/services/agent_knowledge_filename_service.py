@@ -30,6 +30,9 @@ _CANONICAL_BY_ORIGINAL: dict[str, str] = {
     "gpt-validation-rules-delpi.md": "drawing-validation-rules-delpi.md",
     "gpt-diretrizes-criacao-de-descricao.md": "produto-diretrizes-criacao-descricao.md",
     "gpt-understanding-delpi-intermediate-product-codes.md": "engenharia-codigos-intermediarios-delpi.md",
+    "normas_tecnicas_delpi.md": "normas-tecnicas-delpi.md",
+    "gpt_instructions.md": "gpt-instructions.md",
+    "o_arquiteto_do_codigo.md": "o-arquiteto-do-codigo.md",
 }
 
 

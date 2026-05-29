@@ -1,4 +1,4 @@
-> **Origem:** `api-delpi-py/GPT_instructions/data_sql_api_instructions.md` · **Adaptado em:** 2026-05-29 18:03 UTC · **Alvo:** agente Minha DELPI / RAG operacional
+> **Origem:** `api-delpi-py/GPT_instructions/data_sql_api_instructions.md` · **Adaptado em:** 2026-05-29 19:18 UTC · **Alvo:** agente Minha DELPI / RAG operacional
 >
 > Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
 

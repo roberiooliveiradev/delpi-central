@@ -45,6 +45,7 @@ Mensagem do usuário
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights |
+| `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo?», campos da descrição técnica → RAG `Normas_Tecnicas_DELPI.md` (global), sem API de catálogo |
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
 | `ChatAgentProfileService` | Perfil dinâmico do agente ativo (`name`, `description`, `systemPrompt`) para identidade e small talk |

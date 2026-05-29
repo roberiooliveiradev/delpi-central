@@ -721,6 +721,13 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_description_question(cls, normalized: str) -> bool:
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(normalized):
+            return False
+
         terms = [
             "descrição",
             "descricao",

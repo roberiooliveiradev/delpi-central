@@ -22,6 +22,7 @@ class GptInstructionEntry:
     indexed_as: str | None
     notes: str
     ingest_to_agent: bool = False
+    ingest_to_global: bool = False
     tags: tuple[str, ...] = ()
 
 
@@ -81,6 +82,7 @@ GPT_INSTRUCTIONS_COVERAGE: tuple[GptInstructionEntry, ...] = (
         "GPT_instructions.md",
         "Regras gerais do agente GPT; escopo global (company-knowledge), 9 chunks.",
         ingest_to_agent=False,
+        ingest_to_global=True,
         tags=("comportamento",),
     ),
     GptInstructionEntry(
@@ -89,15 +91,17 @@ GPT_INSTRUCTIONS_COVERAGE: tuple[GptInstructionEntry, ...] = (
         "O_ARQUITETO_DO_CODIGO.md",
         "Identidade/plataforma; escopo global.",
         ingest_to_agent=False,
+        ingest_to_global=True,
         tags=("plataforma",),
     ),
     GptInstructionEntry(
         "Normas_Tecnicas_DELPI.md",
-        GptInstructionCoverage.MISSING,
-        None,
-        "Normas técnicas; recomendado base global (admin), não agent_source.",
+        GptInstructionCoverage.INDEXED_GLOBAL,
+        "normas-tecnicas-delpi.md",
+        "Normas técnicas DELPI; base global (company-knowledge), não agent_source.",
         ingest_to_agent=False,
-        tags=("normas",),
+        ingest_to_global=True,
+        tags=("normas", "produtos", "engenharia"),
     ),
     GptInstructionEntry(
         "drawing_analyser_instructions.md",
@@ -174,6 +178,10 @@ class GptInstructionsCoverageService:
     @classmethod
     def agent_ingest_sources(cls) -> tuple[GptInstructionEntry, ...]:
         return tuple(entry for entry in GPT_INSTRUCTIONS_COVERAGE if entry.ingest_to_agent)
+
+    @classmethod
+    def global_sync_sources(cls) -> tuple[GptInstructionEntry, ...]:
+        return tuple(entry for entry in GPT_INSTRUCTIONS_COVERAGE if entry.ingest_to_global)
 
     @classmethod
     def find_by_source(cls, source_file: str) -> GptInstructionEntry | None:

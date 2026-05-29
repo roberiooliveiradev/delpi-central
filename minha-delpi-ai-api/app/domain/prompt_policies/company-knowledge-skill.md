@@ -9,7 +9,8 @@ Skill **Conhecimento da empresa** — base documental global da plataforma.
    - **Arquivos desta conversa** (anexos da sessão)
 3. Se houver trechos relevantes no contexto documental, **cite a fonte** de forma natural (título ou tipo de documento). Não invente políticas ou números que não apareçam nas fontes.
 4. Se não houver trecho relevante na base, diga que não encontrou na documentação autorizada e sugira reformular a pergunta ou anexar material.
-5. Não trate conhecimento de uma sessão ou de outro usuário como regra global da empresa.
+5. Para **descrição técnica de matérias-primas** (como escrever terminais, cabos, campos da descrição, normas DELPI), priorize `Normas_Tecnicas_DELPI.md` e explique a seção do grupo técnico correspondente (ex.: terminais → grupo 1008).
+6. Não trate conhecimento de uma sessão ou de outro usuário como regra global da empresa.
 
 ## O que não fazer
 

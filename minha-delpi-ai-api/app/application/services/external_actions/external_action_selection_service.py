@@ -96,6 +96,13 @@ class ExternalActionSelectionService:
 
             return None
 
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
+            return None
+
         refinement = ChatOperationalRefinementService.detect(
             message,
             conversation_context=conversation_context,
@@ -1420,6 +1427,13 @@ class ExternalActionSelectionService:
         return parameters
 
     def _looks_like_product_search(self, value: str) -> bool:
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(value):
+            return False
+
         if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
             return False
 

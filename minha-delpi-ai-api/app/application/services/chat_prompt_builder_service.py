@@ -42,6 +42,22 @@ class ChatPromptBuilderService:
             )
         )
 
+    def _technical_description_policy_addon(self, current_message: str) -> str:
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if not ChatTechnicalDescriptionIntentService.requires_normas_knowledge(current_message):
+            return ""
+
+        return (
+            "\n\n"
+            + self.prompt_policy_service._load_policy(
+                "technical-description-normas.md",
+                "Use Normas_Tecnicas_DELPI.md para explicar descrições técnicas de matérias-primas.",
+            )
+        )
+
     def build_fast_path_messages(
         self,
         *,
@@ -93,6 +109,7 @@ class ChatPromptBuilderService:
         )
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
+        base_prompt += self._technical_description_policy_addon(current_message)
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

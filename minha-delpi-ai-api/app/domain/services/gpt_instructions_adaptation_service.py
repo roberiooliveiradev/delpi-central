@@ -22,6 +22,13 @@ _HEADER_TEMPLATE = """\
 
 """
 
+_GLOBAL_HEADER_TEMPLATE = """\
+> **Origem:** `api-delpi-py/GPT_instructions/{source_name}` · **Sincronizado em:** {adapted_at} · **Escopo:** conhecimento global (`company-knowledge`)
+>
+> Disponível para chat base e agentes com skill `company-knowledge`.
+
+"""
+
 
 class GptInstructionsAdaptationService:
     @classmethod
@@ -37,6 +44,23 @@ class GptInstructionsAdaptationService:
         text = cls._normalize_search_examples(text)
 
         header = _HEADER_TEMPLATE.format(
+            source_name=source_name,
+            adapted_at=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
+        )
+
+        if text.startswith(">"):
+            return text
+
+        return f"{header}\n{text}"
+
+    @classmethod
+    def adapt_global(cls, content: str, *, source_name: str) -> str:
+        text = str(content or "").strip()
+
+        if not text:
+            return text
+
+        header = _GLOBAL_HEADER_TEMPLATE.format(
             source_name=source_name,
             adapted_at=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         )

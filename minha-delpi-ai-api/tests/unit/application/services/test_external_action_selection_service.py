@@ -984,3 +984,26 @@ def test_select_product_detail_from_structure_description_history():
     assert selected is not None
     assert selected["arguments"]["actionId"] == "analyser-action"
     assert selected["arguments"]["parameters"]["code"] == "10080109"
+
+
+def test_select_action_skips_catalog_for_technical_description_guidance():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "parametersSchema": [{"name": "description", "in": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "como descrever um terminal?",
+        allowed_action_ids=["search-products"],
+    )
+
+    assert selected is None

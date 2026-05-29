@@ -10,6 +10,7 @@ from app.domain.services.agent_knowledge_filename_service import AgentKnowledgeF
         ("Understanding DELPI Intermediate Product Codes.md", "engenharia-codigos-intermediarios-delpi.md"),
         ("Analista SQL DELPI — Produção, Suprimentos e Perdas.txt", "sql-playbook-producao-suprimentos-perdas.txt"),
         ("api-delpi-rotas-agente.md", "api-delpi-rotas-agente.md"),
+        ("Normas_Tecnicas_DELPI.md", "normas-tecnicas-delpi.md"),
     ],
 )
 def test_normalize_known_filenames(original: str, expected: str) -> None:

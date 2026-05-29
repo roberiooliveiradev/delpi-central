@@ -41,6 +41,13 @@ DEFAULT_OUTPUT = (
     / "domains"
     / "gpt-instructions"
 )
+DEFAULT_GLOBAL_OUTPUT = (
+    DEFAULT_REPO_ROOT
+    / "docs"
+    / "knowledge"
+    / "domains"
+    / "global"
+)
 DEFAULT_COVERAGE_MAP = (
     DEFAULT_REPO_ROOT
     / "docs"
@@ -99,6 +106,122 @@ def _generate_adapted_files(source_dir: Path, output_dir: Path) -> list[dict]:
         )
 
     return generated
+
+
+def _generate_global_files(source_dir: Path, output_dir: Path) -> list[dict]:
+    from app.domain.services.agent_knowledge_filename_service import AgentKnowledgeFilenameService
+    from app.domain.services.gpt_instructions_adaptation_service import (
+        GptInstructionsAdaptationService,
+    )
+    from app.domain.services.gpt_instructions_coverage_service import (
+        GptInstructionsCoverageService,
+    )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    generated: list[dict] = []
+
+    for entry in GptInstructionsCoverageService.global_sync_sources():
+        source_path = _resolve_source_path(source_dir, entry.source_file)
+
+        if not source_path.is_file():
+            generated.append(
+                {
+                    "sourceFile": entry.source_file,
+                    "status": "missing_source",
+                    "path": str(source_path),
+                    "scope": "global",
+                }
+            )
+            continue
+
+        raw = source_path.read_text(encoding="utf-8")
+        synced = GptInstructionsAdaptationService.adapt_global(
+            raw,
+            source_name=entry.source_file,
+        )
+        out_name = AgentKnowledgeFilenameService.normalize(entry.source_file)
+        out_path = output_dir / out_name
+        out_path.write_text(synced, encoding="utf-8")
+
+        generated.append(
+            {
+                "sourceFile": entry.source_file,
+                "status": "generated",
+                "outputPath": str(out_path),
+                "outputName": out_name,
+                "chars": len(synced),
+                "tags": list(entry.tags),
+                "scope": "global",
+            }
+        )
+
+    readme = output_dir / "README.md"
+    if not readme.exists():
+        readme.write_text(
+            "# Conhecimento global (chat base / company-knowledge)\n\n"
+            "Documentos com `scope: global` — herdados por chats e agentes com skill "
+            "`company-knowledge`.\n\n"
+            "Regenerar com `scripts/sync_gpt_instructions_knowledge.py --sync-global`.\n",
+            encoding="utf-8",
+        )
+
+    return generated
+
+
+def _ingest_global_documents(*, user_id: str, generated: list[dict]) -> list[dict]:
+    from app.application.dto.ingest_document_request import IngestDocumentRequest
+    from app.application.services.knowledge_curatorial_metadata_service import (
+        build_global_curatorial_metadata,
+    )
+    from app.composition.chat_composer import make_ingest_knowledge_document_use_case
+
+    use_case = make_ingest_knowledge_document_use_case()
+    results: list[dict] = []
+
+    for item in generated:
+        if item.get("status") != "generated" or item.get("scope") != "global":
+            continue
+
+        out_path = Path(item["outputPath"])
+        content = out_path.read_text(encoding="utf-8")
+        title = item["sourceFile"]
+        source_ref = f"repo:docs/knowledge/domains/global/{item['outputName']}"
+
+        metadata = build_global_curatorial_metadata(
+            category="normas" if "normas" in (item.get("tags") or []) else "operacional",
+            tags=item.get("tags") or [],
+            namespace="global:company-knowledge",
+            domain="delpi",
+            extra={
+                "origin": "sync_gpt_instructions_knowledge",
+                "sourceOrigin": "api-delpi-py/GPT_instructions",
+                "originalFilename": item["sourceFile"],
+            },
+        )
+
+        try:
+            response = use_case.execute(
+                IngestDocumentRequest(
+                    title=title,
+                    source_type="manual",
+                    source_ref=source_ref,
+                    content=content,
+                    metadata=metadata,
+                    user_id=user_id,
+                )
+            )
+            results.append(
+                {
+                    **item,
+                    "ingest": "duplicate" if response.get("duplicate") else "created",
+                    "documentId": response.get("id"),
+                    "chunkCount": response.get("chunks"),
+                }
+            )
+        except Exception as exc:  # noqa: BLE001 — script CLI reporta falha por arquivo
+            results.append({**item, "ingest": "error", "error": str(exc)})
+
+    return results
 
 
 def _ingest_agent_sources(
@@ -176,7 +299,13 @@ def main() -> int:
         "--output-dir",
         type=Path,
         default=DEFAULT_OUTPUT,
-        help="Destino dos .md adaptados.",
+        help="Destino dos .md adaptados (agente).",
+    )
+    parser.add_argument(
+        "--global-output-dir",
+        type=Path,
+        default=DEFAULT_GLOBAL_OUTPUT,
+        help="Destino dos documentos globais (company-knowledge).",
     )
     parser.add_argument(
         "--coverage-map",
@@ -190,6 +319,16 @@ def main() -> int:
         "--ingest",
         action="store_true",
         help="Ingerir arquivos gerados como agent_source do agente.",
+    )
+    parser.add_argument(
+        "--sync-global",
+        action="store_true",
+        help="Copiar documentos globais (GPT_instructions, Normas, etc.) para domains/global/.",
+    )
+    parser.add_argument(
+        "--ingest-global",
+        action="store_true",
+        help="Ingerir documentos globais na base company-knowledge (requer --sync-global e --user-id).",
     )
     args = parser.parse_args()
 
@@ -224,6 +363,19 @@ def main() -> int:
             1 for item in generated if item.get("status") == "missing_source"
         )
 
+        if args.sync_global or args.ingest_global:
+            global_generated = _generate_global_files(args.source_dir, args.global_output_dir)
+            report["globalGenerated"] = global_generated
+            report["globalGeneratedCount"] = sum(
+                1 for item in global_generated if item.get("status") == "generated"
+            )
+            report["globalMissingSourceCount"] = sum(
+                1 for item in global_generated if item.get("status") == "missing_source"
+            )
+            report["missingSourceCount"] = report.get("missingSourceCount", 0) + report[
+                "globalMissingSourceCount"
+            ]
+
         coverage_md = GptInstructionsCoverageService.build_markdown_report()
         args.coverage_map.parent.mkdir(parents=True, exist_ok=True)
         args.coverage_map.write_text(coverage_md, encoding="utf-8")
@@ -247,6 +399,29 @@ def main() -> int:
             report["ingestCreated"] = sum(1 for item in ingest_results if item.get("ingest") == "created")
             report["ingestDuplicate"] = sum(
                 1 for item in ingest_results if item.get("ingest") == "duplicate"
+            )
+
+        if args.ingest_global:
+            if not args.user_id:
+                print("--user-id é obrigatório com --ingest-global", file=sys.stderr)
+                return 2
+            if not args.sync_global:
+                print("--ingest-global requer --sync-global", file=sys.stderr)
+                return 2
+
+            from app.extensions.db import db
+
+            global_ingest = _ingest_global_documents(
+                user_id=args.user_id,
+                generated=report.get("globalGenerated") or [],
+            )
+            db.session.commit()
+            report["globalIngest"] = global_ingest
+            report["globalIngestCreated"] = sum(
+                1 for item in global_ingest if item.get("ingest") == "created"
+            )
+            report["globalIngestDuplicate"] = sum(
+                1 for item in global_ingest if item.get("ingest") == "duplicate"
             )
 
     print(json.dumps(report, ensure_ascii=False, indent=2))

@@ -394,6 +394,13 @@ class ChatTurnPreparationService:
         assistant_identity_question = ChatAssistantIdentityService.is_assistant_identity_question(
             message
         )
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        technical_description_normas = (
+            ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message)
+        )
         assistant_identity_direct = None
         if (
             assistant_identity_question
@@ -528,6 +535,8 @@ class ChatTurnPreparationService:
             if assistant_identity_question:
                 rag_query = ChatAssistantIdentityService.build_rag_query(message)
                 rag_min_score = Settings.RAG_IDENTITY_QUESTION_MIN_SCORE
+            elif technical_description_normas:
+                rag_query = ChatTechnicalDescriptionIntentService.build_rag_query(message)
 
             rag = self.rag_context_service.build_context(
                 rag_query,
