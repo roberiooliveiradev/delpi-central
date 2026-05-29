@@ -83,7 +83,7 @@ export function ChatInput({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
-  const { ref: textareaRef } = useAutoGrowTextarea({
+  const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
     value,
     bottomInset: variant === "dock" ? 72 : 48,
     maxHeightCapPx: 176,
@@ -345,7 +345,13 @@ export function ChatInput({
           disabled={disabled || isSending}
           placeholder={placeholder}
           rows={1}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) => {
+            onChange(event.target.value);
+            requestAnimationFrame(() => syncHeight());
+          }}
+          onInput={() => {
+            requestAnimationFrame(() => syncHeight());
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();

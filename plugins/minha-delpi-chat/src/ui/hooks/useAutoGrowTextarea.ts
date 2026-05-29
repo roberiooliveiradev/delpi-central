@@ -8,6 +8,29 @@ export type UseAutoGrowTextareaOptions = {
   maxHeightCapPx?: number;
 };
 
+function measureTextareaContentHeight(element: HTMLTextAreaElement): number {
+  const previous = {
+    height: element.style.height,
+    minHeight: element.style.minHeight,
+    maxHeight: element.style.maxHeight,
+    overflow: element.style.overflow,
+  };
+
+  element.style.overflow = "hidden";
+  element.style.height = "auto";
+  element.style.minHeight = "0";
+  element.style.maxHeight = "none";
+
+  const contentHeight = element.scrollHeight;
+
+  element.style.height = previous.height;
+  element.style.minHeight = previous.minHeight;
+  element.style.maxHeight = previous.maxHeight;
+  element.style.overflow = previous.overflow;
+
+  return contentHeight;
+}
+
 export function useAutoGrowTextarea({
   value,
   bottomInset = 16,
@@ -22,19 +45,18 @@ export function useAutoGrowTextarea({
       return;
     }
 
-    element.style.height = "0px";
-
-    const scrollHeight = element.scrollHeight;
-    const minHeight = Number.parseFloat(getComputedStyle(element).minHeight) || 0;
+    const computed = getComputedStyle(element);
+    const minHeightPx = Number.parseFloat(computed.minHeight) || 0;
+    const contentHeight = measureTextareaContentHeight(element);
     const viewportLimit = Math.max(
-      minHeight,
+      minHeightPx,
       window.innerHeight - element.getBoundingClientRect().top - bottomInset,
     );
     const maxHeight = Math.min(maxHeightCapPx, viewportLimit);
-    const nextHeight = Math.min(Math.max(scrollHeight, minHeight), maxHeight);
+    const nextHeight = Math.min(Math.max(contentHeight, minHeightPx), maxHeight);
 
     element.style.height = `${nextHeight}px`;
-    element.style.overflowY = scrollHeight > maxHeight ? "auto" : "hidden";
+    element.style.overflowY = contentHeight > maxHeight ? "auto" : "hidden";
   }, [bottomInset, maxHeightCapPx]);
 
   useLayoutEffect(() => {
@@ -58,6 +80,10 @@ export function useAutoGrowTextarea({
         : null;
 
     observer?.observe(element);
+
+    if (typeof document !== "undefined" && document.fonts?.ready) {
+      void document.fonts.ready.then(handleResize);
+    }
 
     return () => {
       window.removeEventListener("resize", handleResize);

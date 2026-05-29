@@ -116,7 +116,6 @@
 .mdc-auto-grow-textarea {
   width: 100%;
   min-height: 2.5rem;
-  max-height: min(11rem, 40dvh);
   resize: none;
   overflow-y: hidden;
   border: 0 !important;
@@ -128,6 +127,8 @@
   outline: none;
   box-shadow: none !important;
   box-sizing: border-box;
+  align-self: center;
+  field-sizing: content;
 }
 
 .mdc-chat-input textarea:focus,

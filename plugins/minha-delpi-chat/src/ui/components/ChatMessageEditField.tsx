@@ -15,7 +15,7 @@ export function ChatMessageEditField({
   onCancel,
   onSubmit,
 }: ChatMessageEditFieldProps) {
-  const { ref } = useAutoGrowTextarea({
+  const { ref, syncHeight } = useAutoGrowTextarea({
     value,
     bottomInset: 24,
     maxHeightCapPx: 224,
@@ -29,7 +29,13 @@ export function ChatMessageEditField({
         value={value}
         rows={1}
         autoFocus
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value);
+          requestAnimationFrame(() => syncHeight());
+        }}
+        onInput={() => {
+          requestAnimationFrame(() => syncHeight());
+        }}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
