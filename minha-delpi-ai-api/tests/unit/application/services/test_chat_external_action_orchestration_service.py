@@ -143,3 +143,70 @@ def test_plan_actions_followup_uses_single_code_from_context():
 
     assert len(planned) == 1
     assert not service.product_calls
+
+
+def test_plan_actions_pagination_follow_up_uses_select_action():
+    from app.application.services.external_actions.external_action_selection_service import (
+        ExternalActionSelectionService,
+    )
+
+    class Repo:
+        actions = [
+            {
+                "actionId": "parents-action",
+                "method": "GET",
+                "path": "/products/{code}/parents",
+                "operationId": "get_product_parents",
+                "summary": "Produtos pai",
+                "parametersSchema": [
+                    {"name": "code", "in": "path", "required": True},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            }
+        ]
+
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return self.actions
+
+    history = [
+        {"role": "user", "content": "onde é usado o 10080022"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "parents-action",
+                            "parameters": {
+                                "code": "10080022",
+                                "page": 1,
+                                "page_size": 25,
+                            },
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080022/parents",
+                            "actionId": "parents-action",
+                            "dataCoverageNotice": {"kind": "pagination"},
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    selection_service = ExternalActionSelectionService(Repo())
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        selection_service,
+        message="aumente para 50 linhas",
+        allowed_action_ids=["parents-action"],
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    params = planned[0]["arguments"]["parameters"]
+    assert params["code"] == "10080022"
+    assert params["page_size"] == 50
