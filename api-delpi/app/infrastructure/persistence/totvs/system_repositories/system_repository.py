@@ -15,7 +15,23 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
     e relacionamentos do Protheus / SQL Server.
     """
 
+    @staticmethod
+    def _resolve_physical_table_name(table_name: str) -> str:
+        normalized = str(table_name or "").strip().upper()
+
+        if not normalized:
+            return normalized
+
+        if re.fullmatch(r"[A-Z]{2,4}\d{3,4}", normalized):
+            return normalized
+
+        if re.fullmatch(r"[A-Z]{2,4}\d{0,2}", normalized):
+            return f"{normalized}010"
+
+        return normalized
+
     def get_table(self, table_name: str) -> list[dict]:
+        table_name = self._resolve_physical_table_name(table_name)
         log_info(f"Buscando informações da tabela {table_name}.")
 
         query = """
@@ -46,6 +62,7 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
         page: int = 1,
         page_size: int = 50
     ) -> dict:
+        table_name = self._resolve_physical_table_name(table_name)
         log_info(
             f"Buscando colunas da tabela {table_name} "
             f"(página {page}, limite {page_size})..."
@@ -217,6 +234,7 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
         }
 
     def get_table_indexes(self, table_name: str) -> list[dict]:
+        table_name = self._resolve_physical_table_name(table_name)
         log_info(f"Buscando índices da tabela {table_name}...")
 
         query = """
@@ -236,6 +254,7 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
             return repo.execute_query(query, (table_name,))
 
     def get_table_relations(self, table_name: str) -> list[dict]:
+        table_name = self._resolve_physical_table_name(table_name)
         log_info(f"Buscando relacionamentos da tabela {table_name}...")
 
         query = """
@@ -255,6 +274,7 @@ class SystemRepository(BaseRepository, SystemRepositoryPort):
             return repo.execute_query(query, (table_name,))
 
     def search_columns_in_table(self, table_name: str, text: str) -> list[dict]:
+        table_name = self._resolve_physical_table_name(table_name)
         log_info(
             f"Buscando colunas da tabela {table_name} contendo '{text}'..."
         )

@@ -1,3 +1,6 @@
+import re
+
+
 class ExternalActionResultPresenter:
     PRODUCT_ALIASES = {
         "code": "Código",
@@ -57,6 +60,17 @@ class ExternalActionResultPresenter:
             if structure_result:
                 return structure_result
 
+        if isinstance(root, dict):
+            specialized = (
+                self._present_stock_value_summary(root, path)
+                or self._present_product_billing_summary(root, path)
+                or self._present_financial_pmr(root, path)
+                or self._present_system_table_columns(root, path)
+            )
+
+            if specialized:
+                return specialized
+
         items = root.get("items") if isinstance(root, dict) else None
 
         if isinstance(items, list):
@@ -83,9 +97,13 @@ class ExternalActionResultPresenter:
         if isinstance(root, dict) and self._looks_like_kpi_response(root, path):
             kpi = self._build_kpi_chart(root, path)
             if kpi:
+                linhas = self._kpi_cards_to_linhas(kpi)
+
                 return {
                     "titulo": kpi.get("title", "Indicador"),
-                    "linhas": [f"{kpi.get('title', 'Indicador')}: veja os dados abaixo."],
+                    "linhas": linhas or [
+                        f"{kpi.get('title', 'Indicador')}: veja os dados abaixo."
+                    ],
                     "dados": root,
                     "apresentacao": kpi,
                 }
@@ -146,6 +164,353 @@ class ExternalActionResultPresenter:
             }
 
         return None
+
+    def _extract_product_code_from_path(self, path: str) -> str:
+        match = re.search(r"/products/(\d+)/", str(path or ""), flags=re.IGNORECASE)
+
+        if match:
+            return match.group(1)
+
+        return ""
+
+    def _format_protheus_date(self, value) -> str | None:
+        raw = str(value or "").strip()
+
+        if len(raw) != 8 or not raw.isdigit():
+            return raw or None
+
+        return f"{raw[6:8]}/{raw[4:6]}/{raw[0:4]}"
+
+    def _format_currency(self, value) -> str:
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+
+        formatted = f"{number:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+        return formatted
+
+    def _kpi_cards_to_linhas(self, kpi: dict) -> list[str]:
+        cards = kpi.get("cards")
+
+        if not isinstance(cards, list):
+            return []
+
+        linhas: list[str] = []
+
+        for card in cards:
+            if not isinstance(card, dict):
+                continue
+
+            label = str(card.get("label") or "Indicador").strip()
+            unit = str(card.get("unit") or "").strip()
+            value = card.get("value")
+
+            if value is None:
+                continue
+
+            suffix = f" {unit}".rstrip()
+            linhas.append(f"**{label}:** {self._format_num(value)}{suffix}")
+
+        return linhas
+
+    def _present_stock_value_summary(self, root: dict, path: str) -> dict | None:
+        if "stock-value" not in str(path or "").lower():
+            return None
+
+        summary = root.get("summary")
+
+        if not isinstance(summary, dict):
+            return None
+
+        title = self._kpi_title(path)
+        linhas = [
+            f"**Valor total em estoque:** R$ {self._format_currency(summary.get('total_stock_value'))}",
+            f"**Quantidade total:** {self._format_num(summary.get('total_stock_quantity'))}",
+            f"**Produtos distintos:** {summary.get('total_products')}",
+            f"**Registros:** {summary.get('total_records')}",
+            f"**Localizações:** {summary.get('total_locations')}",
+        ]
+
+        by_branch = root.get("by_branch")
+
+        if isinstance(by_branch, list):
+            for item in by_branch:
+                if not isinstance(item, dict):
+                    continue
+
+                branch = str(item.get("branch") or "").strip()
+
+                if not branch:
+                    continue
+
+                linhas.append(
+                    "Filial "
+                    f"{branch}: R$ {self._format_currency(item.get('total_stock_value'))} "
+                    f"({self._format_num(item.get('total_stock_quantity'))} un.)"
+                )
+
+        kpi = self._build_stock_value_kpi(root, path)
+
+        return {
+            "titulo": title,
+            "linhas": linhas,
+            "dados": root,
+            "apresentacao": kpi,
+        }
+
+    def _present_product_billing_summary(self, root: dict, path: str) -> dict | None:
+        lowered = str(path or "").lower()
+
+        if "/sales/billing" not in lowered:
+            return None
+
+        if "value" not in root and "documents" not in root:
+            return None
+
+        product_code = self._extract_product_code_from_path(path)
+        title = (
+            f"Faturamento do produto {product_code}"
+            if product_code
+            else "Faturamento do produto"
+        )
+        linhas: list[str] = []
+
+        if root.get("value") is not None:
+            linhas.append(
+                f"**Valor faturado:** R$ {self._format_currency(root.get('value'))}"
+            )
+
+        if root.get("documents") is not None:
+            linhas.append(f"**Documentos:** {root.get('documents')}")
+
+        first_date = self._format_protheus_date(root.get("first_billing_date"))
+
+        if first_date:
+            linhas.append(f"**Primeira emissão:** {first_date}")
+
+        last_date = self._format_protheus_date(root.get("last_billing_date"))
+
+        if last_date:
+            linhas.append(f"**Última emissão:** {last_date}")
+
+        return {
+            "titulo": title,
+            "linhas": linhas,
+            "dados": root,
+        }
+
+    def _present_financial_pmr(self, root: dict, path: str) -> dict | None:
+        if "pmr" not in str(path or "").lower():
+            return None
+
+        if "branch" not in root and "pmr_days" not in root:
+            return None
+
+        title = self._kpi_title(path)
+        branch = str(root.get("branch") or "consolidado").strip()
+        linhas = [f"**Filial:** {branch}"]
+        pmr_days = root.get("pmr_days")
+
+        if pmr_days is None:
+            linhas.append(
+                "Não há PMR calculado para esta filial no período disponível."
+            )
+        else:
+            linhas.append(f"**PMR:** {self._format_num(pmr_days)} dias")
+
+        return {
+            "titulo": title,
+            "linhas": linhas,
+            "dados": root,
+        }
+
+    def _present_system_table_columns(self, root: dict, path: str) -> dict | None:
+        if "/columns" not in str(path or "").lower():
+            return None
+
+        results = root.get("results")
+
+        if not isinstance(results, list) or not results:
+            return None
+
+        table_name = str(path or "").rstrip("/").split("/")[-2]
+        total = root.get("total", len(results))
+        linhas = [f"**Total de colunas:** {total}"]
+
+        for item in results[:8]:
+            if not isinstance(item, dict):
+                continue
+
+            field = item.get("X3_CAMPO") or item.get("column_name") or item.get("field")
+            label = item.get("X3_DESCRIC") or item.get("column_description") or item.get("label")
+
+            if field and label:
+                linhas.append(f"- **{field}:** {label}")
+            elif field:
+                linhas.append(f"- **{field}**")
+
+        if len(results) > 8:
+            linhas.append(f"… e mais {len(results) - 8} coluna(s).")
+
+        return {
+            "titulo": f"Colunas da tabela {table_name.upper()}",
+            "linhas": linhas,
+            "dados": root,
+        }
+
+    def _build_stock_value_kpi(self, root: dict, path: str) -> dict | None:
+        summary = root.get("summary")
+
+        if not isinstance(summary, dict):
+            return None
+
+        cards = [
+            {
+                "label": "Valor total",
+                "value": summary.get("total_stock_value"),
+                "unit": "R$",
+                "color": "#0ea5e9",
+            },
+            {
+                "label": "Quantidade total",
+                "value": summary.get("total_stock_quantity"),
+                "unit": "",
+                "color": "#10b981",
+            },
+            {
+                "label": "Produtos",
+                "value": summary.get("total_products"),
+                "unit": "",
+                "color": "#f59e0b",
+            },
+            {
+                "label": "Localizações",
+                "value": summary.get("total_locations"),
+                "unit": "",
+                "color": "#ef4444",
+            },
+        ]
+
+        return {
+            "type": "kpi",
+            "title": self._kpi_title(path),
+            "cards": cards,
+        }
+
+    def _build_stock_value_branch_table(self, root: dict, path: str) -> dict | None:
+        if "stock-value" not in str(path or "").lower():
+            return None
+
+        by_branch = root.get("by_branch")
+
+        if not isinstance(by_branch, list):
+            return None
+
+        rows = [
+            item
+            for item in by_branch
+            if isinstance(item, dict) and str(item.get("branch") or "").strip()
+        ]
+
+        if not rows:
+            return None
+
+        return {
+            "type": "table",
+            "title": "Valor de estoque por filial",
+            "columns": [
+                {"key": "branch", "label": "Filial"},
+                {
+                    "key": "total_stock_value",
+                    "label": "Valor total",
+                    "dataType": "currency",
+                },
+                {
+                    "key": "total_stock_quantity",
+                    "label": "Quantidade",
+                    "dataType": "quantity",
+                },
+                {"key": "total_products", "label": "Produtos"},
+            ],
+            "rows": rows,
+        }
+
+    def _build_product_billing_table(self, root: dict, path: str) -> dict | None:
+        if "/sales/billing" not in str(path or "").lower():
+            return None
+
+        if root.get("value") is None and root.get("documents") is None:
+            return None
+
+        product_code = self._extract_product_code_from_path(path)
+        title = (
+            f"Faturamento do produto {product_code}"
+            if product_code
+            else "Faturamento do produto"
+        )
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": [
+                {"key": "campo", "label": "Campo"},
+                {"key": "valor", "label": "Valor"},
+            ],
+            "rows": [
+                {"campo": "Valor faturado", "valor": root.get("value")},
+                {"campo": "Documentos", "valor": root.get("documents")},
+                {
+                    "campo": "Primeira emissão",
+                    "valor": self._format_protheus_date(root.get("first_billing_date")),
+                },
+                {
+                    "campo": "Última emissão",
+                    "valor": self._format_protheus_date(root.get("last_billing_date")),
+                },
+            ],
+        }
+
+    def _build_system_columns_table(self, root: dict, path: str) -> dict | None:
+        if "/columns" not in str(path or "").lower():
+            return None
+
+        results = root.get("results")
+
+        if not isinstance(results, list) or not results:
+            return None
+
+        table_name = str(path or "").rstrip("/").split("/")[-2]
+        rows = []
+
+        for item in results[:100]:
+            if not isinstance(item, dict):
+                continue
+
+            rows.append(
+                {
+                    "campo": item.get("X3_CAMPO") or item.get("column_name") or item.get("field"),
+                    "descricao": item.get("X3_DESCRIC") or item.get("column_description") or item.get("label"),
+                    "tipo": item.get("X3_TIPO") or item.get("type"),
+                    "tamanho": item.get("X3_TAMANHO") or item.get("size"),
+                }
+            )
+
+        if not rows:
+            return None
+
+        return {
+            "type": "table",
+            "title": f"Colunas da tabela {table_name.upper()}",
+            "columns": [
+                {"key": "campo", "label": "Campo"},
+                {"key": "descricao", "label": "Descrição"},
+                {"key": "tipo", "label": "Tipo"},
+                {"key": "tamanho", "label": "Tamanho"},
+            ],
+            "rows": rows,
+        }
 
     def _infer_items_title(self, items: list, path: str) -> str | None:
         if not path:
@@ -798,6 +1163,21 @@ class ExternalActionResultPresenter:
                 title="Estrutura do produto",
             )
 
+        stock_value_table = self._build_stock_value_branch_table(root, path)
+
+        if stock_value_table:
+            return stock_value_table
+
+        billing_table = self._build_product_billing_table(root, path)
+
+        if billing_table:
+            return billing_table
+
+        columns_table = self._build_system_columns_table(root, path)
+
+        if columns_table:
+            return columns_table
+
         return None
 
     def _build_product_table(self, product: dict, root: dict) -> dict:
@@ -1273,6 +1653,11 @@ class ExternalActionResultPresenter:
             return self._try_chart_from_rows(items, force=force)
 
         if self._looks_like_kpi_response(root, path):
+            stock_value_kpi = self._build_stock_value_kpi(root, path)
+
+            if stock_value_kpi:
+                return stock_value_kpi
+
             return self._build_kpi_chart(root, path)
 
         return None
@@ -1327,6 +1712,11 @@ class ExternalActionResultPresenter:
         }
 
     def _looks_like_kpi_response(self, root: dict, path: str) -> bool:
+        lowered = str(path or "").lower()
+
+        if "/sales/billing" in lowered:
+            return False
+
         kpi_paths = (
             "cpv", "otd", "inventory-turnover", "stock-value", "giro",
             "turnover", "kpi", "indicator", "snapshot",

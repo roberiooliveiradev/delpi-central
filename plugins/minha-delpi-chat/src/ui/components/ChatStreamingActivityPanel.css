@@ -1,9 +1,21 @@
 /* Painel de atividade em streaming — log com linhas subindo + crossfade para resposta */
 
 .mdc-chat-message-streaming-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.mdc-chat-streaming-overlay {
   display: grid;
   align-items: start;
+  position: relative;
   min-height: 2.75rem;
+}
+
+.mdc-chat-message-streaming-body--has-presentation .mdc-chat-streaming-overlay {
+  min-height: 0;
 }
 
 .mdc-chat-stream-activity,
@@ -30,10 +42,20 @@
 }
 
 .mdc-chat-stream-activity.is-answering {
+  position: absolute;
+  width: 100%;
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px);
   pointer-events: none;
+}
+
+.mdc-chat-streaming-overlay:has(.mdc-chat-stream-activity.is-answering:not(.is-active)) {
+  min-height: 0;
 }
 
 .mdc-chat-stream-answer {

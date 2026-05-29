@@ -30,6 +30,7 @@ import {
 } from "../chatMessageDelivery";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
+import { shouldShowRichPresentation } from "../../ui/components/chatPresentation";
 import { upsertStreamingActivityEntry } from "../utils/streamingActivityLog";
 
 type UseChatSessionOptions = {
@@ -678,7 +679,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingToolCalls(toolCalls);
-          setStreamingShowPresentation(false);
+          setStreamingShowPresentation(shouldShowRichPresentation("", toolCalls));
           setStreamingStatus(
             toolCalls.length > 0
               ? "Consultando sistemas autorizados..."
@@ -691,7 +692,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingStatus("Gerando resposta em linguagem natural...");
-          setStreamingShowPresentation(false);
         },
         onPlayback: (payload) => {
           if (!isStreamForActiveSession(sessionId)) {

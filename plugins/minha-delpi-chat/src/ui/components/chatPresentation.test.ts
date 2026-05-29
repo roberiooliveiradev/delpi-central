@@ -9,6 +9,7 @@ import {
   resolveRichTextBody,
   resolveRichTextContent,
   shouldShowRichPresentation,
+  shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
   tablePresentationToMarkdown,
   type PresentationPair,
@@ -250,5 +251,29 @@ describe("multi-product presentation merge", () => {
 
     expect(markdown).toContain("9024");
     expect(markdown).toContain("115");
+  });
+});
+
+describe("shouldShowActionResults", () => {
+  it("oculta JSON bruto quando há apresentação rica", () => {
+    expect(
+      shouldShowActionResults("Estoque por filial/armazém", stockToolCalls),
+    ).toBe(false);
+  });
+
+  it("oculta JSON bruto quando há textPresentation humanizado", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          textPresentation: {
+            type: "markdown",
+            markdown: "### Faturamento\n\n**Valor faturado:** R$ 21.024,26",
+          },
+        },
+      },
+    ];
+
+    expect(shouldShowActionResults("", toolCalls)).toBe(false);
   });
 });

@@ -628,7 +628,6 @@ export function shouldShowRichPresentation(
   return shouldSuppressMarkdownForPresentation(content, pair, toolCalls);
 }
 
-/** Não renderiza markdown duplicado quando o painel rico já exibe o mesmo conteúdo na aba Texto. */
 export function shouldSuppressMarkdownForPresentation(
   content: string | null | undefined,
   pair: PresentationPair,
@@ -668,4 +667,41 @@ export function shouldSuppressMarkdownForPresentation(
   }
 
   return trimmed.length > 100;
+}
+
+function hasToolCallTextPresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    const textPresentation = (toolCall.metadata as Record<string, unknown>)?.textPresentation;
+
+    if (
+      textPresentation &&
+      typeof textPresentation === "object" &&
+      typeof (textPresentation as { markdown?: string }).markdown === "string" &&
+      (textPresentation as { markdown?: string }).markdown?.trim()
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** Oculta JSON bruto da API quando já há apresentação rica ou texto humanizado. */
+export function shouldShowActionResults(
+  content: string | null | undefined,
+  toolCalls?: ChatToolCall[],
+): boolean {
+  if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+    return false;
+  }
+
+  if (shouldShowRichPresentation(content, toolCalls)) {
+    return false;
+  }
+
+  return !hasToolCallTextPresentation(toolCalls);
 }

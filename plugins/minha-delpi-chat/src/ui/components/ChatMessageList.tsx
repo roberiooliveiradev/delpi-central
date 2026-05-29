@@ -33,6 +33,7 @@ import {
   buildAssistantCopyText,
   getPresentationPairFromToolCalls,
   shouldShowRichPresentation,
+  shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
@@ -452,11 +453,17 @@ export function ChatMessageList({
   const isActiveStream = Boolean(isStreaming || streamingAnswer || streamingStatus);
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
   const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
+  const showStreamingPresentation =
+    streamingShowPresentation &&
+    shouldShowRichPresentation(streamingAnswer, streamingToolCalls);
   const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(
     streamingAnswer,
     streamingPresentation,
     streamingToolCalls,
   );
+  const hideStreamingActivity =
+    showStreamingPresentation ||
+    (isGeneratingAnswer && !suppressStreamingMarkdown);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled: isGeneratingAnswer && !suppressStreamingMarkdown,
     charsPerFrame: 2,
@@ -715,9 +722,8 @@ export function ChatMessageList({
               return;
             }
 
-            if (scrollResponseStartIntoView(currentList)) {
-              pendingScrollToResponseRef.current = false;
-            }
+            scrollToBottom("auto");
+            pendingScrollToResponseRef.current = false;
 
             updateScrollAffordances();
           });
@@ -729,7 +735,7 @@ export function ChatMessageList({
     }
 
     wasStreamingRef.current = isActiveStream;
-  }, [isActiveStream, updateScrollAffordances]);
+  }, [isActiveStream, scrollToBottom, updateScrollAffordances]);
 
   async function handleSaveAndResend(messageId: string) {
     const updated = await onEditAndResendMessage?.(messageId, editingContent);
@@ -967,9 +973,9 @@ export function ChatMessageList({
 
             {!isAssistantGenerating(message) ? (
               <>
-                {!messagePresentation.primary ? (
+                {!shouldShowActionResults(displayContent, messageToolCalls) ? null : (
                   <ChatActionResults toolCalls={messageToolCalls} />
-                ) : null}
+                )}
                 <ChatAdminDebugPanel
                   debug={
                     (message.metadata?.adminDebug as Record<
@@ -1065,33 +1071,45 @@ export function ChatMessageList({
                 </div>
               </div>
 
-              <div className="mdc-chat-message-streaming-body">
-                <ChatStreamingActivityPanel
-                  status={streamingStatus}
-                  entries={streamingActivityLog}
-                  isActive
-                  isAnswering={isGeneratingAnswer}
-                />
-                {streamingShowPresentation &&
-                shouldShowRichPresentation(streamingAnswer, streamingToolCalls)
+              <div
+                className={[
+                  "mdc-chat-message-streaming-body",
+                  showStreamingPresentation
+                    ? "mdc-chat-message-streaming-body--has-presentation"
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {!hideStreamingActivity ? (
+                  <div className="mdc-chat-streaming-overlay">
+                    <ChatStreamingActivityPanel
+                      status={streamingStatus}
+                      entries={streamingActivityLog}
+                      isActive
+                      isAnswering={isGeneratingAnswer}
+                    />
+                    {streamingAnswer && !suppressStreamingMarkdown ? (
+                      <div
+                        className={[
+                          "mdc-chat-stream-answer",
+                          isGeneratingAnswer ? "is-visible" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <ChatMarkdown content={revealedStreamingAnswer} />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {showStreamingPresentation
                   ? renderPresentation(
                       streamingToolCalls,
                       streamingAnswer,
                       onDrillDown,
                     )
                   : null}
-                {streamingAnswer && !suppressStreamingMarkdown ? (
-                  <div
-                    className={[
-                      "mdc-chat-stream-answer",
-                      isGeneratingAnswer ? "is-visible" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <ChatMarkdown content={revealedStreamingAnswer} />
-                  </div>
-                ) : null}
                 {streamingCanvasOpen ? (
                   <ChatInlineCanvas
                     payload={streamingCanvasOpen}
@@ -1099,8 +1117,8 @@ export function ChatMessageList({
                   />
                 ) : null}
               </div>
-              {streamingShowPresentation &&
-              !getPresentationPairFromToolCalls(streamingToolCalls).primary ? (
+              {showStreamingPresentation &&
+              shouldShowActionResults(streamingAnswer, streamingToolCalls) ? (
                 <ChatActionResults toolCalls={streamingToolCalls} />
               ) : null}
               <ChatAdminDebugPanel
