@@ -126,7 +126,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
 | 11.2.1 | Garantir `skip_rag` + sem LLM em todos os direct answers operacionais | ✅ | Guarda `direct_answer` → `skip_rag`; teste `test_chat_turn_preparation_direct_answer_skip_rag.py` |
-| 11.2.2 | Calibrar `LLM_MAX_TOKENS` / `OLLAMA_NUM_CTX` por ambiente (homologação &lt; 15s) | 🟡 | Checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) |
+| 11.2.2 | Calibrar `LLM_MAX_TOKENS` / `OLLAMA_NUM_CTX` por ambiente (homologação &lt; 15s) | ✅ | `CHAT_LLM_LATENCY_PROFILE` (`operational_cpu`, `balanced`, `documental`); checklist em [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) |
 | 11.2.3 | Portal: bootstrap sem `login()` em loop se `/me` falhar (guard + `stripOAuthHash`) | ✅ | 401 no bootstrap limpa sessão; `stripOAuthHash` após redirect Keycloak |
 | 11.2.4 | Compose dev: volume `../shared:/shared` no `core-api` | ✅ | Fix JWT sobrevive a `recreate` sem `docker cp` |
 
@@ -143,7 +143,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | 🟡 | `directAnswer` + `skip_rag`; apresentação rica sem markdown duplicado |
+| 11.4.1 | Resposta direta pós-tool operacional sem re-sumarizar no LLM | ✅ | `prefer_presentation_direct_answer` + `skip_rag`; apresentação rica sem markdown duplicado |
 | 11.4.2 | Fase 6 Onda 9: drill-down na tabela («detalhe linha X») | ✅ | `onDrillDown` em `ChatPage`/`ChatMessageList`; `sendMessage({ content })`; queries filial/código |
 | 11.4.3 | Apresentação rica sem texto duplicado (tabela/gráfico + markdown) | ✅ | `_compact_direct_answer_for_rich_presentation` + `shouldSuppressMarkdownForPresentation` |
 | 11.4.4 | Consolidação paginada automática (total/completo/continuar) | ✅ | `ChatPaginationConsolidationService` + múltiplas chamadas API; limite por turno + confirmação; tabela/árvore/listagem |
@@ -152,7 +152,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.5.1 | Smoke operacional no CI ou script pós-deploy | 🟡 | `smoke_operational_questions.py` + checklist manual #56–60; consolidação paginada coberta em pytest |
+| 11.5.1 | Smoke operacional no CI ou script pós-deploy | ✅ | `scripts/run_onda11_validation.sh` (pytest + smoke); checklist manual #56–60 |
 | 11.5.2 | Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` | ✅ | Front valida antes do upload |
 
 ### 11.6 — Fora do escopo imediato (registrar para onda futura)
@@ -176,6 +176,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Revisar com 11.3.1 |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | Consolidação paginada (11.4.4) |
 | `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` | Páginas por turno antes de pedir confirmação |
+| `CHAT_LLM_LATENCY_PROFILE` | `balanced` | Preset `operational_cpu` / `documental` para `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` |
 
 ---
 
@@ -207,6 +208,10 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   python scripts/smoke_operational_questions.py
 
+# Validação completa Onda 11 (pytest + smoke)
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  bash scripts/run_onda11_validation.sh
+
 # Auth (host)
 curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/token' \
   -d 'grant_type=password&client_id=delpi-central&username=rober&password=***' | jq -r .access_token | head -c 20
@@ -223,6 +228,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-29 | Revisão Onda 11: regressão 145+ testes, smoke 6/6, multi-turn 9/9, E2E HTTP estoque→filial com agente; drill-down path template corrigido. |
 | 2026-05-29 | Consolidação paginada (11.4.4): total/completo/continuar em tabela, árvore e demais listagens; docs + variáveis `CHAT_PAGINATION_*`. |
 | 2026-05-29 | 11.1.5: `sync_api_delpi_openapi.py`, catálogo gerado 83 rotas, guia RAG revisado (ROL, produção, propostas). |
+| 2026-05-29 | 11.2.2/11.4.1/11.5.1: `CHAT_LLM_LATENCY_PROFILE`, `prefer_presentation_direct_answer`, `run_onda11_validation.sh`. |
 
 ---
 

@@ -483,12 +483,13 @@ class ChatTurnPreparationService:
             direct_answer = ambiguous_period_answer
             skip_rag = True
 
-        if not direct_answer and operational_optimize and tool_calls:
+        if tool_calls:
             from app.application.services.chat_tool_context_service import (
                 ChatToolContextService,
             )
 
-            presentation_answer = ChatToolContextService.resolve_presentation_only_answer(
+            presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(
+                direct_answer,
                 tool_calls,
             )
 

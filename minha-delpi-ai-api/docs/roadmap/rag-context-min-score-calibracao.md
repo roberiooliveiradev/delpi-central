@@ -62,9 +62,29 @@ RAG_CONTEXT_MIN_SCORE=0.35
 MAX_CONTEXT_CHUNKS=4
 ```
 
-## Homologação de latência (Onda 7.5)
+## Homologação de latência (Onda 7.5 / 11.2.2)
 
-Checklist manual em CPU prod (modelo `qwen2.5:1.5b`):
+### Preset por ambiente
+
+Use `CHAT_LLM_LATENCY_PROFILE` quando não quiser calibrar `LLM_MAX_TOKENS` e `OLLAMA_NUM_CTX` manualmente. Variáveis explícitas **sempre** têm prioridade.
+
+| Perfil | `LLM_MAX_TOKENS` | `OLLAMA_NUM_CTX` | Quando |
+|--------|------------------|------------------|--------|
+| `operational_cpu` | 384 | 1536 | Homologação / produção CPU operacional (meta p95 &lt; 15s) |
+| `balanced` | 1536 | 2048 | Dev local (default) |
+| `documental` | 768 | 4096 | Agentes só RAG ou GPU/16GB+ |
+
+Exemplo homologação:
+
+```env
+CHAT_LLM_LATENCY_PROFILE=operational_cpu
+CHAT_OPERATIONAL_FAST_PATH_ENABLED=true
+CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED=true
+```
+
+Status do perfil ativo: campo `latencyProfile` em `GET /chat/llm/status` (admin).
+
+### Checklist manual CPU
 
 | Pergunta | Meta p95 | Pipeline esperado |
 |----------|----------|-------------------|

@@ -32,7 +32,12 @@ export function ChatAgentHome({
   onManageAgent,
 }: ChatAgentHomeProps) {
   const icebreakers = getAgentIcebreakers(agent);
-  const isPrivate = agent.visibility !== "public";
+  const visibilityLabel =
+    agent.visibility === "system"
+      ? "Oficial"
+      : agent.visibility === "public"
+        ? "Público interno"
+        : "Privado";
 
   return (
     <section className="mdc-chat-agent-home" aria-label={`Agente ${agent.name}`}>
@@ -47,10 +52,12 @@ export function ChatAgentHome({
       {agent.description ? <p>{agent.description}</p> : null}
 
       <div className="mdc-chat-agent-home__meta">
-        <span>{isPrivate ? "Privado" : "Público interno"}</span>
-        {!isPrivate && agent.category ? <span>{agent.category}</span> : null}
-        {!isPrivate && agent.response_style ? <span>{agent.response_style}</span> : null}
-        {!isPrivate && icebreakers.length > 0 ? (
+        <span>{visibilityLabel}</span>
+        {agent.visibility !== "private" && agent.category ? <span>{agent.category}</span> : null}
+        {agent.visibility !== "private" && agent.response_style ? (
+          <span>{agent.response_style}</span>
+        ) : null}
+        {agent.visibility !== "private" && icebreakers.length > 0 ? (
           <span>{icebreakers.length} quebra-gelos</span>
         ) : null}
       </div>

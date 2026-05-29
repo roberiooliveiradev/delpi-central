@@ -1,3 +1,4 @@
+from app.infrastructure.config.llm_latency_profile import describe_active_profile
 from app.infrastructure.config.settings import Settings
 
 
@@ -13,4 +14,5 @@ class GetLlmProviderStatusUseCase:
             "model": model,
             "temperature": Settings.LLM_TEMPERATURE,
             "maxTokens": Settings.LLM_MAX_TOKENS,
+            "latencyProfile": describe_active_profile(),
         }

@@ -606,6 +606,46 @@ class ChatToolContextService:
         return cls._has_rich_presentation(safe_tool_calls)
 
     @classmethod
+    def prefer_presentation_direct_answer(
+        cls,
+        direct_answer: str | None,
+        safe_tool_calls: list[dict],
+    ) -> str | None:
+        """Resposta curta quando a UI rica já exibe tabela/gráfico/KPI (11.4.1)."""
+
+        if not cls.should_answer_with_presentation_only(safe_tool_calls):
+            return direct_answer
+
+        presentation = cls.resolve_presentation_only_answer(safe_tool_calls)
+
+        if not presentation:
+            return direct_answer
+
+        continuation = cls._extract_pagination_continuation_suffix(direct_answer)
+
+        if continuation:
+            return f"{presentation}\n\n{continuation}".strip()
+
+        return presentation
+
+    @classmethod
+    def _extract_pagination_continuation_suffix(cls, direct_answer: str | None) -> str | None:
+        if not direct_answer:
+            return None
+
+        marker = "**Deseja que eu continue buscando?**"
+
+        if marker not in direct_answer:
+            return None
+
+        start = direct_answer.rfind("Consolidei", 0, direct_answer.index(marker))
+
+        if start >= 0:
+            return direct_answer[start:].strip()
+
+        return direct_answer[direct_answer.index(marker) :].strip()
+
+    @classmethod
     def resolve_presentation_only_answer(cls, safe_tool_calls: list[dict]) -> str | None:
         if not cls.should_answer_with_presentation_only(safe_tool_calls):
             return None

@@ -112,11 +112,12 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `LLM_PROVIDER` | `ollama` ou `vllm` |
 | `OLLAMA_BASE_URL` | `http://ollama:11434` |
 | `OLLAMA_MODEL` | Default **`qwen2.5:3b`** (CPU, bom equilíbrio qualidade/velocidade). Alternativas: `qwen2.5:7b` (GPU/16GB RAM), `qwen2.5:1.5b` (mínimo) |
-| `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `2048` (permite coexistência 3b + bge-m3 em 8GB); com 16GB+: `4096` |
+| `OLLAMA_NUM_CTX` | Janela de contexto. **Recomendado:** `2048` (permite coexistência 3b + bge-m3 em 8GB); com 16GB+: `4096`. Perfil `operational_cpu`: `1536` |
 | `OLLAMA_NUM_THREAD` | Threads CPU. Usar = nº de cores reais. **Prod 4 vCPU:** `4` |
 | `OLLAMA_MAX_LOADED_MODELS` | Modelos simultâneos em RAM. **Prod 8 GB:** `2` (chat + embeddings coexistem com ctx=2048) |
 | `OLLAMA_NUM_PARALLEL` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
-| `LLM_MAX_TOKENS` | `num_predict` Ollama. **Recomendado:** `1536`; mínimo: `384` |
+| `LLM_MAX_TOKENS` | `num_predict` Ollama. **Recomendado:** `1536`; mínimo: `384`. Ou use `CHAT_LLM_LATENCY_PROFILE=operational_cpu` (384) |
+| `CHAT_LLM_LATENCY_PROFILE` | Preset de latência quando `LLM_MAX_TOKENS`/`OLLAMA_NUM_CTX` não estão explícitos: `operational_cpu` (384/1536), `balanced` (1536/2048), `documental` (768/4096). **Homolog CPU:** `operational_cpu` |
 | `LLM_TEMPERATURE` | Criatividade das respostas. **Recomendado:** `0.4` (natural); `0.2` (mais determinístico) |
 | `CHAT_SESSION_TITLE_LLM_ENABLED` | `true` recomendado — títulos automáticos melhoram UX |
 | `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`). Max chars: `30` |

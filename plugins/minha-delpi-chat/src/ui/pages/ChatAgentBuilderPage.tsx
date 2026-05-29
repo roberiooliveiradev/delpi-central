@@ -882,8 +882,12 @@ export function ChatAgentBuilderPage({
       setPublishedVersion(published.published_version ?? 0);
       setHasUnpublishedChanges(published.has_unpublished_changes ?? false);
       onSelectAgent?.(published.key);
-    } catch {
-      setLocalError("Não foi possível publicar o agente.");
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.trim()
+          ? error.message.trim()
+          : "Não foi possível publicar o agente.";
+      setLocalError(message);
     } finally {
       setIsPublishing(false);
     }

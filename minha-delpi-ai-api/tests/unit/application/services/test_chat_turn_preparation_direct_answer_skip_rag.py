@@ -52,6 +52,64 @@ def test_direct_answer_in_tool_context_forces_skip_rag():
     rag_context_service.build_context.assert_not_called()
 
 
+def test_operational_rich_presentation_replaces_existing_direct_answer():
+    session = MagicMock()
+    session.id = uuid4()
+    request = MagicMock()
+    request.attachment_ids = None
+
+    rag_context_service = MagicMock()
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/commercial/billing",
+                "presentation": {
+                    "type": "kpi",
+                    "title": "Faturamento comercial",
+                    "items": [{"label": "Total", "value": "R$ 1,00"}],
+                },
+            },
+        }
+    ]
+    build_tool_context = MagicMock(
+        return_value={
+            "context": "",
+            "toolCalls": tool_calls,
+            "directAnswer": "| Filial | Valor |\n| --- | --- |\n| 01 | R$ 1,00 |",
+            "nativeToolCalling": {},
+            "skipRag": True,
+        }
+    )
+
+    service = ChatTurnPreparationService(rag_context_service=rag_context_service)
+
+    prepared = service.prepare(
+        message="faturamento comercial",
+        request=request,
+        session=session,
+        user_id=uuid4(),
+        workspace_context={"allowedActionIds": ["get_commercial_billing"]},
+        attachments=[],
+        previous_messages=[],
+        history_source=[],
+        build_tool_context=build_tool_context,
+        maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
+        prepare_history=lambda history: ("", list(history)),
+        history_keep=12,
+        fast_path_enabled=True,
+        fast_path_max_chars=30,
+        resolve_user_identity_answer=lambda msg: None,
+        resolve_capabilities_answer=lambda msg: None,
+    )
+
+    assert prepared.direct_answer == "Faturamento comercial"
+    assert prepared.skip_rag is True
+    rag_context_service.build_context.assert_not_called()
+
+
 def test_small_talk_uses_direct_answer_and_skips_rag_and_tools():
     session = MagicMock()
     session.id = uuid4()

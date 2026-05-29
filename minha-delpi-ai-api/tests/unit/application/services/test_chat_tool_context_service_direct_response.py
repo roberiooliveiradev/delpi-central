@@ -195,6 +195,65 @@ def test_resolve_presentation_only_answer_for_tree():
     )
 
 
+def test_prefer_presentation_direct_answer_replaces_long_markdown():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/commercial/billing",
+                "presentation": {
+                    "type": "kpi",
+                    "title": "Faturamento comercial",
+                    "items": [{"label": "Total", "value": "R$ 1,00"}],
+                },
+            },
+        }
+    ]
+    long_answer = "| Filial | Valor |\n| --- | --- |\n| 01 | R$ 1,00 |\n" * 5
+
+    compact = ChatToolContextService.prefer_presentation_direct_answer(
+        long_answer,
+        tool_calls,
+    )
+
+    assert compact == "Faturamento comercial"
+
+
+def test_prefer_presentation_direct_answer_keeps_pagination_prompt():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/products/10080055/parents",
+                "presentation": {
+                    "type": "table",
+                    "title": "Pais do produto 10080055",
+                    "columns": [{"key": "code", "label": "Código"}],
+                    "rows": [{"code": "10080001"}],
+                },
+            },
+        }
+    ]
+    continuation = (
+        "Consolidei **2** de **6** registro(s) (páginas 1). "
+        "Ainda faltam cerca de **4** registro(s) em 2 página(s). "
+        "**Deseja que eu continue buscando?** Responda *sim, continue* para trazer o restante."
+    )
+    long_answer = "| Código |\n| --- |\n| 10080001 |\n\n" + continuation
+
+    compact = ChatToolContextService.prefer_presentation_direct_answer(
+        long_answer,
+        tool_calls,
+    )
+
+    assert compact.startswith("Pais do produto 10080055")
+    assert "**Deseja que eu continue buscando?**" in compact
+
+
 def _parents_page(page: int, *, page_size: int = 2, total: int = 6):
     return {
         "items": [{"code": f"parent-{page}-{index}", "description": f"P{page}-{index}"} for index in range(page_size)],
