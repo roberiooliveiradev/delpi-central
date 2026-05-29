@@ -42,6 +42,7 @@ type ChatAgentsPageProps = {
     agentId: string,
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
+  onAgentPublished?: (agent: ChatAgent) => void;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
   onAgentDuplicated?: (agent: ChatAgent) => void;
   onReloadAgents?: (
@@ -126,6 +127,7 @@ export function ChatAgentsPage({
   onSelectAgent,
   onCreateAgent,
   onUpdateAgent,
+  onAgentPublished,
   onDeleteAgent,
   onAgentDuplicated,
   onReloadAgents,
@@ -288,6 +290,7 @@ export function ChatAgentsPage({
         onSelectAgent={onSelectAgent}
         onCreateAgent={onCreateAgent}
         onUpdateAgent={onUpdateAgent}
+        onAgentPublished={onAgentPublished}
         onDeleteAgent={onDeleteAgent}
         onDuplicateAgent={(duplicated) => {
           onAgentDuplicated?.(duplicated);

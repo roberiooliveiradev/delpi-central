@@ -4,6 +4,7 @@ import {
   Check,
   Copy,
   Download,
+  Save,
   Upload,
   Plus,
   Send,
@@ -94,6 +95,7 @@ type ChatAgentBuilderPageProps = {
     agentId: string,
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
+  onAgentPublished?: (agent: ChatAgent) => void;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
   onDuplicateAgent?: (agent: ChatAgent) => void;
   canManageOfficialAgents?: boolean;
@@ -159,6 +161,7 @@ export function ChatAgentBuilderPage({
   onSelectAgent,
   onCreateAgent,
   onUpdateAgent,
+  onAgentPublished,
   onDeleteAgent,
   onDuplicateAgent,
   canManageOfficialAgents = false,
@@ -881,6 +884,7 @@ export function ChatAgentBuilderPage({
       const published = await publishChatAgent(saved.id, { getAccessToken });
       setPublishedVersion(published.published_version ?? 0);
       setHasUnpublishedChanges(published.has_unpublished_changes ?? false);
+      onAgentPublished?.(published);
       onSelectAgent?.(published.key);
     } catch (error) {
       const message =
@@ -1215,6 +1219,7 @@ export function ChatAgentBuilderPage({
                 type="button"
                 className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
                 onClick={() => void deleteCurrentAgent()}
+                title="Excluir agente"
               >
                 <Trash2 size={17} aria-hidden="true" />
                 <span>Excluir</span>
@@ -1227,7 +1232,9 @@ export function ChatAgentBuilderPage({
             className="mdc-chat-ws-toolbar-btn"
             disabled={isSaving || isPublishing}
             onClick={() => void saveDraft()}
+            title="Salvar alterações como rascunho"
           >
+            <Save size={16} aria-hidden="true" />
             <span>{isSaving ? "Salvando..." : "Salvar rascunho"}</span>
           </button>
 
@@ -1237,6 +1244,7 @@ export function ChatAgentBuilderPage({
               className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
               disabled={isSaving || isPublishing}
               onClick={() => void publishAgent()}
+              title="Publicar versão para usuários"
             >
               <Check size={17} aria-hidden="true" />
               <span>{isPublishing ? "Publicando..." : "Publicar"}</span>
@@ -1247,6 +1255,7 @@ export function ChatAgentBuilderPage({
               className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
               disabled={isSaving}
               onClick={() => void saveDraft()}
+              title="Criar agente e salvar rascunho"
             >
               <Check size={17} aria-hidden="true" />
               <span>{isSaving ? "Salvando..." : "Criar e salvar"}</span>

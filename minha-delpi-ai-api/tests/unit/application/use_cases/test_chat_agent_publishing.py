@@ -5,6 +5,8 @@ from uuid import uuid4
 import pytest
 
 from app.application.services.chat_agent_config_snapshot_service import (
+    apply_snapshot_to_agent,
+    build_agent_config_snapshot,
     has_unpublished_changes,
     normalize_draft_payload,
 )
@@ -50,6 +52,54 @@ def test_has_unpublished_changes_detects_draft_diff():
     agent = _agent(name="Demo alterado")
 
     assert has_unpublished_changes(agent) is True
+
+
+def test_publish_snapshot_must_use_draft_not_published_runtime():
+    """Regressão: publish grava rascunho; runtime publicado não pode sobrescrever o snapshot."""
+    draft = _agent(
+        name="Agente Minha DELPI teste",
+        description="Descrição nova",
+        system_prompt="Prompt novo",
+        response_style="detalhado",
+        category="Comercial",
+        icon="sparkles",
+        max_tool_calls=8,
+        requires_confirmation_for_write=False,
+        metadata={
+            "icebreakers": ["Olá"],
+            "capabilities": {"actions": True, "files": False, "canvas": True},
+            "skills": {"sql": {"authoring": True}},
+        },
+        published_config={
+            "version": 4,
+            "name": "Agente Minha DELPI",
+            "description": "desc",
+            "systemPrompt": "prompt",
+            "responseStyle": "objetivo",
+            "category": "Produtos",
+            "icon": "bot",
+            "maxToolCalls": 5,
+            "requiresConfirmationForWrite": True,
+            "metadata": {"icebreakers": ["Oi"]},
+        },
+    )
+    runtime = apply_snapshot_to_agent(draft, draft.published_config)
+
+    assert runtime.name == "Agente Minha DELPI"
+    snapshot = build_agent_config_snapshot(draft)
+    runtime_snapshot = build_agent_config_snapshot(runtime)
+
+    assert snapshot["name"] == "Agente Minha DELPI teste"
+    assert snapshot["description"] == "Descrição nova"
+    assert snapshot["systemPrompt"] == "Prompt novo"
+    assert snapshot["responseStyle"] == "detalhado"
+    assert snapshot["category"] == "Comercial"
+    assert snapshot["icon"] == "sparkles"
+    assert snapshot["maxToolCalls"] == 8
+    assert snapshot["requiresConfirmationForWrite"] is False
+    assert snapshot["metadata"]["capabilities"]["files"] is False
+    assert runtime_snapshot["name"] == "Agente Minha DELPI"
+    assert runtime_snapshot["systemPrompt"] == "prompt"
 
 
 def test_normalize_draft_payload_maps_fields():

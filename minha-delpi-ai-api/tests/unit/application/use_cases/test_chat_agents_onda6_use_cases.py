@@ -38,7 +38,7 @@ def _agent() -> ChatAgent:
 def test_list_agents_can_include_usage_summaries():
     agent = _agent()
     repository = MagicMock()
-    repository.list_accessible.return_value = [(agent, "owner")]
+    repository.list_accessible.return_value = [(agent, "owner", agent)]
     repository.list_usage_summaries.return_value = {
         agent.key: {
             "sessionsInWindow": 4,

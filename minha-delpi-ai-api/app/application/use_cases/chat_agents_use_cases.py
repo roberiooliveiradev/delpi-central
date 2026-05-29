@@ -42,6 +42,7 @@ def _to_response(
     *,
     include_system_prompt: bool = False,
     usage_summary: dict[str, int] | None = None,
+    draft_agent: ChatAgent | None = None,
 ) -> ChatAgentResponse:
     return ChatAgentResponse(
         id=str(agent.id),
@@ -69,7 +70,7 @@ def _to_response(
         published_at=(
             agent.published_at.isoformat() if getattr(agent, "published_at", None) else None
         ),
-        has_unpublished_changes=has_unpublished_changes(agent),
+        has_unpublished_changes=has_unpublished_changes(draft_agent or agent),
     )
 
 
@@ -119,7 +120,7 @@ class ListChatAgentsUseCase:
         if include_stats:
             stats_keys = [
                 agent.key
-                for agent, access_role in agents
+                for agent, access_role, _draft in agents
                 if access_role in {"owner", "editor", "system"}
             ]
             usage_by_key = self.repository.list_usage_summaries(
@@ -132,8 +133,9 @@ class ListChatAgentsUseCase:
                 agent,
                 access_role,
                 usage_summary=usage_by_key.get(agent.key) if include_stats else None,
+                draft_agent=draft if access_role in {"owner", "editor", "system"} else None,
             )
-            for agent, access_role in agents
+            for agent, access_role, draft in agents
         ]
 
 
@@ -517,9 +519,14 @@ class PublishChatAgentUseCase:
         if not record:
             return None
 
-        _, access_role = record
+        draft, access_role = record
 
-        return _to_response(agent, access_role, include_system_prompt=True)
+        return _to_response(
+            agent,
+            access_role,
+            include_system_prompt=True,
+            draft_agent=draft,
+        )
 
 
 class ListChatAgentVersionsUseCase:

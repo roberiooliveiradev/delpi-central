@@ -146,6 +146,7 @@ export function ChatPage({
     clearWorkspaceError,
     addAgent,
     editAgent,
+    syncAgent,
     removeAgent,
     addProject,
     editProject,
@@ -923,6 +924,7 @@ export function ChatPage({
               }}
               onCreateAgent={addAgent}
               onUpdateAgent={editAgent}
+              onAgentPublished={syncAgent}
               onDeleteAgent={removeAgent}
               onAgentDuplicated={() => {
                 void loadAgents(false, true);

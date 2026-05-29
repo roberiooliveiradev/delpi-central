@@ -11,7 +11,7 @@ class ChatAgentRepositoryPort(ABC):
         user_id: UUID,
         *,
         include_disabled: bool = False,
-    ) -> list[tuple[ChatAgent, str]]:
+    ) -> list[tuple[ChatAgent, str, ChatAgent]]:
         raise NotImplementedError
 
     @abstractmethod

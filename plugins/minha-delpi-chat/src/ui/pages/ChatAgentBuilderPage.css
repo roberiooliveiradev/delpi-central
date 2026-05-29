@@ -410,6 +410,20 @@
     padding: 0;
   }
 
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn:hover:not(:disabled) span,
+  .mdc-chat-agent-builder__topbar-actions
+    .mdc-chat-ws-toolbar-btn:focus-visible span {
+    display: inline;
+  }
+
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn:hover:not(:disabled),
+  .mdc-chat-agent-builder__topbar-actions
+    .mdc-chat-ws-toolbar-btn:focus-visible {
+    width: auto;
+    min-width: 2.35rem;
+    padding: 0 0.85rem;
+  }
+
   .mdc-chat-agent-builder__topbar-actions {
     max-width: none;
   }

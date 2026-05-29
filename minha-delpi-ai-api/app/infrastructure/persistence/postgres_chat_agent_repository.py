@@ -27,7 +27,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         user_id: UUID,
         *,
         include_disabled: bool = False,
-    ) -> list[tuple[ChatAgent, str]]:
+    ) -> list[tuple[ChatAgent, str, ChatAgent]]:
         shared_agent_ids = (
             db.session.query(AiChatAgentShareModel.agent_id)
             .filter(AiChatAgentShareModel.target_user_id == user_id)
@@ -52,7 +52,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             .all()
         )
 
-        result: list[tuple[ChatAgent, str]] = []
+        result: list[tuple[ChatAgent, str, ChatAgent]] = []
 
         for model in models:
             access_role = self._access_role(model, user_id)
@@ -64,7 +64,13 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             }:
                 continue
 
-            result.append((self._to_runtime_entity(model), access_role))
+            result.append(
+                (
+                    self._to_runtime_entity(model),
+                    access_role,
+                    self._to_entity_raw(model),
+                )
+            )
 
         return result
 
@@ -159,7 +165,8 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         ):
             return None
 
-        entity = self._to_entity(model)
+        # Snapshot deve refletir o rascunho (colunas da tabela), não o runtime publicado.
+        entity = self._to_entity_raw(model)
         snapshot = build_agent_config_snapshot(entity)
         next_version = int(model.published_version or 0) + 1
         snapshot["version"] = next_version
@@ -556,7 +563,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         db.session.flush()
 
-        return self._to_entity(model)
+        return self._to_entity_raw(model)
 
     def delete(
         self,

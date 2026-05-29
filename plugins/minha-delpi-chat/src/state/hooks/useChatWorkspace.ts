@@ -276,6 +276,12 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     [options.getAccessToken],
   );
 
+  const syncAgent = useCallback((agent: ChatAgent) => {
+    setAgents((current) =>
+      current.map((item) => (item.id === agent.id ? agent : item)),
+    );
+  }, []);
+
   const clearWorkspaceError = useCallback(() => {
     setWorkspaceError(null);
   }, []);
@@ -296,6 +302,7 @@ export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
     loadProjects,
     addAgent,
     editAgent,
+    syncAgent,
     removeAgent,
     shareAgent,
     saveAgentAction,
