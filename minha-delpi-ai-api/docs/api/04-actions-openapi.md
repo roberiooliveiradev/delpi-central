@@ -2,7 +2,7 @@
 
 Actions externas são providers OpenAPI globais vinculados a agentes. O chat comum não deve executar actions externas. O fluxo correto é:
 
-**Provider api-delpi:** após deploy da API, reimporte o OpenAPI e mantenha o documento RAG [`../knowledge/api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md) indexado. O pipeline seleciona rotas por `path`, `summary` e scoring de intent (Onda 10); `operationId` estável quando definido em `api-delpi/app/interface/http/openapi_agent_metadata.py`.
+**Provider api-delpi:** após deploy da API, rode `scripts/sync_api_delpi_openapi.py` (reimport + embeddings + catálogo em `docs/knowledge/_generated/`) e mantenha o documento RAG [`../knowledge/api-delpi-rotas-agente.md`](../knowledge/api-delpi-rotas-agente.md) indexado.
 
 ```text
 Agente -> Provider/API -> Rotas/actions importadas do OpenAPI -> Permissões por agente

@@ -41,6 +41,6 @@ O arquivo `app/domain/prompt_policies/api-delpi-routes.md` é injetado automatic
 Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeline do chat:
 
 1. Deploy da api-delpi
-2. Reimport OpenAPI no agente (`POST .../providers/{key}/import` ou admin reload-schema)
+2. **Sincronizar OpenAPI:** `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (reimport + embeddings + [`_generated/api-delpi-openapi-catalog.md`](./_generated/api-delpi-openapi-catalog.md))
 3. Reindexar `api-delpi-rotas-agente.md` na base de conhecimento
 4. Revisar [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md) e rodar a suíte de regressão documentada em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

@@ -4,9 +4,11 @@
 
 **Provider:** `api-delpi` · **Base no gateway:** `/apps/api-delpi` · **OpenAPI:** `/apps/api-delpi/openapi.json`
 
-**Última revisão:** alinhada às rotas da `api-delpi` em maio/2026 (engenharia LMP em fases, comercial ampliado, qualidade PPM em `/summary`, financeiro em `/financial` e legado `/finacial`).
+**Última revisão:** alinhada às **83 rotas** da `api-delpi` em **29/05/2026** (produção: eficiência fabril + OEE série; comercial: propostas; chat: consolidação paginada).
 
-Após mudanças na API, **reimporte** o schema no agente e **reindexe** este documento se estiver na base de conhecimento.
+Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + embeddings + catálogo) e **reindexe** este documento na base de conhecimento.
+
+**Catálogo gerado (lista completa path → operationId):** [`_generated/api-delpi-openapi-catalog.md`](./_generated/api-delpi-openapi-catalog.md)
 
 ---
 
@@ -20,6 +22,8 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 6. Rotas de **dashboard** (LMP, comercial, RH, produção, qualidade) exigem permissões de dashboard ou `api-delpi.access` conforme a rota — o token do usuário precisa estar autorizado.
 7. **Código de grupo ≠ código de produto.** «Grupo 1008» usa `GET /products/search` com `group_code=1008`. **Nunca** chame `/products/1008/analyser` só porque o número tem 4 dígitos.
 8. Perguntas do tipo «consegue buscar por grupo?» são **capacidade** — responda com a rota e parâmetros; só execute a API quando o usuário pedir a busca de fato.
+9. Rotas **paginadas** (`page`, `page_size`, `total`): quando o usuário pedir **total/completo/tabela completa/traga tudo**, o chat base consolida várias páginas automaticamente (`CHAT_PAGINATION_*`). Não peça ao usuário para clicar «próxima página» se ele pediu a listagem completa.
+10. **ROL genérico** («rol do mês», KPI financeiro) → `GET /financial/rol` com `start_date`/`end_date`. **Série/gráfico comercial de ROL** → `GET /commercial/rol/series` com `granularity` (`day`, `week`, `month`, `year`).
 
 ---
 
@@ -172,8 +176,17 @@ Não confundir com detalhe de LMP (`/engineering/lmps/{sale_number}`) nem vendas
 | % ROL de novos negócios | `GET /commercial/new-business-rol-pct` | `get_new_business_rol_pct` |
 | Meta % ROL matriz | `GET /commercial/head_office_rol_target_pct` | path `head_office_rol` |
 | Meta % ROL filial | `GET /commercial/branch_rol_target_pct` | path `branch_rol_target` |
+| Propostas comerciais (listagem) | `GET /commercial/proposals` | path `commercial/proposals` |
 
 **Parâmetros comuns:** `branch` (2 chars quando aplicável), `start_date`, `end_date`; `rol/series` exige `granularity` (`day`, `week`, `month`, `year`).
+
+**ROL — qual rota usar**
+
+| Pedido do usuário | Rota | Observação |
+|-------------------|------|------------|
+| «rol do mês de março», «qual o rol», KPI financeiro agregado | `GET /financial/rol` | Período via `start_date`/`end_date` |
+| «série de rol», evolução temporal comercial / gráfico | `GET /commercial/rol/series` | Obrigatório `granularity` |
+| Metas % ROL matriz/filial | `GET /commercial/head_office_rol_target_pct` / `branch_rol_target_pct` | Metas, não valor realizado |
 
 ---
 
@@ -198,6 +211,9 @@ O router está montado **duas vezes** no serviço: prefira rotas com prefixo **`
 |----------------|------|--------------------------|
 | OTD produção | `GET /production/on_time_delivery_pct` | `get_on_time_delivery_pct` |
 | OEE (eficiência equipamentos) | `GET /production/overall_equipment_effectiveness_pct` | `get_overall_equipment_effectiveness_pct` |
+| **Série temporal OEE** | `GET /production/oee/series` | path `oee/series` — buckets por período |
+| **Eficiência fabril — dashboard** | `GET /production/eficiencia-fabril/dashboard` | path `eficiencia-fabril/dashboard` |
+| **Eficiência fabril — apontamentos** | `GET /production/eficiencia-fabril/appointments` | path `eficiencia-fabril/appointments` |
 | Custo direto mão de obra | `GET /production/direct_labor_cost_pct` | `get_direct_labor_cost_pct` |
 | Custo de produção | `GET /production/production_cost_pct` | `get_production_cost_pct` |
 | Depreciação % ROL | `GET /production/depreciation_pct` | `get_depreciation_pct` |
@@ -314,9 +330,9 @@ Não pergunte se o usuário "tem permissão"; a API já valida com o token dele.
 
 1. Provider `api-delpi` com `authMode: user_token` e `openApiUrl` apontando para o gateway.
 2. Agente com `allowRead` e actions de leitura/SQL habilitadas.
-3. **Reimport OpenAPI** após deploy da api-delpi (`POST .../providers/{key}/reload-schema` ou import).
+3. **Reimport OpenAPI** após deploy: `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (ou `POST .../providers/api-delpi/import` no admin).
 4. Anexar **este documento** à base de conhecimento do agente (tags: `api-delpi`, `operacional`, `rotas`) **ou** referenciar no `system_prompt`.
-5. Testar: estoque de código, OV de LMP, valor total de estoque com e sem período, PPM interno resumo, SELECT simples.
+5. Testar: estoque de código, OV de LMP, valor total de estoque com e sem período, PPM interno resumo, ROL financeiro do mês, listagem paginada com «traga tudo», SELECT simples.
 
 ---
 

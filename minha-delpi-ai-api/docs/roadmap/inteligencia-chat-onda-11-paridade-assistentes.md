@@ -119,7 +119,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | 11.1.2 | Datas automáticas em KPIs e OV (`start_date`/`end_date`) | ✅ | `ChatDateRangeIntentService` + merge em suprimentos/KPIs e listagem `/sales`; datas `DD/MM/YYYY` não viram código de produto |
 | 11.1.3 | Heurística explícita `summary` vs `analyser` | ✅ | Intent `SUMMARY` + rank dedicado; regressão «resumo do produto 10080047» |
 | 11.1.4 | Regressão E2E send/stream com histórico (filtre filial, estoque desse produto) | ✅ | `test_chat_stock_refinement_stream_send.py` + `test_chat_turn_preparation_stock_refinement.py` |
-| 11.1.5 | Reimport OpenAPI + reindexar `api-delpi-rotas-agente.md` pós-deploy api-delpi | ⬜ | Catálogo alinhado às rotas reais |
+| 11.1.5 | Reimport OpenAPI + reindexar `api-delpi-rotas-agente.md` pós-deploy api-delpi | ✅ | `scripts/sync_api_delpi_openapi.py` + catálogo `_generated/` + guia RAG atualizado |
 
 ### 11.2 — Velocidade e prompt (prioridade alta)
 
@@ -199,6 +199,10 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
   tests/unit/domain/services/test_chat_operational_refinement_service.py \
   tests/unit/application/services/test_external_action_selection_service.py -q
 
+# Sincronizar OpenAPI api-delpi (pós-deploy)
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  python scripts/sync_api_delpi_openapi.py
+
 # Smoke operacional
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   python scripts/smoke_operational_questions.py
@@ -218,6 +222,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-28 | Criação: consolida pesquisa ChatGPT/Gemini (28/mai), commits da branch `chat`, backlog e itens da conversa (login/JWKS). |
 | 2026-05-29 | Revisão Onda 11: regressão 145+ testes, smoke 6/6, multi-turn 9/9, E2E HTTP estoque→filial com agente; drill-down path template corrigido. |
 | 2026-05-29 | Consolidação paginada (11.4.4): total/completo/continuar em tabela, árvore e demais listagens; docs + variáveis `CHAT_PAGINATION_*`. |
+| 2026-05-29 | 11.1.5: `sync_api_delpi_openapi.py`, catálogo gerado 83 rotas, guia RAG revisado (ROL, produção, propostas). |
 
 ---
 
