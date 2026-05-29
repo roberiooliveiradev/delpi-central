@@ -89,6 +89,8 @@ class ChatOperationalRefinementService:
         "/guide",
         "/dashboard",
         "/items",
+        "/columns",
+        "/system/tables",
     )
     _NEXT_PAGE_TERMS = (
         "proxima pagina",
@@ -443,13 +445,8 @@ class ChatOperationalRefinementService:
                 lowered_path = path.lower()
                 coverage = tool_meta.get("dataCoverageNotice")
 
-                has_pagination_notice = (
-                    isinstance(coverage, dict)
-                    and str(coverage.get("kind") or "").lower() == "pagination"
-                )
-
-                if not has_pagination_notice and not any(
-                    fragment in lowered_path for fragment in cls._PAGINATED_PATH_FRAGMENTS
+                if not cls._has_paginated_coverage(coverage) and not cls._is_paginated_path(
+                    lowered_path
                 ):
                     continue
 
@@ -613,13 +610,59 @@ class ChatOperationalRefinementService:
         return None
 
     @classmethod
+    def _has_paginated_coverage(cls, coverage: dict | None) -> bool:
+        if not isinstance(coverage, dict):
+            return False
+
+        kind = str(coverage.get("kind") or "").lower()
+
+        if kind == "pagination":
+            return True
+
+        details = coverage.get("details")
+
+        if not isinstance(details, dict):
+            return False
+
+        for key in ("pagination", "structurePagination", "stockPagination"):
+            if isinstance(details.get(key), dict):
+                return True
+
+        preview = details.get("tablePreview")
+
+        if isinstance(preview, dict):
+            total = cls._coerce_int(preview.get("total"))
+            shown = cls._coerce_int(preview.get("shown"))
+
+            if total is not None and shown is not None and total > shown:
+                return True
+
+        return False
+
+    @classmethod
+    def _is_paginated_path(cls, path: str) -> bool:
+        lowered = str(path or "").lower()
+
+        return any(fragment in lowered for fragment in cls._PAGINATED_PATH_FRAGMENTS)
+
+    @classmethod
+    def _resolve_page_size_from_parameters(cls, parameters: dict) -> int | None:
+        for key in ("page_size", "pagesize", "limit"):
+            value = cls._parameter_int(parameters, key)
+
+            if value is not None:
+                return value
+
+        return None
+
+    @classmethod
     def _resolve_pagination_state(
         cls,
         parameters: dict,
         coverage: dict | None,
     ) -> tuple[int | None, int | None]:
         page = cls._parameter_int(parameters, "page")
-        page_size = cls._parameter_int(parameters, "page_size")
+        page_size = cls._resolve_page_size_from_parameters(parameters)
 
         if not isinstance(coverage, dict):
             return page, page_size
@@ -638,6 +681,12 @@ class ChatOperationalRefinementService:
             page = cls._coerce_int(pagination.get("page")) or page
             page_size = cls._coerce_int(pagination.get("pageSize")) or page_size
             break
+
+        if page_size is None:
+            preview = details.get("tablePreview")
+
+            if isinstance(preview, dict):
+                page_size = cls._coerce_int(preview.get("shown")) or page_size
 
         return page, page_size
 

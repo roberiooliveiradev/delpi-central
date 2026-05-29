@@ -556,3 +556,52 @@ def test_plan_prev_page_follow_up():
 
     assert len(planned) == 1
     assert planned[0].page == 1
+
+
+def test_plan_next_page_follow_up_for_table_columns_preview():
+    history = [
+        {"role": "user", "content": "colunas da tabela SB1"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "table-columns-action",
+                            "parameters": {"tableName": "SB1"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/system/tables/SB1/columns",
+                            "actionId": "table-columns-action",
+                            "dataCoverageNotice": {
+                                "kind": "preview",
+                                "message": (
+                                    "A tabela exibe 25 linha(s) de 318 registro(s) retornados "
+                                    "(prévia limitada a 100)."
+                                ),
+                                "details": {
+                                    "tablePreview": {
+                                        "shown": 25,
+                                        "total": 318,
+                                    }
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_pagination_follow_ups(
+        "proxima pagina",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "pagination_refinement"
+    assert planned[0].action_id == "table-columns-action"
+    assert planned[0].page == 2
+    assert planned[0].previous_parameters["tableName"] == "SB1"
