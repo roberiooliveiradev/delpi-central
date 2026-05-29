@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/drawing_rules_delpi.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 🧭 Normas de Representação e Regras Gráficas de Desenhos DELPI
 
 ### _(drawing_rules_DELPI.md – versão inicial consolidada com base em amostras reais e documentos técnicos)_

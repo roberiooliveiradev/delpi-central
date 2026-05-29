@@ -4,11 +4,11 @@
 Uso (container minha-delpi-ai-api):
 
   PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py \\
-    --source-dir /workspace/api-delpi-py/GPT_instructions
+    --source-dir minha-delpi-ai-api/docs/knowledge/sources/gpt-instructions
 
   # Gerar arquivos + mapa + ingerir no agente (requer owner/editor):
   PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py \\
-    --source-dir /workspace/api-delpi-py/GPT_instructions \\
+    --source-dir minha-delpi-ai-api/docs/knowledge/sources/gpt-instructions \\
     --agent-key minha-delpi-chat \\
     --user-id <uuid> \\
     --ingest
@@ -33,7 +33,24 @@ from uuid import UUID
 
 DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MONOREPO_ROOT = DEFAULT_REPO_ROOT.parent
-DEFAULT_SOURCE = DEFAULT_MONOREPO_ROOT.parent / "api-delpi-py" / "GPT_instructions"
+DEFAULT_SOURCE_MIRROR = (
+    DEFAULT_REPO_ROOT
+    / "docs"
+    / "knowledge"
+    / "sources"
+    / "gpt-instructions"
+)
+DEFAULT_SOURCE_EXTERNAL = DEFAULT_MONOREPO_ROOT.parent / "api-delpi-py" / "GPT_instructions"
+
+
+def _default_source_dir() -> Path:
+    """Prefer mirror in-repo; fallback to api-delpi-py sibling checkout."""
+    if DEFAULT_SOURCE_MIRROR.is_dir() and any(DEFAULT_SOURCE_MIRROR.iterdir()):
+        return DEFAULT_SOURCE_MIRROR
+    return DEFAULT_SOURCE_EXTERNAL
+
+
+DEFAULT_SOURCE = _default_source_dir()
 DEFAULT_OUTPUT = (
     DEFAULT_REPO_ROOT
     / "docs"

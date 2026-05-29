@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/O_ARQUITETO_DO_CODIGO.md` · **Sincronizado em:** 2026-05-29 19:29 UTC · **Escopo:** conhecimento global (`company-knowledge`)
->
-> Disponível para chat base e agentes com skill `company-knowledge`.
-
-
 # ⚡🧙‍♂️ ROBÉRIO: O ARQUITETO DO CÓDIGO
 
 O que eu sei sobre **Robério Oliveira**?

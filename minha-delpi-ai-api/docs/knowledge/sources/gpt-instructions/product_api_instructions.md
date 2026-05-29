@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/product_api_instructions.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 🧩 Guia de Uso — Product API
 
 ## 📘 Descrição
@@ -37,7 +32,7 @@ A **Product API** centraliza informações técnicas, comerciais, produtivas e f
 | Método | Endpoint | Descrição |
 |------|--------|----------|
 | GET | `/products/{code}` | Consulta produto por código |
-| GET | `/products/search` | Busca de produtos por descrição com score |
+| GET | `/products/search/description` | Busca de produtos por descrição com score |
 | GET | `/products/{code}/structure` | Estrutura do produto (BOM) |
 | GET | `/products/{code}/structure/excel` | Exportação pública da estrutura em Excel |
 | GET | `/products/{code}/parents` | Produtos pais (Where Used) |
@@ -93,7 +88,7 @@ GET /products/{code}
 ## 🔹 2. Busca por Descrição
 
 ```http
-GET /products/search?description=terminal&page=1&page_size=5
+GET /products/search/description?description=terminal&page=1&page_size=5
 ```
 
 ### 📌 Parâmetros
@@ -598,3 +593,4 @@ GET /products/10080522/internal-movements?page=1&page_size=20&branch=01&date_sta
 - Paginação obrigatória em grandes volumes
 - Profundidade recomendada: **5–10 níveis**
 - Documentação 100% aderente ao código
+

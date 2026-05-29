@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/data_sql_api_instructions.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 🧩 Guia de Uso da Rota `/data/sql`
 
 ## 📘 Descrição
@@ -91,7 +86,7 @@ SELECT * FROM hierarchy;
 ## 📈 Exemplo de Requisição
 
 ```bash
-curl -X POST "POST /data/sql (gateway: /apps/api-delpi/data/sql)" \
+curl -X POST "https://api.transformamaisdelpi.com.br/data/sql" \
   -H "Authorization: Bearer <TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -3098,3 +3093,5 @@ A consulta deve retornar, para cada registro de perda no período:
 - Quando o usuário pedir **agrupado por matéria-prima**, consolidar com `SUM(BC_QUANT)` e `GROUP BY BC_PRODUTO, B1_DESC`.
 
 ---
+
+

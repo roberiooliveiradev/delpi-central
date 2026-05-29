@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/Understanding DELPI Intermediate Product Codes.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 📘 Entendendo Código Intermediário no TOTVS e Desenhos
 
 Este documento resume o conteúdo do arquivo **“ENTENDENDO CÓDIGO INTERMEDIÁRIO NO TOTVS E DESENHOS.pdf”**, servindo como **referência técnica oficial** para interpretação e padronização das descrições dos **produtos intermediários (família 50xx)** utilizados no Protheus e nos desenhos técnicos DELPI.

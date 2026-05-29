@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/GPT_instructions.md` · **Sincronizado em:** 2026-05-29 19:29 UTC · **Escopo:** conhecimento global (`company-knowledge`)
->
-> Disponível para chat base e agentes com skill `company-knowledge`.
-
-
 # 🤖 Instrução Geral do Agente — Especialista em Produtos DELPI
 
 ## 🌟 Objetivo

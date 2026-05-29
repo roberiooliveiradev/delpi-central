@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/Normas_Tecnicas_DELPI.md` · **Sincronizado em:** 2026-05-29 19:29 UTC · **Escopo:** conhecimento global (`company-knowledge`)
->
-> Disponível para chat base e agentes com skill `company-knowledge`.
-
-
 # Normas Técnicas DELPI
 
 Documento consolidado em formato Markdown, padronizado conforme o modelo do grupo **1008** (Objetivo, Abrangência, Estrutura, Campos, Exemplos e Fonte).

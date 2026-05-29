@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/validation_rules_delpi.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # ✅ Regras de Validação e Critérios de Conformidade de Desenhos DELPI
 ### _(validation_rules_DELPI.md – critérios automáticos de verificação e aprovação de desenhos técnicos DELPI)_
 

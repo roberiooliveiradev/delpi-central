@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/drawing_analyser_instructions.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 🧭 Agente de Verificação de Desenhos DELPI
 
 ---

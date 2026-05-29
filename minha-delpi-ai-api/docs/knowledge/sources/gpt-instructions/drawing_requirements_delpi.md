@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/drawing_requirements_delpi.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 # 🧾 Requisitos Obrigatórios para Desenhos Técnicos DELPI
 
 ### _(Versão consolidada com base nas normas internas, análises de desenhos e integrações com API DELPI)_

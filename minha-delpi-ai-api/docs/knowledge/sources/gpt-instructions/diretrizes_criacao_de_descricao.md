@@ -1,8 +1,3 @@
-> **Origem:** `api-delpi-py/GPT_instructions/diretrizes_criacao_de_descricao.md` · **Adaptado em:** 2026-05-29 19:29 UTC · **Alvo:** agente Minha DELPI / RAG operacional
->
-> Paths normalizados para a api-delpi atual (`/products/search`, `/products/{code}/…`). Consulte também `api-delpi-rotas-agente.md`.
-
-
 ## Criar descrição técnica de um produto DELPI
 
 > Usuário: **“Crie a descrição técnica do produto”**

@@ -8,6 +8,7 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 
 | Pasta | Escopo RAG | Conteúdo |
 |-------|------------|----------|
+| [`sources/gpt-instructions/`](./sources/gpt-instructions/) | referência (não RAG direto) | Espelho verbatim de `api-delpi-py/GPT_instructions` — base para implementações |
 | [`domains/global/`](./domains/global/) | `global` / `company-knowledge` | Normas Técnicas, GPT_instructions, O Arquiteto |
 | [`domains/agents/minha-delpi-chat/`](./domains/agents/minha-delpi-chat/) | `agent_source` | Bundle exportável do agente (12 fontes + manifest) |
 | [`domains/gpt-instructions/`](./domains/gpt-instructions/) | ingestão agente | Markdown adaptado da pasta `GPT_instructions` (api-delpi-py) |
@@ -19,7 +20,8 @@ Arquivos desta pasta são pensados para **ingestão na base de conhecimento** (`
 |---------|-----|
 | [api-delpi-rotas-agente.md](./api-delpi-rotas-agente.md) | Agente com provider OpenAPI **api-delpi** — mapa intenção → rota, permissões, sinônimos e exemplos (maio/2026) |
 | [gpt-instructions-coverage-map.md](./gpt-instructions-coverage-map.md) | Mapa documento a documento: GPT_instructions (api-delpi-py) × agente `minha-delpi-chat` |
-| [domains/gpt-instructions/](./domains/gpt-instructions/) | Markdown adaptado gerado por `scripts/sync_gpt_instructions_knowledge.py` |
+| [sources/gpt-instructions/](./sources/gpt-instructions/) | **Cópia verbatim** da pasta GPT_instructions (14 .md + PDF) — fonte para sync e implementações |
+| [domains/gpt-instructions/](./domains/gpt-instructions/) | Markdown **adaptado** (rotas api-delpi) gerado por `scripts/sync_gpt_instructions_knowledge.py` |
 | [domains/global/](./domains/global/) | **Conhecimento global** (`company-knowledge`) — Normas, GPT_instructions, O Arquiteto |
 | [domains/agents/minha-delpi-chat/](./domains/agents/minha-delpi-chat/) | **Bundle exportável** das fontes do agente (nomes normalizados + `manifest.json`) |
 | [../roadmap/api-delpi-chat-intelligence-audit.md](../roadmap/api-delpi-chat-intelligence-audit.md) | Auditoria técnica rota a rota, erros conhecidos, testes de regressão (dev) |
@@ -59,7 +61,7 @@ Sempre que rotas ou comportamento de seleção mudarem na api-delpi ou no pipeli
 
 1. Deploy da api-delpi
 2. **Sincronizar OpenAPI:** `PYTHONPATH=/app python scripts/sync_api_delpi_openapi.py` (reimport + embeddings + [`_generated/api-delpi-openapi-catalog.md`](./_generated/api-delpi-openapi-catalog.md))
-3. **Sincronizar GPT_instructions:** `PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py --source-dir …/api-delpi-py/GPT_instructions --agent-key minha-delpi-chat --user-id <uuid> --ingest`
+3. **Sincronizar GPT_instructions:** `PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py` (fonte padrão: `docs/knowledge/sources/gpt-instructions/`; ou `--source-dir …/api-delpi-py/GPT_instructions`) `--agent-key minha-delpi-chat --user-id <uuid> --ingest`
 4. **Sincronizar conhecimento global:** `… --sync-global [--ingest-global --user-id <uuid>]` → `docs/knowledge/domains/global/` (inclui `normas-tecnicas-delpi.md`)
 5. **Exportar bundle do agente:** `PYTHONPATH=/app python scripts/export_agent_knowledge_bundle.py --agent-key minha-delpi-chat` → `docs/knowledge/domains/agents/minha-delpi-chat/`
 6. **Smoke melhorias GPT/SQL:** ver perguntas G1–G8 em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md); script `PYTHONPATH=/app python scripts/smoke_gpt_instructions_improvements.py [user_id] [session_id]`
