@@ -7,11 +7,202 @@ export type PresentationPair = {
 
 export type ViewFormat = "text" | "chart" | "table";
 
+function isTablePresentation(
+  value: unknown,
+): value is Extract<ChatPresentation, { type: "table" }> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { type?: string }).type === "table"
+  );
+}
+
+function isChartPresentation(
+  value: unknown,
+): value is Extract<ChatPresentation, { type: "chart" }> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { type?: string }).type === "chart"
+  );
+}
+
+function tableColumnsMatch(
+  left: Extract<ChatPresentation, { type: "table" }>["columns"],
+  right: Extract<ChatPresentation, { type: "table" }>["columns"],
+): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((column, index) => column.key === right[index]?.key);
+}
+
+function inferProductCodeFromTable(
+  table: Extract<ChatPresentation, { type: "table" }>,
+): string {
+  const firstRow = table.rows[0];
+
+  if (!firstRow) {
+    return "";
+  }
+
+  for (const key of ["product_code", "code", "productCode", "produto"]) {
+    const value = firstRow[key];
+
+    if (value !== undefined && value !== null && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+
+  return "";
+}
+
+function mergeTablePresentations(
+  tables: Extract<ChatPresentation, { type: "table" }>[],
+): Extract<ChatPresentation, { type: "table" }> | null {
+  if (tables.length === 0) {
+    return null;
+  }
+
+  if (tables.length === 1) {
+    return tables[0];
+  }
+
+  const [first, ...rest] = tables;
+
+  if (!rest.every((table) => tableColumnsMatch(first.columns, table.columns))) {
+    return first;
+  }
+
+  const productCodes = tables
+    .map((table) => inferProductCodeFromTable(table))
+    .filter(Boolean);
+
+  const title =
+    productCodes.length > 1
+      ? "Estoque por filial/armazém"
+      : first.title;
+
+  return {
+    ...first,
+    title,
+    rows: tables.flatMap((table) => table.rows),
+  };
+}
+
+function prefixChartSeriesName(
+  entry: Record<string, unknown>,
+  productCode: string,
+): Record<string, unknown> {
+  if (!productCode) {
+    return entry;
+  }
+
+  const name = String(entry.name ?? "").trim();
+
+  if (!name) {
+    return entry;
+  }
+
+  if (name.startsWith(`${productCode} ·`) || name.startsWith(`${productCode} `)) {
+    return entry;
+  }
+
+  return {
+    ...entry,
+    name: `${productCode} · ${name}`,
+  };
+}
+
+function mergeChartPresentations(
+  charts: Extract<ChatPresentation, { type: "chart" }>[],
+  tables: Extract<ChatPresentation, { type: "table" }>[],
+): Extract<ChatPresentation, { type: "chart" }> | null {
+  if (charts.length === 0) {
+    return null;
+  }
+
+  if (charts.length === 1) {
+    return charts[0];
+  }
+
+  const [first, ...rest] = charts;
+
+  if (
+    rest.some(
+      (chart) =>
+        chart.chartType !== first.chartType ||
+        JSON.stringify(chart.config ?? {}) !== JSON.stringify(first.config ?? {}),
+    )
+  ) {
+    return first;
+  }
+
+  const mergedData = charts.flatMap((chart, index) => {
+    const productCode = inferProductCodeFromTable(tables[index] ?? { type: "table", title: "", columns: [], rows: [] });
+
+    return (chart.data ?? []).map((entry) =>
+      prefixChartSeriesName(entry as Record<string, unknown>, productCode),
+    );
+  });
+
+  const productCodes = tables
+    .map((table) => inferProductCodeFromTable(table))
+    .filter(Boolean);
+
+  return {
+    ...first,
+    title:
+      productCodes.length > 1
+        ? "Estoque por filial/armazém"
+        : first.title,
+    data: mergedData,
+  };
+}
+
+function collectExternalActionPresentations(toolCalls: ChatToolCall[]): {
+  charts: Extract<ChatPresentation, { type: "chart" }>[];
+  tables: Extract<ChatPresentation, { type: "table" }>[];
+} {
+  const charts: Extract<ChatPresentation, { type: "chart" }>[] = [];
+  const tables: Extract<ChatPresentation, { type: "table" }>[] = [];
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const presentation = metadata.presentation;
+    const tablePresentation = metadata.tablePresentation;
+
+    if (isChartPresentation(presentation)) {
+      charts.push(presentation);
+    }
+
+    if (isTablePresentation(tablePresentation)) {
+      tables.push(tablePresentation);
+    } else if (isTablePresentation(presentation)) {
+      tables.push(presentation);
+    }
+  }
+
+  return { charts, tables };
+}
+
 function getPresentationFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatPresentation | null {
   if (!Array.isArray(toolCalls)) {
     return null;
+  }
+
+  const { charts, tables } = collectExternalActionPresentations(toolCalls);
+  const mergedChart = mergeChartPresentations(charts, tables);
+
+  if (mergedChart) {
+    return mergedChart;
   }
 
   for (const toolCall of toolCalls) {
@@ -40,15 +231,18 @@ function getTablePresentationFromToolCalls(
     return null;
   }
 
+  const { tables } = collectExternalActionPresentations(toolCalls);
+  const mergedTable = mergeTablePresentations(tables);
+
+  if (mergedTable) {
+    return mergedTable;
+  }
+
   for (const toolCall of toolCalls) {
     const tablePresentation = (toolCall.metadata as Record<string, unknown>)?.tablePresentation;
 
-    if (
-      tablePresentation &&
-      typeof tablePresentation === "object" &&
-      "type" in (tablePresentation as Record<string, unknown>)
-    ) {
-      return tablePresentation as ChatPresentation;
+    if (isTablePresentation(tablePresentation)) {
+      return tablePresentation;
     }
   }
 
@@ -94,6 +288,32 @@ export function getPreferredFormatFromToolCalls(
 export function getTextMarkdownFromToolCalls(toolCalls?: ChatToolCall[]): string {
   if (!Array.isArray(toolCalls)) {
     return "";
+  }
+
+  const sections: string[] = [];
+
+  for (const toolCall of toolCalls) {
+    const textPresentation = (toolCall.metadata as Record<string, unknown>)?.textPresentation;
+
+    if (
+      textPresentation &&
+      typeof textPresentation === "object" &&
+      (textPresentation as { type?: string }).type === "markdown"
+    ) {
+      const markdown = (textPresentation as { markdown?: string }).markdown;
+
+      if (typeof markdown === "string" && markdown.trim()) {
+        sections.push(markdown.trim());
+      }
+    }
+  }
+
+  if (sections.length > 1) {
+    return sections.join("\n\n");
+  }
+
+  if (sections.length === 1) {
+    return sections[0];
   }
 
   for (const toolCall of toolCalls) {

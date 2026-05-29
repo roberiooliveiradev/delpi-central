@@ -138,48 +138,39 @@ export function ChatRichPresentation({
     );
   }
 
-  const expandTarget =
-    viewMode === "chart"
-      ? chartPresentation
-      : viewMode === "table"
-        ? tablePresentation
-        : null;
-
   const showSharedTitle = Boolean(presentationTitle);
 
-  const formatToolbar =
-    showToggle || expandTarget ? (
-      <div className="mdc-rich-presentation__toolbar">
-        {showToggle ? (
-          <div className="mdc-rich-presentation__format-toggle" role="group" aria-label="Formato da resposta">
-            {hasText ? (
-              <FormatToggle
-                active={viewMode === "text"}
-                label="Texto"
-                onClick={() => setViewMode("text")}
-              />
-            ) : null}
-            {hasChartView ? (
-              <FormatToggle
-                active={viewMode === "chart"}
-                label="Gráfico"
-                onClick={() => setViewMode("chart")}
-              />
-            ) : null}
-            {hasTableView ? (
-              <FormatToggle
-                active={viewMode === "table"}
-                label="Tabela"
-                onClick={() => setViewMode("table")}
-              />
-            ) : null}
-          </div>
+  const formatToolbar = showToggle ? (
+    <div className="mdc-rich-presentation__toolbar">
+      <div
+        className="mdc-rich-presentation__format-toggle"
+        role="group"
+        aria-label="Formato da resposta"
+      >
+        {hasText ? (
+          <FormatToggle
+            active={viewMode === "text"}
+            label="Texto"
+            onClick={() => setViewMode("text")}
+          />
         ) : null}
-        {expandTarget ? (
-          <ExpandButton presentation={expandTarget} onDrillDown={onDrillDown} />
+        {hasChartView ? (
+          <FormatToggle
+            active={viewMode === "chart"}
+            label="Gráfico"
+            onClick={() => setViewMode("chart")}
+          />
+        ) : null}
+        {hasTableView ? (
+          <FormatToggle
+            active={viewMode === "table"}
+            label="Tabela"
+            onClick={() => setViewMode("table")}
+          />
         ) : null}
       </div>
-    ) : null;
+    </div>
+  ) : null;
 
   return (
     <div className="mdc-rich-presentation mdc-rich-presentation--enter">
@@ -196,7 +187,11 @@ export function ChatRichPresentation({
       ) : null}
 
       {viewMode === "chart" && hasChartView && chartPresentation ? (
-        <ChatRichChart presentation={chartPresentation} hideTitle={showSharedTitle} />
+        <ChatRichChart
+          presentation={chartPresentation}
+          hideTitle={showSharedTitle}
+          onDrillDown={onDrillDown}
+        />
       ) : null}
 
       {viewMode === "table" && hasTableView && tablePresentation ? (

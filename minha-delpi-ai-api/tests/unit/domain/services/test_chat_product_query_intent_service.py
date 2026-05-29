@@ -68,6 +68,27 @@ def test_detect_analyser_intent():
     )
 
 
+def test_extract_product_code_ignores_example_in_prompt():
+    code = ChatProductQueryIntentService.extract_product_code(
+        "informe o codigo do produto (ex.: 10080099)"
+    )
+
+    assert code is None
+
+
+def test_extract_product_code_from_bare_code_message():
+    assert ChatProductQueryIntentService.extract_product_code("10080022") == "10080022"
+
+
+def test_references_previous_product_does_not_match_generic_stock_phrase():
+    assert not ChatProductQueryIntentService.references_previous_product(
+        "estoque do produto"
+    )
+    assert ChatProductQueryIntentService.references_previous_product(
+        "estoque desse produto"
+    )
+
+
 def test_resolve_product_code_from_conversation_context():
     code = ChatProductQueryIntentService.resolve_product_code(
         "busque o estoque desse produto",

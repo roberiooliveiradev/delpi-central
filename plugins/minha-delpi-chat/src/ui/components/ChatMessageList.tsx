@@ -38,6 +38,7 @@ import {
 import { ChatSources } from "./ChatSources";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
+import { ChatMessageEditField } from "./ChatMessageEditField";
 import { getCanvasOpenFromMetadata } from "./chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
@@ -839,43 +840,13 @@ export function ChatMessageList({
               }`}
             >
               {editingMessageId === message.id ? (
-                <div className="mdc-chat-message-edit mdc-chat-message-edit--inline">
-                  <textarea
-                    className="mdc-chat-message-edit__input"
-                    value={editingContent}
-                    rows={1}
-                    autoFocus
-                    onChange={(event) => setEditingContent(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        cancelEditMessage();
-                      }
-
-                      if (
-                        (event.ctrlKey || event.metaKey) &&
-                        event.key === "Enter"
-                      ) {
-                        event.preventDefault();
-                        void handleSaveAndResend(message.id);
-                      }
-                    }}
-                  />
-
-                  <div className="mdc-chat-message-edit-actions">
-                    <button type="button" onClick={cancelEditMessage}>
-                      Cancelar
-                    </button>
-                    <button
-                      type="button"
-                      className="mdc-chat-message-edit-actions__primary"
-                      disabled={Boolean(isStreaming)}
-                      onClick={() => void handleSaveAndResend(message.id)}
-                    >
-                      Enviar
-                    </button>
-                  </div>
-                </div>
+                <ChatMessageEditField
+                  value={editingContent}
+                  disabled={Boolean(isStreaming)}
+                  onChange={setEditingContent}
+                  onCancel={cancelEditMessage}
+                  onSubmit={() => void handleSaveAndResend(message.id)}
+                />
               ) : (
                 <>
                   <ChatMessageAttachments

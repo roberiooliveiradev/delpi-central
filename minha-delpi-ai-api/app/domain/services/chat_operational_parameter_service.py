@@ -115,20 +115,24 @@ class ChatOperationalParameterService:
         if ChatProductQueryIntentService.extract_product_code(message):
             return None
 
-        product_code = ChatProductQueryIntentService.resolve_product_code(
-            message,
-            conversation_context,
-        )
-
-        if product_code:
-            return None
-
         intent = ChatProductQueryIntentService.detect(message)
 
         if intent not in cls._INTENTS_REQUIRING_CODE:
             return None
 
         if not cls._requires_explicit_product_context(normalized, intent):
+            return None
+
+        # «estoque do produto» sem código explícito não herda exemplo do assistente.
+        if not ChatProductQueryIntentService.references_previous_product(message):
+            return intent
+
+        product_code = ChatProductQueryIntentService.resolve_product_code(
+            message,
+            conversation_context,
+        )
+
+        if product_code:
             return None
 
         return intent

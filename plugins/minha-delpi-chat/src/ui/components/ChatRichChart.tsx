@@ -18,15 +18,18 @@ import {
 } from "recharts";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
+import { ExpandButton } from "./ChatExpandModal";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
 export function ChatRichChart({
   presentation,
   hideTitle = false,
+  onDrillDown,
 }: {
   presentation: ChartPresentation;
   hideTitle?: boolean;
+  onDrillDown?: (query: string) => void;
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
@@ -84,6 +87,7 @@ export function ChatRichChart({
           >
             {downloadReady ? "✓ Salvo" : "↓ PNG"}
           </button>
+          <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
         </div>
       </div>
 

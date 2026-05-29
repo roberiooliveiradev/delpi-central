@@ -14,7 +14,7 @@
   position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: flex-end;
   min-height: 3.25rem;
   border: 1px solid var(--mdc-card-border);
   border-radius: 1.6rem;
@@ -112,12 +112,13 @@
   background: currentColor;
 }
 
-.mdc-chat-input textarea {
+.mdc-chat-input textarea,
+.mdc-auto-grow-textarea {
   width: 100%;
   min-height: 2.5rem;
-  max-height: 11rem;
+  max-height: min(11rem, 40dvh);
   resize: none;
-  overflow-y: auto;
+  overflow-y: hidden;
   border: 0 !important;
   background: transparent !important;
   color: var(--mdc-text);
@@ -126,7 +127,7 @@
   padding: 0.62rem 0.55rem 0.62rem 0.75rem;
   outline: none;
   box-shadow: none !important;
-  field-sizing: content;
+  box-sizing: border-box;
 }
 
 .mdc-chat-input textarea:focus,

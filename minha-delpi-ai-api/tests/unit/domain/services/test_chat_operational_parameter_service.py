@@ -65,3 +65,23 @@ def test_should_skip_agentic_for_incomplete_stock_question():
         conversation_context=None,
         tool_context={"toolCalls": []},
     )
+
+
+def test_should_skip_tools_after_missing_code_prompt_with_example():
+    context = (
+        "user: estoque do produto\n"
+        "assistant: Para consultar o estoque, informe o codigo do produto "
+        "(ex.: 10080099)."
+    )
+
+    assert ChatOperationalParameterService.should_skip_tools(
+        "estoque do produto",
+        conversation_context=context,
+    )
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(
+            "estoque do produto",
+            conversation_context=context,
+        )
+        is not None
+    )

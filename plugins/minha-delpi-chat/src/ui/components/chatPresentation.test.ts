@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
+  getPresentationPairFromToolCalls,
   getPresentationTitle,
   isShortPresentationCaption,
   resolveRichTextBody,
@@ -165,5 +166,89 @@ describe("getAvailableFormatsFromToolCalls", () => {
         { metadata: { availableFormats: ["text", "table", "chart"] } },
       ]),
     ).toEqual(["text", "table", "chart"]);
+  });
+});
+
+describe("multi-product presentation merge", () => {
+  const multiStockToolCalls = [
+    {
+      name: "execute_external_action",
+      metadata: {
+        availableFormats: ["text", "table", "chart"],
+        presentation: {
+          type: "chart",
+          title: "Estoque por filial/armazém",
+          chartType: "bar",
+          config: { xAxis: "name", yAxis: ["Qtd. atual"], legend: true },
+          data: [{ name: "Fil.01/01", "Qtd. atual": 9024 }],
+        },
+        tablePresentation: {
+          type: "table",
+          title: "Estoque do produto",
+          columns: [
+            { key: "branch", label: "Filial" },
+            { key: "product_code", label: "Produto" },
+            { key: "current_quantity", label: "Qtd. atual" },
+          ],
+          rows: [{ branch: "01", product_code: "10080047", current_quantity: 9024 }],
+        },
+        textPresentation: {
+          type: "markdown",
+          markdown: "### Estoque do produto\n\nFilial 01: 9024",
+        },
+      },
+    },
+    {
+      name: "execute_external_action",
+      metadata: {
+        availableFormats: ["text", "table", "chart"],
+        presentation: {
+          type: "chart",
+          title: "Estoque por filial/armazém",
+          chartType: "bar",
+          config: { xAxis: "name", yAxis: ["Qtd. atual"], legend: true },
+          data: [{ name: "Fil.02/99", "Qtd. atual": 115 }],
+        },
+        tablePresentation: {
+          type: "table",
+          title: "Estoque do produto",
+          columns: [
+            { key: "branch", label: "Filial" },
+            { key: "product_code", label: "Produto" },
+            { key: "current_quantity", label: "Qtd. atual" },
+          ],
+          rows: [{ branch: "02", product_code: "10080055", current_quantity: 115 }],
+        },
+        textPresentation: {
+          type: "markdown",
+          markdown: "### Estoque do produto\n\nFilial 02: 115",
+        },
+      },
+    },
+  ];
+
+  it("mescla linhas de tabela de vários produtos", () => {
+    const pair = getPresentationPairFromToolCalls(multiStockToolCalls);
+    const table = pair.table;
+
+    expect(table?.type).toBe("table");
+    expect(table?.rows).toHaveLength(2);
+    expect(table?.rows.map((row) => row.product_code)).toEqual([
+      "10080047",
+      "10080055",
+    ]);
+
+    const body = resolveRichTextBody("", multiStockToolCalls);
+
+    expect(body).toContain("10080047");
+    expect(body).toContain("10080055");
+    expect(shouldShowRichPresentation("", multiStockToolCalls)).toBe(true);
+  });
+
+  it("mescla markdown textual de várias consultas", () => {
+    const markdown = resolveRichTextContent("", multiStockToolCalls);
+
+    expect(markdown).toContain("9024");
+    expect(markdown).toContain("115");
   });
 });

@@ -24,6 +24,10 @@ class ChatProductQueryIntentService:
         r"^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$",
         re.IGNORECASE,
     )
+    _EXAMPLE_CODE_PREFIX_RE = re.compile(
+        r"(?:\bex\.?\s*:?|\bexemplo\s*:?|\binforme\s+(?:o\s+)?(?:c[óo]digo|codigo)|\bpor\s+exemplo)\s*$",
+        re.IGNORECASE,
+    )
 
     @classmethod
     def detect(cls, message: str) -> str:
@@ -95,8 +99,6 @@ class ChatProductQueryIntentService:
             "deste produto",
             "esse produto",
             "este produto",
-            "do produto",
-            "da produto",
             "mesmo produto",
             "produto acima",
             "produto anterior",
@@ -162,6 +164,12 @@ class ChatProductQueryIntentService:
         return str(raw or "").strip()
 
     @classmethod
+    def _is_example_product_code_token(cls, text: str, match: re.Match[str]) -> bool:
+        prefix = text[max(0, match.start() - 64) : match.start()].lower()
+
+        return bool(cls._EXAMPLE_CODE_PREFIX_RE.search(prefix))
+
+    @classmethod
     def extract_product_code(cls, text: str | None) -> str | None:
         if cls._looks_like_lmp_context(text):
             return None
@@ -173,6 +181,9 @@ class ChatProductQueryIntentService:
                 continue
 
             if cls._is_date_numeric_token(match.group(0)):
+                continue
+
+            if cls._is_example_product_code_token(raw, match):
                 continue
 
             return cls.normalize_product_code(match.group(0))
@@ -232,6 +243,9 @@ class ChatProductQueryIntentService:
 
         for match in cls._PRODUCT_CODE_RE.finditer(raw):
             if cls._is_group_code_numeric_token(raw, match):
+                continue
+
+            if cls._is_example_product_code_token(raw, match):
                 continue
 
             last_code = cls.normalize_product_code(match.group(0))

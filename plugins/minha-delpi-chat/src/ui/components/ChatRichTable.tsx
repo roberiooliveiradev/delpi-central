@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
+import { ExpandButton } from "./ChatExpandModal";
 import { buildDrillDownQuery } from "./chatDrillDown";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
@@ -125,6 +126,7 @@ export function ChatRichTable({
           >
             ↓ CSV
           </button>
+          <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
         </div>
       </div>
 

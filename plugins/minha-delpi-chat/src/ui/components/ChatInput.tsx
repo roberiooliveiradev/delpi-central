@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
+import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
 import "./ChatInput.css";
 
@@ -82,6 +83,11 @@ export function ChatInput({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
+  const { ref: textareaRef } = useAutoGrowTextarea({
+    value,
+    bottomInset: variant === "dock" ? 72 : 48,
+    maxHeightCapPx: 176,
+  });
 
   useEffect(() => {
     if (!isMenuOpen) {
@@ -333,6 +339,8 @@ export function ChatInput({
         </div>
 
         <textarea
+          ref={textareaRef}
+          className="mdc-auto-grow-textarea"
           value={value}
           disabled={disabled || isSending}
           placeholder={placeholder}

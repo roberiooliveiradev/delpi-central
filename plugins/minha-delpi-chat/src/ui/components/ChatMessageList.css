@@ -337,11 +337,13 @@
 }
 
 .mdc-chat-message-edit__input,
-.mdc-chat-message-edit textarea {
+.mdc-chat-message-edit textarea,
+.mdc-chat-message-edit .mdc-auto-grow-textarea {
   width: 100%;
   min-height: 2.25rem;
-  max-height: 14rem;
-  resize: vertical;
+  max-height: min(14rem, 35dvh);
+  resize: none;
+  overflow-y: hidden;
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-md);
   background: color-mix(in srgb, var(--mdc-bg) 92%, black);
@@ -351,7 +353,7 @@
   line-height: 1.4;
   padding: 0.4rem 0.5rem;
   outline: none;
-  field-sizing: content;
+  box-sizing: border-box;
 }
 
 .mdc-chat-message-edit__input:focus,
@@ -406,7 +408,8 @@
   box-shadow: none;
   padding: 0;
   min-height: 1.35rem;
-  resize: vertical;
+  max-height: min(12rem, 32dvh);
+  resize: none;
 }
 
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline .mdc-chat-message-edit__input:focus,
