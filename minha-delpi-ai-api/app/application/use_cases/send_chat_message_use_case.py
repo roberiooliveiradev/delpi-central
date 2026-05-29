@@ -414,6 +414,11 @@ class SendChatMessageUseCase:
         previous_messages: list | None = None,
         on_stream_activity=None,
     ) -> dict:
+        from app.application.services.chat_small_talk_service import ChatSmallTalkService
+
+        if ChatSmallTalkService.is_small_talk(request.message):
+            return tool_context
+
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
 

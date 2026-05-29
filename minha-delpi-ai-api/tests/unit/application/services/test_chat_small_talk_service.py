@@ -1,0 +1,55 @@
+import pytest
+
+from app.application.services.chat_small_talk_service import ChatSmallTalkService
+from app.domain.services.chat_fast_path_service import ChatFastPathService
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "ola",
+        "olá",
+        "oi",
+        "bom dia",
+        "obrigado",
+        "valeu",
+        "tchau",
+        "ok",
+        "olá, tudo bem?",
+    ],
+)
+def test_small_talk_detection(message: str):
+    assert ChatFastPathService.is_small_talk(message)
+    assert ChatSmallTalkService.is_small_talk(message)
+    assert ChatSmallTalkService.classify(message)
+
+
+def test_small_talk_direct_answer_platform():
+    answer = ChatSmallTalkService.build_direct_answer(
+        message="ola",
+        workspace_context={},
+    )
+
+    assert answer
+    assert "ajudar" in answer.lower()
+
+
+def test_small_talk_direct_answer_agent():
+    answer = ChatSmallTalkService.build_direct_answer(
+        message="oi",
+        workspace_context={
+            "agent": {
+                "name": "Agente Minha DELPI",
+                "description": "assistente geral.",
+            },
+            "agentKey": "minha-delpi",
+        },
+    )
+
+    assert answer
+    assert "Agente Minha DELPI" in answer
+
+
+def test_non_small_talk_is_not_classified():
+    assert not ChatSmallTalkService.is_small_talk("estoque do produto 10080047")
+    assert ChatSmallTalkService.classify("estoque do produto 10080047") is None

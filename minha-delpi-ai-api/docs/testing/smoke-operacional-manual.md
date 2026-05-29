@@ -20,7 +20,7 @@ docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
 | 2 | estouque do produto | Mesmo comportamento (corrige typo) |
 | 3 | estoque do produto 10080022 | Consulta estoque; tabela/gráfico com dados |
 | 4 | quem te criou? | Resposta canônica sobre Minha DELPI; rápida, sem RAG |
-| 5 | olá | Saudação normal (pode usar LLM) |
+| 5 | olá | Saudação direta (`ChatSmallTalkService`); sem RAG/LLM |
 | 6 | *(após #3)* filtre filial 02 | Refina estoque da filial 02 do produto anterior |
 | 6b | *(após KPI estoque empresa)* filial 01 | Refina `/supplies/stock-value` na filial 01; **sem** SQL/agentic |
 
@@ -96,7 +96,20 @@ docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
 | # | Pergunta | O que esperar |
 |---|----------|---------------|
 | 32 | cpv de 01/04/2026 a 30/04/2026 | CPV com intervalo de datas |
-| 33 | listar ov de 01/04/2026 a 30/04/2026 | OVs no período |
+| 33 | listar ov de 01/04/2026 a 30/04/2026 | OVs no período (`GET /sales`, tabela); **não** `/products/{data}/sales` |
+
+---
+
+## Lousa / canvas (multi-turno)
+
+Use agente com `capabilities.canvas: true` (ex.: Minha DELPI Chat).
+
+| # | Sequência | O que esperar |
+|---|-----------|---------------|
+| 56 | me diga quem sou eu e o que consigo fazer aqui, quem é você? | Resposta em seções (perfil, capacidades, assistente) |
+| 57 | *(após #56)* coloque em uma lousa | Lousa abre com o conteúdo da resposta #56; chat confirma «Coloquei …» |
+| 58 | *(após #57)* acrescente na lousa a descrição do produto 10080049 | Consulta produto + lousa **atualizada** (perfil + descrição); **não** repete só a confirmação da lousa |
+| 59 | *(alternativa)* acrescente isso na lousa | Merge da lousa existente + última resposta útil do chat |
 
 ---
 
@@ -193,6 +206,10 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Refinamento paginação | `tests/unit/domain/services/test_chat_operational_refinement_service.py` |
 | Turn preparation paginação | `tests/unit/application/services/test_chat_turn_preparation_pagination_refinement.py` |
 | Apresentação frontend | `plugins/minha-delpi-chat/scripts/verify-pagination-presentation.ts` |
+| Lousa / canvas | `tests/unit/application/services/test_chat_canvas_content_service.py` |
+| Small talk | `tests/unit/application/services/test_chat_small_talk_service.py` |
+| Meta composta | `tests/unit/application/services/test_chat_meta_direct_answer_service.py` |
+| OV / datas | `tests/unit/domain/services/test_chat_analysis_intent_action_planning.py` |
 
 ```bash
 # Backend (no container)

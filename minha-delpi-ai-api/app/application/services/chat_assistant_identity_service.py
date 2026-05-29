@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from functools import lru_cache
 
-from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -73,9 +72,6 @@ class ChatAssistantIdentityService:
 
     @classmethod
     def classify(cls, message: str) -> str | None:
-        if ChatUserContextService.is_user_identity_question(message):
-            return None
-
         content = _identity_content()
         max_length = int(content.get("maxMessageLength") or 220)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
@@ -83,12 +79,21 @@ class ChatAssistantIdentityService:
         if len(normalized) > max_length:
             return None
 
+        category = cls._match_category(message, content)
+
+        if category:
+            return category
+
         exclusions = tuple(
             str(item) for item in (content.get("userIdentityExclusions") or ())
         )
         if ChatMessageNormalizationService.contains_any(message, exclusions):
             return None
 
+        return None
+
+    @classmethod
+    def _match_category(cls, message: str, content: dict) -> str | None:
         patterns = content.get("patterns") or {}
         priority = tuple(
             str(item)

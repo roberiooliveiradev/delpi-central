@@ -59,8 +59,10 @@ No Minha DELPI, **send** e **stream** compartilham `ChatTurnPreparationService` 
 | Normalização / typos | `ChatMessageNormalizationService` | seleção de rotas, intents |
 | Classificação operacional vs análise | `ChatIntelligencePipelineService.resolve_pre_tool_decisions` | `operational_optimize`, `analysis_mode` |
 | Fast path (mensagem curta) | `ChatFastPathService` | use cases |
+| Small talk | `ChatSmallTalkService` | saudações/agradecimentos → resposta direta |
+| Pergunta meta composta | `ChatMetaDirectAnswerService` | perfil + capacidades + assistente numa resposta |
 | Pergunta de capacidade | `ChatCapabilitiesService.resolve_capability_answer` | use cases (antes de tools) |
-| Canvas / lousa | `ChatCanvasContentService` | use cases |
+| Canvas / lousa | `ChatCanvasContentService` + `ChatCanvasIntentService` | cópia, append e merge com tools |
 | Tools + OpenAPI | `ChatToolContextService` + `ExternalActionSelectionService` | tools |
 | Pós-tools / modo análise | `ChatIntelligencePipelineService.finalize_after_tools` | use cases |
 | Resposta direta API | `ChatExternalActionDirectResponseService` | pipeline |
@@ -137,7 +139,9 @@ Ordem fixa no **chat base**; agentes só alteram *dados* (skills, actions), não
 | 2 | `WorkspaceStage` | — |
 | 3 | `NormalizeStage` | preenche `normalized_message` |
 | 4 | `PreToolDecisionStage` | flags operacional/análise |
-| 5 | `CanvasStage` | answer |
+| 5 | `CanvasStage` | answer (cópia/append); operacional segue para tools e merge pós-tool |
+| 5b | `SmallTalkStage` | answer («olá», «obrigado») |
+| 5c | `MetaDirectStage` | answer (perguntas meta compostas) |
 | 6 | `CapabilityStage` | answer («consegue…?») |
 | 7 | `ToolExecutionStage` | tool_context |
 | 8 | `PostToolStage` | analysis_mode, direct_answer |

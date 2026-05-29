@@ -193,12 +193,6 @@ class StreamChatMessageUseCase:
                 not resend_from_message_id
                 and self._should_generate_session_title(session, previous_messages)
             )
-            if should_generate_session_title:
-                self.chat_repository.rename_session(
-                    session_id=session_id,
-                    user_id=user_id,
-                    title=self._fallback_title_from_message(message),
-                )
 
             history_source = history_messages if resend_from_message_id else previous_messages
             agent_meta = workspace_context.get("agent")
@@ -293,6 +287,12 @@ class StreamChatMessageUseCase:
         should_generate_session_title = bool(
             context_box.get("should_generate_session_title")
         )
+        if should_generate_session_title:
+            self.chat_repository.rename_session(
+                session_id=session_id,
+                user_id=user_id,
+                title=self._fallback_title_from_message(message),
+            )
 
         operational_optimize = prepared.operational_optimize
         analysis_mode = prepared.analysis_mode
@@ -913,6 +913,11 @@ class StreamChatMessageUseCase:
         previous_messages: list | None = None,
         on_stream_activity=None,
     ) -> dict:
+        from app.application.services.chat_small_talk_service import ChatSmallTalkService
+
+        if ChatSmallTalkService.is_small_talk(request.message):
+            return tool_context
+
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
 

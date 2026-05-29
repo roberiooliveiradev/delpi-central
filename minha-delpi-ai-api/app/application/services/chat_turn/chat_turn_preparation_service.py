@@ -15,11 +15,16 @@ from app.application.services.chat_assistant_identity_service import (
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
+from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.application.services.chat_intelligence_pipeline_service import (
     ChatIntelligencePipelineService,
 )
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
+from app.application.services.chat_meta_direct_answer_service import (
+    ChatMetaDirectAnswerService,
+)
+from app.application.services.chat_small_talk_service import ChatSmallTalkService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
@@ -127,6 +132,9 @@ class ChatTurnPreparationService:
         canvas_open_payload = (
             canvas_action.open_payload if canvas_action and canvas_action.open_payload else None
         )
+        canvas_operational_update = ChatCanvasIntentService.is_canvas_operational_update_request(
+            message
+        )
 
         attachment_ids = getattr(request, "attachment_ids", None)
         allowed_action_ids = workspace_context.get("allowedActionIds") or []
@@ -169,9 +177,12 @@ class ChatTurnPreparationService:
                     )
                 )
 
-        if canvas_action:
+        if canvas_action or canvas_operational_update:
             operational_optimize = False
             analysis_mode = False
+
+        if canvas_action:
+            fast_path = True
 
         if operational_optimize:
             keep = max(1, int(history_keep))
@@ -241,14 +252,19 @@ class ChatTurnPreparationService:
         pipeline_timings = ChatPipelineTimings()
         pipeline_stages: list[str] = ["ingress"]
 
-        pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
-            message=message,
-            workspace_context=workspace_context,
-            allowed_action_ids=allowed_action_ids,
-            action_catalog=ChatCapabilitiesService.load_action_catalog_for_agent(
-                allowed_action_ids,
-            ),
-        )
+        meta_intents = ChatMetaDirectAnswerService.detect_intents(message)
+        compound_meta_question = meta_intents.count >= 2
+
+        pre_capability_answer = None
+        if not compound_meta_question:
+            pre_capability_answer = ChatCapabilitiesService.resolve_capability_answer(
+                message=message,
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+                action_catalog=ChatCapabilitiesService.load_action_catalog_for_agent(
+                    allowed_action_ids,
+                ),
+            )
 
         fast_path = ChatFastPathService.should_use(
             message,
@@ -259,6 +275,11 @@ class ChatTurnPreparationService:
 
         if canvas_action:
             fast_path = True
+
+        small_talk_direct = ChatSmallTalkService.build_direct_answer(
+            message=message,
+            workspace_context=workspace_context,
+        )
 
         conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
@@ -286,7 +307,8 @@ class ChatTurnPreparationService:
             or pre_capability_answer
             or missing_product_code_answer
             or skip_tools_for_user_identity
-        ):
+            or small_talk_direct
+        ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
                 pipeline_stages.append("identity_shortcut")
             elif canvas_action:
@@ -295,6 +317,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("capabilities")
             elif missing_product_code_answer:
                 pipeline_stages.append("operational_parameter")
+            elif small_talk_direct:
+                pipeline_stages.append("small_talk")
             tool_context = {
                 "context": "",
                 "toolCalls": [],
@@ -339,6 +363,21 @@ class ChatTurnPreparationService:
             tool_calls = tool_context["toolCalls"]
             pipeline_timings.mark("tools_done")
 
+        if canvas_operational_update and not canvas_action:
+            canvas_action = ChatCanvasContentService.build_update_from_tools(
+                message,
+                tool_calls,
+                history_source,
+                workspace_context,
+            )
+
+            if canvas_action and canvas_action.open_payload:
+                canvas_open_payload = canvas_action.open_payload
+                fast_path = True
+
+                if "canvas" not in pipeline_stages:
+                    pipeline_stages.append("canvas")
+
         pipeline_stages.append("post_tool")
 
         resolved_skills = workspace_context.get("skills") or {}
@@ -360,6 +399,7 @@ class ChatTurnPreparationService:
                 fast_path
                 and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
             )
+            or bool(small_talk_direct)
             or operational_optimize
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
             or bool(assistant_identity_direct)
@@ -369,6 +409,8 @@ class ChatTurnPreparationService:
             direct_answer = canvas_action.answer
         elif pre_capability_answer:
             direct_answer = pre_capability_answer
+        elif small_talk_direct:
+            direct_answer = small_talk_direct
         elif analysis_mode:
             direct_answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
                 message,
@@ -386,11 +428,26 @@ class ChatTurnPreparationService:
                 analysis_mode=analysis_mode,
             )
 
-        if canvas_action or pre_capability_answer or (analysis_mode and direct_answer):
+        if canvas_action or pre_capability_answer or small_talk_direct or (
+            analysis_mode and direct_answer
+        ):
             skip_rag = True
 
         # Casos de identidade/capacidades gerais ainda são resolvidos no use case,
         # pois dependem de token e/ou workspace_context completos.
+
+        if not direct_answer:
+            meta_direct = ChatMetaDirectAnswerService.build(
+                message=message,
+                workspace_context=workspace_context,
+                resolve_user_identity_answer=resolve_user_identity_answer,
+                resolve_capabilities_answer=resolve_capabilities_answer,
+            )
+
+            if meta_direct:
+                direct_answer = meta_direct
+                skip_rag = True
+                pipeline_stages.append("meta_direct_answer")
 
         if not direct_answer:
             user_direct = resolve_user_identity_answer(message)

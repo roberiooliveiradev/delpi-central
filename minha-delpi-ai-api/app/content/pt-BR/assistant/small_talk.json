@@ -1,0 +1,68 @@
+{
+  "categoryPriority": ["wellbeing", "thanks", "farewell", "ack", "greeting"],
+  "patterns": {
+    "wellbeing": [
+      "tudo bem",
+      "td bem",
+      "como vai",
+      "blz",
+      "beleza"
+    ],
+    "thanks": [
+      "obrigado",
+      "obrigada",
+      "valeu",
+      "vlw",
+      "brigado",
+      "brigada"
+    ],
+    "farewell": [
+      "ate",
+      "até",
+      "tchau",
+      "flw",
+      "falou"
+    ],
+    "ack": [
+      "ok",
+      "okay",
+      "sim",
+      "nao",
+      "não"
+    ],
+    "greeting": [
+      "ola",
+      "olá",
+      "oi",
+      "opa",
+      "eae",
+      "e ai",
+      "e aí",
+      "hey",
+      "hi",
+      "hello",
+      "bom dia",
+      "boa tarde",
+      "boa noite"
+    ]
+  },
+  "placeholders": {
+    "agentDescriptionFallback": "assistente especializado configurado para este tema."
+  },
+  "responses": {
+    "platform": {
+      "greeting": "Olá! Como posso ajudar você hoje?",
+      "wellbeing": "Olá! Tudo certo por aqui. Em que posso ajudar?",
+      "thanks": "Por nada! Se precisar de algo mais, é só chamar.",
+      "farewell": "Até logo! Estou por aqui quando precisar.",
+      "ack": "Certo! Me diga o que você precisa."
+    },
+    "agent": {
+      "greeting": "Olá! Sou o **{agent_name}**. Como posso ajudar?",
+      "wellbeing": "Olá! Tudo certo por aqui. Sou o **{agent_name}** — em que posso ajudar?",
+      "thanks": "Por nada! Se precisar de mais alguma coisa neste agente, é só chamar.",
+      "farewell": "Até logo! Volte quando quiser continuar por aqui.",
+      "ack": "Certo! Me diga o que você precisa neste agente."
+    }
+  }
+}

@@ -95,6 +95,11 @@ class ChatOperationalParameterService:
         tool_context: dict | None = None,
         previous_messages: list | None = None,
     ) -> bool:
+        from app.domain.services.chat_fast_path_service import ChatFastPathService
+
+        if ChatFastPathService.is_small_talk(message):
+            return True
+
         if cls.should_skip_tools(message, conversation_context=conversation_context):
             return True
 

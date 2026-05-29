@@ -884,8 +884,8 @@ DATE_RANGE_SELECTION_CASES = [
                 "operationId": "list_sale_orders",
                 "summary": "Ordens de venda",
                 "parametersSchema": [
-                    {"name": "start_date", "in": "query"},
-                    {"name": "end_date", "in": "query"},
+                    {"name": "date_start", "in": "query"},
+                    {"name": "date_end", "in": "query"},
                     {"name": "page", "in": "query"},
                     {"name": "page_size", "in": "query"},
                 ],
@@ -893,8 +893,8 @@ DATE_RANGE_SELECTION_CASES = [
         ],
         "expected_action_id": "sales-list",
         "expected_parameters": {
-            "start_date": "01-04-2026",
-            "end_date": "30-04-2026",
+            "date_start": "01-04-2026",
+            "date_end": "30-04-2026",
             "page": 1,
             "page_size": 50,
         },

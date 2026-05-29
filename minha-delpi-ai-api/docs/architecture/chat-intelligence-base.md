@@ -45,13 +45,16 @@ Mensagem do usuário
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights |
-| `ChatCanvasIntentService` | Pedido de enviar conteúdo à lousa (não confunde com Canva.com) |
-| `ChatCanvasContentService` | Monta markdown da última resposta assistant + confirmação |
+| `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
+| `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
+| `ChatSmallTalkService` | Saudações e agradecimentos (`small_talk.json`) — resposta direta sem RAG/LLM |
+| `ChatMetaDirectAnswerService` | Perguntas compostas meta («quem sou eu, o que consigo fazer, quem é você?») em seções |
+| `ExternalActionColumnLabelService` | Rótulos PT-BR de colunas (`column_labels.json` + OpenAPI `title`) no presenter |
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
 | `ChatCompositeDirectAnswerService` | Monta resposta direta única com sucesso/erro por consulta |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise) |
-| `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em pedido de lousa) |
+| `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico nem em **cópia simples** para lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |
 | `ChatOperationalRefinementService` | Follow-up operacional (estoque, KPI/suprimentos com filial) reutilizando contexto do histórico |
@@ -79,6 +82,43 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
 
 Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com perfil RBAC completo nem chamam o Ollama.
+
+### Small talk (maio/2026)
+
+Saudações curtas («olá», «obrigado», «tchau») → `ChatSmallTalkService.build_direct_answer` com respostas em `small_talk.json`: **sem RAG**, **sem** loop agentic, **sem** LLM. Reduz latência e evita RAG irrelevante em cumprimentos.
+
+### Perguntas meta compostas (maio/2026)
+
+Mensagens que misturam perfil do usuário, capacidades da plataforma e identidade do assistente (ex.: *«me diga quem sou eu e o que consigo fazer aqui, quem é você?»*) → `ChatMetaDirectAnswerService.build` monta resposta em seções (`## Seu perfil`, `## O que você pode fazer aqui`, `## Sobre o assistente`). Tem prioridade sobre atalhos isolados de capacidade ou identidade.
+
+### Lousa / canvas — cópia, append e merge operacional (maio/2026)
+
+| Tipo de pedido | Exemplo | Comportamento |
+|----------------|---------|---------------|
+| **Cópia simples** | «coloque na lousa» | Copia a **última resposta útil** do assistente (ignora confirmações «Coloquei … na lousa») |
+| **Append de chat** | «acrescente isso na lousa» | Merge do markdown já na lousa (`metadata.canvasOpen` do histórico) + última resposta útil |
+| **Append operacional** | «acrescente na lousa a descrição do produto 10080049» | Executa action OpenAPI → merge na lousa existente; **não** bloqueia tools |
+
+Detalhes:
+
+- `ChatCanvasIntentService.is_canvas_operational_update_request` libera `ExternalActionSelectionService` e `ChatExternalActionOrchestrationService` (só cópia simples bloqueia actions).
+- `ChatCanvasContentService.build_update_from_tools` usa `textPresentation.markdown` (ou tabela) das tool calls bem-sucedidas.
+- Exige `capabilities.canvas !== false` no agente; evento SSE `canvas_open` e `metadata.canvasOpen` na mensagem assistant.
+
+Testes: `test_chat_canvas_intent_service.py`, `test_chat_canvas_content_service.py`, `test_chat_canvas_stream_and_send.py`.
+
+### Rótulos de colunas em português (maio/2026)
+
+Tabelas operacionais usam `ExternalActionColumnLabelService`: prioridade OpenAPI `title` → `column_labels.json` → humanize do nome técnico. Evita headers crus (`order_number`, `X3_CAMPO`) na UI quando há tradução cadastrada.
+
+### Listagem de OV vs vendas de produto (maio/2026)
+
+| Situação | Rota correta | Erro comum |
+|----------|--------------|------------|
+| «listar ov de 01/04/2026 a 30/04/2026» | `GET /sales` (`list_sale_orders`) com `date_start` / `date_end` | Tratar datas como códigos de produto (`01042026`) e chamar `/products/{code}/sales` |
+| Resumo de vendas de um produto | `GET /products/{code}/sales` | Confundir com listagem de OVs |
+
+`ChatAnalysisIntentService.extract_all_product_codes` ignora tokens de data `DD/MM/YYYY`. Apresentação de OVs usa tabela (`preferredFormat: table`); coluna `order_number` rotulada como **OV**.
 
 **Skill `company-knowledge`:** necessária para incluir documentos globais no escopo RAG. Agentes sem skill explícita herdam o default quando `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL=true`.
 

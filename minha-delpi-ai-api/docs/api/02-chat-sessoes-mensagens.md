@@ -249,7 +249,15 @@ data: {"messageId": "...", "answer": "...", "playback": true, "canvasOpen": {...
 
 Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `done`.
 
-**Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente. O conteúdo vem da **última mensagem `assistant`** do histórico.
+**Lousa:** interpreta «lousa», «canvas» e «canva» (sem `canva.com`) como a lousa DELPI; exige `capabilities.canvas !== false` no agente.
+
+| Intenção | Exemplos | Origem do markdown |
+|----------|----------|-------------------|
+| Cópia | «coloque na lousa», «manda para o canvas» | Última resposta **útil** do assistente (ignora confirmações de lousa) |
+| Append | «acrescente isso na lousa» | Conteúdo já na lousa (`canvasOpen` no histórico) + última resposta útil |
+| Append + API | «acrescente na lousa a descrição do produto 10080049» | Lousa existente + resultado da consulta OpenAPI (tool call) |
+
+Resposta curta no chat («Coloquei …» / «Atualizei a lousa …»); conteúdo completo em `canvas_open` / `canvasOpen`. Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
 **Apresentação rica:** `toolCalls[].metadata.presentation` (e `tablePresentation` quando o primário é gráfico) alimenta `ChatRichPresentation` no plugin. O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver compactação em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
@@ -258,6 +266,9 @@ Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `
 | Tipo de pergunta | RAG | Resposta típica |
 |------------------|-----|-----------------|
 | Operacional (produto, estoque, KPI) | Pode ser omitido (fast path) | Action direta ou LLM curto |
+| Small talk («olá», «obrigado») | Não | Resposta direta `ChatSmallTalkService` |
+| Meta composta (perfil + capacidades + assistente) | Não | Resposta direta `ChatMetaDirectAnswerService` |
+| Lousa — cópia / append | Não | `canvas_open` + confirmação curta; append operacional pode incluir `toolCalls` |
 | Identidade do **usuário** («quem sou eu») | Não | Resposta direta via Core API / contexto |
 | Identidade do **assistente** («quem te criou») | **Não** (default) | Resposta canônica `identity.json` via `build_direct_answer`; `pipeline.skipRag: true`, `directResponse: true` |
 | Capacidades («consegue buscar por grupo?») | Não | Resposta direta `ChatCapabilitiesService` |

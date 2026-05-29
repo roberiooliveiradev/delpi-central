@@ -68,3 +68,50 @@ def test_build_guide_table_uses_portuguese_column_labels():
     assert labels["work_center"] == "Centro de trabalho"
     assert "Route code" not in labels.values()
     assert "Operation description" not in labels.values()
+
+
+def test_build_guide_table_prefers_openapi_schema_labels():
+    presenter = ExternalActionResultPresenter()
+
+    table = presenter.build_presentation(
+        {
+            "items": [
+                {
+                    "branch": "01",
+                    "route_code": "01",
+                    "product_code": "90260123",
+                    "operation_code": "01",
+                    "operation_description": "EMBALAR",
+                    "work_center": "CT-19",
+                }
+            ]
+        },
+        path="/products/90260123/guide",
+        response_schema={
+            "200": {
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "route_code": {
+                                                "type": "string",
+                                                "title": "Roteiro SG2",
+                                            }
+                                        }
+                                    },
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+    )
+
+    labels = {column["key"]: column["label"] for column in table["columns"]}
+
+    assert labels["route_code"] == "Roteiro SG2"

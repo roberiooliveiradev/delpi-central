@@ -81,7 +81,9 @@ class ExecuteExternalActionUseCase:
             path=resolved_path,
         )
         presentation = self.presenter.build_presentation(
-            sanitized_data, path=resolved_path
+            sanitized_data,
+            path=resolved_path,
+            response_schema=action.get("responseSchema"),
         )
         chart_presentation = self.presenter.build_chart_presentation(
             sanitized_data, path=resolved_path,
@@ -163,10 +165,10 @@ class ExecuteExternalActionUseCase:
 
         if tree_presentation and structure_like:
             preferred_format = "tree"
-        elif text_presentation and not table_presentation and not chart_presentation and not tree_presentation:
-            preferred_format = "text"
-        elif table_presentation and not text_presentation:
+        elif table_presentation:
             preferred_format = "table"
+        elif text_presentation:
+            preferred_format = "text"
         elif chart_presentation:
             preferred_format = "chart"
 

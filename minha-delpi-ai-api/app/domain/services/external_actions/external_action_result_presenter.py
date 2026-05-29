@@ -1,7 +1,18 @@
 import re
 
+from app.domain.services.external_actions.external_action_column_label_service import (
+    ExternalActionColumnLabelService,
+)
+
 
 class ExternalActionResultPresenter:
+    def __init__(
+        self,
+        column_label_service: ExternalActionColumnLabelService | None = None,
+    ):
+        self._column_labels = column_label_service or ExternalActionColumnLabelService()
+        self._active_schema_labels: dict[str, str] | None = None
+
     PRODUCT_ALIASES = {
         "code": "Código",
         "description": "Descrição",
@@ -1577,7 +1588,23 @@ class ExternalActionResultPresenter:
             path=path,
         )
 
-    def build_presentation(self, data, *, path: str = "") -> dict | None:
+    def build_presentation(
+        self,
+        data,
+        *,
+        path: str = "",
+        response_schema: dict | None = None,
+    ) -> dict | None:
+        self._active_schema_labels = self._column_labels.resolve_schema_labels(
+            response_schema
+        )
+
+        try:
+            return self._build_presentation(data, path=path)
+        finally:
+            self._active_schema_labels = None
+
+    def _build_presentation(self, data, *, path: str = "") -> dict | None:
         root = self._unwrap_data(data)
 
         if isinstance(root, list) and root and isinstance(root[0], dict):
@@ -1630,7 +1657,7 @@ class ExternalActionResultPresenter:
                 return self._build_product_search_table(items, root, title=title)
 
             if len(items) >= 2 or self._is_tabular_data(items[0]):
-                return self._build_items_table(items, title=title)
+                return self._build_items_table(items, title=title, path=path)
 
             return None
 
@@ -1768,7 +1795,7 @@ class ExternalActionResultPresenter:
 
     def _build_sale_orders_table(self, items: list, root: dict) -> dict:
         columns = [
-            {"key": "order_number", "label": "Pedido"},
+            {"key": "order_number", "label": "OV"},
             {"key": "branch", "label": "Filial"},
             {"key": "description", "label": "Descrição"},
             {"key": "date", "label": "Data", "dataType": "date"},
@@ -1876,109 +1903,13 @@ class ExternalActionResultPresenter:
             col["dataType"] = data_type
         return col
 
-    _STOCK_PREFERRED_COLUMNS = [
-        ("branch", "Filial"),
-        ("warehouse", "Armazém"),
-        ("product_code", "Produto"),
-        ("current_quantity", "Qtd. atual"),
-        ("available_quantity", "Qtd. disponível"),
-        ("committed_quantity", "Qtd. empenhada"),
-        ("reserved_quantity", "Qtd. reservada"),
-        ("physical_location", "Localização"),
-        ("cost_center", "Centro de custo"),
-    ]
-
-    _SUPPLIER_PREFERRED_COLUMNS = [
-        ("supplier_code", "Cód. fornecedor"),
-        ("supplier_name", "Fornecedor"),
-        ("supplier_part_number", "Part number"),
-        ("last_price", "Últ. preço"),
-        ("last_price_date", "Data últ. preço"),
-        ("real_avg_lead_time_days", "Lead time médio (dias)"),
-        ("registered_lead_time_days", "Lead time cadastrado"),
-        ("real_lead_time_sample_size", "Amostras"),
-    ]
-
-    _CUSTOMER_PREFERRED_COLUMNS = [
-        ("customer_code", "Cód. cliente"),
-        ("customer_name", "Cliente"),
-        ("customer_store", "Loja"),
-        ("last_sale_date", "Data últ. venda"),
-        ("last_sale_price", "Últ. preço venda"),
-        ("total_quantity", "Qtd. total"),
-        ("total_value", "Valor total"),
-    ]
-
-    _GUIDE_PREFERRED_COLUMNS = [
-        ("branch", "Filial"),
-        ("route_code", "Cód. roteiro"),
-        ("product_code", "Produto"),
-        ("operation_code", "Cód. operação"),
-        ("operation_description", "Descrição operação"),
-        ("resource_code", "Cód. recurso"),
-        ("work_center", "Centro de trabalho"),
-        ("setup_hours", "Setup (h)"),
-        ("standard_time_hour_mil", "Tempo padrão (mil h)"),
-        ("standard_time_hours_piece", "Tempo padrão (h/peça)"),
-        ("standard_time_minutes_piece", "Tempo padrão (min/peça)"),
-        ("operation_type", "Tipo operação"),
-        ("mandatory_operation", "Oper. obrigatória"),
-        ("mandatory_sequence", "Seq. obrigatória"),
-        ("mandatory_report", "Apont. obrigatório"),
-        ("component_code", "Cód. componente"),
-        ("component_description", "Descrição componente"),
-        ("component_sequence", "Seq. componente"),
-        ("bom_level", "Nível BOM"),
-        ("sequence", "Sequência"),
-        ("step", "Etapa"),
-        ("step_description", "Descrição etapa"),
-        ("machine_code", "Cód. máquina"),
-        ("machine_name", "Máquina"),
-        ("setup_time", "Tempo setup"),
-        ("operation_time", "Tempo operação"),
-    ]
-
-    _INSPECTION_PREFERRED_COLUMNS = [
-        ("inspection_type", "Tipo inspeção"),
-        ("sequence", "Sequência"),
-        ("characteristic", "Característica"),
-        ("specification", "Especificação"),
-        ("method", "Método"),
-        ("frequency", "Frequência"),
-        ("result", "Resultado"),
-    ]
-
-    _MOVEMENT_PREFERRED_COLUMNS = [
-        ("movement_date", "Data"),
-        ("operation", "Operação"),
-        ("origin_warehouse", "Armazém origem"),
-        ("destination_warehouse", "Armazém destino"),
-        ("quantity", "Quantidade"),
-        ("document", "Documento"),
-        ("lot", "Lote"),
-    ]
-
-    _INVOICE_PREFERRED_COLUMNS = [
-        ("invoice_number", "Nº nota"),
-        ("invoice_series", "Série"),
-        ("supplier_name", "Fornecedor"),
-        ("customer_name", "Cliente"),
-        ("issue_date", "Data emissão"),
-        ("quantity", "Quantidade"),
-        ("unit_price", "Preço unitário"),
-        ("total_value", "Valor total"),
-    ]
-
-    _PRICE_PREFERRED_COLUMNS = [
-        ("table_code", "Cód. tabela"),
-        ("table_description", "Tabela"),
-        ("sale_price", "Preço venda"),
-        ("max_price", "Preço máx."),
-        ("discount_value", "Desconto"),
-        ("discount_percent", "% Desconto"),
-    ]
-
-    def _build_items_table(self, items: list, title: str = "Dados retornados") -> dict | None:
+    def _build_items_table(
+        self,
+        items: list,
+        title: str = "Dados retornados",
+        *,
+        path: str = "",
+    ) -> dict | None:
         if not items:
             return None
 
@@ -1987,41 +1918,20 @@ class ExternalActionResultPresenter:
         if not first:
             return None
 
-        is_stock = "current_quantity" in first or "available_quantity" in first
-        is_invoice = "invoice_number" in first
-        is_guide = (
-            ("operation_code" in first and "operation_description" in first)
-            or ("step" in first and "sequence" in first)
-        )
-        is_inspection = "inspection_type" in first or ("characteristic" in first and "specification" in first)
-        is_movement = "origin_warehouse" in first or "destination_warehouse" in first
-        is_price = "table_code" in first or "sale_price" in first
-        is_supplier = ("supplier_name" in first or "supplier_code" in first) and not is_invoice
-        is_customer = ("customer_name" in first or "customer_code" in first) and not is_invoice
-
+        profile_name = self._column_labels.detect_table_profile(first, path=path)
         preferred = None
-        if is_stock:
-            preferred = self._STOCK_PREFERRED_COLUMNS
-        elif is_invoice:
-            preferred = self._INVOICE_PREFERRED_COLUMNS
-        elif is_guide:
-            preferred = self._GUIDE_PREFERRED_COLUMNS
-        elif is_inspection:
-            preferred = self._INSPECTION_PREFERRED_COLUMNS
-        elif is_movement:
-            preferred = self._MOVEMENT_PREFERRED_COLUMNS
-        elif is_price:
-            preferred = self._PRICE_PREFERRED_COLUMNS
-        elif is_supplier:
-            preferred = self._SUPPLIER_PREFERRED_COLUMNS
-        elif is_customer:
-            preferred = self._CUSTOMER_PREFERRED_COLUMNS
+
+        if profile_name:
+            preferred = self._column_labels.preferred_columns(
+                profile_name,
+                first,
+                schema_labels=self._active_schema_labels,
+            )
 
         if preferred:
             columns = [
                 self._enrich_column(key, label)
                 for key, label in preferred
-                if key in first
             ]
         else:
             columns = []
@@ -2055,106 +1965,11 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
-    _KEY_LABELS = {
-        "code": "Código",
-        "description": "Descrição",
-        "type": "Tipo",
-        "unit": "Unidade",
-        "quantity": "Quantidade",
-        "level": "Nível",
-        "parents": "Pais",
-        "lot_quantity": "Qtd. lote",
-        "branch": "Filial",
-        "warehouse": "Armazém",
-        "product_code": "Produto",
-        "product_description": "Descrição produto",
-        "current_quantity": "Qtd. atual",
-        "available_quantity": "Qtd. disponível",
-        "committed_quantity": "Qtd. empenhada",
-        "reserved_quantity": "Qtd. reservada",
-        "physical_location": "Localização",
-        "cost_center": "Centro de custo",
-        "price": "Preço",
-        "cost": "Custo",
-        "total": "Total",
-        "status": "Status",
-        "date": "Data",
-        "supplier": "Fornecedor",
-        "supplier_code": "Cód. fornecedor",
-        "supplier_name": "Fornecedor",
-        "supplier_store": "Loja",
-        "supplier_part_number": "Part number",
-        "customer": "Cliente",
-        "customer_code": "Cód. cliente",
-        "customer_name": "Cliente",
-        "customer_store": "Loja",
-        "registered_lead_time_days": "Lead time (dias)",
-        "real_avg_lead_time_days": "Lead time real (média)",
-        "real_min_lead_time_days": "Lead time mín.",
-        "real_max_lead_time_days": "Lead time máx.",
-        "real_lead_time_sample_size": "Amostras",
-        "last_price": "Últ. preço",
-        "last_price_date": "Data últ. preço",
-        "catalog_code": "Cód. catálogo",
-        "barcode": "Cód. barras",
-        "sale_price": "Preço venda",
-        "max_price": "Preço máx.",
-        "discount_value": "Desconto",
-        "discount_percent": "% Desconto",
-        "table_code": "Cód. tabela",
-        "table_description": "Tabela",
-        "order_number": "Nº pedido",
-        "issue_date": "Data emissão",
-        "delivery_date": "Data entrega",
-        "invoice_number": "Nº nota",
-        "invoice_series": "Série",
-        "operation": "Operação",
-        "movement_date": "Data movimentação",
-        "origin_warehouse": "Armazém origem",
-        "destination_warehouse": "Armazém destino",
-        "last_sale_date": "Data últ. venda",
-        "last_purchase_date": "Data últ. compra",
-        "total_quantity": "Qtd. total",
-        "total_value": "Valor total",
-        "average_price": "Preço médio",
-        "state": "Estado",
-        "opening_date": "Data abertura",
-        "sequence": "Sequência",
-        "step": "Etapa",
-        "step_description": "Descrição etapa",
-        "inspection_type": "Tipo inspeção",
-        "result": "Resultado",
-        "approved": "Aprovado",
-        "rejected": "Rejeitado",
-        "lot": "Lote",
-        "lot_quantity": "Qtd. lote",
-        "route_code": "Cód. roteiro",
-        "operation_code": "Cód. operação",
-        "operation_description": "Descrição operação",
-        "resource_code": "Cód. recurso",
-        "work_center": "Centro de trabalho",
-        "setup_hours": "Setup (h)",
-        "standard_time_hour_mil": "Tempo padrão (mil h)",
-        "standard_time_hours_piece": "Tempo padrão (h/peça)",
-        "standard_time_minutes_piece": "Tempo padrão (min/peça)",
-        "operation_type": "Tipo operação",
-        "mandatory_operation": "Oper. obrigatória",
-        "mandatory_sequence": "Seq. obrigatória",
-        "mandatory_report": "Apont. obrigatório",
-        "component_code": "Cód. componente",
-        "component_description": "Descrição componente",
-        "component_sequence": "Seq. componente",
-        "bom_level": "Nível BOM",
-        "machine_code": "Cód. máquina",
-        "machine_name": "Máquina",
-        "setup_time": "Tempo setup",
-        "operation_time": "Tempo operação",
-    }
-
     def _humanize_key(self, key: str) -> str:
-        if key in self._KEY_LABELS:
-            return self._KEY_LABELS[key]
-        return str(key).replace("_", " ").strip().capitalize()
+        return self._column_labels.label_for(
+            key,
+            schema_labels=self._active_schema_labels,
+        )
 
     _NO_CHART_PATHS = (
         "/suppliers", "/customers", "/structure", "/parents",

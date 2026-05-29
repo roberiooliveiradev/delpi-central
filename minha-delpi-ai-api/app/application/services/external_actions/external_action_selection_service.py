@@ -72,7 +72,7 @@ class ExternalActionSelectionService:
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return None
 
-        if ChatCanvasIntentService.is_canvas_placement_request(message):
+        if ChatCanvasIntentService.blocks_external_action_selection(message):
             return None
 
         refinement = ChatOperationalRefinementService.detect(
@@ -831,6 +831,8 @@ class ExternalActionSelectionService:
                 "startdate",
                 "data_inicio",
                 "data_inicial",
+                "date_start",
+                "datestart",
             }:
                 parameters[name] = date_range.start_date
             elif date_range and lowered in {
@@ -838,6 +840,8 @@ class ExternalActionSelectionService:
                 "enddate",
                 "data_fim",
                 "data_final",
+                "date_end",
+                "dateend",
             }:
                 parameters[name] = date_range.end_date
             elif lowered in {"page"}:
@@ -961,7 +965,8 @@ class ExternalActionSelectionService:
 
         return parameters
 
-    def _looks_like_sale_orders_list_question(self, value: str) -> bool:
+    @staticmethod
+    def _looks_like_sale_orders_list_question(value: str) -> bool:
         if any(term in value for term in ("lmp", "lmps", "amostra")):
             return False
 
@@ -1862,18 +1867,22 @@ class ExternalActionSelectionService:
 
             lowered = name.lower()
 
-            if lowered in {
+            if date_range and lowered in {
                 "start_date",
                 "startdate",
                 "data_inicio",
                 "data_inicial",
+                "date_start",
+                "datestart",
             }:
                 merged[name] = date_range.start_date
-            elif lowered in {
+            elif date_range and lowered in {
                 "end_date",
                 "enddate",
                 "data_fim",
                 "data_final",
+                "date_end",
+                "dateend",
             }:
                 merged[name] = date_range.end_date
 

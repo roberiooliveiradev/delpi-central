@@ -1,10 +1,13 @@
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntentService,
+)
 
 
 class ChatCanvasIntentService:
-    """Detecta pedido de enviar conteúdo do chat para a lousa (canvas) do produto."""
+    """Detecta pedido de enviar ou atualizar conteúdo na lousa (canvas) do produto."""
 
     _PLACEMENT_TERMS = (
         "coloque",
@@ -36,6 +39,32 @@ class ChatCanvasIntentService:
         "envia pra",
     )
 
+    _UPDATE_TERMS = (
+        "acrescente",
+        "acrescentar",
+        "adicione",
+        "adicionar",
+        "adiciona",
+        "inclua",
+        "incluir",
+        "inclui",
+        "atualize",
+        "atualizar",
+        "atualiza",
+        "anexe",
+        "anexar",
+        "anexa",
+        "complemente",
+        "complementar",
+        "agregue",
+        "agregar",
+        "some",
+        "somar",
+        "insira",
+        "inserir",
+        "insere",
+    )
+
     _TARGET_TERMS = (
         "lousa",
         "canvas",
@@ -59,6 +88,29 @@ class ChatCanvasIntentService:
         "em canva",
     )
 
+    _OPERATIONAL_DATA_TERMS = (
+        "descricao",
+        "descrição",
+        "estoque",
+        "saldo",
+        "estrutura",
+        "ficha",
+        "resumo",
+        "vendas",
+        "venda",
+        "compras",
+        "compra",
+        "analise",
+        "análise",
+        "analyser",
+        "onde e usado",
+        "onde é usado",
+        "produto",
+        "item",
+        "codigo",
+        "código",
+    )
+
     _EXTERNAL_CANVA_BLOCK = (
         "canva.com",
         "www.canva",
@@ -71,13 +123,22 @@ class ChatCanvasIntentService:
     )
 
     @classmethod
+    def is_canvas_request(cls, message: str) -> bool:
+        return cls.is_canvas_placement_request(message) or cls.is_canvas_update_request(
+            message
+        )
+
+    @classmethod
     def is_canvas_placement_request(cls, message: str) -> bool:
-        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        normalized = cls._normalize(message)
 
         if not normalized:
             return False
 
         if any(term in normalized for term in cls._EXTERNAL_CANVA_BLOCK):
+            return False
+
+        if cls.is_canvas_update_request(message):
             return False
 
         if any(phrase in normalized for phrase in cls._OPEN_LOUSA_PHRASES):
@@ -87,3 +148,43 @@ class ChatCanvasIntentService:
         has_placement = any(term in normalized for term in cls._PLACEMENT_TERMS)
 
         return bool(has_target and has_placement)
+
+    @classmethod
+    def is_canvas_update_request(cls, message: str) -> bool:
+        normalized = cls._normalize(message)
+
+        if not normalized:
+            return False
+
+        if any(term in normalized for term in cls._EXTERNAL_CANVA_BLOCK):
+            return False
+
+        has_target = any(
+            term in normalized
+            for term in (*cls._TARGET_TERMS, *cls._OPEN_LOUSA_PHRASES)
+        )
+        has_update = any(term in normalized for term in cls._UPDATE_TERMS)
+
+        return bool(has_target and has_update)
+
+    @classmethod
+    def is_canvas_operational_update_request(cls, message: str) -> bool:
+        if not cls.is_canvas_update_request(message):
+            return False
+
+        normalized = cls._normalize(message)
+
+        if ChatProductQueryIntentService.extract_product_code(message):
+            return True
+
+        return any(term in normalized for term in cls._OPERATIONAL_DATA_TERMS)
+
+    @classmethod
+    def blocks_external_action_selection(cls, message: str) -> bool:
+        return cls.is_canvas_request(message) and not cls.is_canvas_operational_update_request(
+            message
+        )
+
+    @classmethod
+    def _normalize(cls, message: str) -> str:
+        return ChatMessageNormalizationService.normalize_for_matching(message)

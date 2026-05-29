@@ -1,0 +1,253 @@
+{
+  "fields": {
+    "code": "Código",
+    "description": "Descrição",
+    "type": "Tipo",
+    "unit": "Unidade",
+    "quantity": "Quantidade",
+    "level": "Nível",
+    "parents": "Pais",
+    "lot_quantity": "Qtd. lote",
+    "branch": "Filial",
+    "warehouse": "Armazém",
+    "product_code": "Produto",
+    "product_description": "Descrição produto",
+    "current_quantity": "Qtd. atual",
+    "available_quantity": "Qtd. disponível",
+    "committed_quantity": "Qtd. empenhada",
+    "reserved_quantity": "Qtd. reservada",
+    "physical_location": "Localização",
+    "cost_center": "Centro de custo",
+    "price": "Preço",
+    "cost": "Custo",
+    "total": "Total",
+    "status": "Status",
+    "date": "Data",
+    "supplier": "Fornecedor",
+    "supplier_code": "Cód. fornecedor",
+    "supplier_name": "Fornecedor",
+    "supplier_store": "Loja",
+    "supplier_part_number": "Part number",
+    "customer": "Cliente",
+    "customer_code": "Cód. cliente",
+    "customer_name": "Cliente",
+    "customer_store": "Loja",
+    "registered_lead_time_days": "Lead time (dias)",
+    "real_avg_lead_time_days": "Lead time real (média)",
+    "real_min_lead_time_days": "Lead time mín.",
+    "real_max_lead_time_days": "Lead time máx.",
+    "real_lead_time_sample_size": "Amostras",
+    "last_price": "Últ. preço",
+    "last_price_date": "Data últ. preço",
+    "catalog_code": "Cód. catálogo",
+    "barcode": "Cód. barras",
+    "sale_price": "Preço venda",
+    "max_price": "Preço máx.",
+    "discount_value": "Desconto",
+    "discount_percent": "% Desconto",
+    "table_code": "Cód. tabela",
+    "table_description": "Tabela",
+    "order_number": "Nº pedido",
+    "issue_date": "Data emissão",
+    "delivery_date": "Data entrega",
+    "invoice_number": "Nº nota",
+    "invoice_series": "Série",
+    "operation": "Operação",
+    "movement_date": "Data movimentação",
+    "origin_warehouse": "Armazém origem",
+    "destination_warehouse": "Armazém destino",
+    "last_sale_date": "Data últ. venda",
+    "last_purchase_date": "Data últ. compra",
+    "total_quantity": "Qtd. total",
+    "total_value": "Valor total",
+    "average_price": "Preço médio",
+    "state": "Estado",
+    "opening_date": "Data abertura",
+    "sequence": "Sequência",
+    "step": "Etapa",
+    "step_description": "Descrição etapa",
+    "inspection_type": "Tipo inspeção",
+    "characteristic": "Característica",
+    "specification": "Especificação",
+    "method": "Método",
+    "frequency": "Frequência",
+    "result": "Resultado",
+    "approved": "Aprovado",
+    "rejected": "Rejeitado",
+    "lot": "Lote",
+    "route_code": "Cód. roteiro",
+    "operation_code": "Cód. operação",
+    "operation_description": "Descrição operação",
+    "resource_code": "Cód. recurso",
+    "work_center": "Centro de trabalho",
+    "setup_hours": "Setup (h)",
+    "standard_time_hour_mil": "Tempo padrão (mil h)",
+    "standard_time_hours_piece": "Tempo padrão (h/peça)",
+    "standard_time_minutes_piece": "Tempo padrão (min/peça)",
+    "operation_type": "Tipo operação",
+    "mandatory_operation": "Oper. obrigatória",
+    "mandatory_sequence": "Seq. obrigatória",
+    "mandatory_report": "Apont. obrigatório",
+    "component_code": "Cód. componente",
+    "component_description": "Descrição componente",
+    "component_sequence": "Seq. componente",
+    "bom_level": "Nível BOM",
+    "machine_code": "Cód. máquina",
+    "machine_name": "Máquina",
+    "setup_time": "Tempo setup",
+    "operation_time": "Tempo operação",
+    "document": "Documento"
+  },
+  "profilePriority": [
+    "stock",
+    "invoice",
+    "guide",
+    "inspection",
+    "movement",
+    "price",
+    "supplier",
+    "customer"
+  ],
+  "tableProfiles": {
+    "stock": {
+      "detect": {
+        "anyKeys": ["current_quantity", "available_quantity"]
+      },
+      "preferredColumns": [
+        ["branch", "Filial"],
+        ["warehouse", "Armazém"],
+        ["product_code", "Produto"],
+        ["current_quantity", "Qtd. atual"],
+        ["available_quantity", "Qtd. disponível"],
+        ["committed_quantity", "Qtd. empenhada"],
+        ["reserved_quantity", "Qtd. reservada"],
+        ["physical_location", "Localização"],
+        ["cost_center", "Centro de custo"]
+      ]
+    },
+    "invoice": {
+      "detect": {
+        "anyKeys": ["invoice_number"]
+      },
+      "preferredColumns": [
+        ["invoice_number", "Nº nota"],
+        ["invoice_series", "Série"],
+        ["supplier_name", "Fornecedor"],
+        ["customer_name", "Cliente"],
+        ["issue_date", "Data emissão"],
+        ["quantity", "Quantidade"],
+        ["unit_price", "Preço unitário"],
+        ["total_value", "Valor total"]
+      ]
+    },
+    "guide": {
+      "detect": {
+        "anyKeyGroups": [
+          ["operation_code", "operation_description"],
+          ["step", "sequence"]
+        ]
+      },
+      "preferredColumns": [
+        ["branch", "Filial"],
+        ["route_code", "Cód. roteiro"],
+        ["product_code", "Produto"],
+        ["operation_code", "Cód. operação"],
+        ["operation_description", "Descrição operação"],
+        ["resource_code", "Cód. recurso"],
+        ["work_center", "Centro de trabalho"],
+        ["setup_hours", "Setup (h)"],
+        ["standard_time_hour_mil", "Tempo padrão (mil h)"],
+        ["standard_time_hours_piece", "Tempo padrão (h/peça)"],
+        ["standard_time_minutes_piece", "Tempo padrão (min/peça)"],
+        ["operation_type", "Tipo operação"],
+        ["mandatory_operation", "Oper. obrigatória"],
+        ["mandatory_sequence", "Seq. obrigatória"],
+        ["mandatory_report", "Apont. obrigatório"],
+        ["component_code", "Cód. componente"],
+        ["component_description", "Descrição componente"],
+        ["component_sequence", "Seq. componente"],
+        ["bom_level", "Nível BOM"],
+        ["sequence", "Sequência"],
+        ["step", "Etapa"],
+        ["step_description", "Descrição etapa"],
+        ["machine_code", "Cód. máquina"],
+        ["machine_name", "Máquina"],
+        ["setup_time", "Tempo setup"],
+        ["operation_time", "Tempo operação"]
+      ]
+    },
+    "inspection": {
+      "detect": {
+        "anyKeys": ["inspection_type"],
+        "anyKeyGroups": [["characteristic", "specification"]]
+      },
+      "preferredColumns": [
+        ["inspection_type", "Tipo inspeção"],
+        ["sequence", "Sequência"],
+        ["characteristic", "Característica"],
+        ["specification", "Especificação"],
+        ["method", "Método"],
+        ["frequency", "Frequência"],
+        ["result", "Resultado"]
+      ]
+    },
+    "movement": {
+      "detect": {
+        "anyKeys": ["origin_warehouse", "destination_warehouse"]
+      },
+      "preferredColumns": [
+        ["movement_date", "Data"],
+        ["operation", "Operação"],
+        ["origin_warehouse", "Armazém origem"],
+        ["destination_warehouse", "Armazém destino"],
+        ["quantity", "Quantidade"],
+        ["document", "Documento"],
+        ["lot", "Lote"]
+      ]
+    },
+    "price": {
+      "detect": {
+        "anyKeys": ["table_code", "sale_price"]
+      },
+      "preferredColumns": [
+        ["table_code", "Cód. tabela"],
+        ["table_description", "Tabela"],
+        ["sale_price", "Preço venda"],
+        ["max_price", "Preço máx."],
+        ["discount_value", "Desconto"],
+        ["discount_percent", "% Desconto"]
+      ]
+    },
+    "supplier": {
+      "detect": {
+        "anyKeys": ["supplier_name", "supplier_code"],
+        "excludeIfAnyKeys": ["invoice_number"]
+      },
+      "preferredColumns": [
+        ["supplier_code", "Cód. fornecedor"],
+        ["supplier_name", "Fornecedor"],
+        ["supplier_part_number", "Part number"],
+        ["last_price", "Últ. preço"],
+        ["last_price_date", "Data últ. preço"],
+        ["real_avg_lead_time_days", "Lead time médio (dias)"],
+        ["registered_lead_time_days", "Lead time cadastrado"],
+        ["real_lead_time_sample_size", "Amostras"]
+      ]
+    },
+    "customer": {
+      "detect": {
+        "anyKeys": ["customer_name", "customer_code"],
+        "excludeIfAnyKeys": ["invoice_number"]
+      },
+      "preferredColumns": [
+        ["customer_code", "Cód. cliente"],
+        ["customer_name", "Cliente"],
+        ["customer_store", "Loja"],
+        ["last_sale_date", "Data últ. venda"],
+        ["last_sale_price", "Últ. preço venda"],
+        ["total_quantity", "Qtd. total"],
+        ["total_value", "Valor total"]
+      ]
+    }
+  }
+}

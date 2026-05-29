@@ -41,12 +41,35 @@ _REFINEMENT_HINT_RE = re.compile(
 )
 
 
+_SMALL_TALK_EXTENDED_PATTERN = (
+    r"^(ol[aá]|oi|opa|hey|hi|hello|bom dia|boa tarde|boa noite)"
+    r"[\s,!?]*"
+    r"(tudo bem|td bem|como vai|blz|beleza)?"
+    r"[\s!?.,:;]*$"
+)
+_SMALL_TALK_EXTENDED_RE = re.compile(_SMALL_TALK_EXTENDED_PATTERN, re.IGNORECASE)
+
+
 def _normalize_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value.strip().lower())
     return "".join(char for char in normalized if not unicodedata.combining(char))
 
 
 class ChatFastPathService:
+    @staticmethod
+    def is_small_talk(message: str) -> bool:
+        text = str(message or "").strip()
+
+        if not text:
+            return False
+
+        normalized = _normalize_text(text)
+
+        if _SMALL_TALK_RE.match(normalized):
+            return True
+
+        return bool(_SMALL_TALK_EXTENDED_RE.match(normalized))
+
     @staticmethod
     def should_use(
         message: str,
@@ -71,7 +94,7 @@ class ChatFastPathService:
 
         normalized = _normalize_text(text)
 
-        if _SMALL_TALK_RE.match(normalized):
+        if ChatFastPathService.is_small_talk(text):
             return True
 
         if _KNOWLEDGE_HINT_RE.search(normalized):
