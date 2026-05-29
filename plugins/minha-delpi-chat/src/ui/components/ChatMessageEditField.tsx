@@ -17,8 +17,12 @@ export function ChatMessageEditField({
 }: ChatMessageEditFieldProps) {
   const { ref, syncHeight } = useAutoGrowTextarea({
     value,
-    bottomInset: 24,
-    maxHeightCapPx: 224,
+    bottomInset: 32,
+    maxHeightViewportRatio: 0.25,
+    autoWidth: true,
+    minWidthPx: 120,
+    maxWidthCapPx: 672,
+    maxWidthViewportInset: 56,
   });
 
   return (

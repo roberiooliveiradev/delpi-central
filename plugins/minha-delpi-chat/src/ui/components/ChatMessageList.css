@@ -116,6 +116,9 @@
 .mdc-chat-message--user .mdc-chat-message-user-stack {
   grid-column: 1;
   grid-row: 1;
+  justify-self: end;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mdc-chat-message--pending .mdc-chat-message-card {
@@ -153,8 +156,8 @@
   gap: 0.3rem;
   justify-self: end;
   width: fit-content;
-  max-width: min(46rem, 100%);
-  min-width: min(8rem, 100%);
+  max-width: min(46rem, calc(100% - 0.25rem));
+  min-width: 0;
 }
 
 .mdc-chat-message-user-toolbar {
@@ -162,7 +165,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.35rem;
-  width: 100%;
+  align-self: stretch;
+  width: auto;
+  min-width: 100%;
   min-height: 1.75rem;
   padding: 0 0.05rem;
 }
@@ -189,7 +194,9 @@
 }
 
 .mdc-chat-message-card--user {
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-lg);
   background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
@@ -199,10 +206,12 @@
 .mdc-chat-message-card--user .mdc-chat-message-user-text {
   font-size: 0.9rem;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .mdc-chat-message-card--user.mdc-chat-message-card--editing {
-  width: min(42rem, 100%);
+  width: fit-content;
   max-width: 100%;
   padding: 0.5rem 0.65rem 0.55rem;
 }
@@ -411,17 +420,27 @@
 
 .mdc-chat-message-edit--inline {
   gap: 0.55rem;
+  width: fit-content;
+  max-width: 100%;
+  min-width: min(10rem, 100%);
 }
 
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline .mdc-chat-message-edit__input,
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
+  display: block;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   padding: 0;
   min-height: 1.35rem;
+  min-width: min(10rem, 100%);
+  max-height: min(25dvh, 25svh);
+  max-width: min(42rem, calc(100vw - 3.5rem));
   resize: none;
+  field-sizing: content;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline .mdc-chat-message-edit__input:focus,
@@ -541,8 +560,12 @@
     gap: var(--mdc-space-2);
   }
 
+  .mdc-chat-message--user .mdc-chat-message-user-stack {
+    max-width: calc(100% - 2rem);
+  }
+
   .mdc-chat-message--user .mdc-chat-message-card {
-    width: auto;
+    width: fit-content;
     max-width: 100%;
     min-width: 0;
   }
@@ -566,7 +589,8 @@
   }
 
   .mdc-chat-message-card--user.mdc-chat-message-card--editing {
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .mdc-chat-scroll-to-bottom {
@@ -590,10 +614,18 @@
     display: none;
   }
 
-  .mdc-chat-message--user .mdc-chat-message-card {
-    width: 100%;
+  .mdc-chat-message--user .mdc-chat-message-user-stack {
     max-width: 100%;
-    justify-self: stretch;
+  }
+
+  .mdc-chat-message--user .mdc-chat-message-card {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: end;
+  }
+
+  .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
+    max-width: min(42rem, calc(100vw - 2rem));
   }
 
   .mdc-chat-message-header {
