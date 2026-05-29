@@ -29,6 +29,32 @@
 
   --si-badge-info-text: var(--secundary, #003866);
   --si-badge-warning-text: #8b6400;
+
+  --si-scope-badge-text: #0b2d4a;
+  --si-scope-badge-key-text: rgba(11, 45, 74, 0.72);
+  --si-scope-badge-more-bg: rgba(2, 38, 65, 0.06);
+  --si-scope-badge-more-border: rgba(2, 38, 65, 0.14);
+  --si-scope-badge-more-text: #0b2d4a;
+
+  --si-scope-branch-01-bg: rgba(0, 116, 206, 0.1);
+  --si-scope-branch-01-border: rgba(0, 116, 206, 0.28);
+  --si-scope-branch-01-text: #0b4a78;
+
+  --si-scope-branch-02-bg: rgba(0, 163, 81, 0.1);
+  --si-scope-branch-02-border: rgba(0, 163, 81, 0.28);
+  --si-scope-branch-02-text: #0d5c32;
+
+  --si-scope-branch-03-bg: rgba(255, 159, 10, 0.12);
+  --si-scope-branch-03-border: rgba(255, 159, 10, 0.3);
+  --si-scope-branch-03-text: #7a4d00;
+
+  --si-scope-branch-04-bg: rgba(175, 82, 222, 0.12);
+  --si-scope-branch-04-border: rgba(175, 82, 222, 0.3);
+  --si-scope-branch-04-text: #5c2780;
+
+  --si-scope-branch-05-bg: rgba(255, 69, 58, 0.1);
+  --si-scope-branch-05-border: rgba(255, 69, 58, 0.26);
+  --si-scope-branch-05-text: #8f2018;
 }
 
 /* =========================================
@@ -56,6 +82,32 @@
 
   --si-badge-info-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
   --si-badge-warning-text: #f2c94c;
+
+  --si-scope-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
+  --si-scope-badge-key-text: rgba(255, 255, 255, 0.62);
+  --si-scope-badge-more-bg: rgba(255, 255, 255, 0.06);
+  --si-scope-badge-more-border: rgba(255, 255, 255, 0.14);
+  --si-scope-badge-more-text: rgba(255, 255, 255, 0.78);
+
+  --si-scope-branch-01-bg: color-mix(in srgb, #0074ce 18%, transparent);
+  --si-scope-branch-01-border: color-mix(in srgb, #0074ce 42%, transparent);
+  --si-scope-branch-01-text: color-mix(in srgb, #0074ce 48%, white);
+
+  --si-scope-branch-02-bg: color-mix(in srgb, #00a351 18%, transparent);
+  --si-scope-branch-02-border: color-mix(in srgb, #00a351 42%, transparent);
+  --si-scope-branch-02-text: color-mix(in srgb, #00a351 48%, white);
+
+  --si-scope-branch-03-bg: color-mix(in srgb, #ff9f0a 20%, transparent);
+  --si-scope-branch-03-border: color-mix(in srgb, #ff9f0a 44%, transparent);
+  --si-scope-branch-03-text: color-mix(in srgb, #ff9f0a 52%, white);
+
+  --si-scope-branch-04-bg: color-mix(in srgb, #af52de 20%, transparent);
+  --si-scope-branch-04-border: color-mix(in srgb, #af52de 44%, transparent);
+  --si-scope-branch-04-text: color-mix(in srgb, #af52de 50%, white);
+
+  --si-scope-branch-05-bg: color-mix(in srgb, #ff453a 18%, transparent);
+  --si-scope-branch-05-border: color-mix(in srgb, #ff453a 42%, transparent);
+  --si-scope-branch-05-text: color-mix(in srgb, #ff453a 48%, white);
 }
 
 /* =========================================
@@ -84,5 +136,31 @@
 
     --si-badge-info-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
     --si-badge-warning-text: #f2c94c;
+
+    --si-scope-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
+    --si-scope-badge-key-text: rgba(255, 255, 255, 0.62);
+    --si-scope-badge-more-bg: rgba(255, 255, 255, 0.06);
+    --si-scope-badge-more-border: rgba(255, 255, 255, 0.14);
+    --si-scope-badge-more-text: rgba(255, 255, 255, 0.78);
+
+    --si-scope-branch-01-bg: color-mix(in srgb, #0074ce 18%, transparent);
+    --si-scope-branch-01-border: color-mix(in srgb, #0074ce 42%, transparent);
+    --si-scope-branch-01-text: color-mix(in srgb, #0074ce 48%, white);
+
+    --si-scope-branch-02-bg: color-mix(in srgb, #00a351 18%, transparent);
+    --si-scope-branch-02-border: color-mix(in srgb, #00a351 42%, transparent);
+    --si-scope-branch-02-text: color-mix(in srgb, #00a351 48%, white);
+
+    --si-scope-branch-03-bg: color-mix(in srgb, #ff9f0a 20%, transparent);
+    --si-scope-branch-03-border: color-mix(in srgb, #ff9f0a 44%, transparent);
+    --si-scope-branch-03-text: color-mix(in srgb, #ff9f0a 52%, white);
+
+    --si-scope-branch-04-bg: color-mix(in srgb, #af52de 20%, transparent);
+    --si-scope-branch-04-border: color-mix(in srgb, #af52de 44%, transparent);
+    --si-scope-branch-04-text: color-mix(in srgb, #af52de 50%, white);
+
+    --si-scope-branch-05-bg: color-mix(in srgb, #ff453a 18%, transparent);
+    --si-scope-branch-05-border: color-mix(in srgb, #ff453a 42%, transparent);
+    --si-scope-branch-05-text: color-mix(in srgb, #ff453a 48%, white);
   }
 }

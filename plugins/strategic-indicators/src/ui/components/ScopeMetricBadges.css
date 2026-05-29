@@ -13,6 +13,7 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--si-scope-badge-text, var(--si-title));
 }
 
 .si-scope-badge {
@@ -23,37 +24,42 @@
   min-width: 0;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(0, 116, 206, 0.08);
-  border: 1px solid rgba(0, 116, 206, 0.18);
-  color: #0b2d4a;
+  background: var(--si-scope-branch-01-bg, rgba(0, 116, 206, 0.08));
+  border: 1px solid var(--si-scope-branch-01-border, rgba(0, 116, 206, 0.18));
+  color: var(--si-scope-branch-01-text, var(--si-scope-badge-text, #0b2d4a));
   font-weight: 700;
   line-height: 1.2;
   box-sizing: border-box;
 }
 
 .si-scope-badge--branch-01 {
-  background: rgba(0, 116, 206, 0.1);
-  border-color: rgba(0, 116, 206, 0.28);
+  background: var(--si-scope-branch-01-bg);
+  border-color: var(--si-scope-branch-01-border);
+  color: var(--si-scope-branch-01-text);
 }
 
 .si-scope-badge--branch-02 {
-  background: rgba(0, 163, 81, 0.1);
-  border-color: rgba(0, 163, 81, 0.28);
+  background: var(--si-scope-branch-02-bg);
+  border-color: var(--si-scope-branch-02-border);
+  color: var(--si-scope-branch-02-text);
 }
 
 .si-scope-badge--branch-03 {
-  background: rgba(255, 159, 10, 0.12);
-  border-color: rgba(255, 159, 10, 0.3);
+  background: var(--si-scope-branch-03-bg);
+  border-color: var(--si-scope-branch-03-border);
+  color: var(--si-scope-branch-03-text);
 }
 
 .si-scope-badge--branch-04 {
-  background: rgba(175, 82, 222, 0.12);
-  border-color: rgba(175, 82, 222, 0.3);
+  background: var(--si-scope-branch-04-bg);
+  border-color: var(--si-scope-branch-04-border);
+  color: var(--si-scope-branch-04-text);
 }
 
 .si-scope-badge--branch-05 {
-  background: rgba(255, 69, 58, 0.1);
-  border-color: rgba(255, 69, 58, 0.26);
+  background: var(--si-scope-branch-05-bg);
+  border-color: var(--si-scope-branch-05-border);
+  color: var(--si-scope-branch-05-text);
 }
 
 .si-scope-badge__key {
@@ -61,6 +67,7 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.3px;
+  color: var(--si-scope-badge-key-text, inherit);
 }
 
 .si-scope-badge__value {
@@ -74,15 +81,16 @@
 
 .si-scope-badge--more {
   cursor: pointer;
-  background: rgba(2, 38, 65, 0.06);
-  border-color: rgba(2, 38, 65, 0.14);
+  background: var(--si-scope-badge-more-bg);
+  border-color: var(--si-scope-badge-more-border);
+  color: var(--si-scope-badge-more-text);
 }
 
 .si-scope-badges__collapse {
   appearance: none;
   border: 0;
   background: transparent;
-  color: #0b2d4a;
+  color: var(--si-scope-badge-more-text, var(--si-title));
   font-weight: 700;
   cursor: pointer;
   padding: 0 4px;
