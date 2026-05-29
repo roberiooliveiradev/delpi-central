@@ -851,3 +851,97 @@ def test_build_date_branch_parameters_infers_granularity_for_series():
 
     assert parameters["granularity"] == "month"
     assert parameters["start_date"]
+
+
+def test_select_product_search_when_description_not_in_structure_history():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-products",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "parametersSchema": [
+                        {"name": "description", "in": "query"},
+                        {"name": "page_size", "in": "query"},
+                    ],
+                },
+                {
+                    "actionId": "structure-action",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "parametersSchema": [{"name": "code", "in": "path"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Mais informações sobre TERM. FASTON 6,30X0,80 1,00-2,60MM2 NU S/ISOLACAO FITADO UL - ROHS",
+        allowed_action_ids=["search-products", "structure-action"],
+        previous_messages=[],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "search-products"
+    assert "term" in selected["arguments"]["parameters"]["description"].lower()
+
+
+def test_select_product_detail_from_structure_description_history():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "analyser-action",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "parametersSchema": [{"name": "code", "in": "path"}],
+                },
+                {
+                    "actionId": "structure-action",
+                    "method": "GET",
+                    "path": "/products/{code}/structure",
+                    "operationId": "get_product_structure",
+                    "parametersSchema": [{"name": "code", "in": "path"}],
+                },
+            ]
+        )
+    )
+
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260143/structure",
+                            "presentation": {
+                                "type": "tree",
+                                "root": {
+                                    "id": "10080109",
+                                    "label": "10080109",
+                                    "subtitle": "TERM. FASTON 6,30X0,80 0,30-0,80MM2 NU S/ISOLACAO FITADO UL ROHS",
+                                },
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    selected = service.select_action(
+        "Mais informações sobre TERM. FASTON 6,30X0,80 1,00-2,60MM2 NU S/ISOLACAO FITADO UL - ROHS",
+        allowed_action_ids=["analyser-action", "structure-action"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "analyser-action"
+    assert selected["arguments"]["parameters"]["code"] == "10080109"

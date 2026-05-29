@@ -158,7 +158,8 @@ O `ExternalActionSelectionService` resolve a action **antes** do LLM quando o fa
 2. **OV / LMP / Transforma Mais / metadados Protheus** (tabelas/colunas).
 3. **Suprimentos** (CPV, OTD, giro, valor total de estoque) — sem código de produto.
 4. **Produto por código** (estoque, estrutura, pais, descrição, …) por intent.
-5. **Busca por grupo ou descrição** → `GET /products/search` (prioridade sobre analyser quando há «grupo X»).
+5. **Drill-down por descrição** — «Mais informações sobre {descrição}» após árvore/tabela de estrutura: `ChatProductDescriptionResolutionService` resolve o código no histórico (`presentation`/`treePresentation`); se não achar, roteia para `GET /products/search`. Tokens de especificação técnica (`6,30X0,80`, `1,00-2,60`) **não** viram código de produto.
+6. **Busca por grupo ou descrição** → `GET /products/search` (prioridade sobre analyser quando há «grupo X»).
 6. **KPI departamental** via `ChatDepartmentKpiIntentService`.
 7. Fallback semântico (se ranker configurado) — **bloqueado** quando a intenção é produto (estoque/estrutura/etc.) **sem código** (`ChatOperationalParameterService`).
 

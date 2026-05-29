@@ -20,6 +20,10 @@ class ChatProductQueryIntentService:
     _PRODUCT_CODE_RE = re.compile(
         r"\b(?:\d[\d.\-/]{2,}\d|\d{4,})\b",
     )
+    _SPECIFICATION_TOKEN_RE = re.compile(
+        r"^\d+[,.]\d+[-xX]\d+[,.]\d+|\d+[,.]\d+\s*[-xX]\s*\d+[,.]\d+",
+        re.IGNORECASE,
+    )
     _DATE_TOKEN_RE = re.compile(
         r"^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$",
         re.IGNORECASE,
@@ -170,6 +174,38 @@ class ChatProductQueryIntentService:
         return bool(cls._EXAMPLE_CODE_PREFIX_RE.search(prefix))
 
     @classmethod
+    def is_plausible_product_code(cls, code: str | None) -> bool:
+        normalized = str(code or "").strip()
+
+        if not normalized:
+            return False
+
+        digits = re.sub(r"\D", "", normalized)
+
+        if len(digits) >= 4:
+            return True
+
+        if re.search(r"[-/,]", normalized):
+            return False
+
+        return len(digits) >= 3
+
+    @classmethod
+    def _is_specification_numeric_token(cls, token: str) -> bool:
+        raw = str(token or "").strip()
+
+        if cls._SPECIFICATION_TOKEN_RE.search(raw):
+            return True
+
+        if re.search(r"[-/,]", raw):
+            digits = re.sub(r"\D", "", raw)
+
+            if len(digits) < 4:
+                return True
+
+        return False
+
+    @classmethod
     def extract_product_code(cls, text: str | None) -> str | None:
         if cls._looks_like_lmp_context(text):
             return None
@@ -177,16 +213,24 @@ class ChatProductQueryIntentService:
         raw = str(text or "")
 
         for match in cls._PRODUCT_CODE_RE.finditer(raw):
+            token = match.group(0)
+
             if cls._is_group_code_numeric_token(raw, match):
                 continue
 
-            if cls._is_date_numeric_token(match.group(0)):
+            if cls._is_date_numeric_token(token):
+                continue
+
+            if cls._is_specification_numeric_token(token):
                 continue
 
             if cls._is_example_product_code_token(raw, match):
                 continue
 
-            return cls.normalize_product_code(match.group(0))
+            code = cls.normalize_product_code(token)
+
+            if cls.is_plausible_product_code(code):
+                return code
 
         return None
 
@@ -245,10 +289,19 @@ class ChatProductQueryIntentService:
             if cls._is_group_code_numeric_token(raw, match):
                 continue
 
+            if cls._is_date_numeric_token(match.group(0)):
+                continue
+
+            if cls._is_specification_numeric_token(match.group(0)):
+                continue
+
             if cls._is_example_product_code_token(raw, match):
                 continue
 
-            last_code = cls.normalize_product_code(match.group(0))
+            code = cls.normalize_product_code(match.group(0))
+
+            if cls.is_plausible_product_code(code):
+                last_code = code
 
         return last_code
 
@@ -339,6 +392,13 @@ class ChatProductQueryIntentService:
         *,
         previous_messages: list | None = None,
     ) -> str:
+        from app.domain.services.chat_product_description_resolution_service import (
+            ChatProductDescriptionResolutionService,
+        )
+
+        if ChatProductDescriptionResolutionService.looks_like_description_lookup(message):
+            return ChatProductQueryIntent.FULL
+
         intent = cls.detect(message)
 
         if intent != ChatProductQueryIntent.FULL:
@@ -367,6 +427,30 @@ class ChatProductQueryIntentService:
         *,
         previous_messages: list | None = None,
     ) -> str | None:
+        from app.domain.services.chat_product_description_resolution_service import (
+            ChatProductDescriptionResolutionService,
+        )
+
+        drill_code = ChatProductDescriptionResolutionService.extract_code_from_drilldown_message(
+            message,
+        )
+
+        if drill_code:
+            return drill_code
+
+        description_query = ChatProductDescriptionResolutionService.extract_description_query(
+            message,
+        )
+
+        if description_query:
+            resolved = ChatProductDescriptionResolutionService.resolve_code_from_history(
+                description_query,
+                previous_messages=previous_messages,
+            )
+
+            if resolved:
+                return resolved
+
         code = cls.extract_product_code(message)
 
         if code:

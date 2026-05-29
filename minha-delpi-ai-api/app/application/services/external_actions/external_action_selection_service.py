@@ -141,6 +141,33 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        from app.domain.services.chat_product_description_resolution_service import (
+            ChatProductDescriptionResolutionService,
+        )
+
+        description_lookup = ChatProductDescriptionResolutionService.extract_description_query(
+            message,
+        )
+
+        if description_lookup and not ChatProductDescriptionResolutionService.extract_code_from_drilldown_message(
+            message,
+        ):
+            resolved_from_history = ChatProductDescriptionResolutionService.resolve_code_from_history(
+                description_lookup,
+                previous_messages=previous_messages,
+            )
+
+            if not resolved_from_history:
+                selected = self._select_product_search_action(
+                    message,
+                    normalized,
+                    allowed_action_ids=allowed_action_ids,
+                    description_override=description_lookup,
+                )
+
+                if selected:
+                    return selected
+
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,
@@ -311,6 +338,7 @@ class ExternalActionSelectionService:
             self._looks_like_product_question(normalized)
             or ChatProductQueryIntentService.extract_product_code(message)
             or product_route_segment
+            or ChatProductDescriptionResolutionService.looks_like_description_lookup(message)
         ):
             return self._select_product_action(
                 message,
@@ -1377,6 +1405,9 @@ class ExternalActionSelectionService:
             "traga", "liste", "listar", "exemplos de",
             "existe algum", "existem", "tem algum",
             "quais produtos", "quais itens", "quais materiais",
+            "mais informações sobre", "mais informacoes sobre",
+            "informações sobre", "informacoes sobre",
+            "detalhe de", "detalhes sobre",
             "search", "find",
         )
         product_context = (
@@ -1405,6 +1436,9 @@ class ExternalActionSelectionService:
         normalized = str(message or "").lower().strip()
 
         patterns = [
+            r"(?:mais\s+)?informa(?:ç|c)(?:õ|o)es\s+sobre\s+(.+?)$",
+            r"detalhes?\s+(?:sobre\s+)?(.+?)$",
+            r"detalhe\s+de\s+(.+?)$",
             r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:exemplos?\s+de\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
             r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:produtos?|itens?|materiais?)\s+(?:d[eoa]\s+(?:tipo\s+)?|com\s+(?:descri[çc][ãa]o\s+)?|tipo\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
             r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
@@ -1450,6 +1484,8 @@ class ExternalActionSelectionService:
         message: str,
         normalized: str,
         allowed_action_ids: list[str],
+        *,
+        description_override: str | None = None,
     ) -> dict | None:
         candidates = self._list_allowed_candidates(
             message,
@@ -1468,7 +1504,7 @@ class ExternalActionSelectionService:
                 continue
 
             group_code = self._extract_search_group_code(message, normalized)
-            description_query = self._extract_search_description(message)
+            description_query = description_override or self._extract_search_description(message)
             product_code_query = ChatProductQueryIntentService.extract_product_code(message)
             page_size = self._extract_search_limit(normalized)
 
