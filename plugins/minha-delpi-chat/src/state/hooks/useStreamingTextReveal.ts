@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
+import {
+  advanceRevealIndex,
+  computeRevealStep,
+} from "./naturalTextReveal";
+
 type UseStreamingTextRevealOptions = {
   /** Revela progressivamente enquanto a resposta está em streaming. */
   enabled: boolean;
@@ -8,12 +13,12 @@ type UseStreamingTextRevealOptions = {
 };
 
 /**
- * Suaviza respostas que chegam em blocos (direct response / proxy buffering),
- * exibindo o texto de forma incremental mesmo quando vários tokens SSE chegam juntos.
+ * Suaviza respostas que chegam em blocos (SSE token / direct response),
+ * exibindo o texto de forma incremental com ritmo natural.
  */
 export function useStreamingTextReveal(
   target: string,
-  { enabled, charsPerFrame = 5 }: UseStreamingTextRevealOptions,
+  { enabled, charsPerFrame = 3 }: UseStreamingTextRevealOptions,
 ): string {
   const [visible, setVisible] = useState(target);
   const targetRef = useRef(target);
@@ -44,13 +49,10 @@ export function useStreamingTextReveal(
           return full;
         }
 
-        const remaining = full.length - current.length;
-        const step =
-          remaining > charsPerFrame * 6
-            ? Math.max(charsPerFrame, Math.ceil(remaining / 12))
-            : charsPerFrame;
+        const step = computeRevealStep(current.length, full.length, charsPerFrame);
+        const nextIndex = advanceRevealIndex(full, current.length, step);
 
-        return full.slice(0, current.length + step);
+        return full.slice(0, nextIndex);
       });
 
       frameId = requestAnimationFrame(tick);

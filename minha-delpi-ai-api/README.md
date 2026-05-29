@@ -94,7 +94,7 @@ docs/              # documentação técnica
 | `RAG_CONTEXT_MIN_SCORE` | Score mínimo de chunk no contexto do chat (default = assertividade) |
 | `RAG_IDENTITY_QUESTION_MIN_SCORE` | Score mínimo para perguntas de identidade (modo RAG+LLM legado) |
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — identidade do assistente via `identity.json`, sem LLM |
-| `CHAT_PERSIST_BEFORE_PLAYBACK` | `false` recomendado em CPU — primeiro token SSE mais cedo |
+| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — persiste no banco antes do playback; front anima com escrita natural |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
 | `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |

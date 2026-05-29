@@ -6,6 +6,8 @@ import {
   shouldShowRichPresentation,
 } from "../../ui/components/chatPresentation";
 
+import { runNaturalTextReveal } from "./naturalTextReveal";
+
 export type ChatPlaybackPayload = {
   messageId: string;
   answer: string;
@@ -14,9 +16,8 @@ export type ChatPlaybackPayload = {
   adminDebug?: Record<string, unknown> | null;
 };
 
-const TEXT_CHUNK_CHARS = 2;
-const TEXT_DELAY_MS = 45;
-const PRESENTATION_REVEAL_MS = 480;
+const PLAYBACK_CHARS_PER_FRAME = 3;
+const PRESENTATION_REVEAL_MS = 420;
 
 export function useChatMessagePlayback(
   payload: ChatPlaybackPayload | null,
@@ -73,55 +74,8 @@ export function useChatMessagePlayback(
 
     if (
       hasRichPresentation &&
-      isShortPresentationCaption(payload.answer, payload.toolCalls)
+      !isShortPresentationCaption(payload.answer, payload.toolCalls)
     ) {
-      const fullText = payload.answer;
-      let index = 0;
-      let cancelled = false;
-
-      setIsPlaying(true);
-      setDisplayedAnswer("");
-      setShowPresentation(false);
-
-      const tick = () => {
-        if (cancelled) {
-          return;
-        }
-
-        index = Math.min(fullText.length, index + TEXT_CHUNK_CHARS);
-        setDisplayedAnswer(fullText.slice(0, index));
-
-        if (index < fullText.length) {
-          window.setTimeout(tick, TEXT_DELAY_MS);
-          return;
-        }
-
-        window.setTimeout(() => {
-          if (cancelled) {
-            return;
-          }
-
-          setShowPresentation(true);
-
-          window.setTimeout(() => {
-            if (cancelled) {
-              return;
-            }
-
-            setIsPlaying(false);
-            onCompleteRef.current?.();
-          }, PRESENTATION_REVEAL_MS);
-        }, 60);
-      };
-
-      window.setTimeout(tick, TEXT_DELAY_MS);
-
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    if (hasRichPresentation) {
       setDisplayedAnswer(payload.answer);
       setShowPresentation(true);
       setIsPlaying(false);
@@ -136,48 +90,53 @@ export function useChatMessagePlayback(
     }
 
     const fullText = payload.answer;
-    let index = 0;
     let cancelled = false;
+    let presentationTimer = 0;
+    let completeTimer = 0;
 
     setIsPlaying(true);
     setDisplayedAnswer("");
     setShowPresentation(false);
 
-    const tick = () => {
-      if (cancelled) {
-        return;
-      }
-
-      index = Math.min(fullText.length, index + TEXT_CHUNK_CHARS);
-      setDisplayedAnswer(fullText.slice(0, index));
-
-      if (index < fullText.length) {
-        window.setTimeout(tick, TEXT_DELAY_MS);
-        return;
-      }
-
-      window.setTimeout(() => {
+    const cancelReveal = runNaturalTextReveal({
+      fullText,
+      charsPerFrame: PLAYBACK_CHARS_PER_FRAME,
+      onUpdate: (visible) => {
+        if (!cancelled) {
+          setDisplayedAnswer(visible);
+        }
+      },
+      onComplete: () => {
         if (cancelled) {
           return;
         }
 
-        setShowPresentation(true);
-
-        window.setTimeout(() => {
+        presentationTimer = window.setTimeout(() => {
           if (cancelled) {
             return;
           }
 
-          setIsPlaying(false);
-          onCompleteRef.current?.();
-        }, PRESENTATION_REVEAL_MS);
-      }, 60);
-    };
+          if (hasRichPresentation) {
+            setShowPresentation(true);
+          }
 
-    window.setTimeout(tick, TEXT_DELAY_MS);
+          completeTimer = window.setTimeout(() => {
+            if (cancelled) {
+              return;
+            }
+
+            setIsPlaying(false);
+            onCompleteRef.current?.();
+          }, PRESENTATION_REVEAL_MS);
+        }, 40);
+      },
+    });
 
     return () => {
       cancelled = true;
+      cancelReveal();
+      window.clearTimeout(presentationTimer);
+      window.clearTimeout(completeTimer);
     };
   }, [payload?.messageId, payload?.answer, payload?.toolCalls]);
 

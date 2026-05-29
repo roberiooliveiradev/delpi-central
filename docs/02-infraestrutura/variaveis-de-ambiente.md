@@ -133,10 +133,9 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
 | `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — «quem te criou» etc. usam `identity.json` sem RAG/LLM; `false` para homologar RAG+LLM |
-| `CHAT_PERSIST_BEFORE_PLAYBACK` | `false` em CPU — primeiro token SSE mais cedo; `true` grava antes do playback |
-| `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Chars por chunk no streaming de respostas diretas. **Recomendado:** `2` |
-| `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Delay em ms entre chunks de streaming direto. **Recomendado:** `45` (efeito de escrita mais legível) |
-| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — grava a resposta do assistente no banco antes do SSE `playback`; o front anima depois. Reload não perde texto em geração |
+| `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — grava a resposta no banco antes do SSE `playback`; o plugin anima com efeito de escrita natural (`naturalTextReveal`). Reload não perde texto em geração. Use `false` só se priorizar primeiro token SSE em CPU muito lenta |
+| `CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: chars por chunk no streaming SSE legado. **Recomendado:** `4` |
+| `CHAT_DIRECT_RESPONSE_STREAM_DELAY_MS` | Só quando `CHAT_PERSIST_BEFORE_PLAYBACK=false`: delay entre chunks SSE. **Recomendado:** `0`–`45` |
 | `RAG_ASSERTIVENESS_MIN_SCORE` | Score mínimo em fluxos de assertividade (default `0.35`) |
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |

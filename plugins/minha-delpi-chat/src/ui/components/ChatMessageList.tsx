@@ -501,9 +501,13 @@ export function ChatMessageList({
     Boolean(streamingAnswer?.trim()) &&
     isShortPresentationCaption(streamingAnswer, streamingToolCalls);
   const revealedStreamingCaption = useStreamingTextReveal(streamingAnswer, {
-    enabled: showStreamingCaptionReveal,
-    charsPerFrame: 2,
+    enabled: showStreamingCaptionReveal && !isPlaybackActive,
+    charsPerFrame: 3,
   });
+  const streamingCaptionText =
+    showStreamingCaptionReveal && isPlaybackActive
+      ? streamingAnswer
+      : revealedStreamingCaption;
   const streamingCaptionComplete =
     !showStreamingCaptionReveal ||
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
@@ -511,8 +515,9 @@ export function ChatMessageList({
     showStreamingPresentation && streamingCaptionComplete;
   const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
-    enabled: isGeneratingAnswer && !suppressStreamingMarkdown,
-    charsPerFrame: 2,
+    enabled:
+      isGeneratingAnswer && !suppressStreamingMarkdown && !isPlaybackActive,
+    charsPerFrame: 3,
   });
 
   useEffect(() => {
@@ -1151,7 +1156,7 @@ export function ChatMessageList({
                 ) : null}
                 {showStreamingCaptionReveal ? (
                   <h3 className="mdc-rich-presentation__heading">
-                    {revealedStreamingCaption}
+                    {streamingCaptionText}
                   </h3>
                 ) : null}
                 {streamingAnswer && !suppressStreamingMarkdown ? (
