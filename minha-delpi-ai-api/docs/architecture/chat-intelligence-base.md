@@ -188,6 +188,8 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 
 **Catálogo agentic (11.3.1):** com `CHAT_AGENTIC_LOOP_ENABLED=true`, `ChatAgenticCatalogService` monta no máximo `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` (default 12) a partir de `find_candidate_actions`, reordenando por intent (`/stock`, `/structure`, …). O planner LLM **só** pode escolher actions desse catálogo; metadados em `toolCalls[].metadata.agentic` / `intelligence.agentic` (`catalogSize`, `catalogMaxActions`).
 
+**Schemas enxutos (11.3.2):** cada action do catálogo é serializada por `ChatAgenticActionSchemaService` (método, path, descrição curta, parâmetros com `example` e `exampleArguments`) antes do prompt do planner — evita mandar o OpenAPI completo e orienta argumentos (`code`, `branch`, datas, paginação). Limite: `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` (default 10).
+
 ### Multi-action e histórico (maio/2026)
 
 `ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.

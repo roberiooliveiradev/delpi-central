@@ -228,6 +228,9 @@ class Settings:
     CHAT_AGENTIC_CATALOG_MAX_ACTIONS = int(
         os.getenv("CHAT_AGENTIC_CATALOG_MAX_ACTIONS", "12")
     )
+    CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS = int(
+        os.getenv("CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS", "10")
+    )
 
     CHAT_RAG_RERANK_ENABLED = (
         os.getenv("CHAT_RAG_RERANK_ENABLED", "true").lower() == "true"

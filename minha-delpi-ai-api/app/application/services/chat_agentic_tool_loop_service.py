@@ -58,18 +58,18 @@ class ChatAgenticToolLoopService:
             return tool_context
 
         max_steps = settings["max_steps"]
-        catalog = self._build_catalog(
+        catalog_keys, catalog_schemas = self._build_catalog(
             message,
             allowed_tool_names,
             allowed_action_ids,
         )
 
-        if not catalog:
+        if not catalog_keys:
             return tool_context
 
         catalog_action_ids = [
             item.split(":", 1)[1]
-            for item in catalog
+            for item in catalog_keys
             if item.startswith("action:")
         ]
 
@@ -99,7 +99,12 @@ class ChatAgenticToolLoopService:
                     )
                 )
 
-            plan = self._plan_tools(message, catalog, step=step)
+            plan = self._plan_tools(
+                message,
+                catalog_keys,
+                catalog_schemas,
+                step=step,
+            )
 
             if not plan.get("tools"):
                 if on_stream_activity:
@@ -282,38 +287,54 @@ class ChatAgenticToolLoopService:
         message: str,
         allowed_tool_names: list[str] | None,
         allowed_action_ids: list[str] | None,
-    ) -> list[str]:
-        catalog: list[str] = []
+    ) -> tuple[list[str], list[dict]]:
+        from app.domain.services.chat_agentic_catalog_service import (
+            ChatAgenticCatalogService,
+        )
+
+        catalog_keys: list[str] = []
 
         for name in allowed_tool_names or []:
             normalized = str(name).strip()
 
             if normalized:
-                catalog.append(f"tool:{normalized}")
+                catalog_keys.append(f"tool:{normalized}")
 
-        action_ids = self._resolve_action_ids_for_catalog(message, allowed_action_ids)
-
-        for action_id in action_ids:
-            catalog.append(f"action:{action_id}")
-
-        return catalog
-
-    def _resolve_action_ids_for_catalog(
-        self,
-        message: str,
-        allowed_action_ids: list[str] | None,
-    ) -> list[str]:
-        from app.domain.services.chat_agentic_catalog_service import (
-            ChatAgenticCatalogService,
-        )
-
-        return ChatAgenticCatalogService.build_action_ids(
+        slim_actions = ChatAgenticCatalogService.build_slim_catalog(
             message,
             allowed_action_ids,
             self.external_action_repository,
         )
 
-    def _plan_tools(self, message: str, catalog: list[str], *, step: int) -> dict:
+        for action in slim_actions:
+            action_id = str(action.get("actionId") or "").strip()
+
+            if action_id:
+                catalog_keys.append(f"action:{action_id}")
+
+        return catalog_keys, slim_actions
+
+    def _plan_tools(
+        self,
+        message: str,
+        catalog: list[str],
+        catalog_schemas: list[dict],
+        *,
+        step: int,
+    ) -> dict:
+        from app.domain.services.chat_agentic_action_schema_service import (
+            ChatAgenticActionSchemaService,
+        )
+
+        planner_catalog = ChatAgenticActionSchemaService.format_planner_catalog(
+            catalog_schemas,
+        )
+        tool_lines = [
+            item
+            for item in catalog
+            if item.startswith("tool:")
+        ]
+
         try:
             raw = self.llm_gateway.generate(
                 [
@@ -323,14 +344,16 @@ class ChatAgenticToolLoopService:
                             "Planeje ferramentas para responder à pergunta. "
                             'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
                             "Use no máximo UMA action por passo, somente se necessário. "
-                            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:."
+                            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:. "
+                            "Quando escolher action:*, preencha arguments conforme exampleArguments do catálogo."
                         ),
                     },
                     {
                         "role": "user",
                         "content": (
                             f"Passo {step + 1}\nPergunta: {message[:1200]}\n"
-                            f"Catálogo:\n" + "\n".join(catalog)
+                            f"Tools internas:\n" + "\n".join(tool_lines or ["(nenhuma)"]) + "\n"
+                            f"Actions OpenAPI (descrição + parâmetros + exemplos):\n{planner_catalog}"
                         ),
                     },
                 ]

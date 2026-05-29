@@ -186,3 +186,51 @@ def test_agentic_skipped_after_successful_stock_value_kpi(monkeypatch):
     assert result["toolCalls"] == tool_context["toolCalls"]
     assert result["directAnswer"] == "Valor Total de Estoque"
     assert result.get("skipRag") is True
+
+
+def test_planner_receives_slim_openapi_schemas(monkeypatch):
+    captured: list[list[dict]] = []
+
+    class CapturingLlm:
+        def generate(self, messages):
+            captured.append(messages)
+            return '{"tools":[],"arguments":{},"done":true}'
+
+    service = ChatAgenticToolLoopService(
+        llm_gateway=CapturingLlm(),
+        execute_tool_use_case=FakeExecuteTool(),
+        external_action_repository=FakeRepository(
+            [
+                {
+                    "actionId": "stock-action",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "summary": "Consulta estoque",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                        {"name": "branch", "in": "query"},
+                    ],
+                }
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "_resolve_settings",
+        lambda: {"enabled": True, "max_steps": 1},
+    )
+
+    service.extend_tool_context(
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token",
+        message="estoque do produto 10080022",
+        tool_context={"context": "", "toolCalls": []},
+        allowed_tool_names=None,
+        allowed_action_ids=["stock-action"],
+    )
+
+    assert captured
+    user_content = captured[0][1]["content"]
+    assert "Actions OpenAPI (descrição + parâmetros + exemplos):" in user_content
+    assert '"actionId": "stock-action"' in user_content
+    assert '"exampleArguments"' in user_content

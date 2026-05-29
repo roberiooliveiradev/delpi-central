@@ -135,7 +135,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
 | 11.3.1 | Catálogo por intent (≤12 actions) no loop agentic | ✅ | `ChatAgenticCatalogService` + `find_candidate_actions` ranqueado por intent; metadados `catalogSize` |
-| 11.3.2 | Schemas OpenAPI enxutos por action (descrição + exemplos) | ⬜ | Melhora ranker e planner quando agentic ligado |
+| 11.3.2 | Schemas OpenAPI enxutos por action (descrição + exemplos) | ✅ | `ChatAgenticActionSchemaService` + catálogo JSON no planner agentic |
 | 11.3.3 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` só em agentes piloto | ⬜ | Tools internas via LLM; OpenAPI continua heurístico |
 | 11.3.4 | Métricas `intelligence.timings` por turno no admin | 🟡 | Já existe Onda 5; validar em homologação |
 
@@ -174,6 +174,7 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` | Manter on |
 | `CHAT_OPERATIONAL_SLIM_USER_CONTEXT` | `true` | Manter on em operacional |
 | `CHAT_AGENTIC_CATALOG_MAX_ACTIONS` | `12` | Revisar com 11.3.1 |
+| `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` | `10` | Máx. parâmetros por action no catálogo agentic (11.3.2) |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | Consolidação paginada (11.4.4) |
 | `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` | Páginas por turno antes de pedir confirmação |
 | `CHAT_LLM_LATENCY_PROFILE` | `balanced` | Preset `operational_cpu` / `documental` para `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` |
@@ -230,6 +231,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-29 | 11.1.5: `sync_api_delpi_openapi.py`, catálogo gerado 83 rotas, guia RAG revisado (ROL, produção, propostas). |
 | 2026-05-29 | 11.2.2/11.4.1/11.5.1: `CHAT_LLM_LATENCY_PROFILE`, `prefer_presentation_direct_answer`, `run_onda11_validation.sh`. |
 | 2026-05-29 | 11.3.1: `ChatAgenticCatalogService` — catálogo ≤12 por intent no loop agentic. |
+| 2026-05-29 | 11.3.2: `ChatAgenticActionSchemaService` — schemas enxutos com exemplos no planner agentic. |
 
 ---
 

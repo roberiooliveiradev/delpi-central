@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
+from app.domain.services.chat_agentic_action_schema_service import (
+    ChatAgenticActionSchemaService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -38,12 +41,12 @@ class ChatAgenticCatalogService:
         return max(1, Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS)
 
     @classmethod
-    def build_action_ids(
+    def build_ranked_candidates(
         cls,
         message: str,
         allowed_action_ids: list[str] | None,
         repository: ExternalActionCatalogRepositoryPort | None,
-    ) -> list[str]:
+    ) -> list[dict[str, Any]]:
         allowed = [
             str(item).strip()
             for item in (allowed_action_ids or [])
@@ -64,25 +67,55 @@ class ChatAgenticCatalogService:
             )
 
         if not candidates:
-            return allowed[:limit]
+            return [{"actionId": action_id} for action_id in allowed[:limit]]
 
         intent = ChatProductQueryIntentService.resolve_product_intent(message)
         ranked = cls._rank_candidates(candidates, intent=intent)
 
-        action_ids: list[str] = []
+        selected: list[dict[str, Any]] = []
+        seen: set[str] = set()
 
         for action in ranked:
             action_id = str(action.get("actionId") or "").strip()
 
-            if not action_id or action_id in action_ids:
+            if not action_id or action_id in seen:
                 continue
 
-            action_ids.append(action_id)
+            seen.add(action_id)
+            selected.append(action)
 
-            if len(action_ids) >= limit:
+            if len(selected) >= limit:
                 break
 
-        return action_ids
+        return selected
+
+    @classmethod
+    def build_action_ids(
+        cls,
+        message: str,
+        allowed_action_ids: list[str] | None,
+        repository: ExternalActionCatalogRepositoryPort | None,
+    ) -> list[str]:
+        return [
+            str(action.get("actionId") or "").strip()
+            for action in cls.build_ranked_candidates(message, allowed_action_ids, repository)
+            if str(action.get("actionId") or "").strip()
+        ]
+
+    @classmethod
+    def build_slim_catalog(
+        cls,
+        message: str,
+        allowed_action_ids: list[str] | None,
+        repository: ExternalActionCatalogRepositoryPort | None,
+    ) -> list[dict[str, Any]]:
+        ranked = cls.build_ranked_candidates(message, allowed_action_ids, repository)
+
+        return [
+            slim
+            for action in ranked
+            if (slim := ChatAgenticActionSchemaService.build_slim_action(action))
+        ]
 
     @classmethod
     def describe_catalog(

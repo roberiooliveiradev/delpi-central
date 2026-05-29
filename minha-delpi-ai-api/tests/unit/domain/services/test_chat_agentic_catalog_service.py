@@ -13,6 +13,10 @@ def _action(action_id: str, path: str, operation_id: str = "") -> dict:
         "path": path,
         "operationId": operation_id or action_id,
         "summary": path,
+        "method": "GET",
+        "parametersSchema": [
+            {"name": "code", "in": "path", "required": True},
+        ],
     }
 
 
@@ -81,6 +85,25 @@ def test_structure_intent_prioritizes_structure_action():
     )
 
     assert action_ids[0] == "structure-action"
+
+
+def test_build_slim_catalog_returns_ranked_schemas():
+    repo = FakeRepository(
+        [
+            _action("stock-action", "/products/{code}/stock", "get_product_stock"),
+            _action("structure-action", "/products/{code}/structure", "get_product_structure"),
+        ]
+    )
+
+    catalog = ChatAgenticCatalogService.build_slim_catalog(
+        "estoque do produto 10080022",
+        ["stock-action", "structure-action"],
+        repo,
+    )
+
+    assert catalog[0]["actionId"] == "stock-action"
+    assert catalog[0]["parameters"][0]["name"] == "code"
+    assert catalog[0]["exampleArguments"]["parameters"]["code"] == "10080022"
 
 
 def test_agentic_loop_exposes_catalog_metadata(monkeypatch):
