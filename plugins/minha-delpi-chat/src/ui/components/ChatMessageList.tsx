@@ -794,13 +794,20 @@ export function ChatMessageList({
           {isUser ? "V" : "D"}
         </div>
 
-        <div className="mdc-chat-message-card">
+        <div
+          className={`mdc-chat-message-card${
+            isUser ? " mdc-chat-message-card--user" : ""
+          }${
+            isUser && editingMessageId === message.id
+              ? " mdc-chat-message-card--editing"
+              : ""
+          }`}
+        >
+          {!(isUser && editingMessageId === message.id) ? (
           <div className="mdc-chat-message-header">
             {!isUser ? (
               <strong>Minha DELPI Chat</strong>
-            ) : (
-              <span className="mdc-chat-message-header__spacer" aria-hidden="true" />
-            )}
+            ) : null}
 
             <div className="mdc-chat-message-meta">
               {messageTime ? (
@@ -897,11 +904,14 @@ export function ChatMessageList({
               </div>
             </div>
           </div>
+          ) : null}
 
           {editingMessageId === message.id ? (
             <div className="mdc-chat-message-edit">
               <textarea
+                className="mdc-chat-message-edit__input"
                 value={editingContent}
+                rows={1}
                 autoFocus
                 onChange={(event) => setEditingContent(event.target.value)}
                 onKeyDown={(event) => {
