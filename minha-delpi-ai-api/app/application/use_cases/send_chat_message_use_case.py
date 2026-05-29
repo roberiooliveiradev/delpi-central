@@ -419,6 +419,13 @@ class SendChatMessageUseCase:
         if ChatSmallTalkService.is_small_talk(request.message):
             return tool_context
 
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(request.message):
+            return tool_context
+
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
 

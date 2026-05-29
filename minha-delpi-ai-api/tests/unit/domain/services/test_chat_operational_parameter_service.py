@@ -89,6 +89,13 @@ def test_should_skip_agentic_for_incomplete_stock_question():
     )
 
 
+def test_should_skip_agentic_for_normas_guidance():
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "como descrever um terminal?",
+        tool_context={"toolCalls": []},
+    )
+
+
 def test_should_skip_tools_after_missing_code_prompt_with_example():
     context = (
         "user: estoque do produto\n"

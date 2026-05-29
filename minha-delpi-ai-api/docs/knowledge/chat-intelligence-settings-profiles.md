@@ -51,7 +51,7 @@ O painel admin **persiste em runtime** (`chat_intelligence_settings`); variávei
 |--------------|-----|----------|------------|
 | **Router LLM de ferramentas** | ❌ | ❌ | +1 LLM/turno; pipeline já roteia estoque, SQL, Normas |
 | **Tool-calling nativo** (vLLM/Ollama) | ❌ | ❌ | Testar isoladamente; conflita com router/agentic |
-| **Loop agentic** | ❌ | ❌ (ou ✅ pontual) | Causa comum de lentidão em perguntas documentais (ex.: N1) |
+| **Loop agentic** | ❌ | ❌ (ou ✅ pontual) | Causa comum de lentidão em perguntas documentais (ex.: N1) — o pipeline **pula** agentic em intent Normas (`ChatTechnicalDescriptionIntentService`) |
 | **Máx. passos agentic** | — (se ❌) | **1** (se ✅) | Só para fluxo multi-etapa raro; evitar 2+ em prod sem monitorar |
 
 ---
@@ -104,7 +104,7 @@ Após alterar `.env` / compose, reinicie a API. Se o admin já salvou valores, e
 
 ## Diagnóstico: «nenhum trecho adicional aplicável»
 
-Em perguntas de **Normas** (N1–N14), fontes com escopo **global** (`company-knowledge`) entram no **prompt do LLM**, mas podem **não aparecer** na lista de fontes visíveis ao usuário (`ChatSourceVisibilityService`). A mensagem amarela no stream **não** significa necessariamente que o RAG falhou — verifique no **Diagnóstico (admin)** o tamanho do contexto RAG.
+Em perguntas de **Normas** (N1–N14), fontes com escopo **global** (`company-knowledge`) entram no **prompt do LLM**, mas podem **não aparecer** na lista de fontes visíveis ao usuário (`ChatSourceVisibilityService`). Com router/agentic desligados, o stream mostra *«contexto aplicado (N caracteres)»* quando há RAG global sem fontes visíveis.
 
 ---
 

@@ -57,6 +57,32 @@ def test_agentic_skipped_when_stock_without_product_code(monkeypatch):
     assert result["toolCalls"] == []
 
 
+def test_agentic_skipped_for_normas_guidance(monkeypatch):
+    service = ChatAgenticToolLoopService(
+        llm_gateway=FakeLlm(),
+        execute_tool_use_case=FakeExecuteTool(),
+        external_action_repository=FakeRepository(
+            [{"actionId": "api_delpi.products.search_products"}],
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "_resolve_settings",
+        lambda: {"enabled": True, "max_steps": 1},
+    )
+
+    result = service.extend_tool_context(
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token",
+        message="como descrever um terminal?",
+        tool_context={"context": "", "toolCalls": []},
+        allowed_tool_names=None,
+        allowed_action_ids=["api_delpi.products.search_products"],
+    )
+
+    assert result["toolCalls"] == []
+
+
 def test_agentic_catalog_uses_semantic_candidates_not_first_ids(monkeypatch):
     calls = []
 

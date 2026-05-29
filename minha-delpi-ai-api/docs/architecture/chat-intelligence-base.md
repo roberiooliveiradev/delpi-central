@@ -161,6 +161,7 @@ Perguntas de **como escrever/descadastrar** descrições técnicas (não confund
 | `ChatTurnPreparationService` | `build_rag_query` enriquecido com grupo técnico (ex.: terminal → **1008**) |
 | `ExternalActionSelectionService` | Retorna `None` — **sem** busca REST de catálogo |
 | `ChatOperationalPipelineService` | Fast path operacional **desligado** |
+| `ChatOperationalParameterService` | **Pula loop agentic** (resposta documental via RAG + 1 LLM) |
 | Policy | `technical-description-normas.md` — ir à seção do `Normas_Tecnicas_DELPI.md`, explicar estrutura/campos/exemplos |
 
 Fonte RAG: `docs/knowledge/domains/global/normas-tecnicas-delpi.md` (`scope: global`). Skill `company-knowledge` necessária (default herdado).

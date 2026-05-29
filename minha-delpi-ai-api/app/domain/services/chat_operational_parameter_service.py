@@ -101,6 +101,13 @@ class ChatOperationalParameterService:
         if ChatFastPathService.is_small_talk(message):
             return True
 
+        from app.domain.services.chat_technical_description_intent_service import (
+            ChatTechnicalDescriptionIntentService,
+        )
+
+        if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
+            return True
+
         if cls.should_skip_tools(message, conversation_context=conversation_context):
             return True
 

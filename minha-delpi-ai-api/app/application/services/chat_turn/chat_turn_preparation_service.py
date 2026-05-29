@@ -555,6 +555,7 @@ class ChatTurnPreparationService:
             )
 
         sources = rag["sources"]
+        rag_context_chars = len(rag.get("context") or "")
         pipeline_timings.mark("rag_done")
 
         if on_stream_activity:
@@ -573,22 +574,47 @@ class ChatTurnPreparationService:
                         entry_id="rag-search",
                     )
                 )
+            elif sources:
+                on_stream_activity(
+                    ChatStreamActivityService.entry(
+                        verb="Encontrado",
+                        target=f"{len(sources)} trecho(s) relevante(s)",
+                        phase="rag",
+                        level="success",
+                        state="done",
+                        message=(
+                            f"Base de conhecimento: {len(sources)} trecho(s) "
+                            "relevante(s) encontrado(s)."
+                        ),
+                        entry_id="rag-search",
+                    )
+                )
+            elif rag_context_chars > 0:
+                on_stream_activity(
+                    ChatStreamActivityService.entry(
+                        verb="Encontrado",
+                        target="contexto documental",
+                        phase="rag",
+                        level="success",
+                        state="done",
+                        message=(
+                            "Base de conhecimento: contexto aplicado "
+                            f"({rag_context_chars} caracteres)."
+                        ),
+                        entry_id="rag-search",
+                    )
+                )
             else:
                 on_stream_activity(
                     ChatStreamActivityService.entry(
-                        verb="Encontrado" if sources else "Sem trechos",
-                        target=(
-                            f"{len(sources)} trecho(s) relevante(s)"
-                            if sources
-                            else "nenhum trecho adicional"
-                        ),
+                        verb="Sem trechos",
+                        target="nenhum trecho adicional",
                         phase="rag",
-                        level="success" if sources else "warning",
+                        level="warning",
                         state="done",
                         message=(
-                            f"Base de conhecimento: {len(sources)} trecho(s) relevante(s) encontrado(s)."
-                            if sources
-                            else "Base de conhecimento consultada; nenhum trecho adicional aplicável."
+                            "Base de conhecimento consultada; "
+                            "nenhum trecho adicional aplicável."
                         ),
                         entry_id="rag-search",
                     )
