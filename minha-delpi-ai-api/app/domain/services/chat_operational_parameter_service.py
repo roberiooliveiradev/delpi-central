@@ -98,11 +98,43 @@ class ChatOperationalParameterService:
         if cls.should_skip_tools(message, conversation_context=conversation_context):
             return True
 
-        return ChatOperationalRefinementService.is_operational_follow_up(
+        if ChatOperationalRefinementService.is_operational_follow_up(
             message,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
+        ):
+            return True
+
+        if not tool_context:
+            return False
+
+        from app.application.services.chat_tool_context_service import (
+            ChatToolContextService,
         )
+
+        tool_calls = tool_context.get("toolCalls") or []
+
+        if isinstance(tool_context.get("directAnswer"), str) and str(
+            tool_context.get("directAnswer") or ""
+        ).strip():
+            return True
+
+        if ChatToolContextService.should_answer_with_presentation_only(tool_calls):
+            return True
+
+        for tool_call in tool_calls:
+            if str(tool_call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = tool_call.get("metadata") or {}
+
+            if metadata.get("agenticStep"):
+                continue
+
+            if metadata.get("ok"):
+                return True
+
+        return False
 
     @classmethod
     def should_block_semantic_action_fallback(

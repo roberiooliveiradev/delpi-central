@@ -471,16 +471,75 @@ class ChatToolContextService:
 
     @classmethod
     def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:
-        for key in ("presentation", "tablePresentation"):
+        for key in (
+            "presentation",
+            "tablePresentation",
+            "treePresentation",
+            "chartPresentation",
+        ):
             presentation = metadata.get(key)
 
             if isinstance(presentation, dict):
                 presentation_type = str(presentation.get("type") or "").strip().lower()
 
-                if presentation_type in {"table", "chart", "kpi"}:
+                if presentation_type in {"table", "chart", "kpi", "tree"}:
                     return presentation
 
         return None
+
+    @classmethod
+    def _external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
+        return [
+            tool_call
+            for tool_call in safe_tool_calls
+            if str(tool_call.get("name") or "") == "execute_external_action"
+        ]
+
+    @classmethod
+    def _successful_external_action_tool_calls(cls, safe_tool_calls: list[dict]) -> list[dict]:
+        successful: list[dict] = []
+
+        for tool_call in cls._external_action_tool_calls(safe_tool_calls):
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            if not metadata.get("ok"):
+                continue
+
+            successful.append(tool_call)
+
+        return successful
+
+    @classmethod
+    def should_answer_with_presentation_only(cls, safe_tool_calls: list[dict]) -> bool:
+        external_calls = cls._external_action_tool_calls(safe_tool_calls)
+
+        if not external_calls:
+            return False
+
+        if len(cls._successful_external_action_tool_calls(safe_tool_calls)) != len(
+            external_calls
+        ):
+            return False
+
+        return cls._has_rich_presentation(safe_tool_calls)
+
+    @classmethod
+    def resolve_presentation_only_answer(cls, safe_tool_calls: list[dict]) -> str | None:
+        if not cls.should_answer_with_presentation_only(safe_tool_calls):
+            return None
+
+        titles = cls._presentation_titles(safe_tool_calls)
+
+        if not titles:
+            return "Consulta concluída."
+
+        if len(titles) == 1:
+            return titles[0]
+
+        return "\n".join(f"- {title}" for title in titles)
 
     @classmethod
     def _has_rich_presentation(cls, safe_tool_calls: list[dict]) -> bool:

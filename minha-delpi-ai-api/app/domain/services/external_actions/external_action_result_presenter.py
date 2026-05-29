@@ -462,15 +462,17 @@ class ExternalActionResultPresenter:
                 {"key": "valor", "label": "Valor"},
             ],
             "rows": [
-                {"campo": "Valor faturado", "valor": root.get("value")},
-                {"campo": "Documentos", "valor": root.get("documents")},
+                {"campo": "Valor faturado", "valor": root.get("value"), "valorType": "currency"},
+                {"campo": "Documentos", "valor": root.get("documents"), "valorType": "quantity"},
                 {
                     "campo": "Primeira emissão",
                     "valor": self._format_protheus_date(root.get("first_billing_date")),
+                    "valorType": "date",
                 },
                 {
                     "campo": "Última emissão",
                     "valor": self._format_protheus_date(root.get("last_billing_date")),
+                    "valorType": "date",
                 },
             ],
         }

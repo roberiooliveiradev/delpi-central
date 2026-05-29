@@ -108,6 +108,7 @@ export function ChatPage({
     isLoadingMessages,
     isComposerBusy,
     isStreamingActiveSession,
+    isPlaybackActive,
     isSessionProcessing,
     error,
     clearError,
@@ -1166,6 +1167,7 @@ export function ChatPage({
                 streamingShowPresentation={streamingShowPresentation}
                 streamingCanvasOpen={streamingCanvasOpen}
                 isStreaming={isStreamingActiveSession}
+                isPlaybackActive={isPlaybackActive}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}
                 onReuseMessage={reuseMessage}

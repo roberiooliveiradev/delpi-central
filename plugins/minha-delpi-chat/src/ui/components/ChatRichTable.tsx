@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ExpandButton } from "./ChatExpandModal";
 import { buildDrillDownQuery } from "./chatDrillDown";
+import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -167,8 +168,16 @@ export function ChatRichTable({
                 title={onDrillDown ? "Clique para detalhar" : undefined}
               >
                 {columns.map((col) => (
-                  <td key={col.key} className={getAlignClass(col.key, row[col.key], col.dataType)}>
-                    {formatCellValue(row[col.key], col.key, col.dataType)}
+                  <td
+                    key={col.key}
+                    className={getAlignClass(
+                      col.key,
+                      row[col.key],
+                      col.dataType,
+                      row,
+                    )}
+                  >
+                    {formatCellValue(row[col.key], col.key, col.dataType, row)}
                   </td>
                 ))}
               </tr>
@@ -184,78 +193,4 @@ export function ChatRichTable({
       )}
     </div>
   );
-}
-
-const CURRENCY_KEYS = /valor|preco|price|custo|cost|total|revenue|faturamento|receita|saldo|vlr|vl_/i;
-const PERCENT_KEYS = /pct|percent|taxa|rate|margem|margin|otd|giro|eficiencia/i;
-const DATE_KEYS = /data|date|emissao|criacao|atualizacao|inicio|fim|vencimento|dt_|created|updated/i;
-const QTY_KEYS = /qtd|quantidade|qty|quantity|saldo|disponivel|reservado|estoque|volume/i;
-
-type ColumnType = "text" | "number" | "currency" | "date" | "percent" | "quantity" | undefined;
-
-function inferColumnType(key: string, dataType?: ColumnType): ColumnType {
-  if (dataType) return dataType;
-  if (CURRENCY_KEYS.test(key)) return "currency";
-  if (PERCENT_KEYS.test(key)) return "percent";
-  if (DATE_KEYS.test(key)) return "date";
-  if (QTY_KEYS.test(key)) return "quantity";
-  return undefined;
-}
-
-function getAlignClass(key: string, value: unknown, dataType?: ColumnType): string {
-  const t = inferColumnType(key, dataType);
-  if (typeof value === "number" || t === "currency" || t === "quantity" || t === "percent" || t === "number") {
-    return "mdc-rich-table__td--right";
-  }
-  return "";
-}
-
-function formatCellValue(value: unknown, columnKey?: string, dataType?: ColumnType): string {
-  if (value == null) return "—";
-  if (typeof value === "boolean") return value ? "Sim" : "Não";
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) =>
-        typeof item === "object" && item !== null
-          ? (item as Record<string, unknown>).code || (item as Record<string, unknown>).description || JSON.stringify(item)
-          : String(item),
-      )
-      .join(" → ");
-  }
-  if (typeof value === "object") {
-    const obj = value as Record<string, unknown>;
-    return obj.code ? String(obj.code) : obj.description ? String(obj.description) : JSON.stringify(value);
-  }
-
-  const key = columnKey || "";
-  const colType = inferColumnType(key, dataType);
-
-  if (typeof value === "number") {
-    if (colType === "currency") {
-      return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-    }
-    if (colType === "percent") {
-      return `${value.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })}%`;
-    }
-    if (colType === "quantity") {
-      return value.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-    }
-    if (Number.isInteger(value)) return value.toLocaleString("pt-BR");
-    return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  }
-
-  const str = String(value);
-
-  if (colType === "date" || /^\d{4}-\d{2}-\d{2}/.test(str)) {
-    const d = new Date(str);
-    if (!isNaN(d.getTime())) {
-      if (str.includes("T") || str.length > 10) {
-        return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-      }
-      return d.toLocaleDateString("pt-BR");
-    }
-  }
-
-  return str;
 }

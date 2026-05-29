@@ -122,3 +122,30 @@ def test_should_not_skip_tools_when_previous_messages_have_real_products():
         "estoque do produto",
         previous_messages=history,
     )
+
+
+def test_should_skip_agentic_after_successful_kpi_presentation():
+    tool_context = {
+        "directAnswer": "Valor Total de Estoque",
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": "api_delpi.suprimentos.get_supplies_stock_value",
+                },
+                "metadata": {
+                    "ok": True,
+                    "path": "/supplies/stock-value",
+                    "presentation": {
+                        "type": "kpi",
+                        "title": "Valor Total de Estoque",
+                    },
+                },
+            }
+        ],
+    }
+
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "qual o valor total de estoque da empresa",
+        tool_context=tool_context,
+    )

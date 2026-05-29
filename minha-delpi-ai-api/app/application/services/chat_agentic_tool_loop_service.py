@@ -74,6 +74,7 @@ class ChatAgenticToolLoopService:
             for item in safe_tool_calls
             if str(item.get("name") or "").strip()
         }
+        executed_action_ids = self._collect_executed_action_ids(safe_tool_calls)
 
         for step in range(max_steps):
             if on_stream_activity:
@@ -137,9 +138,14 @@ class ChatAgenticToolLoopService:
                 resolved_tool_name = tool_name
 
                 if tool_name.startswith("action:"):
+                    action_id = tool_name.split(":", 1)[1].strip()
+
+                    if action_id in executed_action_ids:
+                        continue
+
                     resolved_tool_name = "execute_external_action"
                     tool_arguments = {
-                        "actionId": tool_name.split(":", 1)[1],
+                        "actionId": action_id,
                         **tool_arguments,
                     }
 
@@ -178,6 +184,9 @@ class ChatAgenticToolLoopService:
                         },
                     }
                 )
+                executed_action_ids.update(
+                    self._collect_executed_action_ids(safe_tool_calls[-1:])
+                )
 
                 context_blocks.append(
                     json.dumps(
@@ -202,6 +211,7 @@ class ChatAgenticToolLoopService:
         merged_context = "\n\n".join(part for part in parts if part).strip()
 
         merged = {
+            **tool_context,
             "context": merged_context[: Settings.MAX_CONTEXT_CHARS],
             "toolCalls": safe_tool_calls,
             "agentic": {
@@ -210,10 +220,26 @@ class ChatAgenticToolLoopService:
             },
         }
 
-        if tool_context.get("nativeToolCalling") is not None:
-            merged["nativeToolCalling"] = tool_context["nativeToolCalling"]
-
         return merged
+
+    @staticmethod
+    def _collect_executed_action_ids(tool_calls: list[dict]) -> set[str]:
+        action_ids: set[str] = set()
+
+        for tool_call in tool_calls:
+            arguments = tool_call.get("arguments") or {}
+            action_id = str(arguments.get("actionId") or "").strip()
+
+            if action_id:
+                action_ids.add(action_id)
+
+            metadata = tool_call.get("metadata") or {}
+            meta_action_id = str(metadata.get("actionId") or "").strip()
+
+            if meta_action_id:
+                action_ids.add(meta_action_id)
+
+        return action_ids
 
     def _resolve_settings(self) -> dict:
         runtime = self.intelligence_settings_service.resolve()

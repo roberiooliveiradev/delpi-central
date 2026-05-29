@@ -412,6 +412,19 @@ class ChatTurnPreparationService:
             direct_answer = missing_product_code_answer
             skip_rag = True
 
+        if not direct_answer and operational_optimize and tool_calls:
+            from app.application.services.chat_tool_context_service import (
+                ChatToolContextService,
+            )
+
+            presentation_answer = ChatToolContextService.resolve_presentation_only_answer(
+                tool_calls,
+            )
+
+            if presentation_answer:
+                direct_answer = presentation_answer
+                skip_rag = True
+
         if direct_answer:
             skip_rag = True
             if "direct_answer" not in pipeline_stages:

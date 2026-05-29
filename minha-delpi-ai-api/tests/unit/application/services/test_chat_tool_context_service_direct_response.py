@@ -128,3 +128,68 @@ def test_compact_direct_answer_for_rich_presentation_keeps_short_text():
     )
 
     assert compact == "Saldo disponível na filial 02."
+
+
+def test_resolve_presentation_only_answer_for_kpi():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "presentation": {
+                    "type": "kpi",
+                    "title": "Valor Total de Estoque",
+                    "cards": [{"label": "Valor Total", "value": 1}],
+                },
+            },
+        }
+    ]
+
+    assert ChatToolContextService.should_answer_with_presentation_only(tool_calls)
+    assert (
+        ChatToolContextService.resolve_presentation_only_answer(tool_calls)
+        == "Valor Total de Estoque"
+    )
+
+
+def test_resolve_presentation_only_answer_requires_successful_tools():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": False,
+                "presentation": {
+                    "type": "kpi",
+                    "title": "Valor Total de Estoque",
+                },
+            },
+        }
+    ]
+
+    assert not ChatToolContextService.should_answer_with_presentation_only(tool_calls)
+    assert ChatToolContextService.resolve_presentation_only_answer(tool_calls) is None
+
+
+def test_resolve_presentation_only_answer_for_tree():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/products/10080055/analyser",
+                "presentation": {
+                    "type": "tree",
+                    "title": "Informações completas do produto 10080055",
+                    "nodes": [],
+                },
+            },
+        }
+    ]
+
+    assert ChatToolContextService.should_answer_with_presentation_only(tool_calls)
+    assert (
+        ChatToolContextService.resolve_presentation_only_answer(tool_calls)
+        == "Informações completas do produto 10080055"
+    )

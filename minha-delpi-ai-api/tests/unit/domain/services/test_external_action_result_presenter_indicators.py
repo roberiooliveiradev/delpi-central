@@ -74,3 +74,26 @@ def test_build_text_presentation_for_billing():
     assert text is not None
     assert "21.024,26" in text["markdown"]
     assert "veja os dados abaixo" not in text["markdown"].lower()
+
+
+def test_build_product_billing_table_marks_document_count_as_quantity():
+    presenter = ExternalActionResultPresenter()
+
+    table = presenter.build_presentation(
+        {
+            "value": 2519.81,
+            "documents": 15,
+            "first_billing_date": "20161031",
+            "last_billing_date": "20190211",
+        },
+        path="/products/90260145/sales/billing",
+    )
+
+    assert table is not None
+    assert table["type"] == "table"
+
+    rows = {row["campo"]: row for row in table["rows"]}
+
+    assert rows["Valor faturado"]["valorType"] == "currency"
+    assert rows["Documentos"]["valorType"] == "quantity"
+    assert rows["Documentos"]["valor"] == 15

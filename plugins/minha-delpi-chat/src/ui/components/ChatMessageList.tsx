@@ -32,6 +32,7 @@ import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
   getPresentationPairFromToolCalls,
+  isShortPresentationCaption,
   shouldShowRichPresentation,
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
@@ -63,6 +64,7 @@ type ChatMessageListProps = {
   streamingShowPresentation?: boolean;
   streamingCanvasOpen?: ChatCanvasOpenPayload | null;
   isStreaming?: boolean;
+  isPlaybackActive?: boolean;
   isLoading?: boolean;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   onEditAndResendMessage?: (
@@ -160,6 +162,28 @@ function getMessageAttachments(message: ChatMessage): MessageAttachment[] {
   return attachments.filter((attachment): attachment is MessageAttachment => {
     return Boolean(attachment && typeof attachment === "object");
   });
+}
+
+function resolveEditCardMinWidth(cardEl: HTMLElement | null | undefined): number | null {
+  if (!cardEl) {
+    return null;
+  }
+
+  const measuredWidth = cardEl.getBoundingClientRect().width;
+
+  if (!measuredWidth || measuredWidth <= 0) {
+    return null;
+  }
+
+  const stackEl = cardEl.closest<HTMLElement>(".mdc-chat-message-user-stack");
+  const containerWidth =
+    stackEl?.getBoundingClientRect().width ??
+    cardEl.parentElement?.getBoundingClientRect().width ??
+    window.innerWidth;
+
+  const maxWidth = Math.max(0, containerWidth - 8);
+
+  return Math.min(Math.ceil(measuredWidth), Math.floor(maxWidth));
 }
 
 function formatAttachmentSize(size?: number): string {
@@ -376,6 +400,7 @@ export function ChatMessageList({
   streamingShowPresentation = true,
   streamingCanvasOpen = null,
   isStreaming,
+  isPlaybackActive = false,
   isLoading,
   onEditAndResendMessage,
   onReuseMessage,
@@ -399,6 +424,9 @@ export function ChatMessageList({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
+  const [editingCardMinWidthPx, setEditingCardMinWidthPx] = useState<number | null>(
+    null,
+  );
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
@@ -452,6 +480,7 @@ export function ChatMessageList({
 
   const isActiveStream = Boolean(
     isStreaming ||
+      isPlaybackActive ||
       streamingAnswer ||
       streamingStatus ||
       (isStreaming && streamingToolCalls.length > 0),
@@ -466,9 +495,21 @@ export function ChatMessageList({
     streamingPresentation,
     streamingToolCalls,
   );
-  const hideStreamingActivity =
-    showStreamingPresentation ||
-    (isGeneratingAnswer && !suppressStreamingMarkdown);
+  const showStreamingCaptionReveal =
+    isActiveStream &&
+    suppressStreamingMarkdown &&
+    Boolean(streamingAnswer?.trim()) &&
+    isShortPresentationCaption(streamingAnswer, streamingToolCalls);
+  const revealedStreamingCaption = useStreamingTextReveal(streamingAnswer, {
+    enabled: showStreamingCaptionReveal,
+    charsPerFrame: 2,
+  });
+  const streamingCaptionComplete =
+    !showStreamingCaptionReveal ||
+    revealedStreamingCaption.length >= String(streamingAnswer || "").length;
+  const effectiveShowStreamingPresentation =
+    showStreamingPresentation && streamingCaptionComplete;
+  const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled: isGeneratingAnswer && !suppressStreamingMarkdown,
     charsPerFrame: 2,
@@ -748,10 +789,16 @@ export function ChatMessageList({
     if (updated) {
       setEditingMessageId(null);
       setEditingContent("");
+      setEditingCardMinWidthPx(null);
     }
   }
 
   function startEditMessage(message: ChatMessage) {
+    const cardEl = document.querySelector<HTMLElement>(
+      `[data-message-id="${CSS.escape(message.id)}"] .mdc-chat-message-card--user`,
+    );
+
+    setEditingCardMinWidthPx(resolveEditCardMinWidth(cardEl));
     setEditingMessageId(message.id);
     setEditingContent(message.content);
   }
@@ -759,6 +806,7 @@ export function ChatMessageList({
   function cancelEditMessage() {
     setEditingMessageId(null);
     setEditingContent("");
+    setEditingCardMinWidthPx(null);
   }
 
   async function handleCopy(messageId: string, content: string) {
@@ -849,6 +897,11 @@ export function ChatMessageList({
                   ? " mdc-chat-message-card--editing"
                   : ""
               }`}
+              style={
+                editingMessageId === message.id && editingCardMinWidthPx
+                  ? { minWidth: `min(${editingCardMinWidthPx}px, 100%)` }
+                  : undefined
+              }
             >
               {editingMessageId === message.id ? (
                 <ChatMessageEditField
@@ -1079,36 +1132,41 @@ export function ChatMessageList({
               <div
                 className={[
                   "mdc-chat-message-streaming-body",
-                  showStreamingPresentation
+                  effectiveShowStreamingPresentation
                     ? "mdc-chat-message-streaming-body--has-presentation"
                     : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
-                {!hideStreamingActivity ? (
+                {showStreamingActivityPanel ? (
                   <div className="mdc-chat-streaming-overlay">
                     <ChatStreamingActivityPanel
                       status={streamingStatus}
                       entries={streamingActivityLog}
                       isActive
-                      isAnswering={isGeneratingAnswer}
+                      isAnswering={isGeneratingAnswer && !showStreamingCaptionReveal}
                     />
-                    {streamingAnswer && !suppressStreamingMarkdown ? (
-                      <div
-                        className={[
-                          "mdc-chat-stream-answer",
-                          isGeneratingAnswer ? "is-visible" : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <ChatMarkdown content={revealedStreamingAnswer} />
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
-                {showStreamingPresentation
+                {showStreamingCaptionReveal ? (
+                  <h3 className="mdc-rich-presentation__heading">
+                    {revealedStreamingCaption}
+                  </h3>
+                ) : null}
+                {streamingAnswer && !suppressStreamingMarkdown ? (
+                  <div
+                    className={[
+                      "mdc-chat-stream-answer",
+                      isGeneratingAnswer ? "is-visible" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <ChatMarkdown content={revealedStreamingAnswer} />
+                  </div>
+                ) : null}
+                {effectiveShowStreamingPresentation
                   ? renderPresentation(
                       streamingToolCalls,
                       streamingAnswer,

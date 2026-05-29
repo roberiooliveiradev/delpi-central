@@ -136,3 +136,53 @@ def test_agentic_skipped_on_stock_branch_refinement(monkeypatch):
     )
 
     assert result["toolCalls"] == []
+
+
+def test_agentic_skipped_after_successful_stock_value_kpi(monkeypatch):
+    service = ChatAgenticToolLoopService(
+        llm_gateway=FakeLlm(),
+        execute_tool_use_case=FakeExecuteTool(),
+        external_action_repository=FakeRepository(
+            [{"actionId": "api_delpi.suprimentos.get_supplies_stock_value"}]
+        ),
+    )
+    monkeypatch.setattr(
+        service,
+        "_resolve_settings",
+        lambda: {"enabled": True, "max_steps": 1},
+    )
+
+    tool_context = {
+        "directAnswer": "Valor Total de Estoque",
+        "skipRag": True,
+        "context": "consulta ok",
+        "toolCalls": [
+            {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": "api_delpi.suprimentos.get_supplies_stock_value",
+                },
+                "metadata": {
+                    "ok": True,
+                    "path": "/supplies/stock-value",
+                    "presentation": {
+                        "type": "kpi",
+                        "title": "Valor Total de Estoque",
+                    },
+                },
+            }
+        ],
+    }
+
+    result = service.extend_tool_context(
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token",
+        message="qual o valor total de estoque da empresa",
+        tool_context=tool_context,
+        allowed_tool_names=None,
+        allowed_action_ids=["api_delpi.suprimentos.get_supplies_stock_value"],
+    )
+
+    assert result["toolCalls"] == tool_context["toolCalls"]
+    assert result["directAnswer"] == "Valor Total de Estoque"
+    assert result.get("skipRag") is True

@@ -30,7 +30,7 @@ import {
 } from "../chatMessageDelivery";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
-import { shouldShowRichPresentation } from "../../ui/components/chatPresentation";
+import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
 import { upsertStreamingActivityEntry } from "../utils/streamingActivityLog";
 
 type UseChatSessionOptions = {
@@ -323,8 +323,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     });
   }, [loadMessages, resetStreamingUi]);
 
-  const { displayedAnswer: playbackAnswer, showPresentation: playbackShowPresentation } =
-    useChatMessagePlayback(playbackPayload, finishPlayback);
+  const {
+    displayedAnswer: playbackAnswer,
+    showPresentation: playbackShowPresentation,
+    isPlaying: isPlaybackActive,
+  } = useChatMessagePlayback(playbackPayload, finishPlayback);
 
   const streamingAdminDebug = playbackPayload?.adminDebug ?? null;
 
@@ -683,7 +686,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingShowPresentation(hasRichPresentation);
           setStreamingStatus(
             hasRichPresentation
-              ? null
+              ? "Finalizando apresentação..."
               : toolCalls.length > 0
                 ? "Consultando sistemas autorizados..."
                 : "Gerando resposta...",
@@ -702,7 +705,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           awaitingPlaybackRef.current = true;
-          setStreamingStatus(null);
+          setStreamingStatus("Exibindo resposta...");
           setStreamingSources(payload.sources);
           setStreamingToolCalls(payload.toolCalls);
           setStreamingShowPresentation(
@@ -761,6 +764,37 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
                 adminDebug: response.adminDebug ?? null,
               },
             );
+            return;
+          }
+
+          const finalAnswer = response.answer ?? "";
+          const finalToolCalls = response.toolCalls ?? [];
+
+          if (
+            shouldShowRichPresentation(finalAnswer, finalToolCalls) &&
+            isShortPresentationCaption(finalAnswer, finalToolCalls)
+          ) {
+            setPlaybackPayload({
+              messageId: response.messageId,
+              answer: finalAnswer,
+              sources: response.sources ?? [],
+              toolCalls: finalToolCalls,
+              adminDebug: response.adminDebug ?? null,
+            });
+            return;
+          }
+
+          if (
+            shouldShowRichPresentation(
+              response.answer ?? "",
+              response.toolCalls ?? [],
+            ) &&
+            !String(response.answer ?? "").trim()
+          ) {
+            setDraft("");
+            setPendingUserMessage(null);
+            resetStreamingUi();
+            await loadMessages(sessionId);
             return;
           }
 
@@ -1151,7 +1185,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const isComposerBusy = isActiveSessionBusy();
   const isStreamingActiveSession =
     Boolean(activeSession) &&
-    (isSessionStreaming(activeSession.id) || isSessionPending(activeSession.id));
+    (isSessionStreaming(activeSession.id) ||
+      isSessionPending(activeSession.id) ||
+      isPlaybackActive);
 
   return {
     sessions,
@@ -1173,6 +1209,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isLoadingMessages,
     isComposerBusy,
     isStreamingActiveSession,
+    isPlaybackActive,
     isSessionProcessing,
     error,
     clearError,
