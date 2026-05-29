@@ -77,6 +77,7 @@ class ChatWorkspaceContextService:
             "key": agent.key,
             "name": agent.name,
             "description": agent.description,
+            "category": agent.category,
             "metadata": agent.metadata,
             "responseStyle": agent.response_style,
             "maxToolCalls": agent.max_tool_calls,

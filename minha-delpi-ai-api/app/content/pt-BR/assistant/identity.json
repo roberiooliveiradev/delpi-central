@@ -128,8 +128,9 @@
     ]
   },
   "placeholders": {
-    "agentDescriptionFallback": "assistente especializado configurado para este tema."
+    "agentDescriptionFallback": "assistente configurado para este tema."
   },
+  "responsesNote": "Respostas com agente ativo são montadas dinamicamente a partir de name, description e systemPrompt publicados. Opcional: metadata.identity.responses.{who|what|role|limits|origin|usage}.",
   "responses": {
     "platform": {
       "who": "Olá! Sou o assistente da **{platform_name}** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras daquele perfil.\n\nNão preciso do seu nome ou e-mail só para me apresentar. Se quiser ver tudo que consigo fazer aqui, pergunte *o que você pode fazer*.",
@@ -138,14 +139,6 @@
       "limits": "Alguns limites importantes:\n\n- **Não invento** dados de produto, estoque, preço ou indicadores — se faltar código ou contexto, pergunto.\n- Só acesso o que seu perfil e o agente ativo **autorizam** (SSO/RBAC).\n- Não substituo sistemas oficiais nem executo ações críticas sem confirmação.\n- Posso errar em interpretação; em dúvida, peça para reformular ou confira na fonte.\n\nPara capacidades detalhadas: *o que você pode fazer*.",
       "origin": "Funciono com **modelo de linguagem** (IA generativa) orquestrado pelo backend da {platform_name}, com políticas de segurança, RAG em documentação autorizada e, quando configurado, chamadas a APIs reais via agentes.\n\nNão sou uma pessoa: sou software. As respostas são geradas em tempo real e podem ser revisadas no histórico da conversa.",
       "usage": "Para me usar bem:\n\n1. Escreva em **português**, direto ao ponto — aceito pequenos erros de digitação.\n2. Se souber, informe **código de produto**, OV ou período.\n3. Para números da operação, selecione o **agente** adequado antes de perguntar.\n4. Peça formato (*em tabela*, *gráfico*, *só texto*) quando quiser.\n5. Pergunte *o que você pode fazer* para ver ferramentas e consultas desta sessão.\n\nNão é necessário se identificar com nome/e-mail só para conversar."
-    },
-    "agent": {
-      "who": "Olá! Nesta conversa estou como **{agent_name}** — {agent_description}\n\nSou um assistente da **{platform_name}** com foco nesse tema. Converso em português, uso documentação e ferramentas liberadas para você neste agente.\n\nNão preciso do seu nome ou e-mail para me apresentar. Para ver consultas e ferramentas disponíveis agora, pergunte *o que você pode fazer*.",
-      "what": "Sou o agente **{agent_name}** da {platform_name}: {agent_description}\n\nInterpreto suas perguntas neste domínio, uso conhecimento autorizado e, quando habilitado, consultas operacionais reais — sem inventar números.",
-      "role": "Como **{agent_name}**, {agent_description}\n\nNa prática, ajudo você a **tirar dúvidas e consultar dados** dentro do que este agente tem liberado (documentação + actions configuradas).\n\nPara a lista completa de consultas e ferramentas desta sessão, pergunte *o que você pode fazer*.",
-      "limits": "Como **{agent_name}**, tenho estes limites:\n\n- **Não invento** saldos, preços ou cadastros — preciso de códigos/contexto ou uso as APIs habilitadas.\n- Só o que seu perfil e este agente **autorizam**.\n- Não altero cadastros nem sistemas sem fluxo e confirmação adequados.\n- Posso errar na interpretação; reformule ou peça em tabela se algo vier estranho.\n\nCapacidades desta sessão: *o que você pode fazer*.",
-      "origin": "Sou um **agente configurável** na {platform_name}: instruções, fontes de conhecimento e consultas (actions) definidas pelos administradores, executadas com modelo de linguagem e integrações autorizadas.\n\nNão sou humano — respostas são geradas em tempo real e ficam no histórico do chat.",
-      "usage": "Para usar o **{agent_name}**:\n\n1. Faça perguntas **objetivas** no tema do agente.\n2. Informe **códigos** (produto, OV, filial) quando souber.\n3. Peça *em tabela* ou *gráfico* se quiser visualizar dados.\n4. Digite *o que você pode fazer* para ver as consultas habilitadas agora.\n\nNão precisa enviar nome/e-mail só para começar a conversar."
     }
   },
   "followUps": {

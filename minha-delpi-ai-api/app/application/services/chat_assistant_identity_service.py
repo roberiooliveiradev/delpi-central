@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from functools import lru_cache
 
+from app.domain.services.chat_agent_profile_service import ChatAgentProfileService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -155,34 +156,119 @@ class ChatAssistantIdentityService:
     @classmethod
     def build_direct_answer(cls, *, message: str, workspace_context: dict) -> str | None:
         category = cls.classify(message)
+
         if not category:
             return None
 
+        profile = ChatAgentProfileService.from_workspace(workspace_context)
+
+        if profile.has_agent:
+            custom = ChatAgentProfileService.custom_identity_response(profile, category)
+
+            if custom:
+                return custom
+
+            return cls._build_agent_identity_answer(category, profile)
+
+        return cls._build_platform_identity_answer(category)
+
+    @classmethod
+    def _build_agent_identity_answer(cls, category: str, profile) -> str:
+        builders = {
+            "who": cls._agent_who,
+            "what": cls._agent_what,
+            "role": cls._agent_role,
+            "limits": cls._agent_limits,
+            "origin": cls._agent_origin,
+            "usage": cls._agent_usage,
+        }
+
+        builder = builders.get(category)
+
+        if not builder:
+            return cls._build_platform_identity_answer(category) or ""
+
+        return builder(profile)
+
+    @classmethod
+    def _agent_who(cls, profile) -> str:
+        lines = [f"Olá! Sou **{profile.name}**."]
+
+        if profile.self_description:
+            lines.append(profile.self_description)
+
+        lines.extend(
+            [
+                f"Atuo nesta conversa como agente da **{profile.platform_name}**.",
+                "Para ver consultas e ferramentas disponíveis agora, pergunte *o que você pode fazer*.",
+            ]
+        )
+
+        return "\n\n".join(lines)
+
+    @classmethod
+    def _agent_what(cls, profile) -> str:
+        return (
+            f"Sou **{profile.name}**, agente da {profile.platform_name}.\n\n"
+            f"{profile.self_description}"
+        )
+
+    @classmethod
+    def _agent_role(cls, profile) -> str:
+        return (
+            f"Como **{profile.name}**, {profile.self_description}\n\n"
+            "Na prática, ajudo você a tirar dúvidas e consultar dados dentro do que "
+            "este agente tem liberado (documentação + actions configuradas).\n\n"
+            "Para a lista completa de consultas e ferramentas desta sessão, "
+            "pergunte *o que você pode fazer*."
+        )
+
+    @classmethod
+    def _agent_limits(cls, profile) -> str:
+        return (
+            f"Como **{profile.name}**, tenho estes limites:\n\n"
+            "- **Não invento** saldos, preços ou cadastros — preciso de códigos/contexto "
+            "ou uso as APIs habilitadas.\n"
+            "- Só o que seu perfil e este agente **autorizam**.\n"
+            "- Não altero cadastros nem sistemas sem fluxo e confirmação adequados.\n"
+            "- Posso errar na interpretação; reformule ou peça em tabela se algo vier estranho.\n\n"
+            "Capacidades desta sessão: *o que você pode fazer*."
+        )
+
+    @classmethod
+    def _agent_origin(cls, profile) -> str:
+        return (
+            f"Sou **{profile.name}**, um agente configurável na {profile.platform_name}: "
+            f"{profile.self_description}\n\n"
+            "Funciono com **modelo de linguagem** (IA generativa), políticas de segurança, "
+            "RAG em documentação autorizada e, quando habilitado, chamadas a APIs reais.\n\n"
+            "Não sou humano — respostas são geradas em tempo real e ficam no histórico do chat."
+        )
+
+    @classmethod
+    def _agent_usage(cls, profile) -> str:
+        return (
+            f"Para usar o **{profile.name}**:\n\n"
+            "1. Faça perguntas **objetivas** no tema do agente.\n"
+            "2. Informe **códigos** (produto, OV, filial) quando souber.\n"
+            "3. Peça *em tabela* ou *gráfico* se quiser visualizar dados.\n"
+            "4. Digite *o que você pode fazer* para ver as consultas habilitadas agora.\n\n"
+            "Não precisa enviar nome/e-mail só para começar a conversar."
+        )
+
+    @classmethod
+    def _build_platform_identity_answer(cls, category: str) -> str | None:
         content = _identity_content()
         responses = content.get("responses") or {}
-        agent = workspace_context.get("agent") or {}
-        agent_name = str(agent.get("name") or workspace_context.get("agentKey") or "").strip()
-        has_agent = bool(agent_name)
+        template = str((responses.get("platform") or {}).get(category) or "").strip()
 
-        scope = "agent" if has_agent else "platform"
-        template = str((responses.get(scope) or {}).get(category) or "").strip()
-        if not template:
-            template = str((responses.get("platform") or {}).get(category) or "").strip()
         if not template:
             return None
-
-        placeholders = content.get("placeholders") or {}
-        agent_description = str(agent.get("description") or "").strip()
-        if not agent_description:
-            agent_description = str(
-                placeholders.get("agentDescriptionFallback")
-                or "assistente especializado configurado para este tema."
-            )
 
         platform_name = str(content.get("platformName") or "Minha DELPI")
 
         return template.format(
             platform_name=platform_name,
-            agent_name=agent_name,
-            agent_description=agent_description,
+            agent_name="",
+            agent_description="",
         )

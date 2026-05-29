@@ -1389,7 +1389,7 @@ export function ChatAgentBuilderPage({
                     setKey(createKeyFromName(nextName));
                   }
                 }}
-                placeholder="Especialista em Produtos DELPI"
+                placeholder="Nome do agente"
               />
             </label>
           </header>

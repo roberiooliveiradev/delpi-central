@@ -47,7 +47,8 @@ Mensagem do usuário
 | `ChatAnalysisIntentService` | Detecção de comparação / insights |
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
-| `ChatSmallTalkService` | Saudações e agradecimentos (`small_talk.json`) — resposta direta sem RAG/LLM |
+| `ChatAgentProfileService` | Perfil dinâmico do agente ativo (`name`, `description`, `systemPrompt`) para identidade e small talk |
+| `ChatAssistantIdentityService` | «Quem é você?» — resposta direta dinâmica (sem RAG/LLM no default) |
 | `ChatMetaDirectAnswerService` | Perguntas compostas meta («quem sou eu, o que consigo fazer, quem é você?») em seções |
 | `ExternalActionColumnLabelService` | Rótulos PT-BR de colunas (`column_labels.json` + OpenAPI `title`) no presenter |
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
@@ -77,7 +78,7 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 | Etapa | Comportamento |
 |-------|----------------|
 | Classificação | `ChatAssistantIdentityService.is_assistant_identity_question` / `classify` (categorias: `who`, `origin`, `role`, `what`, `limits`, `usage`) |
-| Resposta | **`build_direct_answer`** (texto em `identity.json`) quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` (default) — **sem RAG nem LLM** (latência baixa em CPU) |
+| Resposta | **`build_direct_answer`** montada dinamicamente via `ChatAgentProfileService` (`name`, `description`, `systemPrompt` publicados; override opcional em `metadata.identity.responses`) quando `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=true` (default) — **sem RAG nem LLM** |
 | Desligar atalho | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED=false` — volta RAG + LLM + policy `chat-assistant-identity.md` |
 | RAG (modo legado) | `build_rag_query`, `RAG_IDENTITY_QUESTION_MIN_SCORE`, filtro `is_identity_relevant_chunk` (rejeita `Normas_Tecnicas_*` mesmo com “DELPI” no trecho) |
 

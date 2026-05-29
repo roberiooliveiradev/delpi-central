@@ -64,7 +64,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             }:
                 continue
 
-            result.append((self._to_entity(model), access_role))
+            result.append((self._to_runtime_entity(model), access_role))
 
         return result
 
@@ -104,7 +104,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if not model or not self._can_access(model, user_id):
             return None
 
-        return self._to_entity(model), self._access_role(model, user_id)
+        return self._to_entity_raw(model), self._access_role(model, user_id)
 
     def get_enabled_by_key(self, key: str, user_id: UUID | None = None) -> ChatAgent | None:
         query = (
@@ -121,15 +121,12 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if user_id and not self._can_access(model, user_id):
             return None
 
-        entity = self._to_entity(model)
+        entity = self._to_runtime_entity(model)
 
         if int(model.published_version or 0) < 1:
             if user_id and self._can_edit(model, user_id):
                 return entity
             return None
-
-        if model.published_config and isinstance(model.published_config, dict):
-            return apply_snapshot_to_agent(entity, model.published_config)
 
         return entity
 
@@ -139,7 +136,12 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         if not record:
             return None
 
-        return record[0]
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model:
+            return None
+
+        return self._to_entity_raw(model)
 
     def publish(
         self,
@@ -1033,7 +1035,24 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return "viewer"
 
-    def _to_entity(self, model: AiChatAgentModel) -> ChatAgent:
+    def _to_runtime_entity(self, model: AiChatAgentModel) -> ChatAgent:
+        return self._apply_published_snapshot(self._to_entity_raw(model), model)
+
+    def _apply_published_snapshot(
+        self,
+        entity: ChatAgent,
+        model: AiChatAgentModel,
+    ) -> ChatAgent:
+        if (
+            int(model.published_version or 0) >= 1
+            and model.published_config
+            and isinstance(model.published_config, dict)
+        ):
+            return apply_snapshot_to_agent(entity, model.published_config)
+
+        return entity
+
+    def _to_entity_raw(self, model: AiChatAgentModel) -> ChatAgent:
         return ChatAgent(
             id=model.id,
             key=model.key,
@@ -1055,3 +1074,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             created_at=model.created_at,
             updated_at=model.updated_at,
         )
+
+    def _to_entity(self, model: AiChatAgentModel) -> ChatAgent:
+        return self._to_runtime_entity(model)

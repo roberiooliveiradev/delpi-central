@@ -48,15 +48,15 @@ def test_who_answer_uses_agent_name():
         message="quem é vc?",
         workspace_context={
             "agent": {
-                "name": "Especialista em Produtos",
+                "name": "Agente Minha DELPI",
                 "description": "foco em cadastro e consultas de produto.",
             },
-            "agentKey": "produtos",
+            "agentKey": "minha-delpi-chat",
         },
     )
     assert text
-    assert "Especialista em Produtos" in text
-    assert "nome ou e-mail" in text.lower() or "e-mail" in text.lower()
+    assert "Agente Minha DELPI" in text
+    assert "cadastro e consultas de produto" in text
 
 
 def test_who_answer_platform_without_agent():
