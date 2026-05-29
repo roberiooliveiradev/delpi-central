@@ -40,6 +40,31 @@ def test_production_oee_series_returns_points_per_bucket() -> None:
     assert result.branch is None
 
 
+def test_production_oee_series_treats_empty_oee_as_null() -> None:
+    repository = MagicMock()
+    repository.get_overall_equipment_effectiveness.return_value = (
+        OverallEquipmentEffectiveness(
+            branch="01",
+            start_date="2026-05-01",
+            end_date="2026-05-01",
+            oee_pct="",
+        )
+    )
+
+    use_case = GetProductionOeeSeriesUseCase(repository)
+    result = use_case.execute(
+        ProductionOeeSeriesRequest(
+            granularity="day",
+            date_start="2026-05-01",
+            date_end="2026-05-02",
+        )
+    )
+
+    assert result.points
+    assert result.points[0].oee_filial_01 is None
+    assert result.points[0].oee_filial_02 is None
+
+
 def test_production_oee_series_filters_single_branch() -> None:
     repository = MagicMock()
     repository.get_overall_equipment_effectiveness.return_value = (

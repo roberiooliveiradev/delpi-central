@@ -86,7 +86,24 @@ class GetProductionOeeSeriesUseCase:
             )
         )
 
-        if oee is None or oee.oee_pct is None:
+        if oee is None:
             return None
 
-        return round(float(oee.oee_pct), 2)
+        parsed = _to_optional_float(oee.oee_pct)
+        if parsed is None:
+            return None
+
+        return round(parsed, 2)
+
+
+def _to_optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+
+    if isinstance(value, str) and not value.strip():
+        return None
+
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
