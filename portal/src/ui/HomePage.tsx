@@ -17,6 +17,8 @@ import {
 
 import { motion } from "framer-motion";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
+import { useAppsById } from "../hooks/useAppsById";
+import { isLaunchableApp } from "../utils/launchableApps";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -39,7 +41,6 @@ export const HomePage = () => {
     user,
     favorites,
     notifications,
-    apps,
     markAllNotificationsRead,
   } = useContext(AuthContext);
   const { markNotificationRead, handleDelete, handleToggleImportant } = useNotificationActions();
@@ -49,16 +50,22 @@ export const HomePage = () => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const routesByApp = useRoutesByApp();
+  const appsById = useAppsById();
+
+  const launchableFavorites = useMemo(
+    () => favorites.filter((fav) => isLaunchableApp(appsById[fav.id])),
+    [favorites, appsById],
+  );
+
   const recentApps = useMemo(() => {
     const ids = getRecentAppIds();
     return ids
-      .map((id) => apps.find((a) => a.id === id))
-      .filter(Boolean) as any[];
-  }, [apps]);
+      .map((id) => appsById[id])
+      .filter(isLaunchableApp);
+  }, [appsById]);
 
   const topNotifications = notifications.slice(0, 4);
-
-  const routesByApp = useRoutesByApp();
 
   return (
     <div id="home-page" className="home-wrap">
@@ -116,7 +123,7 @@ export const HomePage = () => {
         <SummaryCard
           icon={<Star size={18} />}
           title="Favoritos"
-          value={favorites.length}
+          value={launchableFavorites.length}
           subtitle="aplicações fixadas"
           onClick={() => {
             const el = document.querySelector("#home-favorites");
@@ -149,20 +156,21 @@ export const HomePage = () => {
         >
           <PanelHeader title="Favoritos" hint="Acesso rápido às aplicações mais usadas" />
 
-          {favorites.length === 0 ? (
+          {launchableFavorites.length === 0 ? (
             <EmptyState text="Você ainda não fixou aplicações. Use o botão Apps na sidebar." />
           ) : (
           <div className="launcher-pinned-grid">
-            {favorites.map((app) => {
-              const appRoutes = routesByApp[app.id] ?? [];
+            {launchableFavorites.map((favorite) => {
+              const app = appsById[favorite.id] ?? favorite;
+              const appRoutes = routesByApp[favorite.id] ?? [];
 
               return (
                 <AppLauncherCard
                   variant="home"
-                  key={app.id}
+                  key={favorite.id}
                   app={app}
                   routes={appRoutes}
-                  isOpen={openFavoriteAppId === app.id}
+                  isOpen={openFavoriteAppId === favorite.id}
                   isPinned={true}
                   onToggleOpen={(id) => {
                     setOpenRecentAppId(null);
@@ -170,7 +178,12 @@ export const HomePage = () => {
                   }}
                   onOpenSingle={(id) => {
                     const route = routesByApp[id]?.[0];
-                    if (route) navigate(route.path);
+                    const catalogApp = appsById[id];
+                    if (route) {
+                      navigate(route.path);
+                      return;
+                    }
+                    if (catalogApp?.basePath) navigate(catalogApp.basePath);
                   }}
                   onGoToRoute={(path) => navigate(path)}
                   onTogglePin={() => {}}
@@ -215,7 +228,12 @@ export const HomePage = () => {
                   }}
                   onOpenSingle={(id) => {
                     const route = routesByApp[id]?.[0];
-                    if (route) navigate(route.path);
+                    const catalogApp = appsById[id];
+                    if (route) {
+                      navigate(route.path);
+                      return;
+                    }
+                    if (catalogApp?.basePath) navigate(catalogApp.basePath);
                   }}
                   onGoToRoute={(path) => navigate(path)}
                   onTogglePin={() => {}}

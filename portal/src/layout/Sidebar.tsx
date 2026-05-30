@@ -31,6 +31,7 @@ import {
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
+import { isLaunchableApp } from "../utils/launchableApps";
 
 type GroupedRoutes = Record<
   string,
@@ -230,9 +231,10 @@ export const Sidebar = () => {
     if (!favorites?.length) return [];
 
     return favorites
+      .filter((fav) => isLaunchableApp(apps.find((app) => app.id === fav.id)))
       .map((fav) => [fav.id, grouped[fav.id]] as const)
       .filter(([, group]) => !!group);
-  }, [favorites, grouped]);
+  }, [favorites, grouped, apps]);
 
   /* ===============================
      DADOS GERAIS
@@ -316,16 +318,19 @@ export const Sidebar = () => {
             <div className="sidebar-content">
               {pinnedGroupedEntries.map(([appId, group]) => {
                 const isOpen = openApps[appId] ?? false;
+                const catalogApp = apps.find((app) => app.id === appId);
 
                 return (
                   <AppLauncherCard
                     key={appId}
                     variant="sidebar"
-                    app={{
-                      id: appId,
-                      name: group.appName,
-                      icon: group.appIcon,
-                    }}
+                    app={
+                      catalogApp ?? {
+                        id: appId,
+                        name: group.appName,
+                        icon: group.appIcon,
+                      }
+                    }
                     routes={group.routes}
                     isOpen={isOpen}
                     onToggleOpen={(id) =>
@@ -334,7 +339,14 @@ export const Sidebar = () => {
                         [id]: !prev[id],
                       }))
                     }
-                    onOpenSingle={() => navigate("/")}
+                    onOpenSingle={() => {
+                      const route = group.routes[0];
+                      if (route) {
+                        navigate(route.path);
+                        return;
+                      }
+                      if (catalogApp?.basePath) navigate(catalogApp.basePath);
+                    }}
                     onGoToRoute={(path) => navigate(path)}
                   />
                 );

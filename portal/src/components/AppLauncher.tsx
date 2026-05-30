@@ -9,6 +9,8 @@ import {
 import "./AppLauncher.css";
 import { AppLauncherCard } from "./AppLauncherCard";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
+import { pushRecentApp } from "../utils/recentApps";
+import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 interface Props {
   onClose: () => void;
@@ -28,7 +30,8 @@ type AppItem = {
   id: string;
   name: string;
   icon?: string | null;
-  base_path?: string;
+  basePath?: string;
+  type?: "iframe" | "microfrontend" | "backend-only";
 };
 
 type SearchResult =
@@ -64,24 +67,7 @@ export const AppLauncher = ({
 
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const [showAllPinned, setShowAllPinned] = useState(false);
-  const [showAllRecent, setShowAllRecent] = useState(false);
-
-  const RECENT_KEY = "delpi.recent.apps";
-
-  const registerRecent = (appId: string) => {
-    const existing = JSON.parse(
-      localStorage.getItem(RECENT_KEY) || "[]"
-    ) as string[];
-
-    const next = [appId, ...existing.filter(id => id !== appId)].slice(0, 10);
-
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
-  };
-  
-  const [openPinnedAppId, setOpenPinnedAppId] = useState<string | null>(null);
-  const [openRecentAppId, setOpenRecentAppId] = useState<string | null>(null);
-
+  const [openAppId, setOpenAppId] = useState<string | null>(null);
   const [openSearchAppId, setOpenSearchAppId] = useState<string | null>(null);
 
   // Autofocus + atalhos
@@ -127,7 +113,7 @@ export const AppLauncher = ({
 
   const goTo = (path: string) => {
     const route = routes.find(r => r.path === path);
-    if (route?.app) registerRecent(route.app);
+    if (route?.app) pushRecentApp(route.app);
 
     navigate(path);
     onClose();
@@ -141,30 +127,29 @@ export const AppLauncher = ({
     const appRoutes = routesByApp[appId] ?? [];
     const hasNoRoutes = appRoutes.length === 0;
     const hasSingleRoute = appRoutes.length === 1;
-    // const hasMultipleRoutes = appRoutes.length > 1;
+    const catalogApp = apps.find((app) => app.id === appId);
 
     if (hasSingleRoute) {
-      registerRecent(appId);
+      pushRecentApp(appId);
       goTo(appRoutes[0].path);
       return;
     }
 
     if (hasNoRoutes) {
-      goTo("/");
+      if (catalogApp?.basePath) {
+        pushRecentApp(appId);
+        goTo(catalogApp.basePath);
+      }
       return;
     }
 
-    if (hasSingleRoute) {
-      goTo(appRoutes[0].path);
-      return;
-    }
-
-    // if (hasMultipleRoutes) {
-    //   handleOpenApp(appId);
-    // }
+    // Múltiplas rotas: expandir card (onToggleOpen)
   };
 
   const togglePin = async (appId: string) => {
+    const catalogApp = apps.find((app) => app.id === appId);
+    if (!isLaunchableApp(catalogApp)) return;
+
     const isPinned = favorites.some(f => f.id === appId);
 
     if (isPinned) {
@@ -174,44 +159,28 @@ export const AppLauncher = ({
     }
   };
 
-  const pinnedApps = useMemo(() => {
-    if (!favorites?.length) return apps.slice(0, 12);
+  const launchableApps = useMemo(() => filterLaunchableApps(apps), [apps]);
 
+  const availableApps = useMemo(() => {
     const favoriteIds = favorites.map(f => f.id);
 
     const pinnedOrdered = favoriteIds
-      .map(id => apps.find(a => a.id === id))
+      .map(id => launchableApps.find(a => a.id === id))
       .filter(Boolean) as AppItem[];
 
-    const rest = apps
+    const rest = launchableApps
       .filter(a => !favoriteIds.includes(a.id))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
     return [...pinnedOrdered, ...rest];
-  }, [apps, favorites]);
-
-  const visiblePinned = showAllPinned
-  ? pinnedApps
-  : pinnedApps.slice(0, 4);
-
-  const recentApps = useMemo(() => {
-    const stored = JSON.parse(
-      localStorage.getItem(RECENT_KEY) || "[]"
-    ) as string[];
-
-    const ordered = stored
-      .map(id => apps.find(a => a.id === id))
-      .filter(Boolean) as AppItem[];
-
-    return showAllRecent ? ordered : ordered.slice(0, 4);
-  }, [apps, showAllRecent]);
+  }, [launchableApps, favorites]);
 
 
   const searchResults: SearchResult[] = useMemo(() => {
     const q = normalize(query);
     if (!q) return [];
 
-    const aList = (apps ?? []) as AppItem[];
+    const aList = launchableApps as AppItem[];
     const results: SearchResult[] = [];
 
     for (const app of aList) {
@@ -243,7 +212,7 @@ export const AppLauncher = ({
     return results
       .sort((a, b) => b.score - a.score)
       .slice(0, 24);
-  }, [apps, query, routesByApp]);
+  }, [launchableApps, query, routesByApp]);
 
   const isSearching = normalize(query).length > 0;
 
@@ -278,22 +247,21 @@ export const AppLauncher = ({
         </div>
         <div className="launcher-body">
           {!isSearching ? (
-            <>
-              <div className="launcher-section">
-                <div className="launcher-section-header">
-                  <span>Fixado</span>
-                  <button
-                    className="launcher-section-action"
-                    onClick={() => setShowAllPinned(prev => !prev)}
-                  >
-                    {showAllPinned ? "Mostrar menos" : "Mostrar tudo"}
-                  </button>
-                </div>
+            <div className="launcher-section">
+              <div className="launcher-section-header">
+                <span>Disponíveis</span>
+                <span className="launcher-section-action">{availableApps.length} apps</span>
+              </div>
 
+              {availableApps.length === 0 ? (
+                <div className="launcher-reco-empty">
+                  Nenhum aplicativo disponível para sua conta.
+                </div>
+              ) : (
                 <div className="launcher-pinned-grid">
-                  {visiblePinned.map((app) => {
+                  {availableApps.map((app) => {
                     const isPinned = favorites.some(f => f.id === app.id);
-                    const isOpen = openPinnedAppId === app.id;
+                    const isOpen = openAppId === app.id;
                     const appRoutes = routesByApp[app.id] ?? [];
 
                     return (
@@ -304,8 +272,7 @@ export const AppLauncher = ({
                         isOpen={isOpen}
                         isPinned={isPinned}
                         onToggleOpen={(id) => {
-                          setOpenRecentAppId(null);
-                          setOpenPinnedAppId(prev => (prev === id ? null : id));
+                          setOpenAppId(prev => (prev === id ? null : id));
                         }}
                         onOpenSingle={openAppOrDefault}
                         onGoToRoute={goTo}
@@ -314,53 +281,8 @@ export const AppLauncher = ({
                     );
                   })}
                 </div>
-              </div>
-
-              <div className="launcher-divider" />
-
-              <div className="launcher-section">
-                <div className="launcher-section-header">
-                  <span>Recentes</span>
-                  <button
-                    className="launcher-section-action"
-                    onClick={() => setShowAllRecent(prev => !prev)}
-                  >
-                    {showAllRecent ? "Mostrar menos" : "Mostrar tudo"}
-                  </button>
-                </div>
-
-                {recentApps.length === 0 ? (
-                  <div className="launcher-reco-empty">
-                    Nenhum app acessado recentemente.
-                  </div>
-                ) : (
-                  <div className="launcher-pinned-grid">
-                    {recentApps.map(app => {
-                      const isPinned = favorites.some(f => f.id === app.id);
-                      const isOpen = openRecentAppId === app.id;
-                      const appRoutes = routesByApp[app.id] ?? [];
-
-                      return (
-                        <AppLauncherCard
-                          key={app.id}
-                          app={app}
-                          routes={appRoutes}
-                          isOpen={isOpen}
-                          isPinned={isPinned}
-                          onToggleOpen={(id) => {
-                            setOpenPinnedAppId(null);
-                            setOpenRecentAppId(prev => (prev === id ? null : id));
-                          }}
-                          onOpenSingle={openAppOrDefault}
-                          onGoToRoute={goTo}
-                          onTogglePin={togglePin}
-                        />
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </>
+              )}
+            </div>
           ) : (
             <div className="launcher-section">
               <div className="launcher-section-header">

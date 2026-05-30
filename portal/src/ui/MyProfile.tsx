@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 
 import { AuthContext } from "../state/AuthContext";
 import { useRoutesByApp } from "../hooks/useRoutesByApp";
+import { useAppsById } from "../hooks/useAppsById";
+import { filterLaunchableApps, isLaunchableApp } from "../utils/launchableApps";
 
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { DataTable } from "../components/DataTable";
@@ -73,6 +75,7 @@ export const MyProfile = () => {
 
   const navigate = useNavigate();
   const routesByApp = useRoutesByApp();
+  const appsById = useAppsById();
 
   const [query, setQuery] = useState("");
 
@@ -104,6 +107,8 @@ export const MyProfile = () => {
   ========================================= */
 
   const togglePin = async (appId: string) => {
+    if (!isLaunchableApp(appsById[appId])) return;
+
     const isPinned = favorites.some((f) => f.id === appId);
 
     if (isPinned) {
@@ -114,10 +119,11 @@ export const MyProfile = () => {
   };
 
   const sortedApps = useMemo(() => {
+    const launchableApps = filterLaunchableApps(apps);
     const favIds = favorites.map((f) => f.id);
 
-    const pinned = apps.filter((a) => favIds.includes(a.id));
-    const rest = apps.filter((a) => !favIds.includes(a.id));
+    const pinned = launchableApps.filter((a) => favIds.includes(a.id));
+    const rest = launchableApps.filter((a) => !favIds.includes(a.id));
 
     return [...pinned, ...rest];
   }, [apps, favorites]);
@@ -132,7 +138,7 @@ export const MyProfile = () => {
 
     const results: SearchResult[] = [];
 
-    for (const app of apps) {
+    for (const app of filterLaunchableApps(apps)) {
       const appName = normalize(app.name);
 
       const appScore =
@@ -596,7 +602,12 @@ export const MyProfile = () => {
                     isPinned={favorites.some((f) => f.id === app.id)}
                     onOpenSingle={(id) => {
                       const route = routesByApp[id]?.[0];
-                      if (route) navigate(route.path);
+                      const catalogApp = appsById[id];
+                      if (route) {
+                        navigate(route.path);
+                        return;
+                      }
+                      if (catalogApp?.basePath) navigate(catalogApp.basePath);
                     }}
                     onGoToRoute={(path) => navigate(path)}
                     onTogglePin={togglePin}
@@ -629,7 +640,12 @@ export const MyProfile = () => {
                         searchKind="app"
                         onOpenSingle={(id) => {
                           const route = routesByApp[id]?.[0];
-                          if (route) navigate(route.path);
+                          const catalogApp = appsById[id];
+                          if (route) {
+                            navigate(route.path);
+                            return;
+                          }
+                          if (catalogApp?.basePath) navigate(catalogApp.basePath);
                         }}
                         onGoToRoute={(path) => navigate(path)}
                         onTogglePin={togglePin}

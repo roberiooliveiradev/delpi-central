@@ -15,6 +15,8 @@ type AppItem = {
   name: string;
   icon?: string | null;
   base_path?: string | null;
+  basePath?: string | null;
+  type?: "iframe" | "microfrontend" | "backend-only";
 };
 
 type Variant = "launcher" | "home" | "sidebar";
@@ -70,11 +72,12 @@ export const AppLauncherCard = ({
     );
   };
 
+  const resolveAppBasePath = () => app.base_path ?? app.basePath ?? null;
+
   const defaultPath =
     visibleRoutes[0]?.path ||
     routes[0]?.path ||
-    app.base_path ||
-    "/";
+    resolveAppBasePath();
 
   const isModifiedEvent = (
     event: React.MouseEvent<HTMLAnchorElement>,
@@ -91,14 +94,16 @@ export const AppLauncherCard = ({
   const normalizePath = (value: string) => value.replace(/\/+$/, "") || "/";
 
   const currentPath = normalizePath(location.pathname);
-  const normalizedDefaultPath = normalizePath(defaultPath);
 
-  const isMainRouteActive = currentPath === normalizedDefaultPath;
+  const isMainRouteActive =
+    !!defaultPath && currentPath === normalizePath(defaultPath);
   const isAnyChildRouteActive = visibleRoutes.some(
     (route) => normalizePath(route.path) === currentPath,
   );
 
-  const isAppActive = isMainRouteActive || isAnyChildRouteActive;
+  const isAppActive =
+    app.type !== "backend-only" &&
+    (isMainRouteActive || isAnyChildRouteActive);
 
   const handleMainClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (isModifiedEvent(event)) {
@@ -165,7 +170,7 @@ export const AppLauncherCard = ({
       )}
 
       <a
-        href={defaultPath}
+        href={defaultPath ?? "#"}
         className={`launcher-app-main ${isAppActive ? "active" : ""}`}
         onClick={handleMainClick}
         aria-expanded={hasMultipleRoutes ? isOpen : undefined}
