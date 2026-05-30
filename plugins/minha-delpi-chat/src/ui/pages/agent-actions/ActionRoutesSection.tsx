@@ -7,6 +7,7 @@ import type {
   ChatActionTestResult,
   ChatAgentActionProvider,
 } from "../../../data/api/chatTypes";
+import { AgentBuilderCheckbox } from "../../components/agent-builder/AgentBuilderCheckbox";
 import { ActionTestPanel } from "./ActionTestPanel";
 import type { ActionTestPayload } from "./types";
 
@@ -53,8 +54,8 @@ export function ActionRoutesSection({
   onUpdateProviderPermissions,
 }: ActionRoutesSectionProps) {
   return (
-    <section className="mdc-chat-agent-actions-page__block">
-      <div className="mdc-chat-agent-actions-page__block-title">
+    <section className="mdc-chat-agent-actions-page__section">
+      <div className="mdc-chat-agent-actions-page__section-title">
         <Route size={18} aria-hidden="true" />
         <div>
           <h2>Ações disponíveis</h2>
@@ -68,51 +69,36 @@ export function ActionRoutesSection({
 
       {selectedLink ? (
         <div className="mdc-chat-agent-actions-page__permissions">
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedLink.allowRead}
-              onChange={(event) =>
-                onUpdateProviderPermissions({ allowRead: event.target.checked })
-              }
-            />
-            Leitura
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedLink.allowWrite}
-              onChange={(event) =>
-                onUpdateProviderPermissions({ allowWrite: event.target.checked })
-              }
-            />
-            Escrita
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedLink.allowAdmin}
-              onChange={(event) =>
-                onUpdateProviderPermissions({ allowAdmin: event.target.checked })
-              }
-            />
-            Admin
-          </label>
-
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedLink.requiresConfirmationForWrite}
-              onChange={(event) =>
-                onUpdateProviderPermissions({
-                  requiresConfirmationForWrite: event.target.checked,
-                })
-              }
-            />
-            Confirmar escrita
-          </label>
+          <AgentBuilderCheckbox
+            checked={selectedLink.allowRead}
+            onChange={(event) =>
+              onUpdateProviderPermissions({ allowRead: event.target.checked })
+            }
+            label="Leitura"
+          />
+          <AgentBuilderCheckbox
+            checked={selectedLink.allowWrite}
+            onChange={(event) =>
+              onUpdateProviderPermissions({ allowWrite: event.target.checked })
+            }
+            label="Escrita"
+          />
+          <AgentBuilderCheckbox
+            checked={selectedLink.allowAdmin}
+            onChange={(event) =>
+              onUpdateProviderPermissions({ allowAdmin: event.target.checked })
+            }
+            label="Admin"
+          />
+          <AgentBuilderCheckbox
+            checked={selectedLink.requiresConfirmationForWrite}
+            onChange={(event) =>
+              onUpdateProviderPermissions({
+                requiresConfirmationForWrite: event.target.checked,
+              })
+            }
+            label="Confirmar escrita"
+          />
         </div>
       ) : null}
 

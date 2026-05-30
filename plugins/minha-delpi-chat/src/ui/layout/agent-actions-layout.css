@@ -72,8 +72,8 @@
   max-width: 52rem;
 }
 
-.mdc-chat-agent-actions-page__block,
-.mdc-chat-agent-actions-page__create {
+.mdc-chat-agent-actions-page__section,
+.mdc-chat-agent-actions-page__fields {
   width: 100%;
   max-width: none;
 }

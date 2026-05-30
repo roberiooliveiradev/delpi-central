@@ -653,26 +653,21 @@ export function ChatAgentActionsPage({
 
       <div ref={layoutRef} className={layoutClassName} style={layoutStyle}>
         <main className="mdc-chat-agent-actions-page__editor">
-          <section className="mdc-chat-agent-actions-page__headline">
-            <div className="mdc-chat-agent-actions-page__round-back">
-              <button type="button" onClick={onBack} aria-label="Voltar">
-                <ArrowLeft size={19} aria-hidden="true" />
-              </button>
-            </div>
-
+          <div className="mdc-chat-agent-actions-page__panel">
+          <header className="mdc-chat-agent-actions-page__headline">
             <h1>{isCreatingNewAction ? "Criar nova ação" : "Editar ação"}</h1>
             <p>
-              Configure uma API OpenAPI específica deste agente: autenticação,
-              schema, rotas disponíveis e política de privacidade.
+              Configure uma API OpenAPI deste agente: autenticação, schema, rotas
+              e política de privacidade.
             </p>
-          </section>
+          </header>
 
           {error ? (
             <div className="mdc-chat-agent-actions-page__error">{error}</div>
           ) : null}
 
           {successMessage ? (
-            <p className="mdc-chat-muted">{successMessage}</p>
+            <p className="mdc-chat-agent-actions-page__success">{successMessage}</p>
           ) : null}
 
           {isLoading ? (
@@ -680,8 +675,8 @@ export function ChatAgentActionsPage({
           ) : null}
 
           {isCreatingNewAction ? (
-            <section className="mdc-chat-agent-actions-page__block">
-              <div className="mdc-chat-agent-actions-page__block-title">
+            <section className="mdc-chat-agent-actions-page__section">
+              <div className="mdc-chat-agent-actions-page__section-title">
                 <Plus size={18} aria-hidden="true" />
                 <div>
                   <h2>Criar nova ação/API</h2>
@@ -689,9 +684,9 @@ export function ChatAgentActionsPage({
                 </div>
               </div>
 
-              <div className="mdc-chat-agent-actions-page__create">
+              <div className="mdc-chat-agent-actions-page__fields">
                 <div className="mdc-chat-agent-actions-page__grid">
-                  <label>
+                  <label className="mdc-chat-ws-field">
                     <span>Nome da API</span>
                     <input
                       value={newProviderName}
@@ -700,7 +695,7 @@ export function ChatAgentActionsPage({
                     />
                   </label>
 
-                  <label>
+                  <label className="mdc-chat-ws-field">
                     <span>URL base</span>
                     <input
                       value={newProviderBaseUrl}
@@ -711,7 +706,7 @@ export function ChatAgentActionsPage({
                 </div>
 
                 <div className="mdc-chat-agent-actions-page__grid">
-                  <label>
+                  <label className="mdc-chat-ws-field">
                     <span>URL OpenAPI</span>
                     <input
                       value={newProviderOpenApiUrl}
@@ -720,7 +715,7 @@ export function ChatAgentActionsPage({
                     />
                   </label>
 
-                  <label>
+                  <label className="mdc-chat-ws-field">
                     <span>Política de privacidade</span>
                     <input
                       value={newProviderPrivacyPolicyUrl}
@@ -732,7 +727,7 @@ export function ChatAgentActionsPage({
                   </label>
                 </div>
 
-                <label>
+                <label className="mdc-chat-ws-field">
                   <span>Schema OpenAPI JSON</span>
                   <textarea
                     value={newProviderSchema}
@@ -742,20 +737,23 @@ export function ChatAgentActionsPage({
                   />
                 </label>
 
-                <button
-                  type="button"
-                  onClick={() => void createProvider()}
-                  disabled={isCreatingProvider}
-                >
-                  <Plus size={16} aria-hidden="true" />
-                  <span>{isCreatingProvider ? "Criando..." : "Criar nova ação"}</span>
-                </button>
+                <div className="mdc-chat-agent-actions-page__actions-row">
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+                    onClick={() => void createProvider()}
+                    disabled={isCreatingProvider}
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                    <span>{isCreatingProvider ? "Criando..." : "Criar nova ação"}</span>
+                  </button>
+                </div>
               </div>
             </section>
           ) : (
             <>
-              <section className="mdc-chat-agent-actions-page__block">
-                <div className="mdc-chat-agent-actions-page__block-title">
+              <section className="mdc-chat-agent-actions-page__section">
+                <div className="mdc-chat-agent-actions-page__section-title">
                   <Settings2 size={18} aria-hidden="true" />
                   <div>
                     <h2>Informações da action</h2>
@@ -763,9 +761,9 @@ export function ChatAgentActionsPage({
                   </div>
                 </div>
 
-                <div className="mdc-chat-agent-actions-page__create">
+                <div className="mdc-chat-agent-actions-page__fields">
                   <div className="mdc-chat-agent-actions-page__grid">
-                    <label>
+                    <label className="mdc-chat-ws-field">
                       <span>Nome da API</span>
                       <input
                         value={providerName}
@@ -773,7 +771,7 @@ export function ChatAgentActionsPage({
                       />
                     </label>
 
-                    <label>
+                    <label className="mdc-chat-ws-field">
                       <span>URL base</span>
                       <input
                         value={providerBaseUrl}
@@ -783,7 +781,7 @@ export function ChatAgentActionsPage({
                   </div>
 
                   <div className="mdc-chat-agent-actions-page__grid">
-                    <label>
+                    <label className="mdc-chat-ws-field">
                       <span>URL OpenAPI</span>
                       <input
                         value={providerOpenApiUrl}
@@ -791,7 +789,7 @@ export function ChatAgentActionsPage({
                       />
                     </label>
 
-                    <label>
+                    <label className="mdc-chat-ws-field">
                       <span>Política de privacidade</span>
                       <input
                         value={providerPrivacyPolicyUrl}
@@ -805,52 +803,56 @@ export function ChatAgentActionsPage({
                 </div>
               </section>
 
-              <section className="mdc-chat-agent-actions-page__block">
-                <div className="mdc-chat-agent-actions-page__block-title">
+              <section className="mdc-chat-agent-actions-page__section">
+                <div className="mdc-chat-agent-actions-page__section-title">
                   <Shield size={18} aria-hidden="true" />
                   <div>
                     <h2>Autenticação</h2>
-                    <p>Configuração real salva junto desta API/action.</p>
+                    <p>Como o chat autentica chamadas a esta API.</p>
                   </div>
                 </div>
 
-                <div className="mdc-chat-agent-actions-page__auth-card">
-                  <span>Tipo de autenticação</span>
-                  <div>
-                    <label>
+                <div className="mdc-chat-agent-actions-page__auth-panel">
+                  <span className="mdc-chat-ws-section-head">Tipo de autenticação</span>
+                  <div className="mdc-chat-ws-radio-group" role="radiogroup">
+                    <label className="mdc-chat-ws-radio-option">
                       <input
                         type="radio"
+                        name="action-auth-mode"
                         checked={authMode === "none"}
                         onChange={() => setAuthMode("none")}
                       />
-                      Nenhum
+                      <span>Nenhum</span>
                     </label>
 
-                    <label>
+                    <label className="mdc-chat-ws-radio-option">
                       <input
                         type="radio"
+                        name="action-auth-mode"
                         checked={authMode === "user_token"}
                         onChange={() => setAuthMode("user_token")}
                       />
-                      Token do usuário atual
+                      <span>Token do usuário atual</span>
                     </label>
 
-                    <label>
+                    <label className="mdc-chat-ws-radio-option">
                       <input
                         type="radio"
+                        name="action-auth-mode"
                         checked={authMode === "api_key"}
                         onChange={() => setAuthMode("api_key")}
                       />
-                      Chave API
+                      <span>Chave API</span>
                     </label>
 
-                    <label>
+                    <label className="mdc-chat-ws-radio-option">
                       <input
                         type="radio"
+                        name="action-auth-mode"
                         checked={authMode === "oauth"}
                         onChange={() => setAuthMode("oauth")}
                       />
-                      OAuth
+                      <span>OAuth</span>
                     </label>
                   </div>
 
@@ -864,7 +866,7 @@ export function ChatAgentActionsPage({
 
                   {authMode === "api_key" ? (
                     <div className="mdc-chat-agent-actions-page__grid">
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>Chave API</span>
                         <input
                           value={authConfig.apiKey}
@@ -879,7 +881,7 @@ export function ChatAgentActionsPage({
                         />
                       </label>
 
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>Nome do cabeçalho</span>
                         <input
                           value={authConfig.headerName}
@@ -893,7 +895,7 @@ export function ChatAgentActionsPage({
                         />
                       </label>
 
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>Formato</span>
                         <select
                           value={authConfig.scheme}
@@ -913,9 +915,9 @@ export function ChatAgentActionsPage({
                   ) : null}
 
                   {authMode === "oauth" ? (
-                    <div className="mdc-chat-agent-actions-page__create">
+                    <div className="mdc-chat-agent-actions-page__fields">
                       <div className="mdc-chat-agent-actions-page__grid">
-                        <label>
+                        <label className="mdc-chat-ws-field">
                           <span>ID do cliente</span>
                           <input
                             value={authConfig.clientId}
@@ -928,7 +930,7 @@ export function ChatAgentActionsPage({
                           />
                         </label>
 
-                        <label>
+                        <label className="mdc-chat-ws-field">
                           <span>Segredo do cliente</span>
                           <input
                             value={authConfig.clientSecret}
@@ -943,7 +945,7 @@ export function ChatAgentActionsPage({
                         </label>
                       </div>
 
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>URL de autorização</span>
                         <input
                           value={authConfig.authorizationUrl}
@@ -956,7 +958,7 @@ export function ChatAgentActionsPage({
                         />
                       </label>
 
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>Token URL</span>
                         <input
                           value={authConfig.tokenUrl}
@@ -969,7 +971,7 @@ export function ChatAgentActionsPage({
                         />
                       </label>
 
-                      <label>
+                      <label className="mdc-chat-ws-field">
                         <span>Escopo</span>
                         <input
                           value={authConfig.scope}
@@ -986,8 +988,8 @@ export function ChatAgentActionsPage({
                 </div>
               </section>
 
-              <section className="mdc-chat-agent-actions-page__block">
-                <div className="mdc-chat-agent-actions-page__block-title">
+              <section className="mdc-chat-agent-actions-page__section">
+                <div className="mdc-chat-agent-actions-page__section-title">
                   <Zap size={18} aria-hidden="true" />
                   <div>
                     <h2>Schema</h2>
@@ -997,8 +999,8 @@ export function ChatAgentActionsPage({
                   </div>
                 </div>
 
-                <div className="mdc-chat-agent-actions-page__create">
-                  <label>
+                <div className="mdc-chat-agent-actions-page__fields">
+                  <label className="mdc-chat-ws-field">
                     <span>Schema OpenAPI JSON</span>
                     <textarea
                       value={providerSchemaText}
@@ -1009,9 +1011,10 @@ export function ChatAgentActionsPage({
                     />
                   </label>
 
-                  <div className="mdc-chat-agent-actions-page__inline-actions">
+                  <div className="mdc-chat-agent-actions-page__actions-row">
                     <button
                       type="button"
+                      className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
                       onClick={() => void saveProviderConfig()}
                       disabled={isSavingProvider}
                     >
@@ -1023,6 +1026,7 @@ export function ChatAgentActionsPage({
 
                     <button
                       type="button"
+                      className="mdc-chat-ws-outline-btn"
                       onClick={() => void updateRoutes()}
                       disabled={!selectedProviderKey || isUpdatingRoutes}
                     >
@@ -1059,6 +1063,7 @@ export function ChatAgentActionsPage({
               />
             </>
           )}
+          </div>
         </main>
 
         {splitEnabled ? (
