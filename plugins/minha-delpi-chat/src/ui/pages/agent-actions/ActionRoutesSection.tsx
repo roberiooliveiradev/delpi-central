@@ -1,4 +1,4 @@
-import { DatabaseZap, Route } from "lucide-react";
+import { DatabaseZap, Route, Trash2 } from "lucide-react";
 
 import type {
   ChatActionCatalogItem,
@@ -8,6 +8,7 @@ import type {
   ChatAgentActionProvider,
 } from "../../../data/api/chatTypes";
 import { AgentBuilderCheckbox } from "../../components/agent-builder/AgentBuilderCheckbox";
+import { AgentBuilderSwitch } from "../../components/agent-builder/AgentBuilderSwitch";
 import { ActionTestPanel } from "./ActionTestPanel";
 import type { ActionTestPayload } from "./types";
 
@@ -23,7 +24,9 @@ type ActionRoutesSectionProps = {
   testResult: ChatActionTestResult | null;
   testLogs: ChatActionTestLog[];
   isActionEnabled: (action: ChatActionCatalogItem) => boolean;
+  hasActionOverride: (action: ChatActionCatalogItem) => boolean;
   onToggleAction: (action: ChatActionCatalogItem, enabled: boolean) => void;
+  onRemoveActionOverride: (action: ChatActionCatalogItem) => void;
   onOpenTestPanel: (action: ChatActionCatalogItem) => void;
   onRunActionTest: (payload: ActionTestPayload) => Promise<void>;
   onCloseTestPanel: () => void;
@@ -47,7 +50,9 @@ export function ActionRoutesSection({
   testResult,
   testLogs,
   isActionEnabled,
+  hasActionOverride,
   onToggleAction,
+  onRemoveActionOverride,
   onOpenTestPanel,
   onRunActionTest,
   onCloseTestPanel,
@@ -111,46 +116,75 @@ export function ActionRoutesSection({
             <span>Método</span>
             <span>Caminho</span>
             <span>Status</span>
-            <span>Teste</span>
+            <span>Ações</span>
           </div>
 
-          {providerActions.map((action) => (
-            <div className="mdc-action-routes-table__group" key={action.actionId}>
-              <article className="mdc-action-routes-table__row">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={isActionEnabled(action)}
-                    onChange={(event) => onToggleAction(action, event.target.checked)}
+          {providerActions.map((action) => {
+            const enabled = isActionEnabled(action);
+            const customized = hasActionOverride(action);
+
+            return (
+              <div className="mdc-action-routes-table__group" key={action.actionId}>
+                <article className="mdc-action-routes-table__row">
+                  <div className="mdc-action-routes-table__name">
+                    <AgentBuilderSwitch
+                      checked={enabled}
+                      onChange={(event) => onToggleAction(action, event.target.checked)}
+                      ariaLabel={`${enabled ? "Desativar" : "Ativar"} ${action.operationId || action.actionId}`}
+                    />
+                    <span>{action.operationId || action.actionId}</span>
+                  </div>
+
+                  <span>{action.method ?? "-"}</span>
+                  <span>{action.path ?? "-"}</span>
+                  <span
+                    className={[
+                      "mdc-action-routes-table__status",
+                      enabled
+                        ? "mdc-action-routes-table__status--on"
+                        : "mdc-action-routes-table__status--off",
+                    ].join(" ")}
+                  >
+                    {enabled ? "Ativa" : "Inativa"}
+                    {customized ? " · custom" : ""}
+                  </span>
+
+                  <div className="mdc-action-routes-table__actions">
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-outline-btn"
+                      onClick={() => onOpenTestPanel(action)}
+                      disabled={testingActionId === action.actionId}
+                    >
+                      {testingActionId === action.actionId ? "Testando..." : "Testar"}
+                    </button>
+                    {customized ? (
+                      <button
+                        type="button"
+                        className="mdc-action-routes-table__remove"
+                        title="Remover personalização"
+                        aria-label="Remover personalização da rota"
+                        onClick={() => onRemoveActionOverride(action)}
+                      >
+                        <Trash2 size={15} aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+
+                {testAction?.actionId === action.actionId ? (
+                  <ActionTestPanel
+                    action={testAction}
+                    isRunning={testingActionId === testAction.actionId}
+                    result={testResult}
+                    logs={testLogs}
+                    onRun={onRunActionTest}
+                    onClose={onCloseTestPanel}
                   />
-                  <span>{action.operationId || action.actionId}</span>
-                </label>
-
-                <span>{action.method ?? "-"}</span>
-                <span>{action.path ?? "-"}</span>
-                <small>{action.sensitivity || "read"}</small>
-
-                <button
-                  type="button"
-                  onClick={() => onOpenTestPanel(action)}
-                  disabled={testingActionId === action.actionId}
-                >
-                  {testingActionId === action.actionId ? "Testando..." : "Testar"}
-                </button>
-              </article>
-
-              {testAction?.actionId === action.actionId ? (
-                <ActionTestPanel
-                  action={testAction}
-                  isRunning={testingActionId === testAction.actionId}
-                  result={testResult}
-                  logs={testLogs}
-                  onRun={onRunActionTest}
-                  onClose={onCloseTestPanel}
-                />
-              ) : null}
-            </div>
-          ))}
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="mdc-chat-agent-actions-page__empty">

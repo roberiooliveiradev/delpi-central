@@ -86,6 +86,8 @@ from app.composition.chat_composer import (
     make_share_chat_project_use_case,
     make_update_chat_agent_use_case,
     make_upsert_chat_agent_action_use_case,
+    make_delete_chat_agent_action_provider_use_case,
+    make_delete_chat_agent_action_use_case,
     make_list_chat_skill_catalog_use_case,
     make_list_chat_agent_skills_use_case,
     make_upsert_chat_agent_skill_use_case,
@@ -1176,6 +1178,67 @@ def upsert_agent_action(agent_id: str):
         raise
 
     return jsonify({"ok": True}), 200
+
+
+@chat_bp.delete("/agents/<agent_id>/providers/<provider_key>")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def delete_agent_action_provider(agent_id: str, provider_key: str):
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
+    use_case = make_delete_chat_agent_action_provider_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            provider_key=provider_key,
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"deleted": True}), 200
+
+
+@chat_bp.delete("/agents/<agent_id>/providers/<provider_key>/actions/<path:action_id>")
+@require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
+def delete_agent_action(agent_id: str, provider_key: str, action_id: str):
+    can_manage_agent, capabilities = _can_manage_agent_configuration(agent_id)
+
+    if not can_manage_agent:
+        return forbidden("You do not have permission to configure actions for this agent")
+
+    use_case = make_delete_chat_agent_action_use_case()
+
+    try:
+        deleted = use_case.execute(
+            user_id=g.current_user.sub,
+            agent_id=agent_id,
+            provider_key=provider_key,
+            action_id=action_id,
+            can_manage_official_agents=capabilities["canManageOfficialAgents"],
+        )
+
+        if not deleted:
+            db.session.rollback()
+            return _not_found_response()
+
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"deleted": True}), 200
 
 
 @chat_bp.get("/skills")

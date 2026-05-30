@@ -1321,6 +1321,41 @@ export async function saveChatAgentActionProvider(
   return parseJsonResponse<{ saved: boolean }>(response);
 }
 
+export async function deleteChatAgentActionProvider(
+  agentId: string,
+  providerKey: string,
+  options: ChatApiOptions = {},
+): Promise<{ deleted: boolean }> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${encodeURIComponent(providerKey)}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<{ deleted: boolean }>(response);
+}
+
+export async function deleteChatAgentAction(
+  agentId: string,
+  providerKey: string,
+  actionId: string,
+  options: ChatApiOptions = {},
+): Promise<{ deleted: boolean }> {
+  const encodedProvider = encodeURIComponent(providerKey);
+  const encodedAction = encodeURIComponent(actionId);
+  const response = await fetch(
+    `${API_BASE_URL}/chat/agents/${agentId}/providers/${encodedProvider}/actions/${encodedAction}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<{ deleted: boolean }>(response);
+}
+
 
 export async function createChatAgentActionProvider(
   agentId: string,

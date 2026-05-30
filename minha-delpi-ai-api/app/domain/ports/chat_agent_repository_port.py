@@ -210,6 +210,27 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def delete_action_provider(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def delete_action(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        action_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
     def upsert_skill(
         self,
         agent_id: UUID,

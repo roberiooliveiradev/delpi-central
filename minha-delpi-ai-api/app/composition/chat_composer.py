@@ -22,6 +22,8 @@ from app.application.services.rag_context_service import RagContextService
 from app.application.use_cases.create_chat_session_use_case import CreateChatSessionUseCase
 from app.application.use_cases.chat_agents_use_cases import (
     CreateChatAgentUseCase,
+    DeleteChatAgentActionProviderUseCase,
+    DeleteChatAgentActionUseCase,
     DeleteChatAgentUseCase,
     ListChatAgentActionProvidersUseCase,
     ListChatAgentActionsUseCase,
@@ -437,6 +439,14 @@ def make_list_chat_agent_actions_use_case() -> ListChatAgentActionsUseCase:
 
 def make_upsert_chat_agent_action_use_case() -> UpsertChatAgentActionUseCase:
     return UpsertChatAgentActionUseCase(PostgresChatAgentRepository())
+
+
+def make_delete_chat_agent_action_provider_use_case() -> DeleteChatAgentActionProviderUseCase:
+    return DeleteChatAgentActionProviderUseCase(PostgresChatAgentRepository())
+
+
+def make_delete_chat_agent_action_use_case() -> DeleteChatAgentActionUseCase:
+    return DeleteChatAgentActionUseCase(PostgresChatAgentRepository())
 
 
 def make_list_chat_skill_catalog_use_case():

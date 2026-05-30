@@ -911,6 +911,67 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+    def delete_action_provider(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
+            return False
+
+        AiChatAgentActionModel.query.filter(
+            AiChatAgentActionModel.agent_id == agent_id,
+            AiChatAgentActionModel.provider_key == provider_key,
+        ).delete(synchronize_session=False)
+
+        deleted = (
+            AiChatAgentActionProviderModel.query.filter(
+                AiChatAgentActionProviderModel.agent_id == agent_id,
+                AiChatAgentActionProviderModel.provider_key == provider_key,
+            ).delete(synchronize_session=False)
+        )
+
+        db.session.flush()
+
+        return bool(deleted)
+
+    def delete_action(
+        self,
+        agent_id: UUID,
+        user_id: UUID,
+        provider_key: str,
+        action_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model or not self._can_edit(
+            model,
+            user_id,
+            can_manage_official_agents=can_manage_official_agents,
+        ):
+            return False
+
+        deleted = (
+            AiChatAgentActionModel.query.filter(
+                AiChatAgentActionModel.agent_id == agent_id,
+                AiChatAgentActionModel.provider_key == provider_key,
+                AiChatAgentActionModel.action_id == action_id,
+            ).delete(synchronize_session=False)
+        )
+
+        db.session.flush()
+
+        return bool(deleted)
+
     def upsert_skill(
         self,
         agent_id: UUID,

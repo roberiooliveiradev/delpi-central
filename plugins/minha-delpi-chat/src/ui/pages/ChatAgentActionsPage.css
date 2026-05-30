@@ -313,6 +313,18 @@
   align-items: center;
 }
 
+.mdc-chat-agent-actions-page__provider-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-2);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 50%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 38%, transparent);
+  padding: 0.75rem 0.85rem;
+}
+
 @media (max-width: 1180px) {
   .mdc-chat-agent-actions-page__layout {
     grid-template-columns: 1fr;

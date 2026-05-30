@@ -5,12 +5,15 @@ import {
   Save,
   Settings2,
   Shield,
+  Trash2,
   Zap,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import {
   createChatAgentActionProvider,
+  deleteChatAgentAction,
+  deleteChatAgentActionProvider,
   getChatAgentActionProvider,
   importChatAgentActionProviderSchema,
   listActionProviders,
@@ -33,6 +36,8 @@ import type {
   ChatAgentActionProvider,
 } from "../../data/api/chatTypes";
 import { useResizablePane } from "../../state/hooks/useResizablePane";
+import { useConfirmDialog } from "../components/useConfirmDialog";
+import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
 
@@ -164,6 +169,7 @@ export function ChatAgentActionsPage({
   onBack,
   getAccessToken,
 }: ChatAgentActionsPageProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [availableProviders, setAvailableProviders] = useState<ChatActionProvider[]>([]);
   const [configuredProviders, setConfiguredProviders] = useState<ChatAgentActionProvider[]>([]);
   const [selectedProviderKey, setSelectedProviderKey] = useState<string | null>(
@@ -443,6 +449,110 @@ export function ChatAgentActionsPage({
       );
     } finally {
       setTestingActionId(null);
+    }
+  }
+
+  function hasActionOverride(action: ChatActionCatalogItem): boolean {
+    return configuredActions.some((item) => item.actionId === action.actionId);
+  }
+
+  async function toggleProviderEnabled(enabled: boolean) {
+    if (!selectedProviderKey || !selectedLink) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await saveChatAgentActionProvider(
+        agent.id,
+        {
+          providerKey: selectedProviderKey,
+          enabled,
+          allowRead: selectedLink.allowRead,
+          allowWrite: selectedLink.allowWrite,
+          allowAdmin: selectedLink.allowAdmin,
+          requiresConfirmationForWrite: selectedLink.requiresConfirmationForWrite,
+        },
+        { getAccessToken },
+      );
+      await reloadProviders();
+      setSuccessMessage(enabled ? "Action ativada." : "Action desativada.");
+    } catch (toggleError) {
+      setError(
+        toggleError instanceof Error
+          ? toggleError.message
+          : "Não foi possível alterar o status desta action.",
+      );
+    }
+  }
+
+  async function removeProviderLink() {
+    if (!selectedProviderKey || !selectedProvider) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "Excluir action do agente",
+      description: `Remover "${selectedProvider.name}" deste agente? As rotas importadas permanecem no catálogo global, mas o vínculo e personalizações serão apagados.`,
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await deleteChatAgentActionProvider(agent.id, selectedProviderKey, {
+        getAccessToken,
+      });
+      onBack();
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Não foi possível excluir esta action.",
+      );
+    }
+  }
+
+  async function removeActionOverride(action: ChatActionCatalogItem) {
+    if (!selectedProviderKey) {
+      return;
+    }
+
+    if (!hasActionOverride(action)) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "Remover personalização da rota",
+      description: `Restaurar "${action.operationId || action.actionId}" ao padrão do provider (habilitada)?`,
+      confirmLabel: "Remover",
+      danger: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+
+    try {
+      await deleteChatAgentAction(agent.id, selectedProviderKey, action.actionId, {
+        getAccessToken,
+      });
+      await reloadRoutes(selectedProviderKey);
+      setSuccessMessage("Personalização da rota removida.");
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Não foi possível remover a personalização desta rota.",
+      );
     }
   }
 
@@ -752,6 +862,26 @@ export function ChatAgentActionsPage({
             </section>
           ) : (
             <>
+              {selectedLink ? (
+                <section className="mdc-chat-agent-actions-page__section">
+                  <div className="mdc-chat-agent-actions-page__provider-toolbar">
+                    <AgentBuilderSwitch
+                      checked={selectedLink.enabled}
+                      onChange={(event) => void toggleProviderEnabled(event.target.checked)}
+                      label={selectedLink.enabled ? "Action ativa no agente" : "Action desativada no agente"}
+                    />
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--danger"
+                      onClick={() => void removeProviderLink()}
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                      <span>Excluir action</span>
+                    </button>
+                  </div>
+                </section>
+              ) : null}
+
               <section className="mdc-chat-agent-actions-page__section">
                 <div className="mdc-chat-agent-actions-page__section-title">
                   <Settings2 size={18} aria-hidden="true" />
@@ -1047,9 +1177,11 @@ export function ChatAgentActionsPage({
                 testResult={testResult}
                 testLogs={testLogs}
                 isActionEnabled={isActionEnabled}
+                hasActionOverride={hasActionOverride}
                 onToggleAction={(action, enabled) =>
                   void toggleAction(action, enabled)
                 }
+                onRemoveActionOverride={(action) => void removeActionOverride(action)}
                 onOpenTestPanel={(action) => void openTestPanel(action)}
                 onRunActionTest={runActionTest}
                 onCloseTestPanel={() => {
@@ -1065,6 +1197,7 @@ export function ChatAgentActionsPage({
           )}
           </div>
         </main>
+        {confirmDialog}
 
         {splitEnabled ? (
           <div

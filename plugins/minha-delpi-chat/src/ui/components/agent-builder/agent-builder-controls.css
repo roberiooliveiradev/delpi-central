@@ -34,3 +34,85 @@
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.mdc-ab-switch {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+}
+
+.mdc-ab-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.mdc-ab-switch__track {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  width: 2.65rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-text-muted) 28%, var(--mdc-card-border));
+  transition: background 0.2s ease;
+}
+
+.mdc-ab-switch__track::after {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  background: var(--mdc-on-primary);
+  box-shadow: var(--mdc-card-shadow-soft);
+  transition: transform 0.2s ease;
+}
+
+.mdc-ab-switch input:checked + .mdc-ab-switch__track {
+  background: var(--mdc-primary);
+}
+
+.mdc-ab-switch input:checked + .mdc-ab-switch__track::after {
+  transform: translateX(1.1rem);
+}
+
+.mdc-ab-switch input:focus-visible + .mdc-ab-switch__track {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.mdc-ab-switch input:disabled + .mdc-ab-switch__track {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mdc-ab-switch:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.mdc-ab-switch__label {
+  color: var(--mdc-text);
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.mdc-ab-switch__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+

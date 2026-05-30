@@ -39,6 +39,8 @@ import {
   publishChatAgent,
   listChatAgentVersions,
   revokeChatAgentShare,
+  saveChatAgentActionProvider,
+  deleteChatAgentActionProvider,
   shareChatAgent,
   uploadAgentSource,
 } from "../../data/api/chatApi";
@@ -61,6 +63,7 @@ import {
 
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
+import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
 
 import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
@@ -235,6 +238,7 @@ export function ChatAgentBuilderPage({
   );
 
   const [agentActionProviders, setAgentActionProviders] = useState<ChatAgentActionProvider[]>([]);
+  const [actionProviderBusyKey, setActionProviderBusyKey] = useState<string | null>(null);
   const [agentSkillBindings, setAgentSkillBindings] = useState<ChatAgentSkillBinding[]>([]);
   const [agentSources, setAgentSources] = useState<ChatWorkspaceSource[]>([]);
   const [sourceTitle, setSourceTitle] = useState("");
@@ -343,6 +347,87 @@ export function ChatAgentBuilderPage({
       isMounted = false;
     };
   }, [agent?.id, getAccessToken]);
+
+  async function reloadAgentActionProviders() {
+    if (!agent?.id || !getAccessToken) {
+      setAgentActionProviders([]);
+      return;
+    }
+
+    const actionProviders = await listChatAgentActionProviders(agent.id, { getAccessToken });
+    setAgentActionProviders(actionProviders);
+  }
+
+  async function toggleAgentActionProvider(
+    provider: ChatAgentActionProvider,
+    enabled: boolean,
+  ) {
+    if (!agent?.id) {
+      return;
+    }
+
+    setActionProviderBusyKey(provider.providerKey);
+    setLocalError(null);
+
+    try {
+      await saveChatAgentActionProvider(
+        agent.id,
+        {
+          providerKey: provider.providerKey,
+          enabled,
+          allowRead: provider.allowRead,
+          allowWrite: provider.allowWrite,
+          allowAdmin: provider.allowAdmin,
+          requiresConfirmationForWrite: provider.requiresConfirmationForWrite,
+        },
+        { getAccessToken },
+      );
+      await reloadAgentActionProviders();
+    } catch (error) {
+      setLocalError(
+        error instanceof Error
+          ? error.message
+          : `Não foi possível ${enabled ? "ativar" : "desativar"} a action.`,
+      );
+    } finally {
+      setActionProviderBusyKey(null);
+    }
+  }
+
+  async function removeAgentActionProvider(provider: ChatAgentActionProvider) {
+    if (!agent?.id) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      title: "Excluir action do agente",
+      description: `Remover "${provider.providerName || provider.providerKey}" deste agente? O provider global permanece cadastrado.`,
+      confirmLabel: "Excluir",
+      danger: true,
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionProviderBusyKey(provider.providerKey);
+    setLocalError(null);
+
+    try {
+      await deleteChatAgentActionProvider(agent.id, provider.providerKey, {
+        getAccessToken,
+      });
+      await reloadAgentActionProviders();
+    } catch (error) {
+      setLocalError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir a action.",
+      );
+    } finally {
+      setActionProviderBusyKey(null);
+    }
+  }
 
 
 
@@ -1774,7 +1859,7 @@ export function ChatAgentBuilderPage({
             {agent ? (
               <div className="mdc-chat-agent-builder__actions-panel">
                 {agentActionProviders.length > 0 ? (
-                  <div className="mdc-chat-ws-list">
+                  <div className="mdc-chat-ws-list mdc-chat-agent-builder__action-list">
                     {agentActionProviders.map((provider) => (
                       <article key={provider.providerKey} className="mdc-chat-ws-list-row">
                         <span className="mdc-chat-ws-list-row__icon">
@@ -1788,13 +1873,36 @@ export function ChatAgentBuilderPage({
                             {` · ${provider.actionCount} rota(s)`}
                           </small>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => onConfigureAction?.(agent, provider.providerKey)}
-                          title="Configurar action"
-                        >
-                          <Settings2 size={16} aria-hidden="true" />
-                        </button>
+                        <div className="mdc-chat-agent-builder__action-list-actions">
+                          <AgentBuilderSwitch
+                            checked={provider.enabled}
+                            disabled={actionProviderBusyKey === provider.providerKey}
+                            onChange={(event) =>
+                              void toggleAgentActionProvider(provider, event.target.checked)
+                            }
+                            ariaLabel={
+                              provider.enabled
+                                ? `Desativar ${provider.providerName || provider.providerKey}`
+                                : `Ativar ${provider.providerName || provider.providerKey}`
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => onConfigureAction?.(agent, provider.providerKey)}
+                            title="Configurar action"
+                          >
+                            <Settings2 size={16} aria-hidden="true" />
+                          </button>
+                          <button
+                            type="button"
+                            className="mdc-chat-agent-builder__action-delete"
+                            title="Excluir action do agente"
+                            disabled={actionProviderBusyKey === provider.providerKey}
+                            onClick={() => void removeAgentActionProvider(provider)}
+                          >
+                            <Trash2 size={16} aria-hidden="true" />
+                          </button>
+                        </div>
                       </article>
                     ))}
                   </div>

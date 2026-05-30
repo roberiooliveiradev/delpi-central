@@ -637,6 +637,48 @@ class UpsertChatAgentActionProviderUseCase:
         )
 
 
+class DeleteChatAgentActionProviderUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        provider_key: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        return self.repository.delete_action_provider(
+            agent_id=UUID(agent_id),
+            user_id=UUID(user_id),
+            provider_key=_normalize_text(provider_key, 120, required=True),
+            can_manage_official_agents=can_manage_official_agents,
+        )
+
+
+class DeleteChatAgentActionUseCase:
+    def __init__(self, repository: ChatAgentRepositoryPort):
+        self.repository = repository
+
+    def execute(
+        self,
+        *,
+        user_id: str,
+        agent_id: str,
+        provider_key: str,
+        action_id: str,
+        can_manage_official_agents: bool = False,
+    ) -> bool:
+        return self.repository.delete_action(
+            agent_id=UUID(agent_id),
+            user_id=UUID(user_id),
+            provider_key=_normalize_text(provider_key, 120, required=True),
+            action_id=_normalize_text(action_id, 300, required=True),
+            can_manage_official_agents=can_manage_official_agents,
+        )
+
+
 def _sanitize_export_providers(providers: list[dict]) -> list[dict]:
     sanitized: list[dict] = []
 
