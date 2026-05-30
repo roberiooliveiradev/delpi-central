@@ -13,6 +13,13 @@ from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 from app.domain.services.chat_sql_operational_intent_service import (
     ChatSqlOperationalIntentService,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
+from app.domain.services.chat_sql_production_schedule_date_service import (
+    ChatSqlProductionScheduleDateService,
+    ResolvedProductionScheduleDate,
+)
 
 SqlProductionMode = Literal["execute", "authoring"]
 
@@ -53,8 +60,9 @@ class ChatSqlProductionQueryService:
             return None
 
         filial = cls._extract_filial(normalized)
-        sql = cls._build_products_scheduled_today_sql(filial)
-        title = "Produtos programados para produção hoje"
+        schedule_date = ChatSqlProductionScheduleDateService.resolve(message)
+        sql = cls._build_products_scheduled_sql(filial, schedule_date)
+        title = schedule_date.title
 
         if ChatSqlIntentService.is_authoring_request(message):
             return SqlProductionResolution(mode="authoring", sql=sql, title=title)
@@ -72,20 +80,9 @@ class ChatSqlProductionQueryService:
 
     @classmethod
     def _allowed_ids_include_sql_action(cls, allowed_action_ids: list[str]) -> bool:
-        for action_id in allowed_action_ids:
-            lowered = str(action_id or "").lower()
-            if any(
-                token in lowered
-                for token in (
-                    "execute_readonly",
-                    "execute_sql",
-                    "data_sql",
-                    "/data/sql",
-                    ".data.",
-                )
-            ):
-                return True
-        return False
+        return ExternalActionSqlCapabilityService.allowed_action_ids_include_sql(
+            allowed_action_ids
+        )
 
     @classmethod
     def _extract_filial(cls, normalized: str) -> str:
@@ -100,11 +97,15 @@ class ChatSqlProductionQueryService:
         return "01"
 
     @classmethod
-    def _build_products_scheduled_today_sql(cls, filial: str) -> str:
+    def _build_products_scheduled_sql(
+        cls,
+        filial: str,
+        schedule_date: ResolvedProductionScheduleDate,
+    ) -> str:
         branch = str(filial or "01").zfill(2)[:2]
 
         return f"""DECLARE @FILIAL CHAR(2) = '{branch}';
-DECLARE @DATA DATE = CAST(GETDATE() AS DATE);
+{schedule_date.sql_date_declaration}
 SELECT
     OP.C2_PRODUTO AS COD_PRODUTO,
     P.B1_DESC AS DESCRICAO_PRODUTO,

@@ -7,6 +7,7 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_temporal_intent_service import ChatTemporalIntentService
 
 _PRODUCTION_SQL_PHRASES = (
     "produzidos hoje",
@@ -38,7 +39,23 @@ _CATALOG_SEARCH_MARKERS = (
     "informacoes sobre o produto",
 )
 
-_TEMPORAL_TERMS = ("hoje", "amanha", "semana", "mes ", "proxim")
+_TEMPORAL_TERMS = (
+    "hoje",
+    "ontem",
+    "amanha",
+    "anteontem",
+    "semana",
+    "mes ",
+    "proxim",
+    "passad",
+    "segunda",
+    "terca",
+    "quarta",
+    "quinta",
+    "sexta",
+    "sabado",
+    "domingo",
+)
 
 
 class ChatSqlOperationalIntentService:
@@ -55,10 +72,19 @@ class ChatSqlOperationalIntentService:
         if any(phrase in normalized for phrase in _PRODUCTION_SQL_PHRASES):
             return True
 
-        if re.search(r"\bproduz\w*\b", normalized) and any(
-            term in normalized for term in _TEMPORAL_TERMS
+        if re.search(r"\bproduz\w*\b", normalized) and (
+            ChatTemporalIntentService.has_temporal_reference(message)
+            or any(term in normalized for term in _TEMPORAL_TERMS)
         ):
-            if "quais produtos" in normalized or "que produtos" in normalized:
+            if any(
+                phrase in normalized
+                for phrase in (
+                    "quais produtos",
+                    "que produtos",
+                    "o que",
+                    "qual produto",
+                )
+            ):
                 return True
 
         return False

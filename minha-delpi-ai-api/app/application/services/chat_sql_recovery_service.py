@@ -11,6 +11,9 @@ from app.domain.services.chat_sql_error_recovery_service import (
     ChatSqlErrorRecoveryService,
     SqlRecoveryPlan,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 
 
 @dataclass(frozen=True)
@@ -96,18 +99,16 @@ class ChatSqlRecoveryService:
         if not sql_action:
             return None
 
-        retry_body = {
-            "query": plan.corrected_sql,
-            "sql": plan.corrected_sql,
-            "statement": plan.corrected_sql,
-        }
+        retry_body = ExternalActionSqlCapabilityService.build_sql_request_body(
+            plan.corrected_sql
+        )
         retry_result = self._execute_external_action(
             user_id=user_id,
             access_token=access_token,
             action_id=str(sql_action["actionId"]),
             arguments={"body": retry_body},
             on_stream_activity=on_stream_activity,
-            path_hint="/data/sql",
+            path_hint=str(sql_action.get("path") or "/data/sql"),
         )
         retry_metadata = dict(retry_result.metadata or {})
 
@@ -216,24 +217,28 @@ class ChatSqlRecoveryService:
         return ranked[0]
 
     def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
-        allowed = {str(item) for item in allowed_action_ids}
+        actions: list[dict] = []
+        seen: set[str] = set()
 
         list_actions = getattr(self.external_action_repository, "list_actions", None)
         if callable(list_actions):
             for action in list_actions():
-                if str(action.get("actionId") or "") not in allowed:
-                    continue
-                if "/data/sql" in str(action.get("path") or "").lower():
-                    return action
+                action_id = str(action.get("actionId") or "")
+                if action_id and action_id not in seen:
+                    seen.add(action_id)
+                    actions.append(action)
 
         for action in self.external_action_repository.find_candidate_actions(
-            "/data/sql execute readonly",
+            "sql execute readonly query data",
             limit=120,
             allowed_action_ids=list(allowed_action_ids),
         ):
-            if str(action.get("actionId") or "") not in allowed:
-                continue
-            if "/data/sql" in str(action.get("path") or "").lower():
-                return action
+            action_id = str(action.get("actionId") or "")
+            if action_id and action_id not in seen:
+                seen.add(action_id)
+                actions.append(action)
 
-        return None
+        return ExternalActionSqlCapabilityService.pick_sql_execution_action(
+            actions,
+            allowed_action_ids=allowed_action_ids,
+        )

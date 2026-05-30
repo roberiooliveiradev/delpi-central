@@ -20,6 +20,9 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 
 
 class ExternalActionSelectionService:
@@ -1708,11 +1711,11 @@ class ExternalActionSelectionService:
             return None
 
         sql_query = (sql or "").strip() or self._extract_sql_query(message)
-        body = {
-            "query": sql_query,
-            "sql": sql_query,
-            "statement": sql_query,
-        } if sql_query else {"message": message}
+        body = (
+            ExternalActionSqlCapabilityService.build_sql_request_body(sql_query)
+            if sql_query
+            else {"message": message}
+        )
 
         reason = (
             "Consulta SQL de produção reconhecida — execução direta via POST /data/sql."
@@ -2563,29 +2566,31 @@ class ExternalActionSelectionService:
         return ChatProductQueryIntentService.extract_product_code(message)
 
     def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
-        allowed = {str(item) for item in allowed_action_ids}
+        actions: list[dict] = []
+        seen: set[str] = set()
 
         list_actions = getattr(self.repository, "list_actions", None)
         if callable(list_actions):
             for action in list_actions():
-                if str(action.get("actionId") or "") not in allowed:
-                    continue
-                if "/data/sql" in str(action.get("path") or "").lower():
-                    return action
+                action_id = str(action.get("actionId") or "")
+                if action_id and action_id not in seen:
+                    seen.add(action_id)
+                    actions.append(action)
 
-        candidates = self.repository.find_candidate_actions(
-            "/data/sql execute readonly",
+        for action in self.repository.find_candidate_actions(
+            "sql execute readonly query data",
             limit=120,
             allowed_action_ids=list(allowed_action_ids),
+        ):
+            action_id = str(action.get("actionId") or "")
+            if action_id and action_id not in seen:
+                seen.add(action_id)
+                actions.append(action)
+
+        return ExternalActionSqlCapabilityService.pick_sql_execution_action(
+            actions,
+            allowed_action_ids=allowed_action_ids,
         )
-
-        for action in candidates:
-            if str(action.get("actionId") or "") not in allowed:
-                continue
-            if "/data/sql" in str(action.get("path") or "").lower():
-                return action
-
-        return None
 
     def _list_allowed_candidates(
         self,

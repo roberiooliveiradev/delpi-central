@@ -25,3 +25,15 @@ def test_does_not_flag_plain_stock_question():
     assert not ChatSqlOperationalIntentService.requires_sql_knowledge(
         "estoque do produto 10080047"
     )
+
+
+def test_detects_production_question_for_monday():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "quais produtos serão produzidos na segunda-feira?"
+    )
+
+
+def test_detects_production_question_for_tomorrow():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "o que vai ser produzido amanhã?"
+    )

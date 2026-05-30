@@ -7,6 +7,10 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
+
 _INVALID_COLUMN_RE = re.compile(
     r"Invalid column name\s+'([^']+)'",
     re.IGNORECASE,
@@ -43,7 +47,11 @@ class ChatSqlErrorRecoveryService:
             return False
 
         resolved_path = str(metadata.get("path") or path or "").lower()
-        if "/data/sql" not in resolved_path:
+        if not ExternalActionSqlCapabilityService.is_sql_execution_context(
+            path=resolved_path,
+            operation_id=str(metadata.get("operationId") or ""),
+            action_id=str(metadata.get("actionId") or ""),
+        ):
             return False
 
         return cls.parse_invalid_column(metadata) is not None
@@ -68,22 +76,11 @@ class ChatSqlErrorRecoveryService:
 
     @classmethod
     def extract_sql_from_arguments(cls, arguments: dict | None) -> str | None:
-        if not isinstance(arguments, dict):
-            return None
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
 
-        body = arguments.get("body")
-        if isinstance(body, dict):
-            for key in ("sql", "query", "statement"):
-                value = str(body.get(key) or "").strip()
-                if value:
-                    return value
-
-        for key in ("sql", "query", "statement"):
-            value = str(arguments.get(key) or "").strip()
-            if value:
-                return value
-
-        return None
+        return ExternalActionSqlCapabilityService.extract_sql_from_arguments(arguments)
 
     @classmethod
     def build_table_aliases(cls, sql: str) -> dict[str, str]:

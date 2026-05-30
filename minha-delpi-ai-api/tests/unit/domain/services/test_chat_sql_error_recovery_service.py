@@ -33,6 +33,18 @@ def test_is_recoverable_sql_failure():
     assert ChatSqlErrorRecoveryService.is_recoverable_sql_failure(metadata)
 
 
+def test_is_recoverable_sql_failure_by_operation_id():
+    metadata = {
+        "ok": False,
+        "path": "/internal/query",
+        "operationId": "execute_readonly_sql",
+        "actionId": "internal.data.execute_readonly_sql",
+        "responsePreview": "Invalid column name 'D4_OPER'.",
+    }
+
+    assert ChatSqlErrorRecoveryService.is_recoverable_sql_failure(metadata)
+
+
 def test_infer_table_for_qualified_column():
     table = ChatSqlErrorRecoveryService.infer_table_for_column(SQL, "D4_OPER")
 

@@ -475,6 +475,18 @@ class ChatToolContextService:
                 metadata=result.metadata,
                 data=result.data,
             )
+
+            if result.name == "execute_external_action":
+                from app.domain.services.external_actions.external_action_sql_capability_service import (
+                    ExternalActionSqlCapabilityService,
+                )
+
+                executed_sql = ExternalActionSqlCapabilityService.extract_sql_from_arguments(
+                    selected_tool.get("arguments")
+                )
+                if executed_sql:
+                    safe_metadata["executedSql"] = executed_sql
+
             safe_tool_calls.append(
                 {
                     "name": result.name,
@@ -525,6 +537,7 @@ class ChatToolContextService:
                     reason=selected_tool.get("reason"),
                     data=result.data,
                     metadata=result.metadata,
+                    arguments=selected_tool.get("arguments"),
                 )
             )
 
@@ -549,8 +562,13 @@ class ChatToolContextService:
             and self._is_successful_external_action(safe_tool_calls[0].get("metadata") or {})
         ):
             action_metadata = safe_tool_calls[0].get("metadata") or {}
+            action_arguments = safe_tool_calls[0].get("arguments") or {}
             direct_answer = self._build_direct_answer(
-                last_external_action_data,
+                self._attach_request_sql(
+                    last_external_action_data,
+                    action_arguments,
+                    action_metadata,
+                ),
                 message=message,
                 path=action_metadata.get("path"),
                 operation_id=action_metadata.get("operationId"),
@@ -897,7 +915,7 @@ class ChatToolContextService:
             }
         ]
         direct_answer = self._build_direct_answer(
-            merged_data,
+            self._attach_request_sql(merged_data, arguments, safe_metadata),
             message=raw_message,
             path=safe_metadata.get("path"),
             operation_id=safe_metadata.get("operationId"),
@@ -1089,12 +1107,14 @@ class ChatToolContextService:
         reason: str | None,
         data,
         metadata: dict | None,
+        arguments: dict | None = None,
     ) -> str:
         if name == "execute_external_action":
             return self._format_external_action_context(
                 reason=reason,
                 data=data,
                 metadata=metadata or {},
+                arguments=arguments,
             )
 
         payload = {
@@ -1114,6 +1134,7 @@ class ChatToolContextService:
         reason: str | None,
         data,
         metadata: dict,
+        arguments: dict | None = None,
     ) -> str:
         status_code = metadata.get("statusCode")
         ok = metadata.get("ok")
@@ -1121,7 +1142,10 @@ class ChatToolContextService:
         path = metadata.get("path")
         provider = metadata.get("provider")
 
-        humanized = self.external_action_result_presenter.present(data, path=path or "")
+        humanized = self.external_action_result_presenter.present(
+            self._attach_request_sql(data, arguments, metadata),
+            path=path or "",
+        )
 
         linhas = list(humanized.get("linhas") or [])
         coverage = metadata.get("dataCoverageNotice")
@@ -1167,6 +1191,22 @@ class ChatToolContextService:
             return 200 <= int(status_code) < 300
         except (TypeError, ValueError):
             return False
+
+    def _attach_request_sql(
+        self,
+        data,
+        arguments: dict | None = None,
+        metadata: dict | None = None,
+    ):
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
+
+        return ExternalActionSqlCapabilityService.attach_request_sql_to_data(
+            data,
+            arguments=arguments,
+            metadata=metadata,
+        )
 
     def _build_direct_answer(
         self,

@@ -8,6 +8,9 @@ from app.domain.services.chat_external_action_direct_answer_service import (
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -49,7 +52,13 @@ class ChatCompositeDirectAnswerService:
                 )
                 continue
 
-            humanized = presenter.present(execution.data, path=path)
+            humanized = presenter.present(
+                ExternalActionSqlCapabilityService.attach_request_sql_to_data(
+                    execution.data,
+                    metadata=metadata,
+                ),
+                path=path,
+            )
             body = ChatExternalActionDirectAnswerService.format(
                 humanized,
                 message=message,
@@ -58,6 +67,24 @@ class ChatCompositeDirectAnswerService:
             )
 
             if cls._is_empty_result(humanized, execution.data, path=path):
+                if ExternalActionSqlCapabilityService.is_sql_execution_context(
+                    path=path,
+                    operation_id=str(metadata.get("operationId") or ""),
+                    action_id=action_id,
+                ) or ExternalActionSqlCapabilityService.is_sql_result_payload(
+                    cls._unwrap_payload(execution.data)
+                ):
+                    body = ChatExternalActionDirectAnswerService.format(
+                        humanized,
+                        message=message,
+                        path=path,
+                        operation_id=str(metadata.get("operationId") or ""),
+                    )
+
+                    if body:
+                        sections.append(body.strip())
+                        continue
+
                 issues.append(
                     f"- **{label}:** consulta concluída, mas a API não retornou registros."
                 )
@@ -182,6 +209,21 @@ class ChatCompositeDirectAnswerService:
                             return True
 
         return len(linhas) == 0 and humanized.get("titulo") is None
+
+    @classmethod
+    def _unwrap_payload(cls, data: object) -> dict | None:
+        if not isinstance(data, dict):
+            return None
+
+        root = data.get("data", data)
+
+        if isinstance(root, dict) and "data" in root and isinstance(root["data"], dict):
+            return root["data"]
+
+        if isinstance(root, dict):
+            return root
+
+        return None
 
     @classmethod
     def _has_product_payload(cls, data: object) -> bool:

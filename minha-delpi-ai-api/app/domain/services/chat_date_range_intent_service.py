@@ -136,6 +136,40 @@ class ChatDateRangeIntentService:
         if explicit:
             return explicit
 
+        from app.domain.services.chat_temporal_intent_service import (
+            ChatTemporalIntentService,
+        )
+
+        if any(
+            term in normalized
+            for term in (
+                "semana passada",
+                "semana que vem",
+                "proxima semana",
+                "mes que vem",
+                "proximo mes",
+            )
+        ):
+            week_range = cls._resolve_calendar_week_phrases(normalized, reference)
+            if week_range:
+                return week_range
+
+            month_range = cls._resolve_next_month_phrases(normalized, reference)
+            if month_range:
+                return month_range
+
+        point = ChatTemporalIntentService.resolve_point(
+            message,
+            today=reference,
+            default_today=False,
+        )
+        if point and cls._should_use_point_as_range(normalized):
+            return cls._from_dates(
+                point.target_date,
+                point.target_date,
+                reason=f"Data {point.label}.",
+            )
+
         competence = cls._COMPETENCE_RE.search(normalized)
 
         if competence:
@@ -447,6 +481,86 @@ class ChatDateRangeIntentService:
             named_month.month,
             reason=f"Mês {named_month.label} de {reference.year}.",
         )
+
+    @classmethod
+    def _should_use_point_as_range(cls, normalized: str) -> bool:
+        if any(term in normalized for term in _PERIOD_METRIC_TERMS):
+            return True
+
+        return any(
+            term in normalized
+            for term in (
+                "ontem",
+                "anteontem",
+                "antes de ontem",
+                "amanha",
+                "depois de amanha",
+                "dia ",
+                " de janeiro",
+                " de fevereiro",
+                " de marco",
+                " de abril",
+                " de maio",
+                " de junho",
+                " de julho",
+                " de agosto",
+                " de setembro",
+                " de outubro",
+                " de novembro",
+                " de dezembro",
+            )
+        )
+
+    @classmethod
+    def _resolve_calendar_week_phrases(
+        cls,
+        normalized: str,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        from app.domain.services.chat_temporal_intent_service import (
+            ChatTemporalIntentService,
+        )
+
+        if "semana passada" in normalized:
+            start, end = ChatTemporalIntentService.calendar_week_range(
+                reference,
+                offset_weeks=-1,
+            )
+            return cls._from_dates(start, end, reason="Semana passada.")
+
+        if any(term in normalized for term in ("semana que vem", "proxima semana")):
+            start, end = ChatTemporalIntentService.calendar_week_range(
+                reference,
+                offset_weeks=1,
+            )
+            return cls._from_dates(start, end, reason="Semana que vem.")
+
+        return None
+
+    @classmethod
+    def _resolve_next_month_phrases(
+        cls,
+        normalized: str,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        if any(
+            term in normalized
+            for term in ("mes que vem", "mês que vem", "proximo mes", "próximo mês")
+        ):
+            return cls._next_month(reference, reason="Mês que vem.")
+
+        return None
+
+    @classmethod
+    def _next_month(cls, reference: date, *, reason: str) -> ResolvedDateRange:
+        if reference.month == 12:
+            year = reference.year + 1
+            month = 1
+        else:
+            year = reference.year
+            month = reference.month + 1
+
+        return cls._month_range(year, month, reason=reason)
 
     @classmethod
     def _previous_month(cls, reference: date, *, reason: str) -> ResolvedDateRange:

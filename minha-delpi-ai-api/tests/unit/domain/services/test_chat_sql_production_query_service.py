@@ -37,3 +37,26 @@ def test_can_fast_path_authoring_without_sql_action():
         "monte uma query que liste os produtos que vão ser produzidos hoje",
         ["api_delpi.products.search_products"],
     )
+
+
+def test_resolve_execute_for_production_monday():
+    resolution = ChatSqlProductionQueryService.resolve(
+        "quais produtos serão produzidos na segunda-feira?"
+    )
+
+    assert resolution is not None
+    assert resolution.mode == "execute"
+    assert "DECLARE @DATA DATE =" in resolution.sql
+    assert "CAST(GETDATE()" not in resolution.sql
+    assert "segunda-feira" in resolution.title.lower()
+
+
+def test_resolve_execute_for_production_tomorrow():
+    resolution = ChatSqlProductionQueryService.resolve(
+        "o que vai ser produzido amanhã?"
+    )
+
+    assert resolution is not None
+    assert resolution.mode == "execute"
+    assert "amanhã" in resolution.title
+    assert "CAST(GETDATE()" not in resolution.sql

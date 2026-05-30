@@ -2,6 +2,9 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 
 
 class ChatExternalActionKind:
@@ -24,6 +27,18 @@ class ChatExternalActionDirectAnswerService:
         normalized_operation = str(operation_id or "").lower()
         titulo = str(humanized.get("titulo") or "").lower()
 
+        if ExternalActionSqlCapabilityService.is_sql_execution_context(
+            path=normalized_path,
+            operation_id=normalized_operation,
+        ):
+            return ChatExternalActionKind.SQL
+
+        dados = humanized.get("dados")
+        if isinstance(dados, dict) and ExternalActionSqlCapabilityService.is_sql_result_payload(
+            dados
+        ):
+            return ChatExternalActionKind.SQL
+
         if (
             normalized_path.rstrip("/").endswith("/sales")
             or "list_sale_orders" in normalized_operation
@@ -34,7 +49,12 @@ class ChatExternalActionDirectAnswerService:
             if "busca" in titulo or titulo == "busca de produtos":
                 return ChatExternalActionKind.PRODUCT_SEARCH
 
-        if "/products/" in normalized_path or "produto" in titulo:
+        if "/products/" in normalized_path or (
+            "produto" in titulo
+            and not ExternalActionSqlCapabilityService.is_sql_execution_context(
+                path=normalized_path
+            )
+        ):
             return ChatExternalActionKind.PRODUCT
 
         if "/lmps/" in normalized_path and "{" in normalized_path:
@@ -51,9 +71,6 @@ class ChatExternalActionDirectAnswerService:
 
         if "/supplies/" in normalized_path or normalized_operation.startswith("get_supplies_"):
             return ChatExternalActionKind.SUPPLIES
-
-        if "/data/sql" in normalized_path or "sql" in normalized_operation:
-            return ChatExternalActionKind.SQL
 
         linhas = humanized.get("linhas") or []
 
@@ -93,7 +110,7 @@ class ChatExternalActionDirectAnswerService:
             return cls._format_lmp_detail(humanized)
 
         if kind == ChatExternalActionKind.SQL:
-            return cls._format_sql(humanized)
+            return cls._format_sql(humanized, message=message)
 
         if kind == ChatExternalActionKind.SUPPLIES:
             return cls._format_supplies(humanized, operation_id=operation_id)
@@ -132,12 +149,37 @@ class ChatExternalActionDirectAnswerService:
         return "\n\n".join(parts)
 
     @classmethod
-    def _format_sql(cls, humanized: dict) -> str | None:
-        lines = cls._clean_lines(humanized)
+    def _format_sql(cls, humanized: dict, *, message: str | None = None) -> str | None:
+        rows = cls._extract_sql_rows(humanized)
         title = str(humanized.get("titulo") or "Resultado da consulta SQL").strip()
 
+        from app.domain.services.chat_sql_production_schedule_date_service import (
+            ChatSqlProductionScheduleDateService,
+        )
+
+        schedule = ChatSqlProductionScheduleDateService.resolve(message)
+
+        if rows and cls._looks_like_production_schedule_row(rows[0]):
+            if schedule and schedule.title != title:
+                title = schedule.title
+
+        if not rows:
+            lines = cls._clean_lines(humanized)
+            message_text = lines[0] if lines else "A consulta não retornou registros."
+            if schedule and schedule.empty_message != message_text and "hoje" in message_text:
+                message_text = schedule.empty_message
+            return f"**{title}**\n\n{message_text}"
+
+        if rows and cls._looks_like_production_schedule_row(rows[0]):
+            body = "\n".join(f"- {line}" for line in cls._clean_lines(humanized))
+            label = schedule.label if schedule else "hoje"
+            summary = f"**{len(rows)}** produto(s) programado(s) para {label}."
+            return f"**{title}**\n\n{summary}\n\n{body}".strip()
+
+        lines = cls._clean_lines(humanized)
+
         if not lines:
-            return f"**{title}**\n\nA consulta não retornou registros."
+            return f"**{title}**\n\nA consulta retornou **{len(rows)}** registro(s)."
 
         if len(lines) == 1:
             return f"**{title}**\n\n{lines[0]}"
@@ -237,6 +279,34 @@ class ChatExternalActionDirectAnswerService:
             for line in (humanized.get("linhas") or [])
             if str(line).strip()
         ]
+
+    @classmethod
+    def _extract_sql_rows(cls, humanized: dict) -> list[dict]:
+        rows = humanized.get("sqlRows")
+
+        if isinstance(rows, list):
+            return [row for row in rows if isinstance(row, dict)]
+
+        dados = humanized.get("dados")
+
+        if isinstance(dados, dict):
+            nested_rows = dados.get("rows")
+
+            if isinstance(nested_rows, list):
+                return [row for row in nested_rows if isinstance(row, dict)]
+
+        return []
+
+    @classmethod
+    def _looks_like_production_schedule_row(cls, row: dict) -> bool:
+        if not isinstance(row, dict):
+            return False
+
+        keys = {str(key).upper() for key in row.keys()}
+
+        return "COD_PRODUTO" in keys and (
+            "DESCRICAO_PRODUTO" in keys or "QTD_PLANEJADA" in keys
+        )
 
     @classmethod
     def _looks_like_lmp_lines(cls, lines: list) -> bool:

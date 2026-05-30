@@ -3,6 +3,9 @@ import re
 from app.domain.services.external_actions.external_action_column_label_service import (
     ExternalActionColumnLabelService,
 )
+from app.domain.services.external_actions.external_action_sql_capability_service import (
+    ExternalActionSqlCapabilityService,
+)
 
 
 class ExternalActionResultPresenter:
@@ -61,6 +64,11 @@ class ExternalActionResultPresenter:
 
             if lmp_detail:
                 return lmp_detail
+
+            sql_resultsets = self._present_sql_resultsets(root, path)
+
+            if sql_resultsets:
+                return sql_resultsets
 
         if isinstance(root, list) and root:
             sql_result = self._present_sql_rows(root)
@@ -1205,14 +1213,164 @@ class ExternalActionResultPresenter:
                 "dados": {"rows": rows[:100]},
             }
 
-        linhas = [f"A consulta retornou {len(rows)} registro(s)."]
+        return self._present_sql_dict_rows(rows)
+
+    def _present_sql_resultsets(self, root: dict, path: str) -> dict | None:
+        resultsets = root.get("resultsets")
+
+        if not isinstance(resultsets, list):
+            return None
+
+        rows = self._collect_sql_resultset_rows(resultsets)
+        title = self._sql_result_title(root, path)
+
+        if not rows:
+            return {
+                "titulo": title,
+                "linhas": [self._sql_empty_message(root, path)],
+                "dados": root,
+                "sqlRows": [],
+            }
+
+        presented = self._present_sql_dict_rows(rows, title=title)
+        presented["dados"] = root
+        presented["sqlRows"] = rows[:100]
+        return presented
+
+    def _collect_sql_resultset_rows(self, resultsets: list) -> list[dict]:
+        rows: list[dict] = []
+
+        for resultset in resultsets:
+            if not isinstance(resultset, dict):
+                continue
+
+            data = resultset.get("data")
+
+            if not isinstance(data, list):
+                continue
+
+            for row in data:
+                if isinstance(row, dict):
+                    rows.append(row)
+
+        return rows
+
+    def _sql_result_title(self, root: dict, path: str) -> str:
+        if self._looks_like_production_sql_context(root, path):
+            schedule = self._resolve_production_schedule_from_root(root)
+            if schedule:
+                return schedule.title
+            return "Produtos programados para produção hoje"
+
+        if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
+            ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+        ):
+            return "Consulta SQL"
+
+        return "Consulta SQL"
+
+    def _sql_empty_message(self, root: dict, path: str) -> str:
+        if self._looks_like_production_sql_context(root, path):
+            schedule = self._resolve_production_schedule_from_root(root)
+            if schedule:
+                return schedule.empty_message
+            return "Nenhum produto programado para produção hoje."
+
+        if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
+            ExternalActionSqlCapabilityService.is_sql_result_payload(root)
+        ):
+            total = root.get("total_resultsets")
+
+            if total is not None:
+                return (
+                    f"A consulta foi executada com sucesso, mas não retornou registros "
+                    f"({total} resultset(s))."
+                )
+
+            return "A consulta não retornou registros."
+
+        total = root.get("total_resultsets")
+
+        if total is not None:
+            return f"A consulta foi executada com sucesso, mas não retornou registros ({total} resultset(s))."
+
+        return "A consulta não retornou registros."
+
+    def _resolve_production_schedule_from_root(self, root: dict):
+        from app.domain.services.chat_sql_production_schedule_date_service import (
+            ChatSqlProductionScheduleDateService,
+        )
+
+        if not isinstance(root, dict):
+            return None
+
+        for key in ("sql", "query", "statement"):
+            value = root.get(key)
+            if isinstance(value, str) and value.strip():
+                return ChatSqlProductionScheduleDateService.infer_from_sql(value)
+
+        return None
+
+    def _looks_like_production_sql_context(self, root: dict, path: str) -> bool:
+        rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+
+        if rows and self._looks_like_production_schedule_row(rows[0]):
+            return True
+
+        resultsets = root.get("resultsets") if isinstance(root, dict) else None
+        if isinstance(resultsets, list):
+            for resultset in resultsets:
+                if not isinstance(resultset, dict):
+                    continue
+                columns = resultset.get("columns") or []
+                if any(
+                    column in columns
+                    for column in (
+                        "COD_PRODUTO",
+                        "DESCRICAO_PRODUTO",
+                        "QTD_PLANEJADA",
+                    )
+                ):
+                    return True
+
+        if not isinstance(root, dict):
+            return False
+
+        for key in ("sql", "query", "statement"):
+            value = root.get(key)
+            if isinstance(value, str) and ExternalActionSqlCapabilityService.looks_like_production_schedule_sql(
+                value
+            ):
+                return True
+
+        return False
+
+    def _present_sql_dict_rows(self, rows: list[dict], *, title: str = "Consulta SQL") -> dict:
+        if self._looks_like_production_schedule_row(rows[0]):
+            linhas = [
+                self._format_production_schedule_row(row)
+                for row in rows[:25]
+                if isinstance(row, dict)
+            ]
+
+            if len(rows) > 25:
+                linhas.append(f"… e mais {len(rows) - 25} produto(s).")
+
+            return {
+                "titulo": title,
+                "linhas": linhas,
+                "dados": {"rows": rows[:100]},
+                "sqlRows": rows[:100],
+            }
+
+        linhas = [f"A consulta retornou **{len(rows)}** registro(s)."]
 
         for index, row in enumerate(rows[:8], start=1):
             if not isinstance(row, dict):
                 continue
 
             preview = ", ".join(
-                f"{key}={value}"
+                f"`{key}`={value}"
                 for key, value in list(row.items())[:6]
                 if value is not None
             )
@@ -1222,10 +1380,53 @@ class ExternalActionResultPresenter:
             linhas.append(f"… e mais {len(rows) - 8} registro(s).")
 
         return {
-            "titulo": "Consulta SQL",
+            "titulo": title,
             "linhas": linhas,
             "dados": {"rows": rows[:100]},
+            "sqlRows": rows[:100],
         }
+
+    def _looks_like_production_schedule_row(self, row: dict) -> bool:
+        if not isinstance(row, dict):
+            return False
+
+        keys = {str(key).upper() for key in row.keys()}
+
+        return "COD_PRODUTO" in keys and (
+            "DESCRICAO_PRODUTO" in keys or "QTD_PLANEJADA" in keys
+        )
+
+    def _format_production_schedule_row(self, row: dict) -> str:
+        code = str(
+            row.get("COD_PRODUTO")
+            or row.get("cod_produto")
+            or "?"
+        ).strip()
+        description = str(
+            row.get("DESCRICAO_PRODUTO")
+            or row.get("descricao_produto")
+            or ""
+        ).strip()
+        quantity = row.get("QTD_PLANEJADA")
+        unit = str(row.get("UNIDADE") or row.get("unidade") or "").strip()
+        start_at = row.get("DATA_INICIO_OPERACAO") or row.get("data_inicio_operacao")
+
+        parts = [f"**`{code}`**"]
+
+        if description:
+            parts.append(description)
+
+        line = " — ".join(parts)
+
+        if quantity is not None:
+            qty_text = self._format_num(quantity)
+            suffix = f" {unit}".rstrip()
+            line += f" · **{qty_text}{suffix}**"
+
+        if start_at:
+            line += f" · início {start_at}"
+
+        return line
 
     def _present_product_structure(self, root: dict, path: str) -> dict | None:
         root_node = root.get("root")
@@ -1693,6 +1894,15 @@ class ExternalActionResultPresenter:
 
         if columns_table:
             return columns_table
+
+        if isinstance(root.get("resultsets"), list):
+            rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+
+            if rows:
+                return self._build_items_table(
+                    rows,
+                    title=self._sql_result_title(root, path),
+                )
 
         return None
 
