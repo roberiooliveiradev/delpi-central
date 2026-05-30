@@ -46,6 +46,16 @@ def _get_jwks():
 
 def validate_token(token: str):
 
+    try:
+        return _decode_token(token)
+    except Exception:
+        global _jwks_cache
+        _jwks_cache = None
+        return _decode_token(token)
+
+
+def _decode_token(token: str):
+
     jwks = _get_jwks()
 
     header = jwt.get_unverified_header(token)
