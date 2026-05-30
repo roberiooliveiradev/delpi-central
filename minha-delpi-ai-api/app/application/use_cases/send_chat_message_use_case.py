@@ -426,6 +426,13 @@ class SendChatMessageUseCase:
         if ChatSmallTalkService.is_small_talk(request.message):
             return tool_context
 
+        from app.application.services.chat_utility_direct_answer_service import (
+            ChatUtilityDirectAnswerService,
+        )
+
+        if ChatUtilityDirectAnswerService.is_utility_question(request.message):
+            return tool_context
+
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )

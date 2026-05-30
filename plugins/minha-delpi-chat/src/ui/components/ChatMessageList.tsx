@@ -462,6 +462,8 @@ export function ChatMessageList({
     null,
   );
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [enteringAssistantId, setEnteringAssistantId] = useState<string | null>(null);
+  const settleAnimationTimerRef = useRef<number | null>(null);
 
   const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
   const latestUserMessageId = useMemo(() => {
@@ -792,6 +794,23 @@ export function ChatMessageList({
         (!userScrollIntentRef.current ||
           isViewportNearResponse(list, pinnedId));
 
+      const lastAssistant = [...messages]
+        .reverse()
+        .find((message) => message.role === "assistant");
+
+      if (lastAssistant?.id) {
+        setEnteringAssistantId(lastAssistant.id);
+
+        if (settleAnimationTimerRef.current !== null) {
+          window.clearTimeout(settleAnimationTimerRef.current);
+        }
+
+        settleAnimationTimerRef.current = window.setTimeout(() => {
+          setEnteringAssistantId(null);
+          settleAnimationTimerRef.current = null;
+        }, 480);
+      }
+
       pinUserMessageIdRef.current = null;
       pinAlignmentAppliedForRef.current = null;
 
@@ -820,7 +839,15 @@ export function ChatMessageList({
     }
 
     wasStreamingRef.current = isActiveStream;
-  }, [isActiveStream, scrollToBottom, updateScrollAffordances]);
+  }, [isActiveStream, messages, scrollToBottom, updateScrollAffordances]);
+
+  useEffect(() => {
+    return () => {
+      if (settleAnimationTimerRef.current !== null) {
+        window.clearTimeout(settleAnimationTimerRef.current);
+      }
+    };
+  }, []);
 
   async function handleSaveAndResend(messageId: string) {
     const updated = await onEditAndResendMessage?.(messageId, editingContent);
@@ -887,6 +914,10 @@ export function ChatMessageList({
         data-message-id={message.id}
         className={`mdc-chat-message mdc-chat-message--${message.role}${
           isPending ? " mdc-chat-message--pending" : ""
+        }${
+          !isUser && message.id === enteringAssistantId
+            ? " mdc-chat-message--settle-in"
+            : ""
         }`}
       >
         <div className="mdc-chat-message-avatar" aria-hidden="true">
@@ -1189,40 +1220,58 @@ export function ChatMessageList({
                   .filter(Boolean)
                   .join(" ")}
               >
-                {showStreamingActivityPanel ? (
+                {showStreamingActivityPanel ||
+                (streamingAnswer &&
+                  !suppressStreamingMarkdown &&
+                  !showStreamingCaptionReveal) ? (
                   <div className="mdc-chat-streaming-overlay">
-                    <ChatStreamingActivityPanel
-                      status={streamingStatus}
-                      entries={streamingActivityLog}
-                      isActive
-                      isAnswering={isGeneratingAnswer && !showStreamingCaptionReveal}
-                    />
+                    {showStreamingActivityPanel ? (
+                      <ChatStreamingActivityPanel
+                        status={streamingStatus}
+                        entries={streamingActivityLog}
+                        isActive
+                        isAnswering={Boolean(streamingAnswer?.trim())}
+                      />
+                    ) : null}
+                    {streamingAnswer &&
+                    !suppressStreamingMarkdown &&
+                    !showStreamingCaptionReveal ? (
+                      <div
+                        className={[
+                          "mdc-chat-stream-answer",
+                          isGeneratingAnswer ? "is-visible" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <ChatMarkdown content={revealedStreamingAnswer} />
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {showStreamingCaptionReveal ? (
-                  <h3 className="mdc-rich-presentation__heading">
-                    {streamingCaptionText}
-                  </h3>
-                ) : null}
-                {streamingAnswer && !suppressStreamingMarkdown ? (
                   <div
                     className={[
-                      "mdc-chat-stream-answer",
-                      isGeneratingAnswer ? "is-visible" : "",
+                      "mdc-chat-stream-caption",
+                      streamingCaptionText ? "is-visible" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    <ChatMarkdown content={revealedStreamingAnswer} />
+                    <h3 className="mdc-rich-presentation__heading">
+                      {streamingCaptionText}
+                    </h3>
                   </div>
                 ) : null}
-                {effectiveShowStreamingPresentation
-                  ? renderPresentation(
+                {effectiveShowStreamingPresentation ? (
+                  <div className="mdc-chat-stream-presentation is-visible">
+                    {renderPresentation(
                       streamingToolCalls,
                       streamingAnswer,
                       onDrillDown,
-                    )
-                  : null}
+                    )}
+                  </div>
+                ) : null}
                 {streamingCanvasOpen ? (
                   <ChatInlineCanvas
                     payload={streamingCanvasOpen}
@@ -1232,12 +1281,18 @@ export function ChatMessageList({
               </div>
               {showStreamingPresentation &&
               shouldShowActionResults(streamingAnswer, streamingToolCalls) ? (
-                <ChatActionResults toolCalls={streamingToolCalls} />
+                <div className="mdc-chat-stream-extras is-visible">
+                  <ChatActionResults toolCalls={streamingToolCalls} />
+                </div>
               ) : null}
               <ChatAdminDebugPanel
                 debug={(streamingAdminDebug as Record<string, unknown> | null) ?? null}
               />
-              <ChatSources sources={filterVisibleChatSources(streamingSources)} />
+              {filterVisibleChatSources(streamingSources).length > 0 ? (
+                <div className="mdc-chat-stream-extras is-visible">
+                  <ChatSources sources={filterVisibleChatSources(streamingSources)} />
+                </div>
+              ) : null}
             </div>
           </article>
         ) : null}

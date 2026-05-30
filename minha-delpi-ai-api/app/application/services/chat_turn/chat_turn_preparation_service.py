@@ -28,6 +28,9 @@ from app.application.services.chat_meta_direct_answer_service import (
     ChatMetaDirectAnswerService,
 )
 from app.application.services.chat_small_talk_service import ChatSmallTalkService
+from app.application.services.chat_utility_direct_answer_service import (
+    ChatUtilityDirectAnswerService,
+)
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
@@ -284,6 +287,9 @@ class ChatTurnPreparationService:
             message=message,
             workspace_context=workspace_context,
         )
+        utility_direct = ChatUtilityDirectAnswerService.build_direct_answer(
+            message=message,
+        )
 
         conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
@@ -339,6 +345,7 @@ class ChatTurnPreparationService:
             or skip_tools_for_user_identity
             or skip_tools_for_data_interpretation
             or small_talk_direct
+            or utility_direct
         ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
                 pipeline_stages.append("identity_shortcut")
@@ -356,6 +363,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("data_interpretation_empty")
             elif small_talk_direct:
                 pipeline_stages.append("small_talk")
+            elif utility_direct:
+                pipeline_stages.append("utility_direct")
             tool_context = {
                 "context": "",
                 "toolCalls": [],
@@ -444,6 +453,7 @@ class ChatTurnPreparationService:
                 and not ChatAgentSkillsService.preserves_rag_on_fast_path(resolved_skills)
             )
             or bool(small_talk_direct)
+            or bool(utility_direct)
             or operational_optimize
             or analysis_mode
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
@@ -456,6 +466,8 @@ class ChatTurnPreparationService:
             direct_answer = pre_capability_answer
         elif small_talk_direct:
             direct_answer = small_talk_direct
+        elif utility_direct:
+            direct_answer = utility_direct
         elif interpretation_without_data_answer:
             direct_answer = interpretation_without_data_answer
         elif analysis_mode:
@@ -475,7 +487,7 @@ class ChatTurnPreparationService:
                 analysis_mode=analysis_mode,
             )
 
-        if canvas_action or pre_capability_answer or small_talk_direct or (
+        if canvas_action or pre_capability_answer or small_talk_direct or utility_direct or (
             analysis_mode and direct_answer
         ) or interpretation_without_data_answer:
             skip_rag = True

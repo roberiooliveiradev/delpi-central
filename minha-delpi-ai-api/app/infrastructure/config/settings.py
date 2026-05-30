@@ -160,6 +160,13 @@ class Settings:
     CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED = (
         os.getenv("CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED", "true").lower() == "true"
     )
+    CHAT_UTILITY_DIRECT_ENABLED = (
+        os.getenv("CHAT_UTILITY_DIRECT_ENABLED", "true").lower() == "true"
+    )
+    CHAT_UTILITY_TIMEZONE = os.getenv(
+        "CHAT_UTILITY_TIMEZONE",
+        os.getenv("TZ", "America/Sao_Paulo"),
+    ).strip()
     CHAT_USER_CONTEXT_ENABLED = (
         os.getenv("CHAT_USER_CONTEXT_ENABLED", "true").lower() == "true"
     )

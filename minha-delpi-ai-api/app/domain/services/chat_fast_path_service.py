@@ -1,17 +1,7 @@
 import re
 import unicodedata
 
-
-_SMALL_TALK_PATTERN = (
-    r"^(ol[aá]|oi|opa|eae|e a[ií]|hey|hi|hello|"
-    r"bom dia|boa tarde|boa noite|"
-    r"tudo bem|td bem|como vai|blz|beleza|"
-    r"obrigad[oa]|valeu|vlw|brigad[oa]|"
-    r"ok|okay|sim|n[aã]o|nao|"
-    r"at[eé]|tchau|flw|falou)"
-    r"[\s!?.,:;]*$"
-)
-_SMALL_TALK_RE = re.compile(_SMALL_TALK_PATTERN, re.IGNORECASE)
+from app.domain.services.chat_small_talk_pattern_service import ChatSmallTalkPatternService
 
 _KNOWLEDGE_HINT_PATTERN = (
     r"\?|"
@@ -41,15 +31,6 @@ _REFINEMENT_HINT_RE = re.compile(
 )
 
 
-_SMALL_TALK_EXTENDED_PATTERN = (
-    r"^(ol[aá]|oi|opa|hey|hi|hello|bom dia|boa tarde|boa noite)"
-    r"[\s,!?]*"
-    r"(tudo bem|td bem|como vai|blz|beleza)?"
-    r"[\s!?.,:;]*$"
-)
-_SMALL_TALK_EXTENDED_RE = re.compile(_SMALL_TALK_EXTENDED_PATTERN, re.IGNORECASE)
-
-
 def _normalize_text(value: str) -> str:
     normalized = unicodedata.normalize("NFKD", value.strip().lower())
     return "".join(char for char in normalized if not unicodedata.combining(char))
@@ -58,17 +39,7 @@ def _normalize_text(value: str) -> str:
 class ChatFastPathService:
     @staticmethod
     def is_small_talk(message: str) -> bool:
-        text = str(message or "").strip()
-
-        if not text:
-            return False
-
-        normalized = _normalize_text(text)
-
-        if _SMALL_TALK_RE.match(normalized):
-            return True
-
-        return bool(_SMALL_TALK_EXTENDED_RE.match(normalized))
+        return ChatSmallTalkPatternService.is_small_talk(message)
 
     @staticmethod
     def should_use(
@@ -89,13 +60,13 @@ class ChatFastPathService:
         if not text:
             return False
 
+        if ChatFastPathService.is_small_talk(text):
+            return True
+
         if len(text) > max(1, max_chars):
             return False
 
         normalized = _normalize_text(text)
-
-        if ChatFastPathService.is_small_talk(text):
-            return True
 
         if _KNOWLEDGE_HINT_RE.search(normalized):
             return False

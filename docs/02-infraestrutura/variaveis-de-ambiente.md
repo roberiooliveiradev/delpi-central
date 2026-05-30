@@ -156,6 +156,8 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `RAG_CONTEXT_MIN_SCORE` | Default `0.35` (fallback `RAG_ASSERTIVENESS_MIN_SCORE`). Prod operacional: `0.40`–`0.45`. Ver [rag-context-min-score-calibracao.md](../../minha-delpi-ai-api/docs/roadmap/rag-context-min-score-calibracao.md) |
 | `CHAT_FAST_PATH_MAX_CHARS` | Máximo de caracteres para fast path (sem LLM). **Recomendado:** `30` |
 | `CHAT_ASSISTANT_IDENTITY_DIRECT_ENABLED` | `true` (default) — «quem te criou» etc. usam `identity.json` sem RAG/LLM; `false` para homologar RAG+LLM |
+| `CHAT_UTILITY_DIRECT_ENABLED` | `true` (default) — «que horas são?», «que dia é hoje?» etc. usam `utility_answers.json` com hora real, sem LLM |
+| `CHAT_UTILITY_TIMEZONE` | Herda `TZ` (ex.: `America/Sao_Paulo`) — fuso para respostas de hora/data |
 | `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — grava a resposta no banco antes do SSE `playback`; o plugin anima com efeito de escrita natural (`naturalTextReveal`). Reload não perde texto em geração. Use `false` só se priorizar primeiro token SSE em CPU muito lenta |
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` (default) — quando o usuário pede total/completo ou confirma continuação, o chat busca várias páginas da API e consolida (tabela, árvore, listagem) |
 | `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` (default, máx. 8) — páginas buscadas por turno antes de perguntar «deseja continuar?» |

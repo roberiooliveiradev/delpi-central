@@ -21,7 +21,8 @@ Arquivos em `assistant/` usados pela API de chat:
 | `external_action_responses.json` | Respostas SQL, produção, composite e temporal |
 | `identity.json` | Identidade e small talk |
 | `operational_parameters.json` | Parâmetros faltantes e ambiguidade de período |
-| `small_talk.json` | Respostas conversacionais |
+| `small_talk.json` | Respostas conversacionais (8 categorias; padrões editáveis) |
+| `utility_answers.json` | Hora, data e dia da semana (resposta direta) |
 | `stream.json` | Eventos SSE |
 
 Políticas longas para o LLM continuam em `app/domain/prompt_policies/*.md`.

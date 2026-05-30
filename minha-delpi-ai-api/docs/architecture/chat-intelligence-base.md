@@ -92,7 +92,7 @@ Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com per
 
 ### Small talk (maio/2026)
 
-Saudações curtas («olá», «obrigado», «tchau») → `ChatSmallTalkService.build_direct_answer` com respostas em `small_talk.json`: **sem RAG**, **sem** loop agentic, **sem** LLM. Reduz latência e evita RAG irrelevante em cumprimentos.
+Saudações, despedidas, agradecimentos, confirmações e interações sociais curtas → `ChatSmallTalkService.build_direct_answer` com padrões em `small_talk.json` (fonte única via `ChatSmallTalkPatternService`): **sem RAG**, **sem** loop agentic, **sem** LLM. Catálogo inspirado em expressões conversacionais PT-BR ([cumprimentos/despedidas](https://philipebrazuca.com/pt-br/cumprimentos-e-despedidas-em-portugues/), intents de [atendimento BR](https://huggingface.co/datasets/RichardSakaguchiMS/brazilian-customer-service-conversations)). Categorias: `greeting`, `wellbeing`, `thanks`, `apology`, `praise`, `farewell`, `ack`, `laughter`.
 
 ### Perguntas meta compostas (maio/2026)
 

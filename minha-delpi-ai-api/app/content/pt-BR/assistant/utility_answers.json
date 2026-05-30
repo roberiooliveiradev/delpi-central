@@ -1,0 +1,69 @@
+{
+  "maxMessageLength": 80,
+  "categoryPriority": [
+    "current_datetime",
+    "current_time",
+    "current_date",
+    "current_weekday"
+  ],
+  "patterns": {
+    "current_time": [
+      "que horas sao",
+      "que horas e",
+      "qual a hora",
+      "qual e a hora",
+      "me diga as horas",
+      "me fala as horas",
+      "me informe as horas",
+      "horas agora",
+      "hora agora"
+    ],
+    "current_date": [
+      "que dia e hoje",
+      "qual a data",
+      "qual e a data",
+      "data de hoje",
+      "data hoje",
+      "que data e hoje",
+      "me diga a data",
+      "me fala a data"
+    ],
+    "current_datetime": [
+      "que dia e hora",
+      "qual a data e hora",
+      "data e hora",
+      "dia e hora"
+    ],
+    "current_weekday": [
+      "que dia da semana",
+      "qual dia da semana",
+      "que dia da semana e hoje",
+      "qual dia da semana e hoje"
+    ]
+  },
+  "exclusions": [
+    "producao",
+    "produção",
+    "setup",
+    "hora mil",
+    "hora-mil",
+    "inicio",
+    "início",
+    "fim",
+    "encerramento",
+    "ordem",
+    "op ",
+    "totvs",
+    "protheus",
+    "sql",
+    "produto",
+    "estoque"
+  ],
+  "timezoneLabel": "horário de Brasília",
+  "responses": {
+    "current_time": "Agora são **{time}** ({timezone_label}).",
+    "current_date": "Hoje é **{weekday}**, **{date}** ({timezone_label}).",
+    "current_datetime": "Agora são **{time}** de **{weekday}**, **{date}** ({timezone_label}).",
+    "current_weekday": "Hoje é **{weekday}** ({timezone_label})."
+  }
+}

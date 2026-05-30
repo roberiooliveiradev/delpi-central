@@ -796,15 +796,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           ) {
             setDraft("");
             setPendingUserMessage(null);
-            resetStreamingUi();
             await loadMessages(sessionId);
+            resetStreamingUi();
             return;
           }
 
           setDraft("");
           setPendingUserMessage(null);
-          resetStreamingUi();
           await loadMessages(sessionId);
+          resetStreamingUi();
         },
         onError: (streamError: string) => {
           finishSending(sessionId);

@@ -149,3 +149,44 @@ def test_small_talk_uses_direct_answer_and_skips_rag_and_tools():
     build_tool_context.assert_not_called()
     maybe_extend_tool_context.assert_not_called()
     rag_context_service.build_context.assert_not_called()
+
+
+def test_utility_time_uses_direct_answer_and_skips_rag_and_tools():
+    session = MagicMock()
+    session.id = uuid4()
+    request = MagicMock()
+    request.attachment_ids = None
+
+    rag_context_service = MagicMock()
+    build_tool_context = MagicMock()
+    maybe_extend_tool_context = MagicMock()
+
+    service = ChatTurnPreparationService(rag_context_service=rag_context_service)
+
+    prepared = service.prepare(
+        message="que horas são?",
+        request=request,
+        session=session,
+        user_id=uuid4(),
+        workspace_context={},
+        attachments=[],
+        previous_messages=[],
+        history_source=[],
+        build_tool_context=build_tool_context,
+        maybe_extend_tool_context=maybe_extend_tool_context,
+        prepare_history=lambda history: ("", list(history)),
+        history_keep=12,
+        fast_path_enabled=True,
+        fast_path_max_chars=30,
+        resolve_user_identity_answer=lambda msg: None,
+        resolve_capabilities_answer=lambda msg: None,
+    )
+
+    assert prepared.direct_answer
+    assert "Brasília" in prepared.direct_answer
+    assert prepared.skip_rag is True
+    assert "utility_direct" in prepared.pipeline_stages
+    assert "skip_rag" in prepared.pipeline_stages
+    build_tool_context.assert_not_called()
+    maybe_extend_tool_context.assert_not_called()
+    rag_context_service.build_context.assert_not_called()
