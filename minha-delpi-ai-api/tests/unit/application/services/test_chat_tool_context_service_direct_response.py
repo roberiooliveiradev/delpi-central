@@ -195,6 +195,37 @@ def test_resolve_presentation_only_answer_for_tree():
     )
 
 
+def test_prefer_presentation_direct_answer_keeps_short_explanatory_summary():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "statusCode": 200,
+                "path": "/products/90260142/guide",
+                "presentation": {
+                    "type": "table",
+                    "title": "Roteiro do produto",
+                    "columns": [{"key": "operation_description", "label": "Descrição operação"}],
+                    "rows": [{"operation_description": "CORTAR - MANUAL"}],
+                },
+            },
+        }
+    ]
+    summary = (
+        "O produto **90260142** possui 3 operação(ões): "
+        "**01** CORTAR - MANUAL, **02** INSERIR TUBO ISOLANTE e **03** EMBALAR."
+    )
+
+    compact = ChatToolContextService.prefer_presentation_direct_answer(
+        summary,
+        tool_calls,
+    )
+
+    assert "90260142" in compact
+    assert "CORTAR - MANUAL" in compact
+
+
 def test_prefer_presentation_direct_answer_replaces_long_markdown():
     tool_calls = [
         {

@@ -12,6 +12,9 @@ from typing import Any
 from app.application.services.chat_assistant_identity_service import (
     ChatAssistantIdentityService,
 )
+from app.application.services.chat_conversation_context_service import (
+    ChatConversationContextService,
+)
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
@@ -29,6 +32,7 @@ from app.application.services.chat_user_context_service import ChatUserContextSe
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
@@ -308,6 +312,13 @@ class ChatTurnPreparationService:
             getattr(request, "access_token", None)
             and ChatUserContextService.is_user_identity_question(message)
         )
+        skip_tools_for_data_interpretation = (
+            ChatAnalysisIntentService.is_data_interpretation_request(
+                message,
+                history_source,
+            )
+            and ChatConversationContextService.has_recent_tool_data(history_source)
+        )
 
         if (
             canvas_action
@@ -315,10 +326,13 @@ class ChatTurnPreparationService:
             or missing_product_code_answer
             or ambiguous_period_answer
             or skip_tools_for_user_identity
+            or skip_tools_for_data_interpretation
             or small_talk_direct
         ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
                 pipeline_stages.append("identity_shortcut")
+            elif skip_tools_for_data_interpretation:
+                pipeline_stages.append("data_interpretation")
             elif canvas_action:
                 pipeline_stages.append("canvas")
             elif pre_capability_answer:

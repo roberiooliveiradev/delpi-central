@@ -39,6 +39,43 @@ def test_build_analysis_context_includes_tool_preview():
     assert "análise comparativa" in context.lower()
 
 
+def test_apply_analysis_mode_clears_direct_answer_for_data_interpretation():
+    tool_context = {
+        "context": "",
+        "directAnswer": "tabela repetida",
+        "toolCalls": [],
+    }
+    history = [
+        {
+            "role": "assistant",
+            "content": "Roteiro do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260142/guide",
+                            "responsePreview": '{"items": []}',
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    analysis_mode, updated = ChatConversationContextService.apply_analysis_mode(
+        "explique os dados acima",
+        history,
+        tool_context,
+    )
+
+    assert analysis_mode
+    assert updated.get("directAnswer") is None
+    assert updated.get("analysisMode") is True
+    assert "interpretar os dados" in updated.get("context", "").lower()
+
+
 def test_apply_analysis_mode_clears_direct_answer():
     tool_context = {
         "context": "",

@@ -258,16 +258,33 @@ class ChatToolContextService:
             and allowed_action_ids
             and str(router_suggestion["actionId"]) in {str(item) for item in allowed_action_ids}
         ):
+            from app.domain.services.chat_analysis_intent_service import (
+                ChatAnalysisIntentService,
+            )
             from app.domain.services.chat_sql_operational_intent_service import (
                 ChatSqlOperationalIntentService,
             )
+            from app.domain.services.external_actions.external_action_sql_capability_service import (
+                ExternalActionSqlCapabilityService,
+            )
 
-            if not ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            router_action_id = str(router_suggestion["actionId"])
+            skip_router_action = (
+                ChatAnalysisIntentService.is_data_interpretation_request(
+                    raw_message,
+                    previous_messages,
+                )
+                or ExternalActionSqlCapabilityService.is_sql_execution_context(
+                    action_id=router_action_id,
+                )
+            )
+
+            if not skip_router_action and not ChatSqlOperationalIntentService.requires_sql_knowledge(message):
                 selected_tools.append(
                     {
                         "name": "execute_external_action",
                         "arguments": {
-                            "actionId": router_suggestion["actionId"],
+                            "actionId": router_action_id,
                             "body": {"message": message},
                         },
                         "reason": "Action sugerida pelo roteador inteligente do chat.",
@@ -706,6 +723,16 @@ class ChatToolContextService:
 
         if continuation:
             return f"{presentation}\n\n{continuation}".strip()
+
+        normalized = str(direct_answer or "").strip()
+
+        if normalized and normalized != presentation:
+            looks_tabular = "|" in normalized or normalized.count("\n") > 6
+
+            if not looks_tabular and (
+                "\n" in normalized or len(normalized) > len(presentation) + 30
+            ):
+                return normalized
 
         return presentation
 

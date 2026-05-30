@@ -51,6 +51,16 @@ class ChatIntelligencePipelineService:
         )
         analysis_mode = ChatAnalysisIntentService.is_comparison_or_insight_request(message)
 
+        if (
+            not analysis_mode
+            and previous_messages
+            and ChatAnalysisIntentService.is_data_interpretation_request(
+                message,
+                previous_messages,
+            )
+        ):
+            analysis_mode = True
+
         if analysis_mode:
             operational_optimize = False
         elif (

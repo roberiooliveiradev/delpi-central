@@ -25,6 +25,54 @@ def test_does_not_flag_full_analyser_fetch_as_comparison():
     )
 
 
+def test_detects_data_interpretation_follow_up():
+    history = [
+        {
+            "role": "assistant",
+            "content": "Roteiro do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260142/guide",
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "explique os dados acima",
+        history,
+    )
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "o que isso quer dizer",
+        history,
+    )
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "resume",
+        history,
+    )
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "traduz isso",
+        history,
+    )
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "nao entendi",
+        history,
+    )
+
+
+def test_does_not_flag_data_interpretation_without_tool_history():
+    assert not ChatAnalysisIntentService.is_data_interpretation_request(
+        "explique os dados acima",
+        [],
+    )
+
+
 def test_extract_all_product_codes_preserves_order():
     codes = ChatAnalysisIntentService.extract_all_product_codes(
         "user: estrutura 90260077",

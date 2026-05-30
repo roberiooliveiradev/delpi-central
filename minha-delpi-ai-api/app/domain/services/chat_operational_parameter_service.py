@@ -11,6 +11,9 @@ from app.domain.services.chat_message_normalization_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
+from app.application.services.chat_conversation_context_service import (
+    ChatConversationContextService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntent,
     ChatProductQueryIntentService,
@@ -81,6 +84,16 @@ class ChatOperationalParameterService:
         conversation_context: str | None = None,
         previous_messages: list | None = None,
     ) -> bool:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        if ChatAnalysisIntentService.is_data_interpretation_request(
+            message,
+            previous_messages,
+        ) and ChatConversationContextService.has_recent_tool_data(previous_messages):
+            return True
+
         return cls._missing_product_code_intent(
             message,
             conversation_context,

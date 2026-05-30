@@ -114,8 +114,22 @@ class ExternalActionResultPresenter:
                 return self._present_sale_orders(root, items)
 
             title = self._infer_items_title(items, path)
+            lowered_path = str(path or "").lower()
+            first_item = items[0] if items and isinstance(items[0], dict) else {}
+
+            if "/stock" in lowered_path or self._is_stock_data(first_item):
+                return self._present_product_stock(items, path=path, title=title)
+
+            if "/inspection" in lowered_path or self._looks_like_inspection_item(first_item):
+                return self._present_product_inspection(items, path=path, title=title)
+
             if items and isinstance(items[0], dict) and "code" in items[0] and "description" in items[0]:
                 return self._present_product_search(root, items, title=title)
+
+            if items and isinstance(items[0], dict) and (
+                "operation_description" in items[0] or "operation_code" in items[0]
+            ):
+                return self._present_product_guide(items, path=path, title=title)
 
             return self._present_items(items, title=title)
 
@@ -1483,10 +1497,65 @@ class ExternalActionResultPresenter:
             return None
 
         code = str(root_node.get("code") or "").strip()
+        description = str(root_node.get("description") or "").strip()
+        total = root.get("total")
+        level1_count = len(items)
+
+        linhas: list[str] = [
+            f"Produto **{code}**: {description or 'sem descrição'}.",
+        ]
+
+        if total is not None:
+            linhas.append(
+                f"A composição (BOM) possui **{total}** componente(s) de nível 1."
+            )
+        elif level1_count:
+            linhas.append(
+                f"A composição possui **{level1_count}** componente(s) de nível 1."
+            )
+
+        mp_codes: set[str] = set()
+
+        for item in items[:10]:
+            if not isinstance(item, dict):
+                continue
+
+            item_code = str(item.get("code") or "?").strip()
+            item_desc = str(item.get("description") or "").strip()
+            item_type = str(item.get("type") or "").strip()
+            quantity = item.get("quantity")
+
+            if str(item_type).upper() == "MP":
+                mp_codes.add(item_code)
+
+            parts = [f"**{item_code}**"]
+
+            if item_desc:
+                parts.append(item_desc)
+
+            if item_type:
+                parts.append(f"({item_type})")
+
+            line = " — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "")
+
+            if quantity is not None:
+                line += f" — qtd **{self._format_num(quantity)}**"
+
+            linhas.append(f"- {line}")
+
+        if level1_count > 10:
+            linhas.append(f"… e mais **{level1_count - 10}** componente(s).")
+
+        if mp_codes:
+            preview = ", ".join(sorted(mp_codes)[:6])
+            suffix = "…" if len(mp_codes) > 6 else ""
+            linhas.append(
+                f"Inclui **{len(mp_codes)}** matéria(s)-prima(s): {preview}{suffix}."
+            )
 
         return {
             "titulo": f"Estrutura do produto {code}" if code else "Estrutura do produto",
-            "linhas": [],
+            "linhas": linhas,
             "dados": root,
             "sourcePath": path,
         }
@@ -1587,6 +1656,306 @@ class ExternalActionResultPresenter:
             "titulo": "Ordens de Venda",
             "linhas": linhas or ["Nenhuma ordem de venda encontrada."],
             "dados": {"total": total, "items": items[:12]},
+        }
+
+    def _present_product_guide(
+        self,
+        items: list,
+        *,
+        path: str = "",
+        title: str | None = None,
+    ) -> dict:
+        titulo = title or self._infer_items_title(items, path) or "Roteiro do produto"
+        product_code = self._extract_product_code_from_path(path)
+
+        main_ops: list[tuple[str, str, str | None]] = []
+        component_products: set[str] = set()
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            level = item.get("bom_level", 0)
+            op_desc = str(item.get("operation_description") or "").strip()
+            op_code = str(item.get("operation_code") or "").strip()
+            prod = str(item.get("product_code") or "").strip()
+            work_center = str(item.get("work_center") or "").strip() or None
+
+            if not product_code and level == 0 and prod:
+                product_code = prod
+
+            if level == 0 and op_desc:
+                main_ops.append((op_code, op_desc, work_center))
+            elif level and prod:
+                component_products.add(prod)
+
+        linhas: list[str] = []
+
+        if product_code and main_ops:
+            ops_preview = ", ".join(
+                f"**{code}** {desc}" if code else f"**{desc}**"
+                for code, desc, _ in main_ops
+            )
+            linhas.append(
+                f"O produto **{product_code}** possui {len(main_ops)} operação(ões): "
+                f"{ops_preview}."
+            )
+        elif product_code:
+            linhas.append(
+                f"Consulta de roteiro do produto **{product_code}** "
+                f"com {len(items)} registro(s)."
+            )
+
+        if component_products:
+            preview_codes = ", ".join(sorted(component_products)[:5])
+            suffix = "…" if len(component_products) > 5 else ""
+            linhas.append(
+                f"Inclui também roteiros de **{len(component_products)}** componente(s) "
+                f"de nível BOM ({preview_codes}{suffix})."
+            )
+
+        for op_code, op_desc, work_center in main_ops[:8]:
+            center_part = f" no centro **{work_center}**" if work_center else ""
+            label = f"Operação **{op_code}**" if op_code else "Operação"
+            linhas.append(f"- {label}: {op_desc}{center_part}.")
+
+        if not linhas:
+            linhas = [f"A API retornou {len(items)} registro(s) de roteiro."]
+
+        return {
+            "titulo": titulo,
+            "linhas": linhas,
+            "dados": {
+                "items": items[:100],
+                "product_code": product_code,
+                "total": len(items),
+            },
+        }
+
+    def _looks_like_inspection_item(self, item: dict) -> bool:
+        return any(
+            key in item
+            for key in (
+                "inspection_type",
+                "characteristic",
+                "specification",
+                "has_inspection",
+                "measurable_tests",
+                "textual_tests",
+            )
+        )
+
+    def _present_product_inspection(
+        self,
+        items: list,
+        *,
+        path: str = "",
+        title: str | None = None,
+    ) -> dict:
+        titulo = title or self._infer_items_title(items, path) or "Inspeção do produto"
+        product_code = self._extract_product_code_from_path(path)
+        linhas: list[str] = []
+
+        if items and isinstance(items[0], dict) and "has_inspection" in items[0]:
+            with_plan = [item for item in items if item.get("has_inspection")]
+            without_plan = len(items) - len(with_plan)
+
+            if product_code:
+                linhas.append(
+                    f"Plano de inspeção do produto **{product_code}** "
+                    f"com **{len(items)}** registro(s)."
+                )
+            else:
+                linhas.append(f"Plano de inspeção com **{len(items)}** registro(s).")
+
+            linhas.append(f"**{len(with_plan)}** item(ns) com inspeção definida.")
+
+            if without_plan:
+                linhas.append(f"**{without_plan}** item(ns) sem plano cadastrado.")
+
+            for item in with_plan[:8]:
+                if not isinstance(item, dict):
+                    continue
+
+                item_code = str(item.get("product_code") or "?").strip()
+                header = item.get("header") if isinstance(item.get("header"), dict) else {}
+                header_desc = str(header.get("description") or "").strip()
+                measurable = item.get("measurable_tests") or []
+                textual = item.get("textual_tests") or []
+                measurable_count = len(measurable) if isinstance(measurable, list) else 0
+                textual_count = len(textual) if isinstance(textual, list) else 0
+
+                summary = header_desc or "plano de inspeção cadastrado"
+                linhas.append(
+                    f"- **{item_code}**: {summary} "
+                    f"({measurable_count} teste(s) dimensional(is), "
+                    f"{textual_count} textual(is))."
+                )
+
+                if isinstance(measurable, list):
+                    for test in measurable[:3]:
+                        if not isinstance(test, dict):
+                            continue
+
+                        label = test.get("test_code") or test.get("sequence") or "Teste"
+                        unit = test.get("unit") or ""
+                        nominal = test.get("nominal_value")
+                        lower = test.get("lower_spec_limit")
+                        upper = test.get("upper_spec_limit")
+                        spec_parts = []
+
+                        if nominal is not None:
+                            spec_parts.append(f"nominal {nominal}{unit}")
+
+                        if lower is not None or upper is not None:
+                            spec_parts.append(f"limites {lower or '—'} a {upper or '—'}{unit}")
+
+                        if spec_parts:
+                            linhas.append(f"  - {label}: {', '.join(spec_parts)}.")
+
+            if len(with_plan) > 8:
+                linhas.append(f"… e mais **{len(with_plan) - 8}** item(ns) com inspeção.")
+
+            return {
+                "titulo": titulo,
+                "linhas": linhas,
+                "dados": {
+                    "items": items[:100],
+                    "product_code": product_code,
+                    "total": len(items),
+                },
+            }
+
+        linhas.append(f"Plano de inspeção com **{len(items)}** característica(s).")
+
+        for item in items[:10]:
+            if not isinstance(item, dict):
+                continue
+
+            characteristic = (
+                item.get("characteristic")
+                or item.get("specification")
+                or item.get("step_description")
+                or item.get("description")
+                or "?"
+            )
+            inspection_type = item.get("inspection_type") or item.get("method") or ""
+            sequence = item.get("sequence") or item.get("step") or ""
+            parts = [f"**{characteristic}**"]
+
+            if inspection_type:
+                parts.append(f"tipo {inspection_type}")
+
+            if sequence not in (None, ""):
+                parts.append(f"seq. {sequence}")
+
+            linhas.append(f"- {' — '.join(str(part) for part in parts)}")
+
+        if len(items) > 10:
+            linhas.append(f"… e mais **{len(items) - 10}** característica(s).")
+
+        return {
+            "titulo": titulo,
+            "linhas": linhas,
+            "dados": {
+                "items": items[:100],
+                "product_code": product_code,
+                "total": len(items),
+            },
+        }
+
+    def _present_product_stock(
+        self,
+        items: list,
+        *,
+        path: str = "",
+        title: str | None = None,
+    ) -> dict:
+        titulo = title or self._infer_items_title(items, path) or "Estoque do produto"
+        product_code = self._extract_product_code_from_path(path)
+        branches: set[str] = set()
+        warehouses: set[str] = set()
+        total_available = 0.0
+        total_current = 0.0
+        has_available = False
+        has_current = False
+        detail_lines: list[str] = []
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            branch = str(item.get("branch") or "").strip()
+            warehouse = str(item.get("warehouse") or "").strip()
+
+            if branch:
+                branches.add(branch)
+
+            if warehouse:
+                warehouses.add(warehouse)
+
+            available = item.get("available_quantity")
+            current = item.get("current_quantity")
+
+            if available is not None:
+                has_available = True
+                total_available += float(available or 0)
+
+            if current is not None:
+                has_current = True
+                total_current += float(current or 0)
+
+            detail_lines.append(
+                "Filial {branch}, armazém {warehouse}: atual {current}, "
+                "disponível {available}, empenhada {committed}. Local: {location}.".format(
+                    branch=item.get("branch") or "—",
+                    warehouse=item.get("warehouse") or "—",
+                    current=self._format_num(item.get("current_quantity")),
+                    available=self._format_num(item.get("available_quantity")),
+                    committed=self._format_num(item.get("committed_quantity")),
+                    location=item.get("physical_location") or "não informado",
+                )
+            )
+
+        linhas: list[str] = []
+
+        if product_code:
+            linhas.append(
+                f"Posição de estoque do produto **{product_code}** "
+                f"em **{len(items)}** registro(s)."
+            )
+        else:
+            linhas.append(f"Posição de estoque com **{len(items)}** registro(s).")
+
+        if branches:
+            linhas.append(f"Filial(is): {', '.join(sorted(branches))}.")
+
+        if warehouses:
+            linhas.append(f"Armazém(ns): {', '.join(sorted(warehouses))}.")
+
+        if has_available:
+            linhas.append(
+                f"Total disponível nesta consulta: **{self._format_num(total_available)}** un."
+            )
+
+        if has_current and (not has_available or abs(total_current - total_available) > 0.0001):
+            linhas.append(
+                f"Total atual nesta consulta: **{self._format_num(total_current)}** un."
+            )
+
+        linhas.extend(detail_lines[:8])
+
+        if len(detail_lines) > 8:
+            linhas.append(f"… e mais **{len(detail_lines) - 8}** posição(ões) de estoque.")
+
+        return {
+            "titulo": titulo,
+            "linhas": linhas,
+            "dados": {
+                "items": items[:100],
+                "product_code": product_code,
+                "total": len(items),
+            },
         }
 
     def _present_items(self, items: list, *, title: str | None = None) -> dict:

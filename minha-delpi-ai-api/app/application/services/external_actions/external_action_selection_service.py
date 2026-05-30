@@ -1,5 +1,8 @@
 import re
 
+from app.application.services.chat_conversation_context_service import (
+    ChatConversationContextService,
+)
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 from app.domain.services.chat_message_normalization_service import (
@@ -77,6 +80,12 @@ class ExternalActionSelectionService:
         previous_messages: list | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
+
+        if ChatAnalysisIntentService.is_data_interpretation_request(
+            message,
+            previous_messages,
+        ) and ChatConversationContextService.has_recent_tool_data(previous_messages):
+            return None
 
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return None

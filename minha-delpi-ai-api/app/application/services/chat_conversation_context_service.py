@@ -44,7 +44,20 @@ class ChatConversationContextService:
         return "\n".join(parts)
 
     @classmethod
-    def build_analysis_context(cls, previous_messages, *, limit: int = 12) -> str:
+    def has_recent_tool_data(cls, previous_messages, *, limit: int = 10) -> bool:
+        return ChatAnalysisIntentService._has_recent_successful_tool_data(
+            previous_messages or [],
+            limit=limit,
+        )
+
+    @classmethod
+    def build_analysis_context(
+        cls,
+        previous_messages,
+        *,
+        message: str | None = None,
+        limit: int = 12,
+    ) -> str:
         blocks: list[str] = []
         preview_texts: list[str] = []
 
@@ -67,10 +80,21 @@ class ChatConversationContextService:
             *[cls._message_field(m, "content") for m in previous_messages[-limit:]],
         )
 
-        header = (
-            "Contexto para análise comparativa (dados já obtidos nesta conversa; "
-            "não repita consultas idênticas):\n"
+        is_interpretation = ChatAnalysisIntentService.is_data_interpretation_request(
+            str(message or ""),
+            previous_messages,
         )
+
+        if is_interpretation:
+            header = (
+                "Contexto para interpretar os dados já obtidos nesta conversa "
+                "(não repita consultas idênticas):\n"
+            )
+        else:
+            header = (
+                "Contexto para análise comparativa (dados já obtidos nesta conversa; "
+                "não repita consultas idênticas):\n"
+            )
 
         if codes:
             header += f"Códigos de produto identificados no histórico: {', '.join(codes)}\n"
@@ -144,14 +168,23 @@ class ChatConversationContextService:
             ChatAnalysisIntentService,
         )
 
-        if not ChatAnalysisIntentService.is_comparison_or_insight_request(message):
+        if not (
+            ChatAnalysisIntentService.is_comparison_or_insight_request(message)
+            or ChatAnalysisIntentService.is_data_interpretation_request(
+                message,
+                previous_messages,
+            )
+        ):
             return False, tool_context
 
         updated = dict(tool_context or {})
         updated.pop("directAnswer", None)
 
         existing = str(updated.get("context") or "").strip()
-        analysis_block = cls.build_analysis_context(previous_messages)
+        analysis_block = cls.build_analysis_context(
+            previous_messages,
+            message=message,
+        )
 
         if analysis_block:
             updated["context"] = (
