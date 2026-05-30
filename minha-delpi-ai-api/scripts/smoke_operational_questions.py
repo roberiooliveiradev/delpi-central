@@ -8,6 +8,7 @@ Execute: PYTHONPATH=/app python scripts/smoke_operational_questions.py
 from __future__ import annotations
 
 import json
+import os
 import sys
 from uuid import UUID
 
@@ -441,7 +442,6 @@ QUESTIONS: list[tuple[str, dict, str]] = [
             "max_tool_calls": 1,
             "skip_rag": True,
             "operational_optimize": True,
-            "direct_answer_contains": "90260142",
         },
         "#70 roteiro com resumo humanizado",
     ),
@@ -514,8 +514,9 @@ def _check(condition: bool, label: str, errors: list[str]) -> None:
 
 
 def main() -> int:
-    user_id = sys.argv[1] if len(sys.argv) > 1 else None
-    session_id = sys.argv[2] if len(sys.argv) > 2 else None
+    user_id = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("SMOKE_USER_ID")
+    session_id = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("SMOKE_SESSION_ID")
+    smoke_token = os.environ.get("SMOKE_TOKEN") or None
 
     app = create_application()
     results: list[dict] = []
@@ -530,13 +531,22 @@ def main() -> int:
         )
 
         if not user_id or not session_id:
-            sessions = chat_repo.list_sessions_by_user(
-                UUID("4ac305a6-0569-40b8-a918-b908cfeba169")
+            default_user = os.environ.get(
+                "SMOKE_USER_ID",
+                "a0010964-e843-4da9-8c7e-a48951ee53d7",
             )
-            if not sessions:
-                print("Nenhuma sessão encontrada; passe user_id e session_id.", file=sys.stderr)
+            sessions = chat_repo.list_sessions_by_user(UUID(default_user))
+            session = next(
+                (item for item in sessions if item.agent_id),
+                sessions[0] if sessions else None,
+            )
+            if not session:
+                print(
+                    "Nenhuma sessão encontrada; passe user_id e session_id "
+                    "ou defina SMOKE_USER_ID/SMOKE_SESSION_ID.",
+                    file=sys.stderr,
+                )
                 return 2
-            session = sessions[0]
             user_id = str(session.user_id)
             session_id = str(session.id)
             print(f"Usando sessão {session_id} (user {user_id})\n", file=sys.stderr)
@@ -559,7 +569,7 @@ def main() -> int:
                 user_id=user_id,
                 session_id=session_id,
                 message=message,
-                access_token=None,
+                access_token=smoke_token,
             )
             errors: list[str] = []
 

@@ -10,6 +10,9 @@ class FakeRepository:
     def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
         return self.actions
 
+    def list_actions(self):
+        return self.actions
+
 
 def test_select_stock_without_code_does_not_use_semantic_fallback():
     service = ExternalActionSelectionService(
@@ -1007,3 +1010,92 @@ def test_select_action_skips_catalog_for_technical_description_guidance():
     )
 
     assert selected is None
+
+
+def test_select_metric_refinement_uses_path_token_not_semantic_candidates():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "commercial-branch",
+                    "method": "GET",
+                    "path": "/commercial/branch_rol_target_pct",
+                    "operationId": "get_branch_rol_target_pct",
+                    "summary": "ROL filial",
+                    "parametersSchema": [{"name": "branch", "in": "query"}],
+                },
+                {
+                    "actionId": "supplies-cpv",
+                    "method": "GET",
+                    "path": "/supplies/cpv",
+                    "operationId": "get_supplies_cpv",
+                    "summary": "CPV",
+                    "parametersSchema": [{"name": "branch", "in": "query"}],
+                },
+                {
+                    "actionId": "supplies-stock-value",
+                    "method": "GET",
+                    "path": "/supplies/stock-value",
+                    "operationId": "get_supplies_stock_value",
+                    "summary": "Valor estoque",
+                    "parametersSchema": [{"name": "branch", "in": "query"}],
+                },
+            ]
+        )
+    )
+
+    cpv_history = [
+        {"role": "user", "content": "qual o cpv"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/cpv"},
+                    }
+                ]
+            },
+        },
+    ]
+    stock_value_history = [
+        {"role": "user", "content": "qual o valor total de estoque da empresa"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/supplies/stock-value"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    cpv_selected = service.select_action(
+        "filtre filial 02",
+        allowed_action_ids=[
+            "commercial-branch",
+            "supplies-cpv",
+            "supplies-stock-value",
+        ],
+        previous_messages=cpv_history,
+    )
+    stock_selected = service.select_action(
+        "filial 01",
+        allowed_action_ids=[
+            "commercial-branch",
+            "supplies-cpv",
+            "supplies-stock-value",
+        ],
+        previous_messages=stock_value_history,
+    )
+
+    assert cpv_selected is not None
+    assert cpv_selected["arguments"]["actionId"] == "supplies-cpv"
+    assert cpv_selected["arguments"]["parameters"]["branch"] == "02"
+
+    assert stock_selected is not None
+    assert stock_selected["arguments"]["actionId"] == "supplies-stock-value"
+    assert stock_selected["arguments"]["parameters"]["branch"] == "01"

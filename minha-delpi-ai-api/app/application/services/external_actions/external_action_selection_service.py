@@ -1022,11 +1022,18 @@ class ExternalActionSelectionService:
         reason: str,
         previous_messages: list | None = None,
     ) -> dict | None:
-        candidates = self._list_allowed_candidates(
-            message,
+        candidates = self._find_allowed_actions_by_path_token(
+            path_token=path_token,
+            operation_token=operation_token,
             allowed_action_ids=allowed_action_ids,
-            limit=80,
         )
+
+        if not candidates:
+            candidates = self._list_allowed_candidates(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                limit=80,
+            )
 
         for action in candidates:
             if action.get("method") != "GET":
@@ -1034,8 +1041,10 @@ class ExternalActionSelectionService:
 
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
+            token = str(path_token or "").lower()
+            op_token = str(operation_token or "").lower()
 
-            if path_token not in path and operation_token not in operation_id:
+            if token and token not in path and op_token not in operation_id:
                 continue
 
             parameters = self._build_date_branch_parameters(
@@ -2628,6 +2637,50 @@ class ExternalActionSelectionService:
             )
             if str(action.get("actionId")) in allowed
         ]
+
+    def _find_allowed_actions_by_path_token(
+        self,
+        *,
+        path_token: str,
+        operation_token: str,
+        allowed_action_ids: list[str],
+        method: str = "GET",
+    ) -> list[dict]:
+        token = str(path_token or "").lower().strip()
+        op_token = str(operation_token or "").lower().strip()
+        allowed = {str(item) for item in allowed_action_ids}
+
+        if not allowed or (not token and not op_token):
+            return []
+
+        matches: list[dict] = []
+        list_actions = getattr(self.repository, "list_actions", None)
+
+        if not callable(list_actions):
+            return []
+
+        for action in list_actions():
+            if str(action.get("actionId")) not in allowed:
+                continue
+
+            if str(action.get("method") or "").upper() != method.upper():
+                continue
+
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+
+            if token and token in path:
+                matches.append(action)
+                continue
+
+            if op_token and op_token in operation_id:
+                matches.append(action)
+                continue
+
+            if token and token.replace("-", "_") in operation_id:
+                matches.append(action)
+
+        return matches
 
     def _rank_candidates(
         self,

@@ -49,6 +49,9 @@ class FakeRepository:
     def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
         return self.actions
 
+    def list_actions(self):
+        return self.actions
+
 
 @pytest.mark.parametrize("message,expected_intent", INTENT_CASES)
 def test_intent_regression(message, expected_intent):

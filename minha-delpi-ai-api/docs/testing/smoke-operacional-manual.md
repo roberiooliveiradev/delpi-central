@@ -39,6 +39,14 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 **E2E HTTP (token dev: rober / 1234):**
 
 ```bash
+# Validação completa automatizada (U1–U9 + operacional + capabilities)
+cd minha-delpi-ai-api && python3 scripts/run_onda11_api_e2e.py
+
+# Ou via script Onda 11 (pytest + smoke + E2E)
+bash scripts/run_onda11_validation.sh
+```
+
+**Caso manual rápido:**
 TOKEN=$(curl -s -X POST "http://localhost/auth/realms/delpi/protocol/openid-connect/token" \
   -d "client_id=delpi-central" -d "username=rober" -d "password=1234" -d "grant_type=password" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
