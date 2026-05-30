@@ -22,6 +22,19 @@ class InMemoryUserPresenceStore:
         self._lock = threading.Lock()
         self._by_session: dict[str, _ConnectionState] = {}
 
+    def clear_user(self, *, user_id: str) -> None:
+        normalized = str(user_id).strip()
+        if not normalized:
+            return
+        with self._lock:
+            stale = [
+                session_id
+                for session_id, state in self._by_session.items()
+                if state.user_id == normalized
+            ]
+            for session_id in stale:
+                self._by_session.pop(session_id, None)
+
     def register(self, *, user_id: str, session_id: str) -> None:
         now = datetime.utcnow()
         with self._lock:

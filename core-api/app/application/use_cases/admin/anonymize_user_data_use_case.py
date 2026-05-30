@@ -60,13 +60,18 @@ class AnonymizeUserDataUseCase:
             })
 
         from app.infrastructure.db.models.user_consent import UserConsent
+        from app.application.services.usage_tracking_purge_service import (
+            purge_usage_tracking_data,
+        )
+
         consent_count = session.query(UserConsent).filter_by(user_id=uid).delete()
+        usage_events_removed = purge_usage_tracking_data(self._uow, user_id=uid)
 
         self._uow.commit()
 
         logger.info(
-            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d",
-            uid, actor_uid, audit_count, notif_count, consent_count,
+            "lgpd_user_anonymized user_id=%s actor=%s audits=%d notifs=%d consents=%d usage=%d",
+            uid, actor_uid, audit_count, notif_count, consent_count, usage_events_removed,
         )
 
         return {
@@ -75,4 +80,5 @@ class AnonymizeUserDataUseCase:
             "auditLogsCleared": audit_count,
             "notificationsRemoved": notif_count,
             "consentsRemoved": consent_count,
+            "usageEventsRemoved": usage_events_removed,
         }

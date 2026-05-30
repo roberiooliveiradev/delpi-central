@@ -1,5 +1,7 @@
 # app/interfaces/socket/socket_handlers.py
 
+from uuid import UUID
+
 from flask import request
 from flask_socketio import join_room
 
@@ -8,6 +10,7 @@ from app.infrastructure.app_usage.app_usage_live_store_provider import (
     get_app_usage_live_store,
     is_app_usage_enabled,
 )
+from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 from app.infrastructure.presence.presence_store_provider import (
     get_user_presence_store,
     is_user_presence_enabled,
@@ -15,9 +18,31 @@ from app.infrastructure.presence.presence_store_provider import (
 from app.application.use_cases.admin.record_app_usage_use_case import (
     RecordAppUsageUseCase,
 )
-from app.infrastructure.persistence.sqlalchemy.unit_of_work import SqlAlchemyUnitOfWork
 
 from delpi_auth.jwt_validator import validate_token
+
+_socket_authenticated_users: dict[str, str] = {}
+
+
+def _resolve_socket_user_id() -> str | None:
+    user_id = _socket_authenticated_users.get(request.sid)
+    if user_id:
+        return user_id
+    if is_app_usage_enabled():
+        return get_app_usage_live_store().get_user_id(request.sid)
+    return None
+
+
+def _user_has_usage_tracking_consent(user_id: str) -> bool:
+    from app.domain.services.usage_tracking_consent_service import (
+        user_has_usage_tracking_consent,
+    )
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            return user_has_usage_tracking_consent(uow, UUID(str(user_id)))
+    except Exception:
+        return False
 
 
 def _register_presence(user_id: str) -> None:
@@ -65,11 +90,9 @@ def handle_connect(auth):
 
     token = None
 
-    # Socket.IO v4 padrão
     if auth and "token" in auth:
         token = auth["token"]
 
-    # compatibilidade fallback
     if not token:
         from flask import request as flask_request
 
@@ -90,9 +113,13 @@ def handle_connect(auth):
 
         print("✅ Cliente conectado. SUB:", sub)
 
-        join_room(sub)
-        _register_presence(str(sub))
-        _bind_app_usage_session(str(sub))
+        user_id = str(sub)
+        _socket_authenticated_users[request.sid] = user_id
+        join_room(user_id)
+
+        if _user_has_usage_tracking_consent(user_id):
+            _register_presence(user_id)
+            _bind_app_usage_session(user_id)
 
     except Exception as e:
         print("❌ Token inválido no socket:", repr(e))
@@ -101,6 +128,7 @@ def handle_connect(auth):
 
 @socketio.on("disconnect")
 def handle_disconnect():
+    _socket_authenticated_users.pop(request.sid, None)
     _unregister_presence()
     _unbind_app_usage_session()
 
@@ -109,6 +137,11 @@ def handle_disconnect():
 def handle_presence_ping():
     if not is_user_presence_enabled():
         return
+
+    user_id = _resolve_socket_user_id()
+    if not user_id or not _user_has_usage_tracking_consent(user_id):
+        return
+
     get_user_presence_store().touch(request.sid)
 
 
@@ -121,19 +154,22 @@ def handle_app_usage_open(data):
     if not app_id:
         return
 
-    user_id = get_app_usage_live_store().get_user_id(request.sid)
+    user_id = _resolve_socket_user_id()
     if not user_id:
         return
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
-            # LGPD: rastrear somente com consentimento explícito (Art. 7, I)
-            from uuid import UUID
-            consent = uow.consents.get_by_user_and_purpose(
-                UUID(str(user_id)), "usage_tracking"
+            from app.domain.services.usage_tracking_consent_service import (
+                user_has_usage_tracking_consent,
             )
-            if not consent or not consent.granted:
+
+            user_uuid = UUID(str(user_id))
+            if not user_has_usage_tracking_consent(uow, user_uuid):
                 return
+
+            _bind_app_usage_session(user_id)
+            _register_presence(user_id)
 
             RecordAppUsageUseCase(uow).execute(
                 user_id=user_id,
@@ -151,14 +187,21 @@ def handle_app_usage_ping(data):
     if not is_app_usage_enabled():
         return
 
+    user_id = _resolve_socket_user_id()
+    if not user_id or not _user_has_usage_tracking_consent(user_id):
+        return
+
     app_id, _route_path = _extract_app_usage_payload(data)
-    store = get_app_usage_live_store()
-    store.touch(request.sid, app_id=app_id)
+    get_app_usage_live_store().touch(request.sid, app_id=app_id)
 
 
 @socketio.on("app_usage.close")
 def handle_app_usage_close(data):
     if not is_app_usage_enabled():
+        return
+
+    user_id = _resolve_socket_user_id()
+    if not user_id or not _user_has_usage_tracking_consent(user_id):
         return
 
     app_id, _route_path = _extract_app_usage_payload(data)

@@ -258,5 +258,5 @@ class Settings:
     )
 
     LGPD_REQUIRE_AI_CONSENT = (
-        os.getenv("LGPD_REQUIRE_AI_CONSENT", "false").lower() == "true"
+        os.getenv("LGPD_REQUIRE_AI_CONSENT", "true").lower() == "true"
     )

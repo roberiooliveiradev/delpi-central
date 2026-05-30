@@ -69,6 +69,29 @@ class RedisUserPresenceStore:
         if user_id:
             self._client.expire(f"{self._user_prefix}{user_id}", self._ttl_seconds * 2)
 
+    def get_user_id(self, session_id: str) -> str | None:
+        raw = self._client.get(f"{self._session_prefix}{session_id}")
+        if not raw:
+            return None
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+        user_id = payload.get("userId")
+        return str(user_id).strip() if user_id else None
+
+    def clear_user(self, *, user_id: str) -> None:
+        normalized = str(user_id).strip()
+        if not normalized:
+            return
+        user_key = f"{self._user_prefix}{normalized}"
+        session_ids = list(self._client.smembers(user_key))
+        pipe = self._client.pipeline()
+        for session_id in session_ids:
+            pipe.delete(f"{self._session_prefix}{session_id}")
+        pipe.delete(user_key)
+        pipe.execute()
+
     def list_online(self) -> list[UserPresenceSummaryDTO]:
         summaries: list[UserPresenceSummaryDTO] = []
         cutoff = datetime.utcnow() - timedelta(seconds=self._ttl_seconds)

@@ -32,7 +32,17 @@ class ProcessBirthdayNotificationsUseCase:
         sent = 0
         skipped = 0
 
+        from uuid import UUID
+
+        from app.domain.services.usage_tracking_consent_service import (
+            user_has_birthday_notifications_consent,
+        )
+
         for user_id in user_ids:
+            if not user_has_birthday_notifications_consent(self.uow, UUID(str(user_id))):
+                skipped += 1
+                continue
+
             if self.uow.notifications.has_category_notification_on_date(
                 user_id,
                 "birthday",

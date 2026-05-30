@@ -277,8 +277,11 @@ export const PrivacyPolicyPage = () => {
             </li>
             <li>
               <strong>Armazenamento local (localStorage):</strong> utilizado para
-              salvar preferências de interface (tema, sidebar colapsada) e cache
-              de dados não sensíveis para melhorar a performance.
+              salvar preferências de interface (tema, sidebar colapsada), a lista de
+              aplicativos acessados recentemente no portal (chave{" "}
+              <code>delpi.portal.recentApps.v1</code>, apenas identificadores internos
+              dos apps, sem dados pessoais) e cache de dados não sensíveis para
+              melhorar a performance.
             </li>
             <li>
               <strong>Tokens de autenticação:</strong> armazenados de forma segura
