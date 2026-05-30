@@ -266,6 +266,9 @@ class Settings:
     CHAT_WEB_SEARCH_TAVILY_API_KEY = os.getenv("CHAT_WEB_SEARCH_TAVILY_API_KEY", "").strip()
     CHAT_WEB_SEARCH_SERPER_API_KEY = os.getenv("CHAT_WEB_SEARCH_SERPER_API_KEY", "").strip()
     CHAT_WEB_SEARCH_BING_API_KEY = os.getenv("CHAT_WEB_SEARCH_BING_API_KEY", "").strip()
+    CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED = (
+        os.getenv("CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED", "true").lower() == "true"
+    )
 
     @classmethod
     def resolve_web_search_provider(cls) -> str:

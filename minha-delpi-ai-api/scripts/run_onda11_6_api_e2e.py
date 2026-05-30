@@ -223,8 +223,23 @@ def main() -> int:
                 )
                 failed += 1
             else:
+                answer = str(web_response.get("answer") or "")
                 print("OK 11.6.1 web_search isolado (sem execute_external_action)")
                 passed += 1
+                if "internet pública" in answer.lower() or "internet publica" in answer.lower():
+                    print("OK 11.6.1 resposta usa resultado da busca web")
+                    passed += 1
+                elif "não pesquis" in answer.lower() or "nao pesquis" in answer.lower():
+                    print(
+                        "FAIL 11.6.1 LLM negou busca apesar de web_search OK",
+                        file=sys.stderr,
+                    )
+                    failed += 1
+                else:
+                    print(
+                        "SKIP 11.6.1 resposta sem marcador web (verifique directAnswer)",
+                        file=sys.stderr,
+                    )
         elif not env_enabled:
             print(
                 "SKIP 11.6.1 web_search (CHAT_WEB_SEARCH_ENABLED=false no container — "

@@ -353,6 +353,7 @@ class ChatToolContextService:
         direct_answer: str | None = None
         skip_rag = False
         last_external_action_data = None
+        last_web_search_data: dict | None = None
         external_action_results: list = []
         external_planned = [
             item
@@ -593,6 +594,10 @@ class ChatToolContextService:
                 if self._is_successful_external_action(safe_metadata):
                     last_external_action_data = result.data
 
+            if result.name == "web_search" and isinstance(result.data, dict):
+                if str(result.data.get("searchStatus") or "") in {"success", "no_results"}:
+                    last_web_search_data = result.data
+
             context_blocks.append(
                 self._format_tool_context(
                     name=result.name,
@@ -635,6 +640,24 @@ class ChatToolContextService:
                 path=action_metadata.get("path"),
                 operation_id=action_metadata.get("operationId"),
             )
+
+        if (
+            not direct_answer
+            and len(safe_tool_calls) == 1
+            and safe_tool_calls[0].get("name") == "web_search"
+            and isinstance(last_web_search_data, dict)
+        ):
+            from app.domain.services.chat_web_search_direct_answer_service import (
+                ChatWebSearchDirectAnswerService,
+            )
+
+            direct_answer = ChatWebSearchDirectAnswerService.format(
+                last_web_search_data,
+                message=raw_message,
+            )
+
+            if direct_answer:
+                skip_rag = True
 
         requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
         if requested_format:

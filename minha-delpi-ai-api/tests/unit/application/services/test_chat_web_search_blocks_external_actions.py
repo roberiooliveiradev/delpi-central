@@ -66,7 +66,8 @@ def test_web_search_blocks_external_action_in_tool_context(_enabled):
     tool_names = [call["name"] for call in result["toolCalls"]]
 
     assert tool_names == ["web_search"]
-    assert result.get("directAnswer") in (None, "")
+    assert result.get("directAnswer")
+    assert "internet pública" in str(result.get("directAnswer"))
     assert "web_search" in result["context"]
     assert "execute_external_action" not in result["context"]
 

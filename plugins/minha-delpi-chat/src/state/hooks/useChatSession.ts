@@ -222,36 +222,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
   }, [options.getAccessToken]);
 
-  const selectSession = useCallback(
-    (session: ChatSession) => {
-      const isSameSession = activeSessionIdRef.current === session.id;
-
-      if (!isSameSession) {
-        resetStreamingUi();
-        setMessages([]);
-        setPendingUserMessage(null);
-        setError(null);
-      }
-
-      activeSessionIdRef.current = session.id;
-      setActiveSession(session);
-
-      if (
-        isSessionPending(session.id) &&
-        !isSessionStreaming(session.id) &&
-        isStreamForActiveSession(session.id)
-      ) {
-        setStreamingStatus("Finalizando resposta em segundo plano...");
-      }
-    },
-    [
-      isSessionPending,
-      isSessionStreaming,
-      isStreamForActiveSession,
-      resetStreamingUi,
-    ],
-  );
-
   const startSession = useCallback(async () => {
     resetStreamingUi();
     activeSessionIdRef.current = null;
@@ -286,7 +256,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setLastSentUserText("");
         }
 
-        if (!sessionAwaitingAssistantResponse(data)) {
+        if (sessionAwaitingAssistantResponse(data)) {
+          markSessionPending(sessionId);
+        } else {
           unmarkSessionPending(sessionId);
         }
       } catch (err) {
@@ -301,7 +273,35 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [options.getAccessToken, unmarkSessionPending],
+    [markSessionPending, options.getAccessToken, unmarkSessionPending],
+  );
+
+  const selectSession = useCallback(
+    (session: ChatSession) => {
+      const isSameSession = activeSessionIdRef.current === session.id;
+      const sessionStillProcessing = isSessionProcessing(session.id);
+
+      if (!isSameSession) {
+        resetStreamingUi();
+        setMessages([]);
+        setPendingUserMessage(null);
+        setError(null);
+      }
+
+      activeSessionIdRef.current = session.id;
+      setActiveSession(session);
+
+      if (sessionStillProcessing) {
+        setStreamingStatus(
+          isSessionStreaming(session.id)
+            ? "Retomando processamento da conversa..."
+            : "Finalizando resposta em segundo plano...",
+        );
+      }
+
+      void loadMessages(session.id);
+    },
+    [isSessionProcessing, isSessionStreaming, loadMessages, resetStreamingUi],
   );
 
   const finishPlayback = useCallback(() => {
@@ -1109,9 +1109,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     if (
-      isSessionPending(activeSession.id) ||
-      isSessionStreaming(activeSession.id) ||
-      pendingUserMessage
+      (isSessionPending(activeSession.id) ||
+        isSessionStreaming(activeSession.id) ||
+        pendingUserMessage) &&
+      messages.length > 0
     ) {
       return;
     }
@@ -1122,6 +1123,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionPending,
     isSessionStreaming,
     loadMessages,
+    messages.length,
     pendingUserMessage,
   ]);
 

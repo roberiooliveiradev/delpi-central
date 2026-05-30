@@ -437,7 +437,8 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` (triggers: «pesquise na internet», «busque na web», etc.) |
 | Provedores | `auto`: Tavily → Serper → Bing → DuckDuckGo Instant Answer; retry EN quando PT vier vazio |
 | Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
-| Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca; conhecimento geral complementar rotulado |
+| Resposta | `ChatWebSearchDirectAnswerService` + `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` (default on) — formata resposta sem depender do LLM |
+| Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca |
 
 Testes: `test_chat_web_search_intent_service.py`, `test_chat_web_search_blocks_external_actions.py`, `test_web_search_http_gateway.py`.
 
