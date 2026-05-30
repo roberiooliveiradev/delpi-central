@@ -13,3 +13,4 @@ class ChatSessionResponse:
     archived_at: str | None
     created_at: str
     updated_at: str
+    active_leaf_message_id: str | None = None

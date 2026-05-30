@@ -32,6 +32,7 @@ from app.application.dto.update_chat_agent_request import UpdateChatAgentRequest
 from app.application.dto.upsert_chat_agent_action_request import UpsertChatAgentActionRequest
 from app.application.dto.upsert_chat_agent_skill_request import UpsertChatAgentSkillRequest
 from app.application.dto.create_chat_session_request import CreateChatSessionRequest
+from app.application.dto.switch_chat_branch_request import SwitchChatBranchRequest
 from app.application.dto.update_chat_project_request import UpdateChatProjectRequest
 from app.application.dto.update_chat_artifact_request import UpdateChatArtifactRequest
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
@@ -96,6 +97,7 @@ from app.composition.chat_composer import (
     make_update_chat_project_use_case,
     make_update_chat_artifact_use_case,
     make_get_chat_history_use_case,
+    make_switch_chat_branch_use_case,
     make_upsert_chat_message_feedback_use_case,
     make_list_chat_sessions_use_case,
     make_rename_chat_session_use_case,
@@ -109,7 +111,12 @@ from app.application.use_cases.chat_agents_use_cases import (
     ChatAgentKeyConflictError,
     ChatAgentPermissionDeniedError,
 )
-from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
+from app.domain.exceptions.chat_exceptions import (
+    ChatMessageNotFoundError,
+    ChatSessionAccessDeniedError,
+    ChatSessionNotFoundError,
+    InvalidChatSessionInputError,
+)
 from app.interfaces.http.auth_decorators import require_permission
 from app.infrastructure.gateways.core_me_gateway import CoreMeGateway
 from app.interfaces.http.utils.errors import bad_request, conflict, forbidden
@@ -1933,10 +1940,19 @@ def create_session():
                 context=payload.get("context"),
                 project_id=payload.get("projectId") or payload.get("project_id"),
                 agent_id=payload.get("agentId") or payload.get("agent_id"),
+                fork_from_session_id=(
+                    payload.get("forkFromSessionId") or payload.get("fork_from_session_id")
+                ),
+                fork_until_message_id=(
+                    payload.get("forkUntilMessageId") or payload.get("fork_until_message_id")
+                ),
             )
         )
 
         db.session.commit()
+    except (ChatMessageNotFoundError, ChatSessionNotFoundError, ChatSessionAccessDeniedError):
+        db.session.rollback()
+        return _not_found_response()
     except (ValueError, InvalidChatSessionInputError) as exc:
         db.session.rollback()
         return bad_request(str(exc))
@@ -2253,6 +2269,55 @@ def get_history(session_id: str):
         payload.append(item)
 
     return jsonify(payload), 200
+
+
+@chat_bp.patch("/sessions/<session_id>/active-branch")
+@require_permission(CHAT_ASK_PERMISSION)
+def switch_active_branch(session_id: str):
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    anchor_user_message_id = payload.get("anchorUserMessageId") or payload.get(
+        "anchor_user_message_id"
+    )
+
+    if not anchor_user_message_id:
+        return bad_request("anchorUserMessageId is required")
+
+    use_case = make_switch_chat_branch_use_case()
+
+    try:
+        result = use_case.execute(
+            SwitchChatBranchRequest(
+                user_id=g.current_user.sub,
+                session_id=session_id,
+                anchor_user_message_id=str(anchor_user_message_id),
+            )
+        )
+        db.session.commit()
+    except (ChatMessageNotFoundError, ChatSessionNotFoundError, ChatSessionAccessDeniedError):
+        db.session.rollback()
+        return _not_found_response()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    allow_admin_debug = _can_use_admin_debug()
+    response_payload = []
+
+    for message in result:
+        item = asdict(message)
+        if not allow_admin_debug:
+            metadata = item.get("metadata")
+            if isinstance(metadata, dict) and metadata.get("adminDebug") is not None:
+                metadata = dict(metadata)
+                metadata.pop("adminDebug", None)
+                item["metadata"] = metadata
+        response_payload.append(item)
+
+    return jsonify(response_payload), 200
 
 
 @chat_bp.put("/sessions/<session_id>/messages/<message_id>/feedback")

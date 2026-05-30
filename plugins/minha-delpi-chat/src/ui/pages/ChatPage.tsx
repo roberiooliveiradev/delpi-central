@@ -143,6 +143,8 @@ export function ChatPage({
     editAndResendMessage,
     reuseMessage,
     setMessageFeedback,
+    switchMessageBranch,
+    continueFromMessage,
   } = useChatSession({
     getAccessToken,
     projectId: selectedProjectId,
@@ -1520,6 +1522,8 @@ export function ChatPage({
                 isPlaybackActive={isPlaybackActive}
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}
+                onSwitchMessageBranch={switchMessageBranch}
+                onContinueFromMessage={continueFromMessage}
                 onReuseMessage={reuseMessage}
                 onDrillDown={handleDrillDown}
                 onMessageFeedback={setMessageFeedback}

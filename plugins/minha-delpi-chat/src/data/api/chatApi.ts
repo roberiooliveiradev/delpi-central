@@ -203,6 +203,23 @@ export async function listChatMessages(
   return parseJsonResponse<ChatMessage[]>(response);
 }
 
+export async function switchChatBranch(
+  sessionId: string,
+  anchorUserMessageId: string,
+  options: ChatApiOptions = {},
+): Promise<ChatMessage[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/active-branch`,
+    {
+      method: "PATCH",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify({ anchorUserMessageId }),
+    },
+  );
+
+  return parseJsonResponse<ChatMessage[]>(response);
+}
+
 export async function upsertChatMessageFeedback(
   sessionId: string,
   messageId: string,

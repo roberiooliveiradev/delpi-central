@@ -123,7 +123,7 @@ class SendChatMessageUseCase:
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
 
-        previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        previous_messages = self.chat_repository.list_all_messages_by_session(session_id)
         agent_meta = workspace_context.get("agent")
         max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
         attachment_ids = getattr(request, "attachment_ids", None)
@@ -132,6 +132,7 @@ class SendChatMessageUseCase:
             session_id=session_id,
             role="user",
             content=message,
+            parent_message_id=session.active_leaf_message_id,
             metadata={
                 "context": request.context,
                 "agentId": workspace_context.get("agentId"),
@@ -379,7 +380,14 @@ class SendChatMessageUseCase:
             session_id=session_id,
             role="assistant",
             content=answer,
+            parent_message_id=user_message.id,
             metadata=assistant_metadata,
+        )
+
+        self.chat_repository.set_active_leaf_message_id(
+            session_id=session_id,
+            user_id=user_id,
+            message_id=assistant_message.id,
         )
 
         self.audit_repository.log(

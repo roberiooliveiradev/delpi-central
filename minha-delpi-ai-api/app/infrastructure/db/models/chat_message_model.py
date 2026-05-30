@@ -25,3 +25,9 @@ class AiChatMessageModel(db.Model):
         default=lambda: datetime.now(timezone.utc),
         index=True,
     )
+    parent_message_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("ai_chat_messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )

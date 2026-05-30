@@ -11,3 +11,4 @@ class ChatMessage:
     content: str
     metadata: dict | None
     created_at: datetime
+    parent_message_id: UUID | None = None

@@ -8,7 +8,9 @@
     "moreLines": "… e mais {count} linha(s).",
     "moreProducts": "… e mais {count} produto(s).",
     "operationStartPrefix": " · início ",
-    "truncatedHint": "Resultado parcial — peça *mais linhas* ou *próxima página* para continuar."
+    "truncatedHint": "Resultado parcial — peça *mais linhas* ou *próxima página* para continuar.",
+    "emptyWithSuggestions": "A consulta não retornou registros. Verifique filtros de data, código, filial ou status do cadastro.",
+    "largeResultHint": "O resultado parece grande — peça *resumo*, *mais linhas* ou agrupamento por período."
   },
   "productionSchedule": {
     "title": "Produtos programados para produção {label}",
@@ -17,7 +19,9 @@
     "emptyTodayFallback": "Nenhum produto programado para produção hoje.",
     "summaryWithCount": "**{count}** produto(s) programado(s) para {label}.",
     "authoringIntro": "Consulta sugerida para `POST /data/sql` (somente leitura):",
-    "authoringExecuteHint": "Para **executar** no Protheus, peça: «execute essa consulta» ou «traga os dados»."
+    "authoringExecuteHint": "Para **executar** no Protheus, peça: «execute essa consulta» ou «traga os dados».",
+    "stockCheckSuggestion": "Posso verificar o estoque dos componentes dos produtos programados.",
+    "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados."
   },
   "selectionReasons": {
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",

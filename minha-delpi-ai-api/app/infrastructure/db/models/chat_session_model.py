@@ -40,3 +40,9 @@ class AiChatSessionModel(db.Model):
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
+    active_leaf_message_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("ai_chat_messages.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )

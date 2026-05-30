@@ -28,6 +28,21 @@ _DAY_OFFSETS: dict[str, int] = {
     "yesterday_date": -1,
 }
 
+_MONTH_NAMES_PT: tuple[str, ...] = (
+    "janeiro",
+    "fevereiro",
+    "março",
+    "abril",
+    "maio",
+    "junho",
+    "julho",
+    "agosto",
+    "setembro",
+    "outubro",
+    "novembro",
+    "dezembro",
+)
+
 
 class ChatUtilityDirectAnswerService:
     @classmethod
@@ -94,13 +109,32 @@ class ChatUtilityDirectAnswerService:
         target = localized + timedelta(days=offset_days)
         weekday = ExternalActionResponseContentService.weekday_label(target.weekday())
         timezone_label = str(content.get("timezoneLabel") or "horário local").strip()
+        month_name = _MONTH_NAMES_PT[target.month - 1]
+        quarter = (target.month - 1) // 3 + 1
+        is_weekend = target.weekday() >= 5
 
         values = {
             "time": localized.strftime("%H:%M"),
             "date": target.strftime("%d/%m/%Y"),
             "weekday": weekday,
             "year": str(target.year),
+            "month": month_name,
+            "quarter": str(quarter),
+            "week_number": str(target.isocalendar()[1]),
+            "iso_date": target.strftime("%Y-%m-%d"),
+            "iso_datetime": localized.strftime("%Y-%m-%dT%H:%M:%S"),
             "timezone_label": timezone_label,
+            "weekend_note": (
+                "É fim de semana."
+                if is_weekend
+                else "Não é fim de semana — de segunda a sexta considero dia útil "
+                "(sem calendário de feriados)."
+            ),
+            "business_day_note": (
+                "É dia útil (segunda a sexta)."
+                if not is_weekend
+                else "Não é dia útil — cai em fim de semana."
+            ),
         }
 
         try:

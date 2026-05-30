@@ -8,3 +8,5 @@ class CreateChatSessionRequest:
     context: str | None = None
     project_id: str | None = None
     agent_id: str | None = None
+    fork_from_session_id: str | None = None
+    fork_until_message_id: str | None = None

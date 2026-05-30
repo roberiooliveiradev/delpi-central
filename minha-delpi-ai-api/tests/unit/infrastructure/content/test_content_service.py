@@ -40,4 +40,11 @@ def test_load_skills_catalog():
 def test_load_utility_answers():
     data = ContentService.load_json("assistant/utility_answers")
     assert data["responses"]["current_year"]
+    assert data["responses"]["current_month"]
     assert len(data["patterns"]["current_time"]) >= 10
+
+
+def test_load_capabilities_rich_examples():
+    data = ContentService.load_json("assistant/capabilities")
+    assert data.get("richExamples", {}).get("product360")
+    assert len(data.get("combinedQuestions") or []) >= 3

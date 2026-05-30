@@ -74,9 +74,13 @@ Cria uma sessão.
   "title": "Nova conversa",
   "context": "geral",
   "projectId": "uuid|null",
-  "agentKey": "string|null"
+  "agentId": "uuid|null",
+  "forkFromSessionId": "uuid|null",
+  "forkUntilMessageId": "uuid|null"
 }
 ```
+
+`forkFromSessionId` + `forkUntilMessageId` — **continuar daqui**: nova sessão com histórico copiado até a mensagem indicada (contexto acima preservado).
 
 ### Resposta `201`
 
@@ -171,9 +175,28 @@ Envia mensagem sem streaming.
 
 ---
 
+## Ramificações (branches) — maio/2026
+
+Cada mensagem forma uma **árvore** via `parent_message_id`. A sessão guarda `active_leaf_message_id` (folha do ramo ativo).
+
+| Ação | Comportamento |
+|------|----------------|
+| **Envio normal** | Nova mensagem user com `parent` = folha ativa; resposta assistant filha do user; folha avança. |
+| **Editar e reenviar** | Cria **nova** mensagem user irmã (mesmo `parent`); ramo anterior permanece; folha segue o novo ramo. |
+| **Alternar variação** | `PATCH .../active-branch` com `anchorUserMessageId` (pergunta user do ramo desejado). |
+| **Continuar daqui** | `POST /chat/sessions` com `forkFromSessionId` + `forkUntilMessageId` → **nova conversa** com histórico copiado até a mensagem. |
+
+`GET .../messages` retorna só o **caminho ativo** (raiz → folha). Perguntas user com irmãos incluem:
+
+```json
+"branch": { "currentIndex": 2, "total": 2, "siblingIds": ["...", "..."] }
+```
+
+---
+
 ## POST `/chat/sessions/{sessionId}/messages/{messageId}/resend/stream`
 
-Reenvia uma mensagem do usuário existente com streaming SSE (útil após falha ou para regenerar resposta).
+Reenvia uma mensagem do usuário existente com streaming SSE — abre **nova variação (branch)**, sem apagar histórico anterior.
 
 ### Permissão
 
@@ -186,6 +209,22 @@ Opcional (mesmo formato do envio normal, se o backend aceitar override de contex
 ### Resposta
 
 Mesmos eventos SSE de `messages/stream` (ver lista abaixo).
+
+---
+
+## PATCH `/chat/sessions/{sessionId}/active-branch`
+
+Alterna o ramo ativo da conversa (UI « 1 / 2 »).
+
+### Body
+
+```json
+{ "anchorUserMessageId": "uuid-da-pergunta-user" }
+```
+
+### Resposta
+
+`200` — lista de mensagens do **novo caminho ativo** (mesmo formato de `GET .../messages`).
 
 ---
 

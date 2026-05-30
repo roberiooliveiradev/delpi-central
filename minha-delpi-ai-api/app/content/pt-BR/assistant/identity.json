@@ -21,7 +21,18 @@
     "minhas roles",
     "meu login",
     "meu usuario",
-    "meu usuário"
+    "meu usuário",
+    "qual meu cargo",
+    "qual meu setor",
+    "qual meu departamento",
+    "quais grupos eu pertenco",
+    "quais apps posso acessar",
+    "quais modulos tenho acesso",
+    "quais módulos tenho acesso",
+    "qual minha funcao na empresa",
+    "qual minha função na empresa",
+    "minha conta",
+    "dados da minha conta"
   ],
   "patterns": {
     "who": [
@@ -71,7 +82,11 @@
       "conte sobre voce",
       "conte sobre você",
       "me conta quem voce e",
-      "me conta quem você é"
+      "me conta quem você é",
+      "quem e voce dentro da minha delpi",
+      "voce e um agente ou chat geral",
+      "voce muda quando escolho outro agente",
+      "pode se apresentar em uma frase"
     ],
     "what": [
       "o que e voce",
@@ -97,7 +112,10 @@
       "o que e delpi",
       "o que é delpi",
       "para que serve esse chat",
-      "para que serve minha delpi"
+      "para que serve minha delpi",
+      "o que e um agente especialista",
+      "esse chat consulta dados reais",
+      "esse chat substitui o erp"
     ],
     "role": [
       "o que voce faz",
@@ -153,7 +171,10 @@
       "voce erra",
       "você erra",
       "quais sao seus limites",
-      "quais são seus limites"
+      "quais são seus limites",
+      "voce pode alterar dados",
+      "voce pode criar produto no erp",
+      "quando devo conferir no sistema oficial"
     ],
     "origin": [
       "como voce foi feito",
@@ -189,7 +210,10 @@
       "voce usa chatgpt",
       "você usa chatgpt",
       "voce usa gpt",
-      "você usa gpt"
+      "você usa gpt",
+      "o que e rag",
+      "como voce decide qual action usar",
+      "como as permissoes funcionam"
     ],
     "usage": [
       "como usar",
@@ -218,7 +242,10 @@
       "por onde comeco",
       "por onde começo",
       "me ensina a usar",
-      "tutorial do chat"
+      "tutorial do chat",
+      "como peco resposta em tabela",
+      "como peco um grafico",
+      "como faco uma boa pergunta"
     ]
   },
   "placeholders": {

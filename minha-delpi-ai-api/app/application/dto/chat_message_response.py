@@ -10,3 +10,5 @@ class ChatMessageResponse:
     metadata: dict | None
     created_at: str
     user_feedback: int | None = None
+    branch: dict | None = None
+    parent_message_id: str | None = None

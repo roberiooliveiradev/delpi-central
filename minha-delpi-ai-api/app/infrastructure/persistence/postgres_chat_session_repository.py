@@ -3,6 +3,7 @@ from uuid import UUID
 
 from app.domain.entities.chat_message import ChatMessage
 from app.domain.entities.chat_session import ChatSession
+from app.domain.services.chat_message_branch_service import ChatMessageBranchService
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_message_model import AiChatMessageModel
@@ -290,15 +291,79 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return int(deleted or 0)
 
-    def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
+    def list_all_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
         models = (
             AiChatMessageModel.query
             .filter(AiChatMessageModel.session_id == session_id)
-            .order_by(AiChatMessageModel.created_at.asc())
+            .order_by(AiChatMessageModel.created_at.asc(), AiChatMessageModel.id.asc())
             .all()
         )
 
         return [self._to_message_entity(model) for model in models]
+
+    def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
+        session = AiChatSessionModel.query.filter(
+            AiChatSessionModel.id == session_id
+        ).first()
+
+        if not session:
+            return []
+
+        all_messages = self.list_all_messages_by_session(session_id)
+
+        return ChatMessageBranchService.build_active_path(
+            all_messages,
+            session.active_leaf_message_id,
+        )
+
+    def get_message_by_id(
+        self,
+        message_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> ChatMessage | None:
+        query = AiChatMessageModel.query.filter(AiChatMessageModel.id == message_id)
+
+        if user_id is not None:
+            query = query.join(
+                AiChatSessionModel,
+                AiChatSessionModel.id == AiChatMessageModel.session_id,
+            ).filter(AiChatSessionModel.user_id == user_id)
+
+        model = query.first()
+
+        if not model:
+            return None
+
+        return self._to_message_entity(model)
+
+    def set_active_leaf_message_id(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        message_id: UUID,
+    ) -> ChatSession | None:
+        session_model = (
+            AiChatSessionModel.query
+            .filter(AiChatSessionModel.id == session_id)
+            .filter(AiChatSessionModel.user_id == user_id)
+            .first()
+        )
+
+        if not session_model:
+            return None
+
+        message = self.get_message_by_id(message_id, user_id=user_id)
+
+        if not message or message.session_id != session_id:
+            return None
+
+        session_model.active_leaf_message_id = message_id
+        session_model.updated_at = datetime.now(timezone.utc)
+        db.session.flush()
+
+        return self._to_session_entity(session_model)
 
     def create_message(
         self,
@@ -306,12 +371,14 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         role: str,
         content: str,
         metadata: dict | None = None,
+        parent_message_id: UUID | None = None,
     ) -> ChatMessage:
         model = AiChatMessageModel(
             session_id=session_id,
             role=role,
             content=content,
             message_metadata=metadata,
+            parent_message_id=parent_message_id,
         )
 
         db.session.add(model)
@@ -398,6 +465,7 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
             archived_at=model.archived_at,
             created_at=model.created_at,
             updated_at=model.updated_at,
+            active_leaf_message_id=model.active_leaf_message_id,
         )
 
     def _to_message_entity(self, model: AiChatMessageModel) -> ChatMessage:
@@ -408,4 +476,5 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
             content=model.content,
             metadata=model.message_metadata,
             created_at=model.created_at,
+            parent_message_id=model.parent_message_id,
         )

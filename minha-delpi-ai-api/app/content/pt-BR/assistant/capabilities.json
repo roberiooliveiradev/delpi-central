@@ -37,7 +37,9 @@
       "Peça formato: *em tabela*, *em gráfico* ou *só texto*.",
       "Se faltar contexto, pergunto o que você precisa em vez de inventar dados.",
       "Use *próxima página* ou *mais linhas* quando a tabela vier truncada.",
-      "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados»."
+      "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados».",
+      "Perguntas de **negócio** (ex.: «visão 360° do produto», «onde é usado e quem fornece?») costumam cruzar estoque, estrutura, compras e vendas.",
+      "Para **pesquisa na internet**, use frases como «pesquise na web sobre …» quando o agente tiver busca web habilitada."
     ]
   },
   "skills": {
@@ -542,8 +544,12 @@
     "estoque do produto 10080001",
     "fornecedores do 10080001 em tabela",
     "estrutura do 10080001",
+    "onde o produto 10080001 é usado",
     "preço do 10080001",
+    "vendas do produto 10080001 nos últimos 30 dias",
+    "compras recentes do 10080001",
     "listar lmps da filial",
+    "consulte a ov 123456",
     "roteiro do produto 10080001",
     "inspeção do 10080001",
     "valor total de estoque",
@@ -553,10 +559,50 @@
     "eficiencia fabril dashboard",
     "indicadores de qualidade ppm",
     "quais produtos serão produzidos hoje",
+    "compare estoque, vendas e compras do produto 10080001",
     "que horas são",
     "bom dia",
     "o que você pode fazer",
     "quem é você",
     "quais apps tenho acesso"
+  ],
+  "richExampleTitles": {
+    "header": "**Perguntas úteis (negócio)**",
+    "combinedHeader": "**Perguntas que cruzam várias fontes**",
+    "product360": "Visão 360° do produto",
+    "impactAnalysis": "Análise de impacto",
+    "comparison": "Comparação",
+    "charts": "Gráficos e evolução",
+    "diagnostics": "Diagnóstico de cadastro"
+  },
+  "richExamples": {
+    "product360": [
+      "Me traga uma visão 360° do produto 10080001",
+      "Mostre cadastro, estoque, estrutura, fornecedores, clientes, compras e vendas do produto 10080001"
+    ],
+    "impactAnalysis": [
+      "Onde o componente 10080001 é usado e quais produtos seriam impactados se faltar estoque?",
+      "Faça uma análise de impacto desse item na produção"
+    ],
+    "comparison": [
+      "Compare os produtos 10080001 e 10080002 em cadastro, estoque, vendas e estrutura",
+      "Compare fornecedores, compras e preços desses dois itens"
+    ],
+    "charts": [
+      "Mostre vendas mensais do produto 10080001 em gráfico",
+      "Gere um gráfico de compras por fornecedor"
+    ],
+    "diagnostics": [
+      "Esse produto está com cadastro completo?",
+      "O que falta para esse produto ficar bem cadastrado?"
+    ]
+  },
+  "combinedQuestions": [
+    "Tenho o código do produto: mostre estoque, fornecedor, estrutura e últimas vendas.",
+    "Esse item está sem estoque. Onde ele é usado e quem fornece?",
+    "Esse produto vendeu recentemente? Tem estoque suficiente?",
+    "Esse componente é crítico? Mostre onde é usado, saldo e compras recentes.",
+    "Compare compra, venda e estoque desse produto.",
+    "Quais produtos de um grupo estão sem estoque, mas tiveram venda recente?"
   ]
 }

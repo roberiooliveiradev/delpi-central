@@ -23,6 +23,7 @@ from app.application.services.chat_canvas_content_service import ChatCanvasConte
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_message_branch_service import ChatMessageBranchService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
@@ -131,7 +132,7 @@ class StreamChatMessageUseCase:
         resend_from_message_id = request.resend_from_message_id
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
-        previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        previous_messages = self.chat_repository.list_all_messages_by_session(session_id)
         user_message = None
 
         if resend_from_message_id:
@@ -141,6 +142,7 @@ class StreamChatMessageUseCase:
                 session_id=session_id,
                 role="user",
                 content=message,
+                parent_message_id=session.active_leaf_message_id,
                 metadata={
                     "context": request.context,
                     "agentId": workspace_context.get("agentId"),
@@ -211,31 +213,46 @@ class StreamChatMessageUseCase:
             existing_user_message = None
 
             if resend_from_message_id:
-                existing_user_message = self.chat_repository.update_user_message(
+                anchor = self.chat_repository.get_user_message_for_user(
                     message_id=UUID(resend_from_message_id),
                     user_id=user_id,
-                    content=message,
-                    metadata_patch={"editMode": "resend"},
+                    session_id=session_id,
                 )
 
-                if not existing_user_message:
+                if not anchor:
                     raise ChatMessageNotFoundError()
 
-                if existing_user_message.session_id != session_id:
+                if anchor.session_id != session_id:
                     raise ChatSessionAccessDeniedError()
 
-                self.chat_repository.delete_messages_after(
+                all_messages = self.chat_repository.list_all_messages_by_session(session_id)
+                siblings = ChatMessageBranchService.list_user_siblings(all_messages, anchor)
+
+                branch_user_message = self.chat_repository.create_message(
                     session_id=session_id,
-                    message_id=existing_user_message.id,
-                    user_id=user_id,
+                    role="user",
+                    content=message,
+                    parent_message_id=anchor.parent_message_id,
+                    metadata={
+                        "context": request.context,
+                        "agentId": workspace_context.get("agentId"),
+                        "agent": workspace_context.get("agent"),
+                        "project": workspace_context.get("project"),
+                        "attachments": attachments,
+                        "stream": True,
+                        "branch": {
+                            "forkedFromMessageId": str(anchor.id),
+                            "variantIndex": len(siblings) + 1,
+                        },
+                        "delivery": {"status": "submitted"},
+                    },
                 )
 
-                all_messages = self.chat_repository.list_messages_by_session(session_id)
-                history_messages = [
-                    item
-                    for item in all_messages
-                    if item.id != existing_user_message.id
-                ]
+                existing_user_message = branch_user_message
+                history_messages = ChatMessageBranchService.build_path_to_message(
+                    all_messages,
+                    anchor.parent_message_id,
+                )
                 previous_messages = all_messages
             else:
                 history_messages = None
@@ -486,12 +503,18 @@ class StreamChatMessageUseCase:
                 session_id=session_id,
                 role="assistant",
                 content="",
+                parent_message_id=user_message.id if user_message else None,
                 metadata=ChatMessageDeliveryService.generating_metadata(
                     {
                         "agentId": workspace_context.get("agentId"),
                         "stream": True,
                     }
                 ),
+            )
+            self.chat_repository.set_active_leaf_message_id(
+                session_id=session_id,
+                user_id=user_id,
+                message_id=assistant_placeholder.id,
             )
             yield {
                 "type": "assistant_pending",
@@ -618,11 +641,18 @@ class StreamChatMessageUseCase:
                 session_id=session_id,
                 role="assistant",
                 content=answer,
+                parent_message_id=user_message.id if user_message else None,
                 metadata=assistant_metadata,
             )
 
         if not assistant_message:
             raise RuntimeError("Falha ao persistir mensagem do assistente.")
+
+        self.chat_repository.set_active_leaf_message_id(
+            session_id=session_id,
+            user_id=user_id,
+            message_id=assistant_message.id,
+        )
 
         self.audit_repository.log(
             user_id=user_id,

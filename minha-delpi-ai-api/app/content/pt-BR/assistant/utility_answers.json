@@ -1,8 +1,14 @@
 {
-  "maxMessageLength": 90,
+  "maxMessageLength": 96,
   "categoryPriority": [
     "current_datetime",
     "current_time",
+    "is_weekend_today",
+    "is_business_day_today",
+    "current_month",
+    "current_quarter",
+    "current_week_number",
+    "current_date_iso",
     "tomorrow_date",
     "yesterday_date",
     "current_date",
@@ -31,6 +37,10 @@
       "hora atual",
       "horario agora",
       "horário agora",
+      "hora de brasilia",
+      "horário de brasília",
+      "que horas em brasilia",
+      "que horas são em brasília",
       "sabe que horas sao",
       "sabe que horas são",
       "pode me dizer as horas",
@@ -38,7 +48,9 @@
       "quanto ta no relogio",
       "quanto tá no relógio",
       "quantas horas sao",
-      "quantas horas são"
+      "quantas horas são",
+      "horario de brasilia",
+      "horário de brasília agora"
     ],
     "current_date": [
       "que dia e hoje",
@@ -59,7 +71,9 @@
       "dia de hoje",
       "data atual",
       "qual e o dia de hoje",
-      "qual é o dia de hoje"
+      "qual é o dia de hoje",
+      "em que data estamos",
+      "data de hoje em brasilia"
     ],
     "tomorrow_date": [
       "que dia e amanha",
@@ -72,7 +86,10 @@
       "amanha e que dia",
       "amanhã é que dia",
       "dia de amanha",
-      "data de amanha"
+      "data de amanha",
+      "amanha cai em que dia",
+      "amanhã cai em qual dia",
+      "qual sera a data de amanha"
     ],
     "yesterday_date": [
       "que dia foi ontem",
@@ -84,7 +101,9 @@
       "que data e ontem",
       "ontem foi que dia",
       "dia de ontem",
-      "data de ontem"
+      "data de ontem",
+      "ontem caiu em que dia",
+      "qual foi a data de ontem"
     ],
     "current_datetime": [
       "que dia e hora",
@@ -96,7 +115,11 @@
       "data e horario",
       "data e horário",
       "me diga data e hora",
-      "me fala data e hora"
+      "me fala data e hora",
+      "hoje e que dia e que horas",
+      "hoje é que dia e que horas são",
+      "agora e quando",
+      "agora é quando"
     ],
     "current_weekday": [
       "que dia da semana",
@@ -107,7 +130,8 @@
       "qual dia da semana é hoje",
       "hoje e que dia da semana",
       "hoje é que dia da semana",
-      "qual o dia da semana hoje"
+      "qual o dia da semana hoje",
+      "em que dia da semana estamos"
     ],
     "current_year": [
       "qual o ano",
@@ -117,7 +141,54 @@
       "que ano e estamos",
       "que ano é estamos",
       "em que ano estamos",
-      "ano atual"
+      "ano atual",
+      "ano corrente",
+      "exercicio atual",
+      "exercício atual"
+    ],
+    "current_month": [
+      "qual o mes atual",
+      "qual o mês atual",
+      "em que mes estamos",
+      "em que mês estamos",
+      "mes atual",
+      "mês atual",
+      "que mes e",
+      "que mês é"
+    ],
+    "current_quarter": [
+      "qual o trimestre atual",
+      "em que trimestre estamos",
+      "trimestre atual",
+      "que trimestre estamos"
+    ],
+    "current_week_number": [
+      "qual a semana do ano",
+      "semana atual do ano",
+      "em que semana estamos",
+      "numero da semana",
+      "número da semana"
+    ],
+    "current_date_iso": [
+      "data iso",
+      "data em formato iso",
+      "data yyyy-mm-dd",
+      "qual a data iso",
+      "formato iso da data"
+    ],
+    "is_weekend_today": [
+      "hoje e fim de semana",
+      "hoje é fim de semana",
+      "hoje e sabado",
+      "hoje é sábado",
+      "hoje e domingo",
+      "hoje é domingo"
+    ],
+    "is_business_day_today": [
+      "hoje e dia util",
+      "hoje é dia útil",
+      "hoje e dia de trabalho",
+      "hoje é dia de trabalho"
     ]
   },
   "exclusions": [
@@ -128,7 +199,6 @@
     "hora-mil",
     "inicio",
     "início",
-    "fim",
     "encerramento",
     "ordem",
     "op ",
@@ -141,7 +211,40 @@
     "pedido",
     "venda",
     "compra",
-    "faturamento"
+    "faturamento",
+    "ov",
+    "lmp",
+    "bom",
+    "estrutura",
+    "roteiro",
+    "inspecao",
+    "inspeção",
+    "nota",
+    "nf",
+    "nfe",
+    "emissao",
+    "emissão",
+    "vencimento",
+    "validade",
+    "prazo",
+    "lead time",
+    "programado",
+    "programada",
+    "kpi",
+    "indicador",
+    "competencia",
+    "competência",
+    "periodo",
+    "período",
+    "movimentacao",
+    "movimentação",
+    "armazem",
+    "armazém",
+    "filial",
+    "mostre",
+    "liste",
+    "busque",
+    "consulte"
   ],
   "timezoneLabel": "horário de Brasília",
   "responses": {
@@ -151,6 +254,12 @@
     "yesterday_date": "Ontem foi **{weekday}**, **{date}** ({timezone_label}).",
     "current_datetime": "Agora são **{time}** de **{weekday}**, **{date}** ({timezone_label}).",
     "current_weekday": "Hoje é **{weekday}** ({timezone_label}).",
-    "current_year": "Estamos em **{year}** ({timezone_label})."
+    "current_year": "Estamos em **{year}** ({timezone_label}).",
+    "current_month": "Estamos em **{month} de {year}** ({timezone_label}).",
+    "current_quarter": "Estamos no **{quarter}º trimestre de {year}** ({timezone_label}).",
+    "current_week_number": "Estamos na **semana {week_number}** de **{year}** ({timezone_label}).",
+    "current_date_iso": "Data atual em formato ISO: **{iso_date}** ({timezone_label}).",
+    "is_weekend_today": "Hoje é **{weekday}**, **{date}** ({timezone_label}). {weekend_note}",
+    "is_business_day_today": "Hoje é **{weekday}**, **{date}** ({timezone_label}). {business_day_note}"
   }
 }

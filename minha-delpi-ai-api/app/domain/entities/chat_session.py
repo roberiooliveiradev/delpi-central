@@ -16,3 +16,4 @@ class ChatSession:
     is_pinned: bool = False
     pinned_at: datetime | None = None
     archived_at: datetime | None = None
+    active_leaf_message_id: UUID | None = None

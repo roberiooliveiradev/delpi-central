@@ -47,7 +47,79 @@ class FakeChatSessionRepository:
         return None
 
     def list_messages_by_session(self, session_id):
+        return self.list_all_messages_by_session(session_id)
+
+    def list_all_messages_by_session(self, session_id):
         return [message for message in self.messages if message.session_id == session_id]
+
+    def get_message_by_id(self, message_id, *, user_id=None):
+        for message in self.messages:
+            if message.id == message_id:
+                if user_id is None:
+                    return message
+                session = self.get_session_by_id(message.session_id)
+                if session and session.user_id == user_id:
+                    return message
+        return None
+
+    def set_active_leaf_message_id(self, *, session_id, user_id, message_id):
+        session = self.get_session_by_id(session_id)
+        if not session or session.user_id != user_id:
+            return None
+        object.__setattr__(session, "active_leaf_message_id", message_id)
+        return session
+
+    def create_message(
+        self,
+        session_id,
+        role,
+        content,
+        metadata=None,
+        parent_message_id=None,
+    ):
+        from app.domain.entities.chat_message import ChatMessage
+
+        message = ChatMessage(
+            id=uuid4(),
+            session_id=session_id,
+            role=role,
+            content=content,
+            metadata=metadata,
+            created_at=datetime.now(timezone.utc),
+            parent_message_id=parent_message_id,
+        )
+        self.messages.append(message)
+        return message
+
+    def update_user_message(self, *args, **kwargs):
+        return None
+
+    def delete_messages_after(self, *args, **kwargs):
+        return 0
+
+    def get_user_message_for_user(self, *args, **kwargs):
+        return None
+
+    def patch_message_metadata(self, *args, **kwargs):
+        return None
+
+    def update_assistant_message(self, *args, **kwargs):
+        return None
+
+    def delete_session(self, *args, **kwargs):
+        return False
+
+    def rename_session(self, *args, **kwargs):
+        return None
+
+    def update_session_agent_id(self, *args, **kwargs):
+        return False
+
+    def set_session_pinned(self, *args, **kwargs):
+        return None
+
+    def set_session_archived(self, *args, **kwargs):
+        return None
 
 
 def test_create_chat_session_use_case():

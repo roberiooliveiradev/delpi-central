@@ -180,6 +180,12 @@ export type ChatCanvasOpenPayload = {
   sourceMessageId?: string | null;
 };
 
+export type ChatMessageBranch = {
+  currentIndex: number;
+  total: number;
+  siblingIds: string[];
+};
+
 export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];
@@ -201,6 +207,8 @@ export type ChatMessage = {
   metadata: ChatMessageMetadata | null;
   created_at: string;
   user_feedback?: -1 | 1 | null;
+  parent_message_id?: string | null;
+  branch?: ChatMessageBranch | null;
 };
 
 export type ChatMessageFeedbackResponse = {
@@ -218,6 +226,8 @@ export type CreateChatSessionPayload = {
   context?: string;
   projectId?: string | null;
   agentId?: string | null;
+  forkFromSessionId?: string | null;
+  forkUntilMessageId?: string | null;
 };
 
 export type ChatAttachment = {

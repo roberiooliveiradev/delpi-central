@@ -10,6 +10,7 @@ import {
   upsertChatMessageFeedback,
   pinChatSession,
   renameChatSession,
+  switchChatBranch,
   unarchiveChatSession,
   unpinChatSession,
   updateChatMessage,
@@ -1296,6 +1297,74 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isSessionPending(activeSession.id) ||
       isPlaybackActive);
 
+  const switchMessageBranch = useCallback(
+    async (anchorUserMessageId: string) => {
+      const sessionId = activeSession?.id;
+
+      if (!sessionId || isActiveSessionBusy()) {
+        return;
+      }
+
+      setError(null);
+
+      try {
+        const data = await switchChatBranch(sessionId, anchorUserMessageId, {
+          getAccessToken: options.getAccessToken,
+        });
+
+        if (activeSessionIdRef.current !== sessionId) {
+          return;
+        }
+
+        setMessages(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao alternar variação.");
+      }
+    },
+    [activeSession?.id, isActiveSessionBusy, options.getAccessToken],
+  );
+
+  const continueFromMessage = useCallback(
+    async (messageId: string) => {
+      if (!activeSession || isActiveSessionBusy()) {
+        return;
+      }
+
+      setError(null);
+
+      try {
+        const newSession = await createChatSession(
+          {
+            title: activeSession.title
+              ? `${activeSession.title} (continuação)`
+              : "Continuação",
+            context: activeSession.context ?? "geral",
+            projectId: activeSession.project_id,
+            agentId: activeSession.agent_id,
+            forkFromSessionId: activeSession.id,
+            forkUntilMessageId: messageId,
+          },
+          { getAccessToken: options.getAccessToken },
+        );
+
+        setSessions((current) => [newSession, ...current]);
+        selectSession(newSession);
+        options.onSessionActivated?.(newSession.id, {
+          agentId: newSession.agent_id ?? options.agentId ?? null,
+          projectId: newSession.project_id ?? options.projectId ?? null,
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Erro ao continuar conversa.");
+      }
+    },
+    [
+      activeSession,
+      isActiveSessionBusy,
+      options,
+      selectSession,
+    ],
+  );
+
   return {
     sessions,
     archivedSessions,
@@ -1337,5 +1406,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     editAndResendMessage,
     reuseMessage,
     setMessageFeedback,
+    switchMessageBranch,
+    continueFromMessage,
   };
 }

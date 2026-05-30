@@ -54,6 +54,16 @@ def test_build_direct_answer_common_includes_examples():
     assert "pequenos erros de digitação" in text.lower() or "erros de digitacao" in text.lower()
 
 
+def test_build_direct_answer_includes_business_suggestions():
+    text = ChatCapabilitiesService.build_direct_answer(
+        workspace_context={"agent": None, "agentId": None},
+        allowed_action_ids=[],
+        action_catalog=[],
+    )
+    assert "visão 360" in text.lower() or "visao 360" in text.lower()
+    assert "cruzam várias fontes" in text.lower() or "cruzam varias fontes" in text.lower()
+
+
 def test_resolve_path_rule_suppliers():
     category, examples = ChatCapabilitiesService._resolve_path_rule(
         "/api/v1/products/{code}/suppliers"

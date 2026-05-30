@@ -420,7 +420,44 @@ class ChatCapabilitiesService:
         for item in sections.get("tipsItems") or []:
             lines.append(f"- {item}")
 
+        lines.extend(cls._format_business_suggestions(content))
+
         return "\n".join(lines)
+
+    @classmethod
+    def _format_business_suggestions(cls, content: dict) -> list[str]:
+        rich = content.get("richExamples") or {}
+        combined = content.get("combinedQuestions") or []
+
+        if not rich and not combined:
+            return []
+
+        section_titles = content.get("richExampleTitles") or {}
+        lines: list[str] = ["", str(section_titles.get("header") or "**Perguntas úteis (negócio)**")]
+
+        for key, examples in rich.items():
+            if not isinstance(examples, list) or not examples:
+                continue
+
+            title = str(section_titles.get(key) or key.replace("_", " ").title())
+            lines.append(f"**{title}**")
+
+            for example in examples[:4]:
+                lines.append(f"- *{example}*")
+
+        if combined:
+            lines.append("")
+            lines.append(
+                str(
+                    section_titles.get("combinedHeader")
+                    or "**Perguntas que cruzam várias fontes**"
+                )
+            )
+
+            for example in combined[:6]:
+                lines.append(f"- *{example}*")
+
+        return lines
 
     @classmethod
     def _format_skills_section(

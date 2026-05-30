@@ -4,6 +4,7 @@ import {
   Copy,
   Download,
   FileText,
+  GitBranch,
   Pencil,
   RotateCcw,
   ThumbsDown,
@@ -25,6 +26,7 @@ import {
   buildChatTimelineItems,
   formatMessageTime,
 } from "./chatMessageTimeline";
+import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
@@ -77,6 +79,8 @@ type ChatMessageListProps = {
   onDrillDown?: (query: string) => void;
   onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
   onDownloadAttachment?: (attachmentId: string) => Promise<void>;
+  onSwitchMessageBranch?: (anchorUserMessageId: string) => Promise<void>;
+  onContinueFromMessage?: (messageId: string) => Promise<void>;
   lastSentUserText?: string;
 };
 
@@ -451,6 +455,8 @@ export function ChatMessageList({
   onDrillDown,
   onMessageFeedback,
   onDownloadAttachment,
+  onSwitchMessageBranch,
+  onContinueFromMessage,
   onOpenCanvas,
   lastSentUserText = "",
 }: ChatMessageListProps) {
@@ -948,6 +954,16 @@ export function ChatMessageList({
           >
             {editingMessageId !== message.id ? (
               <div className="mdc-chat-message-user-toolbar">
+                {message.branch && onSwitchMessageBranch ? (
+                  <ChatBranchNavigator
+                    branch={message.branch}
+                    disabled={Boolean(isStreaming)}
+                    onSelectSibling={(anchorUserMessageId) => {
+                      void onSwitchMessageBranch(anchorUserMessageId);
+                    }}
+                  />
+                ) : null}
+
                 <div className="mdc-chat-message-actions">
                   <button
                     className="mdc-chat-message-action"
@@ -976,8 +992,9 @@ export function ChatMessageList({
                     className="mdc-chat-message-action"
                     type="button"
                     onClick={() => startEditMessage(message)}
+                    disabled={Boolean(isStreaming)}
                     aria-label="Editar mensagem"
-                    title="Editar mensagem"
+                    title="Editar e reenviar (nova variação)"
                   >
                     <Pencil size={15} aria-hidden="true" />
                   </button>
@@ -991,6 +1008,19 @@ export function ChatMessageList({
                   >
                     <RotateCcw size={15} aria-hidden="true" />
                   </button>
+
+                  {onContinueFromMessage ? (
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      disabled={Boolean(isStreaming)}
+                      onClick={() => void onContinueFromMessage(message.id)}
+                      aria-label="Continuar a partir daqui"
+                      title="Continuar a partir daqui (nova conversa)"
+                    >
+                      <GitBranch size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </div>
 
                 {messageTime ? (
@@ -1108,6 +1138,19 @@ export function ChatMessageList({
                       <Copy size={15} aria-hidden="true" />
                     )}
                   </button>
+
+                  {onContinueFromMessage ? (
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      disabled={Boolean(isStreaming)}
+                      onClick={() => void onContinueFromMessage(message.id)}
+                      aria-label="Continuar a partir daqui"
+                      title="Continuar a partir daqui (nova conversa)"
+                    >
+                      <GitBranch size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </div>

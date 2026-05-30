@@ -69,6 +69,7 @@ from app.application.use_cases.chat_artifacts_use_cases import (
 )
 from app.application.use_cases.get_chat_history_use_case import GetChatHistoryUseCase
 from app.application.use_cases.list_chat_sessions_use_case import ListChatSessionsUseCase
+from app.application.use_cases.switch_chat_branch_use_case import SwitchChatBranchUseCase
 from app.application.use_cases.rename_chat_session_use_case import RenameChatSessionUseCase
 from app.application.use_cases.set_chat_session_state_use_case import (
     SetChatSessionArchivedUseCase,
@@ -118,6 +119,14 @@ def make_list_chat_sessions_use_case() -> ListChatSessionsUseCase:
 
 def make_get_chat_history_use_case() -> GetChatHistoryUseCase:
     return GetChatHistoryUseCase(PostgresChatSessionRepository())
+
+
+def make_switch_chat_branch_use_case() -> SwitchChatBranchUseCase:
+    repository = PostgresChatSessionRepository()
+    return SwitchChatBranchUseCase(
+        repository=repository,
+        history_use_case=GetChatHistoryUseCase(repository),
+    )
 
 
 def make_upsert_chat_message_feedback_use_case():

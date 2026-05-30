@@ -1,5 +1,5 @@
 {
-  "maxMessageLength": 48,
+  "maxMessageLength": 56,
   "exactMatchCategories": ["ack"],
   "categoryPriority": [
     "wellbeing",
@@ -30,7 +30,35 @@
     "liste",
     "abrir",
     "agente",
-    "projeto"
+    "projeto",
+    "ov",
+    "lmp",
+    "bom",
+    "estrutura",
+    "saldo",
+    "preco",
+    "preço",
+    "nota",
+    "nfe",
+    "nf",
+    "op",
+    "ordem",
+    "venda",
+    "compra",
+    "roteiro",
+    "inspecao",
+    "inspeção",
+    "kpi",
+    "indicador",
+    "grafico",
+    "gráfico",
+    "tabela",
+    "mais linhas",
+    "proxima pagina",
+    "próxima página",
+    "armazem",
+    "armazém",
+    "filial"
   ],
   "patterns": {
     "greeting": [
@@ -118,7 +146,13 @@
       "desculpa ai",
       "desculpa aí",
       "peço desculpas",
-      "peco desculpas"
+      "peco desculpas",
+      "me confundi",
+      "escrevi errado",
+      "mandei errado",
+      "errei o codigo",
+      "errei o código",
+      "ignore a mensagem anterior"
     ],
     "praise": [
       "show",
@@ -230,11 +264,11 @@
   },
   "responses": {
     "platform": {
-      "greeting": "Olá! Como posso ajudar você hoje?",
+      "greeting": "Olá! Como posso ajudar você hoje? Pergunte *o que você pode fazer* para ver as opções desta sessão.",
       "wellbeing": "Tudo certo por aqui! E com você — em que posso ajudar?",
-      "thanks": "Por nada! Se precisar de algo mais, é só chamar.",
-      "apology": "Sem problemas! Como posso ajudar agora?",
-      "praise": "Que bom! Posso ajudar em mais alguma coisa?",
+      "thanks": "Por nada! Posso continuar com outra consulta, resumo ou explicação — é só chamar.",
+      "apology": "Sem problemas! Pode reformular ou enviar o código correto que eu refaço a consulta.",
+      "praise": "Que bom que ajudou! Posso detalhar, comparar ou transformar o resultado em tabela.",
       "farewell": "Até logo! Estou por aqui quando precisar.",
       "ack": "Certo! Me diga o que você precisa.",
       "laughter": "😊 Posso ajudar em algo?"

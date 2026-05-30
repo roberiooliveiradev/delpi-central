@@ -50,6 +50,30 @@ class ChatSessionRepositoryPort(ABC):
 
     @abstractmethod
     def list_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
+        """Mensagens do caminho ativo (folha ativa → raiz)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_all_messages_by_session(self, session_id: UUID) -> list[ChatMessage]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_message_by_id(
+        self,
+        message_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> ChatMessage | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_active_leaf_message_id(
+        self,
+        *,
+        session_id: UUID,
+        user_id: UUID,
+        message_id: UUID,
+    ) -> ChatSession | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -119,6 +143,7 @@ class ChatSessionRepositoryPort(ABC):
         role: str,
         content: str,
         metadata: dict | None = None,
+        parent_message_id: UUID | None = None,
     ) -> ChatMessage:
         raise NotImplementedError
 

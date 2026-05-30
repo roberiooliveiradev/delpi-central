@@ -26,6 +26,12 @@ from app.application.services.chat_utility_direct_answer_service import (
         "data e hora",
         "qual o ano?",
         "que ano estamos",
+        "em que mês estamos?",
+        "qual o trimestre atual?",
+        "qual a semana do ano?",
+        "data em formato iso",
+        "hoje é dia útil?",
+        "hoje é fim de semana?",
     ],
 )
 def test_utility_question_detection(message: str):
@@ -41,6 +47,8 @@ def test_utility_question_detection(message: str):
         "tempo real de producao em hora mil",
         "bom dia",
         "o que vai ser produzido amanhã?",
+        "mostre vendas deste mês",
+        "qual a data de entrega do pedido 123",
     ],
 )
 def test_non_utility_questions(message: str):
@@ -117,3 +125,37 @@ def test_yesterday_date_answer():
     assert answer
     assert "29/05/2026" in answer
     assert "Ontem" in answer
+
+
+def test_current_month_answer():
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="em que mês estamos?",
+        now=fixed,
+    )
+
+    assert answer
+    assert "maio" in answer.lower()
+    assert "2026" in answer
+
+
+def test_current_date_iso_answer():
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="data em formato iso",
+        now=fixed,
+    )
+
+    assert answer
+    assert "2026-05-30" in answer
+
+
+def test_weekend_answer_on_saturday():
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="hoje é fim de semana?",
+        now=fixed,
+    )
+
+    assert answer
+    assert "fim de semana" in answer.lower()

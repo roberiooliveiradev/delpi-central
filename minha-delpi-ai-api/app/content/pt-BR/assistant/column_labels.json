@@ -147,7 +147,14 @@
     "created_at": "Criado em",
     "updated_at": "Atualizado em",
     "notes": "Observações",
-    "observation": "Observação"
+    "observation": "Observação",
+    "delivered_quantity": "Qtd. entregue",
+    "sold_quantity": "Qtd. vendida",
+    "ordered_quantity": "Qtd. pedida",
+    "open_quantity": "Qtd. em aberto",
+    "group_description": "Descrição grupo",
+    "warehouse_code": "Cód. armazém",
+    "branch_code": "Cód. filial"
   },
   "profilePriority": [
     "stock",
