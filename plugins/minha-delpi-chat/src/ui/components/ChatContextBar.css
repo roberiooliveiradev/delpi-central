@@ -1,0 +1,51 @@
+.mdc-chat-context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0 var(--mdc-space-3) var(--mdc-space-2);
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--mdc-radius-md);
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 18%, var(--mdc-control-border));
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
+}
+
+.mdc-chat-context-bar__title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--mdc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mdc-chat-context-bar__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  flex: 1;
+}
+
+.mdc-chat-context-bar__chip {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  color: var(--mdc-text);
+  background: var(--mdc-control-bg);
+  border: 1px solid var(--mdc-control-border);
+}
+
+.mdc-chat-context-bar__clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.45rem;
+  border: none;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+}
+
+.mdc-chat-context-bar__clear:hover {
+  color: var(--mdc-primary);
+}

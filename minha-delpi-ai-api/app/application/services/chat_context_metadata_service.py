@@ -40,6 +40,10 @@ class ChatContextMetadataService:
 
         metadata["contextSnapshot"] = snapshot
         metadata["contextAssertiveness"] = assertiveness
+        context_chips = ChatWorkingMemoryService.build_context_chips(snapshot)
+
+        if context_chips:
+            metadata["contextChips"] = context_chips
 
         admin_debug = metadata.get("adminDebug")
 

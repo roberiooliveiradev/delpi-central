@@ -40,3 +40,19 @@ def test_format_prompt_block_includes_active_product():
 
     assert "10080001" in block
     assert "tabela" in block
+
+
+def test_build_context_chips_from_snapshot():
+    chips = ChatWorkingMemoryService.build_context_chips(
+        {
+            "lastEntities": {"productCode": "10080001", "branch": "02"},
+            "behaviorInstructions": {"responseFormat": "table", "tone": "direct"},
+        }
+    )
+
+    kinds = {chip["kind"] for chip in chips}
+
+    assert "product" in kinds
+    assert "branch" in kinds
+    assert "format" in kinds
+    assert "tone" in kinds

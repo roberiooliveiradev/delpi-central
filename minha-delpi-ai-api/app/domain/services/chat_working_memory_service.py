@@ -8,27 +8,16 @@ from typing import Any
 from app.domain.services.chat_behavior_instruction_service import (
     ChatBehaviorInstructionService,
 )
+from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
+)
+from app.domain.services.chat_reference_resolution_service import (
+    ChatReferenceResolutionService,
 )
 
 
 class ChatWorkingMemoryService:
-    _FOLLOW_UP_PATTERNS = (
-        r"\bfornecedores?\b",
-        r"\bestoque\b",
-        r"\broteiro\b",
-        r"\bestrutura\b",
-        r"\binspe[cç][aã]o\b",
-        r"\bdescri[cç][aã]o\b",
-        r"\bmais\s+informa",
-        r"\bagora\b",
-        r"\bdele\b",
-        r"\bdesse\b",
-        r"\bdessa\b",
-        r"\besse\s+produto\b",
-        r"\besse\s+item\b",
-    )
 
     @classmethod
     def build_pre_turn_snapshot(
@@ -39,14 +28,16 @@ class ChatWorkingMemoryService:
     ) -> dict:
         last_entities = cls._extract_last_entities(previous_messages)
         behavior = cls._merge_behavior_instructions(message, previous_messages)
-        resolved, used_keys = cls._resolve_references(message, last_entities)
+        resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
+        follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
         return {
             "lastEntities": last_entities,
             "behaviorInstructions": behavior,
             "resolvedReferences": resolved,
             "usedMemoryKeys": used_keys,
-            "followUpDetected": cls._is_operational_follow_up(message),
+            "followUpDetected": follow_up,
+            "followUpType": ChatFollowUpIntentService.follow_up_type(message) if follow_up else None,
         }
 
     @classmethod
@@ -206,44 +197,50 @@ class ChatWorkingMemoryService:
         return merged
 
     @classmethod
-    def _resolve_references(
-        cls,
-        message: str,
-        last_entities: dict[str, str],
-    ) -> tuple[list[dict], list[str]]:
-        normalized = (message or "").strip().lower()
-        used_keys: list[str] = []
-        resolved: list[dict] = []
+    def build_context_chips(cls, snapshot: dict | None) -> list[dict[str, str]]:
+        if not snapshot:
+            return []
 
-        if not cls._is_operational_follow_up(message):
-            return resolved, used_keys
+        chips: list[dict[str, str]] = []
+        entities = snapshot.get("lastEntities") or {}
+        behavior = snapshot.get("behaviorInstructions") or {}
 
-        product_code = last_entities.get("productCode")
+        product_code = str(entities.get("productCode") or "").strip()
 
-        if product_code and not ChatProductQueryIntentService.extract_product_code(message):
-            resolved.append(
+        if product_code:
+            chips.append(
                 {
-                    "text": "follow-up operacional",
-                    "resolvedTo": "productCode",
+                    "label": f"Produto {product_code}",
+                    "kind": "product",
                     "value": product_code,
-                    "confidence": 0.9,
                 }
             )
-            used_keys.append("productCode")
 
-        return resolved, used_keys
+        branch = str(entities.get("branch") or "").strip()
 
-    @classmethod
-    def _is_operational_follow_up(cls, message: str | None) -> bool:
-        normalized = (message or "").strip().lower()
+        if branch:
+            chips.append(
+                {
+                    "label": f"Filial {branch}",
+                    "kind": "branch",
+                    "value": branch,
+                }
+            )
 
-        if not normalized:
-            return False
+        if behavior.get("responseFormat") == "table":
+            chips.append({"label": "Tabela", "kind": "format", "value": "table"})
 
-        if ChatProductQueryIntentService.extract_product_code(message):
-            return False
+        tone = behavior.get("tone")
 
-        return any(re.search(pattern, normalized) for pattern in cls._FOLLOW_UP_PATTERNS)
+        if tone == "direct":
+            chips.append({"label": "Tom direto", "kind": "tone", "value": "direct"})
+        elif tone == "simple":
+            chips.append({"label": "Linguagem simples", "kind": "tone", "value": "simple"})
+
+        if behavior.get("finalVersionOnly"):
+            chips.append({"label": "Só versão final", "kind": "preference", "value": "final_only"})
+
+        return chips
 
     @classmethod
     def _extract_codes_from_tool_calls(cls, tool_calls: list | None) -> list[str]:

@@ -22,6 +22,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
 | [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: contexto/assertividade (Fase 5), chips, personalidade — status e smokes. |
 | [../changelog/2026-05-contexto-memoria-assertividade.md](../changelog/2026-05-contexto-memoria-assertividade.md) | **Maio/2026:** memória de turno, score de assertividade, chips com produto, correções presenter/estrutura. |
+| [../changelog/2026-05-melhorias-playbooks.md](../changelog/2026-05-melhorias-playbooks.md) | **Maio/2026:** referências/follow-up, contextChips UI, modo textual admin, chips pós-texto. |
 | [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) | Calibração `RAG_CONTEXT_MIN_SCORE` e checklist de latência. |
 | [notificacoes-minha-delpi.md](./notificacoes-minha-delpi.md) | Notificações de plataforma: broadcast, integrações e UI no chat. |
 | [agentes-gestao-melhorias.md](./agentes-gestao-melhorias.md) | Gestão de agentes — melhorias (ondas 1–7 concluídas). |

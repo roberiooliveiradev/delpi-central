@@ -53,7 +53,16 @@
     { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" },
     { "label": "Buscar fornecedor", "query": "quem fornece o produto 10080001?" },
     { "label": "Ver vendas", "query": "mostre vendas do produto 10080001" },
+    { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
+    { "label": "E-mail formal", "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo" },
     { "label": "Quem é você?", "query": "quem é você?" }
+  ],
+  "textHomeStarters": [
+    { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
+    { "label": "Tom mais formal", "query": "deixe mais formal: preciso que você envie isso ainda hoje" },
+    { "label": "Traduzir", "query": "traduza para inglês: precisamos confirmar o prazo de entrega" },
+    { "label": "Resumir", "query": "resuma em tópicos o texto abaixo" },
+    { "label": "E-mail", "query": "escreva um e-mail cobrando retorno do fornecedor sobre prazo" }
   ],
   "composerPlaceholders": {
     "default": "O que vamos resolver hoje? Pode perguntar do seu jeito.",
@@ -68,7 +77,8 @@
     "empty": ["Tentar por descrição", "Ampliar período", "Verificar código", "O que você pode fazer?"],
     "error": ["Refinar o pedido", "Verificar código", "O que você pode fazer?"],
     "warning": ["Detalhar por filial", "Comparar período", "Verificar código"],
-    "generic": ["O que você pode fazer?", "Consultar produto", "Ver estoque"]
+    "generic": ["O que você pode fazer?", "Consultar produto", "Ver estoque"],
+    "text": ["Versão mais curta", "Tom mais formal", "Traduzir para inglês", "Transformar em e-mail"]
   },
   "followUpQueries": {
     "Ver estoque": "qual o estoque do produto {product_code}?",
@@ -89,7 +99,11 @@
     "O que você pode fazer?": "o que você pode fazer?",
     "Refinar o pedido": "pode detalhar o resultado anterior?",
     "Detalhar por filial": "detalhe por filial",
-    "Consultar produto": "me fale do produto {product_code}"
+    "Consultar produto": "me fale do produto {product_code}",
+    "Versão mais curta": "deixe mais curto o texto da resposta anterior",
+    "Tom mais formal": "deixe mais formal o texto da resposta anterior",
+    "Traduzir para inglês": "traduza para inglês o texto da resposta anterior",
+    "Transformar em e-mail": "transforme o texto da resposta anterior em um e-mail com assunto"
   },
   "phrases": {
     "start": [

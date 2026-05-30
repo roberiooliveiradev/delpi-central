@@ -279,6 +279,7 @@ class SendChatMessageUseCase:
                     message,
                     previous_messages,
                 ),
+                text_task_mode=bool(prepared.text_task_mode),
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
             )

@@ -162,6 +162,8 @@ Comportamento esperado:
 
     CONTEXT_MEMORY_POLICY_FALLBACK = """Memória da conversa: use a seção de memória ativa para follow-ups; novo código/filial/período na mensagem prevalece; não repita consulta idêntica se o histórico já trouxe os dados."""
 
+    ADMINISTRATIVE_WRITING_POLICY_FALLBACK = """Modo textual: corrija, traduza ou redija sem consultar ERP/API; preserve códigos e fatos; em correções simples entregue só o texto final."""
+
     def build_system_prompt(self) -> str:
         base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
         context_engineering = self._load_policy(
@@ -238,10 +240,19 @@ Comportamento esperado:
         operational_mode: bool = False,
         analysis_mode: bool = False,
         data_interpretation_mode: bool = False,
+        text_task_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
         resolved_skills = skills or {}
+
+        if text_task_mode:
+            sections.append(
+                self._load_policy(
+                    "administrative-writing.md",
+                    self.ADMINISTRATIVE_WRITING_POLICY_FALLBACK,
+                )
+            )
 
         stream_texts = ContentService.stream()
         rag_header = str(stream_texts.get("ragContextHeader") or "Contexto documental autorizado:")

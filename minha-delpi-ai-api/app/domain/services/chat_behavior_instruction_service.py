@@ -33,6 +33,11 @@ class ChatBehaviorInstructionService:
         r"\bsempre\b",
         r"\bnas\s+pr[oó]ximas\b",
     )
+    _FINAL_ONLY_PATTERNS = (
+        r"\bs[oó]\s+a\s+vers[aã]o\s+final\b",
+        r"\bapenas\s+a\s+vers[aã]o\s+corrigida\b",
+        r"\bsem\s+explica[cç][aã]o\b",
+    )
 
     @classmethod
     def detect(cls, message: str | None) -> dict[str, str]:
@@ -52,6 +57,9 @@ class ChatBehaviorInstructionService:
 
         if any(re.search(pattern, normalized) for pattern in cls._SIMPLE_PATTERNS):
             instructions["tone"] = "simple"
+
+        if any(re.search(pattern, normalized) for pattern in cls._FINAL_ONLY_PATTERNS):
+            instructions["finalVersionOnly"] = "true"
 
         if persistent and instructions:
             instructions["scope"] = "session"

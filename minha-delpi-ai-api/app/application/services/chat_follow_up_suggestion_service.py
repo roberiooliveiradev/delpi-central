@@ -69,11 +69,14 @@ class ChatFollowUpSuggestionService:
         workspace_context: dict | None = None,
         previous_messages: list[Any] | None = None,
     ) -> list[dict[str, str]]:
-        outcome = cls.classify_outcome(
-            answer=answer,
-            tool_calls=tool_calls,
-            issues=issues,
-        )
+        if (workspace_context or {}).get("textTaskCategory") and not tool_calls:
+            outcome = "text"
+        else:
+            outcome = cls.classify_outcome(
+                answer=answer,
+                tool_calls=tool_calls,
+                issues=issues,
+            )
         chips = cls._chip_labels(outcome)
 
         if not chips:

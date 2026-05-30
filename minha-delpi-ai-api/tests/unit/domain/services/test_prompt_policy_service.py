@@ -13,6 +13,18 @@ def test_build_system_prompt_includes_context_engineering():
     assert "Memória de contexto" in prompt or "memória ativa" in prompt.lower()
 
 
+def test_contextual_prompt_includes_administrative_writing_in_text_mode():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        text_task_mode=True,
+    )
+
+    assert "modo de redação" in prompt.lower() or "modo textual" in prompt.lower()
+
+
 def test_contextual_prompt_always_includes_base_and_response_style():
     service = PromptPolicyService()
 

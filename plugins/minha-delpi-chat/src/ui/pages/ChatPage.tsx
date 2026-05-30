@@ -7,6 +7,7 @@ import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
 import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
+import { ChatContextBar, type ChatContextChip } from "../components/ChatContextBar";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
@@ -167,6 +168,31 @@ export function ChatPage({
     },
     onOpenCanvas: openCanvasPanel,
   });
+
+  const activeContextChips = useMemo(() => {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+      const message = messages[index];
+
+      if (message.role !== "assistant") {
+        continue;
+      }
+
+      const chips = message.metadata?.contextChips;
+
+      if (Array.isArray(chips) && chips.length > 0) {
+        return chips as ChatContextChip[];
+      }
+    }
+
+    return [];
+  }, [messages]);
+
+  const handleClearActiveContext = useCallback(() => {
+    void sendMessage({
+      content:
+        "a partir de agora, desconsidere produto, filial e preferências anteriores desta conversa.",
+    });
+  }, [sendMessage]);
 
   const {
     agents,
@@ -1557,6 +1583,11 @@ export function ChatPage({
                 }}
                 onOpenCanvas={openCanvasPanel}
                 lastSentUserText={lastSentUserText}
+              />
+
+              <ChatContextBar
+                chips={activeContextChips}
+                onClearContext={handleClearActiveContext}
               />
 
               <ChatInput

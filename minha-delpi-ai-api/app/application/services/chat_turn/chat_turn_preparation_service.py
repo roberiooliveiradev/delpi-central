@@ -40,6 +40,7 @@ from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
+from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.config.settings import Settings
 
@@ -51,6 +52,8 @@ class ChatTurnPreparationResult:
     analysis_mode: bool
     fast_path: bool
     skip_rag: bool
+    text_task_mode: bool = False
+    text_task_category: str | None = None
 
     # Contexto de conversa usado para o LLM
     history: list[Any]
@@ -155,6 +158,12 @@ class ChatTurnPreparationService:
         )
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
+        text_task_category = ChatTextTaskIntentService.classify(message)
+        text_task_pure = ChatTextTaskIntentService.is_pure_text_task(message)
+
+        if text_task_pure:
+            operational_optimize = False
+            analysis_mode = False
 
         if on_stream_activity:
             from app.application.services.chat_stream_activity_service import (
@@ -300,6 +309,10 @@ class ChatTurnPreparationService:
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot
 
+        if text_task_pure:
+            workspace_context["textTaskMode"] = True
+            workspace_context["textTaskCategory"] = text_task_category
+
         memory_prompt = ChatWorkingMemoryService.format_prompt_block(working_memory_snapshot)
         base_conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
@@ -314,7 +327,7 @@ class ChatTurnPreparationService:
         ambiguous_period_answer = None
         interpretation_without_data_answer = None
 
-        if not canvas_action and not pre_capability_answer and not analysis_mode:
+        if not canvas_action and not pre_capability_answer and not analysis_mode and not text_task_pure:
             missing_product_code_answer = (
                 ChatOperationalParameterService.resolve_missing_product_code_answer(
                     message,
@@ -360,6 +373,7 @@ class ChatTurnPreparationService:
             or skip_tools_for_data_interpretation
             or small_talk_direct
             or utility_direct
+            or text_task_pure
         ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
                 pipeline_stages.append("identity_shortcut")
@@ -379,6 +393,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("small_talk")
             elif utility_direct:
                 pipeline_stages.append("utility_direct")
+            elif text_task_pure:
+                pipeline_stages.append("text_task")
             tool_context = {
                 "context": "",
                 "toolCalls": [],
@@ -569,6 +585,9 @@ class ChatTurnPreparationService:
             if "direct_answer" not in pipeline_stages:
                 pipeline_stages.append("direct_answer")
 
+        if text_task_pure and not direct_answer:
+            skip_rag = True
+
         if on_stream_activity and not skip_rag:
             from app.application.services.chat_stream_activity_service import (
                 ChatStreamActivityService,
@@ -690,6 +709,8 @@ class ChatTurnPreparationService:
             analysis_mode=bool(analysis_mode),
             fast_path=bool(fast_path),
             skip_rag=bool(skip_rag),
+            text_task_mode=bool(text_task_pure),
+            text_task_category=text_task_category if text_task_pure else None,
             history=history,
             history_summary=history_summary,
             tool_context=tool_context,
