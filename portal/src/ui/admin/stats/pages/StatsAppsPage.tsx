@@ -11,7 +11,7 @@ import {
   statPercent,
   formatPercent,
 } from "../StatsEnrichment";
-import { formatAppType, PanelNav, StatsPageIntro, type StatsPageProps } from "../StatsShared";
+import { formatAppType, PanelNav, StatsPageIntro, type StatsPageProps, getTrackableActiveApps } from "../StatsShared";
 import { STATS_CHART_COLORS } from "../statsTheme";
 
 import type { StatsChartsData } from "../useAdminStats";
@@ -24,14 +24,15 @@ export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPagePro
   const usage = stats.apps.usage;
   const ghostCount = usage?.ghostApps?.length ?? 0;
   const usedInPeriod = usage?.usedInPeriod ?? 0;
-  const adoptionPct = statPercent(usedInPeriod, stats.apps.active);
+  const trackableActive = getTrackableActiveApps(stats);
+  const adoptionPct = statPercent(usedInPeriod, trackableActive);
 
   return (
     <div className="admin-stats-page">
       <div className="admin-stats-page__head-row">
         <StatsPageIntro
           title="Aplicações"
-          description="Uso em tempo real, ranking de adoção e apps ativos sem acesso recente."
+          description="Uso em tempo real, ranking de adoção e apps com interface sem abertura recente no portal."
         />
         <PanelNav tab="apps" label="Gerenciar aplicações" onNavigateTab={onNavigateTab} />
       </div>
@@ -46,13 +47,13 @@ export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPagePro
         <StatsMiniKpi
           label="Com uso (30d)"
           value={usedInPeriod}
-          hint={`${formatPercent(adoptionPct)} das ${stats.apps.active} ativas`}
+          hint={`${formatPercent(adoptionPct)} das ${trackableActive} com UI`}
         />
         <StatsMiniKpi
           tone="warning"
           label="Fantasmas"
           value={ghostCount}
-          hint="Ativas sem uso no período"
+          hint="Com UI, sem abertura (30d)"
         />
         <StatsMiniKpi
           label="Cadastro"
@@ -118,7 +119,7 @@ export function StatsAppsPage({ stats, charts, onNavigateTab }: StatsAppsPagePro
       <div className="admin-stats__charts-row admin-stats__charts-row--duo">
         <StatsChartCard
           title="Adoção (30 dias)"
-          foot={`${usedInPeriod} de ${stats.apps.active} apps ativas com pelo menos um acesso`}
+          foot={`${usedInPeriod} de ${trackableActive} apps com UI tiveram pelo menos um acesso`}
         >
           <DonutChart
             segments={charts.appSegments}

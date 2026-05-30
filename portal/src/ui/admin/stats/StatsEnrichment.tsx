@@ -98,7 +98,7 @@ export function GhostAppsCompact({ apps }: { apps: AdminStatisticsRankItem[] }) 
           <Ghost size={16} aria-hidden="true" />
           <div>
             <strong>Apps fantasmas</strong>
-            <span>Todas as apps ativas tiveram uso no período</span>
+            <span>Todas as apps com UI ativas tiveram abertura no portal</span>
           </div>
         </header>
       </aside>
@@ -113,7 +113,7 @@ export function GhostAppsCompact({ apps }: { apps: AdminStatisticsRankItem[] }) 
           <strong>
             Fantasmas <span className="admin-stats-ghost-panel__badge">{count}</span>
           </strong>
-          <span>Ativas sem uso nos últimos 30 dias</span>
+          <span>Com interface no portal, sem abertura nos últimos 30 dias</span>
         </div>
       </header>
       <ul className="admin-stats-ghost-panel__list" aria-label="Aplicações fantasmas">

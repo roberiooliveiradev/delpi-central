@@ -7,6 +7,7 @@ import { ApiClient } from "../../../data/apiClient";
 import { AdminApi, type AdminStatistics } from "../../../data/adminApi";
 import type { ChartSegment } from "./StatsCharts";
 import { STATS_AUTO_REFRESH_MS, STATS_CHART_COLORS } from "./statsTheme";
+import { getTrackableActiveApps } from "./StatsShared";
 
 export type StatsChartsData = {
   userSegments: ChartSegment[];
@@ -88,8 +89,8 @@ export function useAdminStats() {
     const usage = stats.apps.usage;
     const ghostCount = usage?.ghostApps?.length ?? 0;
     const usedInPeriod = usage?.usedInPeriod ?? 0;
-    const appsActive = stats.apps.active;
-    const appsIdle = Math.max(0, appsActive - usedInPeriod);
+    const trackableActive = getTrackableActiveApps(stats);
+    const appsIdle = Math.max(0, trackableActive - usedInPeriod);
 
     const userSegments: ChartSegment[] = [
       {

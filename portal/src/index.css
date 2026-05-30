@@ -209,33 +209,30 @@ textarea {
 
   --warning: #f59e0b;
 
-  /* Analytics / Admin Estatísticas — vivido em claro e escuro (Strategic Indicators) */
-  --stats-title: var(--secundary);
-  --stats-title-soft: color-mix(in srgb, var(--secundary) 68%, var(--primary));
+  /* Analytics / Admin Estatísticas — alinhado ao portal (home/admin) */
+  --stats-title: var(--text);
+  --stats-title-soft: var(--text-muted);
   --stats-text: var(--text);
   --stats-text-muted: var(--text-muted);
   --stats-card-bg: var(--surface);
-  --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 94%, var(--primary));
-  --stats-card-border: color-mix(in srgb, var(--primary) 12%, var(--border));
-  --stats-track-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
-  --stats-hero-bg:
-    radial-gradient(circle at 14% 24%, rgba(8, 155, 219, 0.2), transparent 44%),
-    radial-gradient(circle at 86% 76%, rgba(14, 165, 233, 0.14), transparent 48%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 96%, #ffffff), var(--bg));
-  --stats-kpi-value: color-mix(in srgb, var(--primary) 42%, var(--secundary));
-  --stats-accent-bg: color-mix(in srgb, var(--primary) 14%, var(--surface));
-  --stats-accent-border: color-mix(in srgb, var(--primary) 40%, var(--border));
-  --stats-live-bg: color-mix(in srgb, var(--primary) 11%, var(--surface));
-  --stats-live-border: color-mix(in srgb, var(--primary) 48%, var(--border));
+  --stats-card-bg-elevated: var(--surface-2);
+  --stats-card-border: var(--border);
+  --stats-track-bg: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+  --stats-hero-bg: var(--surface);
+  --stats-kpi-value: var(--text);
+  --stats-accent-bg: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  --stats-accent-border: color-mix(in srgb, var(--primary) 28%, var(--border));
+  --stats-live-bg: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  --stats-live-border: color-mix(in srgb, var(--primary) 32%, var(--border));
 
-  /* Paleta de gráficos — saturada, legível em fundo claro */
-  --chart-1: #089bdb;
-  --chart-2: #0ea5e9;
-  --chart-3: #22d3ee;
-  --chart-4: #22c55e;
-  --chart-5: #f59e0b;
-  --chart-6: #ef4444;
-  --chart-muted: #94a3b8;
+  /* Paleta de gráficos — tokens semânticos do portal */
+  --chart-1: var(--primary);
+  --chart-2: color-mix(in srgb, var(--primary) 75%, #ffffff);
+  --chart-3: color-mix(in srgb, var(--primary) 55%, #ffffff);
+  --chart-4: var(--success);
+  --chart-5: var(--warning);
+  --chart-6: var(--danger);
+  --chart-muted: var(--text-muted);
 }
 
 /* DARK MODE */
@@ -273,31 +270,28 @@ textarea {
     radial-gradient(circle at 82% 72%, rgba(0, 56, 102, 0.35), transparent 52%),
     linear-gradient(135deg, color-mix(in srgb, var(--bg) 88%, #0b1b2b), var(--bg));
 
-  --stats-title: color-mix(in srgb, var(--primary) 75%, #ffffff);
-  --stats-title-soft: color-mix(in srgb, var(--primary) 52%, #ffffff);
-  --stats-text: rgba(255, 255, 255, 0.92);
-  --stats-text-muted: rgba(255, 255, 255, 0.72);
-  --stats-card-bg: color-mix(in srgb, var(--surface-2) 88%, #000000);
-  --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 72%, var(--primary) 6%);
-  --stats-card-border: rgba(255, 255, 255, 0.14);
-  --stats-track-bg: rgba(255, 255, 255, 0.1);
-  --stats-hero-bg:
-    radial-gradient(circle at 12% 20%, rgba(8, 155, 219, 0.28), transparent 42%),
-    radial-gradient(circle at 88% 80%, rgba(56, 189, 248, 0.12), transparent 48%),
-    linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 92%, #000), var(--bg));
-  --stats-kpi-value: color-mix(in srgb, var(--primary) 68%, #ffffff);
-  --stats-accent-bg: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
-  --stats-accent-border: color-mix(in srgb, var(--primary) 45%, transparent);
-  --stats-live-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
-  --stats-live-border: color-mix(in srgb, var(--chart-1) 55%, transparent);
+  --stats-title: var(--text);
+  --stats-title-soft: var(--text-muted);
+  --stats-text: var(--text);
+  --stats-text-muted: var(--text-muted);
+  --stats-card-bg: var(--surface);
+  --stats-card-bg-elevated: var(--surface-2);
+  --stats-card-border: var(--border);
+  --stats-track-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+  --stats-hero-bg: var(--surface);
+  --stats-kpi-value: var(--text);
+  --stats-accent-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+  --stats-accent-border: color-mix(in srgb, var(--primary) 35%, var(--border));
+  --stats-live-bg: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+  --stats-live-border: color-mix(in srgb, var(--primary) 40%, var(--border));
 
-  --chart-1: #38bdf8;
-  --chart-2: #22d3ee;
-  --chart-3: #67e8f9;
-  --chart-4: #4ade80;
-  --chart-5: #fbbf24;
-  --chart-6: #fb7185;
-  --chart-muted: rgba(255, 255, 255, 0.28);
+  --chart-1: var(--primary);
+  --chart-2: color-mix(in srgb, var(--primary) 72%, #ffffff);
+  --chart-3: color-mix(in srgb, var(--primary) 52%, #ffffff);
+  --chart-4: var(--success);
+  --chart-5: var(--warning);
+  --chart-6: var(--danger);
+  --chart-muted: var(--text-muted);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -330,27 +324,28 @@ textarea {
 
     --warning: #fbbf24;
 
-    --stats-title: color-mix(in srgb, var(--primary) 75%, #ffffff);
-    --stats-title-soft: color-mix(in srgb, var(--primary) 52%, #ffffff);
-    --stats-text: rgba(255, 255, 255, 0.92);
-    --stats-text-muted: rgba(255, 255, 255, 0.72);
-    --stats-card-bg: color-mix(in srgb, var(--surface-2) 88%, #000000);
-    --stats-card-bg-elevated: color-mix(in srgb, var(--surface-2) 72%, var(--primary) 6%);
-    --stats-card-border: rgba(255, 255, 255, 0.14);
-    --stats-track-bg: rgba(255, 255, 255, 0.1);
-    --stats-kpi-value: color-mix(in srgb, var(--primary) 68%, #ffffff);
-    --stats-accent-bg: color-mix(in srgb, var(--primary) 16%, var(--surface-2));
-    --stats-accent-border: color-mix(in srgb, var(--primary) 45%, transparent);
-    --stats-live-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
-    --stats-live-border: color-mix(in srgb, var(--chart-1) 55%, transparent);
+    --stats-title: var(--text);
+    --stats-title-soft: var(--text-muted);
+    --stats-text: var(--text);
+    --stats-text-muted: var(--text-muted);
+    --stats-card-bg: var(--surface);
+    --stats-card-bg-elevated: var(--surface-2);
+    --stats-card-border: var(--border);
+    --stats-track-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+    --stats-hero-bg: var(--surface);
+    --stats-kpi-value: var(--text);
+    --stats-accent-bg: color-mix(in srgb, var(--primary) 14%, var(--surface-2));
+    --stats-accent-border: color-mix(in srgb, var(--primary) 35%, var(--border));
+    --stats-live-bg: color-mix(in srgb, var(--primary) 10%, var(--surface-2));
+    --stats-live-border: color-mix(in srgb, var(--primary) 40%, var(--border));
 
-    --chart-1: #38bdf8;
-    --chart-2: #22d3ee;
-    --chart-3: #67e8f9;
-    --chart-4: #4ade80;
-    --chart-5: #fbbf24;
-    --chart-6: #fb7185;
-    --chart-muted: rgba(255, 255, 255, 0.28);
+    --chart-1: var(--primary);
+    --chart-2: color-mix(in srgb, var(--primary) 72%, #ffffff);
+    --chart-3: color-mix(in srgb, var(--primary) 52%, #ffffff);
+    --chart-4: var(--success);
+    --chart-5: var(--warning);
+    --chart-6: var(--danger);
+    --chart-muted: var(--text-muted);
   }
 }
 

@@ -117,6 +117,9 @@ export type AdminAppUsageSnapshot = {
   topUsed: AdminStatisticsRankItem[];
   ghostApps: AdminStatisticsRankItem[];
   usedInPeriod: number;
+  /** Apps ativas com UI (iframe/microfrontend), exclui backend-only. */
+  trackableActive?: number;
+  backendOnlyActive?: number;
 };
 
 export type AdminStatistics = {

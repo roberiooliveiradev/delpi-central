@@ -1,5 +1,5 @@
 // src/ui/admin/stats/statsTheme.ts
-// Paleta via tokens globais do portal (--chart-*, --stats-*) — vivida em claro e escuro
+// Paleta via tokens globais do portal (--chart-*, --stats-*)
 
 export const STATS_CHART_COLORS = {
   c1: "var(--chart-1)",

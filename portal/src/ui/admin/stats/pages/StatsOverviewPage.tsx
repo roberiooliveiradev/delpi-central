@@ -1,6 +1,6 @@
 // src/ui/admin/stats/pages/StatsOverviewPage.tsx
 
-import { LayoutGrid, Shield, Users, UsersRound } from "lucide-react";
+import { LayoutGrid, Shield, Users, Users2 } from "lucide-react";
 
 import { DonutChart } from "../StatsCharts";
 import {
@@ -12,7 +12,7 @@ import {
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
-import { StatsPageIntro, type StatsPageProps } from "../StatsShared";
+import { StatsPageIntro, type StatsPageProps, getTrackableActiveApps } from "../StatsShared";
 
 import type { StatsChartsData } from "../useAdminStats";
 
@@ -20,8 +20,11 @@ type StatsOverviewPageProps = StatsPageProps & {
   charts: StatsChartsData;
 };
 
+const KPI_ICON = { size: 20, strokeWidth: 2, "aria-hidden": true as const };
+
 export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
   const usage = stats.apps.usage;
+  const trackableActive = getTrackableActiveApps(stats);
   const notifyTotal = stats.notifications?.dispatchesTotal ?? 0;
   const notifyOk = stats.notifications?.dispatchesCompleted ?? 0;
   const onlinePct = statPercent(stats.users.online, stats.users.total);
@@ -37,7 +40,7 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
       <div className="admin-stats__kpis" aria-label="Indicadores principais">
         <article className="admin-stats__kpi">
           <span className="admin-stats__kpi-icon">
-            <Users size={18} />
+            <Users {...KPI_ICON} />
           </span>
           <div>
             <strong>{stats.users.total}</strong>
@@ -50,7 +53,7 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
         </article>
         <article className="admin-stats__kpi">
           <span className="admin-stats__kpi-icon">
-            <LayoutGrid size={18} />
+            <LayoutGrid {...KPI_ICON} />
           </span>
           <div>
             <strong>{stats.apps.total}</strong>
@@ -63,7 +66,7 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
         </article>
         <article className="admin-stats__kpi">
           <span className="admin-stats__kpi-icon">
-            <Shield size={18} />
+            <Shield {...KPI_ICON} />
           </span>
           <div>
             <strong>{stats.roles.total}</strong>
@@ -76,7 +79,7 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
         </article>
         <article className="admin-stats__kpi">
           <span className="admin-stats__kpi-icon">
-            <UsersRound size={18} />
+            <Users2 {...KPI_ICON} />
           </span>
           <div>
             <strong>{stats.groups.total}</strong>
@@ -97,8 +100,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
         />
         <StatsInsight
           label="Adoção de apps (30d)"
-          value={formatPercent(statPercent(usage?.usedInPeriod ?? 0, stats.apps.active))}
-          detail={`${usage?.usedInPeriod ?? 0} apps com uso`}
+          value={formatPercent(statPercent(usage?.usedInPeriod ?? 0, trackableActive))}
+          detail={`${usage?.usedInPeriod ?? 0} apps com UI usadas`}
         />
         <StatsInsight
           label="Envios de notificação"
@@ -137,8 +140,8 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
         >
           <DonutChart
             segments={charts.appSegments}
-            centerValue={String(stats.apps.active)}
-            centerLabel="Ativas"
+            centerValue={String(trackableActive)}
+            centerLabel="Com UI"
           />
         </StatsChartCard>
         <StatsChartCard
@@ -169,7 +172,7 @@ export function StatsOverviewPage({ stats, charts }: StatsOverviewPageProps) {
           tone="warning"
           label="Fantasmas"
           value={usage?.ghostApps?.length ?? 0}
-          hint="Apps ativas sem uso"
+          hint="Com UI, sem abertura no portal"
         />
         <StatsMiniKpi
           label="Grupos inativos"

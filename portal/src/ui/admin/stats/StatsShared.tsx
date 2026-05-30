@@ -25,6 +25,16 @@ export function formatAppType(type: string) {
   return type;
 }
 
+/** Apps com interface no portal — base para adoção e fantasmas. */
+export function getTrackableActiveApps(stats: AdminStatistics): number {
+  const trackable = stats.apps.usage?.trackableActive;
+  if (trackable != null) return trackable;
+
+  const backendOnly =
+    stats.apps.byType.find((item) => item.type === "backend-only")?.count ?? 0;
+  return Math.max(0, stats.apps.active - backendOnly);
+}
+
 export function PanelNav({
   tab,
   label,
