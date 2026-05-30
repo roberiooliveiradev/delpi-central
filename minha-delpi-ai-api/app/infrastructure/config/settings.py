@@ -259,6 +259,27 @@ class Settings:
     CHAT_WEB_SEARCH_TIMEOUT_SECONDS = float(
         os.getenv("CHAT_WEB_SEARCH_TIMEOUT_SECONDS", "8")
     )
+    CHAT_WEB_SEARCH_PROVIDER = os.getenv("CHAT_WEB_SEARCH_PROVIDER", "auto").lower().strip()
+    CHAT_WEB_SEARCH_RETRY_EN = (
+        os.getenv("CHAT_WEB_SEARCH_RETRY_EN", "true").lower() == "true"
+    )
+    CHAT_WEB_SEARCH_TAVILY_API_KEY = os.getenv("CHAT_WEB_SEARCH_TAVILY_API_KEY", "").strip()
+    CHAT_WEB_SEARCH_SERPER_API_KEY = os.getenv("CHAT_WEB_SEARCH_SERPER_API_KEY", "").strip()
+    CHAT_WEB_SEARCH_BING_API_KEY = os.getenv("CHAT_WEB_SEARCH_BING_API_KEY", "").strip()
+
+    @classmethod
+    def resolve_web_search_provider(cls) -> str:
+        provider = cls.CHAT_WEB_SEARCH_PROVIDER
+
+        if provider in {"", "auto"}:
+            return "auto"
+
+        allowed = {"duckduckgo", "tavily", "serper", "bing"}
+
+        if provider in allowed:
+            return provider
+
+        return "auto"
 
     OLLAMA_WARMUP_ON_STARTUP = (
         os.getenv("OLLAMA_WARMUP_ON_STARTUP", "true").lower() == "true"

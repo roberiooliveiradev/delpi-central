@@ -178,7 +178,11 @@ Comportamento esperado:
 
     COMPANY_KNOWLEDGE_SKILL_FALLBACK = """Skill Conhecimento da empresa: priorize a base documental global (RAG e search_knowledge_base); cite fontes; não invente políticas."""
 
-    WEB_SEARCH_POLICY_FALLBACK = """Política web_search: cite fontes/URLs retornadas; não trate resultados da internet como dados operacionais DELPI."""
+    WEB_SEARCH_POLICY_FALLBACK = (
+        "Política web_search: cite fontes/URLs retornadas; se searchStatus=no_results, "
+        "diga que a busca não trouxe resultados (sem negar a ferramenta) e complemente "
+        "com conhecimento geral rotulado; não trate web como dados operacionais DELPI."
+    )
 
     def build_active_skill_policy_sections(self, skills: dict | None) -> list[str]:
         """Políticas de skills ativas no runtime (chat comum ou agente), sem ação do usuário."""

@@ -44,6 +44,7 @@ class WebSearchTool(InternalToolPort):
             metadata={
                 "source": "web_search",
                 "provider": payload.get("provider"),
+                "searchStatus": payload.get("searchStatus"),
                 "count": len(payload.get("results") or []),
                 "limit": limit,
             },

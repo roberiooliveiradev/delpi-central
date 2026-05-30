@@ -170,7 +170,7 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | `WebSearchTool`, `CHAT_WEB_SEARCH_ENABLED` (default off), admin `webSearchEnabled` |
+| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | `WebSearchTool`, retry EN, provedores Tavily/Serper/Bing, policy `no_results` |
 | 11.6.2 | RBAC formal (bridge chat) | ✅ | `GET /admin/rbac/profiles` + `formalProfiles` em `/admin/rbac/summary` |
 | 11.6.3 | Rotas NC PostgreSQL (`/quality/audit-5s/*`) | ✅ | `api_paths.json` + heurísticas `ChatDepartmentKpiIntentService`; sync OpenAPI sob demanda |
 
@@ -195,6 +195,11 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 | `CHAT_UTILITY_DIRECT_ENABLED` | `true` | Hora/data/ano via `utility_answers.json`; typos normalizados antes do match |
 | `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch; admin `webSearchEnabled` |
 | `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Máx. resultados por consulta web |
+| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | `auto` \| `duckduckgo` \| `tavily` \| `serper` \| `bing` |
+| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio |
+| `CHAT_WEB_SEARCH_TAVILY_API_KEY` | — | Tavily Search API (recomendado em prod) |
+| `CHAT_WEB_SEARCH_SERPER_API_KEY` | — | Serper (Google) |
+| `CHAT_WEB_SEARCH_BING_API_KEY` | — | Bing Web Search v7 |
 
 ---
 

@@ -1,114 +1,74 @@
 from __future__ import annotations
 
 import logging
-from urllib.parse import quote_plus
 
-import requests
-
+from app.domain.services.web_search_query_service import WebSearchQueryService
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.gateways.web_search_providers import resolve_web_search_providers
 
 logger = logging.getLogger("minha-delpi-ai-api.web_search")
 
 
 class WebSearchHttpGateway:
-    """Gateway MVP para busca pública via DuckDuckGo Instant Answer (sem API key)."""
-
-    INSTANT_ANSWER_URL = "https://api.duckduckgo.com/"
+    """Orquestra provedores de busca web com retry EN e fallback honesto."""
 
     def search(self, query: str, *, max_results: int | None = None) -> dict:
-        cleaned_query = str(query or "").strip()
+        cleaned_query = WebSearchQueryService.normalize_query(query)
 
         if not cleaned_query:
-            return {"query": "", "results": [], "provider": "duckduckgo_instant_answer"}
+            return WebSearchQueryService.build_no_results_payload("", provider="none")
 
         limit = max(1, min(int(max_results or Settings.CHAT_WEB_SEARCH_MAX_RESULTS), 8))
+        providers = resolve_web_search_providers()
+        attempted_queries: list[str] = []
+        last_provider = providers[-1].name if providers else "duckduckgo_instant_answer"
 
-        try:
-            response = requests.get(
-                self.INSTANT_ANSWER_URL,
-                params={
-                    "q": cleaned_query,
-                    "format": "json",
-                    "no_redirect": 1,
-                    "no_html": 1,
-                    "skip_disambig": 1,
-                },
-                timeout=Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS,
-            )
-            response.raise_for_status()
-            payload = response.json()
-        except (requests.RequestException, ValueError) as exc:
-            logger.warning("Falha na busca web para %r: %s", cleaned_query, exc)
-            return {
-                "query": cleaned_query,
-                "results": [],
-                "provider": "duckduckgo_instant_answer",
-                "error": "web_search_unavailable",
-            }
+        for provider in providers:
+            last_provider = provider.name
 
-        results: list[dict] = []
+            for candidate_query in self._query_candidates(cleaned_query):
+                if candidate_query in attempted_queries:
+                    continue
 
-        abstract = str(payload.get("AbstractText") or "").strip()
-        abstract_url = str(payload.get("AbstractURL") or "").strip()
-        heading = str(payload.get("Heading") or "").strip()
+                attempted_queries.append(candidate_query)
+                payload = provider.search(candidate_query, max_results=limit)
 
-        if abstract:
-            results.append(
-                {
-                    "title": heading or cleaned_query,
-                    "snippet": abstract,
-                    "url": abstract_url or None,
-                    "source": "instant_answer",
-                }
-            )
+                if WebSearchQueryService.is_useful_payload(payload):
+                    payload["query"] = cleaned_query
 
-        for topic in payload.get("RelatedTopics") or []:
-            if len(results) >= limit:
-                break
+                    if candidate_query != cleaned_query:
+                        payload["retriedQuery"] = candidate_query
 
-            if isinstance(topic, dict) and topic.get("Text"):
-                results.append(
-                    {
-                        "title": str(topic.get("Text") or "")[:120],
-                        "snippet": str(topic.get("Text") or "").strip(),
-                        "url": str(topic.get("FirstURL") or "").strip() or None,
-                        "source": "related_topic",
-                    }
-                )
-                continue
+                    if len(attempted_queries) > 1:
+                        payload["attemptedQueries"] = attempted_queries
 
-            if isinstance(topic, dict):
-                for nested in topic.get("Topics") or []:
-                    if len(results) >= limit:
-                        break
+                    return payload
 
-                    if not isinstance(nested, dict) or not nested.get("Text"):
-                        continue
+        logger.info(
+            "Busca web sem resultados úteis (query=%r, providers=%s, attempts=%s)",
+            cleaned_query,
+            [provider.name for provider in providers],
+            attempted_queries,
+        )
 
-                    results.append(
-                        {
-                            "title": str(nested.get("Text") or "")[:120],
-                            "snippet": str(nested.get("Text") or "").strip(),
-                            "url": str(nested.get("FirstURL") or "").strip() or None,
-                            "source": "related_topic",
-                        }
-                    )
+        no_results = WebSearchQueryService.build_no_results_payload(
+            cleaned_query,
+            provider=last_provider,
+        )
 
-        if not results:
-            results.append(
-                {
-                    "title": cleaned_query,
-                    "snippet": (
-                        "Não foi possível obter um resumo instantâneo. "
-                        f"Consulte manualmente: https://duckduckgo.com/?q={quote_plus(cleaned_query)}"
-                    ),
-                    "url": f"https://duckduckgo.com/?q={quote_plus(cleaned_query)}",
-                    "source": "fallback_link",
-                }
-            )
+        if len(attempted_queries) > 1:
+            no_results["attemptedQueries"] = attempted_queries
+            no_results["retriedQuery"] = attempted_queries[-1]
 
-        return {
-            "query": cleaned_query,
-            "results": results[:limit],
-            "provider": "duckduckgo_instant_answer",
-        }
+        return no_results
+
+    def _query_candidates(self, query: str) -> list[str]:
+        candidates = [query]
+
+        if Settings.CHAT_WEB_SEARCH_RETRY_EN:
+            english_query = WebSearchQueryService.build_english_retry_query(query)
+
+            if english_query:
+                candidates.append(english_query)
+
+        return candidates
