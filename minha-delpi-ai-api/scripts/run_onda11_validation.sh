@@ -91,6 +91,7 @@ pytest \
   tests/unit/domain/services/test_web_search_query_service.py \
   tests/unit/infrastructure/gateways/test_web_search_http_gateway.py \
   tests/unit/infrastructure/gateways/test_web_search_providers.py \
+  tests/unit/application/services/test_chat_web_search_blocks_external_actions.py \
   tests/unit/domain/services/test_admin_rbac_profile_catalog_service.py \
   tests/unit/application/services/test_chat_turn_preparation_direct_answer_skip_rag.py \
   tests/unit/application/services/test_chat_tool_context_service_direct_response.py \

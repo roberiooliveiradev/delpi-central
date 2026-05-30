@@ -353,6 +353,20 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | G4 | estoque do produto 10080047 | Fast path; 1 tool `stock`; `skipRag` | Tabela/gráfico de estoque do código |
 | G5 | busque parafuso m8 | 1 tool `search`; `skipRag` | Resultado de catálogo (`GET /products/search`); **não** confundir com G1–G3 |
 
+### Pesquisa na internet (`web_search` — tool nativa)
+
+Requer `CHAT_WEB_SEARCH_ENABLED=true` e admin `webSearchEnabled=true`.
+
+| ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
+|----|----------|----------------------------|----------------------------------|
+| W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action` | Resposta resume a web; adminDebug: `searchStatus: success`, opcional `retriedQuery` EN |
+| W2 | pesquise na internet sobre inflação 2026 | Idem W1 | Se `no_results`, texto honesto + conhecimento geral rotulado (não «não pesquiso na internet») |
+
+```bash
+SMOKE_BASE_URL=http://localhost SMOKE_USER=rober SMOKE_PASSWORD=1234 \
+  python scripts/run_onda11_6_api_e2e.py
+```
+
 ### RAG documental — docs GPT ingeridos no agente
 
 | ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |

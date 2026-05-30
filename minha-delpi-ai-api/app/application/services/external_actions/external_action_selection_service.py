@@ -93,6 +93,13 @@ class ExternalActionSelectionService:
         if ChatCanvasIntentService.blocks_external_action_selection(message):
             return None
 
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        if ChatWebSearchIntentService.blocks_external_action_selection(message):
+            return None
+
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             from app.domain.services.chat_sql_production_query_service import (
                 ChatSqlProductionQueryService,

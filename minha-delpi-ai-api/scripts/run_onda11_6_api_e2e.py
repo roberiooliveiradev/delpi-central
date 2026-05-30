@@ -215,6 +215,16 @@ def main() -> int:
         if "web_search" in tools:
             print("OK 11.6.1 chat selecionou tool web_search")
             passed += 1
+            if "execute_external_action" in tools:
+                print(
+                    "FAIL 11.6.1 web_search misturou execute_external_action "
+                    f"(tools={tools})",
+                    file=sys.stderr,
+                )
+                failed += 1
+            else:
+                print("OK 11.6.1 web_search isolado (sem execute_external_action)")
+                passed += 1
         elif not env_enabled:
             print(
                 "SKIP 11.6.1 web_search (CHAT_WEB_SEARCH_ENABLED=false no container — "

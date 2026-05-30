@@ -428,6 +428,21 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 ---
 
+## Pesquisa na internet (`web_search`)
+
+**Tool interna nativa do chat** (não é skill nem action OpenAPI). Habilitada por `CHAT_WEB_SEARCH_ENABLED` + admin `webSearchEnabled`.
+
+| Aspecto | Comportamento |
+|---------|----------------|
+| Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` (triggers: «pesquise na internet», «busque na web», etc.) |
+| Provedores | `auto`: Tavily → Serper → Bing → DuckDuckGo Instant Answer; retry EN quando PT vier vazio |
+| Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
+| Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca; conhecimento geral complementar rotulado |
+
+Testes: `test_chat_web_search_intent_service.py`, `test_chat_web_search_blocks_external_actions.py`, `test_web_search_http_gateway.py`.
+
+---
+
 ## Diagnóstico admin (`adminDebug`)
 
 **Toda** resposta do assistente (send/stream/resend) monta e **persiste** `metadata.adminDebug` via `ChatAdminDebugService.build_for_turn(...)` — para qualquer usuário, permitindo estudo do modelo no banco.

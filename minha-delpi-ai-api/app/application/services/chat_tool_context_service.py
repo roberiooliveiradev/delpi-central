@@ -107,6 +107,14 @@ class ChatToolContextService:
 
         message = ChatMessageNormalizationService.normalize_for_matching(raw_message) or raw_message
 
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        web_search_exclusive = ChatWebSearchIntentService.blocks_external_action_selection(
+            raw_message
+        )
+
         from app.application.services.chat_paginated_external_action_service import (
             ChatPaginatedExternalActionService,
         )
@@ -178,7 +186,12 @@ class ChatToolContextService:
 
         router_suggestion = {"tools": [], "actionId": None}
 
-        if self.tool_router_service and actions_enabled and not native_selections:
+        if (
+            self.tool_router_service
+            and actions_enabled
+            and not native_selections
+            and not web_search_exclusive
+        ):
             catalog_actions = []
 
             if self.external_action_repository and allowed_action_ids:
@@ -209,7 +222,11 @@ class ChatToolContextService:
         selected_external_action = None
         selected_external_action_meta = None
 
-        if self.external_action_selection_service and actions_enabled:
+        if (
+            self.external_action_selection_service
+            and actions_enabled
+            and not web_search_exclusive
+        ):
             from app.application.services.chat_external_action_orchestration_service import (
                 ChatExternalActionOrchestrationService,
             )
@@ -280,6 +297,7 @@ class ChatToolContextService:
 
         if (
             actions_enabled
+            and not web_search_exclusive
             and not selected_external_action
             and router_suggestion.get("actionId")
             and allowed_action_ids

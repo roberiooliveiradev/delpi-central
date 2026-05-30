@@ -30,3 +30,20 @@ def test_resolve_returns_tool_selection(_enabled):
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=False)
 def test_resolve_disabled_when_feature_off(_enabled):
     assert ChatWebSearchIntentService.resolve("pesquise na internet sobre x") is None
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=False)
+def test_blocks_external_action_when_disabled(_enabled):
+    assert (
+        ChatWebSearchIntentService.blocks_external_action_selection(
+            "pesquise na internet sobre python"
+        )
+        is False
+    )
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_blocks_external_action_when_enabled(_enabled):
+    assert ChatWebSearchIntentService.blocks_external_action_selection(
+        "pesquise na internet sobre python"
+    )

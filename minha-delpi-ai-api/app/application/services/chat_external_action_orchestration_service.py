@@ -42,6 +42,13 @@ class ChatExternalActionOrchestrationService:
         if not selection_service or not allowed_action_ids:
             return []
 
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        if ChatWebSearchIntentService.blocks_external_action_selection(message):
+            return []
+
         def _return_planned(planned: list[dict]) -> list[dict]:
             if on_stream_activity and planned:
                 from app.application.services.chat_stream_activity_service import (

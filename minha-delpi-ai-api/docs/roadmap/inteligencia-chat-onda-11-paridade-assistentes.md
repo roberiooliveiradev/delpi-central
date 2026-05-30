@@ -170,7 +170,7 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | `WebSearchTool`, retry EN, provedores Tavily/Serper/Bing, policy `no_results` |
+| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | Retry EN, provedores Tavily/Serper/Bing; isolamento de actions no mesmo turno |
 | 11.6.2 | RBAC formal (bridge chat) | ✅ | `GET /admin/rbac/profiles` + `formalProfiles` em `/admin/rbac/summary` |
 | 11.6.3 | Rotas NC PostgreSQL (`/quality/audit-5s/*`) | ✅ | `api_paths.json` + heurísticas `ChatDepartmentKpiIntentService`; sync OpenAPI sob demanda |
 

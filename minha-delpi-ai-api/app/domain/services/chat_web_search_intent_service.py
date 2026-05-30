@@ -56,6 +56,14 @@ class ChatWebSearchIntentService:
         return bool(normalized) and any(term in normalized for term in cls._TRIGGER_TERMS)
 
     @classmethod
+    def blocks_external_action_selection(cls, message: str) -> bool:
+        """Busca explícita na web não dispara actions OpenAPI no mesmo turno."""
+        if not cls.is_feature_enabled():
+            return False
+
+        return cls.matches(str(message or "").strip())
+
+    @classmethod
     def resolve(cls, message: str) -> dict | None:
         if not cls.is_feature_enabled():
             return None

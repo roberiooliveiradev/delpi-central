@@ -121,6 +121,13 @@ class ChatOperationalParameterService:
         if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(message):
             return True
 
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        if ChatWebSearchIntentService.blocks_external_action_selection(message):
+            return True
+
         if cls.should_skip_tools(message, conversation_context=conversation_context):
             return True
 
