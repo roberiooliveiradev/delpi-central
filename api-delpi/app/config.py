@@ -101,6 +101,10 @@ class Settings:
     QUALITY_SHEET_ID: str | None = _get_env("QUALITY_SHEET_ID")
     QUALITY_KAIZEN_SHEET_GID: str | None = _get_env("QUALITY_KAIZEN_SHEET_GID")
     QUALITY_AUDIT_5S_SHEET_GID: str | None = _get_env("QUALITY_AUDIT_5S_SHEET_GID")
+    AUDIT_5S_NC_UPLOAD_DIR: str = _get_env(
+        "AUDIT_5S_NC_UPLOAD_DIR",
+        default="/app/data/audit-5s-nc",
+    )
 
     TRANSFORMA_MAIS_SHEET_ID: str | None = _get_env("TRANSFORMA_MAIS_SHEET_ID")
     TRANSFORMA_MAIS_GID_PROCESSOS: str | None = _get_env("TRANSFORMA_MAIS_GID_PROCESSOS")

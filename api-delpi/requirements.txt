@@ -10,3 +10,5 @@ python-jose[cryptography]
 requests
 httpx
 psycopg[binary]
+python-socketio>=5.11.0
+python-multipart

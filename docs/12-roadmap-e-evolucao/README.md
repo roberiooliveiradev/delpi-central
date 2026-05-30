@@ -33,3 +33,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [eficiencia-fabril/ROADMAP.md](./eficiencia-fabril/ROADMAP.md) | Roadmap de implantação do plugin |
 | [eficiencia-fabril/ESPECIFICACAO-VIEW.md](./eficiencia-fabril/ESPECIFICACAO-VIEW.md) | View TOTVS e regras de negócio |
 | [eficiencia-fabril/FASE0-VALIDACAO.md](./eficiencia-fabril/FASE0-VALIDACAO.md) | Validação Fase 0 (TOTVS) |
+
+### Auditoria 5S
+
+| Arquivo | Conteúdo |
+|---|---|
+| [auditoria-5s/README.md](./auditoria-5s/README.md) | Índice do módulo |
+| [auditoria-5s/ROADMAP.md](./auditoria-5s/ROADMAP.md) | Roadmap completo do plugin (planejamento) |
+| [auditoria-5s/CRITERIOS-CATALOGO.md](./auditoria-5s/CRITERIOS-CATALOGO.md) | Catálogo de 48 critérios por senso (v1) |
+| [auditoria-5s/REGRAS-NEGOCIO.md](./auditoria-5s/REGRAS-NEGOCIO.md) | Turnos, áreas, validação e regras de cálculo |

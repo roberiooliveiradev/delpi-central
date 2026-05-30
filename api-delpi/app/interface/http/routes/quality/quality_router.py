@@ -34,8 +34,12 @@ from app.composition.quality_composer import (
     build_list_quality_branches_use_case,
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
+from app.interface.http.routes.quality.audit_5s_operational_router import (
+    router as audit_5s_operational_router,
+)
 
 router = APIRouter(prefix="/quality", tags=["Qualidade"])
+router.include_router(audit_5s_operational_router)
 
 
 @router.get("/branches")

@@ -141,6 +141,8 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    profiles:
+      - chat
     container_name: delpi-ollama
     restart: unless-stopped
 
@@ -162,6 +164,8 @@ services:
     build:
       context: ../minha-delpi-ai-api
       dockerfile: Dockerfile.dev
+    profiles:
+      - chat
 
     container_name: delpi-minha-delpi-ai-api
     restart: unless-stopped
@@ -324,6 +328,8 @@ services:
     build:
       context: ../plugins/minha-delpi-chat
       dockerfile: Dockerfile
+    profiles:
+      - chat
 
     container_name: delpi-minha-delpi-chat
     restart: unless-stopped
@@ -424,6 +430,21 @@ services:
     networks:
       - delpi-network
 
+  auditoria-5s:
+    build:
+      context: ../plugins/auditoria-5s
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-auditoria-5s
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     build:
       context: ../plugins/dashboard-supplies
@@ -503,6 +524,19 @@ services:
 
     container_name: delpi-api-delpi
     restart: unless-stopped
+    command:
+      [
+        "python",
+        "-m",
+        "uvicorn",
+        "app.asgi:application",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--root-path",
+        "/apps/api-delpi",
+      ]
     
     env_file:
       - .env
@@ -692,6 +726,7 @@ services:
 
   postgres-plugins:
     image: pgvector/pgvector:pg15
+    platform: linux/amd64
     container_name: delpi-postgres-plugins
     restart: unless-stopped
 
@@ -725,26 +760,12 @@ services:
     volumes:
       - ../gateway/nginx.dev.conf:/etc/nginx/nginx.conf
 
+    # Nginx resolve plugins sob demanda (delpi-{id}). Evita rebuild de todos os MFEs ao subir o gateway.
     depends_on:
       - portal
       - core-api
       - keycloak
-      - strategic-indicators
-      - transformometro
       - api-delpi
-      - strategic-indicators-api
-      - transformometro-api
-      - dashboard-lmps
-      - dashboard-quality
-      - dashboard-commercial
-      - dashboard-production
-      - eficiencia-fabril
-      - dashboard-supplies
-      - dashboard-financial
-      - dashboard-engineering
-      - dashboard-hr
-      - minha-delpi-ai-api
-      - minha-delpi-chat
 
     networks:
       - delpi-network

@@ -43,3 +43,7 @@ Thumbs.dbdist/
 # Infra — overrides locais por desenvolvedor (não commitar)
 infra/docker-compose.local.yml
 infra/docker-compose.override.yml
+
+# Notas pessoais locais (não commitar)
+.local/
+api-delpi/data/
