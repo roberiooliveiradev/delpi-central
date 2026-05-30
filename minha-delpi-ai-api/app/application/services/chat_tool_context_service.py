@@ -412,6 +412,42 @@ class ChatToolContextService:
 
             if (
                 result.name == "execute_external_action"
+                and not self._is_successful_external_action(result_metadata)
+            ):
+                recovery = self._try_sql_error_recovery(
+                    user_id=user_id,
+                    access_token=access_token,
+                    allowed_action_ids=allowed_action_ids,
+                    selected_tool=selected_tool,
+                    metadata=result_metadata,
+                    safe_tool_calls=safe_tool_calls,
+                    context_blocks=context_blocks,
+                    on_stream_activity=on_stream_activity,
+                )
+
+                if recovery:
+                    selected_tool = {
+                        **selected_tool,
+                        "reason": recovery.plan.reason,
+                        "arguments": {
+                            **(selected_tool.get("arguments") or {}),
+                            "body": {
+                                "sql": recovery.plan.corrected_sql,
+                                "query": recovery.plan.corrected_sql,
+                                "statement": recovery.plan.corrected_sql,
+                            },
+                        },
+                    }
+                    result_data = recovery.retry_data
+                    result_metadata = dict(recovery.retry_metadata)
+                    result = ToolResult(
+                        name=result.name,
+                        data=result_data,
+                        metadata=result_metadata,
+                    )
+
+            if (
+                result.name == "execute_external_action"
                 and self._is_successful_external_action(result_metadata)
             ):
                 (
@@ -1205,3 +1241,93 @@ class ChatToolContextService:
             return []
 
         return items[:10]
+
+    def _try_sql_error_recovery(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        allowed_action_ids: list[str] | None,
+        selected_tool: dict,
+        metadata: dict,
+        safe_tool_calls: list[dict],
+        context_blocks: list[str],
+        on_stream_activity=None,
+    ):
+        if not self.external_action_repository or not allowed_action_ids:
+            return None
+
+        from app.application.services.chat_sql_recovery_service import (
+            ChatSqlRecoveryService,
+        )
+
+        recovery_service = ChatSqlRecoveryService(
+            self.execute_tool_use_case,
+            self.external_action_repository,
+        )
+        recovery = recovery_service.maybe_recover(
+            user_id=user_id,
+            access_token=access_token,
+            allowed_action_ids=allowed_action_ids,
+            arguments=selected_tool.get("arguments") or {},
+            metadata=metadata,
+            reason=selected_tool.get("reason"),
+            on_stream_activity=on_stream_activity,
+        )
+
+        if not recovery:
+            return None
+
+        failed_metadata = self._build_safe_tool_metadata(
+            tool_name="execute_external_action",
+            metadata=recovery.failed_metadata,
+            data=None,
+        )
+        safe_tool_calls.append(
+            {
+                "name": "execute_external_action",
+                "arguments": recovery.failed_arguments,
+                "reason": selected_tool.get("reason"),
+                "metadata": failed_metadata,
+            }
+        )
+        context_blocks.append(
+            self._format_tool_context(
+                name="execute_external_action",
+                reason=selected_tool.get("reason"),
+                data=None,
+                metadata=recovery.failed_metadata,
+            )
+        )
+
+        schema_metadata = self._build_safe_tool_metadata(
+            tool_name="execute_external_action",
+            metadata=recovery.schema_metadata,
+            data=recovery.schema_data,
+        )
+        safe_tool_calls.append(
+            {
+                "name": "execute_external_action",
+                "arguments": {
+                    "parameters": {"tableName": recovery.plan.table_name},
+                },
+                "reason": (
+                    f"Schema da tabela {recovery.plan.table_name} consultado para "
+                    "corrigir colunas inválidas no SQL."
+                ),
+                "metadata": schema_metadata,
+            }
+        )
+        context_blocks.append(
+            self._format_tool_context(
+                name="execute_external_action",
+                reason=(
+                    f"Schema da tabela {recovery.plan.table_name} consultado para "
+                    "corrigir colunas inválidas no SQL."
+                ),
+                data=recovery.schema_data,
+                metadata=recovery.schema_metadata,
+            )
+        )
+
+        return recovery

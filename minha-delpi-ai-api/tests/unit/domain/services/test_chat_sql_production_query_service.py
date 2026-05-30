@@ -11,6 +11,7 @@ def test_resolve_execute_for_production_today():
     assert resolution is not None
     assert resolution.mode == "execute"
     assert "SC2010" in resolution.sql
+    assert "D4_OPERAC" in resolution.sql
     assert "CAST(GETDATE()" in resolution.sql
 
 
