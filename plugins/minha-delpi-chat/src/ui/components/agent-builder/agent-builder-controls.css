@@ -116,3 +116,23 @@
   border: 0;
 }
 
+.mdc-ab-switch--compact .mdc-ab-switch__track {
+  width: 2rem;
+  height: 1.125rem;
+}
+
+.mdc-ab-switch--compact .mdc-ab-switch__track::after {
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.mdc-ab-switch--compact input:checked + .mdc-ab-switch__track::after {
+  transform: translateX(0.875rem);
+}
+
+.mdc-ab-switch--compact .mdc-ab-switch__label {
+  font-size: 0.8rem;
+}
+

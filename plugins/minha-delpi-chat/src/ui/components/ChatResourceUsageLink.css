@@ -1,0 +1,38 @@
+.mdc-chat-resource-link {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mdc-chat-resource-link__label {
+  color: var(--mdc-text);
+  font-size: 0.84rem;
+  font-weight: 780;
+}
+
+.mdc-chat-resource-link__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.mdc-chat-resource-link__row a {
+  flex: 1 1 16rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mdc-primary);
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.mdc-chat-resource-link__row a:hover {
+  text-decoration: underline;
+}
+
+.mdc-chat-resource-link small {
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+}

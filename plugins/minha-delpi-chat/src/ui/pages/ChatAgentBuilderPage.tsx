@@ -60,6 +60,8 @@ import {
   AGENT_SYSTEM_PROMPT_TEMPLATES,
   getAgentSystemPromptTemplate,
 } from "../../domain/agentSystemPromptTemplates";
+import { buildChatAgentHref } from "../../navigation/chatRoutes";
+import { handleChatNavClick } from "../../navigation/chatNavigation";
 
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
@@ -100,6 +102,7 @@ type ChatAgentBuilderPageProps = {
     payload: AgentUpdatePayload,
   ) => Promise<ChatAgent | null>;
   onAgentPublished?: (agent: ChatAgent) => void;
+  onAgentCreated?: (agent: ChatAgent) => void;
   onDeleteAgent?: (agentId: string) => Promise<boolean>;
   onDuplicateAgent?: (agent: ChatAgent) => void;
   canManageOfficialAgents?: boolean;
@@ -166,6 +169,7 @@ export function ChatAgentBuilderPage({
   onCreateAgent,
   onUpdateAgent,
   onAgentPublished,
+  onAgentCreated,
   onDeleteAgent,
   onDuplicateAgent,
   canManageOfficialAgents = false,
@@ -257,6 +261,7 @@ export function ChatAgentBuilderPage({
   const [isTransferring, setIsTransferring] = useState(false);
   const [transferMessage, setTransferMessage] = useState<string | null>(null);
   const [updatingShareUserId, setUpdatingShareUserId] = useState<string | null>(null);
+  const [agentLinkCopied, setAgentLinkCopied] = useState(false);
   const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [publishedVersion, setPublishedVersion] = useState(agent?.published_version ?? 0);
@@ -947,6 +952,7 @@ export function ChatAgentBuilderPage({
         setPublishedVersion(created.published_version ?? 0);
         setHasUnpublishedChanges(created.has_unpublished_changes ?? true);
         onSelectAgent?.(created.key);
+        onAgentCreated?.(created);
 
         if (options?.exitAfterSave) {
           onBack();
@@ -1193,6 +1199,40 @@ export function ChatAgentBuilderPage({
   const canExportAgent =
     agent && ["owner", "editor", "system"].includes(agent.access_role);
   const canImportAgent = Boolean(onCreateAgent);
+  const agentUsagePath = useMemo(() => {
+    const normalizedKey = key.trim();
+
+    if (!normalizedKey) {
+      return null;
+    }
+
+    return buildChatAgentHref(normalizedKey);
+  }, [key]);
+  const agentUsageUrl = useMemo(() => {
+    if (!agentUsagePath) {
+      return null;
+    }
+
+    if (typeof window === "undefined") {
+      return agentUsagePath;
+    }
+
+    return `${window.location.origin}${agentUsagePath}`;
+  }, [agentUsagePath]);
+
+  async function copyAgentUsageLink() {
+    if (!agentUsageUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(agentUsageUrl);
+      setAgentLinkCopied(true);
+      window.setTimeout(() => setAgentLinkCopied(false), 1800);
+    } catch {
+      setLocalError("Não foi possível copiar o link do agente.");
+    }
+  }
 
   const {
     layoutRef,
@@ -1548,6 +1588,30 @@ export function ChatAgentBuilderPage({
               </label>
             </div>
 
+            {isEditing && agentUsagePath ? (
+              <div className="mdc-chat-agent-builder__agent-link">
+                <span className="mdc-chat-agent-builder__agent-link-label">Link de uso</span>
+                <div className="mdc-chat-agent-builder__agent-link-row">
+                  <a
+                    href={agentUsagePath}
+                    onClick={(event) => handleChatNavClick(event, agentUsagePath)}
+                  >
+                    {agentUsageUrl}
+                  </a>
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    onClick={() => void copyAgentUsageLink()}
+                    title="Copiar link do agente"
+                  >
+                    <Copy size={15} aria-hidden="true" />
+                    <span>{agentLinkCopied ? "Copiado" : "Copiar"}</span>
+                  </button>
+                </div>
+                <small>Mesma URL usada ao abrir o agente no chat.</small>
+              </div>
+            ) : null}
+
             <div className="mdc-chat-agent-builder__grid mdc-chat-agent-builder__grid--three">
               <label className="mdc-chat-ws-field">
                 <span>Categoria</span>
@@ -1875,6 +1939,7 @@ export function ChatAgentBuilderPage({
                         </div>
                         <div className="mdc-chat-agent-builder__action-list-actions">
                           <AgentBuilderSwitch
+                            size="compact"
                             checked={provider.enabled}
                             disabled={actionProviderBusyKey === provider.providerKey}
                             onChange={(event) =>

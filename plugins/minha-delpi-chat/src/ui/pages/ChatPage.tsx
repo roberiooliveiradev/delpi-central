@@ -1,4 +1,4 @@
-import { type DragEvent, useCallback, useEffect, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -27,9 +27,15 @@ import {
   uploadProjectSource,
 } from "../../data/api/chatApi";
 import {
+  buildChatAdminAgentHref,
+  buildChatAgentActionsHref,
+  buildChatAgentConfigHref,
+  buildChatAgentSkillsHref,
   buildChatHref,
+  buildChatProjectConfigHref,
   buildChatProjectHref,
   buildChatSessionHref,
+  parseChatRoute,
   type ChatRoute,
 } from "../../navigation/chatRoutes";
 import { navigateChatHref } from "../../navigation/chatNavigation";
@@ -69,7 +75,7 @@ export function ChatPage({
 
   const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
-  const [projectSettingsRequestKey, setProjectSettingsRequestKey] = useState(0);
+  const chatRoute = useMemo(() => parseChatRoute(pathname), [pathname]);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
@@ -157,6 +163,24 @@ export function ChatPage({
   } = useChatWorkspace({ getAccessToken });
 
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
+  const projectSettingsOpen =
+    chatRoute.kind === "project-config" &&
+    selectedProject?.id === chatRoute.projectId;
+  const agentSubRoute = useMemo(() => {
+    if (chatRoute.kind === "agent-skills") {
+      return { kind: "skills" as const, agentKey: chatRoute.agentKey };
+    }
+
+    if (chatRoute.kind === "agent-actions") {
+      return {
+        kind: "actions" as const,
+        agentKey: chatRoute.agentKey,
+        providerKey: chatRoute.providerKey ?? null,
+      };
+    }
+
+    return null;
+  }, [chatRoute]);
   const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
   const conversationAgentKey = activeSession?.agent_key ?? activeAgentPageKey;
   const conversationAgent = agents.find((agent) => agent.key === conversationAgentKey);
@@ -253,7 +277,8 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
-        case "project": {
+        case "project":
+        case "project-config": {
           if (shouldPreserveProjectCompose) {
             closeMobileSidebar();
             return;
@@ -299,6 +324,43 @@ export function ChatPage({
           closeMobileSidebar();
           break;
         }
+        case "agent-config": {
+          if (
+            currentView === "agents" &&
+            agentEditRequest?.key === route.agentKey &&
+            !agentSubRoute
+          ) {
+            closeMobileSidebar();
+            return;
+          }
+
+          setAgentEditRequest({
+            key: route.agentKey,
+            requestKey: Date.now(),
+          });
+          setCurrentView("agents");
+          closeMobileSidebar();
+          break;
+        }
+        case "agent-skills":
+        case "agent-actions": {
+          if (
+            currentView === "agents" &&
+            agentSubRoute?.agentKey === route.agentKey &&
+            (route.kind === "agent-skills"
+              ? agentSubRoute.kind === "skills"
+              : agentSubRoute.kind === "actions" &&
+                (agentSubRoute.providerKey ?? null) === (route.providerKey ?? null))
+          ) {
+            closeMobileSidebar();
+            return;
+          }
+
+          setAgentEditRequest(null);
+          setCurrentView("agents");
+          closeMobileSidebar();
+          break;
+        }
         case "agents": {
           if (currentView === "agents") {
             closeMobileSidebar();
@@ -325,6 +387,8 @@ export function ChatPage({
     },
     [
       activeAgentPageKey,
+      agentEditRequest?.key,
+      agentSubRoute,
       activeSession,
       activeSession?.id,
       clearError,
@@ -393,6 +457,34 @@ export function ChatPage({
       setCurrentView("chat");
     }
   }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
+
+  function openProjectConfig(projectId: string) {
+    navigateChatHref(buildChatProjectConfigHref(projectId));
+  }
+
+  function closeProjectConfig(projectId: string) {
+    navigateChatHref(buildChatProjectHref(projectId));
+  }
+
+  function openAgentSkills(agentKey: string) {
+    navigateChatHref(buildChatAgentSkillsHref(agentKey));
+  }
+
+  function openAgentActions(agentKey: string, providerKey?: string | null) {
+    navigateChatHref(buildChatAgentActionsHref(agentKey, providerKey));
+  }
+
+  function openAdminForAgent(agentId: string) {
+    navigateChatHref(buildChatAdminAgentHref(agentId));
+  }
+
+  function openAgentConfig(agentKey: string) {
+    navigateChatHref(buildChatAgentConfigHref(agentKey));
+  }
+
+  function closeAgentConfig() {
+    navigateChatHref(buildChatHref({ kind: "agents" }));
+  }
 
   function openAgentsDirectory() {
     clearWorkspaceError();
@@ -763,7 +855,17 @@ export function ChatPage({
     .filter(Boolean)
     .join(" ");
 
-  const openAdmin = canOpenAdmin && onOpenAdmin ? () => onOpenAdmin() : undefined;
+  const openAdmin =
+    canOpenAdmin && onOpenAdmin
+      ? (agentId?: string) => {
+          if (agentId) {
+            openAdminForAgent(agentId);
+            return;
+          }
+
+          onOpenAdmin();
+        }
+      : undefined;
 
   const rootClassName = [
     "minha-delpi-chat",
@@ -889,6 +991,7 @@ export function ChatPage({
               onCreateProject={addProject}
               onRenameProject={(projectId, name) => editProject(projectId, { name })}
               onDeleteProject={removeProject}
+              onConfigureProject={openProjectConfig}
             />
           </section>
         ) : currentView === "agents" ? (
@@ -919,9 +1022,17 @@ export function ChatPage({
                 clearError();
                 setCanvasDocument(null);
                 setSelectedProjectId(null);
+                setAgentEditRequest(null);
                 setActiveAgentPageKey(agentKey);
                 setContextAgentKey(null);
                 setCurrentView("chat");
+
+                if (agentKey) {
+                  navigateChatHref(buildChatHref({ kind: "agent", agentKey }));
+                } else {
+                  navigateChatHref(buildChatHref({ kind: "home" }));
+                }
+
                 void startSession();
               }}
               onCreateAgent={addAgent}
@@ -932,6 +1043,12 @@ export function ChatPage({
                 void loadAgents(false, true);
               }}
               onReloadAgents={loadAgents}
+              onOpenAgentConfig={openAgentConfig}
+              onCloseAgentConfig={closeAgentConfig}
+              onOpenAgentSkills={openAgentSkills}
+              onOpenAgentActions={openAgentActions}
+              agentSubRoute={agentSubRoute}
+              agentSubRouteKey={pathname}
               onOpenRagAdmin={openAdmin}
               getAccessToken={getAccessToken}
             />
@@ -977,9 +1094,11 @@ export function ChatPage({
                 await editProject(selectedProject.id, { name: nextName });
               }
             }}
-            onOpenProjectSettings={() =>
-              setProjectSettingsRequestKey((current) => current + 1)
-            }
+            onOpenProjectSettings={() => {
+              if (selectedProject) {
+                openProjectConfig(selectedProject.id);
+              }
+            }}
             onDeleteProject={async () => {
               if (!selectedProject) {
                 return;
@@ -1042,7 +1161,19 @@ export function ChatPage({
                   agents={agents}
                   contextAgentKey={contextAgentKey}
                   compact
-                  settingsRequestKey={projectSettingsRequestKey}
+                  settingsOpen={projectSettingsOpen}
+                  onSettingsOpenChange={(open) => {
+                    if (!selectedProject) {
+                      return;
+                    }
+
+                    if (open) {
+                      openProjectConfig(selectedProject.id);
+                      return;
+                    }
+
+                    closeProjectConfig(selectedProject.id);
+                  }}
                   activeSessionId={activeSession?.id}
                   isSessionProcessing={isSessionProcessing}
                   onSelectSession={handleSelectSession}
@@ -1139,6 +1270,7 @@ export function ChatPage({
                           requestKey: Date.now(),
                         });
                         setCurrentView("agents");
+                        navigateChatHref(buildChatAgentConfigHref(activeAgentPage.key));
                       }}
                     />
                   ) : (

@@ -1,6 +1,7 @@
 import {
   ArrowUpRight,
   Bot,
+  Copy,
   Download,
   FileText,
   Folder,
@@ -14,7 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   listChatProjectShares,
@@ -31,7 +32,8 @@ import type {
 import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
 import { useConfirmDialog } from "./useConfirmDialog";
 import { ChatUserSearchField } from "./ChatUserSearchField";
-import { buildChatSessionHref } from "../../navigation/chatRoutes";
+import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
+import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
 
@@ -105,7 +107,8 @@ type ChatProjectHomeProps = {
   onClearProject?: () => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   compact?: boolean;
-  settingsRequestKey?: number;
+  settingsOpen?: boolean;
+  onSettingsOpenChange?: (open: boolean) => void;
   isSessionProcessing?: (sessionId: string) => boolean;
 };
 
@@ -135,13 +138,13 @@ export function ChatProjectHome({
   onClearProject,
   getAccessToken,
   compact,
-  settingsRequestKey,
+  settingsOpen = false,
+  onSettingsOpenChange,
   isSessionProcessing,
 }: ChatProjectHomeProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [openSessionMenuId, setOpenSessionMenuId] = useState<string | null>(null);
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
@@ -157,18 +160,42 @@ export function ChatProjectHome({
   const [isLoadingShares, setIsLoadingShares] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
+  const [projectLinkCopied, setProjectLinkCopied] = useState(false);
+  const projectUsagePath = useMemo(
+    () => buildChatProjectHref(project.id),
+    [project.id],
+  );
+  const projectUsageUrl = useMemo(() => {
+    if (typeof window === "undefined") {
+      return projectUsagePath;
+    }
+
+    return `${window.location.origin}${projectUsagePath}`;
+  }, [projectUsagePath]);
+
+  function closeSettings() {
+    onSettingsOpenChange?.(false);
+  }
+
+  function openSettings() {
+    onSettingsOpenChange?.(true);
+  }
+
+  async function copyProjectUsageLink() {
+    try {
+      await navigator.clipboard.writeText(projectUsageUrl);
+      setProjectLinkCopied(true);
+      window.setTimeout(() => setProjectLinkCopied(false), 1800);
+    } catch {
+      setShareMessage("Não foi possível copiar o link do projeto.");
+    }
+  }
 
   useEffect(() => {
     setName(project.name);
     setDescription(project.description || "");
     setInstructions(project.instructions || "");
   }, [project.description, project.instructions, project.name]);
-
-  useEffect(() => {
-    if (settingsRequestKey) {
-      setIsSettingsOpen(true);
-    }
-  }, [settingsRequestKey]);
 
   const loadProjectShares = useCallback(async () => {
     if (!getAccessToken || project.access_role !== "owner") {
@@ -189,10 +216,10 @@ export function ChatProjectHome({
   }, [getAccessToken, project.access_role, project.id]);
 
   useEffect(() => {
-    if (isSettingsOpen) {
+    if (settingsOpen) {
       void loadProjectShares();
     }
-  }, [isSettingsOpen, loadProjectShares]);
+  }, [settingsOpen, loadProjectShares]);
 
   async function shareCurrentProject() {
     if (project.access_role !== "owner" || !getAccessToken) {
@@ -263,7 +290,7 @@ export function ChatProjectHome({
         instructions: instructions.trim() || null,
       });
 
-      setIsSettingsOpen(false);
+      closeSettings();
     } finally {
       setIsSaving(false);
     }
@@ -419,7 +446,7 @@ export function ChatProjectHome({
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  setIsSettingsOpen(true);
+                  openSettings();
                 }}
               >
                 <Settings size={18} aria-hidden="true" />
@@ -754,14 +781,14 @@ export function ChatProjectHome({
         </ChatAnimatedPanel>
       </div>
 
-      {isSettingsOpen ? (
+      {settingsOpen ? (
         <ModalPortal>
         <div
           className="mdc-chat-project-settings-backdrop"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
-              setIsSettingsOpen(false);
+              closeSettings();
             }
           }}
         >
@@ -775,7 +802,7 @@ export function ChatProjectHome({
               <h3>Configurações do projeto</h3>
               <button
                 type="button"
-                onClick={() => setIsSettingsOpen(false)}
+                onClick={closeSettings}
                 aria-label="Fechar"
               >
                 <X size={20} aria-hidden="true" />
@@ -811,6 +838,28 @@ export function ChatProjectHome({
                 O projeto só usa estas instruções nas conversas deste espaço.
               </small>
             </label>
+
+            <div className="mdc-chat-project-settings__link">
+              <span className="mdc-chat-project-settings__link-label">Link de uso</span>
+              <div className="mdc-chat-project-settings__link-row">
+                <a
+                  href={projectUsagePath}
+                  onClick={(event) => handleChatNavClick(event, projectUsagePath)}
+                >
+                  {projectUsageUrl}
+                </a>
+                <button
+                  type="button"
+                  className="mdc-chat-ws-outline-btn"
+                  onClick={() => void copyProjectUsageLink()}
+                  title="Copiar link do projeto"
+                >
+                  <Copy size={15} aria-hidden="true" />
+                  <span>{projectLinkCopied ? "Copiado" : "Copiar"}</span>
+                </button>
+              </div>
+              <small>Mesma URL usada ao abrir o projeto no chat.</small>
+            </div>
 
             {project.access_role === "owner" ? (
               <section className="mdc-chat-project-settings__share">

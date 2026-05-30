@@ -37,7 +37,9 @@ import type {
 } from "../../data/api/chatTypes";
 import { useResizablePane } from "../../state/hooks/useResizablePane";
 import { useConfirmDialog } from "../components/useConfirmDialog";
+import { ChatResourceUsageLink } from "../components/ChatResourceUsageLink";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
+import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { ActionRoutesSection } from "./agent-actions/ActionRoutesSection";
 import type { ActionTestPayload } from "./agent-actions/types";
 
@@ -770,6 +772,7 @@ export function ChatAgentActionsPage({
               Configure uma API OpenAPI deste agente: autenticação, schema, rotas
               e política de privacidade.
             </p>
+            <ChatResourceUsageLink href={buildChatAgentHref(agent.key)} />
           </header>
 
           {error ? (
@@ -866,6 +869,7 @@ export function ChatAgentActionsPage({
                 <section className="mdc-chat-agent-actions-page__section">
                   <div className="mdc-chat-agent-actions-page__provider-toolbar">
                     <AgentBuilderSwitch
+                      size="compact"
                       checked={selectedLink.enabled}
                       onChange={(event) => void toggleProviderEnabled(event.target.checked)}
                       label={selectedLink.enabled ? "Action ativa no agente" : "Action desativada no agente"}

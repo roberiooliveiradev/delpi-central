@@ -17,6 +17,8 @@ import {
   upsertChatAgentSkill,
 } from "../../data/api/chatApi";
 import type { ChatAgent, ChatAgentSkillBinding } from "../../data/api/chatTypes";
+import { buildChatAgentHref } from "../../navigation/chatRoutes";
+import { ChatResourceUsageLink } from "../components/ChatResourceUsageLink";
 
 import "./ChatAgentSkillsPage.css";
 
@@ -182,6 +184,7 @@ export function ChatAgentSkillsPage({
             <strong>Actions</strong> executam APIs. Para SQL no banco, ative a skill e a action{" "}
             <code>POST /data/sql</code>.
           </p>
+          <ChatResourceUsageLink href={buildChatAgentHref(agent.key)} />
           <div className="mdc-agent-skills__stats">
             <span className="mdc-agent-skills__stat">
               <strong>{enabledCount}</strong>

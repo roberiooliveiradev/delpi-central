@@ -22,7 +22,7 @@ export type AppProps = {
 export default function App({ getAccessToken, pathname }: AppProps) {
   const route = useMemo(() => parseChatRoute(pathname), [pathname]);
 
-  if (route.kind === "admin") {
+  if (route.kind === "admin" || route.kind === "admin-agent") {
     return (
       <Suspense
         fallback={
@@ -34,6 +34,8 @@ export default function App({ getAccessToken, pathname }: AppProps) {
         <ChatAnimatedPanel panelKey="admin" variant="page" className="mdc-chat-page-panel--fill">
           <ChatAdminPage
             getAccessToken={getAccessToken}
+            initialTab={route.kind === "admin-agent" ? "agents" : undefined}
+            initialAgentId={route.kind === "admin-agent" ? route.agentId : null}
             onBack={() => navigateChatHref(buildChatHref({ kind: "home" }))}
           />
         </ChatAnimatedPanel>

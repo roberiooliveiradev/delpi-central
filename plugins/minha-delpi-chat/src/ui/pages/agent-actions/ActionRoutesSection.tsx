@@ -128,6 +128,7 @@ export function ActionRoutesSection({
                 <article className="mdc-action-routes-table__row">
                   <div className="mdc-action-routes-table__name">
                     <AgentBuilderSwitch
+                      size="compact"
                       checked={enabled}
                       onChange={(event) => onToggleAction(action, event.target.checked)}
                       ariaLabel={`${enabled ? "Desativar" : "Ativar"} ${action.operationId || action.actionId}`}

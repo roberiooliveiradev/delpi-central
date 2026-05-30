@@ -5,6 +5,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Settings,
   Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -29,6 +30,7 @@ type ChatProjectsPageProps = {
   }) => Promise<ChatProject | null>;
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
+  onConfigureProject?: (projectId: string) => void;
 };
 
 function getSessionCount(projectId: string, sessions: ChatSession[]): number {
@@ -62,6 +64,7 @@ export function ChatProjectsPage({
   onCreateProject,
   onRenameProject,
   onDeleteProject,
+  onConfigureProject,
 }: ChatProjectsPageProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [searchTerm, setSearchTerm] = useState("");
@@ -224,23 +227,34 @@ export function ChatProjectsPage({
                       </button>
 
                       {canEditProject(project.access_role) ? (
-                        <button
-                          type="button"
-                          className="mdc-chat-ws-toolbar-btn"
-                          onClick={() => {
-                            const nextName = window.prompt(
-                              "Novo nome do projeto",
-                              project.name,
-                            )?.trim();
+                        <>
+                          <button
+                            type="button"
+                            className="mdc-chat-ws-toolbar-btn"
+                            onClick={() => onConfigureProject?.(project.id)}
+                          >
+                            <Settings size={16} aria-hidden="true" />
+                            <span>Configurar</span>
+                          </button>
 
-                            if (nextName && nextName !== project.name) {
-                              void onRenameProject?.(project.id, nextName);
-                            }
-                          }}
-                        >
-                          <Pencil size={16} aria-hidden="true" />
-                          <span>Renomear</span>
-                        </button>
+                          <button
+                            type="button"
+                            className="mdc-chat-ws-toolbar-btn"
+                            onClick={() => {
+                              const nextName = window.prompt(
+                                "Novo nome do projeto",
+                                project.name,
+                              )?.trim();
+
+                              if (nextName && nextName !== project.name) {
+                                void onRenameProject?.(project.id, nextName);
+                              }
+                            }}
+                          >
+                            <Pencil size={16} aria-hidden="true" />
+                            <span>Renomear</span>
+                          </button>
+                        </>
                       ) : null}
 
                       {project.access_role === "owner" ? (
