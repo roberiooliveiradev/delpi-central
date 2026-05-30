@@ -72,12 +72,13 @@ class UpsertChatMessageFeedbackUseCase:
             rating=rating,
             reason=normalized_reason,
         )
-        thanks = ChatFeedbackContentService.thanks_for_rating(
-            rating,
-            seed=message_id,
-        )
+        if rating == 1:
+            thanks = ChatFeedbackContentService.thanks_for_rating(
+                rating,
+                seed=message_id,
+            )
 
-        if thanks:
-            result["thanksMessage"] = thanks
+            if thanks:
+                result["thanksMessage"] = thanks
 
         return result
