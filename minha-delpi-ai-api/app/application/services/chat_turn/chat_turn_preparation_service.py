@@ -601,6 +601,11 @@ class ChatTurnPreparationService:
             )
 
         sources = rag["sources"]
+        web_sources = tool_context.get("webSources") if isinstance(tool_context, dict) else None
+
+        if isinstance(web_sources, list) and web_sources:
+            sources = [*web_sources, *sources]
+
         rag_context_chars = len(rag.get("context") or "")
         pipeline_timings.mark("rag_done")
 

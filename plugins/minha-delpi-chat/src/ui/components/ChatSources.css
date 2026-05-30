@@ -42,4 +42,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
+}
+
+.mdc-chat-source-badge--link:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  text-decoration: underline;
 }

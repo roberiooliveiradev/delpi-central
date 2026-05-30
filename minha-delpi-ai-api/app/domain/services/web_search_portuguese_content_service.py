@@ -48,18 +48,94 @@ class WebSearchPortugueseContentService:
     )
 
     @classmethod
+    def build_fallback_payload(cls, query: str) -> dict | None:
+        """Último recurso quando provedores web não retornam snippet útil."""
+        topic = WebSearchQueryService.extract_primary_entity(query)
+
+        if not topic:
+            topic = cls._extract_topic(query)
+
+        if not topic:
+            return None
+
+        results: list[dict] = []
+        seen_urls: set[str] = set()
+
+        for title in cls._fallback_title_candidates(topic):
+            summary = cls._request_wikipedia_summary(title)
+
+            if not summary:
+                continue
+
+            url = str(summary.get("url") or "").strip()
+
+            if not url or url in seen_urls:
+                continue
+
+            seen_urls.add(url)
+            results.append(summary)
+
+            if len(results) >= Settings.CHAT_WEB_SEARCH_MAX_RESULTS:
+                break
+
+        if not results:
+            return None
+
+        cleaned_query = WebSearchQueryService.normalize_query(query)
+
+        return {
+            "query": cleaned_query,
+            "results": results,
+            "provider": "wikipedia_pt_fallback",
+            "searchStatus": "success",
+            "localizedFor": "pt-BR",
+            "localizedSource": "wikipedia_pt_fallback",
+        }
+
+    @classmethod
+    def _fallback_title_candidates(cls, topic: str) -> list[str]:
+        candidates = cls._topic_title_candidates(topic)
+        entity = str(topic or "").strip()
+
+        if entity:
+            candidates.extend(
+                [
+                    entity,
+                    f"{entity} International",
+                    "TE Connectivity" if entity.casefold() == "tyco" else "",
+                ]
+            )
+
+        deduped: list[str] = []
+
+        for item in candidates:
+            cleaned = str(item or "").strip()
+
+            if cleaned and cleaned not in deduped:
+                deduped.append(cleaned)
+
+        return deduped
+
+    @classmethod
     def localize_payload(cls, payload: dict | None) -> dict | None:
         if not isinstance(payload, dict) or payload.get("searchStatus") != "success":
             return payload
 
         query = str(payload.get("query") or "").strip()
 
-        if not query or not cls._looks_portuguese_query(query):
+        if not query:
             return payload
 
         primary = cls._primary_result(payload)
 
         if not primary or not cls._looks_english_snippet(str(primary.get("snippet") or "")):
+            return payload
+
+        should_localize = cls._looks_portuguese_query(query) or len(
+            WebSearchQueryService.extract_entity_tokens(query)
+        ) == 1
+
+        if not should_localize:
             return payload
 
         topic = cls._extract_topic(query)
@@ -122,6 +198,11 @@ class WebSearchPortugueseContentService:
 
     @classmethod
     def _extract_topic(cls, query: str) -> str:
+        entity = WebSearchQueryService.extract_primary_entity(query)
+
+        if entity:
+            return entity
+
         normalized = WebSearchQueryService.normalize_query(query).casefold()
         normalized = unicodedata.normalize("NFKD", normalized)
         normalized = "".join(char for char in normalized if not unicodedata.combining(char))
@@ -168,6 +249,15 @@ class WebSearchPortugueseContentService:
 
         if cleaned.casefold() == "python":
             candidates.extend(["Python (linguagem de programação)", "Python"])
+
+        if cleaned.casefold() == "tyco":
+            candidates.extend(
+                [
+                    "Tyco International",
+                    "TE Connectivity",
+                    "Johnson Controls",
+                ]
+            )
 
         deduped: list[str] = []
 

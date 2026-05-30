@@ -7,6 +7,7 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.web_search_query_service import WebSearchQueryService
 from app.infrastructure.config.settings import Settings
 
 
@@ -35,7 +36,9 @@ class ChatWebSearchIntentService:
         r"^(?:voce |você )?",
         r"(?:pesquise|pesquisa|busque|busca)(?: na internet| na web| online)?(?: sobre| por)?",
         r"(?:na internet|na web|online)",
+        r"(?:sobre|por)\s+(?:a\s+)?(?:empresa|companhia)\s+",
         r"(?:sobre|por)\s+",
+        r"^(?:a\s+)?(?:empresa|companhia)\s+",
     )
 
     @classmethod
@@ -94,4 +97,6 @@ class ChatWebSearchIntentService:
 
         normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
 
-        return normalized or query
+        sanitized = WebSearchQueryService.sanitize_query(normalized)
+
+        return sanitized or normalized or query

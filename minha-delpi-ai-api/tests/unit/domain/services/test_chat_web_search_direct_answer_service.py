@@ -53,6 +53,9 @@ def test_format_prefers_wikipedia_pt_when_localized():
     assert answer is not None
     assert "Python é uma linguagem" in answer
     assert "Python is a high-level" not in answer
+
+
+def test_format_no_results_message():
     payload = {
         "query": "tema xyz",
         "searchStatus": "no_results",
@@ -69,3 +72,29 @@ def test_format_prefers_wikipedia_pt_when_localized():
 
     assert answer is not None
     assert "não encontrei resultados úteis" in answer
+
+
+def test_build_sources_from_web_results():
+    payload = {
+        "searchStatus": "success",
+        "results": [
+            {
+                "title": "Tyco International",
+                "snippet": "Conglomerado.",
+                "url": "https://pt.wikipedia.org/wiki/Tyco_International",
+                "source": "wikipedia_pt",
+            },
+            {
+                "title": "TE Connectivity",
+                "snippet": "Fabricante de conectores.",
+                "url": "https://pt.wikipedia.org/wiki/TE_Connectivity",
+                "source": "wikipedia_pt",
+            },
+        ],
+    }
+
+    sources = ChatWebSearchDirectAnswerService.build_sources(payload)
+
+    assert len(sources) == 2
+    assert sources[0]["scope"] == "web_search"
+    assert sources[0]["sourceRef"].startswith("https://")

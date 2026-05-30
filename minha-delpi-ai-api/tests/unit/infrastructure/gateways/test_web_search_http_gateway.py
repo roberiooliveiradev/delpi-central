@@ -97,11 +97,52 @@ def test_gateway_returns_no_results_when_all_attempts_fail(monkeypatch):
         "app.infrastructure.gateways.web_search_http_gateway.resolve_web_search_providers",
         lambda: [DuckDuckGoInstantProvider()],
     )
+    monkeypatch.setattr(
+        "app.domain.services.web_search_portuguese_content_service.WebSearchPortugueseContentService.build_fallback_payload",
+        lambda query: None,
+    )
 
     payload = gateway.search("tema inexistente xyz", max_results=3)
 
     assert payload["searchStatus"] == "no_results"
     assert payload["results"][0]["source"] == "no_results"
+
+
+def test_gateway_uses_wikipedia_fallback_when_providers_fail(monkeypatch):
+    gateway = WebSearchHttpGateway()
+
+    def fake_search(self, query, *, max_results):
+        return {"query": query, "results": [], "provider": self.name}
+
+    def fake_fallback(query):
+        return {
+            "query": query,
+            "searchStatus": "success",
+            "provider": "wikipedia_pt_fallback",
+            "results": [
+                {
+                    "title": "Tyco International",
+                    "snippet": "Conglomerado histórico.",
+                    "url": "https://pt.wikipedia.org/wiki/Tyco_International",
+                    "source": "wikipedia_pt",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(DuckDuckGoInstantProvider, "search", fake_search)
+    monkeypatch.setattr(
+        "app.infrastructure.gateways.web_search_http_gateway.resolve_web_search_providers",
+        lambda: [DuckDuckGoInstantProvider()],
+    )
+    monkeypatch.setattr(
+        "app.domain.services.web_search_portuguese_content_service.WebSearchPortugueseContentService.build_fallback_payload",
+        fake_fallback,
+    )
+
+    payload = gateway.search("a empresa tyco", max_results=3)
+
+    assert payload["searchStatus"] == "success"
+    assert payload["provider"] == "wikipedia_pt_fallback"
 
 
 def test_tavily_parses_results(monkeypatch):

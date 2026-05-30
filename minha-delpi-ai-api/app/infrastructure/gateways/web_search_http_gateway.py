@@ -60,15 +60,19 @@ class WebSearchHttpGateway:
             no_results["attemptedQueries"] = attempted_queries
             no_results["retriedQuery"] = attempted_queries[-1]
 
+        from app.domain.services.web_search_portuguese_content_service import (
+            WebSearchPortugueseContentService,
+        )
+
+        fallback = WebSearchPortugueseContentService.build_fallback_payload(cleaned_query)
+
+        if WebSearchQueryService.is_useful_payload(fallback):
+            if len(attempted_queries) > 1:
+                fallback["attemptedQueries"] = attempted_queries
+
+            return fallback
+
         return no_results
 
     def _query_candidates(self, query: str) -> list[str]:
-        candidates = [query]
-
-        if Settings.CHAT_WEB_SEARCH_RETRY_EN:
-            english_query = WebSearchQueryService.build_english_retry_query(query)
-
-            if english_query:
-                candidates.append(english_query)
-
-        return candidates
+        return WebSearchQueryService.build_search_candidates(query)

@@ -16,6 +16,14 @@ def test_extract_query_strips_trigger_phrase():
     assert "inflacao" in query or "2026" in query
 
 
+def test_extract_query_strips_company_prefix():
+    query = ChatWebSearchIntentService.extract_query(
+        "pesquise na internet sobre a empresa TYCO"
+    )
+
+    assert query == "tyco"
+
+
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
 def test_resolve_returns_tool_selection(_enabled):
     result = ChatWebSearchIntentService.resolve(

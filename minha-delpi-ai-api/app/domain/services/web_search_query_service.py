@@ -56,9 +56,112 @@ class WebSearchQueryService:
         }
     )
 
+    _ENTITY_FILLER_WORDS = frozenset(
+        {
+            "empresa",
+            "companhia",
+            "company",
+            "corporation",
+            "negocio",
+            "negócio",
+            "business",
+            "marca",
+            "brand",
+        }
+    )
+
+    _LEADING_FILLER_PATTERNS = (
+        r"^(?:a\s+)?(?:empresa|companhia)\s+",
+        r"^empresa\s+",
+        r"^companhia\s+",
+        r"^the\s+company\s+",
+        r"^a\s+company\s+",
+        r"^sobre\s+a\s+empresa\s+",
+        r"^about\s+the\s+company\s+",
+    )
+
     @classmethod
     def normalize_query(cls, query: str) -> str:
         return re.sub(r"\s+", " ", str(query or "").strip())
+
+    @classmethod
+    def sanitize_query(cls, query: str) -> str:
+        value = cls._normalize_for_retry(query)
+
+        for pattern in cls._LEADING_FILLER_PATTERNS:
+            value = re.sub(pattern, " ", value, flags=re.IGNORECASE).strip()
+
+        value = re.sub(r"\s+", " ", value).strip()
+        return cls.normalize_query(value)
+
+    @classmethod
+    def extract_entity_tokens(cls, query: str) -> list[str]:
+        sanitized = cls.sanitize_query(query)
+        normalized = cls._normalize_for_retry(sanitized or query)
+
+        return [
+            token
+            for token in normalized.split()
+            if token not in cls._PT_STOPWORDS
+            and token not in cls._ENTITY_FILLER_WORDS
+            and len(token) > 1
+        ]
+
+    @classmethod
+    def extract_primary_entity(cls, query: str) -> str:
+        tokens = cls.extract_entity_tokens(query)
+
+        if not tokens:
+            return ""
+
+        token = tokens[-1]
+        return token[:1].upper() + token[1:]
+
+    @classmethod
+    def build_search_candidates(cls, query: str) -> list[str]:
+        normalized = cls.normalize_query(query)
+        sanitized = cls.sanitize_query(normalized) or normalized
+
+        candidates: list[str] = []
+
+        for candidate in (sanitized, normalized):
+            cleaned = cls.normalize_query(candidate)
+
+            if cleaned and cleaned not in candidates:
+                candidates.append(cleaned)
+
+        retry = cls.build_english_retry_query(sanitized or normalized)
+
+        if retry and retry not in candidates:
+            candidates.append(retry)
+
+        tokens = cls.extract_entity_tokens(sanitized or normalized)
+
+        if len(tokens) == 1:
+            entity = cls.extract_primary_entity(sanitized or normalized)
+            boosts = [
+                entity,
+                f"{entity} International",
+                f"{entity} company",
+            ]
+
+            if entity.isupper() and len(entity) <= 8:
+                title_case = entity.title()
+                boosts.extend(
+                    [
+                        title_case,
+                        f"{title_case} International",
+                        f"{title_case} company",
+                    ]
+                )
+
+            for boost in boosts:
+                cleaned = cls.normalize_query(boost)
+
+                if cleaned and cleaned not in candidates:
+                    candidates.append(cleaned)
+
+        return candidates
 
     @classmethod
     def is_useful_payload(cls, payload: dict | None) -> bool:
@@ -82,7 +185,7 @@ class WebSearchQueryService:
 
     @classmethod
     def build_english_retry_query(cls, query: str) -> str | None:
-        normalized = cls._normalize_for_retry(query)
+        normalized = cls._normalize_for_retry(cls.sanitize_query(query) or query)
 
         if not normalized:
             return None
@@ -90,17 +193,18 @@ class WebSearchQueryService:
         translated = normalized
 
         for pt_phrase, en_phrase in cls._PT_TO_EN_PHRASES:
+            if pt_phrase in {"empresa", "companhia"}:
+                continue
+
             translated = translated.replace(pt_phrase, en_phrase)
 
+        translated = cls._strip_leading_filler(translated)
         translated = re.sub(r"\s+", " ", translated).strip()
 
         if not translated or translated == normalized:
             if cls._looks_portuguese(normalized):
-                tokens = [
-                    token
-                    for token in normalized.split()
-                    if token not in cls._PT_STOPWORDS and len(token) > 1
-                ]
+                tokens = cls.extract_entity_tokens(normalized)
+
                 if tokens:
                     translated = " ".join(tokens)
                 else:
@@ -149,3 +253,19 @@ class WebSearchQueryService:
 
         tokens = set(query.split())
         return bool(tokens.intersection(cls._PT_STOPWORDS))
+
+    @classmethod
+    def _strip_leading_filler(cls, query: str) -> str:
+        value = cls._normalize_for_retry(query)
+
+        for pattern in cls._LEADING_FILLER_PATTERNS:
+            value = re.sub(pattern, " ", value, flags=re.IGNORECASE).strip()
+
+        tokens = [
+            token
+            for token in value.split()
+            if token not in cls._PT_STOPWORDS
+            and token not in cls._ENTITY_FILLER_WORDS
+        ]
+
+        return re.sub(r"\s+", " ", " ".join(tokens)).strip()

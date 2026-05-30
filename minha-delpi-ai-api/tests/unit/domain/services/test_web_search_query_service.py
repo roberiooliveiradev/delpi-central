@@ -39,3 +39,21 @@ def test_build_no_results_payload_has_explicit_status():
 
     assert payload["searchStatus"] == "no_results"
     assert payload["results"][0]["source"] == "no_results"
+
+
+def test_sanitize_query_strips_company_prefix():
+    assert WebSearchQueryService.sanitize_query("a empresa tyco") == "tyco"
+
+
+def test_build_search_candidates_includes_entity_boosts():
+    candidates = WebSearchQueryService.build_search_candidates("a empresa tyco")
+
+    assert candidates[0] == "tyco"
+    assert "Tyco International" in candidates
+    assert "tyco company" in candidates or "Tyco company" in candidates
+
+
+def test_build_english_retry_query_strips_company_filler():
+    retry = WebSearchQueryService.build_english_retry_query("a empresa tyco")
+
+    assert retry == "tyco"

@@ -48,4 +48,17 @@ describe("chatSourcesFilter", () => {
       { scope: "session_source", title: "Anexo", sessionId: "s1" },
     ]);
   });
+
+  it("mantém fontes web_search visíveis", () => {
+    const sources: ChatSource[] = [
+      {
+        scope: "web_search",
+        title: "Tyco International",
+        sourceRef: "https://pt.wikipedia.org/wiki/Tyco_International",
+        sourceType: "web",
+      },
+    ];
+
+    expect(filterVisibleChatSources(sources)).toEqual(sources);
+  });
 });

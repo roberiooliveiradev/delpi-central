@@ -354,6 +354,7 @@ class ChatToolContextService:
         skip_rag = False
         last_external_action_data = None
         last_web_search_data: dict | None = None
+        web_sources: list[dict] = []
         external_action_results: list = []
         external_planned = [
             item
@@ -658,6 +659,9 @@ class ChatToolContextService:
 
             if direct_answer:
                 skip_rag = True
+                web_sources = ChatWebSearchDirectAnswerService.build_sources(
+                    last_web_search_data
+                )
 
         requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
         if requested_format:
@@ -688,6 +692,7 @@ class ChatToolContextService:
                 "nativeToolCalling": native_meta,
                 "directAnswer": direct_answer,
                 "skipRag": skip_rag,
+                "webSources": web_sources,
                 "selectedExternalAction": selected_external_action_meta,
                 "currentMessage": raw_message,
             },
