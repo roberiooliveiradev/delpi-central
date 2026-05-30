@@ -128,4 +128,16 @@ class Settings:
     FINANCIAL_RECEIVABLES_SHEET_ID: str | None = _get_env("FINANCIAL_RECEIVABLES_SHEET_ID")
     FINANCIAL_RECEIVABLES_SHEET_GID: str | None = _get_env("FINANCIAL_RECEIVABLES_SHEET_GID")
 
+    # ==========================
+    # Core API — rastreamento de uso (backend-only)
+    # ==========================
+    CORE_API_BASE_URL: str | None = _get_env("CORE_API_BASE_URL", default="http://core-api:8000")
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str | None = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN"
+    )
+    APP_USAGE_APP_ID: str = _get_env("APP_USAGE_APP_ID", default="api-delpi")
+    APP_USAGE_TRACKING_ENABLED: bool = (
+        _get_env("APP_USAGE_TRACKING_ENABLED", default="true").lower() == "true"
+    )
+
 settings = Settings()

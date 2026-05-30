@@ -26,6 +26,7 @@ from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
 from app.interface.http.routes.hr import hr_router
 from app.middleware.auth_middleware import jwt_middleware
+from app.middleware.app_usage_tracking_middleware import app_usage_tracking_middleware
 
 
 # ==========================================================
@@ -118,6 +119,7 @@ app.openapi = custom_openapi
 # ==========================================================
 
 app.middleware("http")(jwt_middleware)
+app.middleware("http")(app_usage_tracking_middleware)
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 

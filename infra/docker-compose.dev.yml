@@ -546,6 +546,11 @@ services:
       STRATEGIC_INDICATORS_API_BASE_URL: http://strategic-indicators-api:8000
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN}
 
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
+      APP_USAGE_APP_ID: api-delpi
+      APP_USAGE_TRACKING_ENABLED: ${APP_USAGE_TRACKING_ENABLED:-true}
+
     volumes:
       - ../api-delpi:/app
       - ../shared:/shared
@@ -554,6 +559,7 @@ services:
       - keycloak
       - postgres-plugins
       - strategic-indicators-api
+      - core-api
 
     networks:
       - delpi-network
