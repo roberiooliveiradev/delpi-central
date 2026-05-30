@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import {
   Search,
+  SearchX,
 } from "lucide-react";
 import "./AppLauncher.css";
 import { AppLauncherCard } from "./AppLauncherCard";
@@ -254,8 +255,15 @@ export const AppLauncher = ({
               </div>
 
               {availableApps.length === 0 ? (
-                <div className="launcher-reco-empty">
-                  Nenhum aplicativo disponível para sua conta.
+                <div className="launcher-empty-state launcher-empty-state--catalog">
+                  <div className="launcher-empty-icon" aria-hidden>
+                    <SearchX size={28} strokeWidth={1.75} />
+                  </div>
+                  <p className="launcher-empty-title">Nenhum aplicativo disponível</p>
+                  <p className="launcher-empty-message">
+                    Sua conta ainda não tem apps liberados. Peça acesso ao administrador
+                    ou tente novamente mais tarde.
+                  </p>
                 </div>
               ) : (
                 <div className="launcher-pinned-grid">
@@ -292,13 +300,30 @@ export const AppLauncher = ({
 
               <div className="launcher-results">
                 {searchResults.length === 0 ? (
-                  <div className="launcher-empty">Nenhum resultado encontrado.</div>
+                  <div className="launcher-empty-state">
+                    <div className="launcher-empty-icon" aria-hidden>
+                      <SearchX size={28} strokeWidth={1.75} />
+                    </div>
+                    <p className="launcher-empty-title">Nenhum resultado encontrado</p>
+                    <p className="launcher-empty-message">
+                      Não encontramos apps ou rotas para{" "}
+                      <span className="launcher-empty-query">“{query.trim()}”</span>.
+                      Tente outro termo ou verifique a ortografia.
+                    </p>
+                    <button
+                      type="button"
+                      className="launcher-empty-clear"
+                      onClick={() => {
+                        setQuery("");
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      Limpar busca
+                    </button>
+                  </div>
                 ) : (
                 <div className="launcher-pinned-grid">
-                  {searchResults.length === 0 ? (
-                    <div className="launcher-empty">Nenhum resultado encontrado.</div>
-                  ) : (
-                    searchResults.map((r, idx) => {
+                    {searchResults.map((r, idx) => {
 
                       if (r.kind === "app") {
                         const isPinned = favorites.some(f => f.id === r.app.id);
@@ -338,16 +363,17 @@ export const AppLauncher = ({
                           onTogglePin={togglePin}
                         />
                       );
-                    })
-                  )}
+                    })}
                 </div>
                 )}
               </div>
 
+              {searchResults.length > 0 && (
               <div className="launcher-hint">
                 Dica: pressione <kbd>Enter</kbd> para abrir o primeiro resultado,{" "}
                 <kbd>Esc</kbd> para fechar.
               </div>
+              )}
             </div>
           )}
         </div>

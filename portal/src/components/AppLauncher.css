@@ -138,8 +138,100 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   background: color-mix(in srgb, var(--surface-3) 75%, transparent);
-  min-height: 100%;
+  min-height: 220px;
   overflow: auto;
+}
+
+/* EMPTY STATE */
+
+.launcher-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  min-height: 220px;
+  padding: 32px 24px 28px;
+}
+
+.launcher-empty-state--catalog {
+  border: 1px dashed color-mix(in srgb, var(--border) 80%, var(--primary));
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface-3) 55%, transparent);
+  min-height: 180px;
+}
+
+.launcher-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  margin-bottom: 4px;
+}
+
+.launcher-empty-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.launcher-empty-message {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--text) 72%, transparent);
+}
+
+.launcher-empty-query {
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.launcher-empty-clear {
+  margin-top: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  color: var(--primary);
+}
+
+.launcher-empty-clear:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: none;
+  box-shadow: none;
+}
+
+.launcher-hint {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--text) 58%, transparent);
+  text-align: center;
+}
+
+.launcher-hint kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
 .launcher-result-item {
