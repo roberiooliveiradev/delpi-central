@@ -8,6 +8,8 @@ Checklist de perguntas para validar o chat operacional após deploy ou alteraç�
 
 **Configuração do chat:** antes do smoke, alinhe toggles do admin ao perfil **dev** ou **prod** — [`../knowledge/chat-intelligence-settings-profiles.md`](../knowledge/chat-intelligence-settings-profiles.md).
 
+**Ambiente local (maio/2026):** se a **api-delpi** interna estiver indisponível, mantenha o provider **desabilitado** no agente e use só **api-externa** (`https://api.transformamaisdelpi.com.br`). Cenários KPI `/supplies/*` (#6b, #34) e parte do smoke operacional dependem da api-delpi; utilitários (U1–U9) e identidade/small talk não dependem de provider.
+
 Se algo falhar após deploy, reinicie ou reconstrua a API:
 
 ```bash

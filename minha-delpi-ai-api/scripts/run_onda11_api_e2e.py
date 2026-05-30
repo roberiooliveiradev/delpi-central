@@ -201,7 +201,17 @@ def main() -> int:
         Case("#1 estoque sem código", "estoque do produto", expect_in_answer=["código"], max_tool_calls=0, skip_rag=True, session_id=ops_session),
         Case("#4 quem te criou?", "quem te criou?", expect_in_answer=["minha delpi"], max_tool_calls=0, skip_rag=True, session_id=ops_session),
         Case("#5 olá", "olá", max_tool_calls=0, session_id=ops_session),
-        Case("#3 estoque código", "estoque do produto 10080022", action_contains="stock", max_tool_calls=1, skip_rag=True, session_id=ops_session),
+    ]
+
+    optional_ops_cases: list[Case] = [
+        Case(
+            "#3 estoque código",
+            "estoque do produto 10080022",
+            action_contains="stock",
+            max_tool_calls=1,
+            skip_rag=True,
+            session_id=ops_session,
+        ),
     ]
 
     for case in cases:
@@ -223,7 +233,34 @@ def main() -> int:
         else:
             print(f"OK {case.label}")
 
-    # Multi-turn KPI estoque empresa → filial 01 (depende da api-delpi responder 200 no passo 1)
+    for case in optional_ops_cases:
+        session_id = case.session_id or ops_session
+        try:
+            response = _send_message(token, session_id, case.message, agent_id=agent_id)
+        except RuntimeError as exc:
+            print(f"SKIP {case.label} (API externa indisponível: {exc})", file=sys.stderr)
+            continue
+
+        tool_calls = response.get("toolCalls") or []
+        tool_meta = (tool_calls[0].get("metadata") or {}) if tool_calls else {}
+        if tool_calls and not tool_meta.get("ok"):
+            print(
+                f"SKIP {case.label} (action executada mas API retornou erro — "
+                "ambiente local com api-delpi off usa api-externa)",
+                file=sys.stderr,
+            )
+            continue
+
+        errors = _check_case(case, response)
+        if errors:
+            failed += 1
+            print(f"FAIL {case.label}: {case.message}", file=sys.stderr)
+            for err in errors:
+                print(f"  - {err}", file=sys.stderr)
+        else:
+            print(f"OK {case.label}")
+
+    # Multi-turn KPI (#6b) exige rotas /supplies/* — só no provider api-delpi (omitido se desabilitado)
     kpi_session = _create_session(token, agent_id, "Smoke Onda 11 — KPI filial")
     kpi_first = _send_message(
         token,
@@ -258,7 +295,7 @@ def main() -> int:
             print("OK #6b KPI + filial curta")
     else:
         print(
-            "SKIP #6b KPI + filial curta (api-delpi indisponível no passo 1)",
+            "SKIP #6b KPI + filial curta (KPI /supplies/* requer provider api-delpi habilitado)",
             file=sys.stderr,
         )
 
