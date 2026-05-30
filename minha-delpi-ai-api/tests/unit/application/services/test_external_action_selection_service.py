@@ -1099,3 +1099,26 @@ def test_select_metric_refinement_uses_path_token_not_semantic_candidates():
     assert stock_selected is not None
     assert stock_selected["arguments"]["actionId"] == "supplies-stock-value"
     assert stock_selected["arguments"]["parameters"]["branch"] == "01"
+
+
+def test_listar_nc_5s_does_not_select_product_search():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "search-description",
+                    "method": "GET",
+                    "path": "/products/search/description",
+                    "operationId": "search_products_by_description",
+                    "parametersSchema": [{"name": "description", "in": "query"}],
+                }
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "listar nc 5s operacional",
+        allowed_action_ids=["search-description"],
+    )
+
+    assert selected is None

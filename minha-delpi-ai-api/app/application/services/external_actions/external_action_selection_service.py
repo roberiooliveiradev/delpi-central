@@ -431,6 +431,19 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        department_kpi = ChatDepartmentKpiIntentService.resolve(message)
+
+        if department_kpi and department_kpi.domain_prefix.startswith("/quality/audit-5s/") and not product_code:
+            selected = self._select_department_kpi_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                match=department_kpi,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
+
         if self._looks_like_sql_or_data_query(message):
             if ChatSqlIntentService.should_auto_execute_sql(message):
                 return self._select_sql_or_data_action(
@@ -1489,6 +1502,19 @@ class ExternalActionSelectionService:
             return False
 
         if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
+            return False
+
+        audit5s_terms = (
+            "nc 5s",
+            "nao conformidade 5s",
+            "não conformidade 5s",
+            "auditoria 5s",
+            "auditorias 5s",
+            "audit 5s",
+            "candidatas a nc 5s",
+        )
+
+        if any(term in value for term in audit5s_terms):
             return False
 
         search_triggers = (
