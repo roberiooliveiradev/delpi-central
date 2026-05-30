@@ -11,6 +11,7 @@ from app.infrastructure.app_usage.app_usage_live_store_provider import (
 )
 from app.infrastructure.db.models import App
 from app.infrastructure.persistence.sqlalchemy.app_usage_repository import (
+    BACKEND_ONLY_APP_TYPE,
     SqlAlchemyAppUsageRepository,
 )
 
@@ -31,6 +32,8 @@ class GetAppUsageSnapshotUseCase:
                 "topUsed": [],
                 "ghostApps": [],
                 "usedInPeriod": 0,
+                "trackableActive": 0,
+                "backendOnlyActive": 0,
             }
 
         from flask import current_app
@@ -94,6 +97,12 @@ class GetAppUsageSnapshotUseCase:
 
         top_used = self.repo.top_apps_by_unique_users(since=since, limit=5)
         ghost_apps = self.repo.ghost_active_apps(since=since)
+        trackable_active = self.repo.count_trackable_active_apps()
+        backend_only_active = int(
+            self.uow.session.query(App.id)
+            .filter(App.active.is_(True), App.type == BACKEND_ONLY_APP_TYPE)
+            .count()
+        )
 
         return {
             "enabled": True,
@@ -103,4 +112,6 @@ class GetAppUsageSnapshotUseCase:
             "topUsed": top_used,
             "ghostApps": ghost_apps,
             "usedInPeriod": self.repo.count_distinct_apps_used(since=since),
+            "trackableActive": trackable_active,
+            "backendOnlyActive": backend_only_active,
         }

@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from app.infrastructure.db.models import App, AppUsageEvent
 
+BACKEND_ONLY_APP_TYPE = "backend-only"
+
 
 class SqlAlchemyAppUsageRepository:
     def __init__(self, session: Session):
@@ -40,6 +42,7 @@ class SqlAlchemyAppUsageRepository:
         app_id: str,
         route_path: str | None,
         opened_at: datetime,
+        caller_app_id: str | None = None,
     ) -> None:
         self.session.add(
             AppUsageEvent(
@@ -47,9 +50,18 @@ class SqlAlchemyAppUsageRepository:
                 user_id=user_id,
                 app_id=app_id,
                 route_path=route_path,
+                caller_app_id=caller_app_id,
                 opened_at=opened_at,
             )
         )
+
+    def delete_events_for_user(self, *, user_id: UUID) -> int:
+        deleted = (
+            self.session.query(AppUsageEvent)
+            .filter(AppUsageEvent.user_id == user_id)
+            .delete(synchronize_session=False)
+        )
+        return int(deleted or 0)
 
     def top_apps_by_unique_users(
         self,
@@ -80,6 +92,7 @@ class SqlAlchemyAppUsageRepository:
         ]
 
     def ghost_active_apps(self, *, since: datetime) -> list[dict]:
+        """Apps com UI ativas sem evento de uso no período (exclui backend-only)."""
         used_rows = (
             self.session.query(AppUsageEvent.app_id)
             .filter(AppUsageEvent.opened_at >= since)
@@ -88,13 +101,28 @@ class SqlAlchemyAppUsageRepository:
         )
         used_ids = [row[0] for row in used_rows]
 
-        query = self.session.query(App.id, App.name).filter(App.active.is_(True))
+        query = self.session.query(App.id, App.name).filter(
+            App.active.is_(True),
+            App.type != BACKEND_ONLY_APP_TYPE,
+        )
 
         if used_ids:
             query = query.filter(~App.id.in_(used_ids))
 
         rows = query.order_by(App.name.asc()).all()
         return [{"id": row.id, "name": row.name} for row in rows]
+
+    def count_trackable_active_apps(self) -> int:
+        """Apps ativas com interface no portal (microfrontend/iframe)."""
+        value = (
+            self.session.query(func.count(App.id))
+            .filter(
+                App.active.is_(True),
+                App.type != BACKEND_ONLY_APP_TYPE,
+            )
+            .scalar()
+        )
+        return int(value or 0)
 
     def count_distinct_apps_used(self, *, since: datetime) -> int:
         value = (
