@@ -30,12 +30,16 @@ import {
   buildChatAdminAgentHref,
   buildChatAgentActionsHref,
   buildChatAgentConfigHref,
+  buildChatAgentHref,
+  buildChatAgentSessionHref,
   buildChatAgentSkillsHref,
   buildChatHref,
   buildChatProjectConfigHref,
   buildChatProjectHref,
   buildChatSessionHref,
+  buildChatSessionHrefForSession,
   findAgentByRouteId,
+  normalizeAgentRouteId,
   parseChatRoute,
   type ChatRoute,
 } from "../../navigation/chatRoutes";
@@ -140,7 +144,14 @@ export function ChatPage({
     getAccessToken,
     projectId: selectedProjectId,
     agentId: requestedAgentId,
-    onSessionActivated: (sessionId) => {
+    onSessionActivated: (sessionId, context) => {
+      const agentId = context?.agentId ?? requestedAgentId;
+
+      if (agentId) {
+        navigateChatHref(buildChatAgentSessionHref(agentId, sessionId), { replace: true });
+        return;
+      }
+
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
@@ -220,7 +231,7 @@ export function ChatPage({
         isStreamingActiveSession;
 
       const shouldPreserveAgentCompose =
-        route.kind === "agent" &&
+        (route.kind === "agent" || route.kind === "agent-session") &&
         hasOutboundInFlight &&
         activeAgentPageId === resolveRouteAgent(route.agentId)?.id;
 
@@ -274,10 +285,73 @@ export function ChatPage({
           setCanvasDocument(null);
           setComposerAttachments([]);
           setSelectedProjectId(session.project_id ?? null);
-          setActiveAgentPageId(null);
+          setActiveAgentPageId(session.agent_id ?? null);
           setContextAgentId(null);
           setCurrentView("chat");
           selectSession(session);
+          closeMobileSidebar();
+
+          if (session.agent_id) {
+            navigateChatHref(
+              buildChatAgentSessionHref(session.agent_id, session.id),
+              { replace: true },
+            );
+          }
+
+          break;
+        }
+        case "agent-session": {
+          const session = sessions.find((item) => item.id === route.sessionId);
+          const routeAgent = resolveRouteAgent(route.agentId);
+
+          if (!routeAgent) {
+            if (!normalizeAgentRouteId(route.agentId)) {
+              navigateChatHref(buildChatHref({ kind: "agents" }), { replace: true });
+            }
+            return;
+          }
+
+          if (session) {
+            if (activeSession?.id === route.sessionId) {
+              if (activeAgentPageId !== routeAgent.id) {
+                setActiveAgentPageId(routeAgent.id);
+              }
+              closeMobileSidebar();
+              return;
+            }
+
+            clearWorkspaceError();
+            clearError();
+            setCanvasDocument(null);
+            setComposerAttachments([]);
+            setSelectedProjectId(session.project_id ?? null);
+            setActiveAgentPageId(routeAgent.id);
+            setContextAgentId(null);
+            setCurrentView("chat");
+            selectSession(session);
+            closeMobileSidebar();
+            break;
+          }
+
+          if (shouldPreserveAgentCompose) {
+            closeMobileSidebar();
+            return;
+          }
+
+          if (activeAgentPageId === routeAgent.id && !activeSession) {
+            closeMobileSidebar();
+            return;
+          }
+
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
+          setSelectedProjectId(null);
+          setActiveAgentPageId(routeAgent.id);
+          setContextAgentId(null);
+          setCurrentView("chat");
+          void startSession();
           closeMobileSidebar();
           break;
         }
@@ -309,6 +383,9 @@ export function ChatPage({
           const routeAgent = resolveRouteAgent(route.agentId);
 
           if (!routeAgent) {
+            if (!normalizeAgentRouteId(route.agentId)) {
+              navigateChatHref(buildChatHref({ kind: "agents" }), { replace: true });
+            }
             return;
           }
 
@@ -666,10 +743,11 @@ export function ChatPage({
     setCanvasDocument(null);
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
-    setActiveAgentPageId(null);
+    setActiveAgentPageId(session.agent_id ?? null);
     setContextAgentId(null);
     setCurrentView("chat");
     selectSession(session);
+    navigateChatHref(buildChatSessionHrefForSession(session));
     closeMobileSidebar();
   }
 
@@ -854,7 +932,7 @@ export function ChatPage({
       setCurrentView("chat");
 
       if (agent) {
-        navigateChatHref(buildChatHref({ kind: "agent", agentId: agent.id }));
+        navigateChatHref(buildChatAgentHref(agent.id));
       }
 
       void startSession();
@@ -980,7 +1058,7 @@ export function ChatPage({
               return;
             }
 
-            navigateChatHref(buildChatHref({ kind: "agent", agentId: agent.id }));
+            navigateChatHref(buildChatAgentHref(agentId));
           }}
           isCollapsed={isDesktop && isSidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}
@@ -1069,7 +1147,7 @@ export function ChatPage({
                   const agent = agents.find((item) => item.id === agentId);
 
                   if (agent) {
-                    navigateChatHref(buildChatHref({ kind: "agent", agentId: agent.id }));
+                    navigateChatHref(buildChatAgentHref(agent.id));
                   }
                 } else {
                   navigateChatHref(buildChatHref({ kind: "home" }));
@@ -1170,6 +1248,7 @@ export function ChatPage({
             onClearAgent={() => {
               setActiveAgentPageId(null);
               setContextAgentId(null);
+              navigateChatHref(buildChatHref({ kind: "home" }));
               void startSession();
             }}
           />
@@ -1255,7 +1334,7 @@ export function ChatPage({
                     setCurrentView("chat");
 
                     if (agent) {
-                      navigateChatHref(buildChatHref({ kind: "agent", agentId: agent.id }));
+                      navigateChatHref(buildChatAgentHref(agent.id));
                     }
 
                     void startSession();

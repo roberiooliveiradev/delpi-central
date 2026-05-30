@@ -37,7 +37,10 @@ type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   projectId?: string | null;
   agentId?: string | null;
-  onSessionActivated?: (sessionId: string) => void;
+  onSessionActivated?: (
+    sessionId: string,
+    context?: { agentId?: string | null; projectId?: string | null },
+  ) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
 
@@ -988,7 +991,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
         queueMicrotask(() => {
-          options.onSessionActivated?.(sessionForMessage!.id);
+          options.onSessionActivated?.(sessionForMessage!.id, {
+            agentId: sessionForMessage!.agent_id ?? options.agentId ?? null,
+            projectId: sessionForMessage!.project_id ?? options.projectId ?? null,
+          });
         });
         setMessages((current) =>
           current.map((item) =>

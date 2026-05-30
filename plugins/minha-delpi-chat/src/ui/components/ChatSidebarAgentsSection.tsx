@@ -47,6 +47,7 @@ export function ChatSidebarAgentsSection({
               subtitle={agent.category || agent.description || agent.visibility}
               active={agent.id === selectedAgentId}
               href={buildChatAgentHref(agent.id)}
+              onClick={() => _onSelectAgent?.(agent.id)}
               badge={
                 agent.access_role === "owner"
                   ? "Seu"

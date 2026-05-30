@@ -2,7 +2,7 @@ import { Archive, Check, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { ChatSession } from "../../data/api/chatTypes";
-import { buildChatSessionHref } from "../../navigation/chatRoutes";
+import { buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { type SessionGroup } from "./chatSidebarUtils";
@@ -184,7 +184,7 @@ export function ChatSidebarSessionList({
               }}
               active={session.id === activeSessionId}
               isProcessing={isSessionProcessing?.(session.id) ?? false}
-              href={buildChatSessionHref(session.id)}
+              href={buildChatSessionHrefForSession(session)}
             />
 
             <div className="mdc-chat-session-actions">

@@ -30,7 +30,7 @@ export function useChatRouteSync({
     const route = parseChatRoute(pathname);
 
     const sessionsGrew =
-      route.kind === "session" &&
+      (route.kind === "session" || route.kind === "agent-session") &&
       sessions.length > lastAppliedSessionCountRef.current;
 
     const agentsBecameReady = agentsReady && !lastAppliedAgentsReadyRef.current;

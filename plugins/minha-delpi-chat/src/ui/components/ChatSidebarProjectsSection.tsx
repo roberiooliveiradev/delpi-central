@@ -6,7 +6,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
-import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
+import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "./ChatProjectCard";
 import { useConfirmDialog } from "./useConfirmDialog";
@@ -209,7 +209,7 @@ export function ChatSidebarProjectsSection({
                               variant="project"
                               active={session.id === activeSessionId}
                               isProcessing={isSessionProcessing?.(session.id) ?? false}
-                              href={buildChatSessionHref(session.id)}
+                              href={buildChatSessionHrefForSession(session)}
                             />
                           ))}
 

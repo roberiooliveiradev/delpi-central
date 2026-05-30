@@ -32,7 +32,7 @@ import type {
 import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
 import { useConfirmDialog } from "./useConfirmDialog";
 import { ChatUserSearchField } from "./ChatUserSearchField";
-import { buildChatProjectHref, buildChatSessionHref } from "../../navigation/chatRoutes";
+import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import { ChatConversationMenu } from "./ChatConversationMenu";
 import { formatSessionDate } from "./chatSidebarUtils";
@@ -538,7 +538,7 @@ export function ChatProjectHome({
                     }
                   >
                     <a
-                      href={buildChatSessionHref(session.id)}
+                      href={buildChatSessionHrefForSession(session)}
                       className="mdc-chat-project-chat-row__link"
                       onClick={(event) => {
                         event.preventDefault();

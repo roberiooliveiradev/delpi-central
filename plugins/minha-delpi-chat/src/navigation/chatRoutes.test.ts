@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildChatAgentHref,
+  buildChatAgentSessionHref,
+  buildChatSessionHrefForSession,
   findAgentByRouteId,
   isChatAgentRouteId,
+  normalizeAgentRouteId,
   parseChatRoute,
   withCanonicalAgentRouteId,
 } from "./chatRoutes";
@@ -26,9 +29,49 @@ describe("chatRoutes agents", () => {
     });
   });
 
+  it("parseia rota de agente com conversa", () => {
+    expect(
+      parseChatRoute(
+        "/apps/minha-delpi-chat/agentes/b185b233-b06a-4d23-8450-6ac3c0f7428d/conversas/sessao-1",
+      ),
+    ).toEqual({
+      kind: "agent-session",
+      agentId: "b185b233-b06a-4d23-8450-6ac3c0f7428d",
+      sessionId: "sessao-1",
+    });
+  });
+
   it("monta href com uuid", () => {
     expect(buildChatAgentHref("b185b233-b06a-4d23-8450-6ac3c0f7428d")).toBe(
       "/apps/minha-delpi-chat/agentes/b185b233-b06a-4d23-8450-6ac3c0f7428d",
+    );
+  });
+
+  it("monta href de conversa do agente", () => {
+    expect(
+      buildChatAgentSessionHref(
+        "b185b233-b06a-4d23-8450-6ac3c0f7428d",
+        "sessao-1",
+      ),
+    ).toBe(
+      "/apps/minha-delpi-chat/agentes/b185b233-b06a-4d23-8450-6ac3c0f7428d/conversas/sessao-1",
+    );
+  });
+
+  it("rejeita agentId inválido ao montar href", () => {
+    expect(buildChatAgentHref(undefined)).toBe("/apps/minha-delpi-chat/agentes");
+    expect(buildChatAgentHref("undefined")).toBe("/apps/minha-delpi-chat/agentes");
+  });
+
+  it("monta href de sessão priorizando agente", () => {
+    expect(
+      buildChatSessionHrefForSession({
+        id: "sessao-1",
+        agent_id: "b185b233-b06a-4d23-8450-6ac3c0f7428d",
+        project_id: null,
+      }),
+    ).toBe(
+      "/apps/minha-delpi-chat/agentes/b185b233-b06a-4d23-8450-6ac3c0f7428d/conversas/sessao-1",
     );
   });
 
@@ -54,5 +97,6 @@ describe("chatRoutes agents", () => {
   it("identifica uuid na rota", () => {
     expect(isChatAgentRouteId("b185b233-b06a-4d23-8450-6ac3c0f7428d")).toBe(true);
     expect(isChatAgentRouteId("minha-delpi-chat")).toBe(false);
+    expect(normalizeAgentRouteId("undefined")).toBeNull();
   });
 });
