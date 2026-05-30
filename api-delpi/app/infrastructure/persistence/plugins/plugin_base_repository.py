@@ -46,6 +46,7 @@ class PluginBaseRepository:
                 row = cursor.fetchone()
                 return dict(row) if row is not None else None
         except Exception as exc:
+            self.rollback()
             logger.exception(
                 "Plugins repository fetch_one failed.",
                 extra={"query": query},
@@ -65,6 +66,7 @@ class PluginBaseRepository:
                 rows = cursor.fetchall()
                 return [dict(row) for row in rows]
         except Exception as exc:
+            self.rollback()
             logger.exception(
                 "Plugins repository fetch_all failed.",
                 extra={"query": query},

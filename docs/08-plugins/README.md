@@ -23,11 +23,14 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 
 - `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
 - `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
+- `./scripts/ci/build-auditoria-5s.sh` — lint + build do plugin Auditoria 5S.
 
 **Homologação:**
 
 - `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
 - `./scripts/homologacao/check-eficiencia-fabril.sh` — smoke HTTP (`remoteEntry.js` + API `/dashboard`; defina `TOKEN` para validar JWT).
+- `./scripts/homologacao/check-auditoria-5s.sh` — smoke HTTP (`remoteEntry.js` + API critérios 5S).
+- `./scripts/homologacao/check-audit-5s-api.sh` — homologação **Fase 2** (curl: área → auditoria → 48 notas → concluir avaliação; requer `TOKEN`).
 - `./scripts/homologacao/check-eficiencia-fabril-fase0.sh` — validação da view TOTVS (container `delpi-api-delpi`).
 
 ---
@@ -41,6 +44,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/dashboard-lmps` | `dash-lmps` | iframe | `/dash-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
+| `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |

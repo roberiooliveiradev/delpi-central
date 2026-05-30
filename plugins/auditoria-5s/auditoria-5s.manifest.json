@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "auditoria-5s",
+  "name": "Auditoria 5S",
+  "description": "Auditoria operacional 5S — avaliação colaborativa por filial",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/auditoria-5s",
+  "entry": "/apps/auditoria-5s/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "auditoria-5s.view.filial-01",
+      "name": "Visualizar Auditoria 5S — Filial 01",
+      "description": "Acesso à auditoria 5S da filial 01",
+      "module": "auditoria-5s"
+    },
+    {
+      "code": "auditoria-5s.view.filial-02",
+      "name": "Visualizar Auditoria 5S — Filial 02",
+      "description": "Acesso à auditoria 5S da filial 02",
+      "module": "auditoria-5s"
+    },
+    {
+      "code": "auditoria-5s.audit.filial-01",
+      "name": "Auditar 5S — Filial 01",
+      "description": "Criar e editar auditorias 5S da filial 01",
+      "module": "auditoria-5s"
+    },
+    {
+      "code": "auditoria-5s.audit.filial-02",
+      "name": "Auditar 5S — Filial 02",
+      "description": "Criar e editar auditorias 5S da filial 02",
+      "module": "auditoria-5s"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/auditoria-5s/filial-01",
+      "label": "Auditoria 5S — Filial 01",
+      "permission": "auditoria-5s.view.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 18,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/auditoria-5s/filial-02",
+      "label": "Auditoria 5S — Filial 02",
+      "permission": "auditoria-5s.view.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 19,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -443,6 +443,21 @@ services:
     networks:
       - delpi-network
 
+  auditoria-5s:
+    build:
+      context: ../plugins/auditoria-5s
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-auditoria-5s
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     build:
       context: ../plugins/dashboard-supplies
@@ -517,6 +532,7 @@ services:
 
   postgres-plugins:
     image: pgvector/pgvector:pg15
+    platform: linux/amd64
     container_name: delpi-postgres-plugins
     restart: unless-stopped
     environment:
@@ -750,6 +766,7 @@ services:
       - dashboard-commercial
       - dashboard-production
       - eficiencia-fabril
+      - auditoria-5s
       - dashboard-supplies
       - dashboard-financial
       - dashboard-engineering

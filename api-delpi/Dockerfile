@@ -62,4 +62,4 @@ EXPOSE 8000
 # execução
 # -----------------
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/apps/api-delpi"]
+CMD ["python", "-m", "uvicorn", "app.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/apps/api-delpi"]

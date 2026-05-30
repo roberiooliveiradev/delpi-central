@@ -12,6 +12,8 @@ from fastapi.openapi.docs import get_swagger_ui_html
 #     run_plugins_migrations_on_startup,
 # )
 
+from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
+from app.interface.socket.sio_server import create_socket_app
 from delpi_auth.credential_guard import check_credentials
 from app.config import settings
 from app.interface.http.routes import product_routes
@@ -153,6 +155,11 @@ app.include_router(sale_routes.router, prefix="/sales", tags=["sales"])
 app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
 
+register_audit_5s_socket_handlers()
+
+# ASGI app exposto ao uvicorn (FastAPI + Socket.IO)
+socket_app = create_socket_app(app)
+
 
 # ==========================================================
 # CUSTOM SWAGGER (COM POSTMESSAGE + REFRESH)
@@ -245,4 +252,4 @@ async def custom_swagger_slash():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.asgi:application", host="0.0.0.0", port=8000, reload=True)
