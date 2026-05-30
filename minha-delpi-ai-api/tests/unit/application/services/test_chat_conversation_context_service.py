@@ -6,6 +6,40 @@ from app.application.services.chat_conversation_context_service import (
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 
 
+def test_build_analysis_context_includes_humanized_summary():
+    messages = [
+        {
+            "role": "assistant",
+            "content": "Visualização dos dados",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/90260142/guide",
+                            "humanizedSummary": {
+                                "titulo": "Roteiro do produto 90260142",
+                                "linhas": ["Operação 10: montagem", "Componente 50230002"],
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    context = ChatConversationContextService.build_analysis_context(
+        messages,
+        message="explique os dados acima",
+    )
+
+    assert "90260142" in context
+    assert "montagem" in context
+    assert "interpretar os dados" in context.lower()
+    assert "perfil" in context.lower() or "permiss" in context.lower()
+
+
 def test_build_analysis_context_includes_tool_preview():
     messages = [
         SimpleNamespace(

@@ -304,3 +304,28 @@ def test_present_inspection_flat_rows_builds_summary():
 
     assert "Comprimento" in joined
     assert "Acabamento" in joined
+
+
+def test_present_guide_path_avoids_sql_title():
+    presenter = ExternalActionResultPresenter()
+
+    humanized = presenter.present(
+        {
+            "items": [
+                {
+                    "operation_code": "10",
+                    "operation_description": "Montagem principal",
+                    "bom_level": 0,
+                    "product_code": "90260142",
+                    "work_center": "C01",
+                }
+            ]
+        },
+        path="/products/90260142/guide",
+    )
+
+    joined = "\n".join(humanized.get("linhas") or [])
+
+    assert humanized.get("titulo") != "Consulta SQL"
+    assert "90260142" in joined
+    assert "Montagem principal" in joined

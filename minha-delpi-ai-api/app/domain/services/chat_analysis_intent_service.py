@@ -245,6 +245,31 @@ class ChatAnalysisIntentService:
         return False
 
     @classmethod
+    def is_data_reference_without_tool_data(
+        cls,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> bool:
+        """Pedido de interpretação que referencia dados anteriores, mas sem consulta prévia."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if cls._has_recent_successful_tool_data(previous_messages or []):
+            return False
+
+        if any(term in normalized for term in cls._DATA_REFERENCE_TERMS):
+            return True
+
+        if "acima" in normalized and any(
+            term in normalized for term in cls._DATA_INTERPRETATION_TERMS
+        ):
+            return True
+
+        return normalized in cls._INTERPRETATION_SHORT_COMMANDS
+
+    @classmethod
     def is_comparison_or_insight_request(cls, message: str) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 

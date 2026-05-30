@@ -132,9 +132,20 @@ class ChatIntelligencePipelineService:
         *,
         current_tool_calls: list | None = None,
     ) -> str | None:
+        from app.application.services.chat_data_interpretation_answer_service import (
+            ChatDataInterpretationAnswerService,
+        )
         from app.application.services.chat_structure_comparison_service import (
             ChatStructureComparisonService,
         )
+
+        interpreted = ChatDataInterpretationAnswerService.build_answer(
+            message,
+            previous_messages,
+        )
+
+        if interpreted:
+            return interpreted
 
         return ChatStructureComparisonService.build_comparison_answer(
             message,

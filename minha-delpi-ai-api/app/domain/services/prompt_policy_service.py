@@ -224,6 +224,7 @@ Comportamento esperado:
         *,
         operational_mode: bool = False,
         analysis_mode: bool = False,
+        data_interpretation_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
@@ -266,7 +267,14 @@ Comportamento esperado:
                 )
             )
 
-        if analysis_mode:
+        if data_interpretation_mode:
+            sections.append(
+                self._load_policy(
+                    "chat-data-interpretation.md",
+                    "Modo interpretação: explique dados operacionais já obtidos; ignore perfil/permissões.",
+                )
+            )
+        elif analysis_mode:
             sections.append(
                 self._load_policy(
                     "chat-analysis-insights.md",

@@ -73,6 +73,38 @@ def test_does_not_flag_data_interpretation_without_tool_history():
     )
 
 
+def test_detects_data_reference_without_tool_history():
+    assert ChatAnalysisIntentService.is_data_reference_without_tool_data(
+        "explique os dados acima",
+        [],
+    )
+    assert ChatAnalysisIntentService.is_data_reference_without_tool_data(
+        "resume",
+        [],
+    )
+
+
+def test_does_not_flag_data_reference_without_tool_when_history_exists():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/90260142/guide"},
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert not ChatAnalysisIntentService.is_data_reference_without_tool_data(
+        "explique os dados acima",
+        history,
+    )
+
+
 def test_extract_all_product_codes_preserves_order():
     codes = ChatAnalysisIntentService.extract_all_product_codes(
         "user: estrutura 90260077",

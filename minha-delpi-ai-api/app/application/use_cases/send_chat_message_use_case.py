@@ -19,6 +19,7 @@ from app.application.services.chat_agent_skills_service import ChatAgentSkillsSe
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.application.services.chat_user_context_service import ChatUserContextService
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
 from app.application.services.llm_cost_estimator_service import LlmCostEstimatorService
 from app.application.services.rag_context_service import RagContextService
@@ -226,6 +227,7 @@ class SendChatMessageUseCase:
                 request.access_token,
                 message,
                 operational_optimize=operational_optimize,
+                analysis_mode=analysis_mode,
             )
             llm_messages = self.prompt_builder_service.build_messages(
                 history=history,
@@ -244,6 +246,10 @@ class SendChatMessageUseCase:
                 history_summary=history_summary,
                 operational_mode=operational_optimize,
                 analysis_mode=analysis_mode,
+                data_interpretation_mode=ChatAnalysisIntentService.is_data_interpretation_request(
+                    message,
+                    previous_messages,
+                ),
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
             )
@@ -604,7 +610,11 @@ class SendChatMessageUseCase:
         message: str,
         *,
         operational_optimize: bool,
+        analysis_mode: bool = False,
     ) -> str | None:
+        if analysis_mode and not ChatUserContextService.is_user_identity_question(message):
+            return None
+
         if (
             operational_optimize
             and Settings.CHAT_OPERATIONAL_SLIM_USER_CONTEXT

@@ -292,6 +292,7 @@ class ChatTurnPreparationService:
         )
         missing_product_code_answer = None
         ambiguous_period_answer = None
+        interpretation_without_data_answer = None
 
         if not canvas_action and not pre_capability_answer and not analysis_mode:
             missing_product_code_answer = (
@@ -307,6 +308,15 @@ class ChatTurnPreparationService:
                     previous_messages=history_source,
                 )
             )
+            if ChatAnalysisIntentService.is_data_reference_without_tool_data(
+                message,
+                history_source,
+            ):
+                interpretation_without_data_answer = (
+                    "Ainda não há dados nesta conversa para interpretar. "
+                    "Faça primeiro uma consulta operacional (ex.: estoque, roteiro, estrutura ou inspeção de um produto) "
+                    "e depois peça para explicar, resumir ou traduzir o resultado."
+                )
 
         skip_tools_for_user_identity = bool(
             getattr(request, "access_token", None)
@@ -325,6 +335,7 @@ class ChatTurnPreparationService:
             or pre_capability_answer
             or missing_product_code_answer
             or ambiguous_period_answer
+            or interpretation_without_data_answer
             or skip_tools_for_user_identity
             or skip_tools_for_data_interpretation
             or small_talk_direct
@@ -341,6 +352,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("operational_parameter")
             elif ambiguous_period_answer:
                 pipeline_stages.append("operational_parameter")
+            elif interpretation_without_data_answer:
+                pipeline_stages.append("data_interpretation_empty")
             elif small_talk_direct:
                 pipeline_stages.append("small_talk")
             tool_context = {
@@ -432,6 +445,7 @@ class ChatTurnPreparationService:
             )
             or bool(small_talk_direct)
             or operational_optimize
+            or analysis_mode
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
             or bool(assistant_identity_direct)
         )
@@ -442,6 +456,8 @@ class ChatTurnPreparationService:
             direct_answer = pre_capability_answer
         elif small_talk_direct:
             direct_answer = small_talk_direct
+        elif interpretation_without_data_answer:
+            direct_answer = interpretation_without_data_answer
         elif analysis_mode:
             direct_answer = ChatIntelligencePipelineService.resolve_analysis_direct_answer(
                 message,
@@ -461,7 +477,7 @@ class ChatTurnPreparationService:
 
         if canvas_action or pre_capability_answer or small_talk_direct or (
             analysis_mode and direct_answer
-        ):
+        ) or interpretation_without_data_answer:
             skip_rag = True
 
         # Casos de identidade/capacidades gerais ainda são resolvidos no use case,
@@ -502,6 +518,10 @@ class ChatTurnPreparationService:
 
         if not direct_answer and ambiguous_period_answer:
             direct_answer = ambiguous_period_answer
+            skip_rag = True
+
+        if not direct_answer and interpretation_without_data_answer:
+            direct_answer = interpretation_without_data_answer
             skip_rag = True
 
         if tool_calls:

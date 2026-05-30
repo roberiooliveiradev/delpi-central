@@ -68,12 +68,24 @@ class ExternalActionResultPresenter:
             if lmp_detail:
                 return lmp_detail
 
-            sql_resultsets = self._present_sql_resultsets(root, path)
+            path_routed = self._present_path_routed_items(root, path)
 
-            if sql_resultsets:
-                return sql_resultsets
+            if path_routed:
+                return path_routed
+
+            if not self._is_product_operational_path(path):
+                sql_resultsets = self._present_sql_resultsets(root, path)
+
+                if sql_resultsets:
+                    return sql_resultsets
 
         if isinstance(root, list) and root:
+            if self._is_product_operational_path(path):
+                path_routed = self._present_path_routed_items({"items": root}, path)
+
+                if path_routed:
+                    return path_routed
+
             sql_result = self._present_sql_rows(root)
 
             if sql_result:
@@ -592,6 +604,45 @@ class ExternalActionResultPresenter:
             return "Lista de LMPs"
         if "/sale-order" in lowered or "/orders" in lowered:
             return "Ordens de venda"
+        return None
+
+    def _is_product_operational_path(cls, path: str) -> bool:
+        lowered = str(path or "").lower()
+
+        return any(
+            segment in lowered
+            for segment in (
+                "/guide",
+                "/inspection",
+                "/stock",
+                "/structure",
+                "/parents",
+                "/purchases",
+                "/sales",
+                "/suppliers",
+                "/customers",
+            )
+        )
+
+    def _present_path_routed_items(self, root: dict, path: str) -> dict | None:
+        items = root.get("items") if isinstance(root, dict) else None
+
+        if not isinstance(items, list) or not items:
+            return None
+
+        lowered_path = str(path or "").lower()
+        title = self._infer_items_title(items, path)
+        first_item = items[0] if isinstance(items[0], dict) else {}
+
+        if "/guide" in lowered_path:
+            return self._present_product_guide(items, path=path, title=title)
+
+        if "/inspection" in lowered_path or self._looks_like_inspection_item(first_item):
+            return self._present_product_inspection(items, path=path, title=title)
+
+        if "/stock" in lowered_path or self._is_stock_data(first_item):
+            return self._present_product_stock(items, path=path, title=title)
+
         return None
 
     def _detect_api_error(self, data) -> dict | None:

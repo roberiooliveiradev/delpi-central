@@ -64,11 +64,17 @@ class ChatConversationContextService:
         for item in previous_messages[-limit:]:
             role = cls._message_field(item, "role", "user") or "user"
             content = cls._message_field(item, "content")
+            tool_blocks = list(cls._iter_tool_data_blocks(item, max_preview_chars=6000))
 
-            if content:
-                blocks.append(f"[{role}]\n{content}")
+            assistant_content = cls._assistant_content_for_analysis(
+                content,
+                has_tool_data=bool(tool_blocks),
+            )
 
-            for block in cls._iter_tool_data_blocks(item, max_preview_chars=6000):
+            if assistant_content:
+                blocks.append(f"[{role}]\n{assistant_content}")
+
+            for block in tool_blocks:
                 blocks.append(block)
                 preview_texts.append(block)
 
@@ -88,7 +94,7 @@ class ChatConversationContextService:
         if is_interpretation:
             header = (
                 "Contexto para interpretar os dados já obtidos nesta conversa "
-                "(não repita consultas idênticas):\n"
+                "(não repita consultas idênticas; ignore perfil/permissões do usuário):\n"
             )
         else:
             header = (
@@ -99,7 +105,83 @@ class ChatConversationContextService:
         if codes:
             header += f"Códigos de produto identificados no histórico: {', '.join(codes)}\n"
 
+        if is_interpretation and not preview_texts:
+            header += (
+                "Nenhum dado operacional detalhado foi encontrado no histórico recente. "
+                "Peça ao usuário para fazer uma consulta primeiro (ex.: estoque, roteiro, estrutura).\n"
+            )
+
         return f"{header}\n" + "\n\n".join(blocks)
+
+    @classmethod
+    def _format_humanized_summary(cls, tool_meta: dict) -> str:
+        humanized = tool_meta.get("humanizedSummary")
+
+        if not isinstance(humanized, dict):
+            return ""
+
+        title = str(humanized.get("titulo") or "").strip()
+        lines = [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line or "").strip()
+        ]
+
+        if not title and not lines:
+            return ""
+
+        parts: list[str] = []
+
+        if title:
+            parts.append(title)
+
+        parts.extend(lines)
+
+        return "\n".join(parts)
+
+    @classmethod
+    def _assistant_content_for_analysis(cls, content: str, *, has_tool_data: bool) -> str:
+        normalized = str(content or "").strip()
+
+        if not normalized:
+            return ""
+
+        generic = (
+            "visualização dos dados",
+            "visualizacao dos dados",
+            "resultado da api",
+            "a api retornou",
+        )
+
+        if normalized.lower() in generic:
+            return ""
+
+        if has_tool_data and len(normalized) < 24:
+            return ""
+
+        return normalized
+
+    @classmethod
+    def _is_weak_humanized_summary(cls, humanized_text: str, tool_meta: dict) -> bool:
+        if not humanized_text:
+            return True
+
+        title = str((tool_meta.get("humanizedSummary") or {}).get("titulo") or "").lower()
+
+        if title in {"consulta sql", "resultado da api", "consulta"}:
+            return True
+
+        lowered = humanized_text.lower()
+
+        return lowered.startswith("a consulta retornou") and "registro" in lowered
+
+    @classmethod
+    def _rehydrate_tool_summary(cls, tool_meta: dict) -> dict | None:
+        from app.application.services.chat_data_interpretation_answer_service import (
+            ChatDataInterpretationAnswerService,
+        )
+
+        return ChatDataInterpretationAnswerService._resolve_tool_summary(tool_meta)
 
     @classmethod
     def _tool_calls_snippet(cls, message, *, max_preview_chars: int) -> str:
@@ -133,6 +215,19 @@ class ChatConversationContextService:
             path = str(tool_meta.get("path") or "").strip()
             action_id = str(tool_meta.get("actionId") or "").strip()
             preview = str(tool_meta.get("responsePreview") or "").strip()
+            humanized_text = cls._format_humanized_summary(tool_meta)
+
+            if cls._is_weak_humanized_summary(humanized_text, tool_meta):
+                humanized_text = ""
+                rehydrated = cls._rehydrate_tool_summary(tool_meta)
+
+                if rehydrated:
+                    humanized_text = "\n".join(
+                        [rehydrated["titulo"], *rehydrated["linhas"]]
+                    )
+
+            if humanized_text:
+                preview = humanized_text if not preview else f"{humanized_text}\n\n{preview}"
 
             if max_preview_chars > 0 and len(preview) > max_preview_chars:
                 preview = f"{preview[:max_preview_chars]}\n…"

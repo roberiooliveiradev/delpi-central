@@ -98,6 +98,20 @@ def test_contextual_prompt_includes_operational_policy_when_operational_mode_ena
     assert "Modo operacional" in prompt
 
 
+def test_contextual_prompt_includes_data_interpretation_policy():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        analysis_mode=True,
+        data_interpretation_mode=True,
+    )
+
+    assert "interpretação de dados" in prompt.lower()
+    assert "perfil do usuário" in prompt.lower()
+
+
 def test_contextual_prompt_includes_analysis_policy_when_analysis_mode_enabled():
     service = PromptPolicyService()
 

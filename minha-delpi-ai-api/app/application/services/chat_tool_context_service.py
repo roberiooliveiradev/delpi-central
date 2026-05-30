@@ -1075,6 +1075,24 @@ class ChatToolContextService:
 
         if tool_name == "execute_external_action":
             safe_metadata["responsePreview"] = self._build_response_preview(data)
+            path = str(safe_metadata.get("path") or "")
+            humanized = self.external_action_result_presenter.present(
+                self._attach_request_sql(data, None, safe_metadata),
+                path=path,
+            )
+
+            if isinstance(humanized, dict):
+                linhas = [
+                    str(line).strip()
+                    for line in (humanized.get("linhas") or [])
+                    if str(line or "").strip()
+                ]
+
+                if humanized.get("titulo") or linhas:
+                    safe_metadata["humanizedSummary"] = {
+                        "titulo": humanized.get("titulo"),
+                        "linhas": linhas,
+                    }
 
         return safe_metadata
 
