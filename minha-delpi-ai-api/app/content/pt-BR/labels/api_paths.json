@@ -303,6 +303,62 @@
     {
       "path": "/health",
       "label": "Verificar saúde da API"
+    },
+    {
+      "path": "/commercial/billing",
+      "label": "Faturamento comercial consolidado"
+    },
+    {
+      "path": "/commercial/sales",
+      "label": "Vendas comerciais (série/resumo)"
+    },
+    {
+      "path": "/products/{code}/sales/billing",
+      "label": "Faturamento do produto"
+    },
+    {
+      "path": "/products/{code}/sales/open-orders",
+      "label": "Pedidos de venda em aberto do produto"
+    },
+    {
+      "path": "/products/{code}/sales/orders",
+      "label": "Ordens de venda do produto"
+    },
+    {
+      "path": "/products/{code}/purchases/history",
+      "label": "Histórico de compras do produto"
+    },
+    {
+      "path": "/products/{code}/stock/movements",
+      "label": "Movimentações de estoque do produto"
+    },
+    {
+      "path": "/products/{code}/stock/summary",
+      "label": "Resumo de estoque do produto"
+    },
+    {
+      "path": "/production/schedule",
+      "label": "Programação de produção"
+    },
+    {
+      "path": "/production/orders",
+      "label": "Ordens de produção"
+    },
+    {
+      "path": "/production/orders/today",
+      "label": "Ordens de produção de hoje"
+    },
+    {
+      "path": "/chat/sessions",
+      "label": "Sessões de chat"
+    },
+    {
+      "path": "/chat/agents",
+      "label": "Agentes de chat"
+    },
+    {
+      "path": "/chat/projects",
+      "label": "Projetos de chat"
     }
   ],
   "englishSummaries": {
@@ -322,7 +378,24 @@
     "root": "Verificar saúde da API",
     "lmps dashboard charts route": "Gráficos do painel de LMPs",
     "lmps dashboard items route": "Itens do painel de LMPs",
-    "lmps dashboard summary route": "Resumo do painel de LMPs"
+    "lmps dashboard summary route": "Resumo do painel de LMPs",
+    "commercial billing": "Faturamento comercial",
+    "sales order otd": "OTD de ordens de venda",
+    "closing rate": "Taxa de conversão de vendas",
+    "inventory turnover": "Giro de estoque / IDD",
+    "stock value": "Valor total de estoque",
+    "execute sql query": "Executar consulta SQL somente leitura",
+    "search products": "Buscar produtos no Protheus",
+    "product stock": "Estoque do produto",
+    "product structure": "Estrutura (BOM) do produto",
+    "product guide": "Roteiro de produção do produto",
+    "product inspection": "Plano de inspeção do produto",
+    "nonconformities": "Não conformidades",
+    "kaizens summary": "Resumo de kaizens",
+    "audit 5s summary": "Resumo da auditoria 5S",
+    "hr snapshot": "Snapshot de indicadores de RH",
+    "production schedule": "Programação de produção",
+    "production orders today": "Ordens de produção de hoje"
   },
   "defaults": {
     "authorizedQuery": "Consulta autorizada"

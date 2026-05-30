@@ -19,7 +19,9 @@
     "alwaysAvailableItems": [
       "Respostas com base na **documentação e conhecimento** autorizado (RAG).",
       "Anexos e fontes da conversa ou do projeto, quando enviados.",
-      "Entendo perguntas com **pequenos erros de digitação** (ex.: *forncedores*, *estoq*, *preco*, *estrutur*)."
+      "Entendo perguntas com **pequenos erros de digitação** (ex.: *forncedores*, *estoq*, *preco*, *estrutur*).",
+      "Cumprimentos, despedidas e perguntas simples de **hora/data** respondem direto, sem consulta pesada.",
+      "Interpretação de **dados já mostrados** na conversa (ex.: «explique essa tabela»)."
     ],
     "skillsTitle": "**Skills (comportamento do assistente)**",
     "operationalWithAgentTitle": "**Consultas operacionais — agente {agent_name}**",
@@ -33,7 +35,9 @@
     "tipsItems": [
       "Inclua **código do produto** (ex.: 10080001) ou **número da OV** quando souber.",
       "Peça formato: *em tabela*, *em gráfico* ou *só texto*.",
-      "Se faltar contexto, pergunto o que você precisa em vez de inventar dados."
+      "Se faltar contexto, pergunto o que você precisa em vez de inventar dados.",
+      "Use *próxima página* ou *mais linhas* quando a tabela vier truncada.",
+      "Para comparar ou resumir um resultado anterior, referencie «essa tabela» ou «esses dados»."
     ]
   },
   "skills": {
@@ -106,7 +110,15 @@
       "da pra fazer o que",
       "o que da pra consultar",
       "menu de comandos",
-      "help"
+      "help",
+      "menu de opcoes",
+      "menu de opções",
+      "o que da pra fazer",
+      "o que dá pra fazer",
+      "me mostra suas funcoes",
+      "me mostra suas funções",
+      "lista o que voce faz",
+      "lista o que você faz"
     ],
     "shortHelp": [
       "ajuda",
@@ -114,7 +126,11 @@
       "comandos",
       "capacidades",
       "funcionalidades",
-      "menu"
+      "menu",
+      "?",
+      "socorro",
+      "manual",
+      "guia"
     ],
     "capazTokens": [
       "fazer",
@@ -150,7 +166,25 @@
       "sql",
       "lmp",
       "comparar",
-      "bom"
+      "bom",
+      "ov",
+      "nota",
+      "faturamento",
+      "producao",
+      "produção",
+      "roteiro",
+      "inspecao",
+      "inspeção",
+      "fornecedor",
+      "cliente",
+      "giro",
+      "idd",
+      "cpv",
+      "otd",
+      "ebitda",
+      "rol",
+      "kaizen",
+      "ppm"
     ],
     "maxMessageLength": 280,
     "helpPrefixMaxLength": 80
@@ -399,7 +433,65 @@
       "token": "/quality/",
       "category": "Indicadores de qualidade",
       "examples": [
-        "indicadores de qualidade"
+        "indicadores de qualidade",
+        "nao conformidades do mes",
+        "ppm interno"
+      ]
+    },
+    {
+      "token": "/billing",
+      "category": "Faturamento comercial",
+      "examples": [
+        "faturamento do mes",
+        "billing comercial"
+      ]
+    },
+    {
+      "token": "/open-orders",
+      "category": "Pedidos em aberto",
+      "examples": [
+        "pedidos em aberto do produto",
+        "carteira de pedidos"
+      ]
+    },
+    {
+      "token": "/pricing",
+      "category": "Preços comerciais do produto",
+      "examples": [
+        "preco comercial do 10080001",
+        "tabela comercial do produto"
+      ]
+    },
+    {
+      "token": "/summary",
+      "category": "Resumo do produto",
+      "examples": [
+        "resumo do produto 10080001",
+        "visao geral do item"
+      ]
+    },
+    {
+      "token": "/transforma-mais",
+      "category": "Transforma Mais (engenharia)",
+      "examples": [
+        "processos transforma mais",
+        "resumo transforma mais"
+      ]
+    },
+    {
+      "token": "/system/tables",
+      "category": "Metadados de tabelas (SX2)",
+      "examples": [
+        "buscar tabela sb1",
+        "qual tabela guarda produtos"
+      ]
+    },
+    {
+      "token": "/system/columns",
+      "category": "Metadados de colunas (SX3)",
+      "examples": [
+        "buscar coluna por descricao",
+        "colunas da tabela sb1"
       ]
     }
   ],
@@ -416,7 +508,17 @@
     "estrutura do 10080001",
     "preço do 10080001",
     "listar lmps da filial",
+    "roteiro do produto 10080001",
+    "inspeção do 10080001",
+    "valor total de estoque",
+    "giro de estoque idd",
+    "faturamento comercial do mês",
+    "indicadores de qualidade ppm",
+    "quais produtos serão produzidos hoje",
+    "que horas são",
+    "bom dia",
     "o que você pode fazer",
+    "quem é você",
     "quais apps tenho acesso"
   ]
 }

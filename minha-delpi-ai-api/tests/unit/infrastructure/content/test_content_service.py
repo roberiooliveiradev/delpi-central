@@ -21,3 +21,16 @@ def test_load_external_action_responses():
     assert data["sql"]["defaultTitle"] == "Consulta SQL"
     assert data["productionSchedule"]["titleTodayFallback"]
     assert len(data["temporal"]["weekdays"]) == 7
+    assert len(data["temporal"]["months"]) == 12
+
+
+def test_load_skills_catalog():
+    data = ContentService.load_json("skills/catalog")
+    assert len(data.get("skills") or []) >= 2
+    assert data["skills"][0].get("key")
+
+
+def test_load_utility_answers():
+    data = ContentService.load_json("assistant/utility_answers")
+    assert data["responses"]["current_year"]
+    assert len(data["patterns"]["current_time"]) >= 10

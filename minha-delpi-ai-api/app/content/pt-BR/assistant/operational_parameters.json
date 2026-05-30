@@ -2,9 +2,15 @@
   "missingProductCode": {
     "stock": "Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Com o código, consulto filial, armazém e quantidade disponível na plataforma.",
     "structure": "Para consultar a **estrutura (BOM)** do item, informe o **código do produto** (ex.: 10080099).",
-    "parents": "Para ver onde o produto é usado, informe o **código do produto** (ex.: 10080099).",
+    "parents": "Para ver **onde o produto é usado** (produtos pai), informe o **código do produto** (ex.: 10080099).",
     "description": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, texto).",
+    "analyser": "Para abrir a **ficha completa** do produto, informe o **código** (ex.: 10080099).",
+    "summary": "Para o **resumo consolidado** do produto, informe o **código** (ex.: 10080099).",
     "default": "Para consultar dados operacionais do produto, informe o **código do produto** (ex.: 10080099)."
   },
-  "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?"
+  "missingSaleNumber": "Para consultar a **LMP** ou **ordem de venda**, informe o **número da OV** (ex.: 123456).",
+  "missingPeriod": "Para essa consulta, informe o **período** desejado (ex.: *março de 2026*, *últimos 30 dias*, *01/03/2026 a 31/03/2026*).",
+  "missingBranch": "Informe a **filial** desejada (ex.: *01*, *matriz*) para eu filtrar o resultado.",
+  "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?",
+  "ambiguousPeriodRange": "Encontrei mais de uma interpretação de período. Confirme se quer **{option_a}** ou **{option_b}**."
 }

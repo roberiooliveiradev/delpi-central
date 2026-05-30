@@ -7,7 +7,8 @@
     "rowsCount": "A consulta retornou **{count}** registro(s).",
     "moreLines": "… e mais {count} linha(s).",
     "moreProducts": "… e mais {count} produto(s).",
-    "operationStartPrefix": " · início "
+    "operationStartPrefix": " · início ",
+    "truncatedHint": "Resultado parcial — peça *mais linhas* ou *próxima página* para continuar."
   },
   "productionSchedule": {
     "title": "Produtos programados para produção {label}",
@@ -20,7 +21,11 @@
   },
   "selectionReasons": {
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",
-    "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente."
+    "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",
+    "stockFastPath": "Consulta de estoque reconhecida — execução direta via API de produto.",
+    "productSearch": "Busca de produtos por descrição, código ou grupo.",
+    "lmpDetail": "Detalhe de LMP/ordem especial por número de OV.",
+    "departmentKpi": "Indicador departamental reconhecido na pergunta."
   },
   "composite": {
     "multiExecutionSummary": "**Resumo:** realizei **{count}** consulta(s) à API DELPI para responder ao seu pedido.",
@@ -33,7 +38,9 @@
     "forbidden": "sem permissão para esta consulta (HTTP {code}).",
     "serverError": "erro temporário na API (HTTP {code}). Tente novamente em instantes.",
     "httpStatus": "a API retornou status HTTP {code}.",
-    "notSuccessful": "a consulta não foi concluída com sucesso."
+    "notSuccessful": "a consulta não foi concluída com sucesso.",
+    "timeout": "a consulta demorou além do esperado. Tente novamente ou refine o filtro.",
+    "partialSuccess": "parte das consultas retornou dados; veja os avisos abaixo."
   },
   "temporal": {
     "today": "hoje",
@@ -41,6 +48,12 @@
     "dayAfterTomorrow": "depois de amanhã",
     "yesterday": "ontem",
     "dayBeforeYesterday": "antes de ontem",
+    "thisWeek": "esta semana",
+    "lastWeek": "semana passada",
+    "nextWeek": "próxima semana",
+    "thisMonth": "este mês",
+    "lastMonth": "mês passado",
+    "nextMonth": "próximo mês",
     "weekdayWithDate": "{weekday} ({date})",
     "namedDayMonthYear": "{day} de {month} de {year}",
     "weekdays": [
@@ -51,6 +64,34 @@
       "sexta-feira",
       "sábado",
       "domingo"
+    ],
+    "months": [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro"
+    ],
+    "monthsShort": [
+      "jan",
+      "fev",
+      "mar",
+      "abr",
+      "mai",
+      "jun",
+      "jul",
+      "ago",
+      "set",
+      "out",
+      "nov",
+      "dez"
     ]
   },
   "dateRangeReasons": {
@@ -64,9 +105,12 @@
     "nextMonth": "Mês que vem.",
     "currentMonth": "Mês atual.",
     "lastYear": "Ano passado.",
+    "currentYear": "Ano atual.",
     "namedMonthYear": "Mês {month} de {year}.",
     "yearMonthInQuestion": "Período ano-mês na pergunta.",
     "pointAsRange": "Data {label}.",
-    "yearConfirmation": "Mês {month} de {year} (confirmação do usuário)."
+    "yearConfirmation": "Mês {month} de {year} (confirmação do usuário).",
+    "weekdayReference": "Referência a dia da semana: {label}.",
+    "quarterReference": "Trimestre {quarter} de {year}."
   }
 }

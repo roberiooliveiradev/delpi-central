@@ -96,17 +96,71 @@
     "machine_name": "Máquina",
     "setup_time": "Tempo setup",
     "operation_time": "Tempo operação",
-    "document": "Documento"
+    "document": "Documento",
+    "unit_price": "Preço unitário",
+    "line_total": "Total linha",
+    "tax_value": "Valor imposto",
+    "discount": "Desconto",
+    "currency": "Moeda",
+    "exchange_rate": "Taxa câmbio",
+    "family": "Família",
+    "group_code": "Grupo",
+    "subgroup": "Subgrupo",
+    "ncm": "NCM",
+    "origin": "Origem",
+    "weight": "Peso",
+    "net_weight": "Peso líquido",
+    "gross_weight": "Peso bruto",
+    "lead_time_days": "Lead time (dias)",
+    "minimum_stock": "Estoque mínimo",
+    "maximum_stock": "Estoque máximo",
+    "reorder_point": "Ponto de reposição",
+    "sale_number": "Nº OV",
+    "sale_order": "Ordem venda",
+    "production_order": "Ordem produção",
+    "scheduled_date": "Data programada",
+    "scheduled_quantity": "Qtd. programada",
+    "produced_quantity": "Qtd. produzida",
+    "scrap_quantity": "Qtd. refugo",
+    "yield_percent": "% Rendimento",
+    "oee_percent": "OEE (%)",
+    "downtime_hours": "Parada (h)",
+    "branch_name": "Filial",
+    "warehouse_name": "Armazém",
+    "item_code": "Item",
+    "item_description": "Descrição item",
+    "revision": "Revisão",
+    "drawing_number": "Nº desenho",
+    "last_sale_price": "Últ. preço venda",
+    "last_purchase_price": "Últ. preço compra",
+    "average_cost": "Custo médio",
+    "standard_cost": "Custo padrão",
+    "margin_percent": "Margem (%)",
+    "kpi_label": "Indicador",
+    "kpi_value": "Valor",
+    "kpi_target": "Meta",
+    "kpi_variance": "Variação",
+    "period_label": "Período",
+    "department": "Departamento",
+    "sector": "Setor",
+    "responsible": "Responsável",
+    "created_at": "Criado em",
+    "updated_at": "Atualizado em",
+    "notes": "Observações",
+    "observation": "Observação"
   },
   "profilePriority": [
     "stock",
+    "production",
+    "lmp",
     "invoice",
     "guide",
     "inspection",
     "movement",
     "price",
     "supplier",
-    "customer"
+    "customer",
+    "kpi"
   ],
   "tableProfiles": {
     "stock": {
@@ -247,6 +301,48 @@
         ["last_sale_price", "Últ. preço venda"],
         ["total_quantity", "Qtd. total"],
         ["total_value", "Valor total"]
+      ]
+    },
+    "production": {
+      "detect": {
+        "anyKeys": ["production_order", "scheduled_quantity", "produced_quantity"]
+      },
+      "preferredColumns": [
+        ["production_order", "Ordem produção"],
+        ["product_code", "Produto"],
+        ["scheduled_date", "Data programada"],
+        ["scheduled_quantity", "Qtd. programada"],
+        ["produced_quantity", "Qtd. produzida"],
+        ["scrap_quantity", "Qtd. refugo"],
+        ["branch", "Filial"],
+        ["status", "Status"]
+      ]
+    },
+    "lmp": {
+      "detect": {
+        "anyKeys": ["sale_number", "sale_order"]
+      },
+      "preferredColumns": [
+        ["sale_number", "Nº OV"],
+        ["product_code", "Produto"],
+        ["description", "Descrição"],
+        ["branch", "Filial"],
+        ["status", "Status"],
+        ["delivery_date", "Data entrega"],
+        ["quantity", "Quantidade"]
+      ]
+    },
+    "kpi": {
+      "detect": {
+        "anyKeys": ["kpi_label", "kpi_value"]
+      },
+      "preferredColumns": [
+        ["kpi_label", "Indicador"],
+        ["kpi_value", "Valor"],
+        ["kpi_target", "Meta"],
+        ["kpi_variance", "Variação"],
+        ["period_label", "Período"],
+        ["department", "Departamento"]
       ]
     }
   }

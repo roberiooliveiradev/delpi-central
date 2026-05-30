@@ -1,44 +1,94 @@
 {
-  "maxMessageLength": 80,
+  "maxMessageLength": 90,
   "categoryPriority": [
     "current_datetime",
     "current_time",
     "current_date",
-    "current_weekday"
+    "current_weekday",
+    "current_year"
   ],
   "patterns": {
     "current_time": [
       "que horas sao",
+      "que horas são",
       "que horas e",
+      "que horas é",
       "qual a hora",
       "qual e a hora",
+      "qual é a hora",
       "me diga as horas",
       "me fala as horas",
       "me informe as horas",
+      "me diz as horas",
+      "me diz a hora",
+      "me fala a hora",
       "horas agora",
-      "hora agora"
+      "hora agora",
+      "hora atual",
+      "horario agora",
+      "horário agora",
+      "sabe que horas sao",
+      "sabe que horas são",
+      "pode me dizer as horas",
+      "pode me dizer a hora",
+      "quanto ta no relogio",
+      "quanto tá no relógio",
+      "quantas horas sao",
+      "quantas horas são"
     ],
     "current_date": [
       "que dia e hoje",
+      "que dia é hoje",
       "qual a data",
       "qual e a data",
+      "qual é a data",
       "data de hoje",
       "data hoje",
       "que data e hoje",
+      "que data é hoje",
       "me diga a data",
-      "me fala a data"
+      "me fala a data",
+      "me informe a data",
+      "me diz a data",
+      "hoje e que dia",
+      "hoje é que dia",
+      "dia de hoje",
+      "data atual",
+      "qual e o dia de hoje",
+      "qual é o dia de hoje"
     ],
     "current_datetime": [
       "que dia e hora",
+      "que dia é hora",
       "qual a data e hora",
+      "qual é a data e hora",
       "data e hora",
-      "dia e hora"
+      "dia e hora",
+      "data e horario",
+      "data e horário",
+      "me diga data e hora",
+      "me fala data e hora"
     ],
     "current_weekday": [
       "que dia da semana",
       "qual dia da semana",
       "que dia da semana e hoje",
-      "qual dia da semana e hoje"
+      "que dia da semana é hoje",
+      "qual dia da semana e hoje",
+      "qual dia da semana é hoje",
+      "hoje e que dia da semana",
+      "hoje é que dia da semana",
+      "qual o dia da semana hoje"
+    ],
+    "current_year": [
+      "qual o ano",
+      "qual e o ano",
+      "qual é o ano",
+      "que ano estamos",
+      "que ano e estamos",
+      "que ano é estamos",
+      "em que ano estamos",
+      "ano atual"
     ]
   },
   "exclusions": [
@@ -57,13 +107,19 @@
     "protheus",
     "sql",
     "produto",
-    "estoque"
+    "estoque",
+    "entrega",
+    "pedido",
+    "venda",
+    "compra",
+    "faturamento"
   ],
   "timezoneLabel": "horário de Brasília",
   "responses": {
     "current_time": "Agora são **{time}** ({timezone_label}).",
     "current_date": "Hoje é **{weekday}**, **{date}** ({timezone_label}).",
     "current_datetime": "Agora são **{time}** de **{weekday}**, **{date}** ({timezone_label}).",
-    "current_weekday": "Hoje é **{weekday}** ({timezone_label})."
+    "current_weekday": "Hoje é **{weekday}** ({timezone_label}).",
+    "current_year": "Estamos em **{year}** ({timezone_label})."
   }
 }

@@ -3,21 +3,45 @@
     {
       "key": "company-knowledge",
       "label": "Conhecimento da empresa",
-      "description": "Prioriza a base documental global da empresa (políticas, diretrizes, glossário e manuais). Orienta o uso do RAG e da ferramenta search_knowledge_base, com citação de fontes quando aplicável.",
+      "description": "Prioriza a base documental global da empresa (políticas, diretrizes, glossário, manuais e normas internas). Orienta o uso do RAG e da ferramenta search_knowledge_base, com citação de fontes quando aplicável. Indicada para perguntas sobre processos, políticas, definições e documentação corporativa — não substitui consultas operacionais com números do ERP.",
       "policyFile": "company-knowledge-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "companyKnowledge",
-      "executionPathHint": "search_knowledge_base"
+      "executionPathHint": "search_knowledge_base",
+      "aliases": [
+        "conhecimento",
+        "documentacao",
+        "documentação",
+        "rag",
+        "base de conhecimento"
+      ],
+      "examplePrompts": [
+        "o que diz a política de compras?",
+        "explique o glossário de qualidade",
+        "busque na base sobre LMP"
+      ]
     },
     {
       "key": "sql",
       "label": "Especialista SQL",
-      "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro. A execução no banco depende da action POST /data/sql habilitada no agente.",
+      "description": "Elabora, explica, corrige e revisa consultas SELECT (SQL genérico) em blocos ```sql```. Identifica erros de sintaxe e lógica quando o usuário colar SQL ou mensagens de erro do Protheus/TOTVS. A execução no banco depende da action POST /data/sql habilitada no agente — elaborar SQL e executar são camadas diferentes.",
       "policyFile": "sql-assistant-skill.md",
       "metadataFlag": "authoring",
       "legacyMetadataFlag": "sqlAuthoring",
       "executionPathHint": "POST /data/sql",
-      "executionDerivedKey": "sqlExecutionAvailable"
+      "executionDerivedKey": "sqlExecutionAvailable",
+      "aliases": [
+        "sql",
+        "consulta sql",
+        "select",
+        "query",
+        "protheus sql"
+      ],
+      "examplePrompts": [
+        "monte um select de produtos ativos",
+        "corrija esse sql: select ...",
+        "explique essa query de estoque"
+      ]
     }
   ]
 }

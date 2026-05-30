@@ -91,6 +91,7 @@ class ChatUtilityDirectAnswerService:
             "time": localized.strftime("%H:%M"),
             "date": localized.strftime("%d/%m/%Y"),
             "weekday": weekday,
+            "year": str(localized.year),
             "timezone_label": timezone_label,
         }
 

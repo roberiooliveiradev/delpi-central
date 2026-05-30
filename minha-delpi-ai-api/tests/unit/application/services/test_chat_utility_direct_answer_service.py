@@ -18,6 +18,8 @@ from app.application.services.chat_utility_direct_answer_service import (
         "qual a data?",
         "que dia da semana é hoje?",
         "data e hora",
+        "qual o ano?",
+        "que ano estamos",
     ],
 )
 def test_utility_question_detection(message: str):
@@ -71,3 +73,14 @@ def test_current_weekday_answer():
 
     assert answer
     assert "sábado" in answer
+
+
+def test_current_year_answer():
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="qual o ano?",
+        now=fixed,
+    )
+
+    assert answer
+    assert "2026" in answer

@@ -1,14 +1,30 @@
 {
   "statusConnected": "Conectado. Preparando resposta...",
+  "statusDirectAnswer": "Resposta pronta.",
+  "statusLoadingHistory": "Carregando histórico da conversa...",
+  "statusSearchingKnowledge": "Consultando documentação autorizada...",
+  "statusRunningTools": "Consultando dados autorizados...",
+  "statusGeneratingAnswer": "Gerando resposta...",
+  "statusFinalizing": "Finalizando resposta...",
   "sessionTitleDefault": "Nova conversa",
   "sessionTitleEmptyValues": [
     "nova conversa",
     "novo chat",
-    "conversa sem título"
+    "conversa sem titulo",
+    "conversa sem título",
+    "sem titulo",
+    "sem título",
+    "chat novo",
+    "conversa nova",
+    "untitled",
+    "new chat"
   ],
   "titleGenerationSystem": "Você cria títulos curtos para conversas corporativas. Responda apenas com o título, em português, sem aspas, sem ponto final, com no máximo 6 palavras.",
   "titleGenerationUserTemplate": "Crie um título curto para esta conversa:\n\n{message}",
   "ragEmptyContext": "Nenhum trecho documental relevante foi encontrado.",
   "toolContextHeader": "Resultados de ferramentas internas autorizadas:",
-  "ragContextHeader": "Contexto documental autorizado:"
+  "ragContextHeader": "Contexto documental autorizado:",
+  "playbackStatus": "Exibindo resposta...",
+  "cancelledStatus": "Resposta cancelada.",
+  "errorGenericStatus": "Não foi possível concluir a resposta. Tente novamente."
 }
