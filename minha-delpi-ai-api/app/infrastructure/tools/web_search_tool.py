@@ -3,6 +3,9 @@ from app.domain.entities.tool_result import ToolResult
 from app.domain.exceptions.tool_exceptions import InvalidToolInputError
 from app.domain.ports.internal_tool_port import InternalToolPort
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
+from app.domain.services.web_search_portuguese_content_service import (
+    WebSearchPortugueseContentService,
+)
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.gateways.web_search_http_gateway import WebSearchHttpGateway
 
@@ -37,6 +40,7 @@ class WebSearchTool(InternalToolPort):
         limit = max(1, min(limit, Settings.CHAT_WEB_SEARCH_MAX_RESULTS))
 
         payload = self.gateway.search(query, max_results=limit)
+        payload = WebSearchPortugueseContentService.localize_payload(payload) or payload
 
         return ToolResult(
             name=self.name,

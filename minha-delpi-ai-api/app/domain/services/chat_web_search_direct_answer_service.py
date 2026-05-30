@@ -40,10 +40,13 @@ class ChatWebSearchDirectAnswerService:
         if not useful:
             return cls._format_no_results(payload, message=message)
 
-        primary = next(
-            (item for item in useful if item.get("source") == "instant_answer"),
-            useful[0],
-        )
+        if payload.get("localizedFor") == "pt-BR":
+            primary = useful[0]
+        else:
+            primary = next(
+                (item for item in useful if item.get("source") == "instant_answer"),
+                useful[0],
+            )
 
         query = str(payload.get("query") or message or "").strip()
         title = str(primary.get("title") or query or "Resultado da busca").strip()
@@ -66,10 +69,13 @@ class ChatWebSearchDirectAnswerService:
         if url:
             lines.extend(["", f"**Fonte principal:** {url}"])
 
-        retried = str(payload.get("retriedQuery") or "").strip()
+        if payload.get("localizedFor") == "pt-BR":
+            lines.extend(["", "*(Resumo em português via Wikipedia.)*"])
+        else:
+            retried = str(payload.get("retriedQuery") or "").strip()
 
-        if retried and retried.casefold() != query.casefold():
-            lines.extend(["", f"*(Busca complementada em inglês: «{retried}».)*"])
+            if retried and retried.casefold() != query.casefold():
+                lines.extend(["", f"*(Busca complementada em inglês: «{retried}».)*"])
 
         return "\n".join(line for line in lines if line is not None).strip()
 

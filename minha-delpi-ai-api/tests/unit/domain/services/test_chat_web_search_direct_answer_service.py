@@ -7,19 +7,13 @@ def test_format_success_from_instant_answer():
     payload = {
         "query": "python linguagem de programacao",
         "searchStatus": "success",
-        "retriedQuery": "python programming language",
+        "localizedFor": "pt-BR",
         "results": [
             {
-                "title": "Python (programming language)",
-                "snippet": "Python is a high-level programming language.",
-                "url": "https://en.wikipedia.org/wiki/Python_(programming_language)",
-                "source": "instant_answer",
-            },
-            {
-                "title": "NumPy",
-                "snippet": "NumPy library.",
-                "url": "https://duckduckgo.com/NumPy",
-                "source": "related_topic",
+                "title": "Python",
+                "snippet": "Python é uma linguagem de programação de alto nível.",
+                "url": "https://pt.wikipedia.org/wiki/Python",
+                "source": "wikipedia_pt",
             },
         ],
     }
@@ -28,12 +22,37 @@ def test_format_success_from_instant_answer():
 
     assert answer is not None
     assert "internet pública" in answer
-    assert "Python is a high-level programming language." in answer
-    assert "wikipedia.org" in answer
-    assert "não pesquis" not in answer.lower()
+    assert "Python é uma linguagem" in answer
+    assert "pt.wikipedia.org" in answer
+    assert "Resumo em português via Wikipedia" in answer
 
 
-def test_format_no_results():
+def test_format_prefers_wikipedia_pt_when_localized():
+    payload = {
+        "query": "python linguagem de programacao",
+        "searchStatus": "success",
+        "localizedFor": "pt-BR",
+        "results": [
+            {
+                "title": "Python",
+                "snippet": "Python é uma linguagem de programação de alto nível.",
+                "url": "https://pt.wikipedia.org/wiki/Python",
+                "source": "wikipedia_pt",
+            },
+            {
+                "title": "Python (programming language)",
+                "snippet": "Python is a high-level programming language.",
+                "url": "https://en.wikipedia.org/wiki/Python",
+                "source": "instant_answer",
+            },
+        ],
+    }
+
+    answer = ChatWebSearchDirectAnswerService.format(payload)
+
+    assert answer is not None
+    assert "Python é uma linguagem" in answer
+    assert "Python is a high-level" not in answer
     payload = {
         "query": "tema xyz",
         "searchStatus": "no_results",

@@ -359,7 +359,7 @@ Requer `CHAT_WEB_SEARCH_ENABLED=true` e admin `webSearchEnabled=true`.
 
 | ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
 |----|----------|----------------------------|----------------------------------|
-| W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action`; `directAnswer` | Resposta em PT com resumo + URL Wikipedia; **não** «não pesquiso na internet» |
+| W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action`; `directAnswer` | Resumo **em português** (Wikipedia PT) + URL pt.wikipedia.org |
 | W2 | pesquise na internet sobre inflação 2026 | Idem W1 | Se `no_results`, texto honesto + conhecimento geral rotulado (não «não pesquiso na internet») |
 
 ```bash

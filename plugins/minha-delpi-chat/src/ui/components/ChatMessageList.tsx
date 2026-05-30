@@ -941,6 +941,29 @@ export function ChatMessageList({
                   <button
                     className="mdc-chat-message-action"
                     type="button"
+                    onClick={() => void handleCopy(message.id, displayContent)}
+                    aria-label={
+                      copiedMessageId === message.id
+                        ? "Pergunta copiada"
+                        : "Copiar pergunta"
+                    }
+                    title={
+                      copiedMessageId === message.id
+                        ? "Pergunta copiada"
+                        : "Copiar pergunta"
+                    }
+                    disabled={!displayContent.trim()}
+                  >
+                    {copiedMessageId === message.id ? (
+                      <Check size={15} aria-hidden="true" />
+                    ) : (
+                      <Copy size={15} aria-hidden="true" />
+                    )}
+                  </button>
+
+                  <button
+                    className="mdc-chat-message-action"
+                    type="button"
                     onClick={() => startEditMessage(message)}
                     aria-label="Editar mensagem"
                     title="Editar mensagem"
