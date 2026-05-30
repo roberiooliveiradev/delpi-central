@@ -31,6 +31,7 @@ export class DelpiApi {
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${this.token}`,
+        "X-Delpi-Caller-App": "dashboard-delpi",
       },
     });
 

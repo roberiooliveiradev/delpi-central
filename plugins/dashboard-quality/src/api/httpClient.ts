@@ -2,6 +2,8 @@ type RequestOptions = {
   signal?: AbortSignal;
 };
 
+const DELPI_CALLER_APP = "dashboard-quality";
+
 let accessTokenGetter: (() => string | undefined) | null = null;
 
 export function configureHttpClient(getAccessToken: () => string | undefined) {
@@ -14,6 +16,7 @@ export async function httpGet<T>(
 ): Promise<T> {
   const headers: Record<string, string> = {
     Accept: "application/json",
+    "X-Delpi-Caller-App": DELPI_CALLER_APP,
   };
 
   const token = accessTokenGetter?.();
