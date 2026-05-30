@@ -4,9 +4,16 @@ import { useEffect, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 
 import {
+  APP_USAGE_CLOSE_EVENT,
   APP_USAGE_OPEN_EVENT,
+  type AppUsageCloseDetail,
   type AppUsageOpenDetail,
 } from "../utils/appUsageEvents";
+import {
+  type ActiveAppUsage,
+  shouldCloseExternalUsage,
+  shouldPingExternalUsage,
+} from "../utils/appUsageSession";
 
 interface UseSocketProps {
   token?: string;
@@ -22,7 +29,7 @@ export const useSocket = ({
   onConnected,
 }: UseSocketProps) => {
   const socketRef = useRef<Socket | null>(null);
-  const activeAppRef = useRef<{ appId: string; routePath: string } | null>(null);
+  const activeAppRef = useRef<ActiveAppUsage | null>(null);
 
   const onNotificationRef = useRef(onNotification);
   const onAdminChangedRef = useRef(onAdminChanged);
@@ -112,7 +119,6 @@ export const useSocket = ({
     if (!socket.connected) {
       socket.connect();
     } else {
-      // reautentica sem recriar conexão
       socket.emit("auth.refresh", { token });
     }
   }, [token]);
@@ -121,67 +127,126 @@ export const useSocket = ({
     const socket = socketRef.current;
     if (!socket || !token || token.length < 20) return;
 
+    const emitAppClose = (appId?: string) => {
+      if (!socket.connected) return;
+      socket.emit("app_usage.close", appId ? { appId } : {});
+    };
+
+    const clearActiveApp = (appId?: string) => {
+      const current = activeAppRef.current;
+      if (appId && current?.appId !== appId) return;
+
+      const closingId = appId ?? current?.appId;
+      activeAppRef.current = null;
+      emitAppClose(closingId);
+    };
+
+    const syncExternalSession = () => {
+      const active = activeAppRef.current;
+      if (!active?.external) return;
+
+      if (shouldCloseExternalUsage(active)) {
+        clearActiveApp(active.appId);
+      }
+    };
+
     const emitUsagePing = () => {
       if (!socket.connected) return;
 
       socket.emit("presence.ping");
 
+      syncExternalSession();
+
       const activeApp = activeAppRef.current;
-      if (activeApp?.appId) {
-        socket.emit("app_usage.ping", {
-          appId: activeApp.appId,
-          routePath: activeApp.routePath,
-        });
-      }
+      if (!activeApp?.appId) return;
+
+      if (!shouldPingExternalUsage(activeApp)) return;
+
+      socket.emit("app_usage.ping", {
+        appId: activeApp.appId,
+        routePath: activeApp.routePath,
+      });
+    };
+
+    const emitAppOpen = (active: ActiveAppUsage) => {
+      if (!socket.connected) return;
+
+      socket.emit("app_usage.open", {
+        appId: active.appId,
+        routePath: active.routePath,
+      });
     };
 
     const onConnect = () => {
       const activeApp = activeAppRef.current;
-      if (activeApp?.appId) {
-        socket.emit("app_usage.open", {
-          appId: activeApp.appId,
-          routePath: activeApp.routePath,
-        });
+      if (!activeApp?.appId) {
+        emitUsagePing();
+        return;
       }
 
+      if (activeApp.external && shouldCloseExternalUsage(activeApp)) {
+        clearActiveApp(activeApp.appId);
+        emitUsagePing();
+        return;
+      }
+
+      emitAppOpen(activeApp);
       emitUsagePing();
     };
 
+    const onVisibilityChange = () => {
+      const active = activeAppRef.current;
+      if (!active?.external) return;
+
+      if (document.visibilityState === "hidden") {
+        active.leftPortal = true;
+        emitUsagePing();
+        return;
+      }
+
+      syncExternalSession();
+    };
+
+    const onAppOpened = (event: Event) => {
+      const custom = event as CustomEvent<AppUsageOpenDetail>;
+      const appId = custom.detail?.appId;
+      const routePath = custom.detail?.routePath;
+      const external = custom.detail?.external;
+
+      if (!appId) return;
+
+      activeAppRef.current = {
+        appId,
+        routePath: routePath || "/",
+        external,
+        openedAt: external ? Date.now() : undefined,
+        leftPortal: false,
+      };
+
+      emitAppOpen(activeAppRef.current);
+      emitUsagePing();
+    };
+
+    const onAppClosed = (event: Event) => {
+      const custom = event as CustomEvent<AppUsageCloseDetail>;
+      clearActiveApp(custom.detail?.appId);
+    };
+
     socket.on("connect", onConnect);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
+    window.addEventListener(APP_USAGE_CLOSE_EVENT, onAppClosed);
 
     const intervalId = window.setInterval(emitUsagePing, 45_000);
 
     return () => {
       socket.off("connect", onConnect);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
+      window.removeEventListener(APP_USAGE_CLOSE_EVENT, onAppClosed);
       window.clearInterval(intervalId);
     };
   }, [token]);
-
-  useEffect(() => {
-    const onAppOpened = (event: Event) => {
-      const custom = event as CustomEvent<AppUsageOpenDetail>;
-      const appId = custom.detail?.appId;
-      const routePath = custom.detail?.routePath;
-
-      if (!appId) return;
-
-      activeAppRef.current = { appId, routePath: routePath || "/" };
-
-      const socket = socketRef.current;
-      if (socket?.connected) {
-        socket.emit("app_usage.open", {
-          appId,
-          routePath: routePath || "/",
-        });
-      }
-    };
-
-    window.addEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
-
-    return () => {
-      window.removeEventListener(APP_USAGE_OPEN_EVENT, onAppOpened);
-    };
-  }, []);
 
   return socketRef;
 };

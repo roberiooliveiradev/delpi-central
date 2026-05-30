@@ -370,7 +370,10 @@ Com `APP_USAGE_ENABLED=true` (padrão), o Portal reporta qual **app** o usuário
 | `connect` | `bind_session(user_id=sub, session_id=sid)` |
 | `disconnect` | `unbind_session(sid)` |
 | `app_usage.open` (ao entrar em um app no `AppHost`) | Atualiza store ao vivo + grava evento em `app_usage_events` (debounce 5 min por usuário/app) |
+| `app_usage.close` (ao sair do `AppHost` ou fim da sessão estimada de app `external`) | Remove app ativo da sessão no store ao vivo |
 | `app_usage.ping` (portal a cada ~45 s, com `appId` atual) | Renova TTL da sessão no app ativo |
+
+Apps **external** (nova aba): o portal não consegue ler a aba externa (`noopener`). A sessão ao vivo combina **Page Visibility** (ping enquanto o portal está em background) + **janela de graça de 90s** após o clique (se o usuário não trocar de aba) + **close** ao voltar ao portal ou ao abrir outro app embedded.
 
 Consultas Admin (`rbac.manage`):
 

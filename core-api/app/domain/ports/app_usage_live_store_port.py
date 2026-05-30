@@ -22,6 +22,14 @@ class AppUsageLiveStorePort(Protocol):
     ) -> None:
         ...
 
+    def clear_active_app(
+        self,
+        session_id: str,
+        *,
+        app_id: str | None = None,
+    ) -> None:
+        ...
+
     def touch(self, session_id: str, *, app_id: str | None = None) -> None:
         ...
 

@@ -33,3 +33,28 @@ def test_live_store_touch_keeps_app_active():
 
     assert len(sessions) == 1
     assert sessions[0].app_id == "minha-delpi-chat"
+
+
+def test_live_store_clear_active_app():
+    store = InMemoryAppUsageLiveStore(ttl_seconds=90)
+
+    store.bind_session(user_id="user-1", session_id="s1")
+    store.set_active_app("s1", app_id="dashboard-lmps", route_path="/lmps")
+
+    store.clear_active_app("s1", app_id="dashboard-lmps")
+
+    assert store.list_live_apps() == []
+    assert store.list_live_sessions() == []
+
+
+def test_live_store_clear_active_app_ignores_other_app():
+    store = InMemoryAppUsageLiveStore(ttl_seconds=90)
+
+    store.bind_session(user_id="user-1", session_id="s1")
+    store.set_active_app("s1", app_id="dashboard-lmps")
+
+    store.clear_active_app("s1", app_id="other-app")
+
+    live_apps = store.list_live_apps()
+    assert len(live_apps) == 1
+    assert live_apps[0].app_id == "dashboard-lmps"

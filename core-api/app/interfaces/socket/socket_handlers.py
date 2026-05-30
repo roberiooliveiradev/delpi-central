@@ -154,3 +154,15 @@ def handle_app_usage_ping(data):
     app_id, _route_path = _extract_app_usage_payload(data)
     store = get_app_usage_live_store()
     store.touch(request.sid, app_id=app_id)
+
+
+@socketio.on("app_usage.close")
+def handle_app_usage_close(data):
+    if not is_app_usage_enabled():
+        return
+
+    app_id, _route_path = _extract_app_usage_payload(data)
+    get_app_usage_live_store().clear_active_app(
+        request.sid,
+        app_id=app_id,
+    )

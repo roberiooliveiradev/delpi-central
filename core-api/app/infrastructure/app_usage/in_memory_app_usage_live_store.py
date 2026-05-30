@@ -62,6 +62,28 @@ class InMemoryAppUsageLiveStore:
             state.app_connected_at = now
             state.last_seen_at = now
 
+    def clear_active_app(
+        self,
+        session_id: str,
+        *,
+        app_id: str | None = None,
+    ) -> None:
+        now = datetime.utcnow()
+        with self._lock:
+            state = self._by_session.get(session_id)
+            if state is None:
+                return
+
+            if app_id:
+                normalized = str(app_id).strip()
+                if not normalized or state.app_id != normalized:
+                    return
+
+            state.app_id = None
+            state.route_path = None
+            state.app_connected_at = None
+            state.last_seen_at = now
+
     def touch(self, session_id: str, *, app_id: str | None = None) -> None:
         now = datetime.utcnow()
         with self._lock:
