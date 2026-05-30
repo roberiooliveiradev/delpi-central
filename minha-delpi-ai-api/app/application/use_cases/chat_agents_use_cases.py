@@ -1,4 +1,3 @@
-import re
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -46,7 +45,6 @@ def _to_response(
 ) -> ChatAgentResponse:
     return ChatAgentResponse(
         id=str(agent.id),
-        key=agent.key,
         name=agent.name,
         description=agent.description,
         enabled=agent.enabled,
@@ -89,15 +87,6 @@ def _normalize_text(value: str | None, max_length: int, required: bool = False) 
     return normalized
 
 
-def _slugify(value: str) -> str:
-    normalized = re.sub(r"[^a-zA-Z0-9]+", "-", value.strip().lower()).strip("-")
-
-    if not normalized:
-        raise InvalidChatSessionInputError("Invalid agent key")
-
-    return normalized[:80]
-
-
 class ListChatAgentsUseCase:
     def __init__(self, repository: ChatAgentRepositoryPort):
         self.repository = repository
@@ -115,16 +104,16 @@ class ListChatAgentsUseCase:
             include_disabled=include_disabled,
         )
 
-        usage_by_key: dict[str, dict[str, int]] = {}
+        usage_by_id: dict[str, dict[str, int]] = {}
 
         if include_stats:
-            stats_keys = [
-                agent.key
+            stats_ids = [
+                agent.id
                 for agent, access_role, _draft in agents
                 if access_role in {"owner", "editor", "system"}
             ]
-            usage_by_key = self.repository.list_usage_summaries(
-                stats_keys,
+            usage_by_id = self.repository.list_usage_summaries(
+                stats_ids,
                 hours=stats_hours,
             )
 
@@ -132,7 +121,7 @@ class ListChatAgentsUseCase:
             _to_response(
                 agent,
                 access_role,
-                usage_summary=usage_by_key.get(agent.key) if include_stats else None,
+                usage_summary=usage_by_id.get(str(agent.id)) if include_stats else None,
                 draft_agent=draft if access_role in {"owner", "editor", "system"} else None,
             )
             for agent, access_role, draft in agents
@@ -155,13 +144,11 @@ class CreateChatAgentUseCase:
                 "You do not have permission to create official agents"
             )
 
-        key = _slugify(request.key or name)
         owner_user_id = None if visibility == "system" else UUID(request.user_id)
 
         try:
             agent = self.repository.create(
                 owner_user_id=owner_user_id,
-                key=key,
                 name=name,
                 description=_normalize_text(request.description, 800),
                 system_prompt=_normalize_text(request.system_prompt, 12000),
@@ -172,7 +159,7 @@ class CreateChatAgentUseCase:
                 metadata=request.metadata,
             )
         except IntegrityError as exc:
-            raise ChatAgentKeyConflictError("Agent key already exists") from exc
+            raise ChatAgentKeyConflictError("Agent could not be created") from exc
 
         return _to_response(agent, "owner", include_system_prompt=True)
 
@@ -443,7 +430,6 @@ class PreviewChatAgentUseCase:
         agent_prompt_override = None
         agent_metadata_override = None
         resolved_agent_id = agent_id
-        resolved_agent_key = None
 
         if agent_id:
             agent = self.repository.get_for_preview(UUID(agent_id), UUID(user_id))
@@ -470,21 +456,17 @@ class PreviewChatAgentUseCase:
 
             agent_prompt_override = agent.system_prompt
             agent_metadata_override = agent.metadata
-            resolved_agent_key = agent.key
         elif draft_snapshot:
             if not draft_snapshot.get("name"):
                 raise InvalidChatSessionInputError("draft.name is required")
             agent_prompt_override = draft_snapshot.get("systemPrompt")
             agent_metadata_override = draft_snapshot.get("metadata")
-            draft_key = (draft or {}).get("key") if isinstance(draft, dict) else None
-            resolved_agent_key = _slugify(str(draft_key or draft_snapshot.get("name")))
         else:
             raise InvalidChatSessionInputError("agentId or draft is required")
 
         return self.simulate_use_case.execute(
             question=normalized,
             agent_id=resolved_agent_id,
-            agent_key=resolved_agent_key,
             generate_answer=generate_answer,
             user_id=user_id,
             access_token=access_token,
@@ -756,7 +738,6 @@ class ExportChatAgentUseCase:
         return {
             "exportVersion": AGENT_EXPORT_VERSION,
             "exportedAt": datetime.now(timezone.utc).isoformat(),
-            "suggestedKey": agent.key,
             "agent": {
                 "name": agent.name,
                 "description": agent.description,
@@ -814,14 +795,11 @@ class ImportChatAgentUseCase:
         if visibility == "system" and not can_manage_official_agents:
             visibility = "private"
 
-        key_source = payload.get("key") or export_payload.get("suggestedKey") or name
-        key = _slugify(str(key_source))
         owner_user_id = None if visibility == "system" else UUID(user_id)
 
         try:
             agent = self.repository.create(
                 owner_user_id=owner_user_id,
-                key=key,
                 name=name,
                 description=_normalize_text(agent_data.get("description"), 800),
                 system_prompt=_normalize_text(agent_data.get("systemPrompt"), 12000),
@@ -837,7 +815,7 @@ class ImportChatAgentUseCase:
                 enabled=agent_data.get("enabled"),
             )
         except IntegrityError as exc:
-            raise ChatAgentKeyConflictError("Agent key already exists") from exc
+            raise ChatAgentKeyConflictError("Agent could not be created") from exc
 
         apply_actions = bool(payload.get("applyActions", True))
 

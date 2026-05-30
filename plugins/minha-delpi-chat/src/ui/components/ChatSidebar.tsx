@@ -38,7 +38,7 @@ type ChatSidebarProps = {
   projects?: ChatProject[];
   activeSessionId?: string;
   selectedProjectId?: string | null;
-  selectedAgentKey?: string | null;
+  selectedAgentId?: string | null;
   isLoading?: boolean;
   isLoadingArchivedSessions?: boolean;
   isLoadingAgents?: boolean;
@@ -69,7 +69,7 @@ type ChatSidebarProps = {
   onRenameProject?: (projectId: string, name: string) => Promise<ChatProject | null>;
   onDeleteProject?: (projectId: string) => Promise<boolean>;
   onSelectProject?: (projectId: string | null) => void;
-  onSelectAgent?: (agentKey: string | null) => void;
+  onSelectAgent?: (agentId: string | null) => void;
   isSessionProcessing?: (sessionId: string) => boolean;
 };
 
@@ -80,7 +80,7 @@ export function ChatSidebar({
   projects = [],
   activeSessionId,
   selectedProjectId,
-  selectedAgentKey,
+  selectedAgentId,
   isLoading,
   isLoadingArchivedSessions,
   isLoadingAgents,
@@ -377,7 +377,7 @@ export function ChatSidebar({
         {isAgentsSectionOpen ? (
           <ChatSidebarAgentsSection
             agents={agents}
-            selectedAgentKey={selectedAgentKey}
+            selectedAgentId={selectedAgentId}
             isLoading={isLoadingAgents}
             onSelectAgent={onSelectAgent}
             canManageAgents={canManageAgents}

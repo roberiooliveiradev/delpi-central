@@ -19,7 +19,7 @@ def test_source_response_exposes_indexing_metadata():
         metadata={
             "scope": "project_source",
             "projectId": "project-1",
-            "agentKey": "agent-1",
+            "agentId": "11111111-1111-4111-8111-111111111111",
             "attachmentId": "attachment-1",
             "originalFilename": "manual.pdf",
             "contentType": "application/pdf",
@@ -34,7 +34,7 @@ def test_source_response_exposes_indexing_metadata():
 
     assert response.scope == "project_source"
     assert response.project_id == "project-1"
-    assert response.agent_key == "agent-1"
+    assert response.agent_id == "11111111-1111-4111-8111-111111111111"
     assert response.attachment_id == "attachment-1"
     assert response.original_filename == "manual.pdf"
     assert response.content_type == "application/pdf"
@@ -60,7 +60,7 @@ def test_source_response_marks_not_indexed_when_chunk_count_is_zero():
         updated_at=now,
         metadata={
             "scope": "agent_source",
-            "agentKey": "agent-1",
+            "agentId": "11111111-1111-4111-8111-111111111111",
             "indexReason": "empty_extracted_content",
         },
     )

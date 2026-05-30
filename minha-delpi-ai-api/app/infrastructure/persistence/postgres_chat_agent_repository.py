@@ -112,10 +112,10 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return self._to_entity_raw(model), self._access_role(model, user_id)
 
-    def get_enabled_by_key(self, key: str, user_id: UUID | None = None) -> ChatAgent | None:
+    def get_enabled_by_id(self, agent_id: UUID, user_id: UUID | None = None) -> ChatAgent | None:
         query = (
             AiChatAgentModel.query
-            .filter(AiChatAgentModel.key == key)
+            .filter(AiChatAgentModel.id == agent_id)
             .filter(AiChatAgentModel.enabled.is_(True))
         )
 
@@ -218,7 +218,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
     def create(
         self,
         owner_user_id: UUID | None,
-        key: str,
         name: str,
         description: str | None,
         system_prompt: str | None,
@@ -234,7 +233,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
     ) -> ChatAgent:
         model = AiChatAgentModel(
             owner_user_id=owner_user_id,
-            key=key,
             name=name,
             description=description,
             system_prompt=system_prompt,
@@ -281,7 +279,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         created = self.create(
             owner_user_id=user_id,
-            key=self._generate_duplicate_key(model.key),
             name=duplicate_name,
             description=model.description,
             system_prompt=model.system_prompt,
@@ -314,11 +311,10 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         safe_hours = max(1, min(int(hours), 24 * 90))
         since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
-        agent_key = model.key
 
         sessions_in_window = (
             AiChatSessionModel.query
-            .filter(AiChatSessionModel.agent_key == agent_key)
+            .filter(AiChatSessionModel.agent_id == agent_id)
             .filter(AiChatSessionModel.created_at >= since)
             .count()
         )
@@ -326,14 +322,14 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         messages_in_window = (
             db.session.query(AiChatMessageModel)
             .join(AiChatSessionModel, AiChatMessageModel.session_id == AiChatSessionModel.id)
-            .filter(AiChatSessionModel.agent_key == agent_key)
+            .filter(AiChatSessionModel.agent_id == agent_id)
             .filter(AiChatMessageModel.created_at >= since)
             .count()
         )
 
         total_sessions = (
             AiChatSessionModel.query
-            .filter(AiChatSessionModel.agent_key == agent_key)
+            .filter(AiChatSessionModel.agent_id == agent_id)
             .count()
         )
 
@@ -352,7 +348,7 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
         )
 
         return {
-            "agentKey": agent_key,
+            "agentId": str(agent_id),
             "windowHours": safe_hours,
             "sessionsInWindow": sessions_in_window,
             "messagesInWindow": messages_in_window,
@@ -363,13 +359,13 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
     def list_usage_summaries(
         self,
-        agent_keys: list[str],
+        agent_ids: list[UUID],
         *,
         hours: int = 168,
     ) -> dict[str, dict[str, int]]:
-        normalized_keys = [key.strip() for key in agent_keys if key and key.strip()]
+        normalized_ids = [agent_id for agent_id in agent_ids if agent_id]
 
-        if not normalized_keys:
+        if not normalized_ids:
             return {}
 
         safe_hours = max(1, min(int(hours), 24 * 90))
@@ -377,38 +373,38 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         window_rows = (
             db.session.query(
-                AiChatSessionModel.agent_key,
+                AiChatSessionModel.agent_id,
                 func.count(AiChatSessionModel.id),
             )
-            .filter(AiChatSessionModel.agent_key.in_(normalized_keys))
+            .filter(AiChatSessionModel.agent_id.in_(normalized_ids))
             .filter(AiChatSessionModel.created_at >= since)
-            .group_by(AiChatSessionModel.agent_key)
+            .group_by(AiChatSessionModel.agent_id)
             .all()
         )
 
         total_rows = (
             db.session.query(
-                AiChatSessionModel.agent_key,
+                AiChatSessionModel.agent_id,
                 func.count(AiChatSessionModel.id),
             )
-            .filter(AiChatSessionModel.agent_key.in_(normalized_keys))
-            .group_by(AiChatSessionModel.agent_key)
+            .filter(AiChatSessionModel.agent_id.in_(normalized_ids))
+            .group_by(AiChatSessionModel.agent_id)
             .all()
         )
 
         summaries: dict[str, dict[str, int]] = {
-            key: {
+            str(agent_id): {
                 "sessionsInWindow": 0,
                 "totalSessions": 0,
             }
-            for key in normalized_keys
+            for agent_id in normalized_ids
         }
 
-        for agent_key, count in window_rows:
-            summaries.setdefault(agent_key, {})["sessionsInWindow"] = int(count)
+        for session_agent_id, count in window_rows:
+            summaries.setdefault(str(session_agent_id), {})["sessionsInWindow"] = int(count)
 
-        for agent_key, count in total_rows:
-            summaries.setdefault(agent_key, {})["totalSessions"] = int(count)
+        for session_agent_id, count in total_rows:
+            summaries.setdefault(str(session_agent_id), {})["totalSessions"] = int(count)
 
         return summaries
 
@@ -523,23 +519,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
             )
 
         db.session.flush()
-
-    def _generate_duplicate_key(self, base_key: str) -> str:
-        normalized = (base_key or "agente").strip() or "agente"
-        candidate = f"{normalized}-copia"[:80]
-        suffix = 2
-
-        while self._key_exists(candidate):
-            suffix_label = f"-{suffix}"
-            candidate = f"{normalized[: 80 - len(suffix_label)]}{suffix_label}"
-            suffix += 1
-
-        return candidate
-
-    def _key_exists(self, key: str) -> bool:
-        return (
-            AiChatAgentModel.query.filter(AiChatAgentModel.key == key).first() is not None
-        )
 
     def update(
         self,
@@ -1123,7 +1102,6 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
     def _to_entity_raw(self, model: AiChatAgentModel) -> ChatAgent:
         return ChatAgent(
             id=model.id,
-            key=model.key,
             name=model.name,
             description=model.description,
             system_prompt=model.system_prompt,

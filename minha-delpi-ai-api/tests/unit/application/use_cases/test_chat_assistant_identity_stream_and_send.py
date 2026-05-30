@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -10,6 +10,8 @@ from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
 from app.domain.entities.chat_session import ChatSession
+
+FAKE_AGENT_ID = UUID("11111111-1111-4111-8111-111111111111")
 
 _IDENTITY_PHRASES = (
     "quem é vc?",
@@ -20,7 +22,7 @@ _IDENTITY_PHRASES = (
 )
 
 
-def _session(*, agent_key: str | None = None) -> ChatSession:
+def _session(*, agent_id: UUID | None = None) -> ChatSession:
     now = datetime.now(timezone.utc)
     return ChatSession(
         id=uuid4(),
@@ -29,7 +31,7 @@ def _session(*, agent_key: str | None = None) -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=agent_key,
+        agent_id=agent_id,
     )
 
 
@@ -40,7 +42,7 @@ def _workspace(*, common: bool) -> dict:
             "agent": None,
             "projectPrompt": None,
             "agentPrompt": None,
-            "agentKey": None,
+            "agentId": None,
             "allowedActionIds": [],
             "capabilities": {},
             "specialization": None,
@@ -50,13 +52,13 @@ def _workspace(*, common: bool) -> dict:
     return {
         "project": None,
         "agent": {
-            "key": "produtos",
+            "id": str(FAKE_AGENT_ID),
             "name": "Especialista em Produtos",
             "description": "consultas e cadastro de produtos.",
         },
         "projectPrompt": None,
         "agentPrompt": "Você é especialista em produtos.",
-        "agentKey": "produtos",
+        "agentId": "11111111-1111-4111-8111-111111111111",
         "allowedActionIds": [],
         "capabilities": {},
         "specialization": None,
@@ -65,7 +67,7 @@ def _workspace(*, common: bool) -> dict:
 
 
 def _build_use_cases(*, common: bool):
-    session = _session(agent_key=None if common else "produtos")
+    session = _session(agent_id=None if common else FAKE_AGENT_ID)
     workspace = _workspace(common=common)
 
     chat_repository = MagicMock()

@@ -13,7 +13,7 @@ class FakeAttachment:
     session_id: object
     message_id: object | None
     project_id: object | None
-    agent_key: str | None
+    agent_id: str | None
     storage_path: str
     original_filename: str
     content_type: str
@@ -85,7 +85,7 @@ def test_index_chat_attachment_uses_session_source_scope():
             session_id=session_id,
             message_id=message_id,
             project_id=project_id,
-            agent_key="minha-delpi-chat",
+            agent_id="11111111-1111-4111-8111-111111111111",
             storage_path="/tmp/documento.md",
             original_filename="documento.md",
             content_type="text/markdown",
@@ -104,6 +104,6 @@ def test_index_chat_attachment_uses_session_source_scope():
     assert request.metadata["sessionId"] == str(session_id)
     assert request.metadata["messageId"] == str(message_id)
     assert request.metadata["projectId"] == str(project_id)
-    assert request.metadata["agentKey"] == "minha-delpi-chat"
+    assert request.metadata["agentId"] == "11111111-1111-4111-8111-111111111111"
     assert request.metadata["attachmentId"] == str(attachment_id)
     assert request.metadata["originalFilename"] == "documento.md"

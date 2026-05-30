@@ -24,7 +24,7 @@ export function isGeneralChatSource(source: ChatSource): boolean {
     return false;
   }
 
-  if (source.agentKey) {
+  if (source.agentId) {
     return true;
   }
 

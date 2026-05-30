@@ -105,7 +105,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
             <option value="">Padrão do chat</option>
             {agents.map((agent) => (
               <option key={agent.id} value={agent.id}>
-                {agent.name} ({agent.key})
+                {agent.name}
               </option>
             ))}
           </select>
@@ -167,7 +167,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
             <h3>Resposta</h3>
             {result.agent ? (
               <p className="mdc-chat-muted">
-                Agente: <strong>{result.agent.name}</strong> ({result.agent.key})
+                Agente: <strong>{result.agent.name}</strong> ({result.agent.id})
               </p>
             ) : null}
             <pre>{result.answerPreview}</pre>

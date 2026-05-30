@@ -22,7 +22,7 @@ class FakeChatSessionRepository:
         title,
         context,
         project_id=None,
-        agent_key=None,
+        agent_id=None,
     ):
         session = ChatSession(
             id=uuid4(),
@@ -30,7 +30,7 @@ class FakeChatSessionRepository:
             title=title,
             context=context,
             project_id=project_id,
-            agent_key=agent_key,
+            agent_id=agent_id,
             created_at=datetime.now(timezone.utc),
             updated_at=datetime.now(timezone.utc),
         )

@@ -27,7 +27,7 @@ class ChatKnowledgeScopeService:
             "user_id": str(user_id),
             "session_id": str(session.id),
             "project_id": str(project_id) if project_id else None,
-            "agent_key": workspace_context.get("agentKey"),
+            "agent_id": workspace_context.get("agentId"),
             "include_global": include_global,
         }
 

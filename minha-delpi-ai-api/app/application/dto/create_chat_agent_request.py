@@ -4,7 +4,6 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class CreateChatAgentRequest:
     user_id: str
-    key: str | None
     name: str
     description: str | None = None
     system_prompt: str | None = None

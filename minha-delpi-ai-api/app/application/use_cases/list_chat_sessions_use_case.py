@@ -24,7 +24,7 @@ class ListChatSessionsUseCase:
                 title=session.title,
                 context=session.context,
                 project_id=str(session.project_id) if session.project_id else None,
-                agent_key=session.agent_key,
+                agent_id=str(session.agent_id) if session.agent_id else None,
                 is_pinned=session.is_pinned,
                 pinned_at=session.pinned_at.isoformat() if session.pinned_at else None,
                 archived_at=session.archived_at.isoformat() if session.archived_at else None,

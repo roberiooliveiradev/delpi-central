@@ -85,7 +85,6 @@ def normalize_draft_payload(draft: dict[str, Any] | None) -> dict[str, Any] | No
 def apply_snapshot_to_agent(agent: ChatAgent, snapshot: dict[str, Any]) -> ChatAgent:
     return ChatAgent(
         id=agent.id,
-        key=agent.key,
         name=str(snapshot.get("name") or agent.name),
         description=snapshot.get("description", agent.description),
         system_prompt=snapshot.get("systemPrompt", agent.system_prompt),

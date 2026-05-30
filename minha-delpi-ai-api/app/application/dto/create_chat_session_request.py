@@ -7,4 +7,4 @@ class CreateChatSessionRequest:
     title: str | None = None
     context: str | None = None
     project_id: str | None = None
-    agent_key: str | None = None
+    agent_id: str | None = None

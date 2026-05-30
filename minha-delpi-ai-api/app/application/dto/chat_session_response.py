@@ -7,7 +7,7 @@ class ChatSessionResponse:
     title: str | None
     context: str | None
     project_id: str | None
-    agent_key: str | None
+    agent_id: str | None
     is_pinned: bool
     pinned_at: str | None
     archived_at: str | None

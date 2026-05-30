@@ -34,7 +34,7 @@ def _source_response(document, chunk_count: int | None = None) -> ChatSourceResp
         source_ref=document.source_ref,
         scope=metadata.get("scope"),
         project_id=metadata.get("projectId"),
-        agent_key=metadata.get("agentKey"),
+        agent_id=metadata.get("agentId"),
         attachment_id=metadata.get("attachmentId"),
         original_filename=metadata.get("originalFilename"),
         content_type=metadata.get("contentType"),
@@ -255,7 +255,7 @@ class CreateAgentSourceUseCase:
 
     def _find_duplicate_agent_source(
         self,
-        agent_key: str,
+        agent_id: str,
         content_hash: str | None,
     ):
         normalized_hash = str(content_hash or "").strip()
@@ -266,7 +266,7 @@ class CreateAgentSourceUseCase:
         documents = self.knowledge_repository.list_documents_by_metadata(
             filters={
                 "scope": "agent_source",
-                "agentKey": agent_key,
+                "agentId": agent_id,
                 "contentHash": normalized_hash,
             },
             limit=1,
@@ -290,11 +290,11 @@ class CreateAgentSourceUseCase:
             content,
             title=title,
             source_type="agent_source",
-            source_ref=agent.key,
+            source_ref=str(agent.id),
             document_metadata=metadata,
         )
 
-        duplicate = self._find_duplicate_agent_source(agent.key, prepared.content_hash)
+        duplicate = self._find_duplicate_agent_source(str(agent.id), prepared.content_hash)
 
         if duplicate:
             document, chunk_count = duplicate
@@ -305,14 +305,13 @@ class CreateAgentSourceUseCase:
                 user_id=user_id,
                 title=title,
                 source_type="agent_source",
-                source_ref=agent.key,
+                source_ref=str(agent.id),
                 content=content,
                 metadata={
                     **(metadata or {}),
                     "scope": "agent_source",
                     "userId": user_id,
                     "agentId": str(agent.id),
-                    "agentKey": agent.key,
                     "agentName": agent.name,
                 },
             )
@@ -355,14 +354,14 @@ class CreateAgentSourceUseCase:
             extracted_content,
             title=original_filename,
             source_type="agent_source",
-            source_ref=agent.key,
+            source_ref=str(agent.id),
             document_metadata={
                 "originalFilename": original_filename,
                 "contentType": content_type,
             },
         )
 
-        duplicate = self._find_duplicate_agent_source(agent.key, prepared.content_hash)
+        duplicate = self._find_duplicate_agent_source(str(agent.id), prepared.content_hash)
 
         if duplicate:
             try:
@@ -384,7 +383,6 @@ class CreateAgentSourceUseCase:
                     "scope": "agent_source",
                     "userId": user_id,
                     "agentId": str(agent.id),
-                    "agentKey": agent.key,
                     "agentName": agent.name,
                     "originalFilename": original_filename,
                     "contentType": content_type,
@@ -438,7 +436,7 @@ class ListAgentSourcesUseCase:
         documents = self.knowledge_repository.list_documents_by_metadata(
             filters={
                 "scope": "agent_source",
-                "agentKey": agent.key,
+                "agentId": str(agent.id),
             },
             limit=200,
             active=True,

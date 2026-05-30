@@ -543,12 +543,12 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                 )
             )
 
-        agent_key = filters.get("agent_key")
-        if agent_key:
+        agent_id = filters.get("agent_id") or filters.get("agentId")
+        if agent_id:
             allowed_clauses.append(
                 db.and_(
                     metadata["scope"].astext == "agent_source",
-                    metadata["agentKey"].astext == str(agent_key),
+                    metadata["agentId"].astext == str(agent_id),
                 )
             )
 

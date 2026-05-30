@@ -8,7 +8,7 @@ class ChatAttachmentResponse:
     session_id: str
     message_id: str | None
     project_id: str | None
-    agent_key: str | None
+    agent_id: str | None
     filename: str
     original_filename: str
     content_type: str | None

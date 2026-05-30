@@ -13,13 +13,25 @@ ALLOWED_VISIBILITY = {"private", "public"}
 ALLOWED_SHARE_ROLES = {"viewer", "editor"}
 
 
+def _parse_optional_uuid(value: str | None) -> UUID | None:
+    if value is None:
+        return None
+
+    normalized = value.strip()
+
+    if not normalized:
+        return None
+
+    return UUID(normalized)
+
+
 def _to_response(project: ChatProject, access_role: str = "viewer") -> ChatProjectResponse:
     return ChatProjectResponse(
         id=str(project.id),
         name=project.name,
         description=project.description,
         instructions=project.instructions,
-        default_agent_key=project.default_agent_key,
+        default_agent_id=str(project.default_agent_id) if project.default_agent_id else None,
         visibility=project.visibility,
         icon=project.icon,
         color=project.color,
@@ -74,7 +86,7 @@ class CreateChatProjectUseCase:
             name=_validate_text(request.name, 120, required=True),
             description=_validate_text(request.description, 500),
             instructions=_validate_text(request.instructions, 12000),
-            default_agent_key=_validate_text(request.default_agent_key, 80),
+            default_agent_id=_parse_optional_uuid(request.default_agent_id),
             visibility=visibility,
             icon=_validate_text(request.icon, 60),
             color=_validate_text(request.color, 40),
@@ -98,7 +110,9 @@ class UpdateChatProjectUseCase:
             name=_validate_text(request.name, 120) if request.name is not None else None,
             description=_validate_text(request.description, 500) if request.description is not None else None,
             instructions=_validate_text(request.instructions, 12000) if request.instructions is not None else None,
-            default_agent_key=_validate_text(request.default_agent_key, 80) if request.default_agent_key is not None else None,
+            default_agent_id=_parse_optional_uuid(request.default_agent_id)
+            if request.default_agent_id is not None
+            else None,
             visibility=request.visibility,
             icon=_validate_text(request.icon, 60) if request.icon is not None else None,
             color=_validate_text(request.color, 40) if request.color is not None else None,

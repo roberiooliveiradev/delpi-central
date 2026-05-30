@@ -1031,7 +1031,7 @@ export async function uploadChatAttachmentWithSession(
   file: File,
   payload: {
     projectId?: string | null;
-    agentKey?: string | null;
+    agentId?: string | null;
     context?: string | null;
   } = {},
   options: ChatApiOptions = {},
@@ -1043,8 +1043,8 @@ export async function uploadChatAttachmentWithSession(
     formData.append("projectId", payload.projectId);
   }
 
-  if (payload.agentKey) {
-    formData.append("agentKey", payload.agentKey);
+  if (payload.agentId) {
+    formData.append("agentId", payload.agentId);
   }
 
   if (payload.context) {

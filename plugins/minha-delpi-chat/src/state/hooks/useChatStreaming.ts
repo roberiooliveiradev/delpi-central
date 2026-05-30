@@ -19,7 +19,7 @@ type StreamMessageParams = {
   message: string;
   context?: string;
   attachmentIds?: string[];
-  agentKey?: string | null;
+  agentId?: string | null;
   onStatus?: (message: string) => void;
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -124,7 +124,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       message,
       context,
       attachmentIds,
-      agentKey,
+      agentId,
       onStatus,
       onActivity,
       onSources,
@@ -145,7 +145,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               message,
               context,
               attachmentIds,
-              agentKey: agentKey ?? undefined,
+              agentId: agentId ?? undefined,
             },
             streamCallbacks,
             {

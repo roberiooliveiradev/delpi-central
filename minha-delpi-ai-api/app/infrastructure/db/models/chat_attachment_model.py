@@ -29,7 +29,12 @@ class AiChatAttachmentModel(db.Model):
         nullable=True,
         index=True,
     )
-    agent_key = db.Column(db.String(80), nullable=True, index=True)
+    agent_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("ai_chat_agents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     filename = db.Column(db.String(255), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
     content_type = db.Column(db.String(160), nullable=True)

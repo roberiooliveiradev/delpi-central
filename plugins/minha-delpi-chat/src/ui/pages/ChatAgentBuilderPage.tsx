@@ -72,7 +72,6 @@ import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
 import "./ChatAgentBuilderPage.css";
 
 type AgentPayload = {
-  key?: string | null;
   name: string;
   description?: string | null;
   systemPrompt?: string | null;
@@ -95,7 +94,7 @@ type ChatAgentBuilderPageProps = {
   onCreateAction?: (agent: ChatAgent) => void;
   onConfigureAction?: (agent: ChatAgent, providerKey: string) => void;
   onConfigureSkills?: (agent: ChatAgent) => void;
-  onSelectAgent?: (agentKey: string | null) => void;
+  onSelectAgent?: (agentId: string | null) => void;
   onCreateAgent?: (payload: AgentPayload) => Promise<ChatAgent | null>;
   onUpdateAgent?: (
     agentId: string,
@@ -109,16 +108,6 @@ type ChatAgentBuilderPageProps = {
   onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
-
-function createKeyFromName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
-}
 
 function getAgentIcebreakers(agent?: ChatAgent | null): string[] {
   const value = agent?.metadata?.icebreakers;
@@ -192,7 +181,6 @@ export function ChatAgentBuilderPage({
     Array<{ role: "user" | "assistant"; content: string }>
   >([]);
 
-  const [key, setKey] = useState(agent?.key ?? "");
   const [name, setName] = useState(agent?.name ?? "");
   const [description, setDescription] = useState(agent?.description ?? "");
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -569,7 +557,6 @@ export function ChatAgentBuilderPage({
     const finalName = generatedName || "Novo agente";
 
     setName(finalName);
-    setKey((current) => current.trim() || createKeyFromName(finalName));
     setDescription((current) => current.trim() || firstSentence.slice(0, 240));
     setSystemPrompt((current) => {
       if (current.trim()) {
@@ -662,7 +649,6 @@ export function ChatAgentBuilderPage({
           message,
           generateAnswer: true,
           draft: {
-            key: "assistente-criacao-agente",
             name: "Assistente de criação",
             description: "Ajuda a definir novos agentes corporativos",
             systemPrompt: AGENT_CREATION_ASSISTANT_PROMPT,
@@ -696,7 +682,6 @@ export function ChatAgentBuilderPage({
     const normalizedName = name.trim();
 
     return {
-      key: key.trim() || createKeyFromName(normalizedName),
       name: normalizedName || "Novo agente",
       description: description.trim() || null,
       systemPrompt: systemPrompt.trim() || null,
@@ -884,15 +869,7 @@ export function ChatAgentBuilderPage({
       return null;
     }
 
-    const normalizedKey = key.trim() || createKeyFromName(normalizedName);
-
-    if (!normalizedKey) {
-      setLocalError("Informe uma chave válida para o agente.");
-      return null;
-    }
-
     return {
-      key: normalizedKey,
       name: normalizedName,
       description: description.trim() || null,
       systemPrompt: systemPrompt.trim() || null,
@@ -936,7 +913,7 @@ export function ChatAgentBuilderPage({
         if (updated) {
           setPublishedVersion(updated.published_version ?? publishedVersion);
           setHasUnpublishedChanges(updated.has_unpublished_changes ?? true);
-          onSelectAgent?.(updated.key);
+          onSelectAgent?.(updated.id);
 
           if (options?.exitAfterSave) {
             onBack();
@@ -951,7 +928,7 @@ export function ChatAgentBuilderPage({
       if (created) {
         setPublishedVersion(created.published_version ?? 0);
         setHasUnpublishedChanges(created.has_unpublished_changes ?? true);
-        onSelectAgent?.(created.key);
+        onSelectAgent?.(created.id);
         onAgentCreated?.(created);
 
         if (options?.exitAfterSave) {
@@ -981,7 +958,7 @@ export function ChatAgentBuilderPage({
       setPublishedVersion(published.published_version ?? 0);
       setHasUnpublishedChanges(published.has_unpublished_changes ?? false);
       onAgentPublished?.(published);
-      onSelectAgent?.(published.key);
+      onSelectAgent?.(published.id);
     } catch (error) {
       const message =
         error instanceof Error && error.message.trim()
@@ -1107,7 +1084,7 @@ export function ChatAgentBuilderPage({
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${agent.key || "agente"}-export.json`;
+      anchor.download = `${agent.name || "agente"}-export.json`;
       anchor.click();
       URL.revokeObjectURL(url);
     } catch {
@@ -1523,12 +1500,7 @@ export function ChatAgentBuilderPage({
                 value={name}
                 maxLength={120}
                 onChange={(event) => {
-                  const nextName = event.target.value;
-                  setName(nextName);
-
-                  if (!isEditing && !key.trim()) {
-                    setKey(createKeyFromName(nextName));
-                  }
+                  setName(event.target.value);
                 }}
                 placeholder="Nome do agente"
               />
@@ -1550,23 +1522,11 @@ export function ChatAgentBuilderPage({
 
           <section
             className="mdc-chat-agent-builder__section mdc-chat-agent-builder__identity-section"
-            aria-label="Identificador e visibilidade do agente"
+            aria-label="Visibilidade do agente"
           >
-            <h2 className="mdc-chat-ws-section-head">Identificador e visibilidade</h2>
+            <h2 className="mdc-chat-ws-section-head">Visibilidade</h2>
 
             <div className="mdc-chat-agent-builder__grid">
-              <label className="mdc-chat-ws-field">
-                <span>Chave</span>
-                <input
-                  value={key}
-                  maxLength={80}
-                  disabled={isEditing}
-                  onChange={(event) => setKey(event.target.value)}
-                  placeholder="especialista-produtos"
-                />
-                <small>Identificador único do agente (não altera após criar).</small>
-              </label>
-
               <label className="mdc-chat-ws-field">
                 <span>Visibilidade</span>
                 <select

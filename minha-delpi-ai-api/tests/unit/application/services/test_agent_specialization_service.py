@@ -11,7 +11,7 @@ def test_build_rag_filters_applies_domain_and_categories():
             "knowledgeCategories": ["rh"],
             "includeGlobalKnowledge": True,
         },
-        {"include_global": True, "agent_key": "rh-agent"},
+        {"include_global": True, "agent_id": "rh-agent"},
     )
 
     assert filters["include_global"] is True

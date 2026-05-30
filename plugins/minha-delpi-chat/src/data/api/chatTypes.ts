@@ -3,7 +3,7 @@ export type ChatSession = {
   title: string | null;
   context: string | null;
   project_id: string | null;
-  agent_key: string | null;
+  agent_id: string | null;
   is_pinned: boolean;
   pinned_at: string | null;
   archived_at: string | null;
@@ -20,7 +20,7 @@ export type ChatSource = {
   chunkIndex?: number | null;
   score?: number | null;
   scope?: string | null;
-  agentKey?: string | null;
+  agentId?: string | null;
   projectId?: string | null;
   sessionId?: string | null;
   attachmentId?: string | null;
@@ -189,7 +189,7 @@ export type CreateChatSessionPayload = {
   title?: string;
   context?: string;
   projectId?: string | null;
-  agentKey?: string | null;
+  agentId?: string | null;
 };
 
 export type ChatAttachment = {
@@ -197,7 +197,7 @@ export type ChatAttachment = {
   session_id: string;
   message_id: string | null;
   project_id: string | null;
-  agent_key: string | null;
+  agent_id: string | null;
   filename: string;
   original_filename: string;
   content_type: string | null;
@@ -212,7 +212,7 @@ export type SendChatMessagePayload = {
   message: string;
   context?: string;
   attachmentIds?: string[];
-  agentKey?: string | null;
+  agentId?: string | null;
 };
 
 export type SendChatMessageResponse = {
@@ -262,7 +262,6 @@ export type UpdateChatArtifactPayload = {
 
 export type ChatAgent = {
   id: string;
-  key: string;
   name: string;
   description: string | null;
   enabled: boolean;
@@ -294,7 +293,6 @@ export type ChatAgentVersion = {
 };
 
 export type ChatAgentPreviewDraft = {
-  key?: string | null;
   name: string;
   description?: string | null;
   systemPrompt?: string | null;
@@ -311,7 +309,7 @@ export type ChatProject = {
   name: string;
   description: string | null;
   instructions: string | null;
-  default_agent_key: string | null;
+  default_agent_id: string | null;
   visibility: "private" | "public" | string;
   icon: string | null;
   color: string | null;
@@ -326,7 +324,7 @@ export type CreateChatProjectPayload = {
   name: string;
   description?: string | null;
   instructions?: string | null;
-  defaultAgentKey?: string | null;
+  defaultAgentId?: string | null;
   visibility?: "private" | "public" | string;
   icon?: string | null;
   color?: string | null;
@@ -337,7 +335,7 @@ export type UpdateChatProjectPayload = {
   name?: string;
   description?: string | null;
   instructions?: string | null;
-  defaultAgentKey?: string | null;
+  defaultAgentId?: string | null;
   visibility?: "private" | "public" | string;
   icon?: string | null;
   color?: string | null;
@@ -346,7 +344,6 @@ export type UpdateChatProjectPayload = {
 };
 
 export type CreateChatAgentPayload = {
-  key?: string | null;
   name: string;
   description?: string | null;
   systemPrompt?: string | null;
@@ -411,7 +408,7 @@ export type ChatAgentExportBundle = {
 };
 
 export type ChatAgentStats = {
-  agentKey: string;
+  agentId: string;
   windowHours: number;
   sessionsInWindow: number;
   messagesInWindow: number;
@@ -468,7 +465,7 @@ export type ChatWorkspaceSource = {
   source_ref: string | null;
   scope: string | null;
   project_id: string | null;
-  agent_key: string | null;
+  agent_id: string | null;
   attachment_id: string | null;
   original_filename: string | null;
   content_type: string | null;

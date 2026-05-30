@@ -12,7 +12,7 @@ class ChatProject:
     created_at: datetime
     updated_at: datetime
     instructions: str | None = None
-    default_agent_key: str | None = None
+    default_agent_id: UUID | None = None
     visibility: str = "private"
     icon: str | None = None
     color: str | None = None

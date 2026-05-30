@@ -1,18 +1,19 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from app.application.services.chat_workspace_context_service import ChatWorkspaceContextService
+
+FAKE_AGENT_ID = UUID("11111111-1111-4111-8111-111111111111")
 
 
 @dataclass(frozen=True)
 class FakeAgent:
     id: object
-    key: str
     name: str
     description: str | None
     system_prompt: str | None
     metadata: dict | None
+    category: str | None = None
     response_style: str | None = None
     max_tool_calls: int | None = None
     requires_confirmation_for_write: bool = False
@@ -22,7 +23,7 @@ class FakeAgent:
 class FakeSession:
     id: object
     project_id: object | None
-    agent_key: str | None
+    agent_id: object | None
 
 
 class FakeProjectRepository:
@@ -33,16 +34,15 @@ class FakeProjectRepository:
 class FakeAgentRepository:
     def __init__(self):
         self.agent = FakeAgent(
-            id=uuid4(),
-            key="acoes-openapi",
+            id=FAKE_AGENT_ID,
             name="Ações OpenAPI",
             description=None,
             system_prompt="Use actions com cuidado.",
             metadata={"allowed_actions": ["fallback.action"]},
         )
 
-    def get_enabled_by_key(self, key, user_id=None):
-        if key == self.agent.key:
+    def get_enabled_by_id(self, agent_id, user_id=None):
+        if agent_id == self.agent.id:
             return self.agent
         return None
 
@@ -60,11 +60,11 @@ def test_workspace_context_uses_agent_action_table_before_metadata_fallback():
     )
 
     context = service.build_context(
-        session=FakeSession(id=uuid4(), project_id=None, agent_key="acoes-openapi"),
+        session=FakeSession(id=uuid4(), project_id=None, agent_id=FAKE_AGENT_ID),
         user_id=uuid4(),
     )
 
-    assert context["agentKey"] == "acoes-openapi"
+    assert context["agentId"] == str(FAKE_AGENT_ID)
     assert context["allowedActionIds"] == ["real.action.one", "real.action.two"]
 
 
@@ -83,7 +83,7 @@ def test_workspace_context_falls_back_to_metadata_allowed_actions():
     )
 
     context = service.build_context(
-        session=FakeSession(id=uuid4(), project_id=None, agent_key="acoes-openapi"),
+        session=FakeSession(id=uuid4(), project_id=None, agent_id=FAKE_AGENT_ID),
         user_id=uuid4(),
     )
 

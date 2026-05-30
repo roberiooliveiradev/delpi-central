@@ -254,7 +254,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                   onClick={() => setSelectedAgentId(agent.id)}
                 >
                   <strong>{agent.name}</strong>
-                  <span>{agent.key}</span>
+                  <span>{agent.id}</span>
                   <small>{agent.hasSpecialization ? "Especializado" : "Sem especialização"}</small>
                 </button>
               </li>
@@ -269,7 +269,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
             <>
               <div className="mdc-admin-agents__agent-title">
                 <strong>{selectedAgent.name}</strong>
-                <span>{selectedAgent.key}</span>
+                <span>{selectedAgent.id}</span>
               </div>
 
               <div className="mdc-admin-agents__stats">

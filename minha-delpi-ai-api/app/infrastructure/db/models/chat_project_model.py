@@ -14,7 +14,12 @@ class AiChatProjectModel(db.Model):
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(500), nullable=True)
     instructions = db.Column(db.Text, nullable=True)
-    default_agent_key = db.Column(db.String(80), nullable=True, index=True)
+    default_agent_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("ai_chat_agents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     visibility = db.Column(db.String(20), nullable=False, default="private", server_default="private", index=True)
     icon = db.Column(db.String(60), nullable=True)
     color = db.Column(db.String(40), nullable=True)

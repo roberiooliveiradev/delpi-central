@@ -52,7 +52,7 @@ class ChatAgentProfileService:
         agent = workspace.get("agent") or {}
         metadata = agent.get("metadata") if isinstance(agent.get("metadata"), dict) else {}
 
-        name = str(agent.get("name") or workspace.get("agentKey") or "").strip()
+        name = str(agent.get("name") or "").strip()
         description = str(agent.get("description") or "").strip()
         system_prompt = cls._optional_str(workspace.get("agentPrompt"))
         category = cls._optional_str(agent.get("category"))

@@ -20,7 +20,7 @@ type ChatProjectsModalProps = {
     name: string;
     description?: string | null;
     instructions?: string | null;
-    defaultAgentKey?: string | null;
+    defaultAgentId?: string | null;
     visibility?: string;
     icon?: string | null;
     color?: string | null;
@@ -31,7 +31,7 @@ type ChatProjectsModalProps = {
       name?: string;
       description?: string | null;
       instructions?: string | null;
-      defaultAgentKey?: string | null;
+      defaultAgentId?: string | null;
       visibility?: string;
       icon?: string | null;
       color?: string | null;
@@ -81,7 +81,7 @@ export function ChatProjectsModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [instructions, setInstructions] = useState("");
-  const [defaultAgentKey, setDefaultAgentKey] = useState("");
+  const [defaultAgentId, setDefaultAgentId] = useState("");
   const [visibility, setVisibility] = useState("private");
   const [icon, setIcon] = useState("folder");
   const [color, setColor] = useState("blue");
@@ -113,7 +113,7 @@ export function ChatProjectsModal({
     setName("");
     setDescription("");
     setInstructions("");
-    setDefaultAgentKey("");
+    setDefaultAgentId("");
     setVisibility("private");
     setIcon("folder");
     setColor("blue");
@@ -128,7 +128,7 @@ export function ChatProjectsModal({
     setName(project.name);
     setDescription(project.description ?? "");
     setInstructions(project.instructions ?? "");
-    setDefaultAgentKey(project.default_agent_key ?? "");
+    setDefaultAgentId(project.default_agent_id ?? "");
     setVisibility(project.visibility === "public" ? "public" : "private");
     setIcon(project.icon ?? "folder");
     setColor(project.color ?? "blue");
@@ -147,7 +147,7 @@ export function ChatProjectsModal({
       name: normalizedName,
       description: description.trim() || null,
       instructions: instructions.trim() || null,
-      defaultAgentKey: defaultAgentKey || null,
+      defaultAgentId: defaultAgentId || null,
       visibility,
       icon: icon.trim() || null,
       color: color.trim() || null,
@@ -408,12 +408,12 @@ export function ChatProjectsModal({
               <label>
                 <span>Agente padrão</span>
                 <select
-                  value={defaultAgentKey}
-                  onChange={(event) => setDefaultAgentKey(event.target.value)}
+                  value={defaultAgentId}
+                  onChange={(event) => setDefaultAgentId(event.target.value)}
                 >
                   <option value="">Sem agente padrão</option>
                   {agents.map((agent) => (
-                    <option key={agent.id} value={agent.key}>
+                    <option key={agent.id} value={agent.id}>
                       {agent.name}
                     </option>
                   ))}

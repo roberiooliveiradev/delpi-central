@@ -36,9 +36,7 @@ import {
   buildChatProjectHref,
   buildChatSessionHref,
   findAgentByRouteId,
-  isChatAgentRouteId,
   parseChatRoute,
-  withCanonicalAgentRouteId,
   type ChatRoute,
 } from "../../navigation/chatRoutes";
 import { navigateChatHref } from "../../navigation/chatNavigation";
@@ -66,7 +64,7 @@ export function ChatPage({
 }: ChatPageProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [activeAgentPageKey, setActiveAgentPageKey] = useState<string | null>(null);
+  const [activeAgentPageId, setActiveAgentPageId] = useState<string | null>(null);
   const [agentEditRequest, setAgentEditRequest] = useState<{
     id: string;
     requestKey: number;
@@ -76,7 +74,7 @@ export function ChatPage({
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
   const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
-  const [contextAgentKey, setContextAgentKey] = useState<string | null>(null);
+  const [contextAgentId, setContextAgentId] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
   const chatRoute = useMemo(() => parseChatRoute(pathname), [pathname]);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
@@ -84,7 +82,7 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const requestedAgentKey = activeAgentPageKey ?? contextAgentKey ?? null;
+  const requestedAgentId = activeAgentPageId ?? contextAgentId ?? null;
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
@@ -141,7 +139,7 @@ export function ChatPage({
   } = useChatSession({
     getAccessToken,
     projectId: selectedProjectId,
-    agentKey: requestedAgentKey,
+    agentId: requestedAgentId,
     onSessionActivated: (sessionId) => {
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
@@ -184,20 +182,20 @@ export function ChatPage({
 
     return null;
   }, [chatRoute]);
-  const activeAgentPage = agents.find((agent) => agent.key === activeAgentPageKey);
-  const conversationAgentKey = activeSession?.agent_key ?? activeAgentPageKey;
-  const conversationAgent = agents.find((agent) => agent.key === conversationAgentKey);
-  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
+  const activeAgentPage = agents.find((agent) => agent.id === activeAgentPageId);
+  const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
+  const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
+  const contextAgent = agents.find((agent) => agent.id === contextAgentId);
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
 
-  function getProjectDefaultAgentKey(projectId: string | null): string | null {
+  function getProjectDefaultAgentId(projectId: string | null): string | null {
     if (!projectId) {
       return null;
     }
 
-    return projects.find((project) => project.id === projectId)?.default_agent_key ?? null;
+    return projects.find((project) => project.id === projectId)?.default_agent_id ?? null;
   }
 
   const { isDesktop, isLandscape, isNarrow } = useChatLayout();
@@ -224,7 +222,7 @@ export function ChatPage({
       const shouldPreserveAgentCompose =
         route.kind === "agent" &&
         hasOutboundInFlight &&
-        activeAgentPageKey === resolveRouteAgent(route.agentId)?.key;
+        activeAgentPageId === resolveRouteAgent(route.agentId)?.id;
 
       const shouldPreserveProjectCompose =
         route.kind === "project" &&
@@ -237,7 +235,7 @@ export function ChatPage({
           if (
             !activeSession &&
             !selectedProjectId &&
-            !activeAgentPageKey &&
+            !activeAgentPageId &&
             currentView === "chat"
           ) {
             return;
@@ -252,8 +250,8 @@ export function ChatPage({
           setCanvasDocument(null);
           setComposerAttachments([]);
           setSelectedProjectId(null);
-          setActiveAgentPageKey(null);
-          setContextAgentKey(null);
+          setActiveAgentPageId(null);
+          setContextAgentId(null);
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -276,8 +274,8 @@ export function ChatPage({
           setCanvasDocument(null);
           setComposerAttachments([]);
           setSelectedProjectId(session.project_id ?? null);
-          setActiveAgentPageKey(null);
-          setContextAgentKey(null);
+          setActiveAgentPageId(null);
+          setContextAgentId(null);
           setCurrentView("chat");
           selectSession(session);
           closeMobileSidebar();
@@ -300,8 +298,8 @@ export function ChatPage({
           setCanvasDocument(null);
           setComposerAttachments([]);
           setSelectedProjectId(route.projectId);
-          setActiveAgentPageKey(null);
-          setContextAgentKey(getProjectDefaultAgentKey(route.projectId));
+          setActiveAgentPageId(null);
+          setContextAgentId(getProjectDefaultAgentId(route.projectId));
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -319,7 +317,7 @@ export function ChatPage({
             return;
           }
 
-          if (activeAgentPageKey === routeAgent.key && !activeSession) {
+          if (activeAgentPageId === routeAgent.id && !activeSession) {
             closeMobileSidebar();
             return;
           }
@@ -329,8 +327,8 @@ export function ChatPage({
           setCanvasDocument(null);
           setComposerAttachments([]);
           setSelectedProjectId(null);
-          setActiveAgentPageKey(routeAgent.key);
-          setContextAgentKey(null);
+          setActiveAgentPageId(routeAgent.id);
+          setContextAgentId(null);
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -410,7 +408,7 @@ export function ChatPage({
       }
     },
     [
-      activeAgentPageKey,
+      activeAgentPageId,
       agentEditRequest?.id,
       agentSubRoute,
       agents,
@@ -430,38 +428,6 @@ export function ChatPage({
     streamingActivityLog,
     ],
   );
-
-  useEffect(() => {
-    if (isLoadingAgents || agents.length === 0) {
-      return;
-    }
-
-    const route = parseChatRoute(pathname);
-
-    if (
-      route.kind !== "agent" &&
-      route.kind !== "agent-config" &&
-      route.kind !== "agent-skills" &&
-      route.kind !== "agent-actions"
-    ) {
-      return;
-    }
-
-    if (isChatAgentRouteId(route.agentId)) {
-      return;
-    }
-
-    const agent = findAgentByRouteId(agents, route.agentId);
-
-    if (!agent) {
-      return;
-    }
-
-    navigateChatHref(
-      buildChatHref(withCanonicalAgentRouteId(route, agent.id)),
-      { replace: true },
-    );
-  }, [agents, isLoadingAgents, pathname]);
 
   useChatRouteSync({
     pathname,
@@ -700,8 +666,8 @@ export function ChatPage({
     setCanvasDocument(null);
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
-    setActiveAgentPageKey(null);
-    setContextAgentKey(null);
+    setActiveAgentPageId(null);
+    setContextAgentId(null);
     setCurrentView("chat");
     selectSession(session);
     closeMobileSidebar();
@@ -862,29 +828,29 @@ export function ChatPage({
     return "Pergunte alguma coisa";
   }
 
-  async function handleSelectContextAgent(agentKey: string | null) {
-    setContextAgentKey(agentKey);
+  async function handleSelectContextAgent(agentId: string | null) {
+    setContextAgentId(agentId);
   }
 
   async function handleSelectContextProject(projectId: string | null) {
     setSelectedProjectId(projectId);
-    setActiveAgentPageKey(null);
-    setContextAgentKey(getProjectDefaultAgentKey(projectId));
+    setActiveAgentPageId(null);
+    setContextAgentId(getProjectDefaultAgentId(projectId));
   }
 
   const composerContextProps = {
     agents,
     projects,
-    selectedAgentKey: contextAgentKey,
+    selectedAgentId: contextAgentId,
     selectedProjectId,
     onSelectAgent: handleSelectContextAgent,
-    onOpenAgentPage: (agentKey: string) => {
-      const agent = agents.find((item) => item.key === agentKey);
+    onOpenAgentPage: (agentId: string) => {
+      const agent = agents.find((item) => item.id === agentId);
 
       setCanvasDocument(null);
       setSelectedProjectId(null);
-      setContextAgentKey(null);
-      setActiveAgentPageKey(agentKey);
+      setContextAgentId(null);
+      setActiveAgentPageId(agentId);
       setCurrentView("chat");
 
       if (agent) {
@@ -899,7 +865,7 @@ export function ChatPage({
   const agentPageComposerContextProps = {
     agents: [],
     projects: [],
-    selectedAgentKey: null,
+    selectedAgentId: null,
     selectedProjectId: null,
     onSelectAgent: () => undefined,
     onSelectProject: () => undefined,
@@ -975,7 +941,7 @@ export function ChatPage({
           activeSessionId={activeSession?.id}
           isSessionProcessing={isSessionProcessing}
           selectedProjectId={selectedProjectId}
-          selectedAgentKey={activeAgentPageKey}
+          selectedAgentId={activeAgentPageId}
           isLoading={isLoadingSessions}
           isLoadingArchivedSessions={isLoadingArchivedSessions}
           isLoadingAgents={isLoadingAgents}
@@ -1002,13 +968,13 @@ export function ChatPage({
 
             navigateChatHref(buildChatProjectHref(projectId));
           }}
-          onSelectAgent={(agentKey) => {
-            if (!agentKey) {
+          onSelectAgent={(agentId) => {
+            if (!agentId) {
               navigateChatHref(buildChatHref({ kind: "home" }));
               return;
             }
 
-            const agent = agents.find((item) => item.key === agentKey);
+            const agent = agents.find((item) => item.id === agentId);
 
             if (!agent) {
               return;
@@ -1041,6 +1007,7 @@ export function ChatPage({
             ) : null}
             <ChatProjectsPage
               projects={projects}
+              agents={agents}
               sessions={sessions}
               selectedProjectId={selectedProjectId}
               isLoading={isLoadingProjects}
@@ -1053,8 +1020,8 @@ export function ChatPage({
                 clearWorkspaceError();
                 clearError();
                 setCanvasDocument(null);
-                setActiveAgentPageKey(null);
-                setContextAgentKey(null);
+                setActiveAgentPageId(null);
+                setContextAgentId(null);
                 setSelectedProjectId(projectId);
                 setCurrentView("chat");
                 navigateChatHref(buildChatProjectHref(projectId));
@@ -1076,7 +1043,7 @@ export function ChatPage({
             ) : null}
             <ChatAgentsPage
               agents={agents}
-              selectedAgentKey={activeAgentPageKey}
+              selectedAgentId={activeAgentPageId}
               canManageAgents={canManageAgents}
               canManageOfficialAgents={canManageOfficialAgents}
               editAgentId={agentEditRequest?.id ?? null}
@@ -1088,18 +1055,18 @@ export function ChatPage({
                 setCurrentView("chat");
                 navigateChatHref(buildChatHref({ kind: "home" }));
               }}
-              onSelectAgent={(agentKey) => {
+              onSelectAgent={(agentId) => {
                 clearWorkspaceError();
                 clearError();
                 setCanvasDocument(null);
                 setSelectedProjectId(null);
                 setAgentEditRequest(null);
-                setActiveAgentPageKey(agentKey);
-                setContextAgentKey(null);
+                setActiveAgentPageId(agentId);
+                setContextAgentId(null);
                 setCurrentView("chat");
 
-                if (agentKey) {
-                  const agent = agents.find((item) => item.key === agentKey);
+                if (agentId) {
+                  const agent = agents.find((item) => item.id === agentId);
 
                   if (agent) {
                     navigateChatHref(buildChatHref({ kind: "agent", agentId: agent.id }));
@@ -1195,14 +1162,14 @@ export function ChatPage({
 
               if (deleted) {
                 setSelectedProjectId(null);
-                setContextAgentKey(null);
+                setContextAgentId(null);
                 await handleStartSession();
               }
             }}
             onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
             onClearAgent={() => {
-              setActiveAgentPageKey(null);
-              setContextAgentKey(null);
+              setActiveAgentPageId(null);
+              setContextAgentId(null);
               void startSession();
             }}
           />
@@ -1234,7 +1201,7 @@ export function ChatPage({
                   project={selectedProject}
                   sessions={selectedProjectSessions}
                   agents={agents}
-                  contextAgentKey={contextAgentKey}
+                  contextAgentId={contextAgentId}
                   compact
                   settingsOpen={projectSettingsOpen}
                   onSettingsOpenChange={(open) => {
@@ -1278,13 +1245,13 @@ export function ChatPage({
                   onUpdateProject={editProject}
                   getAccessToken={getAccessToken}
                   onUseAgent={handleSelectContextAgent}
-                  onOpenAgentPage={(agentKey) => {
-                    const agent = agents.find((item) => item.key === agentKey);
+                  onOpenAgentPage={(agentId) => {
+                    const agent = agents.find((item) => item.id === agentId);
 
                     setCanvasDocument(null);
                     setSelectedProjectId(null);
-                    setContextAgentKey(null);
-                    setActiveAgentPageKey(agentKey);
+                    setContextAgentId(null);
+                    setActiveAgentPageId(agentId);
                     setCurrentView("chat");
 
                     if (agent) {
@@ -1293,13 +1260,13 @@ export function ChatPage({
 
                     void startSession();
                   }}
-                  onSetDefaultAgent={async (agentKey) => {
+                  onSetDefaultAgent={async (agentId) => {
                     const updated = await editProject(selectedProject.id, {
-                      defaultAgentKey: agentKey,
+                      defaultAgentId: agentId,
                     });
 
                     if (updated) {
-                      setContextAgentKey(agentKey);
+                      setContextAgentId(agentId);
                     }
 
                     return updated;
@@ -1309,7 +1276,7 @@ export function ChatPage({
 
                     if (deleted) {
                       setSelectedProjectId(null);
-                      setContextAgentKey(null);
+                      setContextAgentId(null);
                       await handleStartSession();
                     }
 
@@ -1317,7 +1284,7 @@ export function ChatPage({
                   }}
                   onClearProject={() => {
                     setSelectedProjectId(null);
-                    setContextAgentKey(null);
+                    setContextAgentId(null);
                     void handleStartSession();
                   }}
                   composer={
@@ -1343,7 +1310,7 @@ export function ChatPage({
                       onUseSuggestion={setDraft}
                       canManageAgent={canManageAgents}
                       onManageAgent={() => {
-                        if (!canManageAgents || !activeAgentPage?.key) {
+                        if (!canManageAgents || !activeAgentPage?.id) {
                           return;
                         }
 

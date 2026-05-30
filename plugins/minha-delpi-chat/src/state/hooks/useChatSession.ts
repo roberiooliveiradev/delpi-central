@@ -36,7 +36,7 @@ import { upsertStreamingActivityEntry } from "../utils/streamingActivityLog";
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   projectId?: string | null;
-  agentKey?: string | null;
+  agentId?: string | null;
   onSessionActivated?: (sessionId: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
@@ -975,7 +975,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             title: "Nova conversa",
             context: "geral",
             projectId: options.projectId ?? null,
-            agentKey: options.agentKey ?? null,
+            agentId: options.agentId ?? null,
           },
           {
             getAccessToken: options.getAccessToken,
@@ -1051,7 +1051,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         message,
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
-        agentKey: options.agentKey,
+        agentId: options.agentId,
         ...buildStreamCallbacks(sessionForMessage),
       });
     } catch (err) {
@@ -1077,7 +1077,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     loadMessages,
     loadSessions,
     markSessionPending,
-    options.agentKey,
+    options.agentId,
     options.getAccessToken,
     options.projectId,
     streamMessage,

@@ -36,7 +36,7 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def get_enabled_by_key(self, key: str, user_id: UUID | None = None) -> ChatAgent | None:
+    def get_enabled_by_id(self, agent_id: UUID, user_id: UUID | None = None) -> ChatAgent | None:
         raise NotImplementedError
 
     @abstractmethod
@@ -61,7 +61,6 @@ class ChatAgentRepositoryPort(ABC):
     def create(
         self,
         owner_user_id: UUID | None,
-        key: str,
         name: str,
         description: str | None,
         system_prompt: str | None,
@@ -109,7 +108,7 @@ class ChatAgentRepositoryPort(ABC):
     @abstractmethod
     def list_usage_summaries(
         self,
-        agent_keys: list[str],
+        agent_ids: list[UUID],
         *,
         hours: int = 168,
     ) -> dict[str, dict[str, int]]:

@@ -41,7 +41,7 @@ def test_capabilities_detects_consigo_fazer_aqui():
 
 def test_meta_direct_answer_composes_three_sections():
     message = "me diga quem sou eu e o que consigo fazer aqui, quem é você?"
-    workspace_context = {"agent": None, "agentKey": None, "skills": {}}
+    workspace_context = {"agent": None, "agentId": None, "skills": {}}
 
     answer = ChatMetaDirectAnswerService.build(
         message=message,

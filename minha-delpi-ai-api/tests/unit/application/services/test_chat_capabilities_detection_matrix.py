@@ -58,7 +58,7 @@ def test_capabilities_detection_negative(message: str):
 
 def test_capabilities_answer_has_expected_structure_common_chat():
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": None, "agentKey": None},
+        workspace_context={"agent": None, "agentId": None},
         allowed_action_ids=[],
         action_catalog=[],
     )
@@ -71,7 +71,7 @@ def test_capabilities_answer_has_expected_structure_common_chat():
 
 def test_capabilities_answer_with_agent_includes_examples():
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": {"name": "Especialista em Produtos"}, "agentKey": "prod"},
+        workspace_context={"agent": {"name": "Especialista em Produtos"}, "agentId": "11111111-1111-4111-8111-111111111111"},
         allowed_action_ids=["act.stock", "act.suppliers"],
         action_catalog=[
             {

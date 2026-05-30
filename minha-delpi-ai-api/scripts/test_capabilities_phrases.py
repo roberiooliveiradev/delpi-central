@@ -10,10 +10,10 @@ PHRASES = (
     "ajuda",
 )
 
-COMMON = {"agent": None, "agentKey": None}
+COMMON = {"agent": None, "agentId": None}
 AGENT = {
     "agent": {"name": "Especialista em Produtos"},
-    "agentKey": "produtos",
+    "agentId": "11111111-1111-4111-8111-111111111111",
 }
 
 

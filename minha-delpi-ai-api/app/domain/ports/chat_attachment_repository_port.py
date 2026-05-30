@@ -12,7 +12,7 @@ class ChatAttachmentRepositoryPort(ABC):
         user_id: UUID,
         session_id: UUID,
         project_id: UUID | None,
-        agent_key: str | None,
+        agent_id: UUID | None,
         filename: str,
         original_filename: str,
         content_type: str | None,

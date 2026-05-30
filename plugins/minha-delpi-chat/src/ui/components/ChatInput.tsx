@@ -33,14 +33,14 @@ type ChatInputProps = {
   placeholder?: string;
   agents?: ChatAgent[];
   projects?: ChatProject[];
-  selectedAgentKey?: string | null;
+  selectedAgentId?: string | null;
   selectedProjectId?: string | null;
   attachments?: ChatInputAttachment[];
   onChange: (value: string) => void;
   onSubmit: () => void;
   onCancel?: () => void;
-  onSelectAgent?: (agentKey: string | null) => void;
-  onOpenAgentPage?: (agentKey: string) => void;
+  onSelectAgent?: (agentId: string | null) => void;
+  onOpenAgentPage?: (agentId: string) => void;
   onSelectProject?: (projectId: string | null) => void;
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (attachmentId: string) => void;
@@ -67,7 +67,7 @@ export function ChatInput({
   placeholder = "Pergunte alguma coisa",
   agents = [],
   projects = [],
-  selectedAgentKey,
+  selectedAgentId,
   selectedProjectId,
   attachments = [],
   onChange,
@@ -125,7 +125,7 @@ export function ChatInput({
     };
   }, [isMenuOpen]);
 
-  const selectedAgent = agents.find((agent) => agent.key === selectedAgentKey);
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const hasAttachments = attachments.length > 0;
 
@@ -270,12 +270,12 @@ export function ChatInput({
                     <button
                       type="button"
                       className={
-                        agent.key === selectedAgentKey
+                        agent.id === selectedAgentId
                           ? "mdc-chat-input__menu-item--active"
                           : undefined
                       }
                       onClick={() => {
-                        onSelectAgent?.(agent.key);
+                        onSelectAgent?.(agent.id);
                         setIsMenuOpen(false);
                       }}
                     >
@@ -287,7 +287,7 @@ export function ChatInput({
                       type="button"
                       className="mdc-chat-input__open-agent"
                       onClick={() => {
-                        onOpenAgentPage?.(agent.key);
+                        onOpenAgentPage?.(agent.id);
                         setIsMenuOpen(false);
                       }}
                       title={`Abrir página de ${agent.name}`}

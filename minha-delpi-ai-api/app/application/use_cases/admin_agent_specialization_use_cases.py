@@ -45,7 +45,6 @@ class ListAdminSpecializedAgentsUseCase:
             items.append(
                 {
                     "id": str(agent.id),
-                    "key": agent.key,
                     "name": agent.name,
                     "description": agent.description,
                     "category": agent.category,
@@ -74,7 +73,6 @@ class GetAdminAgentSpecializationUseCase:
 
         return {
             "agentId": str(model.id),
-            "agentKey": model.key,
             "agentName": model.name,
             "specialization": specialization,
             "enabled": specialization is not None,
@@ -123,7 +121,6 @@ class SaveAdminAgentSpecializationUseCase:
                 context="admin",
                 metadata={
                     "agent_id": str(model.id),
-                    "agent_key": model.key,
                     "enabled": saved_specialization is not None,
                     "domain": (saved_specialization or {}).get("domain"),
                     "preset_key": (saved_specialization or {}).get("presetKey"),
@@ -132,7 +129,6 @@ class SaveAdminAgentSpecializationUseCase:
 
         return {
             "agentId": str(model.id),
-            "agentKey": model.key,
             "agentName": model.name,
             "specialization": saved_specialization,
             "enabled": saved_specialization is not None,

@@ -101,13 +101,14 @@ class SendChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
-        if request.agent_key and not session.agent_key:
-            self.chat_repository.update_session_agent_key(
+        if request.agent_id and not session.agent_id:
+            parsed_agent_id = UUID(request.agent_id)
+            self.chat_repository.update_session_agent_id(
                 session_id=session_id,
                 user_id=user_id,
-                agent_key=request.agent_key,
+                agent_id=parsed_agent_id,
             )
-            object.__setattr__(session, "agent_key", request.agent_key)
+            object.__setattr__(session, "agent_id", parsed_agent_id)
 
         workspace_context = self._build_workspace_context(session, user_id)
         attachments = self._get_message_attachments(request, user_id, session_id)
@@ -180,7 +181,7 @@ class SendChatMessageUseCase:
             content=message,
             metadata={
                 "context": request.context,
-                "agentKey": workspace_context.get("agentKey"),
+                "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
                 "attachments": attachments,
@@ -294,7 +295,7 @@ class SendChatMessageUseCase:
         assistant_metadata = {
             "provider": Settings.LLM_PROVIDER,
             "model": Settings.OLLAMA_MODEL,
-            "agentKey": workspace_context.get("agentKey"),
+            "agentId": workspace_context.get("agentId"),
             "agent": workspace_context.get("agent"),
             "project": workspace_context.get("project"),
             "attachments": attachments,
@@ -345,7 +346,7 @@ class SendChatMessageUseCase:
                 "session_id": str(session_id),
                 "provider": Settings.LLM_PROVIDER,
                 "model": Settings.OLLAMA_MODEL,
-                "agentKey": workspace_context.get("agentKey"),
+                "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
                 "attachments": attachments,
@@ -648,7 +649,7 @@ class SendChatMessageUseCase:
             "agent": self._agent_metadata(agent),
             "projectPrompt": None,
             "agentPrompt": agent.system_prompt if agent else None,
-            "agentKey": agent.key if agent else session.agent_key,
+            "agentId": str(agent.id) if agent else (str(session.agent_id) if session.agent_id else None),
             "allowedActionIds": [],
             "capabilities": {},
             "skills": ChatAgentSkillsService.resolve(
@@ -660,11 +661,11 @@ class SendChatMessageUseCase:
         }
 
     def _get_session_agent(self, session, user_id: UUID):
-        if not self.agent_repository or not session.agent_key:
+        if not self.agent_repository or not session.agent_id:
             return None
 
-        return self.agent_repository.get_enabled_by_key(
-            session.agent_key,
+        return self.agent_repository.get_enabled_by_id(
+            session.agent_id,
             user_id=user_id,
         )
 
@@ -673,7 +674,7 @@ class SendChatMessageUseCase:
             return None
 
         return {
-            "key": agent.key,
+            "id": str(agent.id),
             "name": agent.name,
             "description": agent.description,
             "metadata": agent.metadata,

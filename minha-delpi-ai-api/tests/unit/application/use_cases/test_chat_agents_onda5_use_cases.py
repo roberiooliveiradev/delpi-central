@@ -16,7 +16,6 @@ def _agent() -> ChatAgent:
     now = datetime.now(timezone.utc)
     return ChatAgent(
         id=uuid4(),
-        key="origem",
         name="Agente origem",
         description="desc",
         system_prompt="prompt",
@@ -71,7 +70,7 @@ def test_get_agent_stats_delegates_to_repository():
     repository = MagicMock()
     repository.get_accessible_by_id.return_value = (_agent(), "owner")
     repository.get_usage_stats.return_value = {
-        "agentKey": "origem",
+        "agentId": "11111111-1111-4111-8111-111111111111",
         "windowHours": 168,
         "sessionsInWindow": 2,
         "messagesInWindow": 10,

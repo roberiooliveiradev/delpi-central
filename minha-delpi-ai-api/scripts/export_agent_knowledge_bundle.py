@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Exporta fontes do agente para docs/knowledge/domains/agents/{agent_key}/ (importação).
+"""Exporta fontes do agente para docs/knowledge/domains/agents/{agent_id}/ (importação).
 
 Lê documentos agent_source do banco e copia arquivos do storage local com nomes normalizados.
 
 Uso:
   PYTHONPATH=/app python scripts/export_agent_knowledge_bundle.py \\
-    --agent-key minha-delpi-chat \\
+    --agent-id 11111111-1111-4111-8111-111111111111 \\
     [--user-id UUID]
 """
 
@@ -22,7 +22,7 @@ from app.composition.root_composer import create_application
 from app.domain.services.agent_knowledge_filename_service import AgentKnowledgeFilenameService
 from app.infrastructure.persistence.postgres_knowledge_repository import PostgresKnowledgeRepository
 
-DEFAULT_AGENT_KEY = "minha-delpi-chat"
+DEFAULT_AGENT_ID = "11111111-1111-4111-8111-111111111111"
 OUTPUT_ROOT = Path(__file__).resolve().parents[1] / "docs" / "knowledge" / "domains" / "agents"
 
 
@@ -48,17 +48,17 @@ def _resolve_content(document, metadata: dict) -> tuple[bytes, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Exporta bundle de conhecimento do agente")
-    parser.add_argument("--agent-key", default=DEFAULT_AGENT_KEY)
+    parser.add_argument("--agent-id", default=DEFAULT_AGENT_ID)
     parser.add_argument("--user-id", default=None, help="Opcional; só para log")
     parser.add_argument(
         "--output-dir",
         default=None,
-        help="Destino (default: docs/knowledge/domains/agents/{agent_key})",
+        help="Destino (default: docs/knowledge/domains/agents/{agent_id})",
     )
     args = parser.parse_args()
 
-    agent_key = args.agent_key.strip()
-    output_dir = Path(args.output_dir) if args.output_dir else OUTPUT_ROOT / agent_key
+    agent_id = args.agent_id.strip()
+    output_dir = Path(args.output_dir) if args.output_dir else OUTPUT_ROOT / agent_id
     output_dir.mkdir(parents=True, exist_ok=True)
 
     app = create_application()
@@ -69,7 +69,7 @@ def main() -> int:
         knowledge_repo = PostgresKnowledgeRepository()
 
         documents = knowledge_repo.list_documents_by_metadata(
-            filters={"scope": "agent_source", "agentKey": agent_key},
+            filters={"scope": "agent_source", "agentId": agent_id},
             limit=500,
             active=True,
         )
@@ -99,7 +99,7 @@ def main() -> int:
             )
 
     manifest = {
-        "agentKey": agent_key,
+        "agentId": agent_id,
         "exportedAt": datetime.now(UTC).isoformat(),
         "outputDir": str(output_dir),
         "fileCount": len(exported),
@@ -118,7 +118,7 @@ def main() -> int:
     readme = output_dir / "README.md"
     if not readme.exists():
         readme.write_text(
-            f"# Conhecimento exportado — agente `{agent_key}`\n\n"
+            f"# Conhecimento exportado — agente `{agent_id}`\n\n"
             "Pasta para **importação/reimportação** de fontes do agente no admin ou via "
             "`POST /chat/agents/{{id}}/sources` (multipart).\n\n"
             "Regenerar com `scripts/export_agent_knowledge_bundle.py`.\n\n"

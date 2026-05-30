@@ -6,7 +6,6 @@ from uuid import UUID
 @dataclass(frozen=True)
 class ChatAgent:
     id: UUID
-    key: str
     name: str
     description: str | None
     system_prompt: str | None

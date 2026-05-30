@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -10,8 +10,10 @@ from app.application.dto.send_chat_message_request import SendChatMessageRequest
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
 from app.domain.entities.chat_session import ChatSession
 
+FAKE_AGENT_ID = UUID("11111111-1111-4111-8111-111111111111")
 
-def _session(*, agent_key: str | None = "minha-delpi") -> ChatSession:
+
+def _session(*, agent_id: UUID | None = FAKE_AGENT_ID) -> ChatSession:
     now = datetime.now(timezone.utc)
     return ChatSession(
         id=uuid4(),
@@ -20,7 +22,7 @@ def _session(*, agent_key: str | None = "minha-delpi") -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=agent_key,
+        agent_id=agent_id,
     )
 
 
@@ -38,13 +40,13 @@ def _build_stream_use_case(*, session: ChatSession):
     workspace_context_service.build_context.return_value = {
         "project": None,
         "agent": {
-            "key": "minha-delpi",
+            "id": str(FAKE_AGENT_ID),
             "name": "Agente Minha DELPI",
             "description": "assistente geral.",
         },
         "projectPrompt": None,
         "agentPrompt": "Você é o assistente.",
-        "agentKey": "minha-delpi",
+        "agentId": "11111111-1111-4111-8111-111111111111",
         "allowedActionIds": [],
         "capabilities": {},
         "specialization": None,

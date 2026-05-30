@@ -16,7 +16,7 @@ def test_is_capabilities_question():
 
 def test_build_direct_answer_common_chat():
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": None, "agentKey": None},
+        workspace_context={"agent": None, "agentId": None},
         allowed_action_ids=[],
         action_catalog=[],
     )
@@ -27,7 +27,7 @@ def test_build_direct_answer_common_chat():
 
 def test_build_direct_answer_with_agent_actions():
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": {"name": "Especialista"}, "agentKey": "esp"},
+        workspace_context={"agent": {"name": "Especialista"}, "agentId": "11111111-1111-4111-8111-111111111111"},
         allowed_action_ids=["act.stock"],
         action_catalog=[
             {
@@ -46,7 +46,7 @@ def test_build_direct_answer_with_agent_actions():
 
 def test_build_direct_answer_common_includes_examples():
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": None, "agentKey": None},
+        workspace_context={"agent": None, "agentId": None},
         allowed_action_ids=[],
         action_catalog=[],
     )
@@ -73,7 +73,7 @@ def test_capability_inquiry_group_search_with_typo():
         message=message,
         workspace_context={
             "agent": {"name": "Especialista em Produtos"},
-            "agentKey": "produtos",
+            "agentId": "11111111-1111-4111-8111-111111111111",
         },
         allowed_action_ids=["act.search"],
         action_catalog=[
@@ -103,7 +103,7 @@ def test_operational_search_is_not_capability_inquiry():
 def test_capability_inquiry_without_agent_explains_common_chat():
     answer = ChatCapabilitiesService.build_feature_answer(
         message="você consegue buscar produto por grupo?",
-        workspace_context={"agent": None, "agentKey": None},
+        workspace_context={"agent": None, "agentId": None},
         allowed_action_ids=[],
         action_catalog=[],
     )

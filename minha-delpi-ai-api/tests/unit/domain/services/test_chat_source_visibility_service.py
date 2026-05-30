@@ -14,7 +14,7 @@ def test_hide_agent_source():
             {
                 "scope": "agent_source",
                 "title": "Manual",
-                "agentKey": "rh-agent",
+                "agentId": "11111111-1111-4111-8111-111111111111",
             }
         )
         is True
@@ -60,7 +60,7 @@ def test_hide_legacy_unscoped_corporate_source():
 def test_filter_client_visible_sources():
     sources = [
         {"scope": "global", "title": "Global"},
-        {"scope": "agent_source", "title": "Agente", "agentKey": "a1"},
+        {"scope": "agent_source", "title": "Agente", "agentId": "11111111-1111-4111-8111-111111111111"},
         {"scope": "project_source", "title": "Projeto", "projectId": "p1"},
         {"scope": "session_source", "title": "Anexo", "sessionId": "s1"},
     ]

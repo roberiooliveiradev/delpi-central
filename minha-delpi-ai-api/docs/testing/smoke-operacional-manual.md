@@ -95,6 +95,38 @@ docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
 
 ---
 
+## Interpretação de dados e resumos humanizados (#70–79)
+
+Valida resumo textual na **primeira resposta** (roteiro, estoque, estrutura, inspeção) e **follow-ups** que interpretam dados já obtidos **sem nova API/SQL**.
+
+**Agente:** Minha DELPI Chat (`minha-delpi-chat`). Use a **mesma conversa** nos follow-ups.
+
+### Consulta inicial — resumo + tabela
+
+| # | Pergunta | O que esperar |
+|---|----------|---------------|
+| 70 | roteiro do 90260142 | Tool `/products/…/guide`; texto resume operações do produto e componentes BOM; **não** só o título «Roteiro do produto» |
+| 71 | estrutura do produto 90260047 | Resumo com produto pai, componentes nível 1 e MPs; árvore/tabela abaixo |
+| 72 | inspeção do produto 90260142 | Resumo do plano de inspeção (testes/características); tabela abaixo |
+| 73 | estoque do produto 10080022 | Resumo com filiais, totais disponível/atual e detalhe por armazém; tabela/gráfico |
+
+### Follow-up — interpretar dados já mostrados (sem nova consulta)
+
+| # | Sequência | O que esperar |
+|---|-----------|---------------|
+| 74 | *(após #70)* explique os dados acima | **Sem** tool call; `analysisMode` no adminDebug; resposta em linguagem natural; **não** erro SQL 400 |
+| 75 | *(após #73)* resume | Idem — comando curto |
+| 76 | *(após #70)* traduz isso | Idem |
+| 77 | *(após #73)* nao entendi | Idem |
+| 78 | *(após #71)* o que isso quer dizer | Idem para estrutura |
+| 79 | explique os dados acima *(conversa vazia)* | **Não** chama SQL; sem histórico útil, não inventa consulta |
+
+**Automatizado (preparação do turno):** `scripts/smoke_operational_questions.py` (#70–78).
+
+**Regressão unitária:** `tests/fixtures/chat_intelligence_regression_cases.py` (`DATA_INTERPRETATION_*`, `PRESENTER_HUMANIZED_CASES`).
+
+---
+
 ## Datas automáticas (11.1.2)
 
 | # | Pergunta | O que esperar |
@@ -341,6 +373,7 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Área | Onde rodar |
 |------|------------|
 | Smoke operacional | `scripts/smoke_operational_questions.py` |
+| Interpretação de dados / resumos (#70–79) | `scripts/smoke_operational_questions.py` + `tests/unit/domain/services/test_chat_intelligence_regression.py` |
 | GPT_instructions + SQL produção + fontes | `scripts/smoke_gpt_instructions_improvements.py` |
 | Regressão unitária SQL operacional | `tests/unit/domain/services/test_chat_sql_operational_intent_service.py`, `test_chat_sql_production_query_service.py` |
 | Intent Normas / descrição técnica | `tests/unit/domain/services/test_chat_technical_description_intent_service.py` |
@@ -400,6 +433,16 @@ Use esta seção para marcar o que passou/falhou durante a validação manual.
 | G12 | ☐ | |
 | G13 | ☐ | |
 | G14 | ☐ | |
+| 70 | ☐ | |
+| 71 | ☐ | |
+| 72 | ☐ | |
+| 73 | ☐ | |
+| 74 | ☐ | |
+| 75 | ☐ | |
+| 76 | ☐ | |
+| 77 | ☐ | |
+| 78 | ☐ | |
+| 79 | ☐ | |
 | N1 | ☐ | |
 | N2 | ☐ | |
 | N3 | ☐ | |

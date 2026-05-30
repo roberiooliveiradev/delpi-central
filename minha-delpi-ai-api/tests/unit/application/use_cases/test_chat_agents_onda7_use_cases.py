@@ -17,7 +17,6 @@ def _agent() -> ChatAgent:
     now = datetime.now(timezone.utc)
     return ChatAgent(
         id=uuid4(),
-        key="rh-agent",
         name="RH",
         description="desc",
         system_prompt="prompt",

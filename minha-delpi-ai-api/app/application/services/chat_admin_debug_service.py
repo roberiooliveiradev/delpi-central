@@ -118,7 +118,7 @@ class ChatAdminDebugService:
 
         payload = {
             "workspace": {
-                "agentKey": workspace_context.get("agentKey"),
+                "agentId": workspace_context.get("agentId"),
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
                 "skills": workspace_context.get("skills"),

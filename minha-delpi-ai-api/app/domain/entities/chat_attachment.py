@@ -10,7 +10,7 @@ class ChatAttachment:
     session_id: UUID
     message_id: UUID | None
     project_id: UUID | None
-    agent_key: str | None
+    agent_id: UUID | None
     filename: str
     original_filename: str
     content_type: str | None

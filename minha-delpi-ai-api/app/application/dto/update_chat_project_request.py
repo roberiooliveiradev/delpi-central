@@ -8,7 +8,7 @@ class UpdateChatProjectRequest:
     name: str | None = None
     description: str | None = None
     instructions: str | None = None
-    default_agent_key: str | None = None
+    default_agent_id: str | None = None
     visibility: str | None = None
     icon: str | None = None
     color: str | None = None

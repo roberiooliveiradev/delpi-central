@@ -42,7 +42,7 @@ def test_small_talk_direct_answer_agent():
                 "name": "Agente Minha DELPI",
                 "description": "assistente geral.",
             },
-            "agentKey": "minha-delpi",
+            "agentId": "11111111-1111-4111-8111-111111111111",
         },
     )
 

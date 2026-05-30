@@ -14,7 +14,6 @@ def _agent() -> ChatAgent:
     now = datetime.now(timezone.utc)
     return ChatAgent(
         id=uuid4(),
-        key="origem",
         name="Agente origem",
         description="desc",
         system_prompt="prompt",
@@ -35,6 +34,7 @@ def _agent() -> ChatAgent:
 def test_duplicate_agent_returns_owner_response():
     agent = _agent()
     repository = MagicMock()
+    repository.get_accessible_by_id.return_value = (agent, "owner")
     repository.duplicate.return_value = agent
 
     result = DuplicateChatAgentUseCase(repository).execute(

@@ -241,7 +241,7 @@ def main() -> int:
                 return 2
             session = sessions[0]
             session_id = str(session.id)
-            print(f"Sessão: {session_id} (agent_key={session.agent_key})\n", file=sys.stderr)
+            print(f"Sessão: {session_id} (agent_id={session.agent_id})\n", file=sys.stderr)
         else:
             session = chat_repo.get_session_by_id(UUID(session_id))
             if not session:
@@ -250,9 +250,9 @@ def main() -> int:
 
         workspace = workspace_svc.build_context(session=session, user_id=UUID(user_id))
 
-        if workspace.get("agentKey") != "minha-delpi-chat":
+        if workspace.get("agentId") != "minha-delpi-chat":
             print(
-                f"Aviso: sessão usa agent_key={workspace.get('agentKey')!r}, "
+                f"Aviso: sessão usa agent_id={workspace.get('agentId')!r}, "
                 "esperado minha-delpi-chat para RAG do agente.",
                 file=sys.stderr,
             )
@@ -279,7 +279,7 @@ def main() -> int:
                     rag_query,
                     filters={
                         "user_id": user_id,
-                        "agent_key": workspace.get("agentKey") or "minha-delpi-chat",
+                        "agent_id": workspace.get("agentId") or "minha-delpi-chat",
                         "include_global": True,
                     },
                     min_score=0.2,
@@ -503,7 +503,7 @@ def main() -> int:
             "ordens de produção SC2010",
             filters={
                 "user_id": user_id,
-                "agent_key": "minha-delpi-chat",
+                "agent_id": "minha-delpi-chat",
                 "include_global": True,
             },
             min_score=0.2,

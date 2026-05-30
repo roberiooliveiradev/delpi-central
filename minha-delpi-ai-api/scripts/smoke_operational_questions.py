@@ -140,6 +140,46 @@ _TWO_PRODUCTS_HISTORY = [
     },
 ]
 
+_GUIDE_HISTORY = [
+    {"role": "user", "content": "roteiro do 90260142"},
+    {
+        "role": "assistant",
+        "content": "Roteiro do produto",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260142/guide",
+                        "actionId": "guide_products_code_guide_get",
+                    },
+                }
+            ]
+        },
+    },
+]
+
+_STRUCTURE_HISTORY = [
+    {"role": "user", "content": "estrutura do produto 90260047"},
+    {
+        "role": "assistant",
+        "content": "Estrutura do produto 90260047",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260047/structure",
+                        "actionId": "get_product_structure",
+                    },
+                }
+            ]
+        },
+    },
+]
+
 # (mensagem, expectativas, rótulo do checklist manual)
 QUESTIONS: list[tuple[str, dict, str]] = [
     (
@@ -394,6 +434,77 @@ QUESTIONS: list[tuple[str, dict, str]] = [
         },
         "#13 estoque completo reset",
     ),
+    (
+        "roteiro do 90260142",
+        {
+            "action_contains": "guide",
+            "max_tool_calls": 1,
+            "skip_rag": True,
+            "operational_optimize": True,
+            "direct_answer_contains": "90260142",
+        },
+        "#70 roteiro com resumo humanizado",
+    ),
+    (
+        "inspeção do produto 90260142",
+        {
+            "action_contains": "inspection",
+            "max_tool_calls": 1,
+            "skip_rag": True,
+        },
+        "#73 inspeção produto",
+    ),
+    (
+        "explique os dados acima",
+        {
+            "synthetic_history": _GUIDE_HISTORY,
+            "max_tool_calls": 0,
+            "analysis_mode": True,
+            "skip_rag": True,
+            "action_must_not_contain": ["sql"],
+        },
+        "#74 interpretação follow-up roteiro",
+    ),
+    (
+        "resume",
+        {
+            "synthetic_history": _STOCK_HISTORY,
+            "max_tool_calls": 0,
+            "analysis_mode": True,
+            "action_must_not_contain": ["sql"],
+        },
+        "#75 comando curto resume",
+    ),
+    (
+        "traduz isso",
+        {
+            "synthetic_history": _GUIDE_HISTORY,
+            "max_tool_calls": 0,
+            "analysis_mode": True,
+            "action_must_not_contain": ["sql"],
+        },
+        "#76 traduz isso após consulta",
+    ),
+    (
+        "nao entendi",
+        {
+            "synthetic_history": _STOCK_HISTORY,
+            "max_tool_calls": 0,
+            "analysis_mode": True,
+            "action_must_not_contain": ["sql"],
+        },
+        "#77 nao entendi após estoque",
+    ),
+    (
+        "o que isso quer dizer",
+        {
+            "synthetic_history": _STRUCTURE_HISTORY,
+            "max_tool_calls": 0,
+            "analysis_mode": True,
+            "action_must_not_contain": ["sql"],
+        },
+        "#78 interpretação estrutura",
+    ),
 ]
 
 
@@ -525,6 +636,14 @@ def main() -> int:
                     errors,
                 )
 
+            if expectations.get("analysis_mode") is not None:
+                _check(
+                    prepared.analysis_mode is expectations["analysis_mode"],
+                    f"analysis_mode={expectations['analysis_mode']} "
+                    f"(foi {prepared.analysis_mode})",
+                    errors,
+                )
+
             max_tools = expectations.get("max_tool_calls")
             if max_tools is not None:
                 _check(
@@ -538,6 +657,14 @@ def main() -> int:
                 _check(
                     any(needle in aid.lower() for aid in action_ids),
                     f"actionId deve conter «{needle}» (foi {action_ids})",
+                    errors,
+                )
+
+            for forbidden in expectations.get("action_must_not_contain") or []:
+                needle = forbidden.lower()
+                _check(
+                    not any(needle in aid.lower() for aid in action_ids),
+                    f"actionId NÃO deve conter «{forbidden}» (foi {action_ids})",
                     errors,
                 )
 
@@ -642,6 +769,7 @@ def main() -> int:
                     "directAnswerPreview": (prepared.direct_answer or "")[:200],
                     "skipRag": prepared.skip_rag,
                     "operationalOptimize": prepared.operational_optimize,
+                    "analysisMode": prepared.analysis_mode,
                     "toolCallCount": len(tool_calls),
                     "actionIds": action_ids,
                     "parameters": params,

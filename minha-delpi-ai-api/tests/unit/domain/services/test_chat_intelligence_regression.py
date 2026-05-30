@@ -22,6 +22,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from tests.fixtures.chat_intelligence_regression_cases import (
     AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
+    DATA_INTERPRETATION_CASES,
+    DATA_INTERPRETATION_NO_ACTION_CASES,
+    DATA_INTERPRETATION_SKIP_TOOLS_CASES,
     DATE_RANGE_SELECTION_CASES,
     DIRECT_ANSWER_CASES,
     INTENT_CASES,
@@ -32,6 +35,7 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     OPERATIONAL_FAST_PATH_CASES,
     OPERATIONAL_REFINEMENT_FAST_PATH_CASES,
     PAGINATION_REFINEMENT_SELECTION_CASES,
+    PRESENTER_HUMANIZED_CASES,
     PRODUCT_CODE_CASES,
     SELECTION_CASES,
     STOCK_REFINEMENT_SELECTION_CASES,
@@ -67,6 +71,39 @@ def test_analysis_intent_regression(message, expected):
     assert (
         ChatAnalysisIntentService.is_comparison_or_insight_request(message) is expected
     )
+
+
+@pytest.mark.parametrize("message,history,expected", DATA_INTERPRETATION_CASES)
+def test_data_interpretation_intent_regression(message, history, expected):
+    assert (
+        ChatAnalysisIntentService.is_data_interpretation_request(message, history)
+        is expected
+    )
+
+
+@pytest.mark.parametrize("message,history,expected", DATA_INTERPRETATION_SKIP_TOOLS_CASES)
+def test_data_interpretation_skip_tools_regression(message, history, expected):
+    assert (
+        ChatOperationalParameterService.should_skip_tools(
+            message,
+            previous_messages=history,
+        )
+        is expected
+    )
+
+
+@pytest.mark.parametrize("case", DATA_INTERPRETATION_NO_ACTION_CASES)
+def test_data_interpretation_does_not_select_action(case):
+    service = ExternalActionSelectionService(FakeRepository(case["actions"]))
+    allowed = [action["actionId"] for action in case["actions"]]
+
+    selected = service.select_action(
+        case["message"],
+        allowed_action_ids=allowed,
+        previous_messages=case.get("previous_messages"),
+    )
+
+    assert selected is None
 
 
 @pytest.mark.parametrize("message,expected", MISSING_PRODUCT_CODE_CASES)
@@ -190,3 +227,17 @@ def test_direct_answer_regression(case):
 
     for token in case["must_contain"]:
         assert token in answer
+
+
+@pytest.mark.parametrize("case", PRESENTER_HUMANIZED_CASES)
+def test_presenter_humanized_summary_regression(case):
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    humanized = presenter.present(case["payload"], path=case["path"])
+    joined = "\n".join(humanized.get("linhas") or []).lower()
+
+    for token in case["must_contain"]:
+        assert token.lower() in joined, f"faltou «{token}» em {case['label']}"

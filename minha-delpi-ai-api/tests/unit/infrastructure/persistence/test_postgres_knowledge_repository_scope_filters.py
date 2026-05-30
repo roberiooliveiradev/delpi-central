@@ -38,7 +38,7 @@ def test_scope_filters_include_global_session_project_agent_and_user_guards():
             "user_id": "user-1",
             "session_id": "session-1",
             "project_id": "project-1",
-            "agent_key": "agent-1",
+            "agent_id": "agent-1",
         },
     )
 
@@ -60,7 +60,7 @@ def test_scope_filters_include_global_session_project_agent_and_user_guards():
     assert "project-1" in rendered
 
     assert "agent_source" in rendered
-    assert "agentKey" in rendered
+    assert "agentId" in rendered
     assert "agent-1" in rendered
 
 
@@ -73,7 +73,7 @@ def test_scope_filters_for_agent_requires_agent_source_scope():
         {
             "include_global": False,
             "user_id": "user-1",
-            "agent_key": "agent-1",
+            "agent_id": "agent-1",
         },
     )
 
@@ -83,7 +83,7 @@ def test_scope_filters_for_agent_requires_agent_source_scope():
 
     assert "userId" in rendered
     assert "user-1" in rendered
-    assert "agentKey" in rendered
+    assert "agentId" in rendered
     assert "agent-1" in rendered
     assert "agent_source" in rendered
 

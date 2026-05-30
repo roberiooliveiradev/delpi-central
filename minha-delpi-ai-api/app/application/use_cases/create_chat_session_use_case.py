@@ -23,7 +23,7 @@ class CreateChatSessionUseCase:
         title = self._normalize_optional_text(request.title, max_length=150)
         context = self._normalize_optional_text(request.context, max_length=50)
         project_id = UUID(request.project_id) if request.project_id else None
-        agent_key = self._normalize_optional_text(request.agent_key, max_length=80)
+        agent_id = self._parse_agent_id(request.agent_id)
 
         if project_id and self.project_repository:
             project_result = self.project_repository.get_accessible_by_id(
@@ -36,11 +36,11 @@ class CreateChatSessionUseCase:
 
             project, _role = project_result
 
-            if not agent_key:
-                agent_key = project.default_agent_key
+            if not agent_id:
+                agent_id = project.default_agent_id
 
-        if agent_key and self.agent_repository:
-            agent = self.agent_repository.get_enabled_by_key(agent_key, user_id=user_id)
+        if agent_id and self.agent_repository:
+            agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)
 
             if not agent:
                 raise ValueError("Agent not found or inaccessible")
@@ -50,7 +50,7 @@ class CreateChatSessionUseCase:
             title=title,
             context=context,
             project_id=project_id,
-            agent_key=agent_key,
+            agent_id=agent_id,
         )
 
         return ChatSessionResponse(
@@ -58,13 +58,24 @@ class CreateChatSessionUseCase:
             title=session.title,
             context=session.context,
             project_id=str(session.project_id) if session.project_id else None,
-            agent_key=session.agent_key,
+            agent_id=str(session.agent_id) if session.agent_id else None,
             is_pinned=bool(session.is_pinned),
             pinned_at=session.pinned_at.isoformat() if session.pinned_at else None,
             archived_at=session.archived_at.isoformat() if session.archived_at else None,
             created_at=session.created_at.isoformat(),
             updated_at=session.updated_at.isoformat(),
         )
+
+    def _parse_agent_id(self, value: str | None) -> UUID | None:
+        if not value:
+            return None
+
+        normalized = value.strip()
+
+        if not normalized:
+            return None
+
+        return UUID(normalized)
 
     def _normalize_optional_text(self, value: str | None, max_length: int) -> str | None:
         if value is None:

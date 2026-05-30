@@ -264,8 +264,8 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             if not isinstance(metadata, dict):
                 continue
 
-            agent_key = metadata.get("agentKey") or "sem_agente"
-            counts[str(agent_key)] = counts.get(str(agent_key), 0) + 1
+            agent_id = metadata.get("agentId") or "sem_agente"
+            counts[str(agent_id)] = counts.get(str(agent_id), 0) + 1
 
         return [
             {"key": key, "count": count}

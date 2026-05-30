@@ -187,7 +187,6 @@ export type AdminAgentSpecializationPreset = AdminAgentSpecialization & {
 
 export type AdminSpecializedAgent = {
   id: string;
-  key: string;
   name: string;
   description: string | null;
   category: string | null;
@@ -207,7 +206,6 @@ export type AdminAgentSpecializationPresetsResponse = {
 
 export type AdminAgentSpecializationResponse = {
   agentId: string;
-  agentKey: string;
   agentName: string;
   enabled: boolean;
   specialization: AdminAgentSpecialization | null;
@@ -228,7 +226,7 @@ export type AdminResponseEvaluationContext = {
   session: {
     id: string | null;
     title: string | null;
-    agentKey: string | null;
+    agentId: string | null;
   };
   userQuestion: string | null;
   evaluation: AdminResponseEvaluation | null;
@@ -427,7 +425,6 @@ export type AdminRagTestRequest = {
 export type AdminAgentSimulateRequest = {
   question: string;
   agentId?: string;
-  agentKey?: string;
   documentId?: string;
   sessionId?: string;
   generateAnswer?: boolean;
@@ -437,7 +434,6 @@ export type AdminAgentSimulateRequest = {
 export type AdminAgentSimulateResponse = AdminRagTestResponse & {
   agent?: {
     id: string;
-    key: string;
     name: string;
   } | null;
   plannedToolCalls?: Array<{

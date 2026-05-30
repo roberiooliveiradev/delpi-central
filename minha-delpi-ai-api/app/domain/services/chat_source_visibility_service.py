@@ -13,7 +13,7 @@ def should_hide_source_from_client(source: dict | None) -> bool:
     if any(source.get(key) for key in ("projectId", "sessionId", "attachmentId")):
         return False
 
-    if source.get("agentKey"):
+    if source.get("agentId"):
         return True
 
     source_type = str(source.get("sourceType") or "").strip().lower()

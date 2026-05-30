@@ -20,7 +20,6 @@ from app.domain.entities.chat_agent import ChatAgent
 def _agent(**overrides):
     base = {
         "id": uuid4(),
-        "key": "demo",
         "name": "Demo",
         "description": "desc",
         "system_prompt": "prompt",

@@ -10,12 +10,11 @@ import "./ChatAgentsModal.css";
 type ChatAgentsModalProps = {
   open: boolean;
   agents: ChatAgent[];
-  selectedAgentKey?: string | null;
+  selectedAgentId?: string | null;
   isLoading?: boolean;
   onClose: () => void;
-  onSelectAgent?: (agentKey: string | null) => void;
+  onSelectAgent?: (agentId: string | null) => void;
   onCreateAgent?: (payload: {
-    key?: string | null;
     name: string;
     description?: string | null;
     systemPrompt?: string | null;
@@ -57,7 +56,7 @@ function canDeleteAgent(agent: ChatAgent): boolean {
 export function ChatAgentsModal({
   open,
   agents,
-  selectedAgentKey,
+  selectedAgentId,
   isLoading,
   onClose,
   onSelectAgent,
@@ -72,7 +71,6 @@ export function ChatAgentsModal({
   const [shareTarget, setShareTarget] = useState<ChatAgent | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const [key, setKey] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -84,8 +82,8 @@ export function ChatAgentsModal({
   const [shareRole, setShareRole] = useState("viewer");
 
   const selectedAgent = useMemo(
-    () => agents.find((agent) => agent.key === selectedAgentKey) ?? null,
-    [agents, selectedAgentKey],
+    () => agents.find((agent) => agent.id === selectedAgentId) ?? null,
+    [agents, selectedAgentId],
   );
 
   useEffect(() => {
@@ -105,7 +103,6 @@ export function ChatAgentsModal({
   function startCreate() {
     setMode("create");
     setEditingAgentId(null);
-    setKey("");
     setName("");
     setDescription("");
     setSystemPrompt("");
@@ -121,7 +118,6 @@ export function ChatAgentsModal({
   function startEdit(agent: ChatAgent) {
     setMode("edit");
     setEditingAgentId(agent.id);
-    setKey(agent.key);
     setName(agent.name);
     setDescription(agent.description ?? "");
     setSystemPrompt("");
@@ -141,7 +137,6 @@ export function ChatAgentsModal({
     }
 
     const payload = {
-      key: key.trim() || null,
       name: normalizedName,
       description: description.trim() || null,
       systemPrompt: systemPrompt.trim() || null,
@@ -155,7 +150,7 @@ export function ChatAgentsModal({
       const created = await onCreateAgent?.(payload);
 
       if (created) {
-        onSelectAgent?.(created.key);
+        onSelectAgent?.(created.id);
         startCreate();
       }
 
@@ -182,7 +177,7 @@ export function ChatAgentsModal({
     const deleted = await onDeleteAgent?.(deleteTarget.id);
 
     if (deleted) {
-      if (selectedAgentKey === deleteTarget.key) {
+      if (selectedAgentId === deleteTarget.id) {
         onSelectAgent?.(null);
       }
 
@@ -246,7 +241,7 @@ export function ChatAgentsModal({
             <button
               type="button"
               className={
-                selectedAgentKey
+                selectedAgentId
                   ? "mdc-chat-agents-modal__all"
                   : "mdc-chat-agents-modal__all mdc-chat-agents-modal__all--active"
               }
@@ -266,7 +261,7 @@ export function ChatAgentsModal({
                   <article
                     key={agent.id}
                     className={
-                      agent.key === selectedAgentKey
+                      agent.id === selectedAgentId
                         ? "mdc-chat-agents-modal__item mdc-chat-agents-modal__item--active"
                         : "mdc-chat-agents-modal__item"
                     }
@@ -274,7 +269,7 @@ export function ChatAgentsModal({
                     <button
                       type="button"
                       className="mdc-chat-agents-modal__item-main"
-                      onClick={() => onSelectAgent?.(agent.key)}
+                      onClick={() => onSelectAgent?.(agent.id)}
                     >
                       <Bot size={17} aria-hidden="true" />
                       <span>
@@ -356,23 +351,10 @@ export function ChatAgentsModal({
               </div>
             )}
 
-            <div className="mdc-chat-agents-modal__grid">
-              <label>
-                <span>Nome</span>
-                <input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} />
-              </label>
-
-              <label>
-                <span>Chave</span>
-                <input
-                  value={key}
-                  maxLength={80}
-                  disabled={mode === "edit"}
-                  onChange={(event) => setKey(event.target.value)}
-                  placeholder="ex.: produtos-estoque"
-                />
-              </label>
-            </div>
+            <label>
+              <span>Nome</span>
+              <input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} />
+            </label>
 
             <label>
               <span>Descrição</span>

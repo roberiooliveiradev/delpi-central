@@ -22,7 +22,7 @@ def _session() -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=None,
+        agent_id=None,
     )
 
 
@@ -47,7 +47,7 @@ def _build_use_cases():
         "agent": None,
         "projectPrompt": None,
         "agentPrompt": None,
-        "agentKey": None,
+        "agentId": None,
         "allowedActionIds": [],
         "capabilities": {"canvas": True},
         "specialization": None,

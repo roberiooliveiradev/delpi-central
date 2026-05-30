@@ -47,7 +47,7 @@ def _session() -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=None,
+        agent_id=None,
     )
 
 
@@ -57,7 +57,7 @@ def _workspace() -> dict:
         "agent": None,
         "projectPrompt": None,
         "agentPrompt": None,
-        "agentKey": None,
+        "agentId": None,
         "allowedActionIds": ["stock-action"],
         "capabilities": {"actions": True},
         "specialization": None,

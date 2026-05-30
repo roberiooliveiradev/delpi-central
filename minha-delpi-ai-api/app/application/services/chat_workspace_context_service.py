@@ -31,10 +31,10 @@ class ChatWorkspaceContextService:
             if result:
                 project, _role = result
 
-        agent_key = session.agent_key or (project.default_agent_key if project else None)
+        agent_id = session.agent_id or (project.default_agent_id if project else None)
 
-        if agent_key:
-            agent = self.agent_repository.get_enabled_by_key(agent_key, user_id=user_id)
+        if agent_id:
+            agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)
 
         allowed_action_ids = self._allowed_action_ids(agent, user_id)
 
@@ -43,7 +43,7 @@ class ChatWorkspaceContextService:
             "agent": self._agent_metadata(agent),
             "projectPrompt": self._project_prompt(project),
             "agentPrompt": agent.system_prompt if agent else None,
-            "agentKey": agent.key if agent else None,
+            "agentId": str(agent.id) if agent else None,
             "actionProviderKeys": self._action_provider_keys(agent, user_id),
             "allowedActionIds": allowed_action_ids,
             "actionsEnabled": bool(agent and allowed_action_ids),
@@ -65,7 +65,7 @@ class ChatWorkspaceContextService:
             "name": project.name,
             "description": project.description,
             "instructions": project.instructions,
-            "defaultAgentKey": project.default_agent_key,
+            "defaultAgentId": str(project.default_agent_id) if project.default_agent_id else None,
             "metadata": project.metadata,
         }
 
@@ -74,7 +74,7 @@ class ChatWorkspaceContextService:
             return None
 
         return {
-            "key": agent.key,
+            "id": str(agent.id),
             "name": agent.name,
             "description": agent.description,
             "category": agent.category,

@@ -304,7 +304,6 @@ def create_agent():
         result = use_case.execute(
             CreateChatAgentRequest(
                 user_id=g.current_user.sub,
-                key=payload.get("key"),
                 name=payload.get("name", ""),
                 description=payload.get("description"),
                 visibility=payload.get("visibility", "private"),
@@ -1496,8 +1495,11 @@ def create_project():
                 user_id=g.current_user.sub,
                 name=payload.get("name", ""),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_id=payload.get("defaultAgentId") or payload.get("default_agent_id"),
                 visibility=payload.get("visibility", "private"),
                 icon=payload.get("icon"),
+                color=payload.get("color"),
                 metadata=payload.get("metadata"),
             )
         )
@@ -1527,8 +1529,11 @@ def update_project(project_id: str):
                 project_id=project_id,
                 name=payload.get("name"),
                 description=payload.get("description"),
+                instructions=payload.get("instructions"),
+                default_agent_id=payload.get("defaultAgentId") or payload.get("default_agent_id"),
                 visibility=payload.get("visibility"),
                 icon=payload.get("icon"),
+                color=payload.get("color"),
                 metadata=payload.get("metadata"),
                 archived=payload.get("archived"),
             )
@@ -1651,7 +1656,7 @@ def upload_attachment_with_session():
         return bad_request("File is required")
 
     project_id = request.form.get("projectId") or request.form.get("project_id")
-    agent_key = request.form.get("agentKey") or request.form.get("agent_key")
+    agent_id = request.form.get("agentId") or request.form.get("agent_id")
     context = request.form.get("context")
 
     session_use_case = make_create_chat_session_use_case()
@@ -1666,7 +1671,7 @@ def upload_attachment_with_session():
                 ),
                 context=context,
                 project_id=project_id,
-                agent_key=agent_key,
+                agent_id=agent_id,
             )
         )
 
@@ -1927,7 +1932,7 @@ def create_session():
                 title=payload.get("title"),
                 context=payload.get("context"),
                 project_id=payload.get("projectId") or payload.get("project_id"),
-                agent_key=payload.get("agentKey") or payload.get("agent_key"),
+                agent_id=payload.get("agentId") or payload.get("agent_id"),
             )
         )
 
@@ -2311,7 +2316,7 @@ def send_message(session_id: str):
                 context=payload.get("context"),
                 access_token=g.access_token,
                 attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
-                agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+                agent_id=payload.get("agentId") or payload.get("agent_id") or None,
                 admin_debug=admin_debug,
             )
         )
@@ -2363,7 +2368,7 @@ def stream_message(session_id: str):
         context=payload.get("context"),
         access_token=g.access_token,
         attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
-        agent_key=payload.get("agentKey") or payload.get("agent_key") or None,
+        agent_id=payload.get("agentId") or payload.get("agent_id") or None,
         admin_debug=_can_use_admin_debug(),
     )
 

@@ -9,7 +9,7 @@ class ChatProjectResponse:
     created_at: str
     updated_at: str
     instructions: str | None
-    default_agent_key: str | None
+    default_agent_id: str | None
     visibility: str
     icon: str | None
     color: str | None

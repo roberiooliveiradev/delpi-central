@@ -12,7 +12,6 @@ import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
 import "./ChatAgentsPage.css";
 
 type AgentPayload = {
-  key?: string | null;
   name: string;
   description?: string | null;
   systemPrompt?: string | null;
@@ -29,14 +28,14 @@ type AgentUpdatePayload = Partial<AgentPayload> & {
 
 type ChatAgentsPageProps = {
   agents: ChatAgent[];
-  selectedAgentKey?: string | null;
+  selectedAgentId?: string | null;
   canManageAgents?: boolean;
   canManageOfficialAgents?: boolean;
   editAgentId?: string | null;
   editRequestKey?: number;
   isLoading?: boolean;
   onBack: () => void;
-  onSelectAgent?: (agentKey: string | null) => void;
+  onSelectAgent?: (agentId: string | null) => void;
   onCreateAgent?: (payload: AgentPayload) => Promise<ChatAgent | null>;
   onUpdateAgent?: (
     agentId: string,
@@ -127,7 +126,7 @@ function getOwnerLabel(agent: ChatAgent): string {
 
 export function ChatAgentsPage({
   agents,
-  selectedAgentKey,
+  selectedAgentId,
   canManageAgents = false,
   canManageOfficialAgents = false,
   editAgentId,
@@ -430,7 +429,7 @@ export function ChatAgentsPage({
                   <article
                     className={[
                       "mdc-chat-ws-directory__card",
-                      agent.key === selectedAgentKey
+                      agent.id === selectedAgentId
                         ? "mdc-chat-ws-directory__card--active"
                         : "",
                     ]
@@ -440,7 +439,7 @@ export function ChatAgentsPage({
                     <button
                       type="button"
                       className="mdc-chat-ws-directory__card-main"
-                      onClick={() => onSelectAgent?.(agent.key)}
+                      onClick={() => onSelectAgent?.(agent.id)}
                     >
                       <span className="mdc-chat-ws-directory__card-icon">
                         <Bot size={18} aria-hidden="true" />
@@ -474,7 +473,7 @@ export function ChatAgentsPage({
                       <button
                         type="button"
                         className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-                        onClick={() => onSelectAgent?.(agent.key)}
+                        onClick={() => onSelectAgent?.(agent.id)}
                       >
                         Usar
                       </button>

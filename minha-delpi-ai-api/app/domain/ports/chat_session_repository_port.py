@@ -13,7 +13,7 @@ class ChatSessionRepositoryPort(ABC):
         title: str | None,
         context: str | None,
         project_id: UUID | None = None,
-        agent_key: str | None = None,
+        agent_id: UUID | None = None,
     ) -> ChatSession:
         raise NotImplementedError
 
@@ -36,11 +36,11 @@ class ChatSessionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def update_session_agent_key(
+    def update_session_agent_id(
         self,
         session_id: UUID,
         user_id: UUID,
-        agent_key: str,
+        agent_id: UUID,
     ) -> bool:
         raise NotImplementedError
 

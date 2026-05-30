@@ -34,7 +34,6 @@ class AdminAgentSimulateUseCase:
         *,
         question: str,
         agent_id: str | None = None,
-        agent_key: str | None = None,
         document_id: str | None = None,
         session_id: str | None = None,
         generate_answer: bool = False,
@@ -54,7 +53,6 @@ class AdminAgentSimulateUseCase:
             agent_prompt = agent_prompt_override
             agent_meta = {
                 "id": agent_id,
-                "key": agent_key,
             }
             specialization = self.specialization_service.parse(
                 (agent_metadata_override or {}).get("specialization")
@@ -62,7 +60,6 @@ class AdminAgentSimulateUseCase:
         else:
             agent_prompt, agent_meta, specialization = self._resolve_agent(
                 agent_id=agent_id,
-                agent_key=agent_key,
                 user_id=user_id,
                 skip_enabled_check=skip_enabled_check,
             )
@@ -300,7 +297,6 @@ class AdminAgentSimulateUseCase:
         self,
         *,
         agent_id: str | None,
-        agent_key: str | None,
         user_id: str | None,
         skip_enabled_check: bool = False,
     ) -> tuple[str | None, dict | None, dict | None]:
@@ -325,16 +321,6 @@ class AdminAgentSimulateUseCase:
             except ValueError:
                 model = None
 
-        if not model and agent_key:
-            query = AiChatAgentModel.query.filter(
-                AiChatAgentModel.key == str(agent_key).strip(),
-            )
-
-            if not skip_enabled_check:
-                query = query.filter(AiChatAgentModel.enabled.is_(True))
-
-            model = query.first()
-
         if not model:
             return None, None, None
 
@@ -350,7 +336,6 @@ class AdminAgentSimulateUseCase:
 
         return agent.system_prompt, {
             "id": str(agent.id),
-            "key": agent.key,
             "name": agent.name,
         }, specialization
 

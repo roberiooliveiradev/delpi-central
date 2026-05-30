@@ -18,7 +18,12 @@ _CAPABILITY_PHRASES = (
 )
 
 
-def _session(*, agent_key: str | None = None) -> ChatSession:
+from uuid import UUID, uuid4
+
+FAKE_AGENT_ID = UUID("11111111-1111-4111-8111-111111111111")
+
+
+def _session(*, agent_id: UUID | None = None) -> ChatSession:
     now = datetime.now(timezone.utc)
     return ChatSession(
         id=uuid4(),
@@ -27,7 +32,7 @@ def _session(*, agent_key: str | None = None) -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=agent_key,
+        agent_id=agent_id,
     )
 
 
@@ -38,7 +43,7 @@ def _workspace(*, common: bool) -> dict:
             "agent": None,
             "projectPrompt": None,
             "agentPrompt": None,
-            "agentKey": None,
+            "agentId": None,
             "allowedActionIds": [],
             "capabilities": {},
             "specialization": None,
@@ -46,10 +51,10 @@ def _workspace(*, common: bool) -> dict:
 
     return {
         "project": None,
-        "agent": {"key": "produtos", "name": "Especialista em Produtos"},
+        "agent": {"id": str(FAKE_AGENT_ID), "name": "Especialista em Produtos"},
         "projectPrompt": None,
         "agentPrompt": "Você é especialista em produtos.",
-        "agentKey": "produtos",
+        "agentId": "11111111-1111-4111-8111-111111111111",
         "allowedActionIds": ["act.stock"],
         "capabilities": {"actions": True},
         "specialization": None,
@@ -57,7 +62,7 @@ def _workspace(*, common: bool) -> dict:
 
 
 def _build_use_cases(*, common: bool):
-    session = _session(agent_key=None if common else "produtos")
+    session = _session(agent_id=None if common else FAKE_AGENT_ID)
     workspace = _workspace(common=common)
 
     chat_repository = MagicMock()

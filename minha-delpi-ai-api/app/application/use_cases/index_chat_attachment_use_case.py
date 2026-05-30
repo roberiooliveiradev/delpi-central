@@ -67,7 +67,7 @@ class IndexChatAttachmentUseCase:
             "sessionId": str(attachment.session_id),
             "messageId": str(attachment.message_id) if attachment.message_id else None,
             "projectId": str(attachment.project_id) if attachment.project_id else None,
-            "agentKey": attachment.agent_key,
+            "agentId": str(attachment.agent_id) if attachment.agent_id else None,
             "attachmentId": str(attachment.id),
             "originalFilename": attachment.original_filename,
             "contentType": attachment.content_type,

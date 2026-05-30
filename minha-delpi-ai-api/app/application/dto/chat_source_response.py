@@ -9,7 +9,7 @@ class ChatSourceResponse:
     source_ref: str | None
     scope: str | None
     project_id: str | None
-    agent_key: str | None
+    agent_id: str | None
     attachment_id: str | None
     original_filename: str | None
     content_type: str | None

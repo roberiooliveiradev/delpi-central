@@ -16,14 +16,14 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         title: str | None,
         context: str | None,
         project_id: UUID | None = None,
-        agent_key: str | None = None,
+        agent_id: UUID | None = None,
     ) -> ChatSession:
         model = AiChatSessionModel(
             user_id=user_id,
             title=title,
             context=context,
             project_id=project_id,
-            agent_key=agent_key,
+            agent_id=agent_id,
         )
 
         db.session.add(model)
@@ -81,11 +81,11 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
 
         return self._to_session_entity(model)
 
-    def update_session_agent_key(
+    def update_session_agent_id(
         self,
         session_id: UUID,
         user_id: UUID,
-        agent_key: str,
+        agent_id: UUID,
     ) -> bool:
         model = (
             AiChatSessionModel.query
@@ -97,7 +97,7 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         if not model:
             return False
 
-        model.agent_key = agent_key
+        model.agent_id = agent_id
         model.updated_at = datetime.now(timezone.utc)
         db.session.flush()
 
@@ -362,7 +362,7 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
             title=model.title,
             context=model.context,
             project_id=model.project_id,
-            agent_key=model.agent_key,
+            agent_id=model.agent_id,
             is_pinned=bool(model.is_pinned),
             pinned_at=model.pinned_at,
             archived_at=model.archived_at,

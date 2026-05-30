@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import type { ChatProject, ChatSession } from "../../data/api/chatTypes";
+import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/ChatProjectCreateModal";
 import { useConfirmDialog } from "../components/useConfirmDialog";
@@ -18,6 +18,7 @@ import "./ChatProjectsPage.css";
 
 type ChatProjectsPageProps = {
   projects: ChatProject[];
+  agents?: ChatAgent[];
   sessions?: ChatSession[];
   selectedProjectId?: string | null;
   isLoading?: boolean;
@@ -56,6 +57,7 @@ function canEditProject(role: string | null | undefined): boolean {
 
 export function ChatProjectsPage({
   projects,
+  agents = [],
   sessions = [],
   selectedProjectId,
   isLoading,
@@ -212,8 +214,12 @@ export function ChatProjectsPage({
                       <span className="mdc-chat-projects-page__role">
                         {formatAccessRole(project.access_role)}
                       </span>
-                      {project.default_agent_key ? (
-                        <span>Agente: {project.default_agent_key}</span>
+                      {project.default_agent_id ? (
+                        <span>
+                          Agente:{" "}
+                          {agents.find((agent) => agent.id === project.default_agent_id)?.name ??
+                            project.default_agent_id}
+                        </span>
                       ) : null}
                     </div>
 

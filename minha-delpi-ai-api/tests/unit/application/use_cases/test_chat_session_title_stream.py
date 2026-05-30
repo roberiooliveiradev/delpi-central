@@ -20,7 +20,7 @@ def _session(*, title: str | None = "Nova conversa") -> ChatSession:
         context=None,
         created_at=now,
         updated_at=now,
-        agent_key=None,
+        agent_id=None,
     )
 
 
@@ -40,7 +40,7 @@ def _build_stream_use_case(*, session: ChatSession):
         "agent": None,
         "projectPrompt": None,
         "agentPrompt": None,
-        "agentKey": None,
+        "agentId": None,
         "allowedActionIds": [],
         "capabilities": {},
         "specialization": None,

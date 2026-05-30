@@ -172,7 +172,7 @@ class RagContextService:
             "userId": metadata.get("userId"),
             "sessionId": metadata.get("sessionId"),
             "projectId": metadata.get("projectId"),
-            "agentKey": metadata.get("agentKey"),
+            "agentId": metadata.get("agentId"),
             "attachmentId": metadata.get("attachmentId"),
             "originalFilename": metadata.get("originalFilename"),
             "contentType": metadata.get("contentType"),

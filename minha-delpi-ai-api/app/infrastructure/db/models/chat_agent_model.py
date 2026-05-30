@@ -10,7 +10,6 @@ class AiChatAgentModel(db.Model):
     __tablename__ = "ai_chat_agents"
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    key = db.Column(db.String(80), nullable=False, unique=True, index=True)
     name = db.Column(db.String(120), nullable=False)
     description = db.Column(db.String(800), nullable=True)
     system_prompt = db.Column(db.Text, nullable=True)

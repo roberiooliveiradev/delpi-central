@@ -4,7 +4,7 @@ from app.domain.services.chat_agent_profile_service import ChatAgentProfileServi
 def test_profile_uses_published_agent_fields():
     profile = ChatAgentProfileService.from_workspace(
         {
-            "agentKey": "minha-delpi-chat",
+            "agentId": "11111111-1111-4111-8111-111111111111",
             "agent": {
                 "name": "Agente Minha DELPI",
                 "description": "Assistente corporativo geral da Minha DELPI.",
@@ -22,7 +22,7 @@ def test_profile_uses_published_agent_fields():
 def test_profile_falls_back_to_system_prompt_excerpt():
     profile = ChatAgentProfileService.from_workspace(
         {
-            "agentKey": "custom-agent",
+            "agentId": "11111111-1111-4111-8111-111111111111",
             "agent": {"name": "Meu Agente", "description": "", "metadata": {}},
             "agentPrompt": (
                 "Você é um especialista em logística. "

@@ -9,7 +9,7 @@ Uso (container minha-delpi-ai-api):
   # Gerar arquivos + mapa + ingerir no agente (requer owner/editor):
   PYTHONPATH=/app python scripts/sync_gpt_instructions_knowledge.py \\
     --source-dir minha-delpi-ai-api/docs/knowledge/sources/gpt-instructions \\
-    --agent-key minha-delpi-chat \\
+    --agent-id 11111111-1111-4111-8111-111111111111 \\
     --user-id <uuid> \\
     --ingest
 
@@ -18,7 +18,7 @@ Montagem dev (delpi-central + api-delpi-py):
   docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \\
     python scripts/sync_gpt_instructions_knowledge.py \\
     --source-dir /workspace/api-delpi-py/GPT_instructions \\
-    --agent-key minha-delpi-chat \\
+    --agent-id 11111111-1111-4111-8111-111111111111 \\
     --user-id 4ac305a6-0569-40b8-a918-b908cfeba169 \\
     --ingest
 """
@@ -71,7 +71,7 @@ DEFAULT_COVERAGE_MAP = (
     / "knowledge"
     / "gpt-instructions-coverage-map.md"
 )
-DEFAULT_AGENT_KEY = "minha-delpi-chat"
+DEFAULT_AGENT_ID = "11111111-1111-4111-8111-111111111111"
 
 
 def _resolve_source_path(source_dir: Path, source_file: str) -> Path:
@@ -243,7 +243,7 @@ def _ingest_global_documents(*, user_id: str, generated: list[dict]) -> list[dic
 
 def _ingest_agent_sources(
     *,
-    agent_key: str,
+    agent_id: str,
     user_id: str,
     output_dir: Path,
     generated: list[dict],
@@ -255,15 +255,18 @@ def _ingest_agent_sources(
 
     repo = PostgresChatAgentRepository()
     agents = repo.list_accessible(UUID(user_id), include_disabled=True)
-    agent_id = None
+    requested_agent_id = str(agent_id).strip()
+    resolved_agent_id = None
 
     for agent, _role, _published in agents:
-        if agent.key == agent_key:
-            agent_id = str(agent.id)
+        if str(agent.id) == requested_agent_id:
+            resolved_agent_id = str(agent.id)
             break
 
-    if not agent_id:
-        raise ValueError(f"Agent {agent_key!r} not found or inaccessible for user {user_id}")
+    if not resolved_agent_id:
+        raise ValueError(
+            f"Agent {requested_agent_id!r} not found or inaccessible for user {user_id}"
+        )
 
     use_case = make_create_agent_source_use_case()
     results: list[dict] = []
@@ -280,7 +283,7 @@ def _ingest_agent_sources(
         try:
             response = use_case.execute_text(
                 user_id=user_id,
-                agent_id=agent_id,
+                agent_id=resolved_agent_id,
                 title=title,
                 content=content,
                 metadata={
@@ -330,7 +333,7 @@ def main() -> int:
         default=DEFAULT_COVERAGE_MAP,
         help="Destino do mapa markdown documento a documento.",
     )
-    parser.add_argument("--agent-key", default=DEFAULT_AGENT_KEY)
+    parser.add_argument("--agent-id", default=DEFAULT_AGENT_ID)
     parser.add_argument("--user-id", help="UUID do usuário owner/editor do agente (para --ingest).")
     parser.add_argument(
         "--ingest",
@@ -406,7 +409,7 @@ def main() -> int:
             from app.extensions.db import db
 
             ingest_results = _ingest_agent_sources(
-                agent_key=args.agent_key,
+                agent_id=args.agent_id,
                 user_id=args.user_id,
                 output_dir=args.output_dir,
                 generated=generated,

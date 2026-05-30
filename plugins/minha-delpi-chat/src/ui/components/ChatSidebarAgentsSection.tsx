@@ -7,9 +7,9 @@ import { ChatSidebarWorkspaceItem } from "./ChatSidebarWorkspaceItem";
 
 type ChatSidebarAgentsSectionProps = {
   agents: ChatAgent[];
-  selectedAgentKey?: string | null;
+  selectedAgentId?: string | null;
   isLoading?: boolean;
-  onSelectAgent?: (agentKey: string | null) => void;
+  onSelectAgent?: (agentId: string | null) => void;
   onManageAgents: () => void;
   canManageAgents?: boolean;
   hideTitle?: boolean;
@@ -17,7 +17,7 @@ type ChatSidebarAgentsSectionProps = {
 
 export function ChatSidebarAgentsSection({
   agents,
-  selectedAgentKey,
+  selectedAgentId,
   isLoading,
   onSelectAgent: _onSelectAgent,
   onManageAgents,
@@ -45,7 +45,7 @@ export function ChatSidebarAgentsSection({
               icon={Bot}
               title={agent.name}
               subtitle={agent.category || agent.description || agent.visibility}
-              active={agent.key === selectedAgentKey}
+              active={agent.id === selectedAgentId}
               href={buildChatAgentHref(agent.id)}
               badge={
                 agent.access_role === "owner"

@@ -275,7 +275,7 @@ class ChatCapabilitiesService:
         texts = _feature_answers().get("productSearchByGroup") or {}
         title = str(texts.get("title") or "**Busca por grupo**")
         agent = workspace_context.get("agent") or {}
-        agent_name = str(agent.get("name") or workspace_context.get("agentKey") or "").strip()
+        agent_name = str(agent.get("name") or "").strip()
 
         if not allowed:
             body = str(texts.get("commonChat") or "")
@@ -388,7 +388,7 @@ class ChatCapabilitiesService:
             lines.extend(skill_lines)
 
         agent = workspace_context.get("agent") or {}
-        agent_name = str(agent.get("name") or workspace_context.get("agentKey") or "").strip()
+        agent_name = str(agent.get("name") or "").strip()
         allowed = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
 
         if allowed and action_catalog:

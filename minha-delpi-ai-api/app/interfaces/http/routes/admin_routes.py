@@ -462,7 +462,6 @@ def simulate_admin_agent():
         result = use_case.execute(
             question=payload.get("question"),
             agent_id=payload.get("agentId"),
-            agent_key=payload.get("agentKey"),
             document_id=payload.get("documentId"),
             session_id=payload.get("sessionId"),
             generate_answer=generate_answer,
@@ -483,7 +482,6 @@ def simulate_admin_agent():
             metadata={
                 "generate_answer": generate_answer,
                 "agent_id": payload.get("agentId"),
-                "agent_key": payload.get("agentKey"),
                 "guideline_count": len(result.get("appliedGuidelines") or []),
                 "chunk_count": len(result.get("chunks") or []),
                 "planned_tool_count": len(result.get("plannedToolCalls") or []),

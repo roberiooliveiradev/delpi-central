@@ -22,15 +22,15 @@ export function isChatAgentRouteId(value: string): boolean {
 }
 
 export function findAgentByRouteId<
-  T extends { id: string; key: string },
+  T extends { id: string },
 >(agents: T[], routeId: string): T | undefined {
   const normalized = routeId.trim();
 
-  if (isChatAgentRouteId(normalized)) {
-    return agents.find((agent) => agent.id === normalized);
+  if (!isChatAgentRouteId(normalized)) {
+    return undefined;
   }
 
-  return agents.find((agent) => agent.key === normalized);
+  return agents.find((agent) => agent.id === normalized);
 }
 
 export function withCanonicalAgentRouteId(route: ChatRoute, agentId: string): ChatRoute {

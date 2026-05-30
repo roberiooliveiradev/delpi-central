@@ -4,7 +4,6 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ChatAgentResponse:
     id: str
-    key: str
     name: str
     description: str | None
     enabled: bool

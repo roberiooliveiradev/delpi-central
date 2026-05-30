@@ -25,7 +25,7 @@ class AgentSourceCopyService:
         documents = self.knowledge_repository.list_documents_by_metadata(
             filters={
                 "scope": "agent_source",
-                "agentKey": source_agent.key,
+                "agentId": str(source_agent.id),
             },
             limit=200,
             active=True,
@@ -57,7 +57,6 @@ class AgentSourceCopyService:
                     "scope": "agent_source",
                     "userId": user_id,
                     "agentId": str(target_agent.id),
-                    "agentKey": target_agent.key,
                     "agentName": target_agent.name,
                     "copiedFromAgentId": str(source_agent.id),
                     "copiedFromDocumentId": str(document.id),
@@ -69,7 +68,7 @@ class AgentSourceCopyService:
                     user_id=user_id,
                     title=document.title,
                     source_type="agent_source",
-                    source_ref=target_agent.key,
+                    source_ref=str(target_agent.id),
                     content=content,
                     metadata=metadata,
                 )

@@ -101,7 +101,6 @@ def test_create_agent_maps_integrity_error_to_key_conflict():
         CreateChatAgentUseCase(repository).execute(
             CreateChatAgentRequest(
                 user_id=str(uuid4()),
-                key="dup-key",
                 name="Agente",
             )
         )

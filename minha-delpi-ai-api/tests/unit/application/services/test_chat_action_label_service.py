@@ -41,7 +41,7 @@ def test_capabilities_catalog_uses_pt_labels():
     from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 
     text = ChatCapabilitiesService.build_direct_answer(
-        workspace_context={"agent": {"name": "Teste"}, "agentKey": "t"},
+        workspace_context={"agent": {"name": "Teste"}, "agentId": "11111111-1111-4111-8111-111111111111"},
         allowed_action_ids=["a1", "a2"],
         action_catalog=[
             {

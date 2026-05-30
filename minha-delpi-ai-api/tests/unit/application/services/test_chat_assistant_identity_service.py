@@ -51,7 +51,7 @@ def test_who_answer_uses_agent_name():
                 "name": "Agente Minha DELPI",
                 "description": "foco em cadastro e consultas de produto.",
             },
-            "agentKey": "minha-delpi-chat",
+            "agentId": "11111111-1111-4111-8111-111111111111",
         },
     )
     assert text
@@ -62,7 +62,7 @@ def test_who_answer_uses_agent_name():
 def test_who_answer_platform_without_agent():
     text = ChatAssistantIdentityService.build_direct_answer(
         message="quem é você?",
-        workspace_context={"agent": None, "agentKey": None},
+        workspace_context={"agent": None, "agentId": None},
     )
     assert text
     assert "Minha DELPI" in text

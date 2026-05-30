@@ -19,7 +19,12 @@ class AiChatSessionModel(db.Model):
         nullable=True,
         index=True,
     )
-    agent_key = db.Column(db.String(80), nullable=True, index=True)
+    agent_id = db.Column(
+        UUID(as_uuid=True),
+        db.ForeignKey("ai_chat_agents.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     is_pinned = db.Column(db.Boolean, nullable=False, default=False, server_default="false", index=True)
     pinned_at = db.Column(db.DateTime(timezone=True), nullable=True)
     archived_at = db.Column(db.DateTime(timezone=True), nullable=True, index=True)

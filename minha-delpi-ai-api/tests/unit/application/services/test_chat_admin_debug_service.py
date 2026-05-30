@@ -5,7 +5,7 @@ from app.application.services.chat_admin_debug_service import ChatAdminDebugServ
 
 def _minimal_build(*, rag: dict) -> dict:
     return ChatAdminDebugService.build(
-        workspace_context={"agentKey": None, "skills": {}},
+        workspace_context={"agentId": None, "skills": {}},
         tool_context={"context": "", "toolCalls": []},
         rag=rag,
         llm_messages=[{"role": "system", "content": "x"}],

@@ -225,7 +225,7 @@ class PostgresResponseEvaluationRepository(ResponseEvaluationRepositoryPort):
             "session": {
                 "id": str(session.id) if session else None,
                 "title": session.title if session else None,
-                "agentKey": session.agent_key if session else None,
+                "agentId": str(session.agent_id) if session and session.agent_id else None,
             },
             "userQuestion": previous_user_message.content if previous_user_message else None,
             "evaluation": self._serialize_evaluation(evaluation) if evaluation else None,

@@ -11,7 +11,6 @@ import {
 const AGENTS = [
   {
     id: "b185b233-b06a-4d23-8450-6ac3c0f7428d",
-    key: "minha-delpi-chat",
   },
 ];
 
@@ -33,19 +32,17 @@ describe("chatRoutes agents", () => {
     );
   });
 
-  it("resolve agente por uuid ou slug legado", () => {
+  it("resolve agente apenas por uuid", () => {
     expect(
-      findAgentByRouteId(AGENTS, "b185b233-b06a-4d23-8450-6ac3c0f7428d")?.key,
-    ).toBe("minha-delpi-chat");
-    expect(findAgentByRouteId(AGENTS, "minha-delpi-chat")?.id).toBe(
-      "b185b233-b06a-4d23-8450-6ac3c0f7428d",
-    );
+      findAgentByRouteId(AGENTS, "b185b233-b06a-4d23-8450-6ac3c0f7428d")?.id,
+    ).toBe("b185b233-b06a-4d23-8450-6ac3c0f7428d");
+    expect(findAgentByRouteId(AGENTS, "minha-delpi-chat")).toBeUndefined();
   });
 
   it("canonicaliza rota com uuid", () => {
     expect(
       withCanonicalAgentRouteId(
-        { kind: "agent-config", agentId: "minha-delpi-chat" },
+        { kind: "agent-config", agentId: "legacy-slug" },
         AGENTS[0].id,
       ),
     ).toEqual({

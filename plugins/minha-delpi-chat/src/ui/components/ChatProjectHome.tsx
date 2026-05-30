@@ -75,7 +75,7 @@ type ChatProjectHomeProps = {
   project: ChatProject;
   sessions: ChatSession[];
   agents?: ChatAgent[];
-  contextAgentKey?: string | null;
+  contextAgentId?: string | null;
   sources?: ChatWorkspaceSource[];
   isLoadingSources?: boolean;
   activeSessionId?: string;
@@ -91,14 +91,14 @@ type ChatProjectHomeProps = {
       name?: string;
       description?: string | null;
       instructions?: string | null;
-      defaultAgentKey?: string | null;
+      defaultAgentId?: string | null;
       visibility?: string;
       archived?: boolean;
     },
   ) => Promise<ChatProject | null>;
-  onUseAgent?: (agentKey: string | null) => void;
-  onOpenAgentPage?: (agentKey: string) => void;
-  onSetDefaultAgent?: (agentKey: string | null) => Promise<ChatProject | null>;
+  onUseAgent?: (agentId: string | null) => void;
+  onOpenAgentPage?: (agentId: string) => void;
+  onSetDefaultAgent?: (agentId: string | null) => Promise<ChatProject | null>;
   onUploadSource?: (file: File) => Promise<ChatWorkspaceSource>;
   onCreateTextSource?: (payload: { title: string; content: string; metadata?: Record<string, unknown> | null }) => Promise<ChatWorkspaceSource>;
   onDeleteSource?: (sourceId: string) => Promise<void>;
@@ -116,7 +116,7 @@ export function ChatProjectHome({
   project,
   sessions,
   agents = [],
-  contextAgentKey,
+  contextAgentId,
   sources = [],
   isLoadingSources,
   activeSessionId,
@@ -270,8 +270,8 @@ export function ChatProjectHome({
     }
   }
 
-  const defaultAgent = agents.find((agent) => agent.key === project.default_agent_key);
-  const contextAgent = agents.find((agent) => agent.key === contextAgentKey);
+  const defaultAgent = agents.find((agent) => agent.id === project.default_agent_id);
+  const contextAgent = agents.find((agent) => agent.id === contextAgentId);
 
   const recentSessions = [...sessions].sort((left, right) => {
     const leftDate = new Date(left.updated_at || left.created_at || 0).getTime();
@@ -553,8 +553,11 @@ export function ChatProjectHome({
                         <strong>{session.title || "Conversa sem título"}</strong>
                         <small>
                           {session.context?.trim() ||
-                            (session.agent_key
-                              ? `Agente: ${session.agent_key}`
+                            (session.agent_id
+                              ? `Agente: ${
+                                  agents.find((agent) => agent.id === session.agent_id)?.name ??
+                                  session.agent_id
+                                }`
                               : "Conversa neste projeto")}
                         </small>
                       </span>
@@ -630,8 +633,8 @@ export function ChatProjectHome({
             <div className="mdc-chat-project-agents__list">
               {agents.length > 0 ? (
                 agents.map((agent) => {
-                  const isDefault = agent.key === project.default_agent_key;
-                  const isContext = agent.key === contextAgentKey;
+                  const isDefault = agent.id === project.default_agent_id;
+                  const isContext = agent.id === contextAgentId;
 
                   return (
                     <article
@@ -658,13 +661,13 @@ export function ChatProjectHome({
                       </div>
 
                       <footer>
-                        <button type="button" onClick={() => onUseAgent?.(agent.key)}>
+                        <button type="button" onClick={() => onUseAgent?.(agent.id)}>
                           Usar neste projeto
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => void onSetDefaultAgent?.(agent.key)}
+                          onClick={() => void onSetDefaultAgent?.(agent.id)}
                           disabled={isDefault}
                         >
                           {isDefault ? "Padrão" : "Definir padrão"}
@@ -672,7 +675,7 @@ export function ChatProjectHome({
 
                         <button
                           type="button"
-                          onClick={() => onOpenAgentPage?.(agent.key)}
+                          onClick={() => onOpenAgentPage?.(agent.id)}
                           title={`Abrir página de ${agent.name}`}
                         >
                           <ArrowUpRight size={15} aria-hidden="true" />

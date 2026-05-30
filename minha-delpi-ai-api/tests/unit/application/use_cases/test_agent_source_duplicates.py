@@ -10,7 +10,6 @@ from app.domain.entities.knowledge_document import KnowledgeDocument
 def _agent():
     return ChatAgent(
         id=uuid4(),
-        key="produtos",
         name="Produtos",
         description=None,
         system_prompt="prompt",
@@ -37,7 +36,7 @@ def _document(title: str = "manual.md"):
         content="conteudo",
         metadata={
             "scope": "agent_source",
-            "agentKey": "produtos",
+            "agentId": "11111111-1111-4111-8111-111111111111",
             "contentHash": "abc123",
         },
         active=True,

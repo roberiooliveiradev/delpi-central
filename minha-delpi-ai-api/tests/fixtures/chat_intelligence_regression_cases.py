@@ -564,6 +564,52 @@ SELECTION_CASES = [
         "expected_action_id": "pmr",
         "expected_parameters": {"branch": "02"},
     },
+    {
+        "message": "roteiro do produto 90260142",
+        "actions": [
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "guide_products_code_guide_get",
+                "summary": "Roteiro de produção",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "guide",
+        "expected_parameters": {"code": "90260142"},
+    },
+    {
+        "message": "inspeção do produto 90260142",
+        "actions": [
+            {
+                "actionId": "inspection",
+                "method": "GET",
+                "path": "/products/{code}/inspection",
+                "operationId": "list_product_inspection",
+                "summary": "Plano de inspeção",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "guide_products_code_guide_get",
+                "summary": "Roteiro",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "inspection",
+        "expected_parameters": {"code": "90260142"},
+    },
 ]
 
 DIRECT_ANSWER_CASES = [
@@ -621,6 +667,115 @@ DIRECT_ANSWER_CASES = [
     },
 ]
 
+PRESENTER_HUMANIZED_CASES = [
+    {
+        "label": "roteiro",
+        "payload": {
+            "items": [
+                {
+                    "branch": "01",
+                    "product_code": "90260142",
+                    "operation_code": "01",
+                    "operation_description": "CORTAR - MANUAL",
+                    "work_center": "CT-05",
+                    "bom_level": 0,
+                },
+                {
+                    "branch": "01",
+                    "product_code": "90260142",
+                    "operation_code": "02",
+                    "operation_description": "INSERIR TUBO ISOLANTE",
+                    "work_center": "CT-08",
+                    "bom_level": 0,
+                },
+                {
+                    "branch": "01",
+                    "product_code": "50230070",
+                    "operation_code": "01",
+                    "operation_description": "CORTAR / DECAPAR - MAQUINA",
+                    "work_center": "CT-01A",
+                    "bom_level": 1,
+                },
+            ]
+        },
+        "path": "/products/90260142/guide",
+        "must_contain": ["90260142", "CORTAR - MANUAL", "componente"],
+    },
+    {
+        "label": "estoque",
+        "payload": {
+            "items": [
+                {
+                    "branch": "01",
+                    "warehouse": "01",
+                    "current_quantity": 100,
+                    "available_quantity": 80,
+                    "committed_quantity": 20,
+                    "physical_location": "A-01",
+                },
+                {
+                    "branch": "02",
+                    "warehouse": "01",
+                    "current_quantity": 50,
+                    "available_quantity": 50,
+                    "committed_quantity": 0,
+                    "physical_location": "B-02",
+                },
+            ]
+        },
+        "path": "/products/10080055/stock",
+        "must_contain": ["10080055", "disponível", "Filial"],
+    },
+    {
+        "label": "estrutura",
+        "payload": {
+            "root": {
+                "code": "90260142",
+                "description": "CABO TESTE",
+                "type": "PA",
+                "unit": "UN",
+                "quantity": 1,
+            },
+            "items": [
+                {
+                    "code": "50230070",
+                    "description": "TERMINAL A",
+                    "type": "ME",
+                    "unit": "UN",
+                    "quantity": 2,
+                },
+                {
+                    "code": "10030015",
+                    "description": "FIO COBRE",
+                    "type": "MP",
+                    "unit": "M",
+                    "quantity": 1.5,
+                },
+            ],
+            "total": 2,
+        },
+        "path": "/products/90260142/structure",
+        "must_contain": ["90260142", "50230070", "matéria"],
+    },
+    {
+        "label": "inspeção aninhada",
+        "payload": {
+            "items": [
+                {
+                    "product_code": "90260142",
+                    "bom_level": 0,
+                    "has_inspection": True,
+                    "header": {"description": "Plano principal"},
+                    "measurable_tests": [{"test_code": "T01", "sequence": 1}],
+                    "textual_tests": [{"test_code": "T02", "sequence": 2}],
+                }
+            ]
+        },
+        "path": "/products/90260142/inspection",
+        "must_contain": ["90260142", "Plano principal", "dimensional"],
+    },
+]
+
 _STOCK_CONVERSATION_HISTORY = [
     {"role": "user", "content": "estoque do produto 10080022"},
     {
@@ -670,6 +825,68 @@ _PARENTS_CONVERSATION_HISTORY = [
                 }
             ]
         },
+    },
+]
+
+_GUIDE_CONVERSATION_HISTORY = [
+    {"role": "user", "content": "roteiro do 90260142"},
+    {
+        "role": "assistant",
+        "content": "Roteiro do produto",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260142/guide",
+                        "actionId": "guide_products_code_guide_get",
+                    },
+                }
+            ]
+        },
+    },
+]
+
+DATA_INTERPRETATION_CASES = [
+    ("explique os dados acima", _GUIDE_CONVERSATION_HISTORY, True),
+    ("o que isso quer dizer", _GUIDE_CONVERSATION_HISTORY, True),
+    ("resume", _STOCK_CONVERSATION_HISTORY, True),
+    ("traduz isso", _GUIDE_CONVERSATION_HISTORY, True),
+    ("nao entendi", _STOCK_CONVERSATION_HISTORY, True),
+    ("roteiro do 90260142", None, False),
+    ("explique os dados acima", None, False),
+]
+
+DATA_INTERPRETATION_SKIP_TOOLS_CASES = [
+    ("explique os dados acima", _GUIDE_CONVERSATION_HISTORY, True),
+    ("resume", _STOCK_CONVERSATION_HISTORY, True),
+    ("traduz isso", _GUIDE_CONVERSATION_HISTORY, True),
+    ("estoque do produto 10080047", None, False),
+]
+
+DATA_INTERPRETATION_NO_ACTION_CASES = [
+    {
+        "message": "explique os dados acima",
+        "previous_messages": _GUIDE_CONVERSATION_HISTORY,
+        "actions": [
+            {
+                "actionId": "sql",
+                "method": "POST",
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+                "summary": "Executar SQL",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "guide",
+                "method": "GET",
+                "path": "/products/{code}/guide",
+                "operationId": "guide_products_code_guide_get",
+                "summary": "Roteiro",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
     },
 ]
 

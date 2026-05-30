@@ -39,7 +39,7 @@ def _attachment(**overrides):
         "session_id": uuid4(),
         "message_id": None,
         "project_id": None,
-        "agent_key": None,
+        "agent_id": None,
         "filename": "doc.md",
         "original_filename": "doc.md",
         "content_type": "text/markdown",

@@ -26,7 +26,7 @@ describe("chatSourcesFilter", () => {
       isGeneralChatSource({
         scope: "agent_source",
         title: "Manual do agente",
-        agentKey: "rh",
+        agentId: "b185b233-b06a-4d23-8450-6ac3c0f7428d",
       }),
     ).toBe(true);
   });
@@ -34,7 +34,11 @@ describe("chatSourcesFilter", () => {
   it("mantém fontes do projeto e da sessão visíveis", () => {
     const sources: ChatSource[] = [
       { scope: "global", title: "Base global" },
-      { scope: "agent_source", title: "Manual do agente", agentKey: "rh" },
+      {
+        scope: "agent_source",
+        title: "Manual do agente",
+        agentId: "b185b233-b06a-4d23-8450-6ac3c0f7428d",
+      },
       { scope: "project_source", title: "Briefing", projectId: "p1" },
       { scope: "session_source", title: "Anexo", sessionId: "s1" },
     ];
