@@ -155,7 +155,7 @@ Estágios 5–9 são os que mais evitam chamadas erradas à api-delpi **antes** 
 
 | Tipo de regra | Onde implementar | Exemplo |
 |---------------|------------------|---------|
-| Sinônimo / typo | `NormalizeStage` ou serviço chamado por ele | ebita → ebitda |
+| Sinônimo / typo | `NormalizeStage` ou serviço chamado por ele | ebita → ebitda; hors → horas; estouque → estoque |
 | Intenção → rota API | `ToolExecutionStage` → `ExternalActionSelectionService` | grupo 1008 → search |
 | Pergunta meta | `CapabilityStage` | buscar por grupo? |
 | Formato da resposta | `PostToolStage` → presenter | tabela vs markdown |

@@ -8,6 +8,8 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 | `6de28da3` | Roadmap Onda 12 — skill análise desenhos PDF (doc only) |
 | `cd1047de` | Fast path SQL produção (G1–G3); download de anexos/fontes; bundle exportável do agente |
 | `50edaf65` | Normas Técnicas em `company-knowledge`; intent de descrição técnica de matéria-prima |
+| `0e85b232` | Catálogo `api_paths.json` alinhado às rotas reais do api-delpi (~84 endpoints) |
+| `427707d3` | Typos em perguntas utilitárias e saudações (`hors`→`horas`, `q horas`, `bo dia`) |
 
 ---
 
@@ -80,7 +82,39 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 
 ---
 
-## 5. Onde ler mais
+## 6. Catálogo api-delpi — rótulos PT-BR (maio/2026)
+
+**Problema:** `labels/api_paths.json` tinha rotas fantasma e faltavam endpoints reais (proposals, OEE/OTD series, eficiência fabril, schema de tabelas).
+
+**Solução:**
+
+| Artefato | Conteúdo |
+|----------|----------|
+| `labels/api_paths.json` | ~84 rotas alinhadas a `api-delpi/app/main.py` |
+| `capabilities.json` | `pathRules` e exemplos atualizados |
+| `ChatActionLabelService` | Match por segmentos (`{tablename}`, `{code}`) |
+
+**Validação:** `test_chat_action_label_service.py`, `test_content_service.py`.
+
+---
+
+## 7. Respostas utilitárias + tolerância a typos (maio/2026)
+
+**Problema:** «que hors são?» caía no loop agentic em vez de responder a hora.
+
+**Solução (chat base):**
+
+| Componente | Função |
+|------------|--------|
+| `ChatUtilityDirectAnswerService` | Hora/data/ano via `utility_answers.json`; fuso `CHAT_UTILITY_TIMEZONE` |
+| `ChatMessageNormalizationService` | Typos antes do match: `hors`→`horas`, `q horas`, `bo dia`, etc. |
+| `ChatSmallTalkPatternService` | Saudações com mesma normalização |
+
+**Checklist manual:** **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+
+---
+
+## 8. Onde ler mais
 
 | Tópico | Documento |
 |--------|-----------|

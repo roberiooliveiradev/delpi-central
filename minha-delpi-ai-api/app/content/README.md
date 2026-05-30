@@ -7,8 +7,8 @@ Textos exibidos ao usuário ou usados em respostas diretas da API ficam aqui, se
 ```
 app/content/
   pt-BR/
-    assistant/     # capacidades, stream SSE, títulos de sessão
-    labels/        # rótulos de rotas OpenAPI
+    assistant/     # capacidades, stream SSE, títulos de sessão, utility, small talk
+    labels/        # rótulos PT-BR das rotas OpenAPI (api-delpi)
     skills/        # catálogo de skills (UI e metadados)
 ```
 
@@ -16,7 +16,7 @@ Arquivos em `assistant/` usados pela API de chat:
 
 | Arquivo | Uso |
 |---------|-----|
-| `capabilities.json` | Catálogo de capacidades |
+| `capabilities.json` | Catálogo de capacidades e `pathRules` api-delpi |
 | `column_labels.json` | Colunas e perfis de tabelas operacionais |
 | `external_action_responses.json` | Respostas SQL, produção, composite e temporal |
 | `identity.json` | Identidade e small talk |
@@ -24,6 +24,14 @@ Arquivos em `assistant/` usados pela API de chat:
 | `small_talk.json` | Respostas conversacionais (8 categorias; padrões editáveis) |
 | `utility_answers.json` | Hora, data, dia da semana e ano (resposta direta) |
 | `stream.json` | Eventos SSE, status de streaming e títulos de sessão |
+
+Arquivos em `labels/`:
+
+| Arquivo | Uso |
+|---------|-----|
+| `api_paths.json` | ~84 rotas reais do **api-delpi** → rótulos PT em tool calls e capacidades |
+
+**Typos:** padrões em JSON são comparados após `ChatMessageNormalizationService.normalize_for_matching` (estoque, filial, hora, saudações, KPIs). Novos typos operacionais → serviço Python; typos de frases utilitárias/small talk → JSON e/ou normalização.
 
 Políticas longas para o LLM continuam em `app/domain/prompt_policies/*.md`.
 

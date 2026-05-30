@@ -8,11 +8,51 @@ Checklist de perguntas para validar o chat operacional após deploy ou alteraç�
 
 **Configuração do chat:** antes do smoke, alinhe toggles do admin ao perfil **dev** ou **prod** — [`../knowledge/chat-intelligence-settings-profiles.md`](../knowledge/chat-intelligence-settings-profiles.md).
 
-Se algo falhar após deploy, reinicie a API:
+Se algo falhar após deploy, reinicie ou reconstrua a API:
 
 ```bash
+# Dev (volume bind — restart basta)
 docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
+
+# Prod/local com Dockerfile.prod (sem volume — rebuild obrigatório após mudar JSON/código)
+docker compose -f infra/docker-compose.yml up -d --build minha-delpi-ai-api
 ```
+
+---
+
+## Smoke utilitário e typos (resposta direta, sem LLM)
+
+Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` antes do matching — typos comuns são corrigidos na camada base (ex.: `hors`→`horas`, `q horas`→`que horas`, `bo dia`→`bom dia`).
+
+| # | Pergunta | O que esperar |
+|---|----------|---------------|
+| U1 | que horas são? | Hora real (`America/Sao_Paulo` / `CHAT_UTILITY_TIMEZONE`); ~1 s; **sem** agentic/RAG/LLM |
+| U2 | que hors são? | Idem U1 (typo corrigido) |
+| U3 | q horas | Idem U1 (abreviação) |
+| U4 | que dia é hoje? | Data + dia da semana |
+| U5 | q dia | Idem U4 |
+| U6 | bo dia | Saudação direta (`small_talk.json`) |
+| U7 | olá | Saudação direta |
+
+**E2E HTTP (token dev: rober / 1234):**
+
+```bash
+TOKEN=$(curl -s -X POST "http://localhost/auth/realms/delpi/protocol/openid-connect/token" \
+  -d "client_id=delpi-central" -d "username=rober" -d "password=1234" -d "grant_type=password" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+SESSION=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"title":"Smoke utilitário"}' "http://localhost/apps/minha-delpi-ai/api/chat/sessions" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"message":"que hors são?"}' \
+  "http://localhost/apps/minha-delpi-ai/api/chat/sessions/$SESSION/messages" | python3 -m json.tool
+```
+
+**Regressão unitária:** `test_chat_utility_direct_answer_service.py`, `test_chat_message_normalization_service.py`, `test_chat_small_talk_pattern_service.py`.
+
+Conteúdo editável: `app/content/pt-BR/assistant/utility_answers.json`, `small_talk.json`. Typos operacionais (estoque, filial, KPI) ficam em `ChatMessageNormalizationService`.
 
 ---
 
@@ -414,6 +454,8 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Apresentação frontend | `plugins/minha-delpi-chat/scripts/verify-pagination-presentation.ts` |
 | Lousa / canvas | `tests/unit/application/services/test_chat_canvas_content_service.py` |
 | Small talk | `tests/unit/application/services/test_chat_small_talk_service.py` |
+| Utilitário (hora/data) + typos | `tests/unit/application/services/test_chat_utility_direct_answer_service.py`, `tests/unit/domain/services/test_chat_message_normalization_service.py` |
+| Rótulos api-delpi | `tests/unit/application/services/test_chat_action_label_service.py`, `tests/unit/infrastructure/content/test_content_service.py` |
 | Meta composta | `tests/unit/application/services/test_chat_meta_direct_answer_service.py` |
 | OV / datas | `tests/unit/domain/services/test_chat_analysis_intent_action_planning.py` |
 

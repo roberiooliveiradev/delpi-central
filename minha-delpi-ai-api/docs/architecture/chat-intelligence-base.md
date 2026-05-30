@@ -94,6 +94,35 @@ Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com per
 
 Saudações, despedidas, agradecimentos, confirmações e interações sociais curtas → `ChatSmallTalkService.build_direct_answer` com padrões em `small_talk.json` (fonte única via `ChatSmallTalkPatternService`): **sem RAG**, **sem** loop agentic, **sem** LLM. Catálogo inspirado em expressões conversacionais PT-BR ([cumprimentos/despedidas](https://philipebrazuca.com/pt-br/cumprimentos-e-despedidas-em-portugues/), intents de [atendimento BR](https://huggingface.co/datasets/RichardSakaguchiMS/brazilian-customer-service-conversations)). Categorias: `greeting`, `wellbeing`, `thanks`, `apology`, `praise`, `farewell`, `ack`, `laughter`.
 
+Typos de saudação (`bo dia`, `bao dia`) são normalizados em `ChatMessageNormalizationService` antes do match.
+
+### Perguntas utilitárias — hora, data, ano (maio/2026)
+
+Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?» → `ChatUtilityDirectAnswerService` com padrões em `utility_answers.json`:
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Classificação | `classify(message)` por categoria (`current_time`, `current_date`, `current_datetime`, `current_weekday`, `current_year`) |
+| Resposta | Template PT-BR com hora/data reais (`CHAT_UTILITY_TIMEZONE`, default `America/Sao_Paulo`) quando `CHAT_UTILITY_DIRECT_ENABLED=true` |
+| Pipeline | **Sem RAG**, **sem** loop agentic, **sem** LLM; estágio `utility_direct` |
+| Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `q horas` → `que horas`, `q dia` → `que dia e hoje` |
+| Exclusões | Mensagens com contexto operacional (`producao`, `ordem`, `estoque`, …) não entram no atalho |
+
+Checklist manual: **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+
+Testes: `test_chat_utility_direct_answer_service.py`, `test_chat_utility_stream.py`, `test_chat_message_normalization_service.py`.
+
+### Rótulos PT-BR das rotas api-delpi (maio/2026)
+
+Actions OpenAPI do provider **api-delpi** exibem rótulos humanizados via `ChatActionLabelService` + `labels/api_paths.json` (~84 rotas alinhadas ao código em `api-delpi/app/main.py`):
+
+- Inclui: `/commercial/proposals`, `/production/oee/series`, `/production/otd/series`, `/production/eficiencia-fabril/*`, `/system/tables/{tablename}/schema|indexes|relations`
+- Removidas rotas fantasma (`/commercial/billing`, `/chat/*`, subrotas inexistentes de produto)
+
+`capabilities.json` (`pathRules`, `commonExamples`) reflete o mesmo catálogo. Regenerar OpenAPI opcional: `scripts/sync_api_delpi_openapi.py`.
+
+Testes: `test_chat_action_label_service.py`, `test_content_service.py`.
+
 ### Perguntas meta compostas (maio/2026)
 
 Mensagens que misturam perfil do usuário, capacidades da plataforma e identidade do assistente (ex.: *«me diga quem sou eu e o que consigo fazer aqui, quem é você?»*) → `ChatMetaDirectAnswerService.build` monta resposta em seções (`## Seu perfil`, `## O que você pode fazer aqui`, `## Sobre o assistente`). Tem prioridade sobre atalhos isolados de capacidade ou identidade.
