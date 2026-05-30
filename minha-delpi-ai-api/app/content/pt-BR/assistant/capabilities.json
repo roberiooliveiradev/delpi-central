@@ -439,11 +439,20 @@
       ]
     },
     {
-      "token": "/billing",
-      "category": "Faturamento comercial",
+      "token": "/proposals",
+      "category": "Propostas comerciais",
       "examples": [
-        "faturamento do mes",
-        "billing comercial"
+        "propostas comerciais ganhas",
+        "listar propostas abertas",
+        "propostas da filial 01"
+      ]
+    },
+    {
+      "token": "/sales/billing",
+      "category": "Faturamento do produto",
+      "examples": [
+        "faturamento do produto 10080001",
+        "billing do item"
       ]
     },
     {
@@ -471,6 +480,31 @@
       ]
     },
     {
+      "token": "/oee/series",
+      "category": "Série histórica de OEE",
+      "examples": [
+        "serie de oee",
+        "oee ao longo do tempo"
+      ]
+    },
+    {
+      "token": "/otd/series",
+      "category": "Série histórica de OTD",
+      "examples": [
+        "serie de otd producao",
+        "otd ao longo do tempo"
+      ]
+    },
+    {
+      "token": "/eficiencia-fabril",
+      "category": "Eficiência fabril",
+      "examples": [
+        "eficiencia fabril",
+        "apontamentos de producao",
+        "dashboard eficiencia fabril"
+      ]
+    },
+    {
       "token": "/transforma-mais",
       "category": "Transforma Mais (engenharia)",
       "examples": [
@@ -483,7 +517,9 @@
       "category": "Metadados de tabelas (SX2)",
       "examples": [
         "buscar tabela sb1",
-        "qual tabela guarda produtos"
+        "qual tabela guarda produtos",
+        "schema da tabela sb1",
+        "indices da tabela"
       ]
     },
     {
@@ -512,7 +548,9 @@
     "inspeção do 10080001",
     "valor total de estoque",
     "giro de estoque idd",
-    "faturamento comercial do mês",
+    "propostas comerciais ganhas",
+    "serie de oee producao",
+    "eficiencia fabril dashboard",
     "indicadores de qualidade ppm",
     "quais produtos serão produzidos hoje",
     "que horas são",

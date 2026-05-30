@@ -9,7 +9,14 @@ def test_load_capabilities_json():
 
 def test_load_api_path_labels():
     data = ContentService.load_json("labels/api_paths")
-    assert len(data.get("pathLabels") or []) > 10
+    paths = {item["path"] for item in (data.get("pathLabels") or [])}
+    assert len(paths) >= 80
+    assert "/commercial/proposals" in paths
+    assert "/production/oee/series" in paths
+    assert "/production/eficiencia-fabril/dashboard" in paths
+    assert "/system/tables/{tablename}/schema" in paths
+    assert "/commercial/billing" not in paths
+    assert "/chat/sessions" not in paths
 
 
 def test_stream_session_title_default():

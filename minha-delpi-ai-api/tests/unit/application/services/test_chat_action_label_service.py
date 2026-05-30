@@ -37,6 +37,42 @@ def test_humanize_hr_snapshot():
     assert label == "Snapshot de indicadores de RH"
 
 
+def test_humanize_commercial_proposals():
+    label = ChatActionLabelService.humanize(
+        path="/commercial/proposals",
+        method="GET",
+        summary="Commercial proposals listed successfully.",
+    )
+    assert label == "Propostas comerciais (ganhas, abertas ou todas)"
+
+
+def test_humanize_production_oee_series():
+    label = ChatActionLabelService.humanize(
+        path="/production/oee/series",
+        method="GET",
+        summary="OEE series",
+    )
+    assert label == "Série histórica de OEE (produção)"
+
+
+def test_humanize_system_table_schema():
+    label = ChatActionLabelService.humanize(
+        path="/system/tables/SB1/schema",
+        method="GET",
+        summary="Table schema",
+    )
+    assert label == "Schema completo da tabela (SX2/SX3/SIX/SX9)"
+
+
+def test_humanize_eficiencia_fabril_dashboard():
+    label = ChatActionLabelService.humanize(
+        path="/production/eficiencia-fabril/dashboard",
+        method="GET",
+        summary="Eficiencia fabril dashboard",
+    )
+    assert label == "Painel de eficiência fabril (apontamentos)"
+
+
 def test_capabilities_catalog_uses_pt_labels():
     from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 
