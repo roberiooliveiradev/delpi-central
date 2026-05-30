@@ -24,6 +24,13 @@ def test_not_pure_when_operational_stock_query():
     assert ChatTextTaskIntentService.is_pure_text_task("qual o estoque do produto 10080001?") is False
 
 
+def test_consulte_estoque_e_escreva_email_is_mixed():
+    message = "consulte estoque do 10080001 e escreva um e-mail"
+
+    assert ChatTextTaskIntentService.is_mixed_text_and_operational(message) is True
+    assert ChatTextTaskIntentService.is_pure_text_task(message) is False
+
+
 def test_mixed_operational_and_text():
     message = (
         "Consulte o estoque do produto 10080001 e escreva um e-mail avisando compras"

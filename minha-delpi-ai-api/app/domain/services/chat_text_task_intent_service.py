@@ -47,10 +47,14 @@ class ChatTextTaskIntentService:
 
     _OPERATIONAL_COMMAND_PATTERNS = (
         r"\bconsulte\b",
+        r"\bconsultar\b",
         r"\bliste\s+produtos\b",
         r"\bqual\s+o\s+estoque\b",
         r"\bme\s+fale\s+do\s+produto\b",
         r"\bmostre\s+(o\s+)?faturamento\b",
+        r"\bmostre\s+o\s+estoque\b",
+        r"\bver\s+estoque\b",
+        r"\bestoque\s+do\b",
         r"\bexecute\s+(a\s+)?sql\b",
         r"\bbusque\s+produto\b",
         r"\bverifique\s+o\s+estoque\b",
@@ -79,11 +83,27 @@ class ChatTextTaskIntentService:
         return None
 
     @classmethod
-    def is_pure_text_task(cls, message: str | None) -> bool:
+    def is_pure_text_task(
+        cls,
+        message: str | None,
+        *,
+        previous_messages: list | None = None,
+    ) -> bool:
         category = cls.classify(message)
 
         if not category:
             return False
+
+        if previous_messages:
+            from app.domain.services.chat_analysis_intent_service import (
+                ChatAnalysisIntentService,
+            )
+
+            if ChatAnalysisIntentService.is_email_from_operational_data_request(
+                message,
+                previous_messages,
+            ):
+                return False
 
         if cls.is_mixed_text_and_operational(message):
             return False

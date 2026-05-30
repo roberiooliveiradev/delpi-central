@@ -159,7 +159,10 @@ class ChatTurnPreparationService:
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
         text_task_category = ChatTextTaskIntentService.classify(message)
-        text_task_pure = ChatTextTaskIntentService.is_pure_text_task(message)
+        text_task_pure = ChatTextTaskIntentService.is_pure_text_task(
+            message,
+            previous_messages=history_source,
+        )
 
         if text_task_pure:
             operational_optimize = False
@@ -484,6 +487,7 @@ class ChatTurnPreparationService:
             )
             or bool(small_talk_direct)
             or bool(utility_direct)
+            or bool(text_task_pure)
             or operational_optimize
             or analysis_mode
             or ChatExternalActionDirectResponseService.should_skip_rag(tool_context)
@@ -579,6 +583,27 @@ class ChatTurnPreparationService:
             if presentation_answer:
                 direct_answer = presentation_answer
                 skip_rag = True
+
+        if ChatTextTaskIntentService.is_mixed_text_and_operational(message):
+            from app.application.services.chat_text_task_composer_service import (
+                ChatTextTaskComposerService,
+            )
+
+            mixed_supplement = ChatTextTaskComposerService.build_supplement_for_mixed_turn(
+                message=message,
+                tool_calls=tool_calls,
+            )
+
+            if mixed_supplement:
+                if direct_answer:
+                    direct_answer = f"{direct_answer.strip()}\n\n---\n\n{mixed_supplement}"
+                else:
+                    direct_answer = mixed_supplement
+
+                skip_rag = True
+
+                if "text_task_mixed" not in pipeline_stages:
+                    pipeline_stages.append("text_task_mixed")
 
         if direct_answer:
             skip_rag = True

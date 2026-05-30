@@ -12,6 +12,20 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** tabela `ai_chat_session_memory` (Fase 4).
 
+## Correções (problemas reportados em homologação)
+
+| Problema | Correção |
+|----------|----------|
+| «Corrija» + anexo → «sem acesso a documentos» | Instrução textual explícita + policy; `text_task` com contexto de anexo no prompt |
+| «Consulte estoque e escreva e-mail» sem e-mail | `ChatTextTaskComposerService` anexa rascunho após tools no turno misto |
+| «E-mail com dados da tabela» → capacidades/RAG | `is_email_from_operational_data_request` + resposta direta com resumo da consulta |
+| Roteiro 360° com `Operations=[{...}]` | `_format_guide_like_item` no presenter do analyser |
+
+## Playbook 07 — Anexos (início)
+
+- `attachmentFollowUpSuggestions` no metadata do assistant quando a mensagem do usuário trouxe anexos.
+- Chips: Resumir, Corrigir, Traduzir, Extrair pendências, Criar checklist (`personality_playbook.json`).
+
 ## Interatividade (`playbook_interatividade_botoes`)
 
 | Entrega | Detalhe |

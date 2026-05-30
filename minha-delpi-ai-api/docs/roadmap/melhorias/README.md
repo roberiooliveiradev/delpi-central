@@ -39,9 +39,10 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 ## Próximo backlog sugerido
 
 1. **Fase 4 contexto** — `ai_chat_session_memory` (persistência entre reloads).
-2. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
-3. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
-4. **Chip «Ver vendas»** — correção da seleção de action (WARN no smoke de chips).
+2. **Playbook 07 completo** — UI de chips de anexo no MFE; indexação PDF/Excel.
+3. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
+4. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
+5. **Chip «Ver vendas»** — correção da seleção de action (WARN no smoke de chips).
 
 ## Regra
 

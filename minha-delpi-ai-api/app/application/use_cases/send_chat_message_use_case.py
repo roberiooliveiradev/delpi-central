@@ -280,6 +280,13 @@ class SendChatMessageUseCase:
                     previous_messages,
                 ),
                 text_task_mode=bool(prepared.text_task_mode),
+                text_task_attachment_context=self._build_attachment_context(
+                    user_id=user_id,
+                    session_id=session_id,
+                    request=request,
+                )
+                if prepared.text_task_mode
+                else None,
                 user_context=user_context,
                 skills=workspace_context.get("skills"),
             )
@@ -401,6 +408,15 @@ class SendChatMessageUseCase:
             tool_calls=tool_calls,
             previous_messages=previous_messages,
             workspace_context=workspace_context,
+        )
+
+        from app.application.services.chat_attachment_follow_up_service import (
+            ChatAttachmentFollowUpService,
+        )
+
+        ChatAttachmentFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            had_attachments=bool(getattr(request, "attachment_ids", None)),
         )
 
         assistant_message = self.chat_repository.create_message(

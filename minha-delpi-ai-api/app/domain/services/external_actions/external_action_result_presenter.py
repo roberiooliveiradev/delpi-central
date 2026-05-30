@@ -978,10 +978,16 @@ class ExternalActionResultPresenter:
             if not isinstance(item, dict):
                 continue
 
+            formatted = self._format_guide_like_item(item)
+
+            if formatted:
+                lines.append(formatted)
+                continue
+
             preview = ", ".join(
                 f"{self._humanize_key(key)}={value}"
                 for key, value in list(item.items())[:6]
-                if value not in (None, "")
+                if value not in (None, "", [], {})
             )
             lines.append(f"- {preview}")
 
@@ -989,6 +995,57 @@ class ExternalActionResultPresenter:
             lines.append(f"… e mais {len(items) - 12} registro(s).")
 
         return lines
+
+    def _format_guide_like_item(self, item: dict) -> str | None:
+        operations = item.get("operations")
+
+        if not isinstance(operations, list) or not operations:
+            op_desc = str(item.get("operation_description") or "").strip()
+
+            if op_desc:
+                product_code = str(item.get("product_code") or "?").strip()
+                level = item.get("bom_level", 0)
+                op_code = str(item.get("operation_code") or "").strip()
+                center = str(item.get("work_center") or "").strip()
+                label = f"Op. **{op_code}**" if op_code else "Operação"
+                center_part = f" ({center})" if center else ""
+
+                return (
+                    f"- Produto **{product_code}** (BOM {level}): "
+                    f"{label} — {op_desc}{center_part}."
+                )
+
+            return None
+
+        product_code = str(item.get("product_code") or "?").strip()
+        level = item.get("bom_level", 0)
+        op_parts: list[str] = []
+
+        for operation in operations[:6]:
+            if not isinstance(operation, dict):
+                continue
+
+            op_desc = str(operation.get("operation_description") or "").strip()
+
+            if not op_desc:
+                continue
+
+            op_code = str(operation.get("operation_code") or "").strip()
+            center = str(operation.get("work_center") or "").strip()
+            label = f"**{op_code}** {op_desc}" if op_code else f"**{op_desc}**"
+
+            if center:
+                label = f"{label} ({center})"
+
+            op_parts.append(label)
+
+        if not op_parts:
+            return None
+
+        joined = "; ".join(op_parts)
+
+        return f"- Produto **{product_code}** (BOM {level}): {joined}."
+
 
     def _build_product_analyser_insights(self, root: dict, product: dict) -> list[str]:
         insights: list[str] = []

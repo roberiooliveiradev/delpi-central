@@ -127,6 +127,43 @@ class ChatAnalysisIntentService:
         "isso aí",
     )
 
+    _EMAIL_FROM_DATA_TERMS = (
+        "escreva um email",
+        "escreva um e-mail",
+        "escreva email",
+        "escreva e-mail",
+        "monte um email",
+        "monte um e-mail",
+        "gerar email",
+        "gerar e-mail",
+        "email com os dados",
+        "e-mail com os dados",
+        "email com a tabela",
+        "e-mail com a tabela",
+        "email com dados",
+        "redija um email",
+        "redija um e-mail",
+    )
+
+    @classmethod
+    def is_email_from_operational_data_request(
+        cls,
+        message: str,
+        previous_messages: list | None = None,
+    ) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if not any(term in normalized for term in cls._EMAIL_FROM_DATA_TERMS):
+            return False
+
+        return bool(
+            previous_messages
+            and cls._has_recent_successful_tool_data(previous_messages)
+        )
+
     @classmethod
     def is_data_interpretation_request(
         cls,
@@ -138,6 +175,9 @@ class ChatAnalysisIntentService:
 
         if not normalized:
             return False
+
+        if cls.is_email_from_operational_data_request(message, previous_messages):
+            return True
 
         if cls._matches_short_interpretation_command(normalized, previous_messages):
             return True

@@ -39,6 +39,18 @@ class ChatDataInterpretationAnswerService:
         ):
             return None
 
+        from app.application.services.chat_text_task_composer_service import (
+            ChatTextTaskComposerService,
+        )
+
+        email_draft = ChatTextTaskComposerService.build_email_from_conversation(
+            message,
+            previous_messages,
+        )
+
+        if email_draft:
+            return email_draft
+
         summaries = cls._collect_summaries(previous_messages)
 
         if not summaries:

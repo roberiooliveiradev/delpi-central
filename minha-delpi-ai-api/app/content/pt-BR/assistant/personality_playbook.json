@@ -57,6 +57,14 @@
     { "label": "E-mail formal", "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo" },
     { "label": "Quem é você?", "query": "quem é você?" }
   ],
+  "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist"],
+  "attachmentFollowUpQueries": {
+    "Resumir": "resuma o conteúdo do arquivo anexado",
+    "Corrigir": "corrija o texto do arquivo anexado",
+    "Traduzir": "traduza o conteúdo do arquivo anexado para português",
+    "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
+    "Criar checklist": "transforme o arquivo anexado em um checklist"
+  },
   "textHomeStarters": [
     { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
     { "label": "Tom mais formal", "query": "deixe mais formal: preciso que você envie isso ainda hoje" },

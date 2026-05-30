@@ -99,6 +99,7 @@ class ChatPromptBuilderService:
         analysis_mode: bool = False,
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
+        text_task_attachment_context: str | None = None,
         user_context: str | None = None,
         skills: dict | None = None,
     ) -> list[dict]:
@@ -114,6 +115,16 @@ class ChatPromptBuilderService:
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
         base_prompt += self._technical_description_policy_addon(current_message)
+
+        if text_task_mode:
+            from app.application.services.chat_text_task_composer_service import (
+                ChatTextTaskComposerService,
+            )
+
+            base_prompt = (
+                f"{base_prompt}\n\n"
+                f"{ChatTextTaskComposerService.attachment_text_task_instruction(attachment_context=text_task_attachment_context)}"
+            )
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

@@ -123,6 +123,8 @@ pytest \
   tests/unit/domain/services/test_chat_follow_up_intent_service.py \
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   tests/unit/domain/services/test_chat_text_task_intent_service.py \
+  tests/unit/application/services/test_chat_text_task_composer_service.py \
+  tests/unit/domain/services/test_external_action_result_presenter_guide.py \
   tests/unit/domain/services/test_prompt_policy_service.py \
   -q
 
