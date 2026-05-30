@@ -266,6 +266,18 @@ class Settings:
     CHAT_WEB_SEARCH_TAVILY_API_KEY = os.getenv("CHAT_WEB_SEARCH_TAVILY_API_KEY", "").strip()
     CHAT_WEB_SEARCH_SERPER_API_KEY = os.getenv("CHAT_WEB_SEARCH_SERPER_API_KEY", "").strip()
     CHAT_WEB_SEARCH_BING_API_KEY = os.getenv("CHAT_WEB_SEARCH_BING_API_KEY", "").strip()
+    CHAT_WEB_SEARCH_SEARXNG_BASE_URL = os.getenv(
+        "CHAT_WEB_SEARCH_SEARXNG_BASE_URL",
+        "",
+    ).strip()
+    CHAT_WEB_SEARCH_SEARXNG_LANGUAGE = os.getenv(
+        "CHAT_WEB_SEARCH_SEARXNG_LANGUAGE",
+        "pt-BR",
+    ).strip()
+    CHAT_WEB_SEARCH_SEARXNG_CATEGORIES = os.getenv(
+        "CHAT_WEB_SEARCH_SEARXNG_CATEGORIES",
+        "general",
+    ).strip()
     CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED = (
         os.getenv("CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED", "true").lower() == "true"
     )
@@ -283,7 +295,7 @@ class Settings:
         if provider in {"", "auto"}:
             return "auto"
 
-        allowed = {"duckduckgo", "tavily", "serper", "bing"}
+        allowed = {"duckduckgo", "tavily", "serper", "bing", "searxng"}
 
         if provider in allowed:
             return provider

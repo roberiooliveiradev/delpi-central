@@ -160,6 +160,21 @@ services:
     networks:
       - delpi-network
 
+  searxng:
+    image: searxng/searxng:latest
+    profiles:
+      - chat
+    container_name: delpi-searxng
+    restart: unless-stopped
+    environment:
+      SEARXNG_BASE_URL: ${SEARXNG_BASE_URL:-http://localhost:8088/}
+    ports:
+      - "8088:8080"
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    networks:
+      - delpi-network
+
   minha-delpi-ai-api:
     build:
       context: ../minha-delpi-ai-api
@@ -228,6 +243,9 @@ services:
       CHAT_WEB_SEARCH_TAVILY_API_KEY: ${CHAT_WEB_SEARCH_TAVILY_API_KEY:-}
       CHAT_WEB_SEARCH_SERPER_API_KEY: ${CHAT_WEB_SEARCH_SERPER_API_KEY:-}
       CHAT_WEB_SEARCH_BING_API_KEY: ${CHAT_WEB_SEARCH_BING_API_KEY:-}
+      CHAT_WEB_SEARCH_SEARXNG_BASE_URL: ${CHAT_WEB_SEARCH_SEARXNG_BASE_URL:-http://searxng:8080}
+      CHAT_WEB_SEARCH_SEARXNG_LANGUAGE: ${CHAT_WEB_SEARCH_SEARXNG_LANGUAGE:-pt-BR}
+      CHAT_WEB_SEARCH_SEARXNG_CATEGORIES: ${CHAT_WEB_SEARCH_SEARXNG_CATEGORIES:-general}
 
       RATE_LIMIT_ENABLED: "true"
       RATE_LIMIT_WINDOW_SECONDS: 60
@@ -250,7 +268,7 @@ services:
       - core-api
       - postgres-plugins
       - ollama
-      
+      - searxng
     networks:
       - delpi-network
 

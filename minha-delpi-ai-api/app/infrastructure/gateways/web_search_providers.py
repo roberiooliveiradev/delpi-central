@@ -1,4 +1,4 @@
-"""Provedores de busca web (DuckDuckGo Instant Answer, Tavily, Serper, Bing)."""
+"""Provedores de busca web (SearXNG, Tavily, Serper, Bing, DuckDuckGo)."""
 
 from __future__ import annotations
 
@@ -136,6 +136,81 @@ class DuckDuckGoInstantProvider(WebSearchProvider):
                             "source": "related_topic",
                         }
                     )
+
+        if not results:
+            return self._empty_payload(cleaned_query, self.name)
+
+        return self._success_payload(cleaned_query, self.name, results, max_results=limit)
+
+
+class SearxngSearchProvider(WebSearchProvider):
+    name = "searxng"
+
+    def is_configured(self) -> bool:
+        return bool(Settings.CHAT_WEB_SEARCH_SEARXNG_BASE_URL)
+
+    def _base_url(self) -> str:
+        return Settings.CHAT_WEB_SEARCH_SEARXNG_BASE_URL.rstrip("/")
+
+    def search(self, query: str, *, max_results: int) -> dict:
+        cleaned_query = WebSearchQueryService.normalize_query(query)
+
+        if not cleaned_query or not self.is_configured():
+            return self._empty_payload(cleaned_query, self.name)
+
+        limit = max(1, min(max_results, 8))
+        params: dict[str, str | int] = {
+            "q": cleaned_query,
+            "format": "json",
+        }
+
+        language = Settings.CHAT_WEB_SEARCH_SEARXNG_LANGUAGE
+
+        if language:
+            params["language"] = language
+
+        categories = Settings.CHAT_WEB_SEARCH_SEARXNG_CATEGORIES
+
+        if categories:
+            params["categories"] = categories
+
+        try:
+            response = requests.get(
+                f"{self._base_url()}/search",
+                params=params,
+                headers={"Accept": "application/json"},
+                timeout=Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS,
+            )
+            response.raise_for_status()
+            payload = response.json()
+        except (requests.RequestException, ValueError) as exc:
+            logger.warning("SearXNG falhou para %r: %s", cleaned_query, exc)
+            return self._empty_payload(cleaned_query, self.name, error="web_search_unavailable")
+
+        results: list[dict] = []
+
+        for item in payload.get("results") or []:
+            if not isinstance(item, dict):
+                continue
+
+            snippet = str(item.get("content") or item.get("snippet") or "").strip()
+            title = str(item.get("title") or cleaned_query).strip()
+            url = str(item.get("url") or "").strip() or None
+
+            if not snippet and not title:
+                continue
+
+            results.append(
+                {
+                    "title": title,
+                    "snippet": snippet or title,
+                    "url": url,
+                    "source": "searxng",
+                }
+            )
+
+            if len(results) >= limit:
+                break
 
         if not results:
             return self._empty_payload(cleaned_query, self.name)
@@ -324,13 +399,14 @@ def resolve_web_search_providers() -> list[WebSearchProvider]:
         "tavily": TavilySearchProvider(),
         "serper": SerperSearchProvider(),
         "bing": BingSearchProvider(),
+        "searxng": SearxngSearchProvider(),
         "duckduckgo": DuckDuckGoInstantProvider(),
     }
 
     provider_name = Settings.resolve_web_search_provider()
 
     if provider_name == "auto":
-        ordered_names = ("tavily", "serper", "bing", "duckduckgo")
+        ordered_names = ("tavily", "serper", "bing", "searxng", "duckduckgo")
         providers: list[WebSearchProvider] = []
 
         for name in ordered_names:
@@ -346,10 +422,20 @@ def resolve_web_search_providers() -> list[WebSearchProvider]:
     if selected is None:
         return [configured["duckduckgo"]]
 
-    if selected.name != "duckduckgo_instant_answer" and not selected.is_configured():
+    if (
+        selected.name not in {"duckduckgo_instant_answer", "searxng"}
+        and not selected.is_configured()
+    ):
         logger.warning(
             "Provedor web_search=%s sem credenciais; usando DuckDuckGo.",
             provider_name,
+        )
+        return [configured["duckduckgo"]]
+
+    if selected.name == "searxng" and not selected.is_configured():
+        logger.warning(
+            "Provedor web_search=searxng sem CHAT_WEB_SEARCH_SEARXNG_BASE_URL; "
+            "usando DuckDuckGo.",
         )
         return [configured["duckduckgo"]]
 
