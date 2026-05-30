@@ -355,16 +355,26 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 ### Pesquisa na internet (`web_search` — tool nativa)
 
-Requer `CHAT_WEB_SEARCH_ENABLED=true` e admin `webSearchEnabled=true`.
+Requer `CHAT_WEB_SEARCH_ENABLED=true`, admin `webSearchEnabled=true` e (recomendado) `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED=true`.
 
 | ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |
 |----|----------|----------------------------|----------------------------------|
-| W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action`; `directAnswer` | Resumo **em português** (Wikipedia PT) + URL pt.wikipedia.org |
+| W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action`; `directAnswer` | Resumo **em português** (Wikipedia PT) + URL pt.wikipedia.org; resposta **curta** (1 fonte principal — sem síntese LLM) |
 | W2 | pesquise na internet sobre inflação 2026 | Idem W1 | Se `no_results`, texto honesto + conhecimento geral rotulado (não «não pesquiso na internet») |
+| W3 | pesquise na internet sobre a empresa TYCO | Idem W1 + stage `web_search_synthesis` quando ≥2 fontes | Resposta **estruturada** (seções, linha do tempo, conclusão); badges **Fontes** clicáveis; links inline no texto |
+| W4 | *(após W3)* | `adminDebug.pipeline.stages` inclui `web_search_synthesis` | Latência maior (~30–90s com Ollama CPU) é esperada na síntese |
+
+**Fontes na UI (W3/W1):** rodapé com badges `scope: web_search`; no markdown, links externos curtos renderizam como pills (`mdc-chat-citation-badge`).
 
 ```bash
 SMOKE_BASE_URL=http://localhost SMOKE_USER=rober SMOKE_PASSWORD=1234 \
   python scripts/run_onda11_6_api_e2e.py
+
+# Pacote unitário web_search (inclui síntese):
+cd minha-delpi-ai-api && pytest \
+  tests/unit/domain/services/test_web_search_query_service.py \
+  tests/unit/application/services/test_chat_web_search_synthesis_service.py \
+  tests/unit/infrastructure/gateways/test_web_search_http_gateway.py -q
 ```
 
 ### RAG documental — docs GPT ingeridos no agente

@@ -435,12 +435,35 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | Aspecto | Comportamento |
 |---------|----------------|
 | Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` (triggers: «pesquise na internet», «busque na web», etc.) |
-| Provedores | `auto`: Tavily → Serper → Bing → DuckDuckGo Instant Answer; retry EN quando PT vier vazio |
+| Consulta | `WebSearchQueryService`: remove «a empresa», gera candidatos (`Tyco`, `Tyco International`, retry EN) |
+| Provedores | `auto`: Tavily → Serper → Bing → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
 | Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
-| Resposta | `ChatWebSearchDirectAnswerService` + `ChatWebSearchSynthesisService` (LLM multi-seção) + Wikipedia PT |
+| Resposta simples | `ChatWebSearchDirectAnswerService` — 1 resultado útil ou fallback rápido (`directAnswer`, `skipRag`) |
+| Síntese LLM | `ChatWebSearchSynthesisService` — com ≥ `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` fontes úteis, monta intro, seções, linha do tempo e conclusão em PT |
+| Localização | `WebSearchPortugueseContentService` — Wikipedia PT quando snippet vier em inglês; entidades de uma palavra (ex.: «tyco») |
+| Fontes na API | `webSources` → `sources[]` com `scope: web_search`, `sourceRef` = URL |
+| UI | Badges **Fontes** no rodapé (`ChatSources`) + links curtos no markdown como pills (`ChatMarkdown`) |
 | Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca |
 
-Testes: `test_chat_web_search_intent_service.py`, `test_chat_web_search_blocks_external_actions.py`, `test_web_search_http_gateway.py`.
+**Pipeline típico (sucesso multi-fonte):** `ingress` → `tools` → `post_tool` → `direct_answer` → `web_search_synthesis` → `skip_rag`.
+
+**Variáveis (compose / `.env`):**
+
+| Variável | Default | Papel |
+|----------|---------|--------|
+| `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch |
+| `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta sem LLM principal |
+| `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada via LLM |
+| `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para sintetizar |
+| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | Ordem de provedores externos |
+| `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry em inglês quando PT/inicial vier vazio |
+| `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Limite por consulta |
+| `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
+| `CHAT_WEB_SEARCH_TAVILY_API_KEY` / `SERPER` / `BING` | — | Credenciais opcionais (recomendado Tavily em prod) |
+
+**Testes:** `test_web_search_query_service.py`, `test_chat_web_search_intent_service.py`, `test_web_search_http_gateway.py`, `test_chat_web_search_direct_answer_service.py`, `test_chat_web_search_synthesis_service.py`, `test_chat_web_search_blocks_external_actions.py`, `scripts/run_onda11_6_api_e2e.py` (caso W1).
+
+**Deploy:** após alterar código Python, recriar/reiniciar `minha-delpi-ai-api` (Gunicorn não recarrega workers sozinho com imagem prod).
 
 ---
 
