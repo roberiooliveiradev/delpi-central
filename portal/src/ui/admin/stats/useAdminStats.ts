@@ -1,12 +1,12 @@
 // src/ui/admin/stats/useAdminStats.ts
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi, type AdminStatistics } from "../../../data/adminApi";
 import type { ChartSegment } from "./StatsCharts";
-import { STATS_CHART_COLORS } from "./statsTheme";
+import { STATS_AUTO_REFRESH_MS, STATS_CHART_COLORS } from "./statsTheme";
 
 export type StatsChartsData = {
   userSegments: ChartSegment[];
@@ -14,35 +14,72 @@ export type StatsChartsData = {
   notificationSegments: ChartSegment[];
 };
 
+type LoadOptions = {
+  silent?: boolean;
+};
+
 export function useAdminStats() {
   const { getAccessToken } = useContext(AuthContext);
   const [stats, setStats] = useState<AdminStatistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasStatsRef = useRef(false);
 
   const api = useMemo(() => {
     return new AdminApi(new ApiClient("", getAccessToken));
   }, [getAccessToken]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: LoadOptions) => {
+    const silent = Boolean(options?.silent && hasStatsRef.current);
+
+    if (!silent) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
       const data = await api.getAdminStatistics();
       setStats(data);
+      hasStatsRef.current = true;
     } catch (err) {
-      setStats(null);
+      if (!silent) {
+        setStats(null);
+        hasStatsRef.current = false;
+      }
       setError(
         err instanceof Error ? err.message : "Falha ao carregar estatísticas",
       );
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [api]);
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState !== "visible") return;
+      void load({ silent: true });
+    };
+
+    const intervalId = window.setInterval(tick, STATS_AUTO_REFRESH_MS);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void load({ silent: true });
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [load]);
 
   const charts = useMemo(() => {
@@ -125,5 +162,12 @@ export function useAdminStats() {
     return { userSegments, appSegments, notificationSegments };
   }, [stats]);
 
-  return { stats, loading, error, load, charts };
-}
+  return {
+    stats,
+    loading,
+    error,
+    load,
+    charts,
+    autoRefreshSeconds: STATS_AUTO_REFRESH_MS / 1000,
+  };
+};

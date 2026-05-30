@@ -18,6 +18,9 @@ export const STATS_CHART_COLORS = {
 
 export type StatsSubPage = "overview" | "users" | "apps" | "access" | "notifications";
 
+/** Alinhado ao ping de uso de apps (45s) e TTL ao vivo (90s). */
+export const STATS_AUTO_REFRESH_MS = 45_000;
+
 export const STATS_SUB_PAGES: {
   id: StatsSubPage;
   label: string;

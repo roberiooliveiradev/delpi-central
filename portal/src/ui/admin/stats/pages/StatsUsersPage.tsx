@@ -7,6 +7,7 @@ import {
   StatsInsightRow,
   StatsMiniKpi,
   StatsMiniKpiRow,
+  LeastEngagedUsersPanel,
   formatPercent,
   statPercent,
 } from "../StatsEnrichment";
@@ -128,6 +129,8 @@ export function StatsUsersPage({ stats, charts, onNavigateTab }: StatsUsersPageP
           />
         </StatsChartCard>
       </div>
+
+      <LeastEngagedUsersPanel data={stats.users.leastEngaged} />
     </div>
   );
 }

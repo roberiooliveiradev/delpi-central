@@ -37,7 +37,7 @@ const SUB_PAGE_ICONS: Record<StatsSubPage, typeof LayoutDashboard> = {
 
 export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
   const [page, setPage] = useState<StatsSubPage>("overview");
-  const { stats, loading, error, load, charts } = useAdminStats();
+  const { stats, loading, error, load, charts, autoRefreshSeconds } = useAdminStats();
 
   const activeMeta = STATS_SUB_PAGES.find((item) => item.id === page)!;
 
@@ -86,6 +86,7 @@ export const StatsTab = ({ onNavigateTab }: StatsTabProps) => {
           generatedAt={stats.generatedAt}
           loading={loading}
           onRefresh={() => void load()}
+          autoRefreshSeconds={autoRefreshSeconds}
         />
       </header>
 

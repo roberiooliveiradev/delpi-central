@@ -15,6 +15,9 @@ from app.infrastructure.presence.presence_store_provider import (
 from app.application.use_cases.admin.get_app_usage_snapshot_use_case import (
     GetAppUsageSnapshotUseCase,
 )
+from app.application.use_cases.admin.get_least_engaged_users_use_case import (
+    GetLeastEngagedUsersUseCase,
+)
 
 
 class GetAdminStatisticsUseCase:
@@ -35,6 +38,9 @@ class GetAdminStatisticsUseCase:
         snapshot["apps"]["usage"] = GetAppUsageSnapshotUseCase(self.uow).execute(
             history_days=history_days,
         )
+        snapshot["users"]["leastEngaged"] = GetLeastEngagedUsersUseCase(
+            self.uow
+        ).execute(history_days=history_days)
         snapshot["generatedAt"] = datetime.utcnow().isoformat() + "Z"
 
         return snapshot

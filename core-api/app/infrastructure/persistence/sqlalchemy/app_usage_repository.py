@@ -103,3 +103,64 @@ class SqlAlchemyAppUsageRepository:
             .scalar()
         )
         return int(value or 0)
+
+    def list_least_engaged_users(
+        self,
+        *,
+        since: datetime,
+        limit: int = 15,
+    ) -> list[dict]:
+        from app.infrastructure.db.models import User
+
+        usage_subq = (
+            self.session.query(
+                AppUsageEvent.user_id.label("user_id"),
+                func.count(func.distinct(AppUsageEvent.app_id)).label("apps_used"),
+                func.count(AppUsageEvent.id).label("total_opens"),
+                func.max(AppUsageEvent.opened_at).label("last_app_usage_at"),
+            )
+            .filter(AppUsageEvent.opened_at >= since)
+            .group_by(AppUsageEvent.user_id)
+            .subquery()
+        )
+
+        rows = (
+            self.session.query(
+                User.id,
+                User.name,
+                User.email,
+                User.last_login_at,
+                User.is_superadmin,
+                func.coalesce(usage_subq.c.apps_used, 0).label("apps_used"),
+                func.coalesce(usage_subq.c.total_opens, 0).label("total_opens"),
+                usage_subq.c.last_app_usage_at,
+            )
+            .outerjoin(usage_subq, User.id == usage_subq.c.user_id)
+            .filter(User.active.is_(True))
+            .order_by(
+                func.coalesce(usage_subq.c.apps_used, 0).asc(),
+                func.coalesce(usage_subq.c.total_opens, 0).asc(),
+                User.last_login_at.asc().nullsfirst(),
+                User.name.asc(),
+            )
+            .limit(max(1, limit))
+            .all()
+        )
+
+        result: list[dict] = []
+        for row in rows:
+            last_app_usage = row.last_app_usage_at
+            last_login = row.last_login_at
+            result.append(
+                {
+                    "id": row.id,
+                    "name": row.name,
+                    "email": row.email,
+                    "is_superadmin": bool(row.is_superadmin),
+                    "apps_used": int(row.apps_used or 0),
+                    "total_opens": int(row.total_opens or 0),
+                    "last_app_usage_at": last_app_usage,
+                    "last_login_at": last_login,
+                }
+            )
+        return result

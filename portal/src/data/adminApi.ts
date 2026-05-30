@@ -62,6 +62,33 @@ export type AdminStatisticsRankItem = {
   count: number;
 };
 
+export type AdminStatisticsAppRef = {
+  id: string;
+  name: string;
+};
+
+export type AdminStatisticsLeastEngagedUser = {
+  id: string;
+  name: string;
+  email: string;
+  isSuperadmin?: boolean;
+  lastLoginAt?: string | null;
+  appsUsedInPeriod: number;
+  totalOpensInPeriod: number;
+  lastAppUsageAt?: string | null;
+  availableAppsCount: number;
+  availableApps: AdminStatisticsAppRef[];
+  availableGroupsCount: number;
+  availableGroups: AdminStatisticsAppRef[];
+  availableRolesCount: number;
+  availableRoles: AdminStatisticsAppRef[];
+};
+
+export type AdminStatisticsLeastEngaged = {
+  periodDays: number;
+  items: AdminStatisticsLeastEngagedUser[];
+};
+
 export type AdminStatisticsTypeCount = {
   type: string;
   count: number;
@@ -105,6 +132,7 @@ export type AdminStatistics = {
     loggedInLast30Days: number;
     withoutDirectRoles: number;
     withoutGroups: number;
+    leastEngaged?: AdminStatisticsLeastEngaged;
   };
   apps: {
     total: number;

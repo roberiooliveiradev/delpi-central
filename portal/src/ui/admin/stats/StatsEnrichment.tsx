@@ -1,9 +1,13 @@
 // src/ui/admin/stats/StatsEnrichment.tsx
 
 import { useState, type ReactNode } from "react";
-import { ChevronDown, Ghost } from "lucide-react";
+import { ChevronDown, Ghost, UserX } from "lucide-react";
 
-import type { AdminStatisticsRankItem } from "../../../data/adminApi";
+import type {
+  AdminStatisticsLeastEngaged,
+  AdminStatisticsRankItem,
+} from "../../../data/adminApi";
+import { formatGeneratedAt } from "./StatsShared";
 
 export function statPercent(part: number, total: number): number {
   if (total <= 0) return 0;
@@ -136,5 +140,125 @@ export function GhostAppsCompact({ apps }: { apps: AdminStatisticsRankItem[] }) 
         </button>
       ) : null}
     </aside>
+  );
+}
+
+export function LeastEngagedUsersPanel({
+  data,
+}: {
+  data?: AdminStatisticsLeastEngaged;
+}) {
+  const items = data?.items ?? [];
+  const periodDays = data?.periodDays ?? 30;
+
+  return (
+    <section className="admin-stats__panel admin-stats__panel--wide">
+      <div className="admin-stats-panel__title-row">
+        <h5>
+          <UserX size={14} aria-hidden="true" />
+          Menor uso da plataforma
+        </h5>
+        <span className="admin-stats-panel__badge">{items.length}</span>
+      </div>
+      <p className="admin-stats-panel__lede">
+        Usuários ativos com menos apps utilizados nos últimos {periodDays} dias,
+        com apps, papéis e grupos liberados para cada um.
+      </p>
+
+      {items.length === 0 ? (
+        <p className="admin-stats__empty">
+          Nenhum usuário ativo encontrado para o ranking.
+        </p>
+      ) : (
+        <ul className="admin-stats-least-engaged-list" aria-label="Usuários com menor engajamento">
+          {items.map((user) => (
+            <li key={user.id} className="admin-stats-least-engaged-item">
+              <div className="admin-stats-least-engaged-item__head">
+                <div>
+                  <strong>{user.name}</strong>
+                  <span className="admin-stats-least-engaged-item__email">
+                    {user.email}
+                  </span>
+                </div>
+                <div className="admin-stats-least-engaged-item__metrics">
+                  <span>{user.appsUsedInPeriod} apps usados</span>
+                  <span>{user.totalOpensInPeriod} aberturas</span>
+                  <span>{user.availableAppsCount} apps</span>
+                  <span>{user.availableRolesCount ?? 0} papéis</span>
+                  <span>{user.availableGroupsCount ?? 0} grupos</span>
+                </div>
+              </div>
+              <div className="admin-stats-least-engaged-item__meta">
+                {user.isSuperadmin ? (
+                  <span className="admin-stats-least-engaged-item__superadmin">
+                    Superadmin
+                  </span>
+                ) : null}
+                <span>
+                  Último login:{" "}
+                  {user.lastLoginAt
+                    ? formatGeneratedAt(user.lastLoginAt)
+                    : "nunca"}
+                </span>
+                {user.lastAppUsageAt ? (
+                  <span>
+                    Último app: {formatGeneratedAt(user.lastAppUsageAt)}
+                  </span>
+                ) : null}
+              </div>
+              <AccessTagSection
+                label="Apps"
+                items={user.availableApps}
+                emptyText="Nenhum app liberado via RBAC."
+                tone="apps"
+              />
+              <AccessTagSection
+                label="Papéis"
+                items={user.availableRoles ?? []}
+                emptyText="Nenhum papel atribuído."
+                tone="roles"
+              />
+              <AccessTagSection
+                label="Grupos"
+                items={user.availableGroups ?? []}
+                emptyText="Nenhum grupo atribuído."
+                tone="groups"
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function AccessTagSection({
+  label,
+  items,
+  emptyText,
+  tone,
+}: {
+  label: string;
+  items: { id: string; name: string }[];
+  emptyText: string;
+  tone: "apps" | "roles" | "groups";
+}) {
+  return (
+    <div className={`admin-stats-least-engaged-item__access admin-stats-least-engaged-item__access--${tone}`}>
+      <span className="admin-stats-least-engaged-item__access-label">{label}</span>
+      {items.length > 0 ? (
+        <ul className="admin-stats__ghost-tags admin-stats-least-engaged-item__tags">
+          {items.map((item) => (
+            <li key={item.id} title={item.id}>
+              {item.name}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="admin-stats__empty admin-stats-least-engaged-item__no-apps">
+          {emptyText}
+        </p>
+      )}
+    </div>
   );
 }

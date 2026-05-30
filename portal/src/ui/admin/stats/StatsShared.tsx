@@ -67,18 +67,27 @@ export function StatsRefreshBar({
   generatedAt,
   loading,
   onRefresh,
+  autoRefreshSeconds,
 }: {
   generatedAt?: string;
   loading: boolean;
   onRefresh: () => void;
+  autoRefreshSeconds?: number;
 }) {
   return (
     <div className="admin-stats-page__toolbar">
-      {generatedAt ? (
-        <span className="admin-stats__generated">
-          Atualizado: {formatGeneratedAt(generatedAt)}
-        </span>
-      ) : null}
+      <div className="admin-stats__generated-wrap">
+        {generatedAt ? (
+          <span className="admin-stats__generated">
+            Atualizado: {formatGeneratedAt(generatedAt)}
+          </span>
+        ) : null}
+        {autoRefreshSeconds ? (
+          <span className="admin-stats__generated admin-stats__generated--muted">
+            Atualização automática a cada {autoRefreshSeconds}s
+          </span>
+        ) : null}
+      </div>
       <button
         type="button"
         className="admin-stats__refresh"
