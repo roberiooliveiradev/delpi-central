@@ -6,20 +6,20 @@ import type { ChatSession } from "../../data/api/chatTypes";
 type UseChatRouteSyncOptions = {
   pathname?: string;
   sessions: ChatSession[];
-  agentsReady?: boolean;
+  workspaceReady?: boolean;
   onApplyRoute: (route: ChatRoute) => void;
 };
 
 export function useChatRouteSync({
   pathname,
   sessions,
-  agentsReady = true,
+  workspaceReady = true,
   onApplyRoute,
 }: UseChatRouteSyncOptions) {
   const isApplyingRouteRef = useRef(false);
   const lastAppliedPathnameRef = useRef<string | null>(null);
   const lastAppliedSessionCountRef = useRef<number>(0);
-  const lastAppliedAgentsReadyRef = useRef<boolean>(agentsReady);
+  const lastAppliedWorkspaceReadyRef = useRef<boolean>(workspaceReady);
 
   useEffect(() => {
     if (!pathname) {
@@ -30,20 +30,23 @@ export function useChatRouteSync({
     const route = parseChatRoute(pathname);
 
     const sessionsGrew =
-      (route.kind === "session" || route.kind === "agent-session") &&
+      (route.kind === "session" ||
+        route.kind === "agent-session" ||
+        route.kind === "project-session") &&
       sessions.length > lastAppliedSessionCountRef.current;
 
-    const agentsBecameReady = agentsReady && !lastAppliedAgentsReadyRef.current;
+    const workspaceBecameReady =
+      workspaceReady && !lastAppliedWorkspaceReadyRef.current;
 
-    if (!pathnameChanged && !sessionsGrew && !agentsBecameReady) {
+    if (!pathnameChanged && !sessionsGrew && !workspaceBecameReady) {
       return;
     }
 
     lastAppliedPathnameRef.current = pathname;
     lastAppliedSessionCountRef.current = sessions.length;
-    lastAppliedAgentsReadyRef.current = agentsReady;
+    lastAppliedWorkspaceReadyRef.current = workspaceReady;
 
-    if (!agentsReady) {
+    if (!workspaceReady) {
       return;
     }
 
@@ -54,7 +57,7 @@ export function useChatRouteSync({
     } finally {
       isApplyingRouteRef.current = false;
     }
-  }, [pathname, sessions, agentsReady, onApplyRoute]);
+  }, [pathname, sessions, workspaceReady, onApplyRoute]);
 
   return { isApplyingRouteRef };
 }

@@ -3,13 +3,20 @@ import { describe, expect, it } from "vitest";
 import {
   buildChatAgentHref,
   buildChatAgentSessionHref,
+  buildChatProjectHref,
+  buildChatProjectSessionHref,
   buildChatSessionHrefForSession,
   findAgentByRouteId,
+  findProjectByRouteId,
   isChatAgentRouteId,
   normalizeAgentRouteId,
+  normalizeProjectRouteId,
+  normalizeRouteId,
   parseChatRoute,
   withCanonicalAgentRouteId,
 } from "./chatRoutes";
+
+const PROJECT_ID = "c285c233-b06a-4d23-8450-6ac3c0f7428e";
 
 const AGENTS = [
   {
@@ -98,5 +105,62 @@ describe("chatRoutes agents", () => {
     expect(isChatAgentRouteId("b185b233-b06a-4d23-8450-6ac3c0f7428d")).toBe(true);
     expect(isChatAgentRouteId("minha-delpi-chat")).toBe(false);
     expect(normalizeAgentRouteId("undefined")).toBeNull();
+    expect(normalizeProjectRouteId("undefined")).toBeNull();
+    expect(normalizeRouteId("undefined")).toBeNull();
+  });
+});
+
+describe("chatRoutes projects", () => {
+  it("parseia rota de projeto por uuid", () => {
+    expect(
+      parseChatRoute(`/apps/minha-delpi-chat/projetos/${PROJECT_ID}`),
+    ).toEqual({
+      kind: "project",
+      projectId: PROJECT_ID,
+    });
+  });
+
+  it("parseia rota de projeto com conversa", () => {
+    expect(
+      parseChatRoute(
+        `/apps/minha-delpi-chat/projetos/${PROJECT_ID}/conversas/sessao-1`,
+      ),
+    ).toEqual({
+      kind: "project-session",
+      projectId: PROJECT_ID,
+      sessionId: "sessao-1",
+    });
+  });
+
+  it("monta href de projeto com uuid", () => {
+    expect(buildChatProjectHref(PROJECT_ID)).toBe(
+      `/apps/minha-delpi-chat/projetos/${PROJECT_ID}`,
+    );
+  });
+
+  it("monta href de conversa do projeto", () => {
+    expect(buildChatProjectSessionHref(PROJECT_ID, "sessao-1")).toBe(
+      `/apps/minha-delpi-chat/projetos/${PROJECT_ID}/conversas/sessao-1`,
+    );
+  });
+
+  it("rejeita projectId inválido ao montar href", () => {
+    expect(buildChatProjectHref(undefined)).toBe("/apps/minha-delpi-chat/projetos");
+    expect(buildChatProjectHref("undefined")).toBe("/apps/minha-delpi-chat/projetos");
+  });
+
+  it("monta href de sessão priorizando projeto quando não há agente", () => {
+    expect(
+      buildChatSessionHrefForSession({
+        id: "sessao-1",
+        agent_id: null,
+        project_id: PROJECT_ID,
+      }),
+    ).toBe(`/apps/minha-delpi-chat/projetos/${PROJECT_ID}/conversas/sessao-1`);
+  });
+
+  it("resolve projeto apenas por uuid", () => {
+    expect(findProjectByRouteId([{ id: PROJECT_ID }], PROJECT_ID)?.id).toBe(PROJECT_ID);
+    expect(findProjectByRouteId([{ id: PROJECT_ID }], "slug-invalido")).toBeUndefined();
   });
 });

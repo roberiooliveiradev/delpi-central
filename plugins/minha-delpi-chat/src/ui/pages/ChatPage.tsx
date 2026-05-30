@@ -36,10 +36,13 @@ import {
   buildChatHref,
   buildChatProjectConfigHref,
   buildChatProjectHref,
+  buildChatProjectSessionHref,
   buildChatSessionHref,
   buildChatSessionHrefForSession,
   findAgentByRouteId,
+  findProjectByRouteId,
   normalizeAgentRouteId,
+  normalizeProjectRouteId,
   parseChatRoute,
   type ChatRoute,
 } from "../../navigation/chatRoutes";
@@ -146,9 +149,15 @@ export function ChatPage({
     agentId: requestedAgentId,
     onSessionActivated: (sessionId, context) => {
       const agentId = context?.agentId ?? requestedAgentId;
+      const projectId = context?.projectId ?? selectedProjectId;
 
       if (agentId) {
         navigateChatHref(buildChatAgentSessionHref(agentId, sessionId), { replace: true });
+        return;
+      }
+
+      if (projectId) {
+        navigateChatHref(buildChatProjectSessionHref(projectId, sessionId), { replace: true });
         return;
       }
 
@@ -225,6 +234,9 @@ export function ChatPage({
       const resolveRouteAgent = (routeId: string) =>
         findAgentByRouteId(agents, routeId);
 
+      const resolveRouteProject = (routeId: string) =>
+        findProjectByRouteId(projects, routeId);
+
       const hasOutboundInFlight =
         messages.some((message) => message.metadata?.optimistic === true) ||
         Boolean(streamingStatus) ||
@@ -236,7 +248,7 @@ export function ChatPage({
         activeAgentPageId === resolveRouteAgent(route.agentId)?.id;
 
       const shouldPreserveProjectCompose =
-        route.kind === "project" &&
+        (route.kind === "project" || route.kind === "project-session") &&
         hasOutboundInFlight &&
         selectedProjectId === route.projectId &&
         (!activeSession || activeSession.project_id === route.projectId);
@@ -296,8 +308,68 @@ export function ChatPage({
               buildChatAgentSessionHref(session.agent_id, session.id),
               { replace: true },
             );
+          } else if (session.project_id) {
+            navigateChatHref(
+              buildChatProjectSessionHref(session.project_id, session.id),
+              { replace: true },
+            );
           }
 
+          break;
+        }
+        case "project-session": {
+          const session = sessions.find((item) => item.id === route.sessionId);
+          const routeProject = resolveRouteProject(route.projectId);
+
+          if (!routeProject) {
+            if (!normalizeProjectRouteId(route.projectId)) {
+              navigateChatHref(buildChatHref({ kind: "projects" }), { replace: true });
+            }
+            return;
+          }
+
+          if (session) {
+            if (activeSession?.id === route.sessionId) {
+              if (selectedProjectId !== routeProject.id) {
+                setSelectedProjectId(routeProject.id);
+              }
+              closeMobileSidebar();
+              return;
+            }
+
+            clearWorkspaceError();
+            clearError();
+            setCanvasDocument(null);
+            setComposerAttachments([]);
+            setSelectedProjectId(routeProject.id);
+            setActiveAgentPageId(null);
+            setContextAgentId(session.agent_id ?? getProjectDefaultAgentId(routeProject.id));
+            setCurrentView("chat");
+            selectSession(session);
+            closeMobileSidebar();
+            break;
+          }
+
+          if (shouldPreserveProjectCompose) {
+            closeMobileSidebar();
+            return;
+          }
+
+          if (selectedProjectId === routeProject.id && !activeSession) {
+            closeMobileSidebar();
+            return;
+          }
+
+          clearWorkspaceError();
+          clearError();
+          setCanvasDocument(null);
+          setComposerAttachments([]);
+          setSelectedProjectId(routeProject.id);
+          setActiveAgentPageId(null);
+          setContextAgentId(getProjectDefaultAgentId(routeProject.id));
+          setCurrentView("chat");
+          void startSession();
+          closeMobileSidebar();
           break;
         }
         case "agent-session": {
@@ -357,12 +429,21 @@ export function ChatPage({
         }
         case "project":
         case "project-config": {
+          const routeProject = resolveRouteProject(route.projectId);
+
+          if (!routeProject) {
+            if (!normalizeProjectRouteId(route.projectId)) {
+              navigateChatHref(buildChatHref({ kind: "projects" }), { replace: true });
+            }
+            return;
+          }
+
           if (shouldPreserveProjectCompose) {
             closeMobileSidebar();
             return;
           }
 
-          if (selectedProjectId === route.projectId && !activeSession) {
+          if (selectedProjectId === routeProject.id && !activeSession) {
             closeMobileSidebar();
             return;
           }
@@ -371,9 +452,9 @@ export function ChatPage({
           clearError();
           setCanvasDocument(null);
           setComposerAttachments([]);
-          setSelectedProjectId(route.projectId);
+          setSelectedProjectId(routeProject.id);
           setActiveAgentPageId(null);
-          setContextAgentId(getProjectDefaultAgentId(route.projectId));
+          setContextAgentId(getProjectDefaultAgentId(routeProject.id));
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -489,6 +570,7 @@ export function ChatPage({
       agentEditRequest?.id,
       agentSubRoute,
       agents,
+      projects,
       activeSession,
       activeSession?.id,
       clearError,
@@ -509,7 +591,7 @@ export function ChatPage({
   useChatRouteSync({
     pathname,
     sessions,
-    agentsReady: !isLoadingAgents,
+    workspaceReady: !isLoadingAgents && !isLoadingProjects,
     onApplyRoute: applyChatRoute,
   });
 
@@ -1364,6 +1446,7 @@ export function ChatPage({
                   onClearProject={() => {
                     setSelectedProjectId(null);
                     setContextAgentId(null);
+                    navigateChatHref(buildChatHref({ kind: "home" }));
                     void handleStartSession();
                   }}
                   composer={
