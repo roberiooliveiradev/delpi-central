@@ -44,7 +44,8 @@ Mensagem do usuário
 |---------|--------|
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
-| `ChatAnalysisIntentService` | Detecção de comparação / insights |
+| `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
+| `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |
 | `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo?», campos da descrição técnica → RAG `Normas_Tecnicas_DELPI.md` (global), sem API de catálogo |
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
@@ -70,7 +71,7 @@ Mensagem do usuário
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
-| `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, …) |
+| `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, …) |
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
 
@@ -254,6 +255,26 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 `ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.
 
 `CHAT_OPERATIONAL_SLIM_USER_CONTEXT` (default `true`): em modo operacional, o prompt LLM não inclui o bloco completo de perfil RBAC (reduz tokens), exceto perguntas sobre o **usuário** («quem sou eu»).
+
+### Interpretação de dados operacionais (follow-up) — maio/2026
+
+Após uma consulta operacional bem-sucedida (estoque, roteiro, estrutura, inspeção, KPI, SQL), mensagens como «explique os dados acima», «resume», «traduz isso» ou «não entendi»:
+
+| Etapa | Comportamento |
+|-------|----------------|
+| `ChatAnalysisIntentService.is_data_interpretation_request` | Detecta referência a dados já mostrados; ativa `analysis_mode` |
+| `ChatTurnPreparationService` | `skip_tools_for_data_interpretation` quando há `humanizedSummary` recente; `skipRag`; suprime bloco `/me` (perfil RBAC) |
+| `ChatDataInterpretationAnswerService.build_answer` | **Fast path:** resposta direta a partir do último `humanizedSummary` (`titulo` + `linhas`) — sem LLM |
+| `ExternalActionResultPresenter` | Gera resumo humanizado por rota (`/guide`, `/stock`, `/structure`, …) antes de heurística SQL genérica |
+| `ChatConversationContextService` | Reidrata contexto de análise; evita título genérico «Consulta SQL» quando há resumo substantivo |
+| Policy | `chat-data-interpretation.md` — fallback LLM só com contexto de dados já obtidos |
+| Sem histórico (#79) | `is_data_reference_without_tool_data` → resposta canônica pedindo consulta prévia; **não** dispara SQL |
+
+Evita o erro «Empty body — SQL not provided» ao confundir interpretação com nova consulta analítica.
+
+Checklist manual: **#70–79** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+
+Testes: `test_chat_data_interpretation_answer_service.py`, `test_chat_analysis_intent_service.py`, casos `DATA_INTERPRETATION_*` em `chat_intelligence_regression_cases.py`.
 
 ### Refinamento operacional (follow-up de estoque) — maio/2026
 

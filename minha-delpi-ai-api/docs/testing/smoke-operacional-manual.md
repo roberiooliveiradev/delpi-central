@@ -99,13 +99,25 @@ docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
 
 Valida resumo textual na **primeira resposta** (roteiro, estoque, estrutura, inspeção) e **follow-ups** que interpretam dados já obtidos **sem nova API/SQL**.
 
-**Agente:** Minha DELPI Chat (`minha-delpi-chat`). Use a **mesma conversa** nos follow-ups.
+**Agente:** Minha DELPI Chat — `agent_key=minha-delpi-chat`, UUID `b85edd53-2fd9-4e2f-ab17-92fd288f4f85`. Use a **mesma conversa** nos follow-ups.
+
+**Pipeline (chat base):**
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Consulta inicial | `ExternalActionResultPresenter` gera `humanizedSummary` (título + linhas) persistido em `toolCalls[].metadata` |
+| Follow-up (#74–78) | `ChatAnalysisIntentService.is_data_interpretation_request` → `analysis_mode`; **sem** nova tool/SQL |
+| Resposta direta | `ChatDataInterpretationAnswerService.build_answer` monta markdown a partir do último `humanizedSummary` — **sem LLM** quando há linhas substantivas |
+| Modo LLM (fallback) | Policy `chat-data-interpretation.md`; bloco «Contexto para interpretar os dados já obtidos»; `skipRag`; **sem** bloco `/me` (perfil RBAC) |
+| Conversa vazia (#79) | `is_data_reference_without_tool_data` → resposta direta pedindo consulta prévia (~sub-segundo); **não** chama `POST /data/sql` |
+
+**Limitação conhecida (UI):** na primeira resposta operacional, o corpo do chat pode mostrar só «Consulta SQL» / «Visualização dos dados» enquanto a tabela/gráfico carrega; os follow-ups (#74–78) já usam o resumo humanizado correto.
 
 ### Consulta inicial — resumo + tabela
 
 | # | Pergunta | O que esperar |
 |---|----------|---------------|
-| 70 | roteiro do 90260142 | Tool `/products/…/guide`; texto resume operações do produto e componentes BOM; **não** só o título «Roteiro do produto» |
+| 70 | roteiro do 90260142 | Tool `GET /products/90260142/guide`; `humanizedSummary` com operações e componentes BOM; tabela abaixo |
 | 71 | estrutura do produto 90260047 | Resumo com produto pai, componentes nível 1 e MPs; árvore/tabela abaixo |
 | 72 | inspeção do produto 90260142 | Resumo do plano de inspeção (testes/características); tabela abaixo |
 | 73 | estoque do produto 10080022 | Resumo com filiais, totais disponível/atual e detalhe por armazém; tabela/gráfico |
@@ -114,16 +126,31 @@ Valida resumo textual na **primeira resposta** (roteiro, estoque, estrutura, ins
 
 | # | Sequência | O que esperar |
 |---|-----------|---------------|
-| 74 | *(após #70)* explique os dados acima | **Sem** tool call; `analysisMode` no adminDebug; resposta em linguagem natural; **não** erro SQL 400 |
-| 75 | *(após #73)* resume | Idem — comando curto |
-| 76 | *(após #70)* traduz isso | Idem |
-| 77 | *(após #73)* nao entendi | Idem |
+| 74 | *(após #70)* explique os dados acima | **Sem** tool call; resposta cita 90260142 e operações; **não** erro SQL 400; **não** vaza perfil/SQL |
+| 75 | *(após #73)* resume | Idem — filiais e totais do 10080022 |
+| 76 | *(após #70)* traduz isso | Idem — linguagem simples |
+| 77 | *(após #73)* nao entendi | Idem — reformulação didática |
 | 78 | *(após #71)* o que isso quer dizer | Idem para estrutura |
-| 79 | explique os dados acima *(conversa vazia)* | **Não** chama SQL; sem histórico útil, não inventa consulta |
+| 79 | explique os dados acima *(conversa vazia)* | Resposta: «Ainda não há dados nesta conversa para interpretar…»; **sem** tool; **sem** SQL |
 
 **Automatizado (preparação do turno):** `scripts/smoke_operational_questions.py` (#70–78).
 
-**Regressão unitária:** `tests/fixtures/chat_intelligence_regression_cases.py` (`DATA_INTERPRETATION_*`, `PRESENTER_HUMANIZED_CASES`).
+**E2E HTTP (stream, mesma sessão):**
+
+```bash
+# Token Keycloak (dev: rober/1234)
+TOKEN=$(curl -s -X POST "http://localhost/auth/realms/delpi/protocol/openid-connect/token" \
+  -d "client_id=delpi-central" -d "username=rober" -d "password=1234" -d "grant_type=password" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+
+# Smoke prep (#70–78) — user_id e session_id da conversa de teste
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app -e SMOKE_TOKEN="$TOKEN" minha-delpi-ai-api \
+  python scripts/smoke_operational_questions.py <user_id> <session_id>
+```
+
+Sequência validada (mai/2026): #70 → #74/#76 (roteiro 90260142); #73 → #75/#77 (estoque 10080022); #79 isolado em sessão nova.
+
+**Regressão unitária:** `tests/fixtures/chat_intelligence_regression_cases.py` (`DATA_INTERPRETATION_*`, `PRESENTER_HUMANIZED_CASES`); `tests/unit/application/services/test_chat_data_interpretation_answer_service.py`.
 
 ---
 
@@ -373,7 +400,7 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 | Área | Onde rodar |
 |------|------------|
 | Smoke operacional | `scripts/smoke_operational_questions.py` |
-| Interpretação de dados / resumos (#70–79) | `scripts/smoke_operational_questions.py` + `tests/unit/domain/services/test_chat_intelligence_regression.py` |
+| Interpretação de dados / resumos (#70–79) | `scripts/smoke_operational_questions.py` + `tests/unit/application/services/test_chat_data_interpretation_answer_service.py` + `tests/unit/domain/services/test_chat_intelligence_regression.py` |
 | GPT_instructions + SQL produção + fontes | `scripts/smoke_gpt_instructions_improvements.py` |
 | Regressão unitária SQL operacional | `tests/unit/domain/services/test_chat_sql_operational_intent_service.py`, `test_chat_sql_production_query_service.py` |
 | Intent Normas / descrição técnica | `tests/unit/domain/services/test_chat_technical_description_intent_service.py` |
@@ -433,16 +460,16 @@ Use esta seção para marcar o que passou/falhou durante a validação manual.
 | G12 | ☐ | |
 | G13 | ☐ | |
 | G14 | ☐ | |
-| 70 | ☐ | |
-| 71 | ☐ | |
-| 72 | ☐ | |
-| 73 | ☐ | |
-| 74 | ☐ | |
-| 75 | ☐ | |
-| 76 | ☐ | |
-| 77 | ☐ | |
-| 78 | ☐ | |
-| 79 | ☐ | |
+| 70 | ☑ | roteiro 90260142 — tool + resumo (mai/2026) |
+| 71 | ☑ | estrutura 90260047 |
+| 72 | ☐ | inspeção — validar manualmente se necessário |
+| 73 | ☑ | estoque 10080022 — filiais/totais |
+| 74 | ☑ | follow-up sem SQL; cita produto/operações |
+| 75 | ☑ | resume estoque |
+| 76 | ☑ | traduz roteiro |
+| 77 | ☑ | nao entendi estoque |
+| 78 | ☐ | estrutura — validar manualmente se necessário |
+| 79 | ☑ | conversa vazia — pede consulta prévia |
 | N1 | ☐ | |
 | N2 | ☐ | |
 | N3 | ☐ | |
