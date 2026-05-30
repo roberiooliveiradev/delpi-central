@@ -13,8 +13,12 @@ from app.application.services.chat_utility_direct_answer_service import (
     [
         "que horas são?",
         "que horas sao",
+        "que hors são?",
+        "q horas",
+        "q hrs",
         "qual a hora?",
         "que dia é hoje?",
+        "q dia",
         "qual a data?",
         "que dia da semana é hoje?",
         "data e hora",

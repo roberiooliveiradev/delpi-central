@@ -41,3 +41,18 @@ def test_expand_query_terms():
     terms = ChatMessageNormalizationService.expand_query_terms("Estoque do 10080001?")
     assert "estoque do 10080001" in terms
     assert any("?" not in t for t in terms)
+
+
+def test_normalize_utility_time_typos():
+    assert (
+        ChatMessageNormalizationService.normalize_for_matching("que hors são?").rstrip("?")
+        == "que horas sao"
+    )
+    assert ChatMessageNormalizationService.normalize_for_matching("q horas") == "que horas"
+    assert ChatMessageNormalizationService.normalize_for_matching("q hrs") == "que horas"
+    assert ChatMessageNormalizationService.normalize_for_matching("q dia") == "que dia e hoje"
+
+
+def test_normalize_greeting_typos():
+    assert ChatMessageNormalizationService.normalize_for_matching("bo dia") == "bom dia"
+    assert ChatMessageNormalizationService.normalize_for_matching("bao dia") == "bom dia"
