@@ -27,9 +27,18 @@ USERNAME = _env("SMOKE_USER", "rober")
 PASSWORD = _env("SMOKE_PASSWORD", "1234")
 API_PREFIX = _env("SMOKE_API_PREFIX", "/apps/minha-delpi-ai/api")
 CHAT_PREFIX = _env("SMOKE_CHAT_PREFIX", f"{API_PREFIX}/chat")
+DEFAULT_HTTP_TIMEOUT = int(_env("SMOKE_HTTP_TIMEOUT", "120"))
+WEB_SEARCH_HTTP_TIMEOUT = int(_env("SMOKE_WEB_SEARCH_HTTP_TIMEOUT", "240"))
 
 
-def _request(method: str, url: str, *, token: str | None = None, body: dict | None = None) -> tuple[int, dict]:
+def _request(
+    method: str,
+    url: str,
+    *,
+    token: str | None = None,
+    body: dict | None = None,
+    timeout: int | None = None,
+) -> tuple[int, dict]:
     headers = {"Accept": "application/json"}
     data = None
 
@@ -43,7 +52,7 @@ def _request(method: str, url: str, *, token: str | None = None, body: dict | No
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
 
     try:
-        with urllib.request.urlopen(request, timeout=120) as response:
+        with urllib.request.urlopen(request, timeout=timeout or DEFAULT_HTTP_TIMEOUT) as response:
             raw = response.read().decode("utf-8")
             return response.status, json.loads(raw) if raw else {}
     except urllib.error.HTTPError as exc:
@@ -105,12 +114,20 @@ def _create_session(token: str, agent_id: str, title: str) -> str:
     return str(session_id)
 
 
-def _send_message(token: str, session_id: str, message: str, agent_id: str) -> dict:
+def _send_message(
+    token: str,
+    session_id: str,
+    message: str,
+    agent_id: str,
+    *,
+    timeout: int | None = None,
+) -> dict:
     status, payload = _request(
         "POST",
         f"{BASE_URL}{CHAT_PREFIX}/sessions/{session_id}/messages",
         token=token,
         body={"message": message, "agentId": agent_id},
+        timeout=timeout,
     )
     if status not in (200, 201):
         raise RuntimeError(f"message HTTP {status}: {payload}")
@@ -134,6 +151,57 @@ def _tool_action_path(response: dict) -> str:
 
 def _tool_names(response: dict) -> list[str]:
     return [str(call.get("name") or "") for call in response.get("toolCalls") or []]
+
+
+def _list_messages(token: str, session_id: str) -> list[dict]:
+    status, payload = _request(
+        "GET",
+        f"{BASE_URL}{CHAT_PREFIX}/sessions/{session_id}/messages",
+        token=token,
+    )
+    if status != 200:
+        raise RuntimeError(f"messages HTTP {status}: {payload}")
+    return payload if isinstance(payload, list) else []
+
+
+def _latest_assistant_message(messages: list[dict]) -> dict | None:
+    for message in reversed(messages):
+        if str(message.get("role") or "") == "assistant":
+            return message
+    return None
+
+
+def _web_search_provider(response: dict) -> str:
+    for call in response.get("toolCalls") or []:
+        if call.get("name") != "web_search":
+            continue
+        metadata = call.get("metadata") or {}
+        return str(metadata.get("provider") or "").strip()
+    return ""
+
+
+def _validate_web_search_research_metadata(message: dict) -> tuple[bool, str]:
+    metadata = message.get("metadata") or {}
+    research = metadata.get("webSearchResearch") or {}
+
+    if not isinstance(research, dict) or not research:
+        return False, "metadata.webSearchResearch ausente"
+
+    provider = str(research.get("provider") or "").strip()
+    if not provider:
+        return False, "webSearchResearch.provider vazio"
+
+    source_count = int(research.get("sourceCount") or 0)
+    sites = research.get("sites") or []
+
+    if source_count < 1 and not sites:
+        return False, "webSearchResearch sem fontes"
+
+    steps = research.get("steps") or []
+    if not steps:
+        return False, "webSearchResearch.steps vazio"
+
+    return True, provider
 
 
 def main() -> int:
@@ -201,6 +269,7 @@ def main() -> int:
             web_session,
             "pesquise na internet sobre Python linguagem de programação",
             agent_id,
+            timeout=WEB_SEARCH_HTTP_TIMEOUT,
         )
     except RuntimeError as exc:
         print(f"SKIP 11.6.1 web_search chat ({exc})", file=sys.stderr)
@@ -237,9 +306,47 @@ def main() -> int:
                     failed += 1
                 else:
                     print(
-                        "SKIP 11.6.1 resposta sem marcador web (verifique directAnswer)",
+                        "SKIP 11.6.1 resposta sem marcador web (verifique directAnswer/síntese)",
                         file=sys.stderr,
                     )
+
+            provider = _web_search_provider(web_response)
+            if provider:
+                print(f"OK 11.6.1 provider web_search={provider}")
+                passed += 1
+            else:
+                print("FAIL 11.6.1 tool web_search sem metadata.provider", file=sys.stderr)
+                failed += 1
+
+            try:
+                assistant_message = _latest_assistant_message(_list_messages(token, web_session))
+            except RuntimeError as exc:
+                print(f"FAIL 11.6.1 GET messages ({exc})", file=sys.stderr)
+                failed += 1
+            else:
+                if not assistant_message:
+                    print("FAIL 11.6.1 mensagem assistant ausente no histórico", file=sys.stderr)
+                    failed += 1
+                else:
+                    ok_research, detail = _validate_web_search_research_metadata(assistant_message)
+                    if ok_research:
+                        print(f"OK 11.6.1 metadata.webSearchResearch (provider={detail})")
+                        passed += 1
+                    else:
+                        print(f"FAIL 11.6.1 {detail}", file=sys.stderr)
+                        failed += 1
+
+            web_sources = [
+                item
+                for item in (web_response.get("sources") or [])
+                if str(item.get("scope") or "").strip().lower() == "web_search"
+            ]
+            if web_sources:
+                print(f"OK 11.6.1 sources web_search={len(web_sources)}")
+                passed += 1
+            else:
+                print("FAIL 11.6.1 resposta sem sources scope=web_search", file=sys.stderr)
+                failed += 1
         elif not env_enabled:
             print(
                 "SKIP 11.6.1 web_search (CHAT_WEB_SEARCH_ENABLED=false no container — "
@@ -249,6 +356,56 @@ def main() -> int:
         else:
             print(f"FAIL 11.6.1 web_search não selecionada (tools={tools})", file=sys.stderr)
             failed += 1
+
+    # --- 11.6.1b SearXNG (TYCO, síntese + painel Fontes) ---
+    searxng_session = _create_session(token, agent_id, "E2E 11.6 — SearXNG TYCO")
+    try:
+        searxng_response = _send_message(
+            token,
+            searxng_session,
+            "pesquise na internet sobre a empresa TYCO",
+            agent_id,
+            timeout=WEB_SEARCH_HTTP_TIMEOUT,
+        )
+    except RuntimeError as exc:
+        print(f"SKIP 11.6.1b SearXNG TYCO ({exc})", file=sys.stderr)
+    else:
+        provider = _web_search_provider(searxng_response)
+        if provider != "searxng":
+            print(
+                f"SKIP 11.6.1b provider={provider or 'n/d'} "
+                "(esperado searxng quando CHAT_WEB_SEARCH_SEARXNG_BASE_URL está configurado)",
+                file=sys.stderr,
+            )
+        elif "web_search" not in _tool_names(searxng_response):
+            print("FAIL 11.6.1b web_search não selecionada para TYCO", file=sys.stderr)
+            failed += 1
+        else:
+            print("OK 11.6.1b web_search TYCO via searxng")
+            passed += 1
+            assistant_message = _latest_assistant_message(_list_messages(token, searxng_session))
+            if not assistant_message:
+                print("FAIL 11.6.1b mensagem assistant ausente", file=sys.stderr)
+                failed += 1
+            else:
+                research = (assistant_message.get("metadata") or {}).get("webSearchResearch") or {}
+                if research.get("synthesized") is True:
+                    print("OK 11.6.1b webSearchResearch.synthesized=true")
+                    passed += 1
+                else:
+                    print("FAIL 11.6.1b webSearchResearch.synthesized ausente/false", file=sys.stderr)
+                    failed += 1
+                hostnames = {
+                    str(item.get("hostname") or "")
+                    for item in (research.get("sites") or [])
+                    if isinstance(item, dict)
+                }
+                if hostnames and not all("duckduckgo.com" in host for host in hostnames):
+                    print(f"OK 11.6.1b sites reais ({', '.join(sorted(hostnames)[:3])}…)")
+                    passed += 1
+                else:
+                    print(f"FAIL 11.6.1b sites inesperados: {hostnames}", file=sys.stderr)
+                    failed += 1
 
     status_actions, actions_payload = _request(
         "GET",

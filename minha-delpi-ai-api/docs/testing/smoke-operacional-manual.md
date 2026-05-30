@@ -377,6 +377,7 @@ curl -s 'http://localhost:8088/search?q=tyco&format=json' | head -c 400
 
 ```bash
 SMOKE_BASE_URL=http://localhost SMOKE_USER=rober SMOKE_PASSWORD=1234 \
+  SMOKE_WEB_SEARCH_HTTP_TIMEOUT=240 \
   python scripts/run_onda11_6_api_e2e.py
 
 # Pacote unitário web_search (inclui síntese, SearXNG e painel de atividade):
