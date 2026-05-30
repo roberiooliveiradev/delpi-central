@@ -99,6 +99,8 @@ pytest \
   tests/unit/application/services/test_chat_turn_preparation_direct_answer_skip_rag.py \
   tests/unit/application/services/test_chat_tool_context_service_direct_response.py \
   tests/unit/application/use_cases/test_chat_stock_refinement_stream_send.py \
+  tests/unit/application/services/test_chat_stream_checkpoint_service.py \
+  tests/unit/application/use_cases/test_stream_incremental_persistence.py \
   tests/unit/domain/services/test_chat_agentic_catalog_service.py \
   tests/unit/domain/services/test_chat_agentic_action_schema_service.py \
   tests/unit/application/services/test_chat_agentic_tool_loop_service.py \
@@ -124,6 +126,10 @@ else
 fi
 
 if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
+  echo ""
+  echo "== Onda 11 — E2E persistência incremental stream =="
+  python scripts/validate_stream_incremental_persistence_e2e.py
+
   echo ""
   echo "== Onda 11 — E2E HTTP (${SMOKE_USER}@${SMOKE_BASE_URL}) =="
   python scripts/run_onda11_api_e2e.py

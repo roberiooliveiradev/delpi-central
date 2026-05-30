@@ -44,8 +44,17 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 # Validação completa automatizada (U1–U9 + operacional + capabilities)
 cd minha-delpi-ai-api && python3 scripts/run_onda11_api_e2e.py
 
+# Persistência incremental no stream (user_persisted → activity → assistant_pending → playback → done)
+cd minha-delpi-ai-api && python3 scripts/validate_stream_incremental_persistence_e2e.py
+
 # Ou via script Onda 11 (pytest + smoke + E2E)
 bash scripts/run_onda11_validation.sh
+```
+
+**Após alterar código da API em dev (volume bind):** reinicie o container para carregar o módulo Python — senão o SSE pode continuar no modo legado (`token` em vez de `user_persisted` / `playback`):
+
+```bash
+docker compose -f infra/docker-compose.dev.yml restart minha-delpi-ai-api
 ```
 
 **Caso manual rápido:**
@@ -65,6 +74,40 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/
 **Regressão unitária:** `test_chat_utility_direct_answer_service.py`, `test_chat_message_normalization_service.py`, `test_chat_small_talk_pattern_service.py`.
 
 Conteúdo editável: `app/content/pt-BR/assistant/utility_answers.json`, `small_talk.json`. Typos operacionais (estoque, filial, KPI) ficam em `ChatMessageNormalizationService`.
+
+---
+
+## Persistência incremental no stream (maio/2026)
+
+Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default), o turno via **stream** grava checkpoints no banco antes do texto final:
+
+| # | O que validar | Como |
+|---|---------------|------|
+| P1 | Evento `user_persisted` **antes** de `activity` | `python3 scripts/validate_stream_incremental_persistence_e2e.py` ou inspecionar SSE |
+| P2 | Evento `assistant_pending` antes de `done` | Idem |
+| P3 | `GET .../messages` após o stream traz user + assistant | Script E2E acima |
+| P4 | Plugin troca `optimistic-*` pelo `messageId` real | Enviar mensagem no chat; inspecionar estado (React) ou recarregar histórico mid-stream |
+
+**Automatizado:** `scripts/validate_stream_incremental_persistence_e2e.py` (9 checks, mensagem «olá», ~5–15 s).
+
+**Unitário:** `tests/unit/application/services/test_chat_stream_checkpoint_service.py`, `tests/unit/application/use_cases/test_stream_incremental_persistence.py`.
+
+**Manual rápido (SSE):**
+
+```bash
+TOKEN=$(curl -s -X POST "http://localhost/auth/realms/delpi/protocol/openid-connect/token" \
+  -d "client_id=delpi-central" -d "username=rober" -d "password=1234" -d "grant_type=password" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])")
+SESSION=$(curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"title":"Smoke persistência"}' "http://localhost/apps/minha-delpi-ai/api/chat/sessions" \
+  | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+curl -N -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"message":"olá"}' \
+  "http://localhost/apps/minha-delpi-ai/api/chat/sessions/$SESSION/messages/stream" 2>&1 | head -40
+# Esperado: event: user_persisted → activity → … → assistant_pending → playback → done
+```
+
+Ver eventos SSE em [`../api/02-chat-sessoes-mensagens.md`](../api/02-chat-sessoes-mensagens.md).
 
 ---
 
@@ -487,6 +530,7 @@ Estes cenários têm cobertura em pytest / scripts do repositório:
 
 | Área | Onde rodar |
 |------|------------|
+| Persistência incremental stream | `scripts/validate_stream_incremental_persistence_e2e.py` + `test_stream_incremental_persistence.py` |
 | Smoke operacional | `scripts/smoke_operational_questions.py` |
 | Interpretação de dados / resumos (#70–79) | `scripts/smoke_operational_questions.py` + `tests/unit/application/services/test_chat_data_interpretation_answer_service.py` + `tests/unit/domain/services/test_chat_intelligence_regression.py` |
 | GPT_instructions + SQL produção + fontes | `scripts/smoke_gpt_instructions_improvements.py` |

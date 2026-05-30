@@ -228,9 +228,14 @@ Mesmo de envio normal:
 
 Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
 
+A pergunta fica persistida e commitada **antes** do prepare (tools/RAG). O plugin substitui mensagens `optimistic-*` ao receber `user_persisted`. Recarregar o histórico mid-stream já mostra a pergunta do usuário.
+
 ```text
 event: user_persisted
 data: {"messageId": "..."}
+
+event: status
+data: {"message": "Conectado. Preparando resposta..."}
 
 event: activity
 data: {"entry": {...}}

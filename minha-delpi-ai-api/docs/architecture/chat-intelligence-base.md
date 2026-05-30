@@ -339,18 +339,21 @@ O dígito após «grupo» **não** é código de produto (`ChatProductQueryInten
 
 «Consegue buscar por grupo?», «coonsegue…» → `ChatCapabilitiesService.is_capability_inquiry`: resposta direta com método/rota, **sem** `execute_external_action`.
 
-### Streaming — log de atividade e carregamento (maio/2026)
+### Streaming — log de atividade, persistência incremental e carregamento (maio/2026)
 
 Turnos em `POST .../messages/stream` expõem progresso antes do texto final:
 
 | Camada | Comportamento |
 |--------|----------------|
-| **API** | Após `status` «Conectado…», o prepare roda em thread com `app_context` Flask; eventos `activity` são emitidos durante carga de sessão, tools e RAG (não só no fim). |
-| **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). |
-| **Plugin** | `ChatThinkingDots` (três pontos pulsando); log **uma linha por fase** que substitui a anterior (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |
-| **Resposta** | Texto revelado aos poucos (`useStreamingTextReveal`); durante o prepare não substitui o painel de etapas. |
+| **Persistência** | Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default): `create_message(user)` **antes** do prepare → SSE `user_persisted`; após tools/RAG, placeholder assistant (`delivery=generating`) → `assistant_pending`; resposta final → `playback` + `done`. Commits em checkpoints via `ChatStreamCheckpointService` + `chat_sse_stream_service` (pergunta visível no banco durante o prepare). |
+| **API** | Após `user_persisted`, `status` «Conectado…»; o prepare roda em thread com `app_context` Flask; eventos `activity` durante carga de sessão, tools e RAG. |
+| **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, modo legado emite `token` até `done` (sem `user_persisted` / `playback`). |
+| **Plugin** | `onUserPersisted` troca ids `optimistic-*` pelo `messageId` real; `ChatThinkingDots`; log **uma linha por fase** (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |
+| **Resposta** | Com playback: texto animado (`useStreamingTextReveal` / `naturalTextReveal`) a partir do evento `playback`; durante o prepare não substitui o painel de etapas. |
 
-Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_message_use_case` (fila + thread), `ChatStreamingActivityPanel`, `streamingActivityLog.ts`.
+Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_message_use_case`, `ChatStreamCheckpointService`, `chat_sse_stream_service`, `ChatStreamingActivityPanel`, `streamingActivityLog.ts`.
+
+Validação: `scripts/validate_stream_incremental_persistence_e2e.py`, [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) (seção **Persistência incremental no stream**).
 
 ### Apresentação rica sem duplicar markdown (maio/2026)
 
