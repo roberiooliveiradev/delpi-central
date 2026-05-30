@@ -11,6 +11,7 @@ Backend operacional FastAPI: TOTVS, KPIs, indicadores estratégicos, engenharia,
 | Arquivo | Conteúdo |
 |---|---|
 | [visao-geral-api-delpi.md](./visao-geral-api-delpi.md) | Papel, prefixos, módulos, bancos |
+| [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md) | Testes sem TOTVS (Google Sheets) |
 
 ---
 

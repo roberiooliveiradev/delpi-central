@@ -9,7 +9,7 @@
 
 ## 1. Papel
 
-Backend **FastAPI** para dados operacionais e integração **TOTVS Protheus** (SQL Server), além de módulos em **PostgreSQL** (qualidade NC). **Indicadores Estratégicos** têm API dedicada (`strategic-indicators-api`).
+Backend **FastAPI** para dados operacionais e integração **TOTVS Protheus** (SQL Server), além de módulos em **PostgreSQL** (qualidade NC) e **Google Sheets** (KPIs de contingência / planilhas corporativas). **Indicadores Estratégicos** têm API dedicada (`strategic-indicators-api`).
 
 ```text
 Core API     → governança (usuários, apps, RBAC)
@@ -41,9 +41,11 @@ Autenticação: `Authorization: Bearer <JWT>` via `delpi_auth` (mesmo Keycloak d
 | `/data` | SQL somente leitura controlado |
 | *(movido)* | Indicadores Estratégicos → `/apps/strategic-indicators-api/strategic-indicators` ([doc](../../strategic-indicators-api/docs/README.md)) |
 | `/engineering` | LMPs, Transforma Mais |
-| `/quality` | Métricas qualidade (TOTVS) |
-| `/commercial`, `/production`, `/supplies`, `/hr` | KPIs departamentais |
-| `/financial` e `/finacial` | Financeiro (montagem dupla em `main.py`; preferir `/financial/*`) |
+| `/quality` | Métricas qualidade — **Kaizen e Audit 5S via Google Sheets**; PPM/NC via TOTVS |
+| `/commercial`, `/production`, `/supplies`, `/hr` | KPIs departamentais (mix TOTVS + Sheets) |
+| `/financial` e `/finacial` | Financeiro — Sheets + ROL TOTVS (montagem dupla em `main.py`; preferir `/financial/*`) |
+
+**Fontes de dados por rota:** ver [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md) (homologação sem VPN TOTVS).
 
 **NC PostgreSQL** (`internal_nc_routes`, `external_nc_routes`): implementadas, **ainda não montadas** em `main.py` — ver [07-qualidade-nc.md](../../api-delpi/docs/api/07-qualidade-nc.md).
 
@@ -91,14 +93,26 @@ Migrações de plugins: `api-delpi/migrations/plugins/`.
 ## 7. Consumo no Portal
 
 - Plugins chamam `/apps/api-delpi/...` com token do usuário.
+- Cada plugin dashboard deve enviar **`X-Delpi-Caller-App: <id-do-manifesto>`** em `httpClient.ts` (rastreamento LGPD via Core API).
 - Páginas nativas do shell: `portal/src/data/delpiApi.ts`, rotas `/delpi/products`, `/delpi/health`.
 
 ---
 
-## 8. Leitura recomendada
+## 8. Rastreamento de uso (LGPD)
+
+Middleware `app_usage_tracking_middleware` registra chamadas autenticadas 2xx na Core API (`POST /integrations/app-usage/record`), com debounce 5 min e repasse de `X-Delpi-Caller-App`. Requer consentimento `usage_tracking` do titular.
+
+Variáveis: `CORE_API_BASE_URL`, `CORE_API_INTEGRATIONS_SERVICE_TOKEN`, `APP_USAGE_TRACKING_ENABLED`, `APP_USAGE_APP_ID`.
+
+Documentação: [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
+
+---
+
+## 9. Leitura recomendada
 
 1. [api-delpi/docs/api/00-visao-geral.md](../../api-delpi/docs/api/00-visao-geral.md)
 2. [api-delpi/docs/api/10-referencia-rapida-endpoints.md](../../api-delpi/docs/api/10-referencia-rapida-endpoints.md)
-3. [api-delpi/docs/api/11-guia-agente-chat.md](../../api-delpi/docs/api/11-guia-agente-chat.md) — agentes Minha DELPI Chat
-4. [minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md](../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) — documento RAG expandido
-5. [../04-core-api/visao-geral-core-api.md](../04-core-api/visao-geral-core-api.md)
+3. [api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md)
+4. [api-delpi/docs/api/11-guia-agente-chat.md](../../api-delpi/docs/api/11-guia-agente-chat.md) — agentes Minha DELPI Chat
+5. [minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md](../../minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md) — documento RAG expandido
+6. [../04-core-api/visao-geral-core-api.md](../04-core-api/visao-geral-core-api.md)

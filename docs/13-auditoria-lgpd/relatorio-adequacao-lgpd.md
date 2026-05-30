@@ -425,6 +425,36 @@ Foram realizadas **12 fases** de adequação à LGPD, cobrindo backend, frontend
 
 ---
 
+## Fase 13 — Rastreamento de uso ampliado (maio/2026)
+
+**Ref. LGPD:** Art. 7º I (consentimento), Art. 18 IV/VI (eliminação/anonimização), Art. 18 IX (revogação)  
+**Escopo:** estatísticas admin, integração api-delpi, caller app, reforço de consentimento
+
+| Commit | Descrição |
+|--------|-----------|
+| `e0da82b5` | UI estatísticas: trackable vs backend-only, responsividade |
+| `078b64a0` | Excluir backend-only de apps fantasmas |
+| `14b7c10c` | api-delpi: middleware de uso + POST Core API |
+| `e64e44d0` | Core API: endpoint integração, `caller_app_id`, consentimento |
+| `cd3b44d4` | LGPD: purge ao revogar/anonimizar, presença/ping com consent, aniversários, AI consent default |
+| `3d0c2c16` | Plugins: header `X-Delpi-Caller-App` |
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `core-api/.../usage_tracking_purge_service.py` | Purge eventos + stores ao vivo/presença |
+| `core-api/.../manage_consent_use_case.py` | Purge ao revogar `usage_tracking` |
+| `core-api/.../anonymize_user_data_use_case.py` | Inclui eventos de uso na anonimização |
+| `core-api/.../process_birthday_notifications_use_case.py` | Exige `birthday_notifications` |
+| `core-api/.../socket_handlers.py` | Presença e pings só com `usage_tracking` |
+| `core-api/.../record_integrated_app_usage_use_case.py` | Integração api-delpi |
+| `api-delpi/.../app_usage_tracking_middleware.py` | Hook pós-auth com caller |
+| `plugins/*/httpClient.ts` | Header `X-Delpi-Caller-App` |
+| `portal/.../PrivacyPolicyPage.tsx` | Documenta `recentApps` no localStorage |
+
+Documentação: [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md), [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md).
+
+---
+
 ## Artigos da LGPD Referenciados
 
 | Artigo | Tema | Fases |

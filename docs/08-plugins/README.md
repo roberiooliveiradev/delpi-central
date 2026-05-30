@@ -56,7 +56,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | Indicadores Estratégicos | `/apps/strategic-indicators-api/strategic-indicators/*` |
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
 | Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
-| Dashboard Qualidade | `/apps/api-delpi/quality/*` (PPM, kaizen, 5S, NC TOTVS) |
+| Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
 
@@ -72,6 +72,35 @@ GET /apps/<plugin-id>/assets/<chunk>.js       # cache longo
 ```
 
 Module Federation: `renderMode: "federated"` + `entryUrl` apontando para `remoteEntry.js`.
+
+---
+
+## 4.1 Header `X-Delpi-Caller-App` (api-delpi)
+
+Plugins que consomem a **api-delpi** devem identificar sua origem no HTTP client:
+
+```typescript
+const DELPI_CALLER_APP = "dashboard-commercial"; // id do manifesto
+
+headers["X-Delpi-Caller-App"] = DELPI_CALLER_APP;
+```
+
+Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/apiClient.ts`).
+
+| Plugin | Valor do header |
+|--------|-----------------|
+| dashboard-commercial | `dashboard-commercial` |
+| dashboard-production | `dashboard-production` |
+| dashboard-financial | `dashboard-financial` |
+| dashboard-quality | `dashboard-quality` |
+| dashboard-supplies | `dashboard-supplies` |
+| dashboard-engineering | `dashboard-engineering` |
+| dashboard-hr | `dashboard-hr` |
+| dashboard-lmps | `dashboard-lmps` |
+| dashboard-delpi | `dashboard-delpi` |
+| eficiencia-fabril | `eficiencia-fabril` |
+
+O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
 ---
 

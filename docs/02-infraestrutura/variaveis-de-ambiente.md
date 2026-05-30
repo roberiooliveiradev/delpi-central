@@ -100,6 +100,28 @@ Regra crítica: o token emitido ao browser usa o issuer **público** (`localhost
 | `API_DELPI_ENV` | `development` |
 | `API_DELPI_JWT_SECRET` | Legado/auxiliar — validação principal é Keycloak |
 | `GOOGLE_SHEETS_*`, `TRANSFORMA_MAIS_*`, `QUALITY_*`, `FINANCIAL_*`, etc. | Integrações planilhas (indicadores) |
+| `CORE_API_BASE_URL` | URL interna da Core API (ex.: `http://core-api:8000`) |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Token para POST `/integrations/app-usage/record` |
+| `API_DELPI_INTERNAL_SERVICE_TOKEN` | Token de serviço interno (bypass auth em rotas protegidas) |
+| `APP_USAGE_TRACKING_ENABLED` | `true` — middleware registra uso na Core API |
+| `APP_USAGE_APP_ID` | Id do app na Core API (default `api-delpi`) |
+
+Homologação **sem TOTVS**: [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md).
+
+### Core API — presença e uso de apps
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `APP_USAGE_ENABLED` | `true` | Rastreamento de apps |
+| `APP_USAGE_TTL_SECONDS` | `90` | TTL store ao vivo |
+| `APP_USAGE_HISTORY_DAYS` | `30` | Janela ranking / fantasmas |
+| `APP_USAGE_STORE` | `memory` | `memory` ou `redis` (futuro) |
+| `USER_PRESENCE_ENABLED` | `true` | Presença online |
+| `USER_PRESENCE_TTL_SECONDS` | `90` | TTL presença |
+| `USER_PRESENCE_STORE` | `memory` | `memory` ou `redis` |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | Token integrações (api-delpi, jobs) |
+
+Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
 ### Minha DELPI AI API
 
@@ -143,7 +165,7 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `EMBEDDING_PROVIDER` / `EMBEDDING_MODEL` | Ex.: `bge-m3` |
 | `RATE_LIMIT_*` | Limites por janela |
 | `KNOWLEDGE_*` | Limites de ingestão RAG |
-| `VLLM_*` | Produção com profile GPU |
+| `LGPD_REQUIRE_AI_CONSENT` | `true` (default maio/2026) — exige consentimento `ai_context` antes de injetar PII no LLM |
 
 ### Keycloak Admin (Core API backend)
 
@@ -225,6 +247,7 @@ PLUGINS_DB_PASSWORD=change-me
 | JWKS timeout | `KEYCLOAK_JWKS_URL` usa hostname `keycloak`, não `localhost` |
 | Portal redirect | `VITE_KC_*` + Valid Redirect URIs no client |
 | API DELPI TOTVS | VPN, `TOTVS_DB_*`, firewall 1433 |
+| API DELPI online, rotas 500 | TOTVS fora — testar rotas Google Sheets; ver [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md) |
 | Chat sem LLM | `OLLAMA_BASE_URL`, modelos baixados no container |
 
 ---

@@ -41,11 +41,12 @@
 
 | Campo | Detalhe |
 |-------|---------|
-| **Dados tratados** | User ID, app acessado, rota, timestamp |
-| **Finalidade** | Analytics de uso, melhoria do produto |
+| **Dados tratados** | User ID, app acessado, rota, timestamp, plugin originador (`caller_app_id`, opcional) |
+| **Finalidade** | Analytics de uso, melhoria do produto, identificação de apps subutilizados |
 | **Base legal** | Consentimento (Art. 7º, I) — requer consentimento `usage_tracking` |
-| **Retenção** | 1 ano |
+| **Retenção** | 1 ano (job `data_retention_job`); purge imediato ao revogar consentimento ou anonimizar titular |
 | **Compartilhamento** | Interno apenas |
+| **Canais** | Socket.IO (portal), integração HTTP (api-delpi → `POST /integrations/app-usage/record`) |
 
 ## 5. Chat de IA (minha-delpi-ai-api)
 

@@ -54,6 +54,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [07-qualidade-nc.md](./07-qualidade-nc.md) | NC interna/externa (implementado, **ainda não montado** em `main.py`). |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [11-guia-agente-chat.md](./11-guia-agente-chat.md) | Mapa intenção → rota para agentes do Minha DELPI Chat (OpenAPI). |
+| [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
 
 ## Permissões principais
 
@@ -78,8 +79,12 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | **FastAPI** | Framework HTTP, OpenAPI, validação Pydantic. |
 | **SQL Server (Protheus)** | Consultas operacionais (produtos, vendas, métricas). |
 | **PostgreSQL** | Plugins (`quality` NC); schema `strategic_indicators` via **strategic-indicators-api**. |
+| **Google Sheets** | Kaizen, Audit 5S, EBITDA, custos produção (export CSV público). |
 | **delpi_auth** | JWT + decorators de permissão. |
+| **Core API** | Rastreamento de uso via `POST /integrations/app-usage/record` (consentimento `usage_tracking`). |
 | **Nginx (gateway)** | Proxy em `/apps/api-delpi/`. |
+
+Plugins dashboards enviam header **`X-Delpi-Caller-App`** — ver [rastreamento-uso-apps.md](../../../docs/04-core-api/rastreamento-uso-apps.md).
 
 ## Observações importantes
 

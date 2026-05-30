@@ -33,6 +33,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [10-guias-operacionais/](./10-guias-operacionais/) | — | Runbooks |
 | [11-padroes-de-desenvolvimento/](./11-padroes-de-desenvolvimento/) | [README](./11-padroes-de-desenvolvimento/README.md) | Padrões de código |
 | [12-roadmap-e-evolucao/](./12-roadmap-e-evolucao/) | [README](./12-roadmap-e-evolucao/README.md) | Status, pendências |
+| [13-auditoria-lgpd/](./13-auditoria-lgpd/) | — | ROPA, relatórios LGPD, rastreamento de uso |
 
 ---
 
@@ -68,6 +69,8 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | [subir-ambiente-dev.md](./10-guias-operacionais/subir-ambiente-dev.md) | Stack local |
 | [configurar-keycloak.md](./10-guias-operacionais/configurar-keycloak.md) | SSO |
 | [troubleshooting.md](./10-guias-operacionais/troubleshooting.md) | Diagnóstico |
+| [rastreamento-uso-apps.md](./04-core-api/rastreamento-uso-apps.md) | Uso de apps, api-delpi, LGPD |
+| [12-testes-sem-totvs-google-sheets.md](../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md) | api-delpi sem VPN TOTVS |
 | [reset-banco-dev.md](./10-guias-operacionais/reset-banco-dev.md) | Reset DB |
 | [registrar-plugin.md](./10-guias-operacionais/registrar-plugin.md) | Plugins |
 | [conectar-aplicacao-iframe.md](./10-guias-operacionais/conectar-aplicacao-iframe.md) | Tutorial app iframe + SSO + notificações |

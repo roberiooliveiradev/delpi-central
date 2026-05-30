@@ -302,7 +302,30 @@ Verificar:
 - conexão com TOTVS externo;
 - JWT/Keycloak.
 
----
+### Health OK, rotas de negócio falham (sem VPN TOTVS)
+
+Sintoma: `/apps/api-delpi/health` retorna 200, mas dashboards comerciais/produção/financeiro retornam 500 ou timeout.
+
+**Causa:** rotas que consultam SQL Server (ROL, propostas, produtos, etc.).
+
+**Alternativa para homologação:**
+
+1. Rotas **somente Google Sheets** — ex.: `GET /quality/kaizens/summary`, `GET /quality/audit-5s/summary`.
+2. Testes automatizados: `tests/test_google_sheets_routes_live.py`.
+
+Guia completo: [12-testes-sem-totvs-google-sheets.md](../../api-delpi/docs/api/12-testes-sem-totvs-google-sheets.md).
+
+```bash
+# Health
+curl -s http://localhost/apps/api-delpi/health
+
+# Kaizen (token de serviço — ver infra/.env)
+curl -s -H "Authorization: Bearer $API_DELPI_INTERNAL_SERVICE_TOKEN" \
+  http://localhost/apps/api-delpi/quality/kaizens/summary | jq '.success'
+
+# Pytest no container
+docker exec delpi-api-delpi sh -c 'cd /app && PYTHONPATH=/app pytest tests/test_google_sheets_routes_live.py -q'
+```
 
 ## 14. Minha DELPI AI API / Chat
 

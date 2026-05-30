@@ -341,13 +341,13 @@ Uso:
 
 ## 12.1 Presença online (portal aberto)
 
-Com `USER_PRESENCE_ENABLED=true` (padrão), a Core API registra conexões Socket.IO:
+Com `USER_PRESENCE_ENABLED=true` (padrão), a Core API registra conexões Socket.IO **somente se o titular tiver consentimento `usage_tracking`** (LGPD Art. 7º, I):
 
 | Evento | Ação |
 |--------|------|
-| `connect` | `register(user_id=sub, session_id=sid)` |
+| `connect` | Autentica e entra na room; `register` presença **se** consentimento |
 | `disconnect` | `unregister(sid)` |
-| `presence.ping` (portal a cada ~45 s) | `touch(sid)` — renova TTL |
+| `presence.ping` (portal a cada ~45 s) | `touch(sid)` — renova TTL **se** consentimento |
 
 Consulta Admin (superadmin): `GET /admin/users/presence` — lista usuários com portal conectado, `connectionCount`, `connectedAt`, `lastSeenAt`.
 
@@ -363,26 +363,35 @@ Em múltiplas réplicas da Core API, use `USER_PRESENCE_STORE=redis` e `REDIS_UR
 
 ## 12.2 Uso de aplicações (plugins em uso)
 
-Com `APP_USAGE_ENABLED=true` (padrão), o Portal reporta qual **app** o usuário está usando:
+Com `APP_USAGE_ENABLED=true` (padrão), o Portal e integrações registram qual **app** o usuário está usando. **Exige consentimento `usage_tracking`** para persistência e store ao vivo.
+
+### Portal (Socket.IO)
 
 | Evento | Ação |
 |--------|------|
-| `connect` | `bind_session(user_id=sub, session_id=sid)` |
+| `connect` | Autentica; bind de sessão ao vivo **se** consentimento |
 | `disconnect` | `unbind_session(sid)` |
-| `app_usage.open` (ao entrar em um app no `AppHost`) | Atualiza store ao vivo + grava evento em `app_usage_events` (debounce 5 min por usuário/app) |
+| `app_usage.open` (ao entrar em um app no `AppHost`) | Store ao vivo + evento em `app_usage_events` (debounce 5 min por usuário/app) |
 | `app_usage.close` (ao sair do `AppHost` ou fim da sessão estimada de app `external`) | Remove app ativo da sessão no store ao vivo |
 | `app_usage.ping` (portal a cada ~45 s, com `appId` atual) | Renova TTL da sessão no app ativo |
 
 Apps **external** (nova aba): o portal não consegue ler a aba externa (`noopener`). A sessão ao vivo combina **Page Visibility** (ping enquanto o portal está em background) + **janela de graça de 90s** após o clique (se o usuário não trocar de aba) + **close** ao voltar ao portal ou ao abrir outro app embedded.
 
+### api-delpi e outros backends (HTTP)
+
+Middleware na api-delpi envia `POST /integrations/app-usage/record` com debounce 5 min. Plugins dashboards enviam **`X-Delpi-Caller-App: <id-do-manifesto>`** para identificar origem (ex.: `dashboard-commercial`).
+
+Detalhes: [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
+
 Consultas Admin (`rbac.manage`):
 
 | Método | Path | Descrição |
 |--------|------|-----------|
-| GET | `/admin/apps/usage` | Snapshot: apps em uso agora, top 30 dias, fantasmas |
+| GET | `/admin/apps/usage` | Snapshot: apps em uso agora, top 30 dias, fantasmas, trackable |
 | GET | `/admin/statistics` | Inclui `apps.usage` no painel de estatísticas |
+| POST | `/integrations/app-usage/record` | Integração serviço (api-delpi); token `CORE_API_INTEGRATIONS_SERVICE_TOKEN` |
 
-**App fantasma:** cadastrada e `active=true`, sem abertura registrada nos últimos `APP_USAGE_HISTORY_DAYS` (padrão 30).
+**App fantasma:** cadastrada e `active=true`, sem abertura registrada nos últimos `APP_USAGE_HISTORY_DAYS` (padrão 30). Apps **`backend-only`** são **excluídos** da lista de fantasmas e de `trackableActive`.
 
 | Variável | Default | Descrição |
 |----------|---------|-----------|
@@ -635,6 +644,7 @@ outbox pattern para publicação garantida
 docs/01-arquitetura/fluxo-de-requisicao.md
 docs/04-core-api/unit-of-work.md
 docs/04-core-api/notificacoes.md
+docs/04-core-api/rastreamento-uso-apps.md
 docs/03-autenticacao-autorizacao/jwt.md
 docs/06-portal-frontend/visao-geral-portal.md
 docs/06-portal-frontend/favoritos.md

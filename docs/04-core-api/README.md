@@ -23,6 +23,7 @@ A Core API é o backend de **governança** da Minha DELPI: JWT/Keycloak, RBAC, p
 | Arquivo | Conteúdo |
 |---|---|
 | [controllers-e-rotas.md](./controllers-e-rotas.md) | Endpoints `/health`, `/me`, `/admin/apps`, `/admin/rbac` |
+| [rastreamento-uso-apps.md](./rastreamento-uso-apps.md) | Uso de apps, integração api-delpi, LGPD, caller app |
 | [visao-geral-core-api.md](./visao-geral-core-api.md) | Visão geral (enxuta) |
 | [modelos-de-banco.md](./modelos-de-banco.md) | Models SQLAlchemy (`postgres-core`) |
 | [migrations.md](./migrations.md) | Flask-Migrate / Alembic |
