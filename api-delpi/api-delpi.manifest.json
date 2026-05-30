@@ -38,8 +38,5 @@
   "observability": {
     "healthEndpoint": "/health",
     "logFormat": "json"
-  },
-  "ui": {
-    "displayInAppLauncher": false
   }
 }
