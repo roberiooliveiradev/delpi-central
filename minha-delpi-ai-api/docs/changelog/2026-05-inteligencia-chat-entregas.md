@@ -10,7 +10,7 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 | `50edaf65` | Normas Técnicas em `company-knowledge`; intent de descrição técnica de matéria-prima |
 | `0e85b232` | Catálogo `api_paths.json` alinhado às rotas reais do api-delpi (~84 endpoints) |
 | `427707d3` | Typos utilitários (`hors`→`horas`) |
-| `a3ad7121` | Docs: catálogo, utility, smoke U1–U7 |
+| `a3ad7121` | Docs: catálogo, utility, smoke U1–U9 |
 | *(esta entrega)* | Onda 11.3.3 piloto native tools; 11.3.4 admin timings; docs roadmap fechados |
 
 ---
@@ -112,7 +112,7 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 | `ChatMessageNormalizationService` | Typos antes do match: `hors`→`horas`, `q horas`, `bo dia`, etc. |
 | `ChatSmallTalkPatternService` | Saudações com mesma normalização |
 
-**Checklist manual:** **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+**Checklist manual:** **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
 ---
 

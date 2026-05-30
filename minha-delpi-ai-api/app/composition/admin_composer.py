@@ -30,6 +30,7 @@ from app.application.services.response_evaluation_llm_suggestion_service import 
     ResponseEvaluationLlmSuggestionService,
 )
 from app.application.use_cases.get_admin_rbac_summary_use_case import GetAdminRbacSummaryUseCase
+from app.application.use_cases.get_admin_rbac_profiles_use_case import GetAdminRbacProfilesUseCase
 from app.application.use_cases.get_admin_system_check_use_case import GetAdminSystemCheckUseCase
 from app.application.use_cases.get_llm_provider_status_use_case import (
     GetLlmProviderStatusUseCase,
@@ -286,6 +287,10 @@ def make_restore_admin_guideline_version_use_case() -> RestoreAdminGuidelineVers
 
 def make_get_admin_rbac_summary_use_case() -> GetAdminRbacSummaryUseCase:
     return GetAdminRbacSummaryUseCase()
+
+
+def make_get_admin_rbac_profiles_use_case() -> GetAdminRbacProfilesUseCase:
+    return GetAdminRbacProfilesUseCase()
 
 
 def _response_evaluation_repository() -> PostgresResponseEvaluationRepository:

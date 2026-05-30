@@ -20,6 +20,7 @@ class ChatIntelligenceSettings:
     native_tool_calling_enabled: bool
     agentic_loop_enabled: bool
     agentic_loop_max_steps: int
+    web_search_enabled: bool
 
 
 class ChatIntelligenceSettingsService:
@@ -77,6 +78,10 @@ class ChatIntelligenceSettingsService:
                 stored.get("agenticLoopMaxSteps"),
                 Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
             ),
+            web_search_enabled=self._bool(
+                stored.get("webSearchEnabled"),
+                Settings.CHAT_WEB_SEARCH_ENABLED,
+            ),
         )
 
     def to_dict(self, settings: ChatIntelligenceSettings | None = None) -> dict:
@@ -94,6 +99,7 @@ class ChatIntelligenceSettingsService:
             "nativeToolCallingEnabled": resolved.native_tool_calling_enabled,
             "agenticLoopEnabled": resolved.agentic_loop_enabled,
             "agenticLoopMaxSteps": resolved.agentic_loop_max_steps,
+            "webSearchEnabled": resolved.web_search_enabled,
             "defaults": {
                 "ragContextMinScore": Settings.RAG_CONTEXT_MIN_SCORE,
                 "externalActionSemanticMinScore": Settings.EXTERNAL_ACTION_SEMANTIC_MIN_SCORE,
@@ -106,6 +112,7 @@ class ChatIntelligenceSettingsService:
                 "nativeToolCallingEnabled": Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED,
                 "agenticLoopEnabled": Settings.CHAT_AGENTIC_LOOP_ENABLED,
                 "agenticLoopMaxSteps": Settings.CHAT_AGENTIC_LOOP_MAX_STEPS,
+                "webSearchEnabled": Settings.CHAT_WEB_SEARCH_ENABLED,
             },
         }
 
@@ -155,6 +162,10 @@ class ChatIntelligenceSettingsService:
             "agenticLoopMaxSteps": self._int(
                 payload.get("agenticLoopMaxSteps"),
                 current.agentic_loop_max_steps,
+            ),
+            "webSearchEnabled": self._bool(
+                payload.get("webSearchEnabled"),
+                current.web_search_enabled,
             ),
         }
 

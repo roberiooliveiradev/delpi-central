@@ -6,6 +6,9 @@ from app.application.security.chat_permissions import (
     CHAT_TOOLS_MANAGE_PERMISSION,
     CHAT_TOOLS_USE_PERMISSION,
 )
+from app.domain.services.admin_rbac_profile_catalog_service import (
+    AdminRbacProfileCatalogService,
+)
 
 
 class GetAdminRbacSummaryUseCase:
@@ -30,6 +33,14 @@ class GetAdminRbacSummaryUseCase:
             "permissions": sorted(permissions),
             "capabilities": capabilities,
             "matrix": self._matrix(capabilities),
+            "formalProfiles": AdminRbacProfileCatalogService.list_profiles(),
+            "activeFormalProfiles": AdminRbacProfileCatalogService.resolve_active_profile_keys(
+                roles
+            ),
+            "formalProfileMatrix": AdminRbacProfileCatalogService.build_matrix(
+                capabilities
+            ),
+            "formalProfileContract": AdminRbacProfileCatalogService.build_contract(),
         }
 
     def _roles_for(self, *, permissions: set[str], is_superadmin: bool) -> list[str]:

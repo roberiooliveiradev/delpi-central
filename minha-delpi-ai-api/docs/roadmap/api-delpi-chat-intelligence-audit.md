@@ -34,7 +34,7 @@
 | Dados SQL | 1 | OK | Intent SQL + policy skill |
 | Sistema | 8 | OK | tabelas/colunas + schema/índices/relações |
 | Eng. Transforma+ | 2 | OK | `_select_transforma_action` |
-| NC PostgreSQL | — | N/A | Rotas não montadas em `main.py` |
+| NC PostgreSQL | 10+ | PARCIAL | Rotas `/quality/audit-5s/*` montadas; catálogo + heurísticas 11.6 |
 | Capacidades | — | OK | `ChatCapabilitiesService` + perguntas por feature |
 | Conhecimento | — | OK | Base global agentes; limite 2M chars documento |
 
@@ -274,8 +274,8 @@ Itens 1–5 abaixo foram entregues na **Onda 11** — ver [inteligencia-chat-ond
 
 1. ~~Parâmetros de data automáticos~~ — ✅ 11.1.2
 2. ~~Heurística explícita summary vs analyser~~ — ✅ 11.1.3
-3. Montar rotas NC PostgreSQL e importar no catálogo — **Onda 12+ / backlog**
+3. ~~Montar rotas NC PostgreSQL e importar no catálogo~~ — ✅ **11.6** (heurísticas + `api_paths.json`; sync OpenAPI quando api-delpi habilitada)
 4. Testes E2E com api-delpi mockada por domínio — **backlog**
 5. ~~Expor `knowledgeDocumentMaxChars` em capabilities~~ — ✅ 11.5.2
 
-**Próxima onda de produto:** [Onda 12 — drawing-analyser PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) ou `web_search` (11.6).
+**Próxima onda de produto:** [Onda 12 — drawing-analyser PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md).

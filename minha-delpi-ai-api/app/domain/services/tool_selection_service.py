@@ -1,6 +1,7 @@
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
 class ToolSelectionService:
@@ -35,6 +36,10 @@ class ToolSelectionService:
                     "reason": "A pergunta solicita menus, rotas ou caminhos autorizados.",
                 }
             )
+
+        web_search = ChatWebSearchIntentService.resolve(message)
+        if web_search:
+            selected.append(web_search)
 
         return selected
 
@@ -72,10 +77,13 @@ class ToolSelectionService:
     def _matches_allowed_routes(self, value: str) -> bool:
         terms = [
             "quais rotas",
+            "rotas disponiveis",
             "rotas disponíveis",
             "rotas autorizadas",
+            "menus disponiveis",
             "menus disponíveis",
             "menus autorizados",
+            "caminhos disponiveis",
             "caminhos disponíveis",
             "caminhos autorizados",
             "itens de menu",

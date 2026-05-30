@@ -108,7 +108,7 @@ Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?»
 | Typos | `ChatMessageNormalizationService` corrige antes do match — ex.: `que hors são?` → `que horas sao`, `q horas` → `que horas`, `q dia` → `que dia e hoje` |
 | Exclusões | Mensagens com contexto operacional (`producao`, `ordem`, `estoque`, …) não entram no atalho |
 
-Checklist manual: **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
 Testes: `test_chat_utility_direct_answer_service.py`, `test_chat_utility_stream.py`, `test_chat_message_normalization_service.py`.
 

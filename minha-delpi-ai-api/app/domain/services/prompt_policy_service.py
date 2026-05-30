@@ -113,6 +113,7 @@ Comportamento esperado:
         "get_current_user",
         "get_allowed_apps",
         "get_allowed_routes",
+        "web_search",
     )
 
     PRODUCT_MARKERS = (
@@ -176,6 +177,8 @@ Comportamento esperado:
     SQL_ASSISTANT_SKILL_FALLBACK = """Skill SQL: elabore e revise consultas SELECT (SQL genérico) em blocos ```sql```; identifique erros quando o usuário colar SQL ou mensagens de erro; execução requer action /data/sql."""
 
     COMPANY_KNOWLEDGE_SKILL_FALLBACK = """Skill Conhecimento da empresa: priorize a base documental global (RAG e search_knowledge_base); cite fontes; não invente políticas."""
+
+    WEB_SEARCH_POLICY_FALLBACK = """Política web_search: cite fontes/URLs retornadas; não trate resultados da internet como dados operacionais DELPI."""
 
     def build_active_skill_policy_sections(self, skills: dict | None) -> list[str]:
         """Políticas de skills ativas no runtime (chat comum ou agente), sem ação do usuário."""
@@ -327,6 +330,14 @@ Comportamento esperado:
                 self._load_policy(
                     "platform-tools.md",
                     self.PLATFORM_TOOLS_POLICY_FALLBACK,
+                )
+            )
+
+        if self._contains_any(normalized_tool_context, ("web_search",)):
+            sections.append(
+                self._load_policy(
+                    "web-search-policy.md",
+                    self.WEB_SEARCH_POLICY_FALLBACK,
                 )
             )
 

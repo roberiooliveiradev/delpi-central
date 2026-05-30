@@ -41,6 +41,7 @@ from app.composition.admin_composer import (
     make_save_admin_llm_cost_table_use_case,
     make_get_admin_tools_health_use_case,
     make_get_admin_rbac_summary_use_case,
+    make_get_admin_rbac_profiles_use_case,
     make_get_admin_system_check_use_case,
     make_list_admin_audit_logs_use_case,
     make_list_admin_guidelines_use_case,
@@ -102,6 +103,13 @@ def get_admin_rbac_summary():
 
     use_case = make_get_admin_rbac_summary_use_case()
     return jsonify(use_case.execute(g.current_user, core_user=core_user)), 200
+
+
+@admin_bp.get("/rbac/profiles")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_admin_rbac_profiles():
+    use_case = make_get_admin_rbac_profiles_use_case()
+    return jsonify(use_case.execute()), 200
 
 
 @admin_bp.get("/skills")

@@ -148,6 +148,7 @@
 | PUT | `/admin/metrics/cost-table` | `chat.admin` |
 | GET | `/admin/llm/status` | `chat.admin` |
 | GET | `/admin/rbac/summary` | `chat.admin` |
+| GET | `/admin/rbac/profiles` | `chat.access` |
 | GET | `/admin/knowledge/documents` | `chat.admin` |
 | PATCH | `/admin/knowledge/documents/{documentId}/metadata` | `chat.admin` |
 | POST | `/admin/knowledge/ingest/preview` | `chat.admin` |

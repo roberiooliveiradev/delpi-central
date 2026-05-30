@@ -181,7 +181,11 @@ Status do provider LLM configurado.
 
 ### GET `/admin/rbac/summary`
 
-Resumo de perfis, permissões e capabilities administrativas.
+Resumo de perfis, permissões e capabilities administrativas. Inclui `formalProfiles`, `activeFormalProfiles` e `formalProfileMatrix` (bridge 11.6).
+
+### GET `/admin/rbac/profiles`
+
+Catálogo formal de perfis RBAC do chat (`admin`, `operator`, `auditor`, `viewer`) e contrato de integração com o core-api.
 
 ---
 

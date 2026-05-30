@@ -93,4 +93,4 @@ Novas revisões:
 
 ## Pendência externa
 
-**RBAC com perfis formais no core:** continua dependendo de evolução no `core-api` (perfis/roles centralizados). O chat admin já expõe `GET /admin/rbac/summary` com capacidades derivadas das permissões atuais.
+**RBAC com perfis formais no core:** continua dependendo de evolução no `core-api` (perfis/roles centralizados). O chat admin expõe `GET /admin/rbac/summary` (capacidades derivadas) e **`GET /admin/rbac/profiles`** (catálogo formal bridge 11.6).

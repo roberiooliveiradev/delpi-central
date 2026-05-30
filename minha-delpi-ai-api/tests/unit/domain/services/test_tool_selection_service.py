@@ -31,3 +31,18 @@ def test_selects_no_tool_for_generic_question():
     result = service.select_tools("O que é a Minha DELPI?")
 
     assert result == []
+
+
+def test_selects_web_search_when_enabled(monkeypatch):
+    from app.domain.services import chat_web_search_intent_service as module
+
+    monkeypatch.setattr(
+        module.ChatWebSearchIntentService,
+        "is_feature_enabled",
+        lambda: True,
+    )
+
+    service = ToolSelectionService()
+    result = service.select_tools("pesquise na internet sobre python")
+
+    assert result[-1]["name"] == "web_search"

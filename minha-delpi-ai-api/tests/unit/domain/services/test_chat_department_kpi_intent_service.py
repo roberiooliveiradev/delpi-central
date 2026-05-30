@@ -50,3 +50,19 @@ def test_resolve_rol_series_only_for_explicit_series():
 
     assert match is not None
     assert "rol/series" in match.path_token
+
+
+def test_resolve_audit_5s_operational_nc():
+    match = ChatDepartmentKpiIntentService.resolve("listar nc 5s operacional")
+
+    assert match is not None
+    assert match.domain_prefix == "/quality/audit-5s/"
+    assert match.path_token == "nonconformities"
+
+
+def test_resolve_audit_5s_operational_audits():
+    match = ChatDepartmentKpiIntentService.resolve("listar auditorias 5s da filial")
+
+    assert match is not None
+    assert match.domain_prefix == "/quality/audit-5s/"
+    assert match.path_token == "audits"

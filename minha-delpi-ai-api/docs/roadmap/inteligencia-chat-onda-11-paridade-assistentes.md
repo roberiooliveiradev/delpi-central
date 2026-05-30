@@ -96,7 +96,7 @@ Documentação parcial já em [`chat-intelligence-base.md`](../architecture/chat
 |--------|-----------|
 | Canvas / tabelas / gráficos estilo ChatGPT (25/mai) | [apresentacao-rica-chat-onda-9.md](./apresentacao-rica-chat-onda-9.md) — **concluída** |
 | Auditoria rota a rota api-delpi | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) |
-| Pesquisa na internet (`web_search`) | **Sem onda dedicada** — ver backlog §11.6 abaixo |
+| Pesquisa na internet (`web_search`) | ✅ **11.6.1** — tool interna + policy; default off |
 
 ### Infra / auth (conversa 28/mai tarde — desbloqueio do portal, não é Onda 11)
 
@@ -164,15 +164,17 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | 11.7.3 | Typos utilitários e saudações | ✅ | `hors`→`horas`, `q horas`, `bo dia` em `ChatMessageNormalizationService` |
 | 11.7.4 | Catálogo `api_paths.json` alinhado (~84 rotas) | ✅ | proposals, OEE/OTD series, eficiência fabril, schema SX |
 
-Checklist manual: **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
-### 11.6 — Fora do escopo imediato (registrar para onda futura)
+### 11.6 — Backlog pós-Onda 11 (entregue em maio/2026)
 
-| Tema | Notas |
-|------|--------|
-| **Pesquisa na internet** | Tool interna `web_search` (não action OpenAPI); política de fontes; ver discussão na conversa (~msg «pesquisa na internet») |
-| **RBAC perfis formais** | [melhorias-futuras.md](./melhorias-futuras.md) — core-api |
-| **Rotas NC PostgreSQL** | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) backlog #3 |
+| # | Item | Status | Critério de pronto |
+|---|------|--------|-------------------|
+| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | `WebSearchTool`, `CHAT_WEB_SEARCH_ENABLED` (default off), admin `webSearchEnabled` |
+| 11.6.2 | RBAC formal (bridge chat) | ✅ | `GET /admin/rbac/profiles` + `formalProfiles` em `/admin/rbac/summary` |
+| 11.6.3 | Rotas NC PostgreSQL (`/quality/audit-5s/*`) | ✅ | `api_paths.json` + heurísticas `ChatDepartmentKpiIntentService`; sync OpenAPI sob demanda |
+
+**Ainda depende de plataforma (fora deste repo):** perfis RBAC centralizados no `core-api` ([melhorias-futuras.md](./melhorias-futuras.md)); provider api-delpi habilitado no agente para actions OpenAPI das rotas 5S.
 
 ---
 
@@ -191,6 +193,8 @@ Checklist manual: **U1–U7** em [`../testing/smoke-operacional-manual.md`](../t
 | `CHAT_LLM_LATENCY_PROFILE` | `balanced` | Preset `operational_cpu` / `documental` para `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` |
 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | Master switch; admin `nativeToolCallingEnabled` + agente piloto `metadata.intelligence.nativeToolCallingEnabled` |
 | `CHAT_UTILITY_DIRECT_ENABLED` | `true` | Hora/data/ano via `utility_answers.json`; typos normalizados antes do match |
+| `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch; admin `webSearchEnabled` |
+| `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Máx. resultados por consulta web |
 
 ---
 
@@ -246,6 +250,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-29 | 11.3.1: `ChatAgenticCatalogService` — catálogo ≤12 por intent no loop agentic. |
 | 2026-05-30 | 11.3.3/11.3.4: native tool calling por agente piloto; `adminDebug.intelligence.timings`; Onda 11 concluída. |
 | 2026-05-30 | 11.7: utility direct, small talk ampliado, typos, catálogo api_paths 84 rotas. |
+| 2026-05-30 | 11.6: `web_search`, RBAC formal (`/admin/rbac/profiles`), rotas NC PostgreSQL 5S. |
 
 ---
 
@@ -256,4 +261,4 @@ Quando 11.1–11.2 estiverem estáveis em homologação, priorizar conforme prod
 | Track | Documento | Foco |
 |-------|-----------|------|
 | **12A** | [Onda 12 — Análise de desenhos PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | Skill `drawing-analyser` herdável; PDF × API DELPI × checklist (paridade ChatGPT DELPI legado) |
-| **12B** | (a definir) | `web_search` + política de citações, ou fundir itens 11.6 |
+| **12B** | (a definir) | Evoluções pós-11.6 (`web_search` avançado, citações) |

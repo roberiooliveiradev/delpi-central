@@ -30,6 +30,20 @@ NATIVE_TOOL_PARAMETERS: dict[str, dict] = {
         "required": ["query"],
         "additionalProperties": False,
     },
+    "web_search": {
+        "type": "object",
+        "properties": {
+            "query": {"type": "string", "description": "Consulta pública na internet."},
+            "limit": {
+                "type": "integer",
+                "description": "Máximo de resultados (1 a 8).",
+                "minimum": 1,
+                "maximum": 8,
+            },
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    },
 }
 
 

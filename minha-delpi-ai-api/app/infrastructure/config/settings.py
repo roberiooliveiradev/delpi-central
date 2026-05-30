@@ -252,6 +252,13 @@ class Settings:
     CHAT_NATIVE_TOOL_CALLING_ENABLED = (
         os.getenv("CHAT_NATIVE_TOOL_CALLING_ENABLED", "false").lower() == "true"
     )
+    CHAT_WEB_SEARCH_ENABLED = (
+        os.getenv("CHAT_WEB_SEARCH_ENABLED", "false").lower() == "true"
+    )
+    CHAT_WEB_SEARCH_MAX_RESULTS = int(os.getenv("CHAT_WEB_SEARCH_MAX_RESULTS", "5"))
+    CHAT_WEB_SEARCH_TIMEOUT_SECONDS = float(
+        os.getenv("CHAT_WEB_SEARCH_TIMEOUT_SECONDS", "8")
+    )
 
     OLLAMA_WARMUP_ON_STARTUP = (
         os.getenv("OLLAMA_WARMUP_ON_STARTUP", "true").lower() == "true"
