@@ -29,6 +29,9 @@ from app.application.services.rag_context_service import RagContextService
 from app.application.services.chat_turn.chat_turn_preparation_service import (
     ChatTurnPreparationService,
 )
+from app.application.services.chat_web_search_synthesis_service import (
+    ChatWebSearchSynthesisService,
+)
 from app.infrastructure.content.content_service import ContentService
 from app.domain.exceptions.chat_exceptions import (
     ChatMessageNotFoundError,
@@ -70,6 +73,7 @@ class StreamChatMessageUseCase:
         workspace_context_service: ChatWorkspaceContextService | None = None,
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
+        web_search_synthesis_service: ChatWebSearchSynthesisService | None = None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -92,6 +96,10 @@ class StreamChatMessageUseCase:
         self.chat_agentic_tool_loop_service = chat_agentic_tool_loop_service
         self.workspace_context_service = workspace_context_service
         self.admin_guideline_prompt_service = admin_guideline_prompt_service
+        self.web_search_synthesis_service = (
+            web_search_synthesis_service
+            or ChatWebSearchSynthesisService(llm_gateway=llm_gateway)
+        )
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
         user_id = UUID(request.user_id)
@@ -314,6 +322,14 @@ class StreamChatMessageUseCase:
         pipeline_timings = prepared.pipeline_timings
         pipeline_stages = prepared.pipeline_stages
         canvas_open_payload = prepared.canvas_open_payload
+
+        direct_answer, pipeline_stages = self.web_search_synthesis_service.enhance_prepared_turn(
+            message=message,
+            tool_context=tool_context,
+            direct_answer=direct_answer,
+            pipeline_stages=pipeline_stages,
+        )
+
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
             tool_context=tool_context,

@@ -14,6 +14,24 @@ class ChatWebSearchDirectAnswerService:
         return Settings.CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED
 
     @classmethod
+    def extract_useful_results(cls, payload: dict | None) -> list[dict]:
+        if not isinstance(payload, dict):
+            return []
+
+        results = payload.get("results")
+
+        if not isinstance(results, list):
+            return []
+
+        return [
+            item
+            for item in results
+            if isinstance(item, dict)
+            and str(item.get("source") or "") not in USELESS_RESULT_SOURCES
+            and str(item.get("snippet") or "").strip()
+        ]
+
+    @classmethod
     def format(cls, payload: dict | None, *, message: str = "") -> str | None:
         if not cls.is_enabled() or not isinstance(payload, dict):
             return None
@@ -31,13 +49,7 @@ class ChatWebSearchDirectAnswerService:
         if not isinstance(results, list):
             return None
 
-        useful = [
-            item
-            for item in results
-            if isinstance(item, dict)
-            and str(item.get("source") or "") not in USELESS_RESULT_SOURCES
-            and str(item.get("snippet") or "").strip()
-        ]
+        useful = cls.extract_useful_results(payload)
 
         if not useful:
             return cls._format_no_results(payload, message=message)

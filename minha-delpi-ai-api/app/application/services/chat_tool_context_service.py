@@ -355,6 +355,7 @@ class ChatToolContextService:
         last_external_action_data = None
         last_web_search_data: dict | None = None
         web_sources: list[dict] = []
+        web_search_payload: dict | None = None
         external_action_results: list = []
         external_planned = [
             item
@@ -662,6 +663,7 @@ class ChatToolContextService:
                 web_sources = ChatWebSearchDirectAnswerService.build_sources(
                     last_web_search_data
                 )
+                web_search_payload = last_web_search_data
 
         requested_format = self._resolve_consolidation_format(raw_message, previous_messages)
         if requested_format:
@@ -693,6 +695,7 @@ class ChatToolContextService:
                 "directAnswer": direct_answer,
                 "skipRag": skip_rag,
                 "webSources": web_sources,
+                "webSearchPayload": web_search_payload,
                 "selectedExternalAction": selected_external_action_meta,
                 "currentMessage": raw_message,
             },

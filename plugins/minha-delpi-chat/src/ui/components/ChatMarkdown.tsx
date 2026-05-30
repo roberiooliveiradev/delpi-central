@@ -58,6 +58,31 @@ const markdownComponents: Components = {
   pre({ children }) {
     return <>{children}</>;
   },
+  a({ href, children, ...props }) {
+    const label = String(children ?? "").trim();
+    const isExternal = typeof href === "string" && /^https?:\/\//i.test(href);
+    const isCitation = isExternal && label.length > 0 && label.length <= 40;
+
+    if (isCitation) {
+      return (
+        <a
+          className="mdc-chat-citation-badge"
+          href={href}
+          rel="noopener noreferrer"
+          target="_blank"
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+
+    return (
+      <a href={href} rel={isExternal ? "noopener noreferrer" : undefined} target={isExternal ? "_blank" : undefined} {...props}>
+        {children}
+      </a>
+    );
+  },
   code({ className, children, ...props }) {
     const match = /language-([\w-]+)/i.exec(className ?? "");
     const code = String(children).replace(/\n$/, "");

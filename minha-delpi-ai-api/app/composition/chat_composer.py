@@ -81,6 +81,9 @@ from app.composition.tool_composer import make_execute_tool_use_case
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.application.services.chat_agentic_tool_loop_service import ChatAgenticToolLoopService
+from app.application.services.chat_web_search_synthesis_service import (
+    ChatWebSearchSynthesisService,
+)
 from app.composition.external_action_composer import make_embedding_gateway
 from app.composition.llm_composer import make_llm_gateway
 from app.infrastructure.persistence.postgres_admin_guideline_repository import PostgresAdminGuidelineRepository
@@ -212,6 +215,10 @@ def make_admin_guideline_prompt_service() -> AdminGuidelinePromptService:
     return AdminGuidelinePromptService(PostgresAdminGuidelineRepository())
 
 
+def make_chat_web_search_synthesis_service() -> ChatWebSearchSynthesisService:
+    return ChatWebSearchSynthesisService(llm_gateway=make_llm_gateway())
+
+
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
@@ -227,6 +234,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         chat_agentic_tool_loop_service=make_chat_agentic_tool_loop_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
+        web_search_synthesis_service=make_chat_web_search_synthesis_service(),
     )
 
 
@@ -245,6 +253,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         chat_agentic_tool_loop_service=make_chat_agentic_tool_loop_service(),
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
+        web_search_synthesis_service=make_chat_web_search_synthesis_service(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:

@@ -149,6 +149,31 @@
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
 }
 
+.mdc-chat-citation-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: min(100%, 14rem);
+  margin-left: 0.15rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-primary);
+  font-size: 0.72rem;
+  font-weight: 650;
+  line-height: 1.2;
+  padding: 0.12rem 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-decoration: none;
+  vertical-align: baseline;
+}
+
+.mdc-chat-citation-badge:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+  text-decoration: underline;
+}
+
 .mdc-chat-markdown--compact {
   overflow-wrap: break-word;
 }

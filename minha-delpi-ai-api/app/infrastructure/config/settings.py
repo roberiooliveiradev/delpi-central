@@ -269,6 +269,12 @@ class Settings:
     CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED = (
         os.getenv("CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED", "true").lower() == "true"
     )
+    CHAT_WEB_SEARCH_SYNTHESIS_ENABLED = (
+        os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_ENABLED", "true").lower() == "true"
+    )
+    CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS = int(
+        os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS", "2")
+    )
 
     @classmethod
     def resolve_web_search_provider(cls) -> str:

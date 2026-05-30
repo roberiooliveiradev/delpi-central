@@ -7,3 +7,4 @@ Política de pesquisa na internet (`web_search`):
 - Não trate resultados da web (nem conhecimento geral complementar) como políticas internas, KPIs ou dados autorizados da empresa.
 - Quando a pergunta for busca explícita na internet, o pipeline **não** executa `execute_external_action` no mesmo turno — só `web_search` + resposta (direta ou LLM).
 - Com `searchStatus: success`, a resposta ao usuário **deve** usar os snippets retornados; negar busca na web é erro grave.
+- Com **dois ou mais** resultados úteis, o pipeline pode sintetizar resposta estruturada (seções, linha do tempo, conclusão) via LLM, citando URLs em markdown `[Fonte](url)`.
