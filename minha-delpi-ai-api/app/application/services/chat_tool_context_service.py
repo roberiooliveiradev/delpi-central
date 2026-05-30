@@ -75,6 +75,31 @@ class ChatToolContextService:
                 },
             )
 
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+
+        sql_refinement = ChatSqlQueryRefinementService.resolve(
+            raw_message,
+            previous_messages=previous_messages,
+        )
+
+        if sql_refinement and sql_refinement.mode == "show_sql":
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": ChatSqlQueryRefinementService.format_show_sql_answer(
+                        sql_refinement
+                    ),
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
         if conversation_context is None and previous_messages:
             conversation_context = ChatIntelligencePipelineService.build_conversation_context(
                 previous_messages,

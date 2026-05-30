@@ -171,6 +171,29 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+
+        sql_refinement = ChatSqlQueryRefinementService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if sql_refinement and sql_refinement.mode == "execute":
+            selected = self._select_sql_or_data_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                sql=sql_refinement.sql,
+            )
+
+            if selected:
+                selected["reason"] = ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "sqlRefinement",
+                )
+                return selected
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         group_search_code = self._extract_search_group_code(message, normalized)
 
@@ -254,7 +277,14 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if self._looks_like_system_metadata_question(normalized) and not product_code:
+        if (
+            self._looks_like_system_metadata_question(normalized)
+            and not product_code
+            and not ChatSqlQueryRefinementService.is_sql_follow_up(
+                message,
+                previous_messages=previous_messages,
+            )
+        ):
             selected = self._select_system_metadata_action(
                 message,
                 allowed_action_ids=allowed_action_ids,

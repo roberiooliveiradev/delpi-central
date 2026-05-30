@@ -59,6 +59,7 @@ Mensagem do usuário
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
 | `ChatSqlOperationalIntentService` | Perguntas SQL de produção/programação do dia (não catálogo) |
 | `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
+| `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |

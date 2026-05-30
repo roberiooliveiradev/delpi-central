@@ -18,6 +18,9 @@ from app.domain.services.chat_operational_pipeline_service import (
 from app.domain.services.chat_operational_refinement_service import (
     ChatOperationalRefinementService,
 )
+from app.domain.services.chat_sql_query_refinement_service import (
+    ChatSqlQueryRefinementService,
+)
 
 
 @dataclass(frozen=True)
@@ -75,6 +78,11 @@ class ChatIntelligencePipelineService:
             if ChatOperationalRefinementService.is_operational_follow_up(
                 message,
                 conversation_context=conversation_context or None,
+                previous_messages=previous_messages,
+            ):
+                operational_optimize = True
+            elif ChatSqlQueryRefinementService.is_sql_follow_up(
+                message,
                 previous_messages=previous_messages,
             ):
                 operational_optimize = True

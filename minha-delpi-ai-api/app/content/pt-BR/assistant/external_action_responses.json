@@ -21,6 +21,7 @@
   },
   "selectionReasons": {
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",
+    "sqlRefinement": "Refinamento da consulta SQL anterior — reexecução via POST /data/sql.",
     "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",
     "stockFastPath": "Consulta de estoque reconhecida — execução direta via API de produto.",
     "productSearch": "Busca de produtos por descrição, código ou grupo.",
