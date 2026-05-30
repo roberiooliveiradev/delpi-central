@@ -25,6 +25,7 @@ type StreamMessageParams = {
   onSources?: (sources: ChatSource[]) => void;
   onToolCalls?: (toolCalls: ChatToolCall[]) => void;
   onToken?: (token: string) => void;
+  onUserPersisted?: (messageId: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
   onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;

@@ -56,6 +56,7 @@ type StreamCallbacks = {
   onSources?: (sources: SendChatMessageResponse["sources"]) => void;
   onToolCalls?: (toolCalls: SendChatMessageResponse["toolCalls"]) => void;
   onToken?: (token: string) => void;
+  onUserPersisted?: (messageId: string) => void;
   onAssistantPending?: (messageId: string) => void;
   onPlayback?: (payload: ChatPlaybackEvent) => void;
   onCanvasOpen?: (payload: ChatCanvasOpenPayload) => void;
@@ -317,6 +318,15 @@ async function consumeChatMessageStream(
 
       if (event === "token") {
         callbacks.onToken?.(typeof data.content === "string" ? data.content : "");
+      }
+
+      if (event === "user_persisted") {
+        const messageId =
+          typeof data.messageId === "string" ? data.messageId : "";
+
+        if (messageId) {
+          callbacks.onUserPersisted?.(messageId);
+        }
       }
 
       if (event === "assistant_pending") {

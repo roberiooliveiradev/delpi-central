@@ -128,6 +128,27 @@ class SendChatMessageUseCase:
         max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
         attachment_ids = getattr(request, "attachment_ids", None)
 
+        user_message = self.chat_repository.create_message(
+            session_id=session_id,
+            role="user",
+            content=message,
+            metadata={
+                "context": request.context,
+                "agentId": workspace_context.get("agentId"),
+                "agent": workspace_context.get("agent"),
+                "project": workspace_context.get("project"),
+                "attachments": attachments,
+                "delivery": {"status": "submitted"},
+            },
+        )
+
+        self._attach_files_to_message(
+            request=request,
+            user_id=user_id,
+            session_id=session_id,
+            message_id=user_message.id,
+        )
+
         prepared = self.turn_preparation_service.prepare(
             message=message,
             request=request,
@@ -196,29 +217,16 @@ class SendChatMessageUseCase:
             ),
         )
 
-        user_message = self.chat_repository.create_message(
-            session_id=session_id,
-            role="user",
-            content=message,
-            metadata={
-                "context": request.context,
-                "agentId": workspace_context.get("agentId"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
+        self.chat_repository.patch_message_metadata(
+            user_message.id,
+            {
                 "rag": {
                     "sources": sources,
                 },
                 "toolCalls": tool_calls,
                 "intelligence": intelligence_metadata,
+                "delivery": {"status": "processing"},
             },
-        )
-
-        self._attach_files_to_message(
-            request=request,
-            user_id=user_id,
-            session_id=session_id,
-            message_id=user_message.id,
         )
 
         if operational_optimize or direct_answer or fast_path:

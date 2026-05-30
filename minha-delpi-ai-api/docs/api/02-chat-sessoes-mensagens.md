@@ -218,7 +218,8 @@ Mesmo de envio normal:
 | `sources` | Após RAG | `sources` |
 | `tool_calls` | Após tools | `toolCalls`, `adminGuidelines` |
 | `admin_guidelines` | Diretrizes ativas | `adminGuidelines` |
-| `assistant_pending` | Resposta persistida vazia, antes do LLM/playback | `messageId` |
+| `assistant_pending` | Placeholder assistant persistido (`delivery=generating`), antes do LLM/playback | `messageId` |
+| `user_persisted` | Pergunta do usuário persistida **antes** do prepare (commit incremental) | `messageId` |
 | `token` | Streaming legado (`CHAT_PERSIST_BEFORE_PLAYBACK=false`) | `content` |
 | `canvas_open` | Pedido de lousa («coloque na lousa/canvas/canva») | `title`, `markdown`, `sourceMessageId`, `messageId` |
 | `playback` | Resposta final já no banco; front anima texto | `messageId`, `answer`, `sources`, `toolCalls` |
@@ -228,6 +229,12 @@ Mesmo de envio normal:
 Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
 
 ```text
+event: user_persisted
+data: {"messageId": "..."}
+
+event: activity
+data: {"entry": {...}}
+
 event: sources
 data: {"sources": [...]}
 

@@ -128,6 +128,42 @@ class StreamChatMessageUseCase:
             )
             object.__setattr__(session, "agent_id", parsed_agent_id)
 
+        resend_from_message_id = request.resend_from_message_id
+        workspace_context = self._build_workspace_context(session, user_id)
+        attachments = self._get_message_attachments(request, user_id, session_id)
+        previous_messages = self.chat_repository.list_messages_by_session(session_id)
+        user_message = None
+
+        if resend_from_message_id:
+            pass
+        else:
+            user_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="user",
+                content=message,
+                metadata={
+                    "context": request.context,
+                    "agentId": workspace_context.get("agentId"),
+                    "agent": workspace_context.get("agent"),
+                    "project": workspace_context.get("project"),
+                    "attachments": attachments,
+                    "stream": True,
+                    "delivery": {"status": "submitted"},
+                },
+            )
+
+            self._attach_files_to_message(
+                request=request,
+                user_id=user_id,
+                session_id=session_id,
+                message_id=user_message.id,
+            )
+
+            yield {
+                "type": "user_persisted",
+                "messageId": str(user_message.id),
+            }
+
         yield {
             "type": "status",
             "message": ContentService.stream().get(
@@ -136,11 +172,15 @@ class StreamChatMessageUseCase:
             ),
         }
 
-        resend_from_message_id = request.resend_from_message_id
         activity_queue: queue.Queue = queue.Queue()
         prepared_box: dict = {}
         prepare_error_box: dict = {}
-        context_box: dict = {}
+        context_box: dict = {
+            "workspace_context": workspace_context,
+            "attachments": attachments,
+            "previous_messages": previous_messages,
+            "user_message": user_message,
+        }
 
         from flask import current_app, has_app_context
 
@@ -165,10 +205,10 @@ class StreamChatMessageUseCase:
                 )
             )
 
-            workspace_context = self._build_workspace_context(session, user_id)
-            attachments = self._get_message_attachments(request, user_id, session_id)
+            workspace_context = context_box["workspace_context"]
+            attachments = context_box["attachments"]
+            previous_messages = context_box["previous_messages"]
             existing_user_message = None
-            history_messages = None
 
             if resend_from_message_id:
                 existing_user_message = self.chat_repository.update_user_message(
@@ -198,7 +238,7 @@ class StreamChatMessageUseCase:
                 ]
                 previous_messages = all_messages
             else:
-                previous_messages = self.chat_repository.list_messages_by_session(session_id)
+                history_messages = None
 
             should_generate_session_title = (
                 not resend_from_message_id
@@ -211,12 +251,10 @@ class StreamChatMessageUseCase:
                 agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
             )
 
-            context_box["workspace_context"] = workspace_context
-            context_box["attachments"] = attachments
-            context_box["previous_messages"] = previous_messages
             context_box["history_source"] = history_source
             context_box["existing_user_message"] = existing_user_message
             context_box["should_generate_session_title"] = should_generate_session_title
+            context_box["user_message"] = existing_user_message or context_box.get("user_message")
 
             _on_stream_activity(
                 ChatStreamActivityService.entry(
@@ -297,6 +335,7 @@ class StreamChatMessageUseCase:
         workspace_context = context_box["workspace_context"]
         attachments = context_box["attachments"]
         previous_messages = context_box["previous_messages"]
+        user_message = context_box.get("user_message")
         existing_user_message = context_box.get("existing_user_message")
         should_generate_session_title = bool(
             context_box.get("should_generate_session_title")
@@ -307,6 +346,12 @@ class StreamChatMessageUseCase:
                 user_id=user_id,
                 title=self._fallback_title_from_message(message),
             )
+
+        if resend_from_message_id and existing_user_message:
+            yield {
+                "type": "user_persisted",
+                "messageId": str(existing_user_message.id),
+            }
 
         operational_optimize = prepared.operational_optimize
         analysis_mode = prepared.analysis_mode
@@ -347,31 +392,18 @@ class StreamChatMessageUseCase:
 
         if resend_from_message_id:
             user_message = existing_user_message
-        else:
-            user_message = self.chat_repository.create_message(
-                session_id=session_id,
-                role="user",
-                content=message,
-                metadata={
-                    "context": request.context,
-                    "agentId": workspace_context.get("agentId"),
-                    "agent": workspace_context.get("agent"),
-                    "project": workspace_context.get("project"),
-                    "attachments": attachments,
-                    "stream": True,
+
+        if user_message is not None:
+            self.chat_repository.patch_message_metadata(
+                user_message.id,
+                {
                     "rag": {
                         "sources": sources,
                     },
                     "toolCalls": tool_calls,
                     "intelligence": intelligence_metadata,
+                    "delivery": {"status": "processing"},
                 },
-            )
-
-            self._attach_files_to_message(
-                request=request,
-                user_id=user_id,
-                session_id=session_id,
-                message_id=user_message.id,
             )
 
         if operational_optimize or direct_answer:
@@ -430,14 +462,7 @@ class StreamChatMessageUseCase:
 
         answer_parts: list[str] = []
         started_at = time.perf_counter()
-        # Respostas diretas não precisam de placeholder/playback; manter streaming de tokens
-        # mesmo quando o modo persist-before-playback está habilitado.
-        #
-        # Exceção: quando há `canvas_open_payload`, o frontend espera playback para
-        # persistir a mensagem e abrir a lousa com referência ao `messageId`.
-        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK and not (
-            bool(direct_answer) and not canvas_open_payload
-        )
+        persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK
         assistant_placeholder = None
 
         yield {

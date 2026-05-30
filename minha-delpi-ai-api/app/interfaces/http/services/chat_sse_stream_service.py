@@ -5,6 +5,9 @@ from typing import Any, Callable, Generator, Iterable
 
 from flask import Flask
 
+from app.application.services.chat_stream_checkpoint_service import (
+    ChatStreamCheckpointService,
+)
 from app.extensions.db import db
 
 logger = logging.getLogger(__name__)
@@ -22,7 +25,7 @@ def stream_chat_events_with_background_completion(
     Executa o stream do chat em uma thread separada e repassa eventos via fila.
 
     Se o cliente SSE desconectar, o consumidor interrompe o yield, mas o produtor
-    continua até o fim e persiste a resposta (commit no evento ``done``).
+    continua até o fim e persiste a resposta (commits incrementais em checkpoints).
     """
     event_queue: queue.Queue[Any] = queue.Queue()
     state = {"committed": False}
@@ -32,9 +35,16 @@ def stream_chat_events_with_background_completion(
             try:
                 for event in stream_factory():
                     event_queue.put(event)
-                    if event.get("type") == "done":
+                    if ChatStreamCheckpointService.should_commit(event):
                         db.session.commit()
                         state["committed"] = True
+                        logger.debug(
+                            "chat_stream_checkpoint_committed",
+                            extra={
+                                "session_id": session_id,
+                                "event_type": event.get("type"),
+                            },
+                        )
                 event_queue.put(_SENTINEL)
             except Exception:
                 logger.exception(

@@ -2415,6 +2415,12 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                 elif event_type == "token":
                     yield _sse("token", {"content": event.get("content", "")})
 
+                elif event_type == "user_persisted":
+                    yield _sse(
+                        "user_persisted",
+                        {"messageId": event.get("messageId")},
+                    )
+
                 elif event_type == "assistant_pending":
                     yield _sse(
                         "assistant_pending",

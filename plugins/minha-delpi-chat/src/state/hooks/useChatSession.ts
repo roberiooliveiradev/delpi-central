@@ -624,10 +624,42 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   );
 
   const buildStreamCallbacks = useCallback(
-    (sessionForMessage: ChatSession) => {
+    (sessionForMessage: ChatSession, optimisticUserMessageId?: string | null) => {
       const sessionId = sessionForMessage.id;
 
       return {
+        onUserPersisted: (messageId: string) => {
+          if (!isStreamForActiveSession(sessionId) || !optimisticUserMessageId) {
+            return;
+          }
+
+          setMessages((current) =>
+            current.map((item) =>
+              item.id === optimisticUserMessageId
+                ? {
+                    ...item,
+                    id: messageId,
+                    metadata: {
+                      ...(item.metadata ?? {}),
+                      optimistic: false,
+                    },
+                  }
+                : item,
+            ),
+          );
+          setPendingUserMessage((current) =>
+            current && current.id === optimisticUserMessageId
+              ? {
+                  ...current,
+                  id: messageId,
+                  metadata: {
+                    ...(current.metadata ?? {}),
+                    optimistic: false,
+                  },
+                }
+              : current,
+          );
+        },
         onStatus: (statusMessage: string) => {
           if (!isStreamForActiveSession(sessionId)) {
             return;
@@ -1060,7 +1092,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
         agentId: options.agentId,
-        ...buildStreamCallbacks(sessionForMessage),
+        ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {

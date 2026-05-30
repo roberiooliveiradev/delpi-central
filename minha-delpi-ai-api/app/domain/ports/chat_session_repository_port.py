@@ -105,6 +105,14 @@ class ChatSessionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def patch_message_metadata(
+        self,
+        message_id: UUID,
+        metadata_patch: dict | None = None,
+    ) -> ChatMessage | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def create_message(
         self,
         session_id: UUID,
