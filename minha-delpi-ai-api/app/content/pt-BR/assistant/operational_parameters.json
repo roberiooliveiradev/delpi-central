@@ -1,16 +1,16 @@
 {
   "missingProductCode": {
-    "stock": "Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Com o código, consulto filial, armazém e quantidade disponível na plataforma.",
+    "stock": "Claro! Para consultar o **estoque**, informe o **código do produto** (ex.: 10080099). Exemplo: *estoque do produto 10080099*.",
     "structure": "Para consultar a **estrutura (BOM)** do item, informe o **código do produto** (ex.: 10080099).",
     "parents": "Para ver **onde o produto é usado** (produtos pai), informe o **código do produto** (ex.: 10080099).",
     "description": "Para buscar **descrição ou ficha** do produto, informe o **código** (ex.: 10080099) ou descreva a busca (grupo, tipo, texto).",
     "analyser": "Para abrir a **ficha completa** do produto, informe o **código** (ex.: 10080099).",
     "summary": "Para o **resumo consolidado** do produto, informe o **código** (ex.: 10080099).",
-    "default": "Para consultar dados operacionais do produto, informe o **código do produto** (ex.: 10080099). Exemplo: *estoque do produto 10080099*."
+    "default": "Claro! Para consultar dados do produto, informe o **código** (ex.: 10080099). Exemplo: *me fale do produto 10080099*."
   },
-  "missingSaleNumber": "Para consultar a **LMP** ou **ordem de venda**, informe o **número da OV** (ex.: 123456). Exemplo: *consulte a OV 123456*.",
-  "missingPeriod": "Para essa consulta, informe o **período** desejado (ex.: *março de 2026*, *últimos 30 dias*, *01/03/2026 a 31/03/2026*). Sem período, não consigo filtrar vendas, compras ou indicadores com segurança.",
-  "missingBranch": "Informe a **filial** desejada (ex.: *01*, *matriz*) para eu filtrar o resultado.",
+  "missingSaleNumber": "Claro! Para a **LMP** ou **ordem de venda**, informe o **número da OV** (ex.: 123456). Exemplo: *consulte a OV 123456*.",
+  "missingPeriod": "Para essa consulta, preciso do **período** (ex.: *março de 2026*, *últimos 30 dias*). Sem isso, não filtro vendas ou indicadores com segurança.",
+  "missingBranch": "Qual **filial** devo usar? Ex.: *01* ou *matriz*.",
   "ambiguousPeriodYear": "Para **{month_label}**, preciso confirmar o ano: você quer os dados de **{current_year}** (este ano) ou de **{previous_year}**?",
   "ambiguousPeriodRange": "Encontrei mais de uma interpretação de período. Confirme se quer **{option_a}** ou **{option_b}**."
 }

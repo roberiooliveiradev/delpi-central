@@ -169,8 +169,11 @@ class StreamChatMessageUseCase:
         yield {
             "type": "status",
             "message": ContentService.stream().get(
-                "statusConnected",
-                "Conectado. Preparando resposta...",
+                "statusUnderstandingQuestion",
+                ContentService.stream().get(
+                    "statusConnected",
+                    "Conectado. Preparando resposta...",
+                ),
             ),
         }
 
@@ -202,7 +205,10 @@ class StreamChatMessageUseCase:
                     target="contexto da sessão",
                     phase="prepare",
                     state="active",
-                    message="Carregando agente, histórico e anexos...",
+                    message=ContentService.stream().get(
+                        "statusPreparingContext",
+                        "Carregando agente, histórico e anexos...",
+                    ),
                     entry_id="prepare-session-context",
                 )
             )
@@ -524,7 +530,10 @@ class StreamChatMessageUseCase:
         if direct_answer:
             yield {
                 "type": "status",
-                "message": "Montando resposta a partir dos dados consultados...",
+                "message": ContentService.stream().get(
+                    "statusAssemblingDirectAnswer",
+                    "Montando resposta a partir dos dados consultados...",
+                ),
             }
             answer_parts.append(direct_answer)
             if not persist_before_playback:
@@ -538,7 +547,10 @@ class StreamChatMessageUseCase:
         else:
             yield {
                 "type": "status",
-                "message": "Gerando resposta em linguagem natural...",
+                "message": ContentService.stream().get(
+                    "statusGeneratingAnswer",
+                    "Gerando resposta em linguagem natural...",
+                ),
             }
 
             for token in self.llm_gateway.stream(llm_messages):

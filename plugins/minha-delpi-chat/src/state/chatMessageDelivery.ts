@@ -29,5 +29,11 @@ export function sessionAwaitingAssistantResponse(messages: ChatMessage[]): boole
     return true;
   }
 
-  return last.role === "user";
+  if (last.role !== "user") {
+    return false;
+  }
+
+  const deliveryStatus = getDeliveryStatus(last.metadata);
+
+  return deliveryStatus === "submitted" || deliveryStatus === "processing";
 }

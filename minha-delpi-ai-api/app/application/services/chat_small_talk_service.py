@@ -3,6 +3,9 @@ from __future__ import annotations
 from functools import lru_cache
 
 from app.domain.services.chat_agent_profile_service import ChatAgentProfileService
+from app.domain.services.chat_personality_content_service import (
+    ChatPersonalityContentService,
+)
 from app.domain.services.chat_small_talk_pattern_service import ChatSmallTalkPatternService
 from app.infrastructure.content.content_service import ContentService
 
@@ -32,7 +35,17 @@ class ChatSmallTalkService:
         responses = content.get("responses") or {}
 
         scope = "agent" if profile.has_agent else "platform"
-        template = str((responses.get(scope) or {}).get(category) or "").strip()
+        variants = content.get("responseVariants") or {}
+        template = ChatPersonalityContentService.pick_variant(
+            variants,
+            scope=scope,
+            category=category,
+            seed=message,
+            fallback="",
+        )
+
+        if not template:
+            template = str((responses.get(scope) or {}).get(category) or "").strip()
 
         if not template:
             template = str((responses.get("platform") or {}).get(category) or "").strip()

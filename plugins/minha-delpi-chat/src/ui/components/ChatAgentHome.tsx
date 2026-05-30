@@ -1,6 +1,7 @@
 import { Bot, Settings, Sparkles } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import "./ChatAgentHome.css";
 
@@ -31,7 +32,10 @@ export function ChatAgentHome({
   canManageAgent = false,
   onManageAgent,
 }: ChatAgentHomeProps) {
-  const icebreakers = getAgentIcebreakers(agent);
+  const configuredIcebreakers = getAgentIcebreakers(agent);
+  const icebreakers =
+    configuredIcebreakers.length > 0 ? configuredIcebreakers : DEFAULT_AGENT_ICEBREAKERS;
+  const usingDefaultIcebreakers = configuredIcebreakers.length === 0;
   const visibilityLabel =
     agent.visibility === "system"
       ? "Oficial"
@@ -57,8 +61,8 @@ export function ChatAgentHome({
         {agent.visibility !== "private" && agent.response_style ? (
           <span>{agent.response_style}</span>
         ) : null}
-        {agent.visibility !== "private" && icebreakers.length > 0 ? (
-          <span>{icebreakers.length} quebra-gelos</span>
+        {agent.visibility !== "private" && configuredIcebreakers.length > 0 ? (
+          <span>{configuredIcebreakers.length} quebra-gelos</span>
         ) : null}
       </div>
 
@@ -73,6 +77,11 @@ export function ChatAgentHome({
 
       {icebreakers.length > 0 ? (
         <div className="mdc-chat-agent-home__icebreakers">
+          {usingDefaultIcebreakers ? (
+            <p className="mdc-chat-agent-home__icebreakers-hint">
+              Sugestões para começar — clique ou digite do seu jeito.
+            </p>
+          ) : null}
           {icebreakers.map((icebreaker) => (
             <button
               key={icebreaker}

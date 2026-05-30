@@ -33,7 +33,7 @@
     "projeto",
     "ov",
     "lmp",
-    "bom",
+    "lista de materiais",
     "estrutura",
     "saldo",
     "preco",
@@ -261,6 +261,92 @@
   },
   "placeholders": {
     "agentDescriptionFallback": "assistente especializado configurado para este tema."
+  },
+  "responseVariants": {
+    "platform": {
+      "greeting": [
+        "Olá! O que vamos resolver hoje?",
+        "Oi! Me diga o que você precisa — ou pergunte *o que você pode fazer*.",
+        "Olá! Bora organizar isso juntos?"
+      ],
+      "wellbeing": [
+        "Tudo certo por aqui! E com você — em que posso ajudar?",
+        "Tudo bem por aqui. O que você quer consultar?",
+        "Tudo ótimo! Me diga como posso ajudar."
+      ],
+      "thanks": [
+        "Por nada! Se precisar, sigo por aqui.",
+        "Disponha! Posso ajudar com mais alguma coisa.",
+        "De nada! É só chamar."
+      ],
+      "apology": [
+        "Sem problemas! Pode reformular ou enviar o código correto que eu refaço.",
+        "Tranquilo — me manda o dado certo que eu consulto de novo.",
+        "Tudo bem. Vamos tentar de outro jeito."
+      ],
+      "praise": [
+        "Boa! Fico feliz que ajudou.",
+        "Que bom! Posso detalhar, comparar ou montar tabela.",
+        "Show! Se quiser, continuo com outra consulta."
+      ],
+      "farewell": [
+        "Até logo! Estou por aqui quando precisar.",
+        "Até mais! Volte quando quiser continuar.",
+        "Falou! Quando precisar, é só chamar."
+      ],
+      "ack": [
+        "Certo! Me diga o que você precisa.",
+        "Combinado. Pode mandar a próxima pergunta.",
+        "Beleza — estou pronto para o próximo passo."
+      ],
+      "laughter": [
+        "Posso ajudar em algo?",
+        "Em que posso ajudar agora?",
+        "Seguimos — o que você precisa?"
+      ]
+    },
+    "agent": {
+      "greeting": [
+        "Olá! Sou o **{agent_name}**. O que vamos consultar?",
+        "Oi! Aqui é o **{agent_name}** — me diga o que precisa.",
+        "Olá! **{agent_name}** no ar. Como posso ajudar?"
+      ],
+      "wellbeing": [
+        "Tudo certo por aqui! Sou o **{agent_name}** — em que posso ajudar?",
+        "Tudo bem! **{agent_name}** pronto para consultar.",
+        "Tudo ótimo por aqui. O que você quer ver?"
+      ],
+      "thanks": [
+        "Por nada! Se precisar de mais alguma coisa neste agente, é só chamar.",
+        "Disponha! Posso cruzar com outra consulta.",
+        "De nada! Sigamos se quiser."
+      ],
+      "apology": [
+        "Sem problemas! Me diga como posso ajudar neste agente.",
+        "Tranquilo — reformule ou corrija o código que eu refaço.",
+        "Tudo bem. Vamos ajustar o pedido."
+      ],
+      "praise": [
+        "Que bom! Posso ajudar em mais alguma coisa por aqui?",
+        "Boa! Quer que eu detalhe ou compare?",
+        "Show! Próximo passo?"
+      ],
+      "farewell": [
+        "Até logo! Volte quando quiser continuar por aqui.",
+        "Até mais! Estou por aqui.",
+        "Falou! Até a próxima consulta."
+      ],
+      "ack": [
+        "Certo! Me diga o que você precisa neste agente.",
+        "Combinado. Pode enviar a pergunta.",
+        "Beleza — seguimos."
+      ],
+      "laughter": [
+        "Em que posso ajudar neste agente?",
+        "Posso ajudar com alguma consulta?",
+        "Seguimos — o que você precisa?"
+      ]
+    }
   },
   "responses": {
     "platform": {

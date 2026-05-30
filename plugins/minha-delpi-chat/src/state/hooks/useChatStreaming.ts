@@ -111,6 +111,10 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
 
       try {
         await runner(callbacks, abortController.signal);
+
+        if (abortController.signal.aborted) {
+          throw new DOMException("The operation was aborted.", "AbortError");
+        }
       } finally {
         streamsRef.current.delete(sessionId);
         bumpStreams();

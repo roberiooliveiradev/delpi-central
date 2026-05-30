@@ -11,6 +11,7 @@ from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.chat_message_branch_service import ChatMessageBranchService
+from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 
 
 class CreateChatSessionUseCase:
@@ -86,9 +87,10 @@ class CreateChatSessionUseCase:
             raise ChatMessageNotFoundError()
 
         all_messages = self.repository.list_all_messages_by_session(source_session_id)
-        path_to_fork = ChatMessageBranchService.build_path_to_message(
+        path_to_fork = ChatMessageBranchService.build_fork_path(
             all_messages,
             until_message_id,
+            source_session.active_leaf_message_id,
         )
 
         if not path_to_fork or path_to_fork[-1].id != until_message_id:
@@ -138,6 +140,12 @@ class CreateChatSessionUseCase:
                 "fromSessionId": str(source_session_id),
                 "fromMessageId": str(source_message.id),
             }
+
+            if source_message.role in ("user", "assistant"):
+                metadata = ChatMessageDeliveryService.ready_metadata(
+                    metadata,
+                    playback_pending=False,
+                )
 
             copied = self.repository.create_message(
                 session_id=new_session.id,

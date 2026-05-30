@@ -5,9 +5,16 @@
   "statusSearchingKnowledge": "Consultando base de conhecimento autorizada...",
   "statusRunningTools": "Consultando sistemas e dados autorizados...",
   "statusGeneratingAnswer": "Gerando resposta em linguagem natural...",
+  "statusAssemblingDirectAnswer": "Montando resposta a partir dos dados consultados...",
   "statusFinalizing": "Finalizando e salvando no histórico...",
   "statusWebSearch": "Pesquisando na internet...",
   "statusPreparingContext": "Carregando agente, histórico e anexos...",
+  "statusUnderstandingQuestion": "Entendendo seu pedido...",
+  "statusCheckingPermissions": "Conferindo permissões...",
+  "statusBuildingTable": "Organizando em tabela...",
+  "statusBuildingChart": "Preparando gráfico...",
+  "statusSummarizing": "Resumindo os pontos principais...",
+  "statusReady": "Pronto, organizei para você.",
   "sessionTitleDefault": "Nova conversa",
   "sessionTitleEmptyValues": [
     "nova conversa",
@@ -28,5 +35,6 @@
   "ragContextHeader": "Contexto documental autorizado:",
   "playbackStatus": "Exibindo resposta...",
   "cancelledStatus": "Resposta cancelada.",
-  "errorGenericStatus": "Não foi possível concluir a resposta. Tente novamente."
+  "errorGenericStatus": "Não foi possível concluir a resposta agora. Tente novamente em instantes ou refine o pedido.",
+  "cancelledStatusFriendly": "Resposta cancelada. Quando quiser, é só enviar de novo."
 }

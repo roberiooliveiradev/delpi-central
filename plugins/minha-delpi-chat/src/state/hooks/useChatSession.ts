@@ -171,18 +171,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     return isSessionProcessing(sessionId);
   }, [isSessionProcessing]);
 
-  const cancelStreaming = useCallback(() => {
-    const sessionId = activeSessionIdRef.current;
-
-    if (sessionId) {
-      cancelSessionStreaming(sessionId);
-      unmarkSessionPending(sessionId);
-      clearSessionStreamUi(sessionId);
-    }
-
-    resetStreamingUi();
-  }, [cancelSessionStreaming, resetStreamingUi, unmarkSessionPending]);
-
   const isStreamForActiveSession = useCallback((sessionId: string) => {
     return activeSessionIdRef.current === sessionId;
   }, []);
@@ -316,6 +304,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionPending],
   );
+
+  const cancelStreaming = useCallback(() => {
+    const sessionId = activeSessionIdRef.current;
+
+    if (sessionId) {
+      cancelSessionStreaming(sessionId);
+      unmarkSessionPending(sessionId);
+      clearSessionStreamUi(sessionId);
+      void loadMessages(sessionId);
+    }
+
+    resetStreamingUi();
+  }, [cancelSessionStreaming, loadMessages, resetStreamingUi, unmarkSessionPending]);
 
   const selectSession = useCallback(
     (session: ChatSession) => {
@@ -664,12 +665,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   );
 
   const buildStreamCallbacks = useCallback(
-    (sessionForMessage: ChatSession, optimisticUserMessageId?: string | null) => {
+    (
+      sessionForMessage: ChatSession,
+      optimisticUserMessageId?: string | null,
+      streamOptions?: { refreshOnUserPersisted?: boolean },
+    ) => {
       const sessionId = sessionForMessage.id;
 
       return {
         onUserPersisted: (messageId: string) => {
           if (!isStreamForActiveSession(sessionId) || !optimisticUserMessageId) {
+            if (streamOptions?.refreshOnUserPersisted && isStreamForActiveSession(sessionId)) {
+              void loadMessages(sessionId);
+            }
             return;
           }
 
@@ -699,6 +707,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
                 }
               : current,
           );
+
+          if (streamOptions?.refreshOnUserPersisted) {
+            void loadMessages(sessionId);
+          }
         },
         onStatus: (statusMessage: string) => {
           if (!statusMessage.trim()) {
@@ -954,30 +966,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       setStreamingActivityLog([]);
       setStreamingStatus("Preparando novo envio...");
 
-      setMessages((current) =>
-        current
-          .slice(0, messageIndex + 1)
-          .map((message, index) =>
-            index === messageIndex
-              ? {
-                  ...message,
-                  content: normalizedContent,
-                  metadata: {
-                    ...message.metadata,
-                    edited: true,
-                  },
-                }
-              : message,
-          ),
-      );
-
       try {
         await resendMessage({
           sessionId: activeSession.id,
           messageId,
           content: normalizedContent,
           context: activeSession.context ?? "geral",
-          ...buildStreamCallbacks(activeSession),
+          ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
         });
 
         return {
@@ -1348,6 +1343,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         );
 
         setSessions((current) => [newSession, ...current]);
+        resetStreamingUi();
         selectSession(newSession);
         options.onSessionActivated?.(newSession.id, {
           agentId: newSession.agent_id ?? options.agentId ?? null,
@@ -1361,6 +1357,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       activeSession,
       isActiveSessionBusy,
       options,
+      resetStreamingUi,
       selectSession,
     ],
   );

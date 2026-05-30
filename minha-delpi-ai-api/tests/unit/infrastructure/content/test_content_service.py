@@ -23,6 +23,19 @@ def test_stream_session_title_default():
     assert ContentService.stream().get("sessionTitleDefault") == "Nova conversa"
 
 
+def test_stream_playbook_status_keys():
+    stream = ContentService.stream()
+    assert stream.get("statusUnderstandingQuestion")
+    assert stream.get("statusAssemblingDirectAnswer")
+    assert stream.get("cancelledStatusFriendly")
+
+
+def test_personality_playbook_content():
+    playbook = ContentService.personality_playbook()
+    assert playbook.get("persona", {}).get("goldenRule")
+    assert len(playbook.get("homeStarters") or []) >= 4
+
+
 def test_load_external_action_responses():
     data = ContentService.load_json("assistant/external_action_responses")
     assert data["sql"]["defaultTitle"] == "Consulta SQL"

@@ -83,6 +83,45 @@ class ChatMessageBranchService:
         return cls.build_path_to_message(messages, leaf_id)
 
     @classmethod
+    def build_fork_path(
+        cls,
+        messages: list[ChatMessage],
+        until_message_id: UUID,
+        active_leaf_message_id: UUID | None = None,
+    ) -> list[ChatMessage]:
+        """Caminho copiado no fork — inclui resposta assistant se existir no ramo ativo."""
+        path = cls.build_path_to_message(messages, until_message_id)
+
+        if not path or path[-1].id != until_message_id:
+            return path
+
+        until_message = path[-1]
+
+        if until_message.role != "user":
+            return path
+
+        active_path = cls.build_active_path(messages, active_leaf_message_id)
+
+        for index, message in enumerate(active_path):
+            if message.id != until_message_id:
+                continue
+
+            if index + 1 >= len(active_path):
+                break
+
+            next_message = active_path[index + 1]
+
+            if (
+                next_message.role == "assistant"
+                and next_message.parent_message_id == until_message_id
+            ):
+                return path + [next_message]
+
+            break
+
+        return path
+
+    @classmethod
     def list_user_siblings(
         cls,
         messages: list[ChatMessage],

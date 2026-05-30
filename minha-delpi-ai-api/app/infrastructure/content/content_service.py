@@ -60,11 +60,17 @@ class ContentService:
         return cls.load_json("skills/catalog", locale=locale)
 
     @classmethod
+    @lru_cache(maxsize=1)
+    def personality_playbook(cls, *, locale: str | None = None) -> dict[str, Any]:
+        return cls.load_json("assistant/personality_playbook", locale=locale)
+
+    @classmethod
     def clear_cache(cls) -> None:
         cls.load_json.cache_clear()
         cls.load_text.cache_clear()
         cls.stream.cache_clear()
         cls.skills_catalog.cache_clear()
+        cls.personality_playbook.cache_clear()
 
     @classmethod
     def _resolve_path(cls, relative_path: str, *, locale: str | None, extension: str | None) -> Path:

@@ -86,3 +86,35 @@ def test_resend_creates_sibling_branch_path():
 
     assert navigation[str(user_branch.id)]["currentIndex"] == 2
     assert navigation[str(user_branch.id)]["total"] == 2
+
+
+def test_build_fork_path_includes_assistant_after_user_on_active_branch():
+    root = _message(role="user", content="pergunta", created_offset=0)
+    assistant = _message(
+        role="assistant",
+        content="resposta",
+        parent_message_id=root.id,
+        created_offset=1,
+    )
+    user_question = _message(
+        role="user",
+        content="refine",
+        parent_message_id=assistant.id,
+        created_offset=2,
+    )
+    user_answer = _message(
+        role="assistant",
+        content="refine ok",
+        parent_message_id=user_question.id,
+        created_offset=3,
+    )
+    messages = [root, assistant, user_question, user_answer]
+
+    path = ChatMessageBranchService.build_fork_path(
+        messages,
+        user_question.id,
+        user_answer.id,
+    )
+
+    assert [item.role for item in path] == ["user", "assistant", "user", "assistant"]
+    assert path[-1].content == "refine ok"

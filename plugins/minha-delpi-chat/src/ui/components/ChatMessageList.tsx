@@ -867,13 +867,17 @@ export function ChatMessageList({
   }, []);
 
   async function handleSaveAndResend(messageId: string) {
-    const updated = await onEditAndResendMessage?.(messageId, editingContent);
+    const content = editingContent.trim();
 
-    if (updated) {
-      setEditingMessageId(null);
-      setEditingContent("");
-      setEditingCardMinWidthPx(null);
+    if (!content || !onEditAndResendMessage) {
+      return;
     }
+
+    setEditingMessageId(null);
+    setEditingContent("");
+    setEditingCardMinWidthPx(null);
+
+    await onEditAndResendMessage(messageId, content);
   }
 
   function startEditMessage(message: ChatMessage) {

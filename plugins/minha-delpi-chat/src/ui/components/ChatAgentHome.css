@@ -48,6 +48,15 @@
   padding: 0.24rem 0.55rem;
 }
 
+.mdc-chat-agent-home__icebreakers-hint {
+  grid-column: 1 / -1;
+  margin: 0 0 0.25rem;
+  color: var(--mdc-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .mdc-chat-agent-home__icebreakers {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

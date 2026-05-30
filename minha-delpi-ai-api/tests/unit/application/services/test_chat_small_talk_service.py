@@ -37,7 +37,11 @@ def test_small_talk_direct_answer_platform():
     )
 
     assert answer
-    assert "ajudar" in answer.lower()
+    lowered = answer.lower()
+    assert any(
+        token in lowered
+        for token in ("ajudar", "resolver", "perguntar", "olá", "oi", "pronto")
+    )
 
 
 def test_small_talk_direct_answer_agent():
@@ -69,7 +73,11 @@ def test_apology_direct_answer():
     )
 
     assert answer
-    assert "sem problemas" in answer.lower()
+    lowered = answer.lower()
+    assert any(
+        token in lowered
+        for token in ("sem problemas", "tranquilo", "tudo bem", "reformular")
+    )
 
 
 def test_praise_direct_answer():
@@ -79,4 +87,18 @@ def test_praise_direct_answer():
     )
 
     assert answer
-    assert "bom" in answer.lower()
+    lowered = answer.lower()
+    assert any(token in lowered for token in ("bom", "boa", "show", "feliz", "detalhar"))
+
+
+def test_small_talk_variants_are_stable():
+    first = ChatSmallTalkService.build_direct_answer(
+        message="ola",
+        workspace_context={},
+    )
+    second = ChatSmallTalkService.build_direct_answer(
+        message="ola",
+        workspace_context={},
+    )
+
+    assert first == second

@@ -122,7 +122,6 @@ export function ChatPage({
     isLoadingSessions,
     isLoadingArchivedSessions,
     isLoadingMessages,
-    isComposerBusy,
     isStreamingActiveSession,
     isPlaybackActive,
     isSessionProcessing,
@@ -947,6 +946,17 @@ export function ChatPage({
     await sendMessage({ content: trimmed });
   }
 
+  async function handleHomeStarter(query: string) {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    setDraft("");
+    await sendMessage({ content: trimmed });
+  }
+
   const hasActiveConversation =
     messages.length > 0 ||
     isStreamingActiveSession ||
@@ -972,22 +982,26 @@ export function ChatPage({
     }
 
     if (selectedProject && contextAgent) {
-      return `Novo chat em ${selectedProject.name} usando ${contextAgent.name}`;
+      return `Pergunte sobre ${selectedProject.name} com ${contextAgent.name}`;
     }
 
     if (selectedProject) {
-      return `Novo chat em ${selectedProject.name}`;
+      return `Pergunte sobre ${selectedProject.name} ou envie um arquivo`;
     }
 
     if (contextAgent) {
-      return `Pergunte usando ${contextAgent.name}`;
+      return `Código, descrição ou pergunta — ${contextAgent.name} consulta dados autorizados`;
     }
 
     if (conversationAgent) {
       return `Pergunte ao agente ${conversationAgent.name}`;
     }
 
-    return "Pergunte alguma coisa";
+    if (activeAgentPage) {
+      return `Converse com ${activeAgentPage.name} — código, descrição ou pergunta`;
+    }
+
+    return "O que vamos resolver hoje? Pode perguntar do seu jeito.";
   }
 
   async function handleSelectContextAgent(agentId: string | null) {
@@ -1455,7 +1469,7 @@ export function ChatPage({
                     <ChatInput
                       value={draft}
                       disabled={false}
-                      isSending={isComposerBusy}
+                      isSending={isStreamingActiveSession}
                       variant="center"
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
@@ -1487,13 +1501,16 @@ export function ChatPage({
                       }}
                     />
                   ) : (
-                    <ChatEmptyState displayName={userDisplayName} />
+                    <ChatEmptyState
+                      displayName={userDisplayName}
+                      onUseStarter={handleHomeStarter}
+                    />
                   )}
 
                   <ChatInput
                     value={draft}
                     disabled={false}
-                    isSending={isComposerBusy}
+                    isSending={isStreamingActiveSession}
                     variant="center"
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
@@ -1537,7 +1554,7 @@ export function ChatPage({
               <ChatInput
                 value={draft}
                 disabled={false}
-                isSending={isComposerBusy}
+                isSending={isStreamingActiveSession}
                 variant="dock"
                 placeholder={getComposerPlaceholder()}
                 {...composerAttachmentProps}

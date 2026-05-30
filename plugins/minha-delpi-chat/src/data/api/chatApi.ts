@@ -277,6 +277,15 @@ async function consumeChatMessageStream(
 
   try {
   while (true) {
+    if (signal?.aborted) {
+      try {
+        await reader.cancel();
+      } catch {
+        // ignore cancel errors
+      }
+      return;
+    }
+
     const { value, done } = await reader.read();
 
     if (done) {
@@ -289,6 +298,9 @@ async function consumeChatMessageStream(
     buffer = parts.pop() ?? "";
 
     for (const part of parts) {
+      if (signal?.aborted) {
+        return;
+      }
       const lines = part.split("\n");
       const event = lines
         .find((line) => line.startsWith("event:"))

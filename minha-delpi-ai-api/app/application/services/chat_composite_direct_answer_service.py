@@ -109,13 +109,21 @@ class ChatCompositeDirectAnswerService:
         parts: list[str] = []
 
         if len(executions) > 1:
-            parts.append(
-                ExternalActionResponseContentService.format(
-                    "composite",
-                    "multiExecutionSummary",
-                    count=len(executions),
+            if not issues:
+                parts.append(
+                    ExternalActionResponseContentService.get(
+                        "composite",
+                        "allSuccessful",
+                    )
                 )
-            )
+            else:
+                parts.append(
+                    ExternalActionResponseContentService.format(
+                        "composite",
+                        "multiExecutionSummary",
+                        count=len(executions),
+                    )
+                )
             parts.append("")
 
         parts.extend(sections)
