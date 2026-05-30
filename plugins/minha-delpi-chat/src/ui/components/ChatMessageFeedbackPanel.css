@@ -1,0 +1,42 @@
+.mdc-chat-feedback-note {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.mdc-chat-feedback-reasons {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin-top: var(--mdc-space-2);
+}
+
+.mdc-chat-feedback-reasons__hint {
+  margin: 0;
+  color: var(--mdc-muted);
+  font-size: 0.86rem;
+}
+
+.mdc-chat-feedback-reasons__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-feedback-reasons__chip {
+  border: 1px solid var(--mdc-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  color: var(--mdc-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.mdc-chat-feedback-reasons__chip--ghost {
+  color: var(--mdc-muted);
+}
+
+.mdc-chat-feedback-reasons__chip:hover {
+  border-color: var(--mdc-accent, #3b82f6);
+}

@@ -16,7 +16,13 @@ def _playbook() -> dict[str, Any]:
 
 class ChatPersonalityContentService:
     @classmethod
-    def pick_phrase(cls, group: str, *, seed: str = "") -> str:
+    def pick_phrase(
+        cls,
+        group: str,
+        *,
+        seed: str = "",
+        humor_level: int | None = None,
+    ) -> str:
         phrases = (_playbook().get("phrases") or {}).get(group) or []
 
         if not isinstance(phrases, list) or not phrases:
@@ -27,10 +33,17 @@ class ChatPersonalityContentService:
         if not cleaned:
             return ""
 
+        if humor_level is not None and humor_level <= 0 and group in {"success", "beforeTool"}:
+            return cleaned[0]
+
         if len(cleaned) == 1:
             return cleaned[0]
 
         index = zlib.adler32(seed.encode("utf-8")) % len(cleaned)
+
+        if humor_level is not None and humor_level <= 1 and len(cleaned) > 1:
+            index = index % min(2, len(cleaned))
+
         return cleaned[index]
 
     @classmethod

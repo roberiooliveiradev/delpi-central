@@ -286,6 +286,7 @@ class ChatTurnPreparationService:
         small_talk_direct = ChatSmallTalkService.build_direct_answer(
             message=message,
             workspace_context=workspace_context,
+            previous_messages=history_source,
         )
         utility_direct = ChatUtilityDirectAnswerService.build_direct_answer(
             message=message,

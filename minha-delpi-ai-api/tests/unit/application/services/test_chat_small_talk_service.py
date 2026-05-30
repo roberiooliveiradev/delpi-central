@@ -91,6 +91,33 @@ def test_praise_direct_answer():
     assert any(token in lowered for token in ("bom", "boa", "show", "feliz", "detalhar"))
 
 
+def test_closure_includes_follow_up_hint_from_previous_assistant():
+    class _Msg:
+        def __init__(self, role: str, metadata: dict):
+            self.role = role
+            self.metadata = metadata
+
+    answer = ChatSmallTalkService.build_direct_answer(
+        message="era isso",
+        workspace_context={},
+        previous_messages=[
+            _Msg(
+                "assistant",
+                {
+                    "followUpSuggestions": [
+                        {"label": "Ver estoque", "query": "estoque 10080001"},
+                        {"label": "Ver vendas", "query": "vendas 10080001"},
+                    ],
+                },
+            ),
+        ],
+    )
+
+    assert answer
+    assert "continuar" in answer.lower()
+    assert "estoque" in answer.lower()
+
+
 def test_small_talk_variants_are_stable():
     first = ChatSmallTalkService.build_direct_answer(
         message="ola",

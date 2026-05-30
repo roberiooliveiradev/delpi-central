@@ -11,6 +11,30 @@
     "2": "leve e descontraído",
     "3": "bem-humorado moderado"
   },
+  "defaultPersonality": {
+    "tone": "amigável e bem-humorado com moderação",
+    "humorLevel": 2,
+    "emojiLevel": 0,
+    "proactivity": true,
+    "suggestFollowUps": true
+  },
+  "feedbackReasons": [
+    { "id": "wrong_data", "label": "Dado incorreto" },
+    { "id": "no_answer", "label": "Não respondeu" },
+    { "id": "missing_source", "label": "Faltou fonte" },
+    { "id": "bad_format", "label": "Formato ruim" },
+    { "id": "too_long", "label": "Muito longo" },
+    { "id": "too_short", "label": "Muito curto" },
+    { "id": "wrong_query", "label": "Consulta errada" }
+  ],
+  "feedbackThanks": {
+    "up": [
+      "Boa! Obrigado pelo retorno — isso ajuda a melhorar as respostas.",
+      "Que bom! Se quiser, sigo com outra consulta.",
+      "Valeu! Estou por aqui."
+    ],
+    "downPrompt": "Obrigado pelo aviso. O que faltou nesta resposta?"
+  },
   "defaultRules": [
     "Não inventar dados operacionais.",
     "Não brincar com erro, permissão ou alerta crítico.",
@@ -36,7 +60,31 @@
     "product": ["Ver estoque", "Ver fornecedores", "Ver estrutura", "Ver vendas", "Onde é usado?"],
     "stock": ["Ver fornecedores", "Ver compras", "Ver vendas recentes", "Analisar risco"],
     "sales": ["Gerar gráfico", "Agrupar por cliente", "Comparar período", "Ver notas fiscais"],
-    "empty": ["Tentar por descrição", "Ampliar período", "Verificar código", "O que você pode fazer?"]
+    "empty": ["Tentar por descrição", "Ampliar período", "Verificar código", "O que você pode fazer?"],
+    "error": ["Refinar o pedido", "Verificar código", "O que você pode fazer?"],
+    "warning": ["Detalhar por filial", "Comparar período", "Verificar código"],
+    "generic": ["O que você pode fazer?", "Consultar produto", "Ver estoque"]
+  },
+  "followUpQueries": {
+    "Ver estoque": "qual o estoque do produto {product_code}?",
+    "Ver fornecedores": "quem fornece o produto {product_code}?",
+    "Ver estrutura": "mostre a estrutura do produto {product_code}",
+    "Ver vendas": "mostre vendas do produto {product_code}",
+    "Onde é usado?": "onde o produto {product_code} é usado?",
+    "Ver compras": "mostre compras do produto {product_code}",
+    "Ver vendas recentes": "vendas dos últimos 30 dias do produto {product_code}",
+    "Analisar risco": "há risco de falta do produto {product_code}?",
+    "Gerar gráfico": "gere um gráfico com os dados acima",
+    "Agrupar por cliente": "agrupa por cliente",
+    "Comparar período": "compare com o mês anterior",
+    "Ver notas fiscais": "mostre notas fiscais relacionadas",
+    "Tentar por descrição": "busque produto por descrição",
+    "Ampliar período": "amplie o período da consulta",
+    "Verificar código": "me fale do produto 10080001",
+    "O que você pode fazer?": "o que você pode fazer?",
+    "Refinar o pedido": "pode detalhar o resultado anterior?",
+    "Detalhar por filial": "detalhe por filial",
+    "Consultar produto": "me fale do produto 10080001"
   },
   "phrases": {
     "start": [

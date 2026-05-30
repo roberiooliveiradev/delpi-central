@@ -17,6 +17,7 @@ class AiChatMessageFeedbackModel(db.Model):
     )
     user_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
     rating = db.Column(db.SmallInteger, nullable=False)
+    reason = db.Column(db.String(64), nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

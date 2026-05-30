@@ -680,6 +680,8 @@ export function ChatAgentBuilderPage({
 
   function buildPreviewDraft() {
     const normalizedName = name.trim();
+    const existingPersonality =
+      (agent?.metadata?.personality as Record<string, unknown> | undefined) ?? {};
 
     return {
       name: normalizedName || "Novo agente",
@@ -693,6 +695,16 @@ export function ChatAgentBuilderPage({
       metadata: {
         ...(agent?.metadata ?? {}),
         icebreakers: normalizedIcebreakers,
+        personality: {
+          tone:
+            (existingPersonality.tone as string | undefined) ??
+            "amigável e bem-humorado com moderação",
+          humorLevel: (existingPersonality.humorLevel as number | undefined) ?? 2,
+          emojiLevel: (existingPersonality.emojiLevel as number | undefined) ?? 0,
+          proactivity: (existingPersonality.proactivity as boolean | undefined) ?? true,
+          suggestFollowUps:
+            (existingPersonality.suggestFollowUps as boolean | undefined) ?? true,
+        },
         allowed_actions: allowedActions,
         capabilities: {
           ...capabilities,
@@ -869,6 +881,9 @@ export function ChatAgentBuilderPage({
       return null;
     }
 
+    const existingPersonality =
+      (agent?.metadata?.personality as Record<string, unknown> | undefined) ?? {};
+
     return {
       name: normalizedName,
       description: description.trim() || null,
@@ -880,6 +895,16 @@ export function ChatAgentBuilderPage({
       metadata: {
         ...(agent?.metadata ?? {}),
         icebreakers: normalizedIcebreakers,
+        personality: {
+          tone:
+            (existingPersonality.tone as string | undefined) ??
+            "amigável e bem-humorado com moderação",
+          humorLevel: (existingPersonality.humorLevel as number | undefined) ?? 2,
+          emojiLevel: (existingPersonality.emojiLevel as number | undefined) ?? 0,
+          proactivity: (existingPersonality.proactivity as boolean | undefined) ?? true,
+          suggestFollowUps:
+            (existingPersonality.suggestFollowUps as boolean | undefined) ?? true,
+        },
         allowed_actions: allowedActions,
         capabilities: {
           ...capabilities,

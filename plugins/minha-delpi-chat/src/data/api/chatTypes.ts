@@ -186,11 +186,26 @@ export type ChatMessageBranch = {
   siblingIds: string[];
 };
 
+export type ChatFollowUpSuggestion = {
+  label: string;
+  query: string;
+};
+
 export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];
   canvasOpen?: ChatCanvasOpenPayload | null;
   webSearchResearch?: ChatWebSearchResearch | null;
+  followUpSuggestions?: ChatFollowUpSuggestion[];
+  followUpOutcome?: string;
+  personality?: {
+    tone?: string;
+    humorLevel?: number;
+    emojiLevel?: number;
+    proactivity?: boolean;
+    suggestFollowUps?: boolean;
+    riskLevel?: number;
+  };
   rag?: {
     enabled?: boolean;
     sourceCount?: number;
@@ -207,6 +222,7 @@ export type ChatMessage = {
   metadata: ChatMessageMetadata | null;
   created_at: string;
   user_feedback?: -1 | 1 | null;
+  user_feedback_reason?: string | null;
   parent_message_id?: string | null;
   branch?: ChatMessageBranch | null;
 };
@@ -215,6 +231,8 @@ export type ChatMessageFeedbackResponse = {
   messageId: string;
   userId: string;
   rating: -1 | 1;
+  reason?: string;
+  thanksMessage?: string;
   createdAt: string;
   updatedAt: string;
 } | {

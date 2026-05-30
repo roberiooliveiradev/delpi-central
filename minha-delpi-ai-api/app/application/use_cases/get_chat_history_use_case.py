@@ -64,6 +64,11 @@ class GetChatHistoryUseCase:
                     if message.role == "assistant"
                     else None
                 ),
+                user_feedback_reason=(
+                    feedback_map.get(str(message.id), {}).get("reason")
+                    if message.role == "assistant"
+                    else None
+                ),
             )
             for message in active_path
         ]

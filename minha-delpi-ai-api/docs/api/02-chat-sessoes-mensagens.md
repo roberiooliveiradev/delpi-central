@@ -36,6 +36,8 @@
 | Campo | Descrição |
 |-------|-----------|
 | `user_feedback` | Presente em mensagens `assistant` do histórico do usuário: `1` (útil), `-1` (não útil) ou omitido/`null` se não avaliada. |
+| `user_feedback_reason` | Motivo estruturado do thumbs down (ex.: `incomplete`, `wrong_data`), quando informado. IDs válidos vêm de `personality_playbook.json` → `feedbackReasons`. |
+| `branch` | Em perguntas `user` com variações (irmãs): `{ currentIndex, total, siblingIds }` para navegação « 1 / N ». |
 | `adminDebug` | Diagnóstico do turno (pipeline, RAG, tools, LLM). **Persistido** em toda mensagem `assistant`; **retornado** no JSON só para admin (ver abaixo). |
 
 ### `metadata.adminDebug` (diagnóstico de turno)
@@ -80,7 +82,7 @@ Cria uma sessão.
 }
 ```
 
-`forkFromSessionId` + `forkUntilMessageId` — **continuar daqui**: nova sessão com histórico copiado até a mensagem indicada (contexto acima preservado).
+`forkFromSessionId` + `forkUntilMessageId` — **continuar daqui**: nova sessão com histórico copiado até a mensagem indicada (contexto acima preservado). Se o ponto de corte for uma **pergunta user** e já existir **resposta assistant** no ramo ativo da sessão de origem, a resposta também é copiada (evita conversa “travada” aguardando resposta). Mensagens copiadas recebem `metadata.delivery.status = ready`.
 
 ### Resposta `201`
 
@@ -182,9 +184,19 @@ Cada mensagem forma uma **árvore** via `parent_message_id`. A sessão guarda `a
 | Ação | Comportamento |
 |------|----------------|
 | **Envio normal** | Nova mensagem user com `parent` = folha ativa; resposta assistant filha do user; folha avança. |
-| **Editar e reenviar** | Cria **nova** mensagem user irmã (mesmo `parent`); ramo anterior permanece; folha segue o novo ramo. |
+| **Editar e reenviar** | Cria **nova** mensagem user irmã (mesmo `parent`); ramo anterior permanece; folha segue o novo ramo. A pergunta da variação é persistida e commitada **no início** do stream (`user_persisted`), como no envio normal. |
 | **Alternar variação** | `PATCH .../active-branch` com `anchorUserMessageId` (pergunta user do ramo desejado). |
-| **Continuar daqui** | `POST /chat/sessions` com `forkFromSessionId` + `forkUntilMessageId` → **nova conversa** com histórico copiado até a mensagem. |
+| **Continuar daqui** | `POST /chat/sessions` com `forkFromSessionId` + `forkUntilMessageId` → **nova conversa** (não abre branch na mesma sessão). |
+| **Cancelar stream** | Cliente aborta o SSE; pergunta já commitada permanece no banco. Reenviar usa o `messageId` da pergunta **âncora** (original ou variação), mesmo que ela não esteja no caminho ativo exibido. |
+
+### UI (plugin `minha-delpi-chat`)
+
+| Elemento | Comportamento |
+|----------|----------------|
+| Setas **1 / N** | Em perguntas user com irmãos; alterna ramo via `PATCH .../active-branch`. |
+| **Continuar daqui** | Ícone de branch em user e assistant; abre nova sessão (fork). |
+| **Editar e reenviar** | Card de edição fecha ao enviar; IDs `optimistic-*` bloqueados até `user_persisted`. |
+| **Parar** | Aborta SSE, recarrega histórico e limpa UI de streaming/playback. |
 
 `GET .../messages` retorna só o **caminho ativo** (raiz → folha). Perguntas user com irmãos incluem:
 
@@ -197,6 +209,10 @@ Cada mensagem forma uma **árvore** via `parent_message_id`. A sessão guarda `a
 ## POST `/chat/sessions/{sessionId}/messages/{messageId}/resend/stream`
 
 Reenvia uma mensagem do usuário existente com streaming SSE — abre **nova variação (branch)**, sem apagar histórico anterior.
+
+O path `{messageId}` é a pergunta **âncora** (user) a partir da qual se cria a variação irmã. Pode ser uma pergunta fora do caminho ativo (ex.: variação anterior após trocar ramo).
+
+A **nova** pergunta da variação é criada e commitada **antes** do prepare (`user_persisted`), igual ao envio normal — cancelar o stream após parar não perde a pergunta no banco.
 
 ### Permissão
 
@@ -267,7 +283,9 @@ Mesmo de envio normal:
 
 Fluxo típico com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default):
 
-A pergunta fica persistida e commitada **antes** do prepare (tools/RAG). O plugin substitui mensagens `optimistic-*` ao receber `user_persisted`. Recarregar o histórico mid-stream já mostra a pergunta do usuário.
+A pergunta fica persistida e commitada **antes** do prepare (tools/RAG) — tanto no **envio normal** quanto no **reenvio** (`resend/stream`). O plugin substitui mensagens `optimistic-*` ao receber `user_persisted`. Recarregar o histórico mid-stream já mostra a pergunta do usuário.
+
+Após respostas operacionais, `metadata.followUpSuggestions` pode trazer chips de « Próximos passos » (playbook `personality_playbook.json`); desabilitável por agente via `metadata.personality.suggestFollowUps`.
 
 ```text
 event: user_persisted
@@ -454,9 +472,15 @@ Registra ou remove feedback do usuário em uma mensagem do **assistente**.
 
 ```json
 {
-  "rating": 1
+  "rating": 1,
+  "reason": "incomplete"
 }
 ```
+
+| Campo | Descrição |
+|-------|-----------|
+| `rating` | Ver tabela abaixo |
+| `reason` | Opcional; só aplicável com `rating: -1`. ID estruturado do playbook (`feedbackReasons`). Omitir ou `null` remove o motivo. |
 
 | `rating` | Comportamento |
 |----------|----------------|
@@ -472,7 +496,8 @@ Com rating:
 {
   "messageId": "uuid",
   "userId": "uuid",
-  "rating": 1,
+  "rating": -1,
+  "reason": "incomplete",
   "createdAt": "datetime",
   "updatedAt": "datetime"
 }
@@ -493,7 +518,7 @@ Ao remover:
 | `400` | Mensagem inexistente na sessão, não é `assistant`, ou `rating` inválido |
 | `403` | Sessão de outro usuário |
 
-Persistência: tabela `ai_chat_message_feedback` (único por `message_id` + `user_id`).
+Persistência: tabela `ai_chat_message_feedback` (único por `message_id` + `user_id`; coluna opcional `reason`, migração `n6o7p8q9r0s1`).
 
 ---
 

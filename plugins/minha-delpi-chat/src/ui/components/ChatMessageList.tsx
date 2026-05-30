@@ -28,6 +28,8 @@ import {
 } from "./chatMessageTimeline";
 import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
+import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
+import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
@@ -77,7 +79,11 @@ type ChatMessageListProps = {
   ) => Promise<ChatMessage | null>;
   onReuseMessage?: (content: string) => void;
   onDrillDown?: (query: string) => void;
-  onMessageFeedback?: (messageId: string, rating: -1 | 1 | null) => Promise<void>;
+  onMessageFeedback?: (
+    messageId: string,
+    rating: -1 | 1 | null,
+    reason?: string | null,
+  ) => Promise<{ thanksMessage?: string } | void>;
   onDownloadAttachment?: (attachmentId: string) => Promise<void>;
   onSwitchMessageBranch?: (anchorUserMessageId: string) => Promise<void>;
   onContinueFromMessage?: (messageId: string) => Promise<void>;
@@ -460,6 +466,12 @@ export function ChatMessageList({
   onOpenCanvas,
   lastSentUserText = "",
 }: ChatMessageListProps) {
+  const [feedbackThanksByMessageId, setFeedbackThanksByMessageId] = useState<
+    Record<string, string>
+  >({});
+  const [feedbackReasonPickerFor, setFeedbackReasonPickerFor] = useState<string | null>(
+    null,
+  );
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
@@ -481,6 +493,20 @@ export function ChatMessageList({
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [enteringAssistantId, setEnteringAssistantId] = useState<string | null>(null);
   const settleAnimationTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!editingMessageId) {
+      return;
+    }
+
+    const stillVisible = messages.some((message) => message.id === editingMessageId);
+
+    if (!stillVisible) {
+      setEditingMessageId(null);
+      setEditingContent("");
+      setEditingCardMinWidthPx(null);
+    }
+  }, [editingMessageId, messages]);
 
   const timelineItems = useMemo(() => buildChatTimelineItems(messages), [messages]);
   const latestUserMessageId = useMemo(() => {
@@ -996,7 +1022,7 @@ export function ChatMessageList({
                     className="mdc-chat-message-action"
                     type="button"
                     onClick={() => startEditMessage(message)}
-                    disabled={Boolean(isStreaming)}
+                    disabled={Boolean(isStreaming) || isPending}
                     aria-label="Editar mensagem"
                     title="Editar e reenviar (nova variação)"
                   >
@@ -1089,12 +1115,37 @@ export function ChatMessageList({
                     type="button"
                     aria-label="Resposta útil"
                     title="Resposta útil"
-                    onClick={() =>
-                      void onMessageFeedback?.(
-                        message.id,
-                        message.user_feedback === 1 ? null : 1,
-                      )
-                    }
+                    onClick={() => {
+                      void (async () => {
+                        if (!onMessageFeedback) {
+                          return;
+                        }
+
+                        if (message.user_feedback === 1) {
+                          await onMessageFeedback(message.id, null);
+                          setFeedbackThanksByMessageId((current) => {
+                            const next = { ...current };
+                            delete next[message.id];
+                            return next;
+                          });
+                          return;
+                        }
+
+                        const result = await onMessageFeedback(message.id, 1);
+                        const thanksMessage =
+                          result && "thanksMessage" in result
+                            ? result.thanksMessage
+                            : undefined;
+
+                        if (thanksMessage) {
+                          setFeedbackThanksByMessageId((current) => ({
+                            ...current,
+                            [message.id]: thanksMessage,
+                          }));
+                          setFeedbackReasonPickerFor(null);
+                        }
+                      })();
+                    }}
                   >
                     <ThumbsUp size={15} aria-hidden="true" />
                   </button>
@@ -1106,12 +1157,32 @@ export function ChatMessageList({
                     type="button"
                     aria-label="Resposta não útil"
                     title="Resposta não útil"
-                    onClick={() =>
-                      void onMessageFeedback?.(
-                        message.id,
-                        message.user_feedback === -1 ? null : -1,
-                      )
-                    }
+                    onClick={() => {
+                      void (async () => {
+                        if (!onMessageFeedback) {
+                          return;
+                        }
+
+                        if (message.user_feedback === -1) {
+                          await onMessageFeedback(message.id, null);
+                          setFeedbackReasonPickerFor(null);
+                          setFeedbackThanksByMessageId((current) => {
+                            const next = { ...current };
+                            delete next[message.id];
+                            return next;
+                          });
+                          return;
+                        }
+
+                        await onMessageFeedback(message.id, -1);
+                        setFeedbackReasonPickerFor(message.id);
+                        setFeedbackThanksByMessageId((current) => {
+                          const next = { ...current };
+                          delete next[message.id];
+                          return next;
+                        });
+                      })();
+                    }}
                   >
                     <ThumbsDown size={15} aria-hidden="true" />
                   </button>
@@ -1207,6 +1278,25 @@ export function ChatMessageList({
                 <ChatSources
                   sources={filterVisibleChatSources(getMessageSources(message))}
                   webSearchResearch={getWebSearchResearch(message)}
+                />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.followUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                />
+                <ChatMessageFeedbackPanel
+                  thanksMessage={feedbackThanksByMessageId[message.id]}
+                  showReasonPicker={feedbackReasonPickerFor === message.id}
+                  onPickReason={(reasonId) => {
+                    void (async () => {
+                      await onMessageFeedback?.(message.id, -1, reasonId);
+                      setFeedbackReasonPickerFor(null);
+                    })();
+                  }}
+                  onDismissReasons={() => setFeedbackReasonPickerFor(null)}
                 />
               </>
             ) : null}

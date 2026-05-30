@@ -55,6 +55,10 @@ type UseChatSessionOptions = {
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
 
+function isPersistedChatMessageId(messageId: string): boolean {
+  return !messageId.startsWith("optimistic-") && /^[0-9a-f-]{36}$/i.test(messageId);
+}
+
 function createOptimisticUserMessage(
   sessionId: string,
   content: string,
@@ -431,14 +435,24 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   );
 
   const setMessageFeedback = useCallback(
-    async (messageId: string, rating: -1 | 1 | null) => {
+    async (
+      messageId: string,
+      rating: -1 | 1 | null,
+      reason?: string | null,
+    ): Promise<{ thanksMessage?: string } | void> => {
       if (!activeSession) {
         return;
       }
 
-      await upsertChatMessageFeedback(activeSession.id, messageId, rating, {
-        getAccessToken: options.getAccessToken,
-      });
+      const result = await upsertChatMessageFeedback(
+        activeSession.id,
+        messageId,
+        rating,
+        {
+          getAccessToken: options.getAccessToken,
+        },
+        reason,
+      );
 
       setMessages((current) =>
         current.map((message) =>
@@ -446,10 +460,20 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             ? {
                 ...message,
                 user_feedback: rating,
+                user_feedback_reason:
+                  rating === -1 && reason
+                    ? reason
+                    : rating === null
+                      ? null
+                      : message.user_feedback_reason,
               }
             : message,
         ),
       );
+
+      if (result && "thanksMessage" in result && result.thanksMessage) {
+        return { thanksMessage: result.thanksMessage };
+      }
     },
     [activeSession, options.getAccessToken],
   );
@@ -937,16 +961,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return null;
       }
 
-      const messageIndex = messages.findIndex((message) => message.id === messageId);
-
-      if (messageIndex < 0) {
-        setError("Mensagem não encontrada.");
+      if (!isPersistedChatMessageId(messageId)) {
+        setError("Aguarde a pergunta ser salva antes de reenviar.");
         return null;
       }
 
-      const targetMessage = messages[messageIndex];
+      const targetMessage = messages.find((message) => message.id === messageId);
 
-      if (targetMessage.role !== "user" || targetMessage.id.startsWith("optimistic-")) {
+      if (targetMessage && targetMessage.role !== "user") {
         setError("Somente perguntas do usuário podem ser reenviadas.");
         return null;
       }
@@ -980,8 +1002,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           session_id: activeSession.id,
           role: "user" as const,
           content: normalizedContent,
-          metadata: targetMessage.metadata,
-          created_at: targetMessage.created_at,
+          metadata: targetMessage?.metadata ?? null,
+          created_at: targetMessage?.created_at ?? new Date().toISOString(),
         };
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") {

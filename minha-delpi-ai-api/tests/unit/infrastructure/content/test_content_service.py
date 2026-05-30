@@ -34,6 +34,8 @@ def test_personality_playbook_content():
     playbook = ContentService.personality_playbook()
     assert playbook.get("persona", {}).get("goldenRule")
     assert len(playbook.get("homeStarters") or []) >= 4
+    assert len(playbook.get("feedbackReasons") or []) >= 5
+    assert playbook.get("followUpQueries", {}).get("Ver estoque")
 
 
 def test_load_external_action_responses():

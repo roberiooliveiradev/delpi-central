@@ -113,3 +113,84 @@ def test_stream_emits_user_persisted_before_prepare_activity(monkeypatch):
     assert user_create_call.kwargs["content"] == request.message
 
     chat_repository.patch_message_metadata.assert_called_once()
+
+
+def test_resend_emits_user_persisted_before_prepare(monkeypatch):
+    session = _session()
+    anchor_id = uuid4()
+    anchor = ChatMessage(
+        id=anchor_id,
+        session_id=session.id,
+        role="user",
+        content="ola",
+        metadata=None,
+        created_at=datetime.now(timezone.utc),
+        parent_message_id=None,
+    )
+    branch_user = MagicMock()
+    branch_user.id = uuid4()
+    assistant_message = MagicMock()
+    assistant_message.id = uuid4()
+
+    chat_repository = MagicMock()
+    chat_repository.get_session_by_id.return_value = session
+    chat_repository.get_user_message_for_user.return_value = anchor
+    chat_repository.list_all_messages_by_session.return_value = [anchor]
+    chat_repository.create_message.side_effect = [branch_user, assistant_message]
+    chat_repository.update_assistant_message.return_value = assistant_message
+
+    workspace_context_service = MagicMock()
+    workspace_context_service.build_context.return_value = {
+        "project": None,
+        "agent": None,
+        "projectPrompt": None,
+        "agentPrompt": None,
+        "agentId": None,
+        "allowedActionIds": [],
+        "capabilities": {},
+        "specialization": None,
+    }
+
+    llm_gateway = MagicMock()
+    llm_gateway.stream.return_value = iter(["Resposta ", "editada."])
+
+    rag_context_service = MagicMock()
+    rag_context_service.build_context.return_value = {"context": "", "sources": []}
+
+    chat_tool_context_service = MagicMock()
+    chat_tool_context_service.build_context.return_value = {
+        "context": "",
+        "toolCalls": [],
+        "directAnswer": None,
+        "skipRag": False,
+    }
+
+    message_security_service = MagicMock()
+    message_security_service.secure_message.side_effect = lambda message, **_: message
+
+    use_case = StreamChatMessageUseCase(
+        chat_repository=chat_repository,
+        audit_repository=MagicMock(),
+        message_security_service=message_security_service,
+        llm_gateway=llm_gateway,
+        prompt_policy_service=MagicMock(),
+        rag_context_service=rag_context_service,
+        chat_tool_context_service=chat_tool_context_service,
+        workspace_context_service=workspace_context_service,
+    )
+
+    request = SendChatMessageRequest(
+        user_id=str(session.user_id),
+        session_id=str(session.id),
+        message="ola editado",
+        access_token=None,
+        resend_from_message_id=str(anchor_id),
+    )
+
+    events = list(use_case.stream(request))
+    event_types = [event.get("type") for event in events]
+
+    assert event_types.index("user_persisted") < event_types.index("activity")
+    assert chat_repository.create_message.call_args_list[0].kwargs["role"] == "user"
+    assert chat_repository.create_message.call_args_list[0].kwargs["content"] == "ola editado"
+    chat_repository.set_active_leaf_message_id.assert_called()

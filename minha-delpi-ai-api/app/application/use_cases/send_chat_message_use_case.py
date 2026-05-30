@@ -376,6 +376,18 @@ class SendChatMessageUseCase:
                 "sourceMessageId": canvas_open_payload.source_message_id,
             }
 
+        from app.application.services.chat_personality_metadata_service import (
+            ChatPersonalityMetadataService,
+        )
+
+        ChatPersonalityMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+            answer=answer,
+            tool_calls=tool_calls,
+            workspace_context=workspace_context,
+        )
+
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
             role="assistant",

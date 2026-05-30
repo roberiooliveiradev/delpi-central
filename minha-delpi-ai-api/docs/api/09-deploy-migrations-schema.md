@@ -92,7 +92,7 @@ docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
 | `ai_chat_agent_actions` | Overrides de rotas/actions por agente. |
 | `ai_external_action_test_logs` | Logs de teste de rotas/actions. |
 | `ai_chat_attachments` | Anexos de chat. |
-| `ai_chat_message_feedback` | Thumbs up/down por mensagem e usuário. |
+| `ai_chat_message_feedback` | Thumbs up/down por mensagem e usuário; coluna opcional `reason` (motivo estruturado do thumbs down). |
 | `ai_admin_runtime_settings` | Configuração runtime (ex.: `llm_cost_table`). |
 | `ai_response_evaluations` | Avaliações admin de respostas. |
 

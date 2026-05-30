@@ -2330,6 +2330,7 @@ def upsert_message_feedback(session_id: str, message_id: str):
         return bad_request("Request body must be a JSON object")
 
     rating_raw = payload.get("rating")
+    reason_raw = payload.get("reason")
 
     rating = None
 
@@ -2347,6 +2348,7 @@ def upsert_message_feedback(session_id: str, message_id: str):
             session_id=session_id,
             message_id=message_id,
             rating=rating,
+            reason=str(reason_raw).strip() if reason_raw is not None else None,
         )
         db.session.commit()
     except ValueError as exc:

@@ -136,7 +136,60 @@ class StreamChatMessageUseCase:
         user_message = None
 
         if resend_from_message_id:
-            pass
+            anchor = self.chat_repository.get_user_message_for_user(
+                message_id=UUID(resend_from_message_id),
+                user_id=user_id,
+                session_id=session_id,
+            )
+
+            if not anchor:
+                raise ChatMessageNotFoundError()
+
+            if anchor.session_id != session_id:
+                raise ChatSessionAccessDeniedError()
+
+            siblings = ChatMessageBranchService.list_user_siblings(
+                previous_messages,
+                anchor,
+            )
+
+            user_message = self.chat_repository.create_message(
+                session_id=session_id,
+                role="user",
+                content=message,
+                parent_message_id=anchor.parent_message_id,
+                metadata={
+                    "context": request.context,
+                    "agentId": workspace_context.get("agentId"),
+                    "agent": workspace_context.get("agent"),
+                    "project": workspace_context.get("project"),
+                    "attachments": attachments,
+                    "stream": True,
+                    "branch": {
+                        "forkedFromMessageId": str(anchor.id),
+                        "variantIndex": len(siblings) + 1,
+                    },
+                    "delivery": {"status": "submitted"},
+                },
+            )
+
+            self._attach_files_to_message(
+                request=request,
+                user_id=user_id,
+                session_id=session_id,
+                message_id=user_message.id,
+            )
+
+            self.chat_repository.set_active_leaf_message_id(
+                session_id=session_id,
+                user_id=user_id,
+                message_id=user_message.id,
+            )
+
+            yield {
+                "type": "user_persisted",
+                "messageId": str(user_message.id),
+            }
         else:
             user_message = self.chat_repository.create_message(
                 session_id=session_id,
@@ -219,6 +272,11 @@ class StreamChatMessageUseCase:
             existing_user_message = None
 
             if resend_from_message_id:
+                branch_user_message = context_box.get("user_message")
+
+                if not branch_user_message:
+                    raise ChatMessageNotFoundError()
+
                 anchor = self.chat_repository.get_user_message_for_user(
                     message_id=UUID(resend_from_message_id),
                     user_id=user_id,
@@ -232,28 +290,6 @@ class StreamChatMessageUseCase:
                     raise ChatSessionAccessDeniedError()
 
                 all_messages = self.chat_repository.list_all_messages_by_session(session_id)
-                siblings = ChatMessageBranchService.list_user_siblings(all_messages, anchor)
-
-                branch_user_message = self.chat_repository.create_message(
-                    session_id=session_id,
-                    role="user",
-                    content=message,
-                    parent_message_id=anchor.parent_message_id,
-                    metadata={
-                        "context": request.context,
-                        "agentId": workspace_context.get("agentId"),
-                        "agent": workspace_context.get("agent"),
-                        "project": workspace_context.get("project"),
-                        "attachments": attachments,
-                        "stream": True,
-                        "branch": {
-                            "forkedFromMessageId": str(anchor.id),
-                            "variantIndex": len(siblings) + 1,
-                        },
-                        "delivery": {"status": "submitted"},
-                    },
-                )
-
                 existing_user_message = branch_user_message
                 history_messages = ChatMessageBranchService.build_path_to_message(
                     all_messages,
@@ -369,12 +405,6 @@ class StreamChatMessageUseCase:
                 user_id=user_id,
                 title=self._fallback_title_from_message(message),
             )
-
-        if resend_from_message_id and existing_user_message:
-            yield {
-                "type": "user_persisted",
-                "messageId": str(existing_user_message.id),
-            }
 
         operational_optimize = prepared.operational_optimize
         analysis_mode = prepared.analysis_mode
@@ -635,6 +665,18 @@ class StreamChatMessageUseCase:
                 "markdown": canvas_open_payload.markdown,
                 "sourceMessageId": canvas_open_payload.source_message_id,
             }
+
+        from app.application.services.chat_personality_metadata_service import (
+            ChatPersonalityMetadataService,
+        )
+
+        ChatPersonalityMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=message,
+            answer=answer,
+            tool_calls=tool_calls,
+            workspace_context=workspace_context,
+        )
 
         if persist_before_playback:
             assistant_metadata = ChatMessageDeliveryService.ready_metadata(

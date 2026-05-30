@@ -2,6 +2,7 @@
   "maxMessageLength": 56,
   "exactMatchCategories": ["ack"],
   "categoryPriority": [
+    "closure",
     "wellbeing",
     "thanks",
     "apology",
@@ -154,6 +155,24 @@
       "errei o código",
       "ignore a mensagem anterior"
     ],
+    "closure": [
+      "era isso",
+      "e isso",
+      "so isso",
+      "só isso",
+      "por hoje e so",
+      "por hoje é só",
+      "ate aqui",
+      "até aqui",
+      "e so isso",
+      "e só isso",
+      "ja era isso",
+      "já era isso",
+      "ja respondeu",
+      "já respondeu",
+      "so precisava disso",
+      "só precisava disso"
+    ],
     "praise": [
       "show",
       "show de bola",
@@ -279,6 +298,11 @@
         "Disponha! Posso ajudar com mais alguma coisa.",
         "De nada! É só chamar."
       ],
+      "closure": [
+        "Perfeito! Se quiser continuar, é só perguntar.",
+        "Combinado. Estou por aqui para o próximo passo.",
+        "Beleza! Quando precisar, sigo de onde paramos."
+      ],
       "apology": [
         "Sem problemas! Pode reformular ou enviar o código correto que eu refaço.",
         "Tranquilo — me manda o dado certo que eu consulto de novo.",
@@ -320,6 +344,11 @@
         "Por nada! Se precisar de mais alguma coisa neste agente, é só chamar.",
         "Disponha! Posso cruzar com outra consulta.",
         "De nada! Sigamos se quiser."
+      ],
+      "closure": [
+        "Perfeito! Posso detalhar ou cruzar com outra consulta neste agente.",
+        "Combinado. Seguimos quando quiser.",
+        "Beleza! Estou por aqui no **{agent_name}**."
       ],
       "apology": [
         "Sem problemas! Me diga como posso ajudar neste agente.",

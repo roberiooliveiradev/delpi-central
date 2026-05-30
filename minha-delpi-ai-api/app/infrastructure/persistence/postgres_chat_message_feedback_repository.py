@@ -15,6 +15,7 @@ class PostgresChatMessageFeedbackRepository:
         message_id: UUID,
         user_id: UUID,
         rating: int,
+        reason: str | None = None,
     ) -> dict:
         now = datetime.now(timezone.utc)
         row = (
@@ -26,12 +27,14 @@ class PostgresChatMessageFeedbackRepository:
 
         if row:
             row.rating = rating
+            row.reason = reason
             row.updated_at = now
         else:
             row = AiChatMessageFeedbackModel(
                 message_id=message_id,
                 user_id=user_id,
                 rating=rating,
+                reason=reason,
                 created_at=now,
                 updated_at=now,
             )
@@ -109,10 +112,15 @@ class PostgresChatMessageFeedbackRepository:
         return row.session_id
 
     def _to_dict(self, row: AiChatMessageFeedbackModel) -> dict:
-        return {
+        payload = {
             "messageId": str(row.message_id),
             "userId": str(row.user_id),
             "rating": int(row.rating),
             "createdAt": row.created_at.isoformat(),
             "updatedAt": row.updated_at.isoformat(),
         }
+
+        if row.reason:
+            payload["reason"] = str(row.reason)
+
+        return payload

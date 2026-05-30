@@ -345,7 +345,7 @@ Turnos em `POST .../messages/stream` expõem progresso antes do texto final:
 
 | Camada | Comportamento |
 |--------|----------------|
-| **Persistência** | Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default): `create_message(user)` **antes** do prepare → SSE `user_persisted`; após tools/RAG, placeholder assistant (`delivery=generating`) → `assistant_pending`; resposta final → `playback` + `done`. Commits em checkpoints via `ChatStreamCheckpointService` + `chat_sse_stream_service` (pergunta visível no banco durante o prepare). |
+| **Persistência** | Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default): `create_message(user)` **antes** do prepare → SSE `user_persisted` (envio normal **e** `resend/stream`); após tools/RAG, placeholder assistant (`delivery=generating`) → `assistant_pending`; resposta final → `playback` + `done`. Commits em checkpoints via `ChatStreamCheckpointService` + `chat_sse_stream_service`. |
 | **API** | Após `user_persisted`, `status` «Conectado…»; o prepare roda em thread com `app_context` Flask; eventos `activity` durante carga de sessão, tools e RAG. |
 | **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, modo legado emite `token` até `done` (sem `user_persisted` / `playback`). |
 | **Plugin** | `onUserPersisted` troca ids `optimistic-*` pelo `messageId` real; `ChatThinkingDots`; log **uma linha por fase** (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |

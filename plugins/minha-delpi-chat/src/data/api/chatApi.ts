@@ -225,13 +225,20 @@ export async function upsertChatMessageFeedback(
   messageId: string,
   rating: -1 | 1 | null,
   options: ChatApiOptions = {},
+  reason?: string | null,
 ): Promise<ChatMessageFeedbackResponse> {
+  const body: { rating: -1 | 1 | null; reason?: string } = { rating };
+
+  if (reason) {
+    body.reason = reason;
+  }
+
   const response = await fetch(
     `${API_BASE_URL}/chat/sessions/${sessionId}/messages/${messageId}/feedback`,
     {
       method: "PUT",
       headers: await getAuthHeaders(options),
-      body: JSON.stringify({ rating }),
+      body: JSON.stringify(body),
     },
   );
 

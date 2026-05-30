@@ -5,6 +5,7 @@ from app.domain.exceptions.chat_exceptions import (
     ChatSessionNotFoundError,
 )
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+from app.domain.services.chat_feedback_content_service import ChatFeedbackContentService
 from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
     PostgresChatMessageFeedbackRepository,
 )
@@ -26,6 +27,7 @@ class UpsertChatMessageFeedbackUseCase:
         session_id: str,
         message_id: str,
         rating: int | None,
+        reason: str | None = None,
     ) -> dict | None:
         session = self.session_repository.get_session_by_id(UUID(session_id))
 
@@ -59,8 +61,23 @@ class UpsertChatMessageFeedbackUseCase:
         if rating not in (-1, 1):
             raise ValueError("rating must be -1 or 1")
 
-        return self.feedback_repository.upsert_feedback(
+        normalized_reason = ChatFeedbackContentService.normalize_reason(reason)
+
+        if rating == 1:
+            normalized_reason = None
+
+        result = self.feedback_repository.upsert_feedback(
             message_id=message_uuid,
             user_id=user_uuid,
             rating=rating,
+            reason=normalized_reason,
         )
+        thanks = ChatFeedbackContentService.thanks_for_rating(
+            rating,
+            seed=message_id,
+        )
+
+        if thanks:
+            result["thanksMessage"] = thanks
+
+        return result
