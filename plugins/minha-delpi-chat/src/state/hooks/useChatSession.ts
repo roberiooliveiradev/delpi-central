@@ -31,7 +31,17 @@ import {
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
-import { upsertStreamingActivityEntry } from "../utils/streamingActivityLog";
+import {
+  clearSessionStreamUi,
+  getSessionStreamUi,
+  patchSessionStreamUi,
+  type SessionStreamUiSnapshot,
+} from "../utils/sessionStreamUiCache";
+import {
+  resolveActivityStatusMessage,
+  resolveStreamingHeadline,
+  upsertStreamingActivityEntry,
+} from "../utils/streamingActivityLog";
 
 type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
@@ -166,6 +176,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     if (sessionId) {
       cancelSessionStreaming(sessionId);
       unmarkSessionPending(sessionId);
+      clearSessionStreamUi(sessionId);
     }
 
     resetStreamingUi();
@@ -174,6 +185,34 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const isStreamForActiveSession = useCallback((sessionId: string) => {
     return activeSessionIdRef.current === sessionId;
   }, []);
+
+  const applyStreamUiSnapshot = useCallback((snapshot: SessionStreamUiSnapshot) => {
+    setStreamingActivityLog(snapshot.activityLog);
+    setStreamingStatus(
+      resolveStreamingHeadline(snapshot.status, snapshot.activityLog),
+    );
+    setStreamingSources(snapshot.sources);
+    setStreamingToolCalls(snapshot.toolCalls);
+  }, []);
+
+  const restoreStreamUiForSession = useCallback(
+    (sessionId: string) => {
+      const snapshot = getSessionStreamUi(sessionId);
+
+      if (
+        snapshot.activityLog.length === 0 &&
+        !snapshot.status &&
+        snapshot.sources.length === 0 &&
+        snapshot.toolCalls.length === 0
+      ) {
+        return false;
+      }
+
+      applyStreamUiSnapshot(snapshot);
+      return true;
+    },
+    [applyStreamUiSnapshot],
+  );
 
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
@@ -258,6 +297,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
         if (sessionAwaitingAssistantResponse(data)) {
           markSessionPending(sessionId);
+          restoreStreamUiForSession(sessionId);
         } else {
           unmarkSessionPending(sessionId);
         }
@@ -273,7 +313,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [markSessionPending, options.getAccessToken, unmarkSessionPending],
+    [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionPending],
   );
 
   const selectSession = useCallback(
@@ -291,17 +331,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       activeSessionIdRef.current = session.id;
       setActiveSession(session);
 
-      if (sessionStillProcessing) {
-        setStreamingStatus(
-          isSessionStreaming(session.id)
-            ? "Retomando processamento da conversa..."
-            : "Finalizando resposta em segundo plano...",
-        );
+      if (sessionStillProcessing && !restoreStreamUiForSession(session.id)) {
+        if (!isSessionStreaming(session.id)) {
+          setStreamingStatus("Finalizando resposta em segundo plano...");
+        }
       }
 
       void loadMessages(session.id);
     },
-    [isSessionProcessing, isSessionStreaming, loadMessages, resetStreamingUi],
+    [isSessionProcessing, isSessionStreaming, loadMessages, resetStreamingUi, restoreStreamUiForSession],
   );
 
   const finishPlayback = useCallback(() => {
@@ -619,6 +657,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const finishSending = useCallback(
     (sessionId: string) => {
       unmarkSessionPending(sessionId);
+      clearSessionStreamUi(sessionId);
     },
     [unmarkSessionPending],
   );
@@ -661,80 +700,82 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           );
         },
         onStatus: (statusMessage: string) => {
+          if (!statusMessage.trim()) {
+            return;
+          }
+
+          const snapshot = patchSessionStreamUi(sessionId, {
+            status: statusMessage.trim(),
+          });
+
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
-          if (statusMessage.trim()) {
-            setStreamingStatus(statusMessage);
-          }
+          setStreamingStatus(snapshot.status);
         },
         onActivity: (entry: ChatStreamActivityEntry) => {
+          const cached = getSessionStreamUi(sessionId);
+          const activityLog = upsertStreamingActivityEntry(cached.activityLog, entry);
+          const status = resolveActivityStatusMessage(entry, cached.status);
+          const snapshot = patchSessionStreamUi(sessionId, {
+            activityLog,
+            ...(status ? { status } : {}),
+          });
+
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
           flushSync(() => {
-            setStreamingActivityLog((current) =>
-              upsertStreamingActivityEntry(current, entry),
-            );
+            setStreamingActivityLog(snapshot.activityLog);
 
-            if (entry.state === "active") {
-              const headline = entry.message?.trim();
-
-              if (headline) {
-                setStreamingStatus(headline);
-                return;
-              }
-
-              if (entry.phase === "think") {
-                setStreamingStatus("Pensando...");
-              } else if (entry.phase === "plan") {
-                setStreamingStatus("Planejando novos passos...");
-              } else if (entry.phase === "prepare") {
-                setStreamingStatus("Preparando contexto...");
-              } else if (entry.phase === "rag") {
-                setStreamingStatus("Consultando base de conhecimento...");
-              } else if (entry.phase === "web_search") {
-                setStreamingStatus("Pesquisando na internet...");
-              }
+            if (status) {
+              setStreamingStatus(status);
             }
           });
         },
         onSources: (sources: ChatSource[]) => {
-          if (!isStreamForActiveSession(sessionId)) {
-            return;
-          }
-
-          setStreamingSources(sources);
-          setStreamingStatus(
+          const status =
             sources.length > 0
               ? "Consultando a base de conhecimento..."
-              : "Verificando contexto autorizado...",
-          );
+              : "Verificando contexto autorizado...";
+          const snapshot = patchSessionStreamUi(sessionId, { sources, status });
+
+          if (!isStreamForActiveSession(sessionId)) {
+            return;
+          }
+
+          setStreamingSources(snapshot.sources);
+          setStreamingStatus(snapshot.status);
         },
         onToolCalls: (toolCalls: ChatToolCall[]) => {
+          const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
+          const status = hasRichPresentation
+            ? "Finalizando apresentação..."
+            : toolCalls.length > 0
+              ? "Consultando sistemas autorizados..."
+              : "Gerando resposta...";
+          const snapshot = patchSessionStreamUi(sessionId, { toolCalls, status });
+
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
-          setStreamingToolCalls(toolCalls);
-          const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
+          setStreamingToolCalls(snapshot.toolCalls);
           setStreamingShowPresentation(hasRichPresentation);
-          setStreamingStatus(
-            hasRichPresentation
-              ? "Finalizando apresentação..."
-              : toolCalls.length > 0
-                ? "Consultando sistemas autorizados..."
-                : "Gerando resposta...",
-          );
+          setStreamingStatus(snapshot.status);
         },
         onAssistantPending: () => {
+          const snapshot = patchSessionStreamUi(sessionId, {
+            status: "Gerando resposta em linguagem natural...",
+          });
+
           if (!isStreamForActiveSession(sessionId)) {
             return;
           }
 
-          setStreamingStatus("Gerando resposta em linguagem natural...");
+          setStreamingStatus(snapshot.status);
         },
         onPlayback: (payload) => {
           if (!isStreamForActiveSession(sessionId)) {
@@ -899,9 +940,17 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
       setError(null);
       markSessionPending(activeSession.id);
+      clearSessionStreamUi(activeSession.id);
+      patchSessionStreamUi(activeSession.id, {
+        activityLog: [],
+        status: "Preparando novo envio...",
+        sources: [],
+        toolCalls: [],
+      });
       setStreamingAnswer("");
       setStreamingSources([]);
       setStreamingToolCalls([]);
+      setStreamingActivityLog([]);
       setStreamingStatus("Preparando novo envio...");
 
       setMessages((current) =>
@@ -984,13 +1033,19 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingToolCalls([]);
     setStreamingActivityLog([]);
     setStreamingShowPresentation(false);
-    setStreamingStatus(
-      activeSession
-        ? "Preparando sua pergunta..."
-        : "Criando conversa e preparando sua pergunta...",
-    );
+    const initialStatus = activeSession
+      ? "Preparando sua pergunta..."
+      : "Criando conversa e preparando sua pergunta...";
+    setStreamingStatus(initialStatus);
 
     if (activeSession) {
+      clearSessionStreamUi(activeSession.id);
+      patchSessionStreamUi(activeSession.id, {
+        activityLog: [],
+        status: initialStatus,
+        sources: [],
+        toolCalls: [],
+      });
       markSessionPending(activeSession.id);
     }
 
@@ -1022,6 +1077,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         skipNextSessionLoadRef.current = true;
         activeSessionIdRef.current = sessionForMessage!.id;
         markSessionPending(sessionForMessage!.id);
+        clearSessionStreamUi(sessionForMessage!.id);
+        patchSessionStreamUi(sessionForMessage!.id, {
+          activityLog: [],
+          status: initialStatus,
+          sources: [],
+          toolCalls: [],
+        });
         setSessions((current) => [sessionForMessage!, ...current]);
         setActiveSession(sessionForMessage);
         queueMicrotask(() => {
@@ -1179,7 +1241,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
-    setStreamingStatus("Finalizando resposta em segundo plano...");
+    if (!restoreStreamUiForSession(sessionId)) {
+      setStreamingStatus("Finalizando resposta em segundo plano...");
+    }
 
     const interval = window.setInterval(() => {
       void loadMessages(sessionId);
@@ -1196,6 +1260,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     messages,
     pendingUserMessage,
     playbackPayload,
+    restoreStreamUiForSession,
   ]);
 
   const visibleMessages = useMemo(() => {

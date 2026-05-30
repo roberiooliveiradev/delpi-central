@@ -79,9 +79,52 @@ export function resolveStreamingHeadline(
     return active.message.trim();
   }
 
+  const line = resolveCurrentActivityLine(entries);
+
+  if (line?.message?.trim()) {
+    return line.message.trim();
+  }
+
   if (status?.trim()) {
     return status.trim();
   }
 
   return "Processando sua solicitação...";
+}
+
+export function resolveActivityStatusMessage(
+  entry: ChatStreamActivityEntry,
+  fallback: string | null = null,
+): string | null {
+  if (entry.state !== "active") {
+    return fallback;
+  }
+
+  const headline = entry.message?.trim();
+
+  if (headline) {
+    return headline;
+  }
+
+  if (entry.phase === "think") {
+    return "Pensando...";
+  }
+
+  if (entry.phase === "plan") {
+    return "Planejando novos passos...";
+  }
+
+  if (entry.phase === "prepare") {
+    return "Preparando contexto...";
+  }
+
+  if (entry.phase === "rag") {
+    return "Consultando base de conhecimento...";
+  }
+
+  if (entry.phase === "web_search") {
+    return "Pesquisando na internet...";
+  }
+
+  return fallback;
 }

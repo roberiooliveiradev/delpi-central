@@ -4,6 +4,7 @@ import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 
 import {
   compactActivityLogForDisplay,
+  resolveActivityStatusMessage,
   resolveCurrentActivityLine,
   resolveStreamingHeadline,
   upsertStreamingActivityEntry,
@@ -57,5 +58,16 @@ describe("streamingActivityLog", () => {
         { id: "1", message: "Consultando base...", state: "active" },
       ]),
     ).toBe("Consultando base...");
+  });
+
+  it("resolve status a partir da fase web_search", () => {
+    expect(
+      resolveActivityStatusMessage({
+        id: "ws",
+        phase: "web_search",
+        message: "",
+        state: "active",
+      }),
+    ).toBe("Pesquisando na internet...");
   });
 });
