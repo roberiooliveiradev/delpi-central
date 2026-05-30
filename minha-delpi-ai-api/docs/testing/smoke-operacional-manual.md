@@ -361,20 +361,31 @@ Requer `CHAT_WEB_SEARCH_ENABLED=true`, admin `webSearchEnabled=true` e (recomend
 |----|----------|----------------------------|----------------------------------|
 | W1 | pesquise na internet sobre Python linguagem de programação | 1 tool `web_search`; **sem** `execute_external_action`; `directAnswer` | Resumo **em português** (Wikipedia PT) + URL pt.wikipedia.org; resposta **curta** (1 fonte principal — sem síntese LLM) |
 | W2 | pesquise na internet sobre inflação 2026 | Idem W1 | Se `no_results`, texto honesto + conhecimento geral rotulado (não «não pesquiso na internet») |
-| W3 | pesquise na internet sobre a empresa TYCO | Idem W1 + stage `web_search_synthesis` quando ≥2 fontes | Resposta **estruturada** (seções, linha do tempo, conclusão); badges **Fontes** clicáveis; links inline no texto |
+| W3 | pesquise na internet sobre a empresa TYCO | Idem W1 + stage `web_search_synthesis` quando ≥2 fontes | Resposta **estruturada** (seções, linha do tempo, conclusão); botão **Fontes · N** abre painel de atividade; links inline no texto |
 | W4 | *(após W3)* | `adminDebug.pipeline.stages` inclui `web_search_synthesis` | Latência maior (~30–90s com Ollama CPU) é esperada na síntese |
+| W5 | *(dev com SearXNG)* `CHAT_WEB_SEARCH_PROVIDER=searxng` ou `auto` sem keys pagas | `metadata.webSearchResearch.provider` = `searxng`; ≥1 URL real (não só duckduckgo.com) | Container `delpi-searxng` no ar; `curl http://localhost:8088/search?q=tyco&format=json` retorna JSON |
 
-**Fontes na UI (W3/W1):** rodapé com badges `scope: web_search`; no markdown, links externos curtos renderizam como pills (`mdc-chat-citation-badge`).
+**Fontes na UI (W3/W1):** rodapé com badges `scope: web_search`; clique em **Fontes · N** abre drawer **Atividade · Pesquisa web** (`webSearchResearch`: queries, sites, síntese); no markdown, links externos curtos renderizam como pills (`mdc-chat-citation-badge`).
+
+**SearXNG (dev):**
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml --profile chat up -d searxng minha-delpi-ai-api
+curl -s 'http://localhost:8088/search?q=tyco&format=json' | head -c 400
+```
 
 ```bash
 SMOKE_BASE_URL=http://localhost SMOKE_USER=rober SMOKE_PASSWORD=1234 \
   python scripts/run_onda11_6_api_e2e.py
 
-# Pacote unitário web_search (inclui síntese):
+# Pacote unitário web_search (inclui síntese, SearXNG e painel de atividade):
 cd minha-delpi-ai-api && pytest \
   tests/unit/domain/services/test_web_search_query_service.py \
   tests/unit/application/services/test_chat_web_search_synthesis_service.py \
-  tests/unit/infrastructure/gateways/test_web_search_http_gateway.py -q
+  tests/unit/application/services/test_chat_web_search_research_activity_service.py \
+  tests/unit/infrastructure/gateways/test_web_search_http_gateway.py \
+  tests/unit/infrastructure/gateways/test_web_search_providers.py -q
 ```
 
 ### RAG documental — docs GPT ingeridos no agente

@@ -436,12 +436,13 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 |---------|----------------|
 | Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` (triggers: «pesquise na internet», «busque na web», etc.) |
 | Consulta | `WebSearchQueryService`: remove «a empresa», gera candidatos (`Tyco`, `Tyco International`, retry EN) |
-| Provedores | `auto`: Tavily → Serper → Bing → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
+| Provedores | `auto`: Tavily → Serper → Bing → **SearXNG** (OSS) → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
 | Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
 | Resposta simples | `ChatWebSearchDirectAnswerService` — 1 resultado útil ou fallback rápido (`directAnswer`, `skipRag`) |
 | Síntese LLM | `ChatWebSearchSynthesisService` — com ≥ `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` fontes úteis, monta intro, seções, linha do tempo e conclusão em PT |
 | Localização | `WebSearchPortugueseContentService` — Wikipedia PT quando snippet vier em inglês; entidades de uma palavra (ex.: «tyco») |
 | Fontes na API | `webSources` → `sources[]` com `scope: web_search`, `sourceRef` = URL |
+| Atividade de pesquisa | `webSearchResearch` na metadata da mensagem assistant; botão **Fontes · N** abre painel lateral (`ChatWebSearchResearchPanel`) |
 | UI | Badges **Fontes** no rodapé (`ChatSources`) + links curtos no markdown como pills (`ChatMarkdown`) |
 | Policy | `web-search-policy.md` — cite fontes; em `no_results`, não negar a busca |
 
@@ -455,13 +456,18 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta sem LLM principal |
 | `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada via LLM |
 | `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para sintetizar |
-| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | Ordem de provedores externos |
+| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | Ordem: `tavily` → `serper` → `bing` → `searxng` → `duckduckgo`; ou valor único |
 | `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry em inglês quando PT/inicial vier vazio |
 | `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Limite por consulta |
 | `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
-| `CHAT_WEB_SEARCH_TAVILY_API_KEY` / `SERPER` / `BING` | — | Credenciais opcionais (recomendado Tavily em prod) |
+| `CHAT_WEB_SEARCH_SEARXNG_BASE_URL` | — (dev: `http://searxng:8080`) | Instância SearXNG self-hosted (`GET /search?format=json`) |
+| `CHAT_WEB_SEARCH_SEARXNG_LANGUAGE` | `pt-BR` | Idioma enviado ao SearXNG |
+| `CHAT_WEB_SEARCH_SEARXNG_CATEGORIES` | `general` | Categoria SearXNG (ex.: `general`, `images`) |
+| `CHAT_WEB_SEARCH_TAVILY_API_KEY` / `SERPER` / `BING` | — | Credenciais opcionais (recomendado Tavily em prod com e-commerce) |
 
-**Testes:** `test_web_search_query_service.py`, `test_chat_web_search_intent_service.py`, `test_web_search_http_gateway.py`, `test_chat_web_search_direct_answer_service.py`, `test_chat_web_search_synthesis_service.py`, `test_chat_web_search_blocks_external_actions.py`, `scripts/run_onda11_6_api_e2e.py` (caso W1).
+**SearXNG (dev):** serviço `searxng` no `infra/docker-compose.dev.yml` (profile `chat`, porta host **8088**). Config em `infra/searxng/settings.yml` com `search.formats: [html, json]` e `server.limiter: false` para chamadas internas da API.
+
+**Testes:** `test_web_search_query_service.py`, `test_chat_web_search_intent_service.py`, `test_web_search_http_gateway.py`, `test_web_search_providers.py`, `test_chat_web_search_direct_answer_service.py`, `test_chat_web_search_synthesis_service.py`, `test_chat_web_search_research_activity_service.py`, `test_chat_web_search_blocks_external_actions.py`, `scripts/run_onda11_6_api_e2e.py` (caso W1).
 
 **Deploy:** após alterar código Python, recriar/reiniciar `minha-delpi-ai-api` (Gunicorn não recarrega workers sozinho com imagem prod).
 

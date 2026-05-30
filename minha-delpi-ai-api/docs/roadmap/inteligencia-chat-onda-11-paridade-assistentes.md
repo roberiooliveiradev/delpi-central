@@ -170,7 +170,7 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 
 | # | Item | Status | Critério de pronto |
 |---|------|--------|-------------------|
-| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | Retry EN, provedores Tavily/Serper/Bing, sanitização de query, fallback Wikipedia PT, síntese LLM multi-seção, fontes clicáveis na UI |
+| 11.6.1 | Tool interna `web_search` + policy de fontes | ✅ | Retry EN, provedores Tavily/Serper/Bing/**SearXNG**, sanitização de query, fallback Wikipedia PT, síntese LLM multi-seção, painel **Fontes · N** com atividade de pesquisa |
 | 11.6.2 | RBAC formal (bridge chat) | ✅ | `GET /admin/rbac/profiles` + `formalProfiles` em `/admin/rbac/summary` |
 | 11.6.3 | Rotas NC PostgreSQL (`/quality/audit-5s/*`) | ✅ | `api_paths.json` + heurísticas `ChatDepartmentKpiIntentService`; sync OpenAPI sob demanda |
 
@@ -196,14 +196,18 @@ Checklist manual: **U1–U9** em [`../testing/smoke-operacional-manual.md`](../t
 | `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch; admin `webSearchEnabled` |
 | `CHAT_WEB_SEARCH_MAX_RESULTS` | `5` | Máx. resultados por consulta web |
 | `CHAT_WEB_SEARCH_TIMEOUT_SECONDS` | `8` | Timeout HTTP dos provedores |
-| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | `auto` \| `duckduckgo` \| `tavily` \| `serper` \| `bing` |
+| `CHAT_WEB_SEARCH_PROVIDER` | `auto` | `auto` \| `duckduckgo` \| `tavily` \| `serper` \| `bing` \| `searxng` |
 | `CHAT_WEB_SEARCH_RETRY_EN` | `true` | Retry automático em EN quando PT/inicial vier vazio |
 | `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta (`directAnswer`) sem passar pelo LLM principal |
 | `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada (seções + timeline) via LLM auxiliar |
 | `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para acionar síntese |
-| `CHAT_WEB_SEARCH_TAVILY_API_KEY` | — | Tavily Search API (recomendado em prod) |
+| `CHAT_WEB_SEARCH_SEARXNG_BASE_URL` | — (dev compose: `http://searxng:8080`) | Meta-busca OSS self-hosted; habilitar JSON em `infra/searxng/settings.yml` |
+| `CHAT_WEB_SEARCH_SEARXNG_LANGUAGE` | `pt-BR` | Idioma da consulta SearXNG |
+| `CHAT_WEB_SEARCH_SEARXNG_CATEGORIES` | `general` | Categoria SearXNG |
+| `CHAT_WEB_SEARCH_TAVILY_API_KEY` | — | Tavily Search API (recomendado em prod / e-commerce) |
 | `CHAT_WEB_SEARCH_SERPER_API_KEY` | — | Serper (Google) |
 | `CHAT_WEB_SEARCH_BING_API_KEY` | — | Bing Web Search v7 |
+| `SEARXNG_BASE_URL` | `http://localhost:8088/` | URL pública do container SearXNG (dev, porta host 8088) |
 
 ---
 
@@ -261,6 +265,7 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-30 | 11.7: utility direct, small talk ampliado, typos, catálogo api_paths 84 rotas. |
 | 2026-05-30 | 11.6: `web_search`, RBAC formal (`/admin/rbac/profiles`), rotas NC PostgreSQL 5S. |
 | 2026-05-30 | `web_search` evoluído: sanitização de query (TYCO), fallback Wikipedia PT, fontes clicáveis, síntese LLM multi-seção (`web_search_synthesis`). |
+| 2026-05-30 | `web_search`: painel **Fontes · N** (`webSearchResearch`), provider **SearXNG** OSS no compose dev, ordem `auto` estendida. |
 
 ---
 
