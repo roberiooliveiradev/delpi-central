@@ -3,6 +3,8 @@
   "categoryPriority": [
     "current_datetime",
     "current_time",
+    "tomorrow_date",
+    "yesterday_date",
     "current_date",
     "current_weekday",
     "current_year"
@@ -58,6 +60,31 @@
       "data atual",
       "qual e o dia de hoje",
       "qual é o dia de hoje"
+    ],
+    "tomorrow_date": [
+      "que dia e amanha",
+      "que dia é amanhã",
+      "qual dia e amanha",
+      "qual o dia de amanha",
+      "qual é o dia de amanhã",
+      "que data e amanha",
+      "que data é amanhã",
+      "amanha e que dia",
+      "amanhã é que dia",
+      "dia de amanha",
+      "data de amanha"
+    ],
+    "yesterday_date": [
+      "que dia foi ontem",
+      "que dia e ontem",
+      "que dia é ontem",
+      "qual dia foi ontem",
+      "qual o dia de ontem",
+      "que data foi ontem",
+      "que data e ontem",
+      "ontem foi que dia",
+      "dia de ontem",
+      "data de ontem"
     ],
     "current_datetime": [
       "que dia e hora",
@@ -120,6 +147,8 @@
   "responses": {
     "current_time": "Agora são **{time}** ({timezone_label}).",
     "current_date": "Hoje é **{weekday}**, **{date}** ({timezone_label}).",
+    "tomorrow_date": "Amanhã será **{weekday}**, **{date}** ({timezone_label}).",
+    "yesterday_date": "Ontem foi **{weekday}**, **{date}** ({timezone_label}).",
     "current_datetime": "Agora são **{time}** de **{weekday}**, **{date}** ({timezone_label}).",
     "current_weekday": "Hoje é **{weekday}** ({timezone_label}).",
     "current_year": "Estamos em **{year}** ({timezone_label})."

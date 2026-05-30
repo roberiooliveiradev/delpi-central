@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import lru_cache
 from zoneinfo import ZoneInfo
 
@@ -21,6 +21,12 @@ from app.infrastructure.content.content_service import ContentService
 @lru_cache(maxsize=1)
 def _utility_content() -> dict:
     return ContentService.load_json("assistant/utility_answers")
+
+
+_DAY_OFFSETS: dict[str, int] = {
+    "tomorrow_date": 1,
+    "yesterday_date": -1,
+}
 
 
 class ChatUtilityDirectAnswerService:
@@ -84,14 +90,16 @@ class ChatUtilityDirectAnswerService:
             return None
 
         localized = now or cls._now()
-        weekday = ExternalActionResponseContentService.weekday_label(localized.weekday())
+        offset_days = _DAY_OFFSETS.get(category, 0)
+        target = localized + timedelta(days=offset_days)
+        weekday = ExternalActionResponseContentService.weekday_label(target.weekday())
         timezone_label = str(content.get("timezoneLabel") or "horário local").strip()
 
         values = {
             "time": localized.strftime("%H:%M"),
-            "date": localized.strftime("%d/%m/%Y"),
+            "date": target.strftime("%d/%m/%Y"),
             "weekday": weekday,
-            "year": str(localized.year),
+            "year": str(target.year),
             "timezone_label": timezone_label,
         }
 

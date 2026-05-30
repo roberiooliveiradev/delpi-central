@@ -18,6 +18,8 @@ from app.application.services.chat_utility_direct_answer_service import (
         "q hrs",
         "qual a hora?",
         "que dia é hoje?",
+        "que dia é amanhã?",
+        "que dia foi ontem?",
         "q dia",
         "qual a data?",
         "que dia da semana é hoje?",
@@ -38,6 +40,7 @@ def test_utility_question_detection(message: str):
         "qual a hora de inicio da ordem 123",
         "tempo real de producao em hora mil",
         "bom dia",
+        "o que vai ser produzido amanhã?",
     ],
 )
 def test_non_utility_questions(message: str):
@@ -88,3 +91,29 @@ def test_current_year_answer():
 
     assert answer
     assert "2026" in answer
+
+
+def test_tomorrow_date_answer():
+    # 2026-05-30 = sábado → amanhã 31/05/2026 domingo
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="que dia é amanhã?",
+        now=fixed,
+    )
+
+    assert answer
+    assert "31/05/2026" in answer
+    assert "domingo" in answer.lower()
+    assert "Amanhã" in answer
+
+
+def test_yesterday_date_answer():
+    fixed = datetime(2026, 5, 30, 12, 8, tzinfo=ZoneInfo("America/Sao_Paulo"))
+    answer = ChatUtilityDirectAnswerService.build_direct_answer(
+        message="que dia foi ontem?",
+        now=fixed,
+    )
+
+    assert answer
+    assert "29/05/2026" in answer
+    assert "Ontem" in answer

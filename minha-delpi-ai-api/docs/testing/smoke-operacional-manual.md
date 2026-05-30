@@ -30,9 +30,11 @@ Perguntas de hora/data/saudação passam por `ChatMessageNormalizationService` a
 | U2 | que hors são? | Idem U1 (typo corrigido) |
 | U3 | q horas | Idem U1 (abreviação) |
 | U4 | que dia é hoje? | Data + dia da semana |
-| U5 | q dia | Idem U4 |
-| U6 | bo dia | Saudação direta (`small_talk.json`) |
-| U7 | olá | Saudação direta |
+| U5 | que dia é amanhã? | **Amanhã será** + data real (ex.: domingo, 31/05/2026); sem LLM |
+| U6 | que dia foi ontem? | **Ontem foi** + data real |
+| U7 | q dia | Idem U4 |
+| U8 | bo dia | Saudação direta (`small_talk.json`) |
+| U9 | olá | Saudação direta |
 
 **E2E HTTP (token dev: rober / 1234):**
 
