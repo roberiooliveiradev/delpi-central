@@ -130,6 +130,33 @@ export type ChatStreamActivityEntry = {
   actionId?: string;
 };
 
+export type ChatWebSearchResearchSite = {
+  hostname: string;
+  url: string;
+  title?: string;
+};
+
+export type ChatWebSearchResearchStep = {
+  id: string;
+  type: "search" | "synthesis" | "organize" | string;
+  message: string;
+  query?: string;
+  state?: "active" | "done" | string;
+  sites?: ChatWebSearchResearchSite[];
+};
+
+export type ChatWebSearchResearch = {
+  sourceCount: number;
+  durationMs?: number;
+  provider?: string | null;
+  query?: string | null;
+  attemptedQueries?: string[] | null;
+  searchStatus?: string | null;
+  synthesized?: boolean;
+  steps?: ChatWebSearchResearchStep[];
+  sites?: ChatWebSearchResearchSite[];
+};
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;
@@ -157,6 +184,7 @@ export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];
   canvasOpen?: ChatCanvasOpenPayload | null;
+  webSearchResearch?: ChatWebSearchResearch | null;
   rag?: {
     enabled?: boolean;
     sourceCount?: number;

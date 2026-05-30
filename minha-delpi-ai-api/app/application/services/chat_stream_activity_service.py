@@ -9,6 +9,9 @@ from typing import Any
 from app.application.services.chat_composite_direct_answer_service import (
     ChatCompositeDirectAnswerService,
 )
+from app.domain.services.chat_web_search_direct_answer_service import (
+    ChatWebSearchDirectAnswerService,
+)
 from app.domain.services.external_actions.external_action_result_presenter import (
     ExternalActionResultPresenter,
 )
@@ -18,6 +21,7 @@ _PHASE_GROUPS = {
     "think": "Pensar",
     "plan": "Planejar novos passos",
     "tools": "Consultando",
+    "web_search": "Pesquisa web",
     "rag": "Conhecimento",
     "response": "Respondendo",
 }
@@ -278,6 +282,61 @@ class ChatStreamActivityService:
             action_id=resolved_action or None,
             status_code=int(metadata.get("statusCode") or 200),
             message=f"{label}: OK",
+        )
+
+    @classmethod
+    def web_search_started(
+        cls,
+        *,
+        query: str,
+        entry_id: str = "web-search",
+    ) -> dict[str, Any]:
+        cleaned = str(query or "").strip() or "consulta web"
+
+        return cls.entry(
+            verb="Buscando",
+            target=cleaned,
+            phase="web_search",
+            state="active",
+            message=f"Buscando «{cleaned}» na internet pública",
+            entry_id=entry_id,
+        )
+
+    @classmethod
+    def web_search_finished(
+        cls,
+        *,
+        payload: dict,
+        entry_id: str = "web-search",
+    ) -> dict[str, Any]:
+        query = str(payload.get("query") or "").strip() or "consulta web"
+        status = str(payload.get("searchStatus") or "").strip()
+        useful = ChatWebSearchDirectAnswerService.extract_useful_results(payload)
+        provider = str(payload.get("provider") or "").strip()
+        detail_parts = [part for part in (provider, f"{len(useful)} resultado(s)") if part]
+        detail = " · ".join(detail_parts) if detail_parts else None
+
+        if status == "no_results" or not useful:
+            return cls.entry(
+                verb="Sem resultados",
+                target=query,
+                phase="web_search",
+                level="warning",
+                state="done",
+                detail=detail,
+                message=f"Busca web sem resultados úteis para «{query}»",
+                entry_id=entry_id,
+            )
+
+        return cls.entry(
+            verb="Encontrado",
+            target=query,
+            phase="web_search",
+            level="success",
+            state="done",
+            detail=detail,
+            message=f"Busca web: {len(useful)} fonte(s) para «{query}»",
+            entry_id=entry_id,
         )
 
     @classmethod

@@ -19,6 +19,7 @@ import type {
   ChatSource,
   ChatStreamActivityEntry,
   ChatToolCall,
+  ChatWebSearchResearch,
 } from "../../data/api/chatTypes";
 import {
   buildChatTimelineItems,
@@ -115,6 +116,16 @@ function getMessageSources(message: ChatMessage): ChatSource[] {
   }
 
   return [];
+}
+
+function getWebSearchResearch(message: ChatMessage): ChatWebSearchResearch | null {
+  const research = message.metadata?.webSearchResearch;
+
+  if (!research || typeof research !== "object") {
+    return null;
+  }
+
+  return research;
 }
 
 function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
@@ -1148,6 +1159,7 @@ export function ChatMessageList({
                 />
                 <ChatSources
                   sources={filterVisibleChatSources(getMessageSources(message))}
+                  webSearchResearch={getWebSearchResearch(message)}
                 />
               </>
             ) : null}

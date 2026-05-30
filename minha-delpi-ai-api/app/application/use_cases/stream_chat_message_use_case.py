@@ -558,6 +558,17 @@ class StreamChatMessageUseCase:
             intelligence_metadata=intelligence_metadata,
         )
 
+        from app.application.services.chat_web_search_research_activity_service import (
+            ChatWebSearchResearchActivityService,
+        )
+
+        ChatWebSearchResearchActivityService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=tool_context,
+            pipeline_stages=pipeline_stages,
+            latency_ms=latency_ms,
+        )
+
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
                 "title": canvas_open_payload.title,

@@ -405,6 +405,17 @@ class ChatToolContextService:
                         )
                     )
 
+            if tool_name == "web_search" and on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                search_query = str(arguments.get("query") or raw_message or "").strip()
+
+                on_stream_activity(
+                    ChatStreamActivityService.web_search_started(query=search_query)
+                )
+
             try:
                 result = self.execute_tool_use_case.execute(
                     ExecuteToolRequest(
@@ -599,6 +610,15 @@ class ChatToolContextService:
             if result.name == "web_search" and isinstance(result.data, dict):
                 if str(result.data.get("searchStatus") or "") in {"success", "no_results"}:
                     last_web_search_data = result.data
+
+                if on_stream_activity:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    on_stream_activity(
+                        ChatStreamActivityService.web_search_finished(payload=result.data)
+                    )
 
             context_blocks.append(
                 self._format_tool_context(

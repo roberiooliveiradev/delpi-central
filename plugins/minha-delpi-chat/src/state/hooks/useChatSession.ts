@@ -663,6 +663,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
                 setStreamingStatus("Preparando contexto...");
               } else if (entry.phase === "rag") {
                 setStreamingStatus("Consultando base de conhecimento...");
+              } else if (entry.phase === "web_search") {
+                setStreamingStatus("Pesquisando na internet...");
               }
             }
           });

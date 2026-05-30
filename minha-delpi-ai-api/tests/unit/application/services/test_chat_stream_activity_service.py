@@ -30,3 +30,26 @@ def test_tool_finished_reports_http_404_as_error():
     assert entry["level"] == "error"
     assert entry["verb"] == "Falhou"
     assert "404" in (entry.get("detail") or "")
+
+
+def test_web_search_finished_reports_successful_results():
+    entry = ChatStreamActivityService.web_search_finished(
+        payload={
+            "query": "JST-SPS-21T-250S",
+            "searchStatus": "success",
+            "provider": "tavily",
+            "results": [
+                {
+                    "title": "DigiKey",
+                    "url": "https://www.digikey.com/",
+                    "snippet": "Preço disponível.",
+                    "source": "tavily",
+                }
+            ],
+        }
+    )
+
+    assert entry["phase"] == "web_search"
+    assert entry["group"] == "Pesquisa web"
+    assert entry["level"] == "success"
+    assert "1 fonte" in entry["message"]
