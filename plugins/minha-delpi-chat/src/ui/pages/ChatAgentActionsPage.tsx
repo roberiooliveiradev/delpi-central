@@ -772,7 +772,7 @@ export function ChatAgentActionsPage({
               Configure uma API OpenAPI deste agente: autenticação, schema, rotas
               e política de privacidade.
             </p>
-            <ChatResourceUsageLink href={buildChatAgentHref(agent.key)} />
+            <ChatResourceUsageLink href={buildChatAgentHref(agent.id)} />
           </header>
 
           {error ? (

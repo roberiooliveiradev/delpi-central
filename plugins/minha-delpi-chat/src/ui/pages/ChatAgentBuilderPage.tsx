@@ -1200,14 +1200,12 @@ export function ChatAgentBuilderPage({
     agent && ["owner", "editor", "system"].includes(agent.access_role);
   const canImportAgent = Boolean(onCreateAgent);
   const agentUsagePath = useMemo(() => {
-    const normalizedKey = key.trim();
-
-    if (!normalizedKey) {
+    if (!agent?.id) {
       return null;
     }
 
-    return buildChatAgentHref(normalizedKey);
-  }, [key]);
+    return buildChatAgentHref(agent.id);
+  }, [agent?.id]);
   const agentUsageUrl = useMemo(() => {
     if (!agentUsagePath) {
       return null;

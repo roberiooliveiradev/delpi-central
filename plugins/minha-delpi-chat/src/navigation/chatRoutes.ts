@@ -1,18 +1,52 @@
 export const CHAT_BASE_PATH = "/apps/minha-delpi-chat";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export type ChatRoute =
   | { kind: "home" }
   | { kind: "session"; sessionId: string }
   | { kind: "project"; projectId: string }
   | { kind: "project-config"; projectId: string }
-  | { kind: "agent"; agentKey: string }
-  | { kind: "agent-config"; agentKey: string }
-  | { kind: "agent-skills"; agentKey: string }
-  | { kind: "agent-actions"; agentKey: string; providerKey?: string }
+  | { kind: "agent"; agentId: string }
+  | { kind: "agent-config"; agentId: string }
+  | { kind: "agent-skills"; agentId: string }
+  | { kind: "agent-actions"; agentId: string; providerKey?: string }
   | { kind: "agents" }
   | { kind: "projects" }
   | { kind: "admin" }
   | { kind: "admin-agent"; agentId: string };
+
+export function isChatAgentRouteId(value: string): boolean {
+  return UUID_RE.test(value.trim());
+}
+
+export function findAgentByRouteId<
+  T extends { id: string; key: string },
+>(agents: T[], routeId: string): T | undefined {
+  const normalized = routeId.trim();
+
+  if (isChatAgentRouteId(normalized)) {
+    return agents.find((agent) => agent.id === normalized);
+  }
+
+  return agents.find((agent) => agent.key === normalized);
+}
+
+export function withCanonicalAgentRouteId(route: ChatRoute, agentId: string): ChatRoute {
+  switch (route.kind) {
+    case "agent":
+      return { kind: "agent", agentId };
+    case "agent-config":
+      return { kind: "agent-config", agentId };
+    case "agent-skills":
+      return { kind: "agent-skills", agentId };
+    case "agent-actions":
+      return { ...route, agentId };
+    default:
+      return route;
+  }
+}
 
 function normalizeBasePath(pathname: string) {
   if (!pathname.startsWith(CHAT_BASE_PATH)) {
@@ -62,11 +96,11 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
         return { kind: "agents" };
       }
 
-      const agentKey = decodeURIComponent(sectionSegments[0]);
+      const agentId = decodeURIComponent(sectionSegments[0]);
 
       if (sectionSegments[1] === "configurar") {
         if (sectionSegments[2] === "skills") {
-          return { kind: "agent-skills", agentKey };
+          return { kind: "agent-skills", agentId };
         }
 
         if (sectionSegments[2] === "actions") {
@@ -74,13 +108,13 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
             ? decodeURIComponent(sectionSegments[3])
             : undefined;
 
-          return { kind: "agent-actions", agentKey, providerKey };
+          return { kind: "agent-actions", agentId, providerKey };
         }
 
-        return { kind: "agent-config", agentKey };
+        return { kind: "agent-config", agentId };
       }
 
-      return { kind: "agent", agentKey };
+      return { kind: "agent", agentId };
     }
     case "admin": {
       if (sectionSegments[0] === "agentes" && sectionSegments[1]) {
@@ -108,15 +142,15 @@ export function buildChatHref(route: ChatRoute): string {
     case "project-config":
       return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(route.projectId)}/configurar`;
     case "agent":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}`;
+      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}`;
     case "agent-config":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}/configurar`;
+      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar`;
     case "agent-skills":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}/configurar/skills`;
+      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/skills`;
     case "agent-actions":
       return route.providerKey
-        ? `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}/configurar/actions/${encodeURIComponent(route.providerKey)}`
-        : `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentKey)}/configurar/actions`;
+        ? `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/actions/${encodeURIComponent(route.providerKey)}`
+        : `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/actions`;
     case "agents":
       return `${CHAT_BASE_PATH}/agentes`;
     case "projects":
@@ -140,22 +174,22 @@ export function buildChatProjectConfigHref(projectId: string) {
   return buildChatHref({ kind: "project-config", projectId });
 }
 
-export function buildChatAgentHref(agentKey: string) {
-  return buildChatHref({ kind: "agent", agentKey });
+export function buildChatAgentHref(agentId: string) {
+  return buildChatHref({ kind: "agent", agentId });
 }
 
-export function buildChatAgentConfigHref(agentKey: string) {
-  return buildChatHref({ kind: "agent-config", agentKey });
+export function buildChatAgentConfigHref(agentId: string) {
+  return buildChatHref({ kind: "agent-config", agentId });
 }
 
-export function buildChatAgentSkillsHref(agentKey: string) {
-  return buildChatHref({ kind: "agent-skills", agentKey });
+export function buildChatAgentSkillsHref(agentId: string) {
+  return buildChatHref({ kind: "agent-skills", agentId });
 }
 
-export function buildChatAgentActionsHref(agentKey: string, providerKey?: string | null) {
+export function buildChatAgentActionsHref(agentId: string, providerKey?: string | null) {
   return buildChatHref({
     kind: "agent-actions",
-    agentKey,
+    agentId,
     providerKey: providerKey?.trim() || undefined,
   });
 }

@@ -6,17 +6,20 @@ import type { ChatSession } from "../../data/api/chatTypes";
 type UseChatRouteSyncOptions = {
   pathname?: string;
   sessions: ChatSession[];
+  agentsReady?: boolean;
   onApplyRoute: (route: ChatRoute) => void;
 };
 
 export function useChatRouteSync({
   pathname,
   sessions,
+  agentsReady = true,
   onApplyRoute,
 }: UseChatRouteSyncOptions) {
   const isApplyingRouteRef = useRef(false);
   const lastAppliedPathnameRef = useRef<string | null>(null);
   const lastAppliedSessionCountRef = useRef<number>(0);
+  const lastAppliedAgentsReadyRef = useRef<boolean>(agentsReady);
 
   useEffect(() => {
     if (!pathname) {
@@ -30,12 +33,19 @@ export function useChatRouteSync({
       route.kind === "session" &&
       sessions.length > lastAppliedSessionCountRef.current;
 
-    if (!pathnameChanged && !sessionsGrew) {
+    const agentsBecameReady = agentsReady && !lastAppliedAgentsReadyRef.current;
+
+    if (!pathnameChanged && !sessionsGrew && !agentsBecameReady) {
       return;
     }
 
     lastAppliedPathnameRef.current = pathname;
     lastAppliedSessionCountRef.current = sessions.length;
+    lastAppliedAgentsReadyRef.current = agentsReady;
+
+    if (!agentsReady) {
+      return;
+    }
 
     isApplyingRouteRef.current = true;
 
@@ -44,7 +54,7 @@ export function useChatRouteSync({
     } finally {
       isApplyingRouteRef.current = false;
     }
-  }, [pathname, sessions, onApplyRoute]);
+  }, [pathname, sessions, agentsReady, onApplyRoute]);
 
   return { isApplyingRouteRef };
 }

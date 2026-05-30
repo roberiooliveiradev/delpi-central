@@ -184,7 +184,7 @@ export function ChatAgentSkillsPage({
             <strong>Actions</strong> executam APIs. Para SQL no banco, ative a skill e a action{" "}
             <code>POST /data/sql</code>.
           </p>
-          <ChatResourceUsageLink href={buildChatAgentHref(agent.key)} />
+          <ChatResourceUsageLink href={buildChatAgentHref(agent.id)} />
           <div className="mdc-agent-skills__stats">
             <span className="mdc-agent-skills__stat">
               <strong>{enabledCount}</strong>

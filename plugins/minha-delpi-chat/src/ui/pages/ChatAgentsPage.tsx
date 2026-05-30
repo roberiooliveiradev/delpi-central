@@ -32,7 +32,7 @@ type ChatAgentsPageProps = {
   selectedAgentKey?: string | null;
   canManageAgents?: boolean;
   canManageOfficialAgents?: boolean;
-  editAgentKey?: string | null;
+  editAgentId?: string | null;
   editRequestKey?: number;
   isLoading?: boolean;
   onBack: () => void;
@@ -49,13 +49,13 @@ type ChatAgentsPageProps = {
     includeDisabled: boolean,
     includeStats?: boolean,
   ) => void | Promise<void>;
-  onOpenAgentConfig?: (agentKey: string) => void;
+  onOpenAgentConfig?: (agentId: string) => void;
   onCloseAgentConfig?: () => void;
-  onOpenAgentSkills?: (agentKey: string) => void;
-  onOpenAgentActions?: (agentKey: string, providerKey?: string | null) => void;
+  onOpenAgentSkills?: (agentId: string) => void;
+  onOpenAgentActions?: (agentId: string, providerKey?: string | null) => void;
   agentSubRoute?: {
     kind: "skills" | "actions";
-    agentKey: string;
+    agentId: string;
     providerKey?: string | null;
   } | null;
   agentSubRouteKey?: string;
@@ -130,7 +130,7 @@ export function ChatAgentsPage({
   selectedAgentKey,
   canManageAgents = false,
   canManageOfficialAgents = false,
-  editAgentKey,
+  editAgentId,
   editRequestKey,
   isLoading,
   onBack,
@@ -193,7 +193,7 @@ export function ChatAgentsPage({
   }, [canManageAgents, onReloadAgents]);
 
   useEffect(() => {
-    if (!editAgentKey) {
+    if (!editAgentId) {
       if (!agentSubRoute) {
         return;
       }
@@ -201,7 +201,7 @@ export function ChatAgentsPage({
       return;
     }
 
-    const targetAgent = agents.find((agent) => agent.key === editAgentKey);
+    const targetAgent = agents.find((agent) => agent.id === editAgentId);
 
     if (
       targetAgent &&
@@ -211,7 +211,7 @@ export function ChatAgentsPage({
       setSkillsEditor(null);
       setActionEditor(null);
     }
-  }, [agents, editAgentKey, editRequestKey, agentSubRoute, canManageAgents, canManageOfficialAgents]);
+  }, [agents, editAgentId, editRequestKey, agentSubRoute, canManageAgents, canManageOfficialAgents]);
 
   useEffect(() => {
     if (!agentSubRoute) {
@@ -220,7 +220,7 @@ export function ChatAgentsPage({
       return;
     }
 
-    const targetAgent = agents.find((agent) => agent.key === agentSubRoute.agentKey);
+    const targetAgent = agents.find((agent) => agent.id === agentSubRoute.agentId);
 
     if (
       !targetAgent ||
@@ -255,13 +255,13 @@ export function ChatAgentsPage({
         }
         onBack={() => {
           if (skillsEditor.returnToBuilder) {
-            onOpenAgentConfig?.(skillsEditor.agent.key);
+            onOpenAgentConfig?.(skillsEditor.agent.id);
           } else {
             setSkillsEditor(null);
           }
         }}
         onOpenActions={(target) => {
-          onOpenAgentActions?.(target.key, null);
+          onOpenAgentActions?.(target.id, null);
         }}
         getAccessToken={getAccessToken}
       />
@@ -280,7 +280,7 @@ export function ChatAgentsPage({
         }
         onBack={() => {
           if (actionEditor.returnToBuilder) {
-            onOpenAgentConfig?.(actionEditor.agent.key);
+            onOpenAgentConfig?.(actionEditor.agent.id);
           } else {
             setActionEditor(null);
           }
@@ -303,27 +303,27 @@ export function ChatAgentsPage({
         onCreateAction={
           editingAgent
             ? () => {
-                onOpenAgentActions?.(editingAgent.key, null);
+                onOpenAgentActions?.(editingAgent.id, null);
               }
             : undefined
         }
         onConfigureAction={
           editingAgent
             ? (_agent, providerKey) => {
-                onOpenAgentActions?.(editingAgent.key, providerKey);
+                onOpenAgentActions?.(editingAgent.id, providerKey);
               }
             : undefined
         }
         onConfigureSkills={
           editingAgent
             ? () => {
-                onOpenAgentSkills?.(editingAgent.key);
+                onOpenAgentSkills?.(editingAgent.id);
               }
             : undefined
         }
         onAgentCreated={(created) => {
           setEditingAgent(created);
-          onOpenAgentConfig?.(created.key);
+          onOpenAgentConfig?.(created.id);
         }}
         onSelectAgent={onSelectAgent}
         onCreateAgent={onCreateAgent}
@@ -333,7 +333,7 @@ export function ChatAgentsPage({
         onDuplicateAgent={(duplicated) => {
           onAgentDuplicated?.(duplicated);
           setEditingAgent(duplicated);
-          onOpenAgentConfig?.(duplicated.key);
+          onOpenAgentConfig?.(duplicated.id);
         }}
         canManageOfficialAgents={canManageOfficialAgents}
         onOpenRagAdmin={onOpenRagAdmin}
@@ -485,7 +485,7 @@ export function ChatAgentsPage({
                           className="mdc-chat-ws-toolbar-btn"
                           onClick={() => {
                             setEditingAgent(agent);
-                            onOpenAgentConfig?.(agent.key);
+                            onOpenAgentConfig?.(agent.id);
                           }}
                         >
                           <Pencil size={16} aria-hidden="true" />
