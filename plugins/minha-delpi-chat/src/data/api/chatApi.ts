@@ -290,7 +290,7 @@ async function consumeChatMessageStream(
       } catch {
         // ignore cancel errors
       }
-      return;
+      throw new DOMException("The operation was aborted.", "AbortError");
     }
 
     const { value, done } = await reader.read();
@@ -306,7 +306,7 @@ async function consumeChatMessageStream(
 
     for (const part of parts) {
       if (signal?.aborted) {
-        return;
+        throw new DOMException("The operation was aborted.", "AbortError");
       }
       const lines = part.split("\n");
       const event = lines
@@ -422,7 +422,7 @@ async function consumeChatMessageStream(
   }
 
   if (signal?.aborted) {
-    return;
+    throw new DOMException("The operation was aborted.", "AbortError");
   }
 
   if (streamErrorMessage) {

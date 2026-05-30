@@ -54,3 +54,27 @@ def test_attach_includes_intelligence_timings():
 
     assert metadata["adminDebug"]["intelligence"]["timings"]["llm_done_ms"] == 890
     assert metadata["adminDebug"]["intelligence"]["pipeline"]["stages"] == ["utility_direct"]
+
+
+def test_resolve_client_admin_debug_merges_assertiveness_from_metadata():
+    build_payload = {"pipeline": {"skipRag": True}}
+    assistant_metadata = {
+        "adminDebug": {
+            "memory": {"lastEntities": {"productCode": "10080001"}},
+            "contextAssertiveness": {"score": 92.0, "flags": ["follow_up_entity_reused"]},
+        }
+    }
+
+    class _Req:
+        admin_debug = True
+
+    merged = ChatAdminDebugService.resolve_client_admin_debug(
+        _Req(),
+        build_payload=build_payload,
+        assistant_metadata=assistant_metadata,
+    )
+
+    assert merged is not None
+    assert merged["contextAssertiveness"]["score"] == 92.0
+    assert merged["memory"]["lastEntities"]["productCode"] == "10080001"
+    assert merged["pipeline"]["skipRag"] is True

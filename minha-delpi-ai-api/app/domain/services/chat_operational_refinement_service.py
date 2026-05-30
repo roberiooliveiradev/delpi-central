@@ -289,8 +289,13 @@ class ChatOperationalRefinementService:
 
         requested_depth = cls.extract_requested_max_depth(normalized)
         current_depth = cls._parameter_int(recent.parameters, "max_depth")
-        max_depth = requested_depth or (current_depth + 5 if current_depth else 99)
-        max_depth = min(max(max_depth, 1), 99)
+        depth_cap = (
+            15
+            if recent.route_segment in {"parents", "structure"}
+            else 99
+        )
+        max_depth = requested_depth or (current_depth + 5 if current_depth else depth_cap)
+        max_depth = min(max(max_depth, 1), depth_cap)
 
         return [
             OperationalRefinement(

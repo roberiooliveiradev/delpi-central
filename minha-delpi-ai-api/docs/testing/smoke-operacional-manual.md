@@ -10,6 +10,20 @@ Checklist de perguntas para validar o chat operacional após deploy ou alteraç�
 
 **Ambiente local (maio/2026):** se a **api-delpi** interna estiver indisponível, mantenha o provider **desabilitado** no agente e use só **api-externa** (`https://api.transformamaisdelpi.com.br`). Cenários KPI `/supplies/*` (#6b, #34) e parte do smoke operacional dependem da api-delpi; utilitários (U1–U9) e identidade/small talk não dependem de provider.
 
+## Smokes automatizados (API)
+
+Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak no ar):
+
+| Script | Comando (container ou `PYTHONPATH` na API) |
+|--------|---------------------------------------------|
+| Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
+| Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
+| Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
+
+Variáveis opcionais: `SMOKE_BASE_URL`, `SMOKE_USER`, `SMOKE_PASSWORD`. Ver [`../changelog/2026-05-contexto-memoria-assertividade.md`](../changelog/2026-05-contexto-memoria-assertividade.md).
+
+---
+
 Se algo falhar após deploy, reinicie ou reconstrua a API:
 
 ```bash

@@ -9,6 +9,8 @@ import { ChatAgentActionsPage } from "./ChatAgentActionsPage";
 import { ChatAgentBuilderPage } from "./ChatAgentBuilderPage";
 import { ChatAgentSkillsPage } from "./ChatAgentSkillsPage";
 
+import { normalizeAgentIcebreakers } from "../agentIcebreakers";
+
 import "./ChatAgentsPage.css";
 
 type AgentPayload = {
@@ -91,13 +93,7 @@ function canDeleteAgent(
 }
 
 function getAgentIcebreakerCount(agent: ChatAgent): number {
-  const value = agent.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return 0;
-  }
-
-  return value.filter((item) => typeof item === "string" && item.trim()).length;
+  return normalizeAgentIcebreakers(agent.metadata?.icebreakers).length;
 }
 
 function getAgentCapabilities(agent: ChatAgent): string[] {

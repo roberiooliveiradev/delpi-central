@@ -32,6 +32,7 @@ from app.domain.services.external_actions.external_action_response_content_servi
 
 
 class ExternalActionSelectionService:
+    HIERARCHICAL_PRODUCT_MAX_DEPTH = 15
     def __init__(self, repository, semantic_ranker=None):
         self.repository = repository
         self.semantic_ranker = semantic_ranker
@@ -857,7 +858,10 @@ class ExternalActionSelectionService:
             lowered = name.lower()
 
             if lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
-                parameters[name] = refinement.max_depth
+                parameters[name] = self._clamp_max_depth_for_path(
+                    refinement.max_depth,
+                    str(action.get("path") or ""),
+                )
 
         reason = fallback_reason or refinement.reason or (
             "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa."
@@ -2521,6 +2525,22 @@ class ExternalActionSelectionService:
 
         return sorted(candidates, key=score, reverse=True)
 
+    @classmethod
+    def _clamp_max_depth_for_path(cls, value: int, path: str) -> int:
+        try:
+            depth = int(value)
+        except (TypeError, ValueError):
+            depth = 10
+
+        lowered = str(path or "").lower()
+        cap = (
+            cls.HIERARCHICAL_PRODUCT_MAX_DEPTH
+            if "/structure" in lowered or "/parents" in lowered
+            else 99
+        )
+
+        return min(max(depth, 1), cap)
+
     def _build_product_parameters(self, action: dict, code: str, *, message: str | None = None) -> dict:
         parameters = {}
         path = (action.get("path") or "").lower()
@@ -2592,7 +2612,11 @@ class ExternalActionSelectionService:
                     parameters[name] = 200 if is_full_listing else 50
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
-                parameters[name] = 99 if is_full_listing else 10
+                parameters[name] = (
+                    self.HIERARCHICAL_PRODUCT_MAX_DEPTH
+                    if is_full_listing
+                    else min(10, self.HIERARCHICAL_PRODUCT_MAX_DEPTH)
+                )
 
             elif lowered in {"branch", "filial", "branch_code", "branchcode"} and branch_code:
                 parameters[name] = branch_code

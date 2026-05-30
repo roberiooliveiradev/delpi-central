@@ -1,6 +1,12 @@
 import { Bot, Settings, Sparkles } from "lucide-react";
 
 import type { ChatAgent } from "../../data/api/chatTypes";
+import {
+  AGENT_ICEBREAKER_MAX_COUNT,
+  formatIcebreakerForDisplay,
+  getIcebreakerGridDensityClass,
+  normalizeAgentIcebreakers,
+} from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import "./ChatAgentHome.css";
@@ -12,30 +18,17 @@ type ChatAgentHomeProps = {
   onManageAgent?: () => void;
 };
 
-function getAgentIcebreakers(agent: ChatAgent): string[] {
-  const value = agent.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 8);
-}
-
 export function ChatAgentHome({
   agent,
   onUseSuggestion,
   canManageAgent = false,
   onManageAgent,
 }: ChatAgentHomeProps) {
-  const configuredIcebreakers = getAgentIcebreakers(agent);
+  const configuredIcebreakers = normalizeAgentIcebreakers(agent.metadata?.icebreakers);
   const icebreakers =
     configuredIcebreakers.length > 0 ? configuredIcebreakers : DEFAULT_AGENT_ICEBREAKERS;
   const usingDefaultIcebreakers = configuredIcebreakers.length === 0;
+  const icebreakerDensityClass = getIcebreakerGridDensityClass(icebreakers.length);
   const visibilityLabel =
     agent.visibility === "system"
       ? "Oficial"
@@ -62,7 +55,9 @@ export function ChatAgentHome({
           <span>{agent.response_style}</span>
         ) : null}
         {agent.visibility !== "private" && configuredIcebreakers.length > 0 ? (
-          <span>{configuredIcebreakers.length} quebra-gelos</span>
+          <span>
+            {Math.min(configuredIcebreakers.length, AGENT_ICEBREAKER_MAX_COUNT)} quebra-gelos
+          </span>
         ) : null}
       </div>
 
@@ -76,22 +71,34 @@ export function ChatAgentHome({
       ) : null}
 
       {icebreakers.length > 0 ? (
-        <div className="mdc-chat-agent-home__icebreakers">
+        <div
+          className={[
+            "mdc-chat-agent-home__icebreakers",
+            icebreakerDensityClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
           {usingDefaultIcebreakers ? (
             <p className="mdc-chat-agent-home__icebreakers-hint">
               Sugestões para começar — clique ou digite do seu jeito.
             </p>
           ) : null}
-          {icebreakers.map((icebreaker) => (
-            <button
-              key={icebreaker}
-              type="button"
-              onClick={() => onUseSuggestion(icebreaker)}
-            >
-              <Sparkles size={15} aria-hidden="true" />
-              <span>{icebreaker}</span>
-            </button>
-          ))}
+          {icebreakers.map((icebreaker) => {
+            const displayLabel = formatIcebreakerForDisplay(icebreaker);
+
+            return (
+              <button
+                key={icebreaker}
+                type="button"
+                onClick={() => onUseSuggestion(icebreaker)}
+                title={icebreaker}
+              >
+                <Sparkles size={15} aria-hidden="true" />
+                <span>{displayLabel}</span>
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </section>

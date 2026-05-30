@@ -93,6 +93,12 @@
   font-weight: 600;
 }
 
+.mdc-chat-admin-debug__assertiveness-chip--warn {
+  border-color: var(--mdc-color-warning, #d97706);
+  background: color-mix(in srgb, var(--mdc-color-warning, #d97706) 12%, transparent);
+  color: var(--mdc-color-warning-foreground, #92400e);
+}
+
 .mdc-chat-admin-debug__body {
   margin: 0;
   padding: 0 var(--mdc-space-3) var(--mdc-space-3);

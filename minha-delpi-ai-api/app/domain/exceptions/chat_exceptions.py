@@ -10,7 +10,10 @@ class ChatSessionAccessDeniedError(Exception):
 
 class ChatMessageNotFoundError(Exception):
     code = "chat.message_not_found"
-    message = "Chat message not found"
+
+    def __init__(self, message: str = "Mensagem não encontrada."):
+        self.message = message
+        super().__init__(message)
 
 
 class InvalidChatSessionInputError(Exception):

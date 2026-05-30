@@ -10,6 +10,7 @@ def test_build_system_prompt_includes_context_engineering():
     assert "Engenharia de contexto" in prompt
     assert "Decisões" in prompt
     assert "não invente" in prompt.lower()
+    assert "Memória de contexto" in prompt or "memória ativa" in prompt.lower()
 
 
 def test_contextual_prompt_always_includes_base_and_response_style():

@@ -39,6 +39,9 @@
 | `user_feedback_reason` | Motivo estruturado do thumbs down (ex.: `incomplete`, `wrong_data`), quando informado. IDs válidos vêm de `personality_playbook.json` → `feedbackReasons`. |
 | `branch` | Em perguntas `user` com variações (irmãs): `{ currentIndex, total, siblingIds }` para navegação « 1 / N ». |
 | `adminDebug` | Diagnóstico do turno (pipeline, RAG, tools, LLM). **Persistido** em toda mensagem `assistant`; **retornado** no JSON só para admin (ver abaixo). |
+| `contextSnapshot` | Snapshot pós-turno da memória de contexto (entidades, follow-up, referências). Persistido no `assistant`. |
+| `contextAssertiveness` | Score 0–100 e `flags` de assertividade contextual do turno. Persistido no `assistant`. |
+| `followUpSuggestions` | Chips «Próximos passos» (`label`, `query`) após respostas operacionais. |
 
 ### `metadata.adminDebug` (diagnóstico de turno)
 
@@ -50,6 +53,14 @@ Montado por `ChatAdminDebugService` em todo envio/stream/resend e salvo em `Chat
 | Admin (`minha-delpi.chat.admin` ou superadmin) | Presente em `POST .../messages`, evento SSE `done` e histórico |
 
 Estrutura resumida: `workspace`, `pipeline` (`skipRag`, `fastPath`, `analysisMode`, …), `tooling`, `rag` (`sources`, `ragContextText`, opcional `sourcesNote`), `llm.messages`, `recordedAt`.
+
+Na resposta HTTP/SSE ao admin, o objeto pode incluir também (mesclado após o turno):
+
+| Campo | Descrição |
+|-------|-----------|
+| `memory` | Resumo compacto de `contextSnapshot` (`lastEntities`, follow-up) |
+| `contextAssertiveness` | Mesmo conteúdo de `metadata.contextAssertiveness` |
+| `intelligence` | Timings e estágios do pipeline (`timings`, `pipeline.stages`, …) |
 
 Validação de identidade do assistente («quem te criou?»), com atalho direto (default):
 

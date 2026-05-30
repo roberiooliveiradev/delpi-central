@@ -80,6 +80,47 @@
   text-align: left;
 }
 
+.mdc-chat-agent-home__icebreakers button span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.mdc-chat-agent-home__icebreakers--medium {
+  gap: 0.55rem;
+  width: min(100%, 580px);
+}
+
+.mdc-chat-agent-home__icebreakers--medium button {
+  min-height: 4.1rem;
+  border-radius: 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 680;
+  padding: 0.65rem 0.75rem;
+}
+
+.mdc-chat-agent-home__icebreakers--many {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: min(100%, 520px);
+}
+
+.mdc-chat-agent-home__icebreakers--many button {
+  min-height: 3.2rem;
+  border-radius: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  gap: 0.3rem;
+  padding: 0.5rem 0.65rem;
+}
+
+.mdc-chat-agent-home__icebreakers--many button span {
+  -webkit-line-clamp: 2;
+}
+
 .mdc-chat-agent-home__icebreakers button:hover {
   border-color: color-mix(in srgb, var(--mdc-primary) 26%, var(--mdc-card-border));
   background: color-mix(in srgb, var(--mdc-primary) 5%, transparent);
@@ -87,6 +128,12 @@
 
 .mdc-chat-agent-home__icebreakers svg {
   color: var(--mdc-primary);
+  flex-shrink: 0;
+}
+
+.mdc-chat-agent-home__icebreakers--many svg {
+  width: 13px;
+  height: 13px;
 }
 
 @media (max-width: 760px) {

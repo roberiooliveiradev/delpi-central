@@ -129,6 +129,83 @@ def test_build_tree_presentation_for_analyser():
     assert tree["root"]["children"][0]["children"][0]["label"] == "10030015"
 
 
+def test_present_product_analyser_unwraps_double_success_data_wrapper():
+    presenter = ExternalActionResultPresenter()
+
+    payload = {
+        "success": True,
+        "product": {
+            "success": True,
+            "data": {
+                "success": True,
+                "data": {
+                    "group_code": "1008",
+                    "code": "10080001",
+                    "description": "TERM. BANDEIRA 6,30X0,80",
+                    "type": "MP",
+                    "unit": "PC",
+                    "active": "S",
+                    "default_warehouse": "01",
+                    "last_purchase_price": 0.033,
+                    "standard_cost": 0.02583,
+                    "last_revision_date": "20231016",
+                    "ncm_ipi_position": "85369090",
+                },
+            },
+        },
+        "structure": {"items": [], "total": 0},
+        "guide": {"items": [], "total": 0},
+        "inspection": {"items": [], "total": 0},
+    }
+
+    humanized = presenter.present(payload, path="/products/10080001/analyser")
+    body = "\n".join(humanized["linhas"])
+
+    assert "10080001" in body
+    assert "TERM. BANDEIRA" in body
+    assert "None" not in body
+
+
+def test_build_text_presentation_unwraps_double_success_data_wrapper():
+    presenter = ExternalActionResultPresenter()
+
+    payload = {
+        "success": True,
+        "product": {
+            "success": True,
+            "data": {
+                "success": True,
+                "data": {
+                    "group_code": "1008",
+                    "code": "10080001",
+                    "description": "TERM. BANDEIRA 6,30X0,80",
+                    "type": "MP",
+                    "unit": "PC",
+                    "active": "S",
+                    "default_warehouse": "01",
+                    "last_purchase_price": 0.033,
+                    "standard_cost": 0.02583,
+                    "last_revision_date": "20231016",
+                    "ncm_ipi_position": "85369090",
+                },
+            },
+        },
+        "structure": {"items": [], "total": 0},
+        "guide": {"items": [], "total": 0},
+        "inspection": {"items": [], "total": 0},
+    }
+
+    text = presenter.build_text_presentation(
+        payload,
+        path="/products/10080001/analyser",
+    )
+
+    assert text is not None
+    assert "10080001" in text["markdown"]
+    assert "TERM. BANDEIRA" in text["markdown"]
+    assert "None" not in text["markdown"]
+
+
 def test_build_text_presentation_includes_structure_markdown():
     presenter = ExternalActionResultPresenter()
 

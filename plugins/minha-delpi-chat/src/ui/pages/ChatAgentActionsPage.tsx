@@ -11,6 +11,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  formatIcebreakerForDisplay,
+  normalizeAgentIcebreakers,
+} from "../agentIcebreakers";
+
+import {
   createChatAgentActionProvider,
   deleteChatAgentAction,
   deleteChatAgentActionProvider,
@@ -77,17 +82,7 @@ function createKeyFromName(value: string): string {
 }
 
 function getAgentIcebreakers(agent: ChatAgent): string[] {
-  const value = agent.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean)
-    .slice(0, 3);
+  return normalizeAgentIcebreakers(agent.metadata?.icebreakers).slice(0, 3);
 }
 
 function shouldConfirmAction(action: ChatActionCatalogItem): boolean {
@@ -1239,8 +1234,8 @@ export function ChatAgentActionsPage({
             {icebreakers.length > 0 ? (
               <div className="mdc-chat-agent-actions-page__icebreakers">
                 {icebreakers.map((icebreaker) => (
-                  <button key={icebreaker} type="button">
-                    {icebreaker}
+                  <button key={icebreaker} type="button" title={icebreaker}>
+                    {formatIcebreakerForDisplay(icebreaker)}
                   </button>
                 ))}
               </div>

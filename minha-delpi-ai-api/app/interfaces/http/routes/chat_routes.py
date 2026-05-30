@@ -2552,11 +2552,13 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
                     "error_type": exc.__class__.__name__,
                 },
             )
+            detail = getattr(exc, "message", None) or str(exc) or "Erro desconhecido."
+
             yield _sse(
                 "error",
                 {
                     "message": "Erro ao gerar resposta em streaming.",
-                    "detail": str(exc),
+                    "detail": detail,
                     "errorType": exc.__class__.__name__,
                 },
             )

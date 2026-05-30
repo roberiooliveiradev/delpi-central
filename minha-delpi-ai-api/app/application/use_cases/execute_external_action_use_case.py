@@ -58,20 +58,22 @@ class ExecuteExternalActionUseCase:
 
         self.policy.validate(provider, action, arguments)
 
+        request_parameters = self._clamp_hierarchical_query_parameters(
+            action.get("path") or "",
+            arguments.get("parameters") or {},
+        )
+
         result = self.gateway.execute(
             provider=provider,
             action=action,
-            parameters=arguments.get("parameters") or {},
+            parameters=request_parameters,
             body=arguments.get("body"),
             access_token=access_token,
         )
 
         sanitized_data = self.policy.sanitize_response(result["data"])
         action_path = action.get("path") or ""
-        resolved_path = self._resolve_action_path(
-            action_path,
-            arguments.get("parameters") or {},
-        )
+        resolved_path = self._resolve_action_path(action_path, request_parameters)
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -102,7 +104,6 @@ class ExecuteExternalActionUseCase:
             },
         )
 
-        request_parameters = dict(arguments.get("parameters") or {})
         presentation_metadata = self._build_presentation_metadata(
             action=action,
             sanitized_data=sanitized_data,
@@ -284,6 +285,29 @@ class ExecuteExternalActionUseCase:
                 )
 
         return resolved
+
+    @staticmethod
+    def _clamp_hierarchical_query_parameters(path: str, parameters: dict) -> dict:
+        lowered = str(path or "").lower()
+
+        if "/structure" not in lowered and "/parents" not in lowered:
+            return dict(parameters or {})
+
+        clamped = dict(parameters or {})
+        depth_keys = {"max_depth", "maxdepth", "depth", "nivel", "levels"}
+
+        for key, value in list(clamped.items()):
+            if str(key).lower() not in depth_keys:
+                continue
+
+            try:
+                depth = int(value)
+            except (TypeError, ValueError):
+                continue
+
+            clamped[key] = min(max(depth, 1), 15)
+
+        return clamped
 
     def _drop_internal_unknown_parameters(self, action: dict, arguments: dict) -> dict:
         normalized = dict(arguments or {})

@@ -27,6 +27,7 @@ import type {
 } from "../../data/api/chatTypes";
 import {
   isAssistantGenerating,
+  sanitizeMessagesAfterStreamDismiss,
   sessionAwaitingAssistantResponse,
 } from "../chatMessageDelivery";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
@@ -106,8 +107,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingSessionIds, setPendingSessionIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
+  const [branchSwitchingMessageId, setBranchSwitchingMessageId] = useState<string | null>(
+    null,
+  );
   const skipNextSessionLoadRef = useRef(false);
   const activeSessionIdRef = useRef<string | null>(null);
+  const userDismissedBackgroundStreamRef = useRef<Set<string>>(new Set());
 
   const {
     isSessionStreaming,
@@ -265,17 +270,36 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, [resetStreamingUi]);
 
   const loadMessages = useCallback(
-    async (sessionId: string) => {
+    async (
+      sessionId: string,
+      loadOptions?: {
+        userDismissedBackground?: boolean;
+      },
+    ) => {
       setIsLoadingMessages(true);
       setError(null);
 
       try {
-        const data = await listChatMessages(sessionId, {
+        let data = await listChatMessages(sessionId, {
           getAccessToken: options.getAccessToken,
         });
 
         if (activeSessionIdRef.current !== sessionId) {
           return;
+        }
+
+        const userDismissed =
+          loadOptions?.userDismissedBackground ||
+          userDismissedBackgroundStreamRef.current.has(sessionId);
+
+        const serverStillAwaiting = sessionAwaitingAssistantResponse(data);
+
+        if (userDismissed) {
+          data = sanitizeMessagesAfterStreamDismiss(data);
+
+          if (!serverStillAwaiting) {
+            userDismissedBackgroundStreamRef.current.delete(sessionId);
+          }
         }
 
         setMessages(data);
@@ -288,11 +312,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setLastSentUserText("");
         }
 
-        if (sessionAwaitingAssistantResponse(data)) {
+        const keepDismissedUi =
+          userDismissed || userDismissedBackgroundStreamRef.current.has(sessionId);
+
+        if (keepDismissedUi) {
+          unmarkSessionPending(sessionId);
+
+          if (activeSessionIdRef.current === sessionId) {
+            setStreamingStatus((current) =>
+              current === "Finalizando resposta em segundo plano..." ? null : current,
+            );
+          }
+        } else if (sessionAwaitingAssistantResponse(data)) {
           markSessionPending(sessionId);
           restoreStreamUiForSession(sessionId);
         } else {
           unmarkSessionPending(sessionId);
+
+          if (activeSessionIdRef.current === sessionId) {
+            setStreamingStatus((current) =>
+              current === "Finalizando resposta em segundo plano..." ? null : current,
+            );
+          }
         }
       } catch (err) {
         if (activeSessionIdRef.current !== sessionId) {
@@ -308,19 +349,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionPending],
   );
-
-  const cancelStreaming = useCallback(() => {
-    const sessionId = activeSessionIdRef.current;
-
-    if (sessionId) {
-      cancelSessionStreaming(sessionId);
-      unmarkSessionPending(sessionId);
-      clearSessionStreamUi(sessionId);
-      void loadMessages(sessionId);
-    }
-
-    resetStreamingUi();
-  }, [cancelSessionStreaming, loadMessages, resetStreamingUi, unmarkSessionPending]);
 
   const selectSession = useCallback(
     (session: ChatSession) => {
@@ -688,6 +716,46 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [unmarkSessionPending],
   );
 
+  const cancelStreaming = useCallback(() => {
+    const sessionId = activeSessionIdRef.current;
+
+    if (sessionId) {
+      userDismissedBackgroundStreamRef.current.add(sessionId);
+      cancelSessionStreaming(sessionId);
+      unmarkSessionPending(sessionId);
+      finishSending(sessionId);
+      clearSessionStreamUi(sessionId);
+
+      setMessages((current) =>
+        sanitizeMessagesAfterStreamDismiss(
+          current.filter((message) => !message.metadata?.optimistic),
+        ),
+      );
+
+      void loadMessages(sessionId, { userDismissedBackground: true });
+    }
+
+    setPendingUserMessage(null);
+
+    const textToRestore = lastSentUserText.trim();
+
+    if (textToRestore) {
+      setDraft(textToRestore);
+    } else {
+      setDraft("");
+    }
+
+    resetStreamingUi();
+  }, [
+    cancelSessionStreaming,
+    clearSessionStreamUi,
+    finishSending,
+    lastSentUserText,
+    loadMessages,
+    resetStreamingUi,
+    unmarkSessionPending,
+  ]);
+
   const buildStreamCallbacks = useCallback(
     (
       sessionForMessage: ChatSession,
@@ -942,94 +1010,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ],
   );
 
-  const editAndResendMessage = useCallback(
-    async (messageId: string, content: string) => {
-      const normalizedContent = content.trim();
-
-      if (!activeSession) {
-        setError("Selecione uma conversa.");
-        return null;
-      }
-
-      if (!normalizedContent) {
-        setError("Informe uma mensagem.");
-        return null;
-      }
-
-      if (isActiveSessionBusy()) {
-        setError("Aguarde a resposta atual terminar.");
-        return null;
-      }
-
-      if (!isPersistedChatMessageId(messageId)) {
-        setError("Aguarde a pergunta ser salva antes de reenviar.");
-        return null;
-      }
-
-      const targetMessage = messages.find((message) => message.id === messageId);
-
-      if (targetMessage && targetMessage.role !== "user") {
-        setError("Somente perguntas do usuário podem ser reenviadas.");
-        return null;
-      }
-
-      setError(null);
-      markSessionPending(activeSession.id);
-      clearSessionStreamUi(activeSession.id);
-      patchSessionStreamUi(activeSession.id, {
-        activityLog: [],
-        status: "Preparando novo envio...",
-        sources: [],
-        toolCalls: [],
-      });
-      setStreamingAnswer("");
-      setStreamingSources([]);
-      setStreamingToolCalls([]);
-      setStreamingActivityLog([]);
-      setStreamingStatus("Preparando novo envio...");
-
-      try {
-        await resendMessage({
-          sessionId: activeSession.id,
-          messageId,
-          content: normalizedContent,
-          context: activeSession.context ?? "geral",
-          ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
-        });
-
-        return {
-          id: messageId,
-          session_id: activeSession.id,
-          role: "user" as const,
-          content: normalizedContent,
-          metadata: targetMessage?.metadata ?? null,
-          created_at: targetMessage?.created_at ?? new Date().toISOString(),
-        };
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") {
-          finishSending(activeSession.id);
-          return null;
-        }
-
-        setStreamingStatus(null);
-        setError(err instanceof Error ? err.message : "Erro ao reenviar mensagem.");
-        finishSending(activeSession.id);
-        await loadMessages(activeSession.id);
-        return null;
-      }
-    },
-    [
-      activeSession,
-      buildStreamCallbacks,
-      finishSending,
-      isActiveSessionBusy,
-      loadMessages,
-      markSessionPending,
-      messages,
-      resendMessage,
-    ],
-  );
-
   const sendMessage = useCallback(async (params: { attachments?: File[]; content?: string } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
@@ -1177,8 +1157,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         if (sessionForMessage) {
+          userDismissedBackgroundStreamRef.current.add(sessionForMessage.id);
           finishSending(sessionForMessage.id);
+          clearSessionStreamUi(sessionForMessage.id);
+
+          setMessages((current) =>
+            sanitizeMessagesAfterStreamDismiss(
+              current.filter((message) => !message.metadata?.optimistic),
+            ),
+          );
+
+          void loadMessages(sessionForMessage.id, { userDismissedBackground: true });
         }
+
+        setPendingUserMessage(null);
+
+        const textToRestore = lastSentUserText.trim();
+
+        if (textToRestore) {
+          setDraft(textToRestore);
+        }
+
+        resetStreamingUi();
         return;
       }
 
@@ -1194,15 +1194,129 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     draft,
     finishSending,
     isActiveSessionBusy,
+    lastSentUserText,
     loadMessages,
     loadSessions,
     markSessionPending,
     options.agentId,
     options.getAccessToken,
     options.projectId,
+    resetStreamingUi,
     streamMessage,
     buildStreamCallbacks,
   ]);
+
+  const editAndResendMessage = useCallback(
+    async (messageId: string, content: string) => {
+      const normalizedContent = content.trim();
+
+      if (!activeSession) {
+        setError("Selecione uma conversa.");
+        return null;
+      }
+
+      if (!normalizedContent) {
+        setError("Informe uma mensagem.");
+        return null;
+      }
+
+      if (isActiveSessionBusy()) {
+        setError("Aguarde a resposta atual terminar.");
+        return null;
+      }
+
+      const targetMessage = messages.find((message) => message.id === messageId);
+
+      if (!isPersistedChatMessageId(messageId)) {
+        setError(null);
+        setMessages((current) => current.filter((message) => message.id !== messageId));
+        setPendingUserMessage(null);
+        await sendMessage({ content: normalizedContent });
+        return targetMessage
+          ? {
+              ...targetMessage,
+              content: normalizedContent,
+            }
+          : null;
+      }
+
+      if (targetMessage && targetMessage.role !== "user") {
+        setError("Somente perguntas do usuário podem ser reenviadas.");
+        return null;
+      }
+
+      setError(null);
+      markSessionPending(activeSession.id);
+      clearSessionStreamUi(activeSession.id);
+      patchSessionStreamUi(activeSession.id, {
+        activityLog: [],
+        status: "Preparando novo envio...",
+        sources: [],
+        toolCalls: [],
+      });
+      setStreamingAnswer("");
+      setStreamingSources([]);
+      setStreamingToolCalls([]);
+      setStreamingActivityLog([]);
+      setStreamingStatus("Preparando novo envio...");
+
+      try {
+        await resendMessage({
+          sessionId: activeSession.id,
+          messageId,
+          content: normalizedContent,
+          context: activeSession.context ?? "geral",
+          ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
+        });
+
+        return {
+          id: messageId,
+          session_id: activeSession.id,
+          role: "user" as const,
+          content: normalizedContent,
+          metadata: targetMessage?.metadata ?? null,
+          created_at: targetMessage?.created_at ?? new Date().toISOString(),
+        };
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          finishSending(activeSession.id);
+          return null;
+        }
+
+        const errorText = err instanceof Error ? err.message.toLowerCase() : "";
+        const messageMissing =
+          errorText.includes("não encontrada") ||
+          errorText.includes("nao encontrada") ||
+          errorText.includes("not found") ||
+          errorText.includes("message_not_found");
+
+        if (messageMissing) {
+          finishSending(activeSession.id);
+          resetStreamingUi();
+          await sendMessage({ content: normalizedContent });
+          return null;
+        }
+
+        setStreamingStatus(null);
+        setError(err instanceof Error ? err.message : "Erro ao reenviar mensagem.");
+        finishSending(activeSession.id);
+        await loadMessages(activeSession.id);
+        return null;
+      }
+    },
+    [
+      activeSession,
+      buildStreamCallbacks,
+      finishSending,
+      isActiveSessionBusy,
+      loadMessages,
+      markSessionPending,
+      messages,
+      resendMessage,
+      resetStreamingUi,
+      sendMessage,
+    ],
+  );
 
   useEffect(() => {
     void loadSessions();
@@ -1248,6 +1362,21 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    if (userDismissedBackgroundStreamRef.current.has(sessionId)) {
+      setStreamingStatus((current) =>
+        current === "Finalizando resposta em segundo plano..." ? null : current,
+      );
+      unmarkSessionPending(sessionId);
+
+      const interval = window.setInterval(() => {
+        void loadMessages(sessionId, { userDismissedBackground: true });
+      }, 2500);
+
+      return () => {
+        window.clearInterval(interval);
+      };
+    }
+
     const awaitingBackground =
       (isSessionPending(sessionId) && !pendingUserMessage) ||
       sessionAwaitingAssistantResponse(messages);
@@ -1264,6 +1393,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     const interval = window.setInterval(() => {
+      if (userDismissedBackgroundStreamRef.current.has(sessionId)) {
+        return;
+      }
+
       void loadMessages(sessionId);
     }, 2500);
 
@@ -1279,6 +1412,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     pendingUserMessage,
     playbackPayload,
     restoreStreamUiForSession,
+    unmarkSessionPending,
   ]);
 
   const visibleMessages = useMemo(() => {
@@ -1315,14 +1449,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isPlaybackActive);
 
   const switchMessageBranch = useCallback(
-    async (anchorUserMessageId: string) => {
+    async (anchorUserMessageId: string, sourceUserMessageId?: string) => {
       const sessionId = activeSession?.id;
 
-      if (!sessionId || isActiveSessionBusy()) {
+      if (!sessionId || isActiveSessionBusy() || branchSwitchingMessageId) {
         return;
       }
 
       setError(null);
+      setBranchSwitchingMessageId(sourceUserMessageId ?? anchorUserMessageId);
 
       try {
         const data = await switchChatBranch(sessionId, anchorUserMessageId, {
@@ -1336,9 +1471,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         setMessages(data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao alternar variação.");
+      } finally {
+        setBranchSwitchingMessageId(null);
       }
     },
-    [activeSession?.id, isActiveSessionBusy, options.getAccessToken],
+    [
+      activeSession?.id,
+      branchSwitchingMessageId,
+      isActiveSessionBusy,
+      options.getAccessToken,
+    ],
   );
 
   const continueFromMessage = useCallback(
@@ -1426,6 +1568,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     reuseMessage,
     setMessageFeedback,
     switchMessageBranch,
+    branchSwitchingMessageId,
     continueFromMessage,
   };
 }

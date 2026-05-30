@@ -12,6 +12,7 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 | `427707d3` | Typos utilitários (`hors`→`horas`) |
 | `a3ad7121` | Docs: catálogo, utility, smoke U1–U9 |
 | *(esta entrega)* | Onda 11.3.3 piloto native tools; 11.3.4 admin timings; docs roadmap fechados |
+| *(maio/2026)* | Contexto/assertividade Fase 5, chips com produto — ver [2026-05-contexto-memoria-assertividade.md](./2026-05-contexto-memoria-assertividade.md) |
 
 ---
 

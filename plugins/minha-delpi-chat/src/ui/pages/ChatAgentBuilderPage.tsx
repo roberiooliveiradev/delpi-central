@@ -62,6 +62,13 @@ import {
 } from "../../domain/agentSystemPromptTemplates";
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
+import {
+  AGENT_ICEBREAKER_MAX_CHARS,
+  AGENT_ICEBREAKER_MAX_COUNT,
+  clampIcebreakerDraft,
+  formatIcebreakerForDisplay,
+  normalizeAgentIcebreakers,
+} from "../agentIcebreakers";
 
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
@@ -110,16 +117,7 @@ type ChatAgentBuilderPageProps = {
 };
 
 function getAgentIcebreakers(agent?: ChatAgent | null): string[] {
-  const value = agent?.metadata?.icebreakers;
-
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  return normalizeAgentIcebreakers(agent?.metadata?.icebreakers);
 }
 
 function getMetadataRecord(
@@ -511,13 +509,19 @@ export function ChatAgentBuilderPage({
   }
 
   const normalizedIcebreakers = useMemo(
-    () => icebreakers.map((item) => item.trim()).filter(Boolean).slice(0, 8),
+    () =>
+      icebreakers
+        .map((item) => clampIcebreakerDraft(item.trim()))
+        .filter(Boolean)
+        .slice(0, AGENT_ICEBREAKER_MAX_COUNT),
     [icebreakers],
   );
 
   function updateIcebreaker(index: number, value: string) {
+    const nextValue = clampIcebreakerDraft(value);
+
     setIcebreakers((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? value : item)),
+      current.map((item, itemIndex) => (itemIndex === index ? nextValue : item)),
     );
   }
 
@@ -530,7 +534,7 @@ export function ChatAgentBuilderPage({
 
   function addIcebreaker() {
     setIcebreakers((current) => {
-      if (current.length >= 8) {
+      if (current.length >= AGENT_ICEBREAKER_MAX_COUNT) {
         return current;
       }
 
@@ -1707,16 +1711,28 @@ export function ChatAgentBuilderPage({
 
           <section className="mdc-chat-agent-builder__section">
             <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
+            <p className="mdc-chat-agent-builder__icebreakers-help">
+              Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
+              {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais
+              sugestões.
+            </p>
 
             <div className="mdc-chat-agent-builder__icebreakers">
               {icebreakers.map((icebreaker, index) => (
                 <div key={`${index}-${icebreakers.length}`}>
                   <input
                     value={icebreaker}
-                    maxLength={180}
+                    maxLength={AGENT_ICEBREAKER_MAX_CHARS}
                     onChange={(event) => updateIcebreaker(index, event.target.value)}
                     placeholder="Ex.: Quero verificar um desenho."
+                    aria-describedby={`icebreaker-count-${index}`}
                   />
+                  <span
+                    id={`icebreaker-count-${index}`}
+                    className="mdc-chat-agent-builder__icebreaker-count"
+                  >
+                    {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
+                  </span>
 
                   <button
                     type="button"
@@ -1732,7 +1748,7 @@ export function ChatAgentBuilderPage({
                 type="button"
                 className="mdc-chat-ws-outline-btn"
                 onClick={addIcebreaker}
-                disabled={icebreakers.length >= 8}
+                disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
               >
                 <Plus size={16} aria-hidden="true" />
                 <span>Adicionar quebra-gelo</span>
@@ -2227,9 +2243,10 @@ export function ChatAgentBuilderPage({
                     key={icebreaker}
                     type="button"
                     disabled={isPreviewLoading}
+                    title={icebreaker}
                     onClick={() => void sendPreviewMessage(icebreaker)}
                   >
-                    {icebreaker}
+                    {formatIcebreakerForDisplay(icebreaker)}
                   </button>
                 ))}
               </div>

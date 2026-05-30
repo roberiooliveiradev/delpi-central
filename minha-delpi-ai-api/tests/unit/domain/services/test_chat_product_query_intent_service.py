@@ -41,6 +41,13 @@ def test_detect_parents_intent_from_follow_up_phrase():
     )
 
 
+def test_detect_parents_intent_when_product_code_is_between_onde_and_usado():
+    assert (
+        ChatProductQueryIntentService.detect("onde o produto 10080001 é usado?")
+        == ChatProductQueryIntent.PARENTS
+    )
+
+
 def test_detect_summary_not_kaizen_or_sales():
     assert (
         ChatProductQueryIntentService.detect("resumo de vendas do mês")

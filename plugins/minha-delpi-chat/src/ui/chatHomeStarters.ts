@@ -14,11 +14,9 @@ export const CHAT_HOME_STARTERS: ChatHomeStarter[] = [
 
 export const DEFAULT_AGENT_ICEBREAKERS: string[] = [
   "O que você consegue consultar?",
-  "Me traga uma visão 360° do produto 10080001",
-  "Qual o estoque do produto 10080001?",
+  "Visão 360° do produto 10080001",
+  "Estoque do produto 10080001",
   "Quem fornece o produto 10080001?",
   "Onde esse componente é usado?",
-  "Mostre vendas dos últimos 30 dias",
-  "Compare compra, venda e estoque de um produto",
-  "Bora consultar um produto?",
+  "Vendas dos últimos 30 dias",
 ];

@@ -204,6 +204,13 @@
   min-height: 10rem;
 }
 
+.mdc-chat-agent-builder__icebreakers-help {
+  margin: 0 0 0.65rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
 .mdc-chat-agent-builder__icebreakers {
   display: grid;
   gap: 0.5rem;
@@ -211,7 +218,7 @@
 
 .mdc-chat-agent-builder__icebreakers > div {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   border-radius: 0.78rem;
@@ -222,6 +229,14 @@
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+
+.mdc-chat-agent-builder__icebreaker-count {
+  padding-inline: 0.45rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .mdc-chat-agent-builder__icebreakers > div > button {

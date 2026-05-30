@@ -32,6 +32,30 @@ class ChatAdminDebugService:
         return payload
 
     @classmethod
+    def resolve_client_admin_debug(
+        cls,
+        request,
+        *,
+        build_payload: dict | None,
+        assistant_metadata: dict | None,
+    ) -> dict | None:
+        """Mescla diagnóstico do turno com memória/assertividade gravados após o attach."""
+        if not cls.should_expose_to_client(request):
+            return None
+
+        merged: dict[str, Any] = dict(build_payload or {})
+        admin_debug = (assistant_metadata or {}).get("adminDebug")
+
+        if isinstance(admin_debug, dict):
+            for key in ("memory", "contextAssertiveness", "intelligence"):
+                value = admin_debug.get(key)
+
+                if value is not None:
+                    merged[key] = value
+
+        return merged or None
+
+    @classmethod
     def build_for_turn(
         cls,
         request,
@@ -144,6 +168,16 @@ class ChatAdminDebugService:
                 "ainda foi injetado no prompt."
             )
 
+        memory_block = None
+        working_memory = workspace_context.get("workingMemory")
+
+        if isinstance(working_memory, dict):
+            from app.domain.services.chat_working_memory_service import (
+                ChatWorkingMemoryService,
+            )
+
+            memory_block = ChatWorkingMemoryService.compact_for_admin_debug(working_memory)
+
         payload = {
             "workspace": {
                 "agentId": workspace_context.get("agentId"),
@@ -172,6 +206,9 @@ class ChatAdminDebugService:
                 "messages": compact_llm_messages,
             },
         }
+
+        if memory_block is not None:
+            payload["memory"] = memory_block
 
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)

@@ -49,9 +49,15 @@ class ExternalActionResultPresenter:
             return error
 
         root = self._unwrap_data(data)
+
+        if isinstance(root, dict) and "/analyser" in str(path or "").lower():
+            root = self._normalize_analyser_root(root)
+
         product = root.get("product") if isinstance(root, dict) else None
 
         if isinstance(product, dict):
+            product = self._normalize_api_section(product)
+
             if "/analyser" in str(path or "").lower():
                 return self._present_product_analyser(root, product, path)
 
@@ -697,6 +703,79 @@ class ExternalActionResultPresenter:
             root = root["data"]
 
         return root
+
+    def _normalize_api_section(self, block, *, _depth: int = 0):
+        """Desembrulha blocos `{ success, data }` retornados pela API DELPI."""
+        if not isinstance(block, dict):
+            return block
+
+        inner = block.get("data")
+
+        if inner is None and "success" not in block and "total" not in block:
+            return block
+
+        if isinstance(inner, list):
+            normalized: dict = {"items": inner}
+            total = block.get("total")
+
+            if total is not None:
+                normalized["total"] = total
+
+            return normalized
+
+        if isinstance(inner, dict):
+            merged = dict(inner)
+
+            for key in ("total", "page", "page_size", "total_pages", "filters", "success"):
+                if key in block and key not in merged:
+                    merged[key] = block[key]
+
+            if "components" in merged and "items" not in merged:
+                components = merged.get("components")
+
+                if isinstance(components, list):
+                    merged["items"] = components
+
+            if merged.get("code") and "root" not in merged:
+                merged.setdefault(
+                    "root",
+                    {
+                        "code": merged.get("code"),
+                        "description": merged.get("description"),
+                        "type": merged.get("type"),
+                        "unit": merged.get("unit"),
+                        "quantity": merged.get("quantity", 1),
+                    },
+                )
+
+            if (
+                _depth < 4
+                and isinstance(merged.get("data"), dict)
+                and not str(merged.get("code") or "").strip()
+            ):
+                return self._normalize_api_section(merged, _depth=_depth + 1)
+
+            return merged
+
+        return block
+
+    def _normalize_analyser_root(self, root: dict) -> dict:
+        normalized = dict(root)
+
+        for key in (
+            "product",
+            "guide",
+            "inspection",
+            "structure",
+            "customers",
+            "suppliers",
+        ):
+            value = normalized.get(key)
+
+            if isinstance(value, dict):
+                normalized[key] = self._normalize_api_section(value)
+
+        return normalized
 
     def _present_product(self, root: dict, product: dict) -> dict:
         product_summary = {
@@ -2193,11 +2272,16 @@ class ExternalActionResultPresenter:
         root = self._unwrap_data(data)
         lowered = str(path or "").lower()
 
+        if isinstance(root, dict) and "/analyser" in lowered:
+            root = self._normalize_analyser_root(root)
+
         if isinstance(root, dict) and isinstance(root.get("product"), dict):
             if "/analyser" in lowered:
+                product = self._normalize_api_section(root["product"])
+
                 return self._build_product_analyser_text_presentation(
                     root,
-                    root["product"],
+                    product,
                     path,
                 )
 

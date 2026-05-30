@@ -143,6 +143,7 @@ export function ChatPage({
     reuseMessage,
     setMessageFeedback,
     switchMessageBranch,
+    branchSwitchingMessageId,
     continueFromMessage,
   } = useChatSession({
     getAccessToken,
@@ -1362,6 +1363,12 @@ export function ChatPage({
               onRetry={() => {
                 if (draft.trim()) {
                   void handleSubmitMessage();
+                  return;
+                }
+
+                if (lastSentUserText.trim()) {
+                  setDraft(lastSentUserText.trim());
+                  void sendMessage({ content: lastSentUserText.trim() });
                 }
               }}
               onDismiss={() => {
@@ -1540,6 +1547,7 @@ export function ChatPage({
                 isLoading={isLoadingMessages && messages.length === 0}
                 onEditAndResendMessage={editAndResendMessage}
                 onSwitchMessageBranch={switchMessageBranch}
+                branchSwitchingMessageId={branchSwitchingMessageId}
                 onContinueFromMessage={continueFromMessage}
                 onReuseMessage={reuseMessage}
                 onDrillDown={handleDrillDown}

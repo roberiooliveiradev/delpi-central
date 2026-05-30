@@ -1219,3 +1219,51 @@ METRIC_REFINEMENT_SELECTION_CASES = [
         "expected_parameters": {"branch": "01"},
     },
 ]
+
+CONTEXT_ASSERTIVENESS_CASES = [
+    {
+        "message": "Quem fornece o produto 10080001?",
+        "tool_paths": ["/products/10080001/analyser"],
+        "expected_flags": ["supplier_intent_used_analyser"],
+        "max_score": 70.0,
+    },
+    {
+        "message": "agora estoque",
+        "tool_paths": ["/products/10080001/stock"],
+        "snapshot": {
+            "followUpDetected": True,
+            "lastEntities": {"productCode": "10080001"},
+        },
+        "expected_flags": ["follow_up_entity_reused"],
+        "min_score": 80.0,
+    },
+    {
+        "message": "agora fornecedores",
+        "tool_paths": [],
+        "snapshot": {
+            "followUpDetected": True,
+            "lastEntities": {"productCode": "10080001"},
+        },
+        "expected_flags": ["follow_up_without_entity_reuse"],
+        "max_score": 65.0,
+    },
+    {
+        "message": "me fale do produto 10080001",
+        "answer": "Informe o código do produto para consultar.",
+        "tool_paths": [],
+        "snapshot": {
+            "followUpDetected": False,
+            "lastEntities": {"productCode": "10080001"},
+        },
+        "expected_flags": ["unnecessary_code_request"],
+        "max_score": 75.0,
+    },
+    {
+        "message": "me fale do produto 10080001",
+        "answer": "Produto **None**: None.",
+        "tool_paths": ["/products/10080001/analyser"],
+        "snapshot": {"lastEntities": {"productCode": "10080001"}},
+        "expected_flags": ["humanized_none_fields"],
+        "max_score": 60.0,
+    },
+]

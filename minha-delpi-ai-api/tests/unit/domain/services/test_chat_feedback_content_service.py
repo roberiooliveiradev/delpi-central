@@ -5,6 +5,7 @@ from app.domain.services.chat_feedback_content_service import ChatFeedbackConten
 
 def test_normalize_reason_accepts_known_id():
     assert ChatFeedbackContentService.normalize_reason("wrong_data") == "wrong_data"
+    assert ChatFeedbackContentService.normalize_reason("lost_context") == "lost_context"
 
 
 def test_normalize_reason_rejects_unknown():

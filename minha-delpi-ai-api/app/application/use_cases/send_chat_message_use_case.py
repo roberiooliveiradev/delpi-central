@@ -457,9 +457,10 @@ class SendChatMessageUseCase:
                 if canvas_open_payload
                 else None
             ),
-            adminDebug=ChatAdminDebugService.payload_for_client(
+            adminDebug=ChatAdminDebugService.resolve_client_admin_debug(
                 request,
-                admin_debug_payload,
+                build_payload=admin_debug_payload,
+                assistant_metadata=assistant_metadata,
             ),
         )
 

@@ -115,6 +115,14 @@ pytest \
   tests/unit/application/services/test_chat_admin_debug_service.py \
   -q
 
+echo "== Onda 11 — contexto / memória / assertividade (Fase 5) =="
+pytest \
+  tests/unit/domain/services/test_chat_context_assertiveness_service.py \
+  tests/unit/domain/services/test_chat_context_assertiveness_regression.py \
+  tests/unit/domain/services/test_chat_working_memory_service.py \
+  tests/unit/domain/services/test_prompt_policy_service.py \
+  -q
+
 _resolve_smoke_context
 
 echo ""
@@ -133,6 +141,10 @@ if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
   echo ""
   echo "== Onda 11 — E2E HTTP (${SMOKE_USER}@${SMOKE_BASE_URL}) =="
   python scripts/run_onda11_api_e2e.py
+
+  echo ""
+  echo "== Onda 11 — smoke assertividade multi-turno (Fase 5) =="
+  python scripts/smoke_context_assertiveness_multiturn.py
 fi
 
 echo ""

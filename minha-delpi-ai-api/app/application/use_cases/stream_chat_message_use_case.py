@@ -760,9 +760,10 @@ class StreamChatMessageUseCase:
                 "messageId": str(assistant_message.id),
             }
 
-        client_admin_debug = ChatAdminDebugService.payload_for_client(
+        client_admin_debug = ChatAdminDebugService.resolve_client_admin_debug(
             request,
-            admin_debug_payload,
+            build_payload=admin_debug_payload,
+            assistant_metadata=assistant_metadata,
         )
 
         if persist_before_playback:

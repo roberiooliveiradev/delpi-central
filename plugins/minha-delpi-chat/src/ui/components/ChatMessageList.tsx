@@ -85,7 +85,11 @@ type ChatMessageListProps = {
     reason?: string | null,
   ) => Promise<{ thanksMessage?: string } | void>;
   onDownloadAttachment?: (attachmentId: string) => Promise<void>;
-  onSwitchMessageBranch?: (anchorUserMessageId: string) => Promise<void>;
+  onSwitchMessageBranch?: (
+    anchorUserMessageId: string,
+    sourceUserMessageId: string,
+  ) => Promise<void>;
+  branchSwitchingMessageId?: string | null;
   onContinueFromMessage?: (messageId: string) => Promise<void>;
   lastSentUserText?: string;
 };
@@ -185,41 +189,6 @@ function getMessageAttachments(message: ChatMessage): MessageAttachment[] {
   return attachments.filter((attachment): attachment is MessageAttachment => {
     return Boolean(attachment && typeof attachment === "object");
   });
-}
-
-function resolveEditCardMinWidth(cardEl: HTMLElement | null | undefined): number | null {
-  if (!cardEl) {
-    return null;
-  }
-
-  const stackEl = cardEl.closest<HTMLElement>(".mdc-chat-message-user-stack");
-  const cardWidth = cardEl.getBoundingClientRect().width;
-  const stackWidth = stackEl?.getBoundingClientRect().width ?? 0;
-  const measuredWidth = Math.max(cardWidth, stackWidth);
-
-  if (!measuredWidth || measuredWidth <= 0) {
-    return null;
-  }
-
-  const containerWidth =
-    stackEl?.parentElement?.getBoundingClientRect().width ?? window.innerWidth;
-
-  const maxWidth = Math.max(0, containerWidth - 8);
-
-  return Math.min(Math.ceil(measuredWidth), Math.floor(maxWidth));
-}
-
-function buildEditCardLockStyle(widthPx: number | null | undefined) {
-  if (!widthPx || widthPx <= 0) {
-    return undefined;
-  }
-
-  const lockedWidth = `min(${widthPx}px, 100%)`;
-
-  return {
-    width: lockedWidth,
-    minWidth: lockedWidth,
-  } as const;
 }
 
 function formatAttachmentSize(size?: number): string {
@@ -462,6 +431,7 @@ export function ChatMessageList({
   onMessageFeedback,
   onDownloadAttachment,
   onSwitchMessageBranch,
+  branchSwitchingMessageId = null,
   onContinueFromMessage,
   onOpenCanvas,
   lastSentUserText = "",
@@ -487,9 +457,6 @@ export function ChatMessageList({
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
-  const [editingCardMinWidthPx, setEditingCardMinWidthPx] = useState<number | null>(
-    null,
-  );
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [enteringAssistantId, setEnteringAssistantId] = useState<string | null>(null);
   const settleAnimationTimerRef = useRef<number | null>(null);
@@ -504,7 +471,6 @@ export function ChatMessageList({
     if (!stillVisible) {
       setEditingMessageId(null);
       setEditingContent("");
-      setEditingCardMinWidthPx(null);
     }
   }, [editingMessageId, messages]);
 
@@ -558,10 +524,8 @@ export function ChatMessageList({
   }, []);
 
   const isActiveStream = Boolean(
-    isStreaming ||
-      isPlaybackActive ||
-      streamingAnswer ||
-      streamingStatus ||
+    isPlaybackActive ||
+      isStreaming ||
       (isStreaming && streamingToolCalls.length > 0),
   );
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
@@ -901,25 +865,24 @@ export function ChatMessageList({
 
     setEditingMessageId(null);
     setEditingContent("");
-    setEditingCardMinWidthPx(null);
 
     await onEditAndResendMessage(messageId, content);
   }
 
   function startEditMessage(message: ChatMessage) {
-    const cardEl = document.querySelector<HTMLElement>(
-      `[data-message-id="${CSS.escape(message.id)}"] .mdc-chat-message-card--user`,
+    const displayContent = resolveUserMessageContent(
+      message,
+      lastSentUserText,
+      message.id === latestUserMessageId,
     );
 
-    setEditingCardMinWidthPx(resolveEditCardMinWidth(cardEl));
     setEditingMessageId(message.id);
-    setEditingContent(message.content);
+    setEditingContent(displayContent || message.content);
   }
 
   function cancelEditMessage() {
     setEditingMessageId(null);
     setEditingContent("");
-    setEditingCardMinWidthPx(null);
   }
 
   async function handleCopy(messageId: string, content: string) {
@@ -976,11 +939,6 @@ export function ChatMessageList({
             className={`mdc-chat-message-user-stack${
               editingMessageId === message.id ? " mdc-chat-message-user-stack--editing" : ""
             }`}
-            style={
-              editingMessageId === message.id
-                ? buildEditCardLockStyle(editingCardMinWidthPx)
-                : undefined
-            }
           >
             {editingMessageId !== message.id ? (
               <div className="mdc-chat-message-user-toolbar">
@@ -988,8 +946,9 @@ export function ChatMessageList({
                   <ChatBranchNavigator
                     branch={message.branch}
                     disabled={Boolean(isStreaming)}
+                    isLoading={branchSwitchingMessageId === message.id}
                     onSelectSibling={(anchorUserMessageId) => {
-                      void onSwitchMessageBranch(anchorUserMessageId);
+                      void onSwitchMessageBranch(anchorUserMessageId, message.id);
                     }}
                   />
                 ) : null}
@@ -1022,7 +981,7 @@ export function ChatMessageList({
                     className="mdc-chat-message-action"
                     type="button"
                     onClick={() => startEditMessage(message)}
-                    disabled={Boolean(isStreaming) || isPending}
+                    disabled={Boolean(isStreaming)}
                     aria-label="Editar mensagem"
                     title="Editar e reenviar (nova variação)"
                   >
@@ -1070,11 +1029,6 @@ export function ChatMessageList({
                   ? " mdc-chat-message-card--editing"
                   : ""
               }`}
-              style={
-                editingMessageId === message.id
-                  ? buildEditCardLockStyle(editingCardMinWidthPx)
-                  : undefined
-              }
             >
               {editingMessageId === message.id ? (
                 <ChatMessageEditField

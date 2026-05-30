@@ -115,10 +115,15 @@
 .mdc-chat-input textarea,
 .mdc-auto-grow-textarea {
   width: 100%;
+  min-width: 0;
   min-height: 2.5rem;
-  max-height: min(25dvh, 25svh);
+  max-height: min(28dvh, 28svh);
   resize: none;
+  overflow-x: hidden;
   overflow-y: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: pre-wrap;
   border: 0 !important;
   background: transparent !important;
   color: var(--mdc-text);

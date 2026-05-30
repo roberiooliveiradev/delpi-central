@@ -156,7 +156,7 @@
   gap: 0.3rem;
   justify-self: end;
   width: fit-content;
-  max-width: min(46rem, calc(100% - 0.25rem));
+  max-width: min(42rem, calc(100vw - 5.5rem));
   min-width: 0;
 }
 
@@ -184,9 +184,9 @@
 .mdc-chat-branch-nav {
   display: inline-flex;
   align-items: center;
-  gap: 0.15rem;
+  gap: 0.2rem;
   margin-right: 0.35rem;
-  padding: 0.1rem 0.35rem;
+  padding: 0.12rem 0.3rem 0.12rem 0.2rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--mdc-surface-muted) 88%, transparent);
   color: var(--mdc-text-muted);
@@ -194,32 +194,57 @@
   font-weight: 600;
 }
 
+.mdc-chat-branch-nav--loading {
+  padding-right: 0.45rem;
+}
+
 .mdc-chat-branch-nav__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-border) 70%, transparent);
   border-radius: 999px;
-  background: transparent;
-  color: inherit;
+  background: color-mix(in srgb, var(--mdc-surface) 92%, transparent);
+  color: var(--mdc-text);
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mdc-chat-branch-nav__button svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .mdc-chat-branch-nav__button:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .mdc-chat-branch-nav__button:not(:disabled):hover {
-  background: color-mix(in srgb, var(--mdc-accent) 16%, transparent);
+  background: color-mix(in srgb, var(--mdc-accent) 18%, var(--mdc-surface));
+  border-color: color-mix(in srgb, var(--mdc-accent) 35%, var(--mdc-border));
   color: var(--mdc-text);
 }
 
 .mdc-chat-branch-nav__label {
   min-width: 2rem;
   text-align: center;
+  user-select: none;
+}
+
+.mdc-chat-branch-nav__spinner {
+  margin-left: 0.1rem;
+  animation: mdc-chat-branch-nav-spin 0.85s linear infinite;
+  color: var(--mdc-primary);
+  flex-shrink: 0;
+}
+
+@keyframes mdc-chat-branch-nav-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .mdc-chat-message-user-toolbar .mdc-chat-message-actions {
@@ -237,30 +262,35 @@
 .mdc-chat-message-card--user {
   width: fit-content;
   max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
   border: 1px solid color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
   border-radius: var(--mdc-radius-lg);
   background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-card-bg));
-  padding: 0.45rem 0.65rem 0.5rem;
+  padding: 0.55rem 0.75rem 0.6rem;
 }
 
 .mdc-chat-message-card--user .mdc-chat-message-user-text {
+  margin: 0;
   font-size: 0.9rem;
-  line-height: 1.4;
+  line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .mdc-chat-message-user-stack--editing {
-  width: auto;
-  max-width: min(46rem, calc(100% - 0.25rem));
+  width: 100%;
+  max-width: min(42rem, calc(100vw - 3.5rem));
+  align-items: stretch;
 }
 
 .mdc-chat-message-card--user.mdc-chat-message-card--editing {
-  width: auto;
-  max-width: min(46rem, calc(100% - 0.25rem));
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
-  padding: 0.5rem 0.65rem 0.55rem;
+  padding: 0.55rem 0.75rem 0.65rem;
 }
 
 .mdc-chat-message--assistant {
@@ -466,31 +496,39 @@
 }
 
 .mdc-chat-message-edit--inline {
+  display: flex;
+  flex-direction: column;
   gap: 0.55rem;
   width: 100%;
-  min-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
+}
+
+.mdc-chat-message-edit--inline .mdc-chat-message-edit-actions {
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline .mdc-chat-message-edit__input,
 .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
   display: block;
   width: 100%;
-  min-width: 100%;
+  min-width: 0;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   padding: 0;
   min-height: 1.35rem;
-  max-height: min(25dvh, 25svh);
+  max-height: min(42dvh, 42svh);
   max-width: 100%;
   resize: none;
   overflow-x: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
-  field-sizing: fixed;
+  box-sizing: border-box;
+  field-sizing: content;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -613,7 +651,7 @@
   }
 
   .mdc-chat-message--user .mdc-chat-message-user-stack {
-    max-width: calc(100% - 2rem);
+    max-width: calc(100% - 2.25rem);
   }
 
   .mdc-chat-message--user .mdc-chat-message-card {
@@ -622,14 +660,19 @@
     min-width: 0;
   }
 
-  .mdc-chat-message-user-stack--editing,
+  .mdc-chat-message-user-stack--editing {
+    width: 100%;
+    max-width: calc(100% - 0.5rem);
+  }
+
   .mdc-chat-message-card--user.mdc-chat-message-card--editing {
+    width: 100%;
     max-width: 100%;
   }
 
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
     font-size: 1rem;
-    max-height: min(25dvh, 25svh, calc(100svh - 12rem));
+    max-height: min(38dvh, 38svh, calc(100svh - 11rem));
   }
 
   .mdc-chat-message--assistant {
@@ -678,26 +721,27 @@
   }
 
   .mdc-chat-message--user .mdc-chat-message-card {
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
-    justify-self: end;
+    justify-self: stretch;
   }
 
   .mdc-chat-message-user-stack--editing {
-    width: auto;
+    width: 100%;
     max-width: 100%;
-    align-items: flex-end;
+    align-items: stretch;
   }
 
   .mdc-chat-message-card--user.mdc-chat-message-card--editing {
+    width: 100%;
     max-width: 100%;
-    justify-self: end;
+    justify-self: stretch;
   }
 
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
     font-size: 1rem;
     max-width: 100%;
-    max-height: min(25dvh, 25svh, calc(100svh - 10rem));
+    max-height: min(40dvh, 40svh, calc(100svh - 9.5rem));
   }
 
   .mdc-chat-message-user-toolbar {

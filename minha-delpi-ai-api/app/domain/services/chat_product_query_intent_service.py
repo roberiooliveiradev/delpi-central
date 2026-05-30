@@ -763,6 +763,12 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_parents_question(cls, normalized: str) -> bool:
+        if re.search(
+            r"\bonde\b(?:\s+(?:o|esse|este|a|as)\s+(?:produto|item))?\s+.*?\b(?:e\s+)?usad[oa]\b",
+            normalized,
+        ):
+            return True
+
         terms = (
             "onde é usado",
             "onde e usado",

@@ -40,6 +40,7 @@ from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
+from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.config.settings import Settings
 
 
@@ -292,10 +293,22 @@ class ChatTurnPreparationService:
             message=message,
         )
 
-        conversation_context = (
+        working_memory_snapshot = ChatWorkingMemoryService.build_pre_turn_snapshot(
+            message=message,
+            previous_messages=history_source,
+        )
+        workspace_context = dict(workspace_context)
+        workspace_context["workingMemory"] = working_memory_snapshot
+
+        memory_prompt = ChatWorkingMemoryService.format_prompt_block(working_memory_snapshot)
+        base_conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
             if history_source
-            else None
+            else ""
+        )
+        conversation_context = ChatWorkingMemoryService.merge_conversation_context(
+            memory_prompt,
+            base_conversation_context,
         )
         missing_product_code_answer = None
         ambiguous_period_answer = None

@@ -160,13 +160,19 @@ Comportamento esperado:
         "chat_attachment",
     )
 
+    CONTEXT_MEMORY_POLICY_FALLBACK = """Memória da conversa: use a seção de memória ativa para follow-ups; novo código/filial/período na mensagem prevalece; não repita consulta idêntica se o histórico já trouxe os dados."""
+
     def build_system_prompt(self) -> str:
         base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
         context_engineering = self._load_policy(
             "context-engineering.md",
             self.CONTEXT_ENGINEERING_POLICY_FALLBACK,
         )
-        return f"{base}\n\n{context_engineering}"
+        context_memory = self._load_policy(
+            "chat-context-memory.md",
+            self.CONTEXT_MEMORY_POLICY_FALLBACK,
+        )
+        return f"{base}\n\n{context_engineering}\n\n{context_memory}"
 
     def build_rag_prompt(self, context: str) -> str:
         return self.build_contextual_prompt(

@@ -72,9 +72,20 @@ Mensagem do usuário
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
-| `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, …) |
+| `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, `chat-context-memory.md`, …) |
+| `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
+| `ChatBehaviorInstructionService` | Instruções de comportamento da sessão injetadas no contexto operacional |
+| `ChatContextAssertivenessService` | Score 0–100 e flags (`follow_up_entity_reused`, `humanized_none_fields`, …) |
+| `ChatContextMetadataService` | Grava `contextSnapshot`, `contextAssertiveness` e espelha em `adminDebug` |
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
+
+### Memória e assertividade (Fase 5)
+
+1. **Pré-turno** — `ChatTurnPreparationService` monta `workspaceContext.workingMemory` a partir do histórico.
+2. **Pós-turno** — `ChatContextMetadataService` atualiza snapshot e calcula assertividade.
+3. **Admin** — `ChatAdminDebugService.resolve_client_admin_debug` mescla memória/assertividade após o attach (resposta HTTP/SSE).
+4. **Regressão** — `CONTEXT_ASSERTIVENESS_CASES` em `tests/fixtures/chat_intelligence_regression_cases.py`; smokes `scripts/smoke_context_assertiveness_multiturn.py` e `scripts/smoke_follow_up_chips.py` (ver [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md)).
 
 A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream.
 
