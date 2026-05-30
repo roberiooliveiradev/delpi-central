@@ -58,6 +58,7 @@ class ExportUserDataUseCase:
             {
                 "appId": e.app_id,
                 "routePath": e.route_path,
+                "callerAppId": e.caller_app_id,
                 "openedAt": e.opened_at.isoformat() if e.opened_at else None,
             }
             for e in usage_q

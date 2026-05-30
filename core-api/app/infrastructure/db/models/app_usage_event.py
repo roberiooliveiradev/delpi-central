@@ -23,4 +23,10 @@ class AppUsageEvent(db.Model, TimestampMixin):
         index=True,
     )
     route_path = db.Column(db.String(255), nullable=True)
+    caller_app_id = db.Column(
+        db.String(50),
+        db.ForeignKey("apps.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     opened_at = db.Column(db.DateTime, nullable=False, index=True)
