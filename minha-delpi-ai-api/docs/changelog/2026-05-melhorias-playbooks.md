@@ -20,6 +20,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | «Consulte estoque e escreva e-mail» sem e-mail | `ChatTextTaskComposerService` anexa rascunho após tools no turno misto |
 | «E-mail com dados da tabela» → capacidades/RAG | `is_email_from_operational_data_request` + resposta direta com resumo da consulta |
 | Roteiro 360° com `Operations=[{...}]` | `_format_guide_like_item` no presenter do analyser |
+| «qual o estoque do produto X?» → «Sobre esta consulta» | `ChatCapabilitiesService` não confundia pergunta operacional com inquiry de capacidade |
 
 ## Playbook 07 — Anexos (início)
 

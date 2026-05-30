@@ -110,6 +110,25 @@ def test_operational_search_is_not_capability_inquiry():
     assert ChatCapabilitiesService.is_capability_inquiry("o que você pode fazer?")
 
 
+def test_qual_estoque_with_product_code_runs_operational_not_capabilities():
+    message = "qual o estoque do produto 90260015?"
+
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.resolve_capability_answer(
+        message=message,
+        workspace_context={"agent": {"name": "Agente"}, "agentId": "x"},
+        allowed_action_ids=["act.stock"],
+        action_catalog=[
+            {
+                "actionId": "act.stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "summary": "Estoque",
+            }
+        ],
+    ) is None
+
+
 def test_capability_inquiry_without_agent_explains_common_chat():
     answer = ChatCapabilitiesService.build_feature_answer(
         message="você consegue buscar produto por grupo?",

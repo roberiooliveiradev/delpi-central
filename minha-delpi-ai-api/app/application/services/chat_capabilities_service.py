@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 
 from app.application.services.chat_action_label_service import ChatActionLabelService
@@ -101,6 +102,40 @@ class ChatCapabilitiesService:
         "é possivel buscar",
         "sabe buscar",
         "tem como buscar",
+    )
+
+    _OPERATIONAL_QUERY_PATTERNS = (
+        r"\bqual\s+o\s+estoque\b",
+        r"\bqual\s+o\s+preco\b",
+        r"\bqual\s+o\s+pre[cç]o\b",
+        r"\bquem\s+fornece\b",
+        r"\bme\s+fale\s+do\s+produto\b",
+        r"\bmostre\s+o\s+estoque\b",
+        r"\bmostre\s+a\s+estrutura\b",
+        r"\bestoque\s+do\s+produto\b",
+        r"\bestoque\s+do\b",
+        r"\bvis[aã]o\s+360\b",
+        r"\bconsulte\b",
+        r"\bconsultar\b",
+        r"\bliste\s+os\s+fornecedores\b",
+        r"\bonde\s+o\s+produto\b",
+        r"\bonde\s+[eé]\s+usado\b",
+    )
+
+    _OPERATIONAL_DATA_TOPICS = (
+        "estoque",
+        "fornecedor",
+        "estrutura",
+        "roteiro",
+        "inspecao",
+        "inspeção",
+        "faturamento",
+        "venda",
+        "compra",
+        "preco",
+        "preço",
+        "lmp",
+        "ov ",
     )
 
     @classmethod
@@ -233,6 +268,9 @@ class ChatCapabilitiesService:
         if not normalized or len(normalized) > max_length:
             return False
 
+        if cls._looks_like_operational_data_request(message, normalized):
+            return False
+
         if cls._looks_like_operational_command(normalized):
             return False
 
@@ -241,6 +279,28 @@ class ChatCapabilitiesService:
 
         topics = tuple(str(item) for item in (detection.get("inquiryTopics") or ()))
         return any(topic in normalized for topic in topics)
+
+    @classmethod
+    def _looks_like_operational_data_request(cls, message: str, normalized: str | None = None) -> bool:
+        """Consulta operacional real (ex.: estoque de produto), não pergunta «consegue?»."""
+        normalized = normalized or ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if any(re.search(pattern, normalized) for pattern in cls._OPERATIONAL_QUERY_PATTERNS):
+            return True
+
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        product_code = ChatProductQueryIntentService.extract_product_code(message)
+
+        if product_code and any(topic in normalized for topic in cls._OPERATIONAL_DATA_TOPICS):
+            return True
+
+        if product_code and not any(marker in normalized for marker in cls._INQUIRY_MARKERS):
+            return True
+
+        return False
 
     @classmethod
     def _is_ability_question(cls, normalized: str, raw: str) -> bool:
