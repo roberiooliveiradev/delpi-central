@@ -35,3 +35,22 @@ def test_no_sources_note_when_rag_empty():
     payload = _minimal_build(rag={"context": "", "sources": []})
 
     assert "sourcesNote" not in payload["rag"]
+
+
+def test_attach_includes_intelligence_timings():
+    admin_debug = {"pipeline": {"skipRag": True}}
+    intelligence = {
+        "timings": {"rag_done_ms": 12, "tools_done_ms": 34, "llm_done_ms": 890},
+        "pipeline": {"stages": ["utility_direct"], "skipRag": True},
+        "nativeToolCalling": {"used": False},
+    }
+    metadata: dict = {}
+
+    ChatAdminDebugService.attach_to_assistant_metadata(
+        metadata,
+        admin_debug,
+        intelligence_metadata=intelligence,
+    )
+
+    assert metadata["adminDebug"]["intelligence"]["timings"]["llm_done_ms"] == 890
+    assert metadata["adminDebug"]["intelligence"]["pipeline"]["stages"] == ["utility_direct"]

@@ -68,9 +68,37 @@ class ChatAdminDebugService:
     def attach_to_assistant_metadata(
         metadata: dict,
         admin_debug_payload: dict | None,
+        intelligence_metadata: dict | None = None,
     ) -> None:
-        if admin_debug_payload is not None:
-            metadata["adminDebug"] = admin_debug_payload
+        if admin_debug_payload is None:
+            return
+
+        if intelligence_metadata:
+            admin_debug_payload["intelligence"] = ChatAdminDebugService._compact_intelligence(
+                intelligence_metadata
+            )
+
+        metadata["adminDebug"] = admin_debug_payload
+
+    @staticmethod
+    def _compact_intelligence(intelligence_metadata: dict) -> dict:
+        payload: dict[str, Any] = {}
+
+        for key in (
+            "timings",
+            "pipeline",
+            "nativeToolCalling",
+            "agentic",
+            "toolCount",
+            "ragSourceCount",
+            "topRagScore",
+        ):
+            value = intelligence_metadata.get(key)
+
+            if value is not None:
+                payload[key] = value
+
+        return payload
 
     @classmethod
     def build(

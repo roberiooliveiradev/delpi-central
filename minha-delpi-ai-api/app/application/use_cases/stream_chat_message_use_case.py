@@ -4,6 +4,7 @@ import queue
 import threading
 import time
 from collections.abc import Iterator
+from functools import partial
 from uuid import UUID
 
 from app.application.dto.send_chat_message_request import SendChatMessageRequest
@@ -230,7 +231,10 @@ class StreamChatMessageUseCase:
                 attachments=attachments,
                 previous_messages=previous_messages,
                 history_source=history_source,
-                build_tool_context=self._build_tool_context,
+                build_tool_context=partial(
+                    self._build_tool_context,
+                    agent_context=workspace_context.get("agent"),
+                ),
                 maybe_extend_tool_context=self._maybe_extend_tool_context,
                 prepare_history=self._prepare_history,
                 history_keep=Settings.CHAT_HISTORY_MAX_MESSAGES,
@@ -535,6 +539,7 @@ class StreamChatMessageUseCase:
         ChatAdminDebugService.attach_to_assistant_metadata(
             assistant_metadata,
             admin_debug_payload,
+            intelligence_metadata=intelligence_metadata,
         )
 
         if canvas_open_payload:
@@ -990,6 +995,7 @@ class StreamChatMessageUseCase:
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
+        agent_context: dict | None = None,
     ) -> dict:
         if not request.access_token:
             return {
@@ -1017,6 +1023,7 @@ class StreamChatMessageUseCase:
             previous_messages=previous_messages,
             max_external_action_calls=max_external_action_calls,
             on_stream_activity=on_stream_activity,
+            agent_context=agent_context,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

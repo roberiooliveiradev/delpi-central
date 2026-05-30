@@ -3,6 +3,9 @@ import logging
 from app.application.services.chat_intelligence_settings_service import (
     ChatIntelligenceSettingsService,
 )
+from app.domain.services.chat_agent_intelligence_policy_service import (
+    ChatAgentIntelligencePolicyService,
+)
 from app.application.services.chat_native_tool_schema_service import (
     ChatNativeToolSchemaService,
 )
@@ -26,7 +29,7 @@ class ChatNativeToolCallingService:
             intelligence_settings_service or ChatIntelligenceSettingsService()
         )
 
-    def is_enabled(self) -> bool:
+    def is_enabled(self, *, agent_context: dict | None = None) -> bool:
         if not Settings.CHAT_NATIVE_TOOL_CALLING_ENABLED:
             return False
 
@@ -39,7 +42,12 @@ class ChatNativeToolCallingService:
         if enabled is None:
             return False
 
-        return bool(enabled)
+        if not bool(enabled):
+            return False
+
+        return ChatAgentIntelligencePolicyService.native_tool_calling_pilot_enabled(
+            agent_context
+        )
 
     def select_tools(
         self,
@@ -47,13 +55,18 @@ class ChatNativeToolCallingService:
         message: str,
         allowed_tool_names: list[str] | None,
         tools_registry: dict[str, InternalToolPort],
+        agent_context: dict | None = None,
     ) -> dict:
+        pilot_enabled = ChatAgentIntelligencePolicyService.native_tool_calling_pilot_enabled(
+            agent_context
+        )
         meta = {
             "used": False,
             "providerSupports": self.llm_gateway.supports_native_tools(),
+            "pilotAgentEnabled": pilot_enabled,
         }
 
-        if not self.is_enabled() or not meta["providerSupports"]:
+        if not self.is_enabled(agent_context=agent_context) or not meta["providerSupports"]:
             return {"selections": [], "meta": meta}
 
         schemas = self.schema_service.build_openai_tools(

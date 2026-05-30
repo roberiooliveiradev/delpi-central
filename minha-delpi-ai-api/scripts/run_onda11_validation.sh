@@ -30,6 +30,15 @@ pytest \
   tests/unit/application/services/test_chat_agentic_tool_loop_service.py \
   -q
 
+echo "== Onda 11 — utility + typos + admin timings =="
+pytest \
+  tests/unit/application/services/test_chat_utility_direct_answer_service.py \
+  tests/unit/domain/services/test_chat_message_normalization_service.py \
+  tests/unit/domain/services/test_chat_agent_intelligence_policy_service.py \
+  tests/unit/application/services/test_chat_native_tool_calling_service.py \
+  tests/unit/application/services/test_chat_admin_debug_service.py \
+  -q
+
 echo ""
 echo "== Onda 11 — smoke operacional (preparação de turno) =="
 python scripts/smoke_operational_questions.py

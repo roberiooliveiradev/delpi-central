@@ -9,7 +9,9 @@ Entregas documentadas após a última atualização ampla do checklist manual (*
 | `cd1047de` | Fast path SQL produção (G1–G3); download de anexos/fontes; bundle exportável do agente |
 | `50edaf65` | Normas Técnicas em `company-knowledge`; intent de descrição técnica de matéria-prima |
 | `0e85b232` | Catálogo `api_paths.json` alinhado às rotas reais do api-delpi (~84 endpoints) |
-| `427707d3` | Typos em perguntas utilitárias e saudações (`hors`→`horas`, `q horas`, `bo dia`) |
+| `427707d3` | Typos utilitários (`hors`→`horas`) |
+| `a3ad7121` | Docs: catálogo, utility, smoke U1–U7 |
+| *(esta entrega)* | Onda 11.3.3 piloto native tools; 11.3.4 admin timings; docs roadmap fechados |
 
 ---
 

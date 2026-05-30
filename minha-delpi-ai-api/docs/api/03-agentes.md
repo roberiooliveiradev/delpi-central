@@ -17,7 +17,23 @@ Roadmap de evolução da gestão (UI + API): [`../roadmap/agentes-gestao-melhori
 
 Modelo conceitual completo: [`12-modelo-conceitual.md`](12-modelo-conceitual.md).
 
-Metadados da resposta podem incluir `intelligence` (RAG, tools, timings). Ver ondas de inteligência em [`../roadmap/README.md`](../roadmap/README.md).
+Metadados da resposta podem incluir `intelligence` (RAG, tools, timings) e `adminDebug.intelligence.timings` para admins. Ver ondas de inteligência em [`../roadmap/README.md`](../roadmap/README.md).
+
+### `metadata.intelligence` (piloto sandbox)
+
+| Campo | Tipo | Uso |
+|-------|------|-----|
+| `nativeToolCallingEnabled` | `boolean` | Opt-in por agente para `ChatNativeToolCallingService` (requer env + admin) |
+
+Exemplo para agente piloto de tools internas via LLM:
+
+```json
+"metadata": {
+  "intelligence": {
+    "nativeToolCallingEnabled": true
+  }
+}
+```
 
 ## Tipos
 
@@ -191,7 +207,10 @@ Todos os campos são opcionais:
   "icon": "bot",
   "metadata": {
     "color": "#111827",
-    "archived": false
+    "archived": false,
+    "intelligence": {
+      "nativeToolCallingEnabled": false
+    }
   },
   "systemPrompt": "Novo prompt",
   "category": "ações",

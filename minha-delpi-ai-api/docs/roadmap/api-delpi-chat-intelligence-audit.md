@@ -2,8 +2,8 @@
 
 **Objetivo:** garantir que o **chat base** (`minha-delpi-ai-api`) selecione a rota correta, responda com clareza (texto/tabela/markdown), trate typos e informe limitações — para **todos os agentes** herdarem o mesmo comportamento.
 
-**Última atualização:** 2026-05-27  
-**Branch de trabalho:** `chat`
+**Última atualização:** 2026-05-30  
+**Branch de trabalho:** `main`
 
 ---
 
@@ -26,13 +26,13 @@
 | Engenharia LMP | 7 | OK | Dashboard vs lista vs detalhe OV |
 | Suprimentos | 4 | OK | CPV, OTD, IDD, stock-value desambiguado de estoque item |
 | Vendas (OV) | 1 | OK | `list_sale_orders` |
-| Comercial | 8 | OK | Heurísticas `ChatDepartmentKpiIntentService` |
+| Comercial | 9 | OK | + `/commercial/proposals`; heurísticas KPI |
 | Financeiro | 4 | OK | EBITDA, PMR, ROL, custo fixo + typos |
-| Produção | 5 | OK | OEE, OTD produção, custos |
+| Produção | 9 | OK | OEE/OTD %, séries, eficiência fabril, custos |
 | RH | 4 | OK | Snapshot, PDI, avaliações, filiais |
 | Qualidade TOTVS | 10 | OK | NC, PPM, kaizen, 5S, filiais |
 | Dados SQL | 1 | OK | Intent SQL + policy skill |
-| Sistema | 7 | OK | `_select_system_metadata_action` (tabelas/colunas) |
+| Sistema | 8 | OK | tabelas/colunas + schema/índices/relações |
 | Eng. Transforma+ | 2 | OK | `_select_transforma_action` |
 | NC PostgreSQL | — | N/A | Rotas não montadas em `main.py` |
 | Capacidades | — | OK | `ChatCapabilitiesService` + perguntas por feature |
@@ -123,6 +123,7 @@
 | `GET /new-business-rol-pct` | rol novos negócios | | OK |
 | `GET /head_office_rol_target_pct` | meta rol matriz | | OK |
 | `GET /branch_rol_target_pct` | meta rol filial | | OK |
+| `GET /proposals` | propostas comerciais ganhas | propostas | OK |
 
 ---
 
@@ -148,6 +149,10 @@ Legado `/finacial/*`: mesmo router; preferir `/financial` no catálogo.
 | `GET /direct_labor_cost_pct` | mão de obra direta | OK |
 | `GET /production_cost_pct` | custo de produção | OK |
 | `GET /depreciation_pct` | depreciação | OK |
+| `GET /oee/series` | série histórica oee | oee | OK |
+| `GET /otd/series` | série histórica otd | | OK |
+| `GET /eficiencia-fabril/dashboard` | painel eficiência fabril | eficiencia | OK |
+| `GET /eficiencia-fabril/appointments` | apontamentos eficiência | | OK |
 
 ---
 
@@ -193,7 +198,9 @@ Elaborar SQL sem executar: skill `sqlAuthoring`; não auto-action.
 | `GET /tables/search` | buscar tabela cliente | buscar tabela | OK | `_select_system_metadata_action` |
 | `GET /tables/{name}/columns` | colunas da tabela SB1 | colunas da tabela | OK | extrai `tableName` |
 | `GET /columns/search` | buscar coluna preço | | OK | dept KPI + system rank |
-| demais | schema, índices, relações | | PARCIAL | semântico / uso raro |
+| `GET /tables/{name}/indexes` | índices da tabela | | OK | |
+| `GET /tables/{name}/relations` | relações da tabela | | OK | |
+| `GET /tables/{name}/schema` | schema completo SB1 | schema | OK | |
 
 ---
 
@@ -208,6 +215,9 @@ Elaborar SQL sem executar: skill `sqlAuthoring`; não auto-action.
 | Regressão seleção | `test_chat_intelligence_regression` | OK |
 | Regressão KPI dept | `test_chat_department_kpi_intent_service` | OK |
 | Typos normalização | `test_chat_message_normalization_service` | OK |
+| Utility direct (hora/data) | `test_chat_utility_direct_answer_service` | OK |
+| Rótulos api-delpi | `test_chat_action_label_service` | OK (~84 rotas) |
+| Admin timings | `adminDebug.intelligence.timings` | OK |
 
 ---
 
@@ -260,10 +270,12 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 
 ## Próximos passos (backlog)
 
-Itens 1–5 abaixo estão consolidados na **Onda 11** — [inteligencia-chat-onda-11-paridade-assistentes.md](./inteligencia-chat-onda-11-paridade-assistentes.md).
+Itens 1–5 abaixo foram entregues na **Onda 11** — ver [inteligencia-chat-onda-11-paridade-assistentes.md](./inteligencia-chat-onda-11-paridade-assistentes.md).
 
-1. Parâmetros de data automáticos (`start_date`/`end_date`) para KPIs e OV.
-2. Heurística explícita `GET /products/{code}/summary` vs analyser.
-3. Montar rotas NC PostgreSQL e importar no catálogo.
-4. Testes E2E com api-delpi mockada por domínio.
-5. Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` para o front validar antes do upload.
+1. ~~Parâmetros de data automáticos~~ — ✅ 11.1.2
+2. ~~Heurística explícita summary vs analyser~~ — ✅ 11.1.3
+3. Montar rotas NC PostgreSQL e importar no catálogo — **Onda 12+ / backlog**
+4. Testes E2E com api-delpi mockada por domínio — **backlog**
+5. ~~Expor `knowledgeDocumentMaxChars` em capabilities~~ — ✅ 11.5.2
+
+**Próxima onda de produto:** [Onda 12 — drawing-analyser PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) ou `web_search` (11.6).

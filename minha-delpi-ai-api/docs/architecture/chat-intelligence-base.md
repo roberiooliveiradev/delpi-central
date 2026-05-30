@@ -279,6 +279,10 @@ Habilitar agentic/router só em sandbox ou com agente com **poucas** actions bem
 
 **Schemas enxutos (11.3.2):** cada action do catálogo é serializada por `ChatAgenticActionSchemaService` (método, path, descrição curta, parâmetros com `example` e `exampleArguments`) antes do prompt do planner — evita mandar o OpenAPI completo e orienta argumentos (`code`, `branch`, datas, paginação). Limite: `CHAT_AGENTIC_SCHEMA_MAX_PARAMETERS` (default 10).
 
+**Native tool calling piloto (11.3.3):** `ChatNativeToolCallingService` só ativa quando (1) `CHAT_NATIVE_TOOL_CALLING_ENABLED=true`, (2) admin `nativeToolCallingEnabled=true` e (3) agente com `metadata.intelligence.nativeToolCallingEnabled=true`. Rotas api-delpi permanecem heurísticas.
+
+**Timings no admin (11.3.4):** `metadata.intelligence.timings` (`ragMs`, `toolsMs`, `llmMs`, `totalMs`) é copiado para `adminDebug.intelligence` e exibido no painel «Diagnóstico (admin)» do plugin.
+
 ### Multi-action e histórico (maio/2026)
 
 `ChatAnalysisIntentService.extract_product_codes_for_action_planning` planeja consultas paralelas **somente** com códigos da mensagem atual. Se o usuário já informou um código («estoque do produto 10080099»), códigos citados só no histórico **não** disparam N chamadas. Follow-ups («estoque desse produto») continuam resolvendo **um** código via contexto.

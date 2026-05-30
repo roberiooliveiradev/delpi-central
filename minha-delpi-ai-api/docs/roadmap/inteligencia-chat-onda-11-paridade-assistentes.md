@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 11: Paridade com ChatGPT/Gemini (roteamento e velocidade)
 
-**Status:** em andamento (maio/2026)  
+**Status:** concluída (maio/2026)  
 **Origem:** pergunta de produto em 28/mai/2026 — *«Como o ChatGPT/Gemini sabem qual rota usar nas actions? Pesquise na internet; o modelo está lento e pouco assertivo.»*  
 **Pré-requisitos:** [Ondas 1–10](./inteligencia-chat-onda-10.md), [arquitetura chat base](../architecture/chat-intelligence-base.md)
 
@@ -136,8 +136,8 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 |---|------|--------|-------------------|
 | 11.3.1 | Catálogo por intent (≤12 actions) no loop agentic | ✅ | `ChatAgenticCatalogService` + `find_candidate_actions` ranqueado por intent; metadados `catalogSize` |
 | 11.3.2 | Schemas OpenAPI enxutos por action (descrição + exemplos) | ✅ | `ChatAgenticActionSchemaService` + catálogo JSON no planner agentic |
-| 11.3.3 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` só em agentes piloto | ⬜ | Tools internas via LLM; OpenAPI continua heurístico |
-| 11.3.4 | Métricas `intelligence.timings` por turno no admin | 🟡 | Já existe Onda 5; validar em homologação |
+| 11.3.3 | `CHAT_NATIVE_TOOL_CALLING_ENABLED` só em agentes piloto | ✅ | `metadata.intelligence.nativeToolCallingEnabled` no agente + flag admin; OpenAPI continua heurístico |
+| 11.3.4 | Métricas `intelligence.timings` por turno no admin | ✅ | `adminDebug.intelligence.timings` (ragMs, toolsMs, llmMs, totalMs) + chips no painel admin |
 
 ### 11.4 — Qualidade de resposta pós-tool (prioridade média)
 
@@ -154,6 +154,17 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 |---|------|--------|-------------------|
 | 11.5.1 | Smoke operacional no CI ou script pós-deploy | ✅ | `scripts/run_onda11_validation.sh` (pytest + smoke); checklist manual #56–60 |
 | 11.5.2 | Expor `knowledgeDocumentMaxChars` em `GET /chat/capabilities` | ✅ | Front valida antes do upload |
+
+### 11.7 — Interações básicas PT-BR (maio/2026)
+
+| # | Item | Status | Critério de pronto |
+|---|------|--------|-------------------|
+| 11.7.1 | Respostas utilitárias (hora/data/ano) sem LLM | ✅ | `ChatUtilityDirectAnswerService` + `utility_answers.json` |
+| 11.7.2 | Small talk ampliado (saudações, thanks, ack…) | ✅ | `small_talk.json` + `ChatSmallTalkPatternService` |
+| 11.7.3 | Typos utilitários e saudações | ✅ | `hors`→`horas`, `q horas`, `bo dia` em `ChatMessageNormalizationService` |
+| 11.7.4 | Catálogo `api_paths.json` alinhado (~84 rotas) | ✅ | proposals, OEE/OTD series, eficiência fabril, schema SX |
+
+Checklist manual: **U1–U7** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
 ### 11.6 — Fora do escopo imediato (registrar para onda futura)
 
@@ -178,6 +189,8 @@ Bug de JWKS introduzido em `a2b0e107` (09/mar/2026 — discovery apontava `local
 | `CHAT_PAGINATION_AUTO_FETCH_ENABLED` | `true` | Consolidação paginada (11.4.4) |
 | `CHAT_PAGINATION_MAX_PAGES_PER_TURN` | `5` | Páginas por turno antes de pedir confirmação |
 | `CHAT_LLM_LATENCY_PROFILE` | `balanced` | Preset `operational_cpu` / `documental` para `LLM_MAX_TOKENS` + `OLLAMA_NUM_CTX` |
+| `CHAT_NATIVE_TOOL_CALLING_ENABLED` | `false` | Master switch; admin `nativeToolCallingEnabled` + agente piloto `metadata.intelligence.nativeToolCallingEnabled` |
+| `CHAT_UTILITY_DIRECT_ENABLED` | `true` | Hora/data/ano via `utility_answers.json`; typos normalizados antes do match |
 
 ---
 
@@ -231,7 +244,8 @@ curl -s -X POST 'http://localhost/auth/realms/delpi/protocol/openid-connect/toke
 | 2026-05-29 | 11.1.5: `sync_api_delpi_openapi.py`, catálogo gerado 83 rotas, guia RAG revisado (ROL, produção, propostas). |
 | 2026-05-29 | 11.2.2/11.4.1/11.5.1: `CHAT_LLM_LATENCY_PROFILE`, `prefer_presentation_direct_answer`, `run_onda11_validation.sh`. |
 | 2026-05-29 | 11.3.1: `ChatAgenticCatalogService` — catálogo ≤12 por intent no loop agentic. |
-| 2026-05-29 | 11.3.2: `ChatAgenticActionSchemaService` — schemas enxutos com exemplos no planner agentic. |
+| 2026-05-30 | 11.3.3/11.3.4: native tool calling por agente piloto; `adminDebug.intelligence.timings`; Onda 11 concluída. |
+| 2026-05-30 | 11.7: utility direct, small talk ampliado, typos, catálogo api_paths 84 rotas. |
 
 ---
 

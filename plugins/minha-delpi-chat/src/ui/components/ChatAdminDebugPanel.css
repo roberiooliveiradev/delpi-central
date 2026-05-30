@@ -72,6 +72,27 @@
   overflow: hidden;
 }
 
+.mdc-chat-admin-debug__timings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: var(--mdc-space-3) var(--mdc-space-3) 0;
+}
+
+.mdc-chat-admin-debug__timing-chip {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-card-bg) 90%, var(--mdc-primary) 10%);
+}
+
+.mdc-chat-admin-debug__timing-chip strong {
+  color: var(--mdc-text);
+  font-weight: 600;
+}
+
 .mdc-chat-admin-debug__body {
   margin: 0;
   padding: 0 var(--mdc-space-3) var(--mdc-space-3);

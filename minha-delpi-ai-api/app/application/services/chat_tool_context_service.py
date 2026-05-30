@@ -45,6 +45,7 @@ class ChatToolContextService:
         previous_messages: list | None = None,
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
+        agent_context: dict | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -134,6 +135,7 @@ class ChatToolContextService:
                 message=message,
                 allowed_tool_names=allowed_tool_names,
                 tools_registry=self.execute_tool_use_case.tools,
+                agent_context=agent_context,
             )
             native_meta = native_result.get("meta") or native_meta
             native_selections = list(native_result.get("selections") or [])
