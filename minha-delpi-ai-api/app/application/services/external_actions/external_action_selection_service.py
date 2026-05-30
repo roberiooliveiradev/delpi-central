@@ -23,6 +23,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionSelectionService:
@@ -1718,9 +1721,15 @@ class ExternalActionSelectionService:
         )
 
         reason = (
-            "Consulta SQL de produção reconhecida — execução direta via POST /data/sql."
+            ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "productionSqlFastPath",
+            )
             if sql
-            else "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente."
+            else ExternalActionResponseContentService.get(
+                "selectionReasons",
+                "genericSql",
+            )
         )
 
         return {

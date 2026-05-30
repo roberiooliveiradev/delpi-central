@@ -12,6 +12,18 @@ app/content/
     skills/        # catálogo de skills (UI e metadados)
 ```
 
+Arquivos em `assistant/` usados pela API de chat:
+
+| Arquivo | Uso |
+|---------|-----|
+| `capabilities.json` | Catálogo de capacidades |
+| `column_labels.json` | Colunas e perfis de tabelas operacionais |
+| `external_action_responses.json` | Respostas SQL, produção, composite e temporal |
+| `identity.json` | Identidade e small talk |
+| `operational_parameters.json` | Parâmetros faltantes e ambiguidade de período |
+| `small_talk.json` | Respostas conversacionais |
+| `stream.json` | Eventos SSE |
+
 Políticas longas para o LLM continuam em `app/domain/prompt_policies/*.md`.
 
 ## Convenção JSON vs MD

@@ -6,6 +6,9 @@ from app.domain.services.external_actions.external_action_column_label_service i
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ExternalActionResultPresenter:
@@ -1199,17 +1202,27 @@ class ExternalActionResultPresenter:
         }
 
     def _present_sql_rows(self, rows: list) -> dict | None:
+        default_title = ExternalActionResponseContentService.get("sql", "defaultTitle")
+
         if not rows:
             return {
-                "titulo": "Consulta SQL",
-                "linhas": ["A consulta não retornou registros."],
+                "titulo": default_title,
+                "linhas": [
+                    ExternalActionResponseContentService.get("sql", "emptyNoRows")
+                ],
                 "dados": {"rows": []},
             }
 
         if not isinstance(rows[0], dict):
             return {
-                "titulo": "Consulta SQL",
-                "linhas": [f"A consulta retornou {len(rows)} registro(s)."],
+                "titulo": default_title,
+                "linhas": [
+                    ExternalActionResponseContentService.format(
+                        "sql",
+                        "rowsCount",
+                        count=len(rows),
+                    )
+                ],
                 "dados": {"rows": rows[:100]},
             }
 
@@ -1260,21 +1273,27 @@ class ExternalActionResultPresenter:
             schedule = self._resolve_production_schedule_from_root(root)
             if schedule:
                 return schedule.title
-            return "Produtos programados para produção hoje"
+            return ExternalActionResponseContentService.get(
+                "productionSchedule",
+                "titleTodayFallback",
+            )
 
         if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
             ExternalActionSqlCapabilityService.is_sql_result_payload(root)
         ):
-            return "Consulta SQL"
+            return ExternalActionResponseContentService.get("sql", "defaultTitle")
 
-        return "Consulta SQL"
+        return ExternalActionResponseContentService.get("sql", "defaultTitle")
 
     def _sql_empty_message(self, root: dict, path: str) -> str:
         if self._looks_like_production_sql_context(root, path):
             schedule = self._resolve_production_schedule_from_root(root)
             if schedule:
                 return schedule.empty_message
-            return "Nenhum produto programado para produção hoje."
+            return ExternalActionResponseContentService.get(
+                "productionSchedule",
+                "emptyTodayFallback",
+            )
 
         if ExternalActionSqlCapabilityService.is_sql_execution_context(path=path) or (
             ExternalActionSqlCapabilityService.is_sql_result_payload(root)
@@ -1282,19 +1301,24 @@ class ExternalActionResultPresenter:
             total = root.get("total_resultsets")
 
             if total is not None:
-                return (
-                    f"A consulta foi executada com sucesso, mas não retornou registros "
-                    f"({total} resultset(s))."
+                return ExternalActionResponseContentService.format(
+                    "sql",
+                    "emptyWithResultsets",
+                    total=total,
                 )
 
-            return "A consulta não retornou registros."
+            return ExternalActionResponseContentService.get("sql", "emptyNoRows")
 
         total = root.get("total_resultsets")
 
         if total is not None:
-            return f"A consulta foi executada com sucesso, mas não retornou registros ({total} resultset(s))."
+            return ExternalActionResponseContentService.format(
+                "sql",
+                "emptyWithResultsets",
+                total=total,
+            )
 
-        return "A consulta não retornou registros."
+        return ExternalActionResponseContentService.get("sql", "emptyNoRows")
 
     def _resolve_production_schedule_from_root(self, root: dict):
         from app.domain.services.chat_sql_production_schedule_date_service import (
@@ -1345,7 +1369,11 @@ class ExternalActionResultPresenter:
 
         return False
 
-    def _present_sql_dict_rows(self, rows: list[dict], *, title: str = "Consulta SQL") -> dict:
+    def _present_sql_dict_rows(self, rows: list[dict], *, title: str | None = None) -> dict:
+        resolved_title = title or ExternalActionResponseContentService.get(
+            "sql",
+            "defaultTitle",
+        )
         if self._looks_like_production_schedule_row(rows[0]):
             linhas = [
                 self._format_production_schedule_row(row)
@@ -1354,16 +1382,28 @@ class ExternalActionResultPresenter:
             ]
 
             if len(rows) > 25:
-                linhas.append(f"… e mais {len(rows) - 25} produto(s).")
+                linhas.append(
+                    ExternalActionResponseContentService.format(
+                        "sql",
+                        "moreProducts",
+                        count=len(rows) - 25,
+                    )
+                )
 
             return {
-                "titulo": title,
+                "titulo": resolved_title,
                 "linhas": linhas,
                 "dados": {"rows": rows[:100]},
                 "sqlRows": rows[:100],
             }
 
-        linhas = [f"A consulta retornou **{len(rows)}** registro(s)."]
+        linhas = [
+            ExternalActionResponseContentService.format(
+                "sql",
+                "rowsCount",
+                count=len(rows),
+            )
+        ]
 
         for index, row in enumerate(rows[:8], start=1):
             if not isinstance(row, dict):
@@ -1380,7 +1420,7 @@ class ExternalActionResultPresenter:
             linhas.append(f"… e mais {len(rows) - 8} registro(s).")
 
         return {
-            "titulo": title,
+            "titulo": resolved_title,
             "linhas": linhas,
             "dados": {"rows": rows[:100]},
             "sqlRows": rows[:100],
@@ -1424,7 +1464,10 @@ class ExternalActionResultPresenter:
             line += f" · **{qty_text}{suffix}**"
 
         if start_at:
-            line += f" · início {start_at}"
+            line += (
+                f"{ExternalActionResponseContentService.get('sql', 'operationStartPrefix')}"
+                f"{start_at}"
+            )
 
         return line
 

@@ -5,6 +5,9 @@ from app.domain.services.chat_product_query_intent_service import (
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 class ChatExternalActionKind:
@@ -151,13 +154,17 @@ class ChatExternalActionDirectAnswerService:
     @classmethod
     def _format_sql(cls, humanized: dict, *, message: str | None = None) -> str | None:
         rows = cls._extract_sql_rows(humanized)
-        title = str(humanized.get("titulo") or "Resultado da consulta SQL").strip()
+        title = str(
+            humanized.get("titulo")
+            or ExternalActionResponseContentService.get("sql", "defaultResultTitle")
+        ).strip()
 
         from app.domain.services.chat_sql_production_schedule_date_service import (
             ChatSqlProductionScheduleDateService,
         )
 
         schedule = ChatSqlProductionScheduleDateService.resolve(message)
+        today_label = ExternalActionResponseContentService.get("temporal", "today", default="hoje")
 
         if rows and cls._looks_like_production_schedule_row(rows[0]):
             if schedule and schedule.title != title:
@@ -165,21 +172,38 @@ class ChatExternalActionDirectAnswerService:
 
         if not rows:
             lines = cls._clean_lines(humanized)
-            message_text = lines[0] if lines else "A consulta não retornou registros."
-            if schedule and schedule.empty_message != message_text and "hoje" in message_text:
+            message_text = lines[0] if lines else ExternalActionResponseContentService.get(
+                "sql",
+                "emptyNoRows",
+            )
+            if (
+                schedule
+                and schedule.empty_message != message_text
+                and today_label in message_text
+            ):
                 message_text = schedule.empty_message
             return f"**{title}**\n\n{message_text}"
 
         if rows and cls._looks_like_production_schedule_row(rows[0]):
             body = "\n".join(f"- {line}" for line in cls._clean_lines(humanized))
-            label = schedule.label if schedule else "hoje"
-            summary = f"**{len(rows)}** produto(s) programado(s) para {label}."
+            label = schedule.label if schedule else today_label
+            summary = ExternalActionResponseContentService.format(
+                "productionSchedule",
+                "summaryWithCount",
+                count=len(rows),
+                label=label,
+            )
             return f"**{title}**\n\n{summary}\n\n{body}".strip()
 
         lines = cls._clean_lines(humanized)
 
         if not lines:
-            return f"**{title}**\n\nA consulta retornou **{len(rows)}** registro(s)."
+            body = ExternalActionResponseContentService.format(
+                "sql",
+                "rowsCount",
+                count=len(rows),
+            )
+            return f"**{title}**\n\n{body}"
 
         if len(lines) == 1:
             return f"**{title}**\n\n{lines[0]}"
@@ -187,7 +211,7 @@ class ChatExternalActionDirectAnswerService:
         body = "\n".join(f"- {line}" for line in lines[:15])
 
         if len(lines) > 15:
-            body += f"\n- … e mais {len(lines) - 15} linha(s)."
+            body += f"\n- {ExternalActionResponseContentService.format('sql', 'moreLines', count=len(lines) - 15)}"
 
         return f"**{title}**\n\n{body}"
 

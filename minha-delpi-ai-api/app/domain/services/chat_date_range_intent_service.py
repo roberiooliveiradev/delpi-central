@@ -11,6 +11,10 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
+from app.infrastructure.content.content_service import ContentService
 
 _MONTHS_PT = {
     "janeiro": 1,
@@ -167,7 +171,7 @@ class ChatDateRangeIntentService:
             return cls._from_dates(
                 point.target_date,
                 point.target_date,
-                reason=f"Data {point.label}.",
+                reason=cls._reason("pointAsRange", label=point.label),
             )
 
         competence = cls._COMPETENCE_RE.search(normalized)
@@ -176,7 +180,7 @@ class ChatDateRangeIntentService:
             return cls._month_range(
                 int(competence.group(1)),
                 int(competence.group(2)),
-                reason="Competência explícita na pergunta.",
+                reason=cls._reason("competence"),
             )
 
         last_days = cls._LAST_N_DAYS_RE.search(normalized)
@@ -188,22 +192,22 @@ class ChatDateRangeIntentService:
             return cls._from_dates(
                 start,
                 reference,
-                reason=f"Últimos {days} dias.",
+                reason=cls._reason("lastNDays", days=days),
             )
 
         if any(term in normalized for term in ("ultima semana", "última semana", "ultimos 7 dias")):
             start = reference - timedelta(days=6)
 
-            return cls._from_dates(start, reference, reason="Última semana.")
+            return cls._from_dates(start, reference, reason=cls._reason("rollingLastWeek"))
 
         if any(term in normalized for term in ("mes passado", "mês passado", "ultimo mes", "último mês")):
-            return cls._previous_month(reference, reason="Mês passado.")
+            return cls._previous_month(reference, reason=cls._reason("previousMonth"))
 
         if any(term in normalized for term in ("mes atual", "mês atual", "este mes", "este mês")):
             return cls._month_range(
                 reference.year,
                 reference.month,
-                reason="Mês atual.",
+                reason=cls._reason("currentMonth"),
             )
 
         if "ano passado" in normalized:
@@ -212,7 +216,7 @@ class ChatDateRangeIntentService:
             return cls._from_dates(
                 date(year, 1, 1),
                 date(year, 12, 31),
-                reason="Ano passado.",
+                reason=cls._reason("lastYear"),
             )
 
         month_match = cls._parse_named_month(normalized, reference)
@@ -226,7 +230,7 @@ class ChatDateRangeIntentService:
             return cls._month_range(
                 int(year_month.group(1)),
                 int(year_month.group(2)),
-                reason="Período ano-mês na pergunta.",
+                reason=cls._reason("yearMonthInQuestion"),
             )
 
         return None
@@ -271,10 +275,19 @@ class ChatDateRangeIntentService:
         if not ambiguous:
             return None
 
-        return (
-            f"Para **{ambiguous.month_label}**, preciso confirmar o ano: "
-            f"você quer os dados de **{ambiguous.current_year}** (este ano) "
-            f"ou de **{ambiguous.previous_year}**?"
+        template = ContentService.get(
+            "assistant/operational_parameters",
+            "ambiguousPeriodYear",
+            default=(
+                "Para **{month_label}**, preciso confirmar o ano: "
+                "você quer os dados de **{current_year}** (este ano) "
+                "ou de **{previous_year}**?"
+            ),
+        )
+        return template.format(
+            month_label=ambiguous.month_label,
+            current_year=ambiguous.current_year,
+            previous_year=ambiguous.previous_year,
         )
 
     @classmethod
@@ -335,7 +348,7 @@ class ChatDateRangeIntentService:
         return cls._month_range(
             year,
             pending.month,
-            reason=f"Mês {pending.label} de {year} (confirmação do usuário).",
+            reason=cls._reason("yearConfirmation", month=pending.label, year=year),
         )
 
     @classmethod
@@ -457,7 +470,7 @@ class ChatDateRangeIntentService:
         if start > end:
             start, end = end, start
 
-        return cls._from_dates(start, end, reason="Intervalo de datas explícito.")
+        return cls._from_dates(start, end, reason=cls._reason("explicitRange"))
 
     @classmethod
     def _parse_named_month(cls, normalized: str, reference: date) -> ResolvedDateRange | None:
@@ -470,7 +483,11 @@ class ChatDateRangeIntentService:
             return cls._month_range(
                 named_month.year,
                 named_month.month,
-                reason=f"Mês {named_month.label} de {named_month.year}.",
+                reason=cls._reason(
+                    "namedMonthYear",
+                    month=named_month.label,
+                    year=named_month.year,
+                ),
             )
 
         if reference.month < named_month.month:
@@ -479,7 +496,11 @@ class ChatDateRangeIntentService:
         return cls._month_range(
             reference.year,
             named_month.month,
-            reason=f"Mês {named_month.label} de {reference.year}.",
+            reason=cls._reason(
+                "namedMonthYear",
+                month=named_month.label,
+                year=reference.year,
+            ),
         )
 
     @classmethod
@@ -526,14 +547,14 @@ class ChatDateRangeIntentService:
                 reference,
                 offset_weeks=-1,
             )
-            return cls._from_dates(start, end, reason="Semana passada.")
+            return cls._from_dates(start, end, reason=cls._reason("lastWeekCalendar"))
 
         if any(term in normalized for term in ("semana que vem", "proxima semana")):
             start, end = ChatTemporalIntentService.calendar_week_range(
                 reference,
                 offset_weeks=1,
             )
-            return cls._from_dates(start, end, reason="Semana que vem.")
+            return cls._from_dates(start, end, reason=cls._reason("nextWeekCalendar"))
 
         return None
 
@@ -547,7 +568,7 @@ class ChatDateRangeIntentService:
             term in normalized
             for term in ("mes que vem", "mês que vem", "proximo mes", "próximo mês")
         ):
-            return cls._next_month(reference, reason="Mês que vem.")
+            return cls._next_month(reference, reason=cls._reason("nextMonth"))
 
         return None
 
@@ -605,6 +626,14 @@ class ChatDateRangeIntentService:
             return date(year, month, day)
         except ValueError:
             return None
+
+    @classmethod
+    def _reason(cls, key: str, **values) -> str:
+        return ExternalActionResponseContentService.format(
+            "dateRangeReasons",
+            key,
+            **values,
+        )
 
     @classmethod
     def _message_role(cls, message: Any) -> str:

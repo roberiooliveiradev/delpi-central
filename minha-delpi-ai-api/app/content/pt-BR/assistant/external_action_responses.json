@@ -1,0 +1,72 @@
+{
+  "sql": {
+    "defaultTitle": "Consulta SQL",
+    "defaultResultTitle": "Resultado da consulta SQL",
+    "emptyNoRows": "A consulta não retornou registros.",
+    "emptyWithResultsets": "A consulta foi executada com sucesso, mas não retornou registros ({total} resultset(s)).",
+    "rowsCount": "A consulta retornou **{count}** registro(s).",
+    "moreLines": "… e mais {count} linha(s).",
+    "moreProducts": "… e mais {count} produto(s).",
+    "operationStartPrefix": " · início "
+  },
+  "productionSchedule": {
+    "title": "Produtos programados para produção {label}",
+    "titleTodayFallback": "Produtos programados para produção hoje",
+    "emptyMessage": "Nenhum produto programado para produção {label}.",
+    "emptyTodayFallback": "Nenhum produto programado para produção hoje.",
+    "summaryWithCount": "**{count}** produto(s) programado(s) para {label}.",
+    "authoringIntro": "Consulta sugerida para `POST /data/sql` (somente leitura):",
+    "authoringExecuteHint": "Para **executar** no Protheus, peça: «execute essa consulta» ou «traga os dados»."
+  },
+  "selectionReasons": {
+    "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",
+    "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente."
+  },
+  "composite": {
+    "multiExecutionSummary": "**Resumo:** realizei **{count}** consulta(s) à API DELPI para responder ao seu pedido.",
+    "attentionHeader": "**Atenção — problemas ou ausência de dados**",
+    "emptyResult": "consulta concluída, mas a API não retornou registros.",
+    "formatFailed": "não foi possível formatar o retorno desta consulta.",
+    "queryLabel": "Consulta {index}",
+    "actionLabel": "action {action_id}",
+    "notFound404": "recurso não encontrado (HTTP 404). Verifique o código informado.",
+    "forbidden": "sem permissão para esta consulta (HTTP {code}).",
+    "serverError": "erro temporário na API (HTTP {code}). Tente novamente em instantes.",
+    "httpStatus": "a API retornou status HTTP {code}.",
+    "notSuccessful": "a consulta não foi concluída com sucesso."
+  },
+  "temporal": {
+    "today": "hoje",
+    "tomorrow": "amanhã",
+    "dayAfterTomorrow": "depois de amanhã",
+    "yesterday": "ontem",
+    "dayBeforeYesterday": "antes de ontem",
+    "weekdayWithDate": "{weekday} ({date})",
+    "namedDayMonthYear": "{day} de {month} de {year}",
+    "weekdays": [
+      "segunda-feira",
+      "terça-feira",
+      "quarta-feira",
+      "quinta-feira",
+      "sexta-feira",
+      "sábado",
+      "domingo"
+    ]
+  },
+  "dateRangeReasons": {
+    "explicitRange": "Intervalo de datas explícito.",
+    "competence": "Competência explícita na pergunta.",
+    "lastNDays": "Últimos {days} dias.",
+    "rollingLastWeek": "Última semana.",
+    "lastWeekCalendar": "Semana passada.",
+    "nextWeekCalendar": "Semana que vem.",
+    "previousMonth": "Mês passado.",
+    "nextMonth": "Mês que vem.",
+    "currentMonth": "Mês atual.",
+    "lastYear": "Ano passado.",
+    "namedMonthYear": "Mês {month} de {year}.",
+    "yearMonthInQuestion": "Período ano-mês na pergunta.",
+    "pointAsRange": "Data {label}.",
+    "yearConfirmation": "Mês {month} de {year} (confirmação do usuário)."
+  }
+}

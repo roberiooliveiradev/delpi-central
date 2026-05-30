@@ -11,6 +11,9 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 from app.infrastructure.config.settings import Settings
 
 
@@ -86,7 +89,7 @@ class ChatCompositeDirectAnswerService:
                         continue
 
                 issues.append(
-                    f"- **{label}:** consulta concluída, mas a API não retornou registros."
+                    f"- **{label}:** {ExternalActionResponseContentService.get('composite', 'emptyResult')}"
                 )
                 continue
 
@@ -97,7 +100,7 @@ class ChatCompositeDirectAnswerService:
                     sections.append(body.strip())
             else:
                 issues.append(
-                    f"- **{label}:** não foi possível formatar o retorno desta consulta."
+                    f"- **{label}:** {ExternalActionResponseContentService.get('composite', 'formatFailed')}"
                 )
 
         if not sections and not issues:
@@ -107,8 +110,11 @@ class ChatCompositeDirectAnswerService:
 
         if len(executions) > 1:
             parts.append(
-                f"**Resumo:** realizei **{len(executions)}** consulta(s) à API DELPI "
-                "para responder ao seu pedido."
+                ExternalActionResponseContentService.format(
+                    "composite",
+                    "multiExecutionSummary",
+                    count=len(executions),
+                )
             )
             parts.append("")
 
@@ -116,7 +122,7 @@ class ChatCompositeDirectAnswerService:
 
         if issues:
             parts.append("")
-            parts.append("**Atenção — problemas ou ausência de dados**")
+            parts.append(ExternalActionResponseContentService.get("composite", "attentionHeader"))
             parts.extend(issues)
 
         return "\n".join(parts).strip()
@@ -144,21 +150,33 @@ class ChatCompositeDirectAnswerService:
             code = None
 
         if code == 404:
-            return "recurso não encontrado (HTTP 404). Verifique o código informado."
+            return ExternalActionResponseContentService.get("composite", "notFound404")
 
         if code in (401, 403):
-            return "sem permissão para esta consulta (HTTP {0}).".format(code)
+            return ExternalActionResponseContentService.format(
+                "composite",
+                "forbidden",
+                code=code,
+            )
 
         if code is not None and code >= 500:
-            return f"erro temporário na API (HTTP {code}). Tente novamente em instantes."
+            return ExternalActionResponseContentService.format(
+                "composite",
+                "serverError",
+                code=code,
+            )
 
         if error:
             return error
 
         if code is not None:
-            return f"a API retornou status HTTP {code}."
+            return ExternalActionResponseContentService.format(
+                "composite",
+                "httpStatus",
+                code=code,
+            )
 
-        return "a consulta não foi concluída com sucesso."
+        return ExternalActionResponseContentService.get("composite", "notSuccessful")
 
     @classmethod
     def _is_empty_result(
@@ -250,6 +268,14 @@ class ChatCompositeDirectAnswerService:
             return path
 
         if action_id:
-            return f"action {action_id}"
+            return ExternalActionResponseContentService.format(
+                "composite",
+                "actionLabel",
+                action_id=action_id,
+            )
 
-        return f"Consulta {index}"
+        return ExternalActionResponseContentService.format(
+            "composite",
+            "queryLabel",
+            index=index,
+        )

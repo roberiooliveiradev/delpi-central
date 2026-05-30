@@ -16,6 +16,9 @@ from app.domain.services.chat_sql_operational_intent_service import (
 from app.domain.services.external_actions.external_action_sql_capability_service import (
     ExternalActionSqlCapabilityService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 from app.domain.services.chat_sql_production_schedule_date_service import (
     ChatSqlProductionScheduleDateService,
     ResolvedProductionScheduleDate,
@@ -71,11 +74,19 @@ class ChatSqlProductionQueryService:
 
     @classmethod
     def format_authoring_answer(cls, resolution: SqlProductionResolution) -> str:
+        intro = ExternalActionResponseContentService.get(
+            "productionSchedule",
+            "authoringIntro",
+        )
+        hint = ExternalActionResponseContentService.get(
+            "productionSchedule",
+            "authoringExecuteHint",
+        )
         return (
             f"### {resolution.title}\n\n"
-            "Consulta sugerida para `POST /data/sql` (somente leitura):\n\n"
+            f"{intro}\n\n"
             f"```sql\n{resolution.sql.strip()}\n```\n\n"
-            "Para **executar** no Protheus, peça: «execute essa consulta» ou «traga os dados»."
+            f"{hint}"
         )
 
     @classmethod

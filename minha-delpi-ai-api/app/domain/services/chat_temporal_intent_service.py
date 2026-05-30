@@ -13,6 +13,9 @@ from app.domain.services.chat_date_range_intent_service import (
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 _WEEKDAYS_PT: dict[str, int] = {
     "domingo": 6,
@@ -35,16 +38,6 @@ _WEEKDAYS_PT: dict[str, int] = {
     "sabado": 5,
     "sab": 5,
 }
-
-_WEEKDAY_LABELS = (
-    "segunda-feira",
-    "terça-feira",
-    "quarta-feira",
-    "quinta-feira",
-    "sexta-feira",
-    "sábado",
-    "domingo",
-)
 
 _MONTH_ORDER = tuple(sorted(_MONTHS_PT.keys(), key=len, reverse=True))
 
@@ -170,7 +163,7 @@ class ChatTemporalIntentService:
     def _for_today(cls, reference: date) -> ResolvedTemporalPoint:
         return ResolvedTemporalPoint(
             target_date=reference,
-            label="hoje",
+            label=ExternalActionResponseContentService.get("temporal", "today", default="hoje"),
             kind="today",
             use_reference_today=True,
         )
@@ -188,14 +181,20 @@ class ChatTemporalIntentService:
         if relative:
             label = relative
         elif target == reference:
-            label = "hoje"
+            label = ExternalActionResponseContentService.get("temporal", "today", default="hoje")
             kind = "today"
         else:
-            weekday = _WEEKDAY_LABELS[target.weekday()]
-            label = f"{weekday} ({target.strftime('%d/%m/%Y')})"
+            weekday = ExternalActionResponseContentService.weekday_label(target.weekday())
+            label = ExternalActionResponseContentService.format(
+                "temporal",
+                "weekdayWithDate",
+                weekday=weekday,
+                date=target.strftime("%d/%m/%Y"),
+            )
 
         if use_reference_today is None:
-            use_reference_today = label == "hoje"
+            today_label = ExternalActionResponseContentService.get("temporal", "today", default="hoje")
+            use_reference_today = label == today_label or kind == "today"
 
         return ResolvedTemporalPoint(
             target_date=target,
@@ -216,12 +215,25 @@ class ChatTemporalIntentService:
                 target,
                 reference,
                 kind="relative",
-                relative="antes de ontem",
+                relative=ExternalActionResponseContentService.get(
+                    "temporal",
+                    "dayBeforeYesterday",
+                    default="antes de ontem",
+                ),
             )
 
         if re.search(r"\bontem\b", normalized):
             target = reference - timedelta(days=1)
-            return cls._build_point(target, reference, kind="relative", relative="ontem")
+            return cls._build_point(
+                target,
+                reference,
+                kind="relative",
+                relative=ExternalActionResponseContentService.get(
+                    "temporal",
+                    "yesterday",
+                    default="ontem",
+                ),
+            )
 
         if re.search(r"\bdepois de amanha\b", normalized):
             target = reference + timedelta(days=2)
@@ -229,12 +241,25 @@ class ChatTemporalIntentService:
                 target,
                 reference,
                 kind="relative",
-                relative="depois de amanhã",
+                relative=ExternalActionResponseContentService.get(
+                    "temporal",
+                    "dayAfterTomorrow",
+                    default="depois de amanhã",
+                ),
             )
 
         if re.search(r"\bamanha\b", normalized):
             target = reference + timedelta(days=1)
-            return cls._build_point(target, reference, kind="relative", relative="amanhã")
+            return cls._build_point(
+                target,
+                reference,
+                kind="relative",
+                relative=ExternalActionResponseContentService.get(
+                    "temporal",
+                    "tomorrow",
+                    default="amanhã",
+                ),
+            )
 
         return None
 
@@ -310,7 +335,13 @@ class ChatTemporalIntentService:
                 return None
 
             month_label = _MONTH_LABELS_PT.get(month, month_name)
-            label = f"{day} de {month_label} de {year}"
+            label = ExternalActionResponseContentService.format(
+                "temporal",
+                "namedDayMonthYear",
+                day=day,
+                month=month_label,
+                year=year,
+            )
             return cls._build_point(target, reference, kind="explicit", relative=label)
 
         return None
@@ -337,11 +368,16 @@ class ChatTemporalIntentService:
                     include_today=not force_next,
                 )
 
-            weekday_label = _WEEKDAY_LABELS[weekday]
+            weekday_label = ExternalActionResponseContentService.weekday_label(weekday)
             formatted = target.strftime("%d/%m/%Y")
             return ResolvedTemporalPoint(
                 target_date=target,
-                label=f"{weekday_label} ({formatted})",
+                label=ExternalActionResponseContentService.format(
+                    "temporal",
+                    "weekdayWithDate",
+                    weekday=weekday_label,
+                    date=formatted,
+                ),
                 kind="weekday",
                 use_reference_today=False,
             )

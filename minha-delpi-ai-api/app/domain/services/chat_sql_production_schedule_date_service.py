@@ -9,6 +9,9 @@ from app.domain.services.chat_temporal_intent_service import (
     ChatTemporalIntentService,
     ResolvedTemporalPoint,
 )
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 
 
 @dataclass(frozen=True)
@@ -19,11 +22,27 @@ class ResolvedProductionScheduleDate:
 
     @property
     def title(self) -> str:
-        return f"Produtos programados para produção {self.label}"
+        return ExternalActionResponseContentService.format(
+            "productionSchedule",
+            "title",
+            default=ExternalActionResponseContentService.get(
+                "productionSchedule",
+                "titleTodayFallback",
+            ),
+            label=self.label,
+        )
 
     @property
     def empty_message(self) -> str:
-        return f"Nenhum produto programado para produção {self.label}."
+        return ExternalActionResponseContentService.format(
+            "productionSchedule",
+            "emptyMessage",
+            default=ExternalActionResponseContentService.get(
+                "productionSchedule",
+                "emptyTodayFallback",
+            ),
+            label=self.label,
+        )
 
     @property
     def sql_date_declaration(self) -> str:
@@ -60,7 +79,7 @@ class ChatSqlProductionScheduleDateService:
         reference = today or date.today()
         return ResolvedTemporalPoint(
             target_date=reference,
-            label="hoje",
+            label=ExternalActionResponseContentService.get("temporal", "today", default="hoje"),
             kind="today",
             use_reference_today=True,
         )
