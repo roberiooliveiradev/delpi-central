@@ -20,6 +20,7 @@ class ChatPersonalityMetadataService:
         tool_calls: list | None,
         workspace_context: dict | None,
         issues: list[str] | None = None,
+        previous_messages: list | None = None,
     ) -> None:
         profile = ChatAgentProfileService.from_workspace(workspace_context)
         personality = ChatAgentPersonalityService.from_profile(profile)
@@ -48,4 +49,5 @@ class ChatPersonalityMetadataService:
             tool_calls=tool_calls,
             workspace_context=workspace_context,
             issues=issues,
+            previous_messages=previous_messages,
         )

@@ -676,6 +676,20 @@ class StreamChatMessageUseCase:
             answer=answer,
             tool_calls=tool_calls,
             workspace_context=workspace_context,
+            previous_messages=context_box.get("history_source") or previous_messages,
+        )
+
+        from app.application.services.chat_context_metadata_service import (
+            ChatContextMetadataService,
+        )
+
+        ChatContextMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=message,
+            answer=answer,
+            tool_calls=tool_calls,
+            previous_messages=context_box.get("history_source") or previous_messages,
+            workspace_context=workspace_context,
         )
 
         if persist_before_playback:

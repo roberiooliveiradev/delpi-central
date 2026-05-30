@@ -8,9 +8,13 @@ from typing import Any
 
 from app.domain.services.chat_agent_personality_service import ChatAgentPersonalityService
 from app.domain.services.chat_agent_profile_service import ChatAgentProfileService
+from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntentService
+from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.content.content_service import ContentService
 
 _PRODUCT_CODE_RE = re.compile(r"\b(\d{5,9})\b")
+_PRODUCT_PLACEHOLDER = "{product_code}"
 
 
 @lru_cache(maxsize=1)
@@ -29,6 +33,7 @@ class ChatFollowUpSuggestionService:
         tool_calls: list | None,
         workspace_context: dict | None,
         issues: list[str] | None = None,
+        previous_messages: list[Any] | None = None,
     ) -> None:
         profile = ChatAgentProfileService.from_workspace(workspace_context)
         personality = ChatAgentPersonalityService.from_profile(profile)
@@ -42,6 +47,7 @@ class ChatFollowUpSuggestionService:
             tool_calls=tool_calls or [],
             issues=issues,
             workspace_context=workspace_context,
+            previous_messages=previous_messages,
         )
 
         if suggestions:
@@ -61,6 +67,7 @@ class ChatFollowUpSuggestionService:
         tool_calls: list,
         issues: list[str] | None = None,
         workspace_context: dict | None = None,
+        previous_messages: list[Any] | None = None,
     ) -> list[dict[str, str]]:
         outcome = cls.classify_outcome(
             answer=answer,
@@ -77,6 +84,7 @@ class ChatFollowUpSuggestionService:
             answer=answer,
             tool_calls=tool_calls,
             workspace_context=workspace_context,
+            previous_messages=previous_messages,
         )
         query_map = _playbook().get("followUpQueries") or {}
 
@@ -88,14 +96,29 @@ class ChatFollowUpSuggestionService:
             if not template:
                 continue
 
-            query = template
+            query = cls._materialize_query(template, product_code)
 
-            if product_code:
-                query = query.replace("{product_code}", product_code)
+            if not query:
+                continue
 
             suggestions.append({"label": label, "query": query})
 
         return suggestions
+
+    @classmethod
+    def _materialize_query(cls, template: str, product_code: str | None) -> str | None:
+        if _PRODUCT_PLACEHOLDER in template and not product_code:
+            return None
+
+        query = template
+
+        if product_code:
+            query = query.replace(_PRODUCT_PLACEHOLDER, product_code)
+
+        if _PRODUCT_PLACEHOLDER in query:
+            return None
+
+        return query.strip()
 
     @classmethod
     def classify_outcome(
@@ -137,6 +160,7 @@ class ChatFollowUpSuggestionService:
                 "analyser",
                 "fornecedor",
                 "supplier",
+                "parents",
             )
         ) or any(token in lowered for token in ("produto", "estrutura", "fornecedor")):
             return "product"
@@ -190,31 +214,103 @@ class ChatFollowUpSuggestionService:
         answer: str,
         tool_calls: list,
         workspace_context: dict | None,
+        previous_messages: list[Any] | None = None,
     ) -> str | None:
-        for source in (message, answer):
-            match = _PRODUCT_CODE_RE.search(str(source or ""))
+        working_memory = (workspace_context or {}).get("workingMemory") or {}
+        entities = working_memory.get("lastEntities") or {}
+        memory_code = str(entities.get("productCode") or "").strip()
 
-            if match:
-                return match.group(1)
+        if memory_code:
+            normalized = ChatProductQueryIntentService.normalize_product_code(memory_code)
 
-        for call in tool_calls:
+            if ChatProductQueryIntentService.is_plausible_product_code(normalized):
+                return normalized
+
+        for code in ChatWorkingMemoryService._extract_codes_from_tool_calls(tool_calls):
+            normalized = ChatProductQueryIntentService.normalize_product_code(code)
+
+            if ChatProductQueryIntentService.is_plausible_product_code(normalized):
+                return normalized
+
+        for call in reversed(tool_calls or []):
             if not isinstance(call, dict):
                 continue
 
-            path = str(call.get("path") or call.get("metadata", {}).get("path") or "")
-            match = _PRODUCT_CODE_RE.search(path)
+            args = call.get("arguments")
 
-            if match:
-                return match.group(1)
+            if isinstance(args, dict):
+                parameters = args.get("parameters")
+
+                if isinstance(parameters, dict):
+                    raw_code = parameters.get("code")
+
+                    if raw_code not in (None, ""):
+                        normalized = ChatProductQueryIntentService.normalize_product_code(
+                            str(raw_code),
+                        )
+
+                        if ChatProductQueryIntentService.is_plausible_product_code(normalized):
+                            return normalized
+
+            metadata = call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            path = str(metadata.get("path") or "")
+            code = ChatAnalysisIntentService.extract_product_code_from_tool_path(path)
+
+            if code:
+                return code
+
+            humanized = metadata.get("humanizedSummary")
+
+            if isinstance(humanized, dict):
+                title = str(humanized.get("titulo") or "")
+                code = ChatProductQueryIntentService.extract_product_code(title)
+
+                if code:
+                    return code
+
+        code = ChatProductQueryIntentService.extract_product_code(message)
+
+        if code:
+            return code
+
+        code = ChatProductQueryIntentService.extract_last_product_code(answer)
+
+        if code:
+            return code
+
+        if previous_messages:
+            code = ChatProductQueryIntentService.extract_last_product_code_from_messages(
+                previous_messages,
+            )
+
+            if code:
+                return code
 
         context = workspace_context or {}
         conversation = context.get("conversationContext") or {}
 
         if isinstance(conversation, dict):
-            code = conversation.get("lastProductCode") or conversation.get("productCode")
+            for key in ("lastProductCode", "productCode"):
+                raw = conversation.get(key)
 
-            if code:
-                return str(code).strip()
+                if raw:
+                    normalized = ChatProductQueryIntentService.normalize_product_code(str(raw))
+
+                    if ChatProductQueryIntentService.is_plausible_product_code(normalized):
+                        return normalized
+
+        for source in (message, answer):
+            match = _PRODUCT_CODE_RE.search(str(source or ""))
+
+            if match:
+                normalized = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+                if ChatProductQueryIntentService.is_plausible_product_code(normalized):
+                    return normalized
 
         return None
 

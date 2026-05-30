@@ -19,13 +19,18 @@
     "suggestFollowUps": true
   },
   "feedbackReasons": [
-    { "id": "wrong_data", "label": "Dado incorreto" },
-    { "id": "no_answer", "label": "Não respondeu" },
+    { "id": "lost_context", "label": "Perdeu o contexto" },
+    { "id": "wrong_product", "label": "Usou produto errado" },
+    { "id": "bad_format", "label": "Não seguiu o formato pedido" },
+    { "id": "forgot_previous", "label": "Não lembrou a resposta anterior" },
+    { "id": "wrong_query", "label": "Consulta errada" },
+    { "id": "too_long", "label": "Resposta muito longa" },
+    { "id": "too_technical", "label": "Resposta muito técnica" },
+    { "id": "wrong_data", "label": "Dados incorretos" },
     { "id": "missing_source", "label": "Faltou fonte" },
-    { "id": "bad_format", "label": "Formato ruim" },
-    { "id": "too_long", "label": "Muito longo" },
+    { "id": "no_answer", "label": "Não respondeu" },
     { "id": "too_short", "label": "Muito curto" },
-    { "id": "wrong_query", "label": "Consulta errada" }
+    { "id": "other", "label": "Outro" }
   ],
   "feedbackThanks": {
     "up": [
@@ -67,24 +72,24 @@
   },
   "followUpQueries": {
     "Ver estoque": "qual o estoque do produto {product_code}?",
-    "Ver fornecedores": "quem fornece o produto {product_code}?",
+    "Ver fornecedores": "liste os fornecedores do produto {product_code}",
     "Ver estrutura": "mostre a estrutura do produto {product_code}",
-    "Ver vendas": "mostre vendas do produto {product_code}",
+    "Ver vendas": "mostre o faturamento do produto {product_code}",
     "Onde é usado?": "onde o produto {product_code} é usado?",
-    "Ver compras": "mostre compras do produto {product_code}",
-    "Ver vendas recentes": "vendas dos últimos 30 dias do produto {product_code}",
-    "Analisar risco": "há risco de falta do produto {product_code}?",
+    "Ver compras": "mostre as compras do produto {product_code}",
+    "Ver vendas recentes": "mostre vendas dos últimos 30 dias do produto {product_code}",
+    "Analisar risco": "analise risco de falta do produto {product_code}",
     "Gerar gráfico": "gere um gráfico com os dados acima",
-    "Agrupar por cliente": "agrupa por cliente",
+    "Agrupar por cliente": "agrupa por cliente os dados acima",
     "Comparar período": "compare com o mês anterior",
     "Ver notas fiscais": "mostre notas fiscais relacionadas",
     "Tentar por descrição": "busque produto por descrição",
     "Ampliar período": "amplie o período da consulta",
-    "Verificar código": "me fale do produto 10080001",
+    "Verificar código": "me fale do produto {product_code}",
     "O que você pode fazer?": "o que você pode fazer?",
     "Refinar o pedido": "pode detalhar o resultado anterior?",
     "Detalhar por filial": "detalhe por filial",
-    "Consultar produto": "me fale do produto 10080001"
+    "Consultar produto": "me fale do produto {product_code}"
   },
   "phrases": {
     "start": [

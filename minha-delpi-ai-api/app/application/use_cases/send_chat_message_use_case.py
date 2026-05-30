@@ -386,6 +386,20 @@ class SendChatMessageUseCase:
             answer=answer,
             tool_calls=tool_calls,
             workspace_context=workspace_context,
+            previous_messages=previous_messages,
+        )
+
+        from app.application.services.chat_context_metadata_service import (
+            ChatContextMetadataService,
+        )
+
+        ChatContextMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+            answer=answer,
+            tool_calls=tool_calls,
+            previous_messages=previous_messages,
+            workspace_context=workspace_context,
         )
 
         assistant_message = self.chat_repository.create_message(
