@@ -216,11 +216,10 @@
   gap: 0.5rem;
 }
 
-.mdc-chat-agent-builder__icebreakers > div,
 .mdc-chat-agent-builder__icebreaker-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  align-items: center;
+  align-items: stretch;
   min-height: 2.75rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   border-radius: 0.78rem;
@@ -228,10 +227,13 @@
   background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
 }
 
-.mdc-chat-agent-builder__icebreakers input {
+.mdc-chat-agent-builder__icebreakers input,
+.mdc-chat-agent-builder__icebreakers textarea {
   border: 0;
   border-radius: 0;
   background: transparent;
+  min-width: 0;
+  width: 100%;
 }
 
 .mdc-chat-agent-builder__icebreaker-count {
@@ -242,7 +244,6 @@
   white-space: nowrap;
 }
 
-.mdc-chat-agent-builder__icebreakers > div > button,
 .mdc-chat-agent-builder__icebreaker-row > button {
   display: inline-grid;
   place-items: center;
@@ -255,7 +256,6 @@
   cursor: pointer;
 }
 
-.mdc-chat-agent-builder__icebreakers > div > button:hover,
 .mdc-chat-agent-builder__icebreaker-row > button:hover {
   background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
   color: var(--mdc-danger);
@@ -1452,7 +1452,7 @@
 }
 
 /* UX fix — icon-only buttons alignment in builder */
-.mdc-chat-agent-builder__icebreakers > div > button,
+.mdc-chat-agent-builder__icebreaker-row > button,
 .mdc-chat-ws-list-row > button,
 .mdc-chat-agent-builder__preview-input button {
   display: inline-flex;
@@ -1462,7 +1462,7 @@
   line-height: 1;
 }
 
-.mdc-chat-agent-builder__icebreakers > div > button svg,
+.mdc-chat-agent-builder__icebreaker-row > button svg,
 .mdc-chat-ws-list-row > button svg,
 .mdc-chat-agent-builder__preview-input button svg {
   display: block;
@@ -1599,14 +1599,14 @@
     padding-inline: 0.65rem;
   }
 
-  .mdc-chat-agent-builder__icebreakers > div,
   .mdc-chat-agent-builder__icebreaker-row {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     align-items: stretch;
   }
 
-  .mdc-chat-agent-builder__icebreakers input {
+  .mdc-chat-agent-builder__icebreakers input,
+  .mdc-chat-agent-builder__icebreakers textarea {
     grid-column: 1 / -1;
     min-height: 2.6rem;
     padding: 0.65rem 0.75rem;
@@ -1618,7 +1618,6 @@
     padding: 0.35rem 0.55rem 0.45rem;
   }
 
-  .mdc-chat-agent-builder__icebreakers > div > button,
   .mdc-chat-agent-builder__icebreaker-row > button {
     grid-column: 2;
     grid-row: 1 / span 2;

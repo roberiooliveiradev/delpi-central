@@ -26,7 +26,7 @@ export function AgentIcebreakersEditor({
   onChange,
 }: AgentIcebreakersEditorProps) {
   const [focusedIndex, setFocusedIndex] = useState(0);
-  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const inputRefs = useRef<Array<HTMLTextAreaElement | null>>([]);
 
   function updateIcebreaker(index: number, value: string) {
     onChange(
@@ -167,11 +167,13 @@ export function AgentIcebreakersEditor({
         {icebreakers.map((icebreaker, index) => (
           <div key={`${index}-${icebreakers.length}`} className="mdc-agent-icebreakers-editor__row">
             <div className="mdc-chat-agent-builder__icebreaker-row">
-              <input
+              <textarea
                 ref={(element) => {
                   inputRefs.current[index] = element;
                 }}
+                className="mdc-chat-agent-builder__icebreaker-field"
                 value={icebreaker}
+                rows={2}
                 maxLength={AGENT_ICEBREAKER_MAX_CHARS}
                 onChange={(event) => updateIcebreaker(index, event.target.value)}
                 onFocus={() => setFocusedIndex(index)}
