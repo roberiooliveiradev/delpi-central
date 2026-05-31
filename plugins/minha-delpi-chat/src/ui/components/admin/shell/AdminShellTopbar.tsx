@@ -6,6 +6,7 @@ import {
   type AdminSection,
 } from "../../../../navigation/adminNavigation";
 import { AdminSectionNav } from "./AdminSectionNav";
+import { ADMIN_SHELL_REVISION } from "./adminShellRevision";
 
 import "./AdminShellTopbar.css";
 
@@ -37,7 +38,12 @@ export function AdminShellTopbar({
 
       <div className="mdc-chat-ws-topbar__title">
         <span>Administração</span>
-        <small>{sectionMeta.label} — Minha DELPI Chat</small>
+        <small>
+          {sectionMeta.label} — Minha DELPI Chat ·{" "}
+          <span className="mdc-admin-shell-revision" title="Versão do painel admin">
+            {ADMIN_SHELL_REVISION}
+          </span>
+        </small>
       </div>
 
       <div className="mdc-chat-ws-topbar__actions">

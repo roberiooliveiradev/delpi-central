@@ -25,7 +25,7 @@ export function isTemporalChartAxis(xAxis: string, data: Record<string, unknown>
 
 export function applyChartTopFilter(
   data: Record<string, unknown>[],
-  xAxis: string,
+  _xAxis: string,
   valueKey: string,
   limit: ChartTopFilter,
 ): Record<string, unknown>[] {

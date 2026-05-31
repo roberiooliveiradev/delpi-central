@@ -12,7 +12,7 @@ import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellStatusStrip } from "../components/admin/shell/AdminShellStatusStrip";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import { AdminSubTabNav } from "../components/admin/shell/AdminSubTabNav";
-import type { AdminLegacyTab, AdminNavState } from "../components/admin/shell/adminShellTypes";
+import type { AdminLegacyTab, AdminNavState } from "../../navigation/adminNavigation";
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";

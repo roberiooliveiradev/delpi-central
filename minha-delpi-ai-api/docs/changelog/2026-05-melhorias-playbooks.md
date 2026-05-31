@@ -369,6 +369,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | CSV | `dashboardExportCsv.ts` — botão **↓ CSV** no header do `ChatRichDashboard` (KPI + tabela + gráfico) |
 | Smoke | `smoke_api_externa_local.py` — pausa entre smokes para evitar HTTP 429 |
 
+## Admin — deploy MFE e shell v2
+
+| Item | Entrega |
+|------|---------|
+| Build | Correções TS no MFE; rebuild `minha-delpi-chat` publica admin em 6 seções |
+| UX | Rótulo `admin-v2-6secoes` no topbar para validar bundle atual |
+| Doc | `subir-ambiente-dev.md` — alterar código exige `docker compose … up --build` no plugin |
+
 ## Admin — atalho Métricas → Inteligência
 
 | Item | Entrega |

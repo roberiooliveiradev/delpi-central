@@ -87,17 +87,23 @@ Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao
 
 Acesso via botão **Admin** na UI (requer `minha-delpi.chat.admin`).
 
-| Aba | Função |
-|-----|--------|
-| Conhecimento | Ingestão global, upload, metadados curadoriais, pré-visualização de pipeline |
-| Métricas | Resumo operacional, janela 24h/7d/30d, tabela de custo LLM editável, série histórica |
-| Diretrizes | CRUD, versões, publicação, teste RAG |
-| Simulação | Prompt final, RAG, diretrizes, tools; histórico de sessão; sandbox de tools |
-| Avaliações | Nota 1–5, sugestões automáticas e opcionais via LLM |
-| Agentes | Especialização (escopo RAG, diretrizes, tools) + estatísticas de uso |
-| Segurança | Config, eventos, scan de entrada |
-| Ferramentas | Health consolidado, providers/actions, LLM |
-| Auditoria | Filtros, timeline, export CSV, trace id |
+Navegação em **6 seções** (sub-abas por seção). No topo deve aparecer `admin-v2-6secoes` ao lado do título — se ainda vir 10 abas planas (Conhecimento, Métricas, Diretrizes…), o MFE no Docker está desatualizado:
+
+```bash
+cd infra
+docker compose -f docker-compose.dev.yml up --build -d minha-delpi-chat
+```
+
+Depois: hard refresh no browser (Ctrl+Shift+R).
+
+| Seção | Sub-abas | Função |
+|-------|----------|--------|
+| Painel | — | KPIs e atalhos |
+| Conhecimento | Documentos, Diretrizes, Comportamentos | Base global, skills |
+| Agentes | Especialização, Simulação | Agentes e sandbox |
+| Qualidade | Métricas, Avaliações | Observabilidade e feedback |
+| Plataforma | Ferramentas, Inteligência | Tools/LLM e toggles do pipeline |
+| Governança | Segurança, Auditoria | RBAC, scan, trilha |
 
 ## Permissões (manifesto)
 

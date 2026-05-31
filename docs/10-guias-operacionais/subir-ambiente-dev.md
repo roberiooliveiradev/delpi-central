@@ -204,9 +204,11 @@ docker compose -f docker-compose.dev.yml up --build -d portal
 # Só Core API
 docker compose -f docker-compose.dev.yml up --build -d core-api
 
-# Só plugin chat
+# Só plugin chat (obrigatório após mudanças no admin/MFE — nginx serve dist da imagem)
 docker compose -f docker-compose.dev.yml up --build -d minha-delpi-chat
 ```
+
+O serviço `minha-delpi-chat` publica `remoteEntry.js` estático; alterar só o código no host **não** atualiza a UI até rebuild. Admin novo: 6 seções no topo + rótulo `admin-v2-6secoes`.
 
 ---
 

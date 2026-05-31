@@ -26,7 +26,7 @@ type AdminSecurityTabProps = {
 
 export function AdminSecurityTab({
   getAccessToken,
-  rbac,
+  rbac: _rbac,
   onOpenAudit,
 }: AdminSecurityTabProps) {
   const [config, setConfig] = useState<AdminSecurityConfig | null>(null);

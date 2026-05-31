@@ -2,7 +2,6 @@ import {
   buildAdminAgentHref,
   buildAdminHref,
   legacyTabToNav,
-  normalizeAdminNav,
   parseAdminPathSegments,
   type AdminLegacyTab,
   type AdminNavState,

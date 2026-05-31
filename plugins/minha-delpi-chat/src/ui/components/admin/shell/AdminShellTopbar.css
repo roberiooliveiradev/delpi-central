@@ -1,5 +1,11 @@
 /* Topbar + abas — herda .mdc-chat-ws-topbar e .mdc-chat-project-home__tabs do workspace */
 
+.mdc-admin-shell-revision {
+  font-family: ui-monospace, monospace;
+  font-size: 0.72em;
+  opacity: 0.75;
+}
+
 .mdc-admin-topbar.mdc-chat-ws-topbar {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-template-rows: auto auto;

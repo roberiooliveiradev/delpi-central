@@ -366,19 +366,11 @@ export function ChatRichPresentation({
             ) : null}
 
             {viewMode === "tree" && hasTreeView && treePresentation ? (
-              <ChatRichTree
-                presentation={treePresentation}
-                onDrillDown={onDrillDown}
-                onOpenCanvas={onOpenCanvas}
-              />
+              <ChatRichTree presentation={treePresentation} onDrillDown={onDrillDown} />
             ) : null}
 
             {viewMode === "table" && hasTableView && tablePresentation ? (
-              <ChatRichTable
-                presentation={tablePresentation}
-                onDrillDown={onDrillDown}
-                onOpenCanvas={onOpenCanvas}
-              />
+              <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
             ) : null}
           </>
         ) : hasTreeView && treePresentation ? (
