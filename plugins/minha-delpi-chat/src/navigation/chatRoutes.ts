@@ -1,4 +1,13 @@
+import {
+  buildAdminHref,
+  parseAdminRouteSegments,
+  type AdminNavState,
+} from "./adminNavigation";
+
 export const CHAT_BASE_PATH = "/apps/minha-delpi-chat";
+
+export type { AdminNavState, AdminSection, AdminSubTab } from "./adminNavigation";
+export { buildAdminHref, normalizeAdminNav, legacyTabToNav } from "./adminNavigation";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,8 +25,8 @@ export type ChatRoute =
   | { kind: "agent-actions"; agentId: string; providerKey?: string }
   | { kind: "agents" }
   | { kind: "projects" }
-  | { kind: "admin" }
-  | { kind: "admin-agent"; agentId: string };
+  | ({ kind: "admin" } & Partial<AdminNavState>)
+  | { kind: "admin-agent"; agentId: string; section?: AdminNavState["section"]; subTab?: AdminNavState["subTab"] };
 
 export function isChatAgentRouteId(value: string): boolean {
   return UUID_RE.test(value.trim());
@@ -179,14 +188,23 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
       return { kind: "agent", agentId };
     }
     case "admin": {
-      if (sectionSegments[0] === "agentes" && sectionSegments[1]) {
+      const parsed = parseAdminRouteSegments(sectionSegments);
+
+      if ("agentId" in parsed) {
         return {
           kind: "admin-agent",
-          agentId: decodeURIComponent(sectionSegments[1]),
+          agentId: parsed.agentId,
+          section: "agents",
+          subTab: "specialization",
         };
       }
 
-      return { kind: "admin" };
+      return {
+        kind: "admin",
+        section: parsed.section,
+        subTab: parsed.subTab,
+        agentId: parsed.agentId,
+      };
     }
     default:
       return { kind: "home" };
@@ -222,9 +240,13 @@ export function buildChatHref(route: ChatRoute): string {
     case "projects":
       return `${CHAT_BASE_PATH}/projetos`;
     case "admin":
-      return `${CHAT_BASE_PATH}/admin`;
+      return buildAdminHref(route);
     case "admin-agent":
-      return `${CHAT_BASE_PATH}/admin/agentes/${encodeURIComponent(route.agentId)}`;
+      return buildAdminHref({
+        section: route.section ?? "agents",
+        subTab: route.subTab ?? "specialization",
+        agentId: route.agentId,
+      });
   }
 }
 

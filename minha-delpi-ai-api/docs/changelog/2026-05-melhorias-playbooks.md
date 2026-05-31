@@ -57,6 +57,17 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** badges em admin debug ampliado; menu em árvore/chip de contexto (interatividade).
 
+## Playbook 11 — Admin UX (abas)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Navegação | 6 seções + sub-abas (`adminNavigation.ts`, `AdminShellTopbar`) |
+| Deep links | `/admin`, `/admin/conhecimento/documentos`, `/admin/agentes/especializacao/:id` |
+| Painel | `AdminOverviewTab` + RBAC; default `/admin` → Painel |
+| Reagrupamento | Inteligência fora de Métricas; RBAC fora de Ferramentas; Skills → Comportamentos |
+
+**Backlog:** cross-links Segurança↔Auditoria, dropdown mobile refinado, testes E2E admin.
+
 ## Atalhos «Próximos passos» vs chat comum
 
 | Entrega | Detalhe |

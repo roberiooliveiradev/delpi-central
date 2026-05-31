@@ -1,0 +1,23 @@
+.mdc-admin-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mdc-space-2);
+  padding: 0 clamp(var(--mdc-space-3), 1.2vw, var(--mdc-space-5));
+}
+
+.mdc-admin-subtabs button {
+  border: 1px solid var(--mdc-border);
+  border-radius: 999px;
+  background: var(--mdc-surface);
+  color: var(--mdc-text-muted);
+  font-size: 0.8125rem;
+  padding: 0.35rem 0.85rem;
+  cursor: pointer;
+}
+
+.mdc-admin-subtabs button.is-active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-surface));
+  color: var(--mdc-text);
+  font-weight: 600;
+}

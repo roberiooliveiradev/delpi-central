@@ -1,0 +1,54 @@
+.mdc-admin-overview {
+  display: grid;
+  gap: var(--mdc-space-5);
+  min-width: 0;
+}
+
+.mdc-admin-overview__header h2 {
+  margin: 0 0 var(--mdc-space-2);
+}
+
+.mdc-admin-overview__header p {
+  margin: 0;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-overview__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-overview__quick h3 {
+  margin: 0 0 var(--mdc-space-3);
+}
+
+.mdc-admin-overview__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-overview__card {
+  display: grid;
+  gap: var(--mdc-space-2);
+  text-align: left;
+  padding: var(--mdc-space-4);
+  border: 1px solid var(--mdc-border);
+  border-radius: var(--mdc-radius-lg);
+  background: var(--mdc-surface);
+  cursor: pointer;
+}
+
+.mdc-admin-overview__card:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-border));
+}
+
+.mdc-admin-overview__card-title {
+  font-weight: 600;
+}
+
+.mdc-admin-overview__card-desc {
+  font-size: 0.8125rem;
+  color: var(--mdc-text-muted);
+}
