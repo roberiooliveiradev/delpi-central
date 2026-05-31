@@ -28,7 +28,7 @@
         "Selecione um agente com actions de produto.",
         "Informe o código do produto."
       ],
-      "relatedFeatures": ["stock_lookup", "sales_lookup", "structure_lookup"]
+      "relatedFeatures": ["stock_lookup", "sales_lookup", "rag"]
     },
     {
       "id": "stock_lookup",
@@ -40,7 +40,7 @@
       "requiredActions": ["/stock"],
       "helpTopicId": null,
       "examples": ["Qual o estoque do produto 10080001?"],
-      "relatedFeatures": ["product_lookup", "suppliers_lookup"]
+      "relatedFeatures": ["product_lookup", "sales_lookup"]
     },
     {
       "id": "sales_lookup",
@@ -71,7 +71,7 @@
         "Use «pesquise na web» ou «pesquisa profunda na web».",
         "Abra Fontes · N para ver etapas e sites."
       ],
-      "relatedFeatures": ["canvas", "attachment_compare"]
+      "relatedFeatures": ["canvas", "attachment"]
     },
     {
       "id": "canvas",

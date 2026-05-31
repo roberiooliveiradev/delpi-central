@@ -1133,7 +1133,7 @@ Motivos se negativo:
 - [x] Starters no MFE (`chatHomeStarters.ts`) — como usar, pesquisa web, lousa.
 - [x] Chips «Explorar» no `ChatMessageList`.
 - [ ] Revisão completa de `identity.json` alinhada ao catálogo.
-- [ ] Matriz de testes H1–H10 automatizada em CI.
+- [x] Matriz de testes H1–H10 — `test_chat_self_help.py` + `chat_self_help_cases.py`.
 
 ### Fase 2 — Catálogo único
 
@@ -1145,10 +1145,10 @@ Motivos se negativo:
 
 ### Fase 3 — Autoatualização
 
-- Criar job de geração do catálogo.
-- Criar release notes.
-- Criar validação em CI.
-- Bloquear PR que altera feature sem atualizar help.
+- [x] `AssistantCapabilitiesCatalogValidator` + `scripts/check_assistant_capabilities_catalog.py` (CI/local).
+- [x] Guias adicionais: estoque, textos, permissões, ações destrutivas (`featureAnswers`).
+- [ ] Job `generate_assistant_capabilities_catalog` a partir de actions/skills.
+- [ ] Bloquear PR que altera feature sem atualizar help.
 
 ### Fase 4 — UI de ajuda
 

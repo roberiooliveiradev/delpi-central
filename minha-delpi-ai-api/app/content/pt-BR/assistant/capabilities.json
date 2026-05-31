@@ -71,6 +71,8 @@
       "quais coisas voce e capaz",
       "quais coisas vc e capaz",
       "o que consegue fazer",
+      "o que você consegue consultar",
+      "o que voce consegue consultar",
       "o que consigo fazer",
       "o que posso fazer aqui",
       "o que consigo fazer aqui",
@@ -163,6 +165,12 @@
       "anexo",
       "anexar",
       "agente",
+      "texto",
+      "corrigir",
+      "corrije",
+      "excluir",
+      "deletar",
+      "apagar",
       "buscar",
       "pesquisar",
       "consultar",
@@ -239,6 +247,22 @@
     "agentHelp": {
       "title": "**Agentes especializados**",
       "body": "No composer, escolha um **agente** com as APIs/actions que você precisa (estoque, vendas, SQL, etc.).\n\n**Chat comum** — respostas gerais, textos e RAG.\n**Com agente** — consultas operacionais DELPI autorizadas.\n\nSe faltar dado, verifique se o agente certo está selecionado e se sua conta tem permissão para a rota."
+    },
+    "stockHelp": {
+      "title": "**Consulta de estoque**",
+      "body": "Selecione um **agente** com action de estoque habilitada e informe o **código do produto**.\n\n**Exemplos:**\n- «Qual o estoque do produto 10080001?»\n- «Saldo do 10080001 em tabela»\n\nSem agente ou sem permissão na rota, a consulta não é executada — apenas consultas autorizadas."
+    },
+    "destructiveAction": {
+      "title": "**Alteração e exclusão de cadastros**",
+      "body": "Não executo **exclusão**, **criação** ou **alteração** de registros no ERP por chat. Posso **consultar** dados autorizados, gerar textos, pesquisar na web e apoiar análises.\n\nPara mudanças de cadastro, use os fluxos oficiais do sistema ou contato com o time responsável."
+    },
+    "permissionsHelp": {
+      "title": "**Permissões e acesso**",
+      "body": "Consultas operacionais exigem:\n1. **Agente** no composer com a action correta (ex.: estoque → `GET /products/{code}/stock`).\n2. **Permissão** da sua conta para essa rota no RBAC.\n\nSe a resposta vier vazia ou com erro de acesso, troque o agente ou peça ao administrador para liberar a action. Pergunte *«o que você pode fazer?»* para ver o que está habilitado nesta sessão."
+    },
+    "textTasksHelp": {
+      "title": "**Correção e redação de textos**",
+      "body": "Sim — corrijo, resumo, traduzo e deixo textos mais formais **sem** consultar o ERP.\n\n**Exemplos:**\n- «Corrija: segue documento em anexo»\n- «Deixe mais formal: preciso do retorno hoje»\n- «Traduza para inglês: prazo de entrega»"
     }
   },
   "pathRules": [

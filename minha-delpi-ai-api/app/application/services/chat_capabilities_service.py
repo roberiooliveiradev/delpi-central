@@ -140,10 +140,15 @@ class ChatCapabilitiesService:
 
     @classmethod
     def is_capability_inquiry(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
         if cls.is_capabilities_question(message):
             return True
 
         if cls.is_release_notes_question(message):
+            return True
+
+        if cls._is_permission_help_inquiry(normalized):
             return True
 
         if cls._is_feature_capability_inquiry(message):
@@ -254,6 +259,24 @@ class ChatCapabilitiesService:
         if cls._is_web_search_help_inquiry(normalized):
             return cls._answer_web_search_help()
 
+        if cls._is_destructive_capability_inquiry(normalized):
+            return cls._answer_topic_help("destructiveAction")
+
+        if cls._is_permission_help_inquiry(normalized):
+            return cls._answer_topic_help("permissionsHelp")
+
+        if cls._is_stock_help_inquiry(normalized):
+            stock_answer = cls._answer_topic_help("stockHelp")
+
+            if stock_answer:
+                return stock_answer
+
+        if cls._is_text_tasks_help_inquiry(normalized):
+            text_answer = cls._answer_topic_help("textTasksHelp")
+
+            if text_answer:
+                return text_answer
+
         topic = cls.classify_help_topic(message)
 
         if topic == "canvas":
@@ -319,6 +342,9 @@ class ChatCapabilitiesService:
 
         if not normalized or len(normalized) > max_length:
             return False
+
+        if cls._is_permission_help_inquiry(normalized):
+            return True
 
         if cls._looks_like_operational_data_request(message, normalized):
             return False
@@ -418,14 +444,19 @@ class ChatCapabilitiesService:
             "attachmentHelp": "attachment",
             "agentHelp": "agent",
             "webSearchHelp": "web",
+            "stockHelp": "stock_lookup",
+            "destructiveAction": None,
+            "permissionsHelp": None,
+            "textTasksHelp": "text_tasks",
         }
         registry_topic = topic_by_key.get(key)
 
-        feature = (
-            AssistantCapabilitiesRegistry.find_by_help_topic(registry_topic)
-            if registry_topic
-            else None
-        )
+        if registry_topic and not str(registry_topic).endswith("_lookup"):
+            feature = AssistantCapabilitiesRegistry.find_by_help_topic(registry_topic)
+        elif registry_topic == "stock_lookup":
+            feature = AssistantCapabilitiesRegistry.get_feature("stock_lookup")
+        else:
+            feature = None
 
         if feature:
             formatted = cls._format_catalog_feature_help(feature)
@@ -468,6 +499,57 @@ class ChatCapabilitiesService:
             lines.extend(f"- «{str(item).strip()}»" for item in examples[:4] if str(item).strip())
 
         return "\n".join(line for line in lines if line is not None).strip()
+
+    @classmethod
+    def _is_stock_help_inquiry(cls, normalized: str) -> bool:
+        return "estoque" in normalized and cls._is_how_to_help_inquiry(normalized)
+
+    @classmethod
+    def _is_text_tasks_help_inquiry(cls, normalized: str) -> bool:
+        return any(
+            token in normalized
+            for token in ("corrige", "corrigir", "texto", "textos", "traduz", "reescreve")
+        ) and cls._is_ability_question(normalized, normalized)
+
+    @classmethod
+    def _is_destructive_capability_inquiry(cls, normalized: str) -> bool:
+        if not cls._is_ability_question(normalized, normalized):
+            return False
+
+        return any(
+            token in normalized
+            for token in ("excluir", "deletar", "apagar", "remover", "alterar cadastro", "criar produto")
+        )
+
+    @classmethod
+    def _is_permission_help_inquiry(cls, normalized: str) -> bool:
+        markers = (
+            "por que nao",
+            "por que não",
+            "nao consigo",
+            "não consigo",
+            "sem acesso",
+            "sem permiss",
+            "nao tenho acesso",
+            "não tenho acesso",
+        )
+
+        return any(marker in normalized for marker in markers)
+
+    @classmethod
+    def _is_how_to_help_inquiry(cls, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in (
+                "como ",
+                "como faço",
+                "como faco",
+                "como uso",
+                "como usar",
+                "como consulto",
+                "como consultar",
+            )
+        )
 
     @classmethod
     def _is_web_search_help_inquiry(cls, normalized: str) -> bool:

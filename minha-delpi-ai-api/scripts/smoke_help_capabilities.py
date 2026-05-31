@@ -68,6 +68,18 @@ def main() -> int:
     else:
         print("OK geral: chips de exploração")
 
+    from app.application.services.assistant_capabilities_catalog_validator import (
+        AssistantCapabilitiesCatalogValidator,
+    )
+
+    catalog_errors = AssistantCapabilitiesCatalogValidator.validate()
+
+    if catalog_errors:
+        print(f"FAIL catalog validator: {catalog_errors[0]}", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog validator")
+
     if failed:
         return 1
 

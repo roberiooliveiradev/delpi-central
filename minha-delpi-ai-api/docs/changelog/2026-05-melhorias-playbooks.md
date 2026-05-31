@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 3 (validação e H1–H10)
+
+| Entrega | Detalhe |
+|---------|---------|
+| CI | `check_assistant_capabilities_catalog.py` valida JSON e referências |
+| Testes | `test_chat_self_help.py` — casos H1–H10 do playbook |
+| Capacidades | Respostas para estoque, permissões, exclusão e textos |
+
 ## Autoajuda — Fase 2 (catálogo)
 
 | Entrega | Detalhe |
