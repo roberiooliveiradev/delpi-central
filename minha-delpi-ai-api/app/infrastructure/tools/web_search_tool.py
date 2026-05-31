@@ -63,6 +63,25 @@ class WebSearchTool(InternalToolPort):
 
         payload = ChatWebSearchSourceEvaluationService.enrich_payload(payload) or payload
 
+        from app.domain.services.chat_web_search_integration_service import (
+            ChatWebSearchIntegrationService,
+            WebSearchIntegration,
+        )
+
+        integration_mode = str(arguments.get("integrationMode") or "").strip()
+
+        if integration_mode:
+            integration = WebSearchIntegration(
+                mode=integration_mode,
+                product_code=str(arguments.get("integrationProductCode") or "").strip() or None,
+                attachment_label=str(arguments.get("integrationAttachment") or "").strip() or None,
+            )
+            payload = ChatWebSearchIntegrationService.apply_to_payload(payload, integration)
+            synthesis_note = str(arguments.get("integrationSynthesisNote") or "").strip()
+
+            if synthesis_note:
+                payload["integrationSynthesisNote"] = synthesis_note
+
         search_intent = str(arguments.get("searchIntent") or "").strip()
 
         if search_intent:
@@ -80,5 +99,6 @@ class WebSearchTool(InternalToolPort):
                 "searchMode": search_mode,
                 "preferOfficial": prefer_official,
                 "searchIntent": search_intent or None,
+                "integrationMode": integration_mode or None,
             },
         )

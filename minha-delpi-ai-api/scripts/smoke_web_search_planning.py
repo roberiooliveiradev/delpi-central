@@ -71,6 +71,20 @@ def main() -> int:
     else:
         print("OK unit: avaliação de fontes (confidence high)")
 
+    from app.domain.services.chat_web_search_integration_service import (
+        ChatWebSearchIntegrationService,
+    )
+
+    integration = ChatWebSearchIntegrationService.resolve(
+        "consulte nosso produto 10080001 e pesquise na web datasheet"
+    )
+
+    if not integration or integration.mode != "internal_product":
+        print(f"FAIL unit: integração produto+web ({integration})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK unit: integração produto interno + web")
+
     if failed:
         return 1
 

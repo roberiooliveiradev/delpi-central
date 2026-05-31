@@ -46,6 +46,7 @@ class ChatToolContextService:
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
         agent_context: dict | None = None,
+        attachment_context: str | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -197,7 +198,11 @@ class ChatToolContextService:
         if native_selections:
             selected_tools = native_selections
         else:
-            selected_tools = self.tool_selection_service.select_tools(message)
+            selected_tools = self.tool_selection_service.select_tools(
+                message,
+                attachment_context=attachment_context,
+                previous_messages=previous_messages,
+            )
 
         if allowed_tool_names:
             allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}

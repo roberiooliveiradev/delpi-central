@@ -100,6 +100,15 @@ class ChatWebSearchDirectAnswerService:
         if warnings_block:
             lines.append(warnings_block)
 
+        from app.domain.services.chat_web_search_integration_service import (
+            ChatWebSearchIntegrationService,
+        )
+
+        integration_footer = ChatWebSearchIntegrationService.format_integration_footer(payload)
+
+        if integration_footer:
+            lines.append(integration_footer)
+
         return "\n".join(line for line in lines if line is not None).strip()
 
     @classmethod

@@ -133,6 +133,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** ampliar `stream.json` / variantes por outcome.
 
+## Pesquisa web — Fase 4 (integração anexo / ERP)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatWebSearchIntegrationService` — modos híbridos e queries extras |
+| Pipeline | Companion operacional em produto+web; anexo no `build_context` |
+| UX | Painel com rótulo de integração |
+
 ## Pesquisa web — Fase 3 (avaliação de fontes)
 
 | Entrega | Detalhe |

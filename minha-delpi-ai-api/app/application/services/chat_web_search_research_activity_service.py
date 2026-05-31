@@ -78,6 +78,17 @@ class ChatWebSearchResearchActivityService:
             research["warnings"] = source_evaluation.get("warnings")
             research["excludedSources"] = source_evaluation.get("excludedSources")
 
+        integration_mode = str(payload.get("integrationMode") or "").strip()
+
+        if integration_mode:
+            research["integrationMode"] = integration_mode
+
+        if payload.get("integrationProductCode"):
+            research["integrationProductCode"] = payload.get("integrationProductCode")
+
+        if payload.get("integrationAttachment"):
+            research["integrationAttachment"] = payload.get("integrationAttachment")
+
         return research
 
     @classmethod

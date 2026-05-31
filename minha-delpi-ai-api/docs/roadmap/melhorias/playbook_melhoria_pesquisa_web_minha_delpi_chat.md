@@ -894,10 +894,12 @@ Pesquisar ou dizer limitação.
 
 ## Fase 4 — Integração avançada
 
-- Web + anexos.
-- Web + dados internos.
-- Comparação de fontes.
-- Pesquisa técnica com tabelas.
+- [x] `ChatWebSearchIntegrationService` — modos `attachment_compare`, `internal_product`, `source_compare`, `technical_table`.
+- [x] Queries extras no planejamento; `integrationMode` no payload e painel.
+- [x] Híbrido produto interno não bloqueia actions DELPI no mesmo turno (`blocks_external_action_selection`).
+- [x] Contexto de anexo repassado ao `ToolSelectionService` / `resolve` da web.
+- [x] Síntese e resposta direta com notas de integração (não substituir dado interno).
+- [ ] Cruzamento automático pós-consulta ERP (comparar JSON interno com web no mesmo pipeline).
 
 ## Fase 5 — UX
 

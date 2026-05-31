@@ -194,6 +194,17 @@ Smoke: `scripts/smoke_web_search_planning.py`. Requer `CHAT_WEB_SEARCH_ENABLED=t
 
 Testes: `test_chat_web_search_source_evaluation_service.py`, `test_chat_web_search_research_activity_service.py` (propagação).
 
+### Pesquisa web — integração anexo / ERP (maio/2026)
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatWebSearchIntegrationService` | Detecta híbrido anexo+web ou produto+web; queries extras; libera companion operacional |
+| `ChatWebSearchIntentService` | `integrationMode` nos argumentos; não bloqueia actions quando há produto interno |
+| `WebSearchTool` / síntese / resposta direta | Metadata e notas «não substituir dado interno» |
+| MFE | Painel indica modo (`produto + web`, `anexo + web`, etc.) |
+
+Testes: `test_chat_web_search_integration_service.py`.
+
 ### Listagem de OV vs vendas de produto (maio/2026)
 
 | Situação | Rota correta | Erro comum |

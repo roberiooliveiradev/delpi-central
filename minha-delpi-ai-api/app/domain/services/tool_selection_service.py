@@ -5,7 +5,13 @@ from app.domain.services.chat_web_search_intent_service import ChatWebSearchInte
 
 
 class ToolSelectionService:
-    def select_tools(self, message: str) -> list[dict]:
+    def select_tools(
+        self,
+        message: str,
+        *,
+        attachment_context: str | None = None,
+        previous_messages: list | None = None,
+    ) -> list[dict]:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         selected: list[dict] = []
@@ -37,9 +43,15 @@ class ToolSelectionService:
                 }
             )
 
-        web_search = ChatWebSearchIntentService.resolve(message)
-        if web_search:
-            selected.append(web_search)
+        if ChatWebSearchIntentService.matches(message):
+            web_search = ChatWebSearchIntentService.resolve(
+                message,
+                attachment_context=attachment_context,
+                previous_messages=previous_messages,
+            )
+
+            if web_search:
+                selected.append(web_search)
 
         return selected
 

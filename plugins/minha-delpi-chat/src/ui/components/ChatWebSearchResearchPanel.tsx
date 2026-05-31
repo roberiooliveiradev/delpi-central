@@ -111,6 +111,15 @@ export function ChatWebSearchResearchPanel({
                     ? " · pesquisa rápida"
                     : ""}
                 {research.preferOfficial ? " · fontes oficiais" : ""}
+                {research.integrationMode === "internal_product"
+                  ? " · produto + web"
+                  : research.integrationMode === "attachment_compare"
+                    ? " · anexo + web"
+                    : research.integrationMode === "source_compare"
+                      ? " · comparar fontes"
+                      : research.integrationMode === "technical_table"
+                        ? " · tabela técnica"
+                        : ""}
                 {confidenceText ? ` · ${confidenceText}` : ""}
                 {research.provider ? ` · ${research.provider}` : ""}
                 {durationLabel ? ` · ${durationLabel}` : ""}

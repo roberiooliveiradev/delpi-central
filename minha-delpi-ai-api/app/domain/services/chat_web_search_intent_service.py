@@ -64,10 +64,28 @@ class ChatWebSearchIntentService:
         if not cls.is_feature_enabled():
             return False
 
-        return cls.matches(str(message or "").strip())
+        raw = str(message or "").strip()
+
+        if not cls.matches(raw):
+            return False
+
+        from app.domain.services.chat_web_search_integration_service import (
+            ChatWebSearchIntegrationService,
+        )
+
+        if ChatWebSearchIntegrationService.should_allow_operational_companion(raw):
+            return False
+
+        return True
 
     @classmethod
-    def resolve(cls, message: str) -> dict | None:
+    def resolve(
+        cls,
+        message: str,
+        *,
+        attachment_context: str | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
         if not cls.is_feature_enabled():
             return None
 
@@ -80,7 +98,16 @@ class ChatWebSearchIntentService:
             ChatWebSearchPlanningService,
         )
 
-        plan = ChatWebSearchPlanningService.plan(raw)
+        from app.domain.services.chat_web_search_integration_service import (
+            ChatWebSearchIntegrationService,
+        )
+
+        integration = ChatWebSearchIntegrationService.resolve(
+            raw,
+            attachment_context=attachment_context,
+            previous_messages=previous_messages,
+        )
+        plan = ChatWebSearchPlanningService.plan(raw, integration=integration)
 
         if not plan:
             return None
@@ -96,16 +123,43 @@ class ChatWebSearchIntentService:
                 f"({len(plan.queries)} consulta(s) planejada(s))."
             )
 
+        if integration:
+            if integration.mode == "internal_product":
+                reason = (
+                    f"{reason} Integração com consulta interna do produto "
+                    f"{integration.product_code or 'informado'}."
+                )
+            elif integration.mode == "attachment_compare":
+                reason = f"{reason} Integração com anexo para comparação de fontes."
+            elif integration.mode == "source_compare":
+                reason = f"{reason} Comparação explícita entre fontes."
+            elif integration.mode == "technical_table":
+                reason = f"{reason} Resposta técnica com tabela comparativa."
+
+        arguments: dict = {
+            "query": plan.primary_query(),
+            "plannedQueries": list(plan.queries),
+            "limit": plan.max_results,
+            "searchMode": plan.mode,
+            "searchIntent": plan.intent,
+            "preferOfficial": plan.prefer_official,
+        }
+
+        if integration:
+            arguments["integrationMode"] = integration.mode
+
+            if integration.product_code:
+                arguments["integrationProductCode"] = integration.product_code
+
+            if integration.attachment_label:
+                arguments["integrationAttachment"] = integration.attachment_label
+
+            if integration.synthesis_note:
+                arguments["integrationSynthesisNote"] = integration.synthesis_note
+
         return {
             "name": "web_search",
-            "arguments": {
-                "query": plan.primary_query(),
-                "plannedQueries": list(plan.queries),
-                "limit": plan.max_results,
-                "searchMode": plan.mode,
-                "searchIntent": plan.intent,
-                "preferOfficial": plan.prefer_official,
-            },
+            "arguments": arguments,
             "reason": reason,
         }
 

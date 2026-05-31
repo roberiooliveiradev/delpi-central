@@ -162,6 +162,9 @@ export type ChatWebSearchResearch = {
   sourceTypes?: string[] | null;
   warnings?: string[] | null;
   excludedSources?: Array<{ hostname?: string; url?: string; reason?: string }> | null;
+  integrationMode?: string | null;
+  integrationProductCode?: string | null;
+  integrationAttachment?: string | null;
   synthesized?: boolean;
   steps?: ChatWebSearchResearchStep[];
   sites?: ChatWebSearchResearchSite[];

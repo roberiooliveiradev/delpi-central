@@ -53,19 +53,21 @@ class ChatWebSearchSynthesisService:
         query = str(payload.get("query") or message or "").strip()
         sources_block = self._build_sources_block(payload)
         user_question = str(message or query or "Consulta web").strip()
+        integration_note = str(payload.get("integrationSynthesisNote") or "").strip()
+        user_content = (
+            f"Pergunta do usuário: {user_question}\n"
+            f"Consulta executada na web: {query or 'n/d'}\n\n"
+            f"Trechos autorizados da busca:\n{sources_block}"
+        )
+
+        if integration_note:
+            user_content = f"{user_content}\n\nInstrução de integração:\n{integration_note}"
 
         try:
             raw = self.llm_gateway.generate(
                 [
-                    {"role": "system", "content": self._system_prompt()},
-                    {
-                        "role": "user",
-                        "content": (
-                            f"Pergunta do usuário: {user_question}\n"
-                            f"Consulta executada na web: {query or 'n/d'}\n\n"
-                            f"Trechos autorizados da busca:\n{sources_block}"
-                        ),
-                    },
+                    {"role": "system", "content": self._system_prompt(payload)},
+                    {"role": "user", "content": user_content},
                 ]
             )
         except Exception as exc:
@@ -80,8 +82,8 @@ class ChatWebSearchSynthesisService:
         return answer
 
     @classmethod
-    def _system_prompt(cls) -> str:
-        return (
+    def _system_prompt(cls, payload: dict | None = None) -> str:
+        base = (
             "Você resume resultados de busca na internet pública para usuários da DELPI.\n"
             "Regras:\n"
             "- Escreva em português brasileiro claro e profissional.\n"
@@ -98,6 +100,20 @@ class ChatWebSearchSynthesisService:
             "- Não diga que não pesquisa na internet; a busca já foi feita.\n"
             "- Não inclua bloco de código; responda só markdown."
         )
+
+        mode = str((payload or {}).get("integrationMode") or "").strip()
+
+        if mode == "technical_table":
+            base += (
+                "\n- Priorize tabela markdown comparativa quando houver especificações nos trechos."
+            )
+
+        if mode == "source_compare":
+            base += (
+                "\n- Explique divergências entre fontes e qual tipo merece mais confiança."
+            )
+
+        return base
 
     @classmethod
     def _build_sources_block(cls, payload: dict) -> str:

@@ -78,7 +78,12 @@ class ChatWebSearchPlanningService:
     )
 
     @classmethod
-    def plan(cls, message: str) -> WebSearchPlan | None:
+    def plan(
+        cls,
+        message: str,
+        *,
+        integration: object | None = None,
+    ) -> WebSearchPlan | None:
         raw = str(message or "").strip()
 
         if not raw or not ChatWebSearchIntentService.matches(raw):
@@ -100,6 +105,9 @@ class ChatWebSearchPlanningService:
             prefer_official=prefer_official,
         )
         max_results = cls._resolve_max_results(mode)
+
+        if integration is not None and hasattr(integration, "merge_queries"):
+            queries = integration.merge_queries(queries)
 
         if not queries:
             return None

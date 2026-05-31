@@ -619,6 +619,11 @@ class SendChatMessageUseCase:
             max_external_action_calls=max_external_action_calls,
             on_stream_activity=on_stream_activity,
             agent_context=agent_context,
+            attachment_context=self._build_attachment_context(
+                user_id=UUID(request.user_id),
+                session_id=UUID(request.session_id),
+                request=request,
+            ),
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
