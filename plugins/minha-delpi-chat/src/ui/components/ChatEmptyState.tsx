@@ -5,7 +5,10 @@ import type {
   AssistantContextualHighlight,
   AssistantOnboardingPayload,
 } from "../../data/api/chatTypes";
-import { resolveStarterQueryForFeature } from "../chatShortcutPrompt";
+import {
+  resolveStarterQueryForFeature,
+  type StarterInvokeContext,
+} from "../chatShortcutPrompt";
 import { splitWelcomeHeadline } from "../welcomeHeadline";
 
 import "./ChatEmptyState.css";
@@ -18,7 +21,7 @@ type ChatEmptyStateProps = {
   catalogError?: boolean;
   selectedProfileId?: string | null;
   onSelectProfile?: (profileId: string) => void;
-  onUseStarter?: (query: string, featureId?: string | null) => void;
+  onUseStarter?: (query: string, context?: StarterInvokeContext) => void;
   onStartTour?: () => void;
 };
 
@@ -168,7 +171,7 @@ export function ChatEmptyState({
               key={card.id}
               type="button"
               className="mdc-chat-empty-state__card"
-              onClick={() => onUseStarter(card.query, card.id)}
+              onClick={() => onUseStarter(card.query, { starterId: card.id })}
             >
               <strong>{card.label}</strong>
               {card.description ? <span>{card.description}</span> : null}
@@ -187,13 +190,12 @@ export function ChatEmptyState({
               className="mdc-chat-empty-state__highlight-chip"
               title={highlight.description}
               onClick={() => {
-                const query = resolveStarterQueryForFeature(
-                  highlight.exampleQuery,
-                  highlight.featureId,
-                );
+                const query = resolveStarterQueryForFeature(highlight.exampleQuery, {
+                  featureId: highlight.featureId,
+                });
 
                 if (query) {
-                  onUseStarter?.(query, highlight.featureId);
+                  onUseStarter?.(query, { featureId: highlight.featureId });
                 }
               }}
             >

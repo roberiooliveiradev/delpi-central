@@ -16,20 +16,23 @@ export const CHAT_OPERATIONAL_HOME_STARTERS: ChatHomeStarter[] = [
 export const CHAT_TEXT_HOME_STARTERS: ChatHomeStarter[] = [
   {
     label: "Corrigir texto",
-    query: "corrija: segue em anexo os documento solicitado",
+    query: "corrija o texto abaixo:\n\n{{textContent}}",
   },
   {
     label: "Tom mais formal",
-    query: "deixe mais formal: preciso que você envie isso ainda hoje",
+    query: "deixe mais formal o texto abaixo:\n\n{{textContent}}",
   },
   {
     label: "Traduzir",
-    query: "traduza para inglês: precisamos confirmar o prazo de entrega",
+    query: "traduza para inglês o texto abaixo:\n\n{{textContent}}",
   },
-  { label: "Resumir", query: "resuma em tópicos o texto abaixo" },
+  {
+    label: "Resumir",
+    query: "resuma em tópicos o texto abaixo:\n\n{{textContent}}",
+  },
   {
     label: "E-mail",
-    query: "escreva um e-mail cobrando retorno do fornecedor sobre prazo",
+    query: "escreva um e-mail formal para {{emailRecipient}} sobre {{emailSubject}}",
   },
 ];
 

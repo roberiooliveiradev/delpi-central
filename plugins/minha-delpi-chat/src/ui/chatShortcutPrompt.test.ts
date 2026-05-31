@@ -8,6 +8,7 @@ import {
   listShortcutFieldIds,
   normalizeShortcutTemplate,
   resolveShortcutFields,
+  resolveStarterPromptOptions,
   resolveStarterQueryForFeature,
   validateShortcutValues,
   WEB_SEARCH_STARTER_QUERY,
@@ -58,14 +59,32 @@ describe("chatShortcutPrompt", () => {
 
   it("resolve novidade de pesquisa web para template com placeholder", () => {
     expect(
-      resolveStarterQueryForFeature(
-        "Pesquise na web sobre manual WEG",
-        "web_search",
-      ),
+      resolveStarterQueryForFeature("Pesquise na web sobre manual WEG", {
+        featureId: "web_search",
+      }),
     ).toBe(WEB_SEARCH_STARTER_QUERY);
-    expect(resolveStarterQueryForFeature("consultar produto", "product")).toBe(
-      "consultar produto",
-    );
+    expect(
+      resolveStarterQueryForFeature("consultar produto", { starterId: "product" }),
+    ).toBe("consultar produto");
+  });
+
+  it("escolhe diálogo por tipo de atalho", () => {
+    expect(
+      resolveStarterPromptOptions("pesquise na web sobre {{searchQuery}}", {
+        featureId: "web_search",
+      }).title,
+    ).toBe("Pesquisa na web");
+    expect(
+      resolveStarterPromptOptions(
+        "escreva um e-mail formal para {{emailRecipient}} sobre {{emailSubject}}",
+        { starterId: "email" },
+      ).title,
+    ).toBe("E-mail formal");
+    expect(
+      resolveStarterPromptOptions("me fale do produto {{productCode}}", {
+        starterId: "product",
+      }).title,
+    ).toBe("Consulta operacional");
   });
 
   it("substitui {{campo}} por dica legível na exibição", () => {

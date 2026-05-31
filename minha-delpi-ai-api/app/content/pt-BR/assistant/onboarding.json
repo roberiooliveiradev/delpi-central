@@ -20,7 +20,7 @@
       "id": "text",
       "label": "Escrever ou corrigir texto",
       "description": "E-mails, atas e revisão",
-      "query": "corrija: segue em anexo os documento solicitado"
+      "query": "corrija o texto abaixo:\n\n{{textContent}}"
     },
     {
       "id": "attachment",
@@ -38,7 +38,7 @@
       "id": "minutes",
       "label": "Criar ata ou comunicado",
       "description": "Textos administrativos",
-      "query": "escreva um comunicado interno sobre prazo de entrega"
+      "query": "escreva um comunicado interno sobre {{announcementTopic}}"
     },
     {
       "id": "capabilities",
@@ -183,19 +183,19 @@
           "id": "email",
           "label": "E-mail formal",
           "description": "Cobrança ou retorno",
-          "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo"
+          "query": "escreva um e-mail formal para {{emailRecipient}} sobre {{emailSubject}}"
         },
         {
           "id": "correct",
           "label": "Corrigir texto",
           "description": "Revisão rápida",
-          "query": "corrija: segue em anexo os documento solicitado"
+          "query": "corrija o texto abaixo:\n\n{{textContent}}"
         },
         {
           "id": "minutes",
           "label": "Criar ata",
           "description": "Ata de reunião",
-          "query": "transforme as notas abaixo em ata de reunião"
+          "query": "transforme as notas abaixo em ata de reunião:\n\n{{meetingNotes}}"
         }
       ]
     }

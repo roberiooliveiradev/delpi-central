@@ -31,7 +31,9 @@ import {
   CHAT_SHORTCUT_PROMPT_COPY,
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
-  isWebSearchStarterQuery,
+  hasShortcutPlaceholders,
+  resolveStarterPromptOptions,
+  type StarterInvokeContext,
 } from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
@@ -174,7 +176,6 @@ export function ChatPage({
   >(async () => undefined);
   const isShortcutPromptOpenRef = useRef<() => boolean>(() => false);
   const shortcutPromptResolvingRef = useRef(false);
-  const homeStarterInFlightRef = useRef(false);
   const resolveShortcutQueryRef = useRef<
     (raw: string, options?: ShortcutPromptOptions) => Promise<string | null>
   >(async () => null);
@@ -1271,28 +1272,18 @@ export function ChatPage({
     );
   }
 
-  function handleHomeStarter(query: string, featureId?: string | null) {
-    if (homeStarterInFlightRef.current || shortcutPromptResolvingRef.current) {
+  function handleHomeStarter(query: string, context: StarterInvokeContext = {}) {
+    if (shortcutPromptResolvingRef.current) {
       return;
     }
 
-    const promptOptions =
-      featureId === "web_search" || isWebSearchStarterQuery(query)
-        ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
-        : shortcutSendPromptOptions;
+    const promptOptions = resolveStarterPromptOptions(query, context);
 
-    homeStarterInFlightRef.current = true;
-
-    void promptAndSendMessage({ content: query }, promptOptions).finally(() => {
-      homeStarterInFlightRef.current = false;
-    });
+    void promptAndSendMessage({ content: query }, promptOptions);
   }
 
-  async function handleHelpTryPrompt(query: string, featureId?: string | null) {
-    const promptOptions =
-      featureId === "web_search" || isWebSearchStarterQuery(query)
-        ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
-        : CHAT_SHORTCUT_PROMPT_COPY.send;
+  async function handleHelpTryPrompt(query: string, context: StarterInvokeContext = {}) {
+    const promptOptions = resolveStarterPromptOptions(query, context);
 
     const resolved = await resolveShortcutQuery(query, promptOptions);
 
@@ -1315,8 +1306,8 @@ export function ChatPage({
   }
 
   async function handleInsertQuery(query: string) {
-    const promptOptions = isWebSearchStarterQuery(query)
-      ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
+    const promptOptions = hasShortcutPlaceholders(query)
+      ? resolveStarterPromptOptions(query, {})
       : CHAT_SHORTCUT_PROMPT_COPY.insert;
 
     const resolved = await resolveShortcutQuery(query, promptOptions);
@@ -2124,8 +2115,8 @@ export function ChatPage({
             setHelpPanelOpen(false);
             setHelpSearchQuery("");
           }}
-          onTryPrompt={(query, featureId) => {
-            void handleHelpTryPrompt(query, featureId);
+          onTryPrompt={(query, context) => {
+            void handleHelpTryPrompt(query, context);
           }}
         />
       </section>

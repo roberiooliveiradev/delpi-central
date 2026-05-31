@@ -14,7 +14,12 @@ export type ShortcutFieldId =
   | "period"
   | "productDescription"
   | "salesOrder"
-  | "ovNumber";
+  | "ovNumber"
+  | "emailRecipient"
+  | "emailSubject"
+  | "textContent"
+  | "meetingNotes"
+  | "announcementTopic";
 
 export type ShortcutFieldDefinition = {
   id: string;
@@ -68,6 +73,36 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
     inputMode: "numeric",
     pattern: /^\d{4,12}$/,
     patternHint: "Informe o número da ordem de venda.",
+  },
+  emailRecipient: {
+    id: "emailRecipient",
+    label: "Destinatário",
+    placeholder: "Ex.: fornecedor ABC",
+    required: true,
+  },
+  emailSubject: {
+    id: "emailSubject",
+    label: "Assunto do e-mail",
+    placeholder: "Ex.: prazo de entrega",
+    required: true,
+  },
+  textContent: {
+    id: "textContent",
+    label: "Texto para revisar",
+    placeholder: "Cole ou descreva o trecho com erros",
+    required: true,
+  },
+  meetingNotes: {
+    id: "meetingNotes",
+    label: "Notas da reunião",
+    placeholder: "Cole as anotações ou tópicos discutidos",
+    required: true,
+  },
+  announcementTopic: {
+    id: "announcementTopic",
+    label: "Assunto do comunicado",
+    placeholder: "Ex.: prazo de entrega",
+    required: true,
   },
 };
 
@@ -253,17 +288,56 @@ export function isWebSearchStarterQuery(query: string): boolean {
   );
 }
 
+export type StarterInvokeContext = {
+  featureId?: string | null;
+  starterId?: string | null;
+};
+
 export function resolveStarterQueryForFeature(
   query: string | null | undefined,
-  featureId?: string | null,
+  context: StarterInvokeContext = {},
 ): string | null {
-  if (featureId === "web_search") {
+  if (context.featureId === "web_search") {
     return WEB_SEARCH_STARTER_QUERY;
   }
 
   const trimmed = String(query ?? "").trim();
 
   return trimmed || null;
+}
+
+/** Diálogo adequado ao tipo de atalho (produto, web, textos administrativos). */
+export function resolveStarterPromptOptions(
+  query: string,
+  context: StarterInvokeContext = {},
+): (typeof CHAT_SHORTCUT_PROMPT_COPY)[keyof typeof CHAT_SHORTCUT_PROMPT_COPY] {
+  if (context.featureId === "web_search" || isWebSearchStarterQuery(query)) {
+    return CHAT_SHORTCUT_PROMPT_COPY.webSearch;
+  }
+
+  const starterId = String(context.starterId ?? "").trim().toLowerCase();
+
+  if (starterId === "email") {
+    return CHAT_SHORTCUT_PROMPT_COPY.textEmail;
+  }
+
+  if (starterId === "correct" || starterId === "text") {
+    return CHAT_SHORTCUT_PROMPT_COPY.textCorrect;
+  }
+
+  if (starterId === "minutes") {
+    return CHAT_SHORTCUT_PROMPT_COPY.textMinutes;
+  }
+
+  if (hasShortcutPlaceholders(query)) {
+    if (query.includes("{{productCode}}")) {
+      return CHAT_SHORTCUT_PROMPT_COPY.product;
+    }
+
+    return CHAT_SHORTCUT_PROMPT_COPY.generic;
+  }
+
+  return CHAT_SHORTCUT_PROMPT_COPY.send;
 }
 
 /** Textos do diálogo de atalhos — linguagem para o usuário final (sem «composer»). */
@@ -297,5 +371,30 @@ export const CHAT_SHORTCUT_PROMPT_COPY = {
     title: "Pesquisa na web",
     description: "Informe o assunto que deseja buscar na internet pública.",
     confirmLabel: "Pesquisar",
+  },
+  product: {
+    title: "Consulta operacional",
+    description: "Informe o código do produto ou os dados solicitados.",
+    confirmLabel: "Enviar pergunta",
+  },
+  textEmail: {
+    title: "E-mail formal",
+    description: "Informe o destinatário e o assunto antes de gerar o texto.",
+    confirmLabel: "Enviar",
+  },
+  textCorrect: {
+    title: "Revisar texto",
+    description: "Cole ou descreva o trecho que deseja corrigir.",
+    confirmLabel: "Enviar",
+  },
+  textMinutes: {
+    title: "Ata de reunião",
+    description: "Informe as notas ou tópicos para montar a ata.",
+    confirmLabel: "Enviar",
+  },
+  generic: {
+    title: "Preencha para continuar",
+    description: "Complete os campos para montar a solicitação ao agente.",
+    confirmLabel: "Enviar pergunta",
   },
 } as const;

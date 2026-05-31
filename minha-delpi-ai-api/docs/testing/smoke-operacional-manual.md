@@ -456,6 +456,8 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 |-------|----------|
 | `Pesquise na web sobre WEG` | Resumo menciona **WEG Industries** (equipamentos elétricos), não «sem resultados» |
 | Novidades → **Pesquisa web com fontes e confiança** | Abre modal **Pesquisa na web** com campo **O que pesquisar**; botão **Pesquisar** envia |
+| Perfil **Administrativo** → E-mail / Corrigir / Ata | Cada card abre modal (destinatário+assunto, texto, notas) antes de enviar |
+| Perfil **Engenharia** → Consultar produto | Modal com **Código do produto** |
 | Admin → diagnóstico | Tool `web_search`; `provider` duckduckgo ou searxng |
 
 ### Pesquisa na internet — checklist W1–W5

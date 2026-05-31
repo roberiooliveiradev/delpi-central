@@ -5,7 +5,10 @@ import type {
   AssistantCatalogFeature,
   AssistantCatalogResponse,
 } from "../../data/api/chatTypes";
-import { resolveStarterQueryForFeature } from "../chatShortcutPrompt";
+import {
+  resolveStarterQueryForFeature,
+  type StarterInvokeContext,
+} from "../chatShortcutPrompt";
 import { ModalPortal } from "./ModalPortal";
 
 import "./ChatHelpPanel.css";
@@ -18,7 +21,7 @@ type ChatHelpPanelProps = {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onClose: () => void;
-  onTryPrompt: (query: string, featureId?: string | null) => void;
+  onTryPrompt: (query: string, context?: StarterInvokeContext) => void;
 };
 
 function resolveAvailabilityLabel(
@@ -62,7 +65,7 @@ function FeatureCard({
 }: {
   feature: AssistantCatalogFeature;
   catalog: AssistantCatalogResponse | null;
-  onTryPrompt: (query: string, featureId?: string | null) => void;
+  onTryPrompt: (query: string, context?: StarterInvokeContext) => void;
 }) {
   const badge = resolveAvailabilityLabel(feature, catalog);
   const examples = (feature.examples ?? []).slice(0, 3);
@@ -83,10 +86,13 @@ function FeatureCard({
               key={example}
               type="button"
               onClick={() => {
-                const query = resolveStarterQueryForFeature(example, feature.id);
+                const query = resolveStarterQueryForFeature(example, {
+                  featureId: feature.id,
+                  starterId: feature.id,
+                });
 
                 if (query) {
-                  onTryPrompt(query, feature.id);
+                  onTryPrompt(query, { featureId: feature.id, starterId: feature.id });
                 }
               }}
             >
@@ -194,20 +200,18 @@ export function ChatHelpPanel({
                   <article key={highlight.featureId ?? highlight.title} className="mdc-chat-help-panel__highlight-card">
                     <h4>{highlight.title}</h4>
                     {highlight.description ? <p>{highlight.description}</p> : null}
-                    {resolveStarterQueryForFeature(
-                      highlight.exampleQuery,
-                      highlight.featureId,
-                    ) ? (
+                    {resolveStarterQueryForFeature(highlight.exampleQuery, {
+                      featureId: highlight.featureId,
+                    }) ? (
                       <button
                         type="button"
                         onClick={() => {
-                          const query = resolveStarterQueryForFeature(
-                            highlight.exampleQuery,
-                            highlight.featureId,
-                          );
+                          const query = resolveStarterQueryForFeature(highlight.exampleQuery, {
+                            featureId: highlight.featureId,
+                          });
 
                           if (query) {
-                            onTryPrompt(query, highlight.featureId);
+                            onTryPrompt(query, { featureId: highlight.featureId });
                           }
                         }}
                       >
@@ -225,7 +229,9 @@ export function ChatHelpPanel({
                   <button
                     key={prompt.id}
                     type="button"
-                    onClick={() => onTryPrompt(prompt.query)}
+                    onClick={() =>
+                      onTryPrompt(prompt.query, { starterId: prompt.id ?? undefined })
+                    }
                   >
                     {prompt.label}
                   </button>
