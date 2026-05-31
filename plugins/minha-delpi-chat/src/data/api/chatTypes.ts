@@ -362,6 +362,8 @@ export type ChatMessageMetadata = {
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
   onboardingFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  milestoneCelebrations?: { id: string; label?: string; message: string }[];
+  onboardingMilestonesAchieved?: string[];
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
   guidedFlow?: ChatGuidedFlow | null;
   guidedFlowCards?: ChatGuidedFlowCard[];

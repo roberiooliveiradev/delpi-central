@@ -1,6 +1,6 @@
 # Playbook 10 — Onboarding e adoção de usuários
 
-> **Status (30/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — `onboarding.json`, cards, tour, modo treinamento, **perfis por área** (`profileId` + inferência por agente); backlog: gamificação leve e materiais PDF/vídeo.
+> **Status (30/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — cards, tour, treinamento, perfis por área, **marcos leves** (`milestoneCelebrations`); backlog: materiais PDF/vídeo e analytics de adoção.
 
 
 ## Objetivo

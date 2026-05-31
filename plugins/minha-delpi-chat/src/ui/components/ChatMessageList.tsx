@@ -32,6 +32,7 @@ import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
+import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
@@ -1297,6 +1298,13 @@ export function ChatMessageList({
                   onUseSuggestion={onDrillDown}
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
+                />
+                <ChatMilestoneCelebration
+                  celebrations={
+                    (message.metadata?.milestoneCelebrations as
+                      | { id: string; label?: string; message: string }[]
+                      | undefined) ?? []
+                  }
                 />
                 <ChatFollowUpChips
                   suggestions={

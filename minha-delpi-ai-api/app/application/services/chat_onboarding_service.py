@@ -51,7 +51,16 @@ class ChatOnboardingService:
             "starterCards": cls.starter_cards(profile_id=resolved_profile),
             "tourSteps": cls.tour_steps(),
             "idleHints": cls.idle_hints(),
+            "milestones": cls._list_milestone_catalog(),
         }
+
+    @classmethod
+    def _list_milestone_catalog(cls) -> list[dict[str, str]]:
+        from app.application.services.chat_onboarding_milestone_service import (
+            ChatOnboardingMilestoneService,
+        )
+
+        return ChatOnboardingMilestoneService.list_milestones()
 
     @classmethod
     def list_profiles(cls) -> list[dict[str, str]]:

@@ -126,6 +126,14 @@ def main() -> int:
     else:
         print("OK catalog onboarding profiles")
 
+    milestones = onboarding.get("milestones") or []
+
+    if len(milestones) < 4:
+        print(f"FAIL onboarding milestones ({len(milestones)})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog onboarding milestones")
+
     commercial = ChatAssistantCatalogService(agent_repository=None).build_response(
         user_id=uuid4(),
         onboarding_profile_id="commercial",

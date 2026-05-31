@@ -426,6 +426,19 @@ class SendChatMessageUseCase:
             pipeline_stages=pipeline_stages,
         )
 
+        from app.application.services.chat_onboarding_milestone_service import (
+            ChatOnboardingMilestoneService,
+        )
+
+        ChatOnboardingMilestoneService.attach_to_assistant_metadata(
+            assistant_metadata,
+            previous_messages=previous_messages,
+            pipeline_stages=pipeline_stages,
+            tool_calls=tool_calls,
+            had_attachments=bool(getattr(request, "attachment_ids", None)),
+            canvas_open=bool(canvas_open_payload),
+        )
+
         from app.application.services.chat_guided_flow_service import (
             ChatGuidedFlowService,
         )

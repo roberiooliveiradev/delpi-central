@@ -227,6 +227,28 @@
       "body": "Peça para abrir ou atualizar a lousa com tabelas e rascunhos."
     }
   ],
+  "milestones": [
+    {
+      "id": "first_operational_query",
+      "label": "Primeira consulta",
+      "message": "Primeira consulta operacional realizada — siga com os chips de próximos passos."
+    },
+    {
+      "id": "first_canvas",
+      "label": "Primeira lousa",
+      "message": "Você usou a lousa pela primeira vez. Peça para atualizar ou resumir o conteúdo quando quiser."
+    },
+    {
+      "id": "first_attachment",
+      "label": "Primeiro anexo",
+      "message": "Arquivo anexado com sucesso. Posso resumir, extrair pendências ou gerar checklist."
+    },
+    {
+      "id": "first_capabilities",
+      "label": "Explorou o chat",
+      "message": "Boa! Você já conhece o básico — experimente uma consulta com código de produto."
+    }
+  ],
   "trainingDetection": {
     "phrases": [
       "me ensine a usar",

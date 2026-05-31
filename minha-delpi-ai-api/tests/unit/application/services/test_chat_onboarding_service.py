@@ -27,6 +27,7 @@ def test_payload_for_catalog():
     assert len(payload["starterCards"]) >= 5
     assert len(payload["tourSteps"]) == 5
     assert len(payload["profiles"]) >= 5
+    assert len(payload["milestones"]) >= 4
 
 
 def test_engineering_profile_cards():

@@ -732,6 +732,19 @@ class StreamChatMessageUseCase:
                 "sourceMessageId": canvas_open_payload.source_message_id,
             }
 
+        from app.application.services.chat_onboarding_milestone_service import (
+            ChatOnboardingMilestoneService,
+        )
+
+        ChatOnboardingMilestoneService.attach_to_assistant_metadata(
+            assistant_metadata,
+            previous_messages=context_box.get("history_source") or previous_messages,
+            pipeline_stages=pipeline_stages,
+            tool_calls=tool_calls,
+            had_attachments=bool(getattr(request, "attachment_ids", None)),
+            canvas_open=bool(canvas_open_payload),
+        )
+
         from app.application.services.chat_personality_metadata_service import (
             ChatPersonalityMetadataService,
         )

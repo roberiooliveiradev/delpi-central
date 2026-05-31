@@ -1,0 +1,20 @@
+.mdc-chat-milestone {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: var(--mdc-space-2);
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-text);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.mdc-chat-milestone p {
+  margin: 0;
+}
+
+.mdc-chat-milestone strong {
+  color: var(--mdc-primary);
+}
