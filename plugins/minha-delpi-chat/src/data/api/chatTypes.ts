@@ -304,6 +304,29 @@ export type AssistantContextualHighlight = {
   releaseVersion?: string | null;
 };
 
+export type AssistantOnboardingStarterCard = {
+  id: string;
+  label: string;
+  description?: string;
+  query: string;
+};
+
+export type AssistantOnboardingTourStep = {
+  id: string;
+  title: string;
+  body?: string;
+};
+
+export type AssistantOnboardingPayload = {
+  welcome: {
+    title: string;
+    subtitle?: string;
+  };
+  starterCards: AssistantOnboardingStarterCard[];
+  tourSteps: AssistantOnboardingTourStep[];
+  idleHints?: string[];
+};
+
 export type AssistantCatalogResponse = {
   version: string;
   query?: string | null;
@@ -318,6 +341,7 @@ export type AssistantCatalogResponse = {
   releaseNotesPreview?: string | null;
   releaseVersion?: string | null;
   contextualHighlights?: AssistantContextualHighlight[];
+  onboarding?: AssistantOnboardingPayload;
   userContext?: AssistantCatalogUserContext;
 };
 
@@ -329,6 +353,7 @@ export type ChatMessageMetadata = {
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  onboardingFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
   guidedFlow?: ChatGuidedFlow | null;
   guidedFlowCards?: ChatGuidedFlowCard[];

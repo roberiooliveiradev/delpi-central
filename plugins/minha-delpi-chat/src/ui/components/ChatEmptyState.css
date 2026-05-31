@@ -61,6 +61,36 @@
   line-height: 1.35;
 }
 
+.mdc-chat-empty-state__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--mdc-space-2);
+  width: min(100%, 42rem);
+  text-align: left;
+}
+
+.mdc-chat-empty-state__card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-border));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+  color: var(--mdc-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.mdc-chat-empty-state__card strong {
+  font-size: 0.88rem;
+}
+
+.mdc-chat-empty-state__card span {
+  font-size: 0.78rem;
+  color: var(--mdc-muted);
+  line-height: 1.35;
+}
+
 .mdc-chat-empty-state__starters {
   display: flex;
   flex-wrap: wrap;

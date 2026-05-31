@@ -1,6 +1,6 @@
 # Playbook 10 — Onboarding e adoção de usuários
 
-> **Status (31/05/2026):** [Backlog de produto](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (30/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — `onboarding.json`, cards no empty state, tour MFE, modo «me ensine a usar», payload em `/chat/assistant/catalog`; backlog: onboarding por perfil (engenharia/compras).
 
 
 ## Objetivo

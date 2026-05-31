@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 
 import { getFirstDisplayName } from "../../utils/authDisplayName";
-import type { AssistantContextualHighlight } from "../../data/api/chatTypes";
+import type {
+  AssistantContextualHighlight,
+  AssistantOnboardingPayload,
+} from "../../data/api/chatTypes";
 import { CHAT_HOME_STARTERS, type ChatHomeStarter } from "../chatHomeStarters";
 
 import "./ChatEmptyState.css";
@@ -10,6 +13,7 @@ type ChatEmptyStateProps = {
   displayName?: string | null;
   starters?: ChatHomeStarter[];
   contextualHighlights?: AssistantContextualHighlight[];
+  onboarding?: AssistantOnboardingPayload | null;
   onUseStarter?: (query: string) => void;
 };
 
@@ -47,20 +51,45 @@ export function ChatEmptyState({
   displayName,
   starters = CHAT_HOME_STARTERS,
   contextualHighlights = [],
+  onboarding,
   onUseStarter,
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
   const greeting = useMemo(() => pickGreeting(firstName), [firstName]);
   const showStarters = Boolean(onUseStarter) && starters.length > 0;
+  const welcomeTitle = onboarding?.welcome?.title?.trim();
+  const welcomeSubtitle = onboarding?.welcome?.subtitle?.trim();
+  const starterCards = onboarding?.starterCards ?? [];
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
       <div className="mdc-chat-empty-state__hero">
-        <h2>{greeting}</h2>
+        <h2>{welcomeTitle || greeting}</h2>
         <p className="mdc-chat-empty-state__hint">
-          Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação.
+          {welcomeSubtitle ||
+            "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
         </p>
       </div>
+
+      {starterCards.length > 0 && onUseStarter ? (
+        <div
+          className="mdc-chat-empty-state__cards"
+          role="group"
+          aria-label="Opções para começar"
+        >
+          {starterCards.map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              className="mdc-chat-empty-state__card"
+              onClick={() => onUseStarter(card.query)}
+            >
+              <strong>{card.label}</strong>
+              {card.description ? <span>{card.description}</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {contextualHighlights.length > 0 ? (
         <div className="mdc-chat-empty-state__highlights" role="region" aria-label="Novidades do chat">

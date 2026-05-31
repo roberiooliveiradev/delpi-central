@@ -110,6 +110,14 @@ def main() -> int:
     else:
         print("OK assistant catalog service (Fase 4)")
 
+    onboarding = catalog_payload.get("onboarding") or {}
+
+    if not onboarding.get("starterCards") or len(onboarding.get("tourSteps") or []) < 5:
+        print(f"FAIL onboarding payload ({onboarding.keys()})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog onboarding (Playbook 10)")
+
     import subprocess
     import sys as _sys
 

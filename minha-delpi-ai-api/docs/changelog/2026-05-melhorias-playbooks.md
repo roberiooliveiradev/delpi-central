@@ -329,6 +329,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Router | `intentRoute.resolvedParams` — `productCode` na mensagem ou herdado do histórico |
 | Compat | Alias `resolvedFromMemory` mantido no mesmo payload |
 
+## Onboarding — primeiro uso (Playbook 10)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Conteúdo | `assistant/onboarding.json` — welcome, cards, tour, modo treinamento |
+| Chat base | `ChatOnboardingService`, resposta direta via `ChatCapabilitiesService` |
+| API | `onboarding` em `GET /chat/assistant/catalog` |
+| MFE | Cards no `ChatEmptyState`, `ChatOnboardingTour` (localStorage) |
+| Chips | `onboardingFollowUpSuggestions` após «me ensine a usar» |
+
 ## Anexos — imagens, comparação e status (Playbook 07)
 
 | Entrega | Detalhe |

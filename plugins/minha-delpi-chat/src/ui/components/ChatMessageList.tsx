@@ -1298,6 +1298,16 @@ export function ChatMessageList({
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.onboardingFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Primeiros passos"
+                  ariaLabel="Sugestões do guia de uso"
+                />
                 <ChatGuidedFlowBlock
                   flow={message.metadata?.guidedFlow as ChatGuidedFlow | undefined}
                   cards={message.metadata?.guidedFlowCards as ChatGuidedFlowCard[] | undefined}

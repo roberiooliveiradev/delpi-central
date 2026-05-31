@@ -45,6 +45,7 @@ Mensagem do usuário
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
 | `ChatIntentRouterService` | Classificação de intenção (Playbook 01): `classify` pré-turno, `resolve_executed` pós-prep; `metadata.adminDebug.intentRoute` e estágio `intent:{nome}` |
 | `ChatActivePendingService` | Pendências ativas (`metadata.activePending`) em respostas de parâmetro operacional; resolução no turno seguinte como `clarification_answer` com `resolvedParams`; snapshot de `intentRoute` no feedback negativo de roteamento |
+| `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
 | `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |

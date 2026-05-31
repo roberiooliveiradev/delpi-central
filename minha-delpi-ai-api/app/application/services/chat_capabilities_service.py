@@ -187,6 +187,15 @@ class ChatCapabilitiesService:
         allowed_action_ids: list[str] | None = None,
         action_catalog: list[dict] | None = None,
     ) -> str | None:
+        from app.application.services.chat_onboarding_service import (
+            ChatOnboardingService,
+        )
+
+        training = ChatOnboardingService.resolve_direct_answer(message=message)
+
+        if training:
+            return training
+
         if cls.is_release_notes_question(message):
             from app.application.services.assistant_capabilities_registry import (
                 AssistantCapabilitiesRegistry,

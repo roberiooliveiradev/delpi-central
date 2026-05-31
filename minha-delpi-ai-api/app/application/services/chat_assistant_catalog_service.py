@@ -11,6 +11,7 @@ from app.application.services.assistant_capabilities_registry import (
 from app.application.services.chat_intelligence_settings_service import (
     ChatIntelligenceSettingsService,
 )
+from app.application.services.chat_onboarding_service import ChatOnboardingService
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.infrastructure.config.settings import Settings
 from app.infrastructure.persistence.postgres_external_action_repository import (
@@ -130,6 +131,7 @@ class ChatAssistantCatalogService:
             ),
             "releaseVersion": AssistantCapabilitiesRegistry.latest_release_version(),
             "contextualHighlights": highlights,
+            "onboarding": ChatOnboardingService.payload_for_catalog(),
             "userContext": {
                 "canUseTools": AssistantCapabilitiesRegistry.user_can_use_tools(
                     permissions={str(item).strip() for item in (user_permissions or []) if str(item).strip()},

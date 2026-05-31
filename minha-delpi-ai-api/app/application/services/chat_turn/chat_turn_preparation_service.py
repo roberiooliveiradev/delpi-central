@@ -441,7 +441,14 @@ class ChatTurnPreparationService:
             elif canvas_action:
                 pipeline_stages.append("canvas")
             elif pre_capability_answer:
-                pipeline_stages.append("capabilities")
+                from app.application.services.chat_onboarding_service import (
+                    ChatOnboardingService,
+                )
+
+                if ChatOnboardingService.is_training_request(message):
+                    pipeline_stages.append("onboarding_training")
+                else:
+                    pipeline_stages.append("capabilities")
             elif missing_product_code_answer:
                 pipeline_stages.append("operational_parameter")
             elif ambiguous_period_answer:

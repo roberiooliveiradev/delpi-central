@@ -1,0 +1,134 @@
+{
+  "welcome": {
+    "title": "Olá! Posso ajudar com consultas operacionais, textos, documentos e análises.",
+    "subtitle": "Escolha uma opção para começar ou escreva do seu jeito."
+  },
+  "starterCards": [
+    {
+      "id": "product",
+      "label": "Consultar produto",
+      "description": "Visão 360°, estoque e estrutura",
+      "query": "me fale do produto 10080001"
+    },
+    {
+      "id": "stock",
+      "label": "Ver estoque",
+      "description": "Saldo por produto e filial",
+      "query": "qual o estoque do produto 10080001?"
+    },
+    {
+      "id": "text",
+      "label": "Escrever ou corrigir texto",
+      "description": "E-mails, atas e revisão",
+      "query": "corrija: segue em anexo os documento solicitado"
+    },
+    {
+      "id": "attachment",
+      "label": "Analisar arquivo",
+      "description": "PDF, planilha ou imagem",
+      "query": "o que você pode fazer com um arquivo anexado?"
+    },
+    {
+      "id": "sales",
+      "label": "Ver vendas",
+      "description": "Histórico e períodos",
+      "query": "mostre vendas do produto 10080001"
+    },
+    {
+      "id": "minutes",
+      "label": "Criar ata ou comunicado",
+      "description": "Textos administrativos",
+      "query": "escreva um comunicado interno sobre prazo de entrega"
+    },
+    {
+      "id": "capabilities",
+      "label": "O que posso fazer?",
+      "description": "Recursos e limites do chat",
+      "query": "o que você pode fazer?"
+    }
+  ],
+  "tourSteps": [
+    {
+      "id": "ask",
+      "title": "Digite uma pergunta",
+      "body": "Use linguagem natural — código de produto, período ou pedido de texto."
+    },
+    {
+      "id": "agent",
+      "title": "Escolha um agente",
+      "body": "Agentes especializados filtram consultas de produtos, compras, vendas e mais."
+    },
+    {
+      "id": "attach",
+      "title": "Anexe arquivos",
+      "body": "PDF, planilha ou imagem: peça resumo, checklist ou comparação."
+    },
+    {
+      "id": "chips",
+      "title": "Use próximos passos",
+      "body": "Após cada resposta, os chips sugerem ações úteis sem redigitar tudo."
+    },
+    {
+      "id": "canvas",
+      "title": "Coloque na lousa",
+      "body": "Peça para abrir ou atualizar a lousa com tabelas e rascunhos."
+    }
+  ],
+  "trainingDetection": {
+    "phrases": [
+      "me ensine a usar",
+      "me ensine a usar o chat",
+      "ensine a usar",
+      "modo treinamento",
+      "tutorial do chat",
+      "tour do chat"
+    ],
+    "maxLength": 80
+  },
+  "trainingAnswer": {
+    "title": "**Guia rápido — Minha DELPI Chat**",
+    "sections": [
+      {
+        "heading": "Consultas operacionais",
+        "bullets": [
+          "Informe o código do produto quando pedir estoque, estrutura ou fornecedor.",
+          "Ex.: «qual o estoque do produto 10080001?»"
+        ]
+      },
+      {
+        "heading": "Textos e documentos",
+        "bullets": [
+          "Cole texto ou anexe arquivo para resumir, corrigir, traduzir ou extrair pendências.",
+          "Ex.: «resuma o PDF anexado em tópicos»"
+        ]
+      },
+      {
+        "heading": "Agentes",
+        "bullets": [
+          "Chat geral: dúvidas amplas. Agentes especialistas: produto, compras, comercial, produção, qualidade.",
+          "Selecione o agente no menu «+» antes de enviar."
+        ]
+      },
+      {
+        "heading": "Gráficos e lousa",
+        "bullets": [
+          "Peça «gerar gráfico» após uma consulta com dados.",
+          "Peça «colocar na lousa» para montar tabelas e rascunhos."
+        ]
+      }
+    ],
+    "footer": "Use os chips abaixo para experimentar ou pergunte *«o que você pode fazer?»* para ver o catálogo completo."
+  },
+  "trainingFollowUpChips": [
+    { "label": "Consultar produto", "query": "me fale do produto 10080001" },
+    { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" },
+    { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
+    { "label": "O que posso fazer?", "query": "o que você pode fazer?" }
+  ],
+  "idleHints": [
+    "Você pode começar perguntando: o que você pode fazer?",
+    "Tem um código de produto? Experimente consultar.",
+    "Cole um texto para eu corrigir.",
+    "Anexe um arquivo para eu resumir."
+  ]
+}

@@ -2,6 +2,7 @@ import { type DragEvent, useCallback, useEffect, useMemo, useState } from "react
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
+import { ChatOnboardingTour } from "../components/ChatOnboardingTour";
 import "./ChatPage.css";
 import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
@@ -55,6 +56,7 @@ import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import type {
   AssistantCatalogResponse,
+  AssistantOnboardingPayload,
   AssistantContextualHighlight,
   ChatCanvasOpenPayload,
 } from "../../data/api/chatTypes";
@@ -106,6 +108,9 @@ export function ChatPage({
   const [helpCatalogLoading, setHelpCatalogLoading] = useState(false);
   const [helpCatalogError, setHelpCatalogError] = useState<string | null>(null);
   const [homeHighlights, setHomeHighlights] = useState<AssistantContextualHighlight[]>([]);
+  const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
+    null,
+  );
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
     if (!payload.markdown.trim()) {
@@ -1099,9 +1104,11 @@ export function ChatPage({
     })
       .then((payload) => {
         setHomeHighlights(payload.contextualHighlights ?? []);
+        setHomeOnboarding(payload.onboarding ?? null);
       })
       .catch(() => {
         setHomeHighlights([]);
+        setHomeOnboarding(null);
       });
   }, [getAccessToken, helpAgentId, isConversationEmpty]);
 
@@ -1652,9 +1659,14 @@ export function ChatPage({
                     <ChatEmptyState
                       displayName={userDisplayName}
                       contextualHighlights={homeHighlights}
+                      onboarding={homeOnboarding}
                       onUseStarter={handleHomeStarter}
                     />
                   )}
+
+                  {isConversationEmpty && homeOnboarding?.tourSteps?.length ? (
+                    <ChatOnboardingTour steps={homeOnboarding.tourSteps} />
+                  ) : null}
 
                   <ChatInput
                     value={draft}

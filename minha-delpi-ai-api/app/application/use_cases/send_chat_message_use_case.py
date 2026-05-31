@@ -416,6 +416,16 @@ class SendChatMessageUseCase:
             message=request.message,
         )
 
+        from app.application.services.chat_onboarding_follow_up_service import (
+            ChatOnboardingFollowUpService,
+        )
+
+        ChatOnboardingFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+            pipeline_stages=pipeline_stages,
+        )
+
         from app.application.services.chat_guided_flow_service import (
             ChatGuidedFlowService,
         )
