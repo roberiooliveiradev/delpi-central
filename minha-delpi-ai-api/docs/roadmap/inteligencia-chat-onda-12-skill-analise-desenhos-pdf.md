@@ -112,7 +112,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | ID | Entrega | Status |
 |----|---------|--------|
 | 12.5.1 | Agente `minha-delpi-chat` (ou engenharia) com skill default | ✅ (auto quando action `get_product_analyser` / path `/analyser`) |
-| 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` (PDF fixture + código conhecido) | ✅ (offline MVP) |
+| 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` + `smoke_drawing_analyser_live.py` (HTTP + PDF + chat E2E) | ✅ |
 | 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ✅ |
 | 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, `CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS`) |
 
@@ -158,9 +158,14 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
   tests/unit/domain/services/test_chat_drawing_intent_service.py \
   tests/unit/domain/services/test_chat_drawing_validation_orchestration_service.py -q
 
-# Smoke (quando existir)
+# Smoke offline
 docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api \
   python scripts/smoke_drawing_analyser.py
+
+# Smoke E2E live (gateway + api-externa + chat)
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
+  -e SMOKE_BASE_URL=http://delpi-gateway minha-delpi-ai-api \\
+  python scripts/smoke_drawing_analyser_live.py
 ```
 
 ---

@@ -107,11 +107,19 @@ class ChatToolContextService:
         from app.domain.services.chat_drawing_analysis_turn_service import (
             ChatDrawingAnalysisTurnService,
         )
+        from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+
+        drawing_runtime_skills = ChatSkillRegistry.resolve_runtime_flags(
+            agent_metadata=agent_metadata if isinstance(agent_metadata, dict) else None,
+            allowed_action_ids=allowed_action_ids,
+            has_agent=bool(agent_context),
+        )
 
         drawing_turn = ChatDrawingAnalysisTurnService.resolve(
             message=raw_message,
             attachment_ids=attachment_ids,
             agent_metadata=agent_metadata if isinstance(agent_metadata, dict) else None,
+            skills=drawing_runtime_skills,
             previous_messages=previous_messages,
             attachment_context=attachment_context,
         )
