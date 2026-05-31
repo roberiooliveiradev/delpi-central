@@ -9,18 +9,27 @@ import {
   resolveTourStepEffect,
   tourTargetSelector,
 } from "../chatTourStepEffects";
+import {
+  computeTourTooltipLayout,
+  type SpotlightRect,
+  type TourTooltipLayout,
+} from "../chatTourTooltipPosition";
 import { ChatFollowUpChips } from "./ChatFollowUpChips";
 
 import "./ChatOnboardingTour.css";
 
 const STORAGE_KEY = "minha-delpi-chat:onboarding-tour-completed";
 
-type SpotlightRect = {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-};
+function readViewportSize(): { width: number; height: number } {
+  if (typeof window === "undefined") {
+    return { width: 1280, height: 800 };
+  }
+
+  return {
+    width: window.visualViewport?.width ?? window.innerWidth,
+    height: window.visualViewport?.height ?? window.innerHeight,
+  };
+}
 
 type ChatOnboardingTourProps = {
   steps: AssistantOnboardingTourStep[];
@@ -46,10 +55,6 @@ function markOnboardingTourCompleted(): void {
   } catch {
     /* ignore quota errors */
   }
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 function spotlightRectsEqual(
@@ -79,9 +84,11 @@ export function ChatOnboardingTour({
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(false);
   const [spotlight, setSpotlight] = useState<SpotlightRect | null>(null);
+  const [tooltipLayout, setTooltipLayout] = useState<TourTooltipLayout | null>(null);
   const [pulseTarget, setPulseTarget] = useState(false);
   const demoAbortRef = useRef<AbortController | null>(null);
   const highlightedRef = useRef<HTMLElement | null>(null);
+  const tooltipRef = useRef<HTMLElement | null>(null);
   const scrolledStepIdRef = useRef<string | null>(null);
   const measureFrameRef = useRef<number | null>(null);
 
@@ -139,7 +146,62 @@ export function ChatOnboardingTour({
     }
 
     scrolledStepIdRef.current = null;
+    setTooltipLayout(null);
   }, [visible, stepId]);
+
+  const applyTooltipLayout = useCallback(() => {
+    if (!spotlight) {
+      setTooltipLayout(null);
+      return;
+    }
+
+    const viewport = readViewportSize();
+    const element = tooltipRef.current;
+    const measuredHeight = element?.offsetHeight ?? undefined;
+    const measuredWidth =
+      element && element.offsetWidth > 120 ? element.offsetWidth : undefined;
+
+    const layout = computeTourTooltipLayout(
+      spotlight,
+      viewport.width,
+      viewport.height,
+      {
+        estimatedHeight: measuredHeight,
+        maxWidth: measuredWidth,
+      },
+    );
+
+    setTooltipLayout((current) => {
+      if (
+        current &&
+        current.top === layout.top &&
+        current.left === layout.left &&
+        current.width === layout.width &&
+        current.placement === layout.placement
+      ) {
+        return current;
+      }
+
+      return layout;
+    });
+  }, [spotlight]);
+
+  useLayoutEffect(() => {
+    if (!visible || !spotlight) {
+      setTooltipLayout(null);
+      return;
+    }
+
+    applyTooltipLayout();
+
+    const refineFrame = requestAnimationFrame(() => {
+      applyTooltipLayout();
+    });
+
+    return () => {
+      cancelAnimationFrame(refineFrame);
+    };
+  }, [applyTooltipLayout, spotlight, visible, stepId, index]);
 
   useEffect(() => {
     if (!visible || !step || !stepId) {
@@ -219,6 +281,8 @@ export function ChatOnboardingTour({
     }
 
     window.addEventListener("resize", scheduleMeasure);
+    window.visualViewport?.addEventListener("resize", scheduleMeasure);
+    window.visualViewport?.addEventListener("scroll", scheduleMeasure);
 
     const retryTimers = [120, 320].map((delay) =>
       window.setTimeout(scheduleMeasure, delay),
@@ -232,6 +296,8 @@ export function ChatOnboardingTour({
 
       retryTimers.forEach((timer) => window.clearTimeout(timer));
       window.removeEventListener("resize", scheduleMeasure);
+      window.visualViewport?.removeEventListener("resize", scheduleMeasure);
+      window.visualViewport?.removeEventListener("scroll", scheduleMeasure);
       resizeObserver?.disconnect();
       clearHighlight();
     };
@@ -260,12 +326,6 @@ export function ChatOnboardingTour({
     return null;
   }
 
-  const tooltipTop = spotlight
-    ? clamp(spotlight.top + spotlight.height + 12, 12, window.innerHeight - 220)
-    : undefined;
-  const tooltipLeft = spotlight
-    ? clamp(spotlight.left, 12, window.innerWidth - 320)
-    : undefined;
   const showDemoChips =
     step.id === "chips" && Boolean(effect?.demoSuggestions && effect.demoSuggestions.length > 0);
 
@@ -298,14 +358,35 @@ export function ChatOnboardingTour({
       ) : null}
 
       <aside
-        className="mdc-chat-onboarding-tour mdc-chat-onboarding-tour--anchored"
+        ref={tooltipRef}
+        className={[
+          "mdc-chat-onboarding-tour",
+          "mdc-chat-onboarding-tour--anchored",
+          tooltipLayout
+            ? `mdc-chat-onboarding-tour--placement-${tooltipLayout.placement}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         role="dialog"
         aria-label="Tour rápido do chat"
         aria-live="polite"
+        data-placement={tooltipLayout?.placement}
         style={
-          tooltipTop !== undefined && tooltipLeft !== undefined
-            ? { top: tooltipTop, left: tooltipLeft }
-            : undefined
+          tooltipLayout
+            ? {
+                top: tooltipLayout.top,
+                left: tooltipLayout.left,
+                width: tooltipLayout.width,
+              }
+            : spotlight
+              ? {
+                  visibility: "hidden",
+                  top: 12,
+                  left: 12,
+                  width: "min(22rem, calc(100vw - 1.5rem))",
+                }
+              : undefined
         }
       >
         <div className="mdc-chat-onboarding-tour__header">

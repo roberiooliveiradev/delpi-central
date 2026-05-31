@@ -92,6 +92,14 @@
   max-width: min(22rem, calc(100vw - 1.5rem));
 }
 
+.mdc-chat-onboarding-tour--placement-above,
+.mdc-chat-onboarding-tour--placement-below,
+.mdc-chat-onboarding-tour--placement-beside-start,
+.mdc-chat-onboarding-tour--placement-beside-end,
+.mdc-chat-onboarding-tour--placement-center {
+  margin: 0;
+}
+
 .mdc-chat-onboarding-tour__header {
   display: flex;
   align-items: center;
@@ -162,13 +170,21 @@
 
 @media (max-width: 767px) {
   .mdc-chat-onboarding-tour--anchored {
-    left: max(0.75rem, env(safe-area-inset-left)) !important;
-    right: max(0.75rem, env(safe-area-inset-right)) !important;
-    width: auto;
-    max-width: none;
+    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
+  }
+
+  .mdc-chat-onboarding-tour--placement-above {
+    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
   }
 
   .mdc-chat-tour-follow-up-anchor {
     bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 767px) and (max-height: 740px) {
+  .mdc-chat-onboarding-tour--placement-above {
+    max-height: min(42vh, 16rem);
+    overflow-y: auto;
   }
 }
