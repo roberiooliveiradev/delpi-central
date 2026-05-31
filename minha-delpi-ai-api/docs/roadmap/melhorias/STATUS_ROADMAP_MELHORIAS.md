@@ -13,6 +13,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 |---------|--------|-------|
 | [README.md](./README.md) | Concluído | Índice vivo; smokes e serviços |
 | [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md) | Concluído | Este arquivo |
+| [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Concluído | Fases 1–5 — `ChatConversationMemoryService` |
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
 | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
 | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial | Fases 1–2 + menu Textos; 3–5 backlog |

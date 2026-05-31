@@ -130,6 +130,22 @@ class ChatWorkingMemoryService:
         if entities.get("branch"):
             lines.append(f"- Filial em foco: {entities['branch']}.")
 
+        if entities.get("period"):
+            lines.append(f"- Período em foco: {entities['period']}.")
+
+        last_action = snapshot.get("lastAction")
+
+        if isinstance(last_action, dict) and last_action.get("name"):
+            params = last_action.get("params") or {}
+            param_hint = ", ".join(f"{k}={v}" for k, v in params.items() if v)
+
+            if param_hint:
+                lines.append(
+                    f"- Última consulta: {last_action['name']} ({param_hint})."
+                )
+            else:
+                lines.append(f"- Última consulta: {last_action['name']}.")
+
         behavior = snapshot.get("behaviorInstructions") or {}
 
         if behavior.get("responseFormat") == "table":
@@ -194,6 +210,11 @@ class ChatWorkingMemoryService:
             lines.append("- Preferência ativa: tom direto e objetivo.")
         elif tone == "simple":
             lines.append("- Preferência ativa: linguagem simples.")
+        elif tone == "formal":
+            lines.append("- Preferência ativa: tom formal.")
+
+        if behavior.get("answerLength") == "short":
+            lines.append("- Preferência ativa: respostas curtas.")
 
         resolved = snapshot.get("resolvedReferences") or []
 
@@ -344,6 +365,11 @@ class ChatWorkingMemoryService:
             chips.append({"label": "Tom direto", "kind": "tone", "value": "direct"})
         elif tone == "simple":
             chips.append({"label": "Linguagem simples", "kind": "tone", "value": "simple"})
+        elif tone == "formal":
+            chips.append({"label": "Tom formal", "kind": "tone", "value": "formal"})
+
+        if behavior.get("answerLength") == "short":
+            chips.append({"label": "Respostas curtas", "kind": "preference", "value": "short"})
 
         if behavior.get("finalVersionOnly"):
             chips.append({"label": "Só versão final", "kind": "preference", "value": "final_only"})

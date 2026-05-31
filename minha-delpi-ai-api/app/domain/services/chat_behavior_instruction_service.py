@@ -38,6 +38,21 @@ class ChatBehaviorInstructionService:
         r"\bapenas\s+a\s+vers[aã]o\s+corrigida\b",
         r"\bsem\s+explica[cç][aã]o\b",
     )
+    _SHORT_ANSWER_PATTERNS = (
+        r"\bresponda\s+curto\b",
+        r"\brespostas?\s+curtas?\b",
+        r"\bseja\s+conciso\b",
+        r"\bresumo\s+curto\b",
+    )
+    _FORMAL_TONE_PATTERNS = (
+        r"\btom\s+formal\b",
+        r"\buse\s+tom\s+formal\b",
+        r"\bsempre\s+formal\b",
+    )
+    _TOPICS_PATTERNS = (
+        r"\bem\s+t[oó]picos\b",
+        r"\bresponda\s+em\s+t[oó]picos\b",
+    )
 
     @classmethod
     def detect(cls, message: str | None) -> dict[str, str]:
@@ -60,6 +75,15 @@ class ChatBehaviorInstructionService:
 
         if any(re.search(pattern, normalized) for pattern in cls._FINAL_ONLY_PATTERNS):
             instructions["finalVersionOnly"] = "true"
+
+        if any(re.search(pattern, normalized) for pattern in cls._SHORT_ANSWER_PATTERNS):
+            instructions["answerLength"] = "short"
+
+        if any(re.search(pattern, normalized) for pattern in cls._FORMAL_TONE_PATTERNS):
+            instructions["tone"] = "formal"
+
+        if any(re.search(pattern, normalized) for pattern in cls._TOPICS_PATTERNS):
+            instructions["responseFormat"] = "topics"
 
         if persistent and instructions:
             instructions["scope"] = "session"

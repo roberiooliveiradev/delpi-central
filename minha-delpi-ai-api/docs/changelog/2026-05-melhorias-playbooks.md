@@ -615,3 +615,14 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 - `test_chat_reference_resolution_service.py`
 - `test_chat_follow_up_intent_service.py`
 - Inclusão em `run_onda11_validation.sh`
+
+## Memória de sessão (Playbook 01)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Orquestração | `ChatConversationMemoryService` — pré/pós-turno, limpeza seletiva, troca de agente |
+| Extractor | `ChatConversationMemoryExtractor` — lastAction, canvas, anexo, período |
+| Referências | `resolve_from_snapshot` — mesmo período, essa tabela, faça o mesmo |
+| Preferências | `answerLength=short`, tom formal, limpeza «esqueça esse produto» |
+| Validação | `run_session_memory_validation.sh`, `test_chat_session_memory.py` |
+

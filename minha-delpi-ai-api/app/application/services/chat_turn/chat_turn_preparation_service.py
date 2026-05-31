@@ -338,17 +338,23 @@ class ChatTurnPreparationService:
                 attachments=attachments,
             )
 
-        working_memory_snapshot = ChatWorkingMemoryService.build_pre_turn_snapshot(
-            message=message,
-            previous_messages=history_source,
+        from app.domain.services.chat_conversation_memory_service import (
+            ChatConversationMemoryService,
         )
 
-        if self.session_memory_service and session is not None:
-            working_memory_snapshot = self.session_memory_service.apply_to_pre_turn(
-                session_id=getattr(session, "id", None),
-                snapshot=working_memory_snapshot,
-                message=message,
-            )
+        previous_agent_id = str(workspace_context.get("agentId") or "") or None
+
+        working_memory_snapshot = ChatConversationMemoryService.build_pre_turn(
+            message=message,
+            previous_messages=history_source,
+            session_memory_service=self.session_memory_service,
+            session_id=getattr(session, "id", None) if session is not None else None,
+            agent_id=str(workspace_context.get("agentId") or "") or None,
+            project_id=str((workspace_context.get("project") or {}).get("id") or "")
+            or None,
+            attachments=attachments,
+            previous_agent_id=previous_agent_id,
+        )
 
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot

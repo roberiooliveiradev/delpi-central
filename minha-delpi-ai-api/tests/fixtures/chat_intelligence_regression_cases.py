@@ -1355,6 +1355,24 @@ TEXT_CORRECTION_SOURCE_CASES = [
     ("corrija: o estoque esta baixo", "user_message"),
 ]
 
+SESSION_MEMORY_REFERENCE_CASES = [
+    ("agora fornecedores", {"productCode": "10080001"}, ["productCode"]),
+    ("mesmo período", {"period": "last_30_days"}, ["period"]),
+    ("esse produto", {"productCode": "10080001"}, ["productCode"]),
+]
+
+SESSION_MEMORY_CLEAR_CASES = [
+    ("limpe o contexto", True),
+    ("começar do zero", True),
+    ("esqueça esse produto", False),
+]
+
+SESSION_MEMORY_BEHAVIOR_CASES = [
+    ("daqui pra frente responda curto", {"answerLength": "short"}),
+    ("use tom formal", {"tone": "formal"}),
+    ("sempre em tabela", {"responseFormat": "table"}),
+]
+
 CONTEXT_ASSERTIVENESS_CASES = [
     {
         "message": "Quem fornece o produto 10080001?",

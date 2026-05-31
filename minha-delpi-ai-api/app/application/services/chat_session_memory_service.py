@@ -12,8 +12,17 @@ class ChatSessionMemoryService:
     _CLEAR_CONTEXT_RE = re.compile(
         r"(?:desconsidere|ignore|esqueça|esqueca|limpe|limpar|resete|reinicie)"
         r".{0,80}"
-        r"(?:produto|filial|prefer[eê]ncias?|contexto|mem[oó]ria|conversa)",
+        r"(?:produto|filial|prefer[eê]ncias?|contexto|mem[oó]ria|conversa|lousa|assunto)",
         re.IGNORECASE | re.DOTALL,
+    )
+    _CLEAR_FULL_PHRASES = (
+        "começar do zero",
+        "comecar do zero",
+        "trocar de assunto",
+        "limpe o contexto",
+        "limpar o contexto",
+        "limpe a lousa",
+        "limpar a lousa",
     )
 
     def __init__(self, repository: ChatSessionMemoryRepositoryPort | None = None):
@@ -102,10 +111,17 @@ class ChatSessionMemoryService:
         if not text:
             return False
 
+        lowered = text.lower()
+
+        if re.search(r"esque.{0,40}produto", lowered) and "contexto" not in lowered and "memoria" not in lowered and "memória" not in lowered:
+            return False
+
         if cls._CLEAR_CONTEXT_RE.search(text):
             return True
 
-        lowered = text.lower()
+        if any(phrase in lowered for phrase in cls._CLEAR_FULL_PHRASES):
+            return True
+
         return (
             "desconsidere" in lowered
             and any(token in lowered for token in ("produto", "filial", "prefer", "contexto"))

@@ -8,6 +8,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
+| Memória de sessão e preferências (01) | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Fases **1–5** (`ChatConversationMemoryService`) |
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
 | Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–5** + menus contextuais (tabela, árvore, gráfico, chip) |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
@@ -41,6 +42,8 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | E-mails corporativos — `ChatEmailIntentService`, validador, chips |
 | [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Correção/revisão — `ChatTextTaskIntentService` (`correct`), validador e chips (planejados) |
 | `ChatWorkingMemoryService.build_context_chips` | Contexto + interatividade — UI |
+| `ChatConversationMemoryService` | Playbook 01 — orquestração memória |
+| `ChatConversationMemoryExtractor` | Playbook 01 — action, canvas, anexo |
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
 | `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |
 | `ChatTrustSignalsService` | Playbook 08 — sinais de confiança no metadata |
@@ -56,6 +59,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/smoke_context_assertiveness_multiturn.py` | Assertividade multi-turno |
 | `scripts/run_onda11_validation.sh` | Regressão Onda 11 + Fase 5 + serviços de melhorias |
 | `scripts/smoke_operational_routing.py` | Estoque com produto não cai em «Sobre esta consulta» |
+| `scripts/run_session_memory_validation.sh` | Playbook 01 — memória + preferências |
 | `scripts/smoke_session_memory_persist.py` | Memória persistida + `memory/clear` |
 | `scripts/upsert_agent_provider.py` | Habilitar/desabilitar provider no agente (API, sem migration) |
 | `scripts/smoke_sql_safety.py` | Bloqueio de SQL destrutivo (Playbook 08) |

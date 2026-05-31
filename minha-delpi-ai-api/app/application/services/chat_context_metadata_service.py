@@ -7,7 +7,9 @@ from typing import Any
 from app.domain.services.chat_context_assertiveness_service import (
     ChatContextAssertivenessService,
 )
-from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
+from app.domain.services.chat_conversation_memory_service import (
+    ChatConversationMemoryService,
+)
 
 
 class ChatContextMetadataService:
@@ -25,11 +27,14 @@ class ChatContextMetadataService:
     ) -> None:
         pre_snapshot = (workspace_context or {}).get("workingMemory")
 
-        snapshot = ChatWorkingMemoryService.build_post_turn_snapshot(
+        workspace = workspace_context or {}
+        snapshot = ChatConversationMemoryService.build_post_turn(
             message=message,
             previous_messages=previous_messages,
             tool_calls=tool_calls,
             pre_snapshot=pre_snapshot if isinstance(pre_snapshot, dict) else None,
+            agent_id=str(workspace.get("agentId") or "") or None,
+            project_id=str((workspace.get("project") or {}).get("id") or "") or None,
         )
 
         assertiveness = ChatContextAssertivenessService.evaluate_turn(
@@ -41,7 +46,7 @@ class ChatContextMetadataService:
 
         metadata["contextSnapshot"] = snapshot
         metadata["contextAssertiveness"] = assertiveness
-        context_chips = ChatWorkingMemoryService.build_context_chips(snapshot)
+        context_chips = ChatConversationMemoryService.build_context_chips(snapshot)
 
         if context_chips:
             metadata["contextChips"] = context_chips
@@ -49,12 +54,15 @@ class ChatContextMetadataService:
         admin_debug = metadata.get("adminDebug")
 
         if isinstance(admin_debug, dict):
-            memory_debug = ChatWorkingMemoryService.compact_for_admin_debug(snapshot)
+            memory_debug = ChatConversationMemoryService.compact_for_admin_debug(snapshot)
 
             if session_memory_service:
                 memory_debug.update(
                     session_memory_service.compact_for_admin_debug(snapshot)
                 )
+
+            memory_debug["resolvedReferences"] = snapshot.get("resolvedReferences") or []
+            memory_debug["preferencesApplied"] = snapshot.get("preferencesApplied") or []
 
             admin_debug["memory"] = memory_debug
             admin_debug["contextAssertiveness"] = assertiveness

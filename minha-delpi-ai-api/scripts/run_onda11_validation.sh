@@ -115,6 +115,9 @@ pytest \
   tests/unit/application/services/test_chat_admin_debug_service.py \
   -q
 
+echo "== Onda 11 — memória de sessão (Playbook 01) =="
+"${ROOT}/scripts/run_session_memory_validation.sh"
+
 echo "== Onda 11 — correção de texto (chat base) =="
 "${ROOT}/scripts/run_text_correction_validation.sh"
 

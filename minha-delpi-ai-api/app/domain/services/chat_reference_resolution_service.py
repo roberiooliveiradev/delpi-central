@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
@@ -11,42 +12,205 @@ from app.domain.services.chat_product_query_intent_service import (
 
 
 class ChatReferenceResolutionService:
+    _PRODUCT_REF_RE = re.compile(
+        r"\b(?:esse|esta|esse\s+mesmo)\s+(?:produto|item|c[oó]digo)\b",
+        re.IGNORECASE,
+    )
+    _PERIOD_REF_RE = re.compile(
+        r"\bmesmo\s+per[ií]odo\b|\bmesmo\s+intervalo\b",
+        re.IGNORECASE,
+    )
+    _TABLE_REF_RE = re.compile(
+        r"\b(?:essa|esta)\s+tabela\b|\btabela\s+anterior\b",
+        re.IGNORECASE,
+    )
+    _CHART_REF_RE = re.compile(
+        r"\b(?:esse|esta)\s+gr[aá]fico\b|\bgr[aá]fico\s+anterior\b",
+        re.IGNORECASE,
+    )
+    _SAME_ACTION_RE = re.compile(
+        r"\bfa[cç]a\s+o\s+mesmo\b|\brepete?\b.*\bconsulta\b",
+        re.IGNORECASE,
+    )
+    _THIS_RE = re.compile(r"\b(?:isso|essa\s+resposta)\b", re.IGNORECASE)
+    _COMPARE_PREVIOUS_RE = re.compile(
+        r"\bcompare?\s+com\s+o\s+anterior\b",
+        re.IGNORECASE,
+    )
+
     @classmethod
     def resolve(
         cls,
         message: str,
         last_entities: dict[str, str] | None,
     ) -> tuple[list[dict[str, Any]], list[str]]:
-        last_entities = last_entities or {}
+        return cls.resolve_from_snapshot(
+            message,
+            {"lastEntities": last_entities or {}},
+        )
+
+    @classmethod
+    def resolve_from_snapshot(
+        cls,
+        message: str,
+        snapshot: dict | None,
+    ) -> tuple[list[dict[str, Any]], list[str]]:
+        snapshot = snapshot or {}
+        entities = snapshot.get("lastEntities") or {}
+        last_action = snapshot.get("lastAction") or {}
+        last_presentation = snapshot.get("lastPresentation") or {}
         used_keys: list[str] = []
         resolved: list[dict[str, Any]] = []
+        normalized = (message or "").strip()
 
-        if not ChatFollowUpIntentService.is_operational_follow_up(message):
+        if not normalized:
             return resolved, used_keys
 
-        product_code = str(last_entities.get("productCode") or "").strip()
-        branch = str(last_entities.get("branch") or "").strip()
+        product_code = str(entities.get("productCode") or "").strip()
+        branch = str(entities.get("branch") or "").strip()
+        period = str(entities.get("period") or "").strip()
+        explicit_code = ChatProductQueryIntentService.extract_product_code(message)
 
-        if product_code and not ChatProductQueryIntentService.extract_product_code(message):
+        operational_follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
+
+        if product_code and not explicit_code and (
+            operational_follow_up or cls._PRODUCT_REF_RE.search(normalized)
+        ):
             resolved.append(
-                {
-                    "text": "follow-up operacional",
-                    "resolvedTo": "productCode",
-                    "value": product_code,
-                    "confidence": 0.9,
-                }
+                cls._entry(
+                    text="esse produto" if cls._PRODUCT_REF_RE.search(normalized) else "follow-up operacional",
+                    resolved_to="productCode",
+                    value=product_code,
+                    source="lastEntities.productCode",
+                    confidence=0.9,
+                )
             )
             used_keys.append("productCode")
 
-        if branch and "filial" not in (message or "").lower():
+        if branch and "filial" not in normalized.lower():
+            if operational_follow_up or re.search(r"\bmesma\s+filial\b", normalized, re.I):
+                resolved.append(
+                    cls._entry(
+                        text="filial em contexto",
+                        resolved_to="branch",
+                        value=branch,
+                        source="lastEntities.branch",
+                        confidence=0.75,
+                    )
+                )
+                used_keys.append("branch")
+
+        if period and cls._PERIOD_REF_RE.search(normalized):
             resolved.append(
-                {
-                    "text": "filial em contexto",
-                    "resolvedTo": "branch",
-                    "value": branch,
-                    "confidence": 0.75,
-                }
+                cls._entry(
+                    text="mesmo período",
+                    resolved_to="period",
+                    value=period,
+                    source="lastEntities.period",
+                    confidence=0.85,
+                )
             )
-            used_keys.append("branch")
+            used_keys.append("period")
+
+        if cls._TABLE_REF_RE.search(normalized) and last_presentation.get("type") == "table":
+            resolved.append(
+                cls._entry(
+                    text="essa tabela",
+                    resolved_to="lastPresentation",
+                    value=str(last_presentation.get("messageId") or "table"),
+                    source="lastPresentation.type=table",
+                    confidence=0.8,
+                )
+            )
+            used_keys.append("lastPresentation")
+
+        if cls._CHART_REF_RE.search(normalized) and last_presentation.get("type") in {
+            "chart",
+            "line",
+            "bar",
+            "pie",
+        }:
+            resolved.append(
+                cls._entry(
+                    text="esse gráfico",
+                    resolved_to="lastPresentation",
+                    value=str(last_presentation.get("messageId") or "chart"),
+                    source="lastPresentation.type=chart",
+                    confidence=0.8,
+                )
+            )
+            used_keys.append("lastPresentation")
+
+        if cls._SAME_ACTION_RE.search(normalized) and isinstance(last_action, dict):
+            action_name = str(last_action.get("name") or "").strip()
+
+            if action_name:
+                resolved.append(
+                    cls._entry(
+                        text="faça o mesmo",
+                        resolved_to="lastAction",
+                        value=action_name,
+                        source="lastAction.name",
+                        confidence=0.85,
+                    )
+                )
+                used_keys.append("lastAction")
+
+        if cls._THIS_RE.search(normalized) and last_presentation.get("messageId"):
+            resolved.append(
+                cls._entry(
+                    text="isso",
+                    resolved_to="lastUsefulMessage",
+                    value=str(last_presentation.get("messageId")),
+                    source="lastPresentation.messageId",
+                    confidence=0.7,
+                )
+            )
+            used_keys.append("lastUsefulMessage")
 
         return resolved, used_keys
+
+    @classmethod
+    def detect_ambiguity(cls, message: str, snapshot: dict | None) -> dict[str, Any] | None:
+        if not cls._COMPARE_PREVIOUS_RE.search(message or ""):
+            return None
+
+        entities = (snapshot or {}).get("lastEntities") or {}
+        product_code = str(entities.get("productCode") or "").strip()
+
+        if not product_code:
+            return None
+
+        previous_codes: list[str] = []
+
+        for item in (snapshot or {}).get("previousProductCodes") or []:
+            code = str(item).strip()
+
+            if code and code != product_code and code not in previous_codes:
+                previous_codes.append(code)
+
+        if len(previous_codes) < 1:
+            return None
+
+        return {
+            "reason": "compare_previous",
+            "candidates": [product_code, *previous_codes[:2]],
+            "promptHint": "Pergunte qual produto o usuário quer comparar antes de consultar.",
+        }
+
+    @staticmethod
+    def _entry(
+        *,
+        text: str,
+        resolved_to: str,
+        value: str,
+        source: str,
+        confidence: float,
+    ) -> dict[str, Any]:
+        return {
+            "text": text,
+            "resolvedTo": resolved_to,
+            "value": value,
+            "source": source,
+            "confidence": confidence,
+        }

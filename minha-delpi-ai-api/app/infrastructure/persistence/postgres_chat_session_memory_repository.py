@@ -11,9 +11,17 @@ from app.infrastructure.db.models.chat_session_memory_model import AiChatSession
 
 
 class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
-    _ENTITY_KEYS = frozenset({"productCode", "branch"})
+    _ENTITY_KEYS = frozenset({"productCode", "branch", "period"})
     _BEHAVIOR_KEYS = frozenset(
-        {"responseFormat", "tone", "emailWriting", "textCorrection", "scope", "finalVersionOnly"}
+        {
+            "responseFormat",
+            "tone",
+            "answerLength",
+            "emailWriting",
+            "textCorrection",
+            "scope",
+            "finalVersionOnly",
+        }
     )
 
     def load_active_overlay(self, session_id: UUID) -> dict:
