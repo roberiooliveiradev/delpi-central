@@ -1,5 +1,5 @@
 {
-  "version": "2026.06.01",
+  "version": "2026.06.02",
   "updatedAt": "2026-06-01T12:00:00Z",
   "features": [
     {
@@ -23,7 +23,9 @@
         "canvas",
         "chart",
         "attachment",
-        "product_lookup"
+        "product_lookup",
+        "commercial_indicators",
+        "quality_indicators"
       ]
     },
     {
@@ -34,7 +36,21 @@
       "summary": "Ficha e dados principais de produtos no ERP.",
       "requiresAgent": true,
       "requiredActions": [
-        "/products"
+        "/cpv",
+        "/customers",
+        "/inbound-invoice",
+        "/inspection",
+        "/internal-movements",
+        "/inventory-turnover",
+        "/otd",
+        "/outbound-invoice",
+        "/products",
+        "/purchases",
+        "/sales/billing",
+        "/search",
+        "/structure",
+        "/suppliers",
+        "/supplies/stock-value"
       ],
       "helpTopicId": null,
       "examples": [
@@ -87,6 +103,147 @@
       ],
       "relatedFeatures": [
         "product_lookup",
+        "chart"
+      ]
+    },
+    {
+      "id": "commercial_indicators",
+      "title": "Indicadores comerciais",
+      "category": "indicators",
+      "status": "available",
+      "summary": "ROL, propostas, taxa de fechamento e metas por filial.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/commercial"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Indicadores comerciais do mês",
+        "Taxa de fechamento de propostas",
+        "ROL por filial"
+      ],
+      "relatedFeatures": [
+        "financial_indicators",
+        "chart"
+      ]
+    },
+    {
+      "id": "financial_indicators",
+      "title": "Indicadores financeiros",
+      "category": "indicators",
+      "status": "available",
+      "summary": "ROL, EBITDA, PMR e custos fixos consolidados.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/financial"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Indicadores financeiros do trimestre",
+        "EBITDA percentual",
+        "PMR do período"
+      ],
+      "relatedFeatures": [
+        "commercial_indicators",
+        "chart"
+      ]
+    },
+    {
+      "id": "quality_indicators",
+      "title": "Indicadores de qualidade",
+      "category": "indicators",
+      "status": "available",
+      "summary": "Não conformidades, PPM, kaizens e auditoria 5S.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/quality"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Não conformidades do mês",
+        "PPM interno e externo",
+        "Resumo de kaizens"
+      ],
+      "relatedFeatures": [
+        "chart"
+      ]
+    },
+    {
+      "id": "hr_indicators",
+      "title": "Indicadores de RH",
+      "category": "indicators",
+      "status": "available",
+      "summary": "Snapshot de RH, PDIs ativos e avaliações de desempenho.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/hr"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Snapshot de RH",
+        "PDIs ativos por filial",
+        "Conclusão de avaliações de desempenho"
+      ],
+      "relatedFeatures": [
+        "chart"
+      ]
+    },
+    {
+      "id": "engineering_lmps",
+      "title": "LMPs de engenharia",
+      "category": "operational",
+      "status": "available",
+      "summary": "Listas de materiais de projeto, dashboard e detalhe por OV.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/engineering/lmps"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Listar LMPs da filial",
+        "Dashboard de LMPs",
+        "Detalhe da LMP OV 12345"
+      ],
+      "relatedFeatures": [
+        "product_lookup",
+        "chart"
+      ]
+    },
+    {
+      "id": "engineering_transforma",
+      "title": "Transforma Mais",
+      "category": "operational",
+      "status": "available",
+      "summary": "Processos e resumo do programa Transforma Mais.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/engineering/transforma-mais"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Processos Transforma Mais",
+        "Resumo Transforma Mais"
+      ],
+      "relatedFeatures": [
+        "engineering_lmps"
+      ]
+    },
+    {
+      "id": "data_sql",
+      "title": "Consulta SQL (leitura)",
+      "category": "operational",
+      "status": "available",
+      "summary": "Consultas SQL autorizadas somente leitura via agente.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/data/sql"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Execute consulta SQL autorizada",
+        "Select somente leitura na base"
+      ],
+      "relatedFeatures": [
         "chart"
       ]
     },
@@ -217,7 +374,7 @@
     }
   ],
   "generation": {
-    "generatedAt": "2026-05-31T03:16:04.039355+00:00",
+    "generatedAt": "2026-05-31T03:32:48.704310+00:00",
     "sources": [
       "external_actions",
       "skills/catalog",
@@ -227,47 +384,13 @@
     "enabledActionCount": 110,
     "skillCount": 2,
     "unmappedActionPaths": [
-      "/",
-      "/commercial/branch_rol_target_pct",
-      "/commercial/closing-rate",
-      "/commercial/head_office_rol_target_pct",
-      "/commercial/new-business-rol-pct",
-      "/commercial/new-clients-average",
-      "/commercial/new-clients-rol-pct",
-      "/commercial/proposals",
-      "/commercial/rol/series",
-      "/data/sql",
-      "/engineering/lmps",
-      "/engineering/lmps/dashboard",
-      "/engineering/lmps/dashboard/charts",
-      "/engineering/lmps/dashboard/items",
-      "/engineering/lmps/dashboard/summary",
-      "/engineering/lmps/{sale_number}",
-      "/engineering/transforma-mais/processes",
-      "/engineering/transforma-mais/processes/summary",
-      "/finacial/ebitda_pct",
-      "/finacial/fixed_cost_pct",
-      "/finacial/pmr",
-      "/finacial/rol",
-      "/financial/ebitda_pct",
-      "/financial/fixed_cost_pct",
-      "/financial/pmr",
-      "/financial/rol",
-      "/health",
-      "/hr/active-pdi-count",
-      "/hr/branches",
-      "/hr/performance-reviews-completion",
-      "/hr/snapshot",
-      "/quality/audit-5s/summary",
-      "/quality/branches",
-      "/quality/kaizens/summary",
-      "/quality/nonconformities",
-      "/quality/nonconformities/series",
-      "/quality/ppm/external",
-      "/quality/ppm/external/series",
-      "/quality/ppm/external/summary",
-      "/quality/ppm/internal"
+      "/system/login",
+      "/system/tables/{tableName}",
+      "/system/tables/{tableName}/columns",
+      "/system/tables/{tableName}/indexes",
+      "/system/tables/{tableName}/relations",
+      "/system/tables/{tableName}/schema"
     ],
-    "pathRulesVersion": "2026.06.01"
+    "pathRulesVersion": "2026.06.02"
   }
 }

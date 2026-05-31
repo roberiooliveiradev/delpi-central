@@ -164,6 +164,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | Grupo «Ajuda após erro» em `ChatMessageList` |
 | CI | `check_help_pr_gate.py` — actions/skills exigem atualização de ajuda |
 
+## Autoajuda — Fase 3 (mapeamento KPIs e produto)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Gerador | Regras comercial, financeiro, qualidade, RH, LMP, SQL; tokens de produto (fornecedores, estrutura, …) |
+| Catálogo | Novas features `commercial_indicators`, `financial_indicators`, `quality_indicators`, `hr_indicators`, `engineering_*`, `data_sql` |
+| Drift | Match por marcador mais específico; ignora `/` e `/health`; `unmapped` residual só rotas `/system/*` |
+
 ## Autoajuda — Fase 3 (geração do catálogo)
 
 | Entrega | Detalhe |

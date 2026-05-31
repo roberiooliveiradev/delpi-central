@@ -43,6 +43,48 @@ def test_generate_links_stock_action():
     assert catalog.get("generation", {}).get("actionCount") == 1
 
 
+def test_generate_maps_commercial_and_suppliers():
+    catalog = AssistantCapabilitiesCatalogGenerator.generate(
+        actions=[
+            {"path": "/commercial/rol/series", "enabled": True},
+            {"path": "/products/100/suppliers", "enabled": True},
+            {"path": "/health", "enabled": True},
+        ],
+        skills=[],
+        base_catalog={
+            "version": "test",
+            "features": [
+                {
+                    "id": "commercial_indicators",
+                    "title": "Comercial",
+                    "category": "indicators",
+                    "status": "available",
+                    "summary": "KPIs",
+                    "requiresAgent": True,
+                },
+                {
+                    "id": "product_lookup",
+                    "title": "Produto",
+                    "category": "operational",
+                    "status": "available",
+                    "summary": "Ficha",
+                    "requiresAgent": True,
+                },
+            ],
+        },
+    )
+
+    commercial = next(
+        item for item in catalog["features"] if item["id"] == "commercial_indicators"
+    )
+    product = next(item for item in catalog["features"] if item["id"] == "product_lookup")
+    generation = catalog.get("generation") or {}
+
+    assert "/commercial" in (commercial.get("requiredActions") or [])
+    assert "/suppliers" in (product.get("requiredActions") or [])
+    assert "/health" not in (generation.get("unmappedActionPaths") or [])
+
+
 def test_drift_report_detects_required_actions_change():
     on_disk = {
         "generation": {"generatedAt": "old"},

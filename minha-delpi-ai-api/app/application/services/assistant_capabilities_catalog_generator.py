@@ -14,22 +14,106 @@ from app.application.services.assistant_capabilities_catalog_validator import (
 )
 from app.infrastructure.content.content_service import ContentService
 
+_PRODUCT_ACTION_TOKENS: tuple[str, ...] = (
+    "/products",
+    "/suppliers",
+    "/customers",
+    "/structure",
+    "/parents",
+    "/purchases",
+    "/prices",
+    "/guide",
+    "/inspection",
+    "/internal-movements",
+    "/inbound-invoice",
+    "/outbound-invoice",
+    "/search",
+    "/analyser",
+    "/supplies/stock-value",
+    "/inventory-turnover",
+    "/cpv",
+    "/otd",
+    "/sale-order",
+    "/sales/billing",
+)
+
+_IGNORE_PATHS: frozenset[str] = frozenset({"/", "/health"})
+
+
+def _path_rule(
+    *,
+    feature_id: str,
+    markers: tuple[str, ...],
+    action_token: str,
+) -> dict[str, Any]:
+    return {
+        "featureId": feature_id,
+        "pathMarkers": markers,
+        "actionToken": action_token,
+    }
+
+
 _PATH_RULES: tuple[dict[str, Any], ...] = (
-    {
-        "featureId": "product_lookup",
-        "pathMarkers": ("/products", "/product", "products"),
-        "actionToken": "/products",
-    },
-    {
-        "featureId": "stock_lookup",
-        "pathMarkers": ("/stock", "estoque", "inventory"),
-        "actionToken": "/stock",
-    },
-    {
-        "featureId": "sales_lookup",
-        "pathMarkers": ("/sales", "/ordens", "ordem de venda", "order"),
-        "actionToken": "/sales",
-    },
+    _path_rule(
+        feature_id="product_lookup",
+        markers=("/products", "/product", "products"),
+        action_token="/products",
+    ),
+    *(
+        _path_rule(feature_id="product_lookup", markers=(token,), action_token=token)
+        for token in _PRODUCT_ACTION_TOKENS
+        if token != "/products"
+    ),
+    _path_rule(
+        feature_id="stock_lookup",
+        markers=("/stock", "estoque", "inventory"),
+        action_token="/stock",
+    ),
+    _path_rule(
+        feature_id="sales_lookup",
+        markers=("/sales", "/ordens", "ordem de venda", "order"),
+        action_token="/sales",
+    ),
+    _path_rule(
+        feature_id="commercial_indicators",
+        markers=("/commercial",),
+        action_token="/commercial",
+    ),
+    _path_rule(
+        feature_id="financial_indicators",
+        markers=("/financial", "/finacial"),
+        action_token="/financial",
+    ),
+    _path_rule(
+        feature_id="quality_indicators",
+        markers=("/quality",),
+        action_token="/quality",
+    ),
+    _path_rule(
+        feature_id="hr_indicators",
+        markers=("/hr",),
+        action_token="/hr",
+    ),
+    _path_rule(
+        feature_id="engineering_lmps",
+        markers=("/engineering/lmps", "/lmps/"),
+        action_token="/engineering/lmps",
+    ),
+    _path_rule(
+        feature_id="engineering_transforma",
+        markers=("/engineering/transforma-mais", "transforma-mais"),
+        action_token="/engineering/transforma-mais",
+    ),
+    _path_rule(
+        feature_id="data_sql",
+        markers=("/data/sql",),
+        action_token="/data/sql",
+    ),
+    _path_rule(
+        feature_id="production_indicators",
+        markers=("/production",),
+        action_token="/production",
+    ),
 )
 
 _SKILL_TO_FEATURE: dict[str, str] = {
@@ -69,7 +153,7 @@ class AssistantCapabilitiesCatalogGenerator:
 
             path = str(action.get("path") or "").strip()
 
-            if not path:
+            if not path or path in _IGNORE_PATHS:
                 continue
 
             feature_id = cls._resolve_feature_id(path)
@@ -121,7 +205,7 @@ class AssistantCapabilitiesCatalogGenerator:
             ),
             "skillCount": len(resolved_skills),
             "unmappedActionPaths": sorted(set(unmapped_paths))[:40],
-            "pathRulesVersion": "2026.06.01",
+            "pathRulesVersion": "2026.06.02",
         }
 
         return catalog
@@ -244,27 +328,40 @@ class AssistantCapabilitiesCatalogGenerator:
         return result
 
     @classmethod
-    def _resolve_feature_id(cls, path: str) -> str | None:
+    def _best_path_match(cls, path: str) -> tuple[str | None, str | None]:
         normalized = path.lower()
+        best_length = 0
+        feature_id: str | None = None
+        action_token: str | None = None
 
         for rule in _PATH_RULES:
             markers = rule.get("pathMarkers") or ()
 
-            if any(marker.lower() in normalized for marker in markers):
-                return str(rule.get("featureId") or "").strip() or None
+            for marker in markers:
+                token = str(marker or "").strip().lower()
 
-        return None
+                if not token or token not in normalized or len(token) <= best_length:
+                    continue
+
+                best_length = len(token)
+                feature_id = str(rule.get("featureId") or "").strip() or None
+                action_token = str(rule.get("actionToken") or "").strip() or None
+
+        return feature_id, action_token
+
+    @classmethod
+    def _resolve_feature_id(cls, path: str) -> str | None:
+        feature_id, _ = cls._best_path_match(path)
+        return feature_id
 
     @classmethod
     def _action_token(cls, path: str) -> str | None:
+        _, action_token = cls._best_path_match(path)
+
+        if action_token:
+            return action_token
+
         normalized = path.lower()
-
-        for rule in _PATH_RULES:
-            markers = rule.get("pathMarkers") or ()
-
-            if any(marker.lower() in normalized for marker in markers):
-                return str(rule.get("actionToken") or "").strip() or None
-
         match = re.search(r"/[a-z0-9_-]+", normalized)
 
         if match:

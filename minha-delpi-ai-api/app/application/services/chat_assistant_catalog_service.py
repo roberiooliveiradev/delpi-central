@@ -20,6 +20,7 @@ from app.infrastructure.persistence.postgres_external_action_repository import (
 _CATEGORY_LABELS: dict[str, str] = {
     "chat_basic": "Chat e agentes",
     "operational": "Consultas operacionais",
+    "indicators": "Indicadores e KPIs",
     "knowledge": "Conhecimento e arquivos",
     "visualization": "Gráficos e lousa",
     "text": "Textos e comunicação",
