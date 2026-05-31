@@ -20,6 +20,8 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
 | Templates de atalhos (sem código fixo) | `python scripts/smoke_shortcut_placeholders.py` |
 | Pacote atalhos (login + API + conteúdo) | `./scripts/run_chat_shortcut_homologation.sh` |
+| Homologação no container | `docker exec delpi-minha-delpi-ai-api bash -c 'cd /app && PYTHONPATH=/app SMOKE_BASE_URL=http://delpi-gateway ./scripts/run_chat_shortcut_homologation.sh'` |
+| Rebuild MFE após fix frontend | `cd infra && docker compose -f docker-compose.dev.yml build minha-delpi-chat && docker compose -f docker-compose.dev.yml --profile chat up -d minha-delpi-chat` |
 | Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
 

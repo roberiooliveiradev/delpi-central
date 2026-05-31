@@ -1743,6 +1743,12 @@ export function ChatPage({
 
           {error || workspaceError ? (
             <ChatInlineError
+              title={
+                error?.includes("diálogo dos atalhos") ||
+                error?.includes("{{")
+                  ? "Complete os campos antes de enviar"
+                  : undefined
+              }
               message={
                 error ||
                 workspaceError ||

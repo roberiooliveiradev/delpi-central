@@ -414,7 +414,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |-------------|-----------|
 | Login `rober` / token Keycloak | OK (`auth` 200, `smoke_identity_profile`) |
 | `smoke_follow_up_chips.py` | OK — chips API com `{{productCode}}`; ações api-externa |
-| `smoke_features_catalog.py` | OK — onboarding/tour com placeholders |
+| `smoke_features_catalog.py` | OK — onboarding/tour com placeholders (container API) |
 | `smoke_admin_endpoints.py` | OK |
 | Vitest MFE | `chatShortcutPrompt`, `chatHomeStarters`, `exportUtils` — 11 testes OK |
 | `smoke_shortcut_placeholders.py` | OK — JSON + follow-up service sem `10080001` fixo nas queries de chip |
@@ -422,12 +422,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Catálogo HTTP | `starterCards` / `demoQuery` com `{{productCode}}` (sem código fixo na API) |
 | Diálogo automático | `onShortcutPromptRequired` abre o formulário ao bloquear `{{…}}` (sem só banner de erro) |
 | Z-index modal | `mdc-chat-shortcut-prompt-backdrop` na camada 1400 (`modal-layer.css`) |
+| Travamento na home | Corrigido — loop de `useLayoutEffect` no `ChatOnboardingTour` (`ecac82f4`) |
+| Fluxo unificado atalhos | `promptAndSendMessage` + guarda de reentrância (`384cbd45`, `ecac82f4`) |
+| Banner de placeholder | Título «Complete os campos antes de enviar» (não «Não consegui gerar…») |
+| Deploy MFE dev | `docker compose build` + `up -d minha-delpi-chat` (31/05) |
 
-**Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Enter no composer com placeholder também deve abrir o modal.
+**Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Enter no composer com placeholder também deve abrir o modal. Hard refresh após deploy; se o tour travar, `localStorage.setItem('minha-delpi-chat:onboarding-tour-completed','1')`.
 
 **Script:** `./scripts/run_chat_shortcut_homologation.sh` — placeholders + login + catálogo + follow-up (pausa configurável para rate limit).
 
-**Commits:** `f8d571bf`, `5633a777`, `0dcda7da` (diálogo ao bloquear), `6670e510` (XLSX/PDF), `a5c7e9e9` (smoke placeholders).
+**Commits:** `f8d571bf`, `5633a777`, `0dcda7da` (diálogo ao bloquear), `6670e510` (XLSX/PDF), `a5c7e9e9` (smoke placeholders), `384cbd45`, `ecac82f4`.
 
 ## Homologação — api-externa local
 

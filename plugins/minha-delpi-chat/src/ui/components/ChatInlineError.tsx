@@ -6,6 +6,8 @@ import "./ChatInlineError.css";
 type ChatInlineErrorProps = {
   message: string;
   details?: string | null;
+  /** Título do alerta; default = erro de resposta do assistente. */
+  title?: string;
   onRetry?: () => void;
   onDismiss?: () => void;
 };
@@ -13,6 +15,7 @@ type ChatInlineErrorProps = {
 export function ChatInlineError({
   message,
   details,
+  title = "Não consegui gerar a resposta agora.",
   onRetry,
   onDismiss,
 }: ChatInlineErrorProps) {
@@ -27,7 +30,7 @@ export function ChatInlineError({
       <div className="mdc-chat-inline-error__body">
         <div className="mdc-chat-inline-error__header">
           <div>
-            <strong>Não consegui gerar a resposta agora.</strong>
+            <strong>{title}</strong>
             <p>{message}</p>
           </div>
 
