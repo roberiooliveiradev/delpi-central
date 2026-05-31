@@ -675,6 +675,17 @@ class StreamChatMessageUseCase:
             latency_ms=latency_ms,
         )
 
+        from app.application.services.chat_web_search_follow_up_service import (
+            ChatWebSearchFollowUpService,
+        )
+
+        ChatWebSearchFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=tool_context,
+            message=request.message,
+            had_attachments=bool(getattr(request, "attachment_ids", None)),
+        )
+
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
                 "title": canvas_open_payload.title,

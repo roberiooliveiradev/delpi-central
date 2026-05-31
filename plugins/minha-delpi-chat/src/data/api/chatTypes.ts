@@ -17,6 +17,8 @@ export type ChatSource = {
   title?: string | null;
   sourceType?: string | null;
   sourceRef?: string | null;
+  qualityScore?: number | null;
+  isOfficial?: boolean | null;
   chunkIndex?: number | null;
   score?: number | null;
   scope?: string | null;
@@ -210,6 +212,7 @@ export type ChatMessageMetadata = {
   canvasOpen?: ChatCanvasOpenPayload | null;
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
+  webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   followUpOutcome?: string;
   personality?: {
     tone?: string;

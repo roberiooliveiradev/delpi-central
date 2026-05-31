@@ -85,6 +85,28 @@ def main() -> int:
     else:
         print("OK unit: integração produto interno + web")
 
+    from app.application.services.chat_web_search_follow_up_service import (
+        ChatWebSearchFollowUpService,
+    )
+
+    metadata: dict = {}
+    ChatWebSearchFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        tool_context={
+            "webSearchPayload": {
+                "searchStatus": "success",
+                "query": "manual WEG CFW500",
+            },
+        },
+        message="pesquise na web manual WEG CFW500",
+    )
+
+    if not metadata.get("webSearchFollowUpSuggestions"):
+        print(f"FAIL unit: chips pós-pesquisa ({metadata})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK unit: webSearchFollowUpSuggestions")
+
     if failed:
         return 1
 

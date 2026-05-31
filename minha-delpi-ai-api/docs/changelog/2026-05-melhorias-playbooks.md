@@ -133,6 +133,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** ampliar `stream.json` / variantes por outcome.
 
+## Pesquisa web — Fase 5 (UX)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Backend | `ChatWebSearchFollowUpService` + chips no `personality_playbook.json` |
+| MFE | Grid de cards de fontes, tag oficial, chips «Após pesquisa web» |
+
 ## Pesquisa web — Fase 4 (integração anexo / ERP)
 
 | Entrega | Detalhe |

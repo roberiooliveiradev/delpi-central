@@ -205,6 +205,15 @@ Testes: `test_chat_web_search_source_evaluation_service.py`, `test_chat_web_sear
 
 Testes: `test_chat_web_search_integration_service.py`.
 
+### Pesquisa web — UX pós-pesquisa (maio/2026)
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatWebSearchFollowUpService` | `webSearchFollowUpSuggestions` no metadata (playbook `webSearchFollowUpChips`) |
+| MFE | Cards de fontes web, badges «oficial», chips «Após pesquisa web» |
+
+Testes: `test_chat_web_search_follow_up_service.py`.
+
 ### Listagem de OV vs vendas de produto (maio/2026)
 
 | Situação | Rota correta | Erro comum |

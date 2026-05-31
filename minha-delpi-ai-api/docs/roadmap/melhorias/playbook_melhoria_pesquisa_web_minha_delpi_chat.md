@@ -4,7 +4,7 @@ Projeto: **Minha DELPI Chat IA**
 
 Objetivo: evoluir a funcionalidade de pesquisa na web para que o chat consiga pesquisar melhor, explicar melhor de onde veio a informação, comparar fontes, lidar com notícias recentes, resumir páginas, validar confiabilidade e integrar resultados externos com o contexto interno da DELPI.
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–2** (`webSearchResearch`, painel MFE, `ChatWebSearchPlanningService` com modo rápido/profundo e queries oficiais). Fases 3–5 (classificação de fonte, integração avançada) em backlog.
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–5** no chat base e MFE (planejamento, avaliação de fontes, integração anexo/ERP, chips pós-pesquisa, cards de fontes). Backlog: cruzamento automático pós-ERP e salvar fontes em projeto.
 
 ---
 
@@ -903,10 +903,11 @@ Pesquisar ou dizer limitação.
 
 ## Fase 5 — UX
 
-- Cards de fontes.
-- Botões pós-pesquisa.
-- Painel de etapas.
-- Salvar fontes na lousa/projeto.
+- [x] Cards de fontes (`ChatSources` — grid com host, título, oficial/confiança).
+- [x] Chips pós-pesquisa (`webSearchFollowUpSuggestions` via `ChatWebSearchFollowUpService` + playbook).
+- [x] Painel de etapas (`ChatWebSearchResearchPanel` — Fase 1–3).
+- [x] Atalho «Colocar na lousa» no chip pós-pesquisa (query com intent de canvas).
+- [ ] Salvar fontes no projeto (persistência além da lousa).
 
 ---
 

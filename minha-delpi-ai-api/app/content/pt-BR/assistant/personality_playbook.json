@@ -127,6 +127,32 @@
     "Traduzir para inglês": "traduza para inglês o texto da resposta anterior",
     "Transformar em e-mail": "transforme o texto da resposta anterior em um e-mail com assunto"
   },
+  "webSearchFollowUpChips": [
+    "Abrir fontes",
+    "Resumir pesquisa",
+    "Extrair parâmetros",
+    "Comparar fontes",
+    "Colocar na lousa",
+    "Só fontes oficiais",
+    "Buscar em inglês"
+  ],
+  "webSearchFollowUpChipsNoResults": [
+    "Buscar em inglês",
+    "Só fontes oficiais",
+    "Ampliar busca",
+    "Usar anexo"
+  ],
+  "webSearchFollowUpQueries": {
+    "Abrir fontes": "liste os links das fontes da pesquisa web acima",
+    "Resumir pesquisa": "resuma em tópicos os resultados da pesquisa web sobre {query}",
+    "Extrair parâmetros": "extraia parâmetros técnicos das fontes da pesquisa web sobre {query} em tabela markdown",
+    "Comparar fontes": "compare as fontes da pesquisa web sobre {query} e destaque divergências",
+    "Colocar na lousa": "coloque na lousa um resumo das fontes da pesquisa web sobre {query} com links",
+    "Só fontes oficiais": "pesquisa profunda na web só em sites oficiais sobre {query}",
+    "Buscar em inglês": "busque na internet em inglês sobre {query}",
+    "Ampliar busca": "pesquisa profunda na web sobre {query}",
+    "Usar anexo": "compare o arquivo anexado com informações públicas sobre {query}"
+  },
   "phrases": {
     "start": [
       "Olá! O que vamos resolver hoje?",

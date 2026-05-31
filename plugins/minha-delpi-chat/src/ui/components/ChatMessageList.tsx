@@ -1265,6 +1265,16 @@ export function ChatMessageList({
                 />
                 <ChatFollowUpChips
                   suggestions={
+                    (message.metadata?.webSearchFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Após pesquisa web"
+                  ariaLabel="Ações sugeridas após pesquisa na internet"
+                />
+                <ChatFollowUpChips
+                  suggestions={
                     (message.metadata?.attachmentFollowUpSuggestions as
                       | ChatFollowUpSuggestion[]
                       | undefined) ?? []
