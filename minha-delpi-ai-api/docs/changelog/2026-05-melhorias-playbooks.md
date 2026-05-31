@@ -473,6 +473,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Revalidação (31/05):** login Keycloak `rober` OK; `run_chat_shortcut_homologation.sh` (placeholders + perfil + catálogo + chips) OK; Vitest atalhos/contexto 14 OK; pytest web search 16 OK; `gateway.search('weg')` → **WEG Industries** (fallback DuckDuckGo após SearXNG 403).
 
+## SearXNG dev — JSON 403 (31/05/2026)
+
+| Problema | Correção |
+|----------|----------|
+| `curl …/search?format=json` → 403 | Container sem `json` em `search.formats` (settings expandido pela imagem) |
+| Botdetection em rede Docker | `infra/scripts/searxng-apply-dev-settings.sh` + `limiter.toml` com `pass_ip` |
+| Compose | `SEARXNG_LIMITER=false` em `docker-compose.dev.yml` |
+
+Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; pesquisa web pode usar provedor `searxng`.
+
 ## Homologação — api-externa local
 
 | Item | Entrega |

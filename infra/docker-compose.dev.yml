@@ -168,6 +168,8 @@ services:
     restart: unless-stopped
     environment:
       SEARXNG_BASE_URL: ${SEARXNG_BASE_URL:-http://localhost:8088/}
+      # Evita rate limit local; JSON ainda exige search.formats em settings (ver searxng-apply-dev-settings.sh).
+      SEARXNG_LIMITER: "false"
     ports:
       - "8088:8080"
     volumes:

@@ -480,8 +480,11 @@ Requer `CHAT_WEB_SEARCH_ENABLED=true`, admin `webSearchEnabled=true` e (recomend
 ```bash
 cd infra
 docker compose -f docker-compose.dev.yml --profile chat up -d searxng minha-delpi-ai-api
+./scripts/searxng-apply-dev-settings.sh   # se curl abaixo retornar 403 (falta format=json no container)
 curl -s 'http://localhost:8088/search?q=tyco&format=json' | head -c 400
 ```
+
+**403 em `format=json`:** a imagem pode substituir `infra/searxng/settings.yml` por defaults só com `html`. Rode `infra/scripts/searxng-apply-dev-settings.sh` e reinicie o container; espere HTTP 200 e JSON com `results`.
 
 ```bash
 SMOKE_BASE_URL=http://localhost SMOKE_USER=rober SMOKE_PASSWORD=1234 \
