@@ -137,6 +137,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** lousa como editor de rascunho (Fase 3), preferências sessão (Fase 4), tarefas mistas (Fase 5).
 
+## Correção de texto (`playbook_correcao_texto_minha_delpi_chat`)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Playbook | `docs/roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md` — objetivo, subtipos, modos, validador, chips, lousa, anexos, testes C1–C12, roadmap Fases 1–6 |
+| Baseline código | `ChatTextTaskIntentService` categoria `correct`, `administrative-writing.md`, estágio `text_task`, `smoke_text_task_routing.py` |
+| Planejado | `ChatTextCorrectionIntentService`, `ChatTextCorrectionQualityValidator`, policy `text-correction.md`, chips `textCorrectionFollowUpChips`, memória de preferências |
+
+**Backlog:** implementação Fases 2–5 + métricas (§23).
+
 ## Escrita de e-mails (`playbook_escrita_emails_minha_delpi_chat`)
 
 | Entrega | Detalhe |

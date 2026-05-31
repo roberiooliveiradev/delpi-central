@@ -15,6 +15,8 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Revertido** no MFE (10 abas planas); mockups Markdown por aba → implementação no final — ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
+| Correção de texto | [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Documentado — Fase **1 parcial** (`correct` + `text_task`); Fases 2–5 planejadas |
+| Escrita de e-mails | [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | Fases **1–5** concluídas |
 | Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fases **1–5** concluídas |
 | Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fases **1–3** + **heatmap** (4); dashboard multi-card backlog |
 | Análise de desenhos DELPI | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial (MVP) — skill `drawing-analysis-delpi`, smoke `smoke_drawing_analyser.py` |
@@ -37,6 +39,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatReferenceResolutionService` | Contexto — reuso de entidade |
 | `ChatTextTaskIntentService` | Admin textos — modo sem API |
 | [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | E-mails corporativos — `ChatEmailIntentService`, validador, chips |
+| [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Correção/revisão — `ChatTextTaskIntentService` (`correct`), validador e chips (planejados) |
 | `ChatWorkingMemoryService.build_context_chips` | Contexto + interatividade — UI |
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
 | `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |
