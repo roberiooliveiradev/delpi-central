@@ -212,3 +212,41 @@
   margin: 0.5rem 0 0 0;
   justify-content: flex-end;
 }
+
+.mdc-rich-chart__ux-toolbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-right: 0.35rem;
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--mdc-radius-sm, 6px);
+  border: 1px solid color-mix(in srgb, var(--mdc-border) 70%, transparent);
+  background: color-mix(in srgb, var(--mdc-surface-elevated, #f4f6fa) 80%, transparent);
+}
+
+.mdc-rich-chart__ux-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--mdc-muted, #5c6578);
+}
+
+.mdc-rich-chart__ux-field select {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--mdc-border, #d8dee8);
+  background: var(--mdc-card-bg, #fff);
+  color: var(--mdc-text, #1a1f2c);
+}
+
+.mdc-rich-chart__ux-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--mdc-text, #1a1f2c);
+  white-space: nowrap;
+}

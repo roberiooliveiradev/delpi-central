@@ -360,6 +360,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
 | OCR imagem | `ChatAttachmentImageOcrService` (Tesseract opcional); preview com `ocr`/`ocrExcerpt` quando há texto |
 
+## Gráficos — UX Fase 5 (filtros, zoom, períodos)
+
+| Item | Entrega |
+|------|---------|
+| Filtro Top N | Select 5/10/20 categorias por valor no `ChatRichChart` |
+| Zoom temporal | Janela 6/12/24 pontos em séries com eixo de tempo |
+| Comparar períodos | Toggle quando dados trazem campo `period`/`periodo`; barras agrupadas |
+
 ## Gráficos — mini dashboard por agente (Fase 4)
 
 | Item | Entrega |

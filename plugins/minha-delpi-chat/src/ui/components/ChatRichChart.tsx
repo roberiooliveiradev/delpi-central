@@ -24,6 +24,16 @@ import {
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
 import { buildChartPointMenuActions } from "./chatDrillDown";
+import {
+  applyChartTopFilter,
+  applyChartZoomWindow,
+  buildPeriodComparisonRows,
+  detectPeriodCompare,
+  firstNumericValueKey,
+  isTemporalChartAxis,
+  type ChartTopFilter,
+  type ChartZoomWindow,
+} from "./chartPresentationUx";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 
@@ -70,6 +80,9 @@ export function ChatRichChart({
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
   const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(null);
+  const [topFilter, setTopFilter] = useState<ChartTopFilter>("all");
+  const [zoomWindow, setZoomWindow] = useState<ChartZoomWindow>("all");
+  const [periodCompareEnabled, setPeriodCompareEnabled] = useState(false);
   const activeChartType = chartTypeOverride || chartType;
   const [pointMenu, setPointMenu] = useState<{
     anchor: { x: number; y: number };
@@ -78,10 +91,56 @@ export function ChatRichChart({
   const isDark = useMdcDarkMode();
 
   const xAxis = config?.xAxis || guessXAxis(data);
-  const yAxes = normalizeYAxes(config?.yAxis, data, xAxis);
+  const baseYAxes = normalizeYAxes(config?.yAxis, data, xAxis);
+  const valueKey = firstNumericValueKey(data, xAxis, baseYAxes);
+  const temporalAxis = useMemo(
+    () => isTemporalChartAxis(xAxis, data),
+    [data, xAxis],
+  );
+  const periodCompareSpec = useMemo(
+    () => detectPeriodCompare(data, xAxis, valueKey),
+    [data, valueKey, xAxis],
+  );
+
+  const chartView = useMemo(() => {
+    let rows = [...data];
+    let axes = [...baseYAxes];
+    let axisKey = xAxis;
+
+    if (periodCompareEnabled && periodCompareSpec) {
+      const compared = buildPeriodComparisonRows(rows, periodCompareSpec);
+
+      rows = compared.rows;
+      axes = compared.yAxes;
+      axisKey = periodCompareSpec.categoryKey;
+    } else {
+      rows = applyChartTopFilter(rows, axisKey, valueKey, topFilter);
+
+      if (temporalAxis) {
+        rows = applyChartZoomWindow(rows, zoomWindow);
+      }
+    }
+
+    return { rows, axes, axisKey };
+  }, [
+    baseYAxes,
+    data,
+    periodCompareEnabled,
+    periodCompareSpec,
+    temporalAxis,
+    topFilter,
+    valueKey,
+    xAxis,
+    zoomWindow,
+  ]);
+
+  const displayData = chartView.rows;
+  const displayYAxes = chartView.axes;
+  const displayXAxis = chartView.axisKey;
+
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
   const colors = config?.colors || chartTheme.seriesColors;
-  const showLegend = config?.legend !== false && yAxes.length > 1;
+  const showLegend = config?.legend !== false && displayYAxes.length > 1;
   const { gridColor, tickFill, tooltipStyle, exportBackground } = chartTheme;
   const tickStyle = { fontSize: 11, fill: tickFill };
 
@@ -91,7 +150,7 @@ export function ChatRichChart({
         return;
       }
 
-      const actions = buildChartPointMenuActions(point, xAxis);
+      const actions = buildChartPointMenuActions(point, displayXAxis);
 
       if (!actions.length) {
         return;
@@ -102,7 +161,7 @@ export function ChatRichChart({
         actions,
       });
     },
-    [onDrillDown, xAxis],
+    [displayXAxis, onDrillDown],
   );
 
   const exportPng = useCallback(() => {
@@ -142,6 +201,59 @@ export function ChatRichChart({
           <span className="mdc-rich-chart__title">{title}</span>
         )}
         <div className="mdc-rich-chart__actions">
+          {data.length > 0 && activeChartType !== "heatmap" ? (
+            <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
+              {!periodCompareEnabled ? (
+                <label className="mdc-rich-chart__ux-field">
+                  <span>Top</span>
+                  <select
+                    value={topFilter}
+                    onChange={(event) =>
+                      setTopFilter(event.target.value as ChartTopFilter)
+                    }
+                  >
+                    <option value="all">Todos</option>
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                  </select>
+                </label>
+              ) : null}
+              {temporalAxis && !periodCompareEnabled ? (
+                <label className="mdc-rich-chart__ux-field">
+                  <span>Janela</span>
+                  <select
+                    value={zoomWindow}
+                    onChange={(event) =>
+                      setZoomWindow(event.target.value as ChartZoomWindow)
+                    }
+                  >
+                    <option value="all">Tudo</option>
+                    <option value="6">6</option>
+                    <option value="12">12</option>
+                    <option value="24">24</option>
+                  </select>
+                </label>
+              ) : null}
+              {periodCompareSpec ? (
+                <label className="mdc-rich-chart__ux-toggle">
+                  <input
+                    type="checkbox"
+                    checked={periodCompareEnabled}
+                    onChange={(event) => {
+                      const enabled = event.target.checked;
+                      setPeriodCompareEnabled(enabled);
+
+                      if (enabled) {
+                        setChartTypeOverride("grouped_bar");
+                      }
+                    }}
+                  />
+                  <span>Comparar períodos</span>
+                </label>
+              ) : null}
+            </div>
+          ) : null}
           {data.length > 0 ? (
             <div
               className="mdc-rich-presentation__format-toggle mdc-rich-chart__type-toggle"
@@ -179,8 +291,8 @@ export function ChatRichChart({
       >
         {activeChartType === "heatmap" ? (
           <HeatmapGrid
-            data={data}
-            xAxis={config?.xAxis || xAxis}
+            data={displayData}
+            xAxis={config?.xAxis || displayXAxis}
             yAxis={
               typeof config?.yAxis === "string"
                 ? config.yAxis
@@ -188,14 +300,14 @@ export function ChatRichChart({
                   ? String(config.yAxis[0] || guessXAxis(data))
                   : guessYAxisCategory(data, xAxis)
             }
-            valueKey={config?.valueKey || yAxes[0] || "value"}
+            valueKey={config?.valueKey || displayYAxes[0] || "value"}
             colors={colors}
             tickFill={tickFill}
             onPointClick={onDrillDown ? openPointMenu : undefined}
           />
         ) : (
           <ResponsiveContainer width="100%" height={280}>
-            {renderChart(activeChartType, data, xAxis, yAxes, colors, showLegend, config, {
+            {renderChart(activeChartType, displayData, displayXAxis, displayYAxes, colors, showLegend, config, {
               gridColor,
               tickStyle,
               tooltipStyle,
