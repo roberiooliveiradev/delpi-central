@@ -1,5 +1,9 @@
 @import "./rich-presentation-shared.css";
 
+.mdc-rich-chart__container--interactive .recharts-layer {
+  cursor: pointer;
+}
+
 .mdc-rich-chart__container {
   padding: 0.75rem 0.5rem;
 }

@@ -38,6 +38,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Starters | Texto administrativo na home (`textHomeStarters` / `CHAT_TEXT_HOME_STARTERS`) |
 
 | Menu por linha de tabela | `ChatTableRowMenu` + `buildTableRowMenuActions` (Fase 4 interatividade) |
+| Menu por ponto de gráfico | `buildChartPointMenuActions` + clique em barra/fatia/ponto (`ChatRichChart`) |
 | Preferência api-externa | `CHAT_PREFER_API_EXTERNA_PROVIDER` + smokes `SMOKE_REQUIRE_API_EXTERNA` |
 
 ## Playbook 08 — Segurança e confiança (início)
@@ -52,8 +53,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Confirmação de escrita | `ChatWriteConfirmationService` bloqueia DELETE/escrita sem «confirmo» |
 
 | Confirmação no MFE | `actionConfirmation` + `ChatActionConfirmationPanel` (Confirmar/Cancelar) |
+| Permissão de tool | `ToolPermissionDeniedError` usa texto `security.actionNotPermitted` |
 
-**Backlog:** badges em admin debug ampliado; menu em gráfico (interatividade).
+**Backlog:** badges em admin debug ampliado; menu em árvore/chip de contexto (interatividade).
+
+## Infra local (gateway)
+
+| Problema | Correção |
+|----------|----------|
+| 502 em `/core-api/*` após restart de containers | `gateway/nginx.dev.conf` — upstreams com variável + `resolver` (DNS dinâmico Docker) |
 
 **Backlog interatividade:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
 

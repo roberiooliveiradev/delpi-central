@@ -152,6 +152,62 @@ export function buildTableRowMenuActions(
   });
 }
 
+export function buildChartPointMenuActions(
+  point: Record<string, unknown>,
+  xAxis: string,
+): TableRowMenuAction[] {
+  const category = String(point[xAxis] ?? "").trim();
+  const actions: TableRowMenuAction[] = [];
+
+  if (category) {
+    actions.push(
+      {
+        id: "chart-detail",
+        label: "Ver detalhe",
+        query: `detalhe ${category} deste gráfico`,
+      },
+      {
+        id: "chart-records",
+        label: "Ver registros",
+        query: `mostre os registros que compõem o valor de ${category} deste gráfico`,
+      },
+      {
+        id: "explain",
+        label: "Explicar ponto",
+        query: `explique o valor de ${category} neste gráfico`,
+      },
+    );
+
+    const code = normalizeCode(category);
+
+    if (/^\d{5,}$/.test(code)) {
+      actions.push(
+        ...buildTableRowMenuActions(
+          { product_code: code },
+          [{ key: "product_code", label: "Produto" }],
+        ).filter((action) => action.id !== "detail"),
+      );
+    }
+  }
+
+  actions.push({
+    id: "as-table",
+    label: "Ver como tabela",
+    query: "mostre os mesmos dados em tabela",
+  });
+
+  const seen = new Set<string>();
+
+  return actions.filter((action) => {
+    if (seen.has(action.query)) {
+      return false;
+    }
+
+    seen.add(action.query);
+    return true;
+  });
+}
+
 export function buildTreeDrillDownQuery(node: {
   id?: string;
   label?: string;

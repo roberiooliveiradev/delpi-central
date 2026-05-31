@@ -7,11 +7,13 @@ export function ChatTableRowMenu({
   anchor,
   onSelect,
   onClose,
+  menuLabel = "Ações da linha",
 }: {
   actions: TableRowMenuAction[];
   anchor: { x: number; y: number };
   onSelect: (query: string) => void;
   onClose: () => void;
+  menuLabel?: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -52,7 +54,7 @@ export function ChatTableRowMenu({
       className="mdc-table-row-menu"
       style={{ left, top }}
       role="menu"
-      aria-label="Ações da linha"
+      aria-label={menuLabel}
     >
       {actions.map((action) => (
         <button

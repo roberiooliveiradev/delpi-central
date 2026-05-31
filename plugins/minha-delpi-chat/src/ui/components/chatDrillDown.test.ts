@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDrillDownQuery, buildTableRowMenuActions } from "./chatDrillDown";
+import {
+  buildChartPointMenuActions,
+  buildDrillDownQuery,
+  buildTableRowMenuActions,
+} from "./chatDrillDown";
 
 const stockColumns = [
   { key: "branch", label: "Filial" },
@@ -67,5 +71,31 @@ describe("buildTableRowMenuActions", () => {
     expect(actions.find((a) => a.id === "stock")?.query).toBe(
       "qual o estoque do produto 10080001?",
     );
+  });
+});
+
+describe("buildChartPointMenuActions", () => {
+  it("monta detalhe e ver como tabela para categoria do eixo X", () => {
+    const actions = buildChartPointMenuActions(
+      { month: "Março 2026", sales: 1200 },
+      "month",
+    );
+
+    const labels = actions.map((action) => action.label);
+
+    expect(labels).toContain("Ver detalhe");
+    expect(labels).toContain("Ver como tabela");
+    expect(actions.find((a) => a.id === "chart-detail")?.query).toBe(
+      "detalhe Março 2026 deste gráfico",
+    );
+  });
+
+  it("inclui ações de produto quando o eixo X parece código", () => {
+    const actions = buildChartPointMenuActions(
+      { product: "10080001", qty: 5 },
+      "product",
+    );
+
+    expect(actions.map((a) => a.label)).toContain("Ver estoque");
   });
 });

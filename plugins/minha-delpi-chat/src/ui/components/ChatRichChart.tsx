@@ -18,6 +18,8 @@ import {
 } from "recharts";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { readMdcChartTheme, useMdcDarkMode } from "../theme/mdcCssVars";
+import { buildChartPointMenuActions } from "./chatDrillDown";
+import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
@@ -33,6 +35,10 @@ export function ChatRichChart({
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
+  const [pointMenu, setPointMenu] = useState<{
+    anchor: { x: number; y: number };
+    actions: ReturnType<typeof buildChartPointMenuActions>;
+  } | null>(null);
   const isDark = useMdcDarkMode();
 
   const xAxis = config?.xAxis || guessXAxis(data);
@@ -42,6 +48,26 @@ export function ChatRichChart({
   const showLegend = config?.legend !== false && yAxes.length > 1;
   const { gridColor, tickFill, tooltipStyle, exportBackground } = chartTheme;
   const tickStyle = { fontSize: 11, fill: tickFill };
+
+  const openPointMenu = useCallback(
+    (point: Record<string, unknown>, clientX: number, clientY: number) => {
+      if (!onDrillDown) {
+        return;
+      }
+
+      const actions = buildChartPointMenuActions(point, xAxis);
+
+      if (!actions.length) {
+        return;
+      }
+
+      setPointMenu({
+        anchor: { x: clientX, y: clientY },
+        actions,
+      });
+    },
+    [onDrillDown, xAxis],
+  );
 
   const exportPng = useCallback(() => {
     const svg = document.querySelector(".mdc-rich-chart__container svg");
@@ -91,15 +117,27 @@ export function ChatRichChart({
         </div>
       </div>
 
-      <div className="mdc-rich-chart__container">
+      <div
+        className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
+      >
         <ResponsiveContainer width="100%" height={280}>
           {renderChart(chartType, data, xAxis, yAxes, colors, showLegend, {
             gridColor,
             tickStyle,
             tooltipStyle,
-          })}
+          }, onDrillDown ? openPointMenu : undefined)}
         </ResponsiveContainer>
       </div>
+
+      {pointMenu && onDrillDown ? (
+        <ChatTableRowMenu
+          actions={pointMenu.actions}
+          anchor={pointMenu.anchor}
+          menuLabel="Ações do ponto"
+          onSelect={onDrillDown}
+          onClose={() => setPointMenu(null)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -110,6 +148,43 @@ type ThemeConfig = {
   tooltipStyle?: React.CSSProperties;
 };
 
+type ChartPointClickHandler = (
+  point: Record<string, unknown>,
+  clientX: number,
+  clientY: number,
+) => void;
+
+function chartPayloadFromSlice(
+  slice: unknown,
+): Record<string, unknown> | undefined {
+  if (!slice || typeof slice !== "object") {
+    return undefined;
+  }
+
+  const record = slice as Record<string, unknown>;
+  const nested = record.payload;
+
+  if (nested && typeof nested === "object") {
+    return nested as Record<string, unknown>;
+  }
+
+  return record;
+}
+
+function chartPointFromEvent(
+  slice: unknown,
+  event: { clientX?: number; clientY?: number } | undefined,
+  onPointClick?: ChartPointClickHandler,
+) {
+  const point = chartPayloadFromSlice(slice);
+
+  if (!onPointClick || !point) {
+    return;
+  }
+
+  onPointClick(point, event?.clientX ?? 0, event?.clientY ?? 0);
+}
+
 function renderChart(
   type: string,
   data: Record<string, unknown>[],
@@ -118,8 +193,10 @@ function renderChart(
   colors: string[],
   showLegend: boolean,
   theme: ThemeConfig,
+  onPointClick?: ChartPointClickHandler,
 ) {
   const commonProps = { data, margin: { top: 10, right: 20, left: 10, bottom: 5 } };
+  const interactiveCursor = onPointClick ? "pointer" : undefined;
 
   switch (type) {
     case "line":
@@ -137,7 +214,14 @@ function renderChart(
               dataKey={key}
               stroke={colors[i % colors.length]}
               strokeWidth={2}
-              dot={{ r: 3 }}
+              dot={{ r: 3, cursor: interactiveCursor }}
+              activeDot={{
+                r: 5,
+                cursor: interactiveCursor,
+                onClick: (dot, event) => {
+                  chartPointFromEvent(dot, event, onPointClick);
+                },
+              }}
             />
           ))}
         </LineChart>
@@ -159,6 +243,13 @@ function renderChart(
               stroke={colors[i % colors.length]}
               fill={colors[i % colors.length]}
               fillOpacity={0.2}
+              activeDot={{
+                r: 5,
+                cursor: interactiveCursor,
+                onClick: (dot, event) => {
+                  chartPointFromEvent(dot, event, onPointClick);
+                },
+              }}
             />
           ))}
         </AreaChart>
@@ -176,6 +267,10 @@ function renderChart(
             cx="50%"
             cy="50%"
             outerRadius={100}
+            cursor={interactiveCursor}
+            onClick={(slice, _index, event) => {
+              chartPointFromEvent(slice, event, onPointClick);
+            }}
             label={({ name, percent }) =>
               `${name}: ${(percent * 100).toFixed(0)}%`
             }
@@ -202,6 +297,10 @@ function renderChart(
               dataKey={key}
               fill={colors[i % colors.length]}
               radius={[4, 4, 0, 0]}
+              cursor={interactiveCursor}
+              onClick={(bar, _index, event) => {
+                chartPointFromEvent(bar, event, onPointClick);
+              }}
             />
           ))}
         </BarChart>
