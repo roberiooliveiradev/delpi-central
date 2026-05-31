@@ -3,16 +3,24 @@
   gap: var(--mdc-space-4);
 }
 
-.mdc-admin-agents__header {
+.mdc-admin-agents__toolbar {
   display: flex;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: var(--mdc-space-4);
+  gap: var(--mdc-space-3);
 }
 
-.mdc-admin-agents__header h2 {
-  margin: 0;
-  color: var(--mdc-primary);
+.mdc-admin-agents__toolbar .mdc-admin-knowledge-summary {
+  flex: 1 1 28rem;
+  margin-bottom: 0;
+}
+
+.mdc-admin-agents__toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .mdc-admin-agents__error {

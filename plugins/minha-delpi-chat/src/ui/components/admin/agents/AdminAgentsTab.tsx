@@ -1,7 +1,9 @@
-import { BarChart3 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { BarChart3, ExternalLink } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { getChatAgentStats } from "../../../../data/api/chatApi";
+import { buildChatAgentConfigHref } from "../../../../navigation/chatRoutes";
+import { navigateChatHref } from "../../../../navigation/chatNavigation";
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
 import {
   getAdminAgentSpecialization,
@@ -14,6 +16,13 @@ import type {
   AdminAgentSpecializationPreset,
   AdminSpecializedAgent,
 } from "../../../../data/api/adminTypes";
+
+import { AgentsSummaryStrip } from "./AgentsSummaryStrip";
+import {
+  computeAgentsSummary,
+  filterAgentsByCatalog,
+  type AgentCatalogFilter,
+} from "./agentsSummary";
 
 import "./AdminAgentsTab.css";
 
@@ -47,6 +56,13 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [agentStats, setAgentStats] = useState<ChatAgentStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [catalogFilter, setCatalogFilter] = useState<AgentCatalogFilter>("all");
+
+  const summary = useMemo(() => computeAgentsSummary(agents), [agents]);
+  const visibleAgents = useMemo(
+    () => filterAgentsByCatalog(agents, catalogFilter),
+    [agents, catalogFilter],
+  );
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId) ?? null;
 
@@ -221,32 +237,69 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
     }
   }
 
+  function openAgentBuilder() {
+    if (!selectedAgentId) {
+      return;
+    }
+
+    navigateChatHref(buildChatAgentConfigHref(selectedAgentId));
+  }
+
   return (
     <section className="mdc-admin-agents">
-      <header className="mdc-admin-agents__header">
-        <div>
-          <h2>Agentes especializados</h2>
-          <p className="mdc-chat-muted">
-            Configure domínio, escopo de RAG, diretrizes e tools permitidas por agente oficial.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="mdc-admin-btn"
-          disabled={isLoading}
-          onClick={() => void loadData()}
-        >
-          {isLoading ? "Carregando..." : "Atualizar"}
-        </button>
+      <header className="mdc-admin-page-header">
+        <h2>Agentes especializados</h2>
+        <p className="mdc-chat-muted">
+          Configure domínio, escopo de RAG, diretrizes e tools permitidas por agente oficial. Para
+          identidade, prompt e actions, use o builder do agente.
+        </p>
       </header>
+
+      <div className="mdc-admin-agents__toolbar">
+        <AgentsSummaryStrip
+          summary={summary}
+          activeFilter={catalogFilter}
+          isLoading={isLoading}
+          onFilterChange={setCatalogFilter}
+        />
+
+        <div className="mdc-admin-agents__toolbar-actions">
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            disabled={isLoading}
+            onClick={() => void loadData()}
+          >
+            {isLoading ? "Carregando..." : "Atualizar"}
+          </button>
+          <button
+            type="button"
+            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+            disabled={!selectedAgentId}
+            onClick={openAgentBuilder}
+          >
+            <ExternalLink size={15} aria-hidden="true" />
+            <span>Abrir builder</span>
+          </button>
+        </div>
+      </div>
 
       {error ? <p className="mdc-admin-agents__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-agents__success">{successMessage}</p> : null}
 
       <div className="mdc-admin-agents__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-agents__list">
+          {isLoading ? (
+            <p className="mdc-chat-muted">Carregando agentes…</p>
+          ) : visibleAgents.length === 0 ? (
+            <p className="mdc-chat-muted">
+              {agents.length === 0
+                ? "Nenhum agente oficial disponível."
+                : "Nenhum agente neste filtro."}
+            </p>
+          ) : (
           <ul>
-            {agents.map((agent) => (
+            {visibleAgents.map((agent) => (
               <li key={agent.id}>
                 <button
                   type="button"
@@ -260,6 +313,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
               </li>
             ))}
           </ul>
+          )}
         </aside>
 
         <article className="mdc-admin-split__main mdc-admin-agents__editor">
