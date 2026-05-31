@@ -12,6 +12,9 @@ export const CHAT_HOME_STARTERS: ChatHomeStarter[] = [
   { label: "Corrigir texto", query: "corrija: segue em anexo os documento solicitado" },
   { label: "E-mail formal", query: "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo" },
   { label: "Quem é você?", query: "quem é você?" },
+  { label: "Como usar o chat?", query: "como usar o chat?" },
+  { label: "Pesquisa na web", query: "como faço pesquisa na web?" },
+  { label: "Lousa", query: "como uso a lousa?" },
 ];
 
 export const CHAT_TEXT_HOME_STARTERS: ChatHomeStarter[] = [

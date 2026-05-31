@@ -153,6 +153,36 @@
     "Ampliar busca": "pesquisa profunda na web sobre {query}",
     "Usar anexo": "compare o arquivo anexado com informações públicas sobre {query}"
   },
+  "helpFollowUpChipsGeneral": [
+    "Consultar produto",
+    "Ver estoque",
+    "Pesquisar na web",
+    "Como usar lousa",
+    "Gerar gráfico",
+    "Anexar arquivo"
+  ],
+  "helpFollowUpChipsByTopic": {
+    "web": ["Pesquisar na web", "Só fontes oficiais", "Colocar na lousa"],
+    "canvas": ["Abrir lousa", "Colocar na lousa", "Ver em tabela"],
+    "chart": ["Gerar gráfico", "Ver em tabela", "Consultar produto"],
+    "attachment": ["Resumir anexo", "Corrigir anexo", "Consultar produto"],
+    "agent": ["O que você pode fazer?", "Consultar produto", "Ver estoque"]
+  },
+  "helpFollowUpQueries": {
+    "Consultar produto": "me fale do produto 10080001",
+    "Ver estoque": "qual o estoque do produto 10080001?",
+    "Pesquisar na web": "como faço pesquisa na web?",
+    "Como usar lousa": "como uso a lousa?",
+    "Gerar gráfico": "como faço para gerar gráfico?",
+    "Anexar arquivo": "como anexo arquivo?",
+    "Abrir lousa": "abra a lousa com um resumo em tópicos",
+    "Colocar na lousa": "coloque na lousa um resumo dos dados acima",
+    "Ver em tabela": "mostre o último resultado em tabela",
+    "Resumir anexo": "resuma o conteúdo do arquivo anexado",
+    "Corrigir anexo": "corrija o texto do arquivo anexado",
+    "Só fontes oficiais": "como pesquiso só em sites oficiais na web?",
+    "O que você pode fazer?": "o que você pode fazer?"
+  },
   "phrases": {
     "start": [
       "Olá! O que vamos resolver hoje?",

@@ -219,6 +219,20 @@ class ChatCapabilitiesService:
         if cls._is_web_search_help_inquiry(normalized):
             return cls._answer_web_search_help()
 
+        topic = cls.classify_help_topic(message)
+
+        if topic == "canvas":
+            return cls._answer_topic_help("canvasHelp")
+
+        if topic == "chart":
+            return cls._answer_topic_help("chartHelp")
+
+        if topic == "attachment":
+            return cls._answer_topic_help("attachmentHelp")
+
+        if topic == "agent":
+            return cls._answer_topic_help("agentHelp")
+
         generic = _feature_answers().get("genericInquiry") or {}
 
         if isinstance(generic, dict):
@@ -326,6 +340,51 @@ class ChatCapabilitiesService:
             return False
 
         return any(verb in normalized for verb in cls._COMMAND_VERBS)
+
+    @classmethod
+    def classify_help_topic(cls, message: str) -> str | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if cls._is_web_search_help_inquiry(normalized):
+            return "web"
+
+        if any(token in normalized for token in ("lousa", "canvas")):
+            return "canvas"
+
+        if any(
+            token in normalized
+            for token in ("grafico", "gráfico", "chart", "visualiz", "barras", "linhas")
+        ):
+            return "chart"
+
+        if any(
+            token in normalized
+            for token in ("anexo", "anexar", "arquivo", "pdf", "planilha")
+        ):
+            return "attachment"
+
+        if any(
+            token in normalized
+            for token in ("agente", "especialista", "selecionar agente", "qual agente")
+        ):
+            return "agent"
+
+        return None
+
+    @classmethod
+    def _answer_topic_help(cls, key: str) -> str | None:
+        texts = _feature_answers().get(key) or {}
+
+        if not isinstance(texts, dict):
+            return None
+
+        title = str(texts.get("title") or "").strip()
+        body = str(texts.get("body") or texts.get("enabled") or "").strip()
+
+        if title and body:
+            return f"{title}\n\n{body}".strip()
+
+        return body or None
 
     @classmethod
     def _is_web_search_help_inquiry(cls, normalized: str) -> bool:

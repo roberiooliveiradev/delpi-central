@@ -144,7 +144,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Entrega | Detalhe |
 |---------|---------|
-| `capabilities.json` | `featureAnswers.webSearchHelp` — «como pesquisar na web?» |
+| `capabilities.json` | `featureAnswers` — web, lousa, gráfico, anexo, agente |
+| `ChatHelpFollowUpService` | `helpFollowUpSuggestions` + chips «Explorar» no MFE |
+| Starters | «Como usar», pesquisa web, lousa em `chatHomeStarters.ts` |
+| Smoke | `scripts/smoke_help_capabilities.py` |
 
 ## Pesquisa web — Fase 5 (UX)
 

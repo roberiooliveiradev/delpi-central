@@ -686,6 +686,15 @@ class StreamChatMessageUseCase:
             had_attachments=bool(getattr(request, "attachment_ids", None)),
         )
 
+        from app.application.services.chat_help_follow_up_service import (
+            ChatHelpFollowUpService,
+        )
+
+        ChatHelpFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+        )
+
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
                 "title": canvas_open_payload.title,

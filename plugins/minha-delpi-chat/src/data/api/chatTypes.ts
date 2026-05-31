@@ -213,6 +213,7 @@ export type ChatMessageMetadata = {
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
   followUpOutcome?: string;
   personality?: {
     tone?: string;
