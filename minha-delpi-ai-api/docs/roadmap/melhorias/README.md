@@ -32,6 +32,8 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
 | `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |
 | `ChatTrustSignalsService` | Playbook 08 — sinais de confiança no metadata |
+| `ChatSecurityMessagingService` | Playbook 08 — mensagens quando API falha |
+| `ChatWriteConfirmationService` | Playbook 08 — confirmação antes de escrita/destrutiva |
 
 ## Smokes automatizados
 

@@ -48,7 +48,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Confiança UI | `metadata.trustSignals` + `ChatTrustBadges` no MFE |
 | Textos | Seção `security` em `external_action_responses.json` |
 
-**Backlog:** confirmação de escrita, badges em admin debug ampliado.
+| Falha de API | `ChatSecurityMessagingService` — não inventa dado quando consulta falha |
+| Confirmação de escrita | `ChatWriteConfirmationService` bloqueia DELETE/escrita sem «confirmo» |
+
+**Backlog:** botões Confirmar/Cancelar no MFE; badges em admin debug ampliado.
 
 **Backlog interatividade:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
 

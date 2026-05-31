@@ -84,6 +84,13 @@ class ChatTrustSignalsService:
             if any_failed and not any_ok:
                 add("api_unavailable")
 
+            if any(
+                (call.get("metadata") or {}).get("blockReason") == "confirmation_required"
+                for call in calls
+                if call.get("name") == "execute_external_action"
+            ):
+                add("draft")
+
             if cls._looks_partial(calls):
                 add("partial_result")
 

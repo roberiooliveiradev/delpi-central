@@ -437,6 +437,66 @@ class ChatToolContextService:
                     ChatStreamActivityService.web_search_started(query=search_query)
                 )
 
+            if (
+                tool_name == "execute_external_action"
+                and action_id
+                and self.external_action_repository
+            ):
+                from app.domain.services.chat_write_confirmation_service import (
+                    ChatWriteConfirmationService,
+                )
+
+                action_bundle = self.external_action_repository.get_action_for_execution(
+                    action_id
+                )
+                action = (action_bundle or {}).get("action") if action_bundle else None
+
+                if ChatWriteConfirmationService.should_block_execution(
+                    message=raw_message,
+                    action=action,
+                ):
+                    prompt = ChatWriteConfirmationService.confirmation_prompt(action)
+                    direct_answer = direct_answer or prompt
+                    skip_rag = True
+
+                    blocked_metadata = {
+                        "ok": False,
+                        "blocked": True,
+                        "blockReason": "confirmation_required",
+                        "actionId": action_id,
+                        "path": path_hint or str((action or {}).get("path") or ""),
+                        "sensitivity": (action or {}).get("sensitivity"),
+                    }
+                    blocked_metadata["responsePreview"] = self._build_response_preview(
+                        blocked_metadata
+                    )
+
+                    safe_tool_calls.append(
+                        {
+                            "name": tool_name,
+                            "arguments": arguments,
+                            "reason": selected_tool.get("reason"),
+                            "metadata": blocked_metadata,
+                        }
+                    )
+
+                    if on_stream_activity:
+                        from app.application.services.chat_stream_activity_service import (
+                            ChatStreamActivityService,
+                        )
+
+                        on_stream_activity(
+                            ChatStreamActivityService.tool_finished(
+                                index=external_index,
+                                total=external_total,
+                                metadata=blocked_metadata,
+                                path=blocked_metadata.get("path"),
+                                action_id=action_id,
+                            )
+                        )
+
+                    continue
+
             try:
                 result = self.execute_tool_use_case.execute(
                     ExecuteToolRequest(

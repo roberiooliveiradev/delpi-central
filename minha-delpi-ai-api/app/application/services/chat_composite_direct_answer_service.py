@@ -51,7 +51,7 @@ class ChatCompositeDirectAnswerService:
 
             if not cls._is_success(metadata):
                 issues.append(
-                    f"- **{label}:** {cls._failure_message(metadata)}"
+                    f"- **{label}:** {cls._failure_message(metadata, path=path)}"
                 )
                 continue
 
@@ -148,43 +148,15 @@ class ChatCompositeDirectAnswerService:
             return False
 
     @classmethod
-    def _failure_message(cls, metadata: dict) -> str:
-        status_code = metadata.get("statusCode")
-        error = str(metadata.get("error") or metadata.get("errorMessage") or "").strip()
+    def _failure_message(cls, metadata: dict, *, path: str = "") -> str:
+        from app.domain.services.chat_security_messaging_service import (
+            ChatSecurityMessagingService,
+        )
 
-        try:
-            code = int(status_code)
-        except (TypeError, ValueError):
-            code = None
-
-        if code == 404:
-            return ExternalActionResponseContentService.get("composite", "notFound404")
-
-        if code in (401, 403):
-            return ExternalActionResponseContentService.format(
-                "composite",
-                "forbidden",
-                code=code,
-            )
-
-        if code is not None and code >= 500:
-            return ExternalActionResponseContentService.format(
-                "composite",
-                "serverError",
-                code=code,
-            )
-
-        if error:
-            return error
-
-        if code is not None:
-            return ExternalActionResponseContentService.format(
-                "composite",
-                "httpStatus",
-                code=code,
-            )
-
-        return ExternalActionResponseContentService.get("composite", "notSuccessful")
+        return ChatSecurityMessagingService.resolve_api_failure(
+            metadata,
+            path=path or str(metadata.get("path") or ""),
+        )
 
     @classmethod
     def _is_empty_result(

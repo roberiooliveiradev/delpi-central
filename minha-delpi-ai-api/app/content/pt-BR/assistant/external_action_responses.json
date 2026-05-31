@@ -126,6 +126,9 @@
     "actionNotPermitted": "Essa consulta não está liberada para este agente ou perfil. Posso ajudar com outra consulta disponível.",
     "noAccess": "Não consegui acessar essa informação com as permissões atuais. Verifique se o agente correto está ativo ou solicite acesso ao administrador.",
     "noAuthorizedSource": "Não encontrei fonte documental autorizada para responder com segurança.",
+    "writeConfirmationRequired": "Essa ação pode alterar dados ou enviar informações. Confirma que deseja continuar? Responda «confirmo» para prosseguir.",
+    "operationalQueryFailed": "Não consegui consultar essa informação agora. Posso tentar novamente ou verificar outro filtro.",
+    "stockQueryFailed": "Não consegui consultar o estoque agora. Posso tentar novamente ou verificar outro filtro.",
     "trustSignalLabels": {
       "authorized_data": "Dados do sistema",
       "document_source": "Fonte documental",
