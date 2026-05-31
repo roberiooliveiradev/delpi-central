@@ -19,9 +19,11 @@ from app.domain.services.chat_operational_pipeline_service import (
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 from tests.fixtures.chat_intelligence_regression_cases import (
     AGENTIC_SKIP_REFINEMENT_CASES,
     ANALYSIS_INTENT_CASES,
+    DRAWING_INTENT_CASES,
     DATA_INTERPRETATION_CASES,
     DATA_INTERPRETATION_NO_ACTION_CASES,
     DATA_INTERPRETATION_SKIP_TOOLS_CASES,
@@ -56,6 +58,17 @@ class FakeRepository:
 @pytest.mark.parametrize("message,expected_intent", INTENT_CASES)
 def test_intent_regression(message, expected_intent):
     assert ChatProductQueryIntentService.detect(message) == expected_intent
+
+
+@pytest.mark.parametrize("message,expected", DRAWING_INTENT_CASES)
+def test_drawing_intent_regression(message, expected):
+    assert (
+        ChatDrawingIntentService.is_drawing_analysis_request(
+            message,
+            attachment_ids=["att-smoke"] if expected else None,
+        )
+        is expected
+    )
 
 
 @pytest.mark.parametrize("case", PRODUCT_CODE_CASES)

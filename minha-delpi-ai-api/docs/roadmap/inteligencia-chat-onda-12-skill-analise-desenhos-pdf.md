@@ -116,6 +116,14 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ✅ |
 | 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, `CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS`) |
 
+### 12.6 — Qualidade (Fase 6)
+
+| ID | Entrega | Status |
+|----|---------|--------|
+| 12.6.1 | Testes D1–D12 (`test_drawing_analysis_skill.py`) | ✅ |
+| 12.6.2 | Regressão intent desenho em `chat_intelligence_regression_cases.py` | ✅ |
+| 12.6.3 | Métricas admin/observabilidade (dashboard) | ⏳ backlog |
+
 ---
 
 ## Critérios de aceite (Onda 12)
@@ -153,8 +161,9 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 ## Validação prevista
 
 ```bash
-# Unit (quando existir)
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest \
+# Unit + D1–D12
+docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api pytest \
+  tests/unit/domain/services/test_drawing_analysis_skill.py \
   tests/unit/domain/services/test_chat_drawing_intent_service.py \
   tests/unit/domain/services/test_chat_drawing_validation_orchestration_service.py -q
 
@@ -176,6 +185,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 |------|-----------|
 | 2026-05-29 | Criação: backlog Onda 12 a partir de paridade com ChatGPT DELPI (análise PDF); skill herdável na camada base. |
 | 2026-05-31 | Estágio `drawing_analysis` no pipeline; smoke E2E HTTP; `drawingAnalysisExport` em `intelligence`. |
+| 2026-05-31 | Testes regressão D1–D12 (`test_drawing_analysis_skill.py`) + intent drawing na regressão chat. |
 
 ---
 

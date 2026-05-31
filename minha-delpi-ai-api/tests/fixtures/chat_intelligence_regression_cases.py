@@ -2,6 +2,13 @@
 
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 
+DRAWING_INTENT_CASES = [
+    ("analise o desenho 90260140", True),
+    ("validar pdf do desenho tecnico 90264130", True),
+    ("gerar relatorio tecnico do desenho 90260140", True),
+    ("estoque do produto 10080047", False),
+]
+
 INTENT_CASES = [
     ("analise o desenho 90260140", ChatProductQueryIntent.ANALYSER),
     ("validar pdf do desenho tecnico 90264130", ChatProductQueryIntent.ANALYSER),

@@ -3,11 +3,16 @@
 
 Uso:
   PYTHONPATH=. python scripts/smoke_drawing_analyser.py
+
+Inclui regressão D1–D12 via pytest (`test_drawing_analysis_skill.py`).
 """
 
 from __future__ import annotations
 
+import os
+import subprocess
 import sys
+from pathlib import Path
 
 from app.application.services.chat_drawing_follow_up_service import (
     ChatDrawingFollowUpService,
@@ -172,6 +177,31 @@ def main() -> int:
         and len(trace.get("phases") or []) >= 5
         and trace["phases"][0]["id"] == "intent",
     )
+
+    api_root = Path(__file__).resolve().parents[1]
+    pytest_env = {**os.environ, "PYTHONPATH": os.environ.get("PYTHONPATH", str(api_root))}
+    pytest_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/unit/domain/services/test_drawing_analysis_skill.py",
+            "-q",
+        ],
+        cwd=str(api_root),
+        env=pytest_env,
+        capture_output=True,
+        text=True,
+    )
+
+    if pytest_result.returncode == 0:
+        check("regressão D1–D12 (pytest)", True)
+    else:
+        if pytest_result.stdout:
+            print(pytest_result.stdout, file=sys.stderr)
+        if pytest_result.stderr:
+            print(pytest_result.stderr, file=sys.stderr)
+        check("regressão D1–D12 (pytest)", False)
 
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
