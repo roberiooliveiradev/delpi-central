@@ -251,6 +251,8 @@ class PostgresExternalActionRepository:
                 "codigo",
                 "estoque",
                 "stock",
+                "venda",
+                "vendas",
                 "descrição",
                 "descricao",
                 "busque",

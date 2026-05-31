@@ -27,6 +27,7 @@ class ExternalActionCatalogRepositoryPort(Protocol):
 class ChatAgenticCatalogService:
     _INTENT_PATH_HINTS: dict[str, tuple[str, ...]] = {
         ChatProductQueryIntent.STOCK: ("/stock", "stock", "estoque"),
+        ChatProductQueryIntent.SALES: ("/sales", "sales", "vendas", "venda"),
         ChatProductQueryIntent.STRUCTURE: ("/structure", "structure", "estrutura", "bom"),
         ChatProductQueryIntent.PARENTS: ("/parents", "parents", "where-used", "onde"),
         ChatProductQueryIntent.SUMMARY: ("/summary", "summary", "resumo"),

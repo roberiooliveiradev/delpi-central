@@ -27,6 +27,13 @@ def test_detect_stock_intent():
     )
 
 
+def test_detect_sales_intent_over_stock_provider_preference():
+    assert (
+        ChatProductQueryIntentService.detect("mostre vendas do produto 10080001")
+        == ChatProductQueryIntent.SALES
+    )
+
+
 def test_detect_summary_intent():
     assert (
         ChatProductQueryIntentService.detect("resumo do produto 10080047")

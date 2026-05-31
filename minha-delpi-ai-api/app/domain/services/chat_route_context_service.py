@@ -38,6 +38,7 @@ class ChatRouteContextService:
 
     _PRODUCT_SEGMENT_TO_INTENT: dict[str, str] = {
         "stock": ChatProductQueryIntent.STOCK,
+        "sales": ChatProductQueryIntent.SALES,
         "summary": ChatProductQueryIntent.SUMMARY,
         "analyser": ChatProductQueryIntent.ANALYSER,
         "structure": ChatProductQueryIntent.STRUCTURE,
@@ -62,7 +63,17 @@ class ChatRouteContextService:
     _MESSAGE_SEGMENT_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("purchases", ("ultima compra", "últimas compras", "ultimas compras", "compra", "purchase")),
         ("suppliers", ("fornecedor", "fornecedore", "supplier")),
-        ("sales", ("venda do produto", "vendas do produto", "historico de venda")),
+        (
+            "sales",
+            (
+                "venda do produto",
+                "vendas do produto",
+                "historico de venda",
+                "mostre vendas",
+                "mostra vendas",
+                "traga vendas",
+            ),
+        ),
         ("pricing", ("preço", "preco", "pricing", "quanto custa", "tabela de preço", "tabela de preco")),
         ("guide", ("roteiro", "guide", "rota de fabricação", "rota de fabricacao")),
         ("inspection", ("inspeção", "inspecao", "inspection")),

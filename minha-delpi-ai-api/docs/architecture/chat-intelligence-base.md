@@ -352,6 +352,7 @@ Evita RAG irrelevante (ex. anexo SQL) e mantém o contexto da conversa em vez de
 |----------|--------------|------------|
 | «Busque 3 produtos do **grupo 1008**» | `GET /products/search` + `group_code=1008`, `page_size=3` | Tratar `1008` como `{code}` no `/analyser` |
 | «Resumo do produto 10080047» | `GET /products/{code}/summary` | Cair no `/analyser` |
+| «Mostre vendas do produto …» | `GET /products/{code}/sales` (api-delpi) | Estoque api-externa por `CHAT_PREFER_API_EXTERNA_PROVIDER` |
 | «Faturamento do produto …» | `GET /products/{code}/sales/billing` | Usar `/sales` genérico |
 | «Valor total de estoque da empresa» | `GET /supplies/stock-value` | `GET /products/{code}/stock` |
 | «Compare as estruturas» | Orquestração multi-fetch | Uma única action ou só histórico |

@@ -382,6 +382,18 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+        if product_code and product_intent == ChatProductQueryIntent.SALES:
+            selected = self._select_product_action(
+                message,
+                product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=ChatProductQueryIntent.SALES,
+                route_segment=product_route_segment or "sales",
+            )
+
+            if selected:
+                return selected
+
         if product_code and product_intent == ChatProductQueryIntent.SUMMARY:
             selected = self._select_product_action(
                 message,
@@ -2358,6 +2370,9 @@ class ExternalActionSelectionService:
             if wants_open_orders and "open-orders" in path:
                 value += 115
 
+            elif wants_sales and self._is_product_sales_summary_path(path):
+                value += 220
+
             elif wants_sales and "/sales" in path and "open-orders" not in path and "billing" not in path:
                 value += 100
 
@@ -2424,6 +2439,19 @@ class ExternalActionSelectionService:
 
                 if "stock" in haystack or "estoque" in haystack:
                     value += 40
+
+                if "analyser" in haystack:
+                    value -= 40
+
+            elif intent == ChatProductQueryIntent.SALES:
+                if self._is_product_sales_summary_path(path):
+                    value += 280
+
+                if "/sales" in path and "billing" not in path and "open-orders" not in path:
+                    value += 60
+
+                if "stock" in path or "structure" in path or "parents" in path:
+                    value -= 120
 
                 if "analyser" in haystack:
                     value -= 40
@@ -2533,6 +2561,15 @@ class ExternalActionSelectionService:
             return value
 
         return sorted(candidates, key=score, reverse=True)
+
+    @staticmethod
+    def _is_product_sales_summary_path(path: str) -> bool:
+        lowered = str(path or "").lower().rstrip("/")
+
+        if "open-orders" in lowered or "/billing" in lowered:
+            return False
+
+        return lowered.endswith("/sales") and "/products/" in lowered
 
     @classmethod
     def _provider_preference_bonus(cls, action: dict) -> int:

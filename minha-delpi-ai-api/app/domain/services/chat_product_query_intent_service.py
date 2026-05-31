@@ -10,6 +10,7 @@ class ChatProductQueryIntent:
     SUMMARY = "summary"
     ANALYSER = "analyser"
     STOCK = "stock"
+    SALES = "sales"
     STRUCTURE = "structure"
     PARENTS = "parents"
     FULL = "full"
@@ -45,6 +46,9 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_structure_question(normalized):
             return ChatProductQueryIntent.STRUCTURE
+
+        if cls._looks_like_sales_question(normalized):
+            return ChatProductQueryIntent.SALES
 
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
@@ -464,6 +468,7 @@ class ChatProductQueryIntentService:
 
         if not (
             cls.references_previous_product(message)
+            or cls._looks_like_sales_question(normalized)
             or cls._looks_like_stock_question(normalized)
             or cls._looks_like_stock_scope_reset_question(normalized)
             or cls._looks_like_description_question(normalized)
@@ -612,6 +617,53 @@ class ChatProductQueryIntentService:
                 "sem filtro",
                 "sem filial",
             )
+        )
+
+    @classmethod
+    def _looks_like_sales_question(cls, normalized: str) -> bool:
+        if cls._looks_like_stock_question(normalized):
+            return False
+
+        if any(
+            term in normalized
+            for term in (
+                "faturamento",
+                "billing",
+                "faturado",
+                "carteira",
+                "pedidos em aberto",
+                "pedido em aberto",
+                "open-orders",
+            )
+        ):
+            return False
+
+        if any(
+            term in normalized
+            for term in (
+                "resumo de vendas",
+                "resumo de venda",
+                "vendas do produto",
+                "venda do produto",
+                "vendas do item",
+                "venda do item",
+                "historico de venda",
+                "histórico de venda",
+                "mostre vendas",
+                "mostra vendas",
+                "traga vendas",
+                "traz vendas",
+            )
+        ):
+            return True
+
+        has_product_ref = any(
+            term in normalized
+            for term in ("produto", "item", "material", "codigo", "código")
+        )
+
+        return has_product_ref and any(
+            term in normalized for term in ("vendas", " venda ", " venda do", "venda do")
         )
 
     @classmethod

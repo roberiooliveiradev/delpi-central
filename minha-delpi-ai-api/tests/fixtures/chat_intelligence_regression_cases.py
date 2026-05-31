@@ -242,6 +242,28 @@ SELECTION_CASES = [
         "expected_action_id": "lmp-dash",
     },
     {
+        "message": "mostre vendas do produto 10080001",
+        "actions": [
+            {
+                "actionId": "sales-summary",
+                "method": "GET",
+                "path": "/products/{code}/sales",
+                "operationId": "get_product_sales_summary",
+                "summary": "Vendas do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "stock-wrong",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "stock_products_code_stock_get",
+                "summary": "Estoque",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "sales-summary",
+    },
+    {
         "message": "resumo de vendas do produto 10080047",
         "actions": [
             {

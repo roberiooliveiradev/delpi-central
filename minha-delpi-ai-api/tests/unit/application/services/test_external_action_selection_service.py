@@ -1125,6 +1125,60 @@ def test_listar_nc_5s_does_not_select_product_search():
     assert selected is None
 
 
+def test_select_sales_prefers_api_delpi_sales_over_api_externa_stock(monkeypatch):
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+
+    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
+    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
+    monkeypatch.setattr(
+        ChatWebSearchIntentService,
+        "blocks_external_action_selection",
+        lambda message: False,
+    )
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.products.sales_products_code_sales_get",
+                    "method": "GET",
+                    "path": "/products/{code}/sales",
+                    "operationId": "get_product_sales_summary",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+                {
+                    "actionId": "api_externa.products.stock_products_code_stock_get",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "stock_products_code_stock_get",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "mostre vendas do produto 10080001",
+        allowed_action_ids=[
+            "api_delpi.products.sales_products_code_sales_get",
+            "api_externa.products.stock_products_code_stock_get",
+        ],
+    )
+
+    assert selected is not None
+    assert (
+        selected["arguments"]["actionId"]
+        == "api_delpi.products.sales_products_code_sales_get"
+    )
+    assert selected["arguments"]["parameters"]["code"] == "10080001"
+
+
 def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,

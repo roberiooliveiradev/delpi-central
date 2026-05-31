@@ -19,6 +19,7 @@ class ChatExternalActionOrchestrationService:
         {
             ChatProductQueryIntent.STRUCTURE,
             ChatProductQueryIntent.STOCK,
+            ChatProductQueryIntent.SALES,
             ChatProductQueryIntent.SUMMARY,
             ChatProductQueryIntent.ANALYSER,
             ChatProductQueryIntent.DESCRIPTION,
@@ -266,6 +267,9 @@ class ChatExternalActionOrchestrationService:
 
         if ChatProductQueryIntentService._looks_like_structure_question(normalized):
             return ChatProductQueryIntent.STRUCTURE
+
+        if ChatProductQueryIntentService._looks_like_sales_question(normalized):
+            return ChatProductQueryIntent.SALES
 
         if ChatProductQueryIntentService._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK

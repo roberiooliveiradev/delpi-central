@@ -351,6 +351,22 @@ class ChatIntentRouterService:
         if "estoque" in lowered:
             return "stock_lookup"
 
+        if any(
+            term in lowered
+            for term in (
+                "vendas do produto",
+                "venda do produto",
+                "mostre vendas",
+                "mostra vendas",
+                "resumo de vendas",
+            )
+        ) or (
+            "vendas" in lowered
+            and "produto" in lowered
+            and "estoque" not in lowered
+        ):
+            return "sales_lookup"
+
         if "fornecedor" in lowered:
             return "supplier_lookup"
 
