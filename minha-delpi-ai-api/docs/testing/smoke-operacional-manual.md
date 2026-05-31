@@ -20,9 +20,11 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
 | Templates de atalhos (sem código fixo) | `python scripts/smoke_shortcut_placeholders.py` |
 | Product analyser (roteiro/inspeção em tabelas) | `python scripts/smoke_product_analyser_presentation.py` |
+| Product analyser (HTTP opcional) | `SMOKE_BASE_URL=http://delpi-gateway python scripts/smoke_product_analyser_live.py` (SKIP se 403 no gateway) |
 | Pacote atalhos (login + API + conteúdo) | `./scripts/run_chat_shortcut_homologation.sh` |
 | Homologação no container | `docker exec delpi-minha-delpi-ai-api bash -c 'cd /app && PYTHONPATH=/app SMOKE_BASE_URL=http://delpi-gateway ./scripts/run_chat_shortcut_homologation.sh'` (~3 min; pausas de rate limit) |
 | Última execução (31/05) | placeholders + login/perfil + catálogo + chips API — **OK** |
+| Product analyser presentation (31/05) | `smoke_product_analyser_presentation.py` — **OK** (tabelas roteiro/inspeção; sem dump QP) |
 | Rebuild MFE após fix frontend | `cd infra && docker compose -f docker-compose.dev.yml build minha-delpi-chat && docker compose -f docker-compose.dev.yml --profile chat up -d minha-delpi-chat` |
 | Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
