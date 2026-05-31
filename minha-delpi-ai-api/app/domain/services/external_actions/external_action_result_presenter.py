@@ -3289,6 +3289,15 @@ class ExternalActionResultPresenter:
         if len(rows) < 2 or not isinstance(rows[0], dict):
             return None
 
+        heatmap = self._try_heatmap_from_rows(
+            rows,
+            force=force,
+            user_message=user_message,
+        )
+
+        if heatmap:
+            return heatmap
+
         if not force and len(rows) > 12:
             return None
 
@@ -3351,4 +3360,56 @@ class ExternalActionResultPresenter:
             "chartType": chart_type,
             "data": rows[:12],
             "config": config,
+        }
+
+    def _try_heatmap_from_rows(
+        self,
+        rows: list,
+        *,
+        force: bool = False,
+        user_message: str | None = None,
+    ) -> dict | None:
+        if len(rows) < 4 or not isinstance(rows[0], dict):
+            return None
+
+        first = rows[0]
+        string_keys = [key for key, value in first.items() if isinstance(value, str)]
+        numeric_keys = [key for key, value in first.items() if isinstance(value, (int, float))]
+
+        if len(string_keys) < 2 or len(numeric_keys) != 1:
+            return None
+
+        from app.domain.services.chat_chart_type_selection_service import (
+            ChatChartTypeSelectionService,
+        )
+
+        message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
+        wants_heatmap = any(
+            token in message
+            for token in ("heatmap", "mapa de calor", "mapa calor", "matriz de intensidade")
+        )
+
+        if not force and not wants_heatmap:
+            if not ChatChartTypeSelectionService._looks_heatmap_matrix(
+                rows,
+                string_keys,
+                numeric_keys,
+            ):
+                return None
+
+        x_axis, y_axis = ChatChartTypeSelectionService._pick_heatmap_axes(string_keys, rows)
+        value_key = numeric_keys[0]
+        capped_rows = rows[:144]
+
+        return {
+            "type": "chart",
+            "title": "Mapa de calor",
+            "chartType": "heatmap",
+            "data": capped_rows,
+            "config": {
+                "xAxis": x_axis,
+                "yAxis": y_axis,
+                "valueKey": value_key,
+                "legend": False,
+            },
         }

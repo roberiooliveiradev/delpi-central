@@ -8,6 +8,77 @@
   padding: 0.75rem 0.5rem;
 }
 
+.mdc-heatmap {
+  padding: 0.25rem 0.5rem 0.5rem;
+  overflow-x: auto;
+}
+
+.mdc-heatmap__grid {
+  display: grid;
+  gap: 2px;
+  min-width: min(100%, 28rem);
+}
+
+.mdc-heatmap__corner {
+  min-height: 1.25rem;
+}
+
+.mdc-heatmap__x-label {
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 0.15rem 0.1rem;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.mdc-heatmap__row {
+  display: contents;
+}
+
+.mdc-heatmap__y-label {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.35rem 0.2rem 0;
+  line-height: 1.2;
+  word-break: break-word;
+  align-self: center;
+}
+
+.mdc-heatmap__cell {
+  min-height: 1.75rem;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mdc-title);
+  border: 1px solid color-mix(in srgb, var(--mdc-border) 55%, transparent);
+}
+
+.mdc-heatmap__cell--filled {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mdc-heatmap__legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  color: var(--mdc-muted);
+}
+
+.mdc-heatmap__legend-bar {
+  flex: 1;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #93c5fd 0%,
+    #1d4ed8 100%
+  );
+}
+
 .mdc-rich-chart__toggle {
   display: flex;
   gap: 0.3rem;

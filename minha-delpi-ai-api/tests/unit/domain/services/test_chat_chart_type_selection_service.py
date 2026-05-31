@@ -76,6 +76,37 @@ def test_resolve_combo_for_meta_realizado_series():
     assert chart_type == "combo"
 
 
+def test_resolve_heatmap_from_message():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"cliente": "A", "mes": "jan", "valor": 10},
+            {"cliente": "A", "mes": "fev", "valor": 12},
+            {"cliente": "B", "mes": "jan", "valor": 8},
+            {"cliente": "B", "mes": "fev", "valor": 9},
+        ],
+        label_key="cliente",
+        numeric_keys=["valor"],
+        user_message="mostre mapa de calor por cliente e mês",
+    )
+
+    assert chart_type == "heatmap"
+
+
+def test_resolve_heatmap_for_matrix_shape():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"turno": "A", "dia": "seg", "qtd": 4},
+            {"turno": "A", "dia": "ter", "qtd": 6},
+            {"turno": "B", "dia": "seg", "qtd": 3},
+            {"turno": "B", "dia": "ter", "qtd": 5},
+        ],
+        label_key="turno",
+        numeric_keys=["qtd"],
+    )
+
+    assert chart_type == "heatmap"
+
+
 def test_resolve_scatter_for_two_numeric_columns():
     chart_type = ChatChartTypeSelectionService.resolve(
         rows=[

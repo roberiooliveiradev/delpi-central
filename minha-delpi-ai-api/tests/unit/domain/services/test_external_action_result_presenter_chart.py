@@ -15,6 +15,25 @@ def _use_case():
     )
 
 
+def test_build_heatmap_from_matrix_rows():
+    presenter = ExternalActionResultPresenter()
+    rows = [
+        {"cliente": "Cliente A", "mes": "jan/2026", "valor": 10000},
+        {"cliente": "Cliente A", "mes": "fev/2026", "valor": 12000},
+        {"cliente": "Cliente B", "mes": "jan/2026", "valor": 8000},
+        {"cliente": "Cliente B", "mes": "fev/2026", "valor": 9000},
+    ]
+
+    chart = presenter._try_heatmap_from_rows(rows)
+
+    assert chart is not None
+    assert chart["chartType"] == "heatmap"
+    assert chart["config"]["xAxis"] == "mes"
+    assert chart["config"]["yAxis"] == "cliente"
+    assert chart["config"]["valueKey"] == "valor"
+    assert len(chart["data"]) == 4
+
+
 def test_build_stock_chart_from_nested_stock_items():
     presenter = ExternalActionResultPresenter()
     data = {

@@ -289,6 +289,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Gráficos — heatmap (Fase 4)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Backend | `_try_heatmap_from_rows` + detecção matriz em `ChatChartTypeSelectionService` |
+| MFE | `HeatmapGrid` em `ChatRichChart` (eixo X/Y + `valueKey`) |
+| Testes | `test_chat_chart_type_selection_service`, `test_external_action_result_presenter_chart` |
+
 ## Auditoria api-delpi — smoke por domínio (mock)
 
 | Entrega | Detalhe |

@@ -73,11 +73,13 @@ export type ChatPresentation =
         | "combo"
         | "scatter"
         | "histogram"
-        | "gauge";
+        | "gauge"
+        | "heatmap";
       data: Record<string, unknown>[];
       config?: {
         xAxis?: string;
         yAxis?: string | string[];
+        valueKey?: string;
         colors?: string[];
         legend?: boolean;
         comboBarKey?: string;

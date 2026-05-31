@@ -16,7 +16,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Revertido** no MFE (10 abas planas); mockups Markdown por aba → implementação no final — ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
 | Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fases **1–5** concluídas |
-| Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fases **1–3** + toggle tipo; heatmap Fase 4 backlog |
+| Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fases **1–3** + **heatmap** (4); dashboard multi-card backlog |
 | Metadados Protheus | [api-delpi-chat-intelligence-audit.md](../api-delpi-chat-intelligence-audit.md) | `/system/tables/*` + [smoke](../../testing/smoke-system-metadata-homologacao.md) |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 

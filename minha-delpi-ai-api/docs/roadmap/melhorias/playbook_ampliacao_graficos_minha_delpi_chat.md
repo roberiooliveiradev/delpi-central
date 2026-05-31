@@ -1331,7 +1331,7 @@ Após gráfico, oferecer:
 
 ## Fase 4 — Visualizações avançadas
 
-- `heatmap`.
+- [x] `heatmap` — `ChatChartTypeSelectionService`, `_try_heatmap_from_rows`, `ChatRichChart` (grade CSS).
 - dashboard multi-card.
 - mini dashboards por agente.
 - recomendações automáticas.

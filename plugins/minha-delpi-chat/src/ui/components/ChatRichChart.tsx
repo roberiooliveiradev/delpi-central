@@ -43,6 +43,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
   scatter: "Dispersão",
   histogram: "Histograma",
   gauge: "Gauge",
+  heatmap: "Mapa de calor",
 };
 
 const CHART_TYPE_ALTERNATES = [
@@ -176,13 +177,31 @@ export function ChatRichChart({
       <div
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
       >
-        <ResponsiveContainer width="100%" height={280}>
-          {renderChart(activeChartType, data, xAxis, yAxes, colors, showLegend, config, {
-            gridColor,
-            tickStyle,
-            tooltipStyle,
-          }, onDrillDown ? openPointMenu : undefined)}
-        </ResponsiveContainer>
+        {activeChartType === "heatmap" ? (
+          <HeatmapGrid
+            data={data}
+            xAxis={config?.xAxis || xAxis}
+            yAxis={
+              typeof config?.yAxis === "string"
+                ? config.yAxis
+                : Array.isArray(config?.yAxis)
+                  ? String(config.yAxis[0] || guessXAxis(data))
+                  : guessYAxisCategory(data, xAxis)
+            }
+            valueKey={config?.valueKey || yAxes[0] || "value"}
+            colors={colors}
+            tickFill={tickFill}
+            onPointClick={onDrillDown ? openPointMenu : undefined}
+          />
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            {renderChart(activeChartType, data, xAxis, yAxes, colors, showLegend, config, {
+              gridColor,
+              tickStyle,
+              tooltipStyle,
+            }, onDrillDown ? openPointMenu : undefined)}
+          </ResponsiveContainer>
+        )}
       </div>
 
       {pointMenu && onDrillDown ? (
@@ -508,6 +527,159 @@ function guessXAxis(data: Record<string, unknown>[]): string {
     (k) => typeof first[k] === "string",
   );
   return stringKeys[0] || Object.keys(first)[0] || "name";
+}
+
+function guessYAxisCategory(data: Record<string, unknown>[], xAxis: string): string {
+  if (!data.length) return "category";
+
+  const first = data[0];
+  const stringKeys = Object.keys(first).filter(
+    (key) => typeof first[key] === "string" && key !== xAxis,
+  );
+
+  return stringKeys[0] || "category";
+}
+
+function heatColor(
+  value: number,
+  min: number,
+  max: number,
+  lowColor: string,
+  highColor: string,
+): string {
+  if (!Number.isFinite(value)) {
+    return lowColor;
+  }
+
+  if (max <= min) {
+    return highColor;
+  }
+
+  const ratio = Math.min(1, Math.max(0, (value - min) / (max - min)));
+  return `color-mix(in srgb, ${lowColor} ${Math.round((1 - ratio) * 100)}%, ${highColor})`;
+}
+
+function HeatmapGrid({
+  data,
+  xAxis,
+  yAxis,
+  valueKey,
+  colors,
+  tickFill,
+  onPointClick,
+}: {
+  data: Record<string, unknown>[];
+  xAxis: string;
+  yAxis: string;
+  valueKey: string;
+  colors: string[];
+  tickFill: string;
+  onPointClick?: ChartPointClickHandler;
+}) {
+  const xLabels = useMemo(
+    () => [...new Set(data.map((row) => String(row[xAxis] ?? "")))].filter(Boolean),
+    [data, xAxis],
+  );
+  const yLabels = useMemo(
+    () => [...new Set(data.map((row) => String(row[yAxis] ?? "")))].filter(Boolean),
+    [data, yAxis],
+  );
+
+  const { valueMap, min, max } = useMemo(() => {
+    const map = new Map<string, number>();
+    let localMin = Infinity;
+    let localMax = -Infinity;
+
+    for (const row of data) {
+      const raw = Number(row[valueKey]);
+      const x = String(row[xAxis] ?? "");
+      const y = String(row[yAxis] ?? "");
+
+      if (!x || !y || !Number.isFinite(raw)) {
+        continue;
+      }
+
+      map.set(`${y}\u0000${x}`, raw);
+      localMin = Math.min(localMin, raw);
+      localMax = Math.max(localMax, raw);
+    }
+
+    return {
+      valueMap: map,
+      min: Number.isFinite(localMin) ? localMin : 0,
+      max: Number.isFinite(localMax) ? localMax : 0,
+    };
+  }, [data, xAxis, yAxis, valueKey]);
+
+  const lowColor = colors[0] || "#93c5fd";
+  const highColor = colors[1] || colors[0] || "#1d4ed8";
+
+  return (
+    <div className="mdc-heatmap" role="img" aria-label="Mapa de calor">
+      <div
+        className="mdc-heatmap__grid"
+        style={{
+          gridTemplateColumns: `minmax(5rem, auto) repeat(${xLabels.length}, minmax(2.5rem, 1fr))`,
+        }}
+      >
+        <div className="mdc-heatmap__corner" />
+        {xLabels.map((label) => (
+          <div key={label} className="mdc-heatmap__x-label" style={{ color: tickFill }}>
+            {label}
+          </div>
+        ))}
+        {yLabels.map((yLabel) => (
+          <div key={yLabel} className="mdc-heatmap__row">
+            <div className="mdc-heatmap__y-label" style={{ color: tickFill }}>
+              {yLabel}
+            </div>
+            {xLabels.map((xLabel) => {
+              const value = valueMap.get(`${yLabel}\u0000${xLabel}`);
+              const hasValue = value !== undefined;
+              const background = hasValue
+                ? heatColor(value, min, max, lowColor, highColor)
+                : "transparent";
+
+              return (
+                <div
+                  key={`${yLabel}-${xLabel}`}
+                  className={`mdc-heatmap__cell${hasValue ? " mdc-heatmap__cell--filled" : ""}`}
+                  style={{ background }}
+                  title={hasValue ? `${yLabel} × ${xLabel}: ${value}` : undefined}
+                  onClick={(event) => {
+                    if (!onPointClick || !hasValue) {
+                      return;
+                    }
+
+                    onPointClick(
+                      { [xAxis]: xLabel, [yAxis]: yLabel, [valueKey]: value },
+                      event.clientX,
+                      event.clientY,
+                    );
+                  }}
+                >
+                  {hasValue ? formatHeatValue(value) : ""}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="mdc-heatmap__legend" aria-hidden="true">
+        <span>{formatHeatValue(min)}</span>
+        <span className="mdc-heatmap__legend-bar" />
+        <span>{formatHeatValue(max)}</span>
+      </div>
+    </div>
+  );
+}
+
+function formatHeatValue(value: number): string {
+  if (Math.abs(value) >= 1000) {
+    return value.toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+  }
+
+  return value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 }
 
 function normalizeYAxes(

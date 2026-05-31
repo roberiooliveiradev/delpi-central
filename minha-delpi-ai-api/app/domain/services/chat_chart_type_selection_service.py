@@ -74,6 +74,15 @@ class ChatChartTypeSelectionService:
             if hinted:
                 return hinted
 
+        string_keys = [
+            key
+            for key, value in (rows[0] or {}).items()
+            if isinstance(value, str)
+        ]
+
+        if cls._looks_heatmap_matrix(rows, string_keys, numeric_keys):
+            return "heatmap"
+
         if cls._looks_gauge(rows, numeric_keys):
             return "gauge"
 
@@ -140,7 +149,49 @@ class ChatChartTypeSelectionService:
         if any(token in message for token in ("combo", "combinado")):
             return "combo"
 
+        if any(token in message for token in ("heatmap", "mapa de calor", "mapa calor", "matriz")):
+            return "heatmap"
+
         return None
+
+    @classmethod
+    def _looks_heatmap_matrix(
+        cls,
+        rows: list[dict[str, Any]],
+        string_keys: list[str],
+        numeric_keys: list[str],
+    ) -> bool:
+        if len(rows) < 4 or len(string_keys) < 2 or len(numeric_keys) != 1:
+            return False
+
+        if len(rows) > 144:
+            return False
+
+        x_key, y_key = cls._pick_heatmap_axes(string_keys, rows)
+        x_count = len({str(row.get(x_key) or "") for row in rows})
+        y_count = len({str(row.get(y_key) or "") for row in rows})
+
+        if x_count < 2 or y_count < 2:
+            return False
+
+        if x_count > 16 or y_count > 16:
+            return False
+
+        return x_count * y_count >= len(rows) * 0.5
+
+    @classmethod
+    def _pick_heatmap_axes(
+        cls,
+        string_keys: list[str],
+        rows: list[dict[str, Any]],
+    ) -> tuple[str, str]:
+        cardinalities = {
+            key: len({str(row.get(key) or "") for row in rows})
+            for key in string_keys
+        }
+        ordered = sorted(string_keys, key=lambda key: cardinalities.get(key, 0))
+
+        return ordered[-1], ordered[0]
 
     @classmethod
     def _message_mentions_stacked(cls, message: str) -> bool:

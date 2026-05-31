@@ -14,7 +14,7 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 
 | # | Item | Playbook | Notas |
 |---|------|----------|-------|
-| 5 | **Heatmap** + dashboard multi-card | [gráficos](./playbook_ampliacao_graficos_minha_delpi_chat.md) Fase 4 | MFE + presenter |
+| 5 | **Dashboard multi-card** + mini dashboards por agente | [gráficos](./playbook_ampliacao_graficos_minha_delpi_chat.md) Fase 4 | MFE + presenter |
 | 6 | Filtros/zoom/comparar períodos no gráfico | Gráficos Fase 5 | Parcial (toggle tipo ✅) |
 | 7 | **Onboarding** guiado (primeiro uso) | [10](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | Produto |
 | 8 | Admin textos Fases 3–5 | [textos](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | MFE admin |
