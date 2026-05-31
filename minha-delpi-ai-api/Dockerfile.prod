@@ -5,9 +5,25 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-COPY minha-delpi-ai-api/requirements.txt .
+# INSTALL_VISION_EXTRAS=true instala requirements-vision.txt (Docling — imagem maior).
+ARG INSTALL_VISION_EXTRAS=false
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY minha-delpi-ai-api/requirements.txt minha-delpi-ai-api/requirements-vision.txt ./
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-por \
+        tesseract-ocr-eng \
+        poppler-utils \
+        libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir -r requirements.txt \
+    && if [ "$INSTALL_VISION_EXTRAS" = "true" ] \
+        && grep -qv '^#' requirements-vision.txt | grep -q '[a-zA-Z0-9]'; then \
+        pip install --no-cache-dir -r requirements-vision.txt; \
+    fi
 
 COPY minha-delpi-ai-api/ .
 COPY shared/delpi_auth /app/delpi_auth

@@ -6,6 +6,8 @@ env.prod
 env.dev
 env.local
 
-# Exemplos (sem secrets reais) podem ser commitados
+# Exemplos (sem secrets reais) podem ser versionados
 !.env.example
+!.env.dev.example
+!.env.prod.example
 !env.*.example

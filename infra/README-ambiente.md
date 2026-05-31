@@ -8,7 +8,8 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 |---------|-----|
 | `docker-compose.dev.yml` | Desenvolvimento local: hot-reload, Flask dev, profile `chat` / `vision` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
-| `docker-compose.vision.yml` | **Override** dev: troca para `Dockerfile.vision.dev` (Docling em `requirements-vision.txt`) |
+| `docker-compose.vision.yml` | **Override** dev: troca para `Dockerfile.vision.dev` (Docling) |
+| `docker-compose.prod.vision.yml` | **Override** prod: `INSTALL_VISION_EXTRAS=true` no `Dockerfile.prod` |
 | `.env.dev.example` | Modelo para copiar → `.env` no dia a dia |
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
