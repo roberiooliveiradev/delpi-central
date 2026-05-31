@@ -83,6 +83,7 @@ Itens explicitamente **fora do escopo** até mockup 11: drawer auditoria, layout
 | `run_onda11_validation.sh` | Regressão pacote |
 | `smoke_system_table_routing.py` | Metadados Protheus `/system` |
 | `smoke_attachment_index_welcome.py` | 07 — upload + welcome + summaries |
+| `smoke_api_delpi_domain_routing.py` | Auditoria api-delpi — 9 domínios mock |
 
 **Backlog ativo:** [BACKLOG_ROADMAP.md](./BACKLOG_ROADMAP.md).
 

@@ -269,6 +269,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 | 2026-05-27 | `9895bd43` | Fix: «grupo 1008» → `/products/search`, não `/analyser` |
 | 2026-05-31 | `db38c4ed` | Roteamento «qual a tabela de produtos?» → `/system/tables/search` |
 | 2026-05-31 | `f311dd43` | Apresentação SX2 + mensagem ERP indisponível + smoke E2E |
+| 2026-05-31 | — | Smoke mock por domínio (`smoke_api_delpi_domain_routing.py`, 9 domínios) |
 
 ---
 
@@ -279,7 +280,7 @@ Itens 1–5 abaixo foram entregues na **Onda 11** — ver [inteligencia-chat-ond
 1. ~~Parâmetros de data automáticos~~ — ✅ 11.1.2
 2. ~~Heurística explícita summary vs analyser~~ — ✅ 11.1.3
 3. ~~Montar rotas NC PostgreSQL e importar no catálogo~~ — ✅ **11.6** (heurísticas + `api_paths.json`; sync OpenAPI quando api-delpi habilitada)
-4. Testes E2E com api-delpi mockada por domínio — **backlog**
+4. ~~Testes E2E com api-delpi mockada por domínio~~ — ✅ `smoke_api_delpi_domain_routing.py` + [smoke-api-delpi-domain-routing.md](../testing/smoke-api-delpi-domain-routing.md)
 5. ~~Expor `knowledgeDocumentMaxChars` em capabilities~~ — ✅ 11.5.2
 
 **Próxima onda de produto:** [Onda 12 — drawing-analyser PDF](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md).

@@ -289,6 +289,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Auditoria api-delpi — smoke por domínio (mock)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Fixture | `api_delpi_domain_routing_cases.py` — 9 domínios, 18 casos |
+| Smoke | `smoke_api_delpi_domain_routing.py` — mock + amostra chat (intent/tools) |
+| Doc | `docs/testing/smoke-api-delpi-domain-routing.md` |
+
 ## Anexos — indexação e preview (Playbook 07)
 
 | Entrega | Detalhe |

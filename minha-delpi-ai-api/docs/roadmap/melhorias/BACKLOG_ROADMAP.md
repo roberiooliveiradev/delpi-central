@@ -9,7 +9,6 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 | 1 | **Admin UX mockup 11** — aprovação produto + PR única (6 seções) | [11](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Grande (MFE) |
 | 2 | **Anexos** — imagens, comparação multi-arquivo, UI status leitura | [07](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Médio |
 | 3 | **Router pendências ativas** + feedback roteamento errado no MFE | [01](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Médio |
-| 4 | **E2E api-delpi mock** por domínio | [auditoria](../api-delpi-chat-intelligence-audit.md) | Médio |
 
 ## Prioridade média (UX)
 
@@ -34,3 +33,4 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 - Interatividade Fase 5 — fluxos guiados (`ChatGuidedFlowService`)
 - Gráficos Fases 1–3 + alternância de tipo no MFE
 - Autoajuda Fases 1–5; pesquisa web Fases 1–5
+- Smoke api-delpi por domínio (mock + amostra chat) — `smoke_api_delpi_domain_routing.py`
