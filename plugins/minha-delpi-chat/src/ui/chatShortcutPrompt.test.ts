@@ -44,4 +44,12 @@ describe("chatShortcutPrompt", () => {
       listShortcutFieldIds("{{searchQuery}} e {{productCode}}"),
     ).toEqual(["searchQuery", "productCode"]);
   });
+
+  it("lista campos após hasShortcutPlaceholders sem corromper regex global", () => {
+    const query = "me fale do produto {{productCode}}";
+
+    expect(hasShortcutPlaceholders(query)).toBe(true);
+    expect(listShortcutFieldIds(query)).toEqual(["productCode"]);
+    expect(resolveShortcutFields(query)).toHaveLength(1);
+  });
 });

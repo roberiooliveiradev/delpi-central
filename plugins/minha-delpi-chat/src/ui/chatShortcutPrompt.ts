@@ -1,6 +1,12 @@
 /** Atalhos com `{{campo}}` exigem preenchimento antes de enviar a mensagem. */
 
-export const SHORTCUT_PLACEHOLDER_PATTERN = /\{\{([a-zA-Z][a-zA-Z0-9]*)\}\}/g;
+const SHORTCUT_PLACEHOLDER_SOURCE = String.raw`\{\{([a-zA-Z][a-zA-Z0-9]*)\}\}`;
+
+/** Sem flag `g` — seguro para `.test()` sem corromper `lastIndex` de outras chamadas. */
+const SHORTCUT_PLACEHOLDER_DETECT = new RegExp(SHORTCUT_PLACEHOLDER_SOURCE);
+
+/** Com flag `g` — usar só em `matchAll` / `replace` após `lastIndex = 0`. */
+export const SHORTCUT_PLACEHOLDER_PATTERN = new RegExp(SHORTCUT_PLACEHOLDER_SOURCE, "g");
 
 export type ShortcutFieldId =
   | "productCode"
@@ -66,13 +72,14 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
 };
 
 export function hasShortcutPlaceholders(query: string): boolean {
-  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
-  return SHORTCUT_PLACEHOLDER_PATTERN.test(query.trim());
+  return SHORTCUT_PLACEHOLDER_DETECT.test(query.trim());
 }
 
 export function listShortcutFieldIds(query: string): string[] {
   const ids: string[] = [];
   const seen = new Set<string>();
+
+  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
 
   for (const match of query.matchAll(SHORTCUT_PLACEHOLDER_PATTERN)) {
     const raw = match[1];
@@ -119,14 +126,15 @@ export function resolveShortcutFields(query: string): ShortcutFieldDefinition[] 
 
 /** Bloqueia envio se ainda houver `{{campo}}` sem substituir. */
 export function hasUnresolvedShortcutPlaceholders(query: string): boolean {
-  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
-  return SHORTCUT_PLACEHOLDER_PATTERN.test(query.trim());
+  return SHORTCUT_PLACEHOLDER_DETECT.test(query.trim());
 }
 
 export function fillShortcutTemplate(
   template: string,
   values: Record<string, string>,
 ): string {
+  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
+
   return template.replace(SHORTCUT_PLACEHOLDER_PATTERN, (_match, fieldId: string) => {
     const value = String(values[fieldId] ?? "").trim();
     return value;

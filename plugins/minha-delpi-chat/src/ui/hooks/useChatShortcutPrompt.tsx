@@ -63,7 +63,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
       const fields = resolveShortcutFields(template);
 
       if (fields.length === 0) {
-        return Promise.resolve(template);
+        return Promise.resolve(null);
       }
 
       const prefill: ShortcutPrefillContext = getPrefillContextRef.current?.() ?? {};
