@@ -374,6 +374,17 @@ class SendChatMessageUseCase:
             intelligence_metadata=intelligence_metadata,
         )
 
+        from app.application.services.chat_active_pending_service import (
+            ChatActivePendingService,
+        )
+
+        ChatActivePendingService.attach_for_operational_direct_answer(
+            assistant_metadata,
+            message=request.message,
+            previous_messages=previous_messages,
+            pipeline_stages=pipeline_stages,
+        )
+
         from app.application.services.chat_web_search_research_activity_service import (
             ChatWebSearchResearchActivityService,
         )

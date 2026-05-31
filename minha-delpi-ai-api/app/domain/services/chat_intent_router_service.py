@@ -143,6 +143,30 @@ class ChatIntentRouterService:
                 priority_applied=10,
             )
 
+        from app.application.services.chat_active_pending_service import (
+            ChatActivePendingService,
+        )
+
+        pending = ChatActivePendingService.find_from_messages(history)
+
+        if pending:
+            resolved = ChatActivePendingService.try_resolve(normalized, pending)
+
+            if resolved:
+                params = resolved.get("resolvedParams")
+
+                return IntentRouteResult(
+                    intent="clarification_answer",
+                    sub_intent=str(pending.get("kind") or "pending"),
+                    confidence=0.93,
+                    requires_tool=bool(resolved.get("requiresTool")),
+                    requires_rag=False,
+                    requires_llm=False,
+                    priority_applied=2,
+                    resolved_params=dict(params) if isinstance(params, dict) else None,
+                    flags=("active_pending_resolved",),
+                )
+
         if ChatSqlSafetyService.blocked_direct_answer(normalized):
             return IntentRouteResult(
                 intent="security",

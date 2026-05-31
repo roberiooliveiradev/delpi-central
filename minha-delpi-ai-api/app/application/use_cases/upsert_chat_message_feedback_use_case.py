@@ -72,6 +72,23 @@ class UpsertChatMessageFeedbackUseCase:
             rating=rating,
             reason=normalized_reason,
         )
+
+        if rating == -1:
+            from app.application.services.chat_active_pending_service import (
+                ChatActivePendingService,
+            )
+
+            if ChatActivePendingService.should_attach_routing_snapshot(
+                normalized_reason,
+            ):
+                assistant_meta = getattr(assistant, "metadata", None) or {}
+                snapshot = ChatActivePendingService.routing_snapshot_from_assistant_metadata(
+                    assistant_meta if isinstance(assistant_meta, dict) else None,
+                )
+
+                if snapshot:
+                    result["routingSnapshot"] = snapshot
+
         if rating == 1:
             thanks = ChatFeedbackContentService.thanks_for_rating(
                 rating,

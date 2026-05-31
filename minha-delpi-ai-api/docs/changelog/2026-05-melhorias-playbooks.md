@@ -329,6 +329,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Router | `intentRoute.resolvedParams` — `productCode` na mensagem ou herdado do histórico |
 | Compat | Alias `resolvedFromMemory` mantido no mesmo payload |
 
+## Roteamento — pendências ativas e feedback (Playbook 01)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Chat base | `ChatActivePendingService` — `metadata.activePending` em respostas `operational_parameter` |
+| Router | Turno seguinte: `clarification_answer` com `resolvedParams` (código de produto, ano de período) |
+| Feedback | Thumbs down com motivos de roteamento retorna `routingSnapshot` de `adminDebug.intentRoute` |
+| MFE | Motivo `wrong_intent` em `chatFeedbackReasons.ts` + `personality_playbook.json` |
+| Testes | `test_chat_active_pending_service.py` |
+
 ## Interatividade — Fase 4 (chip de contexto)
 
 | Entrega | Detalhe |

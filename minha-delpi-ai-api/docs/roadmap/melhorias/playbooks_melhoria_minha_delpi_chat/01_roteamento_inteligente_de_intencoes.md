@@ -1,6 +1,6 @@
 # Playbook 01 — Roteamento inteligente de intenções
 
-> **Status (31/05/2026):** [Parcial](../STATUS_ROADMAP_MELHORIAS.md) — `ChatIntentRouterService`, `adminDebug.intentRoute`, estágio `intent:*`, `subIntent` operacional, `resolvedParams` (código na mensagem + follow-up de memória). Backlog: pendências ativas + feedback de roteamento errado no MFE.
+> **Status (30/05/2026):** [Parcial](../STATUS_ROADMAP_MELHORIAS.md) — `ChatIntentRouterService`, `adminDebug.intentRoute`, estágio `intent:*`, `subIntent` operacional, `resolvedParams` (código na mensagem + follow-up de memória), `metadata.activePending` + resolução `clarification_answer`, feedback thumbs down com `routingSnapshot` (motivos `wrong_query`, `wrong_intent`, etc.).
 
 ## Objetivo
 

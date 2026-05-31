@@ -24,6 +24,7 @@
     { "id": "bad_format", "label": "Não seguiu o formato pedido" },
     { "id": "forgot_previous", "label": "Não lembrou a resposta anterior" },
     { "id": "wrong_query", "label": "Consulta errada" },
+    { "id": "wrong_intent", "label": "Entendeu a intenção errada" },
     { "id": "too_long", "label": "Resposta muito longa" },
     { "id": "too_technical", "label": "Resposta muito técnica" },
     { "id": "wrong_data", "label": "Dados incorretos" },
