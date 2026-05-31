@@ -16,7 +16,10 @@ import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { useConfirmDialog } from "../components/useConfirmDialog";
-import { useChatShortcutPrompt } from "../hooks/useChatShortcutPrompt";
+import {
+  useChatShortcutPrompt,
+  type ShortcutPromptOptions,
+} from "../hooks/useChatShortcutPrompt";
 import { extractProductCodeFromContextChips } from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
@@ -136,31 +139,25 @@ export function ChatPage({
     });
   }, []);
 
-  const resolveShortcutQueryRef = useRef<
-    (
-      rawQuery: string,
-      promptOptions?: {
-        title?: string;
-        description?: string;
-        confirmLabel?: string;
-      },
-    ) => Promise<string | null>
-  >(async () => null);
-  const sendMessageRef = useRef<(params: { content?: string }) => Promise<void>>(async () => undefined);
-  const clearErrorRef = useRef<() => void>(() => undefined);
+  type PromptAndSendParams = {
+    content?: string;
+    attachments?: File[];
+    attachmentIds?: string[];
+    attachmentPreview?: {
+      id: string;
+      original_filename: string;
+      size_bytes: number;
+      content_type: string | null;
+      status: string;
+      parsed?: boolean;
+      readingStatus?: string;
+    }[];
+  };
 
-  const openShortcutPromptForSend = useCallback((template: string) => {
-    clearErrorRef.current();
-    void resolveShortcutQueryRef.current(template, {
-      title: "Consulta ao chat",
-      description: "Informe o código do produto ou o texto da busca antes de enviar.",
-      confirmLabel: "Enviar pergunta",
-    }).then((resolved) => {
-      if (resolved) {
-        void sendMessageRef.current({ content: resolved });
-      }
-    });
-  }, []);
+  const promptAndSendMessageRef = useRef<
+    (params?: PromptAndSendParams, promptOptions?: ShortcutPromptOptions) => Promise<void>
+  >(async () => undefined);
+  const isShortcutPromptOpenRef = useRef<() => boolean>(() => false);
 
   const {
     sessions,
@@ -223,7 +220,14 @@ export function ChatPage({
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
-    onShortcutPromptRequired: openShortcutPromptForSend,
+    isShortcutPromptOpen: () => isShortcutPromptOpenRef.current(),
+    onShortcutPromptRequired: (template) => {
+      if (isShortcutPromptOpenRef.current()) {
+        return;
+      }
+
+      void promptAndSendMessageRef.current({ content: template });
+    },
   });
 
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
@@ -256,15 +260,56 @@ export function ChatPage({
     }),
     [activeContextChips],
   );
-  const { resolveShortcutQuery, shortcutPromptDialog } = useChatShortcutPrompt({
-    getPrefillContext: () => shortcutPrefillContext,
-  });
+  const { resolveShortcutQuery, shortcutPromptDialog, isShortcutPromptOpen } =
+    useChatShortcutPrompt({
+      getPrefillContext: () => shortcutPrefillContext,
+    });
+
+  const shortcutSendPromptOptions = useMemo<ShortcutPromptOptions>(
+    () => ({
+      title: "Consulta ao chat",
+      description: "Informe o código do produto ou o texto da busca antes de enviar.",
+      confirmLabel: "Enviar pergunta",
+    }),
+    [],
+  );
+
+  const promptAndSendMessage = useCallback(
+    async (
+      params: PromptAndSendParams = {},
+      promptOptions: ShortcutPromptOptions = shortcutSendPromptOptions,
+    ) => {
+      const raw = (params.content ?? draft).trim();
+
+      if (!raw) {
+        return;
+      }
+
+      clearError();
+
+      const resolved = await resolveShortcutQuery(raw, promptOptions);
+
+      if (!resolved) {
+        if (params.content == null) {
+          setDraft(raw);
+        }
+
+        return;
+      }
+
+      if (params.content == null) {
+        setDraft("");
+      }
+
+      await sendMessage({ ...params, content: resolved });
+    },
+    [clearError, draft, resolveShortcutQuery, sendMessage, setDraft, shortcutSendPromptOptions],
+  );
 
   useEffect(() => {
-    resolveShortcutQueryRef.current = resolveShortcutQuery;
-    sendMessageRef.current = sendMessage;
-    clearErrorRef.current = clearError;
-  }, [resolveShortcutQuery, sendMessage, clearError]);
+    promptAndSendMessageRef.current = promptAndSendMessage;
+    isShortcutPromptOpenRef.current = isShortcutPromptOpen;
+  }, [isShortcutPromptOpen, promptAndSendMessage]);
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1137,53 +1182,6 @@ export function ChatPage({
     );
   }
 
-  const sendResolvedMessage = useCallback(
-    async (
-      params: {
-        content?: string;
-        attachments?: File[];
-        attachmentIds?: string[];
-        attachmentPreview?: {
-          id: string;
-          original_filename: string;
-          size_bytes: number;
-          content_type: string | null;
-          status: string;
-          parsed?: boolean;
-          readingStatus?: string;
-        }[];
-      } = {},
-      promptOptions?: {
-        title?: string;
-        description?: string;
-        confirmLabel?: string;
-      },
-    ) => {
-      const raw = (params.content ?? draft).trim();
-
-      if (!raw) {
-        return;
-      }
-
-      const resolved = await resolveShortcutQuery(raw, promptOptions);
-
-      if (!resolved) {
-        if (params.content == null) {
-          setDraft(raw);
-        }
-
-        return;
-      }
-
-      if (params.content == null) {
-        setDraft("");
-      }
-
-      await sendMessage({ ...params, content: resolved });
-    },
-    [draft, resolveShortcutQuery, sendMessage, setDraft],
-  );
-
   async function handleSubmitMessage() {
     const presetIds = composerAttachments
       .map((attachment) => attachment.serverAttachmentId)
@@ -1205,7 +1203,7 @@ export function ChatPage({
 
     setComposerAttachments([]);
 
-    await sendResolvedMessage({
+    await promptAndSendMessage({
       attachments: pendingFiles.length > 0 ? pendingFiles : undefined,
       attachmentIds: presetIds.length > 0 ? presetIds : undefined,
       attachmentPreview: attachmentPreview.length > 0 ? attachmentPreview : undefined,
@@ -1213,7 +1211,7 @@ export function ChatPage({
   }
 
   function handleDrillDown(query: string) {
-    void sendResolvedMessage(
+    void promptAndSendMessage(
       { content: query },
       {
         title: "Preencha para continuar",
@@ -1224,14 +1222,7 @@ export function ChatPage({
   }
 
   function handleHomeStarter(query: string) {
-    void sendResolvedMessage(
-      { content: query },
-      {
-        title: "Consulta ao chat",
-        description: "Informe o código do produto ou o texto da busca antes de enviar.",
-        confirmLabel: "Enviar pergunta",
-      },
-    );
+    void promptAndSendMessage({ content: query });
   }
 
   async function handleHelpTryPrompt(query: string) {
@@ -1754,7 +1745,7 @@ export function ChatPage({
                 }
 
                 if (lastSentUserText.trim()) {
-                  void sendResolvedMessage({ content: lastSentUserText.trim() });
+                  void promptAndSendMessage({ content: lastSentUserText.trim() });
                 }
               }}
               onDismiss={() => {

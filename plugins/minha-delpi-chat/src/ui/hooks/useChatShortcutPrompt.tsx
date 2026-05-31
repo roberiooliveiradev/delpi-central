@@ -19,24 +19,37 @@ type PendingShortcutPrompt = {
   resolve: (query: string | null) => void;
 };
 
+export type ShortcutPromptOptions = {
+  title?: string;
+  description?: string;
+  confirmLabel?: string;
+};
+
 type UseChatShortcutPromptOptions = {
   getPrefillContext?: () => ShortcutPrefillContext;
 };
 
 export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}) {
   const [pending, setPending] = useState<PendingShortcutPrompt | null>(null);
+  const pendingRef = useRef<PendingShortcutPrompt | null>(null);
+  const isOpenRef = useRef(false);
   const getPrefillContextRef = useRef(options.getPrefillContext);
   getPrefillContextRef.current = options.getPrefillContext;
 
+  const closePending = useCallback((result: string | null) => {
+    const current = pendingRef.current;
+
+    if (current) {
+      current.resolve(result);
+    }
+
+    pendingRef.current = null;
+    isOpenRef.current = false;
+    setPending(null);
+  }, []);
+
   const resolveShortcutQuery = useCallback(
-    (
-      rawQuery: string,
-      promptOptions?: {
-        title?: string;
-        description?: string;
-        confirmLabel?: string;
-      },
-    ) => {
+    (rawQuery: string, promptOptions?: ShortcutPromptOptions) => {
       const template = normalizeShortcutTemplate(rawQuery.trim());
 
       if (!template) {
@@ -56,18 +69,28 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
       const prefill: ShortcutPrefillContext = getPrefillContextRef.current?.() ?? {};
 
       return new Promise<string | null>((resolve) => {
-        setPending({
+        if (pendingRef.current) {
+          pendingRef.current.resolve(null);
+        }
+
+        const entry: PendingShortcutPrompt = {
           template,
           title: promptOptions?.title,
           description: promptOptions?.description,
           confirmLabel: promptOptions?.confirmLabel,
           prefill,
           resolve,
-        });
+        };
+
+        pendingRef.current = entry;
+        isOpenRef.current = true;
+        setPending(entry);
       });
     },
     [],
   );
+
+  const isShortcutPromptOpen = useCallback(() => isOpenRef.current, []);
 
   const dialog = useMemo(() => {
     if (!pending) {
@@ -82,6 +105,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
 
     return (
       <ChatShortcutPromptDialog
+        key={pending.template}
         open
         template={pending.template}
         title={pending.title}
@@ -89,19 +113,13 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
         confirmLabel={pending.confirmLabel}
         fields={fields}
         initialValues={initialValues}
-        onCancel={() => {
-          pending.resolve(null);
-          setPending(null);
-        }}
-        onConfirm={(filledQuery) => {
-          pending.resolve(filledQuery);
-          setPending(null);
-        }}
+        onCancel={() => closePending(null)}
+        onConfirm={(filledQuery) => closePending(filledQuery)}
       />
     );
-  }, [pending]);
+  }, [closePending, pending]);
 
-  return { resolveShortcutQuery, shortcutPromptDialog: dialog };
+  return { resolveShortcutQuery, shortcutPromptDialog: dialog, isShortcutPromptOpen };
 }
 
 export function useShortcutPrefillFromChips(

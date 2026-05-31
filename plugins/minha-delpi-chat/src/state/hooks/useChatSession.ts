@@ -63,6 +63,8 @@ type UseChatSessionOptions = {
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   /** Abre o diálogo de preenchimento quando a mensagem ainda tem `{{placeholders}}`. */
   onShortcutPromptRequired?: (template: string) => void;
+  /** Evita reabrir o diálogo enquanto o usuário já está preenchendo. */
+  isShortcutPromptOpen?: () => boolean;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -90,6 +92,8 @@ function createOptimisticUserMessage(
 export function useChatSession(options: UseChatSessionOptions = {}) {
   const onShortcutPromptRequiredRef = useRef(options.onShortcutPromptRequired);
   onShortcutPromptRequiredRef.current = options.onShortcutPromptRequired;
+  const isShortcutPromptOpenRef = useRef(options.isShortcutPromptOpen);
+  isShortcutPromptOpenRef.current = options.isShortcutPromptOpen;
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [archivedSessions, setArchivedSessions] = useState<ChatSession[]>([]);
@@ -1139,18 +1143,22 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     if (hasUnresolvedShortcutPlaceholders(message)) {
+      if (isShortcutPromptOpenRef.current?.()) {
+        return;
+      }
+
       if (fromDraft) {
         setDraft(message);
       }
 
       if (onShortcutPromptRequiredRef.current) {
         onShortcutPromptRequiredRef.current(message);
-      } else {
-        setError(
-          "Preencha o código ou os campos da pergunta no diálogo dos atalhos antes de enviar.",
-        );
+        return;
       }
 
+      setError(
+        "Preencha o código ou os campos da pergunta no diálogo dos atalhos antes de enviar.",
+      );
       return;
     }
 

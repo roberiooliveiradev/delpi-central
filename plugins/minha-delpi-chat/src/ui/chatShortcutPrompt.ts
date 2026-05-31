@@ -26,8 +26,8 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
     label: "Código do produto",
     placeholder: "Ex.: 10080001",
     inputMode: "numeric",
-    pattern: /^\d{5,9}$/,
-    patternHint: "Informe um código numérico (5 a 9 dígitos).",
+    pattern: /^\d{4,12}$/,
+    patternHint: "Informe um código numérico (4 a 12 dígitos).",
   },
   searchQuery: {
     id: "searchQuery",
@@ -198,7 +198,7 @@ export function extractProductCodeFromContextChips(
 
     const normalized = String(chip.value ?? "").replace(/\./g, "").trim();
 
-    if (/^\d{5,9}$/.test(normalized)) {
+    if (/^\d{4,12}$/.test(normalized)) {
       return normalized;
     }
   }
