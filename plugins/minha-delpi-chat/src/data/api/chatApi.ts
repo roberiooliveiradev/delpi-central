@@ -937,11 +937,18 @@ export async function transferChatAgentOwnership(
 
 export async function getChatAgentStats(
   agentId: string,
-  options: ChatApiOptions & { hours?: number } = {},
+  options: ChatApiOptions & {
+    hours?: number;
+    specialization?: { enabled: boolean; allowedTools?: string[] };
+  } = {},
 ): Promise<ChatAgentStats> {
   const params = new URLSearchParams({
     hours: String(options.hours ?? 168),
   });
+
+  if (options.specialization) {
+    params.set("specialization", JSON.stringify(options.specialization));
+  }
   const response = await fetch(`${API_BASE_URL}/chat/agents/${agentId}/stats?${params}`, {
     method: "GET",
     headers: await getAuthHeaders(options),

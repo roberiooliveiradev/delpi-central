@@ -12,6 +12,9 @@ from app.application.services.chat_agent_config_snapshot_service import (
     has_unpublished_changes,
     normalize_draft_payload,
 )
+from app.application.services.chat_agent_mini_dashboard_service import (
+    ChatAgentMiniDashboardService,
+)
 from app.domain.entities.chat_agent import ChatAgent
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
@@ -343,6 +346,7 @@ class GetChatAgentStatsUseCase:
         user_id: str,
         agent_id: str,
         hours: int = 168,
+        specialization: dict | None = None,
     ) -> dict | None:
         record = self.repository.get_accessible_by_id(UUID(agent_id), UUID(user_id))
 
@@ -356,11 +360,22 @@ class GetChatAgentStatsUseCase:
                 "You do not have permission to view agent statistics"
             )
 
-        return self.repository.get_usage_stats(
+        stats = self.repository.get_usage_stats(
             UUID(agent_id),
             UUID(user_id),
             hours=hours,
         )
+
+        if not stats:
+            return None
+
+        stats["miniDashboard"] = ChatAgentMiniDashboardService.build_dashboard(stats)
+        stats["recommendations"] = ChatAgentMiniDashboardService.build_recommendations(
+            stats,
+            specialization=specialization,
+        )
+
+        return stats
 
 
 class ListChatAgentSharesUseCase:

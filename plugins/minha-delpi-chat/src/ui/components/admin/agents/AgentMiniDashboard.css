@@ -1,0 +1,29 @@
+.mdc-agent-mini-dashboard {
+  display: grid;
+  gap: var(--mdc-space-4, 1rem);
+}
+
+.mdc-agent-mini-dashboard .mdc-rich-dashboard__grid {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.mdc-agent-mini-dashboard__recommendations {
+  padding: 0.75rem 1rem;
+  border-radius: var(--mdc-radius-md, 8px);
+  border: 1px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 18%, transparent);
+  background: color-mix(in srgb, var(--mdc-primary, #2563eb) 6%, transparent);
+}
+
+.mdc-agent-mini-dashboard__recommendations h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+}
+
+.mdc-agent-mini-dashboard__recommendations ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  color: var(--mdc-text-muted, #5c6578);
+}

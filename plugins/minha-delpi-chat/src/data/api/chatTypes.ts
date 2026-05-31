@@ -643,6 +643,8 @@ export type ChatAgentStats = {
   totalSessions: number;
   actionProvidersCount: number;
   sharesCount: number;
+  miniDashboard?: Extract<ChatPresentation, { type: "dashboard" }>;
+  recommendations?: string[];
 };
 
 export type ChatDirectoryUser = {

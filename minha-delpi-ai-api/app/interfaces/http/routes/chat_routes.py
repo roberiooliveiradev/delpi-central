@@ -637,6 +637,19 @@ def import_agent():
 @require_permission(CHAT_TOOLS_MANAGE_PERMISSION)
 def get_agent_stats(agent_id: str):
     hours = request.args.get("hours", 168)
+    specialization = None
+    spec_raw = request.args.get("specialization")
+
+    if spec_raw:
+        try:
+            import json
+
+            parsed = json.loads(spec_raw)
+
+            if isinstance(parsed, dict):
+                specialization = parsed
+        except (TypeError, ValueError):
+            return bad_request("specialization must be valid JSON")
 
     try:
         hours_value = int(hours)
@@ -650,6 +663,7 @@ def get_agent_stats(agent_id: str):
             user_id=g.current_user.sub,
             agent_id=agent_id,
             hours=hours_value,
+            specialization=specialization,
         )
     except ChatAgentPermissionDeniedError as exc:
         return forbidden(str(exc))

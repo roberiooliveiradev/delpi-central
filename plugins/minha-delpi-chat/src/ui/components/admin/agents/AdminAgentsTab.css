@@ -1,3 +1,5 @@
+@import "./AgentMiniDashboard.css";
+
 .mdc-admin-agents {
   display: grid;
   gap: var(--mdc-space-4);

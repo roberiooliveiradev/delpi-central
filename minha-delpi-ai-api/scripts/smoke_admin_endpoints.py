@@ -102,6 +102,37 @@ def main() -> int:
             failed += 1
 
     try:
+        specialized = _request("GET", "/admin/agents/specialized", token=token)
+        items = specialized.get("items") if isinstance(specialized, dict) else []
+
+        if items and isinstance(items[0], dict) and items[0].get("id"):
+            agent_id = str(items[0]["id"])
+            stats = _request(
+                "GET",
+                f"/chat/agents/{agent_id}/stats?hours=168",
+                token=token,
+            )
+
+            if (
+                isinstance(stats, dict)
+                and stats.get("miniDashboard", {}).get("type") == "dashboard"
+                and isinstance(stats.get("recommendations"), list)
+                and len(stats["recommendations"]) >= 1
+            ):
+                print(f"OK GET /chat/agents/{agent_id}/stats miniDashboard")
+            else:
+                print(
+                    "WARN stats: miniDashboard/recommendations ausentes (rebuild API?)",
+                    file=sys.stderr,
+                )
+        else:
+            print("SKIP stats: nenhum agente especializado para testar")
+    except urllib.error.HTTPError as err:
+        print(f"WARN agent stats: HTTP {err.code}", file=sys.stderr)
+    except urllib.error.URLError as err:
+        print(f"WARN agent stats: {err}", file=sys.stderr)
+
+    try:
         simulate = _request(
             "POST",
             "/admin/agent/simulate",

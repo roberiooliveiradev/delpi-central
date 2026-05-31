@@ -88,3 +88,5 @@ def test_get_agent_stats_delegates_to_repository():
     repository.get_usage_stats.assert_called_once()
     assert repository.get_usage_stats.call_args.kwargs["hours"] == 24
     assert result["sessionsInWindow"] == 2
+    assert result["miniDashboard"]["type"] == "dashboard"
+    assert len(result["recommendations"]) >= 1

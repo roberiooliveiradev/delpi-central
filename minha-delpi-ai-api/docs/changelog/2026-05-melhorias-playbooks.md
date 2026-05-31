@@ -360,6 +360,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
 | OCR imagem | `ChatAttachmentImageOcrService` (Tesseract opcional); preview com `ocr`/`ocrExcerpt` quando há texto |
 
+## Gráficos — mini dashboard por agente (Fase 4)
+
+| Item | Entrega |
+|------|---------|
+| API | `miniDashboard` + `recommendations` em `GET /chat/agents/{id}/stats` |
+| Serviço | `ChatAgentMiniDashboardService` (KPI + gráfico de barras + até 4 recomendações) |
+| MFE | `AgentMiniDashboard` no admin (Agentes) e no builder |
+
 ## Admin UX — 6 seções (Playbook 11)
 
 | Item | Entrega |

@@ -17,6 +17,7 @@ import type {
   AdminSpecializedAgent,
 } from "../../../../data/api/adminTypes";
 
+import { AgentMiniDashboard } from "./AgentMiniDashboard";
 import { AgentsSummaryStrip } from "./AgentsSummaryStrip";
 import {
   computeAgentsSummary,
@@ -145,6 +146,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
         const stats = await getChatAgentStats(selectedAgentId, {
           getAccessToken,
           hours: 168,
+          specialization: form.enabled
+            ? {
+                enabled: true,
+                allowedTools: form.allowedTools ?? [],
+              }
+            : { enabled: false, allowedTools: [] },
         });
 
         if (isMounted) {
@@ -166,7 +173,7 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
     return () => {
       isMounted = false;
     };
-  }, [getAccessToken, selectedAgentId]);
+  }, [form.allowedTools, form.enabled, getAccessToken, selectedAgentId]);
 
   function applyPreset(presetKey: string) {
     const preset = presets.find((item) => item.key === presetKey);
@@ -333,25 +340,12 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                 </div>
                 {isLoadingStats ? (
                   <p className="mdc-chat-muted">Carregando estatísticas...</p>
+                ) : agentStats?.miniDashboard ? (
+                  <AgentMiniDashboard stats={agentStats} />
                 ) : agentStats ? (
-                  <div className="mdc-admin-agents__stats-grid">
-                    <article>
-                      <strong>{agentStats.sessionsInWindow}</strong>
-                      <small>Conversas no período</small>
-                    </article>
-                    <article>
-                      <strong>{agentStats.messagesInWindow}</strong>
-                      <small>Mensagens no período</small>
-                    </article>
-                    <article>
-                      <strong>{agentStats.totalSessions}</strong>
-                      <small>Total de conversas</small>
-                    </article>
-                    <article>
-                      <strong>{agentStats.actionProvidersCount}</strong>
-                      <small>APIs/actions</small>
-                    </article>
-                  </div>
+                  <p className="mdc-chat-muted">
+                    Estatísticas disponíveis, mas o painel visual não foi retornado pela API.
+                  </p>
                 ) : (
                   <p className="mdc-chat-muted">Sem dados de uso no período.</p>
                 )}

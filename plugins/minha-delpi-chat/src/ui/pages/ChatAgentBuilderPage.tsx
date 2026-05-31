@@ -74,6 +74,8 @@ import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
+import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
+import "../components/admin/agents/AgentMiniDashboard.css";
 
 import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
 import "./ChatAgentBuilderPage.css";
@@ -2016,25 +2018,10 @@ export function ChatAgentBuilderPage({
 
               {isLoadingStats ? (
                 <p className="mdc-chat-muted">Carregando estatísticas...</p>
+              ) : agentStats?.miniDashboard ? (
+                <AgentMiniDashboard stats={agentStats} />
               ) : agentStats ? (
-                <div className="mdc-chat-agent-builder__stats-grid">
-                  <article>
-                    <strong>{agentStats.sessionsInWindow}</strong>
-                    <small>Conversas no período</small>
-                  </article>
-                  <article>
-                    <strong>{agentStats.messagesInWindow}</strong>
-                    <small>Mensagens no período</small>
-                  </article>
-                  <article>
-                    <strong>{agentStats.totalSessions}</strong>
-                    <small>Total de conversas</small>
-                  </article>
-                  <article>
-                    <strong>{agentStats.actionProvidersCount}</strong>
-                    <small>APIs/actions vinculadas</small>
-                  </article>
-                </div>
+                <p className="mdc-chat-muted">Estatísticas sem painel visual (atualize a API).</p>
               ) : (
                 <p className="mdc-chat-muted">Sem dados de uso no período.</p>
               )}
