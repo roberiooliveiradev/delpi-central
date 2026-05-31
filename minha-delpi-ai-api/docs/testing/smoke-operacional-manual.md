@@ -18,6 +18,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 |--------|---------------------------------------------|
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
+| Templates de atalhos (sem código fixo) | `python scripts/smoke_shortcut_placeholders.py` |
 | Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
 

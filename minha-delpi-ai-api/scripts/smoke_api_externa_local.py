@@ -50,6 +50,7 @@ def main() -> int:
     pause = int(os.environ.get("SMOKE_RATE_LIMIT_PAUSE", "65"))
 
     scripts = [
+        ("shortcut placeholders", "scripts/smoke_shortcut_placeholders.py"),
         ("operational routing", "scripts/smoke_operational_routing.py"),
         ("follow-up chips", "scripts/smoke_follow_up_chips.py"),
     ]
