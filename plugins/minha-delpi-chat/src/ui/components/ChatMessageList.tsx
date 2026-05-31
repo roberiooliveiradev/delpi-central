@@ -1431,6 +1431,16 @@ export function ChatMessageList({
                 />
                 <ChatFollowUpChips
                   suggestions={
+                    (message.metadata?.textCorrectionFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Refinar texto"
+                  ariaLabel="Ações sugeridas após correção de texto"
+                />
+                <ChatFollowUpChips
+                  suggestions={
                     (message.metadata?.emailFollowUpSuggestions as
                       | ChatFollowUpSuggestion[]
                       | undefined) ?? []
@@ -1482,6 +1492,33 @@ export function ChatMessageList({
                         <Copy size={15} aria-hidden="true" />
                       )}
                       <span>E-mail</span>
+                    </button>
+                  </div>
+                ) : null}
+                {(message.metadata?.textTask as { type?: string } | undefined)?.type ===
+                "correction" ? (
+                  <div className="mdc-chat-drawing-export">
+                    <button
+                      type="button"
+                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                      onClick={() => void handleCopy(message.id, message.content)}
+                      aria-label={
+                        copiedMessageId === message.id
+                          ? "Texto copiado"
+                          : "Copiar texto corrigido"
+                      }
+                      title={
+                        copiedMessageId === message.id
+                          ? "Texto copiado"
+                          : "Copiar versão corrigida"
+                      }
+                    >
+                      {copiedMessageId === message.id ? (
+                        <Check size={15} aria-hidden="true" />
+                      ) : (
+                        <Copy size={15} aria-hidden="true" />
+                      )}
+                      <span>Texto</span>
                     </button>
                   </div>
                 ) : null}

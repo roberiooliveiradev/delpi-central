@@ -37,7 +37,18 @@
     { "id": "email_invented_signature", "label": "Inventou assinatura" },
     { "id": "email_invented_info", "label": "Inventou informação no e-mail" },
     { "id": "email_weak_subject", "label": "Assunto ruim" },
-    { "id": "email_too_generic", "label": "E-mail muito genérico" }
+    { "id": "email_too_generic", "label": "E-mail muito genérico" },
+    { "id": "text_correction_changed_meaning", "label": "Mudou o sentido" },
+    { "id": "text_correction_over_corrected", "label": "Corrigiu demais" },
+    { "id": "text_correction_under_corrected", "label": "Corrigiu de menos" },
+    { "id": "text_correction_style_lost", "label": "Não preservou meu estilo" },
+    { "id": "text_correction_artificial", "label": "Texto ficou artificial" },
+    { "id": "text_correction_too_formal", "label": "Formal demais" },
+    { "id": "text_correction_too_informal", "label": "Informal demais" },
+    { "id": "text_correction_missed_error", "label": "Não corrigiu erro importante" },
+    { "id": "text_correction_altered_code", "label": "Alterou código ou nome" },
+    { "id": "text_correction_over_explained", "label": "Explicou demais" },
+    { "id": "text_correction_under_explained", "label": "Faltou explicar alterações" }
   ],
   "feedbackThanks": {
     "up": [
@@ -91,6 +102,28 @@
     "Traduzir para inglês",
     "Colocar na lousa"
   ],
+  "textCorrectionFollowUpChips": [
+    "Deixar mais formal",
+    "Deixar mais curto",
+    "Deixar mais claro",
+    "Mostrar alterações",
+    "Transformar em e-mail",
+    "Transformar em comunicado",
+    "Traduzir para inglês",
+    "Colocar na lousa",
+    "Copiar texto"
+  ],
+  "textCorrectionFollowUpQueries": {
+    "Deixar mais formal": "deixe o texto corrigido anterior mais formal, mantendo o sentido",
+    "Deixar mais curto": "deixe o texto corrigido anterior mais curto",
+    "Deixar mais claro": "deixe o texto corrigido anterior mais claro",
+    "Mostrar alterações": "mostre o texto anterior antes e depois e liste o que mudou",
+    "Transformar em e-mail": "transforme o texto corrigido anterior em um e-mail formal",
+    "Transformar em comunicado": "transforme o texto corrigido anterior em um comunicado interno",
+    "Traduzir para inglês": "traduza o texto corrigido anterior para inglês corporativo",
+    "Colocar na lousa": "coloque o texto corrigido anterior na lousa",
+    "Copiar texto": "repita só a versão final corrigida do texto anterior"
+  },
   "emailFollowUpQueries": {
     "Deixar mais formal": "deixe o e-mail anterior mais formal, mantendo o mesmo objetivo",
     "Deixar mais curto": "deixe o e-mail anterior mais curto sem perder o pedido principal",

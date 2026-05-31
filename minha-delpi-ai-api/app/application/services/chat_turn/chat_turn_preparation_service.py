@@ -79,6 +79,8 @@ class ChatTurnPreparationResult:
     text_task_category: str | None = None
     email_writing_mode: bool = False
     email_subtype: str | None = None
+    text_correction_mode: bool = False
+    text_correction_subtype: str | None = None
     intent_route: dict | None = None
 
 
@@ -369,6 +371,27 @@ class ChatTurnPreparationService:
             workspace_context["emailSubtype"] = email_subtype
             if "email_writing" not in pipeline_stages:
                 pipeline_stages.append("email_writing")
+
+        from app.domain.services.chat_text_correction_intent_service import (
+            ChatTextCorrectionIntentService,
+        )
+
+        text_correction_mode = bool(
+            text_task_pure
+            and not email_writing_mode
+            and ChatTextCorrectionIntentService.is_text_correction(message)
+        )
+        text_correction_subtype = (
+            ChatTextCorrectionIntentService.classify_subtype(message)
+            if text_correction_mode
+            else None
+        )
+
+        if text_correction_mode:
+            workspace_context["textCorrectionMode"] = True
+            workspace_context["textCorrectionSubtype"] = text_correction_subtype
+            if "text_correction" not in pipeline_stages:
+                pipeline_stages.append("text_correction")
 
         memory_prompt = ChatWorkingMemoryService.format_prompt_block(working_memory_snapshot)
         base_conversation_context = (
@@ -942,6 +965,8 @@ class ChatTurnPreparationService:
             text_task_category=text_task_category if text_task_pure else None,
             email_writing_mode=bool(email_writing_mode),
             email_subtype=email_subtype,
+            text_correction_mode=bool(text_correction_mode),
+            text_correction_subtype=text_correction_subtype,
             intent_route=intent_route,
         )
 

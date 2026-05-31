@@ -100,7 +100,9 @@ class ChatPromptBuilderService:
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
         email_writing_mode: bool = False,
+        text_correction_mode: bool = False,
         email_prompt_supplement: str | None = None,
+        text_correction_prompt_supplement: str | None = None,
         text_task_attachment_context: str | None = None,
         user_context: str | None = None,
         skills: dict | None = None,
@@ -113,6 +115,7 @@ class ChatPromptBuilderService:
             data_interpretation_mode=data_interpretation_mode,
             text_task_mode=text_task_mode,
             email_writing_mode=email_writing_mode,
+            text_correction_mode=text_correction_mode,
             skills=skills,
         )
         base_prompt += self._assistant_identity_policy_addon(current_message)
@@ -131,6 +134,9 @@ class ChatPromptBuilderService:
 
         if email_writing_mode and str(email_prompt_supplement or "").strip():
             base_prompt = f"{base_prompt}\n\n{email_prompt_supplement.strip()}"
+
+        if text_correction_mode and str(text_correction_prompt_supplement or "").strip():
+            base_prompt = f"{base_prompt}\n\n{text_correction_prompt_supplement.strip()}"
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

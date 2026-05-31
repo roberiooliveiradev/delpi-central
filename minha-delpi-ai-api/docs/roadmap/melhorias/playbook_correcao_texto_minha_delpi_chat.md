@@ -2,9 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Habilidade nativa:** correção, revisão e melhoria textual no chat comum  
-**Status implementação:** Documentado — **Fase 1 parcial** (roteamento `text_task` + categoria `correct`); Fases 2–5 e métricas em backlog — maio/2026  
-**Código vigente:** `ChatTextTaskIntentService`, policy `administrative-writing.md`, estágio `text_task` no pipeline, `smoke_text_task_routing.py`  
-**Código alvo:** `ChatTextCorrectionIntentService` (subtipos), `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionTurnService`, chips `textCorrectionFollowUpSuggestions`, memória `behaviorInstructions.textCorrection`
+**Status implementação:** Fases **1–4** (subtipos, policy, validador, chips MFE, copiar texto) — maio/2026; Fase **5** memória de preferências e métricas em backlog  
+**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionTurnService`, `ChatTextCorrectionFollowUpService`, policy `text-correction.md`, `smoke_text_correction.py`, `run_text_correction_validation.sh`
 
 **Objetivo:** fazer o chat corrigir textos com qualidade profissional, preservando sentido, tom, intenção e contexto do usuário.
 
@@ -512,10 +511,10 @@ Motivos em `personality_playbook.json` (alvo):
 
 | Fase | Escopo | Status |
 |------|--------|--------|
-| **1 — Correção básica nativa** | Detectar intenção `correct`; não acionar tools; policy `administrative-writing.md`; preservar códigos/nomes; entregar versão corrigida | **Parcial** |
-| **2 — Modos de correção** | Subtipos (só corrigir, explicar, antes/depois, estilo, formal, simples, profissional) | Planejado |
-| **3 — Validador** | `ChatTextCorrectionQualityValidator`; risco de mudança de sentido | Planejado |
-| **4 — Interatividade** | Chips pós-correção; copiar; lousa; anexo | Planejado |
+| **1 — Correção básica nativa** | Detectar intenção `correct`; não acionar tools; policies `administrative-writing.md` + `text-correction.md`; preservar códigos/nomes | **Concluída** |
+| **2 — Modos de correção** | Subtipos (`text_correct_*`, `text_rewrite`, `text_review_quality`) | **Concluída** |
+| **3 — Validador** | `ChatTextCorrectionQualityValidator` + guard pós-LLM | **Concluída** |
+| **4 — Interatividade** | Chips `textCorrectionFollowUpSuggestions`; botão copiar no MFE | **Concluída** |
 | **5 — Memória** | Preferências de sessão («só versão final», etc.) | Planejado |
 | **6 — Métricas** | Uso, feedback, chips, lousa (§23) | Backlog opcional |
 

@@ -266,12 +266,20 @@ class SendChatMessageUseCase:
                 analysis_mode=analysis_mode,
             )
             from app.application.services.chat_email_turn_service import ChatEmailTurnService
+            from app.application.services.chat_text_correction_turn_service import (
+                ChatTextCorrectionTurnService,
+            )
 
             email_supplement = ChatEmailTurnService.build_prompt_supplement(
                 message=message,
                 workspace_context=workspace_context,
                 email_writing_mode=bool(prepared.email_writing_mode),
                 email_subtype=prepared.email_subtype,
+            )
+            correction_supplement = ChatTextCorrectionTurnService.build_prompt_supplement(
+                message=message,
+                text_correction_mode=bool(prepared.text_correction_mode),
+                text_correction_subtype=prepared.text_correction_subtype,
             )
 
             llm_messages = self.prompt_builder_service.build_messages(
@@ -297,7 +305,9 @@ class SendChatMessageUseCase:
                 ),
                 text_task_mode=bool(prepared.text_task_mode),
                 email_writing_mode=bool(prepared.email_writing_mode),
+                text_correction_mode=bool(prepared.text_correction_mode),
                 email_prompt_supplement=email_supplement,
+                text_correction_prompt_supplement=correction_supplement,
                 text_task_attachment_context=self._build_attachment_context(
                     user_id=user_id,
                     session_id=session_id,
@@ -340,8 +350,16 @@ class SendChatMessageUseCase:
             answer = self.llm_gateway.generate(llm_messages)
 
         from app.application.services.chat_email_turn_service import ChatEmailTurnService
+        from app.application.services.chat_text_correction_turn_service import (
+            ChatTextCorrectionTurnService,
+        )
 
         answer, email_guard_meta = ChatEmailTurnService.finalize_answer(
+            answer,
+            message=request.message,
+            workspace_context=workspace_context,
+        )
+        answer, correction_guard_meta = ChatTextCorrectionTurnService.finalize_answer(
             answer,
             message=request.message,
             workspace_context=workspace_context,
@@ -538,6 +556,14 @@ class SendChatMessageUseCase:
             workspace_context=workspace_context,
             tool_context=tool_context,
             guard_meta=email_guard_meta,
+        )
+
+        ChatTextCorrectionTurnService.attach_follow_up_metadata(
+            assistant_metadata,
+            message=request.message,
+            answer=answer,
+            workspace_context=workspace_context,
+            guard_meta=correction_guard_meta,
         )
 
         from app.application.services.chat_document_vision_metrics_service import (

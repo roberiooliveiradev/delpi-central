@@ -166,6 +166,11 @@ Comportamento esperado:
 
     EMAIL_WRITING_POLICY_FALLBACK = """E-mails corporativos: assunto + corpo objetivo; não invente remetente, cargo, prazos ou valores; use [Seu nome] se assinatura não informada; evite frases artificiais."""
 
+    TEXT_CORRECTION_POLICY_FALLBACK = (
+        "Correção de texto: preserve sentido, códigos e nomes; "
+        "entregue versão corrigida; não consulte ERP neste turno."
+    )
+
     def build_system_prompt(self) -> str:
         base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
         context_engineering = self._load_policy(
@@ -276,6 +281,7 @@ Comportamento esperado:
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
         email_writing_mode: bool = False,
+        text_correction_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
@@ -294,6 +300,14 @@ Comportamento esperado:
                 self._load_policy(
                     "email-writing.md",
                     self.EMAIL_WRITING_POLICY_FALLBACK,
+                )
+            )
+
+        if text_correction_mode:
+            sections.append(
+                self._load_policy(
+                    "text-correction.md",
+                    self.TEXT_CORRECTION_POLICY_FALLBACK,
                 )
             )
 

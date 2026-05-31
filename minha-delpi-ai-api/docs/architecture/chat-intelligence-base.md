@@ -87,7 +87,7 @@ Mensagem do usuário
 | `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, Fase 4–5: agente, `userContext`, filtro por permissão de tools) |
 | `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills — KPIs, produto, match por path mais específico (`pathRulesVersion` 2026.06.02) |
 | `ChatTextTaskIntentService` | Tarefas textuais puras (correção, e-mail, resumo) — estágio `text_task`, sem tools/RAG |
-| Correção de texto (playbook) | [`playbook_correcao_texto_minha_delpi_chat.md`](../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md) — Fase 1 parcial; subtipos/validador planejados |
+| Correção de texto | [`text-correction.md`](./text-correction.md) — `ChatTextCorrectionIntentService`, validador, chips |
 | `ChatEmailIntentService` | Subintenções de e-mail (`email_create`, `email_formalize`, …) — estágio `email_writing` |
 | `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos, assunto fraco) → `emailQuality` |
 | `ChatEmailAnswerGuardService` | Sanitização soft (assinatura inventada, frases artificiais) antes de persistir |

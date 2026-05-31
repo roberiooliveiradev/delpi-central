@@ -375,6 +375,7 @@ export type ChatMessageMetadata = {
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
   drawingFollowUpSuggestions?: ChatFollowUpSuggestion[];
   emailFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  textCorrectionFollowUpSuggestions?: ChatFollowUpSuggestion[];
   textTask?: {
     type?: string;
     subtype?: string;

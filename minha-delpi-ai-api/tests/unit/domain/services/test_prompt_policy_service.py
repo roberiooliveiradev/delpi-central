@@ -166,6 +166,19 @@ def test_contextual_prompt_includes_api_delpi_routes_policy_when_tool_context_me
     assert "get_product_stock" in prompt or "/products/{code}/stock" in prompt
 
 
+def test_contextual_prompt_includes_text_correction_policy():
+    service = PromptPolicyService()
+
+    prompt = service.build_contextual_prompt(
+        rag_context="",
+        tool_context="",
+        text_task_mode=True,
+        text_correction_mode=True,
+    )
+
+    assert "correção" in prompt.lower() or "Correção de texto" in prompt
+
+
 def test_contextual_prompt_includes_session_knowledge_policy_for_attachment_context():
     service = PromptPolicyService()
 
