@@ -40,7 +40,8 @@ docker compose -f infra/docker-compose.dev.yml up -d minha-delpi-chat
 
 | Passo | Esperado |
 |-------|----------|
-| Home vazia → **Consultar produto** | Abre diálogo «Consulta ao chat» com campo **Código do produto** |
+| Home vazia (após skeleton) → **Consultar produto** | Abre diálogo «Consulta ao chat» com campo **Código do produto** (sem travar a aba) |
+| Home ao abrir | Skeleton de perfis/cards até o catálogo; não deve aparecer chips «Consultas e autoajuda» genéricos e depois sumir |
 | Preencher código → **Enviar pergunta** | Mensagem no histórico **sem** `{{productCode}}` |
 | Colar `me fale do produto {{productCode}}` no composer e Enter | Abre diálogo **Consulta ao chat** (não só banner de erro) |
 | **Tentar novamente** com texto incompleto | Reabre o diálogo com o campo de código |

@@ -5,21 +5,16 @@ import type {
   AssistantContextualHighlight,
   AssistantOnboardingPayload,
 } from "../../data/api/chatTypes";
-import {
-  CHAT_OPERATIONAL_HOME_STARTERS,
-  CHAT_TEXT_HOME_STARTERS,
-  type ChatHomeStarter,
-} from "../chatHomeStarters";
 import { splitWelcomeHeadline } from "../welcomeHeadline";
 
 import "./ChatEmptyState.css";
 
 type ChatEmptyStateProps = {
   displayName?: string | null;
-  starters?: ChatHomeStarter[];
-  textStarters?: ChatHomeStarter[];
   contextualHighlights?: AssistantContextualHighlight[];
   onboarding?: AssistantOnboardingPayload | null;
+  catalogLoading?: boolean;
+  catalogError?: boolean;
   selectedProfileId?: string | null;
   onSelectProfile?: (profileId: string) => void;
   onUseStarter?: (query: string) => void;
@@ -58,10 +53,10 @@ function pickGreeting(firstName: string | null): string {
 
 export function ChatEmptyState({
   displayName,
-  starters = CHAT_OPERATIONAL_HOME_STARTERS,
-  textStarters = CHAT_TEXT_HOME_STARTERS,
   contextualHighlights = [],
   onboarding,
+  catalogLoading = false,
+  catalogError = false,
   selectedProfileId,
   onSelectProfile,
   onUseStarter,
@@ -78,11 +73,13 @@ export function ChatEmptyState({
     () => (welcomeTitle ? splitWelcomeHeadline(welcomeTitle) : null),
     [welcomeTitle],
   );
-  const showOnboardingCards = starterCards.length > 0 && Boolean(onUseStarter);
-  const showOperational =
-    Boolean(onUseStarter) && starters.length > 0 && !showOnboardingCards;
-  const showTextStarters =
-    Boolean(onUseStarter) && textStarters.length > 0 && !showOnboardingCards;
+  const showOnboardingCards =
+    !catalogLoading &&
+    starterCards.length > 0 &&
+    Boolean(onUseStarter);
+  const showCatalogSkeleton = catalogLoading;
+  const showCatalogError =
+    !catalogLoading && catalogError && starterCards.length === 0;
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
@@ -114,7 +111,18 @@ export function ChatEmptyState({
         ) : null}
       </div>
 
-      {profiles.length > 0 && onSelectProfile ? (
+      {showCatalogSkeleton ? (
+        <div
+          className="mdc-chat-empty-state__skeleton"
+          aria-busy="true"
+          aria-label="Carregando sugestões"
+        >
+          <div className="mdc-chat-empty-state__skeleton-profiles" />
+          <div className="mdc-chat-empty-state__skeleton-cards" />
+        </div>
+      ) : null}
+
+      {!catalogLoading && profiles.length > 0 && onSelectProfile ? (
         <div
           className="mdc-chat-empty-state__profiles"
           role="tablist"
@@ -139,6 +147,12 @@ export function ChatEmptyState({
             </button>
           ))}
         </div>
+      ) : null}
+
+      {showCatalogError ? (
+        <p className="mdc-chat-empty-state__catalog-error">
+          Não foi possível carregar as sugestões. Use o campo abaixo ou tente recarregar a página.
+        </p>
       ) : null}
 
       {showOnboardingCards ? (
@@ -186,50 +200,6 @@ export function ChatEmptyState({
         </div>
       ) : null}
 
-      {showOperational ? (
-        <div className="mdc-chat-empty-state__section">
-          <p className="mdc-chat-empty-state__section-label">Consultas e autoajuda</p>
-          <div
-            className="mdc-chat-empty-state__starters"
-            role="group"
-            aria-label="Sugestões operacionais"
-          >
-            {starters.map((starter) => (
-              <button
-                key={starter.query}
-                type="button"
-                className="mdc-chat-empty-state__chip"
-                onClick={() => onUseStarter?.(starter.query)}
-              >
-                {starter.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {showTextStarters ? (
-        <div className="mdc-chat-empty-state__section">
-          <p className="mdc-chat-empty-state__section-label">Textos</p>
-          <div
-            className="mdc-chat-empty-state__cards mdc-chat-empty-state__cards--text"
-            role="group"
-            aria-label="Sugestões de texto"
-          >
-            {textStarters.map((starter) => (
-              <button
-                key={starter.query}
-                type="button"
-                className="mdc-chat-empty-state__card mdc-chat-empty-state__card--text"
-                onClick={() => onUseStarter?.(starter.query)}
-              >
-                <strong>{starter.label}</strong>
-                <span>{starter.query}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </section>
   );
 }

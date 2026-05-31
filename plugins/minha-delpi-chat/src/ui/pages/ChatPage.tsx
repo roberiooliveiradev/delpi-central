@@ -23,7 +23,10 @@ import {
   useChatShortcutPrompt,
   type ShortcutPromptOptions,
 } from "../hooks/useChatShortcutPrompt";
-import { extractProductCodeFromContextChips } from "../chatShortcutPrompt";
+import {
+  extractProductCodeFromContextChips,
+  hasUnresolvedShortcutPlaceholders,
+} from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -121,6 +124,8 @@ export function ChatPage({
   const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
     null,
   );
+  const [homeCatalogLoading, setHomeCatalogLoading] = useState(true);
+  const [homeCatalogError, setHomeCatalogError] = useState(false);
   const [tourPlusMenuOpen, setTourPlusMenuOpen] = useState<boolean | null>(null);
   const [onboardingTourOpen, setOnboardingTourOpen] = useState(false);
   const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(() => {
@@ -163,6 +168,16 @@ export function ChatPage({
   >(async () => undefined);
   const isShortcutPromptOpenRef = useRef<() => boolean>(() => false);
   const shortcutPromptResolvingRef = useRef(false);
+  const homeStarterInFlightRef = useRef(false);
+  const resolveShortcutQueryRef = useRef<
+    (raw: string, options?: ShortcutPromptOptions) => Promise<string | null>
+  >(async () => null);
+  const shortcutSendPromptOptionsRef = useRef<ShortcutPromptOptions>({
+    title: "Consulta ao chat",
+    description: "Informe o código do produto ou o texto da busca antes de enviar.",
+    confirmLabel: "Enviar pergunta",
+  });
+  const catalogProfileSyncedRef = useRef(false);
 
   const {
     sessions,
@@ -234,7 +249,10 @@ export function ChatPage({
         return;
       }
 
-      void promptAndSendMessageRef.current({ content: template });
+      void resolveShortcutQueryRef.current(
+        template,
+        shortcutSendPromptOptionsRef.current,
+      );
     },
   });
 
@@ -316,6 +334,10 @@ export function ChatPage({
         setDraft("");
       }
 
+      if (hasUnresolvedShortcutPlaceholders(resolved)) {
+        return;
+      }
+
       await sendMessage({ ...params, content: resolved });
     },
     [clearError, draft, resolveShortcutQuery, sendMessage, setDraft, shortcutSendPromptOptions],
@@ -324,7 +346,9 @@ export function ChatPage({
   useEffect(() => {
     promptAndSendMessageRef.current = promptAndSendMessage;
     isShortcutPromptOpenRef.current = isShortcutPromptOpen;
-  }, [isShortcutPromptOpen, promptAndSendMessage]);
+    resolveShortcutQueryRef.current = resolveShortcutQuery;
+    shortcutSendPromptOptionsRef.current = shortcutSendPromptOptions;
+  }, [isShortcutPromptOpen, promptAndSendMessage, resolveShortcutQuery, shortcutSendPromptOptions]);
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1237,7 +1261,15 @@ export function ChatPage({
   }
 
   function handleHomeStarter(query: string) {
-    void promptAndSendMessage({ content: query });
+    if (homeStarterInFlightRef.current || shortcutPromptResolvingRef.current) {
+      return;
+    }
+
+    homeStarterInFlightRef.current = true;
+
+    void promptAndSendMessage({ content: query }).finally(() => {
+      homeStarterInFlightRef.current = false;
+    });
   }
 
   async function handleHelpTryPrompt(query: string) {
@@ -1326,13 +1358,23 @@ export function ChatPage({
   useEffect(() => {
     if (!isConversationEmpty) {
       setOnboardingTourOpen(false);
+      catalogProfileSyncedRef.current = false;
+      return;
     }
+
+    setHomeCatalogLoading(true);
   }, [isConversationEmpty]);
 
   useEffect(() => {
     if (!isConversationEmpty) {
+      setHomeCatalogLoading(false);
       return;
     }
+
+    let cancelled = false;
+
+    setHomeCatalogLoading(true);
+    setHomeCatalogError(false);
 
     void getAssistantCatalog({
       getAccessToken,
@@ -1341,12 +1383,21 @@ export function ChatPage({
       limit: 8,
     })
       .then((payload) => {
+        if (cancelled) {
+          return;
+        }
+
         setHomeHighlights(payload.contextualHighlights ?? []);
         setHomeOnboarding(payload.onboarding ?? null);
 
         const selected = payload.onboarding?.selectedProfileId;
 
-        if (selected && !onboardingProfileId) {
+        if (
+          selected &&
+          !catalogProfileSyncedRef.current &&
+          selected !== onboardingProfileId
+        ) {
+          catalogProfileSyncedRef.current = true;
           setOnboardingProfileId(selected);
 
           try {
@@ -1357,9 +1408,23 @@ export function ChatPage({
         }
       })
       .catch(() => {
+        if (cancelled) {
+          return;
+        }
+
         setHomeHighlights([]);
         setHomeOnboarding(null);
+        setHomeCatalogError(true);
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setHomeCatalogLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [getAccessToken, helpAgentId, isConversationEmpty, onboardingProfileId]);
 
   function handleSelectOnboardingProfile(profileId: string) {
@@ -1928,6 +1993,8 @@ export function ChatPage({
                       displayName={userDisplayName}
                       contextualHighlights={homeHighlights}
                       onboarding={homeOnboarding}
+                      catalogLoading={homeCatalogLoading}
+                      catalogError={homeCatalogError}
                       selectedProfileId={onboardingProfileId}
                       onSelectProfile={handleSelectOnboardingProfile}
                       onUseStarter={handleHomeStarter}

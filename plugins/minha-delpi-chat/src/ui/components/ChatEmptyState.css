@@ -36,6 +36,58 @@
   color: color-mix(in srgb, var(--mdc-primary) 80%, var(--mdc-text));
 }
 
+.mdc-chat-empty-state__catalog-error {
+  margin: 0 auto;
+  max-width: 28rem;
+  color: var(--mdc-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.mdc-chat-empty-state__skeleton {
+  display: grid;
+  gap: var(--mdc-space-4);
+  width: 100%;
+}
+
+.mdc-chat-empty-state__skeleton-profiles {
+  height: 2rem;
+  max-width: 32rem;
+  margin-inline: auto;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mdc-border) 70%, transparent) 0%,
+    color-mix(in srgb, var(--mdc-primary) 12%, var(--mdc-border)) 50%,
+    color-mix(in srgb, var(--mdc-border) 70%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: mdc-chat-empty-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.mdc-chat-empty-state__skeleton-cards {
+  min-height: 6.5rem;
+  border-radius: 0.9rem;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mdc-border) 55%, transparent) 0%,
+    color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-border)) 50%,
+    color-mix(in srgb, var(--mdc-border) 55%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: mdc-chat-empty-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes mdc-chat-empty-skeleton-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}
+
 .mdc-chat-empty-state__highlights {
   display: grid;
   gap: var(--mdc-space-2);

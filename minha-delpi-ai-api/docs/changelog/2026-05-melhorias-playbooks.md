@@ -424,7 +424,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Z-index modal | `mdc-chat-shortcut-prompt-backdrop` na camada 1400 (`modal-layer.css`) |
 | Travamento na home | Corrigido — tour **não abre mais sozinho**; layout/scroll debounced; digitação demo ≤8 updates (`ecac82f4` + follow-up) |
 | Card do tour vs. controle | `computeTourTooltipLayout` — acima do composer no rodapé; centrado; sem overlap; mobile `visualViewport` |
-| **Consultar produto travava** | Bug: `RegExp` global — `.test()` em `hasShortcutPlaceholders` zerava `matchAll`; `fields.length === 0` → `sendMessage` + `onShortcutPromptRequired` em loop |
+| **Consultar produto travava** | Bug: `RegExp` global — `.test()` em `hasShortcutPlaceholders` zerava `matchAll`; `fields.length === 0` → `sendMessage` + `onShortcutPromptRequired` em loop (`fd75c884`) |
+| **Layout da home «pisca»** | Antes: chips hardcoded (`chatHomeStarters.ts`) até o catálogo carregar; depois: perfis + cards da API. Agora: skeleton até `getAssistantCatalog` |
+| **Loop sendMessage ↔ atalho** | `onShortcutPromptRequired` só abre o diálogo (não chama `promptAndSendMessage` de novo); guarda `hasUnresolvedShortcutPlaceholders` antes de enviar |
 | Fluxo unificado atalhos | `promptAndSendMessage` + guarda de reentrância (`384cbd45`, `ecac82f4`) |
 | Banner de placeholder | Título «Complete os campos antes de enviar» (não «Não consegui gerar…») |
 | Deploy MFE dev | `docker compose build` + `up -d minha-delpi-chat` (31/05) |
