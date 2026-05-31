@@ -391,6 +391,12 @@ export type ChatMessageMetadata = {
     checks?: { criterion: string; ok: boolean; detail?: string }[];
     warnings?: string[];
   };
+  emailDataSource?: {
+    title?: string;
+    path?: string | null;
+    productCode?: string | null;
+    lineCount?: number;
+  };
   drawingAnalysis?: Record<string, unknown>;
   drawingAnalysisExport?: {
     filename: string;

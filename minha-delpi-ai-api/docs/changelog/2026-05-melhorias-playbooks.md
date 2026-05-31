@@ -147,7 +147,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Fase 4 | MFE: botão «Copiar e-mail» quando `textTask.type === email` |
 | Validação | `scripts/run_email_writing_validation.sh`, `scripts/smoke_email_writing.py` |
 
-**Backlog:** e-mail pós-consulta operacional enriquecido (Fase 5), preferências completas na sessão.
+| Fase 5 | `ChatEmailOperationalComposerService` — e-mail só com `humanizedSummary`, rodapé «Fonte dos dados», metadata `emailDataSource`, turno misto e follow-up sem LLM |
+| Validação | `test_chat_email_operational_composer_service.py`, smoke misto em `smoke_email_writing.py` |
+
+**Backlog:** preferências completas na sessão (Fase 3 ampliada).
 
 ## Descontraído (`playbook_chat_interativo_descontraido`)
 

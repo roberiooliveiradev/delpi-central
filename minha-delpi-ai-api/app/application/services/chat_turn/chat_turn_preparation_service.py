@@ -705,6 +705,35 @@ class ChatTurnPreparationService:
             direct_answer = interpretation_without_data_answer
             skip_rag = True
 
+        if not direct_answer and skip_tools_for_data_interpretation:
+            from app.application.services.chat_data_interpretation_answer_service import (
+                ChatDataInterpretationAnswerService,
+            )
+
+            interpreted = ChatDataInterpretationAnswerService.build_answer(
+                message,
+                history_source,
+            )
+
+            if interpreted:
+                direct_answer = interpreted
+                skip_rag = True
+
+                from app.application.services.chat_text_task_composer_service import (
+                    ChatTextTaskComposerService,
+                )
+
+                draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
+                    message=message,
+                    previous_messages=history_source,
+                )
+
+                if draft_meta:
+                    tool_context["operationalEmailDraft"] = draft_meta
+
+                    if "email_operational" not in pipeline_stages:
+                        pipeline_stages.append("email_operational")
+
         if tool_calls:
             from app.application.services.chat_tool_context_service import (
                 ChatToolContextService,
@@ -724,21 +753,36 @@ class ChatTurnPreparationService:
                 ChatTextTaskComposerService,
             )
 
-            mixed_supplement = ChatTextTaskComposerService.build_supplement_for_mixed_turn(
+            mixed_draft = ChatTextTaskComposerService.build_operational_email_with_metadata(
                 message=message,
                 tool_calls=tool_calls,
             )
 
-            if mixed_supplement:
-                if direct_answer:
-                    direct_answer = f"{direct_answer.strip()}\n\n---\n\n{mixed_supplement}"
-                else:
-                    direct_answer = mixed_supplement
+            if mixed_draft:
+                from app.application.services.chat_email_answer_guard_service import (
+                    ChatEmailAnswerGuardService,
+                )
+
+                mixed_text, _guard = ChatEmailAnswerGuardService.apply(
+                    str(mixed_draft.get("text") or ""),
+                    message=message,
+                    workspace_context={"emailWritingMode": True},
+                )
+                tool_context["operationalEmailDraft"] = mixed_draft
+
+                if mixed_text:
+                    if direct_answer:
+                        direct_answer = f"{direct_answer.strip()}\n\n---\n\n{mixed_text}"
+                    else:
+                        direct_answer = mixed_text
 
                 skip_rag = True
 
                 if "text_task_mixed" not in pipeline_stages:
                     pipeline_stages.append("text_task_mixed")
+
+                if "email_operational" not in pipeline_stages:
+                    pipeline_stages.append("email_operational")
 
         if direct_answer:
             skip_rag = True

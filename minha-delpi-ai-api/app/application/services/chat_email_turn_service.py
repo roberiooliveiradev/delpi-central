@@ -56,6 +56,7 @@ class ChatEmailTurnService:
         message: str | None,
         answer: str | None,
         workspace_context: dict | None,
+        tool_context: dict | None = None,
         guard_meta: dict[str, Any] | None = None,
     ) -> None:
         ChatEmailFollowUpService.attach_to_assistant_metadata(
@@ -63,5 +64,6 @@ class ChatEmailTurnService:
             message=message,
             answer=answer,
             workspace_context=workspace_context,
+            tool_context=tool_context,
         )
         ChatEmailFollowUpService.merge_guard_metadata(metadata, guard_meta)

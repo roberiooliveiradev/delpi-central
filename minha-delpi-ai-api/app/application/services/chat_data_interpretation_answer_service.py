@@ -43,13 +43,22 @@ class ChatDataInterpretationAnswerService:
             ChatTextTaskComposerService,
         )
 
-        email_draft = ChatTextTaskComposerService.build_email_from_conversation(
-            message,
-            previous_messages,
+        draft_meta = ChatTextTaskComposerService.build_operational_email_with_metadata(
+            message=message,
+            previous_messages=previous_messages,
         )
 
-        if email_draft:
-            return email_draft
+        if draft_meta:
+            from app.application.services.chat_email_answer_guard_service import (
+                ChatEmailAnswerGuardService,
+            )
+
+            text, _guard = ChatEmailAnswerGuardService.apply(
+                str(draft_meta.get("text") or ""),
+                message=message,
+                workspace_context={"emailWritingMode": True, "operationalEmailDraft": draft_meta},
+            )
+            return text or None
 
         summaries = cls._collect_summaries(previous_messages)
 

@@ -24,7 +24,18 @@ class ChatEmailFollowUpService:
         message: str | None = None,
         answer: str | None = None,
         workspace_context: dict | None = None,
+        tool_context: dict | None = None,
     ) -> None:
+        operational = (
+            (tool_context or {}).get("operationalEmailDraft")
+            if isinstance(tool_context, dict)
+            else None
+        )
+
+        if isinstance(operational, dict) and operational.get("text"):
+            cls._attach_operational_draft(metadata, operational, message=message, answer=answer)
+            return
+
         if not ChatEmailIntentService.is_email_writing(message):
             if not (workspace_context or {}).get("emailWritingMode"):
                 return
@@ -65,6 +76,39 @@ class ChatEmailFollowUpService:
         quality = guard.get("quality")
 
         if isinstance(quality, dict):
+            metadata["emailQuality"] = quality
+
+    @classmethod
+    def _attach_operational_draft(
+        cls,
+        metadata: dict,
+        draft: dict[str, Any],
+        *,
+        message: str | None,
+        answer: str | None,
+    ) -> None:
+        text_task = draft.get("textTask")
+
+        if isinstance(text_task, dict):
+            metadata["textTask"] = text_task
+
+        data_source = draft.get("dataSource")
+
+        if isinstance(data_source, dict):
+            metadata["emailDataSource"] = data_source
+
+        subtype = (text_task or {}).get("subtype") if isinstance(text_task, dict) else None
+        suggestions = cls.build_suggestions(subtype)
+
+        if suggestions:
+            metadata["emailFollowUpSuggestions"] = suggestions
+
+        quality = ChatEmailQualityValidator.validate(
+            answer,
+            user_message=message,
+        )
+
+        if quality.get("checks"):
             metadata["emailQuality"] = quality
 
     @classmethod

@@ -14,8 +14,13 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from app.application.services.chat_text_task_composer_service import (
+    ChatTextTaskComposerService,
+)
 from app.domain.services.chat_email_intent_service import ChatEmailIntentService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+
+_MIXED_MESSAGE = "consulte estoque do produto 10080001 e escreva um e-mail para compras"
 
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
@@ -90,6 +95,33 @@ def main() -> int:
         return 1
 
     print("OK unit: intent e-mail")
+
+    if not ChatTextTaskIntentService.is_mixed_text_and_operational(_MIXED_MESSAGE):
+        print("FAIL unit: pedido misto estoque+e-mail", file=sys.stderr)
+        return 1
+
+    mixed = ChatTextTaskComposerService.build_supplement_for_mixed_turn(
+        message=_MIXED_MESSAGE,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/products/10080001/stock",
+                    "humanizedSummary": {
+                        "titulo": "Estoque do produto",
+                        "linhas": ["Filial 01: 100 un."],
+                    },
+                },
+            }
+        ],
+    )
+
+    if not mixed or "Fonte dos dados" not in mixed:
+        print("FAIL unit: rascunho operacional sem fonte", file=sys.stderr)
+        return 1
+
+    print("OK unit: e-mail operacional misto")
 
     try:
         token = _fetch_token()

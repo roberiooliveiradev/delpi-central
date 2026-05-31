@@ -827,6 +827,7 @@ class StreamChatMessageUseCase:
             message=message,
             answer=answer,
             workspace_context=workspace_context,
+            tool_context=tool_context,
             guard_meta=email_guard_meta,
         )
 

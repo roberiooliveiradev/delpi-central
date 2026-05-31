@@ -26,9 +26,11 @@ def test_mixed_turn_email_supplement_from_stock_tool():
     )
 
     assert supplement is not None
-    assert "Assunto sugerido" in supplement
+    assert "Assunto:" in supplement
     assert "10080001" in supplement
     assert "Filial 01" in supplement
+    assert "Fonte dos dados" in supplement
+    assert "[Seu nome]" in supplement
 
 
 def test_email_from_conversation_after_stock():
@@ -62,8 +64,9 @@ def test_email_from_conversation_after_stock():
     draft = ChatTextTaskComposerService.build_email_from_conversation(message, previous)
 
     assert draft is not None
-    assert "Assunto sugerido" in draft
+    assert "Assunto:" in draft
     assert "Estoque" in draft
+    assert "Fonte dos dados" in draft
 
 
 def test_pure_text_not_when_email_from_data_follow_up():

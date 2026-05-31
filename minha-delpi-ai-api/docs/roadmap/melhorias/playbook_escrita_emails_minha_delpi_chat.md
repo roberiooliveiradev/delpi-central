@@ -1,8 +1,8 @@
 # Playbook — Melhoria da Escrita de E-mails no Minha DELPI Chat IA
 
 **Projeto:** Minha DELPI Chat IA  
-**Status implementação:** Fases 1–2 concluídas; Fase 3 parcial (preferências); Fase 4 parcial (copiar e-mail no MFE) — maio/2026  
-**Código:** `ChatEmailIntentService`, `ChatEmailQualityValidator`, `ChatEmailAnswerGuardService`, `ChatEmailPromptSupplementService`, `ChatEmailPreferenceService`, `ChatEmailTurnService`, policy `email-writing.md`
+**Status implementação:** Fases 1–4 concluídas; Fase 5 concluída (e-mail com dados operacionais) — maio/2026  
+**Código:** `ChatEmailOperationalComposerService`, `ChatEmailIntentService`, `ChatEmailQualityValidator`, `ChatEmailAnswerGuardService`, `ChatEmailPromptSupplementService`, `ChatEmailPreferenceService`, `ChatEmailTurnService`, policy `email-writing.md`
 
 ---
 
@@ -108,7 +108,7 @@ Corpo com proposta, capacidades reais da plataforma, perguntas numeradas para av
 | 2 | Validador ampliado, guard/sanitize, suplemento de prompt | **Concluída** |
 | 3 | Memória de preferências (`ChatEmailPreferenceService`) | **Parcial** |
 | 4 | Botão «Copiar e-mail» no MFE | **Concluída** |
-| 5 | E-mail com contexto operacional (dados autorizados) | Pendente (`ChatTextTaskComposerService`) |
+| 5 | E-mail com contexto operacional (`ChatEmailOperationalComposerService`, `emailDataSource`, estágio `email_operational`) | **Concluída** |
 
 ---
 

@@ -93,6 +93,7 @@ Mensagem do usuário
 | `ChatEmailPromptSupplementService` | Contexto no prompt (destinatário, tom, DELPI/IA, preferências) |
 | `ChatEmailPreferenceService` | Preferências «sempre e-mails curtos/formais» na memória da sessão |
 | `ChatEmailTurnService` | Orquestra suplemento de prompt, guard e metadata de follow-up |
+| `ChatEmailOperationalComposerService` | E-mail a partir de consulta autorizada (turno misto / follow-up) + `emailDataSource` |
 | `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |

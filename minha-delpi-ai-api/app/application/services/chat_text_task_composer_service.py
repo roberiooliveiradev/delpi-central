@@ -30,7 +30,21 @@ class ChatTextTaskComposerService:
         if not summary:
             return None
 
-        return cls._format_email_from_summary(summary, message)
+        draft = cls.build_operational_email_draft(summary, message)
+
+        return draft.get("text") if draft else None
+
+    @classmethod
+    def build_operational_email_draft(
+        cls,
+        summary: dict,
+        message: str,
+    ) -> dict | None:
+        from app.application.services.chat_email_operational_composer_service import (
+            ChatEmailOperationalComposerService,
+        )
+
+        return ChatEmailOperationalComposerService.build_from_summary(summary, message)
 
     @classmethod
     def build_email_from_conversation(
@@ -57,7 +71,38 @@ class ChatTextTaskComposerService:
         if not summaries:
             return None
 
-        return cls._format_email_from_summary(summaries[-1], message)
+        draft = cls.build_operational_email_draft(summaries[-1], message)
+
+        return draft.get("text") if draft else None
+
+    @classmethod
+    def build_operational_email_with_metadata(
+        cls,
+        *,
+        message: str,
+        tool_calls: list | None = None,
+        previous_messages: list[Any] | None = None,
+    ) -> dict | None:
+        """Rascunho operacional + metadata para chips/validação (turno misto ou follow-up)."""
+        summary = None
+
+        if tool_calls:
+            summary = cls._latest_tool_summary(tool_calls)
+
+        if not summary and previous_messages:
+            from app.application.services.chat_data_interpretation_answer_service import (
+                ChatDataInterpretationAnswerService,
+            )
+
+            summaries = ChatDataInterpretationAnswerService._collect_summaries(previous_messages)
+
+            if summaries:
+                summary = summaries[-1]
+
+        if not summary:
+            return None
+
+        return cls.build_operational_email_draft(summary, message)
 
     @classmethod
     def attachment_text_task_instruction(cls, *, attachment_context: str | None) -> str:
@@ -99,83 +144,3 @@ class ChatTextTaskComposerService:
 
         return None
 
-    @classmethod
-    def _format_email_from_summary(cls, summary: dict, message: str) -> str:
-        title = str(summary.get("titulo") or "Consulta operacional").strip()
-        lines = [
-            str(line).strip()
-            for line in (summary.get("linhas") or [])
-            if str(line or "").strip()
-        ][:10]
-        product_code = cls._extract_product_code(summary, lines, message)
-        subject = cls._infer_subject(title, product_code, message)
-
-        body_lines = [
-            "Prezados(as),",
-            "",
-            f"Segue resumo de **{title.lower()}**" + (f" do produto **{product_code}**" if product_code else "") + ":",
-            "",
-        ]
-
-        if lines:
-            body_lines.extend(f"- {line}" for line in lines)
-        else:
-            body_lines.append("- Consulta realizada na plataforma; detalhes na tabela da conversa.")
-
-        body_lines.extend(
-            [
-                "",
-                "Fico à disposição para complementar ou detalhar por filial, se necessário.",
-                "",
-                "Atenciosamente,",
-                "",
-                "[Seu nome]",
-            ]
-        )
-
-        return "\n".join(
-            [
-                f"**Assunto sugerido:** {subject}",
-                "",
-                "\n".join(body_lines),
-            ]
-        )
-
-    @classmethod
-    def _infer_subject(cls, title: str, product_code: str | None, message: str) -> str:
-        lowered = (message or "").lower()
-
-        if "compras" in lowered:
-            return f"Alerta — {title}" + (f" — produto {product_code}" if product_code else "")
-
-        if "fornecedor" in lowered:
-            return f"Comunicado ao fornecedor — {title}" + (f" — {product_code}" if product_code else "")
-
-        return f"{title}" + (f" — produto {product_code}" if product_code else "")
-
-    @classmethod
-    def _extract_product_code(
-        cls,
-        summary: dict,
-        lines: list[str],
-        message: str,
-    ) -> str | None:
-        from app.domain.services.chat_product_query_intent_service import (
-            ChatProductQueryIntentService,
-        )
-
-        code = ChatProductQueryIntentService.extract_product_code(message)
-
-        if code:
-            return code
-
-        path = str(summary.get("path") or "")
-        match = re.search(r"/products/(\d{5,9})", path)
-
-        if match:
-            return match.group(1)
-
-        blob = " ".join(lines)
-        match = re.search(r"\b(\d{5,9})\b", blob)
-
-        return match.group(1) if match else None

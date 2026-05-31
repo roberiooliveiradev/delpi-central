@@ -19,6 +19,8 @@ echo "== E-mail — testes unitários =="
   tests/unit/domain/services/test_chat_email_preference_service.py \
   tests/unit/application/services/test_chat_email_follow_up_service.py \
   tests/unit/application/services/test_chat_email_answer_guard_service.py \
+  tests/unit/application/services/test_chat_email_operational_composer_service.py \
+  tests/unit/application/services/test_chat_text_task_composer_service.py \
   tests/unit/domain/services/test_chat_text_task_intent_service.py \
   -q
 
