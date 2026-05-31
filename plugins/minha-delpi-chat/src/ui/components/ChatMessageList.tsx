@@ -1455,6 +1455,14 @@ export function ChatMessageList({
                     {(message.metadata!.emailPreferences!.labels as string[]).join(" · ")}
                   </p>
                 ) : null}
+                {(message.metadata?.textCorrectionPreferences?.labels?.length ?? 0) > 0 ? (
+                  <p className="mdc-chat-message-list__email-meta" role="note">
+                    Preferências de correção:{" "}
+                    {(message.metadata!.textCorrectionPreferences!.labels as string[]).join(
+                      " · ",
+                    )}
+                  </p>
+                ) : null}
                 {message.metadata?.emailDataSource?.title ? (
                   <p className="mdc-chat-message-list__email-meta" role="note">
                     Fonte dos dados: {String(message.metadata.emailDataSource.title)}

@@ -23,6 +23,7 @@ class ChatTextCorrectionTurnService:
         message: str | None,
         text_correction_mode: bool,
         text_correction_subtype: str | None,
+        workspace_context: dict | None = None,
     ) -> str | None:
         if not text_correction_mode:
             return None
@@ -30,6 +31,7 @@ class ChatTextCorrectionTurnService:
         block = ChatTextCorrectionPromptSupplementService.build(
             message=message,
             text_correction_subtype=text_correction_subtype,
+            workspace_context=workspace_context,
         )
 
         return block or None

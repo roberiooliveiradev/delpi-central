@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.domain.services.chat_text_correction_intent_service import (
     ChatTextCorrectionIntentService,
 )
+from app.domain.services.chat_text_correction_preference_service import (
+    ChatTextCorrectionPreferenceService,
+)
 
 
 class ChatTextCorrectionPromptSupplementService:
@@ -14,8 +17,17 @@ class ChatTextCorrectionPromptSupplementService:
         *,
         message: str | None,
         text_correction_subtype: str | None = None,
+        workspace_context: dict | None = None,
     ) -> str:
-        ctx = ChatTextCorrectionIntentService.extract_context(message)
+        working_memory = (workspace_context or {}).get("workingMemory") or {}
+        ctx = ChatTextCorrectionIntentService.extract_context(
+            message,
+            working_memory=working_memory,
+        )
+        prefs = ChatTextCorrectionPreferenceService.detect(
+            message,
+            working_memory=working_memory,
+        )
         subtype = text_correction_subtype or ctx.get("subtype") or "text_correct_basic"
 
         lines = [
@@ -71,5 +83,10 @@ class ChatTextCorrectionPromptSupplementService:
 
         if ctx.get("tone"):
             lines.append(f"- Tom pedido: {ctx['tone']}.")
+
+        pref_block = ChatTextCorrectionPreferenceService.format_prompt_block(prefs)
+
+        if pref_block:
+            lines.append(pref_block)
 
         return "\n".join(lines)

@@ -497,6 +497,7 @@ class StreamChatMessageUseCase:
                 message=message,
                 text_correction_mode=bool(prepared.text_correction_mode),
                 text_correction_subtype=prepared.text_correction_subtype,
+                workspace_context=workspace_context,
             )
 
             llm_messages = self.prompt_builder_service.build_messages(

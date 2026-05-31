@@ -75,6 +75,25 @@ def main() -> int:
     else:
         print("OK mixed not pure text_task")
 
+    pref_meta: dict = {}
+    ChatTextCorrectionFollowUpService.attach_to_assistant_metadata(
+        pref_meta,
+        message="daqui pra frente entregue só a versão final quando pedir correção",
+        answer="Segue a versão corrigida:\n\nTexto ok.",
+        workspace_context={
+            "textCorrectionMode": True,
+            "workingMemory": {
+                "textCorrectionPreferences": {"deliverFinalOnly": True},
+            },
+        },
+    )
+
+    if not (pref_meta.get("textCorrectionPreferences") or {}).get("labels"):
+        print(f"FAIL textCorrectionPreferences metadata ({pref_meta})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK textCorrectionPreferences metadata")
+
     if failed:
         return 1
 

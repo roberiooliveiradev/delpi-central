@@ -31,15 +31,21 @@ class ChatWorkingMemoryService:
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
         )
+        from app.domain.services.chat_text_correction_preference_service import (
+            ChatTextCorrectionPreferenceService,
+        )
 
         behavior = ChatEmailPreferenceService.merge_into_behavior(message, behavior)
+        behavior = ChatTextCorrectionPreferenceService.merge_into_behavior(message, behavior)
 
         snapshot = {
             "lastEntities": last_entities,
             "behaviorInstructions": behavior,
         }
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
+        ChatTextCorrectionPreferenceService.apply_to_snapshot(snapshot, message=message)
         email_preferences = snapshot.get("emailPreferences") or {}
+        text_correction_preferences = snapshot.get("textCorrectionPreferences") or {}
 
         resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
         follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
@@ -48,6 +54,7 @@ class ChatWorkingMemoryService:
             "lastEntities": last_entities,
             "behaviorInstructions": behavior,
             "emailPreferences": email_preferences,
+            "textCorrectionPreferences": text_correction_preferences,
             "resolvedReferences": resolved,
             "usedMemoryKeys": used_keys,
             "followUpDetected": follow_up,
@@ -100,8 +107,12 @@ class ChatWorkingMemoryService:
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
         )
+        from app.domain.services.chat_text_correction_preference_service import (
+            ChatTextCorrectionPreferenceService,
+        )
 
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
+        ChatTextCorrectionPreferenceService.apply_to_snapshot(snapshot, message=message)
 
         return snapshot
 
@@ -145,6 +156,37 @@ class ChatWorkingMemoryService:
 
                 if pref_block:
                     lines.append(pref_block.replace("Preferências de e-mail nesta sessão:", "- E-mail:"))
+
+        correction_raw = behavior.get("textCorrection")
+
+        if correction_raw:
+            import json
+
+            try:
+                correction_prefs = (
+                    json.loads(correction_raw)
+                    if isinstance(correction_raw, str)
+                    else correction_raw
+                )
+            except json.JSONDecodeError:
+                correction_prefs = {}
+
+            if isinstance(correction_prefs, dict):
+                from app.domain.services.chat_text_correction_preference_service import (
+                    ChatTextCorrectionPreferenceService,
+                )
+
+                correction_block = ChatTextCorrectionPreferenceService.format_prompt_block(
+                    {k: bool(v) for k, v in correction_prefs.items()}
+                )
+
+                if correction_block:
+                    lines.append(
+                        correction_block.replace(
+                            "Preferências de correção nesta sessão:",
+                            "- Correção:",
+                        )
+                    )
 
         tone = behavior.get("tone")
 
@@ -281,6 +323,16 @@ class ChatWorkingMemoryService:
 
         chips.extend(
             ChatEmailPreferenceService.build_context_chips(snapshot.get("emailPreferences"))
+        )
+
+        from app.domain.services.chat_text_correction_preference_service import (
+            ChatTextCorrectionPreferenceService,
+        )
+
+        chips.extend(
+            ChatTextCorrectionPreferenceService.build_context_chips(
+                snapshot.get("textCorrectionPreferences")
+            )
         )
 
         if behavior.get("responseFormat") == "table":

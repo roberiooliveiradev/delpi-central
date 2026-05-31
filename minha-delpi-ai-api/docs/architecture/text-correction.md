@@ -25,6 +25,7 @@ Mensagem
 | `ChatTextCorrectionAnswerGuardService` | Trim «só versão final» |
 | `ChatTextCorrectionFollowUpService` | Chips do `personality_playbook.json` |
 | `ChatTextCorrectionTurnService` | Orquestração no turno (send/stream) |
+| `ChatTextCorrectionPreferenceService` | Preferências de sessão (`textCorrection`, `textCorrectionPreferences`) |
 
 ## Metadata
 

@@ -146,7 +146,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Validação | `run_text_correction_validation.sh`, `smoke_text_correction.py`, `test_text_correction_skill.py` |
 | Arquitetura | `docs/architecture/text-correction.md` |
 
-**Backlog:** Fase 5 memória de preferências; métricas (§23); lousa dedicada.
+| Fase 5 | `ChatTextCorrectionPreferenceService` — `textCorrection` persistido, chips de contexto, metadata `textCorrectionPreferences` no MFE |
+
+**Backlog:** métricas (§23); lousa dedicada.
 
 ## Escrita de e-mails (`playbook_escrita_emails_minha_delpi_chat`)
 

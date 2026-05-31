@@ -8,6 +8,9 @@ from typing import Any
 from app.domain.services.chat_text_correction_intent_service import (
     ChatTextCorrectionIntentService,
 )
+from app.domain.services.chat_text_correction_preference_service import (
+    ChatTextCorrectionPreferenceService,
+)
 from app.domain.services.chat_text_correction_quality_validator import (
     ChatTextCorrectionQualityValidator,
 )
@@ -36,7 +39,11 @@ class ChatTextCorrectionFollowUpService:
         ):
             return
 
-        ctx = ChatTextCorrectionIntentService.extract_context(message)
+        working_memory = (workspace_context or {}).get("workingMemory") or {}
+        ctx = ChatTextCorrectionIntentService.extract_context(
+            message,
+            working_memory=working_memory,
+        )
         subtype = ctx.get("subtype")
         suggestions = cls.build_suggestions(subtype)
 
@@ -61,7 +68,25 @@ class ChatTextCorrectionFollowUpService:
         if quality.get("checks"):
             metadata["textCorrectionQuality"] = quality
 
+        cls._attach_preferences_metadata(metadata, workspace_context, message)
         cls.merge_guard_metadata(metadata, guard_meta)
+
+    @classmethod
+    def _attach_preferences_metadata(
+        cls,
+        metadata: dict,
+        workspace_context: dict | None,
+        message: str | None,
+    ) -> None:
+        working_memory = (workspace_context or {}).get("workingMemory") or {}
+        prefs = ChatTextCorrectionPreferenceService.detect(
+            message,
+            working_memory=working_memory,
+        )
+        pref_meta = ChatTextCorrectionPreferenceService.build_metadata(prefs)
+
+        if pref_meta:
+            metadata["textCorrectionPreferences"] = pref_meta
 
     @classmethod
     def merge_guard_metadata(cls, metadata: dict, guard_meta: dict[str, Any] | None) -> None:

@@ -163,24 +163,53 @@ class ChatTextCorrectionIntentService:
         return None
 
     @classmethod
-    def extract_context(cls, message: str | None) -> dict[str, Any]:
+    def extract_context(
+        cls,
+        message: str | None,
+        *,
+        working_memory: dict | None = None,
+    ) -> dict[str, Any]:
+        from app.domain.services.chat_text_correction_preference_service import (
+            ChatTextCorrectionPreferenceService,
+        )
+
         text = (message or "").strip()
         normalized = text.lower()
         subtype = cls.classify_subtype(message) or "text_correct_basic"
         tone = cls._detect_tone(normalized)
         source_text = cls.extract_source_text(message)
         codes = cls._extract_preserved_codes(text)
-        preserve_style = subtype == "text_correct_preserve_style" or bool(
-            re.search(r"\bsem\s+mudar\b", normalized)
+        prefs = ChatTextCorrectionPreferenceService.detect(
+            message,
+            working_memory=working_memory,
         )
-        explain = subtype in {"text_correct_explain", "text_correct_compare"}
-        deliver_final_only = bool(
-            re.search(
-                r"\b(só|somente|apenas)\s+(a\s+)?versão\s+final\b",
-                normalized,
+
+        preserve_style = (
+            subtype == "text_correct_preserve_style"
+            or bool(re.search(r"\bsem\s+mudar\b", normalized))
+            or prefs.get("preserveStyle")
+        )
+        explain = (
+            subtype in {"text_correct_explain", "text_correct_compare"}
+            or prefs.get("explainChanges")
+            or prefs.get("showBeforeAfter")
+        )
+        deliver_final_only = (
+            bool(
+                re.search(
+                    r"\b(só|somente|apenas)\s+(a\s+)?versão\s+final\b",
+                    normalized,
+                )
             )
             or re.search(r"\bentregue\s+só\b", normalized)
+            or prefs.get("deliverFinalOnly")
         )
+
+        if prefs.get("formalTone") and subtype == "text_correct_basic":
+            subtype = "text_correct_formal"
+
+        if prefs.get("showBeforeAfter") and subtype == "text_correct_basic":
+            subtype = "text_correct_compare"
 
         return {
             "type": "correction",

@@ -2,8 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Habilidade nativa:** correção, revisão e melhoria textual no chat comum  
-**Status implementação:** Fases **1–4** (subtipos, policy, validador, chips MFE, copiar texto) — maio/2026; Fase **5** memória de preferências e métricas em backlog  
-**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionTurnService`, `ChatTextCorrectionFollowUpService`, policy `text-correction.md`, `smoke_text_correction.py`, `run_text_correction_validation.sh`
+**Status implementação:** Fases **1–5** concluídas — maio/2026; métricas (§23) em backlog opcional  
+**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionPreferenceService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionTurnService`, policy `text-correction.md`, `smoke_text_correction.py`, `run_text_correction_validation.sh`
 
 **Objetivo:** fazer o chat corrigir textos com qualidade profissional, preservando sentido, tom, intenção e contexto do usuário.
 
@@ -515,7 +515,7 @@ Motivos em `personality_playbook.json` (alvo):
 | **2 — Modos de correção** | Subtipos (`text_correct_*`, `text_rewrite`, `text_review_quality`) | **Concluída** |
 | **3 — Validador** | `ChatTextCorrectionQualityValidator` + guard pós-LLM | **Concluída** |
 | **4 — Interatividade** | Chips `textCorrectionFollowUpSuggestions`; botão copiar no MFE | **Concluída** |
-| **5 — Memória** | Preferências de sessão («só versão final», etc.) | Planejado |
+| **5 — Memória** | `ChatTextCorrectionPreferenceService`, `textCorrection` em `behaviorInstructions`, chips de contexto | **Concluída** |
 | **6 — Métricas** | Uso, feedback, chips, lousa (§23) | Backlog opcional |
 
 **Ordem sugerida:** Fase 2 (subtipos + policy dedicada) → Fase 3 → Fase 4 → Fase 5.
