@@ -24,6 +24,8 @@ type SpotlightRect = {
 
 type ChatOnboardingTourProps = {
   steps: AssistantOnboardingTourStep[];
+  /** Só abre o overlay quando true (evita loop de layout na home). */
+  autoStart?: boolean;
   onDismiss?: () => void;
   onStepChange?: (step: AssistantOnboardingTourStep, index: number) => void;
   onDemoQuery?: (query: string) => void;
@@ -68,6 +70,7 @@ function spotlightRectsEqual(
 
 export function ChatOnboardingTour({
   steps,
+  autoStart = false,
   onDismiss,
   onStepChange,
   onDemoQuery,
@@ -79,6 +82,8 @@ export function ChatOnboardingTour({
   const [pulseTarget, setPulseTarget] = useState(false);
   const demoAbortRef = useRef<AbortController | null>(null);
   const highlightedRef = useRef<HTMLElement | null>(null);
+  const scrolledStepIdRef = useRef<string | null>(null);
+  const measureFrameRef = useRef<number | null>(null);
 
   const step = steps[Math.min(index, steps.length - 1)];
   const stepId = step?.id;
@@ -88,6 +93,7 @@ export function ChatOnboardingTour({
     [step, stepId],
   );
   const openPlusMenu = Boolean(effect?.openPlusMenu);
+  const demoQuery = effect?.demoQuery?.trim() ?? "";
 
   const clearHighlight = useCallback(() => {
     if (highlightedRef.current) {
@@ -120,24 +126,32 @@ export function ChatOnboardingTour({
   );
 
   useEffect(() => {
-    if (steps.length === 0 || isOnboardingTourCompleted()) {
+    if (!autoStart || steps.length === 0 || isOnboardingTourCompleted()) {
       return;
     }
 
     setVisible(true);
-  }, [steps.length]);
+  }, [autoStart, steps.length]);
 
   useEffect(() => {
-    if (!visible || !step) {
+    if (!visible) {
+      return;
+    }
+
+    scrolledStepIdRef.current = null;
+  }, [visible, stepId]);
+
+  useEffect(() => {
+    if (!visible || !step || !stepId) {
       return;
     }
 
     onStepChange?.(step, index);
     applyStepEffects(step);
-  }, [visible, step, stepId, index, onStepChange, applyStepEffects]);
+  }, [visible, stepId, index, onStepChange, applyStepEffects, step]);
 
   useLayoutEffect(() => {
-    if (!visible || !step || !effect) {
+    if (!visible || !stepId || !effect) {
       setSpotlight(null);
       clearHighlight();
       return;
@@ -151,13 +165,17 @@ export function ChatOnboardingTour({
       clearHighlight();
 
       if (!element) {
-        setSpotlight(null);
+        setSpotlight((current) => (current === null ? current : null));
         return;
       }
 
       highlightedRef.current = element;
       element.classList.add("mdc-chat-tour-target--active");
-      element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+      if (scrolledStepIdRef.current !== stepId) {
+        scrolledStepIdRef.current = stepId;
+        element.scrollIntoView({ block: "nearest", behavior: "auto" });
+      }
 
       const rect = element.getBoundingClientRect();
       const padding = 8;
@@ -174,12 +192,23 @@ export function ChatOnboardingTour({
       );
     }
 
-    measureTarget();
+    function scheduleMeasure() {
+      if (measureFrameRef.current != null) {
+        cancelAnimationFrame(measureFrameRef.current);
+      }
+
+      measureFrameRef.current = requestAnimationFrame(() => {
+        measureFrameRef.current = null;
+        measureTarget();
+      });
+    }
+
+    scheduleMeasure();
 
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
         ? new ResizeObserver(() => {
-            measureTarget();
+            scheduleMeasure();
           })
         : null;
 
@@ -189,19 +218,24 @@ export function ChatOnboardingTour({
       resizeObserver.observe(observed);
     }
 
-    window.addEventListener("resize", measureTarget);
-    window.addEventListener("scroll", measureTarget, true);
+    window.addEventListener("resize", scheduleMeasure);
 
-    const retryTimers = [120, 320, 520].map((delay) => window.setTimeout(measureTarget, delay));
+    const retryTimers = [120, 320].map((delay) =>
+      window.setTimeout(scheduleMeasure, delay),
+    );
 
     return () => {
+      if (measureFrameRef.current != null) {
+        cancelAnimationFrame(measureFrameRef.current);
+        measureFrameRef.current = null;
+      }
+
       retryTimers.forEach((timer) => window.clearTimeout(timer));
-      window.removeEventListener("resize", measureTarget);
-      window.removeEventListener("scroll", measureTarget, true);
+      window.removeEventListener("resize", scheduleMeasure);
       resizeObserver?.disconnect();
       clearHighlight();
     };
-  }, [visible, step, stepId, index, clearHighlight, openPlusMenu]);
+  }, [visible, stepId, index, clearHighlight, openPlusMenu, demoQuery]);
 
   function closeTour() {
     demoAbortRef.current?.abort();

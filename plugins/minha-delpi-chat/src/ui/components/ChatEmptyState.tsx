@@ -23,6 +23,7 @@ type ChatEmptyStateProps = {
   selectedProfileId?: string | null;
   onSelectProfile?: (profileId: string) => void;
   onUseStarter?: (query: string) => void;
+  onStartTour?: () => void;
 };
 
 const GREETINGS_WITH_NAME = [
@@ -64,6 +65,7 @@ export function ChatEmptyState({
   selectedProfileId,
   onSelectProfile,
   onUseStarter,
+  onStartTour,
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
   const greeting = useMemo(() => pickGreeting(firstName), [firstName]);
@@ -101,6 +103,15 @@ export function ChatEmptyState({
           {welcomeSubtitle ||
             "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
         </p>
+        {onStartTour ? (
+          <button
+            type="button"
+            className="mdc-chat-empty-state__tour-link"
+            onClick={onStartTour}
+          >
+            Ver tour rápido do chat
+          </button>
+        ) : null}
       </div>
 
       {profiles.length > 0 && onSelectProfile ? (

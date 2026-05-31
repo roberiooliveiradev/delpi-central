@@ -2,7 +2,10 @@ import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
-import { ChatOnboardingTour } from "../components/ChatOnboardingTour";
+import {
+  ChatOnboardingTour,
+  isOnboardingTourCompleted,
+} from "../components/ChatOnboardingTour";
 import "./ChatPage.css";
 import "../layout/chat-layout.css";
 import { useChatLayout } from "../../state/hooks/useChatLayout";
@@ -119,6 +122,7 @@ export function ChatPage({
     null,
   );
   const [tourPlusMenuOpen, setTourPlusMenuOpen] = useState<boolean | null>(null);
+  const [onboardingTourOpen, setOnboardingTourOpen] = useState(false);
   const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(() => {
     try {
       return localStorage.getItem("minha-delpi-chat:onboarding-profile");
@@ -1309,6 +1313,22 @@ export function ChatPage({
 
   const isConversationEmpty = !hasActiveConversation;
 
+  const homeTourSteps = useMemo(
+    () => homeOnboarding?.tourSteps ?? [],
+    [homeOnboarding?.tourSteps],
+  );
+
+  const canOfferOnboardingTour =
+    isConversationEmpty &&
+    homeTourSteps.length > 0 &&
+    !isOnboardingTourCompleted();
+
+  useEffect(() => {
+    if (!isConversationEmpty) {
+      setOnboardingTourOpen(false);
+    }
+  }, [isConversationEmpty]);
+
   useEffect(() => {
     if (!isConversationEmpty) {
       return;
@@ -1911,15 +1931,24 @@ export function ChatPage({
                       selectedProfileId={onboardingProfileId}
                       onSelectProfile={handleSelectOnboardingProfile}
                       onUseStarter={handleHomeStarter}
+                      onStartTour={
+                        canOfferOnboardingTour
+                          ? () => setOnboardingTourOpen(true)
+                          : undefined
+                      }
                     />
                   )}
 
-                  {isConversationEmpty && homeOnboarding?.tourSteps?.length ? (
+                  {onboardingTourOpen && homeTourSteps.length > 0 ? (
                     <ChatOnboardingTour
-                      steps={homeOnboarding.tourSteps}
+                      autoStart
+                      steps={homeTourSteps}
                       onDemoQuery={setDraft}
                       onPlusMenuOpen={setTourPlusMenuOpen}
-                      onDismiss={() => setTourPlusMenuOpen(null)}
+                      onDismiss={() => {
+                        setOnboardingTourOpen(false);
+                        setTourPlusMenuOpen(null);
+                      }}
                     />
                   ) : null}
 

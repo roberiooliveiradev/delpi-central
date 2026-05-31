@@ -422,12 +422,12 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Catálogo HTTP | `starterCards` / `demoQuery` com `{{productCode}}` (sem código fixo na API) |
 | Diálogo automático | `onShortcutPromptRequired` abre o formulário ao bloquear `{{…}}` (sem só banner de erro) |
 | Z-index modal | `mdc-chat-shortcut-prompt-backdrop` na camada 1400 (`modal-layer.css`) |
-| Travamento na home | Corrigido — loop de `useLayoutEffect` no `ChatOnboardingTour` (`ecac82f4`) |
+| Travamento na home | Corrigido — tour **não abre mais sozinho**; layout/scroll debounced; digitação demo ≤8 updates (`ecac82f4` + follow-up) |
 | Fluxo unificado atalhos | `promptAndSendMessage` + guarda de reentrância (`384cbd45`, `ecac82f4`) |
 | Banner de placeholder | Título «Complete os campos antes de enviar» (não «Não consegui gerar…») |
 | Deploy MFE dev | `docker compose build` + `up -d minha-delpi-chat` (31/05) |
 
-**Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Enter no composer com placeholder também deve abrir o modal. Hard refresh após deploy; se o tour travar, `localStorage.setItem('minha-delpi-chat:onboarding-tour-completed','1')`.
+**Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Tour só após clicar **Ver tour rápido do chat** (não inicia no load). Hard refresh após deploy.
 
 **Script:** `./scripts/run_chat_shortcut_homologation.sh` — placeholders + login + catálogo + follow-up (pausa configurável para rate limit).
 

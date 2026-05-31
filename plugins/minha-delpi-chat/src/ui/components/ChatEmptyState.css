@@ -19,6 +19,23 @@
   line-height: 1.45;
 }
 
+.mdc-chat-empty-state__tour-link {
+  margin: var(--mdc-space-2) auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mdc-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.mdc-chat-empty-state__tour-link:hover {
+  color: color-mix(in srgb, var(--mdc-primary) 80%, var(--mdc-text));
+}
+
 .mdc-chat-empty-state__highlights {
   display: grid;
   gap: var(--mdc-space-2);

@@ -84,21 +84,40 @@ export function tourDemoQueryForDisplay(query?: string): string {
   });
 }
 
+/** Atualiza o composer em poucos passos (evita centenas de re-renders por segundo). */
 export async function animateTourTyping(
   query: string,
   onChange: (value: string) => void,
   signal: AbortSignal,
 ): Promise<void> {
+  if (signal.aborted) {
+    return;
+  }
+
+  const text = query.trim();
+
+  if (!text) {
+    onChange("");
+    return;
+  }
+
   onChange("");
 
-  for (let index = 0; index <= query.length; index += 1) {
+  const maxSteps = 8;
+  const chunkSize = Math.max(1, Math.ceil(text.length / maxSteps));
+
+  for (let index = chunkSize; index < text.length; index += chunkSize) {
     if (signal.aborted) {
       return;
     }
 
-    onChange(query.slice(0, index));
+    onChange(text.slice(0, index));
     await new Promise<void>((resolve) => {
-      window.setTimeout(resolve, 32);
+      window.setTimeout(resolve, 80);
     });
+  }
+
+  if (!signal.aborted) {
+    onChange(text);
   }
 }
