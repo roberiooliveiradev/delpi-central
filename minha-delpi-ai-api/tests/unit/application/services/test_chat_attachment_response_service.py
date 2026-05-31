@@ -34,3 +34,32 @@ def test_to_response_includes_reading_status_and_preview():
     assert response.metadata is not None
     assert response.metadata["readingStatus"] == "Indexado"
     assert response.metadata["preview"]["columns"] == ["Produto", "Qtd"]
+
+
+def test_to_response_legacy_doc_reading_status():
+    attachment = SimpleNamespace(
+        id=uuid4(),
+        session_id=uuid4(),
+        message_id=None,
+        project_id=None,
+        agent_id=None,
+        filename="ata.doc",
+        original_filename="ata.doc",
+        content_type="application/msword",
+        size_bytes=4096,
+        status="unsupported",
+        metadata={
+            "indexed": False,
+            "indexReason": {
+                "reason": "legacy_doc_format",
+                "userHint": "Salve como DOCX.",
+            },
+        },
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    response = ChatAttachmentResponseService.to_response(attachment)
+
+    assert response.metadata is not None
+    assert response.metadata["readingStatus"] == "DOC legado — salve como DOCX"

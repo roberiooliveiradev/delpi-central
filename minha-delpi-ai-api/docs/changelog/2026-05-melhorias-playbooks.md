@@ -357,6 +357,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | Status de leitura no composer e chips de mensagem (`chatAttachmentStatus.ts`) |
 | Chips | «Comparar» em follow-up quando há 2+ anexos |
 | Upload | `readingStatus` + `preview` na resposta do POST; upload antecipado no composer com sessão ativa |
+| Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
 
 ## Roteamento — pendências ativas e feedback (Playbook 01)
 

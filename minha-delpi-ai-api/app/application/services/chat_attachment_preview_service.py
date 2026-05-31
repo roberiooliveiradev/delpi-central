@@ -60,12 +60,38 @@ class ChatAttachmentPreviewService:
         return preview
 
     @classmethod
+    def reading_status_from_index_reason(cls, index_reason: Any) -> str | None:
+        if not isinstance(index_reason, dict):
+            return None
+
+        reason = str(index_reason.get("reason") or "").strip()
+
+        if reason == "legacy_doc_format":
+            return "DOC legado — salve como DOCX"
+
+        if reason == "legacy_xls_format":
+            return "XLS legado — salve como XLSX"
+
+        hint = str(index_reason.get("userHint") or "").strip()
+
+        if hint:
+            return hint[:120]
+
+        return None
+
+    @classmethod
     def reading_status_label(
         cls,
         *,
         status: str | None,
         parsed: bool | None = None,
+        index_reason: Any = None,
     ) -> str:
+        legacy = cls.reading_status_from_index_reason(index_reason)
+
+        if legacy:
+            return legacy
+
         normalized = str(status or "").strip().lower()
 
         if parsed or normalized == "indexed":

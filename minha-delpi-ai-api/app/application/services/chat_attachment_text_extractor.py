@@ -31,6 +31,26 @@ class ChatAttachmentTextExtractor:
         if extension == ".csv":
             return self._extract_csv(path)
 
+        if extension == ".doc":
+            return self._legacy_format(
+                extension,
+                reason="legacy_doc_format",
+                user_hint=(
+                    "O formato .doc (Word antigo) não é lido automaticamente. "
+                    "Salve como .docx e envie novamente."
+                ),
+            )
+
+        if extension == ".xls":
+            return self._legacy_format(
+                extension,
+                reason="legacy_xls_format",
+                user_hint=(
+                    "O formato .xls (Excel antigo) não é lido automaticamente. "
+                    "Salve como .xlsx e envie novamente."
+                ),
+            )
+
         if extension == ".docx":
             return self._extract_docx(path)
 
@@ -236,6 +256,23 @@ class ChatAttachmentTextExtractor:
                 "width": width,
                 "height": height,
                 "format": image_format,
+            },
+        }
+
+    def _legacy_format(
+        self,
+        extension: str,
+        *,
+        reason: str,
+        user_hint: str,
+    ) -> dict:
+        return {
+            "supported": False,
+            "content": "",
+            "metadata": {
+                "reason": reason,
+                "extension": extension,
+                "userHint": user_hint,
             },
         }
 

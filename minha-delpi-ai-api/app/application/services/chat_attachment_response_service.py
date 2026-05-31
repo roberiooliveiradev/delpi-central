@@ -26,6 +26,7 @@ class ChatAttachmentResponseService:
         meta["readingStatus"] = ChatAttachmentPreviewService.reading_status_label(
             status=status,
             parsed=parsed,
+            index_reason=meta.get("indexReason"),
         )
 
         if preview:

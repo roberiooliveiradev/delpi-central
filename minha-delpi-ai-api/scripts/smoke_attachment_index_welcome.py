@@ -229,6 +229,28 @@ def main() -> int:
         else:
             print("WARN API: readingStatus ausente no upload", file=sys.stderr)
 
+        doc_body = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\x00" * 512
+        doc_attachment = _multipart_upload(
+            f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/attachments",
+            token=token,
+            fields={},
+            file_field="file",
+            filename="smoke-legado.doc",
+            content=doc_body,
+            content_type="application/msword",
+        )
+        doc_meta = doc_attachment.get("metadata") or {}
+        doc_status = str(doc_attachment.get("status") or "")
+        doc_reading = str(doc_meta.get("readingStatus") or "")
+
+        if doc_status == "unsupported" and "DOC legado" in doc_reading:
+            print(f"OK API: DOC legado readingStatus={doc_reading}")
+        else:
+            print(
+                f"WARN API: DOC legado status={doc_status} readingStatus={doc_reading}",
+                file=sys.stderr,
+            )
+
         response = _request(
             "POST",
             f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
