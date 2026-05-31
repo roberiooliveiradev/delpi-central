@@ -116,6 +116,8 @@ location /socket.io/ {
 
 Portal conecta em `io("/", { path: "/socket.io" })` — mesma origem do gateway.
 
+**Dev (`nginx.dev.conf`):** use `location ^~ /socket.io` com `proxy_pass http://core-api:8000;` **sem** variável dinâmica (`set $upstream …`). Com variável, o Engine.IO responde 400 (*unsupported version*) ou o WS cai no Portal (Vite) → `CONNECTION_REFUSED` no Firefox.
+
 ### API DELPI
 
 Path dedicado: `/apps/api-delpi/socket.io/` → `api-delpi:8000/socket.io/`.

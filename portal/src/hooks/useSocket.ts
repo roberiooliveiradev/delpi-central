@@ -58,7 +58,8 @@ export const useSocket = ({
 
     const socket = io("/", {
       path: "/socket.io",
-      transports: ["websocket"],
+      // polling primeiro: handshake Engine.IO estável atrás do nginx; depois upgrade WS
+      transports: ["polling", "websocket"],
       reconnection: true,
       autoConnect: false,
     });
