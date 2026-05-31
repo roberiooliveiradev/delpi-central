@@ -14,6 +14,8 @@ export type ChatPlaybackPayload = {
   sources: ChatSource[];
   toolCalls: ChatToolCall[];
   adminDebug?: Record<string, unknown> | null;
+  /** Evita reanimar texto já exibido durante o stream legado (tokens SSE). */
+  skipReveal?: boolean;
 };
 
 const PLAYBACK_CHARS_PER_FRAME = 3;
@@ -42,6 +44,20 @@ export function useChatMessagePlayback(
       payload.answer,
       payload.toolCalls,
     );
+
+    if (payload.skipReveal) {
+      setDisplayedAnswer(payload.answer);
+      setShowPresentation(hasRichPresentation);
+      setIsPlaying(false);
+
+      const timer = window.setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 0);
+
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
 
     if (!payload.answer.trim()) {
       setDisplayedAnswer("");
@@ -138,7 +154,7 @@ export function useChatMessagePlayback(
       window.clearTimeout(presentationTimer);
       window.clearTimeout(completeTimer);
     };
-  }, [payload?.messageId, payload?.answer, payload?.toolCalls]);
+  }, [payload?.messageId, payload?.answer, payload?.toolCalls, payload?.skipReveal]);
 
   return {
     displayedAnswer,

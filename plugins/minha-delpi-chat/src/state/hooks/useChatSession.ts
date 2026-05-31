@@ -30,6 +30,12 @@ import {
   sanitizeMessagesAfterStreamDismiss,
   sessionAwaitingAssistantResponse,
 } from "../chatMessageDelivery";
+import {
+  applyStreamHandoffToMessages,
+  handoffFromPlaybackPayload,
+  streamContentAlreadyDisplayed,
+  type AssistantTurnHandoff,
+} from "../chatStreamHandoff";
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
@@ -101,6 +107,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     null,
   );
   const awaitingPlaybackRef = useRef(false);
+  const streamingAnswerRef = useRef("");
+  const streamingToolCallsRef = useRef<ChatToolCall[]>([]);
+  const playbackPayloadRef = useRef<ChatPlaybackPayload | null>(null);
   const [lastSentUserText, setLastSentUserText] = useState("");
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
@@ -133,6 +142,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingCanvasOpen(null);
     setPlaybackPayload(null);
     awaitingPlaybackRef.current = false;
+    playbackPayloadRef.current = null;
+    streamingAnswerRef.current = "";
+    streamingToolCallsRef.current = [];
   }, []);
 
   const markSessionPending = useCallback((sessionId: string) => {
@@ -274,9 +286,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       sessionId: string,
       loadOptions?: {
         userDismissedBackground?: boolean;
+        background?: boolean;
       },
     ) => {
-      setIsLoadingMessages(true);
+      const background = loadOptions?.background === true;
+
+      if (!background) {
+        setIsLoadingMessages(true);
+      }
+
       setError(null);
 
       try {
@@ -342,12 +360,29 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
         setError(err instanceof Error ? err.message : "Erro ao carregar mensagens.");
       } finally {
-        if (activeSessionIdRef.current === sessionId) {
+        if (activeSessionIdRef.current === sessionId && !background) {
           setIsLoadingMessages(false);
         }
       }
     },
     [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionPending],
+  );
+
+  const finalizeAssistantTurn = useCallback(
+    (sessionId: string, handoff: AssistantTurnHandoff) => {
+      setMessages((current) => applyStreamHandoffToMessages(current, handoff));
+      setPlaybackPayload(null);
+      playbackPayloadRef.current = null;
+      awaitingPlaybackRef.current = false;
+      setDraft("");
+      setPendingUserMessage(null);
+      resetStreamingUi();
+      streamingAnswerRef.current = "";
+      streamingToolCallsRef.current = [];
+
+      void loadMessages(sessionId, { background: true });
+    },
+    [loadMessages, resetStreamingUi],
   );
 
   const selectSession = useCallback(
@@ -378,25 +413,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const finishPlayback = useCallback(() => {
     const sessionId = activeSessionIdRef.current;
+    const payload = playbackPayloadRef.current;
 
-    setPlaybackPayload(null);
-    awaitingPlaybackRef.current = false;
-
-    if (!sessionId) {
+    if (!sessionId || !payload) {
       resetStreamingUi();
       return;
     }
 
-    void loadMessages(sessionId).then(() => {
-      if (activeSessionIdRef.current !== sessionId) {
-        return;
-      }
-
-      setDraft("");
-      setPendingUserMessage(null);
-      resetStreamingUi();
-    });
-  }, [loadMessages, resetStreamingUi]);
+    finalizeAssistantTurn(sessionId, handoffFromPlaybackPayload(sessionId, payload));
+  }, [finalizeAssistantTurn, resetStreamingUi]);
 
   const {
     displayedAnswer: playbackAnswer,
@@ -407,11 +432,24 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const streamingAdminDebug = playbackPayload?.adminDebug ?? null;
 
   useEffect(() => {
+    playbackPayloadRef.current = playbackPayload;
+  }, [playbackPayload]);
+
+  useEffect(() => {
+    streamingAnswerRef.current = streamingAnswer;
+  }, [streamingAnswer]);
+
+  useEffect(() => {
+    streamingToolCallsRef.current = streamingToolCalls;
+  }, [streamingToolCalls]);
+
+  useEffect(() => {
     if (!playbackPayload) {
       return;
     }
 
     setStreamingAnswer(playbackAnswer);
+    streamingAnswerRef.current = playbackAnswer;
     setStreamingShowPresentation(playbackShowPresentation);
   }, [playbackAnswer, playbackPayload, playbackShowPresentation]);
 
@@ -868,6 +906,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingToolCalls(snapshot.toolCalls);
+          streamingToolCallsRef.current = snapshot.toolCalls;
           setStreamingShowPresentation(hasRichPresentation);
           setStreamingStatus(snapshot.status);
         },
@@ -891,10 +930,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus("Exibindo resposta...");
           setStreamingSources(payload.sources);
           setStreamingToolCalls(payload.toolCalls);
+          streamingToolCallsRef.current = payload.toolCalls;
           setStreamingShowPresentation(
             shouldShowRichPresentation(payload.answer, payload.toolCalls),
           );
-          setPlaybackPayload(payload);
+          const skipReveal = streamContentAlreadyDisplayed(
+            streamingAnswerRef.current,
+            streamingToolCallsRef.current,
+            payload,
+          );
+          const enriched: ChatPlaybackPayload = { ...payload, skipReveal };
+          playbackPayloadRef.current = enriched;
+          setPlaybackPayload(enriched);
         },
         onCanvasOpen: (payload) => {
           if (!isStreamForActiveSession(sessionId)) {
@@ -910,7 +957,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
 
           setStreamingShowPresentation(true);
-          setStreamingAnswer((current) => current + token);
+          setStreamingAnswer((current) => {
+            const next = current + token;
+            streamingAnswerRef.current = next;
+            return next;
+          });
         },
         onDone: async (response) => {
           finishSending(sessionId);
@@ -937,54 +988,105 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             options.onOpenCanvas?.(canvasPayload);
           }
 
-          if (response.playback || awaitingPlaybackRef.current) {
-            setPlaybackPayload((current) =>
-              current ?? {
-                messageId: response.messageId,
-                answer: response.answer ?? "",
-                sources: response.sources ?? [],
-                toolCalls: response.toolCalls ?? [],
-                adminDebug: response.adminDebug ?? null,
-              },
-            );
-            return;
-          }
-
           const finalAnswer = response.answer ?? "";
           const finalToolCalls = response.toolCalls ?? [];
+          const turnHandoff: AssistantTurnHandoff = {
+            messageId: response.messageId,
+            sessionId,
+            answer: finalAnswer,
+            sources: response.sources ?? [],
+            toolCalls: finalToolCalls,
+            adminDebug: response.adminDebug ?? null,
+          };
+
+          if (response.playback || awaitingPlaybackRef.current) {
+            const existingPayload = playbackPayloadRef.current;
+
+            if (existingPayload) {
+              if (
+                streamContentAlreadyDisplayed(
+                  streamingAnswerRef.current,
+                  streamingToolCallsRef.current,
+                  existingPayload,
+                )
+              ) {
+                finalizeAssistantTurn(
+                  sessionId,
+                  handoffFromPlaybackPayload(sessionId, existingPayload),
+                );
+              }
+
+              return;
+            }
+
+            const payload: ChatPlaybackPayload = {
+              messageId: response.messageId,
+              answer: finalAnswer,
+              sources: turnHandoff.sources,
+              toolCalls: finalToolCalls,
+              adminDebug: response.adminDebug ?? null,
+              skipReveal: streamContentAlreadyDisplayed(
+                streamingAnswerRef.current,
+                streamingToolCallsRef.current,
+                {
+                  answer: finalAnswer,
+                  toolCalls: finalToolCalls,
+                },
+              ),
+            };
+
+            if (payload.skipReveal) {
+              finalizeAssistantTurn(sessionId, handoffFromPlaybackPayload(sessionId, payload));
+              return;
+            }
+
+            playbackPayloadRef.current = payload;
+            setPlaybackPayload(payload);
+            return;
+          }
 
           if (
             shouldShowRichPresentation(finalAnswer, finalToolCalls) &&
             isShortPresentationCaption(finalAnswer, finalToolCalls)
           ) {
-            setPlaybackPayload({
+            const captionPayload: ChatPlaybackPayload = {
               messageId: response.messageId,
               answer: finalAnswer,
-              sources: response.sources ?? [],
+              sources: turnHandoff.sources,
               toolCalls: finalToolCalls,
               adminDebug: response.adminDebug ?? null,
-            });
+              skipReveal: streamContentAlreadyDisplayed(
+                streamingAnswerRef.current,
+                streamingToolCallsRef.current,
+                {
+                  answer: finalAnswer,
+                  toolCalls: finalToolCalls,
+                },
+              ),
+            };
+
+            if (captionPayload.skipReveal) {
+              finalizeAssistantTurn(
+                sessionId,
+                handoffFromPlaybackPayload(sessionId, captionPayload),
+              );
+              return;
+            }
+
+            playbackPayloadRef.current = captionPayload;
+            setPlaybackPayload(captionPayload);
             return;
           }
 
           if (
-            shouldShowRichPresentation(
-              response.answer ?? "",
-              response.toolCalls ?? [],
-            ) &&
-            !String(response.answer ?? "").trim()
+            shouldShowRichPresentation(finalAnswer, finalToolCalls) &&
+            !finalAnswer.trim()
           ) {
-            setDraft("");
-            setPendingUserMessage(null);
-            await loadMessages(sessionId);
-            resetStreamingUi();
+            finalizeAssistantTurn(sessionId, turnHandoff);
             return;
           }
 
-          setDraft("");
-          setPendingUserMessage(null);
-          await loadMessages(sessionId);
-          resetStreamingUi();
+          finalizeAssistantTurn(sessionId, turnHandoff);
         },
         onError: (streamError: string) => {
           finishSending(sessionId);
@@ -1000,12 +1102,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       };
     },
     [
+      finalizeAssistantTurn,
       finishSending,
       isStreamForActiveSession,
-      loadMessages,
       loadSessions,
       options.onOpenCanvas,
-      playbackPayload,
       resetStreamingUi,
     ],
   );

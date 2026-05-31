@@ -175,6 +175,7 @@ Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadm
 | Streaming em direct responses: 2 chars/chunk, 45ms delay (efeito de escrita) | Concluído |
 | Intent «coloque na lousa» + SSE `canvas_open` (chat base, herda em agentes) | Concluído |
 | Persistir resposta antes do playback (reload não perde texto em geração) | Concluído |
+| Handoff stream → timeline sem piscar ao finalizar (`chatStreamHandoff`, maio/2026) | Concluído |
 | `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
 | Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
 | Normalização de mensagens (typos/acentos) para seleção de actions | Concluído |

@@ -44,6 +44,7 @@ O Nginx serve `dist/` em `/apps/minha-delpi-chat/assets/`.
 ```text
 src/
   data/api/          # chatApi.ts, adminApi.ts, tipos
+  state/             # chatStreamHandoff.ts, chatMessageDelivery.ts
   state/hooks/       # useChatSession, useChatAdmin, …
   ui/
     pages/           # ChatPage, ChatAdminPage, ChatAgentsPage
@@ -58,6 +59,7 @@ src/
 - Tabelas/gráficos/KPI via `ChatRichPresentation` sem duplicar o mesmo conteúdo em markdown
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
+- **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
 - **Feedback** (thumbs up/down) em respostas do assistente
 - Agentes, projetos, fontes e anexos por contexto
 - Notificações (sino) quando habilitado na Core API

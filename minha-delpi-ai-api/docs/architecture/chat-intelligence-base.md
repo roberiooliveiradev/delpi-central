@@ -362,7 +362,7 @@ Turnos em `POST .../messages/stream` expõem progresso antes do texto final:
 | **API** | Após `user_persisted`, `status` «Conectado…»; o prepare roda em thread com `app_context` Flask; eventos `activity` durante carga de sessão, tools e RAG. |
 | **SSE** | Comentário `: connected` + keepalive após `status`/`activity` (`X-Accel-Buffering: no`). Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, modo legado emite `token` até `done` (sem `user_persisted` / `playback`). |
 | **Plugin** | `onUserPersisted` troca ids `optimistic-*` pelo `messageId` real; `ChatThinkingDots`; log **uma linha por fase** (`compactActivityLogForDisplay`); `flushSync` no `onActivity`. |
-| **Resposta** | Com playback: texto animado (`useStreamingTextReveal` / `naturalTextReveal`) a partir do evento `playback`; durante o prepare não substitui o painel de etapas. |
+| **Resposta** | Com playback: texto animado (`useStreamingTextReveal` / `naturalTextReveal`) a partir do evento `playback`; durante o prepare não substitui o painel de etapas. Ao `done`, o MFE faz handoff otimista (`chatStreamHandoff` → `finalizeAssistantTurn`) para não piscar ao trocar bolha de streaming pela mensagem persistida. |
 
 Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_message_use_case`, `ChatStreamCheckpointService`, `chat_sse_stream_service`, `ChatStreamingActivityPanel`, `streamingActivityLog.ts`.
 

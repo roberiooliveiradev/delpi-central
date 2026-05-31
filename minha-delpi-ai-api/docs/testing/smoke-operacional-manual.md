@@ -101,6 +101,7 @@ Com `CHAT_PERSIST_BEFORE_PLAYBACK=true` (default), o turno via **stream** grava 
 | P2 | Evento `assistant_pending` antes de `done` | Idem |
 | P3 | `GET .../messages` após o stream traz user + assistant | Script E2E acima |
 | P4 | Plugin troca `optimistic-*` pelo `messageId` real | Enviar mensagem no chat; inspecionar estado (React) ou recarregar histórico mid-stream |
+| P5 | Sem piscar ao finalizar resposta | Após `playback` + animação, a resposta **não** some e reaparece; transição direta para a mensagem na timeline (handoff `chatStreamHandoff` + `finalizeAssistantTurn`) |
 
 **Automatizado:** `scripts/validate_stream_incremental_persistence_e2e.py` (9 checks, mensagem «olá», ~5–15 s).
 
