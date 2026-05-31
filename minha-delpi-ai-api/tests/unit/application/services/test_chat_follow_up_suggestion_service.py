@@ -21,42 +21,26 @@ def test_classify_empty_outcome():
     assert outcome == "empty"
 
 
-def test_build_follow_up_suggestions_with_product_code_from_message():
+def _operational_context() -> dict:
+    return {"userActivatedAgent": True, "actionsEnabled": True}
+
+
+def test_build_follow_up_suggestions_use_placeholders_not_hardcoded_code():
     suggestions = ChatFollowUpSuggestionService.build(
         message="me fale do produto 10080099",
         answer="Produto 10080099 cadastrado.",
         tool_calls=[{"metadata": {"path": "/products/10080099/analyser", "ok": True}}],
+        workspace_context=_operational_context(),
     )
 
     assert suggestions
-    assert all("10080099" in item["query"] for item in suggestions)
-    assert all("{product_code}" not in item["query"] for item in suggestions)
     assert suggestions[0]["label"] == "Ver estoque"
-    assert suggestions[0]["query"] == "qual o estoque do produto 10080099?"
+    assert suggestions[0]["query"] == "qual o estoque do produto {{productCode}}?"
+    assert "10080099" not in suggestions[0]["query"]
+    assert "{product_code}" not in suggestions[0]["query"]
 
 
-def test_build_follow_up_uses_working_memory_product_code():
-    suggestions = ChatFollowUpSuggestionService.build(
-        message="e o estoque?",
-        answer="Saldo disponível.",
-        tool_calls=[],
-        workspace_context={
-            "workingMemory": {"lastEntities": {"productCode": "10080001"}},
-        },
-    )
-
-    assert suggestions
-    product_queries = [
-        item["query"]
-        for item in suggestions
-        if "{product_code}" not in item["query"] and item["label"] != "O que você pode fazer?"
-    ]
-
-    assert product_queries
-    assert all("10080001" in query for query in product_queries)
-
-
-def test_build_skips_product_chips_without_code():
+def test_build_includes_product_chips_even_without_resolved_code():
     suggestions = ChatFollowUpSuggestionService.build(
         message="o que você pode fazer?",
         answer="Posso ajudar com consultas autorizadas.",
@@ -64,23 +48,26 @@ def test_build_skips_product_chips_without_code():
     )
 
     labels = {item["label"] for item in suggestions}
+    by_label = {item["label"]: item["query"] for item in suggestions}
 
-    assert "Ver estoque" not in labels
+    assert "Ver estoque" in labels
+    assert by_label["Ver estoque"] == "qual o estoque do produto {{productCode}}?"
     assert "O que você pode fazer?" in labels
 
 
-def test_follow_up_queries_use_operational_phrases():
+def test_follow_up_queries_use_operational_phrases_with_placeholders():
     suggestions = ChatFollowUpSuggestionService.build(
         message="me fale do produto 10080001",
         answer="Resumo do produto.",
         tool_calls=[{"metadata": {"path": "/products/10080001/summary", "ok": True}}],
+        workspace_context=_operational_context(),
     )
 
     by_label = {item["label"]: item["query"] for item in suggestions}
 
-    assert by_label["Ver fornecedores"] == "liste os fornecedores do produto 10080001"
-    assert by_label["Ver estrutura"] == "mostre a estrutura do produto 10080001"
-    assert by_label["Onde é usado?"] == "onde o produto 10080001 é usado?"
+    assert by_label["Ver fornecedores"] == "liste os fornecedores do produto {{productCode}}"
+    assert by_label["Ver estrutura"] == "mostre a estrutura do produto {{productCode}}"
+    assert by_label["Onde é usado?"] == "onde o produto {{productCode}} é usado?"
 
 
 def test_attach_skips_when_agent_disables_follow_ups():

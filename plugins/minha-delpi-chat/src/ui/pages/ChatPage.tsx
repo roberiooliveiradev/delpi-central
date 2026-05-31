@@ -16,6 +16,8 @@ import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { useConfirmDialog } from "../components/useConfirmDialog";
+import { useChatShortcutPrompt } from "../hooks/useChatShortcutPrompt";
+import { extractProductCodeFromContextChips } from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -221,6 +223,16 @@ export function ChatPage({
 
     return [];
   }, [messages, contextMemoryCleared]);
+
+  const shortcutPrefillContext = useMemo(
+    () => ({
+      productCode: extractProductCodeFromContextChips(activeContextChips),
+    }),
+    [activeContextChips],
+  );
+  const { resolveShortcutQuery, shortcutPromptDialog } = useChatShortcutPrompt({
+    getPrefillContext: () => shortcutPrefillContext,
+  });
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1094,7 +1106,13 @@ export function ChatPage({
   }
 
   async function handleSubmitMessage() {
-    const messageToSend = draft.trim();
+    const rawDraft = draft.trim();
+
+    if (!rawDraft) {
+      return;
+    }
+
+    const messageToSend = (await resolveShortcutQuery(rawDraft)) ?? "";
 
     if (!messageToSend) {
       return;
@@ -1129,37 +1147,53 @@ export function ChatPage({
   }
 
   async function handleDrillDown(query: string) {
-    const trimmed = query.trim();
+    const resolved = await resolveShortcutQuery(query);
 
-    if (!trimmed) {
+    if (!resolved) {
       return;
     }
 
-    await sendMessage({ content: trimmed });
+    await sendMessage({ content: resolved });
   }
 
   async function handleHomeStarter(query: string) {
-    const trimmed = query.trim();
+    const resolved = await resolveShortcutQuery(query, {
+      title: "Como você quer começar?",
+      description: "Informe os dados da ação antes de enviar ao chat.",
+    });
 
-    if (!trimmed) {
+    if (!resolved) {
       return;
     }
 
     setDraft("");
-    await sendMessage({ content: trimmed });
+    await sendMessage({ content: resolved });
   }
 
   async function handleHelpTryPrompt(query: string) {
-    const trimmed = query.trim();
+    const resolved = await resolveShortcutQuery(query);
 
-    if (!trimmed) {
+    if (!resolved) {
       return;
     }
 
     setHelpPanelOpen(false);
     setHelpSearchQuery("");
     setDraft("");
-    await sendMessage({ content: trimmed });
+    await sendMessage({ content: resolved });
+  }
+
+  async function handleAgentIcebreaker(query: string) {
+    const resolved = await resolveShortcutQuery(query, {
+      title: "Preencha para continuar",
+      description: "Informe os dados antes de colocar a mensagem no composer.",
+    });
+
+    if (!resolved) {
+      return;
+    }
+
+    setDraft(resolved);
   }
 
   const hasActiveConversation =
@@ -1340,6 +1374,7 @@ export function ChatPage({
       onDropCapture={handleChatDrop}
     >
       {confirmDialog}
+      {shortcutPromptDialog}
       {isDraggingFile ? (
         <div className="mdc-chat-drop-overlay" aria-hidden="true">
           <div>
@@ -1740,7 +1775,9 @@ export function ChatPage({
                   {activeAgentPage ? (
                     <ChatAgentHome
                       agent={activeAgentPage}
-                      onUseSuggestion={setDraft}
+                      onUseSuggestion={(query) => {
+                        void handleAgentIcebreaker(query);
+                      }}
                       canManageAgent={canManageAgents}
                       onManageAgent={() => {
                         if (!canManageAgents || !activeAgentPage?.id) {

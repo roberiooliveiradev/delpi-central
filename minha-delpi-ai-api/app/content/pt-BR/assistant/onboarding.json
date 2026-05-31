@@ -8,13 +8,13 @@
       "id": "product",
       "label": "Consultar produto",
       "description": "Visão 360°, estoque e estrutura",
-      "query": "me fale do produto 10080001"
+      "query": "me fale do produto {{productCode}}"
     },
     {
       "id": "stock",
       "label": "Ver estoque",
       "description": "Saldo por produto e filial",
-      "query": "qual o estoque do produto 10080001?"
+      "query": "qual o estoque do produto {{productCode}}?"
     },
     {
       "id": "text",
@@ -32,7 +32,7 @@
       "id": "sales",
       "label": "Ver vendas",
       "description": "Histórico e períodos",
-      "query": "mostre vendas do produto 10080001"
+      "query": "mostre vendas do produto {{productCode}}"
     },
     {
       "id": "minutes",
@@ -61,13 +61,13 @@
           "id": "product",
           "label": "Consultar produto",
           "description": "Visão 360° e roteiro",
-          "query": "me fale do produto 10080001"
+          "query": "me fale do produto {{productCode}}"
         },
         {
           "id": "structure",
           "label": "Ver estrutura",
           "description": "Onde o item é usado",
-          "query": "onde o produto 10080001 é usado?"
+          "query": "onde o produto {{productCode}} é usado?"
         },
         {
           "id": "norms",
@@ -79,7 +79,7 @@
           "id": "stock",
           "label": "Ver estoque",
           "description": "Saldo por filial",
-          "query": "qual o estoque do produto 10080001?"
+          "query": "qual o estoque do produto {{productCode}}?"
         }
       ]
     },
@@ -96,19 +96,19 @@
           "id": "supplier",
           "label": "Quem fornece",
           "description": "Fornecedor do produto",
-          "query": "quem fornece o produto 10080001?"
+          "query": "quem fornece o produto {{productCode}}?"
         },
         {
           "id": "purchases",
           "label": "Histórico de compras",
           "description": "Últimas compras do item",
-          "query": "mostre compras do produto 10080001"
+          "query": "mostre compras do produto {{productCode}}"
         },
         {
           "id": "stock",
           "label": "Ver estoque",
           "description": "Saldo e filial",
-          "query": "qual o estoque do produto 10080001?"
+          "query": "qual o estoque do produto {{productCode}}?"
         }
       ]
     },
@@ -125,13 +125,13 @@
           "id": "sales",
           "label": "Ver vendas",
           "description": "Período e produto",
-          "query": "mostre vendas do produto 10080001"
+          "query": "mostre vendas do produto {{productCode}}"
         },
         {
           "id": "product",
           "label": "Consultar produto",
           "description": "Dados do item",
-          "query": "me fale do produto 10080001"
+          "query": "me fale do produto {{productCode}}"
         },
         {
           "id": "chart",
@@ -212,7 +212,7 @@
       "title": "Digite uma pergunta",
       "body": "Use linguagem natural — código de produto, período ou pedido de texto.",
       "target": "composer-input",
-      "demoQuery": "qual o estoque do produto 10080001?"
+      "demoQuery": "qual o estoque do produto {{productCode}}?"
     },
     {
       "id": "agent",
@@ -234,8 +234,8 @@
       "body": "Após cada resposta, chips como estes sugerem ações sem redigitar tudo.",
       "target": "follow-up-demo",
       "demoSuggestions": [
-        { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" },
-        { "label": "Onde é usado", "query": "onde o produto 10080001 é usado?" },
+        { "label": "Ver estoque", "query": "qual o estoque do produto {{productCode}}?" },
+        { "label": "Onde é usado", "query": "onde o produto {{productCode}} é usado?" },
         { "label": "Abrir lousa", "query": "abra na lousa um rascunho com os pontos da reunião" }
       ]
     },
@@ -287,7 +287,7 @@
         "heading": "Consultas operacionais",
         "bullets": [
           "Informe o código do produto quando pedir estoque, estrutura ou fornecedor.",
-          "Ex.: «qual o estoque do produto 10080001?»"
+          "Ex.: «qual o estoque do produto {{productCode}}?»"
         ]
       },
       {
@@ -315,8 +315,8 @@
     "footer": "Use os chips abaixo para experimentar ou pergunte *«o que você pode fazer?»* para ver o catálogo completo."
   },
   "trainingFollowUpChips": [
-    { "label": "Consultar produto", "query": "me fale do produto 10080001" },
-    { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" },
+    { "label": "Consultar produto", "query": "me fale do produto {{productCode}}" },
+    { "label": "Ver estoque", "query": "qual o estoque do produto {{productCode}}?" },
     { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
     { "label": "O que posso fazer?", "query": "o que você pode fazer?" }
   ],

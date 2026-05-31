@@ -27,7 +27,7 @@ def test_payload_for_catalog():
     assert len(payload["starterCards"]) >= 5
     assert len(payload["tourSteps"]) == 6
     assert payload["tourSteps"][0]["id"] == "starters"
-    assert payload["tourSteps"][1].get("demoQuery")
+    assert "{{productCode}}" in str(payload["tourSteps"][1].get("demoQuery") or "")
     assert len(payload["profiles"]) >= 5
     assert len(payload["milestones"]) >= 4
 

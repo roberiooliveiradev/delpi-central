@@ -15,6 +15,8 @@ from app.infrastructure.content.content_service import ContentService
 
 _PRODUCT_CODE_RE = re.compile(r"\b(\d{5,9})\b")
 _PRODUCT_PLACEHOLDER = "{product_code}"
+_MFE_PRODUCT_PLACEHOLDER = "{{productCode}}"
+_MFE_SEARCH_PLACEHOLDER = "{{searchQuery}}"
 
 
 @lru_cache(maxsize=1)
@@ -85,13 +87,6 @@ class ChatFollowUpSuggestionService:
         if not cls._operational_actions_ready(workspace_context, outcome):
             return []
 
-        product_code = cls._resolve_product_code(
-            message=message,
-            answer=answer,
-            tool_calls=tool_calls,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-        )
         query_map = _playbook().get("followUpQueries") or {}
 
         suggestions: list[dict[str, str]] = []
@@ -102,7 +97,7 @@ class ChatFollowUpSuggestionService:
             if not template:
                 continue
 
-            query = cls._materialize_query(template, product_code)
+            query = cls._template_query(template)
 
             if not query:
                 continue
@@ -112,19 +107,16 @@ class ChatFollowUpSuggestionService:
         return suggestions
 
     @classmethod
-    def _materialize_query(cls, template: str, product_code: str | None) -> str | None:
-        if _PRODUCT_PLACEHOLDER in template and not product_code:
-            return None
+    def _template_query(cls, template: str) -> str | None:
+        """Retorna template com placeholders MFE — preenchimento no clique (sem código fixo)."""
+        query = (
+            template.replace(_PRODUCT_PLACEHOLDER, _MFE_PRODUCT_PLACEHOLDER)
+            .replace("{query}", _MFE_SEARCH_PLACEHOLDER)
+            .replace("{topic}", _MFE_SEARCH_PLACEHOLDER)
+            .strip()
+        )
 
-        query = template
-
-        if product_code:
-            query = query.replace(_PRODUCT_PLACEHOLDER, product_code)
-
-        if _PRODUCT_PLACEHOLDER in query:
-            return None
-
-        return query.strip()
+        return query or None
 
     @classmethod
     def classify_outcome(

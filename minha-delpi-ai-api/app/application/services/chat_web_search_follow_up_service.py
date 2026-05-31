@@ -82,7 +82,11 @@ class ChatWebSearchFollowUpService:
             if not template:
                 continue
 
-            query = template.replace("{query}", topic).replace("{topic}", topic).strip()
+            query = (
+                template.replace("{query}", "{{searchQuery}}")
+                .replace("{topic}", "{{searchQuery}}")
+                .strip()
+            )
 
             if not query:
                 continue

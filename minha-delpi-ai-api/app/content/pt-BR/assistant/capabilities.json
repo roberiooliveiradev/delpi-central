@@ -660,8 +660,8 @@
         "description": "Cadastro, ficha, estrutura e fornecedores.",
         "flowId": "product",
         "suggestions": [
-          { "label": "Consultar produto", "query": "me fale do produto 10080001" },
-          { "label": "Visão 360°", "query": "visão 360° do produto 10080001" }
+          { "label": "Consultar produto", "query": "me fale do produto {{productCode}}" },
+          { "label": "Visão 360°", "query": "visão 360° do produto {{productCode}}" }
         ]
       },
       {
@@ -669,7 +669,7 @@
         "description": "Saldo por filial e armazém.",
         "flowId": "stock",
         "suggestions": [
-          { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" }
+          { "label": "Ver estoque", "query": "qual o estoque do produto {{productCode}}?" }
         ]
       },
       {
@@ -677,7 +677,7 @@
         "description": "OVs, faturamento e histórico de compras.",
         "flowId": "sales",
         "suggestions": [
-          { "label": "Ver vendas", "query": "mostre vendas do produto 10080001" }
+          { "label": "Ver vendas", "query": "mostre vendas do produto {{productCode}}" }
         ]
       },
       {
@@ -685,7 +685,7 @@
         "description": "Fontes públicas com transparência.",
         "flowId": "web",
         "suggestions": [
-          { "label": "Pesquisar na web", "query": "pesquise na web sobre norma NR-12" }
+          { "label": "Pesquisar na web", "query": "pesquise na web sobre {{searchQuery}}" }
         ]
       }
     ]
@@ -704,12 +704,12 @@
         {
           "order": 2,
           "text": "Informe o **código do produto** (8 dígitos) ou peça busca por descrição.",
-          "suggestion": { "label": "Exemplo com código", "query": "me fale do produto 10080001" }
+          "suggestion": { "label": "Exemplo com código", "query": "me fale do produto {{productCode}}" }
         },
         {
           "order": 3,
           "text": "Peça **tabela**, **gráfico** ou **texto** na mesma mensagem, se quiser outro formato.",
-          "suggestion": { "label": "Em tabela", "query": "ficha do produto 10080001 em tabela" }
+          "suggestion": { "label": "Em tabela", "query": "ficha do produto {{productCode}} em tabela" }
         }
       ]
     },
@@ -726,12 +726,12 @@
         {
           "order": 2,
           "text": "Informe o código do produto (ex.: 10080001).",
-          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto 10080001?" }
+          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto {{productCode}}?" }
         },
         {
           "order": 3,
           "text": "Opcional: peça **em gráfico** ou **por filial** na mesma pergunta.",
-          "suggestion": { "label": "Gráfico", "query": "estoque do produto 10080001 em gráfico" }
+          "suggestion": { "label": "Gráfico", "query": "estoque do produto {{productCode}} em gráfico" }
         }
       ]
     },
@@ -748,7 +748,7 @@
         {
           "order": 2,
           "text": "Informe produto e período quando souber.",
-          "suggestion": { "label": "Vendas do item", "query": "vendas do produto 10080001 nos últimos 30 dias" }
+          "suggestion": { "label": "Vendas do item", "query": "vendas do produto {{productCode}} nos últimos {{period}}" }
         }
       ]
     },
@@ -787,7 +787,7 @@
         {
           "order": 2,
           "text": "Peça resumo, correção ou comparação com produto interno.",
-          "suggestion": { "label": "Comparar", "query": "compare o anexo com o produto 10080001" }
+          "suggestion": { "label": "Comparar", "query": "compare o anexo com o produto {{productCode}}" }
         }
       ]
     },

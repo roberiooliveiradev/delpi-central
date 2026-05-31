@@ -126,7 +126,11 @@ def main() -> int:
     if tour_steps and tour_steps[0].get("id") != "starters":
         print(f"FAIL tour first step ({tour_steps[0]})", file=sys.stderr)
         failed += 1
-    elif not (tour_steps[1].get("demoQuery") and tour_steps[2].get("openPlusMenu")):
+    elif not (
+        tour_steps[1].get("demoQuery")
+        and "{{productCode}}" in str(tour_steps[1].get("demoQuery"))
+        and tour_steps[2].get("openPlusMenu")
+    ):
         print(f"FAIL tour demo fields ({tour_steps[1:3]})", file=sys.stderr)
         failed += 1
     else:

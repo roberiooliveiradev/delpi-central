@@ -1,6 +1,8 @@
 import type { ChatContextChip } from "./ChatContextBar";
 import type { TableRowMenuAction } from "./chatDrillDown";
 
+const PRODUCT_CODE = "{{productCode}}";
+
 export function buildContextChipQuery(chip: ChatContextChip): string | null {
   const value = String(chip.value ?? "").trim();
 
@@ -10,7 +12,7 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
 
   switch (chip.kind) {
     case "product":
-      return `qual o estoque do produto ${value}?`;
+      return `qual o estoque do produto ${PRODUCT_CODE}?`;
     case "branch":
       return `filtre pela filial ${value}`;
     case "format":
@@ -61,33 +63,28 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
 
   switch (chip.kind) {
     case "product": {
-      const code = value.replace(/\./g, "").trim();
-
-      if (/^\d{5,}$/.test(code)) {
-        actions.push(
-          {
-            id: "stock",
-            label: "Ver estoque",
-            query: `qual o estoque do produto ${code}?`,
-          },
-          {
-            id: "suppliers",
-            label: "Ver fornecedores",
-            query: `liste os fornecedores do produto ${code}`,
-          },
-          {
-            id: "structure",
-            label: "Ver estrutura",
-            query: `mostre a estrutura do produto ${code}`,
-          },
-          {
-            id: "summary",
-            label: "Resumo do produto",
-            query: `resumo do produto ${code}`,
-          },
-        );
-      }
-
+      actions.push(
+        {
+          id: "stock",
+          label: "Ver estoque",
+          query: `qual o estoque do produto ${PRODUCT_CODE}?`,
+        },
+        {
+          id: "suppliers",
+          label: "Ver fornecedores",
+          query: `liste os fornecedores do produto ${PRODUCT_CODE}`,
+        },
+        {
+          id: "structure",
+          label: "Ver estrutura",
+          query: `mostre a estrutura do produto ${PRODUCT_CODE}`,
+        },
+        {
+          id: "summary",
+          label: "Resumo do produto",
+          query: `resumo do produto ${PRODUCT_CODE}`,
+        },
+      );
       break;
     }
     case "branch":

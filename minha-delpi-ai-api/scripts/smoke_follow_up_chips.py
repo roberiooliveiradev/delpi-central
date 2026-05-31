@@ -28,12 +28,18 @@ _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 
 _EXPECTED_QUERIES = {
-    "Ver estoque": "qual o estoque do produto 10080001?",
-    "Ver fornecedores": "liste os fornecedores do produto 10080001",
-    "Ver estrutura": "mostre a estrutura do produto 10080001",
-    "Ver vendas": "mostre o faturamento do produto 10080001",
-    "Onde é usado?": "onde o produto 10080001 é usado?",
+    "Ver estoque": "qual o estoque do produto {{productCode}}?",
+    "Ver fornecedores": "liste os fornecedores do produto {{productCode}}",
+    "Ver estrutura": "mostre a estrutura do produto {{productCode}}",
+    "Ver vendas": "mostre o faturamento do produto {{productCode}}",
+    "Onde é usado?": "onde o produto {{productCode}} é usado?",
 }
+
+_PRODUCT_CODE_SMOKE = "10080001"
+
+
+def _fill_product_placeholder(query: str, product_code: str = _PRODUCT_CODE_SMOKE) -> str:
+    return query.replace("{{productCode}}", product_code)
 
 _ACTION_HINTS = {
     "Ver estoque": ("stock",),
@@ -162,7 +168,9 @@ def _validate_unit_build() -> list[str]:
 
     for item in suggestions:
         if "{product_code}" in item["query"]:
-            errors.append(f"placeholder não resolvido: {item}")
+            errors.append(f"placeholder legado não convertido: {item}")
+        if item["label"] in _EXPECTED_QUERIES and "{{productCode}}" not in item["query"]:
+            errors.append(f"esperado {{{{productCode}}}} no chip: {item}")
 
     return errors
 
@@ -233,9 +241,10 @@ def main() -> int:
                 )
                 failed += 1
         if not failed:
-            print(f"OK API bootstrap: {len(follow_ups)} chips com código 10080001")
+            print(f"OK API bootstrap: {len(follow_ups)} chips com placeholder de produto")
 
-    for label, query in _EXPECTED_QUERIES.items():
+    for label, query_template in _EXPECTED_QUERIES.items():
+        query = _fill_product_placeholder(query_template)
         chip_session = _create_session(token, agent_id)
         _send_message(token, chip_session, "me fale do produto 10080001", agent_id)
         response = _send_message(token, chip_session, query, agent_id)
