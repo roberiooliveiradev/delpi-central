@@ -7,7 +7,7 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 | # | Item | Playbook | Esforço |
 |---|------|----------|---------|
 | 1 | **Admin UX** — polish E2E Playwright, unificar builder no admin (futuro) | [11](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Médio |
-| 2 | **Anexos** — OCR em imagem (opcional) | [07](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Baixo |
+| 2 | ~~Anexos OCR imagem~~ (feito) — refinamentos de extração | [07](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Baixo |
 | 3 | ~~Router pendências ativas~~ (feito) — refinamentos de roteamento | [01](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Baixo |
 
 ## Prioridade média (UX)

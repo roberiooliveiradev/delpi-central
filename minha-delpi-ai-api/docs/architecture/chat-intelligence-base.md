@@ -48,6 +48,7 @@ Mensagem do usuário
 | `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
 | `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
+| `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
 | `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |

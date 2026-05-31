@@ -251,6 +251,33 @@ def main() -> int:
                 file=sys.stderr,
             )
 
+        png_body = (
+            b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
+            b"\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89"
+            b"\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01"
+            b"\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82"
+        )
+        png_attachment = _multipart_upload(
+            f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/attachments",
+            token=token,
+            fields={},
+            file_field="file",
+            filename="smoke-pixel.png",
+            content=png_body,
+            content_type="image/png",
+        )
+        png_meta = png_attachment.get("metadata") or {}
+        png_preview = png_meta.get("preview") if isinstance(png_meta.get("preview"), dict) else {}
+
+        if str(png_attachment.get("status") or "") == "indexed" and png_preview.get("kind") == "image":
+            ocr_note = "com OCR" if png_preview.get("ocr") else "metadados"
+            print(f"OK API: PNG indexado ({ocr_note})")
+        else:
+            print(
+                f"WARN API: PNG status={png_attachment.get('status')} preview={png_preview}",
+                file=sys.stderr,
+            )
+
         response = _request(
             "POST",
             f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",

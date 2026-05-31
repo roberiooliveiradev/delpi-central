@@ -358,6 +358,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Chips | «Comparar» em follow-up quando há 2+ anexos |
 | Upload | `readingStatus` + `preview` na resposta do POST; upload antecipado no composer com sessão ativa |
 | Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
+| OCR imagem | `ChatAttachmentImageOcrService` (Tesseract opcional); preview com `ocr`/`ocrExcerpt` quando há texto |
 
 ## Admin UX — 6 seções (Playbook 11)
 

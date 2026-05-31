@@ -123,6 +123,12 @@ class Settings:
     CHAT_ATTACHMENT_CONTEXT_MAX_CHARS = int(
         os.getenv("CHAT_ATTACHMENT_CONTEXT_MAX_CHARS", "6000")
     )
+    CHAT_ATTACHMENT_IMAGE_OCR_ENABLED = (
+        os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_ENABLED", "false").lower() == "true"
+    )
+    CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS = int(
+        os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS", "4000")
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"

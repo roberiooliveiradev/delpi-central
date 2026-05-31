@@ -57,6 +57,21 @@ class ChatAttachmentPreviewService:
             if metadata.get("format"):
                 preview["format"] = metadata.get("format")
 
+            ocr_meta = metadata.get("ocr") if isinstance(metadata.get("ocr"), dict) else {}
+
+            if metadata.get("extractor") == "image_ocr" or ocr_meta.get("charCount"):
+                preview["ocr"] = True
+                char_count = ocr_meta.get("charCount")
+
+                if isinstance(char_count, int) and char_count > 0:
+                    preview["ocrCharCount"] = char_count
+
+                if content:
+                    excerpt = content.replace("Texto extraído da imagem (OCR):", "").strip()
+
+                    if excerpt:
+                        preview["ocrExcerpt"] = excerpt[:160]
+
         return preview
 
     @classmethod
@@ -197,9 +212,15 @@ class ChatAttachmentPreviewService:
                         fmt = preview.get("format") or "imagem"
                         size = f" ({preview['width']}×{preview['height']} {fmt})"
 
-                    lines.append(
-                        f"- **{name}:** imagem indexada{size} — descreva o que analisar no visual."
-                    )
+                    if preview.get("ocr") and preview.get("ocrExcerpt"):
+                        excerpt = str(preview["ocrExcerpt"]).strip()
+                        lines.append(
+                            f"- **{name}:** imagem com OCR{size} — «{excerpt}»"
+                        )
+                    else:
+                        lines.append(
+                            f"- **{name}:** imagem indexada{size} — descreva o que analisar no visual."
+                        )
                 else:
                     lines.append(f"- **{name}:** conteúdo indexado para consulta no chat.")
             elif status == "indexed":

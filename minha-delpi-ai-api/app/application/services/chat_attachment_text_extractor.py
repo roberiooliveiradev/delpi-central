@@ -4,6 +4,10 @@ import json
 import zipfile
 from pathlib import Path
 
+from app.application.services.chat_attachment_image_ocr_service import (
+    ChatAttachmentImageOcrService,
+)
+
 
 class ChatAttachmentTextExtractor:
     SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".markdown", ".csv", ".json"}
@@ -241,22 +245,41 @@ class ChatAttachmentTextExtractor:
 
             descriptor = f"{descriptor})"
 
-        content = (
-            f"[{descriptor}. "
-            "Conteúdo visual indexado por metadados; descreva o que precisa "
-            "(ex.: ler gráfico, extrair texto, gerar descrição ou texto alternativo).]"
-        )
+        ocr = ChatAttachmentImageOcrService.try_extract_text(path)
+        ocr_text = str(ocr.get("text") or "").strip()
+
+        metadata: dict = {
+            "extension": extension,
+            "width": width,
+            "height": height,
+            "format": image_format,
+            "ocr": {
+                "enabled": ChatAttachmentImageOcrService.is_enabled(),
+                "used": bool(ocr.get("used")),
+                "reason": ocr.get("reason"),
+            },
+        }
+
+        if ocr_text:
+            metadata["extractor"] = "image_ocr"
+            metadata["ocr"]["charCount"] = ocr.get("charCount")
+            content = (
+                f"[{descriptor}]\n\n"
+                "Texto extraído da imagem (OCR):\n"
+                f"{ocr_text}"
+            )
+        else:
+            metadata["extractor"] = "image_metadata"
+            content = (
+                f"[{descriptor}. "
+                "Conteúdo visual indexado por metadados; descreva o que precisa "
+                "(ex.: ler gráfico, extrair texto, gerar descrição ou texto alternativo).]"
+            )
 
         return {
             "supported": True,
             "content": content,
-            "metadata": {
-                "extractor": "image_metadata",
-                "extension": extension,
-                "width": width,
-                "height": height,
-                "format": image_format,
-            },
+            "metadata": metadata,
         }
 
     def _legacy_format(

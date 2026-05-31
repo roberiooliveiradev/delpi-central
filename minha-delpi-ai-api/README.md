@@ -97,6 +97,8 @@ docs/              # documentação técnica
 | `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — persiste no banco antes do playback; front anima com escrita natural |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
 | `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
+| `CHAT_ATTACHMENT_IMAGE_OCR_ENABLED` | OCR opcional em PNG/JPG/WebP (`false` por padrão; `true` no compose dev) |
+| `CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS` | Limite de caracteres extraídos por OCR (padrão 4000) |
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
 | `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
 | `CHAT_HISTORY_SUMMARY_*` | Resumo de histórico longo no prompt |
