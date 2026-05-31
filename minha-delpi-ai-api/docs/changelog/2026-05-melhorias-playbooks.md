@@ -567,6 +567,8 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | Item | Entrega |
 |------|---------|
 | Quebra-gelos | Seção reposicionada logo após descrição; preview mostra sugestões padrão quando vazio |
+| Placeholders | Editor com modelos (`{{productCode}}`, `{{searchQuery}}`, …), inserção de campos e prévia do card |
+| Sincronia | Builder carrega os mesmos padrões da home quando metadata está vazio; aviso até salvar rascunho |
 | Stats | Painel de uso colapsável (`<details>`); `AgentMiniDashboard` com prop `compact` no builder |
 | Layout | KPIs em 2 colunas + gráfico empilhado — evita sobreposição Indicadores/Volume em coluna estreita |
 | Modo | Ao editar agente existente, formulário Configurar fixo (aba Criar oculta) — quebra-gelos sempre editáveis |

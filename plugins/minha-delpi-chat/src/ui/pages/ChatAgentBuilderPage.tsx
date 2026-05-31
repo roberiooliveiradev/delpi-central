@@ -12,7 +12,6 @@ import {
   Sparkles,
   Trash2,
   Wand2,
-  X,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -63,22 +62,24 @@ import {
 import { buildChatAgentHref } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
 import {
-  AGENT_ICEBREAKER_MAX_CHARS,
   AGENT_ICEBREAKER_MAX_COUNT,
+  agentIcebreakersUseDefaults,
   clampIcebreakerDraft,
   formatIcebreakerForDisplay,
   getIcebreakerGridDensityClass,
-  normalizeAgentIcebreakers,
+  resolveAgentIcebreakersForEditor,
 } from "../agentIcebreakers";
 import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
+import { AgentIcebreakersEditor } from "../components/agent-builder/AgentIcebreakersEditor";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
 import { AgentBuilderSwitch } from "../components/agent-builder/AgentBuilderSwitch";
 import { AgentKnowledgeSourcesPanel } from "../components/agent-builder/AgentKnowledgeSourcesPanel";
 import { AgentMiniDashboard } from "../components/admin/agents/AgentMiniDashboard";
 import "../components/admin/agents/AgentMiniDashboard.css";
 
+import "../components/agent-builder/AgentIcebreakersEditor.css";
 import "../components/agent-builder/AgentKnowledgeSourcesPanel.css";
 import "./ChatAgentBuilderPage.css";
 
@@ -119,10 +120,6 @@ type ChatAgentBuilderPageProps = {
   onOpenRagAdmin?: (agentId: string) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
-
-function getAgentIcebreakers(agent?: ChatAgent | null): string[] {
-  return normalizeAgentIcebreakers(agent?.metadata?.icebreakers);
-}
 
 function getMetadataRecord(
   metadata: Record<string, unknown> | null | undefined,
@@ -211,8 +208,11 @@ export function ChatAgentBuilderPage({
   const [revokingShareUserId, setRevokingShareUserId] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isLoadingAgent, setIsLoadingAgent] = useState(false);
-  const [icebreakers, setIcebreakers] = useState<string[]>(
-    getAgentIcebreakers(agent).length > 0 ? getAgentIcebreakers(agent) : [""],
+  const [icebreakers, setIcebreakers] = useState<string[]>(() =>
+    resolveAgentIcebreakersForEditor(agent?.metadata ?? null),
+  );
+  const [icebreakersUsingDefaults, setIcebreakersUsingDefaults] = useState(() =>
+    agent ? agentIcebreakersUseDefaults(agent.metadata) : false,
   );
 
   const capabilities = getMetadataRecord(agent?.metadata, "capabilities");
@@ -305,9 +305,8 @@ export function ChatAgentBuilderPage({
         setEnabled(details.enabled);
         setMaxToolCalls(details.max_tool_calls);
         setRequiresConfirmationForWrite(details.requires_confirmation_for_write);
-        setIcebreakers(
-          getAgentIcebreakers(details).length > 0 ? getAgentIcebreakers(details) : [""],
-        );
+        setIcebreakers(resolveAgentIcebreakersForEditor(details.metadata));
+        setIcebreakersUsingDefaults(agentIcebreakersUseDefaults(details.metadata));
 
         const nextCapabilities = getMetadataRecord(details.metadata, "capabilities");
         setCapActions(
@@ -529,33 +528,8 @@ export function ChatAgentBuilderPage({
 
   const usingDefaultPreviewIcebreakers = normalizedIcebreakers.length === 0;
   const previewIcebreakerDensityClass = getIcebreakerGridDensityClass(
-    Math.min(previewIcebreakers.length, 3),
+    previewIcebreakers.length,
   );
-
-  function updateIcebreaker(index: number, value: string) {
-    const nextValue = clampIcebreakerDraft(value);
-
-    setIcebreakers((current) =>
-      current.map((item, itemIndex) => (itemIndex === index ? nextValue : item)),
-    );
-  }
-
-  function removeIcebreaker(index: number) {
-    setIcebreakers((current) => {
-      const next = current.filter((_, itemIndex) => itemIndex !== index);
-      return next.length > 0 ? next : [""];
-    });
-  }
-
-  function addIcebreaker() {
-    setIcebreakers((current) => {
-      if (current.length >= AGENT_ICEBREAKER_MAX_COUNT) {
-        return current;
-      }
-
-      return [...current, ""];
-    });
-  }
 
   useEffect(() => {
     if (agent?.id) {
@@ -570,49 +544,15 @@ export function ChatAgentBuilderPage({
       aria-label="Quebra-gelos do agente"
     >
       <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
-      <p className="mdc-chat-agent-builder__icebreakers-help">
-        Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
-        {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais sugestões.
-      </p>
 
-      <div className="mdc-chat-agent-builder__icebreakers">
-        {icebreakers.map((icebreaker, index) => (
-          <div key={`${index}-${icebreakers.length}`} className="mdc-chat-agent-builder__icebreaker-row">
-            <input
-              value={icebreaker}
-              maxLength={AGENT_ICEBREAKER_MAX_CHARS}
-              onChange={(event) => updateIcebreaker(index, event.target.value)}
-              placeholder="Ex.: Quero verificar um desenho."
-              aria-label={`Quebra-gelo ${index + 1}`}
-              aria-describedby={`icebreaker-count-${index}`}
-            />
-            <span
-              id={`icebreaker-count-${index}`}
-              className="mdc-chat-agent-builder__icebreaker-count"
-            >
-              {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
-            </span>
-
-            <button
-              type="button"
-              onClick={() => removeIcebreaker(index)}
-              aria-label="Remover quebra-gelo"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          </div>
-        ))}
-
-        <button
-          type="button"
-          className="mdc-chat-ws-outline-btn"
-          onClick={addIcebreaker}
-          disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
-        >
-          <Plus size={16} aria-hidden="true" />
-          <span>Adicionar quebra-gelo</span>
-        </button>
-      </div>
+      <AgentIcebreakersEditor
+        icebreakers={icebreakers}
+        usingDefaults={icebreakersUsingDefaults}
+        onChange={(next) => {
+          setIcebreakers(next);
+          setIcebreakersUsingDefaults(false);
+        }}
+      />
     </section>
   );
 
@@ -665,12 +605,9 @@ export function ChatAgentBuilderPage({
         return current;
       }
 
-      return [
-        "O que você consegue fazer?",
-        "Quais informações você pode consultar?",
-        "Me ajude com uma análise inicial.",
-      ];
+      return [...DEFAULT_AGENT_ICEBREAKERS];
     });
+    setIcebreakersUsingDefaults(false);
 
     if (options?.switchToConfigure !== false) {
       setBuilderMode("configure");

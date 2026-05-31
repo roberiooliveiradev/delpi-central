@@ -3,11 +3,11 @@ import { Bot, Settings, Sparkles } from "lucide-react";
 import type { ChatAgent } from "../../data/api/chatTypes";
 import {
   AGENT_ICEBREAKER_MAX_COUNT,
+  agentIcebreakersUseDefaults,
   formatIcebreakerForDisplay,
   getIcebreakerGridDensityClass,
-  normalizeAgentIcebreakers,
+  resolveAgentIcebreakersForDisplay,
 } from "../agentIcebreakers";
-import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import "./ChatAgentHome.css";
 
@@ -24,10 +24,9 @@ export function ChatAgentHome({
   canManageAgent = false,
   onManageAgent,
 }: ChatAgentHomeProps) {
-  const configuredIcebreakers = normalizeAgentIcebreakers(agent.metadata?.icebreakers);
-  const icebreakers =
-    configuredIcebreakers.length > 0 ? configuredIcebreakers : DEFAULT_AGENT_ICEBREAKERS;
-  const usingDefaultIcebreakers = configuredIcebreakers.length === 0;
+  const configuredIcebreakers = resolveAgentIcebreakersForDisplay(agent.metadata);
+  const usingDefaultIcebreakers = agentIcebreakersUseDefaults(agent.metadata);
+  const icebreakers = configuredIcebreakers;
   const icebreakerDensityClass = getIcebreakerGridDensityClass(icebreakers.length);
   const visibilityLabel =
     agent.visibility === "system"
@@ -54,9 +53,9 @@ export function ChatAgentHome({
         {agent.visibility !== "private" && agent.response_style ? (
           <span>{agent.response_style}</span>
         ) : null}
-        {agent.visibility !== "private" && configuredIcebreakers.length > 0 ? (
+        {agent.visibility !== "private" && !usingDefaultIcebreakers ? (
           <span>
-            {Math.min(configuredIcebreakers.length, AGENT_ICEBREAKER_MAX_COUNT)} quebra-gelos
+            {Math.min(icebreakers.length, AGENT_ICEBREAKER_MAX_COUNT)} quebra-gelos
           </span>
         ) : null}
       </div>
@@ -81,7 +80,7 @@ export function ChatAgentHome({
         >
           {usingDefaultIcebreakers ? (
             <p className="mdc-chat-agent-home__icebreakers-hint">
-              Sugestões para começar — clique ou digite do seu jeito.
+              Sugestões padrão — clique para preencher campos ou digite do seu jeito.
             </p>
           ) : null}
           {icebreakers.map((icebreaker) => {

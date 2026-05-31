@@ -1368,9 +1368,14 @@
 }
 
 .mdc-chat-agent-builder__preview-icebreakers.mdc-chat-agent-home__icebreakers--few,
+.mdc-chat-agent-builder__preview-icebreakers.mdc-chat-agent-home__icebreakers--quad,
 .mdc-chat-agent-builder__preview-icebreakers.mdc-chat-agent-home__icebreakers--medium,
 .mdc-chat-agent-builder__preview-icebreakers.mdc-chat-agent-home__icebreakers--many {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mdc-chat-agent-builder__preview-icebreakers.mdc-chat-agent-home__icebreakers--quad {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (max-width: 760px) {

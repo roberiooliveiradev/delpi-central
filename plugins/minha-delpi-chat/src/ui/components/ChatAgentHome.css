@@ -94,6 +94,20 @@
   width: min(100%, 580px);
 }
 
+.mdc-chat-agent-home__icebreakers--quad {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+  width: min(100%, 580px);
+}
+
+.mdc-chat-agent-home__icebreakers--quad button {
+  min-height: 4.4rem;
+  border-radius: 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 680;
+  padding: 0.7rem 0.8rem;
+}
+
 .mdc-chat-agent-home__icebreakers--medium button {
   min-height: 4.1rem;
   border-radius: 0.85rem;

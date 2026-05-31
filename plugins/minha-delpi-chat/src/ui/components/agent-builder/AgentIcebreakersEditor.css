@@ -1,0 +1,91 @@
+.mdc-agent-icebreakers-editor {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.mdc-agent-icebreakers-editor__defaults-notice {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-text);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.mdc-agent-icebreakers-editor__help {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.mdc-agent-icebreakers-editor__help code {
+  font-size: 0.8rem;
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
+}
+
+.mdc-agent-icebreakers-editor__templates,
+.mdc-agent-icebreakers-editor__fields {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.mdc-agent-icebreakers-editor__templates-label,
+.mdc-agent-icebreakers-editor__fields-label {
+  color: var(--mdc-title);
+  font-size: 0.8rem;
+  font-weight: 780;
+}
+
+.mdc-agent-icebreakers-editor__template-list,
+.mdc-agent-icebreakers-editor__field-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdc-agent-icebreakers-editor__template-btn,
+.mdc-agent-icebreakers-editor__field-btn {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-card-bg) 80%, transparent);
+  color: var(--mdc-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  padding: 0.35rem 0.65rem;
+}
+
+.mdc-agent-icebreakers-editor__template-btn:hover,
+.mdc-agent-icebreakers-editor__field-btn:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-agent-icebreakers-editor__row {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-agent-icebreakers-editor__preview {
+  margin: 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.mdc-agent-icebreakers-editor__preview span {
+  color: var(--mdc-title);
+  font-weight: 700;
+}
+
+.mdc-agent-icebreakers-editor__preview em {
+  font-style: normal;
+  opacity: 0.92;
+}
