@@ -107,25 +107,13 @@ class ChatDocumentVisionService:
         }
 
     @classmethod
-    def build_attachment_vision_metadata(
+    def _compute_vision_for_attachment(
         cls,
+        attachment,
         *,
-        user_id: str | None = None,
-        session_id: str | None = None,
-        attachment_ids: list | None = None,
         skills: dict | None = None,
     ) -> dict[str, Any] | None:
-        """Snapshot leve para metadata/adminDebug em turnos só com anexo (ex.: boleto PDF)."""
         if not cls.should_run_for_attachment(skills):
-            return None
-
-        attachment = cls._resolve_first_document_attachment(
-            user_id=user_id,
-            session_id=session_id,
-            attachment_ids=attachment_ids,
-        )
-
-        if not attachment:
             return None
 
         filename = attachment.original_filename or ""
@@ -144,34 +132,118 @@ class ChatDocumentVisionService:
             min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
 
             if len(text) < min_legible:
-                vision = cls.extract_from_storage_path(
+                return cls.extract_from_storage_path(
                     attachment.storage_path,
                     filename=filename,
                     content_type=content_type,
                 )
-            else:
-                started = time.perf_counter()
-                built = cls._build_from_text(
-                    text,
-                    engine=str(native.get("engine") or "native"),
-                    stages=["native"],
-                    source_metadata=native.get("metadata") if isinstance(native.get("metadata"), dict) else {},
-                )
-                vision = cls._finalize_result(
-                    built,
-                    engine=str(built.get("engine") or "native"),
-                    stages=["native"],
-                    warnings=[],
-                    started=started,
-                )
-        else:
-            vision = cls.extract_from_storage_path(
-                attachment.storage_path,
-                filename=filename,
-                content_type=content_type,
+
+            started = time.perf_counter()
+            built = cls._build_from_text(
+                text,
+                engine=str(native.get("engine") or "native"),
+                stages=["native"],
+                source_metadata=native.get("metadata") if isinstance(native.get("metadata"), dict) else {},
             )
 
-        return cls.to_document_vision_metadata(vision)
+            return cls._finalize_result(
+                built,
+                engine=str(built.get("engine") or "native"),
+                stages=["native"],
+                warnings=[],
+                started=started,
+            )
+
+        return cls.extract_from_storage_path(
+            attachment.storage_path,
+            filename=filename,
+            content_type=content_type,
+        )
+
+    @classmethod
+    def persist_attachment_vision_metadata(
+        cls,
+        attachment,
+        vision_meta: dict[str, Any],
+    ) -> None:
+        if not attachment or not vision_meta:
+            return
+
+        try:
+            attachment_id = UUID(str(attachment.id))
+        except (TypeError, ValueError):
+            return
+
+        try:
+            from datetime import datetime, timezone
+
+            from app.infrastructure.persistence.postgres_chat_attachment_repository import (
+                PostgresChatAttachmentRepository,
+            )
+
+            PostgresChatAttachmentRepository().update_status(
+                attachment_id=attachment_id,
+                status=str(attachment.status or "ready"),
+                metadata={
+                    "documentVision": vision_meta,
+                    "documentVisionAt": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+        except Exception:
+            return
+
+    @classmethod
+    def refresh_attachment_vision_snapshot(
+        cls,
+        attachment,
+        *,
+        skills: dict | None = None,
+        persist: bool = True,
+    ) -> dict[str, Any] | None:
+        """Recalcula visão/OCR e opcionalmente grava em `attachment.metadata.documentVision`."""
+        vision = cls._compute_vision_for_attachment(attachment, skills=skills)
+
+        if not vision:
+            return None
+
+        meta = cls.to_document_vision_metadata(vision)
+
+        if persist:
+            cls.persist_attachment_vision_metadata(attachment, meta)
+
+        return meta
+
+    @classmethod
+    def build_attachment_vision_metadata(
+        cls,
+        *,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        attachment_ids: list | None = None,
+        skills: dict | None = None,
+        persist: bool = True,
+    ) -> dict[str, Any] | None:
+        """Snapshot leve para metadata/adminDebug em turnos só com anexo (ex.: boleto PDF)."""
+        attachment = cls._resolve_first_document_attachment(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        if not attachment:
+            return None
+
+        vision = cls._compute_vision_for_attachment(attachment, skills=skills)
+
+        if not vision:
+            return None
+
+        meta = cls.to_document_vision_metadata(vision)
+
+        if persist:
+            cls.persist_attachment_vision_metadata(attachment, meta)
+
+        return meta
 
     @classmethod
     def enrich_attachment_excerpt(
@@ -368,6 +440,8 @@ class ChatDocumentVisionService:
         merged["extractor"] = doc.get("engine") or merged.get("extractor") or "document_vision"
         bom_rows = doc.get("bomRows") if isinstance(doc.get("bomRows"), list) else []
 
+        title_block = doc.get("titleBlock") if isinstance(doc.get("titleBlock"), dict) else None
+
         merged["documentVision"] = {
             "schemaVersion": doc.get("schemaVersion"),
             "engine": doc.get("engine"),
@@ -375,12 +449,48 @@ class ChatDocumentVisionService:
             "legibilityScore": doc.get("legibilityScore"),
             "durationMs": doc.get("durationMs"),
             "bomRowCount": len(bom_rows),
+            "hasTitleBlock": bool(title_block),
         }
 
         if bom_rows:
             merged["bomRows"] = bom_rows
+            merged["bomHints"] = cls._bom_rows_to_hints(bom_rows)
+
+        if title_block:
+            merged["titleBlock"] = title_block
+
+            fields = title_block.get("fields") if isinstance(title_block.get("fields"), dict) else {}
+
+            if not merged.get("productCode") and fields.get("code"):
+                merged["productCode"] = fields["code"]
+
+            if not merged.get("revision") and fields.get("rev"):
+                merged["revision"] = fields["rev"]
 
         return merged
+
+    @classmethod
+    def _bom_rows_to_hints(cls, bom_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        hints: list[dict[str, Any]] = []
+
+        for row in bom_rows:
+            if not isinstance(row, dict):
+                continue
+
+            code = str(row.get("code") or "").strip()
+
+            if not code:
+                continue
+
+            hints.append(
+                {
+                    "componentCode": code,
+                    "qty": row.get("quantity"),
+                    "evidence": "bom_heuristic",
+                }
+            )
+
+        return hints
 
     @classmethod
     def _resolve_first_document_attachment(

@@ -340,13 +340,14 @@ Admin: estender painel Métricas ou subseção em drawing; endpoint opcional `GE
 
 ## 13. Critérios de aceite (playbook)
 
-- [ ] Skill `document-vision-delpi` no catálogo e registry.
-- [ ] `ChatDocumentVisionService` com backends `native`, `tesseract`, `docling` (mínimo).
-- [ ] `drawing-analysis-delpi` usa vision quando texto nativo &lt; limiar.
-- [ ] Metadata `documentVision` no turno e adminDebug.
-- [ ] Smokes V1–V8 passando no container vision profile.
-- [ ] Documentação env vars + compose profile.
-- [ ] Sem regressão em `smoke_drawing_analyser.py` e roteamento operacional.
+- [x] Skill `document-vision-delpi` no catálogo e registry.
+- [x] `ChatDocumentVisionService` com backends `native`, `tesseract`, `docling`, `paddleocr`, `ollama_vlm` (fallback).
+- [x] `drawing-analysis-delpi` usa vision quando texto nativo &lt; limiar.
+- [x] Metadata `documentVision` no turno, adminDebug e **anexo** (`documentVisionAt`).
+- [x] Smokes V1–V9 + `run_onda13_validation.sh` no container padrão.
+- [x] Documentação env vars + `docker-compose.vision.yml`.
+- [x] Sem regressão em `smoke_drawing_analyser.py` e roteamento operacional.
+- [ ] Smokes com profile **vision** (Docling/Paddle instalados) em homologação.
 
 ---
 

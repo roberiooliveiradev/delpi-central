@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from unittest.mock import patch
 from uuid import uuid4
 
 from app.application.use_cases.index_chat_attachment_use_case import (
     IndexChatAttachmentUseCase,
 )
+from app.infrastructure.config.settings import Settings
 
 
 @dataclass
@@ -107,3 +109,38 @@ def test_index_chat_attachment_uses_session_source_scope():
     assert request.metadata["agentId"] == "11111111-1111-4111-8111-111111111111"
     assert request.metadata["attachmentId"] == str(attachment_id)
     assert request.metadata["originalFilename"] == "documento.md"
+
+
+def test_index_pdf_triggers_vision_snapshot_when_enabled(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+
+    attachment_id = uuid4()
+    repository = FakeAttachmentRepository()
+    ingest = FakeIngestUseCase()
+
+    use_case = IndexChatAttachmentUseCase(
+        attachment_repository=repository,
+        ingest_knowledge_document_use_case=ingest,
+        text_extractor=FakeTextExtractor(),
+    )
+
+    with patch(
+        "app.application.services.chat_document_vision_service.ChatDocumentVisionService.refresh_attachment_vision_snapshot"
+    ) as refresh_mock:
+        use_case.execute(
+            user_id=str(uuid4()),
+            attachment=FakeAttachment(
+                id=attachment_id,
+                user_id=uuid4(),
+                session_id=uuid4(),
+                message_id=None,
+                project_id=None,
+                agent_id=None,
+                storage_path="/tmp/desenho.pdf",
+                original_filename="desenho.pdf",
+                content_type="application/pdf",
+            ),
+        )
+
+    refresh_mock.assert_called_once()

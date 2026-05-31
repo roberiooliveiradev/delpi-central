@@ -109,3 +109,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | BOM heurístico (`ChatDocumentVisionBomService`); fast path desligado em `attachment_document`. |
 | 2026-05-31 | Backends `docling`, `paddleocr` e `ollama_vlm` wired com fallback; testes de contrato neural/VLM. |
 | 2026-05-31 | `titleBlock`, `bomRows` no resultado; métricas `byStage`; compose `docker-compose.vision.yml`. |
+| 2026-05-31 | Persistência `metadata.documentVision` no anexo (index + turno); `bomHints` no merge desenho. |

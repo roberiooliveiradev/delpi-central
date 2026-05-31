@@ -242,7 +242,7 @@
     },
     "attachmentHelp": {
       "title": "**Anexos e arquivos**",
-      "body": "Use o clipe do composer para enviar PDF, planilha ou imagem. Depois peça, por exemplo:\n- «O que está escrito no arquivo?» (leitura e OCR quando necessário)\n- «Resuma o arquivo anexado»\n- «Corrija o texto do anexo»\n- «Compare o anexo com dados do produto 10080001»\n- «Extraia pendências do PDF»\n\nPDFs **indexados** usam o texto da sessão; scans e imagens passam por **visão/OCR** (Tesseract). Desenhos técnicos usam a skill de **análise de desenhos** com validação na API DELPI.\n\nOs chips **Com o anexo** aparecem quando há arquivo na mensagem."
+      "body": "Use o clipe do composer para enviar PDF, planilha ou imagem. Depois peça, por exemplo:\n- «O que está escrito no arquivo?» (leitura e OCR quando necessário; intent dedicado sem planejar APIs)\n- «Resuma o arquivo anexado»\n- «Corrija o texto do anexo»\n- «Compare o anexo com dados do produto 10080001»\n- «Extraia pendências do PDF»\n\nPDFs **indexados** usam o texto da sessão; scans e imagens passam por **visão/OCR** (Tesseract no ambiente padrão; Docling/Paddle/VLM no profile Docker `vision`). O snapshot `documentVision` fica no metadata do anexo após indexação.\n\nDesenhos técnicos usam a skill de **análise de desenhos** com validação na API DELPI.\n\nOs chips **Com o anexo** aparecem quando há arquivo na mensagem."
     },
     "agentHelp": {
       "title": "**Agentes especializados**",

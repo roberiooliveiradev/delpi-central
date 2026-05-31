@@ -62,6 +62,7 @@ def main() -> int:
             "Att",
             (),
             {
+                "id": "00000000-0000-4000-8000-000000000099",
                 "status": "indexed",
                 "storage_path": "/tmp/smoke.pdf",
                 "original_filename": "smoke.pdf",
@@ -74,12 +75,16 @@ def main() -> int:
             "_stage_native",
             return_value={"fullText": "TEXTO LEGIVEL " * 20, "engine": "pypdf", "metadata": {}},
         ):
-            meta_indexed = ChatDocumentVisionService.build_attachment_vision_metadata(
-                user_id="u",
-                session_id="s",
-                attachment_ids=["a"],
-                skills={"documentVision": True},
-            )
+            with patch.object(
+                ChatDocumentVisionService,
+                "persist_attachment_vision_metadata",
+            ):
+                meta_indexed = ChatDocumentVisionService.build_attachment_vision_metadata(
+                    user_id="u",
+                    session_id="s",
+                    attachment_ids=["a"],
+                    skills={"documentVision": True},
+                )
     check("attachment vision metadata indexed", meta_indexed and meta_indexed.get("stages") == ["native"])
 
     text = "DESENHO 90260140 REV.01\nCOD. CLIENTE TESTE"

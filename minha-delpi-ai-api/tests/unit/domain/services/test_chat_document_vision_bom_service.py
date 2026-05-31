@@ -37,3 +37,5 @@ def test_merge_into_drawing_parse_includes_bom_rows():
     assert merged["bomRows"][0]["code"] == "90260141"
     assert "90260141" in merged["componentCodes"]
     assert merged["documentVision"]["bomRowCount"] == 1
+    assert merged["bomHints"][0]["componentCode"] == "90260141"
+    assert merged["bomHints"][0]["evidence"] == "bom_heuristic"
