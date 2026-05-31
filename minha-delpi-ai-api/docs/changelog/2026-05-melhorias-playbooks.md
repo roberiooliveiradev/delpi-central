@@ -460,6 +460,19 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Homologação | `run_chat_shortcut_homologation.sh` via `delpi-gateway` — login `rober` + catálogo + follow-up OK |
 | Deploy MFE | `docker compose build` + `up -d minha-delpi-chat` |
 
+## Atalhos da home — modais antes de enviar (31/05/2026)
+
+| Problema | Correção |
+|----------|----------|
+| Só **E-mail** abria diálogo; demais atalhos enviavam direto | `resolveStarterPromptOptions` mapeia `featureId`/`starterId` (produto, web, e-mail, corrigir texto, ata, comunicado) |
+| Cliques seguidos ignorados | Removido `homeStarterInFlightRef` — cada card dispara seu próprio fluxo |
+| **Novidades → Pesquisa web** sem assunto | `featureId: web_search` + template `{{searchQuery}}` no release notes / catálogo |
+| Perfil **Administrativo** | `onboarding.json` — queries com `{{emailRecipient}}`, `{{emailSubject}}`, `{{textContent}}`, `{{meetingNotes}}` |
+
+**Commits:** `a6b7cd52` (modal pesquisa web), `23fc01cd` (modais e-mail/corrigir/ata/produto).
+
+**Revalidação (31/05):** login Keycloak `rober` OK; `run_chat_shortcut_homologation.sh` (placeholders + perfil + catálogo + chips) OK; Vitest atalhos/contexto 14 OK; pytest web search 16 OK; `gateway.search('weg')` → **WEG Industries** (fallback DuckDuckGo após SearXNG 403).
+
 ## Homologação — api-externa local
 
 | Item | Entrega |
