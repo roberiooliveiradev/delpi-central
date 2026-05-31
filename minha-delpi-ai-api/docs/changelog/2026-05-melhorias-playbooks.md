@@ -170,7 +170,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |---------|---------|
 | Gerador | Regras comercial, financeiro, qualidade, RH, LMP, SQL; tokens de produto (fornecedores, estrutura, …) |
 | Catálogo | Novas features `commercial_indicators`, `financial_indicators`, `quality_indicators`, `hr_indicators`, `engineering_*`, `data_sql` |
-| Drift | Match por marcador mais específico; ignora `/` e `/health`; `unmapped` residual só rotas `/system/*` |
+| Drift | Match por marcador mais específico; ignora `/` e `/health`; `system_metadata` mapeia rotas `/system/*` |
 
 ## Autoajuda — Fase 3 (geração do catálogo)
 

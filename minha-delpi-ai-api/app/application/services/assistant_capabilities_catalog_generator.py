@@ -114,6 +114,11 @@ _PATH_RULES: tuple[dict[str, Any], ...] = (
         markers=("/production",),
         action_token="/production",
     ),
+    _path_rule(
+        feature_id="system_metadata",
+        markers=("/system",),
+        action_token="/system",
+    ),
 )
 
 _SKILL_TO_FEATURE: dict[str, str] = {
@@ -205,7 +210,7 @@ class AssistantCapabilitiesCatalogGenerator:
             ),
             "skillCount": len(resolved_skills),
             "unmappedActionPaths": sorted(set(unmapped_paths))[:40],
-            "pathRulesVersion": "2026.06.02",
+            "pathRulesVersion": "2026.06.03",
         }
 
         return catalog

@@ -85,6 +85,35 @@ def test_generate_maps_commercial_and_suppliers():
     assert "/health" not in (generation.get("unmappedActionPaths") or [])
 
 
+def test_generate_maps_system_tables():
+    catalog = AssistantCapabilitiesCatalogGenerator.generate(
+        actions=[
+            {"path": "/system/tables/{tableName}/schema", "enabled": True},
+            {"path": "/system/login", "enabled": True},
+        ],
+        skills=[],
+        base_catalog={
+            "version": "test",
+            "features": [
+                {
+                    "id": "system_metadata",
+                    "title": "System",
+                    "category": "operational",
+                    "status": "available",
+                    "summary": "SX2",
+                    "requiresAgent": True,
+                },
+            ],
+        },
+    )
+
+    system = catalog["features"][0]
+    generation = catalog.get("generation") or {}
+
+    assert "/system" in (system.get("requiredActions") or [])
+    assert not generation.get("unmappedActionPaths")
+
+
 def test_drift_report_detects_required_actions_change():
     on_disk = {
         "generation": {"generatedAt": "old"},
