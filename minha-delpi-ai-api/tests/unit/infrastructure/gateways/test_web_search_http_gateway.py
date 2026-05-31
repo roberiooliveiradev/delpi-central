@@ -86,6 +86,51 @@ def test_gateway_retries_english_when_portuguese_empty(monkeypatch):
     assert "python programming language" in calls
 
 
+def test_gateway_tries_fallback_provider_after_first_returns_empty(monkeypatch):
+    gateway = WebSearchHttpGateway()
+    calls: list[tuple[str, str]] = []
+
+    class EmptyProvider(DuckDuckGoInstantProvider):
+        name = "empty_provider"
+
+        def is_configured(self):
+            return True
+
+        def search(self, query, *, max_results):
+            calls.append((self.name, query))
+            return {"query": query, "results": [], "provider": self.name}
+
+    monkeypatch.setattr(
+        "app.infrastructure.gateways.web_search_http_gateway.resolve_web_search_providers",
+        lambda: [EmptyProvider(), DuckDuckGoInstantProvider()],
+    )
+
+    def fake_ddg_search(self, query, *, max_results):
+        calls.append((self.name, query))
+
+        return {
+            "query": query,
+            "results": [
+                {
+                    "title": "WEG Industries",
+                    "snippet": "Brazilian electric equipment company.",
+                    "url": "https://duckduckgo.com/WEG_Industries",
+                    "source": "related_topic",
+                }
+            ],
+            "provider": self.name,
+            "searchStatus": "success",
+        }
+
+    monkeypatch.setattr(DuckDuckGoInstantProvider, "search", fake_ddg_search)
+
+    payload = gateway.search("weg", max_results=3)
+
+    assert payload["searchStatus"] == "success"
+    assert payload["results"][0]["title"] == "WEG Industries"
+    assert any(name == "duckduckgo_instant_answer" for name, _ in calls)
+
+
 def test_gateway_returns_no_results_when_all_attempts_fail(monkeypatch):
     gateway = WebSearchHttpGateway()
 

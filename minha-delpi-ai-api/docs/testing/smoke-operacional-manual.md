@@ -450,6 +450,15 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 ### Pesquisa na internet (`web_search` — tool nativa)
 
+**Regressão (31/05/2026):** após falha do SearXNG (403), o gateway deve tentar DuckDuckGo — mensagem «não encontrei resultados úteis» para «WEG» indica bug no fallback.
+
+| Passo | Esperado |
+|-------|----------|
+| `Pesquise na web sobre WEG` | Resumo menciona **WEG Industries** (equipamentos elétricos), não «sem resultados» |
+| Admin → diagnóstico | Tool `web_search`; `provider` duckduckgo ou searxng |
+
+### Pesquisa na internet — checklist W1–W5
+
 Requer `CHAT_WEB_SEARCH_ENABLED=true`, admin `webSearchEnabled=true` e (recomendado) `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED=true`.
 
 | ID | Pergunta | O que esperar (automático) | O que observar no chat (manual) |

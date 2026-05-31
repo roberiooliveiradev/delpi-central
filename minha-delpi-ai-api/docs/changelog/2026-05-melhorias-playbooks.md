@@ -439,6 +439,16 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Commits:** `f8d571bf`, `5633a777`, `0dcda7da`, `6670e510`, `a5c7e9e9`, `384cbd45`, `ecac82f4`, `df271df7`, `a1c9c33d`, `2500fc14`, `fd75c884`.
 
+## Fix pesquisa web — WEG / provedor fallback (31/05/2026)
+
+| Problema | Causa | Correção |
+|----------|--------|----------|
+| «Pesquise na web sobre WEG» → sem resultados úteis | `attempted_queries` impedia o 2º provedor (SearXNG falhava 403 e DuckDuckGo nunca era chamado) | Dedup por `(provider, query)` no `WebSearchHttpGateway` |
+| Resumo errado (homônimo) | DuckDuckGo listava «Gladstone» antes de «WEG Industries» | `rank_results_for_query` + Wikipedia fallback `WEG Industries` |
+| SearXNG 403 | Botdetection sem `X-Forwarded-For` | Headers na API + `limiter.toml` (pass_ip redes internas) |
+
+**Testes:** `test_web_search_http_gateway` (fallback provider), `test_rank_results_for_query`; E2E container: `gateway.search('weg')` → WEG Industries.
+
 ## UX atalhos, diálogo e contexto ativo (31/05/2026)
 
 | Item | Entrega |

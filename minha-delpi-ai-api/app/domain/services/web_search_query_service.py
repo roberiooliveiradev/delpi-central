@@ -183,6 +183,72 @@ class WebSearchQueryService:
 
         return bool(useful)
 
+    _ENTITY_BOOST_MARKERS = (
+        "industries",
+        "indústrias",
+        "empresa",
+        "company",
+        "corporation",
+        "brazil",
+        "brasileir",
+        "manufacturer",
+        "multinacional",
+    )
+
+    @classmethod
+    def rank_results_for_query(cls, payload: dict, query: str) -> dict:
+        """Prioriza resultados alinhados à entidade (ex.: WEG → WEG Industries, não homônimos)."""
+        if not isinstance(payload, dict):
+            return payload
+
+        results = payload.get("results")
+
+        if not isinstance(results, list) or len(results) <= 1:
+            return payload
+
+        tokens = cls.extract_entity_tokens(query)
+
+        if not tokens:
+            return payload
+
+        entity = tokens[-1].casefold()
+
+        def score(item: dict) -> float:
+            text = " ".join(
+                [
+                    str(item.get("title") or ""),
+                    str(item.get("snippet") or ""),
+                    str(item.get("url") or ""),
+                ]
+            ).casefold()
+            value = 0.0
+
+            if entity in text:
+                value += 12.0
+
+            if re.search(rf"\b{re.escape(entity)}\b", text):
+                value += 4.0
+
+            for marker in cls._ENTITY_BOOST_MARKERS:
+                if marker in text:
+                    value += 2.0
+
+            if "weg industries" in text or "weg.net" in text:
+                value += 8.0
+
+            if str(item.get("source") or "") == "instant_answer":
+                value -= 2.0
+
+            return value
+
+        ranked = sorted(
+            (item for item in results if isinstance(item, dict)),
+            key=score,
+            reverse=True,
+        )
+
+        return {**payload, "results": ranked}
+
     @classmethod
     def build_english_retry_query(cls, query: str) -> str | None:
         normalized = cls._normalize_for_retry(cls.sanitize_query(query) or query)

@@ -22,6 +22,11 @@ class WebSearchPortugueseContentService:
     WIKIPEDIA_PT_SUMMARY_URL = "https://pt.wikipedia.org/api/rest_v1/page/summary/"
     WIKIPEDIA_USER_AGENT = "MinhaDelpiWebSearch/1.0 (https://delpi.com.br; chat-web-search)"
 
+    _KNOWN_ENTITY_TITLES: dict[str, list[str]] = {
+        "weg": ["WEG Industries", "WEG"],
+        "tyco": ["Tyco International", "TE Connectivity"],
+    }
+
     _ENGLISH_MARKERS = re.compile(
         r"\b(the|and|with|language|programming|high-level|general-purpose|software)\b",
         re.IGNORECASE,
@@ -96,13 +101,17 @@ class WebSearchPortugueseContentService:
     def _fallback_title_candidates(cls, topic: str) -> list[str]:
         candidates = cls._topic_title_candidates(topic)
         entity = str(topic or "").strip()
+        entity_key = entity.casefold()
+
+        if entity_key in cls._KNOWN_ENTITY_TITLES:
+            candidates.extend(cls._KNOWN_ENTITY_TITLES[entity_key])
 
         if entity:
             candidates.extend(
                 [
                     entity,
                     f"{entity} International",
-                    "TE Connectivity" if entity.casefold() == "tyco" else "",
+                    "TE Connectivity" if entity_key == "tyco" else "",
                 ]
             )
 

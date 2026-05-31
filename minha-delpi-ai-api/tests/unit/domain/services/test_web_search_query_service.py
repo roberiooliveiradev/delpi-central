@@ -31,6 +31,27 @@ def test_is_useful_payload_accepts_real_snippet():
     assert WebSearchQueryService.is_useful_payload(payload) is True
 
 
+def test_rank_results_for_query_prioritizes_entity_match():
+    payload = {
+        "results": [
+            {
+                "title": "William Ewart Gladstone",
+                "snippet": "British statesman.",
+                "source": "related_topic",
+            },
+            {
+                "title": "WEG Industries",
+                "snippet": "A Brazilian company operating worldwide in electric engineering.",
+                "source": "related_topic",
+            },
+        ]
+    }
+
+    ranked = WebSearchQueryService.rank_results_for_query(payload, "weg")
+
+    assert ranked["results"][0]["title"] == "WEG Industries"
+
+
 def test_build_no_results_payload_has_explicit_status():
     payload = WebSearchQueryService.build_no_results_payload(
         "consulta vazia",

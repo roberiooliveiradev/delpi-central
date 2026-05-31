@@ -29,6 +29,7 @@ class WebSearchHttpGateway:
         limit = max(1, min(int(max_results or Settings.CHAT_WEB_SEARCH_MAX_RESULTS), 8))
         providers = resolve_web_search_providers()
         attempted_queries: list[str] = []
+        seen_attempts: set[tuple[str, str]] = set()
         last_provider = providers[-1].name if providers else "duckduckgo_instant_answer"
 
         for provider in providers:
@@ -38,13 +39,20 @@ class WebSearchHttpGateway:
                 cleaned_query,
                 planned_queries=planned_queries,
             ):
-                if candidate_query in attempted_queries:
+                attempt_key = (provider.name, candidate_query)
+
+                if attempt_key in seen_attempts:
                     continue
 
-                attempted_queries.append(candidate_query)
+                seen_attempts.add(attempt_key)
+
+                if candidate_query not in attempted_queries:
+                    attempted_queries.append(candidate_query)
+
                 payload = provider.search(candidate_query, max_results=limit)
 
                 if WebSearchQueryService.is_useful_payload(payload):
+                    payload = WebSearchQueryService.rank_results_for_query(payload, cleaned_query)
                     payload["query"] = cleaned_query
 
                     if candidate_query != cleaned_query:

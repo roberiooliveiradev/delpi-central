@@ -178,7 +178,12 @@ class SearxngSearchProvider(WebSearchProvider):
             response = requests.get(
                 f"{self._base_url()}/search",
                 params=params,
-                headers={"Accept": "application/json"},
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": "MinhaDelpiWebSearch/1.0 (delpi-internal)",
+                    "X-Forwarded-For": "127.0.0.1",
+                    "X-Real-IP": "127.0.0.1",
+                },
                 timeout=Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS,
             )
             response.raise_for_status()

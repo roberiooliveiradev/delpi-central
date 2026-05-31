@@ -54,13 +54,18 @@ class ChatWebSearchDirectAnswerService:
         if not useful:
             return cls._format_no_results(payload, message=message)
 
+        from app.domain.services.web_search_query_service import WebSearchQueryService
+
+        ranked = WebSearchQueryService.rank_results_for_query(
+            {"results": useful},
+            str(payload.get("query") or message or ""),
+        )
+        ranked_useful = cls.extract_useful_results(ranked) or useful
+
         if payload.get("localizedFor") == "pt-BR":
-            primary = useful[0]
+            primary = ranked_useful[0]
         else:
-            primary = next(
-                (item for item in useful if item.get("source") == "instant_answer"),
-                useful[0],
-            )
+            primary = ranked_useful[0]
 
         query = str(payload.get("query") or message or "").strip()
         title = str(primary.get("title") or query or "Resultado da busca").strip()
