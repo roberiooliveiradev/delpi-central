@@ -425,6 +425,8 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Enter no composer com placeholder também deve abrir o modal.
 
+**Script:** `./scripts/run_chat_shortcut_homologation.sh` — placeholders + login + catálogo + follow-up (pausa configurável para rate limit).
+
 **Commits:** `f8d571bf`, `5633a777`, `0dcda7da` (diálogo ao bloquear), `6670e510` (XLSX/PDF), `a5c7e9e9` (smoke placeholders).
 
 ## Homologação — api-externa local
