@@ -70,7 +70,7 @@ Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comport
 
 | Recurso | Descrição |
 |---------|-----------|
-| Builder | Instruções, visibilidade, **quebra-gelos** (após descrição), **publicar** rascunho, preview com sugestões padrão, compartilhamento, stats colapsáveis, duplicar |
+| Builder | Instruções, visibilidade, **quebra-gelos** (antes de Skills; placeholders `{{productCode}}`), **publicar** rascunho, preview, stats colapsáveis, duplicar |
 | Skills | Comportamentos de prompt por agente (ex.: Especialista SQL, company-knowledge); badge de execução SQL quando action `/data/sql` habilitada |
 | Actions | Providers OpenAPI, rotas, teste e logs |
 | Compartilhar | Busca de usuário (sem UUID manual); editar papel viewer/editor |

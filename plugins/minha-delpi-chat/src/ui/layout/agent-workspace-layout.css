@@ -88,6 +88,10 @@
     padding-bottom: 1.5rem;
   }
 
+  .mdc-chat-agent-builder__form {
+    overflow-x: hidden;
+  }
+
   .mdc-chat-agent-builder__preview-label {
     flex-direction: column;
     align-items: stretch;

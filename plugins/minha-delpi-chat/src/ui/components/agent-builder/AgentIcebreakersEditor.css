@@ -89,3 +89,36 @@
   font-style: normal;
   opacity: 0.92;
 }
+
+@container agent-workspace (max-width: 720px) {
+  .mdc-agent-icebreakers-editor__template-list,
+  .mdc-agent-icebreakers-editor__field-list {
+    gap: 0.35rem;
+  }
+
+  .mdc-agent-icebreakers-editor__template-btn,
+  .mdc-agent-icebreakers-editor__field-btn {
+    font-size: 0.74rem;
+    padding: 0.32rem 0.55rem;
+  }
+
+  .mdc-agent-icebreakers-editor__help {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-agent-icebreakers-editor__templates,
+  .mdc-agent-icebreakers-editor__fields {
+    gap: 0.35rem;
+  }
+
+  .mdc-agent-icebreakers-editor__defaults-notice {
+    font-size: 0.8rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .mdc-agent-icebreakers-editor__preview {
+    font-size: 0.74rem;
+  }
+}

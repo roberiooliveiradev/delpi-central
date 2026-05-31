@@ -1565,8 +1565,6 @@ export function ChatAgentBuilderPage({
             </label>
           </section>
 
-          {icebreakersSection}
-
           <section
             className="mdc-chat-agent-builder__section mdc-chat-agent-builder__identity-section"
             aria-label="Visibilidade do agente"
@@ -1812,6 +1810,8 @@ export function ChatAgentBuilderPage({
               />
             </div>
           </section>
+
+          {icebreakersSection}
 
           <section className="mdc-chat-agent-builder__section">
             <h2 className="mdc-chat-ws-section-head">Skills</h2>

@@ -572,6 +572,8 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | Stats | Painel de uso colapsável (`<details>`); `AgentMiniDashboard` com prop `compact` no builder |
 | Layout | KPIs em 2 colunas + gráfico empilhado — evita sobreposição Indicadores/Volume em coluna estreita |
 | Modo | Ao editar agente existente, formulário Configurar fixo (aba Criar oculta) — quebra-gelos sempre editáveis |
+| Ordem | Quebra-gelos após Recursos e imediatamente antes de Skills |
+| Responsivo | Layout revisado em telas ≤720px (container) e ≤480px — listas, link de uso, editor e preview |
 | Deploy | `docker compose -f infra/docker-compose.dev.yml build minha-delpi-chat` + `up -d` |
 
 ## Admin UX — 6 seções (Playbook 11)
