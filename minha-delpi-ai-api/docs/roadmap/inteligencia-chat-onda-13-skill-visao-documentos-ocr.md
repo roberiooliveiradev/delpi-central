@@ -18,7 +18,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 | Aspecto | Hoje | Alvo (Onda 13) |
 |---------|------|----------------|
 | PDF anexo | Texto via pypdf + regex (`ChatDrawingPdfExtractionService`) | Pipeline em estágios com OCR/layout/VLM |
-| Imagem | Tesseract opcional (`ChatAttachmentImageOcrService`) | Unificado em `ChatDocumentVisionService` |
+| Imagem | Tesseract via `ChatDocumentVisionService` (PNG/JPG/WebP) | OCR no contexto de anexo e no fluxo de desenho |
 | Desenho técnico | Código/REV heurísticos | Carimbo, BOM, cotas, decapes com confidence |
 | Skill plataforma | Não existe `document-vision-delpi` | Catálogo + policy + registry |
 | Operação | Sem métricas vision | adminDebug + métricas por engine |

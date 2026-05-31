@@ -19,6 +19,24 @@ class ChatDocumentVisionService:
         return Settings.CHAT_DOCUMENT_VISION_ENABLED
 
     @classmethod
+    def should_run_for_attachment(cls, skills: dict | None = None) -> bool:
+        if not cls.is_enabled():
+            return False
+
+        resolved = skills if isinstance(skills, dict) else {}
+
+        if resolved.get("documentVision"):
+            return True
+
+        if (
+            Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING
+            and resolved.get("drawingAnalysis")
+        ):
+            return True
+
+        return cls.is_enabled()
+
+    @classmethod
     def should_run_for_drawing(cls, skills: dict | None) -> bool:
         if not cls.is_enabled():
             return False
@@ -48,7 +66,7 @@ class ChatDocumentVisionService:
         if not cls.should_run_for_drawing(skills):
             return base
 
-        attachment = cls._resolve_first_pdf_attachment(
+        attachment = cls._resolve_first_document_attachment(
             user_id=user_id,
             session_id=session_id,
             attachment_ids=attachment_ids,
@@ -60,10 +78,42 @@ class ChatDocumentVisionService:
         vision = cls.extract_from_storage_path(
             attachment.storage_path,
             filename=attachment.original_filename,
-            content_type=attachment.content_type or "application/pdf",
+            content_type=attachment.content_type
+            or cls._default_content_type(attachment.original_filename),
         )
 
         return cls.merge_into_drawing_parse(base, vision)
+
+    @classmethod
+    def enrich_attachment_excerpt(
+        cls,
+        *,
+        storage_path: str,
+        filename: str,
+        content_type: str | None,
+        extracted_content: str,
+        skills: dict | None = None,
+    ) -> str:
+        if not cls.should_run_for_attachment(skills):
+            return extracted_content
+
+        if not cls._is_vision_target(content_type, filename, storage_path):
+            return extracted_content
+
+        vision = cls.extract_from_storage_path(
+            storage_path,
+            filename=filename,
+            content_type=content_type or cls._default_content_type(filename),
+        )
+        ocr_text = str(vision.get("fullText") or "").strip()
+
+        if not ocr_text:
+            return extracted_content
+
+        if cls._should_replace_attachment_content(extracted_content, ocr_text):
+            return ocr_text
+
+        return f"{extracted_content.strip()}\n\n{ocr_text}".strip()
 
     @classmethod
     def extract_from_storage_path(
@@ -77,6 +127,15 @@ class ChatDocumentVisionService:
         backend = str(Settings.CHAT_DOCUMENT_VISION_BACKEND or "auto").strip().lower()
         stages: list[str] = []
         warnings: list[str] = []
+
+        if cls._is_image(content_type, filename):
+            return cls._extract_image_document(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+                backend=backend,
+                started=started,
+            )
 
         native = cls._stage_native(storage_path, filename=filename, content_type=content_type)
         stages.append("native")
@@ -114,19 +173,6 @@ class ChatDocumentVisionService:
                 )
             elif ocr.get("warnings"):
                 warnings.extend(ocr["warnings"])
-
-        elif needs_ocr and cls._is_image(content_type, filename):
-            ocr = cls._stage_tesseract_image(storage_path)
-            stages.append("tesseract_image")
-
-            if ocr.get("fullText"):
-                merged_text = f"{full_text}\n\n{ocr['fullText']}".strip()
-                native = cls._build_from_text(
-                    merged_text,
-                    engine="tesseract",
-                    stages=stages,
-                    warnings=warnings,
-                )
 
         return cls._finalize_result(
             native,
@@ -197,7 +243,39 @@ class ChatDocumentVisionService:
         return merged
 
     @classmethod
-    def _resolve_first_pdf_attachment(
+    def _resolve_first_document_attachment(
+        cls,
+        *,
+        user_id: str | None,
+        session_id: str | None,
+        attachment_ids: list | None,
+    ):
+        attachments = cls._list_attachments(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        if not attachments:
+            return None
+
+        pdf_match = None
+        image_match = None
+
+        for attachment in attachments:
+            name = str(attachment.original_filename or "").lower()
+            content_type = str(attachment.content_type or "").lower()
+
+            if content_type == "application/pdf" or name.endswith(".pdf"):
+                return attachment
+
+            if image_match is None and cls._is_image(content_type, name):
+                image_match = attachment
+
+        return image_match
+
+    @classmethod
+    def _list_attachments(
         cls,
         *,
         user_id: str | None,
@@ -205,7 +283,7 @@ class ChatDocumentVisionService:
         attachment_ids: list | None,
     ):
         if not user_id or not session_id or not attachment_ids:
-            return None
+            return []
 
         try:
             from app.infrastructure.persistence.postgres_chat_attachment_repository import (
@@ -222,24 +300,15 @@ class ChatDocumentVisionService:
                     continue
 
             if not ids:
-                return None
+                return []
 
-            attachments = repository.list_attachments_by_ids(
+            return repository.list_attachments_by_ids(
                 user_id=UUID(str(user_id)),
                 session_id=UUID(str(session_id)),
                 attachment_ids=ids,
             )
         except Exception:
-            return None
-
-        for attachment in attachments:
-            name = str(attachment.original_filename or "").lower()
-            content_type = str(attachment.content_type or "").lower()
-
-            if content_type == "application/pdf" or name.endswith(".pdf"):
-                return attachment
-
-        return None
+            return []
 
     @classmethod
     def _stage_native(
@@ -334,17 +403,104 @@ class ChatDocumentVisionService:
         }
 
     @classmethod
-    def _stage_tesseract_image(cls, storage_path: str) -> dict[str, Any]:
-        from app.application.services.chat_attachment_image_ocr_service import (
-            ChatAttachmentImageOcrService,
+    def _extract_image_document(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        content_type: str,
+        backend: str,
+        started: float,
+    ) -> dict[str, Any]:
+        stages: list[str] = []
+        warnings: list[str] = []
+        merged_text = ""
+
+        if backend in {"native", "text"}:
+            native = cls._stage_native(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+            )
+            stages.append("native")
+            merged_text = str(native.get("fullText") or "").strip()
+            warnings.extend(native.get("warnings") or [])
+
+        if backend in {"tesseract", "auto"}:
+            ocr = cls._stage_tesseract_image(storage_path)
+            stages.append("tesseract_image")
+            warnings.extend(ocr.get("warnings") or [])
+
+            ocr_text = str(ocr.get("fullText") or "").strip()
+
+            if ocr_text:
+                merged_text = (
+                    f"{merged_text}\n\n{ocr_text}".strip()
+                    if merged_text
+                    else ocr_text
+                )
+
+        if not merged_text and backend in {"tesseract", "auto"}:
+            warnings.append("no_text_detected")
+
+        payload = cls._build_from_text(
+            merged_text,
+            engine="tesseract" if "tesseract_image" in stages else "native",
+            stages=stages or ["native"],
+            warnings=warnings,
         )
 
-        result = ChatAttachmentImageOcrService.try_extract_text(Path(storage_path))
+        return cls._finalize_result(
+            payload,
+            engine=str(payload.get("engine") or "tesseract"),
+            stages=stages or ["tesseract_image"],
+            warnings=warnings,
+            started=started,
+        )
+
+    @classmethod
+    def _stage_tesseract_image(cls, storage_path: str) -> dict[str, Any]:
+        lang = os.getenv("CHAT_DOCUMENT_VISION_TESSERACT_LANG", "por+eng").strip() or "por+eng"
+        max_chars = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))
+
+        try:
+            import pytesseract
+            from PIL import Image
+        except ImportError as exc:
+            return {
+                "fullText": "",
+                "engine": "tesseract",
+                "warnings": [f"dependencies_unavailable:{exc.__class__.__name__}"],
+            }
+
+        try:
+            with Image.open(storage_path) as image:
+                rgb = image.convert("RGB")
+                raw = pytesseract.image_to_string(rgb, lang=lang)
+        except Exception as exc:
+            return {
+                "fullText": "",
+                "engine": "tesseract",
+                "warnings": [f"ocr_failed:{exc.__class__.__name__}"],
+            }
+
+        text = " ".join(str(raw or "").split()).strip()
+
+        if not text:
+            return {
+                "fullText": "",
+                "engine": "tesseract",
+                "warnings": ["no_text_detected"],
+            }
+
+        if len(text) > max_chars:
+            text = f"{text[: max_chars - 1]}…"
 
         return {
-            "fullText": str(result.get("text") or "").strip(),
+            "fullText": text,
             "engine": "tesseract",
-            "warnings": [str(result.get("reason"))] if result.get("reason") else [],
+            "charCount": len(text),
+            "warnings": [],
         }
 
     @classmethod
@@ -428,5 +584,65 @@ class ChatDocumentVisionService:
         lowered = f"{content_type} {filename}".lower()
         return any(
             token in lowered
-            for token in ("image/png", "image/jpeg", "image/jpg", "image/webp", ".png", ".jpg", ".jpeg")
+            for token in (
+                "image/png",
+                "image/jpeg",
+                "image/jpg",
+                "image/webp",
+                "image/tiff",
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".webp",
+                ".tif",
+                ".tiff",
+            )
         )
+
+    @classmethod
+    def _is_vision_target(cls, content_type: str | None, filename: str, storage_path: str) -> bool:
+        content_type = str(content_type or "")
+        filename = str(filename or "")
+
+        return cls._is_pdf(content_type, filename, storage_path) or cls._is_image(
+            content_type,
+            filename,
+        )
+
+    @classmethod
+    def _default_content_type(cls, filename: str) -> str:
+        lowered = str(filename or "").lower()
+
+        if lowered.endswith(".pdf"):
+            return "application/pdf"
+
+        if lowered.endswith(".png"):
+            return "image/png"
+
+        if lowered.endswith(".webp"):
+            return "image/webp"
+
+        if lowered.endswith((".jpg", ".jpeg")):
+            return "image/jpeg"
+
+        return "application/octet-stream"
+
+    @classmethod
+    def _should_replace_attachment_content(cls, extracted: str, ocr_text: str) -> bool:
+        normalized = str(extracted or "").strip()
+
+        if not normalized:
+            return True
+
+        placeholders = (
+            "Conteúdo visual indexado por metadados",
+            "descreva o que precisa",
+            "texto alternativo",
+        )
+
+        if any(token in normalized for token in placeholders):
+            return True
+
+        min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
+
+        return len(normalized) < min_legible and len(ocr_text) >= min_legible

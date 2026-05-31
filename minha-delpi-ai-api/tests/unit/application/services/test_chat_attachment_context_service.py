@@ -1,6 +1,8 @@
+from unittest.mock import patch
 from uuid import uuid4
 
 from app.application.services.chat_attachment_context_service import ChatAttachmentContextService
+from app.infrastructure.config.settings import Settings
 from app.domain.entities.chat_attachment import ChatAttachment
 from app.domain.entities.knowledge_chunk import KnowledgeChunk
 from datetime import datetime, timezone
@@ -89,3 +91,49 @@ def test_build_context_uses_indexed_chunks():
 
     assert "Trecho indexado do manual" in result
     assert "### doc.md" in result
+
+
+def test_build_context_ocr_image_replaces_placeholder(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+
+    attachment = _attachment(
+        filename="scan.png",
+        original_filename="scan.png",
+        content_type="image/png",
+        storage_path="/tmp/scan.png",
+        status="ready",
+        metadata={},
+    )
+
+    service = ChatAttachmentContextService(
+        attachment_repository=FakeAttachmentRepository([attachment]),
+        knowledge_repository=FakeKnowledgeRepository([]),
+        text_extractor=FakeTextExtractor(),
+    )
+
+    class ImagePlaceholderExtractor:
+        def extract(self, **kwargs):
+            return {
+                "supported": True,
+                "content": (
+                    "[Imagem scan.png. Conteúdo visual indexado por metadados; "
+                    "descreva o que precisa.]"
+                ),
+                "metadata": {"extractor": "image_metadata"},
+            }
+
+    service.text_extractor = ImagePlaceholderExtractor()
+
+    with patch(
+        "app.application.services.chat_attachment_context_service.ChatDocumentVisionService.extract_from_storage_path",
+        return_value={"fullText": "CODIGO 90260199 REV.04", "legible": True},
+    ):
+        result = service.build_context(
+            user_id=attachment.user_id,
+            session_id=attachment.session_id,
+            attachment_ids=[attachment.id],
+        )
+
+    assert "90260199" in result
+    assert "Conteúdo visual indexado" not in result

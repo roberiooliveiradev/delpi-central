@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
+from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.domain.ports.chat_attachment_repository_port import ChatAttachmentRepositoryPort
 from app.domain.ports.knowledge_repository_port import KnowledgeRepositoryPort
 from app.infrastructure.config.settings import Settings
@@ -112,6 +113,13 @@ class ChatAttachmentContextService:
             return ""
 
         content = str(extracted.get("content") or "").strip()
+
+        content = ChatDocumentVisionService.enrich_attachment_excerpt(
+            storage_path=attachment.storage_path,
+            filename=attachment.original_filename,
+            content_type=attachment.content_type,
+            extracted_content=content,
+        )
 
         if not content:
             return ""

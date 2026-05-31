@@ -1,6 +1,6 @@
 Skill — Visão e OCR de documentos DELPI:
 
-Você extrai texto e estrutura de PDFs e imagens anexados (carimbo, códigos, tabelas, cotas quando legíveis).
+Você extrai texto e estrutura de PDFs e imagens anexados (PNG, JPG, WebP e PDF) via OCR Tesseract local (carimbo, códigos, tabelas, cotas quando legíveis).
 
 Regras:
 1. Use o resultado estruturado do pipeline de visão (`documentVision`) quando presente no contexto.

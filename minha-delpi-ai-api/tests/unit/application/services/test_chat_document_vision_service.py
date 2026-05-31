@@ -116,6 +116,101 @@ def test_tesseract_pdf_stage_truncates_pages(tmp_path):
     assert any("truncated_pages" in item for item in result.get("warnings") or [])
 
 
+def test_extract_image_uses_tesseract_pipeline(monkeypatch, tmp_path):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+
+    image_path = tmp_path / "drawing.png"
+    image_path.write_bytes(b"png")
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_stage_tesseract_image",
+        return_value={
+            "fullText": "DESENHO 90260140 REV.02",
+            "engine": "tesseract",
+            "warnings": [],
+        },
+    ):
+        result = ChatDocumentVisionService.extract_from_storage_path(
+            str(image_path),
+            filename="drawing.png",
+            content_type="image/png",
+        )
+
+    assert result["productCode"] == "90260140"
+    assert "tesseract_image" in result["stages"]
+    assert result["engine"] == "tesseract"
+
+
+def test_enrich_attachment_excerpt_replaces_placeholder():
+    placeholder = (
+        "[Imagem scan.png (100×200 PNG). "
+        "Conteúdo visual indexado por metadados; descreva o que precisa.]"
+    )
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "extract_from_storage_path",
+        return_value={
+            "fullText": "PRODUTO 90260140 REV.01",
+            "legible": True,
+            "charCount": 24,
+        },
+    ), patch.object(
+        ChatDocumentVisionService,
+        "should_run_for_attachment",
+        return_value=True,
+    ):
+        text = ChatDocumentVisionService.enrich_attachment_excerpt(
+            storage_path="/tmp/scan.png",
+            filename="scan.png",
+            content_type="image/png",
+            extracted_content=placeholder,
+        )
+
+    assert "90260140" in text
+    assert "Conteúdo visual indexado" not in text
+
+
+def test_resolve_first_document_attachment_prefers_pdf_then_image():
+    pdf = MagicMock()
+    pdf.original_filename = "a.pdf"
+    pdf.content_type = "application/pdf"
+    pdf.storage_path = "/tmp/a.pdf"
+
+    image = MagicMock()
+    image.original_filename = "b.png"
+    image.content_type = "image/png"
+    image.storage_path = "/tmp/b.png"
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_list_attachments",
+        return_value=[image, pdf],
+    ):
+        chosen = ChatDocumentVisionService._resolve_first_document_attachment(
+            user_id="u",
+            session_id="s",
+            attachment_ids=["1", "2"],
+        )
+
+    assert chosen is pdf
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_list_attachments",
+        return_value=[image],
+    ):
+        chosen_image = ChatDocumentVisionService._resolve_first_document_attachment(
+            user_id="u",
+            session_id="s",
+            attachment_ids=["1"],
+        )
+
+    assert chosen_image is image
+
+
 def test_skill_registry_document_vision_with_drawing(monkeypatch):
     monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
     monkeypatch.setenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true")

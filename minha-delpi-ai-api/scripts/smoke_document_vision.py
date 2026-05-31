@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.domain.services.chat_drawing_pdf_extraction_service import ChatDrawingPdfExtractionService
@@ -51,6 +52,23 @@ def main() -> int:
     check("merge revision", merged.get("revision") == "01")
 
     fixture = Path(__file__).resolve().parents[1] / "tests/fixtures/drawings/sample_carimbo_minimal.pdf"
+    with patch.object(
+        ChatDocumentVisionService,
+        "_stage_tesseract_image",
+        return_value={
+            "fullText": "DESENHO 90260155 REV.03",
+            "engine": "tesseract",
+            "warnings": [],
+        },
+    ):
+        img_result = ChatDocumentVisionService.extract_from_storage_path(
+            "/tmp/smoke-drawing.png",
+            filename="drawing.png",
+            content_type="image/png",
+        )
+        check("imagem PNG OCR", img_result.get("productCode") == "90260155")
+        check("imagem stages tesseract", "tesseract_image" in (img_result.get("stages") or []))
+
     if fixture.is_file():
         result = ChatDocumentVisionService.extract_from_storage_path(
             str(fixture),

@@ -153,6 +153,12 @@ class Settings:
     CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS = float(
         os.getenv("CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS", "120")
     )
+    CHAT_DOCUMENT_VISION_MAX_CHARS = int(
+        os.getenv(
+            "CHAT_DOCUMENT_VISION_MAX_CHARS",
+            os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS", "8000"),
+        )
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"
