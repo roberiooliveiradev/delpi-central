@@ -10,6 +10,12 @@ import {
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 import { useConfirmDialog } from "../../useConfirmDialog";
+import { SkillsSummaryStrip } from "./SkillsSummaryStrip";
+import {
+  computeSkillsSummary,
+  filterSkillsByStatus,
+  type SkillStatusFilter,
+} from "./skillsSummary";
 
 import "./AdminSkillsTab.css";
 
@@ -74,6 +80,13 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<SkillStatusFilter>("all");
+
+  const summary = useMemo(() => computeSkillsSummary(skills), [skills]);
+  const visibleSkills = useMemo(
+    () => filterSkillsByStatus(skills, statusFilter),
+    [skills, statusFilter],
+  );
 
   const selectedSkill = useMemo(
     () => skills.find((item) => item.id === selectedId) ?? null,
@@ -209,46 +222,70 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
   }
 
   return (
-    <section className="mdc-admin-skills" aria-label="Catálogo de skills">
+    <section className="mdc-admin-skills" aria-label="Catálogo de habilidades">
       {confirmDialog}
       <header className="mdc-admin-page-header">
-        <h2>Skills do chat</h2>
+        <h2>Habilidades</h2>
         <p>
-          Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais skills estão
-          ativas; a execução de APIs continua nas <strong>Actions</strong>.
+          Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais habilidades
+          estão ativas; a execução de APIs continua nas <strong>Actions</strong>.
         </p>
       </header>
+
+      <div className="mdc-admin-skills__toolbar">
+        <SkillsSummaryStrip
+          summary={summary}
+          activeFilter={statusFilter}
+          isLoading={isLoading}
+          onFilterChange={setStatusFilter}
+        />
+
+        <div className="mdc-admin-skills__toolbar-actions">
+          <button
+            type="button"
+            className="mdc-admin-btn"
+            onClick={() => void loadSkills()}
+            disabled={isLoading}
+            aria-label="Atualizar catálogo"
+          >
+            <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
+            <span>Atualizar</span>
+          </button>
+          {canManage ? (
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              onClick={startCreate}
+            >
+              <Plus size={15} aria-hidden="true" />
+              <span>Nova habilidade</span>
+            </button>
+          ) : null}
+        </div>
+      </div>
 
       <div className="mdc-admin-skills__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-skills__list-panel">
           <div className="mdc-admin-skills__list-toolbar">
-            <strong>Catálogo</strong>
-            <div className="mdc-admin-skills__list-actions">
-              <button
-                type="button"
-                className="mdc-admin-btn"
-                onClick={() => void loadSkills()}
-                disabled={isLoading}
-                aria-label="Atualizar"
-              >
-                <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
-              </button>
-              {canManage ? (
-                <button type="button" className="mdc-admin-btn mdc-admin-btn--primary" onClick={startCreate}>
-                  <Plus size={15} aria-hidden="true" />
-                  <span>Nova</span>
-                </button>
-              ) : null}
-            </div>
+            <strong>
+              Catálogo
+              {statusFilter !== "all"
+                ? ` (${visibleSkills.length} de ${skills.length})`
+                : ` (${skills.length})`}
+            </strong>
           </div>
 
           {isLoading ? (
             <p className="mdc-admin-skills__muted">Carregando…</p>
-          ) : skills.length === 0 ? (
-            <p className="mdc-admin-skills__muted">Nenhuma skill cadastrada.</p>
+          ) : visibleSkills.length === 0 ? (
+            <p className="mdc-admin-skills__muted">
+              {skills.length === 0
+                ? "Nenhuma habilidade cadastrada."
+                : "Nenhuma habilidade neste filtro."}
+            </p>
           ) : (
             <ul className="mdc-admin-skills__list">
-              {skills.map((skill) => (
+              {visibleSkills.map((skill) => (
                 <li key={skill.id}>
                   <button
                     type="button"

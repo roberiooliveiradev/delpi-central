@@ -33,7 +33,7 @@ const ADMIN_TABS: AdminTabItem[] = [
   { key: "knowledge", label: "Conhecimento" },
   { key: "metrics", label: "Métricas" },
   { key: "guidelines", label: "Diretrizes" },
-  { key: "skills", label: "Skills" },
+  { key: "skills", label: "Habilidades" },
   { key: "simulate", label: "Simulação" },
   { key: "evaluations", label: "Avaliações" },
   { key: "agents", label: "Agentes" },
