@@ -158,6 +158,7 @@ export function ChatPage({
     (params?: PromptAndSendParams, promptOptions?: ShortcutPromptOptions) => Promise<void>
   >(async () => undefined);
   const isShortcutPromptOpenRef = useRef<() => boolean>(() => false);
+  const shortcutPromptResolvingRef = useRef(false);
 
   const {
     sessions,
@@ -222,7 +223,10 @@ export function ChatPage({
     onOpenCanvas: openCanvasPanel,
     isShortcutPromptOpen: () => isShortcutPromptOpenRef.current(),
     onShortcutPromptRequired: (template) => {
-      if (isShortcutPromptOpenRef.current()) {
+      if (
+        isShortcutPromptOpenRef.current() ||
+        shortcutPromptResolvingRef.current
+      ) {
         return;
       }
 
@@ -286,8 +290,15 @@ export function ChatPage({
       }
 
       clearError();
+      shortcutPromptResolvingRef.current = true;
 
-      const resolved = await resolveShortcutQuery(raw, promptOptions);
+      let resolved: string | null = null;
+
+      try {
+        resolved = await resolveShortcutQuery(raw, promptOptions);
+      } finally {
+        shortcutPromptResolvingRef.current = false;
+      }
 
       if (!resolved) {
         if (params.content == null) {

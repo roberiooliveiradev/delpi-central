@@ -43,7 +43,7 @@ export function ChatShortcutPromptDialog({
 
     setValues(initialValues);
     setErrors({});
-  }, [open, template, initialValues]);
+  }, [open, template]);
 
   const preview = useMemo(() => {
     const filled = fillShortcutTemplate(template, values).trim();

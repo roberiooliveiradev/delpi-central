@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -50,6 +50,22 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+function spotlightRectsEqual(
+  current: SpotlightRect | null,
+  next: SpotlightRect | null,
+): boolean {
+  if (!current || !next) {
+    return current === next;
+  }
+
+  return (
+    current.top === next.top &&
+    current.left === next.left &&
+    current.width === next.width &&
+    current.height === next.height
+  );
+}
+
 export function ChatOnboardingTour({
   steps,
   onDismiss,
@@ -65,8 +81,13 @@ export function ChatOnboardingTour({
   const highlightedRef = useRef<HTMLElement | null>(null);
 
   const step = steps[Math.min(index, steps.length - 1)];
+  const stepId = step?.id;
   const isLast = index >= steps.length - 1;
-  const effect = step ? resolveTourStepEffect(step) : null;
+  const effect = useMemo(
+    () => (step ? resolveTourStepEffect(step) : null),
+    [step, stepId],
+  );
+  const openPlusMenu = Boolean(effect?.openPlusMenu);
 
   const clearHighlight = useCallback(() => {
     if (highlightedRef.current) {
@@ -113,7 +134,7 @@ export function ChatOnboardingTour({
 
     onStepChange?.(step, index);
     applyStepEffects(step);
-  }, [visible, step, index, onStepChange, applyStepEffects]);
+  }, [visible, step, stepId, index, onStepChange, applyStepEffects]);
 
   useLayoutEffect(() => {
     if (!visible || !step || !effect) {
@@ -141,12 +162,16 @@ export function ChatOnboardingTour({
       const rect = element.getBoundingClientRect();
       const padding = 8;
 
-      setSpotlight({
+      const nextSpotlight: SpotlightRect = {
         top: Math.max(0, rect.top - padding),
         left: Math.max(0, rect.left - padding),
         width: rect.width + padding * 2,
         height: rect.height + padding * 2,
-      });
+      };
+
+      setSpotlight((current) =>
+        spotlightRectsEqual(current, nextSpotlight) ? current : nextSpotlight,
+      );
     }
 
     measureTarget();
@@ -176,7 +201,7 @@ export function ChatOnboardingTour({
       resizeObserver?.disconnect();
       clearHighlight();
     };
-  }, [visible, step, effect, index, clearHighlight, effect?.openPlusMenu, step?.id]);
+  }, [visible, step, stepId, index, clearHighlight, openPlusMenu]);
 
   function closeTour() {
     demoAbortRef.current?.abort();
