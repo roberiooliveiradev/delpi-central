@@ -254,27 +254,44 @@ class ChatAdminDebugService:
                     analyser_ok=ChatDrawingMetricsService.resolve_analyser_ok(tool_context),
                 )
 
-            from app.application.services.chat_document_vision_metrics_service import (
-                ChatDocumentVisionMetricsService,
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        vision_payload = tool_context.get("documentVision")
+
+        if isinstance(vision_payload, dict) and vision_payload:
+            summary = tool_context.get("drawingPdfExtractSummary")
+            char_count = None
+            legible = None
+            vision_context = "attachment"
+
+            if isinstance(summary, dict):
+                char_count = int(summary.get("charCount") or 0) or None
+                legible = summary.get("legible")
+                vision_context = "drawing"
+
+            if char_count is None:
+                char_count = int(vision_payload.get("charCount") or 0) or None
+
+            if legible is None:
+                legible = vision_payload.get("legible")
+
+            payload["documentVisionMetrics"] = ChatDocumentVisionMetricsService.build_snapshot(
+                vision_payload,
+                char_count=char_count,
+                legible=legible,
+                context=vision_context,
             )
-
-            vision_payload = tool_context.get("documentVision")
-
-            if isinstance(vision_payload, dict) and vision_payload:
-                summary = tool_context.get("drawingPdfExtractSummary")
-                char_count = None
-                legible = None
-
-                if isinstance(summary, dict):
-                    char_count = int(summary.get("charCount") or 0) or None
-                    legible = summary.get("legible")
-
-                payload["documentVisionMetrics"] = ChatDocumentVisionMetricsService.build_snapshot(
-                    vision_payload,
-                    char_count=char_count,
-                    legible=legible,
-                    context="drawing",
-                )
+            payload["documentVisionTrace"] = {
+                "engine": vision_payload.get("engine"),
+                "stages": vision_payload.get("stages"),
+                "legibilityScore": vision_payload.get("legibilityScore"),
+                "durationMs": vision_payload.get("durationMs"),
+                "charCount": char_count,
+                "context": vision_context,
+            }
+            payload["pipeline"]["documentVision"] = True
 
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)

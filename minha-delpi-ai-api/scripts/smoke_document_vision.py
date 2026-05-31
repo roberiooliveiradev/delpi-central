@@ -55,6 +55,33 @@ def main() -> int:
     )
     check("documentVisionMetrics", bool(metrics_meta.get("documentVisionMetrics")))
 
+    with patch.object(
+        ChatDocumentVisionService,
+        "_resolve_first_document_attachment",
+        return_value=type(
+            "Att",
+            (),
+            {
+                "status": "indexed",
+                "storage_path": "/tmp/smoke.pdf",
+                "original_filename": "smoke.pdf",
+                "content_type": "application/pdf",
+            },
+        )(),
+    ):
+        with patch.object(
+            ChatDocumentVisionService,
+            "_stage_native",
+            return_value={"fullText": "TEXTO LEGIVEL " * 20, "engine": "pypdf", "metadata": {}},
+        ):
+            meta_indexed = ChatDocumentVisionService.build_attachment_vision_metadata(
+                user_id="u",
+                session_id="s",
+                attachment_ids=["a"],
+                skills={"documentVision": True},
+            )
+    check("attachment vision metadata indexed", meta_indexed and meta_indexed.get("stages") == ["native"])
+
     text = "DESENHO 90260140 REV.01\nCOD. CLIENTE TESTE"
     parsed = ChatDrawingPdfExtractionService.parse_from_text(text)
     vision = ChatDocumentVisionService._build_from_text(
@@ -106,6 +133,7 @@ def main() -> int:
             "pytest",
             "tests/unit/application/services/test_chat_document_vision_service.py",
             "tests/unit/application/services/test_chat_document_vision_metrics_service.py",
+            "tests/unit/application/services/test_chat_document_vision_attachment_metadata.py",
             "-q",
         ],
         cwd=str(api_root),

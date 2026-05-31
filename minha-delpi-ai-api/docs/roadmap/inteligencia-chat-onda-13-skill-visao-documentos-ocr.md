@@ -21,7 +21,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 | Imagem | Tesseract via `ChatDocumentVisionService` (PNG/JPG/WebP) | OCR no contexto de anexo e no fluxo de desenho |
 | Desenho técnico | Código/REV heurísticos | Carimbo, BOM, cotas, decapes com confidence |
 | Skill plataforma | Não existe `document-vision-delpi` | Catálogo + policy + registry |
-| Operação | Sem métricas vision | adminDebug + métricas por engine |
+| Operação | Sem métricas vision | adminDebug + métricas por engine (anexo e desenho) |
 
 ---
 
@@ -105,3 +105,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | OCR de imagens (PNG/JPG/WebP) no anexo e no fluxo de desenho; enrich sem depender só de `attachment_context`. |
 | 2026-05-31 | Stream `document_vision` no chat; README com env vars; validação container + smokes. |
 | 2026-05-31 | Métricas `documentVisionMetrics` + endpoint admin summary; profile compose `vision`. |
+| 2026-05-31 | `documentVision`/`documentVisionTrace` em turnos só com anexo (PDF indexado → snapshot native leve). |

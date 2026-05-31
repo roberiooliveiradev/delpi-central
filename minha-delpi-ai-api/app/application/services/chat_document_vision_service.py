@@ -85,6 +85,86 @@ class ChatDocumentVisionService:
         return cls.merge_into_drawing_parse(base, vision)
 
     @classmethod
+    def to_document_vision_metadata(cls, vision: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "schemaVersion": vision.get("schemaVersion") or cls.SCHEMA_VERSION,
+            "engine": vision.get("engine"),
+            "stages": vision.get("stages") or [],
+            "legibilityScore": vision.get("legibilityScore"),
+            "durationMs": vision.get("durationMs"),
+            "charCount": vision.get("charCount"),
+            "legible": vision.get("legible"),
+            "pageCount": vision.get("pageCount"),
+        }
+
+    @classmethod
+    def build_attachment_vision_metadata(
+        cls,
+        *,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        attachment_ids: list | None = None,
+        skills: dict | None = None,
+    ) -> dict[str, Any] | None:
+        """Snapshot leve para metadata/adminDebug em turnos só com anexo (ex.: boleto PDF)."""
+        if not cls.should_run_for_attachment(skills):
+            return None
+
+        attachment = cls._resolve_first_document_attachment(
+            user_id=user_id,
+            session_id=session_id,
+            attachment_ids=attachment_ids,
+        )
+
+        if not attachment:
+            return None
+
+        filename = attachment.original_filename or ""
+        content_type = attachment.content_type or cls._default_content_type(filename)
+
+        if not cls._is_vision_target(content_type, filename, attachment.storage_path):
+            return None
+
+        if str(attachment.status or "").lower() == "indexed":
+            native = cls._stage_native(
+                attachment.storage_path,
+                filename=filename,
+                content_type=content_type,
+            )
+            text = str(native.get("fullText") or "").strip()
+            min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
+
+            if len(text) < min_legible:
+                vision = cls.extract_from_storage_path(
+                    attachment.storage_path,
+                    filename=filename,
+                    content_type=content_type,
+                )
+            else:
+                started = time.perf_counter()
+                built = cls._build_from_text(
+                    text,
+                    engine=str(native.get("engine") or "native"),
+                    stages=["native"],
+                    source_metadata=native.get("metadata") if isinstance(native.get("metadata"), dict) else {},
+                )
+                vision = cls._finalize_result(
+                    built,
+                    engine=str(built.get("engine") or "native"),
+                    stages=["native"],
+                    warnings=[],
+                    started=started,
+                )
+        else:
+            vision = cls.extract_from_storage_path(
+                attachment.storage_path,
+                filename=filename,
+                content_type=content_type,
+            )
+
+        return cls.to_document_vision_metadata(vision)
+
+    @classmethod
     def enrich_attachment_excerpt(
         cls,
         *,

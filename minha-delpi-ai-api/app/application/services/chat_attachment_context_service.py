@@ -25,6 +25,7 @@ class ChatAttachmentContextService:
         user_id: UUID,
         session_id: UUID,
         attachment_ids: list[UUID],
+        skills: dict | None = None,
     ) -> str:
         if not Settings.CHAT_ATTACHMENT_CONTEXT_ENABLED or not attachment_ids:
             return ""
@@ -46,7 +47,7 @@ class ChatAttachmentContextService:
             if remaining <= 0:
                 break
 
-            excerpt = self._resolve_excerpt(attachment, max_chars=remaining)
+            excerpt = self._resolve_excerpt(attachment, max_chars=remaining, skills=skills)
 
             if not excerpt:
                 continue
@@ -75,7 +76,7 @@ class ChatAttachmentContextService:
             "Observação: trechos podem estar truncados; o RAG pode trazer fontes adicionais."
         )
 
-    def _resolve_excerpt(self, attachment, *, max_chars: int) -> str:
+    def _resolve_excerpt(self, attachment, *, max_chars: int, skills: dict | None = None) -> str:
         metadata = attachment.metadata or {}
 
         if attachment.status == "indexed":
@@ -119,6 +120,7 @@ class ChatAttachmentContextService:
             filename=attachment.original_filename,
             content_type=attachment.content_type,
             extracted_content=content,
+            skills=skills,
         )
 
         if not content:

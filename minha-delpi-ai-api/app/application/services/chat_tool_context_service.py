@@ -1027,6 +1027,46 @@ class ChatToolContextService:
                     "drawingAnalysisExport"
                 ]
 
+        from app.application.services.chat_document_vision_service import (
+            ChatDocumentVisionService,
+        )
+        from app.application.services.chat_stream_activity_service import (
+            ChatStreamActivityService,
+        )
+
+        if (
+            attachment_ids
+            and not result_payload.get("documentVision")
+            and ChatDocumentVisionService.should_run_for_attachment(drawing_runtime_skills)
+        ):
+            if on_stream_activity and not drawing_analysis_mode:
+                ChatStreamActivityService.emit_document_vision_progress(
+                    on_stream_activity,
+                    phase="start",
+                )
+                ChatStreamActivityService.emit_document_vision_progress(
+                    on_stream_activity,
+                    phase="ocr",
+                )
+
+            attachment_vision = ChatDocumentVisionService.build_attachment_vision_metadata(
+                user_id=str(user_id) if user_id else None,
+                session_id=session_id,
+                attachment_ids=attachment_ids,
+                skills=drawing_runtime_skills,
+            )
+
+            if attachment_vision:
+                result_payload["documentVision"] = attachment_vision
+
+                if on_stream_activity and not drawing_analysis_mode:
+                    ChatStreamActivityService.emit_document_vision_progress(
+                        on_stream_activity,
+                        phase="complete",
+                        engine=str(attachment_vision.get("engine") or "document_vision"),
+                        char_count=int(attachment_vision.get("charCount") or 0),
+                    )
+
         return self._finalize_tool_context_result(
             message=raw_message,
             previous_messages=previous_messages,
