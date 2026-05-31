@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Any
 
@@ -97,7 +98,7 @@ class AssistantCapabilitiesRegistry:
                 if len(word) < 3:
                     continue
 
-                if word in haystack:
+                if cls._word_matches_haystack(word, haystack):
                     score += 2
 
             if score > 0:
@@ -106,6 +107,40 @@ class AssistantCapabilitiesRegistry:
         scored.sort(key=lambda item: item[0], reverse=True)
 
         return [feature for _, feature in scored[:limit]]
+
+    @classmethod
+    def _word_matches_haystack(cls, word: str, haystack: str) -> bool:
+        if word in haystack:
+            return True
+
+        if len(word) < 4:
+            return False
+
+        min_prefix = min(7, len(word))
+
+        for token in re.findall(r"[a-z0-9]+", haystack):
+            if len(token) < 4:
+                continue
+
+            if token.startswith(word) or word.startswith(token):
+                return True
+
+            shared = cls._shared_prefix_length(word, token)
+
+            if shared >= min_prefix:
+                return True
+
+        return False
+
+    @staticmethod
+    def _shared_prefix_length(left: str, right: str) -> int:
+        limit = min(len(left), len(right))
+        index = 0
+
+        while index < limit and left[index] == right[index]:
+            index += 1
+
+        return index
 
     @classmethod
     def resolve_availability(

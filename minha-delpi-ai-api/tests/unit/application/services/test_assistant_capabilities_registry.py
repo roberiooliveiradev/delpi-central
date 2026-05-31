@@ -26,6 +26,12 @@ def test_search_estoque():
     assert any(item.get("id") == "stock_lookup" for item in results)
 
 
+def test_search_comercial_matches_comerciais():
+    results = AssistantCapabilitiesRegistry.search("comercial")
+
+    assert any(item.get("id") == "commercial_indicators" for item in results)
+
+
 def test_resolve_availability_without_agent():
     buckets = AssistantCapabilitiesRegistry.resolve_availability(
         allowed_action_ids=[],
