@@ -412,6 +412,27 @@ class ChatIntentRouterService:
         if any(term in lowered for term in ("onde", "usado", "pais", "parents")):
             return "parents_lookup"
 
+        if any(
+            term in lowered
+            for term in (
+                "tabela",
+                "tabelas",
+                "coluna",
+                "colunas",
+                "protheus",
+                "sx2",
+                "sx3",
+                "metadado",
+            )
+        ) and (
+            "qual a tabela" in lowered
+            or "qual tabela" in lowered
+            or "buscar tabela" in lowered
+            or "pesquisar tabela" in lowered
+            or "schema da tabela" in lowered
+        ):
+            return "system_metadata"
+
         if "produto" in lowered:
             return "product_lookup"
 

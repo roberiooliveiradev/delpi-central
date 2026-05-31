@@ -1275,3 +1275,47 @@ def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
         selected["arguments"]["actionId"]
         == "api_externa.products.suppliers_products_code_suppliers_get"
     )
+
+
+def test_select_system_table_search_with_article_qual_a_tabela(monkeypatch):
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+
+    monkeypatch.setattr(
+        ChatWebSearchIntentService,
+        "blocks_external_action_selection",
+        lambda message: False,
+    )
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "tables-search",
+                    "method": "GET",
+                    "path": "/system/tables/search",
+                    "operationId": "search_tables",
+                    "summary": "Buscar tabelas",
+                    "parametersSchema": [{"name": "description", "in": "query"}],
+                },
+                {
+                    "actionId": "product-search",
+                    "method": "GET",
+                    "path": "/products/search",
+                    "operationId": "search_products",
+                    "summary": "Buscar produtos",
+                    "parametersSchema": [{"name": "description", "in": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "qual a tabela de produtos?",
+        allowed_action_ids=["tables-search", "product-search"],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "tables-search"
+    assert selected["arguments"]["parameters"]["description"] == "produtos"

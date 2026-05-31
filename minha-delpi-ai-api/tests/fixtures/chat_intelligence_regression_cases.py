@@ -572,6 +572,29 @@ SELECTION_CASES = [
         "expected_parameters": {"tableName": "SB1"},
     },
     {
+        "message": "qual a tabela de produtos?",
+        "actions": [
+            {
+                "actionId": "tables-search",
+                "method": "GET",
+                "path": "/system/tables/search",
+                "operationId": "search_tables",
+                "summary": "Buscar tabelas",
+                "parametersSchema": [{"name": "description"}],
+            },
+            {
+                "actionId": "product-search",
+                "method": "GET",
+                "path": "/products/search",
+                "operationId": "search_products",
+                "summary": "Buscar produtos",
+                "parametersSchema": [{"name": "description"}],
+            },
+        ],
+        "expected_action_id": "tables-search",
+        "expected_parameters": {"description": "produtos"},
+    },
+    {
         "message": "pmr da filial 02",
         "actions": [
             {

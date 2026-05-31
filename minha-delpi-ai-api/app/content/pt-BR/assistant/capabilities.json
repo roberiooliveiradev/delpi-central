@@ -575,6 +575,7 @@
       "examples": [
         "buscar tabela sb1",
         "qual tabela guarda produtos",
+        "qual a tabela de produtos",
         "schema da tabela sb1",
         "indices da tabela"
       ]

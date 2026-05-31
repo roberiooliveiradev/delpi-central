@@ -203,6 +203,23 @@ class ExternalActionSelectionService:
                 return selected
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if (
+            self._looks_like_system_metadata_question(normalized)
+            and not ChatProductQueryIntentService.extract_product_code(message)
+            and not ChatSqlQueryRefinementService.is_sql_follow_up(
+                message,
+                previous_messages=previous_messages,
+            )
+        ):
+            selected = self._select_system_metadata_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if selected:
+                return selected
+
         group_search_code = self._extract_search_group_code(message, normalized)
 
         if group_search_code and self._looks_like_product_search(normalized):
@@ -280,22 +297,6 @@ class ExternalActionSelectionService:
                 message,
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
-            )
-
-            if selected:
-                return selected
-
-        if (
-            self._looks_like_system_metadata_question(normalized)
-            and not product_code
-            and not ChatSqlQueryRefinementService.is_sql_follow_up(
-                message,
-                previous_messages=previous_messages,
-            )
-        ):
-            selected = self._select_system_metadata_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
             )
 
             if selected:
@@ -1345,6 +1346,40 @@ class ExternalActionSelectionService:
             )
         )
 
+    def _wants_system_table_search(self, normalized: str) -> bool:
+        if any(
+            term in normalized
+            for term in (
+                "buscar tabela",
+                "pesquisar tabela",
+                "qual tabela",
+                "qual a tabela",
+                "qual e a tabela",
+                "tabelas do",
+            )
+        ):
+            return True
+
+        return bool(re.search(r"\bqual\s+(?:a\s+)?tabela\b", normalized))
+
+    def _extract_system_table_search_description(self, message: str) -> str | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        for pattern in (
+            r"(?:buscar|pesquisar|procurar)\s+tabelas?\s+(.+?)(?:\?|$)",
+            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+(?:de|do|da|dos|das)\s+(.+?)(?:\?|$)",
+            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+guarda(?:m)?\s+(.+?)(?:\?|$)",
+        ):
+            match = re.search(pattern, normalized, flags=re.IGNORECASE)
+
+            if match:
+                query = match.group(1).strip(" .?")
+
+                if len(query) >= 2:
+                    return query[:120]
+
+        return None
+
     def _select_transforma_action(
         self,
         message: str,
@@ -1407,6 +1442,7 @@ class ExternalActionSelectionService:
         message: str,
         allowed_action_ids: list[str],
     ) -> dict | None:
+        allowed = {str(item) for item in allowed_action_ids}
         candidates = [
             action
             for action in self._list_allowed_candidates(
@@ -1418,16 +1454,25 @@ class ExternalActionSelectionService:
             and str(action.get("path") or "").lower().startswith("/system/")
         ]
 
+        if not candidates and allowed:
+            list_actions = getattr(self.repository, "list_actions", None)
+
+            if callable(list_actions):
+                candidates = [
+                    action
+                    for action in list_actions()
+                    if str(action.get("actionId")) in allowed
+                    if action.get("method") == "GET"
+                    and str(action.get("path") or "").lower().startswith("/system/")
+                ]
+
         if not candidates:
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         table_name = self._extract_protheus_table_name(message)
         wants_columns = "coluna" in normalized
-        wants_table_search = any(
-            term in normalized
-            for term in ("buscar tabela", "pesquisar tabela", "qual tabela", "tabelas do")
-        )
+        wants_table_search = self._wants_system_table_search(normalized)
 
         def score(action: dict) -> int:
             path = str(action.get("path") or "").lower()
@@ -1512,13 +1557,18 @@ class ExternalActionSelectionService:
             elif lowered in {"page_size", "pagesize", "limit"}:
                 parameters[name] = 50
             elif lowered == "description":
-                query_match = re.search(
-                    r"(?:buscar|pesquisar|procurar)\s+(?:tabela|coluna)s?\s+(.+)$",
-                    normalized,
-                )
+                description = self._extract_system_table_search_description(message)
 
-                if query_match:
-                    parameters[name] = query_match.group(1).strip()[:120]
+                if description:
+                    parameters[name] = description
+                else:
+                    query_match = re.search(
+                        r"(?:buscar|pesquisar|procurar)\s+(?:tabela|coluna)s?\s+(.+)$",
+                        normalized,
+                    )
+
+                    if query_match:
+                        parameters[name] = query_match.group(1).strip()[:120]
 
         if table_name and "{tableName}" in path and not parameters:
             parameters["tableName"] = table_name

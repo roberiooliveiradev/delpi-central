@@ -195,7 +195,7 @@ Elaborar SQL sem executar: skill `sqlAuthoring`; não auto-action.
 
 | Rota | Frases teste | Status |
 |------|--------------|--------|
-| `GET /tables/search` | buscar tabela cliente | buscar tabela | OK | `_select_system_metadata_action` |
+| `GET /tables/search` | buscar tabela cliente \| qual a tabela de produtos | buscar tabela | OK | `_select_system_metadata_action` (+ artigo «a») |
 | `GET /tables/{name}/columns` | colunas da tabela SB1 | colunas da tabela | OK | extrai `tableName` |
 | `GET /columns/search` | buscar coluna preço | | OK | dept KPI + system rank |
 | `GET /tables/{name}/indexes` | índices da tabela | | OK | |
@@ -251,6 +251,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 | kpis do painel de LMPs | `/engineering/lmps/dashboard/summary` | — |
 | processos do transforma mais | `/engineering/transforma-mais/processes` | — |
 | colunas da tabela SB1 | `/system/tables/{tableName}/columns` | — |
+| qual a tabela de produtos? | `/system/tables/search?description=produtos` | artigo «a» |
 | pmr da filial 02 | `/financial/pmr?branch=02` | — |
 
 ---

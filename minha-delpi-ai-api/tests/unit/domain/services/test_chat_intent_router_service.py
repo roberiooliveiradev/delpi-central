@@ -22,6 +22,16 @@ def test_classify_operational_stock():
     assert route.requires_tool is False or route.requires_tool is True
 
 
+def test_classify_system_metadata_table_question():
+    route = ChatIntentRouterService.classify(
+        "qual a tabela de produtos?",
+        allowed_action_ids=["api_delpi.system.search_tables_system_tables_search_get"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "system_metadata"
+
+
 def test_classify_small_talk():
     route = ChatIntentRouterService.classify("obrigado!")
 

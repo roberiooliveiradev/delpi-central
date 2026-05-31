@@ -203,6 +203,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Catálogo | Novas features `commercial_indicators`, `financial_indicators`, `quality_indicators`, `hr_indicators`, `engineering_*`, `data_sql` |
 | Drift | Match por marcador mais específico; ignora `/` e `/health`; `system_metadata` mapeia rotas `/system/*` |
 
+## Metadados Protheus — roteamento «qual a tabela de produtos?»
+
+| Entrega | Detalhe |
+|---------|---------|
+| Seleção | `qual a tabela` (com artigo), `description=produtos`, prioridade antes de busca de produto; fallback `list_actions` para `/system/*` |
+| Intent | `subIntent: system_metadata` no router (evita `product_lookup` só por conter «produto») |
+| Smoke | `scripts/smoke_system_table_routing.py` |
+| Testes | Regressão + `test_select_system_table_search_with_article_qual_a_tabela` |
+
 ## Autoajuda — Fase 3 (geração do catálogo)
 
 | Entrega | Detalhe |

@@ -294,7 +294,14 @@ class ChatDepartmentKpiIntentService:
         (
             "/system/",
             "tables/search",
-            ("buscar tabela", "pesquisar tabela", "qual tabela", "tabelas do protheus", "metadado de tabela"),
+            (
+                "buscar tabela",
+                "pesquisar tabela",
+                "qual tabela",
+                "qual a tabela",
+                "tabelas do protheus",
+                "metadado de tabela",
+            ),
             ("coluna",),
             "busca de tabelas do Protheus",
         ),
