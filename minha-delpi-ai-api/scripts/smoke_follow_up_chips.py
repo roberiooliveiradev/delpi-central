@@ -149,6 +149,7 @@ def _validate_unit_build() -> list[str]:
         ],
         workspace_context={
             "actionsEnabled": True,
+            "userActivatedAgent": True,
             "workingMemory": {"lastEntities": {"productCode": "10080001"}},
         },
     )

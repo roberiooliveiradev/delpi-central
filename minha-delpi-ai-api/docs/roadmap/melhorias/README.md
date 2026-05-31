@@ -50,7 +50,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 
 ## Chat «comum» e atalhos operacionais
 
-Sessões **sem agente escolhido** passam a herdar o agente de sistema configurado (`CHAT_PLATFORM_DEFAULT_AGENT_NAME`, padrão **Agente Minha DELPI**) para que chips como «Ver estoque» executem consultas reais. Chips operacionais só aparecem quando `actionsEnabled`; cliques em atalhos com código de produto **não entram no loop agentic** (fast path de seleção OpenAPI).
+No **chat comum**, o agente de sistema (`CHAT_PLATFORM_DEFAULT_AGENT_NAME`) pode executar consultas em background quando configurado, mas chips operacionais («Ver estoque», «Ver estrutura», etc.) só aparecem com **`userActivatedAgent`** — usuário escolheu o agente no composer (`session.agent_id` ou `agentId` na mensagem). Chips genéricos («O que você pode fazer?») e de texto seguem sem agente. Cliques em atalhos explícitos **não entram no loop agentic**.
 
 ## Homologação local (api-externa)
 

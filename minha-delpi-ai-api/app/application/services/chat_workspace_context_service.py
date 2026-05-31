@@ -21,9 +21,16 @@ class ChatWorkspaceContextService:
         self.agent_repository = agent_repository
         self.specialization_service = AgentSpecializationService()
 
-    def build_context(self, *, session, user_id: UUID) -> dict:
+    def build_context(
+        self,
+        *,
+        session,
+        user_id: UUID,
+        request_agent_id: UUID | str | None = None,
+    ) -> dict:
         project = None
         agent = None
+        parsed_request_agent_id = self._parse_agent_id(request_agent_id)
 
         if session.project_id:
             result = self.project_repository.get_accessible_by_id(
@@ -34,7 +41,8 @@ class ChatWorkspaceContextService:
             if result:
                 project, _role = result
 
-        agent_id = session.agent_id or (project.default_agent_id if project else None)
+        user_activated_agent_id = session.agent_id or parsed_request_agent_id
+        agent_id = user_activated_agent_id or (project.default_agent_id if project else None)
 
         if not agent_id:
             agent_id = ChatPlatformDefaultAgentService.resolve_agent_id(
@@ -46,6 +54,8 @@ class ChatWorkspaceContextService:
             agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)
 
         allowed_action_ids = self._allowed_action_ids(agent, user_id)
+        actions_enabled = bool(agent and allowed_action_ids)
+        user_activated_agent = bool(user_activated_agent_id and actions_enabled)
 
         return {
             "project": self._project_metadata(project),
@@ -55,7 +65,8 @@ class ChatWorkspaceContextService:
             "agentId": str(agent.id) if agent else None,
             "actionProviderKeys": self._action_provider_keys(agent, user_id),
             "allowedActionIds": allowed_action_ids,
-            "actionsEnabled": bool(agent and allowed_action_ids),
+            "actionsEnabled": actions_enabled,
+            "userActivatedAgent": user_activated_agent,
             "capabilities": self._capabilities(agent),
             "skills": ChatAgentSkillsService.resolve(
                 agent_metadata=agent.metadata if agent else {},
@@ -120,6 +131,24 @@ class ChatWorkspaceContextService:
         metadata = agent.metadata or {}
 
         return self.specialization_service.parse(metadata.get("specialization"))
+
+    @staticmethod
+    def _parse_agent_id(value: UUID | str | None) -> UUID | None:
+        if not value:
+            return None
+
+        if isinstance(value, UUID):
+            return value
+
+        normalized = str(value).strip()
+
+        if not normalized:
+            return None
+
+        try:
+            return UUID(normalized)
+        except ValueError:
+            return None
 
     def _allowed_action_ids(self, agent, user_id: UUID) -> list[str]:
         if not agent:

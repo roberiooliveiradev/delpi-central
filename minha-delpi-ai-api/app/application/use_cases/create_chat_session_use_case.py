@@ -10,9 +10,6 @@ from app.domain.exceptions.chat_exceptions import (
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
-from app.application.services.chat_platform_default_agent_service import (
-    ChatPlatformDefaultAgentService,
-)
 from app.domain.services.chat_message_branch_service import ChatMessageBranchService
 from app.domain.services.chat_message_delivery_service import ChatMessageDeliveryService
 
@@ -51,12 +48,6 @@ class CreateChatSessionUseCase:
 
             if not agent_id:
                 agent_id = project.default_agent_id
-
-        if not agent_id:
-            agent_id = ChatPlatformDefaultAgentService.resolve_agent_id(
-                self.agent_repository,
-                user_id,
-            )
 
         if agent_id and self.agent_repository:
             agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)

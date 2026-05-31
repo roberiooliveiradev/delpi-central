@@ -212,13 +212,13 @@ class ChatFollowUpSuggestionService:
 
         context = workspace_context or {}
 
-        if context.get("actionsEnabled"):
-            return True
-
         if outcome in {"generic", "empty", "error"}:
             return True
 
-        return False
+        if outcome in {"product", "stock", "sales", "warning"}:
+            return bool(context.get("userActivatedAgent"))
+
+        return bool(context.get("userActivatedAgent") or context.get("actionsEnabled"))
 
     @classmethod
     def _chip_labels(cls, outcome: str) -> list[str]:

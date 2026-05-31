@@ -123,7 +123,11 @@ class SendChatMessageUseCase:
             )
             object.__setattr__(session, "agent_id", parsed_agent_id)
 
-        workspace_context = self._build_workspace_context(session, user_id)
+        workspace_context = self._build_workspace_context(
+            session,
+            user_id,
+            request_agent_id=request.agent_id,
+        )
         attachments = self._get_message_attachments(request, user_id, session_id)
 
         previous_messages = self.chat_repository.list_all_messages_by_session(session_id)
@@ -758,11 +762,17 @@ class SendChatMessageUseCase:
         service = ChatUserContextService(core_api_gateway=CoreApiHttpGateway())
         return service.build_direct_answer(access_token, message)
 
-    def _build_workspace_context(self, session, user_id: UUID) -> dict:
+    def _build_workspace_context(
+        self,
+        session,
+        user_id: UUID,
+        request_agent_id: str | None = None,
+    ) -> dict:
         if self.workspace_context_service:
             return self.workspace_context_service.build_context(
                 session=session,
                 user_id=user_id,
+                request_agent_id=request_agent_id,
             )
 
         agent = self._get_session_agent(session, user_id)
@@ -776,6 +786,8 @@ class SendChatMessageUseCase:
             "agentPrompt": agent.system_prompt if agent else None,
             "agentId": str(agent.id) if agent else (str(session.agent_id) if session.agent_id else None),
             "allowedActionIds": [],
+            "actionsEnabled": False,
+            "userActivatedAgent": bool(session.agent_id or request_agent_id),
             "capabilities": {},
             "skills": ChatAgentSkillsService.resolve(
                 agent_metadata=agent.metadata if agent else {},
