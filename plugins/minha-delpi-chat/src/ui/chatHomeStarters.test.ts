@@ -20,4 +20,20 @@ describe("chatHomeStarters", () => {
       CHAT_OPERATIONAL_HOME_STARTERS.length + CHAT_TEXT_HOME_STARTERS.length,
     );
   });
+
+  it("operacionais usam placeholders em vez de código fixo", () => {
+    const withProduct = CHAT_OPERATIONAL_HOME_STARTERS.filter((s) =>
+      s.query.includes("{{productCode}}"),
+    );
+    const withSearch = CHAT_OPERATIONAL_HOME_STARTERS.filter((s) =>
+      s.query.includes("{{searchQuery}}"),
+    );
+
+    expect(withProduct.length).toBeGreaterThanOrEqual(3);
+    expect(withSearch.length).toBeGreaterThanOrEqual(1);
+
+    for (const starter of CHAT_OPERATIONAL_HOME_STARTERS) {
+      expect(starter.query).not.toMatch(/\b10080001\b/);
+    }
+  });
 });

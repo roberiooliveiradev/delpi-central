@@ -236,6 +236,8 @@ Detalhes: [reset-banco-dev.md](./reset-banco-dev.md).
 | Core API crash loop | Ver logs; conferir `DB_HOST=postgres-core` no `.env` |
 | Keycloak lento no 1º boot | Aguardar 1–2 min; ver `docker logs delpi-keycloak` |
 | 502 no gateway | Container alvo down — `docker compose ps` |
+| 502 em `/auth/.../token` (login/smokes) | Keycloak parado — `docker compose -f docker-compose.dev.yml up -d keycloak keycloak-db` e aguardar realm responder 200 |
+| Atalhos do chat enviam código fixo | Rebuild `minha-delpi-chat`; atalhos operacionais usam `{{productCode}}` / `{{searchQuery}}` e abrem diálogo de preenchimento no MFE |
 | Console: `WebSocket … socket.io` / `NS_ERROR_WEBSOCKET_CONNECTION_REFUSED` | Gateway dev: `proxy_pass` do `/socket.io` deve ser **estático** (`http://core-api:8000`), não com variável `$upstream` — ver `gateway/nginx.dev.conf`. Depois: `docker compose -f docker-compose.dev.yml restart gateway` |
 | Plugin 404 em assets | Container `delpi-<id>` rodando? Id na URL = id do manifesto |
 | Chat sem resposta | Modelos Ollama não baixados (passo 5) |

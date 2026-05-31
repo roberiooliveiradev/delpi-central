@@ -189,7 +189,7 @@ export function ChatHelpPanel({
                     {highlight.description ? <p>{highlight.description}</p> : null}
                     {highlight.exampleQuery ? (
                       <button type="button" onClick={() => onTryPrompt(highlight.exampleQuery!)}>
-                        {highlight.exampleQuery}
+                        Experimentar
                       </button>
                     ) : null}
                   </article>

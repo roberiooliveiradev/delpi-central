@@ -401,6 +401,20 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | Callout em `AdminMetricsTab` com botão para Plataforma → Inteligência |
 | UX | Esclarece que toggles de pipeline saíram de Métricas (Playbook 11) |
 
+## Homologação — atalhos com preenchimento (31/05/2026)
+
+| Verificação | Resultado |
+|-------------|-----------|
+| Login `rober` / token Keycloak | OK após subir `keycloak` |
+| `smoke_identity_profile.py` | OK — perfil com nome/e-mail |
+| `smoke_follow_up_chips.py` | OK — chips API com `{{productCode}}`; ações api-externa |
+| `smoke_features_catalog.py` | OK — onboarding/tour com placeholders |
+| `smoke_admin_endpoints.py` | OK |
+| MFE bundle | `ChatShortcutPromptDialog` em `App-*.js` no container |
+| Catálogo HTTP | `starterCards` e `demoQuery` do tour sem `10080001` fixo |
+
+**Manual:** na home vazia ou chips «Próximos passos», clicar «Consultar produto» / «Ver estoque» deve abrir o diálogo antes de enviar; com chip de contexto de produto, o código pode vir pré-preenchido.
+
 ## Homologação — api-externa local
 
 | Item | Entrega |
