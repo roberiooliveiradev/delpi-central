@@ -3,6 +3,32 @@
   gap: var(--mdc-space-4);
 }
 
+.mdc-admin-simulate__toolbar {
+  align-items: flex-end;
+}
+
+.mdc-admin-simulate__toolbar .mdc-admin-knowledge-summary {
+  flex: 1 1 22rem;
+  margin-bottom: 0;
+}
+
+.mdc-admin-simulate__toolbar .mdc-admin-knowledge-summary__grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.mdc-admin-simulate__toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-simulate__toolbar .mdc-admin-knowledge-summary__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .mdc-admin-simulate__layout {
   align-items: start;
 }
@@ -22,10 +48,13 @@
 
 .mdc-admin-simulate__placeholder {
   margin: 0;
-  padding: var(--mdc-space-4);
-  border: 1px dashed var(--mdc-card-border);
+  padding: var(--mdc-space-5);
+  border: 0;
   border-radius: var(--mdc-radius-xl);
-  background: color-mix(in srgb, var(--mdc-bg-muted) 60%, transparent);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+  text-align: center;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-simulate__error {

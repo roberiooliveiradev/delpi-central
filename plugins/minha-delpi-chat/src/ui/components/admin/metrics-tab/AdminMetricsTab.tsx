@@ -270,9 +270,7 @@ export function AdminMetricsTab({
   if (!metricsSummary) {
     return (
       <section className="mdc-admin-metrics-tab">
-        <article className="mdc-admin-panel">
-          <p className="mdc-chat-muted">Carregando métricas...</p>
-        </article>
+        <p className="mdc-chat-muted mdc-admin-metrics-tab__loading">Carregando métricas...</p>
       </section>
     );
   }
@@ -300,32 +298,30 @@ export function AdminMetricsTab({
 
   return (
     <section className="mdc-admin-metrics-tab">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Métricas avançadas</p>
-            <h2>Observabilidade do Minha DELPI Chat</h2>
-            <p>
-              Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por
-              agente e usuário.
-            </p>
-          </div>
+      <header className="mdc-admin-tab-header mdc-admin-metrics-tab__header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Métricas</p>
+          <h2>Observabilidade do Minha DELPI Chat</h2>
+          <p>
+            Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por
+            agente e usuário.
+          </p>
+        </div>
 
-          {onMetricsHoursChange ? (
-            <label className="mdc-admin-field mdc-admin-metrics-tab__window">
-              <span>Janela</span>
-              <select
-                value={metricsHours}
-                onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
-              >
-                <option value={24}>24 horas</option>
-                <option value={168}>7 dias</option>
-                <option value={720}>30 dias</option>
-              </select>
-            </label>
-          ) : null}
-        </header>
-      </article>
+        {onMetricsHoursChange ? (
+          <label className="mdc-admin-field mdc-admin-metrics-tab__window">
+            <span>Janela</span>
+            <select
+              value={metricsHours}
+              onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+            >
+              <option value={24}>24 horas</option>
+              <option value={168}>7 dias</option>
+              <option value={720}>30 dias</option>
+            </select>
+          </label>
+        ) : null}
+      </header>
 
       <div className="mdc-admin-kpi-grid">
         <article className="mdc-admin-kpi-card">

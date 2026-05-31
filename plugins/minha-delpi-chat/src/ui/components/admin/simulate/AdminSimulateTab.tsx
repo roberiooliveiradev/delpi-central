@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { listChatAgents, listChatSessions } from "../../../../data/api/chatApi";
 import type { ChatSession } from "../../../../data/api/chatTypes";
 import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
+
+import { SimulateSummaryStrip } from "./SimulateSummaryStrip";
+import { computeSimulateSummary } from "./simulateSummary";
 
 import "./AdminSimulateTab.css";
 
@@ -42,6 +45,17 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
     void loadAgents();
   }, [getAccessToken]);
 
+  const summary = useMemo(
+    () => computeSimulateSummary(agents.length, sessions.length, Boolean(result)),
+    [agents.length, sessions.length, result],
+  );
+
+  function handleClear() {
+    setQuestion("");
+    setResult(null);
+    setError(null);
+  }
+
   async function handleSimulate() {
     const normalized = question.trim();
 
@@ -74,17 +88,28 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
 
   return (
     <section className="mdc-admin-simulate">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Simulação</p>
-            <h2>Simulação completa do agente</h2>
-            <p>
-              Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
-            </p>
-          </div>
-        </header>
-      </article>
+      <header className="mdc-admin-simulate__toolbar mdc-admin-tab-header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Simulação</p>
+          <h2>Simulação completa do agente</h2>
+          <p>
+            Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
+          </p>
+        </div>
+
+        <SimulateSummaryStrip summary={summary} />
+
+        <div className="mdc-admin-simulate__toolbar-actions">
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn"
+            disabled={!result && !error && !question.trim()}
+            onClick={handleClear}
+          >
+            Limpar
+          </button>
+        </div>
+      </header>
 
       <div className="mdc-admin-simulate__layout mdc-admin-split">
         <div className="mdc-admin-split__aside">
@@ -143,7 +168,7 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
 
         <button
           type="button"
-          className="mdc-admin-btn mdc-admin-btn--primary"
+          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
           disabled={isLoading}
           onClick={() => void handleSimulate()}
         >

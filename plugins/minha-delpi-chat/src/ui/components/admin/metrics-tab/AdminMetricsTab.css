@@ -4,6 +4,15 @@
   min-width: 0;
 }
 
+.mdc-admin-metrics-tab__header {
+  align-items: flex-end;
+}
+
+.mdc-admin-metrics-tab__loading {
+  margin: 0;
+  padding: var(--mdc-space-4);
+}
+
 .mdc-admin-metrics-tab__window {
   min-width: 11rem;
 }

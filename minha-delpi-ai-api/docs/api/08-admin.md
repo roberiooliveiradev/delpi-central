@@ -500,3 +500,16 @@ Resposta:
 ```
 
 Cada novo evento de auditoria recebe `traceId` da requisição HTTP (`X-Trace-ID`, `X-Request-ID` ou UUID gerado).
+
+---
+
+## Smoke automatizado (homologação)
+
+Login Keycloak (`rober` / `1234` em dev) + rotas admin críticas:
+
+```bash
+cd minha-delpi-ai-api
+SMOKE_BASE_URL=http://localhost python scripts/smoke_admin_endpoints.py
+```
+
+Verifica: `GET /admin/knowledge/documents` (campo `summary`), `guidelines`, `metrics/summary`, `agents/specialized` e `POST /admin/agent/simulate`.
