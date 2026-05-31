@@ -8,19 +8,27 @@ export type ChatFollowUpSuggestion = {
 type ChatFollowUpChipsProps = {
   suggestions: ChatFollowUpSuggestion[];
   onUseSuggestion?: (query: string) => void;
+  groupLabel?: string;
+  ariaLabel?: string;
 };
 
 export function ChatFollowUpChips({
   suggestions,
   onUseSuggestion,
+  groupLabel = "Próximos passos",
+  ariaLabel,
 }: ChatFollowUpChipsProps) {
   if (!onUseSuggestion || suggestions.length === 0) {
     return null;
   }
 
   return (
-    <div className="mdc-chat-follow-up" role="group" aria-label="Próximos passos sugeridos">
-      <p className="mdc-chat-follow-up__label">Próximos passos</p>
+    <div
+      className="mdc-chat-follow-up"
+      role="group"
+      aria-label={ariaLabel ?? `${groupLabel} sugeridos`}
+    >
+      <p className="mdc-chat-follow-up__label">{groupLabel}</p>
       <div className="mdc-chat-follow-up__chips">
         {suggestions.map((suggestion) => (
           <button

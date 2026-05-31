@@ -52,8 +52,6 @@ class ChatTurnPreparationResult:
     analysis_mode: bool
     fast_path: bool
     skip_rag: bool
-    text_task_mode: bool = False
-    text_task_category: str | None = None
 
     # Contexto de conversa usado para o LLM
     history: list[Any]
@@ -76,6 +74,8 @@ class ChatTurnPreparationResult:
     # Métricas / debug
     pipeline_timings: ChatPipelineTimings
     pipeline_stages: list[str]
+    text_task_mode: bool = False
+    text_task_category: str | None = None
 
 
 class ChatTurnPreparationService:
@@ -734,8 +734,6 @@ class ChatTurnPreparationService:
             analysis_mode=bool(analysis_mode),
             fast_path=bool(fast_path),
             skip_rag=bool(skip_rag),
-            text_task_mode=bool(text_task_pure),
-            text_task_category=text_task_category if text_task_pure else None,
             history=history,
             history_summary=history_summary,
             tool_context=tool_context,
@@ -746,5 +744,7 @@ class ChatTurnPreparationService:
             canvas_open_payload=canvas_open_payload,
             pipeline_timings=pipeline_timings,
             pipeline_stages=pipeline_stages,
+            text_task_mode=bool(text_task_pure),
+            text_task_category=text_task_category if text_task_pure else None,
         )
 

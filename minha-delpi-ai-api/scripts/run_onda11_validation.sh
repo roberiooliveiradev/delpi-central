@@ -150,6 +150,10 @@ if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
   echo ""
   echo "== Onda 11 — smoke assertividade multi-turno (Fase 5) =="
   python scripts/smoke_context_assertiveness_multiturn.py
+
+  echo ""
+  echo "== Onda 11 — smoke roteamento operacional (estoque vs capacidades) =="
+  python scripts/smoke_operational_routing.py
 fi
 
 echo ""

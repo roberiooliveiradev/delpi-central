@@ -1241,6 +1241,16 @@ export function ChatMessageList({
                   }
                   onUseSuggestion={onDrillDown}
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.attachmentFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Com o anexo"
+                  ariaLabel="Ações sugeridas para o arquivo anexado"
+                />
                 <ChatMessageFeedbackPanel
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}
