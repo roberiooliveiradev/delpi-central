@@ -107,6 +107,7 @@ class ChatIntentRouterService:
         "small_talk": ("small_talk", None, 9),
         "utility_direct": ("utility", None, 9),
         "attachment_welcome": ("attachment_task", "welcome", 7),
+        "drawing_analysis": ("drawing_analysis", "delpi_pdf", 5),
         "identity_shortcut": ("identity", "user_profile", 9),
         "meta_direct_answer": ("identity", "meta", 9),
         "rag": ("rag_question", None, 8),
@@ -175,6 +176,29 @@ class ChatIntentRouterService:
                 requires_llm=False,
                 priority_applied=1,
                 flags=("sql_safety",),
+            )
+
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+
+        if ChatDrawingIntentService.is_drawing_analysis_request(
+            normalized,
+            attachment_ids=attachment_ids,
+        ):
+            code = ChatDrawingIntentService.resolve_product_code(normalized)
+            params = {"productCode": code} if code else None
+
+            return IntentRouteResult(
+                intent="drawing_analysis",
+                sub_intent="pdf_api_validation",
+                confidence=0.94,
+                requires_tool=bool(code and allowed_action_ids),
+                requires_rag=bool(attachment_ids),
+                requires_llm=not bool(code),
+                priority_applied=5,
+                resolved_params=params,
+                flags=("drawing_analysis_delpi",),
             )
 
         if text_task_pure or ChatTextTaskIntentService.is_pure_text_task(

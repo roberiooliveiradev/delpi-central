@@ -38,6 +38,13 @@ class ChatProductQueryIntentService:
     def detect(cls, message: str) -> str:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+
+        if ChatDrawingIntentService.is_drawing_analysis_request(message):
+            return ChatProductQueryIntent.ANALYSER
+
         if cls._looks_like_mixed_documental_operational(normalized):
             return ChatProductQueryIntent.FULL
 

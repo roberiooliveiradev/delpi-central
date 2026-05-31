@@ -688,6 +688,7 @@ class SendChatMessageUseCase:
                 session_id=UUID(request.session_id),
                 request=request,
             ),
+            attachment_ids=getattr(request, "attachment_ids", None),
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:

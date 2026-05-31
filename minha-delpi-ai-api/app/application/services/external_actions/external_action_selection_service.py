@@ -101,6 +101,28 @@ class ExternalActionSelectionService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return None
 
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+
+        if ChatDrawingIntentService.is_drawing_analysis_request(message):
+            product_code = ChatProductQueryIntentService.resolve_product_code(
+                message,
+                conversation_context,
+                previous_messages=previous_messages,
+            )
+
+            if product_code:
+                selected = self._select_product_action(
+                    message,
+                    product_code,
+                    allowed_action_ids=allowed_action_ids,
+                    intent=ChatProductQueryIntent.ANALYSER,
+                )
+
+                if selected:
+                    return selected
+
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
             from app.domain.services.chat_sql_production_query_service import (
                 ChatSqlProductionQueryService,

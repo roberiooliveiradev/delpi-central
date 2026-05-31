@@ -47,6 +47,7 @@ class ChatToolContextService:
         on_stream_activity=None,
         agent_context: dict | None = None,
         attachment_context: str | None = None,
+        attachment_ids: list[str] | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -75,6 +76,40 @@ class ChatToolContextService:
                     "currentMessage": raw_message,
                 },
             )
+
+        agent_metadata = agent_context.get("metadata") if isinstance(agent_context, dict) else None
+
+        from app.domain.services.chat_drawing_analysis_turn_service import (
+            ChatDrawingAnalysisTurnService,
+        )
+
+        drawing_turn = ChatDrawingAnalysisTurnService.resolve(
+            message=raw_message,
+            attachment_ids=attachment_ids,
+            agent_metadata=agent_metadata if isinstance(agent_metadata, dict) else None,
+            previous_messages=previous_messages,
+        )
+
+        if drawing_turn and drawing_turn.direct_answer:
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": drawing_turn.direct_answer,
+                    "skipRag": True,
+                    "drawingAnalysisMode": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
+        drawing_analysis_mode = bool(
+            drawing_turn and drawing_turn.active and drawing_turn.skill_enabled
+        )
+        drawing_product_code = drawing_turn.product_code if drawing_turn else None
+        drawing_has_pdf = bool(drawing_turn and drawing_turn.has_pdf_attachment)
 
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
@@ -818,20 +853,41 @@ class ChatToolContextService:
                 else pagination_continue_prompt
             )
 
+        drawing_analysis_payload = None
+
+        if drawing_analysis_mode:
+            drawing_analysis_payload = self._build_drawing_analysis_enrichment(
+                safe_tool_calls=safe_tool_calls,
+                product_code=drawing_product_code,
+                has_pdf_attachment=drawing_has_pdf,
+                direct_answer=direct_answer,
+            )
+
+            if drawing_analysis_payload:
+                direct_answer = drawing_analysis_payload.get("directAnswer") or direct_answer
+
+        result_payload = {
+            "context": context,
+            "toolCalls": safe_tool_calls,
+            "nativeToolCalling": native_meta,
+            "directAnswer": direct_answer,
+            "skipRag": skip_rag,
+            "webSources": web_sources,
+            "webSearchPayload": web_search_payload,
+            "selectedExternalAction": selected_external_action_meta,
+            "currentMessage": raw_message,
+        }
+
+        if drawing_analysis_mode:
+            result_payload["drawingAnalysisMode"] = True
+
+            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
+                result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
+
         return self._finalize_tool_context_result(
             message=raw_message,
             previous_messages=previous_messages,
-            result={
-                "context": context,
-                "toolCalls": safe_tool_calls,
-                "nativeToolCalling": native_meta,
-                "directAnswer": direct_answer,
-                "skipRag": skip_rag,
-                "webSources": web_sources,
-                "webSearchPayload": web_search_payload,
-                "selectedExternalAction": selected_external_action_meta,
-                "currentMessage": raw_message,
-            },
+            result=result_payload,
         )
 
 
@@ -1461,6 +1517,59 @@ class ChatToolContextService:
             arguments=arguments,
             metadata=metadata,
         )
+
+    def _build_drawing_analysis_enrichment(
+        self,
+        *,
+        safe_tool_calls: list[dict],
+        product_code: str | None,
+        has_pdf_attachment: bool,
+        direct_answer: str | None,
+    ) -> dict | None:
+        from app.domain.services.chat_drawing_validation_orchestration_service import (
+            ChatDrawingValidationOrchestrationService,
+        )
+
+        code = str(product_code or "").strip()
+
+        for tool_call in self._successful_external_action_tool_calls(safe_tool_calls):
+            metadata = tool_call.get("metadata") or {}
+            path = str(metadata.get("path") or "")
+
+            if "/analyser" not in path.lower():
+                continue
+
+            if not code:
+                arguments = tool_call.get("arguments") or {}
+                code = str(arguments.get("code") or arguments.get("productCode") or "").strip()
+
+            data = tool_call.get("data")
+
+            if data is None:
+                data = metadata.get("authorizedResult") or metadata.get("data")
+
+            root = data.get("data", data) if isinstance(data, dict) else {}
+
+            if isinstance(root, dict) and isinstance(root.get("data"), dict):
+                root = root["data"]
+
+            package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+                product_code=code or "—",
+                payload=root if isinstance(root, dict) else None,
+                has_pdf_attachment=has_pdf_attachment,
+                api_ok=bool(metadata.get("ok")),
+                api_status_code=metadata.get("statusCode"),
+            )
+
+            return {
+                "directAnswer": ChatDrawingValidationOrchestrationService.wrap_direct_answer(
+                    str(direct_answer or ""),
+                    package=package,
+                ),
+                "drawingAnalysis": package.get("drawingAnalysis"),
+            }
+
+        return None
 
     def _build_direct_answer(
         self,

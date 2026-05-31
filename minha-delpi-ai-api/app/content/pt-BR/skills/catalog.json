@@ -42,6 +42,27 @@
         "corrija esse sql: select ...",
         "explique essa query de estoque"
       ]
+    },
+    {
+      "key": "drawing-analysis-delpi",
+      "label": "Análise de Desenhos DELPI",
+      "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus (GET /products/{code}/analyser) e normas internas.",
+      "policyFile": "drawing-analysis-delpi-skill.md",
+      "metadataFlag": "engineering",
+      "legacyMetadataFlag": "drawingAnalysis",
+      "executionPathHint": "GET /products/{code}/analyser",
+      "aliases": [
+        "drawing-analyser",
+        "analise de desenho",
+        "desenho tecnico",
+        "validar desenho"
+      ],
+      "examplePrompts": [
+        "analise este desenho 90260140",
+        "valide o pdf com o protheus",
+        "gerar relatorio tecnico do desenho"
+      ],
+      "sortOrder": 30
     }
   ]
 }

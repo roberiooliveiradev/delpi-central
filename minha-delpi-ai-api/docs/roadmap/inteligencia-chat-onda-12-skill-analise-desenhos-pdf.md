@@ -1,7 +1,8 @@
 # Inteligência do chat — Onda 12: Skill de análise de desenhos DELPI (PDF)
 
-**Status:** backlog (planejado)  
+**Status:** parcial (MVP Fase 1 em código — maio/2026)  
 **Criado:** 2026-05-29  
+**Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`)  
 **Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
 
 ---
@@ -75,9 +76,9 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 12.1.1 | `ChatDrawingIntentService` — detecta pedido de análise de desenho + PDF anexado ou código de produto | ⬜ |
-| 12.1.2 | Policy `drawing-analyser-skill.md` + registro em `PromptPolicyService` / catálogo admin | ⬜ |
-| 12.1.3 | Skill `drawing-analyser` no `catalog.json` e bootstrap admin | ⬜ |
+| 12.1.1 | `ChatDrawingIntentService` — detecta pedido de análise de desenho + PDF anexado ou código de produto | ✅ |
+| 12.1.2 | Policy `drawing-analysis-delpi-skill.md` + registro em `PromptPolicyService` / catálogo admin | ✅ |
+| 12.1.3 | Skill `drawing-analysis-delpi` no `catalog.json` e bootstrap admin | ✅ |
 | 12.1.4 | Bloqueio de roteamento incorreto (ex.: não confundir «analise o desenho 90264130» com busca catálogo) | ⬜ |
 
 ### 12.2 — Extração do PDF (visão / OCR)
@@ -93,7 +94,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 12.3.1 | `ChatDrawingValidationOrchestrationService` — merge PDF extraído + payload `/analyser` | ⬜ |
+| 12.3.1 | `ChatDrawingValidationOrchestrationService` — merge PDF extraído + payload `/analyser` | ✅ (MVP API; PDF OCR pendente) |
 | 12.3.2 | Regras de tolerância (±5% comprimento, ±1 mm decape) conforme `validation_rules_delpi` | ⬜ |
 | 12.3.3 | Classificação consolidada ✅ / ⚠️ / ❌ por seção do checklist | ⬜ |
 | 12.3.4 | Integração em `ChatToolContextService` / action `get_product_analyser` com parâmetros de profundidade | ⬜ |
@@ -111,7 +112,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | ID | Entrega | Status |
 |----|---------|--------|
 | 12.5.1 | Agente `minha-delpi-chat` (ou engenharia) com skill default | ⬜ |
-| 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` (PDF fixture + código conhecido) | ⬜ |
+| 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` (PDF fixture + código conhecido) | ✅ (offline MVP) |
 | 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ⬜ |
 | 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ⬜ |
 

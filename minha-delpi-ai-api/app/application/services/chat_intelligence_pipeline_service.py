@@ -47,12 +47,30 @@ class ChatIntelligencePipelineService:
         attachment_ids: list[str] | None = None,
         previous_messages: list[Any] | None = None,
     ) -> ChatPreToolDecisions:
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+
+        drawing_operational = (
+            ChatDrawingIntentService.is_drawing_analysis_request(
+                message,
+                attachment_ids=attachment_ids,
+            )
+            and bool(
+                ChatDrawingIntentService.resolve_product_code(message)
+                or attachment_ids
+            )
+        )
+
         operational_optimize = ChatOperationalPipelineService.should_optimize(
             message,
             allowed_action_ids,
             attachment_ids=attachment_ids,
-        )
+        ) or drawing_operational
         analysis_mode = ChatAnalysisIntentService.is_comparison_or_insight_request(message)
+
+        if drawing_operational:
+            analysis_mode = False
 
         if (
             not analysis_mode

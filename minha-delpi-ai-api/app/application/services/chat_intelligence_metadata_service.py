@@ -65,4 +65,12 @@ class ChatIntelligenceMetadataService:
         if pipeline:
             metadata["pipeline"] = pipeline
 
+        if tool_context.get("drawingAnalysisMode"):
+            metadata["drawingAnalysisMode"] = True
+
+        drawing_analysis = tool_context.get("drawingAnalysis")
+
+        if isinstance(drawing_analysis, dict):
+            metadata["drawingAnalysis"] = drawing_analysis
+
         return metadata

@@ -24,7 +24,7 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 | # | Item | Doc |
 |---|------|-----|
 | 9 | SQL Server TOTVS acessível no dev (`TOTVS_DB_HOST`) | [smoke-system-metadata](../../testing/smoke-system-metadata-homologacao.md) |
-| 10 | **Onda 12** — skill drawing-analyser PDF | [onda-12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
+| 10 | **Onda 12** — skill análise de desenhos PDF | [playbook](./playbook_skill_analise_desenhos_delpi.md) · [onda-12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) |
 
 ## Recém-concluído (referência)
 

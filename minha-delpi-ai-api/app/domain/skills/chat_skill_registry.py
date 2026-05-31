@@ -8,6 +8,7 @@ from app.infrastructure.content.content_service import ContentService
 SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
 COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
+DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
 
 
 @dataclass(frozen=True)
@@ -163,7 +164,12 @@ class ChatSkillRegistry:
 
     @classmethod
     def is_enabled(cls, agent_metadata: dict | None, skill_key: str) -> bool:
-        definition = cls.get(skill_key)
+        normalized = str(skill_key or "").strip().lower()
+
+        if normalized == "drawing-analyser":
+            normalized = DRAWING_ANALYSIS_SKILL_KEY
+
+        definition = cls.get(normalized)
 
         if not definition:
             return False
@@ -262,6 +268,7 @@ class ChatSkillRegistry:
             "sqlAuthoring": False,
             "sqlExecutionAvailable": False,
             "companyKnowledge": False,
+            "drawingAnalysis": False,
         }
 
         for item in bindings:
@@ -272,6 +279,8 @@ class ChatSkillRegistry:
                 )
             if item["skillKey"] == COMPANY_KNOWLEDGE_SKILL_KEY:
                 resolved["companyKnowledge"] = bool(item["enabled"])
+            if item["skillKey"] == DRAWING_ANALYSIS_SKILL_KEY:
+                resolved["drawingAnalysis"] = bool(item["enabled"])
 
         return resolved
 
@@ -302,6 +311,9 @@ class ChatSkillRegistry:
             return False
 
         skill_block = skills.get(definition.key)
+
+        if skill_block is None and definition.key == DRAWING_ANALYSIS_SKILL_KEY:
+            skill_block = skills.get("drawing-analyser")
 
         if isinstance(skill_block, dict) and definition.metadata_flag in skill_block:
             return bool(skill_block.get(definition.metadata_flag))

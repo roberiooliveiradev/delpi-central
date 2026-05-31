@@ -226,6 +226,23 @@ Comportamento esperado:
                 )
             )
 
+        if resolved_skills.get("drawingAnalysis"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                DRAWING_ANALYSIS_SKILL_KEY,
+            )
+
+            drawing_policy = ChatSkillRegistry.get_policy_content(
+                DRAWING_ANALYSIS_SKILL_KEY
+            )
+            sections.append(
+                drawing_policy
+                or self._load_policy(
+                    "drawing-analysis-delpi-skill.md",
+                    "Analise desenhos PDF confrontando com API DELPI e normas.",
+                )
+            )
+
         return [
             section.strip()
             for section in sections
