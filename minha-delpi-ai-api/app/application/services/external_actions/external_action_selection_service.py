@@ -1757,6 +1757,13 @@ class ExternalActionSelectionService:
         *,
         sql: str | None = None,
     ) -> dict | None:
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if ChatSqlSafetyService.contains_destructive_sql(sql) or ChatSqlSafetyService.contains_destructive_sql(
+            message
+        ):
+            return None
+
         if not allowed_action_ids:
             return None
 

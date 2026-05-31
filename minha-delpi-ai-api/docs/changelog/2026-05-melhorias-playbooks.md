@@ -40,7 +40,17 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Menu por linha de tabela | `ChatTableRowMenu` + `buildTableRowMenuActions` (Fase 4 interatividade) |
 | Preferência api-externa | `CHAT_PREFER_API_EXTERNA_PROVIDER` + smokes `SMOKE_REQUIRE_API_EXTERNA` |
 
-**Backlog:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
+## Playbook 08 — Segurança e confiança (início)
+
+| Entrega | Detalhe |
+|---------|---------|
+| SQL seguro | `ChatSqlSafetyService` bloqueia DELETE/UPDATE/… no `ChatToolContextService` |
+| Confiança UI | `metadata.trustSignals` + `ChatTrustBadges` no MFE |
+| Textos | Seção `security` em `external_action_responses.json` |
+
+**Backlog:** confirmação de escrita, badges em admin debug ampliado.
+
+**Backlog interatividade:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
 
 ## Admin textos (`playbook_assistente_administrativo_textos`)
 

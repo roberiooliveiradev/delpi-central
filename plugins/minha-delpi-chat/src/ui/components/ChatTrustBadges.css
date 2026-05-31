@@ -1,0 +1,36 @@
+.mdc-chat-trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.mdc-chat-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid var(--mdc-badge-border, var(--mdc-card-border));
+  background: var(--mdc-badge-bg, var(--mdc-bg-soft));
+  color: var(--mdc-badge-text, var(--mdc-text-muted));
+}
+
+.mdc-chat-trust-badge--authorized_data {
+  border-color: color-mix(in srgb, var(--mdc-success, #2e7d32) 35%, transparent);
+  color: var(--mdc-success, #2e7d32);
+}
+
+.mdc-chat-trust-badge--draft,
+.mdc-chat-trust-badge--no_source {
+  border-color: color-mix(in srgb, var(--mdc-warning, #b8860b) 40%, transparent);
+  color: var(--mdc-warning, #9a7b0a);
+}
+
+.mdc-chat-trust-badge--permission_limited,
+.mdc-chat-trust-badge--api_unavailable {
+  border-color: color-mix(in srgb, var(--mdc-danger, #c62828) 35%, transparent);
+  color: var(--mdc-danger, #c62828);
+}

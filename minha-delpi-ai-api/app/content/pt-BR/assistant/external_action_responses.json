@@ -120,5 +120,20 @@
     "yearConfirmation": "Mês {month} de {year} (confirmação do usuário).",
     "weekdayReference": "Referência a dia da semana: {label}.",
     "quarterReference": "Trimestre {quarter} de {year}."
+  },
+  "security": {
+    "destructiveSqlBlocked": "Não executo comandos que alteram ou apagam dados (DELETE, UPDATE, INSERT, DROP, ALTER, TRUNCATE, etc.). Posso montar ou executar uma consulta somente leitura (SELECT).",
+    "actionNotPermitted": "Essa consulta não está liberada para este agente ou perfil. Posso ajudar com outra consulta disponível.",
+    "noAccess": "Não consegui acessar essa informação com as permissões atuais. Verifique se o agente correto está ativo ou solicite acesso ao administrador.",
+    "noAuthorizedSource": "Não encontrei fonte documental autorizada para responder com segurança.",
+    "trustSignalLabels": {
+      "authorized_data": "Dados do sistema",
+      "document_source": "Fonte documental",
+      "draft": "Rascunho",
+      "no_source": "Sem fonte",
+      "permission_limited": "Permissão limitada",
+      "partial_result": "Resultado parcial",
+      "api_unavailable": "Consulta indisponível"
+    }
   }
 }

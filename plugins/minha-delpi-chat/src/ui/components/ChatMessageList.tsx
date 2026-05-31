@@ -44,6 +44,7 @@ import {
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
+import { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
 import { ChatMessageEditField } from "./ChatMessageEditField";
@@ -1227,6 +1228,13 @@ export function ChatMessageList({
                       string,
                       unknown
                     > | null) ?? null
+                  }
+                />
+                <ChatTrustBadges
+                  signals={
+                    (message.metadata?.trustSignals as
+                      | ChatTrustSignal[]
+                      | undefined) ?? []
                   }
                 />
                 <ChatSources

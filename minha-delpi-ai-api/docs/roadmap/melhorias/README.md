@@ -9,6 +9,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
 | Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–3** + menu por linha de tabela (MFE); Fase **5** guiados em backlog |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
+| Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL destrutivo bloqueado; `trustSignals` + badges MFE; mensagens em `external_action_responses.json` |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** (detecção + policy, sem ERP); Fases **3–5** em backlog |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência; itens críticos migrados para código/testes |
@@ -29,6 +30,8 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatTextTaskIntentService` | Admin textos — modo sem API |
 | `ChatWorkingMemoryService.build_context_chips` | Contexto + interatividade — UI |
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
+| `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |
+| `ChatTrustSignalsService` | Playbook 08 — sinais de confiança no metadata |
 
 ## Smokes automatizados
 
@@ -40,6 +43,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/smoke_operational_routing.py` | Estoque com produto não cai em «Sobre esta consulta» |
 | `scripts/smoke_session_memory_persist.py` | Memória persistida + `memory/clear` |
 | `scripts/upsert_agent_provider.py` | Habilitar/desabilitar provider no agente (API, sem migration) |
+| `scripts/smoke_sql_safety.py` | Bloqueio de SQL destrutivo (Playbook 08) |
 
 ## Homologação local (api-externa)
 

@@ -49,6 +49,25 @@ class ExternalActionResponseContentService:
             return template
 
     @classmethod
+    def get_mapping(cls, *path: str) -> dict[str, str]:
+        node: Any = _responses_content()
+
+        for key in path:
+            if not isinstance(node, dict):
+                return {}
+
+            node = node.get(key)
+
+        if not isinstance(node, dict):
+            return {}
+
+        return {
+            str(item_key): str(item_value)
+            for item_key, item_value in node.items()
+            if str(item_key).strip() and item_value is not None
+        }
+
+    @classmethod
     def list(cls, *path: str) -> list[str]:
         node: Any = _responses_content()
 

@@ -100,6 +100,27 @@ class ChatToolContextService:
                 },
             )
 
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        sql_block_answer = ChatSqlSafetyService.blocked_direct_answer(
+            raw_message,
+            sql=getattr(sql_refinement, "sql", None) if sql_refinement else None,
+        )
+
+        if sql_block_answer:
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": sql_block_answer,
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
         if conversation_context is None and previous_messages:
             conversation_context = ChatIntelligencePipelineService.build_conversation_context(
                 previous_messages,

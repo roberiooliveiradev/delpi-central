@@ -51,3 +51,17 @@ class ChatPersonalityMetadataService:
             issues=issues,
             previous_messages=previous_messages,
         )
+
+        from app.application.services.chat_trust_metadata_service import (
+            ChatTrustMetadataService,
+        )
+
+        ChatTrustMetadataService.attach_to_assistant_metadata(
+            metadata,
+            message=message,
+            answer=answer,
+            tool_calls=tool_calls,
+            sources=metadata.get("sources") if isinstance(metadata.get("sources"), list) else None,
+            workspace_context=workspace_context,
+            direct_response=bool(metadata.get("directResponse")),
+        )
