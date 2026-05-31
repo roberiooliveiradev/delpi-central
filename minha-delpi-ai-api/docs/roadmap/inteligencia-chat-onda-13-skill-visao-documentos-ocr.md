@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** parcial (13.1–13.2 + 13.4 + 13.6 + intent `attachment_document`; 13.3/13.5 backlog; maio/2026)  
+**Status:** parcial (13.1–13.2 + 13.3.2 + 13.4 + 13.6 + intent `attachment_document`; 13.3.1/13.5 wired com fallback; maio/2026)  
 **Criado:** 2026-05-31  
 **Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
@@ -48,7 +48,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 13.3.1 | Backend `docling` (MIT) ou `paddleocr` (Apache 2.0) | ⬜ (stub + fallback `auto`; wiring pendente) |
+| 13.3.1 | Backend `docling` (MIT) ou `paddleocr` (Apache 2.0) | ✅ (wired; requer `requirements-vision.txt` / profile `vision`) |
 | 13.3.2 | Extração de tabelas BOM | ✅ (heurística `bomRows` + `bom_heuristic` em texto OCR) |
 
 ### 13.4 — Integração drawing (Onda 12 Fase 3)
@@ -62,7 +62,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 13.5.1 | Backend `ollama_vlm` (Qwen2.5-VL) com JSON schema | ⬜ (stub + fallback `auto`) |
+| 13.5.1 | Backend `ollama_vlm` (Qwen2.5-VL) com JSON schema | ✅ (`/api/chat` + imagens; fallback `auto` se indisponível) |
 
 ### 13.6 — UX, testes e ops
 
@@ -103,3 +103,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | Intent `attachment_document` (leitura de anexo sem planejar OpenAPI); painel admin Métricas visão/OCR. |
 | 2026-05-31 | Crop carimbo Tesseract, fallback OCR em indexado curto, `run_onda13_validation.sh`, adminDebug MFE visão. |
 | 2026-05-31 | BOM heurístico (`ChatDocumentVisionBomService`); fast path desligado em `attachment_document`. |
+| 2026-05-31 | Backends `docling`, `paddleocr` e `ollama_vlm` wired com fallback; testes de contrato neural/VLM. |

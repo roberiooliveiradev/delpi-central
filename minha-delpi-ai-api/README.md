@@ -100,7 +100,9 @@ docs/              # documentação técnica
 | `CHAT_ATTACHMENT_IMAGE_OCR_ENABLED` | OCR legado em PNG/JPG/WebP (`false` por padrão); preferir `CHAT_DOCUMENT_VISION_*` |
 | `CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS` | Limite de caracteres do OCR legado (padrão 4000) |
 | `CHAT_DOCUMENT_VISION_ENABLED` | Skill `document-vision-delpi` — OCR PDF/imagem no chat base (`true` no compose dev) |
-| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` \| `native` \| `tesseract` (MVP: native + Tesseract via PyMuPDF) |
+| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` \| `native` \| `tesseract` \| `docling` \| `paddleocr` \| `ollama_vlm` |
+| `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` / `OLLAMA_BASE_URL` | VLM local (ex.: `qwen2.5vl:7b`) quando backend `ollama_vlm` |
+| `CHAT_DOCUMENT_VISION_PADDLE_USE_GPU` | GPU PaddleOCR no profile `vision` (`false` default) |
 | `CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING` | Enriquece extração da skill de desenho (default `true`) |
 | `CHAT_DOCUMENT_VISION_MAX_PAGES` / `DPI` / `MAX_CHARS` | Limites de rasterização e texto |
 | `CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS` | Mínimo para considerar PDF legível antes do OCR |

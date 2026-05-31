@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import base64
 import os
 import time
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -562,6 +564,55 @@ class ChatDocumentVisionService:
         warnings: list[str] = []
         merged_text = ""
 
+        if backend in {"ollama_vlm", "vlm"}:
+            vlm = cls._stage_ollama_vlm(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+            )
+            warnings.extend(vlm.get("warnings") or [])
+
+            if str(vlm.get("fullText") or "").strip():
+                stages.append("ollama_vlm")
+                payload = cls._build_from_text(
+                    str(vlm["fullText"]),
+                    engine="ollama_vlm",
+                    stages=stages,
+                    warnings=warnings,
+                )
+                return cls._finalize_result(
+                    payload,
+                    engine="ollama_vlm",
+                    stages=stages,
+                    warnings=warnings,
+                    started=started,
+                )
+
+            warnings.append("ollama_vlm_unavailable_fallback_auto")
+            backend = "tesseract"
+
+        if backend in {"docling", "paddleocr"}:
+            neural = cls._stage_neural_backend(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+                backend=backend,
+            )
+            warnings.extend(neural.get("warnings") or [])
+
+            if str(neural.get("fullText") or "").strip():
+                stages.append(backend)
+                return cls._finalize_result(
+                    neural,
+                    engine=backend,
+                    stages=stages,
+                    warnings=warnings,
+                    started=started,
+                )
+
+            warnings.append(f"{backend}_unavailable_fallback_tesseract")
+            backend = "tesseract"
+
         if backend in {"native", "text"}:
             native = cls._stage_native(
                 storage_path,
@@ -572,7 +623,7 @@ class ChatDocumentVisionService:
             merged_text = str(native.get("fullText") or "").strip()
             warnings.extend(native.get("warnings") or [])
 
-        if backend in {"tesseract", "auto"}:
+        if backend in {"tesseract", "auto", "paddleocr", "docling"}:
             ocr = cls._stage_tesseract_image(storage_path)
             stages.append("tesseract_image")
             warnings.extend(ocr.get("warnings") or [])
@@ -767,6 +818,62 @@ class ChatDocumentVisionService:
         return "\n".join(parts).strip()
 
     @classmethod
+    def _vision_timeout_seconds(cls) -> float:
+        return max(5.0, float(Settings.CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS))
+
+    @classmethod
+    def _truncate_vision_text(cls, text: str) -> str:
+        max_chars = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))
+        normalized = str(text or "").strip()
+
+        if len(normalized) <= max_chars:
+            return normalized
+
+        return f"{normalized[: max_chars - 1]}…"
+
+    @classmethod
+    def _rasterize_pdf_pages(cls, storage_path: str) -> tuple[list[Any], list[str]]:
+        warnings: list[str] = []
+
+        try:
+            import fitz
+            from PIL import Image
+        except ImportError as exc:
+            return [], [f"dependencies_unavailable:{exc.__class__.__name__}"]
+
+        dpi = max(72, int(Settings.CHAT_DOCUMENT_VISION_DPI))
+        max_pages = max(1, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES))
+        zoom = dpi / 72.0
+        matrix = fitz.Matrix(zoom, zoom)
+        images: list[Any] = []
+
+        try:
+            document = fitz.open(storage_path)
+        except Exception as exc:
+            return [], [f"pdf_open_failed:{exc.__class__.__name__}"]
+
+        try:
+            for index, page in enumerate(document):
+                if index >= max_pages:
+                    warnings.append("max_pages_reached")
+                    break
+
+                pixmap = page.get_pixmap(matrix=matrix, alpha=False)
+                images.append(
+                    Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+                )
+        finally:
+            document.close()
+
+        return images, warnings
+
+    @classmethod
+    def _pil_to_base64_png(cls, image: Any) -> str:
+        buffer = BytesIO()
+        image.save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode("ascii")
+
+    @classmethod
     def _stage_ollama_vlm(
         cls,
         storage_path: str,
@@ -779,7 +886,8 @@ class ChatDocumentVisionService:
         base_url = os.getenv(
             "CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL",
             os.getenv("OLLAMA_BASE_URL", "http://ollama:11434"),
-        ).strip()
+        ).strip().rstrip("/")
+        max_vlm_pages = max(1, min(3, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES)))
 
         try:
             import requests
@@ -787,8 +895,69 @@ class ChatDocumentVisionService:
             warnings.append("requests_unavailable")
             return {"fullText": "", "warnings": warnings}
 
-        warnings.append(f"ollama_vlm_not_wired:{model}@{base_url}")
-        return {"fullText": "", "warnings": warnings}
+        images_b64: list[str] = []
+
+        if cls._is_pdf(content_type, filename, storage_path):
+            pages, page_warnings = cls._rasterize_pdf_pages(storage_path)
+            warnings.extend(page_warnings)
+            images_b64 = [cls._pil_to_base64_png(page) for page in pages[:max_vlm_pages]]
+        elif cls._is_image(content_type, filename):
+            try:
+                from PIL import Image
+
+                with Image.open(storage_path) as image:
+                    images_b64 = [cls._pil_to_base64_png(image.convert("RGB"))]
+            except Exception as exc:
+                warnings.append(f"vlm_image_open_failed:{exc.__class__.__name__}")
+        else:
+            warnings.append("vlm_unsupported_content_type")
+            return {"fullText": "", "warnings": warnings}
+
+        if not images_b64:
+            warnings.append("vlm_no_images")
+            return {"fullText": "", "warnings": warnings}
+
+        prompt = (
+            "Extraia todo o texto visível deste documento técnico "
+            "(carimbo, lista de materiais, cotas, notas). "
+            "Responda apenas com o texto extraído, sem comentários."
+        )
+        url = f"{base_url}/api/chat"
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                    "images": images_b64,
+                }
+            ],
+            "stream": False,
+            "options": {"num_predict": min(4096, int(Settings.CHAT_DOCUMENT_VISION_MAX_CHARS))},
+        }
+
+        try:
+            response = requests.post(url, json=payload, timeout=cls._vision_timeout_seconds())
+            response.raise_for_status()
+            data = response.json()
+        except Exception as exc:
+            warnings.append(f"ollama_vlm_request_failed:{exc.__class__.__name__}")
+            return {"fullText": "", "warnings": warnings}
+
+        message = data.get("message") if isinstance(data, dict) else {}
+        content = str((message or {}).get("content") or "").strip()
+
+        if not content:
+            warnings.append("ollama_vlm_empty_response")
+            return {"fullText": "", "warnings": warnings}
+
+        text = cls._truncate_vision_text(content)
+        return cls._build_from_text(
+            text,
+            engine="ollama_vlm",
+            stages=["ollama_vlm"],
+            warnings=warnings,
+        )
 
     @classmethod
     def _stage_neural_backend(
@@ -816,13 +985,37 @@ class ChatDocumentVisionService:
     @classmethod
     def _stage_docling(cls, storage_path: str, *, filename: str, warnings: list[str]) -> dict[str, Any]:
         try:
-            import docling  # noqa: F401
+            from docling.document_converter import DocumentConverter
         except ImportError:
             warnings.append("docling_not_installed")
             return {"fullText": "", "warnings": warnings}
 
-        warnings.append("docling_not_wired_yet")
-        return {"fullText": "", "warnings": warnings}
+        try:
+            converter = DocumentConverter()
+            result = converter.convert(storage_path)
+            document = result.document
+            text = ""
+
+            if hasattr(document, "export_to_markdown"):
+                text = str(document.export_to_markdown() or "")
+            elif hasattr(document, "export_to_text"):
+                text = str(document.export_to_text() or "")
+        except Exception as exc:
+            warnings.append(f"docling_failed:{exc.__class__.__name__}")
+            return {"fullText": "", "warnings": warnings}
+
+        text = cls._truncate_vision_text(text)
+
+        if not text:
+            warnings.append("docling_empty_text")
+            return {"fullText": "", "warnings": warnings}
+
+        return cls._build_from_text(
+            text,
+            engine="docling",
+            stages=["docling"],
+            warnings=warnings,
+        )
 
     @classmethod
     def _stage_paddleocr(
@@ -833,13 +1026,95 @@ class ChatDocumentVisionService:
         warnings: list[str],
     ) -> dict[str, Any]:
         try:
-            from paddleocr import PaddleOCR  # noqa: F401
+            from paddleocr import PaddleOCR
         except ImportError:
             warnings.append("paddleocr_not_installed")
             return {"fullText": "", "warnings": warnings}
 
-        warnings.append("paddleocr_not_wired_yet")
-        return {"fullText": "", "warnings": warnings}
+        use_gpu = os.getenv("CHAT_DOCUMENT_VISION_PADDLE_USE_GPU", "false").lower() == "true"
+
+        try:
+            engine = PaddleOCR(use_angle_cls=True, lang="por", use_gpu=use_gpu, show_log=False)
+        except Exception as exc:
+            warnings.append(f"paddleocr_init_failed:{exc.__class__.__name__}")
+            return {"fullText": "", "warnings": warnings}
+
+        parts: list[str] = []
+        content_type = cls._default_content_type(filename)
+
+        if cls._is_pdf(content_type, filename, storage_path):
+            pages, page_warnings = cls._rasterize_pdf_pages(storage_path)
+            warnings.extend(page_warnings)
+
+            for page in pages:
+                segment = cls._paddleocr_from_image(engine, page)
+
+                if segment:
+                    parts.append(segment)
+        else:
+            segment = cls._paddleocr_from_path(engine, storage_path)
+
+            if segment:
+                parts.append(segment)
+
+        text = cls._truncate_vision_text("\n\n".join(parts).strip())
+
+        if not text:
+            warnings.append("paddleocr_empty_text")
+            return {"fullText": "", "warnings": warnings}
+
+        return cls._build_from_text(
+            text,
+            engine="paddleocr",
+            stages=["paddleocr"],
+            warnings=warnings,
+        )
+
+    @classmethod
+    def _paddleocr_from_path(cls, engine: Any, storage_path: str) -> str:
+        try:
+            from PIL import Image
+        except ImportError:
+            return ""
+
+        try:
+            with Image.open(storage_path) as image:
+                return cls._paddleocr_from_image(engine, image.convert("RGB"))
+        except Exception:
+            return ""
+
+    @classmethod
+    def _paddleocr_from_image(cls, engine: Any, image: Any) -> str:
+        try:
+            import numpy as np
+        except ImportError:
+            return ""
+
+        try:
+            array = np.array(image)
+            result = engine.ocr(array, cls=True)
+        except Exception:
+            return ""
+
+        lines: list[str] = []
+
+        for block in result or []:
+            if not isinstance(block, list):
+                continue
+
+            for item in block:
+                if not isinstance(item, (list, tuple)) or len(item) < 2:
+                    continue
+
+                text_part = item[1]
+
+                if isinstance(text_part, (list, tuple)) and text_part:
+                    line = str(text_part[0] or "").strip()
+
+                    if line:
+                        lines.append(line)
+
+        return "\n".join(lines).strip()
 
     @classmethod
     def _is_pdf(cls, content_type: str, filename: str, storage_path: str) -> bool:
