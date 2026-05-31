@@ -63,6 +63,27 @@
         "gerar relatorio tecnico do desenho"
       ],
       "sortOrder": 30
+    },
+    {
+      "key": "document-vision-delpi",
+      "label": "Visão e OCR de documentos",
+      "description": "Extrai texto e estrutura de PDFs e imagens (OCR Tesseract, texto nativo) para alimentar análise de desenhos e anexos. Processamento local no chat base.",
+      "policyFile": "document-vision-delpi-skill.md",
+      "metadataFlag": "enabled",
+      "legacyMetadataFlag": "documentVision",
+      "executionPathHint": "ChatDocumentVisionService",
+      "aliases": [
+        "ocr-delpi",
+        "pdf-ocr",
+        "visao documentos",
+        "extrair texto pdf"
+      ],
+      "examplePrompts": [
+        "extrair texto deste pdf",
+        "ocr do anexo",
+        "ler carimbo do desenho"
+      ],
+      "sortOrder": 25
     }
   ]
 }

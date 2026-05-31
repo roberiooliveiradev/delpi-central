@@ -698,7 +698,7 @@ Alinhado à [Onda 12](../inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md
 |------|--------|-------------|
 | **1 — MVP técnico** | PDF; extrair código; `/analyser`; relatório básico; cabeçalho + BOM | 12.1, 12.3 (parcial), 12.4.1 |
 | **2 — Validação normativa** | Checklist + requirements + rules + validation_rules no RAG/policy | 12.1.2, RAG global |
-| **3 — Dimensional e 50xx** | Cotas; decapes; intermediários; terminais/isoladores | 12.2, 12.3.2 |
+| **3 — Dimensional e 50xx** | Cotas; decapes; intermediários; terminais/isoladores | 12.2, 12.3.2 → **[Onda 13 / visão OCR](./playbook_skill_visao_documentos_ocr_delpi.md)** |
 | **4 — Relatório avançado** | Evidências por página; severidade; plano de ação; export; lousa | 12.4 |
 | **5 — UI interativa** | Progresso; chips filtro; seções; reanálise; comparar revisões | 12.4.2, MFE |
 | **6 — Qualidade e auditoria** | Métricas; histórico; dashboard; feedback; testes D1–D12 | 12.5 |

@@ -90,6 +90,22 @@ class ChatDrawingAdminDebugService:
                     "detail": pdf_detail,
                 }
             )
+
+            doc_vision = tool_context.get("documentVision")
+
+            if isinstance(doc_vision, dict) and doc_vision:
+                phases.append(
+                    {
+                        "id": "document_vision",
+                        "label": "Visão / OCR (document-vision-delpi)",
+                        "status": "ok",
+                        "detail": (
+                            f"engine={doc_vision.get('engine')} "
+                            f"stages={doc_vision.get('stages')} "
+                            f"score={doc_vision.get('legibilityScore')}"
+                        ),
+                    }
+                )
         else:
             phases.append(
                 {

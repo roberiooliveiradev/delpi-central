@@ -86,7 +86,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | ID | Entrega | Status |
 |----|---------|--------|
 | 12.2.1 | Definir provedor: LLM multimodal (anexo) vs serviço OCR dedicado vs pipeline híbrido | ✅ (híbrido: pypdf + parse heurístico) |
-| 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ✅ (código/REV/cliente; cotas Fase 3) |
+| 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ✅ (código/REV/cliente; **cotas → Onda 13** [playbook visão](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md)) |
 | 12.2.3 | Limites de tamanho/páginas; timeout; fallback quando OCR falhar | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, legibilidade mínima) |
 | 12.2.4 | Testes com PDFs reais anonimizados (fixtures em `tests/fixtures/drawings/`) | ✅ (`sample_carimbo_minimal.pdf` via `scripts/build_drawing_fixture_pdf.py`) |
 
@@ -193,6 +193,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | 2026-05-31 | Endpoint admin `GET /admin/metrics/drawing-analysis/summary` (histórico via audit). |
 | 2026-05-31 | Painel **Análise de Desenhos DELPI** na aba Métricas do admin (MFE `minha-delpi-chat`). |
 | 2026-05-31 | Roteamento explícito api-externa para `/analyser` (testes + smoke + policy/catálogo). |
+| 2026-05-31 | Playbook OCR/visão chat base → [Onda 13](./inteligencia-chat-onda-13-skill-visao-documentos-ocr.md). |
 
 ---
 

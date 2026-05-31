@@ -243,6 +243,21 @@ Comportamento esperado:
                 )
             )
 
+        if resolved_skills.get("documentVision"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                DOCUMENT_VISION_SKILL_KEY,
+            )
+
+            vision_policy = ChatSkillRegistry.get_policy_content(DOCUMENT_VISION_SKILL_KEY)
+            sections.append(
+                vision_policy
+                or self._load_policy(
+                    "document-vision-delpi-skill.md",
+                    "Extraia texto e estrutura de PDFs e imagens via pipeline local de visão.",
+                )
+            )
+
         return [
             section.strip()
             for section in sections

@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Smoke — skill document-vision-delpi (Onda 13).
+
+Uso:
+  PYTHONPATH=/app python scripts/smoke_document_vision.py
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+from pathlib import Path
+
+from app.application.services.chat_document_vision_service import ChatDocumentVisionService
+from app.domain.services.chat_drawing_pdf_extraction_service import ChatDrawingPdfExtractionService
+from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+from app.infrastructure.config.settings import Settings
+
+
+def main() -> int:
+    failed = 0
+
+    def check(name: str, ok: bool) -> None:
+        nonlocal failed
+
+        if ok:
+            print(f"OK {name}")
+        else:
+            print(f"FAIL {name}", file=sys.stderr)
+            failed += 1
+
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+    flags = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata=None,
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+    check("skill documentVision com drawing", flags.get("documentVision") is True)
+
+    text = "DESENHO 90260140 REV.01\nCOD. CLIENTE TESTE"
+    parsed = ChatDrawingPdfExtractionService.parse_from_text(text)
+    vision = ChatDocumentVisionService._build_from_text(
+        text,
+        engine="native",
+        stages=["native"],
+    )
+    merged = ChatDocumentVisionService.merge_into_drawing_parse(parsed, vision)
+    check("merge código produto", merged.get("productCode") == "90260140")
+    check("merge revision", merged.get("revision") == "01")
+
+    fixture = Path(__file__).resolve().parents[1] / "tests/fixtures/drawings/sample_carimbo_minimal.pdf"
+    if fixture.is_file():
+        result = ChatDocumentVisionService.extract_from_storage_path(
+            str(fixture),
+            filename=fixture.name,
+            content_type="application/pdf",
+        )
+        check("fixture PDF schema", result.get("schemaVersion") == "1.0")
+        check("fixture PDF stages", bool(result.get("stages")))
+    else:
+        print("SKIP fixture PDF (ausente)")
+
+    api_root = Path(__file__).resolve().parents[1]
+    pytest_env = {**os.environ, "PYTHONPATH": os.environ.get("PYTHONPATH", str(api_root))}
+    import subprocess
+
+    pytest_result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "tests/unit/application/services/test_chat_document_vision_service.py",
+            "-q",
+        ],
+        cwd=str(api_root),
+        env=pytest_env,
+        check=False,
+    )
+    check("pytest document vision", pytest_result.returncode == 0)
+
+    if failed:
+        print("\nSmoke document vision: falhou.", file=sys.stderr)
+        return 1
+
+    print("\nSmoke document vision: todas as verificações passaram.")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -133,6 +133,26 @@ class Settings:
     CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS = int(
         os.getenv("CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS", "40")
     )
+    CHAT_DOCUMENT_VISION_ENABLED = (
+        os.getenv("CHAT_DOCUMENT_VISION_ENABLED", "false").lower() == "true"
+    )
+    CHAT_DOCUMENT_VISION_BACKEND = os.getenv("CHAT_DOCUMENT_VISION_BACKEND", "auto").strip().lower()
+    CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = (
+        os.getenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true").lower() == "true"
+    )
+    CHAT_DOCUMENT_VISION_MAX_PAGES = int(
+        os.getenv("CHAT_DOCUMENT_VISION_MAX_PAGES", os.getenv("CHAT_DRAWING_PDF_MAX_PAGES", "10"))
+    )
+    CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS = int(
+        os.getenv(
+            "CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS",
+            os.getenv("CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS", "40"),
+        )
+    )
+    CHAT_DOCUMENT_VISION_DPI = int(os.getenv("CHAT_DOCUMENT_VISION_DPI", "200"))
+    CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS = float(
+        os.getenv("CHAT_DOCUMENT_VISION_TIMEOUT_SECONDS", "120")
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"

@@ -9,6 +9,7 @@ SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
 COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
 DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
+DOCUMENT_VISION_SKILL_KEY = "document-vision-delpi"
 DRAWING_ANALYSER_ACTION_ID = "get_product_analyser"
 DRAWING_ANALYSER_PATH_TOKEN = "/analyser"
 
@@ -234,6 +235,17 @@ class ChatSkillRegistry:
                 and not cls._has_explicit_config(agent_metadata, definition)
             ):
                 enabled = cls._drawing_analysis_available(allowed)
+            elif definition.key == DOCUMENT_VISION_SKILL_KEY:
+                if not cls._has_explicit_config(agent_metadata, definition):
+                    from app.infrastructure.config.settings import Settings
+
+                    if has_agent:
+                        enabled = cls._drawing_analysis_available(allowed) or (
+                            Settings.CHAT_DOCUMENT_VISION_ENABLED
+                            and Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING
+                        )
+                    else:
+                        enabled = Settings.CHAT_DOCUMENT_VISION_ENABLED
 
             derived: dict[str, bool] = {}
 
@@ -277,6 +289,7 @@ class ChatSkillRegistry:
             "sqlExecutionAvailable": False,
             "companyKnowledge": False,
             "drawingAnalysis": False,
+            "documentVision": False,
         }
 
         for item in bindings:
@@ -289,6 +302,8 @@ class ChatSkillRegistry:
                 resolved["companyKnowledge"] = bool(item["enabled"])
             if item["skillKey"] == DRAWING_ANALYSIS_SKILL_KEY:
                 resolved["drawingAnalysis"] = bool(item["enabled"])
+            if item["skillKey"] == DOCUMENT_VISION_SKILL_KEY:
+                resolved["documentVision"] = bool(item["enabled"])
 
         return resolved
 

@@ -1,0 +1,134 @@
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+from uuid import uuid4
+
+from app.application.services.chat_document_vision_service import ChatDocumentVisionService
+from app.infrastructure.config.settings import Settings
+
+
+def test_merge_into_drawing_parse_prefers_existing_and_fills_gaps():
+    parsed = {
+        "productCode": "90260140",
+        "revision": None,
+        "componentCodes": ["50111111"],
+        "legible": False,
+        "charCount": 10,
+    }
+    vision = {
+        "revision": "02",
+        "componentCodes": ["50122222"],
+        "intermediateCodes": ["50133333"],
+        "dimensions": {"totalLengthMm": 1000.0},
+        "legible": True,
+        "charCount": 200,
+        "engine": "tesseract",
+        "stages": ["native", "tesseract_pdf"],
+        "legibilityScore": 0.9,
+        "durationMs": 50,
+        "schemaVersion": "1.0",
+    }
+
+    merged = ChatDocumentVisionService.merge_into_drawing_parse(parsed, vision)
+
+    assert merged["productCode"] == "90260140"
+    assert merged["revision"] == "02"
+    assert "50111111" in merged["componentCodes"]
+    assert "50122222" in merged["componentCodes"]
+    assert merged["legible"] is True
+    assert merged["extractor"] == "tesseract"
+    assert merged["documentVision"]["engine"] == "tesseract"
+
+
+def test_should_run_for_drawing_when_auto_with_drawing(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+    assert ChatDocumentVisionService.should_run_for_drawing({"drawingAnalysis": True}) is True
+    assert ChatDocumentVisionService.should_run_for_drawing({"drawingAnalysis": False}) is False
+
+
+def test_enrich_skips_when_disabled(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "false")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = False
+
+    base = {"productCode": "90260140", "legible": True}
+
+    assert (
+        ChatDocumentVisionService.enrich_drawing_extract(
+            base,
+            user_id=str(uuid4()),
+            session_id=str(uuid4()),
+            attachment_ids=[str(uuid4())],
+            skills={"drawingAnalysis": True},
+        )
+        == base
+    )
+
+
+def test_extract_native_from_text(tmp_path):
+    pdf_path = tmp_path / "sample.txt"
+    pdf_path.write_text("DESENHO 90260140 REV.01\nCOD. CLIENTE ACME", encoding="utf-8")
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_stage_native",
+        return_value=ChatDocumentVisionService._build_from_text(
+            "DESENHO 90260140 REV.01",
+            engine="pypdf",
+            stages=["native"],
+        ),
+    ):
+        result = ChatDocumentVisionService.extract_from_storage_path(
+            str(pdf_path),
+            filename="drawing.pdf",
+            content_type="application/pdf",
+        )
+
+    assert result["productCode"] == "90260140"
+    assert result["schemaVersion"] == "1.0"
+    assert "native" in result["stages"]
+
+
+def test_tesseract_pdf_stage_truncates_pages(tmp_path):
+    fake_doc = MagicMock()
+    fake_doc.page_count = 15
+    fake_page = MagicMock()
+    fake_pix = MagicMock()
+    fake_pix.width = 10
+    fake_pix.height = 10
+    fake_pix.samples = b"\x00" * 300
+    fake_page.get_pixmap.return_value = fake_pix
+    fake_doc.load_page.return_value = fake_page
+
+    with patch("fitz.open", return_value=fake_doc), patch(
+        "pytesseract.image_to_string",
+        return_value="90260140 REV.02",
+    ), patch(
+        "PIL.Image.frombytes",
+        return_value=MagicMock(),
+    ):
+        Settings.CHAT_DOCUMENT_VISION_MAX_PAGES = 2
+        result = ChatDocumentVisionService._stage_tesseract_pdf(str(tmp_path / "x.pdf"))
+
+    assert "90260140" in result["fullText"]
+    assert any("truncated_pages" in item for item in result.get("warnings") or [])
+
+
+def test_skill_registry_document_vision_with_drawing(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING = True
+
+    from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+
+    flags = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata=None,
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+
+    assert flags["drawingAnalysis"] is True
+    assert flags["documentVision"] is True

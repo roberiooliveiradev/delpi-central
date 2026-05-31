@@ -48,6 +48,7 @@ class ChatToolContextService:
         agent_context: dict | None = None,
         attachment_context: str | None = None,
         attachment_ids: list[str] | None = None,
+        session_id: str | None = None,
     ) -> dict:
         if fast_path:
             return {
@@ -154,6 +155,18 @@ class ChatToolContextService:
 
             drawing_pdf_extract = ChatDrawingPdfExtractionService.parse_from_attachment_context(
                 attachment_context
+            )
+
+            from app.application.services.chat_document_vision_service import (
+                ChatDocumentVisionService,
+            )
+
+            drawing_pdf_extract = ChatDocumentVisionService.enrich_drawing_extract(
+                drawing_pdf_extract,
+                user_id=str(user_id) if user_id else None,
+                session_id=session_id,
+                attachment_ids=attachment_ids,
+                skills=drawing_runtime_skills,
             )
 
             if (
@@ -963,7 +976,12 @@ class ChatToolContextService:
                     "legible": drawing_pdf_extract.get("legible"),
                     "componentCount": len(drawing_pdf_extract.get("componentCodes") or []),
                     "reason": drawing_pdf_extract.get("reason"),
+                    "extractor": drawing_pdf_extract.get("extractor"),
+                    "documentVision": drawing_pdf_extract.get("documentVision"),
                 }
+
+                if drawing_pdf_extract.get("documentVision"):
+                    result_payload["documentVision"] = drawing_pdf_extract["documentVision"]
 
             if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
                 result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]

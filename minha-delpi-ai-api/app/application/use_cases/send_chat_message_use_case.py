@@ -721,6 +721,7 @@ class SendChatMessageUseCase:
                 request=request,
             ),
             attachment_ids=getattr(request, "attachment_ids", None),
+            session_id=str(request.session_id) if getattr(request, "session_id", None) else None,
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
