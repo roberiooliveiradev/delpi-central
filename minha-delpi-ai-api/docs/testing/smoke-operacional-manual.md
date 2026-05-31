@@ -17,10 +17,26 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Script | Comando (container ou `PYTHONPATH` na API) |
 |--------|---------------------------------------------|
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
+| Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
 | Assertividade multi-turno | `python scripts/smoke_context_assertiveness_multiturn.py` |
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
 
 Variáveis opcionais: `SMOKE_BASE_URL`, `SMOKE_USER`, `SMOKE_PASSWORD`. Ver [`../changelog/2026-05-contexto-memoria-assertividade.md`](../changelog/2026-05-contexto-memoria-assertividade.md).
+
+### Atalhos com preenchimento (MFE)
+
+Após alterar `plugins/minha-delpi-chat`, rebuild do container e hard refresh no navegador:
+
+```bash
+docker compose -f infra/docker-compose.dev.yml build minha-delpi-chat
+docker compose -f infra/docker-compose.dev.yml up -d minha-delpi-chat
+```
+
+| Passo | Esperado |
+|-------|----------|
+| Home vazia → **Consultar produto** | Abre diálogo «Consulta ao chat» com campo **Código do produto** |
+| Preencher código → **Enviar pergunta** | Mensagem no histórico **sem** `{{productCode}}` |
+| Colar `me fale do produto {{productCode}}` no composer e Enter | Diálogo ou erro — não envia placeholder cru |
 
 ---
 

@@ -412,15 +412,18 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Verificação | Resultado |
 |-------------|-----------|
-| Login `rober` / token Keycloak | OK após subir `keycloak` |
-| `smoke_identity_profile.py` | OK — perfil com nome/e-mail |
+| Login `rober` / token Keycloak | OK (`auth` 200, `smoke_identity_profile`) |
 | `smoke_follow_up_chips.py` | OK — chips API com `{{productCode}}`; ações api-externa |
 | `smoke_features_catalog.py` | OK — onboarding/tour com placeholders |
 | `smoke_admin_endpoints.py` | OK |
-| MFE bundle | `ChatShortcutPromptDialog` em `App-*.js` no container |
-| Catálogo HTTP | `starterCards` e `demoQuery` do tour sem `10080001` fixo |
+| Vitest MFE | `chatShortcutPrompt`, `chatHomeStarters`, `exportUtils` — 11 testes OK |
+| MFE bundle | `App-Bwrh617t.js` — CSS/JS com `mdc-chat-shortcut-prompt` e textos do diálogo |
+| Catálogo HTTP | `starterCards` / `demoQuery` com `{{productCode}}` (sem código fixo na API) |
+| Envio bloqueado | `hasUnresolvedShortcutPlaceholders` em `sendMessage` + `sendResolvedMessage` no `ChatPage` |
 
-**Manual:** na home vazia ou chips «Próximos passos», clicar «Consultar produto» / «Ver estoque» deve abrir o diálogo antes de enviar; com chip de contexto de produto, o código pode vir pré-preenchido.
+**Manual:** na home ou «Próximos passos», «Consultar produto» abre **Consulta ao chat** (campo código + **Enviar pergunta**); não deve ir `{{productCode}}` para o histórico. Hard refresh após rebuild do plugin.
+
+**Commits:** `f8d571bf` (placeholders + diálogo), `5633a777` (bloqueio e `sendResolvedMessage`), `6670e510` (export XLSX/PDF).
 
 ## Homologação — api-externa local
 
