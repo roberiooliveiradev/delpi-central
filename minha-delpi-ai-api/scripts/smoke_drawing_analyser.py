@@ -146,6 +146,85 @@ def main() -> int:
     )
     check("skill default com analyser", resolved.get("drawingAnalysis") is True)
 
+    resolved_externa = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=["api_externa.products.get_product_analyser"],
+        has_agent=True,
+    )
+    check(
+        "skill com api-externa analyser",
+        resolved_externa.get("drawingAnalysis") is True,
+    )
+
+    from app.application.services.external_actions.external_action_selection_service import (
+        ExternalActionSelectionService,
+    )
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+    from app.infrastructure.config.settings import Settings
+
+    class _SmokeActionRepo:
+        def __init__(self, actions):
+            self.actions = actions
+
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            return self.actions
+
+        def list_actions(self):
+            return self.actions
+
+    prev_prefer = Settings.CHAT_PREFER_API_EXTERNA_PROVIDER
+    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
+    prev_blocks = ChatWebSearchIntentService.blocks_external_action_selection
+    ChatWebSearchIntentService.blocks_external_action_selection = staticmethod(
+        lambda message: False
+    )
+    try:
+        selection = ExternalActionSelectionService(
+            _SmokeActionRepo(
+                [
+                    {
+                        "actionId": "api_delpi.products.get_product_analyser",
+                        "method": "GET",
+                        "path": "/products/{code}/analyser",
+                        "operationId": "get_product_analyser",
+                        "parametersSchema": [
+                            {"name": "code", "in": "path", "required": True},
+                            {"name": "page_size", "in": "query"},
+                            {"name": "max_depth", "in": "query"},
+                        ],
+                    },
+                    {
+                        "actionId": "api_externa.products.get_product_analyser",
+                        "method": "GET",
+                        "path": "/products/{code}/analyser",
+                        "operationId": "get_product_analyser",
+                        "parametersSchema": [
+                            {"name": "code", "in": "path", "required": True},
+                            {"name": "page_size", "in": "query"},
+                            {"name": "max_depth", "in": "query"},
+                        ],
+                    },
+                ]
+            )
+        ).select_action(
+            "analise o desenho 90260140",
+            allowed_action_ids=[
+                "api_delpi.products.get_product_analyser",
+                "api_externa.products.get_product_analyser",
+            ],
+        )
+        check(
+            "roteamento desenho → api-externa analyser",
+            selection is not None
+            and selection["arguments"]["actionId"]
+            == "api_externa.products.get_product_analyser",
+        )
+    finally:
+        Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = prev_prefer
+        ChatWebSearchIntentService.blocks_external_action_selection = prev_blocks
+
     from app.application.services.chat_drawing_admin_debug_service import (
         ChatDrawingAdminDebugService,
     )

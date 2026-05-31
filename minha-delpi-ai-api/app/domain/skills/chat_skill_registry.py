@@ -361,6 +361,11 @@ class ChatSkillRegistry:
         if DRAWING_ANALYSER_ACTION_ID in allowed_set:
             return True
 
+        operation_suffix = f".{DRAWING_ANALYSER_ACTION_ID}"
+
+        if any(action_id.endswith(operation_suffix) for action_id in allowed_set):
+            return True
+
         try:
             from app.infrastructure.persistence.postgres_external_action_repository import (
                 PostgresExternalActionRepository,

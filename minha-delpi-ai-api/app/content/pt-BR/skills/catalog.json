@@ -46,7 +46,7 @@
     {
       "key": "drawing-analysis-delpi",
       "label": "Análise de Desenhos DELPI",
-      "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus (GET /products/{code}/analyser) e normas internas.",
+      "description": "Analisa desenhos técnicos DELPI em PDF, validando o documento contra dados reais do Protheus via provider OpenAPI (api-delpi ou api-externa: GET /products/{code}/analyser) e normas internas.",
       "policyFile": "drawing-analysis-delpi-skill.md",
       "metadataFlag": "engineering",
       "legacyMetadataFlag": "drawingAnalysis",

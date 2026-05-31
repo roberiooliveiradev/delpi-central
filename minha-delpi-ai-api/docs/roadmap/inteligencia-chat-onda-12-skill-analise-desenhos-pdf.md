@@ -20,7 +20,7 @@ A funcionalidade deve ser uma **skill de plataforma** (`drawing-analyser`), regi
 | Aspecto | Hoje (maio/2026) | Alvo (Onda 12) |
 |---------|------------------|----------------|
 | Conhecimento normativo | Docs ingeridos no RAG do agente (`drawing_analyser`, `drawing_rules`, `drawing_requirements`, `validation_rules`, códigos 50xx) | Mesmo RAG + policy da skill |
-| API operacional | `GET /products/{code}/analyser` disponível na api-delpi e no catálogo de actions | Fast path / roteamento automático quando houver código + PDF |
+| API operacional | `GET /products/{code}/analyser` em **api-delpi** e **api-externa** (mesma action `get_product_analyser`) | Fast path / roteamento automático quando houver código + PDF |
 | PDF anexado na sessão | Anexo vira `session_source` no RAG (texto extraído se houver) | Pipeline dedicado: visão/OCR estruturado + checklist |
 | Relatório técnico | LLM responde genericamente com contexto RAG | Formato padronizado (✅ / ⚠️ / ❌) alinhado ao GPT legado |
 | Herança por agente | Não existe skill `drawing-analyser` | Agente habilita skill; engenharia/qualidade podem ser default |
@@ -42,7 +42,7 @@ Anexo PDF + mensagem
   → ChatDrawingIntentService (intent)
   → ChatIntelligencePipelineService (desliga fast path genérico; liga modo drawing)
   → ChatToolContextService
-        · execute_external_action → GET /products/{code}/analyser
+        · execute_external_action → GET /products/{code}/analyser (api-delpi ou api-externa)
         · (futuro) analyze_drawing_pdf → extração estruturada do PDF
   → RAG (drawing_* docs + Normas_Tecnicas quando global)
   → PromptPolicyService → drawing-analyser-skill.md
@@ -146,6 +146,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | Código do produto | Obrigatório na mensagem vs OCR do carimbo | Fallback: pedir código se ambíguo |
 | PDF multipágina | Todas as páginas vs só folha principal | Limitar páginas no MVP |
 | Normas técnicas | Global vs agente | Recomendado **global** (admin knowledge) |
+| Provider API | api-delpi vs api-externa (`CHAT_PREFER_API_EXTERNA_PROVIDER`) | Mesma rota `/analyser`; local costuma só api-externa |
 | api-delpi | Só `/analyser` vs endpoints futuros de drawing | Hoje `/analyser` cobre SB1/SG1/SG2/QP |
 
 ---
@@ -154,7 +155,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 
 - Docs GPT de desenho adaptados e ingeridos no agente ([sync script](../../scripts/sync_gpt_instructions_knowledge.py)).
 - Mapa documento a documento ([gpt-instructions-coverage-map.md](../knowledge/gpt-instructions-coverage-map.md)).
-- Action OpenAPI `get_product_analyser` no catálogo api-delpi.
+- Action OpenAPI `get_product_analyser` nos catálogos api-delpi e api-externa.
 - Pipeline base de anexos (`session_source`) e RAG por agente.
 
 ---
@@ -191,6 +192,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | 2026-05-31 | `ChatDrawingMetricsService` — snapshot em metadata, adminDebug e audit log. |
 | 2026-05-31 | Endpoint admin `GET /admin/metrics/drawing-analysis/summary` (histórico via audit). |
 | 2026-05-31 | Painel **Análise de Desenhos DELPI** na aba Métricas do admin (MFE `minha-delpi-chat`). |
+| 2026-05-31 | Roteamento explícito api-externa para `/analyser` (testes + smoke + policy/catálogo). |
 
 ---
 

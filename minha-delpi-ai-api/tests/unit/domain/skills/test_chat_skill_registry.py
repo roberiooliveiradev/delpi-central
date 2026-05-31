@@ -88,6 +88,16 @@ def test_drawing_skill_default_when_analyser_action_allowed():
     assert resolved["drawingAnalysis"] is True
 
 
+def test_drawing_skill_on_with_api_externa_analyser_action_id():
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=["api_externa.products.get_product_analyser"],
+        has_agent=True,
+    )
+
+    assert resolved["drawingAnalysis"] is True
+
+
 def test_drawing_skill_off_when_agent_explicitly_disabled():
     bindings = ChatSkillRegistry.list_agent_bindings(
         agent_metadata={

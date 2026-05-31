@@ -290,6 +290,17 @@ def test_skill_enabled_via_registry_when_analyser_allowed():
     assert flags["drawingAnalysis"] is True
 
 
+def test_skill_enabled_via_api_externa_analyser_action_id():
+    """Skill ativa quando só api-externa expõe get_product_analyser no catálogo."""
+    flags = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata=None,
+        allowed_action_ids=["api_externa.products.get_product_analyser"],
+        has_agent=True,
+    )
+
+    assert flags["drawingAnalysis"] is True
+
+
 def test_pdf_extract_from_fixture_text():
     parsed = ChatDrawingPdfExtractionService.parse_from_text("DESENHO 90260140 REV.01")
 

@@ -1319,3 +1319,61 @@ def test_select_system_table_search_with_article_qual_a_tabela(monkeypatch):
     assert selected is not None
     assert selected["arguments"]["actionId"] == "tables-search"
     assert selected["arguments"]["parameters"]["description"] == "produtos"
+
+
+def test_select_drawing_analysis_prefers_api_externa_analyser(monkeypatch):
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+
+    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
+    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
+    monkeypatch.setattr(
+        ChatWebSearchIntentService,
+        "blocks_external_action_selection",
+        lambda message: False,
+    )
+
+    analyser_params = [
+        {"name": "code", "in": "path", "required": True},
+        {"name": "page_size", "in": "query"},
+        {"name": "max_depth", "in": "query"},
+    ]
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.products.get_product_analyser",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "parametersSchema": analyser_params,
+                },
+                {
+                    "actionId": "api_externa.products.get_product_analyser",
+                    "method": "GET",
+                    "path": "/products/{code}/analyser",
+                    "operationId": "get_product_analyser",
+                    "parametersSchema": analyser_params,
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "analise o desenho técnico 90260140",
+        allowed_action_ids=[
+            "api_delpi.products.get_product_analyser",
+            "api_externa.products.get_product_analyser",
+        ],
+    )
+
+    assert selected is not None
+    assert (
+        selected["arguments"]["actionId"]
+        == "api_externa.products.get_product_analyser"
+    )
+    assert selected["arguments"]["parameters"]["code"] == "90260140"
+    assert selected["arguments"]["parameters"]["page_size"] == 50
+    assert selected["arguments"]["parameters"]["max_depth"] == 10
