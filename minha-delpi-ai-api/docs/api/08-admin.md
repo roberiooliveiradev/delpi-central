@@ -209,7 +209,7 @@ Query params:
 | `tag` | — | Tag (match parcial em `metadata.tags`). |
 | `sourceType` | — | Tipo de fonte do documento. |
 
-Resposta inclui `facets` (categorias, namespaces, domínios, tags e tipos de fonte disponíveis na base global) e campos curadoriais em cada item (`category`, `tags`, `namespace`, `domain`, `priority`, `qualityScore`).
+Resposta inclui `facets` (categorias, namespaces, domínios, tags e tipos de fonte disponíveis na base global), `summary` (contagens globais: `total`, `active`, `inactive`, `pendingIndex` — ativos sem chunks) e campos curadoriais em cada item (`category`, `tags`, `namespace`, `domain`, `priority`, `qualityScore`).
 
 ### PATCH `/admin/knowledge/documents/{documentId}/metadata`
 
