@@ -104,6 +104,16 @@ Perguntas como «quem é você», «quem te criou», «o que você é» (não co
 
 Com o atalho ativo, perguntas como «quem te criou?» não montam prompt com perfil RBAC completo nem chamam o Ollama.
 
+### Perfil do usuário («quem sou eu»)
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Fonte | `GET {CORE_API_BASE_URL}/me` + `me/access-profile` via `ChatUserContextService` |
+| Resposta direta | `build_direct_answer` — exibe nome/e-mail ao titular (não aplica `_strip_pii`; LGPD só no bloco injetado no LLM em `build_user_context`) |
+| Consentimento | `GET {CORE_API_BASE_URL}/me/consents` (mesmo prefixo que `/me`; **não** duplicar `/core-api` no path quando a base já é `http://core-api:8000`) |
+
+Se o consentimento `ai_context` não estiver concedido e `LGPD_REQUIRE_AI_CONSENT=true`, o prompt LLM não recebe PII — mas a resposta direta na UI continua mostrando nome/e-mail quando `/me` os retorna.
+
 ### Small talk (maio/2026)
 
 Saudações, despedidas, agradecimentos, confirmações e interações sociais curtas → `ChatSmallTalkService.build_direct_answer` com padrões em `small_talk.json` (fonte única via `ChatSmallTalkPatternService`): **sem RAG**, **sem** loop agentic, **sem** LLM. Catálogo inspirado em expressões conversacionais PT-BR ([cumprimentos/despedidas](https://philipebrazuca.com/pt-br/cumprimentos-e-despedidas-em-portugues/), intents de [atendimento BR](https://huggingface.co/datasets/RichardSakaguchiMS/brazilian-customer-service-conversations)). Categorias: `greeting`, `wellbeing`, `thanks`, `apology`, `praise`, `farewell`, `ack`, `laughter`.

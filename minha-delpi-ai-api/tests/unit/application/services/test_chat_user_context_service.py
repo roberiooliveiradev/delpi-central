@@ -61,6 +61,49 @@ def test_format_role_detail_answer_lists_permissions_and_apps():
     assert "Chat" in answer
 
 
+def test_core_api_url_joins_me_consents_without_duplicate_prefix():
+    from app.application.services.chat_user_context_service import ChatUserContextService
+    from app.infrastructure.config.settings import Settings
+
+    original = Settings.CORE_API_BASE_URL
+    try:
+        Settings.CORE_API_BASE_URL = "http://core-api:8000"
+        assert (
+            ChatUserContextService._core_api_url("me/consents")
+            == "http://core-api:8000/me/consents"
+        )
+        Settings.CORE_API_BASE_URL = "http://localhost/core-api"
+        assert (
+            ChatUserContextService._core_api_url("me/consents")
+            == "http://localhost/core-api/me/consents"
+        )
+    finally:
+        Settings.CORE_API_BASE_URL = original
+
+
+def test_build_direct_answer_keeps_name_email_for_identity_question():
+    gateway = StubCoreGateway(
+        me={
+            "authorized": True,
+            "name": "Robério Oliveira",
+            "email": "engenharia6@delpi.com.br",
+            "is_superadmin": True,
+            "roles": [],
+            "permissions": [],
+        },
+        profile={"effectiveApps": [{"label": "Chat", "name": "Minha DELPI Chat"}]},
+    )
+    service = ChatUserContextService(gateway)
+    service._should_strip_pii = lambda _token: True  # type: ignore[method-assign]
+
+    answer = service.build_direct_answer("token", "quem sou eu?")
+
+    assert answer is not None
+    assert "Robério Oliveira" in answer
+    assert "engenharia6@delpi.com.br" in answer
+    assert "Não informado" not in answer
+
+
 def test_build_direct_answer_for_role_permissions_without_llm():
     gateway = StubCoreGateway(
         me={

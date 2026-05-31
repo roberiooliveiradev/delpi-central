@@ -1,5 +1,6 @@
 import logging
 import re
+from urllib.parse import urljoin
 
 from app.domain.ports.core_api_gateway_port import CoreApiGatewayPort
 from app.infrastructure.config.settings import Settings
@@ -84,14 +85,19 @@ class ChatUserContextService:
             sanitized.pop(field, None)
         return sanitized
 
-    @staticmethod
-    def _has_ai_context_consent(access_token: str) -> bool:
+    @classmethod
+    def _core_api_url(cls, path: str) -> str:
+        base = Settings.CORE_API_BASE_URL.rstrip("/") + "/"
+        return urljoin(base, path.lstrip("/"))
+
+    @classmethod
+    def _has_ai_context_consent(cls, access_token: str) -> bool:
         """Verifica consentimento ``ai_context`` via core-api."""
         import requests
 
         try:
             resp = requests.get(
-                f"{Settings.CORE_API_BASE_URL}/core-api/me/consents",
+                cls._core_api_url("me/consents"),
                 headers={"Authorization": f"Bearer {access_token}"},
                 timeout=Settings.CORE_API_TIMEOUT_SECONDS,
             )
@@ -147,9 +153,7 @@ class ChatUserContextService:
         if not me or me.get("authorized") is False:
             return None
 
-        if self._should_strip_pii(access_token):
-            me = self._strip_pii(me)
-
+        # Resposta exibida ao próprio usuário: não remover PII (LGPD aplica só ao prompt LLM).
         access_profile = self._fetch_access_profile(access_token)
         apps = self._apps_from_profile(access_profile) or self._fetch_apps(access_token)
         return self._format_direct_answer(me, apps, message, access_profile)
