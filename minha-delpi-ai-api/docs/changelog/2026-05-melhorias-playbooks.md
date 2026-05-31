@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 3 (geração do catálogo)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Gerador | `AssistantCapabilitiesCatalogGenerator` — actions, skills, `requiredActions`, `linkedSkills` |
+| Scripts | `generate_assistant_capabilities_catalog.py` (`--check` / `--write`); check CI estendido |
+| Conteúdo | `features_catalog.json` com bloco `generation` e paths não mapeados |
+
 ## Autoajuda — Fase 4 (painel de ajuda)
 
 | Entrega | Detalhe |

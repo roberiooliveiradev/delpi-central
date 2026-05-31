@@ -66,9 +66,24 @@ def main() -> int:
 
     from uuid import uuid4
 
+    from app.application.services.assistant_capabilities_catalog_generator import (
+        AssistantCapabilitiesCatalogGenerator,
+    )
     from app.application.services.chat_assistant_catalog_service import (
         ChatAssistantCatalogService,
     )
+
+    generated = AssistantCapabilitiesCatalogGenerator.generate(actions=[])
+    drift = AssistantCapabilitiesCatalogGenerator.drift_report(
+        on_disk=AssistantCapabilitiesCatalogGenerator.load_catalog(),
+        generated=generated,
+    )
+
+    if drift:
+        print(f"FAIL catalog generator drift: {drift[0]}", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog generator sincronizado (Fase 3)")
 
     catalog_payload = ChatAssistantCatalogService(agent_repository=None).build_response(
         user_id=uuid4(),

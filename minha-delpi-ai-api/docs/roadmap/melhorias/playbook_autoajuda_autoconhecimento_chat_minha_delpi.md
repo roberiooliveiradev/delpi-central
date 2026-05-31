@@ -1147,8 +1147,9 @@ Motivos se negativo:
 
 - [x] `AssistantCapabilitiesCatalogValidator` + `scripts/check_assistant_capabilities_catalog.py` (CI/local).
 - [x] Guias adicionais: estoque, textos, permissões, ações destrutivas (`featureAnswers`).
-- [ ] Job `generate_assistant_capabilities_catalog` a partir de actions/skills.
-- [ ] Bloquear PR que altera feature sem atualizar help.
+- [x] Job `scripts/generate_assistant_capabilities_catalog.py` (`--check`, `--write`) + `AssistantCapabilitiesCatalogGenerator`.
+- [x] `check_assistant_capabilities_catalog.py` valida JSON e sincronização com actions/skills.
+- [ ] Bloquear PR que altera feature sem atualizar help (hook CI dedicado).
 
 ### Fase 4 — UI de ajuda
 

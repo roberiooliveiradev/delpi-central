@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.application.services.assistant_capabilities_registry import (
-    AssistantCapabilitiesRegistry,
-)
 from app.infrastructure.content.content_service import ContentService
 
 
@@ -15,12 +12,16 @@ class AssistantCapabilitiesCatalogValidator:
 
     @classmethod
     def validate(cls) -> list[str]:
-        errors: list[str] = []
-
         try:
             catalog = ContentService.load_json("assistant/features_catalog")
         except (FileNotFoundError, OSError, ValueError) as exc:
             return [f"features_catalog.json inválido: {exc}"]
+
+        return cls.validate_catalog_dict(catalog)
+
+    @classmethod
+    def validate_catalog_dict(cls, catalog: dict[str, Any]) -> list[str]:
+        errors: list[str] = []
 
         version = str(catalog.get("version") or "").strip()
 
@@ -34,6 +35,22 @@ class AssistantCapabilitiesCatalogValidator:
             return errors
 
         seen_ids: set[str] = set()
+        feature_by_id: dict[str, dict[str, Any]] = {}
+        help_topic_ids: set[str] = set()
+
+        for feature in features:
+            if not isinstance(feature, dict):
+                continue
+
+            token = str(feature.get("id") or "").strip()
+
+            if token:
+                feature_by_id[token] = feature
+
+            help_token = str(feature.get("helpTopicId") or "").strip()
+
+            if help_token:
+                help_topic_ids.add(help_token)
 
         for index, feature in enumerate(features):
             if not isinstance(feature, dict):
@@ -53,7 +70,7 @@ class AssistantCapabilitiesCatalogValidator:
 
             help_topic = str(feature.get("helpTopicId") or "").strip()
 
-            if help_topic and not AssistantCapabilitiesRegistry.find_by_help_topic(help_topic):
+            if help_topic and help_topic not in help_topic_ids:
                 errors.append(
                     f"features[{feature_id}]: helpTopicId {help_topic!r} sem feature correspondente"
                 )
@@ -61,7 +78,7 @@ class AssistantCapabilitiesCatalogValidator:
             for related_id in feature.get("relatedFeatures") or []:
                 token = str(related_id or "").strip()
 
-                if token and not AssistantCapabilitiesRegistry.get_feature(token):
+                if token and token not in feature_by_id:
                     errors.append(
                         f"features[{feature_id}]: relatedFeatures referencia id inexistente {token}"
                     )

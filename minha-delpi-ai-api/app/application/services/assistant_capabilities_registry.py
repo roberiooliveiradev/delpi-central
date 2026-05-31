@@ -13,6 +13,11 @@ def _catalog_data() -> dict[str, Any]:
     return ContentService.load_json("assistant/features_catalog")
 
 
+def clear_catalog_cache() -> None:
+    _catalog_data.cache_clear()
+    _release_notes_data.cache_clear()
+
+
 @lru_cache(maxsize=1)
 def _release_notes_data() -> dict[str, Any]:
     try:
