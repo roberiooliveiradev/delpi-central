@@ -36,6 +36,7 @@ import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
+import { downloadDrawingAnalysisExport } from "../utils/drawingAnalysisExport";
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
@@ -1344,6 +1345,24 @@ export function ChatMessageList({
                   groupLabel="Com o anexo"
                   ariaLabel="Ações sugeridas para o arquivo anexado"
                 />
+                {message.metadata?.drawingAnalysisExport?.markdown ? (
+                  <div className="mdc-chat-drawing-export">
+                    <button
+                      type="button"
+                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                      onClick={() =>
+                        downloadDrawingAnalysisExport(
+                          message.metadata!.drawingAnalysisExport!,
+                        )
+                      }
+                      aria-label="Baixar relatório de análise de desenho"
+                      title="Baixar relatório (.md)"
+                    >
+                      <Download size={15} aria-hidden="true" />
+                      <span>Baixar relatório</span>
+                    </button>
+                  </div>
+                ) : null}
                 <ChatFollowUpChips
                   suggestions={
                     (message.metadata?.drawingFollowUpSuggestions as

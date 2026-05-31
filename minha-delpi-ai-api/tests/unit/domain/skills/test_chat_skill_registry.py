@@ -64,3 +64,41 @@ def test_resolve_runtime_flags_includes_company_knowledge():
     )
 
     assert resolved["companyKnowledge"] is True
+
+
+def test_drawing_skill_default_when_analyser_action_allowed():
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={},
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+
+    drawing = next(
+        item for item in bindings if item["skillKey"] == "drawing-analysis-delpi"
+    )
+
+    assert drawing["enabled"] is True
+
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+
+    assert resolved["drawingAnalysis"] is True
+
+
+def test_drawing_skill_off_when_agent_explicitly_disabled():
+    bindings = ChatSkillRegistry.list_agent_bindings(
+        agent_metadata={
+            "skills": {"drawing-analysis-delpi": {"engineering": False}},
+        },
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+
+    drawing = next(
+        item for item in bindings if item["skillKey"] == "drawing-analysis-delpi"
+    )
+
+    assert drawing["enabled"] is False

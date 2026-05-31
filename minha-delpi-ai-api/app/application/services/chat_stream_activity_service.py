@@ -24,7 +24,21 @@ _PHASE_GROUPS = {
     "web_search": "Pesquisa web",
     "rag": "Conhecimento",
     "response": "Respondendo",
+    "drawing_analysis": "Análise de desenho",
 }
+
+_DRAWING_ANALYSIS_STAGE_MESSAGES: tuple[tuple[str, str], ...] = (
+    ("read_pdf", "Lendo PDF…"),
+    ("identify_code", "Identificando código…"),
+    ("query_api", "Consultando API DELPI…"),
+    ("validate_header", "Validando cabeçalho…"),
+    ("validate_bom", "Conferindo BOM…"),
+    ("validate_dims", "Conferindo cotas…"),
+    ("validate_route", "Validando roteiro…"),
+    ("validate_inspection", "Validando inspeções…"),
+    ("apply_rules", "Aplicando normas…"),
+    ("build_report", "Gerando relatório…"),
+)
 
 
 class ChatStreamActivityService:
@@ -138,6 +152,57 @@ class ChatStreamActivityService:
             message=message or "Análise de desenho DELPI em andamento…",
             entry_id="drawing-analysis",
         )
+
+    @classmethod
+    def drawing_analysis_step(
+        cls,
+        *,
+        step_key: str,
+        message: str,
+        state: str = "active",
+    ) -> dict[str, Any]:
+        return cls.entry(
+            verb="Analisando",
+            target="desenho técnico",
+            phase="drawing_analysis",
+            state=state,
+            level="info",
+            message=message,
+            entry_id=f"drawing-analysis-{step_key}",
+        )
+
+    @classmethod
+    def emit_drawing_analysis_progress(
+        cls,
+        on_stream_activity,
+        *,
+        has_pdf: bool,
+        phase: str = "start",
+    ) -> None:
+        if not on_stream_activity:
+            return
+
+        if phase == "complete":
+            on_stream_activity(
+                cls.drawing_analysis_step(
+                    step_key="build_report",
+                    message="Gerando relatório…",
+                    state="done",
+                )
+            )
+            return
+
+        for step_key, message in _DRAWING_ANALYSIS_STAGE_MESSAGES:
+            if step_key == "read_pdf" and not has_pdf:
+                continue
+
+            on_stream_activity(
+                cls.drawing_analysis_step(
+                    step_key=step_key,
+                    message=message,
+                    state="active",
+                )
+            )
 
     @classmethod
     def emit_planned_actions(

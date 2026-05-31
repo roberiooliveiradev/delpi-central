@@ -852,3 +852,17 @@
 .mdc-chat-message-attachment__download:hover {
   color: var(--mdc-primary);
 }
+
+.mdc-chat-drawing-export {
+  margin-top: 0.5rem;
+}
+
+.mdc-chat-drawing-export__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: auto;
+  height: auto;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+}

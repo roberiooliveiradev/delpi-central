@@ -9,6 +9,8 @@ SQL_SKILL_KEY = "sql"
 SQL_EXECUTION_PATH_TOKEN = "/data/sql"
 COMPANY_KNOWLEDGE_SKILL_KEY = "company-knowledge"
 DRAWING_ANALYSIS_SKILL_KEY = "drawing-analysis-delpi"
+DRAWING_ANALYSER_ACTION_ID = "get_product_analyser"
+DRAWING_ANALYSER_PATH_TOKEN = "/analyser"
 
 
 @dataclass(frozen=True)
@@ -226,6 +228,12 @@ class ChatSkillRegistry:
                 definition,
             ):
                 enabled = default_company_knowledge
+            elif (
+                definition.key == DRAWING_ANALYSIS_SKILL_KEY
+                and has_agent
+                and not cls._has_explicit_config(agent_metadata, definition)
+            ):
+                enabled = cls._drawing_analysis_available(allowed)
 
             derived: dict[str, bool] = {}
 
@@ -340,6 +348,38 @@ class ChatSkillRegistry:
 
         if definition.legacy_metadata_flag and definition.legacy_metadata_flag in skills:
             return True
+
+        return False
+
+    @classmethod
+    def _drawing_analysis_available(cls, allowed_action_ids: list[str]) -> bool:
+        if not allowed_action_ids:
+            return False
+
+        allowed_set = {str(item).strip() for item in allowed_action_ids if str(item).strip()}
+
+        if DRAWING_ANALYSER_ACTION_ID in allowed_set:
+            return True
+
+        try:
+            from app.infrastructure.persistence.postgres_external_action_repository import (
+                PostgresExternalActionRepository,
+            )
+
+            repository = PostgresExternalActionRepository()
+
+            for action in repository.list_actions():
+                action_id = str(action.get("actionId") or "").strip()
+
+                if action_id not in allowed_set:
+                    continue
+
+                path = str(action.get("path") or "").lower()
+
+                if DRAWING_ANALYSER_PATH_TOKEN in path:
+                    return True
+        except Exception:
+            return False
 
         return False
 

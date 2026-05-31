@@ -90,6 +90,30 @@ def main() -> int:
     )
     check("chips follow-up desenho", len(meta.get("drawingFollowUpSuggestions") or []) >= 3)
 
+    from app.application.services.chat_drawing_follow_up_turn_service import (
+        ChatDrawingFollowUpTurnService,
+    )
+
+    follow_up = ChatDrawingFollowUpTurnService.resolve_direct_answer(
+        "mostre apenas os erros críticos do relatório",
+        previous_messages=[
+            {
+                "role": "assistant",
+                "metadata": {"drawingAnalysis": package_full["drawingAnalysis"]},
+            }
+        ],
+    )
+    check("follow-up erros críticos", bool(follow_up and "críticos" in follow_up.lower()))
+
+    from app.domain.skills.chat_skill_registry import ChatSkillRegistry
+
+    resolved = ChatSkillRegistry.resolve_runtime_flags(
+        agent_metadata={},
+        allowed_action_ids=["get_product_analyser"],
+        has_agent=True,
+    )
+    check("skill default com analyser", resolved.get("drawingAnalysis") is True)
+
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
         return 1

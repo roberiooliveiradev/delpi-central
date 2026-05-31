@@ -79,6 +79,31 @@ class ChatToolContextService:
 
         agent_metadata = agent_context.get("metadata") if isinstance(agent_context, dict) else None
 
+        from app.application.services.chat_drawing_follow_up_turn_service import (
+            ChatDrawingFollowUpTurnService,
+        )
+
+        drawing_follow_up_answer = ChatDrawingFollowUpTurnService.resolve_direct_answer(
+            raw_message,
+            previous_messages=previous_messages,
+            attachment_ids=attachment_ids,
+        )
+
+        if drawing_follow_up_answer:
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": drawing_follow_up_answer,
+                    "skipRag": True,
+                    "drawingAnalysisMode": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
         from app.domain.services.chat_drawing_analysis_turn_service import (
             ChatDrawingAnalysisTurnService,
         )
@@ -135,11 +160,10 @@ class ChatToolContextService:
                 ChatStreamActivityService,
             )
 
-            on_stream_activity(
-                ChatStreamActivityService.drawing_analysis_phase(
-                    target="desenho técnico",
-                    message="Análise de desenho DELPI: consulta API e validação do PDF…",
-                )
+            ChatStreamActivityService.emit_drawing_analysis_progress(
+                on_stream_activity,
+                has_pdf=drawing_has_pdf,
+                phase="start",
             )
 
         from app.domain.services.chat_sql_query_refinement_service import (
@@ -897,6 +921,17 @@ class ChatToolContextService:
 
             if drawing_analysis_payload:
                 direct_answer = drawing_analysis_payload.get("directAnswer") or direct_answer
+
+            if drawing_analysis_mode and on_stream_activity:
+                from app.application.services.chat_stream_activity_service import (
+                    ChatStreamActivityService,
+                )
+
+                ChatStreamActivityService.emit_drawing_analysis_progress(
+                    on_stream_activity,
+                    has_pdf=drawing_has_pdf,
+                    phase="complete",
+                )
 
         result_payload = {
             "context": context,

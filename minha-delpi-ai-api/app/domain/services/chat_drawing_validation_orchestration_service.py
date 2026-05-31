@@ -262,6 +262,86 @@ class ChatDrawingValidationOrchestrationService:
         return "\n".join(lines)
 
     @classmethod
+    def format_critical_only_markdown(cls, analysis: dict[str, Any]) -> str:
+        product_code = str(analysis.get("productCode") or "—")
+        lines = [
+            "# Erros críticos — análise de desenho DELPI",
+            "",
+            f"**Produto:** {product_code}",
+            f"**Status:** {analysis.get('overallLabel') or '—'}",
+            "",
+            "| Seção | Item | PDF | API | Ação |",
+            "|---|---|---|---|---|",
+        ]
+
+        critical = [
+            item
+            for item in (analysis.get("items") or [])
+            if str(item.get("status") or "") == cls._STATUS_CRITICAL
+        ]
+
+        if not critical:
+            lines.append("| — | Nenhum erro crítico registrado | — | — | — |")
+        else:
+            for item in critical:
+                lines.append(
+                    "| {section} | {item} | {pdf} | {api} | {rec} |".format(
+                        section=item.get("section") or "—",
+                        item=item.get("item") or "—",
+                        pdf=item.get("pdfEvidence") or "—",
+                        api=item.get("apiEvidence") or "—",
+                        rec=item.get("recommendation") or "—",
+                    )
+                )
+
+        return "\n".join(lines)
+
+    @classmethod
+    def format_section_filter_markdown(
+        cls,
+        analysis: dict[str, Any],
+        *,
+        section_keywords: tuple[str, ...],
+        title: str,
+    ) -> str:
+        product_code = str(analysis.get("productCode") or "—")
+        lowered = tuple(keyword.casefold() for keyword in section_keywords)
+
+        filtered = [
+            item
+            for item in (analysis.get("items") or [])
+            if any(
+                keyword in str(item.get("section") or "").casefold()
+                or keyword in str(item.get("item") or "").casefold()
+                for keyword in lowered
+            )
+        ]
+
+        lines = [
+            f"# {title}",
+            "",
+            f"**Produto:** {product_code}",
+            "",
+            "| Seção | Item | Status | Observação |",
+            "|---|---|---|---|",
+        ]
+
+        if not filtered:
+            lines.append("| — | Nenhum item nesta seção | — | — |")
+        else:
+            for item in filtered:
+                lines.append(
+                    "| {section} | {item} | {status} | {rec} |".format(
+                        section=item.get("section") or "—",
+                        item=item.get("item") or "—",
+                        status=cls._status_label(str(item.get("status") or "")),
+                        rec=item.get("recommendation") or "—",
+                    )
+                )
+
+        return "\n".join(lines)
+
+    @classmethod
     def wrap_direct_answer(
         cls,
         direct_answer: str,
