@@ -5,14 +5,23 @@ import "./AgentMiniDashboard.css";
 
 type AgentMiniDashboardProps = {
   stats: ChatAgentStats;
+  /** Layout empilhado e controles reduzidos — builder do agente e colunas estreitas. */
+  compact?: boolean;
 };
 
-export function AgentMiniDashboard({ stats }: AgentMiniDashboardProps) {
+export function AgentMiniDashboard({ stats, compact = false }: AgentMiniDashboardProps) {
   const dashboard = stats.miniDashboard;
   const recommendations = stats.recommendations ?? [];
 
   return (
-    <div className="mdc-agent-mini-dashboard">
+    <div
+      className={[
+        "mdc-agent-mini-dashboard",
+        compact ? "mdc-agent-mini-dashboard--compact" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {dashboard ? (
         <ChatRichDashboard presentation={dashboard} />
       ) : null}

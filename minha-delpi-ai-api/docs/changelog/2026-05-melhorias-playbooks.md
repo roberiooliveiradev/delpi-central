@@ -561,6 +561,15 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | Serviço | `ChatAgentMiniDashboardService` (KPI + gráfico de barras + até 4 recomendações) |
 | MFE | `AgentMiniDashboard` no admin (Agentes) e no builder |
 
+### Builder — layout quebra-gelos e stats (31/05)
+
+| Item | Entrega |
+|------|---------|
+| Quebra-gelos | Seção reposicionada logo após descrição; preview mostra sugestões padrão quando vazio |
+| Stats | Painel de uso colapsável (`<details>`); `AgentMiniDashboard` com prop `compact` no builder |
+| Layout | KPIs em 2 colunas + gráfico empilhado — evita sobreposição Indicadores/Volume em coluna estreita |
+| Deploy | `docker compose -f infra/docker-compose.dev.yml build minha-delpi-chat` + `up -d` |
+
 ## Admin UX — 6 seções (Playbook 11)
 
 | Item | Entrega |

@@ -67,8 +67,10 @@ import {
   AGENT_ICEBREAKER_MAX_COUNT,
   clampIcebreakerDraft,
   formatIcebreakerForDisplay,
+  getIcebreakerGridDensityClass,
   normalizeAgentIcebreakers,
 } from "../agentIcebreakers";
+import { DEFAULT_AGENT_ICEBREAKERS } from "../chatHomeStarters";
 
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { AgentBuilderCheckbox } from "../components/agent-builder/AgentBuilderCheckbox";
@@ -517,6 +519,17 @@ export function ChatAgentBuilderPage({
         .filter(Boolean)
         .slice(0, AGENT_ICEBREAKER_MAX_COUNT),
     [icebreakers],
+  );
+
+  const previewIcebreakers = useMemo(
+    () =>
+      normalizedIcebreakers.length > 0 ? normalizedIcebreakers : DEFAULT_AGENT_ICEBREAKERS,
+    [normalizedIcebreakers],
+  );
+
+  const usingDefaultPreviewIcebreakers = normalizedIcebreakers.length === 0;
+  const previewIcebreakerDensityClass = getIcebreakerGridDensityClass(
+    Math.min(previewIcebreakers.length, 3),
   );
 
   function updateIcebreaker(index: number, value: string) {
@@ -1551,6 +1564,53 @@ export function ChatAgentBuilderPage({
             </label>
           </section>
 
+          <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__icebreakers-section">
+            <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
+            <p className="mdc-chat-agent-builder__icebreakers-help">
+              Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
+              {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais
+              sugestões.
+            </p>
+
+            <div className="mdc-chat-agent-builder__icebreakers">
+              {icebreakers.map((icebreaker, index) => (
+                <div key={`${index}-${icebreakers.length}`}>
+                  <input
+                    value={icebreaker}
+                    maxLength={AGENT_ICEBREAKER_MAX_CHARS}
+                    onChange={(event) => updateIcebreaker(index, event.target.value)}
+                    placeholder="Ex.: Quero verificar um desenho."
+                    aria-describedby={`icebreaker-count-${index}`}
+                  />
+                  <span
+                    id={`icebreaker-count-${index}`}
+                    className="mdc-chat-agent-builder__icebreaker-count"
+                  >
+                    {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => removeIcebreaker(index)}
+                    aria-label="Remover quebra-gelo"
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                onClick={addIcebreaker}
+                disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
+              >
+                <Plus size={16} aria-hidden="true" />
+                <span>Adicionar quebra-gelo</span>
+              </button>
+            </div>
+          </section>
+
           <section
             className="mdc-chat-agent-builder__section mdc-chat-agent-builder__identity-section"
             aria-label="Visibilidade do agente"
@@ -1709,53 +1769,6 @@ export function ChatAgentBuilderPage({
                 <option value="detalhado">Detalhado</option>
               </select>
             </label>
-          </section>
-
-          <section className="mdc-chat-agent-builder__section">
-            <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
-            <p className="mdc-chat-agent-builder__icebreakers-help">
-              Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
-              {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais
-              sugestões.
-            </p>
-
-            <div className="mdc-chat-agent-builder__icebreakers">
-              {icebreakers.map((icebreaker, index) => (
-                <div key={`${index}-${icebreakers.length}`}>
-                  <input
-                    value={icebreaker}
-                    maxLength={AGENT_ICEBREAKER_MAX_CHARS}
-                    onChange={(event) => updateIcebreaker(index, event.target.value)}
-                    placeholder="Ex.: Quero verificar um desenho."
-                    aria-describedby={`icebreaker-count-${index}`}
-                  />
-                  <span
-                    id={`icebreaker-count-${index}`}
-                    className="mdc-chat-agent-builder__icebreaker-count"
-                  >
-                    {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => removeIcebreaker(index)}
-                    aria-label="Remover quebra-gelo"
-                  >
-                    <X size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className="mdc-chat-ws-outline-btn"
-                onClick={addIcebreaker}
-                disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
-              >
-                <Plus size={16} aria-hidden="true" />
-                <span>Adicionar quebra-gelo</span>
-              </button>
-            </div>
           </section>
 
           <section className="mdc-chat-agent-builder__section">
@@ -2013,18 +2026,22 @@ export function ChatAgentBuilderPage({
           ) : null}
 
           {agent && ["owner", "editor", "system"].includes(agent.access_role) ? (
-            <section className="mdc-chat-agent-builder__section">
-              <h2 className="mdc-chat-ws-section-head">Uso (últimos 7 dias)</h2>
+            <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__usage-panel">
+              <details className="mdc-chat-agent-builder__usage-details">
+                <summary className="mdc-chat-ws-section-head">Uso (últimos 7 dias)</summary>
 
-              {isLoadingStats ? (
-                <p className="mdc-chat-muted">Carregando estatísticas...</p>
-              ) : agentStats?.miniDashboard ? (
-                <AgentMiniDashboard stats={agentStats} />
-              ) : agentStats ? (
-                <p className="mdc-chat-muted">Estatísticas sem painel visual (atualize a API).</p>
-              ) : (
-                <p className="mdc-chat-muted">Sem dados de uso no período.</p>
-              )}
+                <div className="mdc-chat-agent-builder__usage-details-body">
+                  {isLoadingStats ? (
+                    <p className="mdc-chat-muted">Carregando estatísticas...</p>
+                  ) : agentStats?.miniDashboard ? (
+                    <AgentMiniDashboard stats={agentStats} compact />
+                  ) : agentStats ? (
+                    <p className="mdc-chat-muted">Estatísticas sem painel visual (atualize a API).</p>
+                  ) : (
+                    <p className="mdc-chat-muted">Sem dados de uso no período.</p>
+                  )}
+                </div>
+              </details>
 
               {agent.access_role === "owner" ? (
                 <div className="mdc-chat-agent-builder__resource-list">
@@ -2223,9 +2240,21 @@ export function ChatAgentBuilderPage({
                 "Configure comportamento, instruções e quebra-gelos deste especialista."}
             </p>
 
-            {normalizedIcebreakers.length > 0 ? (
-              <div className="mdc-chat-agent-builder__preview-icebreakers">
-                {normalizedIcebreakers.slice(0, 3).map((icebreaker) => (
+            {previewIcebreakers.length > 0 ? (
+              <div
+                className={[
+                  "mdc-chat-agent-builder__preview-icebreakers",
+                  previewIcebreakerDensityClass,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {usingDefaultPreviewIcebreakers ? (
+                  <p className="mdc-chat-agent-builder__preview-icebreakers-hint">
+                    Sugestões padrão — configure em Quebra-gelos ou clique para testar.
+                  </p>
+                ) : null}
+                {previewIcebreakers.slice(0, 3).map((icebreaker) => (
                   <button
                     key={icebreaker}
                     type="button"
