@@ -152,8 +152,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Métricas | `ChatTextCorrectionMetricsService` → `textCorrectionMetrics` no metadata |
 | Lousa/anexo | `source` canvas/attachment no intent e suplemento de prompt |
 | AdminDebug | `sync_text_correction_trace` — métricas/tarefa/qualidade no `adminDebug`; `run_chat_text_correction_homologation.sh`; Onda 11 |
+| Lousa | `ChatTextCorrectionCanvasService` — lê lousa, injeta no prompt, `canvasOpen` após correção |
 
-**Backlog:** painel admin agregado de métricas (§23 completo).
+**Backlog:** painel admin agregado de métricas (§23 agregado).
 
 ## Escrita de e-mails (`playbook_escrita_emails_minha_delpi_chat`)
 

@@ -498,6 +498,7 @@ class StreamChatMessageUseCase:
                 text_correction_mode=bool(prepared.text_correction_mode),
                 text_correction_subtype=prepared.text_correction_subtype,
                 workspace_context=workspace_context,
+                previous_messages=previous_messages,
             )
 
             llm_messages = self.prompt_builder_service.build_messages(
@@ -655,6 +656,23 @@ class StreamChatMessageUseCase:
             message=message,
             workspace_context=workspace_context,
         )
+
+        correction_canvas_payload = (
+            ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
+                message=message,
+                answer=answer,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+            )
+        )
+        correction_canvas_updated = bool(correction_canvas_payload)
+
+        if correction_canvas_payload:
+            canvas_open_payload = correction_canvas_payload
+            answer = ChatTextCorrectionTurnService.apply_canvas_update_to_answer(
+                answer,
+                canvas_payload=correction_canvas_payload,
+            )
 
         pipeline_timings.mark("llm_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
@@ -856,6 +874,7 @@ class StreamChatMessageUseCase:
             answer=answer,
             workspace_context=workspace_context,
             guard_meta=correction_guard_meta,
+            canvas_updated=correction_canvas_updated,
         )
 
         from app.application.services.chat_document_vision_metrics_service import (

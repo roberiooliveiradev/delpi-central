@@ -16,7 +16,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
 | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
 | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial | Fases 1–2 + menu Textos; 3–5 backlog |
-| [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Concluído | Fases 1–5 (preferências `textCorrection` na sessão); métricas backlog |
+| [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Concluído | Fases 1–6 + lousa bidirecional; agregado §23 backlog |
 | [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | Concluído | Fases 1–5 + preferências de sessão |
 | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial | `personality_playbook.json`, starters |
 | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Concluído | Fases 1–5 + salvar fontes no projeto |

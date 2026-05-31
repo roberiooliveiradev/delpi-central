@@ -25,6 +25,7 @@ class ChatTextCorrectionMetricsService:
         workspace_context: dict | None = None,
         guard_meta: dict[str, Any] | None = None,
         follow_up_count: int = 0,
+        canvas_updated: bool = False,
     ) -> dict[str, Any] | None:
         if not (
             ChatTextCorrectionIntentService.is_text_correction(message)
@@ -63,6 +64,8 @@ class ChatTextCorrectionMetricsService:
             "deliverFinalOnly": bool(ctx.get("deliverFinalOnly")),
             "explainChanges": bool(ctx.get("explainChanges")),
             "followUpChipCount": follow_up_count,
+            "canvasUpdated": bool(canvas_updated),
+            "canvasSource": ctx.get("source") == "canvas",
         }
 
     @classmethod
@@ -75,6 +78,7 @@ class ChatTextCorrectionMetricsService:
         workspace_context: dict | None = None,
         guard_meta: dict[str, Any] | None = None,
         follow_up_count: int = 0,
+        canvas_updated: bool = False,
     ) -> None:
         snapshot = cls.build_snapshot(
             message=message,
@@ -82,6 +86,7 @@ class ChatTextCorrectionMetricsService:
             workspace_context=workspace_context,
             guard_meta=guard_meta,
             follow_up_count=follow_up_count,
+            canvas_updated=canvas_updated,
         )
 
         if snapshot:

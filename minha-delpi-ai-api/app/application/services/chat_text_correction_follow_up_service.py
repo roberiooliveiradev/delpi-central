@@ -32,6 +32,7 @@ class ChatTextCorrectionFollowUpService:
         answer: str | None = None,
         workspace_context: dict | None = None,
         guard_meta: dict[str, Any] | None = None,
+        canvas_updated: bool = False,
     ) -> None:
         if not (
             ChatTextCorrectionIntentService.is_text_correction(message)
@@ -82,6 +83,7 @@ class ChatTextCorrectionFollowUpService:
             workspace_context=workspace_context,
             guard_meta=guard_meta,
             follow_up_count=len(suggestions),
+            canvas_updated=canvas_updated,
         )
 
         from app.application.services.chat_admin_debug_service import ChatAdminDebugService

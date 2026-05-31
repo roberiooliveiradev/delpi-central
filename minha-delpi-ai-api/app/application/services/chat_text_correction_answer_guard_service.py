@@ -52,6 +52,32 @@ class ChatTextCorrectionAnswerGuardService:
         return sanitized, guard_meta
 
     @classmethod
+    def extract_corrected_body(
+        cls,
+        answer: str | None,
+        *,
+        message: str | None = None,
+        workspace_context: dict | None = None,
+    ) -> str:
+        if not answer:
+            return ""
+
+        if not (
+            ChatTextCorrectionIntentService.is_text_correction(message)
+            or (workspace_context or {}).get("textCorrectionMode")
+        ):
+            return answer.strip()
+
+        ctx = ChatTextCorrectionIntentService.extract_context(message)
+        subtype = ctx.get("subtype") or "text_correct_basic"
+        sanitized = answer.strip()
+
+        if ctx.get("deliverFinalOnly") or subtype == "text_correct_basic":
+            sanitized = cls._trim_to_final_version(sanitized, subtype)
+
+        return sanitized
+
+    @classmethod
     def _trim_to_final_version(cls, text: str, subtype: str) -> str:
         if subtype in {"text_correct_explain", "text_correct_compare"}:
             return text

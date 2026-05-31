@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Any
+
+from app.application.services.chat_text_correction_canvas_service import (
+    ChatTextCorrectionCanvasService,
+)
 from app.domain.services.chat_text_correction_intent_service import (
     ChatTextCorrectionIntentService,
 )
@@ -18,6 +23,7 @@ class ChatTextCorrectionPromptSupplementService:
         message: str | None,
         text_correction_subtype: str | None = None,
         workspace_context: dict | None = None,
+        previous_messages: list[Any] | None = None,
     ) -> str:
         working_memory = (workspace_context or {}).get("workingMemory") or {}
         ctx = ChatTextCorrectionIntentService.extract_context(
@@ -79,9 +85,26 @@ class ChatTextCorrectionPromptSupplementService:
         source = ctx.get("source")
 
         if source == "canvas":
-            lines.append(
-                "- Fonte: texto da lousa/canvas — use o conteúdo atual da lousa como base."
+            canvas_markdown, canvas_title, _ = ChatTextCorrectionCanvasService.load_active_canvas(
+                previous_messages
             )
+
+            if canvas_markdown.strip():
+                preview = (
+                    canvas_markdown
+                    if len(canvas_markdown) <= 4000
+                    else f"{canvas_markdown[:4000]}…"
+                )
+                title = (canvas_title or "").strip() or "Lousa"
+                lines.append(
+                    f"- Fonte: lousa «{title}» — corrija o markdown abaixo e devolva a versão revisada."
+                )
+                lines.append(f"- Conteúdo atual da lousa:\n```\n{preview}\n```")
+            else:
+                lines.append(
+                    "- Fonte: lousa — ainda não há conteúdo na lousa; peça ao usuário abrir "
+                    "ou colar o texto, ou use o trecho após «:» no pedido."
+                )
         elif source == "attachment":
             lines.append(
                 "- Fonte: anexo/documento — corrija o texto extraído do arquivo enviado."

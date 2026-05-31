@@ -56,6 +56,7 @@ class ChatAdminDebugService:
                 "textCorrectionTask",
                 "textCorrectionQuality",
                 "textCorrectionPreferences",
+                "textCorrectionCanvasUpdate",
             ):
                 value = admin_debug.get(key)
 
@@ -159,6 +160,11 @@ class ChatAdminDebugService:
 
         if isinstance(preferences, dict):
             admin_debug["textCorrectionPreferences"] = preferences
+
+        canvas_update = metadata.get("textCorrectionCanvasUpdate")
+
+        if isinstance(canvas_update, dict):
+            admin_debug["textCorrectionCanvasUpdate"] = canvas_update
 
     @staticmethod
     def _compact_intelligence(intelligence_metadata: dict) -> dict:

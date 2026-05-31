@@ -110,6 +110,36 @@ def main() -> int:
     else:
         print("OK textCorrectionMetrics snapshot")
 
+    from types import SimpleNamespace
+
+    from app.application.services.chat_text_correction_canvas_service import (
+        ChatTextCorrectionCanvasService,
+    )
+
+    canvas_messages = [
+        SimpleNamespace(
+            role="assistant",
+            metadata={
+                "canvasOpen": {
+                    "title": "Lousa teste",
+                    "markdown": "Frase com erro ortografico.",
+                }
+            },
+        ),
+    ]
+    canvas_payload = ChatTextCorrectionCanvasService.resolve_canvas_open_after_correction(
+        message="corrija o texto da lousa",
+        answer="Segue a versão corrigida:\n\nFrase com erro ortográfico.",
+        previous_messages=canvas_messages,
+        workspace_context={"agent": {"capabilities": {"canvas": True}}},
+    )
+
+    if not canvas_payload or "ortográfico" not in canvas_payload.markdown:
+        print(f"FAIL canvas correction update ({canvas_payload})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK canvas correction updates lousa payload")
+
     if failed:
         return 1
 

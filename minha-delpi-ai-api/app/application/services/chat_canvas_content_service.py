@@ -255,6 +255,14 @@ class ChatCanvasContentService:
         return markdown, cls._derive_title(markdown), cls._message_id(source)
 
     @classmethod
+    def find_active_canvas(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> tuple[str, str, str | None]:
+        """Markdown, título e sourceMessageId da lousa mais recente no histórico."""
+        return cls._find_existing_canvas_from_history(previous_messages)
+
+    @classmethod
     def _find_existing_canvas_from_history(
         cls,
         previous_messages: list[Any] | None,

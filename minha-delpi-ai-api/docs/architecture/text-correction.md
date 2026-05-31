@@ -25,6 +25,7 @@ Mensagem
 | `ChatTextCorrectionAnswerGuardService` | Trim «só versão final» |
 | `ChatTextCorrectionFollowUpService` | Chips do `personality_playbook.json` |
 | `ChatTextCorrectionTurnService` | Orquestração no turno (send/stream) |
+| `ChatTextCorrectionCanvasService` | Lousa: lê `canvasOpen`, atualiza após correção |
 | `ChatTextCorrectionPreferenceService` | Preferências de sessão (`textCorrection`, `textCorrectionPreferences`) |
 
 ## Metadata
@@ -33,7 +34,9 @@ Mensagem
 - `textTask.subtype`: ex. `text_correct_basic`
 - `textCorrectionFollowUpSuggestions`: chips de refinamento
 - `textCorrectionQuality`: falhas do validador (opcional)
-- `textCorrectionMetrics`: snapshot leve (subtipo, fonte, preferências, qualidade)
+- `textCorrectionMetrics`: snapshot leve (subtipo, fonte, `canvasUpdated`, qualidade)
+- `textCorrectionCanvasUpdate`: `{ applied: true }` quando a lousa foi regravada
+- `canvasOpen`: markdown corrigido (turnos «corrija o texto da lousa» com lousa ativa)
 - `adminDebug.textCorrection*`: mesma trilha para painel admin (`ChatAdminDebugService.sync_text_correction_trace`)
 
 ## Validação

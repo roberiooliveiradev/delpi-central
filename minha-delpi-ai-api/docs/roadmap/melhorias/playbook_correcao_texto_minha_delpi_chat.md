@@ -2,8 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Habilidade nativa:** correção, revisão e melhoria textual no chat comum  
-**Status implementação:** Fases **1–5** + regressão + métricas leves + fonte lousa/anexo — maio/2026  
-**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionPreferenceService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionMetricsService`, `ChatTextCorrectionTurnService`, policy `text-correction.md`, `run_text_correction_validation.sh`
+**Status implementação:** Fases **1–6** (snapshot) + lousa bidirecional + regressão — maio/2026  
+**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionCanvasService`, `ChatTextCorrectionPreferenceService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionMetricsService`, `ChatTextCorrectionTurnService`, policy `text-correction.md`, `run_text_correction_validation.sh`, `run_chat_text_correction_homologation.sh`
 
 **Objetivo:** fazer o chat corrigir textos com qualidade profissional, preservando sentido, tom, intenção e contexto do usuário.
 
@@ -75,16 +75,16 @@ Evoluir **`ChatTextTaskIntentService`** ou extrair **`ChatTextCorrectionIntentSe
 
 | Subintenção | Descrição | Status |
 |-------------|-----------|--------|
-| `text_correct_basic` | Ortografia, acentos, concordância e pontuação | Planejado |
-| `text_correct_preserve_style` | Corrigir mantendo estilo original | Planejado |
-| `text_correct_formal` | Corrigir e deixar mais formal | Planejado |
-| `text_correct_clear` | Corrigir e melhorar clareza | Planejado |
-| `text_correct_simple` | Corrigir e simplificar linguagem | Planejado |
-| `text_correct_professional` | Corrigir com tom corporativo | Planejado |
-| `text_correct_explain` | Corrigir e explicar alterações | Planejado |
-| `text_correct_compare` | Mostrar antes/depois | Planejado |
-| `text_rewrite` | Reescrever mantendo sentido | Parcial (`rewrite` em `ChatTextTaskIntentService`) |
-| `text_review_quality` | Avaliar se o texto está adequado | Planejado |
+| `text_correct_basic` | Ortografia, acentos, concordância e pontuação | **Concluída** |
+| `text_correct_preserve_style` | Corrigir mantendo estilo original | **Concluída** |
+| `text_correct_formal` | Corrigir e deixar mais formal | **Concluída** |
+| `text_correct_clear` | Corrigir e melhorar clareza | **Concluída** |
+| `text_correct_simple` | Corrigir e simplificar linguagem | **Concluída** |
+| `text_correct_professional` | Corrigir com tom corporativo | **Concluída** |
+| `text_correct_explain` | Corrigir e explicar alterações | **Concluída** |
+| `text_correct_compare` | Mostrar antes/depois | **Concluída** |
+| `text_rewrite` | Reescrever mantendo sentido | **Concluída** |
+| `text_review_quality` | Avaliar se o texto está adequado | **Concluída** |
 
 ---
 
@@ -93,13 +93,12 @@ Evoluir **`ChatTextTaskIntentService`** ou extrair **`ChatTextCorrectionIntentSe
 ```
 Mensagem do usuário
   → ChatTextTaskIntentService (tarefa textual / correction)
-  → ChatTextCorrectionIntentService (subtipo) [planejado]
-  → extrair texto a corrigir
-  → identificar modo desejado (simples, explicar, antes/depois, tom)
-  → policy administrative-writing.md + text-correction.md [planejado]
-  → LLM (estágio text_task, sem tools)
-  → ChatTextCorrectionQualityValidator [planejado]
-  → metadata textTask + chips pós-correção
+  → ChatTextCorrectionIntentService (subtipo)
+  → extrair texto a corrigir (pedido, lousa ou anexo)
+  → ChatTextCorrectionPromptSupplementService + policies
+  → LLM (estágios text_task + text_correction, sem tools)
+  → ChatTextCorrectionAnswerGuardService + QualityValidator
+  → metadata textTask + chips; lousa: canvasOpen atualizado quando há conteúdo
 ```
 
 **Não usar em correção textual pura:** action, RAG, SQL, API operacional, consulta externa.
@@ -316,7 +315,7 @@ Após corrigir, exibir chips (alvo: `personality_playbook.json` → `textCorrect
 - Colocar na lousa
 - Copiar texto
 
-**MFE:** atalho «Escrever ou corrigir texto» com `{{textContent}}` (`onboarding.json`); botão copiar quando `textTask.type === correction` [planejado].
+**MFE:** atalho «Escrever ou corrigir texto» com `{{textContent}}` (`onboarding.json`); botão copiar e chips quando `textTask.type === correction` (`ChatMessageList.tsx`).
 
 ---
 
@@ -332,6 +331,8 @@ Comandos suportados:
 - Transforme a lousa em comunicado.
 
 **Fluxo:** texto → lousa → correção → atualização da lousa → refinamentos (histórico no canvas).
+
+**Implementado:** `ChatTextCorrectionCanvasService` lê `canvasOpen` do histórico (`ChatCanvasContentService.find_active_canvas`), injeta no prompt e, após o LLM, emite novo `canvasOpen` com a versão corrigida (`textCorrectionCanvasUpdate` / `canvasUpdated` nas métricas).
 
 Reutilizar `ChatCanvasIntentService` / `ChatCanvasContentService` sem duplicar lógica de correção no agente.
 
@@ -517,8 +518,9 @@ Motivos em `personality_playbook.json` (alvo):
 | **3 — Validador** | `ChatTextCorrectionQualityValidator` + guard pós-LLM | **Concluída** |
 | **4 — Interatividade** | Chips `textCorrectionFollowUpSuggestions`; botão copiar no MFE | **Concluída** |
 | **5 — Memória** | `ChatTextCorrectionPreferenceService`, `textCorrection` em `behaviorInstructions`, chips de contexto | **Concluída** |
-| **6 — Métricas** | `textCorrectionMetrics` no metadata (snapshot leve por turno) | **Parcial** |
-| **Lousa/anexo** | `source`: canvas / attachment no contexto e prompt | **Concluída** |
+| **6 — Métricas** | `textCorrectionMetrics` + `adminDebug` + `canvasUpdated` por turno | **Concluída** (agregado §23 backlog) |
+| **Lousa bidirecional** | Leitura + `canvasOpen` após correção da lousa | **Concluída** |
+| **Lousa/anexo (fonte)** | `source`: canvas / attachment no contexto e prompt | **Concluída** |
 
 **Ordem sugerida:** Fase 2 (subtipos + policy dedicada) → Fase 3 → Fase 4 → Fase 5.
 
@@ -526,7 +528,9 @@ Motivos em `personality_playbook.json` (alvo):
 
 ## 23. Métricas
 
-Medir (backlog):
+**Por turno (implementado):** `textCorrectionMetrics` (subtipo, fonte, qualidade, `canvasUpdated`, chips).
+
+**Agregado (backlog produto/admin):**
 
 - quantidade de correções solicitadas;
 - taxa de feedback positivo;
