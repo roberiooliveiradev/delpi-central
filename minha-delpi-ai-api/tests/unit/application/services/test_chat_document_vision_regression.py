@@ -13,6 +13,40 @@ def test_regression_v6_bom_heuristic():
     assert [row["code"] for row in rows] == case["expect_bom_codes"]
 
 
+def test_regression_v9_title_block_on_tesseract_stamp(monkeypatch):
+    case = next(item for item in REGRESSION_CASES if item["id"] == "V9")
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_BACKEND", "tesseract")
+    Settings.CHAT_DOCUMENT_VISION_BACKEND = "tesseract"
+
+    with patch.object(
+        ChatDocumentVisionService,
+        "_stage_tesseract_pdf",
+        return_value={
+            "fullText": case["ocr_text"],
+            "engine": "tesseract",
+            "pageCount": 1,
+            "stampCrop": True,
+            "stampText": case.get("stamp_text", ""),
+            "warnings": [],
+        },
+    ):
+        with patch.object(
+            ChatDocumentVisionService,
+            "_stage_native",
+            return_value={"fullText": "", "legible": False},
+        ):
+            result = ChatDocumentVisionService.extract_from_storage_path(
+                "/tmp/drawing.pdf",
+                filename="drawing.pdf",
+                content_type="application/pdf",
+            )
+
+    title_block = result.get("titleBlock")
+
+    assert isinstance(title_block, dict)
+    assert title_block.get("fields", {}).get("code") == case["expect_product_code"]
+
+
 def test_regression_v8_merge_product_code():
     case = next(item for item in REGRESSION_CASES if item["id"] == "V8")
 

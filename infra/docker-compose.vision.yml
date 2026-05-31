@@ -1,0 +1,12 @@
+# Override opcional — imagem com extras de visão (Docling/Paddle em requirements-vision.txt).
+#
+# Uso:
+#   docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
+#     --profile chat build minha-delpi-ai-api
+#   docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
+#     --profile chat up -d --force-recreate minha-delpi-ai-api
+
+services:
+  minha-delpi-ai-api:
+    build:
+      dockerfile: Dockerfile.vision.dev

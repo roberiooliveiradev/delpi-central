@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** parcial (13.1–13.2 + 13.3.2 + 13.4 + 13.6 + intent `attachment_document`; 13.3.1/13.5 wired com fallback; maio/2026)  
+**Status:** MVP fechado (13.1–13.6 + intent `attachment_document`); refinamentos: profile `vision` em homologação, contrato completo playbook, E2E gateway (maio/2026)  
 **Criado:** 2026-05-31  
 **Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
@@ -19,8 +19,8 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 |---------|------|----------------|
 | PDF anexo | Texto via pypdf + regex (`ChatDrawingPdfExtractionService`) | Pipeline em estágios com OCR/layout/VLM |
 | Imagem | Tesseract via `ChatDocumentVisionService` (PNG/JPG/WebP) | OCR no contexto de anexo e no fluxo de desenho |
-| Desenho técnico | Código/REV heurísticos | Carimbo, BOM, cotas, decapes com confidence |
-| Skill plataforma | Não existe `document-vision-delpi` | Catálogo + policy + registry |
+| Desenho técnico | Código/REV + BOM heurístico + `titleBlock` | Cotas/decapes com confidence (backlog fino) |
+| Skill plataforma | `document-vision-delpi` no catálogo | Policy + registry + métricas admin |
 | Operação | Métricas + intent `attachment_document` | adminDebug + painel admin + audit por engine |
 
 ---
@@ -78,9 +78,13 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 ## Validação prevista
 
 ```bash
-# Rebuild após mudanças em requirements ou Dockerfile da API
+# Rebuild padrão (Tesseract + native)
 docker compose -f infra/docker-compose.dev.yml build minha-delpi-ai-api minha-delpi-chat
 docker compose -f infra/docker-compose.dev.yml --profile chat up -d --force-recreate minha-delpi-ai-api minha-delpi-chat
+
+# Opcional — imagem vision (descomente pacotes em requirements-vision.txt antes)
+docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.vision.yml \
+  --profile chat build minha-delpi-ai-api
 
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   bash scripts/run_onda13_validation.sh
@@ -104,3 +108,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | Crop carimbo Tesseract, fallback OCR em indexado curto, `run_onda13_validation.sh`, adminDebug MFE visão. |
 | 2026-05-31 | BOM heurístico (`ChatDocumentVisionBomService`); fast path desligado em `attachment_document`. |
 | 2026-05-31 | Backends `docling`, `paddleocr` e `ollama_vlm` wired com fallback; testes de contrato neural/VLM. |
+| 2026-05-31 | `titleBlock`, `bomRows` no resultado; métricas `byStage`; compose `docker-compose.vision.yml`. |

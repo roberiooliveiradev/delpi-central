@@ -105,7 +105,7 @@ Resumo agregado da skill **Visão de Documentos DELPI** (Onda 13), a partir de s
 
 Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
 
-Resposta: `runsCount`, `byEngine`, `byContext`, `legibilityRate`, `avgDurationMs`, `recent[]`.
+Resposta: `runsCount`, `byEngine`, `byContext`, `byStage`, `legibilityRate`, `avgDurationMs`, `recent[]`.
 
 ### GET `/admin/metrics/summary`
 

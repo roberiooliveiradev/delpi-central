@@ -377,6 +377,7 @@ export type AdminDocumentVisionSummary = {
   runsCount: number;
   byEngine: Record<string, number>;
   byContext: Record<string, number>;
+  byStage?: Record<string, number>;
   legibleCount: number;
   legibilityRate: number | null;
   avgDurationMs: number | null;

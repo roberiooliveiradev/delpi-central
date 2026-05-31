@@ -1,4 +1,4 @@
-"""Casos de regressão V1–V8 — Onda 13 (playbook §10)."""
+"""Casos de regressão V1–V9 — Onda 13 (playbook §10)."""
 
 from __future__ import annotations
 
@@ -45,5 +45,12 @@ REGRESSION_CASES: tuple[dict, ...] = (
         "vision_product_code": "90260140",
         "drawing_product_code": None,
         "expect_merged_code": "90260140",
+    },
+    {
+        "id": "V9",
+        "description": "Carimbo OCR — titleBlock estruturado",
+        "ocr_text": "DETALHES DO DESENHO\nLINHA 1",
+        "stamp_text": "PRODUTO 90260140\nREV. 03\nCLIENTE ACME",
+        "expect_product_code": "90260140",
     },
 )

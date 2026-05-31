@@ -90,6 +90,8 @@ class ChatDocumentVisionService:
     def to_document_vision_metadata(cls, vision: dict[str, Any]) -> dict[str, Any]:
         bom_rows = vision.get("bomRows") if isinstance(vision.get("bomRows"), list) else []
 
+        title_block = vision.get("titleBlock")
+
         return {
             "schemaVersion": vision.get("schemaVersion") or cls.SCHEMA_VERSION,
             "engine": vision.get("engine"),
@@ -99,7 +101,9 @@ class ChatDocumentVisionService:
             "charCount": vision.get("charCount"),
             "legible": vision.get("legible"),
             "pageCount": vision.get("pageCount"),
+            "pagesProcessed": vision.get("pagesProcessed") or vision.get("pageCount"),
             "bomRowCount": len(bom_rows),
+            "hasTitleBlock": bool(title_block),
         }
 
     @classmethod
@@ -299,6 +303,7 @@ class ChatDocumentVisionService:
                     stages=stages,
                     page_count=ocr.get("pageCount"),
                     warnings=warnings + list(ocr.get("warnings") or []),
+                    source_metadata={"stampText": str(ocr.get("stampText") or "")},
                 )
             elif ocr.get("warnings"):
                 warnings.extend(ocr["warnings"])
@@ -519,6 +524,7 @@ class ChatDocumentVisionService:
                 warnings.append(f"truncated_pages:{document.page_count}>{max_pages}")
 
             stamp_crop_used = False
+            stamp_text = ""
 
             for index in range(page_count):
                 page = document.load_page(index)
@@ -531,10 +537,11 @@ class ChatDocumentVisionService:
                     texts.append(chunk)
 
                 if index == 0 and Settings.CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED:
-                    stamp_text = cls._ocr_stamp_regions(page, matrix=matrix, lang=lang)
+                    cropped = cls._ocr_stamp_regions(page, matrix=matrix, lang=lang)
 
-                    if stamp_text and stamp_text not in chunk:
-                        texts.append(stamp_text)
+                    if cropped and cropped not in chunk:
+                        texts.append(cropped)
+                        stamp_text = cropped
                         stamp_crop_used = True
         finally:
             document.close()
@@ -548,6 +555,7 @@ class ChatDocumentVisionService:
             "pageCount": page_count if "page_count" in locals() else 0,
             "warnings": warnings,
             "stampCrop": stamp_crop_used,
+            "stampText": stamp_text if stamp_crop_used else "",
         }
 
     @classmethod
@@ -745,7 +753,19 @@ class ChatDocumentVisionService:
         if parsed.get("productCode"):
             legibility_score = min(1.0, legibility_score + 0.25)
 
-        return {
+        from app.domain.services.chat_document_vision_title_block_service import (
+            ChatDocumentVisionTitleBlockService,
+        )
+
+        stamp_text = str((source_metadata or {}).get("stampText") or "").strip()
+        title_block = ChatDocumentVisionTitleBlockService.build(
+            text=text,
+            product_code=parsed.get("productCode"),
+            revision=parsed.get("revision"),
+            stamp_text=stamp_text or None,
+        )
+
+        result = {
             **parsed,
             "schemaVersion": cls.SCHEMA_VERSION,
             "engine": engine,
@@ -753,9 +773,15 @@ class ChatDocumentVisionService:
             "warnings": warnings or [],
             "fullText": text,
             "pageCount": page_count,
+            "pagesProcessed": page_count,
             "legibilityScore": round(legibility_score, 3),
             "charCount": char_count,
         }
+
+        if title_block:
+            result["titleBlock"] = title_block
+
+        return result
 
     @classmethod
     def _finalize_result(
@@ -769,6 +795,8 @@ class ChatDocumentVisionService:
     ) -> dict[str, Any]:
         duration_ms = round((time.perf_counter() - started) * 1000, 2)
 
+        bom_rows = payload.get("bomRows") if isinstance(payload.get("bomRows"), list) else []
+
         return {
             "schemaVersion": cls.SCHEMA_VERSION,
             "engine": engine,
@@ -776,6 +804,7 @@ class ChatDocumentVisionService:
             "durationMs": duration_ms,
             "warnings": warnings,
             "pageCount": payload.get("pageCount"),
+            "pagesProcessed": payload.get("pagesProcessed") or payload.get("pageCount"),
             "legible": bool(payload.get("legible")),
             "legibilityScore": payload.get("legibilityScore"),
             "productCode": payload.get("productCode"),
@@ -785,6 +814,9 @@ class ChatDocumentVisionService:
             "componentCodes": payload.get("componentCodes") or [],
             "intermediateCodes": payload.get("intermediateCodes") or [],
             "dimensions": payload.get("dimensions") or {},
+            "titleBlock": payload.get("titleBlock"),
+            "bomRows": bom_rows,
+            "bomRowCount": len(bom_rows),
             "fullText": payload.get("fullText") or "",
             "charCount": int(payload.get("charCount") or 0),
         }

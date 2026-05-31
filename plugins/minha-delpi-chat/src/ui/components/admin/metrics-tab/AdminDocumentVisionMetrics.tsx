@@ -47,6 +47,9 @@ export function AdminDocumentVisionMetrics({
   const engineEntries = summary
     ? Object.entries(summary.byEngine).sort((left, right) => right[1] - left[1])
     : [];
+  const stageEntries = summary?.byStage
+    ? Object.entries(summary.byStage).sort((left, right) => right[1] - left[1])
+    : [];
 
   return (
     <section
@@ -103,6 +106,20 @@ export function AdminDocumentVisionMetrics({
                 {engineEntries.map(([engine, count]) => (
                   <li key={engine}>
                     <span>{engine}</span>
+                    <strong>{formatNumber(count)}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {stageEntries.length > 0 ? (
+            <div className="mdc-admin-drawing-metrics__status-list">
+              <h4>Por estágio</h4>
+              <ul>
+                {stageEntries.map(([stage, count]) => (
+                  <li key={stage}>
+                    <span>{stage}</span>
                     <strong>{formatNumber(count)}</strong>
                   </li>
                 ))}

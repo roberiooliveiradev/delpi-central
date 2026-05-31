@@ -51,6 +51,7 @@ Mensagem do usuário
 | `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
 | `ChatDocumentVisionService` | Skill `document-vision-delpi` — OCR PDF/imagem (native + Tesseract); anexos da sessão (`documentVision` no tool context) e `drawing-analysis-delpi` |
 | `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
+| `ChatDocumentVisionTitleBlockService` | Carimbo `titleBlock` (bbox heurístico + `fields.code/rev`) — Onda 13 |
 | Backends visão | `native`, `tesseract`, `docling`, `paddleocr` (profile vision), `ollama_vlm` (Ollama `/api/chat` + imagens) |
 | `ChatAgentMiniDashboardService` | Mini dashboard + recomendações em `GET /chat/agents/{id}/stats` (gráficos Fase 4) |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |

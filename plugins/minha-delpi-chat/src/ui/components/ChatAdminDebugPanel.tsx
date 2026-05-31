@@ -146,6 +146,10 @@ function AdminDocumentVisionTraceSummary({
     trace.durationMs != null ? `${String(trace.durationMs)}ms` : "";
   const bomCount =
     trace.bomRowCount != null ? String(trace.bomRowCount) : "";
+  const titleCode =
+    trace.titleBlockCode != null ? String(trace.titleBlockCode) : "";
+  const titleRev =
+    trace.titleBlockRev != null ? String(trace.titleBlockRev) : "";
   const context = trace.context != null ? String(trace.context) : "";
 
   if (!engine && !stages) {
@@ -182,6 +186,12 @@ function AdminDocumentVisionTraceSummary({
       {bomCount ? (
         <span className="mdc-chat-admin-debug__timing-chip">
           <strong>BOM</strong> {bomCount} linha(s)
+        </span>
+      ) : null}
+      {titleCode ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>carimbo</strong> {titleCode}
+          {titleRev ? ` rev ${titleRev}` : ""}
         </span>
       ) : null}
     </div>

@@ -24,6 +24,7 @@ python3 -m pytest \
   tests/unit/application/services/test_chat_document_vision_regression.py \
   tests/unit/application/services/test_chat_attachment_context_service.py \
   tests/unit/domain/services/test_chat_document_vision_bom_service.py \
+  tests/unit/domain/services/test_chat_document_vision_title_block_service.py \
   tests/unit/domain/services/test_chat_attachment_document_intent_service.py \
   tests/unit/domain/services/test_chat_intent_router_service.py \
   -q

@@ -22,6 +22,19 @@ def test_build_snapshot():
     assert snapshot["charCount"] == 500
     assert snapshot["legible"] is True
     assert snapshot["context"] == "drawing"
+    assert snapshot["stageUsage"]["native"] == 1
+    assert snapshot["stageUsage"]["tesseract"] == 1
+
+
+def test_stage_usage_from_stages():
+    usage = ChatDocumentVisionMetricsService.stage_usage_from_stages(
+        ["native", "tesseract_pdf", "bom_heuristic", "unknown"]
+    )
+
+    assert usage["native"] == 1
+    assert usage["tesseract_pdf"] == 1
+    assert usage["bom_heuristic"] == 1
+    assert "unknown" not in usage
 
 
 def test_attach_to_assistant_metadata_from_tool_context():
@@ -71,6 +84,7 @@ def test_aggregate_snapshots():
                     "context": "drawing",
                     "legible": True,
                     "durationMs": 1000,
+                    "stageUsage": {"tesseract_pdf": 1, "bom_heuristic": 1},
                 },
             },
             {
@@ -81,6 +95,7 @@ def test_aggregate_snapshots():
                     "context": "attachment",
                     "legible": False,
                     "durationMs": 200,
+                    "stageUsage": {"native": 1},
                 },
             },
         ],
@@ -90,6 +105,8 @@ def test_aggregate_snapshots():
 
     assert result["runsCount"] == 2
     assert result["byEngine"]["tesseract"] == 1
+    assert result["byStage"]["tesseract_pdf"] == 1
+    assert result["byStage"]["native"] == 1
     assert result["legibleCount"] == 1
     assert result["legibilityRate"] == 0.5
     assert len(result["recent"]) == 2

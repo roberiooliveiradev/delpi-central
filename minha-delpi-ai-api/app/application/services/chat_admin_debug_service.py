@@ -283,6 +283,15 @@ class ChatAdminDebugService:
                 legible=legible,
                 context=vision_context,
             )
+            title_block = vision_payload.get("titleBlock")
+            title_fields = {}
+
+            if isinstance(title_block, dict):
+                fields = title_block.get("fields")
+
+                if isinstance(fields, dict):
+                    title_fields = fields
+
             payload["documentVisionTrace"] = {
                 "engine": vision_payload.get("engine"),
                 "stages": vision_payload.get("stages"),
@@ -290,6 +299,9 @@ class ChatAdminDebugService:
                 "durationMs": vision_payload.get("durationMs"),
                 "charCount": char_count,
                 "bomRowCount": vision_payload.get("bomRowCount"),
+                "hasTitleBlock": bool(title_block),
+                "titleBlockCode": title_fields.get("code"),
+                "titleBlockRev": title_fields.get("rev"),
                 "context": vision_context,
             }
             payload["pipeline"]["documentVision"] = True
