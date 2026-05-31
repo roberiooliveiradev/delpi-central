@@ -19,6 +19,16 @@ class ChatActivePendingService:
             "wrong_intent",
             "bad_format",
             "forgot_previous",
+            "routing_wrong_intent",
+            "routing_wrong_api",
+            "routing_should_api",
+            "routing_should_not_api",
+            "routing_should_web",
+            "routing_unneeded_web",
+            "routing_lost_context",
+            "routing_repeated_question",
+            "routing_wrong_format",
+            "routing_missed_text_task",
         }
     )
 
@@ -167,6 +177,32 @@ class ChatActivePendingService:
                         "resolvedParams": {"periodYear": year_match.group(1)},
                         "requiresTool": True,
                     }
+
+        if kind in {"branch", "missing_branch", "filial"}:
+            branch_match = re.search(r"\b(\d{1,3})\b", normalized)
+
+            if branch_match:
+                return {
+                    "kind": kind,
+                    "resolvedParams": {"branch": branch_match.group(1)},
+                    "requiresTool": True,
+                }
+
+            lowered = normalized.lower()
+
+            if lowered in {"sim", "s", "yes", "ok", "pode", "pode seguir"}:
+                options = pending.get("options")
+
+                branch = "01"
+
+                if isinstance(options, list) and options:
+                    branch = str(options[0]).strip() or branch
+
+                return {
+                    "kind": kind,
+                    "resolvedParams": {"branch": branch},
+                    "requiresTool": True,
+                }
 
         return None
 

@@ -167,6 +167,10 @@ if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
   echo ""
   echo "== Onda 11 — smoke memória persistida (Fase 4) =="
   python scripts/smoke_session_memory_persist.py
+
+  echo ""
+  echo "== Playbook 02 — roteamento de intenção (R1–R15) =="
+  bash scripts/run_intent_routing_validation.sh
 fi
 
 echo ""

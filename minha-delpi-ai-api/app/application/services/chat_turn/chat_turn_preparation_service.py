@@ -956,6 +956,8 @@ class ChatTurnPreparationService:
         intent_route = ChatIntentRouterService.resolve_executed(
             message=message,
             pipeline_stages=pipeline_stages,
+            previous_messages=history_source,
+            workspace_context=workspace_context,
             analysis_mode=bool(analysis_mode),
             text_task_pure=bool(text_task_pure),
             text_task_category=text_task_category if text_task_pure else None,
@@ -963,6 +965,7 @@ class ChatTurnPreparationService:
             direct_answer=direct_answer,
             tool_calls=tool_calls,
             attachment_ids=request_attachment_ids or None,
+            allowed_action_ids=allowed_action_ids,
         ).to_dict()
 
         if f"intent:{intent_route['intent']}" not in pipeline_stages:

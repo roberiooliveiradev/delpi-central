@@ -44,6 +44,46 @@
       "label": "Entendeu a intenção errada"
     },
     {
+      "id": "routing_wrong_intent",
+      "label": "Interpretou errado o pedido"
+    },
+    {
+      "id": "routing_wrong_api",
+      "label": "Chamou consulta errada"
+    },
+    {
+      "id": "routing_should_api",
+      "label": "Deveria ter usado API/dados"
+    },
+    {
+      "id": "routing_should_not_api",
+      "label": "Não deveria ter usado API"
+    },
+    {
+      "id": "routing_should_web",
+      "label": "Deveria ter pesquisado na web"
+    },
+    {
+      "id": "routing_unneeded_web",
+      "label": "Pesquisou na web sem necessidade"
+    },
+    {
+      "id": "routing_lost_context",
+      "label": "Perdeu contexto no roteamento"
+    },
+    {
+      "id": "routing_repeated_question",
+      "label": "Perguntou algo que já informei"
+    },
+    {
+      "id": "routing_wrong_format",
+      "label": "Usou formato errado (tabela/gráfico)"
+    },
+    {
+      "id": "routing_missed_text_task",
+      "label": "Não entendeu que era tarefa de texto"
+    },
+    {
       "id": "too_long",
       "label": "Resposta muito longa"
     },

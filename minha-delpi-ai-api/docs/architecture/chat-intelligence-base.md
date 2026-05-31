@@ -43,8 +43,9 @@ Mensagem do usuário
 | Serviço | Função |
 |---------|--------|
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
-| `ChatIntentRouterService` | Classificação de intenção (Playbook 01): `classify` pré-turno, `resolve_executed` pós-prep; `metadata.adminDebug.intentRoute` e estágio `intent:{nome}` |
-| `ChatActivePendingService` | Pendências ativas (`metadata.activePending`) em respostas de parâmetro operacional; resolução no turno seguinte como `clarification_answer` com `resolvedParams`; snapshot de `intentRoute` no feedback negativo de roteamento |
+| `ChatIntentRouterService` | Roteamento de intenção (Playbook 02): `classify`, `resolve_executed`; intents `self_help`, `web_search`, `sql_task`, `mixed_task`, `presentation_task`; `metadata.intentRouting` + `adminDebug.intentRoute`; ver [`intent-routing.md`](./intent-routing.md) |
+| `ChatIntentRouterMetricsService` | `intentRouterMetrics` e espelho `intentRouting` na mensagem do assistente |
+| `ChatActivePendingService` | Pendências ativas (`metadata.activePending`); resolução como `clarification`; filial/sim; snapshot de roteamento no feedback `routing_*` |
 | `ChatOnboardingService` | Playbook 10 — cards/tour no catálogo, modo treinamento («me ensine a usar»), estágio `onboarding_training` |
 | `ChatOnboardingMilestoneService` | Marcos leves de adoção — `milestoneCelebrations` e `onboardingMilestonesAchieved` no metadata do assistente |
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |

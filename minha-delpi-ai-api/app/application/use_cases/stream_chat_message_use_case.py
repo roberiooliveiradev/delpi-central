@@ -730,6 +730,16 @@ class StreamChatMessageUseCase:
             intelligence_metadata=intelligence_metadata,
         )
 
+        from app.domain.services.chat_intent_router_metrics_service import (
+            ChatIntentRouterMetricsService,
+        )
+
+        ChatIntentRouterMetricsService.attach_to_assistant_metadata(
+            assistant_metadata,
+            prepared.intent_route,
+            normalized_message=request.message,
+        )
+
         from app.application.services.chat_active_pending_service import (
             ChatActivePendingService,
         )

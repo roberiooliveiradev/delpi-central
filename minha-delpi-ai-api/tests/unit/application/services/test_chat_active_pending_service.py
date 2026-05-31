@@ -54,7 +54,7 @@ def test_classify_resolves_active_pending_before_operational():
         previous_messages=history,
     )
 
-    assert route.intent == "clarification_answer"
+    assert route.intent == "clarification"
     assert route.sub_intent == "missing_product_code"
     assert route.resolved_params == {"productCode": "10080099"}
     assert "active_pending_resolved" in route.flags

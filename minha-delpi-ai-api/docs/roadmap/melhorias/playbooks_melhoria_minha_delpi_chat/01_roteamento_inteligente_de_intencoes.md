@@ -1,6 +1,6 @@
 # Playbook 01 — Roteamento inteligente de intenções
 
-> **Status (30/05/2026):** [Parcial](../STATUS_ROADMAP_MELHORIAS.md) — `ChatIntentRouterService`, `adminDebug.intentRoute`, estágio `intent:*`, `subIntent` operacional, `resolvedParams` (código na mensagem + follow-up de memória), `metadata.activePending` + resolução `clarification_answer`, feedback thumbs down com `routingSnapshot` (motivos `wrong_query`, `wrong_intent`, etc.).
+> **Status (30/05/2026):** Evoluído pelo [Playbook 02 — Roteamento de intenção](../playbook_roteamento_intencao_minha_delpi_chat.md). Este arquivo permanece como registro da Onda inicial; use o Playbook 02 para o contrato vigente (`intentRouting`, `self_help`, `web_search`, `sql_task`, R1–R15).
 
 ## Objetivo
 
