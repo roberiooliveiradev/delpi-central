@@ -1,7 +1,7 @@
 # Playbook 02 — Roteamento Inteligente de Intenção
 
 **Projeto:** Minha DELPI Chat IA  
-**Status (30/05/2026):** Implementado (Fases 1–3 e 5 parciais; Fase 4 mixed_task básico)  
+**Status (30/05/2026):** Implementado (Fases 1–5; Fase 4 mixed compound básico; UI desambiguação + admin métricas)  
 **Código:** `ChatIntentRouterService`, `ChatIntentRouterMetricsService`  
 **Arquitetura:** [`docs/architecture/intent-routing.md`](../../architecture/intent-routing.md)  
 **Validação:** `scripts/run_intent_routing_validation.sh`, regressão R1–R15 em `tests/fixtures/intent_router_regression_cases.py`
@@ -105,9 +105,8 @@ Motivos `routing_*` no `personality_playbook.json` e MFE `chatFeedbackReasons.ts
 
 | Fase | Itens |
 |------|--------|
-| 4 | Mixed tasks compostos (web+relatório, arquivo+lousa) |
-| 5 | Painel admin agregado de métricas de roteamento |
-| UI | Botões de desambiguação quando `ambiguous: true` |
+| 4+ | Orquestração automática de mixed compound (executar steps em sequência) |
+| UI+ | Chips dinâmicos por agente/ações permitidas |
 
 ---
 

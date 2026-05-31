@@ -37,6 +37,7 @@ import type {
   AdminLlmCostTableResponse,
   AdminLlmStatus,
   AdminDrawingAnalysisSummary,
+  AdminIntentRoutingSummary,
   AdminDocumentVisionSummary,
   AdminMetricsSummary,
   AdminMetricsTimeseriesResponse,
@@ -841,6 +842,21 @@ export async function getAdminDrawingAnalysisSummary(
   );
 
   return parseJsonResponse<AdminDrawingAnalysisSummary>(response);
+}
+
+export async function getAdminIntentRoutingSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminIntentRoutingSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/intent-routing/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminIntentRoutingSummary>(response);
 }
 
 export async function getAdminDocumentVisionSummary(

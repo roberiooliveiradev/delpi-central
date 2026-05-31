@@ -85,14 +85,14 @@ def main() -> int:
         "o que esta escrito no arquivo?",
         attachment_ids=["att-smoke"],
     )
-    if doc_route.intent != "attachment_document":
+    if doc_route.intent not in {"attachment_document", "attachment_task"}:
         print(
             f"FAIL unit: classify anexo -> {doc_route.intent}",
             file=sys.stderr,
         )
         failed += 1
     else:
-        print("OK unit: classify attachment_document")
+        print(f"OK unit: classify anexo intent={doc_route.intent}")
 
     try:
         token = _fetch_token()

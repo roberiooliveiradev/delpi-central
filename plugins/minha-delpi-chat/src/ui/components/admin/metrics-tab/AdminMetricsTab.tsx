@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getAdminDrawingAnalysisSummary,
   getAdminDocumentVisionSummary,
+  getAdminIntentRoutingSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
   saveAdminLlmCostTable,
@@ -10,6 +11,7 @@ import {
 import type {
   AdminDrawingAnalysisSummary,
   AdminDocumentVisionSummary,
+  AdminIntentRoutingSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
   AdminMetricsDistributionItem,
@@ -18,6 +20,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
+import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
 import "./AdminMetricsTab.css";
@@ -263,6 +266,10 @@ export function AdminMetricsTab({
     useState<AdminDocumentVisionSummary | null>(null);
   const [isLoadingDocumentVisionSummary, setIsLoadingDocumentVisionSummary] =
     useState(false);
+  const [intentRoutingSummary, setIntentRoutingSummary] =
+    useState<AdminIntentRoutingSummary | null>(null);
+  const [isLoadingIntentRoutingSummary, setIsLoadingIntentRoutingSummary] =
+    useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -314,6 +321,20 @@ export function AdminMetricsTab({
       .then(setDocumentVisionSummary)
       .catch(() => setDocumentVisionSummary(null))
       .finally(() => setIsLoadingDocumentVisionSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setIntentRoutingSummary(null);
+      return;
+    }
+
+    setIsLoadingIntentRoutingSummary(true);
+
+    void getAdminIntentRoutingSummary(metricsHours, { getAccessToken })
+      .then(setIntentRoutingSummary)
+      .catch(() => setIntentRoutingSummary(null))
+      .finally(() => setIsLoadingIntentRoutingSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -481,6 +502,12 @@ export function AdminMetricsTab({
           </p>
         </article>
       </div>
+
+      <AdminIntentRoutingMetrics
+        summary={intentRoutingSummary}
+        isLoading={isLoadingIntentRoutingSummary}
+        windowHours={windowLabel}
+      />
 
       <AdminDrawingAnalysisMetrics
         summary={drawingSummary}

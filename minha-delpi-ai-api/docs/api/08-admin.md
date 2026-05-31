@@ -99,6 +99,14 @@ Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
 
 Resposta: `analysesCount`, `byStatus`, `totalCriticalErrors`, `reportExportedCount`, `analyserOkCount`, `withPdfCount`, `recent[]`.
 
+### GET `/admin/metrics/intent-routing/summary`
+
+Resumo agregado do **roteamento de intenção** (Playbook 02), a partir de snapshots em `ai_audit_logs.metadata.intentRouting`.
+
+Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
+
+Resposta: `routesCount`, `ambiguousCount`, `mixedTaskCount`, `webSearchCount`, `textSkipToolsCount`, `byIntent`, `byDecision`, `recent[]`.
+
 ### GET `/admin/metrics/document-vision/summary`
 
 Resumo agregado da skill **Visão de Documentos DELPI** (Onda 13), a partir de snapshots em `ai_audit_logs.metadata.documentVision`.

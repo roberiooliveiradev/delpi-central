@@ -20,6 +20,9 @@ from app.application.use_cases.delete_knowledge_document_use_case import (
 from app.application.use_cases.get_admin_drawing_analysis_summary_use_case import (
     GetAdminDrawingAnalysisSummaryUseCase,
 )
+from app.application.use_cases.get_admin_intent_routing_summary_use_case import (
+    GetAdminIntentRoutingSummaryUseCase,
+)
 from app.application.use_cases.get_admin_document_vision_summary_use_case import (
     GetAdminDocumentVisionSummaryUseCase,
 )
@@ -183,6 +186,10 @@ def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
 
 def make_get_admin_drawing_analysis_summary_use_case() -> GetAdminDrawingAnalysisSummaryUseCase:
     return GetAdminDrawingAnalysisSummaryUseCase(PostgresAuditRepository())
+
+
+def make_get_admin_intent_routing_summary_use_case() -> GetAdminIntentRoutingSummaryUseCase:
+    return GetAdminIntentRoutingSummaryUseCase(PostgresAuditRepository())
 
 
 def make_get_admin_document_vision_summary_use_case() -> GetAdminDocumentVisionSummaryUseCase:

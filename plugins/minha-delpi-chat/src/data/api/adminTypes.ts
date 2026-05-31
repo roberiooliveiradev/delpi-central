@@ -348,6 +348,28 @@ export type AdminDrawingAnalysisRecentItem = {
   reportExported?: boolean | null;
 };
 
+export type AdminIntentRoutingRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  intent?: string | null;
+  subIntent?: string | null;
+  decision?: string | null;
+  ambiguous?: boolean | null;
+};
+
+export type AdminIntentRoutingSummary = {
+  windowHours: number;
+  since: string;
+  routesCount: number;
+  ambiguousCount: number;
+  mixedTaskCount: number;
+  webSearchCount: number;
+  textSkipToolsCount: number;
+  byIntent: Record<string, number>;
+  byDecision: Record<string, number>;
+  recent: AdminIntentRoutingRecentItem[];
+};
+
 export type AdminDrawingAnalysisSummary = {
   windowHours: number;
   since: string;

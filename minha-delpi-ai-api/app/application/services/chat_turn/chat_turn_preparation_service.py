@@ -82,6 +82,7 @@ class ChatTurnPreparationResult:
     text_correction_mode: bool = False
     text_correction_subtype: str | None = None
     intent_route: dict | None = None
+    routing_disambiguation_suggestions: list[dict[str, str]] | None = None
 
 
 class ChatTurnPreparationService:
@@ -359,6 +360,36 @@ class ChatTurnPreparationService:
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot
 
+        from app.domain.services.chat_intent_disambiguation_service import (
+            ChatIntentDisambiguationService,
+        )
+
+        routing_disambiguation = None
+        routing_disambiguation_answer = None
+        routing_disambiguation_suggestions: list[dict[str, str]] | None = None
+
+        if (
+            not canvas_action
+            and not pre_capability_answer
+            and not analysis_mode
+            and not text_task_pure
+        ):
+            routing_disambiguation = ChatIntentDisambiguationService.try_build(
+                message,
+                previous_messages=history_source,
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+            )
+
+            if routing_disambiguation:
+                routing_disambiguation_answer = routing_disambiguation.get("directAnswer")
+                raw_suggestions = routing_disambiguation.get("suggestions")
+
+                if isinstance(raw_suggestions, list):
+                    routing_disambiguation_suggestions = [
+                        dict(item) for item in raw_suggestions if isinstance(item, dict)
+                    ]
+
         from app.application.services.chat_session_memory_direct_answer_service import (
             ChatSessionMemoryDirectAnswerService,
         )
@@ -502,6 +533,7 @@ class ChatTurnPreparationService:
             or pre_capability_answer
             or missing_product_code_answer
             or ambiguous_period_answer
+            or routing_disambiguation_answer
             or interpretation_without_data_answer
             or skip_tools_for_user_identity
             or skip_tools_for_data_interpretation
@@ -531,6 +563,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("operational_parameter")
             elif ambiguous_period_answer:
                 pipeline_stages.append("operational_parameter")
+            elif routing_disambiguation_answer:
+                pipeline_stages.append("intent_disambiguation")
             elif interpretation_without_data_answer:
                 pipeline_stages.append("data_interpretation_empty")
             elif small_talk_direct:
@@ -744,6 +778,10 @@ class ChatTurnPreparationService:
 
         if not direct_answer and ambiguous_period_answer:
             direct_answer = ambiguous_period_answer
+            skip_rag = True
+
+        if not direct_answer and routing_disambiguation_answer:
+            direct_answer = routing_disambiguation_answer
             skip_rag = True
 
         if not direct_answer and interpretation_without_data_answer:
@@ -993,5 +1031,6 @@ class ChatTurnPreparationService:
             text_correction_mode=bool(text_correction_mode),
             text_correction_subtype=text_correction_subtype,
             intent_route=intent_route,
+            routing_disambiguation_suggestions=routing_disambiguation_suggestions,
         )
 

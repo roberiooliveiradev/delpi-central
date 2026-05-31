@@ -1304,6 +1304,16 @@ export function ChatMessageList({
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.routingDisambiguationSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Sobre o produto"
+                  ariaLabel="Escolha o que consultar sobre o produto"
+                />
                 <ChatMilestoneCelebration
                   celebrations={
                     (message.metadata?.milestoneCelebrations as

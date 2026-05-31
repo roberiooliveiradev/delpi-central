@@ -18,7 +18,9 @@ Mensagem → normalização → segurança → classificação (classify)
 | Serviço | Papel |
 |---------|--------|
 | `ChatIntentRouterService` | `classify` (pré-turno), `resolve_executed` (pós-prep) |
-| `ChatIntentRouterMetricsService` | `intentRouting` + `intentRouterMetrics` na resposta |
+| `ChatIntentRouterMetricsService` | `intentRouting` + `intentRouterMetrics`; agregação admin via audit |
+| `ChatIntentDisambiguationService` | Resposta direta + chips quando `ambiguous` com código de produto |
+| `ChatIntentDisambiguationFollowUpService` | `metadata.routingDisambiguationSuggestions` |
 | `ChatActivePendingService` | Pendências (`clarification`) |
 | `ChatReferenceResolutionService` / memória | Follow-up e `resolvedParams` |
 | `ChatWebSearchIntentService` | Detecção de `web_search` explícito |
@@ -42,6 +44,12 @@ Mensagem → normalização → segurança → classificação (classify)
 - `metadata.intentRouting` — contrato Playbook 02 (intent, subIntent, flags, resolvedParams, …)  
 - `metadata.adminDebug.intentRoute` — compatibilidade admin  
 - `metadata.intentRouterMetrics` — snapshot para métricas  
+- `metadata.routingDisambiguationSuggestions` — botões Cadastro/Estoque/Fornecedores… (MFE)
+
+## Admin
+
+- `GET /admin/metrics/intent-routing/summary?hours=168` — agregado de `audit_metadata.intentRouting`
+- Painel Métricas (MFE): `AdminIntentRoutingMetrics`
 
 ## Testes
 

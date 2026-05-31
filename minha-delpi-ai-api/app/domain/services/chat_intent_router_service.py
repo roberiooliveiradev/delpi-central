@@ -213,6 +213,7 @@ class ChatIntentRouterService:
         "data_interpretation": ("follow_up", "data_interpretation", 5),
         "data_interpretation_empty": ("follow_up", "data_interpretation_empty", 5),
         "operational_parameter": ("clarification", "missing_params", 2),
+        "intent_disambiguation": ("operational_query", "scope_clarification", 6),
         "tools": ("operational_query", None, 6),
         "capabilities": ("self_help", "capabilities_catalog", 9),
         "small_talk": ("small_talk", None, 9),
@@ -463,6 +464,26 @@ class ChatIntentRouterService:
                 ),
                 decision="skip_tools",
                 reason="explicit_text_task",
+            )
+
+        compound_steps = cls._mixed_compound_steps(normalized)
+
+        if compound_steps:
+            return cls._with_decision(
+                IntentRouteResult(
+                    intent="mixed_task",
+                    sub_intent="compound",
+                    confidence=0.86,
+                    requires_tool=True,
+                    requires_rag="attachment_summary" in compound_steps,
+                    requires_web="web_search" in compound_steps,
+                    requires_llm=True,
+                    priority_applied=3,
+                    mixed_steps=compound_steps,
+                    flags=("mixed_task", "mixed_compound"),
+                ),
+                decision="mixed_decompose",
+                reason="compound_mixed_task",
             )
 
         if ChatTextTaskIntentService.is_mixed_text_and_operational(normalized):
@@ -889,6 +910,47 @@ class ChatIntentRouterService:
                 return True
 
         return False
+
+    @staticmethod
+    def _mixed_compound_steps(message: str) -> tuple[str, ...] | None:
+        lowered = message.lower()
+        steps: list[str] = []
+
+        has_web = any(
+            term in lowered
+            for term in (
+                "pesquise na web",
+                "pesquisa na web",
+                "na internet",
+                "busque na web",
+            )
+        )
+        has_report = any(
+            term in lowered for term in ("relatório", "relatorio", "resumo executivo", "report")
+        )
+
+        if has_web and has_report:
+            steps.extend(["web_search", "report_compose"])
+
+        has_attachment = any(
+            term in lowered
+            for term in ("resuma o pdf", "resuma esse pdf", "resuma o anexo", "resuma o arquivo")
+        )
+        has_canvas = any(term in lowered for term in ("lousa", "canvas"))
+
+        if has_attachment and has_canvas:
+            steps.extend(["attachment_summary", "canvas_placement"])
+
+        has_table = "tabela" in lowered or "em tabela" in lowered
+        has_chart = any(term in lowered for term in ("gráfico", "grafico", "em pizza", "em barras"))
+
+        if has_table and has_chart:
+            steps.extend(["presentation_table", "presentation_chart"])
+
+        if len(steps) < 2:
+            return None
+
+        return tuple(steps)
 
     @staticmethod
     def _mixed_task_steps(message: str) -> tuple[str, ...]:

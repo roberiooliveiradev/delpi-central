@@ -740,6 +740,15 @@ class StreamChatMessageUseCase:
             normalized_message=request.message,
         )
 
+        from app.application.services.chat_intent_disambiguation_follow_up_service import (
+            ChatIntentDisambiguationFollowUpService,
+        )
+
+        ChatIntentDisambiguationFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            suggestions=prepared.routing_disambiguation_suggestions,
+        )
+
         from app.application.services.chat_active_pending_service import (
             ChatActivePendingService,
         )
@@ -975,6 +984,11 @@ class StreamChatMessageUseCase:
             stream_audit_metadata,
             intelligence=intelligence_metadata,
             tool_context=tool_context,
+        )
+
+        ChatIntentRouterMetricsService.enrich_audit_metadata(
+            stream_audit_metadata,
+            route=prepared.intent_route,
         )
 
         self.audit_repository.log(
