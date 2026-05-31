@@ -25,6 +25,8 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 ## Playbook 07 — Anexos (início)
 
 - `attachmentFollowUpSuggestions` no metadata do assistant quando a mensagem do usuário trouxe anexos.
+- `ChatAttachmentWelcomeService` — resposta automática ao enviar anexo (mensagem vazia ou «segue anexo»).
+- Correção de quebras de linha na extração CSV/XLSX/PDF (`ChatAttachmentTextExtractor`).
 - Chips: Resumir, Corrigir, Traduzir, Extrair pendências, Criar checklist (`personality_playbook.json`).
 
 ## Interatividade (`playbook_interatividade_botoes`)

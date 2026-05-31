@@ -40,6 +40,17 @@ class ChatSessionMemoryService:
             }
 
         overlay = self.repository.load_active_overlay(session_id)
+
+        if overlay.get("cleared"):
+            cleared_snapshot = {
+                **snapshot,
+                "lastEntities": {},
+                "behaviorInstructions": {},
+                "persistedMemoryApplied": False,
+                "persistedMemoryCleared": True,
+            }
+            return cleared_snapshot
+
         merged = self._merge_overlay(snapshot, overlay)
 
         if overlay.get("lastEntities") or overlay.get("behaviorInstructions"):

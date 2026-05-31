@@ -11,8 +11,11 @@ class FakeMemoryRepository:
         }
         self.synced: list[dict] = []
         self.cleared = 0
+        self.clear_marker = False
 
     def load_active_overlay(self, session_id):
+        if self.clear_marker:
+            return {"lastEntities": {}, "behaviorInstructions": {}, "cleared": True}
         return dict(self.overlay)
 
     def sync_from_snapshot(self, session_id, snapshot, *, source_message_id=None):
@@ -26,6 +29,7 @@ class FakeMemoryRepository:
 
     def deactivate_all(self, session_id):
         self.cleared += 1
+        self.clear_marker = True
         self.overlay = {"lastEntities": {}, "behaviorInstructions": {}}
         return 2
 
@@ -91,6 +95,24 @@ def test_persist_post_turn_skips_after_clear():
     )
 
     assert repo.synced == []
+
+
+def test_apply_after_api_clear_zeros_entities():
+    repo = FakeMemoryRepository()
+    repo.clear_marker = True
+    service = ChatSessionMemoryService(repo)
+
+    snapshot = service.apply_to_pre_turn(
+        session_id=uuid4(),
+        snapshot={
+            "lastEntities": {"productCode": "10080001"},
+            "behaviorInstructions": {"tone": "simple"},
+        },
+        message="mostre fornecedores",
+    )
+
+    assert snapshot["lastEntities"] == {}
+    assert snapshot["persistedMemoryCleared"] is True
 
 
 def test_persist_post_turn_syncs_snapshot():

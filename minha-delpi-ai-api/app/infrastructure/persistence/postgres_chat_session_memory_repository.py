@@ -15,6 +15,9 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
     _BEHAVIOR_KEYS = frozenset({"responseFormat", "tone"})
 
     def load_active_overlay(self, session_id: UUID) -> dict:
+        if self._has_clear_marker(session_id):
+            return {"lastEntities": {}, "behaviorInstructions": {}, "cleared": True}
+
         now = datetime.now(timezone.utc)
         rows = (
             AiChatSessionMemoryModel.query.filter(
@@ -62,6 +65,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             return
 
         now = datetime.now(timezone.utc)
+        self._clear_clear_marker(session_id, now=now)
         expires_at = now + timedelta(days=30)
         entities = snapshot.get("lastEntities") or {}
         behavior = snapshot.get("behaviorInstructions") or {}
@@ -106,6 +110,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 synchronize_session=False,
             )
         )
+        self._set_clear_marker(session_id, now=now)
         return int(updated or 0)
 
     def expire_stale(self, *, older_than_days: int = 30) -> int:
@@ -121,6 +126,52 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             )
         )
         return int(deactivated or 0)
+
+    def _has_clear_marker(self, session_id: UUID) -> bool:
+        return (
+            AiChatSessionMemoryModel.query.filter(
+                AiChatSessionMemoryModel.session_id == session_id,
+                AiChatSessionMemoryModel.memory_type == "meta",
+                AiChatSessionMemoryModel.key == "cleared",
+                AiChatSessionMemoryModel.active.is_(True),
+            ).first()
+            is not None
+        )
+
+    def _set_clear_marker(self, session_id: UUID, *, now: datetime) -> None:
+        for row in AiChatSessionMemoryModel.query.filter(
+            AiChatSessionMemoryModel.session_id == session_id,
+            AiChatSessionMemoryModel.memory_type == "meta",
+            AiChatSessionMemoryModel.key == "cleared",
+            AiChatSessionMemoryModel.active.is_(True),
+        ):
+            row.active = False
+            row.updated_at = now
+
+        db.session.add(
+            AiChatSessionMemoryModel(
+                session_id=session_id,
+                memory_type="meta",
+                key="cleared",
+                value_json="true",
+                scope="session",
+                active=True,
+                created_at=now,
+                updated_at=now,
+                expires_at=now + timedelta(hours=24),
+            )
+        )
+
+    def _clear_clear_marker(self, session_id: UUID, *, now: datetime) -> None:
+        AiChatSessionMemoryModel.query.filter(
+            AiChatSessionMemoryModel.session_id == session_id,
+            AiChatSessionMemoryModel.memory_type == "meta",
+            AiChatSessionMemoryModel.key == "cleared",
+            AiChatSessionMemoryModel.active.is_(True),
+        ).update(
+            {"active": False, "updated_at": now},
+            synchronize_session=False,
+        )
 
     def _upsert_row(
         self,

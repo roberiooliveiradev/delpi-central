@@ -307,6 +307,20 @@ class ChatTurnPreparationService:
             message=message,
         )
 
+        from app.application.services.chat_attachment_welcome_service import (
+            ChatAttachmentWelcomeService,
+        )
+
+        attachment_welcome_direct = None
+
+        if ChatAttachmentWelcomeService.should_welcome(
+            message,
+            attachment_ids=attachment_ids,
+        ):
+            attachment_welcome_direct = ChatAttachmentWelcomeService.build_direct_answer(
+                attachments=attachments,
+            )
+
         working_memory_snapshot = ChatWorkingMemoryService.build_pre_turn_snapshot(
             message=message,
             previous_messages=history_source,
@@ -386,6 +400,7 @@ class ChatTurnPreparationService:
             or skip_tools_for_data_interpretation
             or small_talk_direct
             or utility_direct
+            or attachment_welcome_direct
             or text_task_pure
         ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
@@ -406,6 +421,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("small_talk")
             elif utility_direct:
                 pipeline_stages.append("utility_direct")
+            elif attachment_welcome_direct:
+                pipeline_stages.append("attachment_welcome")
             elif text_task_pure:
                 pipeline_stages.append("text_task")
             tool_context = {
@@ -497,6 +514,7 @@ class ChatTurnPreparationService:
             )
             or bool(small_talk_direct)
             or bool(utility_direct)
+            or bool(attachment_welcome_direct)
             or bool(text_task_pure)
             or operational_optimize
             or analysis_mode
@@ -512,6 +530,8 @@ class ChatTurnPreparationService:
             direct_answer = small_talk_direct
         elif utility_direct:
             direct_answer = utility_direct
+        elif attachment_welcome_direct:
+            direct_answer = attachment_welcome_direct
         elif interpretation_without_data_answer:
             direct_answer = interpretation_without_data_answer
         elif analysis_mode:
@@ -532,6 +552,8 @@ class ChatTurnPreparationService:
             )
 
         if canvas_action or pre_capability_answer or small_talk_direct or utility_direct or (
+            attachment_welcome_direct
+        ) or (
             analysis_mode and direct_answer
         ) or interpretation_without_data_answer:
             skip_rag = True

@@ -87,7 +87,7 @@ class ChatAttachmentTextExtractor:
 
         return {
             "supported": True,
-            "content": "\\n".join(rows),
+            "content": "\n".join(rows),
             "metadata": {
                 "extractor": "csv",
                 "extension": ".csv",
@@ -150,7 +150,7 @@ class ChatAttachmentTextExtractor:
 
             return {
                 "supported": True,
-                "content": "\\n".join(lines),
+                "content": "\n".join(lines),
                 "metadata": {
                     "extractor": "openpyxl",
                     "extension": ".xlsx",
@@ -176,7 +176,7 @@ class ChatAttachmentTextExtractor:
 
             return {
                 "supported": True,
-                "content": "\\n\\n".join(pages),
+                "content": "\n\n".join(pages),
                 "metadata": {
                     "extractor": "pypdf",
                     "extension": ".pdf",

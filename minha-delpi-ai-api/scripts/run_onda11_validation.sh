@@ -121,6 +121,7 @@ pytest \
   tests/unit/domain/services/test_chat_context_assertiveness_regression.py \
   tests/unit/domain/services/test_chat_working_memory_service.py \
   tests/unit/application/services/test_chat_session_memory_service.py \
+  tests/unit/application/services/test_chat_attachment_welcome_service.py \
   tests/unit/domain/services/test_chat_follow_up_intent_service.py \
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   tests/unit/domain/services/test_chat_text_task_intent_service.py \
@@ -155,6 +156,10 @@ if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
   echo ""
   echo "== Onda 11 — smoke roteamento operacional (estoque vs capacidades) =="
   python scripts/smoke_operational_routing.py
+
+  echo ""
+  echo "== Onda 11 — smoke memória persistida (Fase 4) =="
+  python scripts/smoke_session_memory_persist.py
 fi
 
 echo ""

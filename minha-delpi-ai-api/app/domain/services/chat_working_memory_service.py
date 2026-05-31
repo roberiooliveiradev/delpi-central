@@ -54,7 +54,10 @@ class ChatWorkingMemoryService:
             previous_messages=previous_messages,
         ))
 
-        entities = dict(snapshot.get("lastEntities") or {})
+        if snapshot.get("persistedMemoryCleared"):
+            entities: dict[str, str] = {}
+        else:
+            entities = dict(snapshot.get("lastEntities") or {})
         for code in cls._extract_codes_from_tool_calls(tool_calls):
             entities["productCode"] = code
             break
@@ -156,6 +159,7 @@ class ChatWorkingMemoryService:
             "resolvedReferences": snapshot.get("resolvedReferences") or [],
             "followUpDetected": bool(snapshot.get("followUpDetected")),
             "usedMemoryKeys": snapshot.get("usedMemoryKeys") or [],
+            "clearedThisTurn": bool(snapshot.get("persistedMemoryCleared")),
         }
 
     @classmethod
