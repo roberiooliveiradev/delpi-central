@@ -8,7 +8,9 @@ import {
   listShortcutFieldIds,
   normalizeShortcutTemplate,
   resolveShortcutFields,
+  resolveStarterQueryForFeature,
   validateShortcutValues,
+  WEB_SEARCH_STARTER_QUERY,
 } from "./chatShortcutPrompt";
 
 describe("chatShortcutPrompt", () => {
@@ -52,6 +54,18 @@ describe("chatShortcutPrompt", () => {
     expect(hasShortcutPlaceholders(query)).toBe(true);
     expect(listShortcutFieldIds(query)).toEqual(["productCode"]);
     expect(resolveShortcutFields(query)).toHaveLength(1);
+  });
+
+  it("resolve novidade de pesquisa web para template com placeholder", () => {
+    expect(
+      resolveStarterQueryForFeature(
+        "Pesquise na web sobre manual WEG",
+        "web_search",
+      ),
+    ).toBe(WEB_SEARCH_STARTER_QUERY);
+    expect(resolveStarterQueryForFeature("consultar produto", "product")).toBe(
+      "consultar produto",
+    );
   });
 
   it("substitui {{campo}} por dica legível na exibição", () => {

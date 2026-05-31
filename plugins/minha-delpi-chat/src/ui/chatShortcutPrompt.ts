@@ -241,6 +241,31 @@ export function extractProductCodeFromContextChips(
   return null;
 }
 
+/** Template padrão ao clicar em novidades/atalho de pesquisa web. */
+export const WEB_SEARCH_STARTER_QUERY = "pesquise na web sobre {{searchQuery}}";
+
+export function isWebSearchStarterQuery(query: string): boolean {
+  const normalized = normalizeShortcutTemplate(query.trim());
+
+  return (
+    normalized.includes("{{searchQuery}}") ||
+    /\b(pesquise|pesquisa|busque|busca)\b.*\b(web|internet|online)\b/i.test(normalized)
+  );
+}
+
+export function resolveStarterQueryForFeature(
+  query: string | null | undefined,
+  featureId?: string | null,
+): string | null {
+  if (featureId === "web_search") {
+    return WEB_SEARCH_STARTER_QUERY;
+  }
+
+  const trimmed = String(query ?? "").trim();
+
+  return trimmed || null;
+}
+
 /** Textos do diálogo de atalhos — linguagem para o usuário final (sem «composer»). */
 export const CHAT_SHORTCUT_PROMPT_COPY = {
   /** Coloca a pergunta no campo de mensagem; o usuário revisa e envia. */
@@ -267,5 +292,10 @@ export const CHAT_SHORTCUT_PROMPT_COPY = {
     title: "Preencha para continuar",
     description: "Informe os dados antes de reenviar a mensagem.",
     confirmLabel: "Reenviar",
+  },
+  webSearch: {
+    title: "Pesquisa na web",
+    description: "Informe o assunto que deseja buscar na internet pública.",
+    confirmLabel: "Pesquisar",
   },
 } as const;

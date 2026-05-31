@@ -5,6 +5,7 @@ import type {
   AssistantCatalogFeature,
   AssistantCatalogResponse,
 } from "../../data/api/chatTypes";
+import { resolveStarterQueryForFeature } from "../chatShortcutPrompt";
 import { ModalPortal } from "./ModalPortal";
 
 import "./ChatHelpPanel.css";
@@ -17,7 +18,7 @@ type ChatHelpPanelProps = {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onClose: () => void;
-  onTryPrompt: (query: string) => void;
+  onTryPrompt: (query: string, featureId?: string | null) => void;
 };
 
 function resolveAvailabilityLabel(
@@ -61,7 +62,7 @@ function FeatureCard({
 }: {
   feature: AssistantCatalogFeature;
   catalog: AssistantCatalogResponse | null;
-  onTryPrompt: (query: string) => void;
+  onTryPrompt: (query: string, featureId?: string | null) => void;
 }) {
   const badge = resolveAvailabilityLabel(feature, catalog);
   const examples = (feature.examples ?? []).slice(0, 3);
@@ -81,7 +82,13 @@ function FeatureCard({
             <button
               key={example}
               type="button"
-              onClick={() => onTryPrompt(example)}
+              onClick={() => {
+                const query = resolveStarterQueryForFeature(example, feature.id);
+
+                if (query) {
+                  onTryPrompt(query, feature.id);
+                }
+              }}
             >
               {example}
             </button>
@@ -187,8 +194,23 @@ export function ChatHelpPanel({
                   <article key={highlight.featureId ?? highlight.title} className="mdc-chat-help-panel__highlight-card">
                     <h4>{highlight.title}</h4>
                     {highlight.description ? <p>{highlight.description}</p> : null}
-                    {highlight.exampleQuery ? (
-                      <button type="button" onClick={() => onTryPrompt(highlight.exampleQuery!)}>
+                    {resolveStarterQueryForFeature(
+                      highlight.exampleQuery,
+                      highlight.featureId,
+                    ) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const query = resolveStarterQueryForFeature(
+                            highlight.exampleQuery,
+                            highlight.featureId,
+                          );
+
+                          if (query) {
+                            onTryPrompt(query, highlight.featureId);
+                          }
+                        }}
+                      >
                         Experimentar
                       </button>
                     ) : null}

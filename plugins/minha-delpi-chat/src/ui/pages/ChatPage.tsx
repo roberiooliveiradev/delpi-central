@@ -31,6 +31,7 @@ import {
   CHAT_SHORTCUT_PROMPT_COPY,
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
+  isWebSearchStarterQuery,
 } from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
@@ -1270,20 +1271,30 @@ export function ChatPage({
     );
   }
 
-  function handleHomeStarter(query: string) {
+  function handleHomeStarter(query: string, featureId?: string | null) {
     if (homeStarterInFlightRef.current || shortcutPromptResolvingRef.current) {
       return;
     }
 
+    const promptOptions =
+      featureId === "web_search" || isWebSearchStarterQuery(query)
+        ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
+        : shortcutSendPromptOptions;
+
     homeStarterInFlightRef.current = true;
 
-    void promptAndSendMessage({ content: query }).finally(() => {
+    void promptAndSendMessage({ content: query }, promptOptions).finally(() => {
       homeStarterInFlightRef.current = false;
     });
   }
 
-  async function handleHelpTryPrompt(query: string) {
-    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.send);
+  async function handleHelpTryPrompt(query: string, featureId?: string | null) {
+    const promptOptions =
+      featureId === "web_search" || isWebSearchStarterQuery(query)
+        ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
+        : CHAT_SHORTCUT_PROMPT_COPY.send;
+
+    const resolved = await resolveShortcutQuery(query, promptOptions);
 
     if (!resolved) {
       return;
@@ -1304,7 +1315,11 @@ export function ChatPage({
   }
 
   async function handleInsertQuery(query: string) {
-    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.insert);
+    const promptOptions = isWebSearchStarterQuery(query)
+      ? CHAT_SHORTCUT_PROMPT_COPY.webSearch
+      : CHAT_SHORTCUT_PROMPT_COPY.insert;
+
+    const resolved = await resolveShortcutQuery(query, promptOptions);
 
     if (resolved) {
       setDraft(resolved);
@@ -2109,8 +2124,8 @@ export function ChatPage({
             setHelpPanelOpen(false);
             setHelpSearchQuery("");
           }}
-          onTryPrompt={(query) => {
-            void handleHelpTryPrompt(query);
+          onTryPrompt={(query, featureId) => {
+            void handleHelpTryPrompt(query, featureId);
           }}
         />
       </section>

@@ -5,6 +5,7 @@ import type {
   AssistantContextualHighlight,
   AssistantOnboardingPayload,
 } from "../../data/api/chatTypes";
+import { resolveStarterQueryForFeature } from "../chatShortcutPrompt";
 import { splitWelcomeHeadline } from "../welcomeHeadline";
 
 import "./ChatEmptyState.css";
@@ -17,7 +18,7 @@ type ChatEmptyStateProps = {
   catalogError?: boolean;
   selectedProfileId?: string | null;
   onSelectProfile?: (profileId: string) => void;
-  onUseStarter?: (query: string) => void;
+  onUseStarter?: (query: string, featureId?: string | null) => void;
   onStartTour?: () => void;
 };
 
@@ -167,7 +168,7 @@ export function ChatEmptyState({
               key={card.id}
               type="button"
               className="mdc-chat-empty-state__card"
-              onClick={() => onUseStarter(card.query)}
+              onClick={() => onUseStarter(card.query, card.id)}
             >
               <strong>{card.label}</strong>
               {card.description ? <span>{card.description}</span> : null}
@@ -186,8 +187,13 @@ export function ChatEmptyState({
               className="mdc-chat-empty-state__highlight-chip"
               title={highlight.description}
               onClick={() => {
-                if (highlight.exampleQuery) {
-                  onUseStarter?.(highlight.exampleQuery);
+                const query = resolveStarterQueryForFeature(
+                  highlight.exampleQuery,
+                  highlight.featureId,
+                );
+
+                if (query) {
+                  onUseStarter?.(query, highlight.featureId);
                 }
               }}
             >

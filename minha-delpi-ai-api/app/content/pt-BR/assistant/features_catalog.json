@@ -300,7 +300,7 @@
       "helpTopicId": "web",
       "featureFlag": "web_search_enabled",
       "examples": [
-        "Pesquise na web sobre manual WEG CFW500",
+        "pesquise na web sobre {{searchQuery}}",
         "Busque na internet sobre norma NR-12",
         "Salvar fontes da pesquisa no projeto"
       ],
