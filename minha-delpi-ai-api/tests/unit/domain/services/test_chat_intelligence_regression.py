@@ -149,6 +149,12 @@ def test_agentic_skip_on_stock_refinement_regression(message, expected, history)
     )
 
 
+def test_agentic_skip_on_follow_up_chip_query():
+    assert ChatOperationalParameterService.should_skip_agentic_loop(
+        "mostre a estrutura do produto 10080001",
+    )
+
+
 @pytest.mark.parametrize(
     "case",
     SELECTION_CASES

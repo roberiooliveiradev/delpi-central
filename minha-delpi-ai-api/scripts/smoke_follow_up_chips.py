@@ -147,7 +147,10 @@ def _validate_unit_build() -> list[str]:
                 },
             }
         ],
-        workspace_context={"workingMemory": {"lastEntities": {"productCode": "10080001"}}},
+        workspace_context={
+            "actionsEnabled": True,
+            "workingMemory": {"lastEntities": {"productCode": "10080001"}},
+        },
     )
     by_label = {item["label"]: item["query"] for item in suggestions}
 

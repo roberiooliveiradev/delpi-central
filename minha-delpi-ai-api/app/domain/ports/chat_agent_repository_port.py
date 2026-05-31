@@ -40,6 +40,14 @@ class ChatAgentRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def get_enabled_system_by_name(
+        self,
+        name: str,
+        user_id: UUID | None = None,
+    ) -> ChatAgent | None:
+        raise NotImplementedError
+
+    @abstractmethod
     def get_for_preview(self, agent_id: UUID, user_id: UUID) -> ChatAgent | None:
         raise NotImplementedError
 

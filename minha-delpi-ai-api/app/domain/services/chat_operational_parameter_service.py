@@ -114,6 +114,13 @@ class ChatOperationalParameterService:
         if ChatFastPathService.is_small_talk(message):
             return True
 
+        from app.domain.services.chat_follow_up_chip_query_service import (
+            ChatFollowUpChipQueryService,
+        )
+
+        if ChatFollowUpChipQueryService.is_explicit_chip_query(message):
+            return True
+
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )

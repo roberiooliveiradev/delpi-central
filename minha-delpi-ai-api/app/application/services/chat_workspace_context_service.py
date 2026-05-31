@@ -6,6 +6,9 @@ from app.application.services.agent_specialization_service import (
 from app.application.services.chat_agent_skills_service import ChatAgentSkillsService
 from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
+from app.application.services.chat_platform_default_agent_service import (
+    ChatPlatformDefaultAgentService,
+)
 
 
 class ChatWorkspaceContextService:
@@ -32,6 +35,12 @@ class ChatWorkspaceContextService:
                 project, _role = result
 
         agent_id = session.agent_id or (project.default_agent_id if project else None)
+
+        if not agent_id:
+            agent_id = ChatPlatformDefaultAgentService.resolve_agent_id(
+                self.agent_repository,
+                user_id,
+            )
 
         if agent_id:
             agent = self.agent_repository.get_enabled_by_id(agent_id, user_id=user_id)

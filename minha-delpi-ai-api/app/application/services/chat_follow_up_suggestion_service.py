@@ -82,6 +82,9 @@ class ChatFollowUpSuggestionService:
         if not chips:
             return []
 
+        if not cls._operational_actions_ready(workspace_context, outcome):
+            return []
+
         product_code = cls._resolve_product_code(
             message=message,
             answer=answer,
@@ -197,6 +200,25 @@ class ChatFollowUpSuggestionService:
             return 1
 
         return 0
+
+    @classmethod
+    def _operational_actions_ready(
+        cls,
+        workspace_context: dict | None,
+        outcome: str,
+    ) -> bool:
+        if outcome == "text":
+            return True
+
+        context = workspace_context or {}
+
+        if context.get("actionsEnabled"):
+            return True
+
+        if outcome in {"generic", "empty", "error"}:
+            return True
+
+        return False
 
     @classmethod
     def _chip_labels(cls, outcome: str) -> list[str]:

@@ -136,6 +136,39 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return entity
 
+    def get_enabled_system_by_name(
+        self,
+        name: str,
+        user_id: UUID | None = None,
+    ) -> ChatAgent | None:
+        normalized_name = str(name or "").strip()
+
+        if not normalized_name:
+            return None
+
+        model = (
+            AiChatAgentModel.query.filter(
+                AiChatAgentModel.name == normalized_name,
+                AiChatAgentModel.enabled.is_(True),
+                AiChatAgentModel.visibility == "system",
+            )
+            .order_by(AiChatAgentModel.published_version.desc())
+            .first()
+        )
+
+        if not model:
+            return None
+
+        if user_id and not self._can_access(model, user_id):
+            return None
+
+        if int(model.published_version or 0) < 1:
+            if user_id and self._can_edit(model, user_id):
+                return self._to_runtime_entity(model)
+            return None
+
+        return self._to_runtime_entity(model)
+
     def get_for_preview(self, agent_id: UUID, user_id: UUID) -> ChatAgent | None:
         record = self.get_accessible_by_id(agent_id, user_id)
 

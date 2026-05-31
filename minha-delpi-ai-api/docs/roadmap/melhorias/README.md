@@ -47,6 +47,10 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/upsert_agent_provider.py` | Habilitar/desabilitar provider no agente (API, sem migration) |
 | `scripts/smoke_sql_safety.py` | Bloqueio de SQL destrutivo (Playbook 08) |
 
+## Chat «comum» e atalhos operacionais
+
+Sessões **sem agente escolhido** passam a herdar o agente de sistema configurado (`CHAT_PLATFORM_DEFAULT_AGENT_NAME`, padrão **Agente Minha DELPI**) para que chips como «Ver estoque» executem consultas reais. Chips operacionais só aparecem quando `actionsEnabled`; cliques em atalhos com código de produto **não entram no loop agentic** (fast path de seleção OpenAPI).
+
 ## Homologação local (api-externa)
 
 Com **api-delpi** indisponível no ambiente local, use:

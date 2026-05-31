@@ -57,6 +57,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** badges em admin debug ampliado; menu em árvore/chip de contexto (interatividade).
 
+## Atalhos «Próximos passos» vs chat comum
+
+| Entrega | Detalhe |
+|---------|---------|
+| Agente padrão | `ChatPlatformDefaultAgentService` — sessão sem agente usa agente de sistema (nome/ID via env) |
+| Chips condicionais | `ChatFollowUpSuggestionService` não sugere «Ver estoque» etc. sem `actionsEnabled` |
+| Sem agentic em chip | `ChatFollowUpChipQueryService` + `should_skip_agentic_loop` para consultas explícitas dos atalhos |
+
 ## Infra local (gateway)
 
 | Problema | Correção |
