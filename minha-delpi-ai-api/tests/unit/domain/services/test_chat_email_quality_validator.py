@@ -47,3 +47,23 @@ def test_invented_deadline_without_user_input():
         user_message="escreva um e-mail de cobrança cordial",
     )
     assert result["passed"] is False
+
+
+def test_sanitize_replaces_invented_signature():
+    answer = """Assunto: Teste
+
+Gostaria de informar.
+
+Atenciosamente,
+Roberto Silva
+Superadministrador"""
+    sanitized, fixes = ChatEmailQualityValidator.sanitize(answer)
+    assert "signature_placeholder" in fixes
+    assert "[Seu nome]" in sanitized
+    assert "Roberto Silva" not in sanitized
+
+
+def test_weak_subject_flagged():
+    answer = "Assunto: Solicitação de Criação de IA para Minha DELPI\n\nGostaria de apresentar uma proposta."
+    result = ChatEmailQualityValidator.validate(answer)
+    assert any(c["criterion"] == "subject_quality" and not c["ok"] for c in result["checks"])

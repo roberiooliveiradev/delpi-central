@@ -137,6 +137,18 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** lousa como editor de rascunho (Fase 3), preferências sessão (Fase 4), tarefas mistas (Fase 5).
 
+## Escrita de e-mails (`playbook_escrita_emails_minha_delpi_chat`)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Fase 1 | `ChatEmailIntentService`, policy `email-writing.md`, `ChatEmailFollowUpService`, chips `emailFollowUpSuggestions`, metadata `textTask` |
+| Fase 2 | `ChatEmailQualityValidator` (assunto fraco, sanitize), `ChatEmailAnswerGuardService`, `ChatEmailPromptSupplementService`, `ChatEmailTurnService` |
+| Fase 3 (parcial) | `ChatEmailPreferenceService` + memória `behaviorInstructions.emailWriting` |
+| Fase 4 | MFE: botão «Copiar e-mail» quando `textTask.type === email` |
+| Validação | `scripts/run_email_writing_validation.sh`, `scripts/smoke_email_writing.py` |
+
+**Backlog:** e-mail pós-consulta operacional enriquecido (Fase 5), preferências completas na sessão.
+
 ## Descontraído (`playbook_chat_interativo_descontraido`)
 
 | Entrega | Detalhe |

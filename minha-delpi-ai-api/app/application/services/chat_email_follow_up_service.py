@@ -55,6 +55,19 @@ class ChatEmailFollowUpService:
             metadata["emailQuality"] = quality
 
     @classmethod
+    def merge_guard_metadata(cls, metadata: dict, guard_meta: dict[str, Any] | None) -> None:
+        if not guard_meta:
+            return
+
+        metadata.update(guard_meta)
+
+        guard = guard_meta.get("emailGuard") or {}
+        quality = guard.get("quality")
+
+        if isinstance(quality, dict):
+            metadata["emailQuality"] = quality
+
+    @classmethod
     def build_suggestions(cls, subtype: str | None = None) -> list[dict[str, str]]:
         labels = list(
             _playbook().get("emailFollowUpChips")

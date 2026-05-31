@@ -265,6 +265,15 @@ class SendChatMessageUseCase:
                 operational_optimize=operational_optimize,
                 analysis_mode=analysis_mode,
             )
+            from app.application.services.chat_email_turn_service import ChatEmailTurnService
+
+            email_supplement = ChatEmailTurnService.build_prompt_supplement(
+                message=message,
+                workspace_context=workspace_context,
+                email_writing_mode=bool(prepared.email_writing_mode),
+                email_subtype=prepared.email_subtype,
+            )
+
             llm_messages = self.prompt_builder_service.build_messages(
                 history=history,
                 current_message=message,
@@ -288,6 +297,7 @@ class SendChatMessageUseCase:
                 ),
                 text_task_mode=bool(prepared.text_task_mode),
                 email_writing_mode=bool(prepared.email_writing_mode),
+                email_prompt_supplement=email_supplement,
                 text_task_attachment_context=self._build_attachment_context(
                     user_id=user_id,
                     session_id=session_id,
@@ -328,6 +338,14 @@ class SendChatMessageUseCase:
             answer = direct_answer
         else:
             answer = self.llm_gateway.generate(llm_messages)
+
+        from app.application.services.chat_email_turn_service import ChatEmailTurnService
+
+        answer, email_guard_meta = ChatEmailTurnService.finalize_answer(
+            answer,
+            message=request.message,
+            workspace_context=workspace_context,
+        )
 
         pipeline_timings.mark("llm_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
@@ -513,15 +531,12 @@ class SendChatMessageUseCase:
             latency_ms=latency_ms,
         )
 
-        from app.application.services.chat_email_follow_up_service import (
-            ChatEmailFollowUpService,
-        )
-
-        ChatEmailFollowUpService.attach_to_assistant_metadata(
+        ChatEmailTurnService.attach_follow_up_metadata(
             assistant_metadata,
             message=request.message,
             answer=answer,
             workspace_context=workspace_context,
+            guard_meta=email_guard_meta,
         )
 
         from app.application.services.chat_document_vision_metrics_service import (

@@ -958,6 +958,32 @@ export function resolveRichTextBody(
   return "";
 }
 
+/** Texto do rascunho de e-mail (assunto + corpo), sem blocos de apresentação rica. */
+export function buildEmailCopyText(messageContent: string | null | undefined): string {
+  const raw = String(messageContent || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const withoutRich = raw
+    .replace(/^###\s+/gm, "")
+    .replace(/\*\*Assunto[^*]*\*\*/gi, (match) => match.replace(/\*\*/g, ""))
+    .replace(/\*\*/g, "")
+    .trim();
+
+  const subjectMatch = withoutRich.match(/^\s*assunto\s*:\s*(.+)$/im);
+  if (subjectMatch) {
+    return withoutRich;
+  }
+
+  const altSubject = withoutRich.match(/^\s*\*\*assunto\s+sugerido:\*\*\s*(.+)$/im);
+  if (altSubject) {
+    return withoutRich.replace(/^\s*\*\*assunto\s+sugerido:\*\*\s*/i, "Assunto: ");
+  }
+
+  return withoutRich;
+}
+
 /** Texto completo para copiar/compartilhar respostas com apresentação rica. */
 export function buildAssistantCopyText(
   messageContent: string | null | undefined,

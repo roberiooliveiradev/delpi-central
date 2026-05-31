@@ -48,6 +48,7 @@ import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
+  buildEmailCopyText,
   getPresentationPairFromToolCalls,
   isShortPresentationCaption,
   shouldShowRichPresentation,
@@ -1438,6 +1439,38 @@ export function ChatMessageList({
                   groupLabel="Refinar e-mail"
                   ariaLabel="Ações sugeridas após geração de e-mail"
                 />
+                {(message.metadata?.textTask as { type?: string } | undefined)?.type ===
+                "email" ? (
+                  <div className="mdc-chat-drawing-export">
+                    <button
+                      type="button"
+                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                      onClick={() =>
+                        void handleCopy(
+                          message.id,
+                          buildEmailCopyText(message.content),
+                        )
+                      }
+                      aria-label={
+                        copiedMessageId === message.id
+                          ? "E-mail copiado"
+                          : "Copiar e-mail"
+                      }
+                      title={
+                        copiedMessageId === message.id
+                          ? "E-mail copiado"
+                          : "Copiar e-mail (assunto e corpo)"
+                      }
+                    >
+                      {copiedMessageId === message.id ? (
+                        <Check size={15} aria-hidden="true" />
+                      ) : (
+                        <Copy size={15} aria-hidden="true" />
+                      )}
+                      <span>E-mail</span>
+                    </button>
+                  </div>
+                ) : null}
                 <ChatMessageFeedbackPanel
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}

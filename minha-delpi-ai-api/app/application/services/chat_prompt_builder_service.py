@@ -100,6 +100,7 @@ class ChatPromptBuilderService:
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
         email_writing_mode: bool = False,
+        email_prompt_supplement: str | None = None,
         text_task_attachment_context: str | None = None,
         user_context: str | None = None,
         skills: dict | None = None,
@@ -127,6 +128,9 @@ class ChatPromptBuilderService:
                 f"{base_prompt}\n\n"
                 f"{ChatTextTaskComposerService.attachment_text_task_instruction(attachment_context=text_task_attachment_context)}"
             )
+
+        if email_writing_mode and str(email_prompt_supplement or "").strip():
+            base_prompt = f"{base_prompt}\n\n{email_prompt_supplement.strip()}"
 
         if user_context:
             base_prompt = f"{base_prompt}\n\n{user_context}"

@@ -88,7 +88,11 @@ Mensagem do usuário
 | `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills — KPIs, produto, match por path mais específico (`pathRulesVersion` 2026.06.02) |
 | `ChatTextTaskIntentService` | Tarefas textuais puras (correção, e-mail, resumo) — estágio `text_task`, sem tools/RAG |
 | `ChatEmailIntentService` | Subintenções de e-mail (`email_create`, `email_formalize`, …) — estágio `email_writing` |
-| `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos) → `emailQuality` |
+| `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos, assunto fraco) → `emailQuality` |
+| `ChatEmailAnswerGuardService` | Sanitização soft (assinatura inventada, frases artificiais) antes de persistir |
+| `ChatEmailPromptSupplementService` | Contexto no prompt (destinatário, tom, DELPI/IA, preferências) |
+| `ChatEmailPreferenceService` | Preferências «sempre e-mails curtos/formais» na memória da sessão |
+| `ChatEmailTurnService` | Orquestra suplemento de prompt, guard e metadata de follow-up |
 | `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |

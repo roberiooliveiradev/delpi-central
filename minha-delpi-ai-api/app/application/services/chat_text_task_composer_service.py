@@ -128,6 +128,8 @@ class ChatTextTaskComposerService:
                 "Fico à disposição para complementar ou detalhar por filial, se necessário.",
                 "",
                 "Atenciosamente,",
+                "",
+                "[Seu nome]",
             ]
         )
 

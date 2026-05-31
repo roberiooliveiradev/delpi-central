@@ -10,9 +10,16 @@ class ChatEmailQualityValidator:
     _ARTIFICIAL_PHRASES = (
         "estou em consideração",
         "venho por meio deste, venho por meio deste",
+        "venho por meio deste",
         "sua participação é vital",
         "a ia pode revolucionar",
         "garantirá eficiência",
+        "revolucionar o mercado",
+    )
+
+    _WEAK_SUBJECT_PATTERNS = (
+        re.compile(r"solicitação\s+de\s+criação", re.I),
+        re.compile(r"solicitação\s+de\s+avaliação\s+sobre\s+criação", re.I),
     )
 
     _INVENTED_SIGNATURE_MARKERS = (
@@ -101,11 +108,69 @@ class ChatEmailQualityValidator:
         if expected_tone:
             add_check("tone_compatible", True)
 
+        weak_subject = cls._weak_subject(text)
+        add_check(
+            "subject_quality",
+            not weak_subject,
+            detail="assunto genérico ou rígido" if weak_subject else None,
+        )
+
         return {
             "passed": passed,
             "checks": checks,
             "warnings": [c["detail"] for c in checks if not c["ok"] and c.get("detail")],
         }
+
+    @classmethod
+    def sanitize(
+        cls,
+        answer: str | None,
+        *,
+        user_provided_signature: str | None = None,
+    ) -> tuple[str, list[str]]:
+        text = (answer or "").strip()
+        fixes: list[str] = []
+
+        if not text or user_provided_signature:
+            return text, fixes
+
+        if cls._invented_signature(text, None):
+            text = cls._replace_invented_signature_tail(text)
+            fixes.append("signature_placeholder")
+
+        for phrase in cls._ARTIFICIAL_PHRASES[:3]:
+            if phrase in text.lower():
+                replacement = {
+                    "estou em consideração": "Gostaria de solicitar sua avaliação",
+                    "venho por meio deste": "Gostaria de",
+                }.get(phrase)
+
+                if replacement:
+                    text = re.sub(re.escape(phrase), replacement, text, flags=re.I)
+                    fixes.append("artificial_phrase_replaced")
+
+        return text.strip(), fixes
+
+    @classmethod
+    def build_remediation_hints(cls, quality: dict[str, Any]) -> list[str]:
+        if quality.get("passed"):
+            return []
+
+        hints: list[str] = []
+
+        for warning in quality.get("warnings") or []:
+            lowered = str(warning).lower()
+
+            if "artificial" in lowered:
+                hints.append("Evite frases artificiais; use abertura direta («Gostaria de…»).")
+            elif "assinatura" in lowered:
+                hints.append("Use [Seu nome] se o remetente não foi informado.")
+            elif "assunto" in lowered:
+                hints.append("Prefira assunto objetivo (ex.: «Proposta de…»).")
+            elif "prazo" in lowered:
+                hints.append("Não inclua prazos que o usuário não informou.")
+
+        return hints
 
     @classmethod
     def _has_artificial_phrase(cls, text: str) -> bool:
@@ -187,6 +252,30 @@ class ChatEmailQualityValidator:
                 "confirmacao",
             )
         )
+
+    @classmethod
+    def _weak_subject(cls, text: str) -> bool:
+        match = re.search(r"(?im)^\s*assunto\s*:\s*(.+?)\s*$", text)
+
+        if not match:
+            return False
+
+        subject = (match.group(1) or "").strip()
+
+        return any(pattern.search(subject) for pattern in cls._WEAK_SUBJECT_PATTERNS)
+
+    @classmethod
+    def _replace_invented_signature_tail(cls, text: str) -> str:
+        lowered = text.lower()
+        marker = "atenciosamente"
+
+        idx = lowered.rfind(marker)
+
+        if idx < 0:
+            return text
+
+        head = text[: idx + len(marker)]
+        return f"{head},\n\n[Seu nome]"
 
     @classmethod
     def _invented_deadline(cls, text: str, user_message: str | None) -> bool:

@@ -1,8 +1,8 @@
 # Playbook — Melhoria da Escrita de E-mails no Minha DELPI Chat IA
 
 **Projeto:** Minha DELPI Chat IA  
-**Status implementação:** Fase 1 em andamento (maio/2026)  
-**Código:** `ChatEmailIntentService`, `ChatEmailQualityValidator`, `ChatEmailFollowUpService`, policy `email-writing.md`
+**Status implementação:** Fases 1–2 concluídas; Fase 3 parcial (preferências); Fase 4 parcial (copiar e-mail no MFE) — maio/2026  
+**Código:** `ChatEmailIntentService`, `ChatEmailQualityValidator`, `ChatEmailAnswerGuardService`, `ChatEmailPromptSupplementService`, `ChatEmailPreferenceService`, `ChatEmailTurnService`, policy `email-writing.md`
 
 ---
 
@@ -104,18 +104,19 @@ Corpo com proposta, capacidades reais da plataforma, perguntas numeradas para av
 
 | Fase | Escopo | Status |
 |------|--------|--------|
-| 1 | Policy, subintent, validador, chips, placeholders | **Em implementação** |
-| 2 | Validador ampliado + bloqueio soft | Parcial (validador leve) |
-| 3 | Memória de preferências de e-mail | Pendente |
-| 4 | UI copiar e-mail | Pendente |
-| 5 | E-mail com contexto operacional (dados autorizados) | Pendente |
+| 1 | Policy, subintent, validador, chips, placeholders | **Concluída** |
+| 2 | Validador ampliado, guard/sanitize, suplemento de prompt | **Concluída** |
+| 3 | Memória de preferências (`ChatEmailPreferenceService`) | **Parcial** |
+| 4 | Botão «Copiar e-mail» no MFE | **Concluída** |
+| 5 | E-mail com contexto operacional (dados autorizados) | Pendente (`ChatTextTaskComposerService`) |
 
 ---
 
 ## 11. Testes
 
 `tests/unit/test_email_writing_skill.py` — casos E1–E15 (subset automatizado).  
-`tests/unit/domain/services/test_chat_email_*.py` — intent e qualidade.
+`tests/unit/domain/services/test_chat_email_*.py` — intent e qualidade.  
+`scripts/run_email_writing_validation.sh` — suite unit + `scripts/smoke_email_writing.py`.
 
 ---
 

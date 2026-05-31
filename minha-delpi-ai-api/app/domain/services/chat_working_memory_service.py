@@ -28,6 +28,11 @@ class ChatWorkingMemoryService:
     ) -> dict:
         last_entities = cls._extract_last_entities(previous_messages)
         behavior = cls._merge_behavior_instructions(message, previous_messages)
+        from app.domain.services.chat_email_preference_service import (
+            ChatEmailPreferenceService,
+        )
+
+        behavior = ChatEmailPreferenceService.merge_into_behavior(message, behavior)
         resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
         follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
@@ -102,6 +107,28 @@ class ChatWorkingMemoryService:
 
         if behavior.get("responseFormat") == "table":
             lines.append("- Preferência ativa: responder em tabela quando couber.")
+
+        email_raw = behavior.get("emailWriting")
+
+        if email_raw:
+            import json
+
+            try:
+                email_prefs = json.loads(email_raw) if isinstance(email_raw, str) else email_raw
+            except json.JSONDecodeError:
+                email_prefs = {}
+
+            if isinstance(email_prefs, dict):
+                from app.domain.services.chat_email_preference_service import (
+                    ChatEmailPreferenceService,
+                )
+
+                pref_block = ChatEmailPreferenceService.format_prompt_block(
+                    {k: bool(v) for k, v in email_prefs.items()}
+                )
+
+                if pref_block:
+                    lines.append(pref_block.replace("Preferências de e-mail nesta sessão:", "- E-mail:"))
 
         tone = behavior.get("tone")
 
