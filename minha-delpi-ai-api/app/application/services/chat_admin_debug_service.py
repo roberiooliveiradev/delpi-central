@@ -238,6 +238,22 @@ class ChatAdminDebugService:
                 if isinstance(phase, dict) and phase.get("id")
             ]
 
+            from app.application.services.chat_drawing_metrics_service import (
+                ChatDrawingMetricsService,
+            )
+
+            drawing_payload = tool_context.get("drawingAnalysis")
+
+            if isinstance(drawing_payload, dict):
+                payload["drawingAnalysisMetrics"] = ChatDrawingMetricsService.build_snapshot(
+                    drawing_payload,
+                    report_exported=bool(
+                        isinstance(tool_context.get("drawingAnalysisExport"), dict)
+                        and tool_context["drawingAnalysisExport"].get("markdown")
+                    ),
+                    analyser_ok=ChatDrawingMetricsService.resolve_analyser_ok(tool_context),
+                )
+
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)
         if len(serialized) > limits.max_json_chars:

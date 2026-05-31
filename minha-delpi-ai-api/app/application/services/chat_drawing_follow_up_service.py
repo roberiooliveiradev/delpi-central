@@ -21,6 +21,7 @@ class ChatDrawingFollowUpService:
         *,
         intelligence: dict | None = None,
         tool_context: dict | None = None,
+        latency_ms: int | None = None,
     ) -> None:
         drawing = None
 
@@ -42,6 +43,17 @@ class ChatDrawingFollowUpService:
 
         if isinstance(export, dict) and export.get("markdown"):
             metadata["drawingAnalysisExport"] = export
+
+        from app.application.services.chat_drawing_metrics_service import (
+            ChatDrawingMetricsService,
+        )
+
+        ChatDrawingMetricsService.attach_to_assistant_metadata(
+            metadata,
+            intelligence=intelligence,
+            tool_context=tool_context,
+            latency_ms=latency_ms,
+        )
 
     @classmethod
     def build_suggestions(cls, drawing: dict) -> list[dict[str, str]]:

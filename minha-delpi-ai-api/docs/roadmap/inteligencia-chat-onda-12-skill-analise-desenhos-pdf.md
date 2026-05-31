@@ -122,7 +122,8 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 |----|---------|--------|
 | 12.6.1 | Testes D1–D12 (`test_drawing_analysis_skill.py`) | ✅ |
 | 12.6.2 | Regressão intent desenho em `chat_intelligence_regression_cases.py` | ✅ |
-| 12.6.3 | Métricas admin/observabilidade (dashboard) | ⏳ backlog |
+| 12.6.3 | Métricas em metadata, adminDebug e auditoria (`drawingAnalysisMetrics`) | ✅ |
+| 12.6.4 | Dashboard admin agregado (histórico) | ⏳ backlog |
 
 ---
 
@@ -171,9 +172,10 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-delpi-ai-api \
   python scripts/smoke_drawing_analyser.py
 
-# Smoke E2E live (gateway + api-externa + chat)
+# Smoke E2E live (api-delpi direto + gateway + chat)
 docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
-  -e SMOKE_BASE_URL=http://delpi-gateway minha-delpi-ai-api \\
+  -e SMOKE_BASE_URL=http://delpi-gateway \\
+  -e SMOKE_API_DELPI_URL=http://api-delpi:8000 minha-delpi-ai-api \\
   python scripts/smoke_drawing_analyser_live.py
 ```
 
@@ -186,6 +188,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | 2026-05-29 | Criação: backlog Onda 12 a partir de paridade com ChatGPT DELPI (análise PDF); skill herdável na camada base. |
 | 2026-05-31 | Estágio `drawing_analysis` no pipeline; smoke E2E HTTP; `drawingAnalysisExport` em `intelligence`. |
 | 2026-05-31 | Testes regressão D1–D12 (`test_drawing_analysis_skill.py`) + intent drawing na regressão chat. |
+| 2026-05-31 | `ChatDrawingMetricsService` — snapshot em metadata, adminDebug e audit log. |
 
 ---
 

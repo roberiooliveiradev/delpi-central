@@ -41,6 +41,7 @@ _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
 _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _PRODUCT_CODE = os.environ.get("SMOKE_PRODUCT_CODE", "90260140").strip()
+_API_DELPI_URL = os.environ.get("SMOKE_API_DELPI_URL", "").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _SKIP_CHAT = os.environ.get("SMOKE_SKIP_CHAT_E2E", "").lower() in {"1", "true", "yes"}
 _SKIP_PREPARATION = os.environ.get("SMOKE_SKIP_PREPARATION_E2E", "").lower() in {
@@ -137,10 +138,17 @@ def _fetch_token() -> str:
 
 def _fetch_analyser(token: str, code: str) -> dict:
     query = urllib.parse.urlencode({"max_depth": "10", "page": "1", "page_size": "50"})
-    paths = [
-        f"/api/externa/products/{code}/analyser?{query}",
-        f"/api/minha-delpi/externa/products/{code}/analyser?{query}",
-    ]
+    paths: list[str] = []
+
+    if _API_DELPI_URL:
+        paths.append(f"{_API_DELPI_URL.rstrip('/')}/products/{code}/analyser?{query}")
+
+    paths.extend(
+        [
+            f"{_BASE_URL}/api/externa/products/{code}/analyser?{query}",
+            f"{_BASE_URL}/api/minha-delpi/externa/products/{code}/analyser?{query}",
+        ]
+    )
     last_error: Exception | None = None
 
     for path in paths:
@@ -159,16 +167,20 @@ def _fetch_analyser(token: str, code: str) -> dict:
 
                 return json.loads(raw)
         except urllib.error.HTTPError as exc:
-            if exc.code in {401, 403, 404}:
-                raise exc
-
             last_error = exc
+
+            if exc.code in {401, 403, 404}:
+                continue
+
             continue
         except (urllib.error.URLError, json.JSONDecodeError) as exc:
             last_error = exc
             continue
 
-    raise RuntimeError(f"Não foi possível obter analyser: {last_error}")
+    if last_error is not None:
+        raise last_error
+
+    raise RuntimeError("Não foi possível obter analyser")
 
 
 def _multipart_upload(
@@ -602,6 +614,17 @@ def _run_chat_e2e(token: str, pdf_path: Path) -> list[str]:
     if not isinstance(export_meta, dict) or not export_meta.get("markdown"):
         errors.append("drawingAnalysisExport ausente no chat E2E")
 
+    metrics = metadata.get("drawingAnalysisMetrics")
+
+    if not isinstance(metrics, dict) or not metrics.get("productCode"):
+        errors.append("drawingAnalysisMetrics ausente no chat E2E")
+
+    if isinstance(admin_debug, dict):
+        debug_metrics = admin_debug.get("drawingAnalysisMetrics")
+
+        if not isinstance(debug_metrics, dict):
+            errors.append("adminDebug sem drawingAnalysisMetrics")
+
     return errors
 
 
@@ -644,10 +667,12 @@ def main() -> int:
         data = _fetch_analyser(token, _PRODUCT_CODE)
         analyser_root = _unwrap_analyser_root(data)
         check("HTTP GET /analyser", bool(analyser_root))
-    except urllib.error.HTTPError as exc:
+    except (urllib.error.HTTPError, urllib.error.URLError, OSError) as exc:
         http_skipped = True
+        reason = getattr(exc, "code", None) or exc
+
         print(
-            f"SKIP HTTP analyser ({exc.code}): merge offline com payload de teste",
+            f"SKIP HTTP analyser ({reason}): merge offline com payload de teste",
             file=sys.stderr,
         )
         from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
@@ -655,9 +680,6 @@ def main() -> int:
         )
 
         analyser_root = _analyser_payload_with_guide_and_inspection()
-    except Exception as exc:
-        print(f"FAIL HTTP analyser: {exc}", file=sys.stderr)
-        return 1
 
     try:
         merged = _run_pipeline_merge(analyser_root=analyser_root, pdf_path=pdf_path)

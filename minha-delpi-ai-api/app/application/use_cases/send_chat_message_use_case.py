@@ -509,6 +509,7 @@ class SendChatMessageUseCase:
             assistant_metadata,
             intelligence=intelligence_metadata,
             tool_context=tool_context,
+            latency_ms=latency_ms,
         )
 
         assistant_message = self.chat_repository.create_message(
@@ -535,31 +536,43 @@ class SendChatMessageUseCase:
             message_id=assistant_message.id,
         )
 
+        from app.application.services.chat_drawing_metrics_service import (
+            ChatDrawingMetricsService,
+        )
+
+        audit_metadata = {
+            "session_id": str(session_id),
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentId": workspace_context.get("agentId"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "rag_enabled": True,
+            "tool_count": len(tool_calls),
+            "admin_guideline_count": len(active_guidelines),
+            "admin_guidelines": self._guideline_metadata(active_guidelines),
+            "latency_ms": latency_ms,
+            "prompt_tokens_estimated": prompt_tokens_estimated,
+            "completion_tokens_estimated": completion_tokens_estimated,
+            "total_tokens_estimated": total_tokens_estimated,
+            "estimated_cost": estimated_cost,
+        }
+        ChatDrawingMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+            latency_ms=latency_ms,
+        )
+
         self.audit_repository.log(
             user_id=user_id,
             action="chat.message.sent",
             prompt_hash=self._hash_prompt(message),
             context=request.context,
             tool_calls=tool_calls,
-            metadata={
-                "session_id": str(session_id),
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentId": workspace_context.get("agentId"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "rag_enabled": True,
-                "tool_count": len(tool_calls),
-                "admin_guideline_count": len(active_guidelines),
-                "admin_guidelines": self._guideline_metadata(active_guidelines),
-                "latency_ms": latency_ms,
-                "prompt_tokens_estimated": prompt_tokens_estimated,
-                "completion_tokens_estimated": completion_tokens_estimated,
-                "total_tokens_estimated": total_tokens_estimated,
-                "estimated_cost": estimated_cost,
-            },
+            metadata=audit_metadata,
         )
 
         return SendChatMessageResponse(

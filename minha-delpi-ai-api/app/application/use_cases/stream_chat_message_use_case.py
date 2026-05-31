@@ -799,6 +799,7 @@ class StreamChatMessageUseCase:
             assistant_metadata,
             intelligence=intelligence_metadata,
             tool_context=tool_context,
+            latency_ms=latency_ms,
         )
 
         if persist_before_playback:
@@ -841,33 +842,43 @@ class StreamChatMessageUseCase:
             message_id=assistant_message.id,
         )
 
+        from app.application.services.chat_drawing_metrics_service import (
+            ChatDrawingMetricsService,
+        )
+
+        stream_audit_metadata = {
+            "session_id": str(session_id),
+            "provider": Settings.LLM_PROVIDER,
+            "model": Settings.OLLAMA_MODEL,
+            "agentId": workspace_context.get("agentId"),
+            "agent": workspace_context.get("agent"),
+            "project": workspace_context.get("project"),
+            "attachments": attachments,
+            "sources": sources,
+            "rag_enabled": True,
+            "tool_count": len(tool_calls),
+            "admin_guideline_count": len(active_guidelines),
+            "admin_guidelines": self._guideline_metadata(active_guidelines),
+            "latency_ms": latency_ms,
+            "prompt_tokens_estimated": prompt_tokens_estimated,
+            "completion_tokens_estimated": completion_tokens_estimated,
+            "total_tokens_estimated": total_tokens_estimated,
+            "estimated_cost": estimated_cost,
+        }
+        ChatDrawingMetricsService.enrich_audit_metadata(
+            stream_audit_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+            latency_ms=latency_ms,
+        )
+
         self.audit_repository.log(
             user_id=user_id,
             action="chat.message.streamed",
             prompt_hash=self._hash_prompt(message),
             context=request.context,
             tool_calls=tool_calls,
-            metadata={
-                "session_id": str(session_id),
-                "provider": Settings.LLM_PROVIDER,
-                "model": Settings.OLLAMA_MODEL,
-                "agentId": workspace_context.get("agentId"),
-                "agent": workspace_context.get("agent"),
-                "project": workspace_context.get("project"),
-                "attachments": attachments,
-                "sources": sources,
-                "rag_enabled": True,
-                "tool_count": len(tool_calls),
-                "admin_guideline_count": len(active_guidelines),
-                "admin_guidelines": self._guideline_metadata(active_guidelines),
-                "agent_id": workspace_context.get("agentId"),
-                "agent": workspace_context.get("agent"),
-                "latency_ms": latency_ms,
-                "prompt_tokens_estimated": prompt_tokens_estimated,
-                "completion_tokens_estimated": completion_tokens_estimated,
-                "total_tokens_estimated": total_tokens_estimated,
-                "estimated_cost": estimated_cost,
-            },
+            metadata=stream_audit_metadata,
         )
 
         if canvas_open_payload:

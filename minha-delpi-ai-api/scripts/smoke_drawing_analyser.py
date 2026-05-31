@@ -178,6 +178,27 @@ def main() -> int:
         and trace["phases"][0]["id"] == "intent",
     )
 
+    from app.application.services.chat_drawing_metrics_service import (
+        ChatDrawingMetricsService,
+    )
+
+    metrics = ChatDrawingMetricsService.build_snapshot(
+        package_full["drawingAnalysis"],
+        report_exported=True,
+        analyser_ok=True,
+    )
+    check(
+        "métricas drawingAnalysis",
+        metrics.get("productCode") == "90260140"
+        and metrics.get("checklistItems", 0) > 0
+        and metrics.get("overallStatus") in {
+            "approved",
+            "approved_with_notes",
+            "rejected",
+            "incomplete",
+        },
+    )
+
     api_root = Path(__file__).resolve().parents[1]
     pytest_env = {**os.environ, "PYTHONPATH": os.environ.get("PYTHONPATH", str(api_root))}
     pytest_result = subprocess.run(
