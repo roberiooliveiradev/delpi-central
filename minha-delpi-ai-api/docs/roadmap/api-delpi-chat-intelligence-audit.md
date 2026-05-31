@@ -201,6 +201,7 @@ Elaborar SQL sem executar: skill `sqlAuthoring`; não auto-action.
 | `GET /tables/{name}/indexes` | índices da tabela | | OK | |
 | `GET /tables/{name}/relations` | relações da tabela | | OK | |
 | `GET /tables/{name}/schema` | schema completo SB1 | schema | OK | |
+| Apresentação chat | busca SX2 com resultados | — | OK | `_present_system_tables_search` |
 
 ---
 

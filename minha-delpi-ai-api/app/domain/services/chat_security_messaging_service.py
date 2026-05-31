@@ -39,6 +39,27 @@ class ChatSecurityMessagingService:
                 "stockQueryFailed",
             )
 
+        if "/system/" in lowered_path:
+            lowered_error = error.lower()
+
+            if any(
+                term in lowered_error
+                for term in (
+                    "banco de dados",
+                    "banco",
+                    "timeout",
+                    "conexão",
+                    "conexao",
+                    "connection",
+                    "sql server",
+                    "sqldriverconnect",
+                )
+            ):
+                return ExternalActionResponseContentService.get(
+                    "security",
+                    "systemMetadataQueryFailed",
+                )
+
         if code is not None and code >= 500:
             return ExternalActionResponseContentService.get(
                 "security",

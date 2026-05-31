@@ -91,6 +91,101 @@ def _validate_unit() -> list[str]:
     return errors
 
 
+def _first_enabled_agent(token: str) -> str:
+    request = urllib.request.Request(
+        f"{_BASE_URL}{_CHAT_PREFIX}/agents?limit=20",
+        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    items = payload if isinstance(payload, list) else payload.get("items", [])
+
+    for agent in items:
+        if agent.get("enabled"):
+            return str(agent["id"])
+
+    if items:
+        return str(items[0]["id"])
+
+    raise RuntimeError("Nenhum agente habilitado")
+
+
+def _validate_chat_e2e(token: str) -> list[str]:
+    errors: list[str] = []
+    agent_id = _first_enabled_agent(token)
+    session_body = json.dumps({"title": "Smoke system tables", "agentId": agent_id}).encode()
+    session_request = urllib.request.Request(
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions",
+        data=session_body,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(session_request, timeout=60) as response:
+        session_id = str(json.loads(response.read().decode("utf-8"))["id"])
+
+    message_body = json.dumps({"message": _MESSAGE, "agentId": agent_id}).encode()
+    message_request = urllib.request.Request(
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
+        data=message_body,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    with urllib.request.urlopen(message_request, timeout=300) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+
+    tool_calls = payload.get("toolCalls") or []
+    system_call = None
+
+    for call in tool_calls:
+        if call.get("name") != "execute_external_action":
+            continue
+
+        meta = call.get("metadata") or {}
+        path = str(meta.get("path") or "").lower()
+
+        if "/system/tables/search" in path:
+            system_call = call
+            break
+
+    if not system_call:
+        errors.append("chat: toolCalls sem /system/tables/search")
+        return errors
+
+    args = system_call.get("arguments") or {}
+    params = args.get("parameters") or {}
+
+    if params.get("description") != "produtos":
+        errors.append(f"chat: parameters={params!r}")
+
+    sub_intent = ((payload.get("adminDebug") or {}).get("intentRoute") or {}).get("subIntent")
+
+    if sub_intent != "system_metadata":
+        errors.append(f"chat: subIntent={sub_intent!r}")
+
+    meta = system_call.get("metadata") or {}
+
+    if meta.get("ok"):
+        print("OK chat: tool executada com sucesso")
+    else:
+        print(
+            "OK chat: roteamento e tool corretos "
+            f"(execução ok={meta.get('ok')}, status={meta.get('statusCode')})"
+        )
+
+    return errors
+
+
 def main() -> int:
     failed = 0
 
@@ -129,6 +224,16 @@ def main() -> int:
         else:
             print(f"FAIL API: HTTP {exc.code} {body[:200]}", file=sys.stderr)
             failed += 1
+
+    chat_errors = _validate_chat_e2e(token)
+
+    if chat_errors:
+        failed += len(chat_errors)
+
+        for error in chat_errors:
+            print(f"FAIL {error}", file=sys.stderr)
+    else:
+        print("OK chat: intent system_metadata + tool /system/tables/search")
 
     return 1 if failed else 0
 

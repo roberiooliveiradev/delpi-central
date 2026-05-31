@@ -21,3 +21,16 @@ def test_permission_failure_uses_no_access():
     )
 
     assert "permiss" in message.lower()
+
+
+def test_system_metadata_db_failure_message():
+    message = ChatSecurityMessagingService.resolve_api_failure(
+        {
+            "ok": False,
+            "statusCode": 400,
+            "error": "Erro de conexão com o banco de dados: login timeout",
+        },
+        path="/system/tables/search",
+    )
+
+    assert "protheus" in message.lower() or "dicionário" in message.lower()

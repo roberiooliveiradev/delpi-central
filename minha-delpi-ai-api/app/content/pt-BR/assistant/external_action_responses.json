@@ -129,6 +129,7 @@
     "writeConfirmationRequired": "Essa ação pode alterar dados ou enviar informações. Confirma que deseja continuar? Responda «confirmo» para prosseguir.",
     "operationalQueryFailed": "Não consegui consultar essa informação agora. Posso tentar novamente ou verificar outro filtro.",
     "stockQueryFailed": "Não consegui consultar o estoque agora. Posso tentar novamente ou verificar outro filtro.",
+    "systemMetadataQueryFailed": "Não consegui consultar o dicionário de tabelas do Protheus agora (conexão com o ERP indisponível). Tente novamente em instantes ou peça o código da tabela (ex.: SB1).",
     "confirmationChips": {
       "confirm": "Confirmar",
       "cancel": "Cancelar",

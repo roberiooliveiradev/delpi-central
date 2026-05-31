@@ -116,6 +116,7 @@ class ExternalActionResultPresenter:
                 self._present_stock_value_summary(root, path)
                 or self._present_product_billing_summary(root, path)
                 or self._present_financial_pmr(root, path)
+                or self._present_system_tables_search(root, path)
                 or self._present_system_table_columns(root, path)
             )
 
@@ -488,6 +489,59 @@ class ExternalActionResultPresenter:
 
         return {
             "titulo": title,
+            "linhas": linhas,
+            "dados": root,
+        }
+
+    def _present_system_tables_search(self, root: dict, path: str) -> dict | None:
+        if "/tables/search" not in str(path or "").lower():
+            return None
+
+        results = root.get("results")
+
+        if not isinstance(results, list):
+            return None
+
+        total = root.get("total_records", len(results))
+        linhas = [f"**Tabelas encontradas:** {total}"]
+
+        for item in results[:12]:
+            if not isinstance(item, dict):
+                continue
+
+            table_code = (
+                item.get("X2_ARQUIVO")
+                or item.get("table_name")
+                or item.get("name")
+            )
+            label = item.get("X2_NOME") or item.get("description") or item.get("title")
+            score = item.get("total_score") or item.get("score")
+
+            if table_code and label:
+                line = f"- **{table_code}:** {label}"
+            elif table_code:
+                line = f"- **{table_code}**"
+            elif label:
+                line = f"- {label}"
+            else:
+                continue
+
+            if score is not None:
+                try:
+                    line += f" (relevância {float(score):.0f})"
+                except (TypeError, ValueError):
+                    pass
+
+            linhas.append(line)
+
+        if len(results) > 12:
+            linhas.append(f"… e mais {len(results) - 12} tabela(s).")
+
+        if len(linhas) <= 1:
+            linhas.append("Nenhuma tabela correspondeu à descrição informada.")
+
+        return {
+            "titulo": "Busca de tabelas Protheus (SX2)",
             "linhas": linhas,
             "dados": root,
         }

@@ -209,8 +209,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |---------|---------|
 | Seleção | `qual a tabela` (com artigo), `description=produtos`, prioridade antes de busca de produto; fallback `list_actions` para `/system/*` |
 | Intent | `subIntent: system_metadata` no router (evita `product_lookup` só por conter «produto») |
-| Smoke | `scripts/smoke_system_table_routing.py` |
+| Smoke | `scripts/smoke_system_table_routing.py` (unit + API + chat E2E) |
 | Testes | Regressão + `test_select_system_table_search_with_article_qual_a_tabela` |
+| Apresentação | `_present_system_tables_search` (lista SX2 com relevância) |
+| Erros | `systemMetadataQueryFailed` quando ERP/SQL indisponível; `error` no metadata da tool |
 
 ## Autoajuda — Fase 3 (geração do catálogo)
 

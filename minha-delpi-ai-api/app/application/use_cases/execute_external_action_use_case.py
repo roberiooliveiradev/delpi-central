@@ -111,6 +111,18 @@ class ExecuteExternalActionUseCase:
             request_parameters=request_parameters,
         )
 
+        execution_metadata = {
+            "durationMs": result["durationMs"],
+            "sensitivity": action["sensitivity"],
+            **presentation_metadata,
+        }
+
+        if not result["ok"]:
+            api_error = self._extract_api_error_message(sanitized_data)
+
+            if api_error:
+                execution_metadata["error"] = api_error
+
         return {
             "provider": provider["providerKey"],
             "actionId": action["actionId"],
@@ -119,12 +131,21 @@ class ExecuteExternalActionUseCase:
             "statusCode": result["statusCode"],
             "ok": result["ok"],
             "data": sanitized_data,
-            "metadata": {
-                "durationMs": result["durationMs"],
-                "sensitivity": action["sensitivity"],
-                **presentation_metadata,
-            },
+            "metadata": execution_metadata,
         }
+
+    @staticmethod
+    def _extract_api_error_message(data) -> str | None:
+        if not isinstance(data, dict):
+            return None
+
+        for key in ("message", "error", "detail", "errorMessage"):
+            value = data.get(key)
+
+            if value is not None and str(value).strip():
+                return str(value).strip()
+
+        return None
 
     def build_metadata_for_data(
         self,
