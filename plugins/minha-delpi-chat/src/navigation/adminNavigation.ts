@@ -150,6 +150,8 @@ const SUB_TAB_BY_SLUG = Object.fromEntries(
   Object.entries(SUB_TAB_SLUG).map(([subTab, slug]) => [slug, subTab as AdminSubTab]),
 ) as Record<string, AdminSubTab>;
 
+const LEGACY_TAB_WARNED = new Set<LegacyAdminTab>();
+
 const LEGACY_TAB_TO_NAV: Record<LegacyAdminTab, AdminNavState> = {
   knowledge: { section: "knowledge", subTab: "documents" },
   guidelines: { section: "knowledge", subTab: "guidelines" },
@@ -195,6 +197,14 @@ export function normalizeAdminNav(
 }
 
 export function legacyTabToNav(tab: LegacyAdminTab, agentId?: string | null): AdminNavState {
+  if (import.meta.env.DEV && !LEGACY_TAB_WARNED.has(tab)) {
+    LEGACY_TAB_WARNED.add(tab);
+    console.warn(
+      `[minha-delpi-chat] Aba admin legada "${tab}" foi remapeada para a navegação em seções. ` +
+        "Prefira URLs como /admin/conhecimento/documentos.",
+    );
+  }
+
   const base = LEGACY_TAB_TO_NAV[tab];
 
   return normalizeAdminNav({

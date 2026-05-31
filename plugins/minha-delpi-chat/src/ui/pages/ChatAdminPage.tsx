@@ -18,7 +18,7 @@ import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeT
 import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminOverviewTab } from "../components/admin/overview/AdminOverviewTab";
 import { AdminPlatformIntelligenceTab } from "../components/admin/platform/AdminPlatformIntelligenceTab";
-import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
+import { AdminShellStatusStrip } from "../components/admin/shell/AdminShellStatusStrip";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
@@ -179,7 +179,11 @@ export function ChatAdminPage({
 
     if (nav.section === "agents" && nav.subTab === "specialization") {
       return (
-        <AdminAgentsTab getAccessToken={getAccessToken} initialAgentId={nav.agentId ?? initialAgentId} />
+        <AdminAgentsTab
+          getAccessToken={getAccessToken}
+          initialAgentId={nav.agentId ?? initialAgentId}
+          onNavigate={applyNav}
+        />
       );
     }
 
@@ -213,11 +217,11 @@ export function ChatAdminPage({
     }
 
     if (nav.section === "governance" && nav.subTab === "security") {
-      return <AdminSecurityTab getAccessToken={getAccessToken} />;
+      return <AdminSecurityTab getAccessToken={getAccessToken} onNavigate={applyNav} />;
     }
 
     if (nav.section === "governance" && nav.subTab === "audit") {
-      return <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />;
+      return <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} onNavigate={applyNav} />;
     }
 
     return null;
@@ -234,7 +238,13 @@ export function ChatAdminPage({
           onNavChange={applyNav}
         />
 
-        <AdminShellAlerts error={admin.error} successMessage={admin.successMessage} />
+        <AdminShellStatusStrip
+          error={admin.error}
+          successMessage={admin.successMessage}
+          lastRefreshedAt={admin.lastRefreshedAt}
+          isLoading={admin.isLoading}
+          onRefresh={admin.loadAdminData}
+        />
 
         <ChatAnimatedPanel
           panelKey={adminNavPanelKey(nav)}

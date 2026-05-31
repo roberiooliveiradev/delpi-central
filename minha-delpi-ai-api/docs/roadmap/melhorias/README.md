@@ -11,7 +11,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL seguro, trust badges, falha de API, confirmação de escrita + painel MFE; mensagem amigável em `ToolPermissionDeniedError` |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
-| Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Fases **1–3** (6 seções, sub-abas, Painel, Inteligência em Plataforma); Fase **4** polish em backlog |
+| Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Fases **1–4** concluídas (6 seções, Painel, status strip, cross-links, mobile) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** (detecção + policy, sem ERP); Fases **3–5** em backlog |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência; itens críticos migrados para código/testes |
 
@@ -66,7 +66,7 @@ Com **api-delpi** indisponível no ambiente local, use:
 1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
 2. **Interatividade Fase 4** — menu por nó de árvore / chip de contexto (gráfico feito no MFE).
 3. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
-4. **Playbook 08** — mensagens de permissão e badges de confiança no presenter.
+4. **Playbook 08** — badges de confiança no admin debug ampliado.
 
 ## Regra
 

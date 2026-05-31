@@ -92,6 +92,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
   const [documentOffset, setDocumentOffset] = useState(0);
   const [documentLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [ingestionPreview, setIngestionPreview] =
@@ -147,6 +148,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
       setDocumentsResponse(docs);
       setDocumentFacets(docs.facets ?? EMPTY_FACETS);
       setGuidelines(guidelinesResponse);
+      setLastRefreshedAt(new Date());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar administração.");
     } finally {
@@ -460,6 +462,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     documentSourceType,
     documentFacets,
     isLoading,
+    lastRefreshedAt,
     isMutating,
     successMessage,
     ingestionPreview,

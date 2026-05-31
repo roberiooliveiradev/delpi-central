@@ -414,19 +414,20 @@ Respeitar `AdminRbacSummary` ao montar abas:
 
 ## Checklist de entrega
 
-- [ ] `AdminSection` + `AdminSubTab` tipados
-- [ ] Rotas nested em `chatRoutes.ts`
-- [ ] Shell com 6 abas + sub-nav + mobile
-- [ ] `AdminOverviewTab` mínimo viável
-- [ ] Intelligence settings em Plataforma
-- [ ] RBAC em Painel
-- [ ] Redirects de compatibilidade
-- [ ] README admin atualizado
-- [ ] `chatRoutes.test.ts` verde
-- [ ] `npm run build` verde
+- [x] `AdminSection` + `AdminSubTab` tipados
+- [x] Rotas nested em `chatRoutes.ts` / `adminNavigation.ts`
+- [x] Shell com 6 abas + sub-nav + mobile dropdown
+- [x] `AdminOverviewTab` mínimo viável
+- [x] Intelligence settings em Plataforma
+- [x] RBAC em Painel
+- [x] Redirects de compatibilidade + aviso DEV em `legacyTabToNav`
+- [x] Status strip (erro/sucesso, última atualização)
+- [x] Cross-links Governança e Agentes ↔ Builder
+- [x] README admin atualizado (`plugins/minha-delpi-chat/src/ui/components/admin/README.md`)
+- [x] `adminNavigation.test.ts` (6 seções + legado)
 
 ---
 
-## Próxima ação recomendada
+## Status (maio/2026)
 
-Implementar **Fase 1** em branch dedicada: apenas shell e rotas, montando os componentes existentes nos novos wrappers — entrega valor imediato (menos abas visíveis) sem reescrever lógica de negócio.
+**Fases 1–4 concluídas.** Evoluções futuras fora deste playbook: unificar `ChatAgentBuilderPage` no admin, E2E Playwright dedicado, status strip com polling automático.

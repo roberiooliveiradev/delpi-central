@@ -67,7 +67,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Painel | `AdminOverviewTab` + RBAC; default `/admin` → Painel |
 | Reagrupamento | Inteligência fora de Métricas; RBAC fora de Ferramentas; Skills → Comportamentos |
 
-**Backlog:** cross-links Segurança↔Auditoria, dropdown mobile refinado, testes E2E admin.
+| Fase 4 polish | Status strip, cross-links Governança/Agentes↔Builder, animação sub-abas, mobile sem sub-nav duplicada, testes 6 seções |
+
+**Playbook 11 concluído** (fases 1–4). E2E admin dedicado permanece evolução futura.
 
 ## Atalhos «Próximos passos» vs chat comum
 

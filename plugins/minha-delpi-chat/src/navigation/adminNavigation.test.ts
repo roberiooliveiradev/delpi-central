@@ -60,4 +60,26 @@ describe("adminNavigation", () => {
       subTab: "metrics",
     });
   });
+
+  it("deep links das seis áreas do admin", () => {
+    const cases = [
+      { section: "knowledge" as const, subTab: "behaviors" as const, path: "/conhecimento/comportamentos" },
+      { section: "agents" as const, subTab: "simulation" as const, path: "/agentes/simulacao" },
+      { section: "quality" as const, subTab: "evaluations" as const, path: "/qualidade/avaliacoes" },
+      { section: "platform" as const, subTab: "intelligence" as const, path: "/plataforma/inteligencia" },
+      { section: "governance" as const, subTab: "security" as const, path: "/governanca/seguranca" },
+      { section: "governance" as const, subTab: "audit" as const, path: "/governanca/auditoria" },
+    ];
+
+    for (const item of cases) {
+      const href = buildAdminHref({ section: item.section, subTab: item.subTab });
+
+      expect(href).toBe(`/apps/minha-delpi-chat/admin${item.path}`);
+      expect(parseChatRoute(href)).toMatchObject({
+        kind: "admin",
+        section: item.section,
+        subTab: item.subTab,
+      });
+    }
+  });
 });

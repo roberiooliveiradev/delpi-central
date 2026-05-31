@@ -1,30 +1,37 @@
 # Admin Minha DELPI Chat
 
-A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo deve ficar em sua própria pasta, com componente e CSS próprios.
+A área admin é organizada por **6 seções** no topbar, cada uma com **sub-abas** quando aplicável. Deep links em `navigation/adminNavigation.ts` e `navigation/chatRoutes.ts`.
 
 ## Estrutura
 
-- `shell/`: topbar, abas e alertas do admin.
-- `metrics/` e `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
-- `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
-- `guidelines/`: diretrizes globais de comportamento.
-- `skills/`: catálogo global de skills (CRUD, policy Markdown).
-- `shared/`: formulários e checkboxes alinhados (`AdminFormCheckbox`, `admin-shared.css`).
-- `simulate/`: simulação do agente (sessão, sandbox, LLM).
-- `evaluations/`: avaliação de respostas e sugestões.
-- `agents/`: especialização por agente.
-- `security/`: segurança operacional de entrada.
-- `tools/`: provider LLM, actions e health (`GET /admin/tools/health`).
-- `audit/`: auditoria, timeline, export CSV, trace id.
-- `rbac/`: resumo de permissões do admin.
+| Seção | Sub-abas | Pasta principal |
+|-------|----------|-----------------|
+| **Painel** | — | `overview/` (+ `rbac/` no painel) |
+| **Conhecimento** | Documentos, Diretrizes, Comportamentos | `knowledge/`, `guidelines/`, `skills/` |
+| **Agentes** | Especialização, Simulação | `agents/`, `simulate/` |
+| **Qualidade** | Métricas, Avaliações | `metrics-tab/`, `evaluations/` |
+| **Plataforma** | Ferramentas, Inteligência | `tools/`, `platform/` |
+| **Governança** | Segurança, Auditoria | `security/`, `audit/` |
+
+- `shell/`: topbar (6 abas + ícones), sub-nav, **status strip** (erro/sucesso, última atualização), menu mobile.
+- `shared/`: `AdminSectionLinks` (cross-links entre abas relacionadas), formulários compartilhados.
 
 Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificações), não neste plugin.
+
+## Navegação
+
+- Default: `/apps/minha-delpi-chat/admin` → **Painel** (não Conhecimento).
+- Legado: props `initialTab` / rotas antigas remapeadas; em DEV o console avisa depreciação.
+- Builder de agentes: lista em `/apps/minha-delpi-chat/agentes`; configuração em `/agentes/:id/configurar`. Atalhos na aba **Agentes → Especialização**.
+
+## Cross-links (Fase 4)
+
+- **Governança:** Segurança ↔ Auditoria.
+- **Agentes:** Especialização ↔ Builder ↔ Simulação.
 
 ## Regras
 
 1. Não colocar CSS de aba dentro de `ChatAdminPage.css`.
-2. Não usar seletores genéricos compartilhados entre abas quando o componente for isolado.
-3. Toda aba deve expor componentes menores para formulário, lista, tabela, filtros e ações.
-4. Contratos administrativos ficam centralizados em `data/api/adminApi.ts` e `adminTypes.ts`.
-5. Endpoints documentados em `minha-delpi-ai-api/docs/api/08-admin.md`.
-6. A base de conhecimento do admin representa contexto global do chat; anexos de conversa não pertencem a essa tela.
+2. `ChatIntelligenceSettingsPanel` fica em **Plataforma → Inteligência**, não em Qualidade.
+3. `AdminRbacPanel` fica no **Painel**, não em Plataforma.
+4. Contratos em `data/api/adminApi.ts` e `adminTypes.ts`; API em `minha-delpi-ai-api/docs/api/08-admin.md`.

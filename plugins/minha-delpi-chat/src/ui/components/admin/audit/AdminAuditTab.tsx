@@ -15,6 +15,8 @@ import type {
   AdminRbacSummary,
 } from "../../../../data/api/adminTypes";
 
+import type { AdminNavState } from "../../../../navigation/adminNavigation";
+import { AdminSectionLinks } from "../shared/AdminSectionLinks";
 import { AuditFiltersPanel } from "./AuditFiltersPanel";
 import { AuditPagination } from "./AuditPagination";
 import { AuditSummaryPanel } from "./AuditSummaryPanel";
@@ -27,6 +29,7 @@ import "./AdminAuditTab.css";
 type AdminAuditTabProps = {
   rbac?: AdminRbacSummary | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  onNavigate?: (nav: Partial<AdminNavState>) => void;
 };
 
 const PAGE_SIZE = 25;
@@ -91,7 +94,7 @@ function formatJson(value: unknown): string {
   }
 }
 
-export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
+export function AdminAuditTab({ rbac, getAccessToken, onNavigate }: AdminAuditTabProps) {
   const [filters, setFilters] = useState<AuditFilters>(DEFAULT_AUDIT_FILTERS);
   const [response, setResponse] = useState<AdminAuditLogsResponse | null>(null);
   const [timelineDays, setTimelineDays] = useState<AdminAuditTimelineDay[]>([]);
@@ -220,6 +223,19 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
   return (
     <section className="mdc-admin-audit-tab">
+      <AdminSectionLinks
+        items={
+          onNavigate
+            ? [
+                {
+                  label: "Configuração de segurança",
+                  onClick: () => onNavigate({ section: "governance", subTab: "security" }),
+                },
+              ]
+            : []
+        }
+      />
+
       <article className="mdc-admin-panel">
         <header className="mdc-admin-tab-header">
           <div className="mdc-admin-panel__intro">

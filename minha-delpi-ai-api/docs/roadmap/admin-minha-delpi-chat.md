@@ -13,6 +13,17 @@ Documentos relacionados:
 
 ## Estado Atual
 
+### Navegação admin (Playbook 11 — maio/2026)
+
+- **6 seções** no topbar: Painel, Conhecimento, Agentes, Qualidade, Plataforma, Governança
+- Sub-abas por seção; default `/admin` → **Painel**
+- Deep links: `/admin/conhecimento/documentos`, `/admin/plataforma/inteligencia`, etc.
+- Mobile: dropdown único (seção + sub-aba); sub-nav oculta em &lt;768px
+- Status strip global: última atualização, erros e sucesso do `useChatAdmin`
+- Cross-links: Segurança ↔ Auditoria; Especialização ↔ Builder (`/agentes`)
+
+Detalhes: `plugins/minha-delpi-chat/src/ui/components/admin/README.md`.
+
 ### Já implementado
 
 - Estrutura visual administrativa e abas modulares
