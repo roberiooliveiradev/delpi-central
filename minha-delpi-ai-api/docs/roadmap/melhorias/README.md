@@ -45,7 +45,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
 3. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
 4. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
-5. **Chip «Ver vendas»** — correção da seleção de action (WARN no smoke de chips).
+5. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
 
 ## Regra
 

@@ -1,6 +1,6 @@
 # Biblioteca de Playbooks — Minha DELPI Chat IA
 
-Este pacote contém 10 playbooks de melhoria para o Minha DELPI Chat IA.
+Este pacote contém 11 playbooks de melhoria para o Minha DELPI Chat IA.
 
 1. [Playbook 01 — Roteamento inteligente de intenções](01_roteamento_inteligente_de_intencoes.md)
 2. [Playbook 02 — Respostas operacionais DELPI](02_respostas_operacionais_delpi.md)
@@ -12,3 +12,4 @@ Este pacote contém 10 playbooks de melhoria para o Minha DELPI Chat IA.
 8. [Playbook 08 — Segurança, permissões e confiança](08_seguranca_permissoes_confianca.md)
 9. [Playbook 09 — Dashboards, gráficos e apresentação rica](09_dashboards_graficos_apresentacao_rica.md)
 10. [Playbook 10 — Onboarding e adoção de usuários](10_onboarding_e_adoção_de_usuarios.md)
+11. [Playbook 11 — Admin UX: reorganização das abas](11_admin_ux_reorganizacao_abas.md)

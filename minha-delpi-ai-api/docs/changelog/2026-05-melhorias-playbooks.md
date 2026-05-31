@@ -27,6 +27,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 - `attachmentFollowUpSuggestions` no metadata do assistant quando a mensagem do usuário trouxe anexos.
 - `ChatAttachmentWelcomeService` — resposta automática ao enviar anexo (mensagem vazia ou «segue anexo»).
 - Correção de quebras de linha na extração CSV/XLSX/PDF (`ChatAttachmentTextExtractor`).
+- Migration `p8q9r0s1t3`: provider `api-delpi` habilitado no agente oficial — chip «Ver vendas» usa `/sales/billing`.
 - Chips: Resumir, Corrigir, Traduzir, Extrair pendências, Criar checklist (`personality_playbook.json`).
 
 ## Interatividade (`playbook_interatividade_botoes`)
