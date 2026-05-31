@@ -4,6 +4,19 @@
   align-items: start;
 }
 
+.mdc-admin-guidelines__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-guidelines__toolbar .mdc-admin-knowledge-summary {
+  flex: 1 1 28rem;
+  margin-bottom: 0;
+}
+
 .mdc-admin-guidelines__workbench.mdc-admin-split {
   align-items: stretch;
 }

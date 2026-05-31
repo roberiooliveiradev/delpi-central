@@ -1,9 +1,12 @@
 import type { AdminGuideline } from "./guidelineTypes";
+import type { GuidelineStatusFilter } from "./guidelinesSummary";
 
 import "./GuidelineListPanel.css";
 
 type GuidelineListPanelProps = {
   guidelines: AdminGuideline[];
+  statusFilter?: GuidelineStatusFilter;
+  totalCount?: number;
   publishGuideline: (guidelineId: string) => Promise<void>;
   archiveGuideline: (guidelineId: string) => Promise<void>;
   onEditGuideline: (guideline: AdminGuideline) => void;
@@ -25,8 +28,17 @@ const ENVIRONMENT_LABEL: Record<string, string> = {
   prod: "PROD",
 };
 
+const STATUS_FILTER_LABEL: Record<GuidelineStatusFilter, string> = {
+  all: "todas",
+  active: "ativas",
+  draft: "rascunho",
+  archived: "arquivadas",
+};
+
 export function GuidelineListPanel({
   guidelines,
+  statusFilter = "all",
+  totalCount,
   publishGuideline,
   archiveGuideline,
   onEditGuideline,
@@ -43,7 +55,9 @@ export function GuidelineListPanel({
         </div>
 
         <span className="mdc-admin-badge mdc-admin-badge--muted">
-          {guidelines.length} regra(s)
+          {statusFilter === "all"
+            ? `${guidelines.length} regra(s)`
+            : `${guidelines.length} de ${totalCount ?? guidelines.length} (${STATUS_FILTER_LABEL[statusFilter]})`}
         </span>
       </header>
 
@@ -53,9 +67,15 @@ export function GuidelineListPanel({
 
       {guidelines.length === 0 ? (
         <div className="mdc-guideline-list-panel__empty">
-          <strong>Nenhuma diretriz cadastrada ainda.</strong>
+          <strong>
+            {statusFilter === "all" && (totalCount ?? 0) === 0
+              ? "Nenhuma diretriz cadastrada ainda."
+              : "Nenhuma diretriz neste filtro."}
+          </strong>
           <p>
-            Crie a primeira diretriz no painel ao lado para orientar o comportamento global do chat.
+            {statusFilter === "all" && (totalCount ?? 0) === 0
+              ? "Use «Nova diretriz» acima ou o editor ao lado para criar a primeira regra."
+              : "Selecione outro status nos cards de resumo ou crie uma nova diretriz."}
           </p>
         </div>
       ) : (

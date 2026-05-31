@@ -1,9 +1,15 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { GuidelineEditorPanel } from "./GuidelineEditorPanel";
 import { GuidelineListPanel } from "./GuidelineListPanel";
+import { GuidelinesSummaryStrip } from "./GuidelinesSummaryStrip";
 import { GuidelineTestPanel } from "./GuidelineTestPanel";
 import { GuidelineVersionPanel } from "./GuidelineVersionPanel";
+import {
+  computeGuidelinesSummary,
+  filterGuidelinesByStatus,
+  type GuidelineStatusFilter,
+} from "./guidelinesSummary";
 import type { AdminRbacSummary } from "../../../../data/api/adminTypes";
 import type { AdminGuideline, GuidelineBackendPlaceholders } from "./guidelineTypes";
 
@@ -26,6 +32,16 @@ export function AdminGuidelinesTab({
 }: AdminGuidelinesTabProps) {
   const [editingGuideline, setEditingGuideline] =
     useState<AdminGuideline | null>(null);
+  const [statusFilter, setStatusFilter] = useState<GuidelineStatusFilter>("all");
+
+  const summary = useMemo(
+    () => computeGuidelinesSummary(guidelines),
+    [guidelines],
+  );
+  const visibleGuidelines = useMemo(
+    () => filterGuidelinesByStatus(guidelines, statusFilter),
+    [guidelines, statusFilter],
+  );
 
   const canCreateGuidelines = Boolean(rbac?.capabilities.canCreateGuidelines);
   const canPublishGuidelines = Boolean(rbac?.capabilities.canPublishGuidelines);
@@ -33,8 +49,32 @@ export function AdminGuidelinesTab({
 
   return (
     <section className="mdc-admin-guidelines">
+      <div className="mdc-admin-guidelines__toolbar">
+        <GuidelinesSummaryStrip
+          summary={summary}
+          activeFilter={statusFilter}
+          onFilterChange={setStatusFilter}
+        />
+
+        <button
+          type="button"
+          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+          disabled={!canCreateGuidelines}
+          title={
+            canCreateGuidelines
+              ? "Criar nova diretriz"
+              : "Sem permissão para criar diretrizes"
+          }
+          onClick={() => setEditingGuideline(null)}
+        >
+          Nova diretriz
+        </button>
+      </div>
+
       <GuidelineListPanel
-        guidelines={guidelines}
+        guidelines={visibleGuidelines}
+        statusFilter={statusFilter}
+        totalCount={guidelines.length}
         publishGuideline={publishGuideline}
         archiveGuideline={archiveGuideline}
         onEditGuideline={setEditingGuideline}
