@@ -79,15 +79,15 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | 12.1.1 | `ChatDrawingIntentService` — detecta pedido de análise de desenho + PDF anexado ou código de produto | ✅ |
 | 12.1.2 | Policy `drawing-analysis-delpi-skill.md` + registro em `PromptPolicyService` / catálogo admin | ✅ |
 | 12.1.3 | Skill `drawing-analysis-delpi` no `catalog.json` e bootstrap admin | ✅ |
-| 12.1.4 | Bloqueio de roteamento incorreto (ex.: não confundir «analise o desenho 90264130» com busca catálogo) | ⬜ |
+| 12.1.4 | Bloqueio de roteamento incorreto (ex.: não confundir «analise o desenho 90264130» com busca catálogo) | ✅ |
 
 ### 12.2 — Extração do PDF (visão / OCR)
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 12.2.1 | Definir provedor: LLM multimodal (anexo) vs serviço OCR dedicado vs pipeline híbrido | ⬜ |
-| 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ⬜ |
-| 12.2.3 | Limites de tamanho/páginas; timeout; fallback quando OCR falhar | ⬜ |
+| 12.2.1 | Definir provedor: LLM multimodal (anexo) vs serviço OCR dedicado vs pipeline híbrido | ✅ (híbrido: pypdf + parse heurístico) |
+| 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ✅ (código/REV/cliente; cotas Fase 3) |
+| 12.2.3 | Limites de tamanho/páginas; timeout; fallback quando OCR falhar | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, legibilidade mínima) |
 | 12.2.4 | Testes com PDFs reais anonimizados (fixtures em `tests/fixtures/drawings/`) | ⬜ |
 
 ### 12.3 — Orquestração PDF × API × checklist
@@ -104,7 +104,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | ID | Entrega | Status |
 |----|---------|--------|
 | 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ⬜ |
-| 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ⬜ |
+| 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ✅ |
 | 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ⬜ |
 
 ### 12.5 — Agentes, testes e operação
@@ -113,8 +113,8 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 |----|---------|--------|
 | 12.5.1 | Agente `minha-delpi-chat` (ou engenharia) com skill default | ⬜ |
 | 12.5.2 | Smoke `scripts/smoke_drawing_analyser.py` (PDF fixture + código conhecido) | ✅ (offline MVP) |
-| 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ⬜ |
-| 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ⬜ |
+| 12.5.3 | Casos em `chat_intelligence_regression_cases.py` | ✅ |
+| 12.5.4 | Documentar env vars (timeout OCR, max pages, model vision) | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, `CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS`) |
 
 ---
 

@@ -88,6 +88,7 @@ class ChatToolContextService:
             attachment_ids=attachment_ids,
             agent_metadata=agent_metadata if isinstance(agent_metadata, dict) else None,
             previous_messages=previous_messages,
+            attachment_context=attachment_context,
         )
 
         if drawing_turn and drawing_turn.direct_answer:
@@ -110,6 +111,36 @@ class ChatToolContextService:
         )
         drawing_product_code = drawing_turn.product_code if drawing_turn else None
         drawing_has_pdf = bool(drawing_turn and drawing_turn.has_pdf_attachment)
+
+        drawing_pdf_extract = None
+
+        if drawing_analysis_mode and drawing_has_pdf and attachment_context:
+            from app.domain.services.chat_drawing_pdf_extraction_service import (
+                ChatDrawingPdfExtractionService,
+            )
+
+            drawing_pdf_extract = ChatDrawingPdfExtractionService.parse_from_attachment_context(
+                attachment_context
+            )
+
+            if (
+                drawing_pdf_extract
+                and drawing_pdf_extract.get("productCode")
+                and not drawing_product_code
+            ):
+                drawing_product_code = str(drawing_pdf_extract["productCode"])
+
+        if drawing_analysis_mode and on_stream_activity:
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
+
+            on_stream_activity(
+                ChatStreamActivityService.drawing_analysis_phase(
+                    target="desenho técnico",
+                    message="Análise de desenho DELPI: consulta API e validação do PDF…",
+                )
+            )
 
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
@@ -861,6 +892,7 @@ class ChatToolContextService:
                 product_code=drawing_product_code,
                 has_pdf_attachment=drawing_has_pdf,
                 direct_answer=direct_answer,
+                pdf_extract=drawing_pdf_extract,
             )
 
             if drawing_analysis_payload:
@@ -1525,6 +1557,7 @@ class ChatToolContextService:
         product_code: str | None,
         has_pdf_attachment: bool,
         direct_answer: str | None,
+        pdf_extract: dict | None = None,
     ) -> dict | None:
         from app.domain.services.chat_drawing_validation_orchestration_service import (
             ChatDrawingValidationOrchestrationService,
@@ -1559,6 +1592,7 @@ class ChatToolContextService:
                 has_pdf_attachment=has_pdf_attachment,
                 api_ok=bool(metadata.get("ok")),
                 api_status_code=metadata.get("statusCode"),
+                pdf_extract=pdf_extract,
             )
 
             return {

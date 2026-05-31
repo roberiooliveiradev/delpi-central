@@ -3,6 +3,8 @@
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 
 INTENT_CASES = [
+    ("analise o desenho 90260140", ChatProductQueryIntent.ANALYSER),
+    ("validar pdf do desenho tecnico 90264130", ChatProductQueryIntent.ANALYSER),
     ("descrição do produto 10080047", ChatProductQueryIntent.DESCRIPTION),
     ("qual a descrição do 10.080.055", ChatProductQueryIntent.DESCRIPTION),
     ("busque o estoque desse produto", ChatProductQueryIntent.STOCK),

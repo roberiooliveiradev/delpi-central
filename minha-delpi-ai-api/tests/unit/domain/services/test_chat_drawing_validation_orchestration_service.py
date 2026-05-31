@@ -35,6 +35,28 @@ def test_build_from_analyser_product_not_found_critical():
     assert package["drawingAnalysis"]["criticalErrors"] >= 1
 
 
+def test_pdf_code_divergence_critical():
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90264130",
+            "revision": "00",
+            "legible": True,
+        },
+    )
+
+    critical = [
+        item
+        for item in package["drawingAnalysis"]["items"]
+        if item.get("status") == "critical_error"
+    ]
+
+    assert any(item.get("item") == "Código DELPI" for item in critical)
+
+
 def test_format_report_contains_sections():
     package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
         product_code="90260140",

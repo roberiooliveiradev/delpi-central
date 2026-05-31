@@ -122,6 +122,24 @@ class ChatStreamActivityService:
         )
 
     @classmethod
+    def drawing_analysis_phase(
+        cls,
+        *,
+        target: str = "desenho técnico",
+        message: str | None = None,
+        state: str = "active",
+    ) -> dict[str, Any]:
+        return cls.entry(
+            verb="Analisando",
+            target=target,
+            phase="drawing_analysis",
+            state=state,
+            level="info",
+            message=message or "Análise de desenho DELPI em andamento…",
+            entry_id="drawing-analysis",
+        )
+
+    @classmethod
     def emit_planned_actions(
         cls,
         on_stream_activity,

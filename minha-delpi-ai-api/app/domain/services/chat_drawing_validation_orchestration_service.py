@@ -23,6 +23,7 @@ class ChatDrawingValidationOrchestrationService:
         has_pdf_attachment: bool = False,
         api_ok: bool = True,
         api_status_code: int | None = None,
+        pdf_extract: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         code = str(product_code or "").strip()
         root = payload if isinstance(payload, dict) else {}
@@ -47,6 +48,7 @@ class ChatDrawingValidationOrchestrationService:
                 items=items,
                 has_pdf_attachment=has_pdf_attachment,
                 product=product,
+                pdf_extract=pdf_extract,
             )
 
         items.append(
@@ -140,23 +142,33 @@ class ChatDrawingValidationOrchestrationService:
                 )
             )
         else:
+            pdf_meta = pdf_extract if isinstance(pdf_extract, dict) else {}
+            legible = bool(pdf_meta.get("legible"))
+
             items.append(
                 cls._item(
                     section="PDF",
                     item="Documento anexado",
-                    status=cls._STATUS_OK,
-                    pdf_evidence="PDF na sessão",
+                    status=cls._STATUS_OK if legible else cls._STATUS_PENDING,
+                    pdf_evidence="PDF na sessão" if legible else "Texto insuficiente/ilegível",
                     api_evidence="—",
                     rule="Extrair carimho, BOM e cotas do anexo",
-                    recommendation="Conferir divergências item a item no relatório",
+                    recommendation=(
+                        "Conferir divergências item a item no relatório"
+                        if legible
+                        else "Regerar PDF com melhor qualidade ou informar código na mensagem"
+                    ),
                 )
             )
+
+            items.extend(cls._pdf_cross_check_items(product, code, pdf_meta))
 
         return cls._package(
             product_code=code,
             items=items,
             has_pdf_attachment=has_pdf_attachment,
             product=product,
+            pdf_extract=pdf_extract,
         )
 
     @classmethod
@@ -173,6 +185,7 @@ class ChatDrawingValidationOrchestrationService:
             "| Campo | Valor |",
             "|---|---|",
             f"| Código | {analysis.get('productCode') or '—'} |",
+            f"| Revisão (PDF) | {analysis.get('revisionPdf') or '—'} |",
             f"| PDF anexado | {'Sim' if analysis.get('hasPdfAttachment') else 'Não'} |",
             "",
             "## 3. Dados retornados pela API",
@@ -274,6 +287,77 @@ class ChatDrawingValidationOrchestrationService:
         }
 
     @classmethod
+    def _pdf_cross_check_items(
+        cls,
+        product: dict,
+        api_code: str,
+        pdf_extract: dict,
+    ) -> list[dict[str, Any]]:
+        items: list[dict[str, Any]] = []
+        pdf_code = str(pdf_extract.get("productCode") or "").strip()
+        api_product_code = str(product.get("code") or api_code or "").strip()
+
+        if pdf_code and api_product_code and pdf_code != api_product_code:
+            items.append(
+                cls._item(
+                    section="Cabeçalho",
+                    item="Código DELPI",
+                    status=cls._STATUS_CRITICAL,
+                    pdf_evidence=pdf_code,
+                    api_evidence=api_product_code,
+                    rule="Código do PDF deve bater com SB1010",
+                    recommendation="Corrigir código no desenho ou no cadastro",
+                )
+            )
+        elif pdf_code and api_product_code:
+            items.append(
+                cls._item(
+                    section="Cabeçalho",
+                    item="Código DELPI",
+                    status=cls._STATUS_OK,
+                    pdf_evidence=pdf_code,
+                    api_evidence=api_product_code,
+                    rule="Código PDF × API",
+                    recommendation="—",
+                )
+            )
+
+        pdf_revision = str(pdf_extract.get("revision") or "").strip()
+        api_revision = str(
+            product.get("last_revision_date") or product.get("revision") or ""
+        ).strip()
+
+        if pdf_revision and api_revision:
+            api_short = api_revision[-2:] if len(api_revision) >= 8 else api_revision
+
+            if len(api_revision) <= 4 and pdf_revision != api_short.zfill(2):
+                items.append(
+                    cls._item(
+                        section="Cabeçalho",
+                        item="Revisão",
+                        status=cls._STATUS_CRITICAL,
+                        pdf_evidence=f"REV.{pdf_revision}",
+                        api_evidence=api_revision,
+                        rule="Revisão do carimbo × cadastro",
+                        recommendation="Atualizar revisão do PDF ou cadastro Protheus",
+                    )
+                )
+            elif len(api_revision) > 4:
+                items.append(
+                    cls._item(
+                        section="Cabeçalho",
+                        item="Revisão",
+                        status=cls._STATUS_PENDING,
+                        pdf_evidence=f"REV.{pdf_revision}",
+                        api_evidence=api_revision,
+                        rule="Conferência manual (API em data, PDF em REV.)",
+                        recommendation="Validar revisão no carimbo com SB1010",
+                    )
+                )
+
+        return items
+
+    @classmethod
     def _package(
         cls,
         *,
@@ -281,15 +365,25 @@ class ChatDrawingValidationOrchestrationService:
         items: list[dict[str, Any]],
         has_pdf_attachment: bool,
         product: dict,
+        pdf_extract: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         critical = sum(1 for i in items if i.get("status") == cls._STATUS_CRITICAL)
         errors = sum(1 for i in items if i.get("status") == cls._STATUS_ERROR)
         pending = sum(1 for i in items if i.get("status") == cls._STATUS_PENDING)
 
+        pdf_meta = pdf_extract if isinstance(pdf_extract, dict) else {}
+
         if critical:
             overall = "rejected"
             overall_label = "Reprovado"
             conclusion = "O desenho não pode ser liberado enquanto houver erro crítico."
+        elif has_pdf_attachment and pdf_meta and not pdf_meta.get("legible"):
+            overall = "incomplete"
+            overall_label = "Análise incompleta"
+            conclusion = (
+                "O PDF está ilegível ou sem texto extraível suficiente. "
+                "Informe o código na mensagem ou regenere o PDF."
+            )
         elif pending and not has_pdf_attachment:
             overall = "incomplete"
             overall_label = "Análise incompleta"
@@ -311,7 +405,11 @@ class ChatDrawingValidationOrchestrationService:
                 "status": overall,
                 "overallLabel": overall_label,
                 "productCode": product_code,
+                "revisionPdf": pdf_meta.get("revision"),
+                "revisionApi": product.get("last_revision_date"),
+                "pdfProductCode": pdf_meta.get("productCode"),
                 "hasPdfAttachment": has_pdf_attachment,
+                "pdfLegible": pdf_meta.get("legible"),
                 "criticalErrors": critical,
                 "errors": errors,
                 "warnings": pending,

@@ -35,6 +35,7 @@ class ChatDrawingAnalysisTurnService:
         agent_metadata: dict | None = None,
         skills: dict | None = None,
         previous_messages: list | None = None,
+        attachment_context: str | None = None,
     ) -> DrawingTurnResolution | None:
         if not ChatDrawingIntentService.is_drawing_analysis_request(
             message,
@@ -57,6 +58,18 @@ class ChatDrawingAnalysisTurnService:
             message or "",
             previous_messages=previous_messages,
         )
+
+        if not product_code and attachment_context:
+            from app.domain.services.chat_drawing_pdf_extraction_service import (
+                ChatDrawingPdfExtractionService,
+            )
+
+            pdf_extract = ChatDrawingPdfExtractionService.parse_from_attachment_context(
+                attachment_context
+            )
+
+            if pdf_extract and pdf_extract.get("productCode"):
+                product_code = str(pdf_extract["productCode"])
 
         if ChatDrawingIntentService.requires_pdf_for_full_analysis(
             message,

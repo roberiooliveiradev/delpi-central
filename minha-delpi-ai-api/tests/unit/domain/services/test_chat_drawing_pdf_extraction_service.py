@@ -1,0 +1,39 @@
+from app.domain.services.chat_drawing_pdf_extraction_service import (
+    ChatDrawingPdfExtractionService,
+)
+
+
+def test_parse_from_text_extracts_code_and_revision():
+    text = """
+    DESENHO TÉCNICO DELPI
+    CÓDIGO 90260140
+    REV. 02
+    DESCRIÇÃO CHICOTE TESTE
+    """
+
+    parsed = ChatDrawingPdfExtractionService.parse_from_text(text)
+
+    assert parsed["productCode"] == "90260140"
+    assert parsed["revision"] == "02"
+    assert parsed["legible"] is True
+
+
+def test_parse_from_attachment_context_block():
+    context = (
+        "Conteúdo dos arquivos anexados:\n\n"
+        "### desenho.pdf\n"
+        "CODIGO 90264130 REV.00 CLIENTE WEG\n"
+    )
+
+    parsed = ChatDrawingPdfExtractionService.parse_from_attachment_context(context)
+
+    assert parsed is not None
+    assert parsed["productCode"] == "90264130"
+    assert parsed["revision"] == "00"
+
+
+def test_parse_illegible_short_text():
+    parsed = ChatDrawingPdfExtractionService.parse_from_text("abc")
+
+    assert parsed["legible"] is False
+    assert parsed["productCode"] is None

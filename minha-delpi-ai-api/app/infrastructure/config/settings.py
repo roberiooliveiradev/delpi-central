@@ -129,6 +129,10 @@ class Settings:
     CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS = int(
         os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS", "4000")
     )
+    CHAT_DRAWING_PDF_MAX_PAGES = int(os.getenv("CHAT_DRAWING_PDF_MAX_PAGES", "10"))
+    CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS = int(
+        os.getenv("CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS", "40")
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"

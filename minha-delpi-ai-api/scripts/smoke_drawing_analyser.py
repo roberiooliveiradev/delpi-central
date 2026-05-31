@@ -10,6 +10,9 @@ from __future__ import annotations
 import sys
 
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+from app.domain.services.chat_drawing_pdf_extraction_service import (
+    ChatDrawingPdfExtractionService,
+)
 from app.domain.services.chat_drawing_validation_orchestration_service import (
     ChatDrawingValidationOrchestrationService,
 )
@@ -56,6 +59,11 @@ def main() -> int:
 
     check("relatório markdown", "Relatório de Análise de Desenho DELPI" in report)
     check("metadata drawingAnalysis", bool(package.get("drawingAnalysis")))
+
+    pdf_parsed = ChatDrawingPdfExtractionService.parse_from_text(
+        "DESENHO 90260140 REV.01"
+    )
+    check("extração PDF código", pdf_parsed.get("productCode") == "90260140")
 
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
