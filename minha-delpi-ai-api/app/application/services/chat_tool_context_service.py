@@ -916,6 +916,11 @@ class ChatToolContextService:
             if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
                 result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
 
+            if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysisExport"):
+                result_payload["drawingAnalysisExport"] = drawing_analysis_payload[
+                    "drawingAnalysisExport"
+                ]
+
         return self._finalize_tool_context_result(
             message=raw_message,
             previous_messages=previous_messages,
@@ -1595,12 +1600,26 @@ class ChatToolContextService:
                 pdf_extract=pdf_extract,
             )
 
+            report_markdown = ChatDrawingValidationOrchestrationService.format_report_markdown(
+                package
+            )
+
+            from app.application.services.chat_drawing_report_export_service import (
+                ChatDrawingReportExportService,
+            )
+
+            export_payload = ChatDrawingReportExportService.build_export_payload(
+                package=package,
+                report_markdown=report_markdown,
+            )
+
             return {
                 "directAnswer": ChatDrawingValidationOrchestrationService.wrap_direct_answer(
                     str(direct_answer or ""),
                     package=package,
                 ),
                 "drawingAnalysis": package.get("drawingAnalysis"),
+                "drawingAnalysisExport": export_payload,
             }
 
         return None

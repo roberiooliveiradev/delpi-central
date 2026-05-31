@@ -73,6 +73,22 @@
     "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa."
   },
   "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist", "Comparar"],
+  "drawingFollowUpChips": [
+    "Ver só erros críticos",
+    "Ver checklist completo",
+    "Validar BOM",
+    "Validar cotas",
+    "Gerar relatório",
+    "Reanalisar desenho"
+  ],
+  "drawingFollowUpQueries": {
+    "Ver só erros críticos": "mostre apenas os erros críticos do relatório de análise do desenho {{productCode}}",
+    "Ver checklist completo": "mostre o checklist completo da análise do desenho {{productCode}}",
+    "Validar BOM": "valide a tabela de materiais do desenho {{productCode}} contra o Protheus",
+    "Validar cotas": "valide as cotas e decapes do desenho {{productCode}}",
+    "Gerar relatório": "gere novamente o relatório técnico do desenho {{productCode}}",
+    "Reanalisar desenho": "reanalise o desenho técnico {{productCode}} com o PDF anexado"
+  },
   "attachmentFollowUpQueries": {
     "Resumir": "resuma o conteúdo do arquivo anexado",
     "Corrigir": "corrija o texto do arquivo anexado",

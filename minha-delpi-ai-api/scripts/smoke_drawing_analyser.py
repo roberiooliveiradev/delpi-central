@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import sys
 
+from app.application.services.chat_drawing_follow_up_service import (
+    ChatDrawingFollowUpService,
+)
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 from app.domain.services.chat_drawing_pdf_extraction_service import (
     ChatDrawingPdfExtractionService,
@@ -79,6 +82,13 @@ def main() -> int:
         },
     )
     check("validação BOM integrada", package_full["drawingAnalysis"]["criticalErrors"] == 0)
+
+    meta: dict = {}
+    ChatDrawingFollowUpService.attach_to_assistant_metadata(
+        meta,
+        intelligence={"drawingAnalysis": package_full["drawingAnalysis"]},
+    )
+    check("chips follow-up desenho", len(meta.get("drawingFollowUpSuggestions") or []) >= 3)
 
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)

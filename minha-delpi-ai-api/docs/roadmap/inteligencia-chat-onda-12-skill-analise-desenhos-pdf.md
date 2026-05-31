@@ -103,7 +103,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ⬜ |
+| 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ✅ (markdown + export `.md` em metadata) |
 | 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ✅ |
 | 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ⬜ |
 

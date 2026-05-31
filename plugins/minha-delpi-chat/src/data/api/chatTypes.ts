@@ -373,6 +373,13 @@ export type ChatMessageMetadata = {
   milestoneCelebrations?: { id: string; label?: string; message: string }[];
   onboardingMilestonesAchieved?: string[];
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  drawingFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  drawingAnalysis?: Record<string, unknown>;
+  drawingAnalysisExport?: {
+    filename: string;
+    mimeType: string;
+    markdown: string;
+  };
   guidedFlow?: ChatGuidedFlow | null;
   guidedFlowCards?: ChatGuidedFlowCard[];
   guidedFlowSuggestions?: ChatFollowUpSuggestion[];

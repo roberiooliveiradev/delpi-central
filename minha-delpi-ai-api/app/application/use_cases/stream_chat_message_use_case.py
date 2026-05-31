@@ -782,6 +782,16 @@ class StreamChatMessageUseCase:
             attachments=attachments,
         )
 
+        from app.application.services.chat_drawing_follow_up_service import (
+            ChatDrawingFollowUpService,
+        )
+
+        ChatDrawingFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+        )
+
         if persist_before_playback:
             assistant_metadata = ChatMessageDeliveryService.ready_metadata(
                 assistant_metadata,

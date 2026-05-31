@@ -492,6 +492,16 @@ class SendChatMessageUseCase:
             attachments=attachments,
         )
 
+        from app.application.services.chat_drawing_follow_up_service import (
+            ChatDrawingFollowUpService,
+        )
+
+        ChatDrawingFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+        )
+
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
             role="assistant",

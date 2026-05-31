@@ -1344,6 +1344,16 @@ export function ChatMessageList({
                   groupLabel="Com o anexo"
                   ariaLabel="Ações sugeridas para o arquivo anexado"
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.drawingFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Análise de desenho"
+                  ariaLabel="Ações sugeridas após análise de desenho técnico"
+                />
                 <ChatMessageFeedbackPanel
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}
