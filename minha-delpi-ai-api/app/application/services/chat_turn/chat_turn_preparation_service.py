@@ -435,6 +435,10 @@ class ChatTurnPreparationService:
             )
         )
 
+        if skip_tools_for_attachment_document:
+            operational_optimize = False
+            analysis_mode = False
+
         if (
             canvas_action
             or pre_capability_answer

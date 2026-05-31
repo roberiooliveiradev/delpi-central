@@ -86,6 +86,8 @@ class ChatDocumentVisionService:
 
     @classmethod
     def to_document_vision_metadata(cls, vision: dict[str, Any]) -> dict[str, Any]:
+        bom_rows = vision.get("bomRows") if isinstance(vision.get("bomRows"), list) else []
+
         return {
             "schemaVersion": vision.get("schemaVersion") or cls.SCHEMA_VERSION,
             "engine": vision.get("engine"),
@@ -95,6 +97,7 @@ class ChatDocumentVisionService:
             "charCount": vision.get("charCount"),
             "legible": vision.get("legible"),
             "pageCount": vision.get("pageCount"),
+            "bomRowCount": len(bom_rows),
         }
 
     @classmethod
@@ -356,13 +359,19 @@ class ChatDocumentVisionService:
         merged["legible"] = bool(merged.get("legible") or doc.get("legible"))
         merged["charCount"] = max(int(merged.get("charCount") or 0), int(doc.get("charCount") or 0))
         merged["extractor"] = doc.get("engine") or merged.get("extractor") or "document_vision"
+        bom_rows = doc.get("bomRows") if isinstance(doc.get("bomRows"), list) else []
+
         merged["documentVision"] = {
             "schemaVersion": doc.get("schemaVersion"),
             "engine": doc.get("engine"),
             "stages": doc.get("stages"),
             "legibilityScore": doc.get("legibilityScore"),
             "durationMs": doc.get("durationMs"),
+            "bomRowCount": len(bom_rows),
         }
+
+        if bom_rows:
+            merged["bomRows"] = bom_rows
 
         return merged
 
@@ -659,6 +668,24 @@ class ChatDocumentVisionService:
             text,
             metadata={"extractor": engine, **(source_metadata or {})},
         )
+
+        from app.domain.services.chat_document_vision_bom_service import (
+            ChatDocumentVisionBomService,
+        )
+
+        bom_rows = ChatDocumentVisionBomService.extract_bom_rows(
+            text,
+            exclude_product_code=parsed.get("productCode"),
+        )
+
+        if bom_rows:
+            parsed["bomRows"] = bom_rows
+            parsed["componentCodes"] = ChatDocumentVisionBomService.merge_component_codes_from_rows(
+                list(parsed.get("componentCodes") or []),
+                bom_rows,
+            )
+            if "bom_heuristic" not in stages:
+                stages = [*stages, "bom_heuristic"]
 
         min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
         char_count = int(parsed.get("charCount") or 0)

@@ -2,7 +2,15 @@ from unittest.mock import patch
 
 from app.application.services.chat_document_vision_service import ChatDocumentVisionService
 from app.infrastructure.config.settings import Settings
+from app.domain.services.chat_document_vision_bom_service import ChatDocumentVisionBomService
 from tests.fixtures.document_vision_regression_cases import REGRESSION_CASES
+
+
+def test_regression_v6_bom_heuristic():
+    case = next(item for item in REGRESSION_CASES if item["id"] == "V6")
+    rows = ChatDocumentVisionBomService.extract_bom_rows(case["bom_text"])
+
+    assert [row["code"] for row in rows] == case["expect_bom_codes"]
 
 
 def test_regression_v8_merge_product_code():

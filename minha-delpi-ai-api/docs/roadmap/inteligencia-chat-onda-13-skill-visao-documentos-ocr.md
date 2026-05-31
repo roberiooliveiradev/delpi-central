@@ -21,7 +21,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 | Imagem | Tesseract via `ChatDocumentVisionService` (PNG/JPG/WebP) | OCR no contexto de anexo e no fluxo de desenho |
 | Desenho técnico | Código/REV heurísticos | Carimbo, BOM, cotas, decapes com confidence |
 | Skill plataforma | Não existe `document-vision-delpi` | Catálogo + policy + registry |
-| Operação | Sem métricas vision | adminDebug + métricas por engine (anexo e desenho) |
+| Operação | Métricas + intent `attachment_document` | adminDebug + painel admin + audit por engine |
 
 ---
 
@@ -49,7 +49,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 | ID | Entrega | Status |
 |----|---------|--------|
 | 13.3.1 | Backend `docling` (MIT) ou `paddleocr` (Apache 2.0) | ⬜ (stub + fallback `auto`; wiring pendente) |
-| 13.3.2 | Extração de tabelas BOM | ⬜ |
+| 13.3.2 | Extração de tabelas BOM | ✅ (heurística `bomRows` + `bom_heuristic` em texto OCR) |
 
 ### 13.4 — Integração drawing (Onda 12 Fase 3)
 
@@ -102,3 +102,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | `documentVision`/`documentVisionTrace` em turnos só com anexo (PDF indexado → snapshot native leve). |
 | 2026-05-31 | Intent `attachment_document` (leitura de anexo sem planejar OpenAPI); painel admin Métricas visão/OCR. |
 | 2026-05-31 | Crop carimbo Tesseract, fallback OCR em indexado curto, `run_onda13_validation.sh`, adminDebug MFE visão. |
+| 2026-05-31 | BOM heurístico (`ChatDocumentVisionBomService`); fast path desligado em `attachment_document`. |

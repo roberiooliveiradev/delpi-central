@@ -33,6 +33,12 @@ REGRESSION_CASES: tuple[dict, ...] = (
         "expect_unchanged": True,
     },
     {
+        "id": "V6",
+        "description": "BOM heurístico em texto OCR",
+        "bom_text": "LISTA DE MATERIAIS\n90260141 2 TERMINAL",
+        "expect_bom_codes": ["90260141"],
+    },
+    {
         "id": "V8",
         "description": "Integração drawing — código no merge",
         "vision_engine": "tesseract",

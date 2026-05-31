@@ -144,6 +144,8 @@ function AdminDocumentVisionTraceSummary({
     trace.legibilityScore != null ? String(trace.legibilityScore) : "";
   const duration =
     trace.durationMs != null ? `${String(trace.durationMs)}ms` : "";
+  const bomCount =
+    trace.bomRowCount != null ? String(trace.bomRowCount) : "";
   const context = trace.context != null ? String(trace.context) : "";
 
   if (!engine && !stages) {
@@ -175,6 +177,11 @@ function AdminDocumentVisionTraceSummary({
       {duration ? (
         <span className="mdc-chat-admin-debug__timing-chip">
           <strong>duração</strong> {duration}
+        </span>
+      ) : null}
+      {bomCount ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>BOM</strong> {bomCount} linha(s)
         </span>
       ) : null}
     </div>

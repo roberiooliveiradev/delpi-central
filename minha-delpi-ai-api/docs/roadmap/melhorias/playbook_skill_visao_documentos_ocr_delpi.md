@@ -277,7 +277,7 @@ Validar RAM: 7B VLM quantizado ~5–8 GB + api + postgres.
 |------|---------|-----|
 | **13.1 — Contrato e skill** | `DocumentVisionResult`, `ChatDocumentVisionService` interface, skill no catálogo, policy, registry | 13.1.1–13.1.4 |
 | **13.2 — Estágio 0+2** | Unificar Tesseract PDF multipágina + carimbo heurístico; testes fixtures | 13.2.1–13.2.3 |
-| **13.3 — Docling ou Paddle** | Backend `docling` em profile vision; tabelas BOM | 13.3.1–13.3.2 |
+| **13.3 — Docling ou Paddle** | Backend `docling` em profile vision; tabelas BOM | 13.3.1 ⬜; **13.3.2 ✅** (`ChatDocumentVisionBomService`, `bom_heuristic`) |
 | **13.4 — Integração desenho** | `ChatDrawingPdfExtractionService` consome vision; fechar Onda 12 Fase 3 | 13.4.1 |
 | **13.5 — VLM Ollama** | Backend `ollama_vlm` opt-in; cotas com confidence | 13.5.1 |
 | **13.6 — UX e ops** | Stream, adminDebug, métricas `documentVision`, smoke, compose profile | 13.6.1–13.6.4 |

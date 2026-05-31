@@ -289,6 +289,7 @@ class ChatAdminDebugService:
                 "legibilityScore": vision_payload.get("legibilityScore"),
                 "durationMs": vision_payload.get("durationMs"),
                 "charCount": char_count,
+                "bomRowCount": vision_payload.get("bomRowCount"),
                 "context": vision_context,
             }
             payload["pipeline"]["documentVision"] = True

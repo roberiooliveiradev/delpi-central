@@ -50,6 +50,7 @@ Mensagem do usuário
 | `ChatAttachmentResponseService` | Enriquece upload/listagem com `readingStatus` e `preview` consistente (Playbook 07) |
 | `ChatAttachmentImageOcrService` | OCR opcional em imagens (`CHAT_ATTACHMENT_IMAGE_OCR_ENABLED`) |
 | `ChatDocumentVisionService` | Skill `document-vision-delpi` — OCR PDF/imagem (native + Tesseract); anexos da sessão (`documentVision` no tool context) e `drawing-analysis-delpi` |
+| `ChatDocumentVisionBomService` | Heurística BOM (`bomRows`, estágio `bom_heuristic`) em texto OCR — Onda 13.3.2 |
 | `ChatAgentMiniDashboardService` | Mini dashboard + recomendações em `GET /chat/agents/{id}/stats` (gráficos Fase 4) |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
