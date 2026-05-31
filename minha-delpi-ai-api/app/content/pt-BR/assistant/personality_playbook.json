@@ -72,13 +72,14 @@
     ],
     "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa."
   },
-  "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist"],
+  "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist", "Comparar"],
   "attachmentFollowUpQueries": {
     "Resumir": "resuma o conteúdo do arquivo anexado",
     "Corrigir": "corrija o texto do arquivo anexado",
     "Traduzir": "traduza o conteúdo do arquivo anexado para português",
     "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
-    "Criar checklist": "transforme o arquivo anexado em um checklist"
+    "Criar checklist": "transforme o arquivo anexado em um checklist",
+    "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais"
   },
   "textHomeStarters": [
     { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },

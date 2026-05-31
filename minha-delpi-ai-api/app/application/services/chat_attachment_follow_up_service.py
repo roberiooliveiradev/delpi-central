@@ -34,17 +34,23 @@ class ChatAttachmentFollowUpService:
             if summaries:
                 metadata["attachmentSummaries"] = summaries
 
-        labels = _playbook().get("attachmentFollowUpChips") or [
-            "Resumir",
-            "Corrigir",
-            "Traduzir",
-            "Extrair pendências",
-        ]
+        labels = list(
+            _playbook().get("attachmentFollowUpChips")
+            or [
+                "Resumir",
+                "Corrigir",
+                "Traduzir",
+                "Extrair pendências",
+            ]
+        )
         queries = _playbook().get("attachmentFollowUpQueries") or {}
+
+        if attachments and len(attachments) >= 2 and "Comparar" not in labels:
+            labels.append("Comparar")
 
         suggestions: list[dict[str, str]] = []
 
-        for label in labels[:6]:
+        for label in labels[:7]:
             template = str(queries.get(label) or label).strip()
             suggestions.append({"label": str(label), "query": template})
 

@@ -329,6 +329,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Router | `intentRoute.resolvedParams` — `productCode` na mensagem ou herdado do histórico |
 | Compat | Alias `resolvedFromMemory` mantido no mesmo payload |
 
+## Anexos — imagens, comparação e status (Playbook 07)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Indexação | PNG/JPG/WebP com metadados (`image_metadata`) e preview `kind=image` |
+| Comparação | `ChatAttachmentMultiCompareService` + estágio `attachment_compare` |
+| MFE | Status de leitura no composer e chips de mensagem (`chatAttachmentStatus.ts`) |
+| Chips | «Comparar» em follow-up quando há 2+ anexos |
+
 ## Roteamento — pendências ativas e feedback (Playbook 01)
 
 | Entrega | Detalhe |

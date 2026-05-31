@@ -5,6 +5,7 @@ import {
   Download,
   FileText,
   GitBranch,
+  Image as ImageIcon,
   Pencil,
   RotateCcw,
   ThumbsDown,
@@ -13,6 +14,7 @@ import {
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal";
+import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
 
 import type {
   ChatCanvasOpenPayload,
@@ -184,6 +186,8 @@ type MessageAttachment = {
   content_type?: string | null;
   size_bytes?: number;
   status?: string;
+  parsed?: boolean;
+  readingStatus?: string;
 };
 
 function getMessageAttachments(message: ChatMessage): MessageAttachment[] {
@@ -234,6 +238,10 @@ function ChatMessageAttachments({
           `Arquivo ${index + 1}`;
         const size = formatAttachmentSize(attachment.size_bytes);
         const canDownload = Boolean(attachment.id && onDownloadAttachment);
+        const readingStatus =
+          attachment.readingStatus ||
+          attachmentReadingStatusLabel(attachment.status, attachment.parsed);
+        const isImage = String(attachment.content_type || "").startsWith("image/");
 
         return (
           <span
@@ -241,9 +249,14 @@ function ChatMessageAttachments({
             className="mdc-chat-message-attachment"
             title={filename}
           >
-            <FileText size={14} aria-hidden="true" />
+            {isImage ? (
+              <ImageIcon size={14} aria-hidden="true" />
+            ) : (
+              <FileText size={14} aria-hidden="true" />
+            )}
             <strong>{filename}</strong>
             {size ? <small>{size}</small> : null}
+            <small className="mdc-chat-message-attachment__status">{readingStatus}</small>
             {canDownload ? (
               <button
                 type="button"

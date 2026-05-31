@@ -961,6 +961,7 @@ export function ChatPage({
       size: file.size,
       type: file.type,
       file,
+      status: "queued" as const,
     }));
 
     if (nextAttachments.length === 0) {

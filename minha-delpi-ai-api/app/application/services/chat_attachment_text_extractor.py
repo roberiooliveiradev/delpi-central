@@ -8,10 +8,15 @@ from pathlib import Path
 class ChatAttachmentTextExtractor:
     SUPPORTED_TEXT_EXTENSIONS = {".txt", ".md", ".markdown", ".csv", ".json"}
     SUPPORTED_OPTIONAL_EXTENSIONS = {".docx", ".xlsx", ".pdf"}
+    SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 
     @classmethod
     def supported_extensions(cls) -> set[str]:
-        return set(cls.SUPPORTED_TEXT_EXTENSIONS) | set(cls.SUPPORTED_OPTIONAL_EXTENSIONS)
+        return (
+            set(cls.SUPPORTED_TEXT_EXTENSIONS)
+            | set(cls.SUPPORTED_OPTIONAL_EXTENSIONS)
+            | set(cls.SUPPORTED_IMAGE_EXTENSIONS)
+        )
 
     def extract(self, *, storage_path: str, filename: str, content_type: str | None) -> dict:
         path = Path(storage_path)
@@ -34,6 +39,9 @@ class ChatAttachmentTextExtractor:
 
         if extension == ".pdf":
             return self._extract_pdf(path)
+
+        if extension in self.SUPPORTED_IMAGE_EXTENSIONS:
+            return self._extract_image(path, extension)
 
         return {
             "supported": False,
@@ -187,6 +195,49 @@ class ChatAttachmentTextExtractor:
             }
         except Exception as exc:
             return self._unsupported_optional(".pdf", exc)
+
+    def _extract_image(self, path: Path, extension: str) -> dict:
+        width: int | None = None
+        height: int | None = None
+        image_format: str | None = extension.lstrip(".").upper()
+
+        try:
+            from PIL import Image
+
+            with Image.open(path) as image:
+                width, height = image.size
+                image_format = str(image.format or image_format or "").upper() or image_format
+        except Exception:
+            pass
+
+        label = path.name
+        descriptor = f"Imagem {label}"
+
+        if width and height:
+            descriptor = f"{descriptor} ({width}×{height}"
+
+            if image_format:
+                descriptor = f"{descriptor} {image_format}"
+
+            descriptor = f"{descriptor})"
+
+        content = (
+            f"[{descriptor}. "
+            "Conteúdo visual indexado por metadados; descreva o que precisa "
+            "(ex.: ler gráfico, extrair texto, gerar descrição ou texto alternativo).]"
+        )
+
+        return {
+            "supported": True,
+            "content": content,
+            "metadata": {
+                "extractor": "image_metadata",
+                "extension": extension,
+                "width": width,
+                "height": height,
+                "format": image_format,
+            },
+        }
 
     def _unsupported_optional(self, extension: str, exc: Exception) -> dict:
         return {

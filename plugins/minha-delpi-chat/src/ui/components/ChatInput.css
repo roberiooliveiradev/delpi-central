@@ -502,7 +502,7 @@
 
 .mdc-chat-input__attachment-chip {
   display: inline-grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 0.38rem;
   max-width: min(100%, 18rem);
@@ -530,6 +530,11 @@
   color: var(--mdc-text-muted);
   font-size: 0.68rem;
   white-space: nowrap;
+}
+
+.mdc-chat-input__attachment-chip-status {
+  color: color-mix(in srgb, var(--mdc-primary) 72%, var(--mdc-text-muted));
+  font-weight: 650;
 }
 
 .mdc-chat-input__attachment-chip button {

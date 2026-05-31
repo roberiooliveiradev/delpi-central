@@ -45,7 +45,42 @@ class ChatAttachmentPreviewService:
             if content:
                 preview["charCount"] = len(content)
 
+        elif extension in {".png", ".jpg", ".jpeg", ".webp"}:
+            preview["kind"] = "image"
+            width = metadata.get("width")
+            height = metadata.get("height")
+
+            if width and height:
+                preview["width"] = width
+                preview["height"] = height
+
+            if metadata.get("format"):
+                preview["format"] = metadata.get("format")
+
         return preview
+
+    @classmethod
+    def reading_status_label(
+        cls,
+        *,
+        status: str | None,
+        parsed: bool | None = None,
+    ) -> str:
+        normalized = str(status or "").strip().lower()
+
+        if parsed or normalized == "indexed":
+            return "Indexado"
+
+        if normalized in {"uploaded", "uploading"}:
+            return "Processando leitura"
+
+        if normalized == "unsupported":
+            return "Leitura limitada"
+
+        if normalized == "index_failed":
+            return "Falha na leitura"
+
+        return "Aguardando envio"
 
     @classmethod
     def summarize_attachments(cls, attachments: list[dict] | None) -> list[dict[str, Any]]:
@@ -63,10 +98,16 @@ class ChatAttachmentPreviewService:
             preview = meta.get("preview") if isinstance(meta.get("preview"), dict) else None
             indexed = bool(meta.get("indexed")) or status == "indexed"
 
+            parsed = indexed and preview is not None
+
             entry: dict[str, Any] = {
                 "filename": name,
                 "status": status,
-                "parsed": indexed and preview is not None,
+                "parsed": parsed,
+                "readingStatus": cls.reading_status_label(
+                    status=status,
+                    parsed=parsed,
+                ),
             }
 
             if preview:
@@ -122,6 +163,16 @@ class ChatAttachmentPreviewService:
                             if preview.get("charCount")
                             else "."
                         )
+                    )
+                elif preview.get("kind") == "image":
+                    size = ""
+
+                    if preview.get("width") and preview.get("height"):
+                        fmt = preview.get("format") or "imagem"
+                        size = f" ({preview['width']}×{preview['height']} {fmt})"
+
+                    lines.append(
+                        f"- **{name}:** imagem indexada{size} — descreva o que analisar no visual."
                     )
                 else:
                     lines.append(f"- **{name}:** conteúdo indexado para consulta no chat.")

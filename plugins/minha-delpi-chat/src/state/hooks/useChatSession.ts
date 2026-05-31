@@ -1222,13 +1222,24 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       const attachmentIds = uploadedAttachments.map((attachment) => attachment.id);
-      const attachmentPreview = uploadedAttachments.map((attachment) => ({
-        id: attachment.id,
-        original_filename: attachment.original_filename,
-        size_bytes: attachment.size_bytes,
-        content_type: attachment.content_type,
-        status: attachment.status,
-      }));
+      const attachmentPreview = uploadedAttachments.map((attachment) => {
+        const indexed =
+          attachment.status === "indexed" ||
+          Boolean(
+            attachment.metadata &&
+              typeof attachment.metadata === "object" &&
+              (attachment.metadata as Record<string, unknown>).indexed,
+          );
+
+        return {
+          id: attachment.id,
+          original_filename: attachment.original_filename,
+          size_bytes: attachment.size_bytes,
+          content_type: attachment.content_type,
+          status: attachment.status,
+          parsed: indexed,
+        };
+      });
 
       if (attachmentPreview.length > 0) {
         setMessages((current) =>

@@ -363,6 +363,23 @@ class ChatTurnPreparationService:
             memory_prompt,
             base_conversation_context,
         )
+
+        from app.application.services.chat_attachment_multi_compare_service import (
+            ChatAttachmentMultiCompareService,
+        )
+
+        attachment_compare_hint = ChatAttachmentMultiCompareService.build_context_hint(
+            message=message,
+            attachments=attachments,
+        )
+
+        if attachment_compare_hint:
+            conversation_context = ChatWorkingMemoryService.merge_conversation_context(
+                conversation_context,
+                attachment_compare_hint,
+            )
+            pipeline_stages.append("attachment_compare")
+
         missing_product_code_answer = None
         ambiguous_period_answer = None
         interpretation_without_data_answer = None

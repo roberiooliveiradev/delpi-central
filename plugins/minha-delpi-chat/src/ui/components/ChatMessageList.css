@@ -832,6 +832,11 @@
   font-size: 0.76rem;
 }
 
+.mdc-chat-message-attachment__status {
+  color: color-mix(in srgb, var(--mdc-primary) 70%, var(--mdc-text-muted));
+  font-weight: 650;
+}
+
 .mdc-chat-message-attachment__download {
   display: inline-grid;
   place-items: center;

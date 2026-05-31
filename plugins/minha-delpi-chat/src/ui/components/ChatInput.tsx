@@ -4,6 +4,7 @@ import {
   Bot,
   FileText,
   Folder,
+  Image as ImageIcon,
   Paperclip,
   Plus,
   Trash2,
@@ -13,6 +14,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
+import {
+  composerAttachmentStatusLabel,
+  type ComposerAttachmentStatus,
+} from "../chatAttachmentStatus";
 import { CHAT_TEXT_HOME_STARTERS } from "../chatHomeStarters";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
@@ -24,6 +29,7 @@ export type ChatInputAttachment = {
   size: number;
   type: string;
   file: File;
+  status?: ComposerAttachmentStatus;
 };
 
 type ChatInputProps = {
@@ -204,12 +210,23 @@ export function ChatInput({
             </div>
 
             <div className="mdc-chat-input__attachment-list">
-              {attachments.map((attachment) => (
+              {attachments.map((attachment) => {
+                const isImage = attachment.type.startsWith("image/");
+                const statusLabel = composerAttachmentStatusLabel(
+                  attachment.status ?? "queued",
+                );
+
+                return (
                 <span key={attachment.id} className="mdc-chat-input__attachment-chip">
-                  <FileText size={14} aria-hidden="true" />
+                  {isImage ? (
+                    <ImageIcon size={14} aria-hidden="true" />
+                  ) : (
+                    <FileText size={14} aria-hidden="true" />
+                  )}
 
                   <strong>{attachment.name}</strong>
                   <small>{formatFileSize(attachment.size)}</small>
+                  <small className="mdc-chat-input__attachment-chip-status">{statusLabel}</small>
 
                   <button
                     type="button"
@@ -219,7 +236,8 @@ export function ChatInput({
                     <X size={13} aria-hidden="true" />
                   </button>
                 </span>
-              ))}
+                );
+              })}
             </div>
           </div>
         ) : null}
