@@ -483,6 +483,37 @@ def _run_pipeline_merge(*, analyser_root: dict, pdf_path: Path) -> dict:
     }
 
 
+def _assistant_metadata_from_messages(
+    session_id: str,
+    *,
+    token: str,
+) -> tuple[dict, list, dict]:
+    """Metadados do último turno assistant (drawingAnalysis fica em intelligence)."""
+    messages = _request(
+        "GET",
+        f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
+        token=token,
+    )
+    items = messages if isinstance(messages, list) else messages.get("items", [])
+
+    for item in reversed(items):
+        if str(item.get("role") or "") != "assistant":
+            continue
+
+        metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+        intelligence = metadata.get("intelligence")
+
+        if isinstance(intelligence, dict):
+            merged = dict(metadata)
+            merged.setdefault("drawingAnalysis", intelligence.get("drawingAnalysis"))
+            merged.setdefault("drawingAnalysisMode", intelligence.get("drawingAnalysisMode"))
+            return merged, list(metadata.get("toolCalls") or []), metadata.get("adminDebug") or {}
+
+        return metadata, list(metadata.get("toolCalls") or []), metadata.get("adminDebug") or {}
+
+    return {}, [], {}
+
+
 def _run_chat_e2e(token: str, pdf_path: Path) -> list[str]:
     errors: list[str] = []
     agent_id = _first_agent(token)
@@ -521,21 +552,17 @@ def _run_chat_e2e(token: str, pdf_path: Path) -> list[str]:
     )
 
     answer = str(response.get("answer") or response.get("content") or "")
-    metadata = response.get("metadata") if isinstance(response.get("metadata"), dict) else {}
-    admin_debug = response.get("adminDebug") if isinstance(response.get("adminDebug"), dict) else {}
-
-    if not metadata:
-        messages = _request(
-            "GET",
-            f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session_id}/messages",
-            token=token,
-        )
-        items = messages if isinstance(messages, list) else messages.get("items", [])
-
-        for item in reversed(items):
-            if str(item.get("role") or "") == "assistant":
-                metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
-                break
+    metadata, persisted_tool_calls, persisted_admin_debug = _assistant_metadata_from_messages(
+        session_id,
+        token=token,
+    )
+    admin_debug = (
+        response.get("adminDebug")
+        if isinstance(response.get("adminDebug"), dict)
+        else persisted_admin_debug
+    )
+    if not isinstance(admin_debug, dict):
+        admin_debug = {}
 
     drawing = metadata.get("drawingAnalysis")
 
@@ -545,12 +572,15 @@ def _run_chat_e2e(token: str, pdf_path: Path) -> list[str]:
     if "Relatório" not in answer and "Análise" not in answer and "desenho" not in answer.lower():
         errors.append(f"resposta do chat sem indicativo de relatório: {answer[:240]}")
 
-    tool_calls = metadata.get("toolCalls") or response.get("toolCalls") or []
+    tool_calls = persisted_tool_calls or response.get("toolCalls") or []
 
     if not any(
-        "/analyser" in str((call.get("metadata") or {}).get("path") or "").lower()
+        isinstance(call, dict)
+        and (
+            "/analyser" in str((call.get("metadata") or {}).get("path") or "").lower()
+            or (call.get("arguments") or {}).get("actionId") == "get_product_analyser"
+        )
         for call in tool_calls
-        if isinstance(call, dict)
     ):
         errors.append("toolCall /analyser não encontrado na resposta E2E")
 
@@ -668,11 +698,13 @@ def main() -> int:
 
             if chat_errors:
                 for err in chat_errors:
-                    print(f"WARN chat HTTP: {err}", file=sys.stderr)
+                    print(f"FAIL chat HTTP: {err}", file=sys.stderr)
+                    failed += 1
             else:
                 check("chat HTTP E2E desenho + PDF", True)
         except Exception as exc:
-            print(f"WARN chat HTTP E2E: {exc}", file=sys.stderr)
+            print(f"FAIL chat HTTP E2E: {exc}", file=sys.stderr)
+            failed += 1
 
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
@@ -687,6 +719,9 @@ def main() -> int:
 
     if not _SKIP_PREPARATION:
         parts.append("preparation E2E")
+
+    if not _SKIP_CHAT:
+        parts.append("chat HTTP E2E")
 
     print(f"Smoke drawing analyser live ({_PRODUCT_CODE}): {' · '.join(parts)} OK.")
     return 0

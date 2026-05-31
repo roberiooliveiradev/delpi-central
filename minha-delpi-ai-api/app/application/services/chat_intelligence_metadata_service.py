@@ -73,4 +73,9 @@ class ChatIntelligenceMetadataService:
         if isinstance(drawing_analysis, dict):
             metadata["drawingAnalysis"] = drawing_analysis
 
+        drawing_export = tool_context.get("drawingAnalysisExport")
+
+        if isinstance(drawing_export, dict) and drawing_export.get("markdown"):
+            metadata["drawingAnalysisExport"] = drawing_export
+
         return metadata
