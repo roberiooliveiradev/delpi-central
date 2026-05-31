@@ -1,5 +1,8 @@
 # Playbook — Chat interativo, descontraído e de bom humor
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Projeto: **Minha DELPI Chat IA**
 
 Objetivo: orientar como tornar o chat mais interativo, agradável e humano, simulando uma pessoa de bom humor, sem perder segurança, precisão operacional e postura corporativa.

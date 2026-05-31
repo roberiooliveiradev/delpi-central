@@ -1,5 +1,8 @@
 # Sugestões ricas de perguntas para o Minha DELPI Chat IA
 
+> **Status (31/05/2026):** [Concluído (referência arquivada)](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Baseado na análise do arquivo `capabilities.json` em:
 
 `minha-delpi-ai-api/app/content/pt-BR/assistant/capabilities.json`

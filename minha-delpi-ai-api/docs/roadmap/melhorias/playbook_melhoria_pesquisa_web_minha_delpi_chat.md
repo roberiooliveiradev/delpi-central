@@ -4,6 +4,8 @@ Projeto: **Minha DELPI Chat IA**
 
 Objetivo: evoluir a funcionalidade de pesquisa na web para que o chat consiga pesquisar melhor, explicar melhor de onde veio a informação, comparar fontes, lidar com notícias recentes, resumir páginas, validar confiabilidade e integrar resultados externos com o contexto interno da DELPI.
 
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fase 1 concluída** (`webSearchResearch` no metadata, `ChatWebSearchResearchPanel` no MFE, `ChatWebSearchSynthesisService`). Fases 2–5 (planejamento, avaliação de fonte, UX avançada) em backlog.
+
 ---
 
 ## 1. Diagnóstico do estado atual

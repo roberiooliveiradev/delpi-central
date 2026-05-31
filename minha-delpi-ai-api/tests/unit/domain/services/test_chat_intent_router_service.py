@@ -51,3 +51,31 @@ def test_resolve_executed_text_task_stage():
     )
 
     assert route.intent == "text_task"
+
+
+def test_classify_operational_follow_up_resolves_product_from_memory():
+    history = [
+        {"role": "user", "content": "me fale do produto 10080001"},
+        {
+            "role": "assistant",
+            "content": "Informações do produto.",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080001/analyser"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    route = ChatIntentRouterService.classify(
+        "e as vendas desse produto",
+        previous_messages=history,
+    )
+
+    assert route.intent == "operational_query"
+    assert route.is_follow_up is True
+    assert route.resolved_from_memory == {"productCode": "10080001"}
+    assert route.to_dict().get("resolvedFromMemory") == {"productCode": "10080001"}

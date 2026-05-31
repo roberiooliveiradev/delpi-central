@@ -1,5 +1,8 @@
 # Playbook — Interatividade no Minha DELPI Chat IA
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Projeto: **Minha DELPI Chat IA**
 
 Objetivo: melhorar a interação do usuário com o chat por meio de botões clicáveis, chips contextuais, sugestões de próximos passos, ações rápidas por resposta, menus guiados e feedback estruturado.

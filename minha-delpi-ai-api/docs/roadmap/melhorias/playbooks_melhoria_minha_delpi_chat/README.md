@@ -2,6 +2,8 @@
 
 Este pacote contém 11 playbooks de melhoria para o Minha DELPI Chat IA.
 
+**Status de todos os arquivos do roadmap:** [STATUS_ROADMAP_MELHORIAS.md](../STATUS_ROADMAP_MELHORIAS.md).
+
 1. [Playbook 01 — Roteamento inteligente de intenções](01_roteamento_inteligente_de_intencoes.md)
 2. [Playbook 02 — Respostas operacionais DELPI](02_respostas_operacionais_delpi.md)
 3. [Playbook 03 — Agentes especialistas](03_agentes_especialistas.md)

@@ -1,5 +1,8 @@
 # Mockups — Admin Minha DELPI Chat
 
+> **Status (31/05/2026):** Ver [STATUS_ROADMAP_MELHORIAS.md](../../STATUS_ROADMAP_MELHORIAS.md) (mockups 01–10 implementados; 11 aguardando aprovação).
+
+
 Wireframes em **Markdown**. Incrementos **01–10** já no MFE (10 abas planas + DS workspace); **11** só após aprovação explícita do conjunto.
 
 ## Template (copiar em cada aba)

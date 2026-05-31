@@ -1,5 +1,8 @@
 # Playbook 04 — RAG e conhecimento interno
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Melhorar a qualidade das respostas baseadas em documentos, conhecimento interno, anexos e fontes da DELPI.

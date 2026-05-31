@@ -1,5 +1,8 @@
 # Playbook 06 — Lousa/canvas como área de trabalho
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Transformar a lousa/canvas em uma área de trabalho produtiva para rascunhos, relatórios, atas, análises, textos, comparações e resultados operacionais.

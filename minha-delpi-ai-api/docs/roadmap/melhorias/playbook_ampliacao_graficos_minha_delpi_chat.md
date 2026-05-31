@@ -1,5 +1,7 @@
 # Playbook — Ampliação de gráficos e visualizações no Minha DELPI Chat IA
 
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fase 1 em produção** (`chartPresentation`, toggles Texto/Tabela/Gráfico/Árvore, testes MFE). Fases 2–5 em backlog.
+
 Projeto: **Minha DELPI Chat IA**
 
 Objetivo: evoluir a camada de apresentação rica para suportar mais tipos de gráficos e escolher automaticamente a melhor visualização conforme o tipo de dado: temporal, categórico, participação, ranking, distribuição, comparação, meta, hierarquia e KPI.

@@ -1,5 +1,8 @@
 # Mockup — Avaliações
 
+> **Status (31/05/2026):** Ver [STATUS_ROADMAP_MELHORIAS.md](../../STATUS_ROADMAP_MELHORIAS.md) (mockups 01–10 implementados; 11 aguardando aprovação).
+
+
 ## Estado atual
 
 - `AdminEvaluationsTab` — notas 1–5, sugestões LLM, candidatos.

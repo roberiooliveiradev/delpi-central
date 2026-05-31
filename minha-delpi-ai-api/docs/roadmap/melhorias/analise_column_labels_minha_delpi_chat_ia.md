@@ -1,5 +1,8 @@
 # Análise e sugestões — `column_labels.json`
 
+> **Status (31/05/2026):** [Concluído (referência arquivada)](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Arquivo analisado:
 
 `minha-delpi-ai-api/app/content/pt-BR/assistant/column_labels.json`

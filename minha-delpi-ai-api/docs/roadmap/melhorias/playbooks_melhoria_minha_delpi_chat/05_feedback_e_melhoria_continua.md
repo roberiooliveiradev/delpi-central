@@ -1,5 +1,8 @@
 # Playbook 05 — Feedback e melhoria contínua
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Transformar feedback dos usuários em melhoria contínua real do Minha DELPI Chat IA.

@@ -1,5 +1,8 @@
 # Análise e sugestões — `small_talk.json`
 
+> **Status (31/05/2026):** [Concluído (referência arquivada)](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Arquivo analisado:
 
 `minha-delpi-ai-api/app/content/pt-BR/assistant/small_talk.json`

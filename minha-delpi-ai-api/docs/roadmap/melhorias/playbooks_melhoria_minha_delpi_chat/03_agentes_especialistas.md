@@ -1,5 +1,8 @@
 # Playbook 03 — Agentes especialistas
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Definir um padrão para criar, configurar, publicar, testar e evoluir agentes especialistas no Minha DELPI Chat IA.

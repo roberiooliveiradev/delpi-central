@@ -1,5 +1,8 @@
 # Playbook — Assistente administrativo excelente em textos
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Projeto: **Minha DELPI Chat IA**
 
 Objetivo: transformar o chat também em um assistente administrativo de alto nível, capaz de ajudar com escrita, revisão, correção, tradução, resumo, e-mails, atas, comunicados, documentos internos, respostas profissionais e padronização de linguagem — com qualidade comparável a assistentes generalistas como ChatGPT, mas adaptado ao ambiente corporativo DELPI.

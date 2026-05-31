@@ -1,5 +1,7 @@
 # Playbook 01 — Roteamento inteligente de intenções
 
+> **Status (31/05/2026):** [Parcial](../STATUS_ROADMAP_MELHORIAS.md) — `ChatIntentRouterService`, `adminDebug.intentRoute`, estágio `intent:*`, `subIntent` operacional, `resolvedFromMemory` em follow-ups. Backlog: feedback de roteamento errado no MFE.
+
 ## Objetivo
 
 Melhorar a capacidade do Minha DELPI Chat IA de decidir corretamente o que fazer com cada mensagem do usuário:

@@ -1,5 +1,8 @@
 # Playbook — Melhoria de contexto, memória conversacional e assertividade
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Projeto: **Minha DELPI Chat IA**
 
 Objetivo: melhorar a capacidade do chat de manter contexto entre perguntas, lembrar respostas anteriores, obedecer instruções de comportamento dadas pelo usuário e responder follow-ups sem se perder.

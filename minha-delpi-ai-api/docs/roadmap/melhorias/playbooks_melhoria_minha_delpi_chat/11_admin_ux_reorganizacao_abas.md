@@ -1,5 +1,8 @@
 # Playbook 11 — Admin UX: reorganização das abas
 
+> **Status (31/05/2026):** [Parcial — mockups 01–10 no MFE; refatoração 6 seções aguardando mockup 11](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 > **Status (maio/2026):** implementação das fases 1–4 **revertida** no MFE (`ea9eaf0e` — 10 abas planas estáveis). Novo ciclo: **estudo + mockups Markdown por aba** → implementação única no final. Ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) e [`mockups/`](./11_admin_ux_reorganizacao_abas/mockups/README.md).
 
 ## Objetivo

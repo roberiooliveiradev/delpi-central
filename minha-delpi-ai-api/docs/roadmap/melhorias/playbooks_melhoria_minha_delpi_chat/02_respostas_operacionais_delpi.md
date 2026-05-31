@@ -1,5 +1,8 @@
 # Playbook 02 — Respostas operacionais DELPI
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Padronizar como o Minha DELPI Chat IA deve responder consultas operacionais sobre produtos, estoque, fornecedores, clientes, estrutura/BOM, compras, vendas, preços, roteiro, inspeção, notas fiscais, LMP/OV, KPIs e SQL.

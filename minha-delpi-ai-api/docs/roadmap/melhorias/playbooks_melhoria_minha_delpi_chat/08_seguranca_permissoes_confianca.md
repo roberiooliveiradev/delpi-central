@@ -1,5 +1,8 @@
 # Playbook 08 — Segurança, permissões e confiança
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Garantir que o Minha DELPI Chat IA seja confiável, seguro, transparente e aderente às permissões do usuário.

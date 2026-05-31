@@ -23,11 +23,21 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Sub-abas no mobile | Sub-nav visível com rolagem horizontal (não oculta) |
 | URLs legadas | `/admin/metrics`, `/admin/skills`, etc. redirecionam ao destino correto |
 
+## Roadmap `docs/roadmap/melhorias` (fechamento 31/05/2026)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Índice | `STATUS_ROADMAP_MELHORIAS.md` — status dos 40+ arquivos da pasta |
+| Playbooks raiz | `playbook_melhoria_pesquisa_web` e `playbook_ampliacao_graficos` versionados com Fase 1 marcada |
+| Playbook 01 | `resolvedFromMemory` em `intentRoute` para follow-ups operacionais |
+| Playbook 02 | `smoke_product_sales_routing.py` — vendas → `/sales` (api-delpi) |
+| Playbook 11 | Mockups 01–10 implementados; mockup 11 aguardando aprovação |
+
 ## Arquitetura — ordem chat base → MFE (maio/2026)
 
 | Camada | Entrega |
 |--------|---------|
-| Chat base | `ChatIntentRouterService` (`classify`, `resolve_executed`); `intentRoute` em `adminDebug`; estágio `intent:{nome}` |
+| Chat base | `ChatIntentRouterService` (`classify`, `resolve_executed`); `intentRoute` em `adminDebug`; estágio `intent:{nome}`; `resolvedFromMemory` |
 | Playbook 08 | `trustSignals` mesclados no `adminDebug` (cliente admin) + resumo no `ChatAdminDebugPanel` |
 | MFE | `buildTreePointMenuActions` + menu na árvore; chips de contexto clicáveis; seção **Textos** no menu `+` (`CHAT_TEXT_HOME_STARTERS`) |
 | Smoke | `scripts/smoke_intent_route.py` — valida `adminDebug.intentRoute` e `intent:*` no pipeline |

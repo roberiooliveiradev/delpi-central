@@ -1,5 +1,8 @@
 # Playbook 09 — Dashboards, gráficos e apresentação rica
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Definir como o Minha DELPI Chat IA deve usar tabelas, gráficos, árvores, KPIs e cards para apresentar dados de forma clara, interativa e útil.

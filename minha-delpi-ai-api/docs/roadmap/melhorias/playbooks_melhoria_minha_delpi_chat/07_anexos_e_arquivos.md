@@ -1,5 +1,8 @@
 # Playbook 07 — Anexos e arquivos
 
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Definir como o Minha DELPI Chat IA deve lidar com arquivos anexados: PDFs, Word, Excel, CSV, JSON, imagens, datasheets, relatórios, documentos administrativos e planilhas.

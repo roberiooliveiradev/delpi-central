@@ -17,6 +17,7 @@ class IntentRouteResult:
     requires_llm: bool = True
     priority_applied: int = 0
     flags: tuple[str, ...] = ()
+    resolved_from_memory: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -35,7 +36,34 @@ class IntentRouteResult:
         if self.flags:
             payload["flags"] = list(self.flags)
 
+        if self.resolved_from_memory:
+            payload["resolvedFromMemory"] = dict(self.resolved_from_memory)
+
         return payload
+
+
+def _resolve_entities_from_memory(
+    message: str,
+    *,
+    previous_messages: list[Any] | None,
+) -> dict[str, str] | None:
+    from app.domain.services.chat_product_query_intent_service import (
+        ChatProductQueryIntentService,
+    )
+
+    code_in_message = ChatProductQueryIntentService.extract_product_code(message)
+    code = ChatProductQueryIntentService.resolve_product_code(
+        message,
+        previous_messages=previous_messages,
+    )
+
+    if not code or code_in_message:
+        return None
+
+    if not ChatProductQueryIntentService.references_previous_product(message):
+        return None
+
+    return {"productCode": code}
 
 
 class ChatIntentRouterService:
@@ -166,15 +194,22 @@ class ChatIntentRouterService:
                 flags=("analysis_mode",),
             )
 
+        memory_entities = _resolve_entities_from_memory(
+            normalized,
+            previous_messages=history,
+        )
+
         if operational_optimize or cls._looks_operational(normalized):
             return IntentRouteResult(
                 intent="operational_query",
                 sub_intent=cls._operational_sub_intent(normalized),
+                is_follow_up=bool(memory_entities),
                 confidence=0.82,
                 requires_tool=bool(allowed_action_ids),
                 requires_rag=False,
                 requires_llm=False,
                 priority_applied=6,
+                resolved_from_memory=memory_entities,
             )
 
         if attachment_ids:
@@ -299,6 +334,7 @@ class ChatIntentRouterService:
                 ),
                 priority_applied=priority,
                 flags=tuple(flags),
+                resolved_from_memory=predicted.resolved_from_memory,
             )
 
             if best is None or priority < best.priority_applied:

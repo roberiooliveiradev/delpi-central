@@ -1,5 +1,8 @@
 # Playbook 10 — Onboarding e adoção de usuários
 
+> **Status (31/05/2026):** [Backlog de produto](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 ## Objetivo
 
 Criar uma experiência de entrada que ensine usuários a usar o Minha DELPI Chat IA com segurança, confiança e produtividade.

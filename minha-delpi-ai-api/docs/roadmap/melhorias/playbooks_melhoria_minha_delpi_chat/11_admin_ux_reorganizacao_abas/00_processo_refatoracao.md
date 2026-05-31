@@ -1,5 +1,8 @@
 # Processo — refatoração do Admin (pós-revert)
 
+> **Status (31/05/2026):** Ver [STATUS_ROADMAP_MELHORIAS.md](../../STATUS_ROADMAP_MELHORIAS.md) (mockups 01–10 implementados; 11 aguardando aprovação).
+
+
 ## Por que revertemos
 
 A reorganização em **6 seções + sub-abas + Painel + barra legada** (Playbook 11, commits `5e9b178d`–`be4568bc`) gerou regressões de UX (navegação duplicada, links quebrados, conteúdo escondido, RBAC/inteligência fora do lugar esperado).

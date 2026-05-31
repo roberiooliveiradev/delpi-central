@@ -1,5 +1,8 @@
 # Análise e sugestões — `external_action_responses.json`
 
+> **Status (31/05/2026):** [Concluído (referência arquivada)](./STATUS_ROADMAP_MELHORIAS.md).
+
+
 Arquivo analisado:
 
 `minha-delpi-ai-api/app/content/pt-BR/assistant/external_action_responses.json`

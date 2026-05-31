@@ -1,5 +1,8 @@
 # Mockup — Agentes
 
+> **Status (31/05/2026):** Ver [STATUS_ROADMAP_MELHORIAS.md](../../STATUS_ROADMAP_MELHORIAS.md) (mockups 01–10 implementados; 11 aguardando aprovação).
+
+
 ## Estado atual
 
 - `AdminAgentsTab` — especialização, presets, escopo RAG/tools, estatísticas de uso.
