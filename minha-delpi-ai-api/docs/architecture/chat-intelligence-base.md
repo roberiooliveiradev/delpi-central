@@ -77,7 +77,8 @@ Mensagem do usuário
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` (`POST /chat/assistant/help-events`) |
-| `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias em rotas de produto (`/suppliers`, `/stock`, …) — evita «A API retornou dados autorizados» |
+| `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; `chartPresentation` com tipos ampliados |
+| `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, `chat-context-memory.md`, …) |

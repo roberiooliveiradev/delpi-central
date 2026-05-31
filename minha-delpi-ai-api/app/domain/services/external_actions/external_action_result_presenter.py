@@ -3018,7 +3018,7 @@ class ExternalActionResultPresenter:
         return {
             "type": "chart",
             "title": "Estoque por filial/armazém",
-            "chartType": "bar",
+            "chartType": "horizontal_bar",
             "data": chart_data,
             "config": {
                 "xAxis": "name",
@@ -3224,7 +3224,13 @@ class ExternalActionResultPresenter:
         "saldo", "volume", "peso", "weight",
     }
 
-    def _try_chart_from_rows(self, rows: list, *, force: bool = False) -> dict | None:
+    def _try_chart_from_rows(
+        self,
+        rows: list,
+        *,
+        force: bool = False,
+        user_message: str | None = None,
+    ) -> dict | None:
         """Gera gráfico APENAS quando os dados são naturalmente visuais (ou force=True)."""
         if len(rows) < 2 or not isinstance(rows[0], dict):
             return None
@@ -3254,10 +3260,21 @@ class ExternalActionResultPresenter:
         if len(set(labels)) < 2:
             return None
 
+        from app.domain.services.chat_chart_type_selection_service import (
+            ChatChartTypeSelectionService,
+        )
+
+        chart_type = ChatChartTypeSelectionService.resolve(
+            rows=rows[:12],
+            label_key=label_key,
+            numeric_keys=chart_numeric[:3],
+            user_message=user_message,
+        )
+
         return {
             "type": "chart",
             "title": "Visualização dos dados",
-            "chartType": "bar",
+            "chartType": chart_type,
             "data": rows[:12],
             "config": {
                 "xAxis": label_key,

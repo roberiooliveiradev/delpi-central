@@ -45,6 +45,7 @@ def test_build_stock_chart_from_nested_stock_items():
 
     assert chart is not None
     assert chart["type"] == "chart"
+    assert chart["chartType"] == "horizontal_bar"
     assert len(chart["data"]) == 2
 
 

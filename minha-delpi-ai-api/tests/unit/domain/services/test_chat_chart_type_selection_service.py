@@ -1,0 +1,82 @@
+from app.domain.services.chat_chart_type_selection_service import (
+    ChatChartTypeSelectionService,
+)
+
+
+def _rows(*pairs: tuple[str, float]) -> list[dict]:
+    return [{"name": label, "value": value} for label, value in pairs]
+
+
+def test_resolve_donut_from_message():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=_rows(("A", 40), ("B", 35), ("C", 25)),
+        label_key="name",
+        numeric_keys=["value"],
+        user_message="mostre participação em rosca",
+    )
+
+    assert chart_type == "donut"
+
+
+def test_resolve_horizontal_bar_for_ranking():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=_rows(
+            ("Produto com nome bem longo", 10),
+            ("Outro produto extenso", 8),
+            ("Terceiro", 6),
+            ("Quarto", 4),
+            ("Quinto", 2),
+            ("Sexto", 1),
+            ("Sétimo", 1),
+        ),
+        label_key="name",
+        numeric_keys=["value"],
+    )
+
+    assert chart_type == "horizontal_bar"
+
+
+def test_resolve_line_for_temporal_periods():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"period": "2026-01", "value": 10},
+            {"period": "2026-02", "value": 12},
+            {"period": "2026-03", "value": 9},
+        ],
+        label_key="period",
+        numeric_keys=["value"],
+    )
+
+    assert chart_type == "line"
+
+
+def test_resolve_grouped_bar_for_multiple_series():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"name": "Jan", "meta": 10, "realizado": 8},
+            {"name": "Fev", "meta": 11, "realizado": 12},
+        ],
+        label_key="name",
+        numeric_keys=["meta", "realizado"],
+    )
+
+    assert chart_type == "grouped_bar"
+
+
+def test_try_chart_from_rows_uses_selection():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+    chart = presenter._try_chart_from_rows(
+        [
+            {"period": "2026-01", "revenue": 100},
+            {"period": "2026-02", "revenue": 120},
+            {"period": "2026-03", "revenue": 90},
+        ],
+        force=True,
+    )
+
+    assert chart is not None
+    assert chart["chartType"] == "line"

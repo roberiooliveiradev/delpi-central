@@ -60,7 +60,16 @@ export type ChatPresentation =
   | {
       type: "chart";
       title: string;
-      chartType: "bar" | "line" | "pie" | "area";
+      chartType:
+        | "bar"
+        | "line"
+        | "pie"
+        | "area"
+        | "horizontal_bar"
+        | "donut"
+        | "grouped_bar"
+        | "stacked_bar"
+        | "multi_line";
       data: Record<string, unknown>[];
       config?: {
         xAxis?: string;

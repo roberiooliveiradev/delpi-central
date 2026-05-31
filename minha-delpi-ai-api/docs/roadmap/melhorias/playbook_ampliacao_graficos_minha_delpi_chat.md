@@ -1,6 +1,6 @@
 # Playbook — Ampliação de gráficos e visualizações no Minha DELPI Chat IA
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fase 1 em produção** (`chartPresentation`, toggles Texto/Tabela/Gráfico/Árvore, testes MFE). Fases 2–5 em backlog.
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–2** (`chartPresentation`, toggles, `ChatChartTypeSelectionService`, tipos `horizontal_bar`/`donut`/`grouped_bar`/`stacked_bar`/`multi_line` no MFE). Fases 3–5 em backlog.
 
 Projeto: **Minha DELPI Chat IA**
 
@@ -1315,11 +1315,12 @@ Após gráfico, oferecer:
 
 ## Fase 2 — Novos tipos simples
 
-- `horizontal_bar`.
-- `donut`.
-- `grouped_bar`.
-- `stacked_bar`.
-- `multi_line`.
+- [x] `horizontal_bar` — MFE + estoque por filial.
+- [x] `donut` — MFE + detecção por participação/pergunta.
+- [x] `grouped_bar` — MFE + múltiplas séries numéricas.
+- [x] `stacked_bar` — MFE + `stackId`.
+- [x] `multi_line` — alias de `line` no MFE; seleção temporal com várias séries.
+- [x] `ChatChartTypeSelectionService` em `_try_chart_from_rows`.
 
 ## Fase 3 — Tipos analíticos
 

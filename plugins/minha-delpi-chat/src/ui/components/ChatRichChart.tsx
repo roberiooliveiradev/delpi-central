@@ -200,6 +200,7 @@ function renderChart(
 
   switch (type) {
     case "line":
+    case "multi_line":
       return (
         <LineChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
@@ -256,6 +257,7 @@ function renderChart(
       );
 
     case "pie":
+    case "donut":
       return (
         <PieChart>
           <Tooltip contentStyle={theme.tooltipStyle} />
@@ -266,6 +268,7 @@ function renderChart(
             nameKey={xAxis}
             cx="50%"
             cy="50%"
+            innerRadius={type === "donut" ? 52 : 0}
             outerRadius={100}
             cursor={interactiveCursor}
             onClick={(slice, _index, event) => {
@@ -283,6 +286,54 @@ function renderChart(
         </PieChart>
       );
 
+    case "horizontal_bar":
+      return (
+        <BarChart {...commonProps} layout="vertical" margin={{ top: 10, right: 20, left: 8, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis type="number" tick={theme.tickStyle} />
+          <YAxis type="category" dataKey={xAxis} width={120} tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
+          {showLegend && <Legend />}
+          {yAxes.map((key, i) => (
+            <Bar
+              key={key}
+              dataKey={key}
+              fill={colors[i % colors.length]}
+              radius={[0, 4, 4, 0]}
+              cursor={interactiveCursor}
+              onClick={(bar, _index, event) => {
+                chartPointFromEvent(bar, event, onPointClick);
+              }}
+            />
+          ))}
+        </BarChart>
+      );
+
+    case "stacked_bar":
+      return (
+        <BarChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <YAxis tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
+          {showLegend && <Legend />}
+          {yAxes.map((key, i) => (
+            <Bar
+              key={key}
+              dataKey={key}
+              stackId="stack"
+              fill={colors[i % colors.length]}
+              radius={i === yAxes.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+              cursor={interactiveCursor}
+              onClick={(bar, _index, event) => {
+                chartPointFromEvent(bar, event, onPointClick);
+              }}
+            />
+          ))}
+        </BarChart>
+      );
+
+    case "grouped_bar":
     default:
       return (
         <BarChart {...commonProps}>

@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Gráficos — Fase 2 (tipos e seleção automática)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatChartTypeSelectionService` — linha temporal, ranking horizontal, donut, grouped/stacked |
+| API | `ExternalActionResultPresenter._try_chart_from_rows` usa seleção automática |
+| MFE | `ChatRichChart` renderiza `horizontal_bar`, `donut`, `stacked_bar`, `grouped_bar`, `multi_line` |
+
 ## Autoajuda — Fase 1 (identity ↔ catálogo)
 
 | Entrega | Detalhe |
