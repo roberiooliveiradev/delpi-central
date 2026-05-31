@@ -394,6 +394,9 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
+            if ChatProductQueryIntentService.extract_product_code(message):
+                return None
+
         if product_code and product_intent == ChatProductQueryIntent.SUMMARY:
             selected = self._select_product_action(
                 message,
@@ -433,11 +436,17 @@ class ExternalActionSelectionService:
             or product_route_segment
             or ChatProductDescriptionResolutionService.looks_like_description_lookup(message)
         ):
+            resolved_intent = (
+                product_intent
+                if product_intent != ChatProductQueryIntent.FULL
+                else ChatProductQueryIntent.FULL
+            )
+
             return self._select_product_action(
                 message,
                 product_code,
                 allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.FULL,
+                intent=resolved_intent,
                 route_segment=product_route_segment,
             )
 
@@ -1920,6 +1929,24 @@ class ExternalActionSelectionService:
             for action in candidates
             if action.get("method") == "GET"
         ] or candidates
+
+        if intent == ChatProductQueryIntent.SALES:
+            sales_candidates = [
+                action
+                for action in candidates
+                if self._is_product_sales_summary_path(str(action.get("path") or ""))
+            ]
+
+            if not sales_candidates:
+                return None
+
+            candidates = sales_candidates
+        else:
+            candidates = [
+                action
+                for action in candidates
+                if "search" not in str(action.get("path") or "").lower()
+            ] or candidates
 
         ranked = self._rank_product_actions(
             candidates,

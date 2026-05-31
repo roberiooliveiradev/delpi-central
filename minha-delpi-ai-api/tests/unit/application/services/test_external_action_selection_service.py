@@ -1179,6 +1179,51 @@ def test_select_sales_prefers_api_delpi_sales_over_api_externa_stock(monkeypatch
     assert selected["arguments"]["parameters"]["code"] == "10080001"
 
 
+def test_sales_intent_does_not_fall_back_to_product_search(monkeypatch):
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+
+    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
+    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
+    monkeypatch.setattr(
+        ChatWebSearchIntentService,
+        "blocks_external_action_selection",
+        lambda message: False,
+    )
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_externa.products.search_products_by_description",
+                    "method": "GET",
+                    "path": "/products/search/description",
+                    "operationId": "search_products_by_description",
+                    "parametersSchema": [{"name": "description", "in": "query"}],
+                },
+                {
+                    "actionId": "api_externa.products.stock_products_code_stock_get",
+                    "method": "GET",
+                    "path": "/products/{code}/stock",
+                    "operationId": "stock_products_code_stock_get",
+                    "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "mostre vendas do produto 10080001",
+        allowed_action_ids=[
+            "api_externa.products.search_products_by_description",
+            "api_externa.products.stock_products_code_stock_get",
+        ],
+    )
+
+    assert selected is None
+
+
 def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
     from app.domain.services.chat_web_search_intent_service import (
         ChatWebSearchIntentService,
