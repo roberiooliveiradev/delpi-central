@@ -1,4 +1,4 @@
-"""Seleção automática de chartType — Playbook ampliação de gráficos, Fase 2."""
+"""Seleção automática de chartType — Playbook ampliação de gráficos, Fases 2–3."""
 
 from __future__ import annotations
 
@@ -52,6 +52,9 @@ _STACKED_HINTS = (
     "acumulad",
 )
 
+_COMBO_VALUE_KEYS = ("realizado", "actual", "atual", "value", "current", "valor")
+_COMBO_TARGET_KEYS = ("meta", "target", "goal", "objetivo")
+
 
 class ChatChartTypeSelectionService:
     @classmethod
@@ -70,6 +73,18 @@ class ChatChartTypeSelectionService:
 
             if hinted:
                 return hinted
+
+        if cls._looks_gauge(rows, numeric_keys):
+            return "gauge"
+
+        if cls._looks_scatter(rows, label_key, numeric_keys):
+            return "scatter"
+
+        if cls._looks_combo(numeric_keys):
+            return "combo" if cls._looks_temporal(rows, label_key) else "grouped_bar"
+
+        if cls._looks_histogram(rows, numeric_keys):
+            return "histogram"
 
         if cls._looks_temporal(rows, label_key):
             return "line" if len(numeric_keys) <= 1 else "multi_line"
@@ -112,6 +127,18 @@ class ChatChartTypeSelectionService:
 
         if "área" in message or "area" in message:
             return "area"
+
+        if any(token in message for token in ("dispers", "scatter", "correla", "correlação")):
+            return "scatter"
+
+        if any(token in message for token in ("histograma", "distribui", "frequencia", "frequência")):
+            return "histogram"
+
+        if any(token in message for token in ("velocimetro", "velocímetro", "gauge", "medidor")):
+            return "gauge"
+
+        if any(token in message for token in ("combo", "combinado")):
+            return "combo"
 
         return None
 
@@ -169,3 +196,63 @@ class ChatChartTypeSelectionService:
         key_lower = key.lower()
 
         return any(token in key_lower for token in _PARTICIPATION_HINTS)
+
+    @classmethod
+    def _looks_gauge(cls, rows: list[dict[str, Any]], numeric_keys: list[str]) -> bool:
+        if len(rows) != 1 or not numeric_keys:
+            return False
+
+        lowered = [key.lower() for key in numeric_keys]
+
+        has_target = any(
+            any(token in key for token in _COMBO_TARGET_KEYS)
+            for key in lowered
+        )
+        has_value = any(
+            any(token in key for token in _COMBO_VALUE_KEYS)
+            for key in lowered
+        )
+
+        return has_target and has_value
+
+    @classmethod
+    def _looks_scatter(
+        cls,
+        rows: list[dict[str, Any]],
+        label_key: str,
+        numeric_keys: list[str],
+    ) -> bool:
+        if len(numeric_keys) < 2 or len(rows) < 3:
+            return False
+
+        if cls._looks_temporal(rows, label_key):
+            return False
+
+        label_token = str(label_key or "").lower()
+
+        if any(token in label_token for token in _TEMPORAL_LABEL_TOKENS):
+            return False
+
+        return True
+
+    @classmethod
+    def _looks_combo(cls, numeric_keys: list[str]) -> bool:
+        if len(numeric_keys) < 2:
+            return False
+
+        lowered = [key.lower() for key in numeric_keys]
+
+        has_target = any(
+            any(token in key for token in _COMBO_TARGET_KEYS)
+            for key in lowered
+        )
+        has_value = any(
+            any(token in key for token in _COMBO_VALUE_KEYS)
+            for key in lowered
+        )
+
+        return has_target and has_value
+
+    @classmethod
+    def _looks_histogram(cls, rows: list[dict[str, Any]], numeric_keys: list[str]) -> bool:
+        return len(numeric_keys) == 1 and len(rows) >= 8

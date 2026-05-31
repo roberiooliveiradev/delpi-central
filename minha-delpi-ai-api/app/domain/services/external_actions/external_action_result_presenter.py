@@ -3264,21 +3264,37 @@ class ExternalActionResultPresenter:
             ChatChartTypeSelectionService,
         )
 
+        chart_numeric_slice = chart_numeric[:3]
         chart_type = ChatChartTypeSelectionService.resolve(
             rows=rows[:12],
             label_key=label_key,
-            numeric_keys=chart_numeric[:3],
+            numeric_keys=chart_numeric_slice,
             user_message=user_message,
         )
+
+        config: dict = {
+            "xAxis": label_key,
+            "yAxis": chart_numeric_slice,
+            "legend": len(chart_numeric_slice) > 1,
+        }
+
+        if chart_type == "scatter" and len(chart_numeric_slice) >= 2:
+            config["xAxis"] = chart_numeric_slice[0]
+            config["yAxis"] = [chart_numeric_slice[1]]
+            config["legend"] = False
+
+        if chart_type == "combo" and len(chart_numeric_slice) >= 2:
+            config["comboBarKey"] = chart_numeric_slice[0]
+            config["comboLineKey"] = chart_numeric_slice[1]
+
+        if chart_type == "gauge" and chart_numeric_slice:
+            config["gaugeValueKey"] = chart_numeric_slice[0]
+            config["gaugeTargetKey"] = chart_numeric_slice[1] if len(chart_numeric_slice) > 1 else None
 
         return {
             "type": "chart",
             "title": "Visualização dos dados",
             "chartType": chart_type,
             "data": rows[:12],
-            "config": {
-                "xAxis": label_key,
-                "yAxis": chart_numeric[:3],
-                "legend": len(chart_numeric) > 1,
-            },
+            "config": config,
         }

@@ -1,6 +1,6 @@
 # Playbook — Ampliação de gráficos e visualizações no Minha DELPI Chat IA
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–2** (`chartPresentation`, toggles, `ChatChartTypeSelectionService`, tipos `horizontal_bar`/`donut`/`grouped_bar`/`stacked_bar`/`multi_line` no MFE). Fases 3–5 em backlog.
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–3** + alternância de tipo no MFE (Fase 5 parcial). Fases 4 e restante da 5 em backlog.
 
 Projeto: **Minha DELPI Chat IA**
 
@@ -1324,10 +1324,10 @@ Após gráfico, oferecer:
 
 ## Fase 3 — Tipos analíticos
 
-- `scatter`.
-- `histogram`.
-- `combo`.
-- `gauge`.
+- [x] `scatter` — `ScatterChart` + seleção por duas métricas numéricas.
+- [x] `histogram` — barras para 8+ categorias (distribuição).
+- [x] `combo` — `ComposedChart` barra + linha (meta/realizado).
+- [x] `gauge` — `RadialBarChart` para valor × meta em linha única.
 
 ## Fase 4 — Visualizações avançadas
 
@@ -1338,7 +1338,7 @@ Após gráfico, oferecer:
 
 ## Fase 5 — UX avançada
 
-- alternar tipo de gráfico no front;
+- [x] Alternar tipo de gráfico no front (`ChatRichChart` — toggles de tipo).
 - filtros interativos;
 - zoom temporal;
 - comparação de períodos;

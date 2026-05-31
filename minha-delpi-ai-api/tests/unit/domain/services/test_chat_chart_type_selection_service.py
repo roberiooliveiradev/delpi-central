@@ -63,6 +63,53 @@ def test_resolve_grouped_bar_for_multiple_series():
     assert chart_type == "grouped_bar"
 
 
+def test_resolve_combo_for_meta_realizado_series():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"period": "2026-01", "meta": 100, "realizado": 80},
+            {"period": "2026-02", "meta": 110, "realizado": 105},
+        ],
+        label_key="period",
+        numeric_keys=["meta", "realizado"],
+    )
+
+    assert chart_type == "combo"
+
+
+def test_resolve_scatter_for_two_numeric_columns():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[
+            {"x": 1, "y": 2},
+            {"x": 3, "y": 5},
+            {"x": 4, "y": 3},
+        ],
+        label_key="x",
+        numeric_keys=["x", "y"],
+    )
+
+    assert chart_type == "scatter"
+
+
+def test_resolve_histogram_for_many_buckets():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[{"bucket": f"B{i}", "count": i} for i in range(10)],
+        label_key="bucket",
+        numeric_keys=["count"],
+    )
+
+    assert chart_type == "histogram"
+
+
+def test_resolve_gauge_for_single_row_meta_value():
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=[{"label": "OTD", "meta": 95, "realizado": 88}],
+        label_key="label",
+        numeric_keys=["meta", "realizado"],
+    )
+
+    assert chart_type == "gauge"
+
+
 def test_try_chart_from_rows_uses_selection():
     from app.domain.services.external_actions.external_action_result_presenter import (
         ExternalActionResultPresenter,

@@ -8,6 +8,11 @@ import {
   Pie,
   AreaChart,
   Area,
+  ComposedChart,
+  ScatterChart,
+  Scatter,
+  RadialBarChart,
+  RadialBar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -24,6 +29,34 @@ import { ExpandButton } from "./ChatExpandModal";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
+const CHART_TYPE_LABELS: Record<string, string> = {
+  bar: "Barras",
+  line: "Linhas",
+  area: "Área",
+  horizontal_bar: "H. barras",
+  donut: "Rosca",
+  pie: "Pizza",
+  grouped_bar: "Agrupado",
+  stacked_bar: "Empilhado",
+  multi_line: "Multi-linha",
+  combo: "Combo",
+  scatter: "Dispersão",
+  histogram: "Histograma",
+  gauge: "Gauge",
+};
+
+const CHART_TYPE_ALTERNATES = [
+  "bar",
+  "line",
+  "area",
+  "horizontal_bar",
+  "donut",
+  "pie",
+  "combo",
+  "scatter",
+  "histogram",
+] as const;
+
 export function ChatRichChart({
   presentation,
   hideTitle = false,
@@ -35,6 +68,8 @@ export function ChatRichChart({
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
+  const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(null);
+  const activeChartType = chartTypeOverride || chartType;
   const [pointMenu, setPointMenu] = useState<{
     anchor: { x: number; y: number };
     actions: ReturnType<typeof buildChartPointMenuActions>;
@@ -106,6 +141,27 @@ export function ChatRichChart({
           <span className="mdc-rich-chart__title">{title}</span>
         )}
         <div className="mdc-rich-chart__actions">
+          {data.length > 0 ? (
+            <div
+              className="mdc-rich-presentation__format-toggle mdc-rich-chart__type-toggle"
+              role="group"
+              aria-label="Tipo de gráfico"
+            >
+              {CHART_TYPE_ALTERNATES.map((token) => (
+                <button
+                  key={token}
+                  type="button"
+                  className={`mdc-rich-chart__toggle-btn${activeChartType === token ? " mdc-rich-chart__toggle-btn--active" : ""}`}
+                  onClick={() =>
+                    setChartTypeOverride((current) => (current === token ? null : token))
+                  }
+                  title={CHART_TYPE_LABELS[token] ?? token}
+                >
+                  {CHART_TYPE_LABELS[token] ?? token}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <button
             className="mdc-rich-chart__btn"
             onClick={exportPng}
@@ -121,7 +177,7 @@ export function ChatRichChart({
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
       >
         <ResponsiveContainer width="100%" height={280}>
-          {renderChart(chartType, data, xAxis, yAxes, colors, showLegend, {
+          {renderChart(activeChartType, data, xAxis, yAxes, colors, showLegend, config, {
             gridColor,
             tickStyle,
             tooltipStyle,
@@ -192,6 +248,7 @@ function renderChart(
   yAxes: string[],
   colors: string[],
   showLegend: boolean,
+  chartConfig: ChartPresentation["config"],
   theme: ThemeConfig,
   onPointClick?: ChartPointClickHandler,
 ) {
@@ -309,6 +366,63 @@ function renderChart(
         </BarChart>
       );
 
+    case "combo": {
+      const barKey = chartConfig?.comboBarKey || yAxes[0];
+      const lineKey = chartConfig?.comboLineKey || yAxes[1] || yAxes[0];
+
+      return (
+        <ComposedChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis dataKey={xAxis} tick={theme.tickStyle} />
+          <YAxis tick={theme.tickStyle} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
+          {showLegend && <Legend />}
+          {barKey ? (
+            <Bar
+              dataKey={barKey}
+              fill={colors[0]}
+              radius={[4, 4, 0, 0]}
+              cursor={interactiveCursor}
+            />
+          ) : null}
+          {lineKey ? (
+            <Line
+              type="monotone"
+              dataKey={lineKey}
+              stroke={colors[1 % colors.length]}
+              strokeWidth={2}
+              dot={{ r: 3, cursor: interactiveCursor }}
+            />
+          ) : null}
+        </ComposedChart>
+      );
+    }
+
+    case "scatter": {
+      const scatterX = chartConfig?.xAxis || yAxes[0] || xAxis;
+      const scatterY = yAxes[0] || "value";
+
+      return (
+        <ScatterChart {...commonProps}>
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.gridColor} />
+          <XAxis type="number" dataKey={scatterX} tick={theme.tickStyle} name={scatterX} />
+          <YAxis type="number" dataKey={scatterY} tick={theme.tickStyle} name={scatterY} />
+          <Tooltip contentStyle={theme.tooltipStyle} />
+          {showLegend && <Legend />}
+          <Scatter
+            name="Dados"
+            data={data}
+            fill={colors[0]}
+            cursor={interactiveCursor}
+            onClick={(point, _index, event) => {
+              chartPointFromEvent(point, event, onPointClick);
+            }}
+          />
+        </ScatterChart>
+      );
+    }
+
+    case "histogram":
     case "stacked_bar":
       return (
         <BarChart {...commonProps}>
@@ -332,6 +446,34 @@ function renderChart(
           ))}
         </BarChart>
       );
+
+    case "gauge": {
+      const valueKey = chartConfig?.gaugeValueKey || yAxes[0];
+      const targetKey = chartConfig?.gaugeTargetKey || yAxes[1];
+      const row = data[0] ?? {};
+      const rawValue = Number(row[valueKey] ?? 0);
+      const rawTarget = Number(row[targetKey ?? ""] ?? rawValue);
+      const maxValue = rawTarget > 0 ? rawTarget : Math.max(rawValue, 1);
+      const fill = Math.min(100, Math.round((rawValue / maxValue) * 100));
+      const gaugeData = [{ name: "Atual", value: fill, fill: colors[0] }];
+
+      return (
+        <RadialBarChart
+          cx="50%"
+          cy="50%"
+          innerRadius="58%"
+          outerRadius="100%"
+          barSize={18}
+          data={gaugeData}
+          startAngle={180}
+          endAngle={0}
+        >
+          <RadialBar dataKey="value" cornerRadius={6} background />
+          <Tooltip contentStyle={theme.tooltipStyle} />
+          <Legend />
+        </RadialBarChart>
+      );
+    }
 
     case "grouped_bar":
     default:

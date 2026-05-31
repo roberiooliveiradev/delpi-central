@@ -69,13 +69,21 @@ export type ChatPresentation =
         | "donut"
         | "grouped_bar"
         | "stacked_bar"
-        | "multi_line";
+        | "multi_line"
+        | "combo"
+        | "scatter"
+        | "histogram"
+        | "gauge";
       data: Record<string, unknown>[];
       config?: {
         xAxis?: string;
         yAxis?: string | string[];
         colors?: string[];
         legend?: boolean;
+        comboBarKey?: string;
+        comboLineKey?: string;
+        gaugeValueKey?: string;
+        gaugeTargetKey?: string | null;
       };
     }
   | {
