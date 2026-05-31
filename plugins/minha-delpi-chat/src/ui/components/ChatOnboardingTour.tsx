@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import type { AssistantOnboardingTourStep } from "../../data/api/chatTypes";
 import {
   animateTourTyping,
+  tourDemoQueryForDisplay,
   resolveTourStepEffect,
   tourTargetSelector,
 } from "../chatTourStepEffects";
@@ -85,7 +86,11 @@ export function ChatOnboardingTour({
       setPulseTarget(Boolean(activeEffect.pulseTarget));
 
       if (activeEffect.demoQuery && onDemoQuery) {
-        void animateTourTyping(activeEffect.demoQuery, onDemoQuery, signal);
+        void animateTourTyping(
+          tourDemoQueryForDisplay(activeEffect.demoQuery),
+          onDemoQuery,
+          signal,
+        );
       } else {
         onDemoQuery?.("");
       }

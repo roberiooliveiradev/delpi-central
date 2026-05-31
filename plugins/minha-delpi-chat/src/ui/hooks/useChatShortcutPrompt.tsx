@@ -1,10 +1,9 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
   buildShortcutPrefill,
   extractProductCodeFromContextChips,
   hasShortcutPlaceholders,
-  listShortcutFieldIds,
   normalizeShortcutTemplate,
   resolveShortcutFields,
   type ShortcutPrefillContext,
@@ -15,6 +14,7 @@ type PendingShortcutPrompt = {
   template: string;
   title?: string;
   description?: string;
+  confirmLabel?: string;
   prefill?: ShortcutPrefillContext;
   resolve: (query: string | null) => void;
 };
@@ -25,9 +25,18 @@ type UseChatShortcutPromptOptions = {
 
 export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}) {
   const [pending, setPending] = useState<PendingShortcutPrompt | null>(null);
+  const getPrefillContextRef = useRef(options.getPrefillContext);
+  getPrefillContextRef.current = options.getPrefillContext;
 
   const resolveShortcutQuery = useCallback(
-    (rawQuery: string, promptOptions?: { title?: string; description?: string }) => {
+    (
+      rawQuery: string,
+      promptOptions?: {
+        title?: string;
+        description?: string;
+        confirmLabel?: string;
+      },
+    ) => {
       const template = normalizeShortcutTemplate(rawQuery.trim());
 
       if (!template) {
@@ -38,25 +47,26 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
         return Promise.resolve(template);
       }
 
-      const fieldIds = listShortcutFieldIds(template);
+      const fields = resolveShortcutFields(template);
 
-      if (fieldIds.length === 0) {
+      if (fields.length === 0) {
         return Promise.resolve(template);
       }
 
-      const prefill: ShortcutPrefillContext = options.getPrefillContext?.() ?? {};
+      const prefill: ShortcutPrefillContext = getPrefillContextRef.current?.() ?? {};
 
       return new Promise<string | null>((resolve) => {
         setPending({
           template,
           title: promptOptions?.title,
           description: promptOptions?.description,
+          confirmLabel: promptOptions?.confirmLabel,
           prefill,
           resolve,
         });
       });
     },
-    [options.getPrefillContext],
+    [],
   );
 
   const dialog = useMemo(() => {
@@ -76,6 +86,7 @@ export function useChatShortcutPrompt(options: UseChatShortcutPromptOptions = {}
         template={pending.template}
         title={pending.title}
         description={pending.description}
+        confirmLabel={pending.confirmLabel}
         fields={fields}
         initialValues={initialValues}
         onCancel={() => {

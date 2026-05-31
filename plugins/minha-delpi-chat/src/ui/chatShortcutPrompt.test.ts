@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   fillShortcutTemplate,
   hasShortcutPlaceholders,
+  hasUnresolvedShortcutPlaceholders,
   listShortcutFieldIds,
   normalizeShortcutTemplate,
   resolveShortcutFields,
@@ -13,6 +14,8 @@ describe("chatShortcutPrompt", () => {
   it("detecta placeholders no template", () => {
     expect(hasShortcutPlaceholders("estoque do produto {{productCode}}")).toBe(true);
     expect(hasShortcutPlaceholders("o que você pode fazer?")).toBe(false);
+    expect(hasUnresolvedShortcutPlaceholders("produto {{productCode}}")).toBe(true);
+    expect(hasUnresolvedShortcutPlaceholders("produto 10080001")).toBe(false);
   });
 
   it("normaliza legado do playbook", () => {

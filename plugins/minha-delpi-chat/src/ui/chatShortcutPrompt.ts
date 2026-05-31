@@ -11,7 +11,7 @@ export type ShortcutFieldId =
   | "ovNumber";
 
 export type ShortcutFieldDefinition = {
-  id: ShortcutFieldId;
+  id: string;
   label: string;
   placeholder: string;
   inputMode?: "text" | "numeric";
@@ -70,8 +70,8 @@ export function hasShortcutPlaceholders(query: string): boolean {
   return SHORTCUT_PLACEHOLDER_PATTERN.test(query.trim());
 }
 
-export function listShortcutFieldIds(query: string): ShortcutFieldId[] {
-  const ids: ShortcutFieldId[] = [];
+export function listShortcutFieldIds(query: string): string[] {
+  const ids: string[] = [];
   const seen = new Set<string>();
 
   for (const match of query.matchAll(SHORTCUT_PLACEHOLDER_PATTERN)) {
@@ -81,17 +81,46 @@ export function listShortcutFieldIds(query: string): ShortcutFieldId[] {
       continue;
     }
 
-    if (raw in FIELD_DEFINITIONS) {
-      seen.add(raw);
-      ids.push(raw as ShortcutFieldId);
-    }
+    seen.add(raw);
+    ids.push(raw);
   }
 
   return ids;
 }
 
+function placeholderLabel(fieldId: string): string {
+  if (fieldId in FIELD_DEFINITIONS) {
+    return FIELD_DEFINITIONS[fieldId as ShortcutFieldId].label;
+  }
+
+  const spaced = fieldId.replace(/([A-Z])/g, " $1").trim();
+
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : "Valor";
+}
+
+function fieldDefinitionForPlaceholder(fieldId: string): ShortcutFieldDefinition {
+  if (fieldId in FIELD_DEFINITIONS) {
+    return FIELD_DEFINITIONS[fieldId as ShortcutFieldId];
+  }
+
+  const label = placeholderLabel(fieldId);
+
+  return {
+    id: fieldId,
+    label,
+    placeholder: `Informe ${label.toLowerCase()}`,
+    required: true,
+  };
+}
+
 export function resolveShortcutFields(query: string): ShortcutFieldDefinition[] {
-  return listShortcutFieldIds(query).map((id) => FIELD_DEFINITIONS[id]);
+  return listShortcutFieldIds(query).map((id) => fieldDefinitionForPlaceholder(id));
+}
+
+/** Bloqueia envio se ainda houver `{{campo}}` sem substituir. */
+export function hasUnresolvedShortcutPlaceholders(query: string): boolean {
+  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
+  return SHORTCUT_PLACEHOLDER_PATTERN.test(query.trim());
 }
 
 export function fillShortcutTemplate(
@@ -141,7 +170,7 @@ export type ShortcutPrefillContext = {
 };
 
 export function buildShortcutPrefill(
-  fieldIds: ShortcutFieldId[],
+  fieldIds: string[],
   context: ShortcutPrefillContext = {},
 ): Record<string, string> {
   const values: Record<string, string> = {};

@@ -172,7 +172,6 @@ export function ChatPage({
     archiveSession,
     unarchiveSession,
     editAndResendMessage,
-    reuseMessage,
     setMessageFeedback,
     switchMessageBranch,
     branchSwitchingMessageId,
@@ -1105,19 +1104,54 @@ export function ChatPage({
     );
   }
 
+  const sendResolvedMessage = useCallback(
+    async (
+      params: {
+        content?: string;
+        attachments?: File[];
+        attachmentIds?: string[];
+        attachmentPreview?: {
+          id: string;
+          original_filename: string;
+          size_bytes: number;
+          content_type: string | null;
+          status: string;
+          parsed?: boolean;
+          readingStatus?: string;
+        }[];
+      } = {},
+      promptOptions?: {
+        title?: string;
+        description?: string;
+        confirmLabel?: string;
+      },
+    ) => {
+      const raw = (params.content ?? draft).trim();
+
+      if (!raw) {
+        return;
+      }
+
+      const resolved = await resolveShortcutQuery(raw, promptOptions);
+
+      if (!resolved) {
+        if (params.content == null) {
+          setDraft(raw);
+        }
+
+        return;
+      }
+
+      if (params.content == null) {
+        setDraft("");
+      }
+
+      await sendMessage({ ...params, content: resolved });
+    },
+    [draft, resolveShortcutQuery, sendMessage, setDraft],
+  );
+
   async function handleSubmitMessage() {
-    const rawDraft = draft.trim();
-
-    if (!rawDraft) {
-      return;
-    }
-
-    const messageToSend = (await resolveShortcutQuery(rawDraft)) ?? "";
-
-    if (!messageToSend) {
-      return;
-    }
-
     const presetIds = composerAttachments
       .map((attachment) => attachment.serverAttachmentId)
       .filter((value): value is string => Boolean(value));
@@ -1138,40 +1172,40 @@ export function ChatPage({
 
     setComposerAttachments([]);
 
-    await sendMessage({
-      content: messageToSend,
+    await sendResolvedMessage({
       attachments: pendingFiles.length > 0 ? pendingFiles : undefined,
       attachmentIds: presetIds.length > 0 ? presetIds : undefined,
       attachmentPreview: attachmentPreview.length > 0 ? attachmentPreview : undefined,
     });
   }
 
-  async function handleDrillDown(query: string) {
-    const resolved = await resolveShortcutQuery(query);
-
-    if (!resolved) {
-      return;
-    }
-
-    await sendMessage({ content: resolved });
+  function handleDrillDown(query: string) {
+    void sendResolvedMessage(
+      { content: query },
+      {
+        title: "Preencha para continuar",
+        description: "Informe o código ou o texto antes de enviar a pergunta.",
+        confirmLabel: "Enviar pergunta",
+      },
+    );
   }
 
-  async function handleHomeStarter(query: string) {
-    const resolved = await resolveShortcutQuery(query, {
-      title: "Como você quer começar?",
-      description: "Informe os dados da ação antes de enviar ao chat.",
-    });
-
-    if (!resolved) {
-      return;
-    }
-
-    setDraft("");
-    await sendMessage({ content: resolved });
+  function handleHomeStarter(query: string) {
+    void sendResolvedMessage(
+      { content: query },
+      {
+        title: "Consulta ao chat",
+        description: "Informe o código do produto ou o texto da busca antes de enviar.",
+        confirmLabel: "Enviar pergunta",
+      },
+    );
   }
 
   async function handleHelpTryPrompt(query: string) {
-    const resolved = await resolveShortcutQuery(query);
+    const resolved = await resolveShortcutQuery(query, {
+      title: "Preencha para continuar",
+      confirmLabel: "Enviar pergunta",
+    });
 
     if (!resolved) {
       return;
@@ -1183,10 +1217,34 @@ export function ChatPage({
     await sendMessage({ content: resolved });
   }
 
+  async function handleReuseMessage(content: string) {
+    const resolved = await resolveShortcutQuery(content, {
+      title: "Preencha para continuar",
+      description: "Complete os campos antes de reutilizar a mensagem no composer.",
+      confirmLabel: "Usar no composer",
+    });
+
+    if (resolved) {
+      setDraft(resolved);
+    }
+  }
+
+  async function handleInsertQuery(query: string) {
+    const resolved = await resolveShortcutQuery(query, {
+      title: "Preencha para continuar",
+      confirmLabel: "Usar no composer",
+    });
+
+    if (resolved) {
+      setDraft(resolved);
+    }
+  }
+
   async function handleAgentIcebreaker(query: string) {
     const resolved = await resolveShortcutQuery(query, {
       title: "Preencha para continuar",
       description: "Informe os dados antes de colocar a mensagem no composer.",
+      confirmLabel: "Usar no composer",
     });
 
     if (!resolved) {
@@ -1194,6 +1252,19 @@ export function ChatPage({
     }
 
     setDraft(resolved);
+  }
+
+  async function handleEditAndResendMessage(messageId: string, content: string) {
+    const resolved = await resolveShortcutQuery(content.trim(), {
+      title: "Preencha para continuar",
+      confirmLabel: "Reenviar",
+    });
+
+    if (!resolved) {
+      return null;
+    }
+
+    return editAndResendMessage(messageId, resolved);
   }
 
   const hasActiveConversation =
@@ -1650,8 +1721,7 @@ export function ChatPage({
                 }
 
                 if (lastSentUserText.trim()) {
-                  setDraft(lastSentUserText.trim());
-                  void sendMessage({ content: lastSentUserText.trim() });
+                  void sendResolvedMessage({ content: lastSentUserText.trim() });
                 }
               }}
               onDismiss={() => {
@@ -1845,11 +1915,13 @@ export function ChatPage({
                 isStreaming={isStreamingActiveSession}
                 isPlaybackActive={isPlaybackActive}
                 isLoading={isLoadingMessages && messages.length === 0}
-                onEditAndResendMessage={editAndResendMessage}
+                onEditAndResendMessage={handleEditAndResendMessage}
                 onSwitchMessageBranch={switchMessageBranch}
                 branchSwitchingMessageId={branchSwitchingMessageId}
                 onContinueFromMessage={continueFromMessage}
-                onReuseMessage={reuseMessage}
+                onReuseMessage={(content) => {
+                  void handleReuseMessage(content);
+                }}
                 onDrillDown={handleDrillDown}
                 onMessageFeedback={setMessageFeedback}
                 onDownloadAttachment={async (attachmentId) => {
@@ -1877,7 +1949,9 @@ export function ChatPage({
                   onChange={setDraft}
                   onSubmit={handleSubmitMessage}
                   onCancel={cancelStreaming}
-                  onInsertQuery={(query) => setDraft(query)}
+                  onInsertQuery={(query) => {
+                    void handleInsertQuery(query);
+                  }}
                 />
               </div>
             </section>

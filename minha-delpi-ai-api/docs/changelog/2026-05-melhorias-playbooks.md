@@ -350,7 +350,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | Cards no `ChatEmptyState`, `ChatOnboardingTour` (localStorage) |
 | MFE | Home do chat — `chat-design-system.css`, título em duas linhas, chips só sem cards do onboarding |
 | MFE | Coluna única centralizada na home (`mdc-chat-empty-composer__column`); cards em flex centralizado (sem última linha à esquerda) |
-| MFE | Atalhos com `{{productCode}}`, `{{searchQuery}}`, etc. — diálogo de preenchimento antes de enviar (`ChatShortcutPromptDialog`) |
+| MFE | Atalhos com `{{productCode}}`, `{{searchQuery}}`, etc. — diálogo obrigatório antes de enviar (`ChatShortcutPromptDialog`); bloqueio se `{{…}}` chegar ao `sendMessage` |
 | API | Chips e templates do playbook retornam placeholders; sem injetar código 10080001 no backend |
 | MFE | Tour interativo — spotlight no alvo, digitação demo no composer, menu + e chips de exemplo (`chatTourStepEffects.ts`) |
 | API | `tourSteps` com `target`, `demoQuery`, `openPlusMenu`, `demoSuggestions` (6 passos em `onboarding.json`) |

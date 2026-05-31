@@ -39,6 +39,7 @@ import {
 import { useChatMessagePlayback, type ChatPlaybackPayload } from "./useChatMessagePlayback";
 import { useChatStreaming } from "./useChatStreaming";
 import { shouldShowRichPresentation, isShortPresentationCaption } from "../../ui/components/chatPresentation";
+import { hasUnresolvedShortcutPlaceholders } from "../../ui/chatShortcutPrompt";
 import {
   clearSessionStreamUi,
   getSessionStreamUi,
@@ -1129,6 +1130,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     const fromDraft = params.content == null;
 
     if (!message || isActiveSessionBusy()) {
+      return;
+    }
+
+    if (hasUnresolvedShortcutPlaceholders(message)) {
+      setError(
+        "Preencha o código ou os campos da pergunta no diálogo dos atalhos antes de enviar.",
+      );
+
+      if (fromDraft) {
+        setDraft(message);
+      }
+
       return;
     }
 

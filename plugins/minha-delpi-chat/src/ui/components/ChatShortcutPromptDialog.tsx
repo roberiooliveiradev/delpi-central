@@ -104,6 +104,7 @@ export function ChatShortcutPromptDialog({
                   type="text"
                   inputMode={field.inputMode === "numeric" ? "numeric" : "text"}
                   autoComplete="off"
+                  autoFocus={fields[0]?.id === field.id}
                   placeholder={field.placeholder}
                   value={values[field.id] ?? ""}
                   onChange={(event) => {

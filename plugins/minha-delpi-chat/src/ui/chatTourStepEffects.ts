@@ -1,4 +1,5 @@
 import type { AssistantOnboardingTourStep } from "../data/api/chatTypes";
+import { fillShortcutTemplate, normalizeShortcutTemplate } from "./chatShortcutPrompt";
 
 export type ChatTourDemoSuggestion = {
   label: string;
@@ -61,6 +62,26 @@ export function resolveTourStepEffect(step: AssistantOnboardingTourStep): ChatTo
     demoSuggestions,
     pulseTarget: defaults.pulseTarget ?? false,
   };
+}
+
+/** Texto legível no composer durante o tour (não envia `{{placeholders}}`). */
+export function tourDemoQueryForDisplay(query?: string): string {
+  const template = normalizeShortcutTemplate(String(query ?? "").trim());
+
+  if (!template) {
+    return "";
+  }
+
+  if (!template.includes("{{")) {
+    return template;
+  }
+
+  return fillShortcutTemplate(template, {
+    productCode: "10080001",
+    searchQuery: "manual WEG CFW500",
+    period: "últimos 30 dias",
+    productDescription: "exemplo de busca",
+  });
 }
 
 export async function animateTourTyping(
