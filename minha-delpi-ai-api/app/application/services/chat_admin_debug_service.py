@@ -299,6 +299,12 @@ class ChatAdminDebugService:
                 "durationMs": vision_payload.get("durationMs"),
                 "charCount": char_count,
                 "bomRowCount": vision_payload.get("bomRowCount"),
+                "tableCount": vision_payload.get("tableCount")
+                or (
+                    len(vision_payload.get("tables") or [])
+                    if isinstance(vision_payload.get("tables"), list)
+                    else None
+                ),
                 "hasTitleBlock": bool(title_block),
                 "titleBlockCode": title_fields.get("code"),
                 "titleBlockRev": title_fields.get("rev"),

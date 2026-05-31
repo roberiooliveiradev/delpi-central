@@ -109,7 +109,7 @@ docs/              # documentação técnica
 | `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | Idiomas Tesseract (ex.: `por+eng`) |
 | `CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED` | Recorte heurístico do carimbo na 1ª página PDF (`true` default) |
 
-Profile Docker opcional `vision`: `requirements-vision.txt` + `Dockerfile.vision.dev` + `infra/docker-compose.vision.yml` (Docling/Paddle — ver Onda 13).
+Profile Docker opcional `vision`: `requirements-vision.txt` + `Dockerfile.vision.dev` + `infra/docker-compose.vision.yml` (Docling habilitado; build: `scripts/build_vision_profile.sh`).
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
 | `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
 | `CHAT_HISTORY_SUMMARY_*` | Resumo de histórico longo no prompt |

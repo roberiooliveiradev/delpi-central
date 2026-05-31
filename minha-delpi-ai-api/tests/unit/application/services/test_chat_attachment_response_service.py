@@ -36,6 +36,43 @@ def test_to_response_includes_reading_status_and_preview():
     assert response.metadata["preview"]["columns"] == ["Produto", "Qtd"]
 
 
+def test_to_response_includes_document_vision_summary():
+    attachment = SimpleNamespace(
+        id=uuid4(),
+        session_id=uuid4(),
+        message_id=None,
+        project_id=None,
+        agent_id=None,
+        filename="doc.pdf",
+        original_filename="doc.pdf",
+        content_type="application/pdf",
+        size_bytes=1200,
+        status="indexed",
+        metadata={
+            "indexed": True,
+            "documentVision": {
+                "engine": "tesseract",
+                "legible": True,
+                "legibilityScore": 0.8,
+                "bomRowCount": 2,
+                "hasTitleBlock": True,
+                "tableCount": 1,
+                "stages": ["native", "tesseract_pdf"],
+            },
+        },
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    response = ChatAttachmentResponseService.to_response(attachment)
+
+    summary = response.metadata.get("documentVisionSummary")
+
+    assert summary["engine"] == "tesseract"
+    assert summary["bomRowCount"] == 2
+    assert "visão (tesseract)" in response.metadata["readingStatus"]
+
+
 def test_to_response_legacy_doc_reading_status():
     attachment = SimpleNamespace(
         id=uuid4(),

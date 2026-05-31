@@ -3,6 +3,7 @@
 #
 # Para habilitar backends neurais, descomente e reconstrua com Dockerfile.vision.dev:
 #
-# docling>=2.7.0
+# Docling — layout/OCR neural (MIT). Rebuild: scripts/build_vision_profile.sh
+docling>=2.7.0
 # paddlepaddle>=2.6.0
 # paddleocr>=2.7.0

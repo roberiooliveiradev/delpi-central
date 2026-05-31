@@ -104,6 +104,9 @@ class ChatDocumentVisionService:
             "pagesProcessed": vision.get("pagesProcessed") or vision.get("pageCount"),
             "bomRowCount": len(bom_rows),
             "hasTitleBlock": bool(title_block),
+            "tableCount": len(vision.get("tables") or [])
+            if isinstance(vision.get("tables"), list)
+            else 0,
         }
 
     @classmethod
@@ -891,6 +894,19 @@ class ChatDocumentVisionService:
         if title_block:
             result["titleBlock"] = title_block
 
+        from app.domain.services.chat_document_vision_tables_service import (
+            ChatDocumentVisionTablesService,
+        )
+
+        tables = ChatDocumentVisionTablesService.extract_tables(text)
+
+        if tables:
+            result["tables"] = tables
+
+            if "table_heuristic" not in stages:
+                stages = [*stages, "table_heuristic"]
+                result["stages"] = stages
+
         return result
 
     @classmethod
@@ -927,6 +943,8 @@ class ChatDocumentVisionService:
             "titleBlock": payload.get("titleBlock"),
             "bomRows": bom_rows,
             "bomRowCount": len(bom_rows),
+            "tables": payload.get("tables") if isinstance(payload.get("tables"), list) else [],
+            "titleBlock": payload.get("titleBlock"),
             "fullText": payload.get("fullText") or "",
             "charCount": int(payload.get("charCount") or 0),
         }

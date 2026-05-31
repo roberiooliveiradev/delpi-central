@@ -16,6 +16,7 @@ class ChatDocumentVisionMetricsService:
         "tesseract_stamp_crop",
         "tesseract_image",
         "bom_heuristic",
+        "table_heuristic",
         "docling",
         "paddleocr",
         "ollama_vlm",
@@ -60,6 +61,7 @@ class ChatDocumentVisionMetricsService:
             "legible": legible if legible is not None else vision.get("legible"),
             "bomRowCount": vision.get("bomRowCount"),
             "hasTitleBlock": bool(vision.get("titleBlock")),
+            "tableCount": vision.get("tableCount"),
         }
 
     @classmethod

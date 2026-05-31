@@ -32,6 +32,27 @@ class ChatAttachmentResponseService:
         if preview:
             meta["preview"] = preview
 
+        document_vision = meta.get("documentVision")
+
+        if isinstance(document_vision, dict) and document_vision:
+            meta["documentVisionSummary"] = {
+                "engine": document_vision.get("engine"),
+                "legible": document_vision.get("legible"),
+                "legibilityScore": document_vision.get("legibilityScore"),
+                "bomRowCount": document_vision.get("bomRowCount"),
+                "hasTitleBlock": document_vision.get("hasTitleBlock"),
+                "tableCount": document_vision.get("tableCount"),
+                "stages": document_vision.get("stages") or [],
+            }
+
+            if document_vision.get("legible") is False:
+                meta["readingStatus"] = (
+                    f"{meta.get('readingStatus', 'Processado')} · OCR com baixa legibilidade"
+                )
+            elif document_vision.get("engine") and meta.get("readingStatus") == "Indexado":
+                engine = str(document_vision.get("engine") or "")
+                meta["readingStatus"] = f"Indexado · visão ({engine})"
+
         return meta
 
     @classmethod
