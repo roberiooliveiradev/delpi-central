@@ -26,6 +26,31 @@ def test_payload_for_catalog():
     assert payload["welcome"]["title"]
     assert len(payload["starterCards"]) >= 5
     assert len(payload["tourSteps"]) == 5
+    assert len(payload["profiles"]) >= 5
+
+
+def test_engineering_profile_cards():
+    cards = ChatOnboardingService.starter_cards(profile_id="engineering")
+
+    assert any("estrutura" in card["query"].lower() or "usado" in card["query"].lower() for card in cards)
+
+
+def test_infer_profile_from_agent_name():
+    profile = ChatOnboardingService.infer_profile_from_agent(
+        agent_name="Agente de Compras",
+        agent_category=None,
+    )
+
+    assert profile == "purchases"
+
+
+def test_explicit_profile_overrides_agent():
+    resolved = ChatOnboardingService.resolve_profile_id(
+        profile_id="commercial",
+        agent_name="Agente de Compras",
+    )
+
+    assert resolved == "commercial"
 
 
 def test_starter_cards_have_queries():

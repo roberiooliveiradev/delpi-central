@@ -111,6 +111,13 @@ export function ChatPage({
   const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
     null,
   );
+  const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("minha-delpi-chat:onboarding-profile");
+    } catch {
+      return null;
+    }
+  });
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
     if (!payload.markdown.trim()) {
@@ -1100,17 +1107,40 @@ export function ChatPage({
     void getAssistantCatalog({
       getAccessToken,
       agentId: helpAgentId,
+      profileId: onboardingProfileId ?? undefined,
       limit: 8,
     })
       .then((payload) => {
         setHomeHighlights(payload.contextualHighlights ?? []);
         setHomeOnboarding(payload.onboarding ?? null);
+
+        const selected = payload.onboarding?.selectedProfileId;
+
+        if (selected && !onboardingProfileId) {
+          setOnboardingProfileId(selected);
+
+          try {
+            localStorage.setItem("minha-delpi-chat:onboarding-profile", selected);
+          } catch {
+            /* ignore */
+          }
+        }
       })
       .catch(() => {
         setHomeHighlights([]);
         setHomeOnboarding(null);
       });
-  }, [getAccessToken, helpAgentId, isConversationEmpty]);
+  }, [getAccessToken, helpAgentId, isConversationEmpty, onboardingProfileId]);
+
+  function handleSelectOnboardingProfile(profileId: string) {
+    setOnboardingProfileId(profileId);
+
+    try {
+      localStorage.setItem("minha-delpi-chat:onboarding-profile", profileId);
+    } catch {
+      /* ignore */
+    }
+  }
 
   function getComposerPlaceholder() {
     if (isNarrow) {
@@ -1660,6 +1690,8 @@ export function ChatPage({
                       displayName={userDisplayName}
                       contextualHighlights={homeHighlights}
                       onboarding={homeOnboarding}
+                      selectedProfileId={onboardingProfileId}
+                      onSelectProfile={handleSelectOnboardingProfile}
                       onUseStarter={handleHomeStarter}
                     />
                   )}

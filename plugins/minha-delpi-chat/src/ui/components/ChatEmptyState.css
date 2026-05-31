@@ -61,6 +61,31 @@
   line-height: 1.35;
 }
 
+.mdc-chat-empty-state__profiles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  width: min(100%, 42rem);
+}
+
+.mdc-chat-empty-state__profile {
+  border: 1px solid var(--mdc-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  color: var(--mdc-text-muted);
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.mdc-chat-empty-state__profile--active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  color: var(--mdc-primary);
+}
+
 .mdc-chat-empty-state__cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));

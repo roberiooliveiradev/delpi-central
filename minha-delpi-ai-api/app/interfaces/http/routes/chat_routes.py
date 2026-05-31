@@ -265,6 +265,11 @@ def get_assistant_catalog():
 
     query = (request.args.get("q") or request.args.get("query") or "").strip()
     agent_id = (request.args.get("agentId") or request.args.get("agent_id") or "").strip()
+    onboarding_profile_id = (
+        request.args.get("profileId")
+        or request.args.get("onboardingProfileId")
+        or ""
+    ).strip()
 
     try:
         limit = int(request.args.get("limit", 24))
@@ -287,6 +292,7 @@ def get_assistant_catalog():
         user_id=user_id,
         query=query or None,
         agent_id=agent_id or None,
+        onboarding_profile_id=onboarding_profile_id or None,
         limit=limit,
         user_permissions=set(capabilities.get("permissions") or []),
         is_superadmin=bool(capabilities.get("isSuperadmin")),

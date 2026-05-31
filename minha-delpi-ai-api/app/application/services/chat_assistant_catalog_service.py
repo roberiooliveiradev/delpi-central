@@ -56,6 +56,7 @@ class ChatAssistantCatalogService:
         user_id: UUID,
         query: str | None = None,
         agent_id: str | None = None,
+        onboarding_profile_id: str | None = None,
         limit: int = 24,
         user_permissions: set[str] | None = None,
         is_superadmin: bool = False,
@@ -66,6 +67,8 @@ class ChatAssistantCatalogService:
         web_search_enabled = self._resolve_web_search_enabled()
         allowed_action_ids: list[str] = []
         agent_name: str | None = None
+        agent_category: str | None = None
+        agent = None
 
         if agent_id and self.agent_repository:
             parsed = self._parse_agent_id(agent_id)
@@ -75,6 +78,7 @@ class ChatAssistantCatalogService:
 
                 if agent:
                     agent_name = str(agent.name or "").strip() or None
+                    agent_category = str(agent.category or "").strip() or None
                     allowed_action_ids = self._allowed_action_ids(agent, user_id)
 
         action_catalog = self._load_action_catalog()
@@ -131,7 +135,11 @@ class ChatAssistantCatalogService:
             ),
             "releaseVersion": AssistantCapabilitiesRegistry.latest_release_version(),
             "contextualHighlights": highlights,
-            "onboarding": ChatOnboardingService.payload_for_catalog(),
+            "onboarding": ChatOnboardingService.payload_for_catalog(
+                profile_id=onboarding_profile_id,
+                agent_name=agent_name,
+                agent_category=agent_category,
+            ),
             "userContext": {
                 "canUseTools": AssistantCapabilitiesRegistry.user_can_use_tools(
                     permissions={str(item).strip() for item in (user_permissions or []) if str(item).strip()},

@@ -14,6 +14,8 @@ type ChatEmptyStateProps = {
   starters?: ChatHomeStarter[];
   contextualHighlights?: AssistantContextualHighlight[];
   onboarding?: AssistantOnboardingPayload | null;
+  selectedProfileId?: string | null;
+  onSelectProfile?: (profileId: string) => void;
   onUseStarter?: (query: string) => void;
 };
 
@@ -52,6 +54,8 @@ export function ChatEmptyState({
   starters = CHAT_HOME_STARTERS,
   contextualHighlights = [],
   onboarding,
+  selectedProfileId,
+  onSelectProfile,
   onUseStarter,
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
@@ -60,6 +64,8 @@ export function ChatEmptyState({
   const welcomeTitle = onboarding?.welcome?.title?.trim();
   const welcomeSubtitle = onboarding?.welcome?.subtitle?.trim();
   const starterCards = onboarding?.starterCards ?? [];
+  const profiles = onboarding?.profiles ?? [];
+  const activeProfileId = selectedProfileId ?? onboarding?.selectedProfileId ?? null;
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
@@ -70,6 +76,32 @@ export function ChatEmptyState({
             "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
         </p>
       </div>
+
+      {profiles.length > 0 && onSelectProfile ? (
+        <div
+          className="mdc-chat-empty-state__profiles"
+          role="tablist"
+          aria-label="Perfil de uso"
+        >
+          {profiles.map((profile) => (
+            <button
+              key={profile.id}
+              type="button"
+              role="tab"
+              aria-selected={profile.id === activeProfileId}
+              className={
+                profile.id === activeProfileId
+                  ? "mdc-chat-empty-state__profile mdc-chat-empty-state__profile--active"
+                  : "mdc-chat-empty-state__profile"
+              }
+              title={profile.subtitle}
+              onClick={() => onSelectProfile(profile.id)}
+            >
+              {profile.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {starterCards.length > 0 && onUseStarter ? (
         <div

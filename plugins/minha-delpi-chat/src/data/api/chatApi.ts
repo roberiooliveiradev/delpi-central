@@ -157,7 +157,12 @@ export async function getChatCapabilities(
 }
 
 export async function getAssistantCatalog(
-  options: ChatApiOptions & { query?: string; agentId?: string; limit?: number } = {},
+  options: ChatApiOptions & {
+    query?: string;
+    agentId?: string;
+    profileId?: string;
+    limit?: number;
+  } = {},
 ): Promise<AssistantCatalogResponse> {
   const params = new URLSearchParams();
 
@@ -167,6 +172,10 @@ export async function getAssistantCatalog(
 
   if (options.agentId?.trim()) {
     params.set("agentId", options.agentId.trim());
+  }
+
+  if (options.profileId?.trim()) {
+    params.set("profileId", options.profileId.trim());
   }
 
   if (typeof options.limit === "number") {

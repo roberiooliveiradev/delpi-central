@@ -345,6 +345,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | API | `onboarding` em `GET /chat/assistant/catalog` |
 | MFE | Cards no `ChatEmptyState`, `ChatOnboardingTour` (localStorage) |
 | Chips | `onboardingFollowUpSuggestions` após «me ensine a usar» |
+| Perfis | 5 presets (engenharia, compras, comercial, diretoria, admin) + `profileId` na API e seletor no MFE |
 
 ## Anexos — imagens, comparação e status (Playbook 07)
 

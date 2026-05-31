@@ -47,6 +47,159 @@
       "query": "o que você pode fazer?"
     }
   ],
+  "profilePresets": [
+    {
+      "id": "engineering",
+      "label": "Engenharia",
+      "subtitle": "Produto, estrutura, normas e descrição técnica.",
+      "match": {
+        "categories": ["engenharia", "engineering", "produtos", "product"],
+        "nameTokens": ["produto", "engenharia", "estrutura", "bom"]
+      },
+      "cards": [
+        {
+          "id": "product",
+          "label": "Consultar produto",
+          "description": "Visão 360° e roteiro",
+          "query": "me fale do produto 10080001"
+        },
+        {
+          "id": "structure",
+          "label": "Ver estrutura",
+          "description": "Onde o item é usado",
+          "query": "onde o produto 10080001 é usado?"
+        },
+        {
+          "id": "norms",
+          "label": "Normas técnicas",
+          "description": "Descrição padrão DELPI",
+          "query": "como descrever um cabo na descrição técnica?"
+        },
+        {
+          "id": "stock",
+          "label": "Ver estoque",
+          "description": "Saldo por filial",
+          "query": "qual o estoque do produto 10080001?"
+        }
+      ]
+    },
+    {
+      "id": "purchases",
+      "label": "Compras",
+      "subtitle": "Fornecedor, compras e itens críticos.",
+      "match": {
+        "categories": ["compras", "purchases", "suprimentos", "supplies"],
+        "nameTokens": ["compra", "fornecedor", "suprimento", "cpv"]
+      },
+      "cards": [
+        {
+          "id": "supplier",
+          "label": "Quem fornece",
+          "description": "Fornecedor do produto",
+          "query": "quem fornece o produto 10080001?"
+        },
+        {
+          "id": "purchases",
+          "label": "Histórico de compras",
+          "description": "Últimas compras do item",
+          "query": "mostre compras do produto 10080001"
+        },
+        {
+          "id": "stock",
+          "label": "Ver estoque",
+          "description": "Saldo e filial",
+          "query": "qual o estoque do produto 10080001?"
+        }
+      ]
+    },
+    {
+      "id": "commercial",
+      "label": "Comercial",
+      "subtitle": "Vendas, clientes e ordens de venda.",
+      "match": {
+        "categories": ["comercial", "commercial", "vendas", "sales"],
+        "nameTokens": ["comercial", "venda", "cliente", "ov"]
+      },
+      "cards": [
+        {
+          "id": "sales",
+          "label": "Ver vendas",
+          "description": "Período e produto",
+          "query": "mostre vendas do produto 10080001"
+        },
+        {
+          "id": "product",
+          "label": "Consultar produto",
+          "description": "Dados do item",
+          "query": "me fale do produto 10080001"
+        },
+        {
+          "id": "chart",
+          "label": "Gerar gráfico",
+          "description": "Após consulta com dados",
+          "query": "gere um gráfico das vendas acima"
+        }
+      ]
+    },
+    {
+      "id": "executive",
+      "label": "Diretoria",
+      "subtitle": "KPIs, resumo executivo e tendências.",
+      "match": {
+        "categories": ["diretoria", "executive", "indicadores", "kpi"],
+        "nameTokens": ["kpi", "indicador", "diretoria", "dashboard"]
+      },
+      "cards": [
+        {
+          "id": "kpi",
+          "label": "KPIs comerciais",
+          "description": "Indicadores do período",
+          "query": "mostre KPIs comerciais do mês passado"
+        },
+        {
+          "id": "summary",
+          "label": "Resumo executivo",
+          "description": "Síntese dos dados",
+          "query": "faça um resumo executivo dos indicadores acima"
+        },
+        {
+          "id": "capabilities",
+          "label": "O que posso fazer?",
+          "description": "Catálogo de análises",
+          "query": "o que você pode fazer?"
+        }
+      ]
+    },
+    {
+      "id": "admin",
+      "label": "Administrativo",
+      "subtitle": "E-mails, atas, comunicados e revisão.",
+      "match": {
+        "categories": ["administrativo", "admin", "textos", "text"],
+        "nameTokens": ["admin", "texto", "ata", "comunicado"]
+      },
+      "cards": [
+        {
+          "id": "email",
+          "label": "E-mail formal",
+          "description": "Cobrança ou retorno",
+          "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo"
+        },
+        {
+          "id": "correct",
+          "label": "Corrigir texto",
+          "description": "Revisão rápida",
+          "query": "corrija: segue em anexo os documento solicitado"
+        },
+        {
+          "id": "minutes",
+          "label": "Criar ata",
+          "description": "Ata de reunião",
+          "query": "transforme as notas abaixo em ata de reunião"
+        }
+      ]
+    }
+  ],
   "tourSteps": [
     {
       "id": "ask",

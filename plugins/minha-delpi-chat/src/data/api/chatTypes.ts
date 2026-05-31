@@ -317,11 +317,19 @@ export type AssistantOnboardingTourStep = {
   body?: string;
 };
 
+export type AssistantOnboardingProfile = {
+  id: string;
+  label: string;
+  subtitle?: string;
+};
+
 export type AssistantOnboardingPayload = {
   welcome: {
     title: string;
     subtitle?: string;
   };
+  profiles?: AssistantOnboardingProfile[];
+  selectedProfileId?: string | null;
   starterCards: AssistantOnboardingStarterCard[];
   tourSteps: AssistantOnboardingTourStep[];
   idleHints?: string[];

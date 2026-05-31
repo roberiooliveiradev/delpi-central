@@ -118,6 +118,27 @@ def main() -> int:
     else:
         print("OK catalog onboarding (Playbook 10)")
 
+    profiles = onboarding.get("profiles") or []
+
+    if len(profiles) < 5:
+        print(f"FAIL onboarding profiles ({len(profiles)})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog onboarding profiles")
+
+    commercial = ChatAssistantCatalogService(agent_repository=None).build_response(
+        user_id=uuid4(),
+        onboarding_profile_id="commercial",
+        limit=6,
+    )
+    commercial_cards = (commercial.get("onboarding") or {}).get("starterCards") or []
+
+    if not commercial_cards or not any("venda" in str(card.get("query") or "").lower() for card in commercial_cards):
+        print("FAIL onboarding profile commercial cards", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK onboarding profileId=commercial")
+
     import subprocess
     import sys as _sys
 
