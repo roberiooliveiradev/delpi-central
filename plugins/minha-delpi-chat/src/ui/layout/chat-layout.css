@@ -198,12 +198,17 @@
 
   .minha-delpi-chat--narrow .mdc-chat-empty-composer {
     align-content: start;
-    justify-items: stretch;
+    justify-items: center;
     overflow-y: auto;
     padding: var(--mdc-space-3) max(0.75rem, env(safe-area-inset-right, 0px))
       calc(var(--mdc-space-5) + env(safe-area-inset-bottom, 0px))
       max(0.75rem, env(safe-area-inset-left, 0px));
     gap: var(--mdc-space-4);
+  }
+
+  .minha-delpi-chat--narrow .mdc-chat-empty-composer__column {
+    width: 100%;
+    max-width: none;
   }
 
   .minha-delpi-chat--narrow .mdc-chat-conversation .mdc-chat-input,

@@ -347,6 +347,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | API | `onboarding` em `GET /chat/assistant/catalog` |
 | MFE | Cards no `ChatEmptyState`, `ChatOnboardingTour` (localStorage) |
 | MFE | Home do chat — `chat-design-system.css`, título em duas linhas, chips só sem cards do onboarding |
+| MFE | Coluna única centralizada na home (`mdc-chat-empty-composer__column`); cards em flex centralizado (sem última linha à esquerda) |
 | MFE | Tour interativo — spotlight no alvo, digitação demo no composer, menu + e chips de exemplo (`chatTourStepEffects.ts`) |
 | API | `tourSteps` com `target`, `demoQuery`, `openPlusMenu`, `demoSuggestions` (6 passos em `onboarding.json`) |
 | Chips | `onboardingFollowUpSuggestions` após «me ensine a usar» |

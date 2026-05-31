@@ -1736,7 +1736,7 @@ export function ChatPage({
                   }
                 />
               ) : (
-                <>
+                <div className="mdc-chat-empty-composer__column">
                   {activeAgentPage ? (
                     <ChatAgentHome
                       agent={activeAgentPage}
@@ -1789,7 +1789,7 @@ export function ChatPage({
                     onSubmit={handleSubmitMessage}
                     onCancel={cancelStreaming}
                   />
-                </>
+                </div>
               )}
             </section>
           ) : (

@@ -50,10 +50,11 @@
 .mdc-chat-empty-composer {
   display: grid;
   align-content: center;
-  justify-items: center;
-  gap: var(--mdc-space-4);
+  justify-items: stretch;
   min-height: 0;
   height: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .mdc-chat-context-chips {
