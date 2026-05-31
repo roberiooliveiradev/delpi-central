@@ -112,11 +112,22 @@ def main() -> int:
 
     onboarding = catalog_payload.get("onboarding") or {}
 
-    if not onboarding.get("starterCards") or len(onboarding.get("tourSteps") or []) < 5:
+    tour_steps = onboarding.get("tourSteps") or []
+
+    if not onboarding.get("starterCards") or len(tour_steps) < 6:
         print(f"FAIL onboarding payload ({onboarding.keys()})", file=sys.stderr)
         failed += 1
     else:
         print("OK catalog onboarding (Playbook 10)")
+
+    if tour_steps and tour_steps[0].get("id") != "starters":
+        print(f"FAIL tour first step ({tour_steps[0]})", file=sys.stderr)
+        failed += 1
+    elif not (tour_steps[1].get("demoQuery") and tour_steps[2].get("openPlusMenu")):
+        print(f"FAIL tour demo fields ({tour_steps[1:3]})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog onboarding tour interativo (6 passos)")
 
     profiles = onboarding.get("profiles") or []
 

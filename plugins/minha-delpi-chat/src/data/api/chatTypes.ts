@@ -315,6 +315,14 @@ export type AssistantOnboardingTourStep = {
   id: string;
   title: string;
   body?: string;
+  /** Alvo do spotlight (`data-tour` no DOM). */
+  target?: string;
+  /** Texto digitado em tempo real no composer. */
+  demoQuery?: string;
+  /** Abre o menu + do composer neste passo. */
+  openPlusMenu?: boolean;
+  /** Chips de demonstração (passo «próximos passos»). */
+  demoSuggestions?: { label: string; query: string }[];
 };
 
 export type AssistantOnboardingProfile = {

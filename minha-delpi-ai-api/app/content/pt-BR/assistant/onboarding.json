@@ -202,29 +202,49 @@
   ],
   "tourSteps": [
     {
+      "id": "starters",
+      "title": "Escolha um atalho",
+      "body": "Toque em um card — produto, estoque, textos ou análise de arquivo.",
+      "target": "starter-cards"
+    },
+    {
       "id": "ask",
       "title": "Digite uma pergunta",
-      "body": "Use linguagem natural — código de produto, período ou pedido de texto."
+      "body": "Use linguagem natural — código de produto, período ou pedido de texto.",
+      "target": "composer-input",
+      "demoQuery": "qual o estoque do produto 10080001?"
     },
     {
       "id": "agent",
       "title": "Escolha um agente",
-      "body": "Agentes especializados filtram consultas de produtos, compras, vendas e mais."
+      "body": "No menu +, agentes especializados filtram produtos, compras, vendas e mais.",
+      "target": "composer-plus-menu-agents",
+      "openPlusMenu": true
     },
     {
       "id": "attach",
       "title": "Anexe arquivos",
-      "body": "PDF, planilha ou imagem: peça resumo, checklist ou comparação."
+      "body": "PDF, planilha ou imagem: peça resumo, checklist ou comparação.",
+      "target": "composer-attach",
+      "openPlusMenu": true
     },
     {
       "id": "chips",
       "title": "Use próximos passos",
-      "body": "Após cada resposta, os chips sugerem ações úteis sem redigitar tudo."
+      "body": "Após cada resposta, chips como estes sugerem ações sem redigitar tudo.",
+      "target": "follow-up-demo",
+      "demoSuggestions": [
+        { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" },
+        { "label": "Onde é usado", "query": "onde o produto 10080001 é usado?" },
+        { "label": "Abrir lousa", "query": "abra na lousa um rascunho com os pontos da reunião" }
+      ]
     },
     {
       "id": "canvas",
       "title": "Coloque na lousa",
-      "body": "Peça para abrir ou atualizar a lousa com tabelas e rascunhos."
+      "body": "Peça para abrir ou atualizar a lousa — o texto aparece aqui antes de enviar.",
+      "target": "composer-input",
+      "demoQuery": "abra na lousa um rascunho com os pontos da reunião"
     }
   ],
   "milestones": [

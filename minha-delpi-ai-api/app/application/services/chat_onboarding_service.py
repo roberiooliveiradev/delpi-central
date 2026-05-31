@@ -200,9 +200,9 @@ class ChatOnboardingService:
         return [dict(item) for item in items if isinstance(item, dict)]
 
     @classmethod
-    def tour_steps(cls) -> list[dict[str, str]]:
+    def tour_steps(cls) -> list[dict[str, Any]]:
         items = _content().get("tourSteps") or []
-        steps: list[dict[str, str]] = []
+        steps: list[dict[str, Any]] = []
 
         for item in items:
             if not isinstance(item, dict):
@@ -214,13 +214,40 @@ class ChatOnboardingService:
             if not title:
                 continue
 
-            steps.append(
-                {
-                    "id": str(item.get("id") or title).strip(),
-                    "title": title,
-                    "body": body,
-                }
-            )
+            step: dict[str, Any] = {
+                "id": str(item.get("id") or title).strip(),
+                "title": title,
+                "body": body,
+            }
+
+            target = str(item.get("target") or "").strip()
+            if target:
+                step["target"] = target
+
+            demo_query = str(item.get("demoQuery") or "").strip()
+            if demo_query:
+                step["demoQuery"] = demo_query
+
+            if item.get("openPlusMenu") is True:
+                step["openPlusMenu"] = True
+
+            raw_suggestions = item.get("demoSuggestions")
+            if isinstance(raw_suggestions, list):
+                suggestions: list[dict[str, str]] = []
+                for suggestion in raw_suggestions:
+                    if not isinstance(suggestion, dict):
+                        continue
+
+                    label = str(suggestion.get("label") or "").strip()
+                    query = str(suggestion.get("query") or "").strip()
+
+                    if label and query:
+                        suggestions.append({"label": label, "query": query})
+
+                if suggestions:
+                    step["demoSuggestions"] = suggestions
+
+            steps.append(step)
 
         return steps
 

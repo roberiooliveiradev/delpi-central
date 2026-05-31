@@ -92,8 +92,13 @@ export function ChatContextTopbar({
         ) : null}
 
         {onOpenAdmin && mode === "general" ? (
-          <button type="button" onClick={onOpenAdmin}>
-            Administração
+          <button
+            type="button"
+            className="mdc-chat-context-topbar__admin-btn"
+            onClick={onOpenAdmin}
+          >
+            <span className="mdc-chat-context-topbar__admin-label--long">Administração</span>
+            <span className="mdc-chat-context-topbar__admin-label--short">Admin</span>
           </button>
         ) : null}
 

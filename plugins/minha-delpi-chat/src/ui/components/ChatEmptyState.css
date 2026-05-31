@@ -7,13 +7,8 @@
   text-align: center;
 }
 
-.mdc-chat-empty-state__hero h2 {
+.mdc-chat-empty-state__headline {
   margin: 0;
-  color: var(--mdc-title);
-  font-size: clamp(1.75rem, 3vw, 2.55rem);
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  line-height: 1.12;
 }
 
 .mdc-chat-empty-state__hint {
@@ -116,21 +111,11 @@
   line-height: 1.35;
 }
 
-.mdc-chat-empty-state__starter-block {
+.mdc-chat-empty-state__section {
   display: grid;
   gap: 0.45rem;
   width: 100%;
-  max-width: 42rem;
-}
-
-.mdc-chat-empty-state__starter-label {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--mdc-muted);
-  text-align: center;
+  max-width: 44rem;
 }
 
 .mdc-chat-empty-state__cards--text {
@@ -159,7 +144,7 @@
   border: 1px solid var(--mdc-border);
   border-radius: 999px;
   padding: 0.45rem 0.9rem;
-  background: var(--mdc-surface-elevated, rgba(255, 255, 255, 0.04));
+  background: color-mix(in srgb, var(--mdc-card-bg) 88%, transparent);
   color: var(--mdc-text);
   font-size: 0.875rem;
   line-height: 1.2;

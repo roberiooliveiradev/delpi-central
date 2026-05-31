@@ -10,6 +10,7 @@ import {
   CHAT_TEXT_HOME_STARTERS,
   type ChatHomeStarter,
 } from "../chatHomeStarters";
+import { splitWelcomeHeadline } from "../welcomeHeadline";
 
 import "./ChatEmptyState.css";
 
@@ -66,18 +67,36 @@ export function ChatEmptyState({
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
   const greeting = useMemo(() => pickGreeting(firstName), [firstName]);
-  const showOperational = Boolean(onUseStarter) && starters.length > 0;
-  const showTextStarters = Boolean(onUseStarter) && textStarters.length > 0;
   const welcomeTitle = onboarding?.welcome?.title?.trim();
   const welcomeSubtitle = onboarding?.welcome?.subtitle?.trim();
   const starterCards = onboarding?.starterCards ?? [];
   const profiles = onboarding?.profiles ?? [];
   const activeProfileId = selectedProfileId ?? onboarding?.selectedProfileId ?? null;
+  const headlineParts = useMemo(
+    () => (welcomeTitle ? splitWelcomeHeadline(welcomeTitle) : null),
+    [welcomeTitle],
+  );
+  const showOnboardingCards = starterCards.length > 0 && Boolean(onUseStarter);
+  const showOperational =
+    Boolean(onUseStarter) && starters.length > 0 && !showOnboardingCards;
+  const showTextStarters =
+    Boolean(onUseStarter) && textStarters.length > 0 && !showOnboardingCards;
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
       <div className="mdc-chat-empty-state__hero">
-        <h2>{welcomeTitle || greeting}</h2>
+        <h2 className="mdc-chat-empty-state__headline">
+          {headlineParts ? (
+            <>
+              <span className="mdc-chat-empty-state__headline-main">{headlineParts.lead}</span>
+              {headlineParts.accent ? (
+                <span className="mdc-chat-empty-state__headline-accent">{headlineParts.accent}</span>
+              ) : null}
+            </>
+          ) : (
+            <span className="mdc-chat-empty-state__headline-main">{greeting}</span>
+          )}
+        </h2>
         <p className="mdc-chat-empty-state__hint">
           {welcomeSubtitle ||
             "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
@@ -89,6 +108,7 @@ export function ChatEmptyState({
           className="mdc-chat-empty-state__profiles"
           role="tablist"
           aria-label="Perfil de uso"
+          data-tour="profiles"
         >
           {profiles.map((profile) => (
             <button
@@ -110,11 +130,12 @@ export function ChatEmptyState({
         </div>
       ) : null}
 
-      {starterCards.length > 0 && onUseStarter ? (
+      {showOnboardingCards ? (
         <div
           className="mdc-chat-empty-state__cards"
           role="group"
           aria-label="Opções para começar"
+          data-tour="starter-cards"
         >
           {starterCards.map((card) => (
             <button
@@ -155,8 +176,8 @@ export function ChatEmptyState({
       ) : null}
 
       {showOperational ? (
-        <div className="mdc-chat-empty-state__starter-block">
-          <p className="mdc-chat-empty-state__starter-label">Consultas e autoajuda</p>
+        <div className="mdc-chat-empty-state__section">
+          <p className="mdc-chat-empty-state__section-label">Consultas e autoajuda</p>
           <div
             className="mdc-chat-empty-state__starters"
             role="group"
@@ -177,8 +198,8 @@ export function ChatEmptyState({
       ) : null}
 
       {showTextStarters ? (
-        <div className="mdc-chat-empty-state__starter-block">
-          <p className="mdc-chat-empty-state__starter-label">Textos</p>
+        <div className="mdc-chat-empty-state__section">
+          <p className="mdc-chat-empty-state__section-label">Textos</p>
           <div
             className="mdc-chat-empty-state__cards mdc-chat-empty-state__cards--text"
             role="group"

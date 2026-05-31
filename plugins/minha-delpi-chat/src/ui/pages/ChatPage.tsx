@@ -113,6 +113,7 @@ export function ChatPage({
   const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
     null,
   );
+  const [tourPlusMenuOpen, setTourPlusMenuOpen] = useState<boolean | null>(null);
   const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(() => {
     try {
       return localStorage.getItem("minha-delpi-chat:onboarding-profile");
@@ -1766,7 +1767,12 @@ export function ChatPage({
                   )}
 
                   {isConversationEmpty && homeOnboarding?.tourSteps?.length ? (
-                    <ChatOnboardingTour steps={homeOnboarding.tourSteps} />
+                    <ChatOnboardingTour
+                      steps={homeOnboarding.tourSteps}
+                      onDemoQuery={setDraft}
+                      onPlusMenuOpen={setTourPlusMenuOpen}
+                      onDismiss={() => setTourPlusMenuOpen(null)}
+                    />
                   ) : null}
 
                   <ChatInput
@@ -1777,6 +1783,8 @@ export function ChatPage({
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
                     {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
+                    plusMenuOpen={tourPlusMenuOpen ?? undefined}
+                    onPlusMenuOpenChange={setTourPlusMenuOpen}
                     onChange={setDraft}
                     onSubmit={handleSubmitMessage}
                     onCancel={cancelStreaming}

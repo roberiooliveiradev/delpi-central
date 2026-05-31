@@ -346,6 +346,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Chat base | `ChatOnboardingService`, resposta direta via `ChatCapabilitiesService` |
 | API | `onboarding` em `GET /chat/assistant/catalog` |
 | MFE | Cards no `ChatEmptyState`, `ChatOnboardingTour` (localStorage) |
+| MFE | Home do chat — `chat-design-system.css`, título em duas linhas, chips só sem cards do onboarding |
+| MFE | Tour interativo — spotlight no alvo, digitação demo no composer, menu + e chips de exemplo (`chatTourStepEffects.ts`) |
+| API | `tourSteps` com `target`, `demoQuery`, `openPlusMenu`, `demoSuggestions` (6 passos em `onboarding.json`) |
 | Chips | `onboardingFollowUpSuggestions` após «me ensine a usar» |
 | Perfis | 5 presets (engenharia, compras, comercial, diretoria, admin) + `profileId` na API e seletor no MFE |
 | Marcos | `ChatOnboardingMilestoneService` — `milestoneCelebrations` (máx. 1/turno), histórico em `onboardingMilestonesAchieved` |

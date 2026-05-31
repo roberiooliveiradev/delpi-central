@@ -56,6 +56,8 @@ type ChatInputProps = {
   onRemoveAttachment?: (attachmentId: string) => void;
   onClearAttachments?: () => void;
   onInsertQuery?: (query: string) => void;
+  plusMenuOpen?: boolean;
+  onPlusMenuOpenChange?: (open: boolean) => void;
 };
 
 function formatFileSize(size: number): string {
@@ -91,8 +93,21 @@ export function ChatInput({
   onRemoveAttachment,
   onClearAttachments,
   onInsertQuery,
+  plusMenuOpen,
+  onPlusMenuOpenChange,
 }: ChatInputProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [internalMenuOpen, setInternalMenuOpen] = useState(false);
+  const isPlusMenuControlled = plusMenuOpen !== undefined;
+  const isMenuOpen = isPlusMenuControlled ? plusMenuOpen : internalMenuOpen;
+
+  function setMenuOpen(open: boolean) {
+    if (isPlusMenuControlled) {
+      onPlusMenuOpenChange?.(open);
+      return;
+    }
+
+    setInternalMenuOpen(open);
+  }
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
   const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
@@ -106,7 +121,7 @@ export function ChatInput({
       return;
     }
 
-    const closeMenu = () => setIsMenuOpen(false);
+    const closeMenu = () => setMenuOpen(false);
 
     const handlePointerDown = (event: MouseEvent) => {
       const target = event.target;
@@ -148,6 +163,7 @@ export function ChatInput({
           ? "mdc-chat-input mdc-chat-input--center"
           : "mdc-chat-input"
       }
+      data-tour="composer"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit();
@@ -246,11 +262,11 @@ export function ChatInput({
           </div>
         ) : null}
 
-        <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef}>
+        <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
           <button
             type="button"
             className="mdc-chat-input__plus"
-            onClick={() => setIsMenuOpen((current) => !current)}
+            onClick={() => setMenuOpen(!isMenuOpen)}
             aria-label="Mais opções"
             aria-expanded={isMenuOpen}
           >
@@ -264,9 +280,10 @@ export function ChatInput({
 
                 <button
                   type="button"
+                  data-tour="composer-attach"
                   onClick={() => {
                     fileInputRef.current?.click();
-                    setIsMenuOpen(false);
+                    setMenuOpen(false);
                   }}
                 >
                   <Upload size={16} aria-hidden="true" />
@@ -284,7 +301,7 @@ export function ChatInput({
                       type="button"
                       onClick={() => {
                         onInsertQuery(starter.query);
-                        setIsMenuOpen(false);
+                        setMenuOpen(false);
                       }}
                     >
                       <FileText size={16} aria-hidden="true" />
@@ -300,7 +317,7 @@ export function ChatInput({
                       type="button"
                       onClick={() => {
                         onInsertQuery(template.draft);
-                        setIsMenuOpen(false);
+                        setMenuOpen(false);
                       }}
                     >
                       <FileText size={16} aria-hidden="true" />
@@ -310,7 +327,7 @@ export function ChatInput({
                 </div>
               ) : null}
 
-              <div className="mdc-chat-input__menu-section">
+              <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
                 <strong>Usar agente neste contexto</strong>
 
                 {selectedAgent ? (
@@ -318,7 +335,7 @@ export function ChatInput({
                     type="button"
                     onClick={() => {
                       onSelectAgent?.(null);
-                      setIsMenuOpen(false);
+                      setMenuOpen(false);
                     }}
                   >
                     <X size={16} aria-hidden="true" />
@@ -337,7 +354,7 @@ export function ChatInput({
                       }
                       onClick={() => {
                         onSelectAgent?.(agent.id);
-                        setIsMenuOpen(false);
+                        setMenuOpen(false);
                       }}
                     >
                       <Bot size={16} aria-hidden="true" />
@@ -349,7 +366,7 @@ export function ChatInput({
                       className="mdc-chat-input__open-agent"
                       onClick={() => {
                         onOpenAgentPage?.(agent.id);
-                        setIsMenuOpen(false);
+                        setMenuOpen(false);
                       }}
                       title={`Abrir página de ${agent.name}`}
                       aria-label={`Abrir página de ${agent.name}`}
@@ -368,7 +385,7 @@ export function ChatInput({
                     type="button"
                     onClick={() => {
                       onSelectProject?.(null);
-                      setIsMenuOpen(false);
+                      setMenuOpen(false);
                     }}
                   >
                     <X size={16} aria-hidden="true" />
@@ -387,7 +404,7 @@ export function ChatInput({
                     }
                     onClick={() => {
                       onSelectProject?.(project.id);
-                      setIsMenuOpen(false);
+                      setMenuOpen(false);
                     }}
                   >
                     <Folder size={16} aria-hidden="true" />
@@ -402,6 +419,7 @@ export function ChatInput({
         <textarea
           ref={textareaRef}
           className="mdc-auto-grow-textarea"
+          data-tour="composer-input"
           value={value}
           disabled={disabled || isSending}
           placeholder={placeholder}

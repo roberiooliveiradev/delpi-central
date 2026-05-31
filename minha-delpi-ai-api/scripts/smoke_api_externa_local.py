@@ -15,8 +15,17 @@ import sys
 import time
 
 
+def _subprocess_env() -> dict[str, str]:
+    env = os.environ.copy()
+    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    existing = env.get("PYTHONPATH", "").strip()
+    env["PYTHONPATH"] = app_root if not existing else f"{app_root}{os.pathsep}{existing}"
+    return env
+
+
 def main() -> int:
     failed = 0
+    env = _subprocess_env()
 
     print("== Configurar providers (api-externa on, api-delpi off) ==")
     cfg = subprocess.run(
@@ -33,6 +42,7 @@ def main() -> int:
             "false",
         ],
         cwd=None,
+        env=env,
     )
     if cfg.returncode != 0:
         return cfg.returncode
@@ -48,7 +58,7 @@ def main() -> int:
             print(f"\n(pausa {pause}s — rate limit chat_messages)\n")
             time.sleep(pause)
         print(f"\n== {label} ==")
-        result = subprocess.run([sys.executable, script], check=False)
+        result = subprocess.run([sys.executable, script], check=False, env=env)
         if result.returncode != 0:
             failed += 1
 
