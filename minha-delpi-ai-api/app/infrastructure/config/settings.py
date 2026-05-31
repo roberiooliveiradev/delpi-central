@@ -159,6 +159,9 @@ class Settings:
             os.getenv("CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS", "8000"),
         )
     )
+    CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED = (
+        os.getenv("CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED", "true").lower() == "true"
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"

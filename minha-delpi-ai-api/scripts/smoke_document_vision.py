@@ -136,6 +136,7 @@ def main() -> int:
             "tests/unit/application/services/test_chat_document_vision_attachment_metadata.py",
             "tests/unit/application/services/test_chat_document_vision_neural_backend.py",
             "tests/unit/domain/services/test_chat_attachment_document_intent_service.py",
+            "tests/unit/application/services/test_chat_document_vision_regression.py",
             "-q",
         ],
         cwd=str(api_root),

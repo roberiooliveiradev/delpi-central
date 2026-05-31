@@ -217,6 +217,26 @@ class ChatDocumentVisionService:
                 started=started,
             )
 
+        if backend in {"ollama_vlm", "vlm"}:
+            vlm = cls._stage_ollama_vlm(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+            )
+
+            if str(vlm.get("fullText") or "").strip():
+                stages.append("ollama_vlm")
+                return cls._finalize_result(
+                    vlm,
+                    engine="ollama_vlm",
+                    stages=stages,
+                    warnings=list(vlm.get("warnings") or []),
+                    started=started,
+                )
+
+            warnings.append("ollama_vlm_unavailable_fallback_auto")
+            backend = "auto"
+
         if backend in {"docling", "paddleocr"}:
             neural = cls._stage_neural_backend(
                 storage_path,
@@ -262,6 +282,9 @@ class ChatDocumentVisionService:
         if needs_ocr and cls._is_pdf(content_type, filename, storage_path):
             ocr = cls._stage_tesseract_pdf(storage_path)
             stages.append("tesseract_pdf")
+
+            if ocr.get("stampCrop"):
+                stages.append("tesseract_stamp_crop")
 
             if ocr.get("fullText"):
                 merged_text = f"{full_text}\n\n{ocr['fullText']}".strip()
@@ -484,6 +507,8 @@ class ChatDocumentVisionService:
             if document.page_count > max_pages:
                 warnings.append(f"truncated_pages:{document.page_count}>{max_pages}")
 
+            stamp_crop_used = False
+
             for index in range(page_count):
                 page = document.load_page(index)
                 pixmap = page.get_pixmap(matrix=matrix, alpha=False)
@@ -493,14 +518,25 @@ class ChatDocumentVisionService:
 
                 if chunk:
                     texts.append(chunk)
+
+                if index == 0 and Settings.CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED:
+                    stamp_text = cls._ocr_stamp_regions(page, matrix=matrix, lang=lang)
+
+                    if stamp_text and stamp_text not in chunk:
+                        texts.append(stamp_text)
+                        stamp_crop_used = True
         finally:
             document.close()
+
+        if stamp_crop_used:
+            warnings.append("stamp_crop_applied")
 
         return {
             "fullText": "\n\n".join(texts).strip(),
             "engine": "tesseract",
             "pageCount": page_count if "page_count" in locals() else 0,
             "warnings": warnings,
+            "stampCrop": stamp_crop_used,
         }
 
     @classmethod
@@ -674,6 +710,58 @@ class ChatDocumentVisionService:
             "fullText": payload.get("fullText") or "",
             "charCount": int(payload.get("charCount") or 0),
         }
+
+    @classmethod
+    def _ocr_stamp_regions(cls, page, *, matrix, lang: str) -> str:
+        """Recorte heurístico do carimbo (faixa superior + canto superior direito)."""
+        try:
+            import fitz
+            import pytesseract
+            from PIL import Image
+        except ImportError:
+            return ""
+
+        width = float(page.rect.width)
+        height = float(page.rect.height)
+        regions = (
+            fitz.Rect(0, 0, width, height * 0.32),
+            fitz.Rect(width * 0.42, 0, width, height * 0.38),
+        )
+        parts: list[str] = []
+
+        for rect in regions:
+            pixmap = page.get_pixmap(matrix=matrix, clip=rect, alpha=False)
+            image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+            text = str(pytesseract.image_to_string(image, lang=lang) or "").strip()
+
+            if text and text not in parts:
+                parts.append(text)
+
+        return "\n".join(parts).strip()
+
+    @classmethod
+    def _stage_ollama_vlm(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        content_type: str,
+    ) -> dict[str, Any]:
+        warnings: list[str] = []
+        model = os.getenv("CHAT_DOCUMENT_VISION_OLLAMA_MODEL", "qwen2.5vl:7b").strip()
+        base_url = os.getenv(
+            "CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL",
+            os.getenv("OLLAMA_BASE_URL", "http://ollama:11434"),
+        ).strip()
+
+        try:
+            import requests
+        except ImportError:
+            warnings.append("requests_unavailable")
+            return {"fullText": "", "warnings": warnings}
+
+        warnings.append(f"ollama_vlm_not_wired:{model}@{base_url}")
+        return {"fullText": "", "warnings": warnings}
 
     @classmethod
     def _stage_neural_backend(

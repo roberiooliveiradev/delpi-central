@@ -105,6 +105,7 @@ docs/              # documentação técnica
 | `CHAT_DOCUMENT_VISION_MAX_PAGES` / `DPI` / `MAX_CHARS` | Limites de rasterização e texto |
 | `CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS` | Mínimo para considerar PDF legível antes do OCR |
 | `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | Idiomas Tesseract (ex.: `por+eng`) |
+| `CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED` | Recorte heurístico do carimbo na 1ª página PDF (`true` default) |
 
 Profile Docker opcional `vision`: `requirements-vision.txt` + `Dockerfile.vision.dev` (backends Docling/Paddle — ver Onda 13).
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |

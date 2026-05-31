@@ -99,7 +99,16 @@ class ChatAttachmentContextService:
                     )
 
                     if combined:
-                        return self._truncate(combined, max_chars)
+                        min_legible = max(
+                            1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS)
+                        )
+                        use_indexed_only = (
+                            not Settings.CHAT_DOCUMENT_VISION_ENABLED
+                            or len(combined.strip()) >= min_legible
+                        )
+
+                        if use_indexed_only:
+                            return self._truncate(combined, max_chars)
 
         if attachment.status == "unsupported":
             return ""

@@ -30,6 +30,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Onda 11 + Fase 5 (pytest + smokes) | `./scripts/run_onda11_validation.sh` |
 | Visão/OCR documentos (Onda 13) | `python scripts/smoke_document_vision.py` (+ pytest `test_chat_document_vision_service.py`, `test_chat_attachment_context_service.py`) |
 | Análise de desenho (Onda 12) | `python scripts/smoke_drawing_analyser.py` |
+| Pacote Onda 13 (visão/OCR) | `./scripts/run_onda13_validation.sh` |
 
 Variáveis opcionais: `SMOKE_BASE_URL`, `SMOKE_USER`, `SMOKE_PASSWORD`. Ver [`../changelog/2026-05-contexto-memoria-assertividade.md`](../changelog/2026-05-contexto-memoria-assertividade.md).
 

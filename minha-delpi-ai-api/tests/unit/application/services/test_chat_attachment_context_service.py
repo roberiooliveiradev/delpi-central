@@ -56,7 +56,10 @@ def _attachment(**overrides):
     return ChatAttachment(**base)
 
 
-def test_build_context_uses_indexed_chunks():
+def test_build_context_uses_indexed_chunks(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "false")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = False
+
     document_id = uuid4()
     attachment = _attachment(
         metadata={"knowledgeDocumentId": str(document_id)},
@@ -137,3 +140,53 @@ def test_build_context_ocr_image_replaces_placeholder(monkeypatch):
 
     assert "90260199" in result
     assert "Conteúdo visual indexado" not in result
+
+
+def test_build_context_indexed_short_chunks_falls_back_to_ocr(monkeypatch):
+    monkeypatch.setenv("CHAT_DOCUMENT_VISION_ENABLED", "true")
+    Settings.CHAT_DOCUMENT_VISION_ENABLED = True
+    Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS = 40
+
+    document_id = uuid4()
+    attachment = _attachment(
+        filename="scan.pdf",
+        original_filename="scan.pdf",
+        content_type="application/pdf",
+        storage_path="/tmp/scan.pdf",
+        status="indexed",
+        metadata={"knowledgeDocumentId": str(document_id)},
+    )
+
+    service = ChatAttachmentContextService(
+        attachment_repository=FakeAttachmentRepository([attachment]),
+        knowledge_repository=FakeKnowledgeRepository(
+            [
+                KnowledgeChunk(
+                    id=uuid4(),
+                    document_id=document_id,
+                    chunk_index=0,
+                    content="curto",
+                    metadata={},
+                    created_at=datetime.now(timezone.utc),
+                    score=None,
+                    title="scan.pdf",
+                    source_type="chat_attachment",
+                    source_ref=str(attachment.id),
+                )
+            ]
+        ),
+        text_extractor=FakeTextExtractor(),
+    )
+
+    with patch(
+        "app.application.services.chat_attachment_context_service.ChatDocumentVisionService.enrich_attachment_excerpt",
+        return_value="TEXTO LONGO DE OCR " * 20,
+    ) as enrich_mock:
+        result = service.build_context(
+            user_id=attachment.user_id,
+            session_id=attachment.session_id,
+            attachment_ids=[attachment.id],
+        )
+
+    enrich_mock.assert_called_once()
+    assert "TEXTO LONGO DE OCR" in result

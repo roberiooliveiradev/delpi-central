@@ -41,7 +41,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 | ID | Entrega | Status |
 |----|---------|--------|
 | 13.2.1 | Rasterização PDF (PyMuPDF/pdf2image) | ✅ (PyMuPDF/fitz) |
-| 13.2.2 | Backend `tesseract` multipágina + crop carimbo | ✅ (multipágina; crop carimbo backlog) |
+| 13.2.2 | Backend `tesseract` multipágina + crop carimbo | ✅ (faixa superior + canto sup. direito na pág. 1) |
 | 13.2.3 | Testes V1–V5 + fixtures | ✅ (`test_chat_document_vision_service.py`) |
 
 ### 13.3 — Layout neural (profile vision)
@@ -62,7 +62,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 13.5.1 | Backend `ollama_vlm` (Qwen2.5-VL) com JSON schema | ⬜ |
+| 13.5.1 | Backend `ollama_vlm` (Qwen2.5-VL) com JSON schema | ⬜ (stub + fallback `auto`) |
 
 ### 13.6 — UX, testes e ops
 
@@ -79,17 +79,11 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 ```bash
 # Rebuild após mudanças em requirements ou Dockerfile da API
-docker compose -f infra/docker-compose.dev.yml build minha-delpi-ai-api
-docker compose -f infra/docker-compose.dev.yml --profile chat up -d --force-recreate minha-delpi-ai-api
+docker compose -f infra/docker-compose.dev.yml build minha-delpi-ai-api minha-delpi-chat
+docker compose -f infra/docker-compose.dev.yml --profile chat up -d --force-recreate minha-delpi-ai-api minha-delpi-chat
 
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  sh -c 'PYTHONPATH=/app pytest tests/unit/application/services/test_chat_document_vision_service.py tests/unit/application/services/test_chat_attachment_context_service.py tests/unit/application/services/test_chat_stream_activity_service.py -q'
-
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  sh -c 'PYTHONPATH=/app python scripts/smoke_document_vision.py'
-
-docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
-  sh -c 'PYTHONPATH=/app python scripts/smoke_drawing_analyser.py'
+  bash scripts/run_onda13_validation.sh
 ```
 
 Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.md).
@@ -107,3 +101,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | Métricas `documentVisionMetrics` + endpoint admin summary; profile compose `vision`. |
 | 2026-05-31 | `documentVision`/`documentVisionTrace` em turnos só com anexo (PDF indexado → snapshot native leve). |
 | 2026-05-31 | Intent `attachment_document` (leitura de anexo sem planejar OpenAPI); painel admin Métricas visão/OCR. |
+| 2026-05-31 | Crop carimbo Tesseract, fallback OCR em indexado curto, `run_onda13_validation.sh`, adminDebug MFE visão. |

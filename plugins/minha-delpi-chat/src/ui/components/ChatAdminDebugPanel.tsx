@@ -133,6 +133,54 @@ type DrawingPhase = {
   detail?: string;
 };
 
+function AdminDocumentVisionTraceSummary({
+  trace,
+}: {
+  trace: Record<string, unknown>;
+}) {
+  const engine = trace.engine != null ? String(trace.engine) : "";
+  const stages = Array.isArray(trace.stages) ? trace.stages.map(String).join(", ") : "";
+  const score =
+    trace.legibilityScore != null ? String(trace.legibilityScore) : "";
+  const duration =
+    trace.durationMs != null ? `${String(trace.durationMs)}ms` : "";
+  const context = trace.context != null ? String(trace.context) : "";
+
+  if (!engine && !stages) {
+    return null;
+  }
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="Visão de documentos (admin)">
+      {context ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>visão</strong> {context}
+        </span>
+      ) : null}
+      {engine ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>motor</strong> {engine}
+        </span>
+      ) : null}
+      {stages ? (
+        <span className="mdc-chat-admin-debug__timing-chip" title={stages}>
+          <strong>estágios</strong> {stages}
+        </span>
+      ) : null}
+      {score ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>legibilidade</strong> {score}
+        </span>
+      ) : null}
+      {duration ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>duração</strong> {duration}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 function AdminDrawingAnalysisTraceSummary({
   trace,
 }: {
@@ -222,6 +270,8 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const intentRoute = (debug?.intentRoute as Record<string, unknown> | undefined) ?? null;
   const drawingTrace =
     (debug?.drawingAnalysisTrace as Record<string, unknown> | undefined) ?? null;
+  const documentVisionTrace =
+    (debug?.documentVisionTrace as Record<string, unknown> | undefined) ?? null;
   const trustSignals = Array.isArray(debug?.trustSignals)
     ? (debug?.trustSignals as Array<Record<string, unknown>>)
     : [];
@@ -242,12 +292,15 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           <Bug size={16} aria-hidden="true" />
           <span>Diagnóstico (admin)</span>
           <span className="mdc-chat-admin-debug__summary-hint">
-            intenção · tools · RAG · desenho
+            intenção · tools · RAG · anexo · desenho
           </span>
         </summary>
 
         <div className="mdc-chat-admin-debug__content">
           {intentRoute ? <AdminIntentRouteSummary intentRoute={intentRoute} /> : null}
+          {documentVisionTrace ? (
+            <AdminDocumentVisionTraceSummary trace={documentVisionTrace} />
+          ) : null}
           {drawingTrace ? <AdminDrawingAnalysisTraceSummary trace={drawingTrace} /> : null}
           {trustSignals.length > 0 ? (
             <AdminTrustSignalsSummary signals={trustSignals} />
