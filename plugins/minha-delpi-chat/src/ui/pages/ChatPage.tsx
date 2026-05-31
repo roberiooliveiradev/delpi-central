@@ -17,6 +17,7 @@ import { useConfirmDialog } from "../components/useConfirmDialog";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
+  clearChatSessionMemory,
   createChatArtifact,
   createProjectTextSource,
   deleteChatSource,
@@ -169,7 +170,13 @@ export function ChatPage({
     onOpenCanvas: openCanvasPanel,
   });
 
+  const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
+
   const activeContextChips = useMemo(() => {
+    if (contextMemoryCleared) {
+      return [];
+    }
+
     for (let index = messages.length - 1; index >= 0; index -= 1) {
       const message = messages[index];
 
@@ -185,14 +192,30 @@ export function ChatPage({
     }
 
     return [];
-  }, [messages]);
+  }, [messages, contextMemoryCleared]);
+
+  useEffect(() => {
+    setContextMemoryCleared(false);
+  }, [activeSession?.id]);
 
   const handleClearActiveContext = useCallback(() => {
-    void sendMessage({
-      content:
-        "a partir de agora, desconsidere produto, filial e preferências anteriores desta conversa.",
-    });
-  }, [sendMessage]);
+    void (async () => {
+      if (activeSession?.id) {
+        try {
+          await clearChatSessionMemory(activeSession.id, { getAccessToken });
+        } catch {
+          // fallback: mensagem explícita ainda aciona limpeza no pipeline
+          await sendMessage({
+            content:
+              "a partir de agora, desconsidere produto, filial e preferências anteriores desta conversa.",
+          });
+          return;
+        }
+      }
+
+      setContextMemoryCleared(true);
+    })();
+  }, [activeSession?.id, getAccessToken, sendMessage]);
 
   const {
     agents,

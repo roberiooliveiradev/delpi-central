@@ -136,6 +136,22 @@ Lista sessões do usuário.
 
 ---
 
+## POST `/chat/sessions/{sessionId}/memory/clear`
+
+Desativa memória persistida da sessão (produto/filial em foco, preferências de formato/tom).
+
+### Permissão
+
+`minha-delpi.chat.ask`
+
+### Resposta `200`
+
+```json
+{ "cleared": 2 }
+```
+
+---
+
 ## GET `/chat/sessions/{sessionId}/messages`
 
 Lista mensagens de uma sessão.

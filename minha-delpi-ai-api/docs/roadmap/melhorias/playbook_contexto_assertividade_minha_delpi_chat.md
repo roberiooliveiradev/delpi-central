@@ -11,7 +11,7 @@ Objetivo: melhorar a capacidade do chat de manter contexto entre perguntas, lemb
 | 1 | `contextSnapshot` em metadata, memória em `adminDebug` | **Concluída** | `ChatWorkingMemoryService`, `ChatContextMetadataService` |
 | 2 | Follow-up operacional, reuso de entidade | **Concluída** | `ChatFollowUpIntentService`, `ChatReferenceResolutionService`, `workingMemory` |
 | 3 | UI contextual (chips de contexto ativo) | **Concluída (MFE)** | `metadata.contextChips`, `ChatContextBar`, limpar contexto |
-| 4 | Memória persistida (`ai_chat_session_memory`) | Backlog | — |
+| 4 | Memória persistida (`ai_chat_session_memory`) | **Concluída** | `ChatSessionMemoryService`, `POST /chat/sessions/{id}/memory/clear` |
 | 5 | Score de assertividade, smoke multi-turno, admin, feedback | **Concluída** | `ChatContextAssertivenessService`, `smoke_context_assertiveness_multiturn.py`, painel admin |
 
 Detalhes e changelog: [`../../changelog/2026-05-contexto-memoria-assertividade.md`](../../changelog/2026-05-contexto-memoria-assertividade.md). Arquitetura: [`../../architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md).

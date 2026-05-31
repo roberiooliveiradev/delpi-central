@@ -76,8 +76,15 @@ from app.application.use_cases.set_chat_session_state_use_case import (
     SetChatSessionPinnedUseCase,
 )
 from app.application.use_cases.search_knowledge_use_case import SearchKnowledgeUseCase
+from app.application.services.chat_session_memory_service import ChatSessionMemoryService
+from app.application.use_cases.clear_chat_session_memory_use_case import (
+    ClearChatSessionMemoryUseCase,
+)
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
+from app.infrastructure.persistence.postgres_chat_session_memory_repository import (
+    PostgresChatSessionMemoryRepository,
+)
 from app.composition.tool_composer import make_execute_tool_use_case
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
@@ -228,6 +235,17 @@ def make_chat_web_search_synthesis_service() -> ChatWebSearchSynthesisService:
     return ChatWebSearchSynthesisService(llm_gateway=make_llm_gateway())
 
 
+def make_chat_session_memory_service() -> ChatSessionMemoryService:
+    return ChatSessionMemoryService(PostgresChatSessionMemoryRepository())
+
+
+def make_clear_chat_session_memory_use_case() -> ClearChatSessionMemoryUseCase:
+    return ClearChatSessionMemoryUseCase(
+        PostgresChatSessionRepository(),
+        PostgresChatSessionMemoryRepository(),
+    )
+
+
 def make_send_chat_message_use_case() -> SendChatMessageUseCase:
     return SendChatMessageUseCase(
         chat_repository=PostgresChatSessionRepository(),
@@ -244,6 +262,7 @@ def make_send_chat_message_use_case() -> SendChatMessageUseCase:
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
         web_search_synthesis_service=make_chat_web_search_synthesis_service(),
+        session_memory_service=make_chat_session_memory_service(),
     )
 
 
@@ -263,6 +282,7 @@ def make_stream_chat_message_use_case() -> StreamChatMessageUseCase:
         workspace_context_service=make_chat_workspace_context_service(),
         admin_guideline_prompt_service=make_admin_guideline_prompt_service(),
         web_search_synthesis_service=make_chat_web_search_synthesis_service(),
+        session_memory_service=make_chat_session_memory_service(),
     )
 
 def make_rename_chat_session_use_case() -> RenameChatSessionUseCase:

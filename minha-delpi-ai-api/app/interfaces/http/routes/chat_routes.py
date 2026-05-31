@@ -103,6 +103,7 @@ from app.composition.chat_composer import (
     make_rename_chat_session_use_case,
     make_set_chat_session_archived_use_case,
     make_set_chat_session_pinned_use_case,
+    make_clear_chat_session_memory_use_case,
     make_send_chat_message_use_case,
     make_stream_chat_message_use_case,
 )
@@ -2198,6 +2199,30 @@ def unarchive_session(session_id: str):
         raise
 
     return jsonify(asdict(session)), 200
+
+
+@chat_bp.post("/sessions/<session_id>/memory/clear")
+@require_permission(CHAT_ASK_PERMISSION)
+def clear_session_memory(session_id: str):
+    use_case = make_clear_chat_session_memory_use_case()
+
+    try:
+        cleared = use_case.execute(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify({"cleared": cleared}), 200
 
 
 @chat_bp.patch("/messages/<message_id>")

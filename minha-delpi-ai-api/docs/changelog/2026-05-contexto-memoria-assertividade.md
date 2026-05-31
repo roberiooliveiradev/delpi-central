@@ -68,8 +68,15 @@ Motivo **Perdeu o contexto** (`lost_context`) em `personality_playbook.json` e `
 - [`../api/02-chat-sessoes-mensagens.md`](../api/02-chat-sessoes-mensagens.md) — metadata `contextAssertiveness`, `adminDebug.memory`
 - [`../roadmap/melhorias/README.md`](../roadmap/melhorias/README.md) — índice e status
 
+## Fase 4 — Memória persistida (maio/2026)
+
+| Item | Detalhe |
+|------|---------|
+| Tabela | `ai_chat_session_memory` (entidades + instruções de comportamento, escopo `session`, TTL 30 dias) |
+| Serviço | `ChatSessionMemoryService` — carrega overlay no pré-turno, sincroniza `contextSnapshot` pós-turno |
+| API | `POST /chat/sessions/{id}/memory/clear` |
+| MFE | `clearChatSessionMemory` + botão **Limpar** na barra de contexto |
+
 ## Backlog (playbook)
 
-- **Fase 3:** chips de contexto ativo na UI, limpar contexto
-- **Fase 4:** tabela `ai_chat_session_memory` persistida entre sessões
 - Seleção de action para chip «Ver vendas» (WARN no smoke de chips)

@@ -86,9 +86,11 @@ class ChatTurnPreparationService:
         *,
         rag_context_service,
         knowledge_scope_service: ChatKnowledgeScopeService | None = None,
+        session_memory_service=None,
     ):
         self.rag_context_service = rag_context_service
         self.knowledge_scope_service = knowledge_scope_service or ChatKnowledgeScopeService()
+        self.session_memory_service = session_memory_service
 
     def prepare(
         self,
@@ -309,6 +311,14 @@ class ChatTurnPreparationService:
             message=message,
             previous_messages=history_source,
         )
+
+        if self.session_memory_service and session is not None:
+            working_memory_snapshot = self.session_memory_service.apply_to_pre_turn(
+                session_id=getattr(session, "id", None),
+                snapshot=working_memory_snapshot,
+                message=message,
+            )
+
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot
 

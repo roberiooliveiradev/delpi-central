@@ -21,6 +21,7 @@ class ChatContextMetadataService:
         tool_calls: list | None,
         previous_messages: list[Any] | None,
         workspace_context: dict | None,
+        session_memory_service=None,
     ) -> None:
         pre_snapshot = (workspace_context or {}).get("workingMemory")
 
@@ -48,5 +49,12 @@ class ChatContextMetadataService:
         admin_debug = metadata.get("adminDebug")
 
         if isinstance(admin_debug, dict):
-            admin_debug["memory"] = ChatWorkingMemoryService.compact_for_admin_debug(snapshot)
+            memory_debug = ChatWorkingMemoryService.compact_for_admin_debug(snapshot)
+
+            if session_memory_service:
+                memory_debug.update(
+                    session_memory_service.compact_for_admin_debug(snapshot)
+                )
+
+            admin_debug["memory"] = memory_debug
             admin_debug["contextAssertiveness"] = assertiveness

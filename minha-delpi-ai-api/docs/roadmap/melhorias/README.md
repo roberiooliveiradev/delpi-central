@@ -6,7 +6,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
-| Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–2, 3 (UI), 5** na API/MFE; **Fase 4** (DB persistida) em backlog |
+| Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
 | Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–3** (queries com produto, outcomes erro/vazio/texto); Fases **4–5** em backlog |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | API: `attachmentFollowUpSuggestions`; MFE: chips «Com o anexo» |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
@@ -28,6 +28,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatReferenceResolutionService` | Contexto — reuso de entidade |
 | `ChatTextTaskIntentService` | Admin textos — modo sem API |
 | `ChatWorkingMemoryService.build_context_chips` | Contexto + interatividade — UI |
+| `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
 
 ## Smokes automatizados
 
@@ -40,8 +41,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 
 ## Próximo backlog sugerido
 
-1. **Fase 4 contexto** — `ai_chat_session_memory` (persistência entre reloads).
-2. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
+1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
 3. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
 4. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
 5. **Chip «Ver vendas»** — correção da seleção de action (WARN no smoke de chips).

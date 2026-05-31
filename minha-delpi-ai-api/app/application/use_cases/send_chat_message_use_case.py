@@ -66,6 +66,7 @@ class SendChatMessageUseCase:
         admin_guideline_prompt_service=None,
         message_security_service: ChatMessageSecurityService | None = None,
         web_search_synthesis_service: ChatWebSearchSynthesisService | None = None,
+        session_memory_service=None,
     ):
         self.chat_repository = chat_repository
         self.audit_repository = audit_repository
@@ -78,8 +79,10 @@ class SendChatMessageUseCase:
         self.knowledge_scope_service = ChatKnowledgeScopeService()
         self.rag_context_service = rag_context_service
         self.chat_tool_context_service = chat_tool_context_service
+        self.session_memory_service = session_memory_service
         self.turn_preparation_service = ChatTurnPreparationService(
             rag_context_service=rag_context_service,
+            session_memory_service=session_memory_service,
         )
         self.agent_repository = agent_repository
         self.attachment_repository = attachment_repository
@@ -408,6 +411,7 @@ class SendChatMessageUseCase:
             tool_calls=tool_calls,
             previous_messages=previous_messages,
             workspace_context=workspace_context,
+            session_memory_service=self.session_memory_service,
         )
 
         from app.application.services.chat_attachment_follow_up_service import (
@@ -426,6 +430,16 @@ class SendChatMessageUseCase:
             parent_message_id=user_message.id,
             metadata=assistant_metadata,
         )
+
+        if self.session_memory_service:
+            post_snapshot = assistant_metadata.get("contextSnapshot")
+
+            if isinstance(post_snapshot, dict):
+                self.session_memory_service.persist_post_turn(
+                    session_id=session_id,
+                    snapshot=post_snapshot,
+                    source_message_id=assistant_message.id,
+                )
 
         self.chat_repository.set_active_leaf_message_id(
             session_id=session_id,

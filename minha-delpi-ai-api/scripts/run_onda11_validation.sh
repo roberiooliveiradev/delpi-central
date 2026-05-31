@@ -120,6 +120,7 @@ pytest \
   tests/unit/domain/services/test_chat_context_assertiveness_service.py \
   tests/unit/domain/services/test_chat_context_assertiveness_regression.py \
   tests/unit/domain/services/test_chat_working_memory_service.py \
+  tests/unit/application/services/test_chat_session_memory_service.py \
   tests/unit/domain/services/test_chat_follow_up_intent_service.py \
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   tests/unit/domain/services/test_chat_text_task_intent_service.py \

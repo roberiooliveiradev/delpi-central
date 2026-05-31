@@ -10,7 +10,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Fase 3 (UI) | `metadata.contextChips` + barra **Contexto ativo** no plugin (`ChatContextBar`) |
 | Comportamento | Preferência «só versão final» em `ChatBehaviorInstructionService` |
 
-**Backlog:** tabela `ai_chat_session_memory` (Fase 4).
+**Fase 4:** tabela `ai_chat_session_memory` + `POST /chat/sessions/{id}/memory/clear`.
 
 ## Correções (problemas reportados em homologação)
 

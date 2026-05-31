@@ -612,6 +612,18 @@ export async function unarchiveChatSession(
   return parseJsonResponse<ChatSession>(response);
 }
 
+export async function clearChatSessionMemory(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<{ cleared: number }> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/clear`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<{ cleared: number }>(response);
+}
+
 
 export async function listChatArtifacts(
   sessionId: string,
