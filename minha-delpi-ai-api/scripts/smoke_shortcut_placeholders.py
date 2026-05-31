@@ -162,6 +162,24 @@ def _check_web_search_examples() -> list[str]:
         if "pesquise na web" in query.lower() and _LEGACY_WEB_SEARCH_EXAMPLE.search(query):
             errors.append(f"capabilities.interactive.{label}: exemplo legado WEG/CFW")
 
+    release_notes = _load_json("assistant_release_notes.json")
+
+    for block in release_notes.get("releases") or []:
+        if not isinstance(block, dict):
+            continue
+
+        for item in block.get("highlights") or []:
+            if not isinstance(item, dict) or item.get("featureId") != "web_search":
+                continue
+
+            for example in item.get("examples") or []:
+                text = str(example)
+
+                if _LEGACY_WEB_SEARCH_EXAMPLE.search(text):
+                    errors.append(
+                        f"assistant_release_notes.web_search: exemplo legado — {text!r}",
+                    )
+
     if not found_delpi_example:
         errors.append(
             "conteúdo assistente: falta exemplo de pesquisa web com "

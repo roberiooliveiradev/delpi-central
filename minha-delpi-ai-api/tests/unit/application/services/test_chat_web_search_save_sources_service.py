@@ -52,7 +52,7 @@ def test_build_direct_answer_saves_sources(mock_factory):
             "role": "assistant",
             "metadata": {
                 "webSearchResearch": {
-                    "query": "manual WEG",
+                    "query": "DELPI Conexões Elétricas",
                     "sites": [
                         {
                             "title": "Manual CFW500",
@@ -84,5 +84,5 @@ def test_build_direct_answer_saves_sources(mock_factory):
     assert "Salvei" in answer
     mock_use_case.execute_text.assert_called_once()
     kwargs = mock_use_case.execute_text.call_args.kwargs
-    assert "manual WEG" in kwargs["content"]
+    assert "DELPI Conexões Elétricas" in kwargs["content"]
     assert kwargs["metadata"]["origin"] == "web_search"

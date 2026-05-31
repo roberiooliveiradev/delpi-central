@@ -7,7 +7,7 @@ def test_build_success_suggestions_with_topic():
     suggestions = ChatWebSearchFollowUpService.build(
         payload={
             "searchStatus": "success",
-            "query": "manual WEG CFW500",
+            "query": "DELPI Conexões Elétricas",
             "preferOfficial": True,
         },
     )
@@ -15,7 +15,7 @@ def test_build_success_suggestions_with_topic():
     assert len(suggestions) >= 4
     labels = {item["label"] for item in suggestions}
     assert "Colocar na lousa" in labels
-    assert any("CFW500" in item["query"] for item in suggestions)
+    assert any("{{searchQuery}}" in item["query"] for item in suggestions)
 
 
 def test_build_no_results_includes_attachment_chip():

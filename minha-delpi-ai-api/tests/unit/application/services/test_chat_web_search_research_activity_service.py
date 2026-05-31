@@ -55,7 +55,7 @@ def test_build_research_activity_with_attempted_queries_and_sites():
 def test_build_research_propagates_source_evaluation():
     tool_context = {
         "webSearchPayload": {
-            "query": "manual WEG CFW500",
+            "query": "DELPI Conexões Elétricas",
             "searchStatus": "success",
             "preferOfficial": True,
             "searchMode": "deep",

@@ -95,10 +95,10 @@ def main() -> int:
         tool_context={
             "webSearchPayload": {
                 "searchStatus": "success",
-                "query": "manual WEG CFW500",
+                "query": "DELPI Conexões Elétricas",
             },
         },
-        message="pesquise na web manual WEG CFW500",
+        message="pesquise na web sobre DELPI Conexões Elétricas",
     )
 
     if not metadata.get("webSearchFollowUpSuggestions"):

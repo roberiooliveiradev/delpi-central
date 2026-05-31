@@ -582,7 +582,13 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 
 **Manual:** home ou novidades → **Pesquisar na web** → modal «Pesquisa na web» → placeholder **DELPI Conexões Elétricas** (hard refresh após rebuild do MFE).
 
-**Commits:** `7a0c4cce` (MFE + conteúdo), homologação documentada nesta seção.
+**Script:** `./scripts/run_search_placeholder_validation.sh` — smoke JSON, pytest follow-up/research, Vitest MFE, grep no bundle do container.
+
+**Homologação:** `run_chat_shortcut_homologation.sh` usa `.venv` no host; `SMOKE_SKIP_HTTP_FOLLOW_UP=1` pula chip HTTP sob rate limit.
+
+**Revalidação (31/05, host):** `run_search_placeholder_validation.sh` — smoke + pytest 6 + Vitest 10 + bundle container OK; login/identity OK; `smoke_features_catalog` pode falhar por drift de `features_catalog.json` sem DB local (independente do placeholder).
+
+**Commits:** `7a0c4cce` (MFE + conteúdo), `800603fe` (smoke/docs), homologação ampliada nesta rodada.
 
 ## Testes
 

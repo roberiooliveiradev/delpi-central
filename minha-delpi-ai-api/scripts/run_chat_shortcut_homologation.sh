@@ -16,10 +16,15 @@ export PYTHONPATH="${PYTHONPATH:-$ROOT}"
 export SMOKE_BASE_URL="${SMOKE_BASE_URL:-http://localhost}"
 PAUSE="${SMOKE_RATE_LIMIT_PAUSE:-45}"
 
+PY="${PYTHON:-python3}"
+if [[ -x "${ROOT}/.venv/bin/python" ]]; then
+  PY="${ROOT}/.venv/bin/python"
+fi
+
 run() {
   echo ""
   echo "== $1 =="
-  python3 scripts/"$2"
+  "$PY" scripts/"$2"
 }
 
 failed=0
@@ -35,10 +40,23 @@ run_step() {
   run "$1" "$2" || failed=$((failed + 1))
 }
 
-run_step "Placeholders no conteúdo (sem código fixo)" smoke_shortcut_placeholders.py
+if [[ -x "${ROOT}/scripts/run_search_placeholder_validation.sh" ]]; then
+  echo ""
+  echo "== Validação placeholder pesquisa web (offline) =="
+  "${ROOT}/scripts/run_search_placeholder_validation.sh" || failed=$((failed + 1))
+  step=$((step + 1))
+else
+  run_step "Placeholders no conteúdo (sem código fixo)" smoke_shortcut_placeholders.py
+fi
 run_step "Login e perfil" smoke_identity_profile.py
 run_step "Catálogo e onboarding" smoke_features_catalog.py
-run_step "Chips Próximos passos (API)" smoke_follow_up_chips.py
+if [[ "${SMOKE_SKIP_HTTP_FOLLOW_UP:-}" != "1" ]]; then
+  run_step "Chips Próximos passos (API)" smoke_follow_up_chips.py
+else
+  echo ""
+  echo "== Chips Próximos passos (API) =="
+  echo "SKIP SMOKE_SKIP_HTTP_FOLLOW_UP=1 (evita rate limit chat_messages)"
+fi
 
 if [[ "$failed" -gt 0 ]]; then
   echo ""
