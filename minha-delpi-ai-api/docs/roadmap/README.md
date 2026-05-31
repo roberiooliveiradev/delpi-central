@@ -20,7 +20,9 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) | **Onda 12 (backlog):** skill `drawing-analyser` — análise de desenhos DELPI em PDF (paridade ChatGPT legado); herdável por agentes. |
 | [../changelog/2026-05-inteligencia-chat-entregas.md](../changelog/2026-05-inteligencia-chat-entregas.md) | **Maio/2026:** SQL produção (G1–G3), download fontes/anexos, bundle agente, Normas global, catálogo api-delpi, utility/small talk. |
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
-| [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: contexto/assertividade (Fase 5), chips, personalidade — status e smokes. |
+| [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: status, smokes e índice. |
+| [melhorias/BACKLOG_ROADMAP.md](./melhorias/BACKLOG_ROADMAP.md) | Backlog ativo priorizado (admin 11, anexos, heatmap, onboarding). |
+| [../testing/smoke-system-metadata-homologacao.md](../testing/smoke-system-metadata-homologacao.md) | Homologação `/system` (SX2). |
 | [../changelog/2026-05-contexto-memoria-assertividade.md](../changelog/2026-05-contexto-memoria-assertividade.md) | **Maio/2026:** memória de turno, score de assertividade, chips com produto, correções presenter/estrutura. |
 | [../changelog/2026-05-melhorias-playbooks.md](../changelog/2026-05-melhorias-playbooks.md) | **Maio/2026:** referências/follow-up, contextChips UI, modo textual admin, chips pós-texto. |
 | [rag-context-min-score-calibracao.md](./rag-context-min-score-calibracao.md) | Calibração `RAG_CONTEXT_MIN_SCORE` e checklist de latência. |

@@ -14,12 +14,12 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [README.md](./README.md) | Concluído | Índice vivo; smokes e serviços |
 | [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md) | Concluído | Este arquivo |
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
-| [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Parcial | Fases 1–5 (fluxos guiados); menus contextuais Fase 4 em backlog |
+| [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
 | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial | Fases 1–2 + menu Textos; 3–5 backlog |
 | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial | `personality_playbook.json`, starters |
 | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Concluído | Fases 1–5 + salvar fontes no projeto |
 | [playbook_autoajuda_autoconhecimento_chat_minha_delpi.md](./playbook_autoajuda_autoconhecimento_chat_minha_delpi.md) | Concluído | Fases 1–5 (catálogo, painel ?, personalização, identity sync) |
-| [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Parcial | Fases 1–3 + alternar tipo no MFE; heatmap/dashboard (4–5) backlog |
+| [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Parcial | Fases 1–3 + alternar tipo (5 parcial); heatmap/dashboard Fase 4 backlog |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)
@@ -81,6 +81,9 @@ Itens explicitamente **fora do escopo** até mockup 11: drawer auditoria, layout
 | `smoke_admin_endpoints.py` | 11 |
 | `smoke_identity_profile.py` | Identity |
 | `run_onda11_validation.sh` | Regressão pacote |
+| `smoke_system_table_routing.py` | Metadados Protheus `/system` |
+
+**Backlog ativo:** [BACKLOG_ROADMAP.md](./BACKLOG_ROADMAP.md).
 
 ---
 

@@ -9,14 +9,15 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
-| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–4** (tabela, gráfico, **árvore**, chip contexto); Fase **5** guiados em backlog |
+| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–5** + menus contextuais (tabela, árvore, gráfico, chip) |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL seguro, trust badges, falha de API, confirmação de escrita + painel MFE; mensagem amigável em `ToolPermissionDeniedError` |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Revertido** no MFE (10 abas planas); mockups Markdown por aba → implementação no final — ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
-| Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fases **1–2** (`ChatWebSearchPlanningService`); Fases 3–5 backlog |
-| Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fase **1** (`chartPresentation`, toggles); Fases 2–5 backlog |
+| Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fases **1–5** concluídas |
+| Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fases **1–3** + toggle tipo; heatmap Fase 4 backlog |
+| Metadados Protheus | [api-delpi-chat-intelligence-audit.md](../api-delpi-chat-intelligence-audit.md) | `/system/tables/*` + [smoke](../../testing/smoke-system-metadata-homologacao.md) |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 
 **Changelogs:**
@@ -76,12 +77,9 @@ Com **api-delpi** indisponível no ambiente local, use:
 3. **MFE** — menu contextual na árvore, chips de contexto clicáveis, seção «Textos» no menu `+`.
 4. **Backlog** — Playbook 07 indexação completa; interatividade Fase 5 guiados.
 
-## Próximo backlog sugerido
+## Próximo backlog
 
-1. **Playbook 11** — revisar mockups `11_admin_ux_reorganizacao_abas/mockups/` (aba a aba); só então PR única de refatoração do admin.
-2. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
-3. **Playbook 01** — `resolvedParams` e pendências ativas no router.
-4. **Interatividade Fase 5** — fluxos guiados no MFE.
+Ver **[BACKLOG_ROADMAP.md](./BACKLOG_ROADMAP.md)** (prioridades: Admin mockup 11, anexos 07, router 01, heatmap, onboarding 10).
 
 ## Regra
 

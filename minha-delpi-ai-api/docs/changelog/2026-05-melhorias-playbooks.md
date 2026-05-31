@@ -289,6 +289,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Interatividade — Fase 4 (chip de contexto)
+
+| Entrega | Detalhe |
+|---------|---------|
+| MFE | `chatContextChipActions.ts` — menu contextual (produto, filial, formato) |
+| MFE | `ChatContextBar.tsx` — clique/botão direito via `ChatTableRowMenu` |
+| Docs | `BACKLOG_ROADMAP.md`, STATUS/README roadmap sincronizados |
+
 ## Testes
 
 - `test_chat_text_task_intent_service.py` (T1/T6/T7 lógica)

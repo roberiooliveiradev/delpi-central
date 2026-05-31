@@ -1,4 +1,5 @@
 import type { ChatContextChip } from "./ChatContextBar";
+import type { TableRowMenuAction } from "./chatDrillDown";
 
 export function buildContextChipQuery(chip: ChatContextChip): string | null {
   const value = String(chip.value ?? "").trim();
@@ -37,4 +38,99 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
     default:
       return null;
   }
+}
+
+/** Playbook interatividade — Fase 4: menu por chip de contexto. */
+export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenuAction[] {
+  const value = String(chip.value ?? "").trim();
+
+  if (!value) {
+    return [];
+  }
+
+  const actions: TableRowMenuAction[] = [];
+  const primary = buildContextChipQuery(chip);
+
+  if (primary) {
+    actions.push({
+      id: "primary",
+      label: "Consultar",
+      query: primary,
+    });
+  }
+
+  switch (chip.kind) {
+    case "product": {
+      const code = value.replace(/\./g, "").trim();
+
+      if (/^\d{5,}$/.test(code)) {
+        actions.push(
+          {
+            id: "stock",
+            label: "Ver estoque",
+            query: `qual o estoque do produto ${code}?`,
+          },
+          {
+            id: "suppliers",
+            label: "Ver fornecedores",
+            query: `liste os fornecedores do produto ${code}`,
+          },
+          {
+            id: "structure",
+            label: "Ver estrutura",
+            query: `mostre a estrutura do produto ${code}`,
+          },
+          {
+            id: "summary",
+            label: "Resumo do produto",
+            query: `resumo do produto ${code}`,
+          },
+        );
+      }
+
+      break;
+    }
+    case "branch":
+      actions.push(
+        {
+          id: "filter-branch",
+          label: "Filtrar nesta filial",
+          query: `filtre pela filial ${value}`,
+        },
+        {
+          id: "stock-branch",
+          label: "Estoque da filial",
+          query: `qual o estoque total da filial ${value}?`,
+        },
+      );
+      break;
+    case "format":
+      if (value === "table") {
+        actions.push({
+          id: "chart",
+          label: "Ver como gráfico",
+          query: "mostre os mesmos dados em gráfico",
+        });
+      } else if (value === "chart") {
+        actions.push({
+          id: "table",
+          label: "Ver como tabela",
+          query: "mostre os mesmos dados em tabela",
+        });
+      }
+      break;
+    default:
+      break;
+  }
+
+  const seen = new Set<string>();
+
+  return actions.filter((action) => {
+    if (seen.has(action.query)) {
+      return false;
+    }
+
+    seen.add(action.query);
+    return true;
+  });
 }

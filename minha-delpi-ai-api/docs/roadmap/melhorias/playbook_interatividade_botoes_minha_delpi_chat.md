@@ -1,6 +1,6 @@
 # Playbook — Interatividade no Minha DELPI Chat IA
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — Fases 1–4 + **fluxos guiados** (Fase 5). Menus contextuais em gráfico/chip: backlog.
+> **Status (31/05/2026):** [Concluído](./STATUS_ROADMAP_MELHORIAS.md) — Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip de contexto).
 
 
 Projeto: **Minha DELPI Chat IA**
@@ -1387,10 +1387,10 @@ Com regras para:
 
 ## Fase 4 — Menus contextuais
 
-- Menu por linha de tabela.
-- Menu por nó de árvore.
-- Menu por ponto de gráfico.
-- Menu por chip de contexto.
+- [x] Menu por linha de tabela (`ChatRichTable` + `ChatTableRowMenu`).
+- [x] Menu por nó de árvore (`ChatRichTree`).
+- [x] Menu por ponto de gráfico (`ChatRichChart` + `buildChartPointMenuActions`).
+- [x] Menu por chip de contexto (`ChatContextBar` + `buildContextChipMenuActions`).
 
 ## Fase 5 — Fluxos guiados
 
