@@ -38,6 +38,15 @@ class ChatSessionMemoryDirectAnswerService:
         if ChatFollowUpIntentService.is_operational_follow_up(message):
             return None
 
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
+
+        text_ack = ChatTextTaskPreferenceService.build_ack_direct_answer(message)
+
+        if text_ack:
+            return text_ack
+
         detected = ChatBehaviorInstructionService.detect(message)
 
         if detected.get("scope") != "session":

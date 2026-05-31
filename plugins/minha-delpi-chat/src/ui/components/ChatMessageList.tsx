@@ -1451,6 +1451,16 @@ export function ChatMessageList({
                 />
                 <ChatFollowUpChips
                   suggestions={
+                    (message.metadata?.textTaskFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Refinar texto"
+                  ariaLabel="Sugestões para tarefas textuais"
+                />
+                <ChatFollowUpChips
+                  suggestions={
                     (message.metadata?.emailFollowUpSuggestions as
                       | ChatFollowUpSuggestion[]
                       | undefined) ?? []

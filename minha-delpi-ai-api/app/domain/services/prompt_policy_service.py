@@ -164,6 +164,8 @@ Comportamento esperado:
 
     ADMINISTRATIVE_WRITING_POLICY_FALLBACK = """Modo textual: corrija, traduza ou redija sem consultar ERP/API; preserve códigos e fatos; em correções simples entregue só o texto final."""
 
+    TEXT_SPECIALIST_POLICY_FALLBACK = """Especialista em textos: preserve sentido e códigos; não invente; não use API/RAG/web em tarefa textual pura; e-mails com assunto; atas e checklists estruturados."""
+
     EMAIL_WRITING_POLICY_FALLBACK = """E-mails corporativos: assunto + corpo objetivo; não invente remetente, cargo, prazos ou valores; use [Seu nome] se assinatura não informada; evite frases artificiais."""
 
     TEXT_CORRECTION_POLICY_FALLBACK = (
@@ -292,6 +294,12 @@ Comportamento esperado:
                 self._load_policy(
                     "administrative-writing.md",
                     self.ADMINISTRATIVE_WRITING_POLICY_FALLBACK,
+                )
+            )
+            sections.append(
+                self._load_policy(
+                    "text-specialist.md",
+                    self.TEXT_SPECIALIST_POLICY_FALLBACK,
                 )
             )
 

@@ -171,6 +171,10 @@ if [[ "${SMOKE_SKIP_HTTP_E2E:-0}" != "1" ]]; then
   echo ""
   echo "== Playbook 02 — roteamento de intenção (R1–R15) =="
   bash scripts/run_intent_routing_validation.sh
+
+  echo ""
+  echo "== Playbook 03 — especialista em textos (T1–T15) =="
+  bash scripts/run_text_specialist_validation.sh
 fi
 
 echo ""

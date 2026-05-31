@@ -376,6 +376,17 @@ export type ChatMessageMetadata = {
   drawingFollowUpSuggestions?: ChatFollowUpSuggestion[];
   emailFollowUpSuggestions?: ChatFollowUpSuggestion[];
   textCorrectionFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  textTaskFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  textTaskQuality?: {
+    passed?: boolean;
+    checks?: { code?: string; message?: string }[];
+    subtype?: string;
+  };
+  textTaskMetrics?: {
+    type?: string;
+    subtype?: string;
+    tone?: string;
+  };
   textCorrectionPreferences?: {
     active?: Record<string, boolean>;
     labels?: string[];

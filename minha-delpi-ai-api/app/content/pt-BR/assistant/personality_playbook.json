@@ -152,6 +152,58 @@
       "label": "Não preservou meu estilo"
     },
     {
+      "id": "text_meaning_changed",
+      "label": "Mudou o sentido"
+    },
+    {
+      "id": "text_artificial",
+      "label": "Texto artificial"
+    },
+    {
+      "id": "text_wrong_tone",
+      "label": "Tom inadequado"
+    },
+    {
+      "id": "text_too_formal",
+      "label": "Muito formal"
+    },
+    {
+      "id": "text_too_informal",
+      "label": "Muito informal"
+    },
+    {
+      "id": "text_too_long",
+      "label": "Muito longo"
+    },
+    {
+      "id": "text_too_short",
+      "label": "Muito curto"
+    },
+    {
+      "id": "text_code_not_preserved",
+      "label": "Não preservou código"
+    },
+    {
+      "id": "text_name_not_preserved",
+      "label": "Não preservou nome"
+    },
+    {
+      "id": "text_invented_info",
+      "label": "Inventou informação"
+    },
+    {
+      "id": "text_wrong_format",
+      "label": "Não seguiu formato"
+    },
+    {
+      "id": "text_unclear",
+      "label": "Faltou clareza"
+    },
+    {
+      "id": "text_bad_translation",
+      "label": "Tradução ruim"
+    },
+    {
       "id": "text_correction_artificial",
       "label": "Texto ficou artificial"
     },
@@ -455,6 +507,30 @@
     "Tom mais formal": "deixe mais formal o texto da resposta anterior",
     "Traduzir para inglês": "traduza para inglês o texto da resposta anterior",
     "Transformar em e-mail": "transforme o texto da resposta anterior em um e-mail com assunto"
+  },
+  "textTaskFollowUpChips": [
+    "Deixar mais formal",
+    "Deixar mais curto",
+    "Deixar mais direto",
+    "Deixar mais cordial",
+    "Mostrar alterações",
+    "Criar e-mail",
+    "Criar comunicado",
+    "Traduzir",
+    "Colocar na lousa",
+    "Copiar texto"
+  ],
+  "textTaskFollowUpQueries": {
+    "Deixar mais formal": "deixe mais formal o texto da resposta anterior",
+    "Deixar mais curto": "deixe mais curto o texto da resposta anterior",
+    "Deixar mais direto": "deixe mais direto o texto da resposta anterior",
+    "Deixar mais cordial": "deixe mais cordial o texto da resposta anterior",
+    "Mostrar alterações": "mostre as principais alterações feitas no texto anterior",
+    "Criar e-mail": "transforme o texto anterior em um e-mail com assunto",
+    "Criar comunicado": "transforme o texto anterior em um comunicado interno",
+    "Traduzir": "traduza o texto da resposta anterior para inglês",
+    "Colocar na lousa": "coloque o texto da resposta anterior na lousa",
+    "Copiar texto": "repita só o texto final da resposta anterior, sem comentários"
   },
   "webSearchFollowUpChips": [
     "Abrir fontes",

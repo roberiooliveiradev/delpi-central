@@ -605,6 +605,18 @@ class SendChatMessageUseCase:
             canvas_updated=correction_canvas_updated,
         )
 
+        if prepared.text_task_mode:
+            from app.application.services.chat_text_task_follow_up_service import (
+                ChatTextTaskFollowUpService,
+            )
+
+            ChatTextTaskFollowUpService.attach_to_assistant_metadata(
+                assistant_metadata,
+                message=request.message,
+                answer=answer,
+                workspace_context=workspace_context,
+            )
+
         from app.application.services.chat_document_vision_metrics_service import (
             ChatDocumentVisionMetricsService,
         )

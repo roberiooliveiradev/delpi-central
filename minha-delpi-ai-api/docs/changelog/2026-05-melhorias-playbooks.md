@@ -29,6 +29,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |---------|---------|
 | Índice | `STATUS_ROADMAP_MELHORIAS.md` — status dos 40+ arquivos da pasta |
 | Playbooks raiz | `playbook_melhoria_pesquisa_web` e `playbook_ampliacao_graficos` versionados com Fase 1 marcada |
+| Playbook 03 | `ChatTextTaskService`, policy `text-specialist.md`, validador textual, chips `textTaskFollowUpSuggestions`, regressão T1–T15 |
 | Playbook 02 | Desambiguação operacional (`ChatIntentDisambiguationService` + chips MFE), métricas admin agregadas, mixed compound, audit `intentRouting` |
 | Playbook 02 | `ChatIntentRouterService` ampliado: `self_help`, `web_search`, `sql_task`, `mixed_task`, `presentation_task`, `intentRouting`, R1–R15, feedback `routing_*` |
 | Playbook 01 | `resolvedFromMemory` em `intentRoute` para follow-ups operacionais |

@@ -35,8 +35,13 @@ class ChatWorkingMemoryService:
             ChatTextCorrectionPreferenceService,
         )
 
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
+
         behavior = ChatEmailPreferenceService.merge_into_behavior(message, behavior)
         behavior = ChatTextCorrectionPreferenceService.merge_into_behavior(message, behavior)
+        behavior = ChatTextTaskPreferenceService.merge_into_behavior(message, behavior)
 
         snapshot = {
             "lastEntities": last_entities,
@@ -44,6 +49,7 @@ class ChatWorkingMemoryService:
         }
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
         ChatTextCorrectionPreferenceService.apply_to_snapshot(snapshot, message=message)
+        ChatTextTaskPreferenceService.apply_to_snapshot(snapshot, message=message)
         email_preferences = snapshot.get("emailPreferences") or {}
         text_correction_preferences = snapshot.get("textCorrectionPreferences") or {}
 
@@ -110,9 +116,13 @@ class ChatWorkingMemoryService:
         from app.domain.services.chat_text_correction_preference_service import (
             ChatTextCorrectionPreferenceService,
         )
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
 
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
         ChatTextCorrectionPreferenceService.apply_to_snapshot(snapshot, message=message)
+        ChatTextTaskPreferenceService.apply_to_snapshot(snapshot, message=message)
 
         return snapshot
 

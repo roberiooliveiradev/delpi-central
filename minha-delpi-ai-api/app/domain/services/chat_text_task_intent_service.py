@@ -55,6 +55,11 @@ class ChatTextTaskIntentService:
         "tone_adjust": (r"\bmais\s+firme\b", r"\bmenos\s+agressiv", r"\bajuste\s+o\s+tom\b"),
         "extract_actions": (r"\bpendências\b", r"\bpendencias\b", r"\bpróximos\s+passos\b", r"\bproximos\s+passos\b"),
         "document": (r"\bcomunicado\b", r"\brelatório\b", r"\brelatorio\b", r"\bprocedimento\b"),
+        "minutes": (r"\bata\b", r"\bata de reuni", r"\banotações em ata\b", r"\bnotas em ata\b"),
+        "announcement": (r"\bcomunicado interno\b", r"\bcrise um comunicado\b", r"\bmonte um comunicado\b"),
+        "compare": (r"\bcompare\b", r"\bcomparar\b", r"\bqual está melhor\b", r"\bo que mudou\b"),
+        "organize": (r"\borganize\b", r"\borganizar\b", r"\bem tópicos\b", r"\bem topicos\b"),
+        "simplify": (r"\bexplique de forma simples\b", r"\bsimplifique\b", r"\bdeixe fácil\b"),
     }
 
     _OPERATIONAL_COMMAND_PATTERNS = (
@@ -88,7 +93,28 @@ class ChatTextTaskIntentService:
         if len(normalized) < 4:
             return None
 
-        for category, patterns in cls._CATEGORY_PATTERNS.items():
+        priority = (
+            "correct",
+            "compare",
+            "minutes",
+            "announcement",
+            "email",
+            "translate",
+            "summarize",
+            "simplify",
+            "structure",
+            "organize",
+            "rewrite",
+            "document",
+            "message",
+            "write",
+            "tone_adjust",
+            "extract_actions",
+        )
+
+        for category in priority:
+            patterns = cls._CATEGORY_PATTERNS.get(category, ())
+
             if any(re.search(pattern, normalized) for pattern in patterns):
                 return category
 
@@ -133,6 +159,7 @@ class ChatTextTaskIntentService:
             "rewrite",
             "translate",
             "summarize",
+            "simplify",
         }:
             return False
 
