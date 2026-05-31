@@ -31,7 +31,13 @@
     { "id": "missing_source", "label": "Faltou fonte" },
     { "id": "no_answer", "label": "Não respondeu" },
     { "id": "too_short", "label": "Muito curto" },
-    { "id": "other", "label": "Outro" }
+    { "id": "other", "label": "Outro" },
+    { "id": "email_wrong_tone", "label": "Tom inadequado no e-mail" },
+    { "id": "email_artificial", "label": "Frase artificial no e-mail" },
+    { "id": "email_invented_signature", "label": "Inventou assinatura" },
+    { "id": "email_invented_info", "label": "Inventou informação no e-mail" },
+    { "id": "email_weak_subject", "label": "Assunto ruim" },
+    { "id": "email_too_generic", "label": "E-mail muito genérico" }
   ],
   "feedbackThanks": {
     "up": [
@@ -73,6 +79,30 @@
     "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa."
   },
   "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist", "Comparar"],
+  "emailFollowUpChips": [
+    "Deixar mais formal",
+    "Deixar mais curto",
+    "Tom mais executivo",
+    "Tom mais cordial",
+    "Tom mais firme",
+    "Criar assunto alternativo",
+    "Gerar 3 versões",
+    "Transformar em WhatsApp",
+    "Traduzir para inglês",
+    "Colocar na lousa"
+  ],
+  "emailFollowUpQueries": {
+    "Deixar mais formal": "deixe o e-mail anterior mais formal, mantendo o mesmo objetivo",
+    "Deixar mais curto": "deixe o e-mail anterior mais curto sem perder o pedido principal",
+    "Tom mais executivo": "reescreva o e-mail anterior com tom mais executivo",
+    "Tom mais cordial": "reescreva o e-mail anterior com tom mais cordial",
+    "Tom mais firme": "reescreva o e-mail anterior com tom mais firme, sem grosseria",
+    "Criar assunto alternativo": "crie 3 opções de assunto para o e-mail anterior",
+    "Gerar 3 versões": "gere 3 versões do e-mail anterior com tons ligeiramente diferentes",
+    "Transformar em WhatsApp": "transforme o e-mail anterior em mensagem curta para WhatsApp",
+    "Traduzir para inglês": "traduza o e-mail anterior para inglês corporativo",
+    "Colocar na lousa": "coloque o e-mail anterior na lousa para edição"
+  },
   "drawingFollowUpChips": [
     "Ver só erros críticos",
     "Ver checklist completo",

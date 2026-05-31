@@ -164,6 +164,8 @@ Comportamento esperado:
 
     ADMINISTRATIVE_WRITING_POLICY_FALLBACK = """Modo textual: corrija, traduza ou redija sem consultar ERP/API; preserve códigos e fatos; em correções simples entregue só o texto final."""
 
+    EMAIL_WRITING_POLICY_FALLBACK = """E-mails corporativos: assunto + corpo objetivo; não invente remetente, cargo, prazos ou valores; use [Seu nome] se assinatura não informada; evite frases artificiais."""
+
     def build_system_prompt(self) -> str:
         base = self._load_policy("base.md", self.BASE_POLICY_FALLBACK)
         context_engineering = self._load_policy(
@@ -273,6 +275,7 @@ Comportamento esperado:
         analysis_mode: bool = False,
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
+        email_writing_mode: bool = False,
         skills: dict | None = None,
     ) -> str:
         sections: list[str] = [self.build_system_prompt()]
@@ -283,6 +286,14 @@ Comportamento esperado:
                 self._load_policy(
                     "administrative-writing.md",
                     self.ADMINISTRATIVE_WRITING_POLICY_FALLBACK,
+                )
+            )
+
+        if email_writing_mode:
+            sections.append(
+                self._load_policy(
+                    "email-writing.md",
+                    self.EMAIL_WRITING_POLICY_FALLBACK,
                 )
             )
 

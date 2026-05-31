@@ -77,6 +77,8 @@ class ChatTurnPreparationResult:
     pipeline_stages: list[str]
     text_task_mode: bool = False
     text_task_category: str | None = None
+    email_writing_mode: bool = False
+    email_subtype: str | None = None
     intent_route: dict | None = None
 
 
@@ -349,9 +351,24 @@ class ChatTurnPreparationService:
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot
 
+        from app.domain.services.chat_email_intent_service import ChatEmailIntentService
+
+        email_writing_mode = bool(
+            text_task_pure and ChatEmailIntentService.is_email_writing(message)
+        )
+        email_subtype = (
+            ChatEmailIntentService.classify_subtype(message) if email_writing_mode else None
+        )
+
         if text_task_pure:
             workspace_context["textTaskMode"] = True
             workspace_context["textTaskCategory"] = text_task_category
+
+        if email_writing_mode:
+            workspace_context["emailWritingMode"] = True
+            workspace_context["emailSubtype"] = email_subtype
+            if "email_writing" not in pipeline_stages:
+                pipeline_stages.append("email_writing")
 
         memory_prompt = ChatWorkingMemoryService.format_prompt_block(working_memory_snapshot)
         base_conversation_context = (
@@ -879,6 +896,8 @@ class ChatTurnPreparationService:
             pipeline_stages=pipeline_stages,
             text_task_mode=bool(text_task_pure),
             text_task_category=text_task_category if text_task_pure else None,
+            email_writing_mode=bool(email_writing_mode),
+            email_subtype=email_subtype,
             intent_route=intent_route,
         )
 

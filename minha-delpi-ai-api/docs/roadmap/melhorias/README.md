@@ -36,6 +36,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatFollowUpIntentService` | Contexto — follow-up |
 | `ChatReferenceResolutionService` | Contexto — reuso de entidade |
 | `ChatTextTaskIntentService` | Admin textos — modo sem API |
+| [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | E-mails corporativos — `ChatEmailIntentService`, validador, chips |
 | `ChatWorkingMemoryService.build_context_chips` | Contexto + interatividade — UI |
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
 | `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |

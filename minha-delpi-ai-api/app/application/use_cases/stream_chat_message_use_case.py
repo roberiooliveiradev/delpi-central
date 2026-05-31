@@ -504,6 +504,7 @@ class StreamChatMessageUseCase:
                     previous_messages,
                 ),
                 text_task_mode=bool(prepared.text_task_mode),
+                email_writing_mode=bool(prepared.email_writing_mode),
                 text_task_attachment_context=self._build_attachment_context(
                     user_id=user_id,
                     session_id=session_id,
@@ -800,6 +801,17 @@ class StreamChatMessageUseCase:
             intelligence=intelligence_metadata,
             tool_context=tool_context,
             latency_ms=latency_ms,
+        )
+
+        from app.application.services.chat_email_follow_up_service import (
+            ChatEmailFollowUpService,
+        )
+
+        ChatEmailFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=message,
+            answer=answer,
+            workspace_context=workspace_context,
         )
 
         from app.application.services.chat_document_vision_metrics_service import (

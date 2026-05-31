@@ -374,6 +374,23 @@ export type ChatMessageMetadata = {
   onboardingMilestonesAchieved?: string[];
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
   drawingFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  emailFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  textTask?: {
+    type?: string;
+    subtype?: string;
+    recipient?: string;
+    tone?: string;
+    audience?: string;
+    subject?: string;
+    missingFields?: string[];
+    inventedFieldsPrevented?: boolean;
+    suggestions?: string[];
+  };
+  emailQuality?: {
+    passed?: boolean;
+    checks?: { criterion: string; ok: boolean; detail?: string }[];
+    warnings?: string[];
+  };
   drawingAnalysis?: Record<string, unknown>;
   drawingAnalysisExport?: {
     filename: string;

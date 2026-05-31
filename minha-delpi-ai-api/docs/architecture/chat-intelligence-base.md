@@ -86,6 +86,10 @@ Mensagem do usuário
 | `AssistantCapabilitiesRegistry` | Catálogo `features_catalog.json`, busca, disponibilidade e «o que mudou?» (autoajuda Fase 2) |
 | `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, Fase 4–5: agente, `userContext`, filtro por permissão de tools) |
 | `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills — KPIs, produto, match por path mais específico (`pathRulesVersion` 2026.06.02) |
+| `ChatTextTaskIntentService` | Tarefas textuais puras (correção, e-mail, resumo) — estágio `text_task`, sem tools/RAG |
+| `ChatEmailIntentService` | Subintenções de e-mail (`email_create`, `email_formalize`, …) — estágio `email_writing` |
+| `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos) → `emailQuality` |
+| `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` (`POST /chat/assistant/help-events`) |
@@ -94,7 +98,7 @@ Mensagem do usuário
 | `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
-| `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, `chat-context-memory.md`, …) |
+| `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
 | `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
 | `ChatSessionMemoryService` | Fase 4: overlay em `ai_chat_session_memory` (reload da sessão) |
 | `ChatBehaviorInstructionService` | Instruções de comportamento da sessão injetadas no contexto operacional |

@@ -99,6 +99,7 @@ class ChatPromptBuilderService:
         analysis_mode: bool = False,
         data_interpretation_mode: bool = False,
         text_task_mode: bool = False,
+        email_writing_mode: bool = False,
         text_task_attachment_context: str | None = None,
         user_context: str | None = None,
         skills: dict | None = None,
@@ -110,6 +111,7 @@ class ChatPromptBuilderService:
             analysis_mode=analysis_mode,
             data_interpretation_mode=data_interpretation_mode,
             text_task_mode=text_task_mode,
+            email_writing_mode=email_writing_mode,
             skills=skills,
         )
         base_prompt += self._assistant_identity_policy_addon(current_message)

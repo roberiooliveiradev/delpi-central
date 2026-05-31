@@ -1428,6 +1428,16 @@ export function ChatMessageList({
                   groupLabel="Análise de desenho"
                   ariaLabel="Ações sugeridas após análise de desenho técnico"
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.emailFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Refinar e-mail"
+                  ariaLabel="Ações sugeridas após geração de e-mail"
+                />
                 <ChatMessageFeedbackPanel
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}
