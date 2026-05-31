@@ -133,6 +133,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** ampliar `stream.json` / variantes por outcome.
 
+## Pesquisa web — Fase 3 (avaliação de fontes)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatWebSearchSourceEvaluationService` — tipos, score, exclusão com `preferOfficial` |
+| Pipeline | `WebSearchTool.enrich_payload`; avisos em resposta direta; metadata `webSearchResearch` |
+| MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
+| Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
+
 ## Testes
 
 - `test_chat_text_task_intent_service.py` (T1/T6/T7 lógica)

@@ -52,6 +52,47 @@ def test_build_research_activity_with_attempted_queries_and_sites():
     assert any(step["type"] == "organize" for step in research["steps"])
 
 
+def test_build_research_propagates_source_evaluation():
+    tool_context = {
+        "webSearchPayload": {
+            "query": "manual WEG CFW500",
+            "searchStatus": "success",
+            "preferOfficial": True,
+            "searchMode": "deep",
+            "results": [
+                {
+                    "title": "Manual CFW500",
+                    "url": "https://www.weg.net/manual/cfw500",
+                    "snippet": "PDF",
+                    "source": "tavily",
+                    "sourceType": "manufacturer",
+                    "qualityScore": 0.95,
+                    "isOfficial": True,
+                },
+            ],
+            "sourceEvaluation": {
+                "confidence": "high",
+                "sourceTypes": ["manufacturer"],
+                "warnings": [],
+                "excludedSources": [],
+            },
+        },
+        "webSources": [],
+    }
+
+    research = ChatWebSearchResearchActivityService.build(
+        tool_context=tool_context,
+        pipeline_stages=["web_search"],
+        latency_ms=5000,
+    )
+
+    assert research is not None
+    assert research["confidence"] == "high"
+    assert research["sourceTypes"] == ["manufacturer"]
+    assert research["sites"][0]["isOfficial"] is True
+    assert research["sites"][0]["sourceType"] == "manufacturer"
+
+
 def test_attach_to_assistant_metadata_only_when_web_search_payload_exists():
     metadata: dict = {"sources": []}
 

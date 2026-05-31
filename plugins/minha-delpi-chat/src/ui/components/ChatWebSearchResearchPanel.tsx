@@ -38,12 +38,29 @@ function resolveStepIcon(step: ChatWebSearchResearchStep) {
   return Search;
 }
 
+function confidenceLabel(confidence?: string | null): string | null {
+  if (confidence === "high") {
+    return "alta confiança";
+  }
+
+  if (confidence === "medium") {
+    return "confiança moderada";
+  }
+
+  if (confidence === "low") {
+    return "baixa confiança";
+  }
+
+  return null;
+}
+
 function ResearchSiteBadge({ site }: { site: ChatWebSearchResearchSite }) {
   const label = site.hostname || site.title || "fonte";
+  const official = site.isOfficial === true;
 
   return (
     <a
-      className="mdc-chat-web-research__site"
+      className={`mdc-chat-web-research__site${official ? " mdc-chat-web-research__site--official" : ""}`}
       href={site.url}
       rel="noopener noreferrer"
       target="_blank"
@@ -51,6 +68,7 @@ function ResearchSiteBadge({ site }: { site: ChatWebSearchResearchSite }) {
     >
       <ExternalLink size={12} aria-hidden="true" />
       <span>{label}</span>
+      {official ? <span className="mdc-chat-web-research__site-tag">oficial</span> : null}
     </a>
   );
 }
@@ -64,6 +82,8 @@ export function ChatWebSearchResearchPanel({
   const allSites = useMemo(() => research?.sites ?? [], [research?.sites]);
   const durationLabel = formatDuration(research?.durationMs);
   const sourceCount = research?.sourceCount ?? allSites.length;
+  const confidenceText = confidenceLabel(research?.confidence);
+  const warnings = research?.warnings ?? [];
 
   if (!open || !research) {
     return null;
@@ -91,6 +111,7 @@ export function ChatWebSearchResearchPanel({
                     ? " · pesquisa rápida"
                     : ""}
                 {research.preferOfficial ? " · fontes oficiais" : ""}
+                {confidenceText ? ` · ${confidenceText}` : ""}
                 {research.provider ? ` · ${research.provider}` : ""}
                 {durationLabel ? ` · ${durationLabel}` : ""}
               </p>
@@ -107,6 +128,17 @@ export function ChatWebSearchResearchPanel({
           </header>
 
           <div className="mdc-chat-web-research-panel__body">
+            {warnings.length > 0 ? (
+              <section className="mdc-chat-web-research__warnings" role="note">
+                <h3>Observações sobre as fontes</h3>
+                <ul>
+                  {warnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
             <ol className="mdc-chat-web-research__steps">
               {steps.map((step) => {
                 const Icon = resolveStepIcon(step);

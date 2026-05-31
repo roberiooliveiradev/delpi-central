@@ -182,6 +182,18 @@ Tabelas operacionais usam `ExternalActionColumnLabelService`: prioridade OpenAPI
 
 Smoke: `scripts/smoke_web_search_planning.py`. Requer `CHAT_WEB_SEARCH_ENABLED=true` e provider configurado para E2E real.
 
+### Pesquisa web — avaliação de fontes (maio/2026)
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatWebSearchSourceEvaluationService` | Classifica URL (`manufacturer`, `government`, `forum`, …), pontua e reordena `results` |
+| `WebSearchTool` | Chama `enrich_payload` após busca bem-sucedida |
+| `ChatWebSearchDirectAnswerService` | Injeta avisos de confiabilidade no markdown quando aplicável |
+| `ChatWebSearchResearchActivityService` | Propaga `confidence`, `warnings`, `excludedSources` e metadados por site |
+| MFE | Painel de pesquisa com tag «oficial», rótulo de confiança e observações |
+
+Testes: `test_chat_web_search_source_evaluation_service.py`, `test_chat_web_search_research_activity_service.py` (propagação).
+
 ### Listagem de OV vs vendas de produto (maio/2026)
 
 | Situação | Rota correta | Erro comum |

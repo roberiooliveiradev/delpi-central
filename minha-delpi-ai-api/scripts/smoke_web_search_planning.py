@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke — planejamento de pesquisa web (Fase 2 playbook)."""
+"""Smoke — planejamento e avaliação de fontes (Fases 2–3 playbook pesquisa web)."""
 
 from __future__ import annotations
 
@@ -9,6 +9,9 @@ from app.domain.services.chat_web_search_planning_service import (
     ChatWebSearchPlanningService,
 )
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
+from app.domain.services.chat_web_search_source_evaluation_service import (
+    ChatWebSearchSourceEvaluationService,
+)
 
 
 def main() -> int:
@@ -46,6 +49,27 @@ def main() -> int:
         failed += 1
     else:
         print("OK unit: resolve inclui plannedQueries e searchMode")
+
+    enriched = ChatWebSearchSourceEvaluationService.enrich_payload(
+        {
+            "searchStatus": "success",
+            "preferOfficial": True,
+            "results": [
+                {
+                    "title": "WEG manual",
+                    "url": "https://www.weg.net/manual/cfw500",
+                    "snippet": "doc",
+                    "source": "tavily",
+                },
+            ],
+        }
+    )
+
+    if not enriched or enriched.get("sourceEvaluation", {}).get("confidence") != "high":
+        print(f"FAIL unit: enrich_payload sem confiança alta ({enriched})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK unit: avaliação de fontes (confidence high)")
 
     if failed:
         return 1

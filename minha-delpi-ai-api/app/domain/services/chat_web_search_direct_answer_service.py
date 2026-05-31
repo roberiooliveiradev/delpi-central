@@ -91,6 +91,15 @@ class ChatWebSearchDirectAnswerService:
             if retried and retried.casefold() != query.casefold():
                 lines.extend(["", f"*(Busca complementada em inglês: «{retried}».)*"])
 
+        from app.domain.services.chat_web_search_source_evaluation_service import (
+            ChatWebSearchSourceEvaluationService,
+        )
+
+        warnings_block = ChatWebSearchSourceEvaluationService.format_warnings_block(payload)
+
+        if warnings_block:
+            lines.append(warnings_block)
+
         return "\n".join(line for line in lines if line is not None).strip()
 
     @classmethod
@@ -125,14 +134,21 @@ class ChatWebSearchDirectAnswerService:
             if len(title) > 56:
                 title = cls._hostname(url)
 
-            sources.append(
-                {
-                    "title": title,
-                    "sourceType": "web",
-                    "sourceRef": url,
-                    "scope": "web_search",
-                }
-            )
+            entry = {
+                "title": title,
+                "sourceType": "web",
+                "sourceRef": url,
+                "scope": "web_search",
+            }
+
+            evaluated_type = str(item.get("sourceType") or "").strip()
+
+            if evaluated_type:
+                entry["sourceType"] = evaluated_type
+                entry["qualityScore"] = item.get("qualityScore")
+                entry["isOfficial"] = item.get("isOfficial")
+
+            sources.append(entry)
 
             if len(sources) >= max(1, int(Settings.CHAT_WEB_SEARCH_MAX_RESULTS)):
                 break

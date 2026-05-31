@@ -70,6 +70,14 @@ class ChatWebSearchResearchActivityService:
         if search_intent:
             research["searchIntent"] = search_intent
 
+        source_evaluation = payload.get("sourceEvaluation")
+
+        if isinstance(source_evaluation, dict):
+            research["confidence"] = source_evaluation.get("confidence")
+            research["sourceTypes"] = source_evaluation.get("sourceTypes")
+            research["warnings"] = source_evaluation.get("warnings")
+            research["excludedSources"] = source_evaluation.get("excludedSources")
+
         return research
 
     @classmethod
@@ -137,13 +145,17 @@ class ChatWebSearchResearchActivityService:
 
                 seen_urls.add(url)
                 title = str(item.get("title") or "").strip()
-                sites.append(
-                    {
-                        "hostname": cls._hostname(url),
-                        "url": url,
-                        "title": title or cls._hostname(url),
-                    }
-                )
+                site_entry = {
+                    "hostname": cls._hostname(url),
+                    "url": url,
+                    "title": title or cls._hostname(url),
+                }
+
+                for key in ("sourceType", "qualityScore", "isOfficial"):
+                    if key in item:
+                        site_entry[key] = item.get(key)
+
+                sites.append(site_entry)
 
         return sites
 

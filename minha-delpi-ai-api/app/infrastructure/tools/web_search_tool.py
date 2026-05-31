@@ -57,6 +57,12 @@ class WebSearchTool(InternalToolPort):
         )
         payload = WebSearchPortugueseContentService.localize_payload(payload) or payload
 
+        from app.domain.services.chat_web_search_source_evaluation_service import (
+            ChatWebSearchSourceEvaluationService,
+        )
+
+        payload = ChatWebSearchSourceEvaluationService.enrich_payload(payload) or payload
+
         search_intent = str(arguments.get("searchIntent") or "").strip()
 
         if search_intent:

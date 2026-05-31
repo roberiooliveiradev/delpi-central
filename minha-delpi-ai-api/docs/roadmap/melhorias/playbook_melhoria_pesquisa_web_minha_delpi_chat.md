@@ -886,10 +886,11 @@ Pesquisar ou dizer limitação.
 
 ## Fase 3 — Avaliação de fonte
 
-- Classificar fonte.
-- Marcar fonte oficial.
-- Descartar baixa qualidade.
-- Mostrar aviso de confiabilidade.
+- [x] `ChatWebSearchSourceEvaluationService` — classifica `sourceType`, `qualityScore`, `isOfficial`.
+- [x] `enrich_payload` no `WebSearchTool` — reordena resultados; omite fontes fracas quando `preferOfficial`.
+- [x] `sourceEvaluation` (`confidence`, `warnings`, `excludedSources`) em payload e `webSearchResearch`.
+- [x] Resposta direta com bloco «Observação sobre as fontes» quando há avisos.
+- [x] MFE `ChatWebSearchResearchPanel` — badge «oficial», confiança e lista de avisos.
 
 ## Fase 4 — Integração avançada
 

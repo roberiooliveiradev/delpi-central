@@ -134,6 +134,9 @@ export type ChatWebSearchResearchSite = {
   hostname: string;
   url: string;
   title?: string;
+  sourceType?: string | null;
+  qualityScore?: number | null;
+  isOfficial?: boolean | null;
 };
 
 export type ChatWebSearchResearchStep = {
@@ -155,6 +158,10 @@ export type ChatWebSearchResearch = {
   searchMode?: "quick" | "deep" | string | null;
   searchIntent?: string | null;
   preferOfficial?: boolean | null;
+  confidence?: "high" | "medium" | "low" | string | null;
+  sourceTypes?: string[] | null;
+  warnings?: string[] | null;
+  excludedSources?: Array<{ hostname?: string; url?: string; reason?: string }> | null;
   synthesized?: boolean;
   steps?: ChatWebSearchResearchStep[];
   sites?: ChatWebSearchResearchSite[];
