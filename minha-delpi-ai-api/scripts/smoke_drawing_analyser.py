@@ -65,6 +65,21 @@ def main() -> int:
     )
     check("extração PDF código", pdf_parsed.get("productCode") == "90260140")
 
+    package_full = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90260140",
+            "legible": True,
+            "componentCodes": ["50212194"],
+            "intermediateCodes": ["50212194"],
+            "dimensions": {"totalLengthMm": 2.0, "leftDecapeMm": 10, "rightDecapeMm": 12},
+        },
+    )
+    check("validação BOM integrada", package_full["drawingAnalysis"]["criticalErrors"] == 0)
+
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
         return 1

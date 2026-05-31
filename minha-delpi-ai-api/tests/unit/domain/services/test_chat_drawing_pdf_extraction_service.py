@@ -32,6 +32,22 @@ def test_parse_from_attachment_context_block():
     assert parsed["revision"] == "00"
 
 
+def test_parse_extracts_components_and_dimensions():
+    text = """
+    CODIGO 90260140 REV.01
+    COMPONENTE 50212194
+    COMPRIMENTO TOTAL 1400 mm
+    DECAPE ESQUERDO 10
+    DECAPE DIREITO 12
+    """
+
+    parsed = ChatDrawingPdfExtractionService.parse_from_text(text)
+
+    assert "50212194" in parsed["componentCodes"]
+    assert parsed["dimensions"]["totalLengthMm"] == 1400.0
+    assert parsed["dimensions"]["leftDecapeMm"] == 10.0
+
+
 def test_parse_illegible_short_text():
     parsed = ChatDrawingPdfExtractionService.parse_from_text("abc")
 

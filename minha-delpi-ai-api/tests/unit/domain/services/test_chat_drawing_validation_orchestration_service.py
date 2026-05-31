@@ -57,6 +57,27 @@ def test_pdf_code_divergence_critical():
     assert any(item.get("item") == "Código DELPI" for item in critical)
 
 
+def test_format_report_uses_status_symbols():
+    package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
+        product_code="90260140",
+        payload=_analyser_payload_with_guide_and_inspection(),
+        has_pdf_attachment=True,
+        api_ok=True,
+        pdf_extract={
+            "productCode": "90260140",
+            "revision": "01",
+            "legible": True,
+            "componentCodes": ["50212194"],
+            "intermediateCodes": ["50212194"],
+            "dimensions": {"totalLengthMm": 2.0},
+        },
+    )
+
+    report = ChatDrawingValidationOrchestrationService.format_report_markdown(package)
+
+    assert "✅" in report or "⚠️" in report or "❌" in report
+
+
 def test_format_report_contains_sections():
     package = ChatDrawingValidationOrchestrationService.build_from_analyser_payload(
         product_code="90260140",

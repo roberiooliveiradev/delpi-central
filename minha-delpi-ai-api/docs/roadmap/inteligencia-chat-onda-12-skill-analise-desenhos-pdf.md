@@ -95,9 +95,9 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | ID | Entrega | Status |
 |----|---------|--------|
 | 12.3.1 | `ChatDrawingValidationOrchestrationService` — merge PDF extraído + payload `/analyser` | ✅ (MVP API; PDF OCR pendente) |
-| 12.3.2 | Regras de tolerância (±5% comprimento, ±1 mm decape) conforme `validation_rules_delpi` | ⬜ |
-| 12.3.3 | Classificação consolidada ✅ / ⚠️ / ❌ por seção do checklist | ⬜ |
-| 12.3.4 | Integração em `ChatToolContextService` / action `get_product_analyser` com parâmetros de profundidade | ⬜ |
+| 12.3.2 | Regras de tolerância (±5% comprimento, ±1 mm decape) conforme `validation_rules_delpi` | ✅ |
+| 12.3.3 | Classificação consolidada ✅ / ⚠️ / ❌ por seção do checklist | ✅ |
+| 12.3.4 | Integração em `ChatToolContextService` / action `get_product_analyser` com parâmetros de profundidade | ✅ (`page_size=50`, `max_depth=10`) |
 
 ### 12.4 — UX e apresentação
 

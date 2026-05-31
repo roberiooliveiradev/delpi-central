@@ -2694,6 +2694,17 @@ class ExternalActionSelectionService:
 
         return min(max(depth, 1), cap)
 
+    @classmethod
+    def _is_drawing_analyser_request(cls, message: str | None, path: str) -> bool:
+        if "/analyser" not in str(path or "").lower():
+            return False
+
+        from app.domain.services.chat_drawing_intent_service import (
+            ChatDrawingIntentService,
+        )
+
+        return ChatDrawingIntentService.is_drawing_analysis_request(message or "")
+
     def _build_product_parameters(self, action: dict, code: str, *, message: str | None = None) -> dict:
         parameters = {}
         path = (action.get("path") or "").lower()
@@ -2761,15 +2772,20 @@ class ExternalActionSelectionService:
             elif lowered in {"page_size", "pagesize", "limit"}:
                 if requested_page_size is not None:
                     parameters[name] = requested_page_size
+                elif self._is_drawing_analyser_request(message, path):
+                    parameters[name] = 50
                 else:
                     parameters[name] = 200 if is_full_listing else 50
 
             elif lowered in {"max_depth", "maxdepth", "depth", "nivel", "levels"}:
-                parameters[name] = (
-                    self.HIERARCHICAL_PRODUCT_MAX_DEPTH
-                    if is_full_listing
-                    else min(10, self.HIERARCHICAL_PRODUCT_MAX_DEPTH)
-                )
+                if self._is_drawing_analyser_request(message, path):
+                    parameters[name] = 10
+                else:
+                    parameters[name] = (
+                        self.HIERARCHICAL_PRODUCT_MAX_DEPTH
+                        if is_full_listing
+                        else min(10, self.HIERARCHICAL_PRODUCT_MAX_DEPTH)
+                    )
 
             elif lowered in {"branch", "filial", "branch_code", "branchcode"} and branch_code:
                 parameters[name] = branch_code

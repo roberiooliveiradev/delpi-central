@@ -15,6 +15,22 @@ _REV_PATTERN = re.compile(
     r"(?:REV(?:IS[AÃ]O)?\.?|REVISION)\s*[:.]?\s*(\d{1,3})",
     re.IGNORECASE,
 )
+_COMPONENT_CODE_RE = re.compile(r"\b(90\d{6}|50\d{6}|10\d{6}|100\d{5})\b")
+_INTERMEDIATE_CODE_RE = re.compile(r"\b(50\d{6})\b")
+_LENGTH_RE = re.compile(
+    r"(?:COMPR(?:IMENTO)?\s*(?:TOTAL)?|LENGTH)\s*[:.]?\s*(\d+[,.]?\d*)\s*mm?",
+    re.IGNORECASE,
+)
+_DECAPE_LEFT_RE = re.compile(
+    r"DECAPE\s*E(?:SQUERDO)?\s*[:.]?\s*(\d+[,.]?\d*)",
+    re.IGNORECASE,
+)
+_DECAPE_RIGHT_RE = re.compile(
+    r"DECAPE\s*D(?:IREITO)?\s*[:.]?\s*(\d+[,.]?\d*)",
+    re.IGNORECASE,
+)
+
+
 class ChatDrawingPdfExtractionService:
     @classmethod
     def max_pages(cls) -> int:
@@ -101,14 +117,23 @@ class ChatDrawingPdfExtractionService:
             labels=("DESCRIÇÃO", "DESCRICAO", "DESCRIPTION"),
         )
 
+        component_codes = cls._extract_component_codes(normalized, exclude=product_code)
+        intermediate_codes = sorted(_INTERMEDIATE_CODE_RE.findall(normalized))
+        dimensions = cls._extract_dimensions(normalized)
+
         min_chars = max(1, int(Settings.CHAT_DRAWING_PDF_MIN_LEGIBLE_CHARS))
-        legible = char_count >= min_chars and bool(product_code or revision)
+        legible = char_count >= min_chars and bool(
+            product_code or revision or component_codes
+        )
 
         payload: dict[str, Any] = {
             "productCode": product_code,
             "revision": revision,
             "customerReference": customer_reference,
             "description": description,
+            "componentCodes": component_codes,
+            "intermediateCodes": intermediate_codes,
+            "dimensions": dimensions,
             "charCount": char_count,
             "legible": legible,
             "extractor": (metadata or {}).get("extractor") or "text_parse",
@@ -152,12 +177,69 @@ class ChatDrawingPdfExtractionService:
         return None
 
     @classmethod
+    def _extract_component_codes(
+        cls,
+        text: str,
+        *,
+        exclude: str | None,
+    ) -> list[str]:
+        exclude_norm = ChatProductQueryIntentService.normalize_product_code(exclude or "")
+        found: list[str] = []
+
+        for match in _COMPONENT_CODE_RE.finditer(text):
+            code = ChatProductQueryIntentService.normalize_product_code(match.group(1))
+
+            if not code or code == exclude_norm:
+                continue
+
+            if code not in found:
+                found.append(code)
+
+        return found
+
+    @classmethod
+    def _extract_dimensions(cls, text: str) -> dict[str, float | None]:
+        dimensions: dict[str, float | None] = {
+            "totalLengthMm": None,
+            "leftDecapeMm": None,
+            "rightDecapeMm": None,
+        }
+
+        length_match = _LENGTH_RE.search(text)
+
+        if length_match:
+            dimensions["totalLengthMm"] = cls._parse_number(length_match.group(1))
+
+        left_match = _DECAPE_LEFT_RE.search(text)
+
+        if left_match:
+            dimensions["leftDecapeMm"] = cls._parse_number(left_match.group(1))
+
+        right_match = _DECAPE_RIGHT_RE.search(text)
+
+        if right_match:
+            dimensions["rightDecapeMm"] = cls._parse_number(right_match.group(1))
+
+        return dimensions
+
+    @classmethod
+    def _parse_number(cls, raw: str) -> float | None:
+        from app.domain.services.chat_drawing_tolerance_service import (
+            ChatDrawingToleranceService,
+        )
+
+        return ChatDrawingToleranceService.parse_mm(raw)
+
+    @classmethod
     def _empty(cls, *, reason: str) -> dict[str, Any]:
         return {
             "productCode": None,
             "revision": None,
             "customerReference": None,
             "description": None,
+            "componentCodes": [],
+            "intermediateCodes": [],
+            "dimensions": {},
             "charCount": 0,
             "legible": False,
             "extractor": reason,

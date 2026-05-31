@@ -163,6 +163,18 @@ class ChatDrawingValidationOrchestrationService:
 
             items.extend(cls._pdf_cross_check_items(product, code, pdf_meta))
 
+            from app.domain.services.chat_drawing_structure_validation_service import (
+                ChatDrawingStructureValidationService,
+            )
+
+            items.extend(
+                ChatDrawingStructureValidationService.build_check_items(
+                    root=root,
+                    pdf_extract=pdf_meta,
+                    product_code=code,
+                )
+            )
+
         return cls._package(
             product_code=code,
             items=items,
@@ -425,10 +437,23 @@ class ChatDrawingValidationOrchestrationService:
 
     @classmethod
     def _status_label(cls, status: str) -> str:
-        return {
+        symbol = cls._status_symbol(status)
+        label = {
             cls._STATUS_OK: "OK",
             cls._STATUS_PENDING: "Pendente",
             cls._STATUS_ERROR: "Erro",
             cls._STATUS_CRITICAL: "Erro crítico",
             cls._STATUS_NA: "Não aplicável",
         }.get(status, status)
+
+        return f"{symbol} {label}"
+
+    @classmethod
+    def _status_symbol(cls, status: str) -> str:
+        return {
+            cls._STATUS_OK: "✅",
+            cls._STATUS_PENDING: "⚠️",
+            cls._STATUS_ERROR: "❌",
+            cls._STATUS_CRITICAL: "❌",
+            cls._STATUS_NA: "—",
+        }.get(status, "—")
