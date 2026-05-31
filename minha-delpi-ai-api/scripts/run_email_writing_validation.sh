@@ -6,6 +6,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 export PYTHONPATH="${PYTHONPATH:-/app:${ROOT}}"
+
+if [[ -d /app && -z "${SMOKE_BASE_URL:-}" ]]; then
+  export SMOKE_BASE_URL=http://delpi-gateway
+fi
+
 PY="${PYTHON:-python3}"
 if [[ -x "${ROOT}/.venv/bin/python" ]]; then
   PY="${ROOT}/.venv/bin/python"
@@ -25,6 +30,7 @@ echo "== E-mail — testes unitários =="
   tests/unit/domain/services/test_chat_email_preference_service.py \
   tests/unit/domain/services/test_chat_working_memory_email_preferences.py \
   tests/unit/infrastructure/persistence/test_postgres_chat_session_memory_email.py \
+  tests/unit/domain/services/test_chat_email_intelligence_regression.py \
   -q
 
 echo ""

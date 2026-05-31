@@ -262,7 +262,7 @@
     },
     "textTasksHelp": {
       "title": "**Correção e redação de textos**",
-      "body": "Sim — corrijo, resumo, traduzo e deixo textos mais formais **sem** consultar o ERP.\n\n**Exemplos:**\n- «Corrija: segue documento em anexo»\n- «Deixe mais formal: preciso do retorno hoje»\n- «Traduza para inglês: prazo de entrega»"
+      "body": "Sim — corrijo, resumo, traduzo e deixo textos mais formais **sem** consultar o ERP.\n\n**E-mails corporativos:** assunto + corpo profissional, assinatura segura (`[Seu nome]` se não informado), chips para refinar (mais formal, mais curto, traduzir, lousa). Após consulta operacional, posso montar e-mail **só com os dados retornados** e citar a fonte.\n\n**Exemplos:**\n- «Corrija: segue documento em anexo»\n- «Escreva um e-mail formal para o fornecedor sobre prazo»\n- «Consulte o estoque do 10080001 e escreva um e-mail para compras»\n- «Daqui pra frente sempre faça e-mails curtos»"
     }
   },
   "pathRules": [

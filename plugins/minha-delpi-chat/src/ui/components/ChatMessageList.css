@@ -869,3 +869,10 @@
   padding: 0.35rem 0.65rem;
   font-size: 0.82rem;
 }
+
+.mdc-chat-message-list__email-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--mdc-text-muted, #6b7280);
+  line-height: 1.4;
+}

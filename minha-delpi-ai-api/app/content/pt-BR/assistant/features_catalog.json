@@ -370,12 +370,13 @@
       "title": "Textos administrativos",
       "category": "text",
       "status": "available",
-      "summary": "Correção, tom formal, tradução e e-mails.",
+      "summary": "Correção, tradução, e-mails corporativos e refinamento por chips.",
       "requiresAgent": false,
       "helpTopicId": null,
       "examples": [
         "Corrija: segue documento em anexo",
-        "Escreva um e-mail formal cobrando prazo"
+        "Escreva um e-mail formal cobrando prazo",
+        "Consulte estoque do 10080001 e escreva e-mail para compras"
       ],
       "relatedFeatures": [
         "attachment"

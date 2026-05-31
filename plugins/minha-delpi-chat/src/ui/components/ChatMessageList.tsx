@@ -1439,6 +1439,20 @@ export function ChatMessageList({
                   groupLabel="Refinar e-mail"
                   ariaLabel="Ações sugeridas após geração de e-mail"
                 />
+                {(message.metadata?.emailPreferences?.labels?.length ?? 0) > 0 ? (
+                  <p className="mdc-chat-message-list__email-meta" role="note">
+                    Preferências de e-mail:{" "}
+                    {(message.metadata!.emailPreferences!.labels as string[]).join(" · ")}
+                  </p>
+                ) : null}
+                {message.metadata?.emailDataSource?.title ? (
+                  <p className="mdc-chat-message-list__email-meta" role="note">
+                    Fonte dos dados: {String(message.metadata.emailDataSource.title)}
+                    {message.metadata.emailDataSource.path
+                      ? ` (${String(message.metadata.emailDataSource.path)})`
+                      : ""}
+                  </p>
+                ) : null}
                 {(message.metadata?.textTask as { type?: string } | undefined)?.type ===
                 "email" ? (
                   <div className="mdc-chat-drawing-export">

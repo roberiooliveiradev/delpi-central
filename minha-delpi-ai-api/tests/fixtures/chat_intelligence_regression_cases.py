@@ -1291,6 +1291,35 @@ METRIC_REFINEMENT_SELECTION_CASES = [
     },
 ]
 
+EMAIL_WRITING_SUBTYPE_CASES = [
+    ("escreva um e-mail formal para Robério sobre IA no Minha DELPI", "email_create"),
+    ("redija um e-mail para o fornecedor sobre prazo", "email_create"),
+    ("deixe o e-mail anterior mais curto", "email_shorten"),
+    ("deixe o e-mail anterior mais formal", "email_formalize"),
+    ("tom mais firme no e-mail anterior", "email_firm"),
+    ("crie 3 opções de assunto para o e-mail", "email_subjects"),
+    ("traduza o e-mail anterior para inglês", "email_translate"),
+    ("responda este e-mail de forma educada", "email_reply"),
+]
+
+EMAIL_PURE_TEXT_TASK_CASES = [
+    ("escreva um e-mail formal para a diretoria", True),
+    ("corrija: segue documento em anexo", True),
+    ("consulte estoque do 10080001 e escreva um e-mail", False),
+    ("escreva um email com os dados da tabela", True),
+]
+
+EMAIL_WRITING_MODE_CASES = [
+    ("escreva um e-mail para compras", True),
+    ("qual o estoque do produto 10080001", False),
+]
+
+EMAIL_PREFERENCE_DETECT_CASES = [
+    ("daqui pra frente sempre faça e-mails curtos", {"shortEmails": True}),
+    ("sempre use tom formal nos e-mails", {"formalTone": True}),
+    ("sempre deixe assinatura em branco nos e-mails", {"blankSignature": True}),
+]
+
 CONTEXT_ASSERTIVENESS_CASES = [
     {
         "message": "Quem fornece o produto 10080001?",

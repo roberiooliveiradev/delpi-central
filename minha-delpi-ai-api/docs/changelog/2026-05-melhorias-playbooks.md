@@ -152,7 +152,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Fase 3 | Persistência `emailWriting`/`scope` em `ai_chat_session_memory`, merge acumulativo, `emailPreferences` no metadata e chips de contexto |
 
-**Backlog:** nenhum item crítico restante do playbook de e-mails.
+| Homologação | `EMAIL_*_CASES` em regressão, `docs/architecture/email-writing.md`, smoke com `delpi-gateway` no container, MFE exibe fonte/preferências |
+
+**Backlog:** métricas de uso de e-mail (playbook §23) — opcional, fora do escopo mínimo.
 
 ## Descontraído (`playbook_chat_interativo_descontraido`)
 

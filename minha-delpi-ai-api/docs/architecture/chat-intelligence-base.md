@@ -112,6 +112,8 @@ Mensagem do usuário
 
 Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimulateUseCase`) **não** devem acumular regras de inteligência — apenas passam histórico e flags ao pipeline.
 
+Documentação dedicada: [`email-writing.md`](./email-writing.md) (escrita de e-mails corporativos).
+
 ### Memória e assertividade (Fases 4–5)
 
 1. **Pré-turno** — `ChatTurnPreparationService` monta `workspaceContext.workingMemory` a partir do histórico e do overlay persistido (`ChatSessionMemoryService`).

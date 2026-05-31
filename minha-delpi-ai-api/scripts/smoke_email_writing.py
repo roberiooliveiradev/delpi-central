@@ -22,7 +22,19 @@ from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntent
 
 _MIXED_MESSAGE = "consulte estoque do produto 10080001 e escreva um e-mail para compras"
 
-_BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
+def _default_smoke_base_url() -> str:
+    explicit = os.environ.get("SMOKE_BASE_URL", "").strip()
+
+    if explicit:
+        return explicit
+
+    if os.path.isdir("/app"):
+        return "http://delpi-gateway"
+
+    return "http://localhost"
+
+
+_BASE_URL = _default_smoke_base_url().strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
 _CLIENT_ID = os.environ.get("SMOKE_CLIENT_ID", "delpi-central").strip()
 _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()

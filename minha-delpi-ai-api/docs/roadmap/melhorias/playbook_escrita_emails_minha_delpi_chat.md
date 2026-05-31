@@ -112,11 +112,20 @@ Corpo com proposta, capacidades reais da plataforma, perguntas numeradas para av
 
 ---
 
-## 11. Testes
+## 11. Testes e homologação
 
-`tests/unit/test_email_writing_skill.py` — casos E1–E15 (subset automatizado).  
-`tests/unit/domain/services/test_chat_email_*.py` — intent e qualidade.  
-`scripts/run_email_writing_validation.sh` — suite unit + `scripts/smoke_email_writing.py`.
+| Artefato | Conteúdo |
+|----------|----------|
+| `tests/unit/test_email_writing_skill.py` | Casos E1–E15 (subset) |
+| `tests/fixtures/chat_intelligence_regression_cases.py` | `EMAIL_*_CASES` |
+| `tests/unit/domain/services/test_chat_email_intelligence_regression.py` | Regressão de subtipo, text_task e preferências |
+| `scripts/run_email_writing_validation.sh` | Suite unit + smoke |
+
+**Host:** `cd minha-delpi-ai-api && ./scripts/run_email_writing_validation.sh`
+
+**Container:** `docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api bash scripts/run_email_writing_validation.sh` (usa `SMOKE_BASE_URL=http://delpi-gateway` automaticamente).
+
+**Arquitetura:** [`docs/architecture/email-writing.md`](../../architecture/email-writing.md).
 
 ---
 
@@ -128,4 +137,5 @@ Motivos em `personality_playbook.json`: `email_wrong_tone`, `email_artificial`, 
 
 ## Referência arquitetural
 
-[`docs/architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) — inteligência no chat base, não só no prompt do agente.
+[`docs/architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md) — inteligência no chat base.  
+[`docs/architecture/email-writing.md`](../../architecture/email-writing.md) — pipeline e metadata de e-mail.
