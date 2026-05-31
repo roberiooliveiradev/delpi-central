@@ -14,7 +14,7 @@ class ChatTextTaskPreferenceService:
         (r"sempre\s+deixe\s+mais\s+formal", "tone_formal"),
         (r"sempre\s+use\s+linguagem\s+simples", "tone_simple"),
         (r"sempre\s+ger[eo]\s+assunto", "email_subject"),
-        (r"sempre\s+em\s+t[oó]picos", "format_topics"),
+        (r"sempre\s+(?:me\s+entregue\s+)?em\s+t[oó]picos", "format_topics"),
         (r"sempre\s+resumo\s+executivo", "summary_executive"),
     )
 

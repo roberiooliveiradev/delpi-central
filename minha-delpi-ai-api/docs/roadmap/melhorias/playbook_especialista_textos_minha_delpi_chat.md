@@ -1,6 +1,6 @@
 # Playbook 03 — Especialista em Textos
 
-**Status (30/05/2026):** Implementado (Fases 1–3; 4–6 parciais)  
+**Status (31/05/2026):** Implementado (Fases 1–6)  
 **Código:** `ChatTextTaskService`, `ChatTextQualityValidator`, `text-specialist.md`  
 **Validação:** `scripts/run_text_specialist_validation.sh`
 
@@ -9,35 +9,40 @@
 | Componente | Função |
 |------------|--------|
 | `ChatTextTaskIntentService` | Detecção `text_task` pura vs mista |
-| `ChatTextTaskService` | Classificação, prompt supplement, metadata `textTask` |
-| `ChatTextQualityValidator` | Checklist de qualidade pós-resposta |
+| `ChatTextTaskService` | Subtipos Playbook 03, supplement de prompt, `textTask` metadata |
+| `ChatTextQualityValidator` | Validação pós-resposta |
 | `ChatTextTaskFollowUpService` | Chips `textTaskFollowUpSuggestions` |
-| Policies | `administrative-writing.md`, `text-specialist.md`, `text-correction.md`, `email-writing.md` |
+| `ChatTextTaskPreferenceService` | Preferências de sessão («só versão final», tom formal, …) |
+| `ChatTextTaskMixedTurnService` | Metadata `textTaskMixed` (consulta + e-mail) |
+| `ChatTextTaskCanvasService` | Lousa + `textCanvasVersions` |
+| `ChatTextTaskAdminMetricsService` | Agregado admin (`GET /admin/metrics/text-tasks/summary`) |
+
+## Policies
+
+`administrative-writing.md`, `text-specialist.md`, `text-correction.md`, `email-writing.md`
 
 ## Regra central
 
 Tarefa textual explícita → **sem** API/SQL/RAG/web no mesmo turno (roteamento Playbook 02 + estágio `text_task`).
 
-## Subtipos (exemplos)
-
-`text_correct`, `text_rewrite`, `text_email_create`, `text_minutes`, `text_checklist`, `text_summarize`, `text_translate`, `text_announcement`, `text_compare`, …
-
-## Metadata
+## Metadata (exemplo)
 
 ```json
 {
-  "textTask": { "type": "correction", "subtype": "text_correct", "tone": "formal" },
+  "textTask": { "type": "correction", "subtype": "text_correct" },
   "textTaskFollowUpSuggestions": [{ "label": "Deixar mais formal", "query": "..." }],
-  "textTaskMetrics": { "subtype": "text_correct" }
+  "textTaskMetrics": { "subtype": "text_correct" },
+  "textTaskMixed": { "operational": true, "draftAttached": true },
+  "textCanvasVersions": [{ "version": 1, "role": "previous" }, { "version": 2, "role": "current" }]
 }
 ```
 
-## Regressão T1–T15
+## Regressão T1–T16
 
-Ver `tests/fixtures/text_specialist_regression_cases.py`.
+`tests/fixtures/text_specialist_regression_cases.py`
 
-## Roadmap restante
+## Admin
 
-- Orquestração automática de mixed turn (dados reais + e-mail)
-- Dashboard admin de uso textual
-- Versionamento de alterações na lousa
+Painel Métricas (MFE): `AdminTextTaskMetrics` — `GET /admin/metrics/text-tasks/summary?hours=168`
+
+Arquitetura: [`docs/architecture/text-specialist.md`](../../architecture/text-specialist.md)

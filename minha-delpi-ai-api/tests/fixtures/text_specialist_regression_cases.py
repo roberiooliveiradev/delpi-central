@@ -30,4 +30,10 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
         "route_intents": {"text_task", "attachment_task"},
     },
     {"id": "T15", "message": "corrija o texto da lousa", "pure": True, "category": "correct"},
+    {
+        "id": "T16",
+        "message": "sempre me entregue em tópicos",
+        "pure": True,
+        "preference": "format_topics",
+    },
 ]

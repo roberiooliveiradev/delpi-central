@@ -47,7 +47,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 |----------|--------|---------------------------|
 | [01 — Roteamento](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Parcial | Ver Playbook 02 (evolução) |
 | [02 — Roteamento intenção](./playbook_roteamento_intencao_minha_delpi_chat.md) | Implementado | R1–R15, desambiguação produto, admin `/metrics/intent-routing/summary`, chips MFE |
-| [03 — Especialista textos](./playbook_especialista_textos_minha_delpi_chat.md) | Implementado (F1–3) | `ChatTextTaskService`, `text-specialist.md`, T1–T15, chips e feedback textual |
+| [03 — Especialista textos](./playbook_especialista_textos_minha_delpi_chat.md) | Implementado (F1–6) | T1–T16, mixed turn, lousa versionada, admin `/metrics/text-tasks/summary`, MFE |
 | [02 — Operacional](./playbooks_melhoria_minha_delpi_chat/02_respostas_operacionais_delpi.md) | Parcial | Actions, presenter, vendas/estoque, smokes operacionais |
 | [03 — Agentes](./playbooks_melhoria_minha_delpi_chat/03_agentes_especialistas.md) | Parcial | Agentes, providers, especialização |
 | [04 — RAG](./playbooks_melhoria_minha_delpi_chat/04_rag_e_conhecimento_interno.md) | Parcial | RAG, skill company-knowledge |

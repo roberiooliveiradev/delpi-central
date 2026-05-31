@@ -4,6 +4,7 @@ import {
   getAdminDrawingAnalysisSummary,
   getAdminDocumentVisionSummary,
   getAdminIntentRoutingSummary,
+  getAdminTextTaskSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
   saveAdminLlmCostTable,
@@ -12,6 +13,7 @@ import type {
   AdminDrawingAnalysisSummary,
   AdminDocumentVisionSummary,
   AdminIntentRoutingSummary,
+  AdminTextTaskSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
   AdminMetricsDistributionItem,
@@ -21,6 +23,7 @@ import type {
 import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
 import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
+import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
 import "./AdminMetricsTab.css";
@@ -270,6 +273,10 @@ export function AdminMetricsTab({
     useState<AdminIntentRoutingSummary | null>(null);
   const [isLoadingIntentRoutingSummary, setIsLoadingIntentRoutingSummary] =
     useState(false);
+  const [textTaskSummary, setTextTaskSummary] = useState<AdminTextTaskSummary | null>(
+    null,
+  );
+  const [isLoadingTextTaskSummary, setIsLoadingTextTaskSummary] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -335,6 +342,20 @@ export function AdminMetricsTab({
       .then(setIntentRoutingSummary)
       .catch(() => setIntentRoutingSummary(null))
       .finally(() => setIsLoadingIntentRoutingSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setTextTaskSummary(null);
+      return;
+    }
+
+    setIsLoadingTextTaskSummary(true);
+
+    void getAdminTextTaskSummary(metricsHours, { getAccessToken })
+      .then(setTextTaskSummary)
+      .catch(() => setTextTaskSummary(null))
+      .finally(() => setIsLoadingTextTaskSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -506,6 +527,12 @@ export function AdminMetricsTab({
       <AdminIntentRoutingMetrics
         summary={intentRoutingSummary}
         isLoading={isLoadingIntentRoutingSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminTextTaskMetrics
+        summary={textTaskSummary}
+        isLoading={isLoadingTextTaskSummary}
         windowHours={windowLabel}
       />
 

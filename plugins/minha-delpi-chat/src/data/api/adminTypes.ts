@@ -370,6 +370,27 @@ export type AdminIntentRoutingSummary = {
   recent: AdminIntentRoutingRecentItem[];
 };
 
+export type AdminTextTaskRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  subtype?: string | null;
+  type?: string | null;
+  mixed?: boolean | null;
+  qualityPassed?: boolean | null;
+};
+
+export type AdminTextTaskSummary = {
+  windowHours: number;
+  since: string;
+  textTasksCount: number;
+  mixedTurnCount: number;
+  qualityFailedCount: number;
+  canvasVersionedCount: number;
+  bySubtype: Record<string, number>;
+  byType: Record<string, number>;
+  recent: AdminTextTaskRecentItem[];
+};
+
 export type AdminDrawingAnalysisSummary = {
   windowHours: number;
   since: string;

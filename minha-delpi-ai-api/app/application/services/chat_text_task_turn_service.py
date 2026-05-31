@@ -43,6 +43,11 @@ class ChatTextTaskTurnService:
         text_task_mode: bool,
         correction_guard_meta: dict[str, Any] | None = None,
         canvas_updated: bool = False,
+        pipeline_stages: list[str] | None = None,
+        tool_context: dict | None = None,
+        canvas_title: str | None = None,
+        canvas_markdown: str | None = None,
+        previous_messages: list | None = None,
     ) -> None:
         if not text_task_mode:
             return
@@ -70,3 +75,26 @@ class ChatTextTaskTurnService:
             answer=answer,
             workspace_context=workspace_context,
         )
+
+        from app.application.services.chat_text_task_mixed_turn_service import (
+            ChatTextTaskMixedTurnService,
+        )
+
+        ChatTextTaskMixedTurnService.attach_to_assistant_metadata(
+            metadata,
+            message=message,
+            pipeline_stages=pipeline_stages,
+            tool_context=tool_context,
+        )
+
+        if canvas_updated and canvas_markdown:
+            from app.application.services.chat_text_task_canvas_service import (
+                ChatTextTaskCanvasService,
+            )
+
+            ChatTextTaskCanvasService.attach_version_history(
+                metadata,
+                previous_messages=previous_messages,
+                new_markdown=canvas_markdown,
+                title=canvas_title or "Texto na lousa",
+            )

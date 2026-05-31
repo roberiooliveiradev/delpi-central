@@ -1,4 +1,4 @@
-"""Regressão Playbook 03 — especialista em textos (T1–T15)."""
+"""Regressão Playbook 03 — especialista em textos (T1–T16)."""
 
 from __future__ import annotations
 
@@ -45,6 +45,14 @@ def test_text_specialist_regression(case: dict):
 
     if case.get("preserved"):
         assert case["preserved"] in (ctx.get("preservedCodes") or [])
+
+    if case.get("preference"):
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
+
+        prefs = ChatTextTaskPreferenceService.detect_from_message(case["message"])
+        assert prefs.get(case["preference"]) is True
 
 
 def test_t1_router_blocks_operational():

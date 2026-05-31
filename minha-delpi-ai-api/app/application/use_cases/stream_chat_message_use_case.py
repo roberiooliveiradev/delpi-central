@@ -674,6 +674,28 @@ class StreamChatMessageUseCase:
                 canvas_payload=correction_canvas_payload,
             )
 
+        text_canvas_updated = False
+
+        if prepared.text_task_mode and not canvas_open_payload:
+            from app.application.services.chat_text_task_canvas_service import (
+                ChatTextTaskCanvasService,
+            )
+
+            text_canvas_payload = ChatTextTaskCanvasService.resolve_canvas_open_after_text_task(
+                message=message,
+                answer=answer,
+                previous_messages=previous_messages,
+                workspace_context=workspace_context,
+            )
+
+            if text_canvas_payload:
+                canvas_open_payload = text_canvas_payload
+                text_canvas_updated = True
+                answer = ChatTextTaskCanvasService.append_canvas_update_note(
+                    answer,
+                    title=text_canvas_payload.title,
+                )
+
         pipeline_timings.mark("llm_done")
         intelligence_metadata = ChatIntelligenceMetadataService.build(
             sources=sources,
@@ -897,15 +919,23 @@ class StreamChatMessageUseCase:
         )
 
         if prepared.text_task_mode:
-            from app.application.services.chat_text_task_follow_up_service import (
-                ChatTextTaskFollowUpService,
+            from app.application.services.chat_text_task_turn_service import (
+                ChatTextTaskTurnService,
             )
 
-            ChatTextTaskFollowUpService.attach_to_assistant_metadata(
+            ChatTextTaskTurnService.attach_follow_up_metadata(
                 assistant_metadata,
                 message=message,
                 answer=answer,
                 workspace_context=workspace_context,
+                text_task_mode=True,
+                correction_guard_meta=correction_guard_meta,
+                canvas_updated=correction_canvas_updated or text_canvas_updated,
+                pipeline_stages=pipeline_stages,
+                tool_context=tool_context,
+                canvas_title=canvas_open_payload.title if canvas_open_payload else None,
+                canvas_markdown=canvas_open_payload.markdown if canvas_open_payload else None,
+                previous_messages=previous_messages,
             )
 
         from app.application.services.chat_document_vision_metrics_service import (
@@ -1001,6 +1031,15 @@ class StreamChatMessageUseCase:
         ChatIntentRouterMetricsService.enrich_audit_metadata(
             stream_audit_metadata,
             route=prepared.intent_route,
+        )
+
+        from app.domain.services.chat_text_task_admin_metrics_service import (
+            ChatTextTaskAdminMetricsService,
+        )
+
+        ChatTextTaskAdminMetricsService.enrich_audit_metadata(
+            stream_audit_metadata,
+            assistant_metadata=assistant_metadata,
         )
 
         self.audit_repository.log(

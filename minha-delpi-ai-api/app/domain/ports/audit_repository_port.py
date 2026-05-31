@@ -74,6 +74,9 @@ class AuditRepositoryPort(ABC):
     def get_intent_routing_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 
+    def get_text_task_summary(self, *, hours: int = 168) -> dict:
+        raise NotImplementedError
+
     def list_logs(self, limit: int = 100) -> list[dict]:
         items, _total = self.list_logs_page(AuditLogQuery(limit=limit, offset=0))
         return items
