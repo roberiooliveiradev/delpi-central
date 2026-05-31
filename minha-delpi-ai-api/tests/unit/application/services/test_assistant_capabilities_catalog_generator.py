@@ -132,3 +132,41 @@ def test_drift_report_detects_required_actions_change():
     )
 
     assert drift
+
+
+def test_drift_report_ignores_action_count_only():
+    features = [{"id": "stock_lookup", "requiredActions": ["/stock"]}]
+    on_disk = {
+        "generation": {"actionCount": 110, "enabledActionCount": 110, "pathRulesVersion": "2026.06.03"},
+        "features": features,
+    }
+    generated = {
+        "generation": {"actionCount": 0, "enabledActionCount": 0, "pathRulesVersion": "2026.06.03"},
+        "features": features,
+    }
+
+    drift = AssistantCapabilitiesCatalogGenerator.drift_report(
+        on_disk=on_disk,
+        generated=generated,
+    )
+
+    assert not drift
+
+
+def test_preserve_generation_counts_when_actions_missing():
+    catalog = {
+        "generation": {"actionCount": 0, "enabledActionCount": 0},
+        "features": [],
+    }
+    previous = {
+        "generation": {"actionCount": 42, "enabledActionCount": 40},
+        "features": [],
+    }
+
+    AssistantCapabilitiesCatalogGenerator._preserve_generation_counts(
+        catalog,
+        previous=previous,
+    )
+
+    assert catalog["generation"]["actionCount"] == 42
+    assert catalog["generation"]["enabledActionCount"] == 40

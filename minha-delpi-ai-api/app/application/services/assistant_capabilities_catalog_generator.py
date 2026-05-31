@@ -242,11 +242,19 @@ class AssistantCapabilitiesCatalogGenerator:
 
         stable_generation = None
 
+        volatile_generation_keys = frozenset(
+            {
+                "generatedAt",
+                "actionCount",
+                "enabledActionCount",
+            }
+        )
+
         if isinstance(generation, dict):
             stable_generation = {
                 key: value
                 for key, value in generation.items()
-                if key != "generatedAt"
+                if key not in volatile_generation_keys
             }
 
         return {
@@ -272,11 +280,45 @@ class AssistantCapabilitiesCatalogGenerator:
         ]
 
     @classmethod
+    def _preserve_generation_counts(
+        cls,
+        catalog: dict[str, Any],
+        *,
+        previous: dict[str, Any] | None = None,
+    ) -> None:
+        generation = catalog.get("generation")
+
+        if not isinstance(generation, dict):
+            return
+
+        if generation.get("actionCount"):
+            return
+
+        prior = previous or cls.load_catalog()
+        prior_generation = prior.get("generation") if isinstance(prior, dict) else None
+
+        if not isinstance(prior_generation, dict):
+            return
+
+        action_count = prior_generation.get("actionCount")
+
+        if not action_count:
+            return
+
+        generation["actionCount"] = action_count
+        enabled = prior_generation.get("enabledActionCount")
+
+        if enabled:
+            generation["enabledActionCount"] = enabled
+
+    @classmethod
     def write_catalog(cls, catalog: dict[str, Any]) -> Path:
         errors = AssistantCapabilitiesCatalogValidator.validate_catalog_dict(catalog)
 
         if errors:
             raise ValueError("; ".join(errors))
+
+        cls._preserve_generation_counts(catalog)
 
         path = cls.catalog_file_path()
         path.write_text(

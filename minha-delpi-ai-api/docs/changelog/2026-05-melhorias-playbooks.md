@@ -329,6 +329,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Router | `intentRoute.resolvedParams` — `productCode` na mensagem ou herdado do histórico |
 | Compat | Alias `resolvedFromMemory` mantido no mesmo payload |
 
+## Catálogo de funcionalidades — drift CI
+
+| Entrega | Detalhe |
+|---------|---------|
+| Generator | `drift_report` ignora `actionCount`/`enabledActionCount` (dependem do DB no momento da geração) |
+| Generator | `write_catalog` preserva contagens anteriores quando `--no-db` ou actions vazias |
+
 ## Onboarding — primeiro uso (Playbook 10)
 
 | Entrega | Detalhe |
