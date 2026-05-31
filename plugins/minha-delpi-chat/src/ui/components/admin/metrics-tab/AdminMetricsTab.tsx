@@ -13,7 +13,6 @@ import type {
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
 
-import { AdminSectionLinks } from "../shared/AdminSectionLinks";
 import { ChatIntelligenceSettingsPanel } from "./ChatIntelligenceSettingsPanel";
 import "./AdminMetricsTab.css";
 
@@ -22,9 +21,6 @@ type AdminMetricsTabProps = {
   metricsHours?: number;
   onMetricsHoursChange?: (hours: number) => void;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
-  /** Mantém o bloco de configuração de inteligência na aba Métricas (comportamento pré–Playbook 11). */
-  showIntelligenceSettings?: boolean;
-  onOpenIntelligenceSettings?: () => void;
 };
 
 function formatPercent(value?: number | null): string {
@@ -242,8 +238,6 @@ export function AdminMetricsTab({
   metricsHours = 24,
   onMetricsHoursChange,
   getAccessToken,
-  showIntelligenceSettings = false,
-  onOpenIntelligenceSettings,
 }: AdminMetricsTabProps) {
   const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
   const [costTable, setCostTable] = useState<AdminLlmCostTableEntry[]>([]);
@@ -304,20 +298,8 @@ export function AdminMetricsTab({
     }
   }
 
-  const intelligenceLinks =
-    onOpenIntelligenceSettings && showIntelligenceSettings
-      ? [
-          {
-            label: "Abrir em Plataforma → Inteligência",
-            onClick: onOpenIntelligenceSettings,
-          },
-        ]
-      : [];
-
   return (
     <section className="mdc-admin-metrics-tab">
-      {intelligenceLinks.length > 0 ? <AdminSectionLinks items={intelligenceLinks} /> : null}
-
       <article className="mdc-admin-panel">
         <header className="mdc-admin-tab-header">
           <div className="mdc-admin-panel__intro">
@@ -424,6 +406,8 @@ export function AdminMetricsTab({
         </article>
       </div>
 
+      <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
+
       {effectiveCostTable.length > 0 ? (
         <CostTablePanel
           items={effectiveCostTable}
@@ -501,10 +485,6 @@ export function AdminMetricsTab({
           <p>Sem observações adicionais.</p>
         )}
       </article>
-
-      {showIntelligenceSettings && getAccessToken ? (
-        <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
-      ) : null}
     </section>
   );
 }

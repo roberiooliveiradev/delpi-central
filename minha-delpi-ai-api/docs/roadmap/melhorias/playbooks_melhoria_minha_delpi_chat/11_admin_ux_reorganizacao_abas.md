@@ -1,5 +1,7 @@
 # Playbook 11 — Admin UX: reorganização das abas
 
+> **Status (maio/2026):** implementação das fases 1–4 **revertida** no MFE (`ea9eaf0e` — 10 abas planas estáveis). Novo ciclo: **estudo + mockups Markdown por aba** → implementação única no final. Ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) e [`mockups/`](./11_admin_ux_reorganizacao_abas/mockups/README.md).
+
 ## Objetivo
 
 Reorganizar o painel administrativo do Minha DELPI Chat (`plugins/minha-delpi-chat`) para reduzir fragmentação, agrupar informações por jornada do administrador e alinhar a navegação aos padrões já usados no Portal e no Strategic Indicators.

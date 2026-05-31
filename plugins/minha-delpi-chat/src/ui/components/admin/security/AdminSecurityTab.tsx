@@ -13,17 +13,13 @@ import type {
   AdminSecuritySummary,
 } from "../../../../data/api/adminTypes";
 
-import type { AdminNavState } from "../../../../navigation/adminNavigation";
-import { AdminSectionLinks } from "../shared/AdminSectionLinks";
-
 import "./AdminSecurityTab.css";
 
 type AdminSecurityTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
-  onNavigate?: (nav: Partial<AdminNavState>) => void;
 };
 
-export function AdminSecurityTab({ getAccessToken, onNavigate }: AdminSecurityTabProps) {
+export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
   const [config, setConfig] = useState<AdminSecurityConfig | null>(null);
   const [summary, setSummary] = useState<AdminSecuritySummary | null>(null);
   const [events, setEvents] = useState<AdminSecurityEventsResponse | null>(null);
@@ -79,19 +75,6 @@ export function AdminSecurityTab({ getAccessToken, onNavigate }: AdminSecurityTa
 
   return (
     <section className="mdc-admin-security">
-      <AdminSectionLinks
-        items={
-          onNavigate
-            ? [
-                {
-                  label: "Ver trilha de auditoria",
-                  onClick: () => onNavigate({ section: "governance", subTab: "audit" }),
-                },
-              ]
-            : []
-        }
-      />
-
       <article className="mdc-admin-panel">
         <header className="mdc-admin-tab-header">
           <div className="mdc-admin-panel__intro">

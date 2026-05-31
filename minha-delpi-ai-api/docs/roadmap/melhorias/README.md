@@ -11,7 +11,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL seguro, trust badges, falha de API, confirmação de escrita + painel MFE; mensagem amigável em `ToolPermissionDeniedError` |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
-| Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Fases **1–4** concluídas (6 seções, Painel, status strip, cross-links, mobile) |
+| Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Revertido** no MFE (10 abas planas); mockups Markdown por aba → implementação no final — ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência; itens críticos migrados para código/testes |
 
@@ -72,9 +72,10 @@ Com **api-delpi** indisponível no ambiente local, use:
 
 ## Próximo backlog sugerido
 
-1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
-2. **Playbook 01** — `resolvedParams` e pendências ativas no router.
-3. **Interatividade Fase 5** — fluxos guiados no MFE.
+1. **Playbook 11** — revisar mockups `11_admin_ux_reorganizacao_abas/mockups/` (aba a aba); só então PR única de refatoração do admin.
+2. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
+3. **Playbook 01** — `resolvedParams` e pendências ativas no router.
+4. **Interatividade Fase 5** — fluxos guiados no MFE.
 
 ## Regra
 

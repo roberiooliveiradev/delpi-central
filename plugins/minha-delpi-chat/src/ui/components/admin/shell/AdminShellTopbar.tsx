@@ -1,79 +1,33 @@
-import { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
-
-import {
-  ADMIN_SECTIONS,
-  type AdminNavState,
-  type AdminSection,
-  type AdminSubTab,
-  getAdminSectionConfig,
-} from "../../../../navigation/adminNavigation";
-import { AdminLegacyQuickNav } from "./AdminLegacyQuickNav";
-import { AdminSubTabNav } from "./AdminSubTabNav";
+import type { AdminTab, AdminTabItem } from "./adminShellTypes";
 
 import "./AdminShellTopbar.css";
 
 type AdminShellTopbarProps = {
-  nav: AdminNavState;
+  activeTab: AdminTab;
+  tabs: AdminTabItem[];
   isLoading: boolean;
   onRefresh: () => void;
   onBack: () => void;
-  onNavChange: (nav: Partial<AdminNavState>) => void;
+  onTabChange: (tab: AdminTab) => void;
 };
 
 export function AdminShellTopbar({
-  nav,
+  activeTab,
+  tabs,
   isLoading,
   onRefresh,
   onBack,
-  onNavChange,
+  onTabChange,
 }: AdminShellTopbarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const sectionConfig = getAdminSectionConfig(nav.section);
-
-  const mobileItems = useMemo(
-    () =>
-      ADMIN_SECTIONS.flatMap((section) => {
-        if (!section.subTabs.length) {
-          return [{ section: section.key, subTab: null as AdminSubTab | null, label: section.label }];
-        }
-
-        return section.subTabs.map((subTab) => ({
-          section: section.key,
-          subTab: subTab.key,
-          label: `${section.label} · ${subTab.label}`,
-        }));
-      }),
-    [],
-  );
-
-  const activeMobileLabel =
-    mobileItems.find(
-      (item) => item.section === nav.section && item.subTab === (nav.subTab ?? null),
-    )?.label ?? sectionConfig.label;
-
-  function selectSection(section: AdminSection) {
-    const config = getAdminSectionConfig(section);
-    onNavChange({
-      section,
-      subTab: config.subTabs[0]?.key ?? null,
-      agentId: section === "agents" ? nav.agentId : null,
-    });
-    setMobileOpen(false);
-  }
-
-  function selectSubTab(subTab: AdminSubTab) {
-    onNavChange({ section: nav.section, subTab });
-    setMobileOpen(false);
-  }
-
   return (
     <header className="mdc-admin-topbar">
       <div className="mdc-admin-topbar__content">
         <div>
           <p className="mdc-chat-eyebrow">Administração</p>
           <h1>Minha DELPI Chat</h1>
-          <p>{sectionConfig.description}</p>
+          <p>
+            Curadoria da base global, diretrizes, ferramentas e auditoria operacional.
+          </p>
         </div>
 
         <div className="mdc-admin-topbar__actions">
@@ -91,67 +45,18 @@ export function AdminShellTopbar({
         </div>
       </div>
 
-      <div className="mdc-admin-mobile-select">
-        <button
-          type="button"
-          className="mdc-admin-mobile-trigger"
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((open) => !open)}
-        >
-          <span>{activeMobileLabel}</span>
-          <ChevronDown size={18} aria-hidden />
-        </button>
-        {mobileOpen ? (
-          <div className="mdc-admin-mobile-menu" role="menu">
-            {mobileItems.map((item) => (
-              <button
-                key={`${item.section}:${item.subTab ?? ""}`}
-                type="button"
-                role="menuitem"
-                className={
-                  item.section === nav.section && item.subTab === (nav.subTab ?? null)
-                    ? "is-active"
-                    : undefined
-                }
-                onClick={() => {
-                  onNavChange({ section: item.section, subTab: item.subTab });
-                  setMobileOpen(false);
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <nav className="mdc-admin-tabs mdc-admin-tabs--sections" aria-label="Seções do admin">
-        {ADMIN_SECTIONS.map((section) => {
-          const Icon = section.icon;
-          const isActive = nav.section === section.key;
-
-          return (
-            <button
-              key={section.key}
-              type="button"
-              className={isActive ? "is-active" : undefined}
-              aria-current={isActive ? "page" : undefined}
-              onClick={() => selectSection(section.key)}
-            >
-              <Icon size={16} aria-hidden />
-              <span>{section.label}</span>
-            </button>
-          );
-        })}
+      <nav className="mdc-admin-tabs" aria-label="Administração do chat">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            className={activeTab === tab.key ? "is-active" : undefined}
+            onClick={() => onTabChange(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </nav>
-
-      <AdminSubTabNav
-        section={sectionConfig}
-        activeSubTab={nav.subTab}
-        onSubTabChange={selectSubTab}
-      />
-
-      <AdminLegacyQuickNav nav={nav} onNavChange={onNavChange} />
     </header>
   );
 }

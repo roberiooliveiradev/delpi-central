@@ -1,20 +1,5 @@
 /* Utilitários compartilhados do admin — importar em ChatAdminPage.css */
 
-.mdc-admin-section-intro {
-  display: grid;
-  gap: var(--mdc-space-2);
-  margin-bottom: var(--mdc-space-4);
-}
-
-.mdc-admin-section-intro h2 {
-  margin: 0;
-}
-
-.mdc-admin-section-intro p {
-  margin: 0;
-  color: var(--mdc-text-muted);
-}
-
 .mdc-admin-page-header {
   display: grid;
   gap: 0.35rem;

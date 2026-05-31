@@ -176,6 +176,7 @@ Roadmap: [`inteligencia-chat-onda-10.md`](../../../minha-delpi-ai-api/docs/roadm
 | Intent «coloque na lousa» + SSE `canvas_open` (chat base, herda em agentes) | Concluído |
 | Persistir resposta antes do playback (reload não perde texto em geração) | Concluído |
 | Handoff stream → timeline sem piscar ao finalizar (`chatStreamHandoff`, maio/2026) | Concluído |
+| Admin UX Playbook 11 (6 seções) | **Revertido** — 10 abas planas; mockups em `11_admin_ux_reorganizacao_abas/mockups/` |
 | `OLLAMA_NUM_CTX=2048` — coexistência qwen2.5:3b + bge-m3 em 8GB RAM | Concluído |
 | Perguntas ambíguas pedem esclarecimento (não encerram) | Concluído |
 | Normalização de mensagens (typos/acentos) para seleção de actions | Concluído |

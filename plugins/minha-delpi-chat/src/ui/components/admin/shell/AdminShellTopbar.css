@@ -53,60 +53,6 @@
   padding: 0.22rem;
 }
 
-.mdc-admin-tabs--sections button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.mdc-admin-mobile-select {
-  display: none;
-  position: relative;
-}
-
-.mdc-admin-mobile-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--mdc-space-2);
-  border: 1px solid var(--mdc-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-surface);
-  padding: 0.55rem 0.75rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mdc-admin-mobile-menu {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 0.35rem);
-  left: 0;
-  right: 0;
-  display: grid;
-  max-height: 16rem;
-  overflow: auto;
-  border: 1px solid var(--mdc-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-surface);
-  box-shadow: var(--mdc-elevation-3);
-}
-
-.mdc-admin-mobile-menu button {
-  text-align: left;
-  border: 0;
-  background: transparent;
-  padding: 0.55rem 0.75rem;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mdc-admin-mobile-menu button.is-active {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  font-weight: 600;
-}
-
 .mdc-admin-tabs button {
   min-height: 2rem;
   border: 0;
@@ -152,16 +98,16 @@
 }
 
 @media (max-width: 767px) {
-  .mdc-admin-mobile-select {
-    display: block;
+  .mdc-admin-tabs {
+    width: 100%;
+    border-radius: var(--mdc-radius-lg);
+    padding: 0.18rem;
   }
 
-  .mdc-admin-tabs--sections {
-    display: none;
-  }
-
-  .mdc-admin-subtabs {
-    padding-inline: 0;
+  .mdc-admin-tabs button {
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.65rem;
   }
 }
 

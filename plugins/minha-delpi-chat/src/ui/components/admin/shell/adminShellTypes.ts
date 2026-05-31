@@ -1,12 +1,3 @@
-export type {
-  AdminNavState,
-  AdminSection,
-  AdminSubTab,
-  AdminSectionConfig,
-  LegacyAdminTab,
-} from "../../../../navigation/adminNavigation";
-
-/** @deprecated Prefer AdminSection */
 export type AdminTab =
   | "knowledge"
   | "metrics"
@@ -18,3 +9,8 @@ export type AdminTab =
   | "security"
   | "tools"
   | "audit";
+
+export type AdminTabItem = {
+  key: AdminTab;
+  label: string;
+};

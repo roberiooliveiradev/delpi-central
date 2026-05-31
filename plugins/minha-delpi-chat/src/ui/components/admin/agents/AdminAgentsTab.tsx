@@ -1,11 +1,7 @@
 import { BarChart3 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-import type { AdminNavState } from "../../../../navigation/adminNavigation";
-import { navigateChatHref } from "../../../../navigation/chatNavigation";
-import { buildChatAgentConfigHref, buildChatHref } from "../../../../navigation/chatRoutes";
 import { getChatAgentStats } from "../../../../data/api/chatApi";
-import { AdminSectionLinks } from "../shared/AdminSectionLinks";
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
 import {
   getAdminAgentSpecialization,
@@ -24,7 +20,6 @@ import "./AdminAgentsTab.css";
 type AdminAgentsTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   initialAgentId?: string | null;
-  onNavigate?: (nav: Partial<AdminNavState>) => void;
 };
 
 const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
@@ -41,7 +36,7 @@ const EMPTY_SPECIALIZATION: AdminAgentSpecialization = {
   includeGlobalKnowledge: true,
 };
 
-export function AdminAgentsTab({ getAccessToken, initialAgentId, onNavigate }: AdminAgentsTabProps) {
+export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTabProps) {
   const [agents, setAgents] = useState<AdminSpecializedAgent[]>([]);
   const [presets, setPresets] = useState<AdminAgentSpecializationPreset[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -226,33 +221,8 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId, onNavigate }: A
     }
   }
 
-  const builderLinks = [
-    {
-      label: "Lista e criação de agentes (builder)",
-      onClick: () => navigateChatHref(buildChatHref({ kind: "agents" })),
-    },
-    ...(selectedAgentId
-      ? [
-          {
-            label: `Abrir builder de ${selectedAgent?.name ?? "agente"}`,
-            onClick: () => navigateChatHref(buildChatAgentConfigHref(selectedAgentId)),
-          },
-        ]
-      : []),
-    ...(onNavigate
-      ? [
-          {
-            label: "Simulação no admin",
-            onClick: () => onNavigate({ section: "agents", subTab: "simulation" }),
-          },
-        ]
-      : []),
-  ];
-
   return (
     <section className="mdc-admin-agents">
-      <AdminSectionLinks items={builderLinks} />
-
       <header className="mdc-admin-agents__header">
         <div>
           <h2>Agentes especializados</h2>
