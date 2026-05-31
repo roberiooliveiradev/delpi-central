@@ -3,7 +3,10 @@
 
 from __future__ import annotations
 
+import os
 import sys
+import urllib.error
+import urllib.request
 from unittest.mock import patch
 
 from app.application.services.assistant_capabilities_registry import (
@@ -176,6 +179,22 @@ def main() -> int:
         failed += 1
     else:
         print("OK identity ↔ catálogo")
+
+    gateway_base = os.environ.get("SMOKE_BASE_URL", "http://delpi-gateway").strip().rstrip("/")
+    socket_url = f"{gateway_base}/socket.io/?EIO=4&transport=polling"
+
+    try:
+        with urllib.request.urlopen(socket_url, timeout=15) as response:
+            body = response.read().decode("utf-8", errors="replace")
+    except urllib.error.URLError as exc:
+        print(f"FAIL gateway socket.io ({socket_url}): {exc}", file=sys.stderr)
+        failed += 1
+    else:
+        if '"sid"' not in body or "unsupported version" in body.lower():
+            print(f"FAIL gateway socket.io handshake ({body[:120]!r})", file=sys.stderr)
+            failed += 1
+        else:
+            print("OK gateway socket.io (core-api via nginx dev)")
 
     if failed:
         return 1

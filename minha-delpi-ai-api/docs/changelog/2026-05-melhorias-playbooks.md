@@ -114,6 +114,8 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Problema | Correção |
 |----------|----------|
 | 502 em `/core-api/*` após restart de containers | `gateway/nginx.dev.conf` — upstreams com variável + `resolver` (DNS dinâmico Docker) |
+| Console `WebSocket … CONNECTION_REFUSED` / Engine.IO 400 no dev | `/socket.io` com `proxy_pass http://core-api:8000` estático (`^~`); portal usa `polling` + `websocket` |
+| Regressão homologação | `smoke_features_catalog` valida handshake `socket.io` via `SMOKE_BASE_URL` |
 
 ## Interatividade — Fase 5 (fluxos guiados)
 
