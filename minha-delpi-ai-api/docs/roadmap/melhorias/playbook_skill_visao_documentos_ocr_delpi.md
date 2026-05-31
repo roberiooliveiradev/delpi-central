@@ -220,7 +220,7 @@ Turno com desenho
   → ChatDrawingValidationOrchestrationService
 ```
 
-**Stream:** `ChatStreamActivityService` — fases `document_vision_start`, `document_vision_page`, `document_vision_complete` (paridade com `drawing_analysis`).
+**Stream:** `ChatStreamActivityService.emit_document_vision_progress` — fase `document_vision` (`start`, `ocr`, `complete`); integrado no fluxo de desenho antes da análise DELPI.
 
 **adminDebug:** bloco `documentVision` com engine, stages, legibility, tempo, páginas.
 

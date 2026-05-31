@@ -53,3 +53,36 @@ def test_web_search_finished_reports_successful_results():
     assert entry["group"] == "Pesquisa web"
     assert entry["level"] == "success"
     assert "1 fonte" in entry["message"]
+
+
+def test_document_vision_complete_entry():
+    entry = ChatStreamActivityService.document_vision_step(
+        step_key="complete",
+        message="Texto extraído (motor tesseract, 120 caracteres)",
+        state="done",
+    )
+
+    assert entry["phase"] == "document_vision"
+    assert entry["group"] == "Visão de documentos"
+    assert entry["state"] == "done"
+
+
+def test_emit_document_vision_progress_invokes_callback():
+    events: list[dict] = []
+
+    ChatStreamActivityService.emit_document_vision_progress(
+        events.append,
+        phase="start",
+    )
+    ChatStreamActivityService.emit_document_vision_progress(
+        events.append,
+        phase="complete",
+        engine="tesseract",
+        char_count=42,
+    )
+
+    assert len(events) == 2
+    assert events[0]["phase"] == "document_vision"
+    assert "OCR" in events[0]["message"]
+    assert events[1]["state"] == "done"
+    assert "tesseract" in events[1]["message"]

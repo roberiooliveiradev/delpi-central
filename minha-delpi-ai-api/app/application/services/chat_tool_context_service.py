@@ -148,18 +148,39 @@ class ChatToolContextService:
 
         drawing_pdf_extract = None
 
-        if drawing_analysis_mode and drawing_has_pdf and attachment_context:
+        if drawing_analysis_mode and drawing_has_pdf:
+            from app.application.services.chat_document_vision_service import (
+                ChatDocumentVisionService,
+            )
+            from app.application.services.chat_stream_activity_service import (
+                ChatStreamActivityService,
+            )
             from app.domain.services.chat_drawing_pdf_extraction_service import (
                 ChatDrawingPdfExtractionService,
             )
 
-            drawing_pdf_extract = ChatDrawingPdfExtractionService.parse_from_attachment_context(
-                attachment_context
+            vision_will_run = ChatDocumentVisionService.should_run_for_drawing(
+                drawing_runtime_skills
             )
 
-            from app.application.services.chat_document_vision_service import (
-                ChatDocumentVisionService,
-            )
+            if vision_will_run and on_stream_activity:
+                ChatStreamActivityService.emit_document_vision_progress(
+                    on_stream_activity,
+                    phase="start",
+                )
+                ChatStreamActivityService.emit_document_vision_progress(
+                    on_stream_activity,
+                    phase="ocr",
+                )
+
+            drawing_pdf_extract = {}
+            if attachment_context:
+                drawing_pdf_extract = (
+                    ChatDrawingPdfExtractionService.parse_from_attachment_context(
+                        attachment_context
+                    )
+                    or {}
+                )
 
             drawing_pdf_extract = ChatDocumentVisionService.enrich_drawing_extract(
                 drawing_pdf_extract,
@@ -175,6 +196,20 @@ class ChatToolContextService:
                 and not drawing_product_code
             ):
                 drawing_product_code = str(drawing_pdf_extract["productCode"])
+
+            if vision_will_run and on_stream_activity and drawing_pdf_extract:
+                char_count = int(drawing_pdf_extract.get("charCount") or 0)
+                engine = (
+                    drawing_pdf_extract.get("extractor")
+                    or drawing_pdf_extract.get("visionEngine")
+                    or "document_vision"
+                )
+                ChatStreamActivityService.emit_document_vision_progress(
+                    on_stream_activity,
+                    phase="complete",
+                    engine=str(engine),
+                    char_count=char_count,
+                )
 
         if drawing_analysis_mode and on_stream_activity:
             from app.application.services.chat_stream_activity_service import (

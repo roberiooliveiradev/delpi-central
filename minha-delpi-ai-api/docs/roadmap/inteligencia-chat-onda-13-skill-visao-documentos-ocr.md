@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** parcial (13.1–13.2 + 13.4 MVP — Tesseract PDF via PyMuPDF; maio/2026)  
+**Status:** parcial (13.1–13.2 + 13.4 + OCR imagem + stream MVP; maio/2026)  
 **Criado:** 2026-05-31  
 **Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
@@ -68,7 +68,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 13.6.1 | Stream + adminDebug `documentVision` | ⬜ |
+| 13.6.1 | Stream + adminDebug `documentVision` | ✅ (stream `document_vision`; adminDebug fase `document_vision`) |
 | 13.6.2 | `scripts/smoke_document_vision.py` | ✅ |
 | 13.6.3 | Compose profile `vision` + `requirements-vision.txt` | ⬜ |
 | 13.6.4 | Métricas admin (opcional) | ⬜ |
@@ -78,12 +78,21 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 ## Validação prevista
 
 ```bash
-docker compose -f infra/docker-compose.dev.yml --profile vision exec -T minha-delpi-ai-api \
-  sh -c 'PYTHONPATH=/app pytest tests/unit/application/services/test_chat_document_vision_service.py -q'
+# Rebuild após mudanças em requirements ou Dockerfile da API
+docker compose -f infra/docker-compose.dev.yml build minha-delpi-ai-api
+docker compose -f infra/docker-compose.dev.yml --profile chat up -d --force-recreate minha-delpi-ai-api
+
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  sh -c 'PYTHONPATH=/app pytest tests/unit/application/services/test_chat_document_vision_service.py tests/unit/application/services/test_chat_attachment_context_service.py tests/unit/application/services/test_chat_stream_activity_service.py -q'
 
 docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
   sh -c 'PYTHONPATH=/app python scripts/smoke_document_vision.py'
+
+docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
+  sh -c 'PYTHONPATH=/app python scripts/smoke_drawing_analyser.py'
 ```
+
+Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.md).
 
 ---
 
@@ -93,3 +102,5 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api \
 |------|-----------|
 | 2026-05-31 | Criação da Onda 13 a partir do playbook de visão/OCR. |
 | 2026-05-31 | MVP: `ChatDocumentVisionService`, skill `document-vision-delpi`, OCR PDF Tesseract + integração drawing. |
+| 2026-05-31 | OCR de imagens (PNG/JPG/WebP) no anexo e no fluxo de desenho; enrich sem depender só de `attachment_context`. |
+| 2026-05-31 | Stream `document_vision` no chat; README com env vars; validação container + smokes. |

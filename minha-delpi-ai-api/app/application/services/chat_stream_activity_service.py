@@ -25,10 +25,11 @@ _PHASE_GROUPS = {
     "rag": "Conhecimento",
     "response": "Respondendo",
     "drawing_analysis": "Análise de desenho",
+    "document_vision": "Visão de documentos",
 }
 
 _DRAWING_ANALYSIS_STAGE_MESSAGES: tuple[tuple[str, str], ...] = (
-    ("read_pdf", "Lendo PDF…"),
+    ("read_pdf", "Lendo documento (PDF ou imagem)…"),
     ("identify_code", "Identificando código…"),
     ("query_api", "Consultando API DELPI…"),
     ("validate_header", "Validando cabeçalho…"),
@@ -201,6 +202,71 @@ class ChatStreamActivityService:
                     step_key=step_key,
                     message=message,
                     state="active",
+                )
+            )
+
+    @classmethod
+    def document_vision_step(
+        cls,
+        *,
+        step_key: str,
+        message: str,
+        state: str = "active",
+    ) -> dict[str, Any]:
+        return cls.entry(
+            verb="Extraindo",
+            target="texto do documento",
+            phase="document_vision",
+            state=state,
+            level="info",
+            message=message,
+            entry_id=f"document-vision-{step_key}",
+        )
+
+    @classmethod
+    def emit_document_vision_progress(
+        cls,
+        on_stream_activity,
+        *,
+        phase: str = "start",
+        engine: str | None = None,
+        char_count: int | None = None,
+    ) -> None:
+        if not on_stream_activity:
+            return
+
+        if phase == "start":
+            on_stream_activity(
+                cls.document_vision_step(
+                    step_key="start",
+                    message="OCR e leitura do anexo…",
+                    state="active",
+                )
+            )
+            return
+
+        if phase == "ocr":
+            on_stream_activity(
+                cls.document_vision_step(
+                    step_key="ocr",
+                    message="Reconhecendo texto (Tesseract)…",
+                    state="active",
+                )
+            )
+            return
+
+        if phase == "complete":
+            parts: list[str] = []
+            if engine:
+                parts.append(f"motor {engine}")
+            if char_count is not None and char_count > 0:
+                parts.append(f"{char_count} caracteres")
+            detail = f" ({', '.join(parts)})" if parts else ""
+            on_stream_activity(
+                cls.document_vision_step(
+                    step_key="complete",
+                    message=f"Texto extraído{detail}",
+                    state="done",
                 )
             )
 

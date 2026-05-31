@@ -97,8 +97,14 @@ docs/              # documentação técnica
 | `CHAT_PERSIST_BEFORE_PLAYBACK` | `true` (default) — persiste no banco antes do playback; front anima com escrita natural |
 | `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` | Skill `company-knowledge` no chat sem agente (default `true`) |
 | `CHAT_ATTACHMENT_CONTEXT_*` | Injeção inline de texto de anexos no prompt |
-| `CHAT_ATTACHMENT_IMAGE_OCR_ENABLED` | OCR opcional em PNG/JPG/WebP (`false` por padrão; `true` no compose dev) |
-| `CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS` | Limite de caracteres extraídos por OCR (padrão 4000) |
+| `CHAT_ATTACHMENT_IMAGE_OCR_ENABLED` | OCR legado em PNG/JPG/WebP (`false` por padrão); preferir `CHAT_DOCUMENT_VISION_*` |
+| `CHAT_ATTACHMENT_IMAGE_OCR_MAX_CHARS` | Limite de caracteres do OCR legado (padrão 4000) |
+| `CHAT_DOCUMENT_VISION_ENABLED` | Skill `document-vision-delpi` — OCR PDF/imagem no chat base (`true` no compose dev) |
+| `CHAT_DOCUMENT_VISION_BACKEND` | `auto` \| `native` \| `tesseract` (MVP: native + Tesseract via PyMuPDF) |
+| `CHAT_DOCUMENT_VISION_AUTO_WITH_DRAWING` | Enriquece extração da skill de desenho (default `true`) |
+| `CHAT_DOCUMENT_VISION_MAX_PAGES` / `DPI` / `MAX_CHARS` | Limites de rasterização e texto |
+| `CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS` | Mínimo para considerar PDF legível antes do OCR |
+| `CHAT_DOCUMENT_VISION_TESSERACT_LANG` | Idiomas Tesseract (ex.: `por+eng`) |
 | `EXTERNAL_ACTION_SEMANTIC_*` | Ranking semântico de actions OpenAPI |
 | `CHAT_TOOL_ROUTER_*` | Router LLM para tools/actions |
 | `CHAT_HISTORY_SUMMARY_*` | Resumo de histórico longo no prompt |
