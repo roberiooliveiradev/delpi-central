@@ -1,6 +1,6 @@
 # Mockups — Admin Minha DELPI Chat
 
-Wireframes em **Markdown** (sem implementação no MFE até aprovação do conjunto).
+Wireframes em **Markdown**. Incrementos **01–10** já no MFE (10 abas planas + DS workspace); **11** só após aprovação explícita do conjunto.
 
 ## Template (copiar em cada aba)
 
@@ -16,16 +16,16 @@ Wireframes em **Markdown** (sem implementação no MFE até aprovação do conju
 
 ## Índice
 
-| Arquivo | Aba legada | Status do mockup |
-|---------|------------|------------------|
-| [01_conhecimento.md](./01_conhecimento.md) | Conhecimento | Rascunho inicial |
-| [02_diretrizes.md](./02_diretrizes.md) | Diretrizes | Esqueleto |
-| [03_skills.md](./03_skills.md) | Skills | Esqueleto |
-| [04_agentes.md](./04_agentes.md) | Agentes | Esqueleto |
-| [05_simulacao.md](./05_simulacao.md) | Simulação | Esqueleto |
-| [06_metricas.md](./06_metricas.md) | Métricas | Esqueleto |
-| [07_avaliacoes.md](./07_avaliacoes.md) | Avaliações | Esqueleto |
-| [08_ferramentas.md](./08_ferramentas.md) | Ferramentas | Esqueleto |
-| [09_seguranca.md](./09_seguranca.md) | Segurança | Esqueleto |
-| [10_auditoria.md](./10_auditoria.md) | Auditoria | Esqueleto |
-| [11_painel_e_navegacao.md](./11_painel_e_navegacao.md) | (novo) | Esqueleto — **após** as 10 abas |
+| Arquivo | Aba legada | Status |
+|---------|------------|--------|
+| [01_conhecimento.md](./01_conhecimento.md) | Conhecimento | Implementado (strip + API summary) |
+| [02_diretrizes.md](./02_diretrizes.md) | Diretrizes | Implementado |
+| [03_skills.md](./03_skills.md) | Skills | Implementado |
+| [04_agentes.md](./04_agentes.md) | Agentes | Implementado |
+| [05_simulacao.md](./05_simulacao.md) | Simulação | Implementado |
+| [06_metricas.md](./06_metricas.md) | Métricas | Implementado (observabilidade) |
+| [07_avaliacoes.md](./07_avaliacoes.md) | Avaliações | Implementado |
+| [08_ferramentas.md](./08_ferramentas.md) | Ferramentas | Implementado (+ inteligência global) |
+| [09_seguranca.md](./09_seguranca.md) | Segurança | Implementado (+ RBAC) |
+| [10_auditoria.md](./10_auditoria.md) | Auditoria | Implementado |
+| [11_painel_e_navegacao.md](./11_painel_e_navegacao.md) | (novo) | **Aguardando aprovação** — não implementar 6 seções antes |

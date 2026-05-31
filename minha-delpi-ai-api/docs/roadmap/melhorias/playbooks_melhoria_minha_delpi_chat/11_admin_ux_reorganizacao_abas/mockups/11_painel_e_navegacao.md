@@ -35,4 +35,6 @@ Definir se (e como) substituir as **10 abas planas** por seções agrupadas, sem
 
 ## Status
 
-- [ ] Aguardando aprovação dos mockups 01–10.
+- [x] Mockups 01–10 implementados no MFE (abas planas + `smoke_admin_endpoints.py`).
+- [ ] Aprovação do produto para trocar navegação (6 seções / dropdowns).
+- [ ] Implementação do mockup 11 (sem duplicar barra «Acesso direto»).
