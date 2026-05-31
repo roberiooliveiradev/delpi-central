@@ -1,5 +1,15 @@
 import { useState } from "react";
-import { ArrowRight, Sparkles, X } from "lucide-react";
+import {
+  Building2,
+  LayoutGrid,
+  MessageSquare,
+  Package,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+import { contextChipKey, contextChipKindClass } from "../chatActiveContext";
 import {
   buildContextChipMenuActions,
   buildContextChipQuery,
@@ -16,10 +26,29 @@ export type ChatContextChip = {
 type ChatContextBarProps = {
   chips: ChatContextChip[];
   onClearContext?: () => void;
+  onDismissChip?: (chip: ChatContextChip) => void;
   onChipAction?: (query: string) => void;
 };
 
-export function ChatContextBar({ chips, onClearContext, onChipAction }: ChatContextBarProps) {
+const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
+  product: Package,
+  branch: Building2,
+  warehouse: Building2,
+  format: LayoutGrid,
+  tone: MessageSquare,
+  preference: SlidersHorizontal,
+};
+
+function chipIconForKind(kind: string): LucideIcon {
+  return CHIP_KIND_ICONS[kind] ?? SlidersHorizontal;
+}
+
+export function ChatContextBar({
+  chips,
+  onClearContext,
+  onDismissChip,
+  onChipAction,
+}: ChatContextBarProps) {
   const [chipMenu, setChipMenu] = useState<{
     anchor: { x: number; y: number };
     actions: ReturnType<typeof buildContextChipMenuActions>;
@@ -30,6 +59,7 @@ export function ChatContextBar({ chips, onClearContext, onChipAction }: ChatCont
   }
 
   const interactive = Boolean(onChipAction);
+  const showClear = Boolean(onClearContext) && chips.length > 0;
 
   function openChipMenu(chip: ChatContextChip, clientX: number, clientY: number) {
     if (!onChipAction) {
@@ -56,62 +86,91 @@ export function ChatContextBar({ chips, onClearContext, onChipAction }: ChatCont
 
   return (
     <div className="mdc-chat-context-bar" aria-label="Contexto ativo da conversa">
-      <div className="mdc-chat-context-bar__header">
-        <div className="mdc-chat-context-bar__heading">
-          <Sparkles size={14} aria-hidden="true" className="mdc-chat-context-bar__icon" />
-          <span className="mdc-chat-context-bar__title">Contexto ativo</span>
-          {interactive ? (
-            <span className="mdc-chat-context-bar__hint">Clique ou botão direito</span>
-          ) : null}
-        </div>
-
-        {onClearContext ? (
-          <button
-            type="button"
-            className="mdc-chat-context-bar__clear"
-            onClick={onClearContext}
-            title="Limpar preferências de contexto"
-            aria-label="Limpar contexto ativo"
-          >
-            <X size={14} aria-hidden="true" />
-            <span className="mdc-chat-context-bar__clear-label">Limpar</span>
-          </button>
-        ) : null}
-      </div>
+      <span className="mdc-chat-context-bar__label">Contexto</span>
 
       <div className="mdc-chat-context-bar__chips" role="list">
         {chips.map((chip) => {
-          const chipKey = `${chip.kind}-${chip.value}`;
+          const key = contextChipKey(chip);
           const query = interactive ? buildContextChipQuery(chip) : null;
           const isActionable = interactive && Boolean(query);
+          const Icon = chipIconForKind(chip.kind);
+          const kindClass = contextChipKindClass(chip.kind);
+
+          const chipBody = (
+            <>
+              <Icon size={12} aria-hidden="true" className="mdc-chat-context-bar__chip-icon" />
+              <span className="mdc-chat-context-bar__chip-text">{chip.label}</span>
+            </>
+          );
 
           if (isActionable) {
             return (
-              <button
-                key={chipKey}
-                type="button"
-                role="listitem"
-                className="mdc-chat-context-bar__chip mdc-chat-context-bar__chip--action"
-                title={`Consultar: ${chip.label}`}
-                onClick={(event) => openChipMenu(chip, event.clientX, event.clientY)}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  openChipMenu(chip, event.clientX, event.clientY);
-                }}
-              >
-                <span className="mdc-chat-context-bar__chip-text">{chip.label}</span>
-                <ArrowRight size={13} aria-hidden="true" className="mdc-chat-context-bar__chip-arrow" />
-              </button>
+              <span key={key} role="listitem" className="mdc-chat-context-bar__chip-wrap">
+                <button
+                  type="button"
+                  className={[
+                    "mdc-chat-context-bar__chip",
+                    "mdc-chat-context-bar__chip--action",
+                    kindClass,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  title={`${chip.label} — clique para ações`}
+                  onClick={(event) => openChipMenu(chip, event.clientX, event.clientY)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    openChipMenu(chip, event.clientX, event.clientY);
+                  }}
+                >
+                  {chipBody}
+                </button>
+                {onDismissChip ? (
+                  <button
+                    type="button"
+                    className="mdc-chat-context-bar__chip-dismiss"
+                    title={`Remover ${chip.label} do contexto`}
+                    aria-label={`Remover ${chip.label}`}
+                    onClick={() => onDismissChip(chip)}
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
             );
           }
 
           return (
-            <span key={chipKey} role="listitem" className="mdc-chat-context-bar__chip">
-              {chip.label}
+            <span key={key} role="listitem" className="mdc-chat-context-bar__chip-wrap">
+              <span className={["mdc-chat-context-bar__chip", kindClass].filter(Boolean).join(" ")}>
+                {chipBody}
+              </span>
+              {onDismissChip ? (
+                <button
+                  type="button"
+                  className="mdc-chat-context-bar__chip-dismiss"
+                  title={`Remover ${chip.label} do contexto`}
+                  aria-label={`Remover ${chip.label}`}
+                  onClick={() => onDismissChip(chip)}
+                >
+                  <X size={12} aria-hidden="true" />
+                </button>
+              ) : null}
             </span>
           );
         })}
       </div>
+
+      {showClear ? (
+        <button
+          type="button"
+          className="mdc-chat-context-bar__clear"
+          onClick={onClearContext}
+          title="Limpar todo o contexto"
+          aria-label="Limpar todo o contexto"
+        >
+          <X size={14} aria-hidden="true" />
+        </button>
+      ) : null}
 
       {chipMenu && onChipAction ? (
         <ChatTableRowMenu

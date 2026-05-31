@@ -43,8 +43,19 @@ docker compose -f infra/docker-compose.dev.yml up -d minha-delpi-chat
 | Home vazia (após skeleton) → **Consultar produto** | Abre diálogo «Consulta ao chat» com campo **Código do produto** (sem travar a aba) |
 | Home ao abrir | Skeleton de perfis/cards até o catálogo; não deve aparecer chips «Consultas e autoajuda» genéricos e depois sumir |
 | Preencher código → **Enviar pergunta** | Mensagem no histórico **sem** `{{productCode}}` |
-| Colar `me fale do produto {{productCode}}` no composer e Enter | Abre diálogo **Consulta ao chat** (não só banner de erro) |
+| Atalho / quebra-gelo com placeholder → confirmar | Botão **Inserir pergunta** (texto vai ao campo de mensagem; revisar e enviar) — não usar jargão «composer» |
+| Cards do agente (home) | Exibem **Ex.: 10080001** no lugar de `{{productCode}}`; clique ainda abre o diálogo |
+| Colar `me fale do produto {{productCode}}` no campo de mensagem e Enter | Abre diálogo **Consulta ao chat** (não só banner de erro) |
 | **Tentar novamente** com texto incompleto | Reabre o diálogo com o campo de código |
+
+### Contexto ativo (barra acima do campo de mensagem)
+
+| Passo | Esperado |
+|-------|----------|
+| Após consulta com produto (e opcionalmente filial / tabela) | Barra **Contexto** discreta com **vários chips** (produto, filial, preferências) |
+| Várias respostas na mesma sessão | Chips **acumulados** dos últimos turnos (deduplicados por tipo+valor) |
+| Hover no chip (desktop) | ✕ para remover só aquele item; ✕ à direita limpa tudo |
+| Clique no chip de produto | Menu ou consulta (estoque, fornecedores, etc.) |
 
 ---
 

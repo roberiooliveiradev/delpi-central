@@ -439,6 +439,17 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Commits:** `f8d571bf`, `5633a777`, `0dcda7da`, `6670e510`, `a5c7e9e9`, `384cbd45`, `ecac82f4`, `df271df7`, `a1c9c33d`, `2500fc14`, `fd75c884`.
 
+## UX atalhos, diálogo e contexto ativo (31/05/2026)
+
+| Item | Entrega |
+|------|---------|
+| Exibição de atalhos | `formatShortcutTemplateForDisplay` — `{{productCode}}` → `Ex.: 10080001` nos cards do agente |
+| Diálogo de atalho | `CHAT_SHORTCUT_PROMPT_COPY` — **Inserir pergunta** / textos sem «composer» |
+| Contexto ativo | `collectActiveContextChips` — merge multi-turno; barra compacta; ícones por tipo; remover chip ou limpar tudo |
+| Testes | Vitest `chatActiveContext`, `chatShortcutPrompt` (9) |
+| Homologação | `run_chat_shortcut_homologation.sh` via `delpi-gateway` — login `rober` + catálogo + follow-up OK |
+| Deploy MFE | `docker compose build` + `up -d minha-delpi-chat` |
+
 ## Homologação — api-externa local
 
 | Item | Entrega |

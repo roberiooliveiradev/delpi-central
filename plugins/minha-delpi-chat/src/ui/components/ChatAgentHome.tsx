@@ -92,7 +92,7 @@ export function ChatAgentHome({
                 key={icebreaker}
                 type="button"
                 onClick={() => onUseSuggestion(icebreaker)}
-                title={icebreaker}
+                title={displayLabel}
               >
                 <Sparkles size={15} aria-hidden="true" />
                 <span>{displayLabel}</span>

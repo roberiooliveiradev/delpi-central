@@ -105,6 +105,33 @@ function placeholderLabel(fieldId: string): string {
   return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : "Valor";
 }
 
+/** Texto de exemplo exibido no lugar de `{{campo}}` (cards, tour, tooltips). */
+export function shortcutDisplayHintForField(fieldId: string): string {
+  if (fieldId in FIELD_DEFINITIONS) {
+    return FIELD_DEFINITIONS[fieldId as ShortcutFieldId].placeholder;
+  }
+
+  return `informe ${placeholderLabel(fieldId).toLowerCase()}`;
+}
+
+/**
+ * Versão legível de templates com placeholders — não altera o valor enviado ao clicar.
+ * Ex.: `me fale do produto {{productCode}}` → `me fale do produto Ex.: 10080001`
+ */
+export function formatShortcutTemplateForDisplay(template: string): string {
+  const normalized = normalizeShortcutTemplate(template);
+
+  if (!hasShortcutPlaceholders(normalized)) {
+    return normalized;
+  }
+
+  SHORTCUT_PLACEHOLDER_PATTERN.lastIndex = 0;
+
+  return normalized.replace(SHORTCUT_PLACEHOLDER_PATTERN, (_match, fieldId: string) =>
+    shortcutDisplayHintForField(fieldId),
+  );
+}
+
 function fieldDefinitionForPlaceholder(fieldId: string): ShortcutFieldDefinition {
   if (fieldId in FIELD_DEFINITIONS) {
     return FIELD_DEFINITIONS[fieldId as ShortcutFieldId];
@@ -213,3 +240,32 @@ export function extractProductCodeFromContextChips(
 
   return null;
 }
+
+/** Textos do diálogo de atalhos — linguagem para o usuário final (sem «composer»). */
+export const CHAT_SHORTCUT_PROMPT_COPY = {
+  /** Coloca a pergunta no campo de mensagem; o usuário revisa e envia. */
+  insert: {
+    title: "Preencha para continuar",
+    description:
+      "A pergunta montada aparecerá no campo de mensagem abaixo. Revise e envie quando estiver pronta.",
+    confirmLabel: "Inserir pergunta",
+  },
+  /** Envia direto após preencher (ex.: ajuda / experimentar). */
+  send: {
+    title: "Preencha para continuar",
+    description: "Informe os dados para enviar a pergunta ao agente.",
+    confirmLabel: "Enviar pergunta",
+  },
+  /** Reutilizar mensagem do histórico no campo de mensagem. */
+  reuse: {
+    title: "Preencha para continuar",
+    description:
+      "Complete os campos. A mensagem montada voltará ao campo de mensagem para você revisar.",
+    confirmLabel: "Inserir pergunta",
+  },
+  resend: {
+    title: "Preencha para continuar",
+    description: "Informe os dados antes de reenviar a mensagem.",
+    confirmLabel: "Reenviar",
+  },
+} as const;

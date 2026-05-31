@@ -1,3 +1,5 @@
+import { formatShortcutTemplateForDisplay } from "./chatShortcutPrompt";
+
 /** Limites de quebra-gelos na home do agente e no builder. */
 export const AGENT_ICEBREAKER_MAX_COUNT = 6;
 export const AGENT_ICEBREAKER_MAX_CHARS = 72;
@@ -18,12 +20,12 @@ export function clampIcebreakerDraft(value: string): string {
   return value.slice(0, AGENT_ICEBREAKER_MAX_CHARS);
 }
 
-/** Texto exibido no card (pode truncar; o clique envia o texto completo). */
+/** Texto exibido no card (pode truncar; o clique envia o template com `{{campo}}`). */
 export function formatIcebreakerForDisplay(
   text: string,
   maxChars: number = AGENT_ICEBREAKER_MAX_CHARS,
 ): string {
-  const trimmed = text.trim();
+  const trimmed = formatShortcutTemplateForDisplay(text);
 
   if (trimmed.length <= maxChars) {
     return trimmed;

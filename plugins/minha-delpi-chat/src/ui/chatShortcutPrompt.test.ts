@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   fillShortcutTemplate,
+  formatShortcutTemplateForDisplay,
   hasShortcutPlaceholders,
   hasUnresolvedShortcutPlaceholders,
   listShortcutFieldIds,
@@ -51,5 +52,17 @@ describe("chatShortcutPrompt", () => {
     expect(hasShortcutPlaceholders(query)).toBe(true);
     expect(listShortcutFieldIds(query)).toEqual(["productCode"]);
     expect(resolveShortcutFields(query)).toHaveLength(1);
+  });
+
+  it("substitui {{campo}} por dica legível na exibição", () => {
+    expect(formatShortcutTemplateForDisplay("me fale do produto {{productCode}}")).toBe(
+      "me fale do produto Ex.: 10080001",
+    );
+    expect(formatShortcutTemplateForDisplay("pesquise na web sobre {{searchQuery}}")).toBe(
+      "pesquise na web sobre Ex.: manual WEG CFW500",
+    );
+    expect(formatShortcutTemplateForDisplay("o que você pode fazer?")).toBe(
+      "o que você pode fazer?",
+    );
   });
 });

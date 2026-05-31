@@ -24,6 +24,11 @@ import {
   type ShortcutPromptOptions,
 } from "../hooks/useChatShortcutPrompt";
 import {
+  collectActiveContextChips,
+  contextChipKey,
+} from "../chatActiveContext";
+import {
+  CHAT_SHORTCUT_PROMPT_COPY,
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
 } from "../chatShortcutPrompt";
@@ -173,9 +178,8 @@ export function ChatPage({
     (raw: string, options?: ShortcutPromptOptions) => Promise<string | null>
   >(async () => null);
   const shortcutSendPromptOptionsRef = useRef<ShortcutPromptOptions>({
+    ...CHAT_SHORTCUT_PROMPT_COPY.send,
     title: "Consulta ao chat",
-    description: "Informe o código do produto ou o texto da busca antes de enviar.",
-    confirmLabel: "Enviar pergunta",
   });
   const catalogProfileSyncedRef = useRef(false);
 
@@ -257,28 +261,25 @@ export function ChatPage({
   });
 
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
+  const [dismissedContextChipKeys, setDismissedContextChipKeys] = useState<string[]>([]);
 
-  const activeContextChips = useMemo(() => {
+  const mergedContextChips = useMemo(() => {
     if (contextMemoryCleared) {
       return [];
     }
 
-    for (let index = messages.length - 1; index >= 0; index -= 1) {
-      const message = messages[index];
+    return collectActiveContextChips(messages);
+  }, [messages, contextMemoryCleared]);
 
-      if (message.role !== "assistant") {
-        continue;
-      }
-
-      const chips = message.metadata?.contextChips;
-
-      if (Array.isArray(chips) && chips.length > 0) {
-        return chips as ChatContextChip[];
-      }
+  const activeContextChips = useMemo(() => {
+    if (dismissedContextChipKeys.length === 0) {
+      return mergedContextChips;
     }
 
-    return [];
-  }, [messages, contextMemoryCleared]);
+    const hidden = new Set(dismissedContextChipKeys);
+
+    return mergedContextChips.filter((chip) => !hidden.has(contextChipKey(chip)));
+  }, [mergedContextChips, dismissedContextChipKeys]);
 
   const shortcutPrefillContext = useMemo(
     () => ({
@@ -293,9 +294,8 @@ export function ChatPage({
 
   const shortcutSendPromptOptions = useMemo<ShortcutPromptOptions>(
     () => ({
+      ...CHAT_SHORTCUT_PROMPT_COPY.send,
       title: "Consulta ao chat",
-      description: "Informe o código do produto ou o texto da busca antes de enviar.",
-      confirmLabel: "Enviar pergunta",
     }),
     [],
   );
@@ -352,7 +352,16 @@ export function ChatPage({
 
   useEffect(() => {
     setContextMemoryCleared(false);
+    setDismissedContextChipKeys([]);
   }, [activeSession?.id]);
+
+  const handleDismissContextChip = useCallback((chip: ChatContextChip) => {
+    const key = contextChipKey(chip);
+
+    setDismissedContextChipKeys((current) =>
+      current.includes(key) ? current : [...current, key],
+    );
+  }, []);
 
   const handleClearActiveContext = useCallback(() => {
     void (async () => {
@@ -370,6 +379,7 @@ export function ChatPage({
       }
 
       setContextMemoryCleared(true);
+      setDismissedContextChipKeys([]);
     })();
   }, [activeSession?.id, getAccessToken, sendMessage]);
 
@@ -1273,10 +1283,7 @@ export function ChatPage({
   }
 
   async function handleHelpTryPrompt(query: string) {
-    const resolved = await resolveShortcutQuery(query, {
-      title: "Preencha para continuar",
-      confirmLabel: "Enviar pergunta",
-    });
+    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.send);
 
     if (!resolved) {
       return;
@@ -1289,11 +1296,7 @@ export function ChatPage({
   }
 
   async function handleReuseMessage(content: string) {
-    const resolved = await resolveShortcutQuery(content, {
-      title: "Preencha para continuar",
-      description: "Complete os campos antes de reutilizar a mensagem no composer.",
-      confirmLabel: "Usar no composer",
-    });
+    const resolved = await resolveShortcutQuery(content, CHAT_SHORTCUT_PROMPT_COPY.reuse);
 
     if (resolved) {
       setDraft(resolved);
@@ -1301,10 +1304,7 @@ export function ChatPage({
   }
 
   async function handleInsertQuery(query: string) {
-    const resolved = await resolveShortcutQuery(query, {
-      title: "Preencha para continuar",
-      confirmLabel: "Usar no composer",
-    });
+    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.insert);
 
     if (resolved) {
       setDraft(resolved);
@@ -1312,11 +1312,7 @@ export function ChatPage({
   }
 
   async function handleAgentIcebreaker(query: string) {
-    const resolved = await resolveShortcutQuery(query, {
-      title: "Preencha para continuar",
-      description: "Informe os dados antes de colocar a mensagem no composer.",
-      confirmLabel: "Usar no composer",
-    });
+    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.insert);
 
     if (!resolved) {
       return;
@@ -1326,10 +1322,7 @@ export function ChatPage({
   }
 
   async function handleEditAndResendMessage(messageId: string, content: string) {
-    const resolved = await resolveShortcutQuery(content.trim(), {
-      title: "Preencha para continuar",
-      confirmLabel: "Reenviar",
-    });
+    const resolved = await resolveShortcutQuery(content.trim(), CHAT_SHORTCUT_PROMPT_COPY.resend);
 
     if (!resolved) {
       return null;
@@ -2072,6 +2065,7 @@ export function ChatPage({
                 <ChatContextBar
                   chips={activeContextChips}
                   onClearContext={handleClearActiveContext}
+                  onDismissChip={handleDismissContextChip}
                   onChipAction={handleDrillDown}
                 />
 

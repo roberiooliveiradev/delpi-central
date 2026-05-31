@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 
 import {
+  CHAT_SHORTCUT_PROMPT_COPY,
   fillShortcutTemplate,
   type ShortcutFieldDefinition,
   validateShortcutValues,
@@ -24,11 +25,11 @@ type ChatShortcutPromptDialogProps = {
 export function ChatShortcutPromptDialog({
   open,
   template,
-  title = "Preencha para continuar",
-  description = "Informe os dados da consulta antes de enviar.",
+  title = CHAT_SHORTCUT_PROMPT_COPY.insert.title,
+  description = CHAT_SHORTCUT_PROMPT_COPY.insert.description,
   fields,
   initialValues = {},
-  confirmLabel = "Usar no chat",
+  confirmLabel = CHAT_SHORTCUT_PROMPT_COPY.insert.confirmLabel,
   onCancel,
   onConfirm,
 }: ChatShortcutPromptDialogProps) {
