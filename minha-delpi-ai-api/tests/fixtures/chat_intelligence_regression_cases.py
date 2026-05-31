@@ -691,6 +691,23 @@ DIRECT_ANSWER_CASES = [
 
 PRESENTER_HUMANIZED_CASES = [
     {
+        "label": "fornecedores_vazio",
+        "payload": {
+            "success": True,
+            "message": "Fornecedores de 10090077 retornados com sucesso (página 1/0).",
+            "data": {
+                "success": True,
+                "total": 0,
+                "page": 1,
+                "page_size": 50,
+                "total_pages": 0,
+                "data": [],
+            },
+        },
+        "path": "/products/10090077/suppliers",
+        "must_contain": ["10090077", "Nenhum fornecedor"],
+    },
+    {
         "label": "roteiro",
         "payload": {
             "items": [

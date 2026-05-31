@@ -173,6 +173,9 @@ class ChatConversationContextService:
 
         lowered = humanized_text.lower()
 
+        if "a api retornou dados autorizados" in lowered:
+            return True
+
         return lowered.startswith("a consulta retornou") and "registro" in lowered
 
     @classmethod

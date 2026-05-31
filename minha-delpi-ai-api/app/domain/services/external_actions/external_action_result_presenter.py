@@ -50,6 +50,14 @@ class ExternalActionResultPresenter:
 
         root = self._unwrap_data(data)
 
+        empty_operational = self._present_empty_operational_result(
+            path=path,
+            root=root,
+        )
+
+        if empty_operational:
+            return empty_operational
+
         if isinstance(root, dict) and "/analyser" in str(path or "").lower():
             root = self._normalize_analyser_root(root)
 
@@ -229,6 +237,107 @@ class ExternalActionResultPresenter:
             return match.group(1)
 
         return ""
+
+    def _present_empty_operational_result(self, *, path: str, root) -> dict | None:
+        if not self._is_product_operational_path(path):
+            return None
+
+        if not self._is_empty_operational_payload(root):
+            return None
+
+        lowered_path = str(path or "").lower()
+        product_code = self._extract_product_code_from_path(path)
+        code_hint = f" **{product_code}**" if product_code else ""
+
+        if "/suppliers" in lowered_path:
+            linha = (
+                f"Nenhum fornecedor cadastrado para o produto{code_hint}."
+                if product_code
+                else "Nenhum fornecedor cadastrado para este produto."
+            )
+        elif "/customers" in lowered_path:
+            linha = (
+                f"Nenhum cliente vinculado ao produto{code_hint}."
+                if product_code
+                else "Nenhum cliente vinculado a este produto."
+            )
+        elif "/stock" in lowered_path:
+            linha = (
+                f"Nenhuma posição de estoque encontrada para o produto{code_hint}."
+                if product_code
+                else "Nenhuma posição de estoque encontrada para este produto."
+            )
+        elif "/structure" in lowered_path:
+            linha = (
+                f"Nenhum componente na estrutura do produto{code_hint}."
+                if product_code
+                else "Nenhum componente na estrutura deste produto."
+            )
+        elif "/parents" in lowered_path:
+            linha = (
+                f"O produto{code_hint} não aparece como componente em outros produtos."
+                if product_code
+                else "Este produto não aparece como componente em outros produtos."
+            )
+        elif "/guide" in lowered_path:
+            linha = (
+                f"Nenhuma operação de roteiro cadastrada para o produto{code_hint}."
+                if product_code
+                else "Nenhuma operação de roteiro cadastrada para este produto."
+            )
+        elif "/inspection" in lowered_path:
+            linha = (
+                f"Nenhum dado de inspeção para o produto{code_hint}."
+                if product_code
+                else "Nenhum dado de inspeção para este produto."
+            )
+        elif "/sales" in lowered_path or "/purchases" in lowered_path:
+            linha = f"Nenhum registro encontrado para esta consulta do produto{code_hint}.".strip()
+        else:
+            linha = "Nenhum registro encontrado para esta consulta."
+
+        titulo = self._infer_items_title([], path) or "Consulta"
+
+        return {
+            "titulo": titulo,
+            "linhas": [linha],
+            "dados": {
+                "items": [],
+                "total": 0,
+                "product_code": product_code or None,
+            },
+        }
+
+    @staticmethod
+    def _is_empty_operational_payload(root) -> bool:
+        if isinstance(root, list):
+            return len(root) == 0
+
+        if not isinstance(root, dict):
+            return False
+
+        total = root.get("total")
+
+        if total == 0:
+            return True
+
+        items = root.get("items")
+
+        if isinstance(items, list) and not items:
+            return True
+
+        nested = root.get("data")
+
+        if isinstance(nested, list) and not nested:
+            return True
+
+        if isinstance(nested, dict) and nested.get("total") == 0:
+            inner = nested.get("data") or nested.get("items")
+
+            if inner is None or inner == []:
+                return True
+
+        return False
 
     def _format_protheus_date(self, value) -> str | None:
         raw = str(value or "").strip()
