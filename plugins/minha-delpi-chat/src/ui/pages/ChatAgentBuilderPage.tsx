@@ -557,6 +557,68 @@ export function ChatAgentBuilderPage({
     });
   }
 
+  useEffect(() => {
+    if (agent?.id) {
+      setBuilderMode("configure");
+    }
+  }, [agent?.id]);
+
+  const icebreakersSection = (
+    <section
+      id="agent-icebreakers"
+      className="mdc-chat-agent-builder__section mdc-chat-agent-builder__icebreakers-section"
+      aria-label="Quebra-gelos do agente"
+    >
+      <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
+      <p className="mdc-chat-agent-builder__icebreakers-help">
+        Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
+        {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais sugestões.
+      </p>
+
+      <div className="mdc-chat-agent-builder__icebreakers">
+        {icebreakers.map((icebreaker, index) => (
+          <div key={`${index}-${icebreakers.length}`} className="mdc-chat-agent-builder__icebreaker-row">
+            <input
+              value={icebreaker}
+              maxLength={AGENT_ICEBREAKER_MAX_CHARS}
+              onChange={(event) => updateIcebreaker(index, event.target.value)}
+              placeholder="Ex.: Quero verificar um desenho."
+              aria-label={`Quebra-gelo ${index + 1}`}
+              aria-describedby={`icebreaker-count-${index}`}
+            />
+            <span
+              id={`icebreaker-count-${index}`}
+              className="mdc-chat-agent-builder__icebreaker-count"
+            >
+              {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => removeIcebreaker(index)}
+              aria-label="Remover quebra-gelo"
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className="mdc-chat-ws-outline-btn"
+          onClick={addIcebreaker}
+          disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
+        >
+          <Plus size={16} aria-hidden="true" />
+          <span>Adicionar quebra-gelo</span>
+        </button>
+      </div>
+    </section>
+  );
+
+  const activeBuilderMode = isEditing ? "configure" : builderMode;
+  const showConfigureForm = isEditing || builderMode === "configure";
+
   function applyDraftFromBrief(brief: string, options?: { switchToConfigure?: boolean }) {
     const normalizedBrief = brief.trim();
 
@@ -1422,25 +1484,27 @@ export function ChatAgentBuilderPage({
           }}
         >
           <div className="mdc-chat-agent-builder__panel">
-          <div className="mdc-chat-agent-builder__switch" role="tablist" aria-label="Modo de edição">
-            <button
-              type="button"
-              className={builderMode === "create" ? "is-active" : ""}
-              onClick={() => setBuilderMode("create")}
-            >
-              Criar
-            </button>
-            <button
-              type="button"
-              className={builderMode === "configure" ? "is-active" : ""}
-              onClick={() => setBuilderMode("configure")}
-            >
-              Configurar
-            </button>
-          </div>
+          {!isEditing ? (
+            <div className="mdc-chat-agent-builder__switch" role="tablist" aria-label="Modo de edição">
+              <button
+                type="button"
+                className={activeBuilderMode === "create" ? "is-active" : ""}
+                onClick={() => setBuilderMode("create")}
+              >
+                Criar
+              </button>
+              <button
+                type="button"
+                className={activeBuilderMode === "configure" ? "is-active" : ""}
+                onClick={() => setBuilderMode("configure")}
+              >
+                Configurar
+              </button>
+            </div>
+          ) : null}
 
-          <ChatAnimatedPanel panelKey={builderMode} variant="tab">
-          {builderMode === "create" ? (
+          <ChatAnimatedPanel panelKey={showConfigureForm ? "configure" : "create"} variant="tab">
+          {!showConfigureForm ? (
             <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__create-mode">
               <h2 className="mdc-chat-ws-section-head">Criar conversando</h2>
               <p className="mdc-chat-ws-section-lead">
@@ -1564,52 +1628,7 @@ export function ChatAgentBuilderPage({
             </label>
           </section>
 
-          <section className="mdc-chat-agent-builder__section mdc-chat-agent-builder__icebreakers-section">
-            <h2 className="mdc-chat-ws-section-head">Quebra-gelos</h2>
-            <p className="mdc-chat-agent-builder__icebreakers-help">
-              Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões na página do agente, com no máximo{" "}
-              {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada. Cards menores quando houver mais
-              sugestões.
-            </p>
-
-            <div className="mdc-chat-agent-builder__icebreakers">
-              {icebreakers.map((icebreaker, index) => (
-                <div key={`${index}-${icebreakers.length}`}>
-                  <input
-                    value={icebreaker}
-                    maxLength={AGENT_ICEBREAKER_MAX_CHARS}
-                    onChange={(event) => updateIcebreaker(index, event.target.value)}
-                    placeholder="Ex.: Quero verificar um desenho."
-                    aria-describedby={`icebreaker-count-${index}`}
-                  />
-                  <span
-                    id={`icebreaker-count-${index}`}
-                    className="mdc-chat-agent-builder__icebreaker-count"
-                  >
-                    {icebreaker.length}/{AGENT_ICEBREAKER_MAX_CHARS}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => removeIcebreaker(index)}
-                    aria-label="Remover quebra-gelo"
-                  >
-                    <X size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              ))}
-
-              <button
-                type="button"
-                className="mdc-chat-ws-outline-btn"
-                onClick={addIcebreaker}
-                disabled={icebreakers.length >= AGENT_ICEBREAKER_MAX_COUNT}
-              >
-                <Plus size={16} aria-hidden="true" />
-                <span>Adicionar quebra-gelo</span>
-              </button>
-            </div>
-          </section>
+          {icebreakersSection}
 
           <section
             className="mdc-chat-agent-builder__section mdc-chat-agent-builder__identity-section"

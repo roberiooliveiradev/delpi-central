@@ -216,13 +216,16 @@
   gap: 0.5rem;
 }
 
-.mdc-chat-agent-builder__icebreakers > div {
+.mdc-chat-agent-builder__icebreakers > div,
+.mdc-chat-agent-builder__icebreaker-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
+  min-height: 2.75rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   border-radius: 0.78rem;
   overflow: hidden;
+  background: color-mix(in srgb, var(--mdc-card-bg) 72%, transparent);
 }
 
 .mdc-chat-agent-builder__icebreakers input {
@@ -239,7 +242,8 @@
   white-space: nowrap;
 }
 
-.mdc-chat-agent-builder__icebreakers > div > button {
+.mdc-chat-agent-builder__icebreakers > div > button,
+.mdc-chat-agent-builder__icebreaker-row > button {
   display: inline-grid;
   place-items: center;
   width: 2.6rem;
@@ -251,7 +255,8 @@
   cursor: pointer;
 }
 
-.mdc-chat-agent-builder__icebreakers > div > button:hover {
+.mdc-chat-agent-builder__icebreakers > div > button:hover,
+.mdc-chat-agent-builder__icebreaker-row > button:hover {
   background: color-mix(in srgb, var(--mdc-danger) 10%, transparent);
   color: var(--mdc-danger);
 }
@@ -1347,6 +1352,10 @@
 
 .mdc-chat-agent-builder__icebreakers-section {
   scroll-margin-top: 4.5rem;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 22%, var(--mdc-card-border));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
 }
 
 .mdc-chat-agent-builder__preview-icebreakers-hint {

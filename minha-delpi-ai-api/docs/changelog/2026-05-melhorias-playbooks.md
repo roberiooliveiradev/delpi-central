@@ -29,7 +29,8 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |---------|---------|
 | Índice | `STATUS_ROADMAP_MELHORIAS.md` — status dos 40+ arquivos da pasta |
 | Playbooks raiz | `playbook_melhoria_pesquisa_web` e `playbook_ampliacao_graficos` versionados com Fase 1 marcada |
-| Playbook 03 | `ChatTextTaskService`, policy `text-specialist.md`, validador textual, chips `textTaskFollowUpSuggestions`, regressão T1–T15 |
+| Playbook 03 (F4–6) | Preferências sessão, `textTaskMixed`, `textCanvasVersions`, admin `text-tasks/summary`, `AdminTextTaskMetrics` |
+| Playbook 03 | `ChatTextTaskService`, policy `text-specialist.md`, validador textual, chips `textTaskFollowUpSuggestions`, regressão T1–T16 |
 | Playbook 02 | Desambiguação operacional (`ChatIntentDisambiguationService` + chips MFE), métricas admin agregadas, mixed compound, audit `intentRouting` |
 | Playbook 02 | `ChatIntentRouterService` ampliado: `self_help`, `web_search`, `sql_task`, `mixed_task`, `presentation_task`, `intentRouting`, R1–R15, feedback `routing_*` |
 | Playbook 01 | `resolvedFromMemory` em `intentRoute` para follow-ups operacionais |
@@ -568,6 +569,7 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | Quebra-gelos | Seção reposicionada logo após descrição; preview mostra sugestões padrão quando vazio |
 | Stats | Painel de uso colapsável (`<details>`); `AgentMiniDashboard` com prop `compact` no builder |
 | Layout | KPIs em 2 colunas + gráfico empilhado — evita sobreposição Indicadores/Volume em coluna estreita |
+| Modo | Ao editar agente existente, formulário Configurar fixo (aba Criar oculta) — quebra-gelos sempre editáveis |
 | Deploy | `docker compose -f infra/docker-compose.dev.yml build minha-delpi-chat` + `up -d` |
 
 ## Admin UX — 6 seções (Playbook 11)
