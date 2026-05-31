@@ -79,6 +79,7 @@
     "Validar BOM",
     "Validar cotas",
     "Gerar relatório",
+    "Colocar na lousa",
     "Reanalisar desenho"
   ],
   "drawingFollowUpQueries": {
@@ -87,6 +88,7 @@
     "Validar BOM": "valide a tabela de materiais do desenho {{productCode}} contra o Protheus",
     "Validar cotas": "valide as cotas e decapes do desenho {{productCode}}",
     "Gerar relatório": "gere novamente o relatório técnico do desenho {{productCode}}",
+    "Colocar na lousa": "coloque o relatório de análise do desenho {{productCode}} na lousa",
     "Reanalisar desenho": "reanalise o desenho técnico {{productCode}} com o PDF anexado"
   },
   "attachmentFollowUpQueries": {

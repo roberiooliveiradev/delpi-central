@@ -88,7 +88,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | 12.2.1 | Definir provedor: LLM multimodal (anexo) vs serviço OCR dedicado vs pipeline híbrido | ✅ (híbrido: pypdf + parse heurístico) |
 | 12.2.2 | `ChatDrawingPdfExtractionService` — schema estruturado (código, REV., cotas, cabos, terminais, carimbo) | ✅ (código/REV/cliente; cotas Fase 3) |
 | 12.2.3 | Limites de tamanho/páginas; timeout; fallback quando OCR falhar | ✅ (`CHAT_DRAWING_PDF_MAX_PAGES`, legibilidade mínima) |
-| 12.2.4 | Testes com PDFs reais anonimizados (fixtures em `tests/fixtures/drawings/`) | ⬜ (texto `sample_carimbo.txt`; PDF binário pendente) |
+| 12.2.4 | Testes com PDFs reais anonimizados (fixtures em `tests/fixtures/drawings/`) | ✅ (`sample_carimbo_minimal.pdf` via `scripts/build_drawing_fixture_pdf.py`) |
 
 ### 12.3 — Orquestração PDF × API × checklist
 
@@ -105,7 +105,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 |----|---------|--------|
 | 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ✅ (markdown + export `.md` em metadata) |
 | 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ✅ |
-| 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ⬜ |
+| 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ✅ (CSV + XLSX no MFE; MD completo; PDF export pendente) |
 
 ### 12.5 — Agentes, testes e operação
 

@@ -36,7 +36,11 @@ import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
-import { downloadDrawingAnalysisExport } from "../utils/drawingAnalysisExport";
+import {
+  downloadDrawingAnalysisCsv,
+  downloadDrawingAnalysisMarkdown,
+  downloadDrawingAnalysisXlsx,
+} from "../utils/drawingAnalysisExport";
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
@@ -1351,16 +1355,49 @@ export function ChatMessageList({
                       type="button"
                       className="mdc-chat-message-action mdc-chat-drawing-export__btn"
                       onClick={() =>
-                        downloadDrawingAnalysisExport(
+                        downloadDrawingAnalysisMarkdown(
                           message.metadata!.drawingAnalysisExport!,
                         )
                       }
-                      aria-label="Baixar relatório de análise de desenho"
+                      aria-label="Baixar relatório Markdown"
                       title="Baixar relatório (.md)"
                     >
                       <Download size={15} aria-hidden="true" />
-                      <span>Baixar relatório</span>
+                      <span>Markdown</span>
                     </button>
+                    {message.metadata.drawingAnalysisExport.csv ? (
+                      <button
+                        type="button"
+                        className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                        onClick={() =>
+                          downloadDrawingAnalysisCsv(
+                            message.metadata!.drawingAnalysisExport!,
+                          )
+                        }
+                        aria-label="Baixar não conformidades CSV"
+                        title="Baixar não conformidades (.csv)"
+                      >
+                        <Download size={15} aria-hidden="true" />
+                        <span>CSV</span>
+                      </button>
+                    ) : null}
+                    {(message.metadata.drawingAnalysisExport.spreadsheetRows?.length ?? 0) >
+                    0 ? (
+                      <button
+                        type="button"
+                        className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                        onClick={() =>
+                          void downloadDrawingAnalysisXlsx(
+                            message.metadata!.drawingAnalysisExport!,
+                          )
+                        }
+                        aria-label="Baixar não conformidades XLSX"
+                        title="Baixar não conformidades (.xlsx)"
+                      >
+                        <Download size={15} aria-hidden="true" />
+                        <span>XLSX</span>
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
                 <ChatFollowUpChips

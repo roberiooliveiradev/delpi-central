@@ -5,6 +5,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+_STATUS_LABELS = {
+    "ok": "OK",
+    "pending": "Pendente",
+    "error": "Erro",
+    "critical_error": "Erro crítico",
+    "incomplete": "Incompleto",
+}
+
 
 class ChatDrawingReportExportService:
     @classmethod
@@ -13,17 +21,91 @@ class ChatDrawingReportExportService:
         *,
         package: dict[str, Any],
         report_markdown: str,
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         analysis = package.get("drawingAnalysis") if isinstance(package, dict) else {}
         code = str(analysis.get("productCode") or "desenho").strip()
         safe_code = "".join(char for char in code if char.isalnum()) or "desenho"
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d")
+        csv_content = cls.build_nonconformity_csv(analysis)
 
-        return {
+        payload: dict[str, Any] = {
             "filename": f"relatorio-desenho-{safe_code}-{stamp}.md",
             "mimeType": "text/markdown; charset=utf-8",
             "markdown": str(report_markdown or "").strip(),
         }
+
+        if csv_content.strip():
+            payload["csv"] = csv_content
+            payload["csvFilename"] = f"nao-conformidades-{safe_code}-{stamp}.csv"
+            payload["spreadsheetRows"] = cls.build_nonconformity_rows(analysis)
+
+        return payload
+
+    @classmethod
+    def build_nonconformity_rows(cls, analysis: dict[str, Any]) -> list[dict[str, str]]:
+        rows: list[dict[str, str]] = []
+
+        for item in analysis.get("items") or []:
+            if not isinstance(item, dict):
+                continue
+
+            status = str(item.get("status") or "")
+
+            if status == "ok":
+                continue
+
+            rows.append(
+                {
+                    "section": str(item.get("section") or ""),
+                    "item": str(item.get("item") or ""),
+                    "status": _STATUS_LABELS.get(status, status),
+                    "pdfEvidence": str(item.get("pdfEvidence") or ""),
+                    "apiEvidence": str(item.get("apiEvidence") or ""),
+                    "recommendation": str(item.get("recommendation") or ""),
+                }
+            )
+
+        return rows
+
+    @classmethod
+    def build_nonconformity_csv(cls, analysis: dict[str, Any]) -> str:
+        rows = cls.build_nonconformity_rows(analysis)
+
+        if not rows:
+            return ""
+
+        header = ["Seção", "Item", "Status", "Evidência PDF", "Evidência API", "Recomendação"]
+        lines = ["\ufeff" + cls._csv_row(header)]
+
+        for row in rows:
+            lines.append(
+                cls._csv_row(
+                    [
+                        row["section"],
+                        row["item"],
+                        row["status"],
+                        row["pdfEvidence"],
+                        row["apiEvidence"],
+                        row["recommendation"],
+                    ]
+                )
+            )
+
+        return "\n".join(lines)
+
+    @classmethod
+    def _csv_row(cls, cells: list[str]) -> str:
+        escaped: list[str] = []
+
+        for cell in cells:
+            text = str(cell or "")
+
+            if ";" in text or '"' in text or "\n" in text:
+                text = '"' + text.replace('"', '""') + '"'
+
+            escaped.append(text)
+
+        return ";".join(escaped)
 
     @classmethod
     def attach_to_metadata(

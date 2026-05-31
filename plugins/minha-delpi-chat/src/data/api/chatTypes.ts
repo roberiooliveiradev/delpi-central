@@ -379,6 +379,16 @@ export type ChatMessageMetadata = {
     filename: string;
     mimeType: string;
     markdown: string;
+    csv?: string;
+    csvFilename?: string;
+    spreadsheetRows?: {
+      section: string;
+      item: string;
+      status: string;
+      pdfEvidence: string;
+      apiEvidence: string;
+      recommendation: string;
+    }[];
   };
   guidedFlow?: ChatGuidedFlow | null;
   guidedFlowCards?: ChatGuidedFlowCard[];

@@ -119,6 +119,23 @@ class ChatCanvasContentService:
         cls,
         previous_messages: list[Any] | None,
     ) -> ChatCanvasAction:
+        export_markdown, export_title = cls._last_drawing_export_from_history(
+            previous_messages
+        )
+
+        if export_markdown:
+            return ChatCanvasAction(
+                answer=(
+                    f"Coloquei «{export_title}» na lousa ao lado. "
+                    "Você pode editar, visualizar e salvar o relatório de análise quando quiser."
+                ),
+                open_payload=ChatCanvasOpenPayload(
+                    title=export_title,
+                    markdown=export_markdown,
+                    source_message_id=cls._last_drawing_source_message_id(previous_messages),
+                ),
+            )
+
         source = cls._find_last_substantive_assistant_message(previous_messages)
 
         if not source:
@@ -364,6 +381,61 @@ class ChatCanvasContentService:
             return canvas
 
         return True
+
+    @classmethod
+    def _last_drawing_export_from_history(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> tuple[str | None, str]:
+        if not previous_messages:
+            return None, "Relatório de desenho"
+
+        for message in reversed(previous_messages):
+            if str(cls._message_role(message) or "").lower() != "assistant":
+                continue
+
+            metadata = cls._message_metadata(message)
+            export = metadata.get("drawingAnalysisExport")
+
+            if not isinstance(export, dict):
+                continue
+
+            markdown = str(export.get("markdown") or "").strip()
+
+            if not markdown:
+                continue
+
+            drawing = metadata.get("drawingAnalysis")
+
+            code = ""
+
+            if isinstance(drawing, dict):
+                code = str(drawing.get("productCode") or "").strip()
+
+            title = f"Análise de desenho {code}".strip() if code else "Relatório de desenho DELPI"
+
+            return markdown, title
+
+        return None, "Relatório de desenho"
+
+    @classmethod
+    def _last_drawing_source_message_id(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> str | None:
+        if not previous_messages:
+            return None
+
+        for message in reversed(previous_messages):
+            if str(cls._message_role(message) or "").lower() != "assistant":
+                continue
+
+            metadata = cls._message_metadata(message)
+
+            if isinstance(metadata.get("drawingAnalysisExport"), dict):
+                return cls._message_id(message)
+
+        return None
 
     @classmethod
     def _find_last_substantive_assistant_message(

@@ -12,6 +12,9 @@ import sys
 from app.application.services.chat_drawing_follow_up_service import (
     ChatDrawingFollowUpService,
 )
+from app.application.services.chat_drawing_report_export_service import (
+    ChatDrawingReportExportService,
+)
 from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
 from app.domain.services.chat_drawing_pdf_extraction_service import (
     ChatDrawingPdfExtractionService,
@@ -89,6 +92,29 @@ def main() -> int:
         intelligence={"drawingAnalysis": package_full["drawingAnalysis"]},
     )
     check("chips follow-up desenho", len(meta.get("drawingFollowUpSuggestions") or []) >= 3)
+
+    package_nc = {
+        "drawingAnalysis": {
+            **package_full["drawingAnalysis"],
+            "items": [
+                *(package_full["drawingAnalysis"].get("items") or []),
+                {
+                    "section": "Smoke",
+                    "item": "Item de teste",
+                    "status": "error",
+                    "recommendation": "Corrigir",
+                },
+            ],
+        }
+    }
+    export_payload = ChatDrawingReportExportService.build_export_payload(
+        package=package_nc,
+        report_markdown=ChatDrawingValidationOrchestrationService.format_report_markdown(
+            package_full
+        ),
+    )
+    check("export CSV não conformidades", bool(export_payload.get("csv")))
+    check("export linhas planilha", len(export_payload.get("spreadsheetRows") or []) >= 1)
 
     from app.application.services.chat_drawing_follow_up_turn_service import (
         ChatDrawingFollowUpTurnService,
