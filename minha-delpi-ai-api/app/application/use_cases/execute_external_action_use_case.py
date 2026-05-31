@@ -189,6 +189,10 @@ class ExecuteExternalActionUseCase:
             sanitized_data,
             path=resolved_path,
         )
+        dashboard_presentation = self.presenter.build_dashboard_presentation(
+            sanitized_data,
+            path=resolved_path,
+        )
         presentation = self.presenter.build_presentation(
             sanitized_data,
             path=resolved_path,
@@ -211,6 +215,9 @@ class ExecuteExternalActionUseCase:
             table_presentation = presentation
 
         available_formats: list[str] = []
+
+        if dashboard_presentation:
+            available_formats.append("dashboard")
 
         if text_presentation:
             available_formats.append("text")
@@ -243,7 +250,9 @@ class ExecuteExternalActionUseCase:
         )
         stock_like = "/stock" in path_lower
 
-        if tree_presentation and structure_like:
+        if dashboard_presentation:
+            primary_presentation = dashboard_presentation
+        elif tree_presentation and structure_like:
             primary_presentation = tree_presentation
         elif chart_presentation:
             primary_presentation = chart_presentation
@@ -256,7 +265,9 @@ class ExecuteExternalActionUseCase:
 
         preferred_format = None
 
-        if tree_presentation and structure_like:
+        if dashboard_presentation:
+            preferred_format = "dashboard"
+        elif tree_presentation and structure_like:
             preferred_format = "tree"
         elif chart_presentation and stock_like:
             preferred_format = "chart"

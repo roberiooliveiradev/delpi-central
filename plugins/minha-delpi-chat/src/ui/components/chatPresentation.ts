@@ -996,7 +996,13 @@ export function getPresentationFromStreamingToolCalls(
   return getPresentationFromToolCalls(toolCalls);
 }
 
-const RICH_PRESENTATION_TYPES = new Set(["table", "chart", "kpi", "tree"]);
+const RICH_PRESENTATION_TYPES = new Set([
+  "table",
+  "chart",
+  "kpi",
+  "tree",
+  "dashboard",
+]);
 
 export function hasRichPresentation(pair: PresentationPair): boolean {
   const primaryType = pair.primary?.type;

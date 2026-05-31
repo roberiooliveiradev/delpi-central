@@ -19,6 +19,7 @@ import {
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
+import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTree } from "./ChatRichTree";
 import { ExpandButton } from "./ChatExpandModal";
@@ -242,6 +243,22 @@ export function ChatRichPresentation({
 
   if (!primary && !table && !tree && !textBody && !commentaryBody && !presentationTitle) {
     return null;
+  }
+
+  if (primary?.type === "dashboard") {
+    return (
+      <div className="mdc-rich-presentation mdc-rich-presentation--enter">
+        {dataCoverageNotice ? (
+          <div className="mdc-rich-presentation__coverage-notice" role="status">
+            {dataCoverageNotice.message}
+          </div>
+        ) : null}
+        <div className="mdc-rich-presentation__toolbar">
+          <ExpandButton presentation={primary} />
+        </div>
+        <ChatRichDashboard presentation={primary} onDrillDown={onDrillDown} />
+      </div>
+    );
   }
 
   if (primary?.type === "kpi") {

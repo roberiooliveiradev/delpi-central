@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
+import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTree } from "./ChatRichTree";
 import { ModalPortal } from "./ModalPortal";
@@ -139,6 +140,12 @@ export function ChatExpandModal({
             )}
             {presentation.type === "kpi" && (
               <ChatRichKpi presentation={presentation} />
+            )}
+            {presentation.type === "dashboard" && (
+              <ChatRichDashboard
+                presentation={presentation}
+                onDrillDown={onDrillDown}
+              />
             )}
             {presentation.type === "tree" && (
               <ChatRichTree

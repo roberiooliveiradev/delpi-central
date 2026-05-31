@@ -94,6 +94,18 @@ export type ChatPresentation =
       cards: ChatKpiCard[];
     }
   | {
+      type: "dashboard";
+      title: string;
+      panels: {
+        id: string;
+        title?: string;
+        presentation: Extract<
+          ChatPresentation,
+          { type: "kpi" } | { type: "chart" } | { type: "table" }
+        >;
+      }[];
+    }
+  | {
       type: "tree";
       title: string;
       root: ChatTreeNode;

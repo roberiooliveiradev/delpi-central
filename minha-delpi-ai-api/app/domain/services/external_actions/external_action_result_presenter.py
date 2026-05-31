@@ -2967,6 +2967,38 @@ class ExternalActionResultPresenter:
         "/inbound-invoice", "/outbound-invoice", "/prices",
     )
 
+    def build_dashboard_presentation(self, data, *, path: str = "") -> dict | None:
+        from app.domain.services.chat_dashboard_presentation_service import (
+            ChatDashboardPresentationService,
+        )
+
+        root = self._unwrap_data(data)
+
+        if not isinstance(root, dict):
+            return None
+
+        return ChatDashboardPresentationService.build(
+            root,
+            path=path,
+            build_kpi=lambda summary, route: (
+                (
+                    {
+                        "type": "kpi",
+                        "title": self._kpi_title(route) or "Resumo",
+                        "cards": cards,
+                    }
+                    if (cards := self._build_generic_kpi_cards(summary, route))
+                    else None
+                )
+                or self._build_kpi_chart(summary, route)
+            ),
+            build_lmp_table=self._build_lmp_table,
+            build_items_table=lambda items, title: self._build_items_table(
+                items,
+                title=title,
+            ),
+        )
+
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
         """Gera presentation tipo chart APENAS quando dados são naturalmente visuais."""
         if not force:

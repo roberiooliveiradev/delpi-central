@@ -289,6 +289,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Gráficos — dashboard multi-card (Fase 4)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Backend | `ChatDashboardPresentationService` + `build_dashboard_presentation` (LMP summary/charts/items) |
+| MFE | `ChatRichDashboard` — grid de KPI + gráficos + tabela |
+| Metadata | `preferredFormat: dashboard` quando painel composto |
+
 ## Gráficos — heatmap (Fase 4)
 
 | Entrega | Detalhe |
