@@ -129,6 +129,11 @@
     "writeConfirmationRequired": "Essa ação pode alterar dados ou enviar informações. Confirma que deseja continuar? Responda «confirmo» para prosseguir.",
     "operationalQueryFailed": "Não consegui consultar essa informação agora. Posso tentar novamente ou verificar outro filtro.",
     "stockQueryFailed": "Não consegui consultar o estoque agora. Posso tentar novamente ou verificar outro filtro.",
+    "confirmationChips": {
+      "confirm": "Confirmar",
+      "cancel": "Cancelar",
+      "cancelQuery": "cancelar esta ação"
+    },
     "trustSignalLabels": {
       "authorized_data": "Dados do sistema",
       "document_source": "Fonte documental",

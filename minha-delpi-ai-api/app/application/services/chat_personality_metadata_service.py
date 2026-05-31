@@ -65,3 +65,13 @@ class ChatPersonalityMetadataService:
             workspace_context=workspace_context,
             direct_response=bool(metadata.get("directResponse")),
         )
+
+        from app.application.services.chat_action_confirmation_metadata_service import (
+            ChatActionConfirmationMetadataService,
+        )
+
+        ChatActionConfirmationMetadataService.attach_to_assistant_metadata(
+            metadata,
+            tool_calls=tool_calls,
+            user_message=message,
+        )

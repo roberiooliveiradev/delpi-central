@@ -1,0 +1,43 @@
+.mdc-chat-action-confirmation {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--mdc-warning, #b8860b) 45%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-warning, #b8860b) 8%, var(--mdc-bg-soft));
+}
+
+.mdc-chat-action-confirmation__hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-action-confirmation__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.mdc-chat-action-confirmation__btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-bg);
+  color: var(--mdc-text);
+}
+
+.mdc-chat-action-confirmation__btn--confirm {
+  border-color: color-mix(in srgb, var(--mdc-primary) 50%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-chat-action-confirmation__btn--confirm:hover {
+  background: var(--mdc-rich-hover-strong, var(--mdc-rich-hover));
+}
+
+.mdc-chat-action-confirmation__btn--cancel:hover {
+  background: var(--mdc-rich-hover);
+}

@@ -51,7 +51,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Falha de API | `ChatSecurityMessagingService` — não inventa dado quando consulta falha |
 | Confirmação de escrita | `ChatWriteConfirmationService` bloqueia DELETE/escrita sem «confirmo» |
 
-**Backlog:** botões Confirmar/Cancelar no MFE; badges em admin debug ampliado.
+| Confirmação no MFE | `actionConfirmation` + `ChatActionConfirmationPanel` (Confirmar/Cancelar) |
+
+**Backlog:** badges em admin debug ampliado; menu em gráfico (interatividade).
 
 **Backlog interatividade:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
 

@@ -45,6 +45,10 @@ import {
 } from "./chatPresentation";
 import { ChatSources } from "./ChatSources";
 import { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
+import {
+  ChatActionConfirmationPanel,
+  type ChatActionConfirmation,
+} from "./ChatActionConfirmationPanel";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
 import { ChatMessageEditField } from "./ChatMessageEditField";
@@ -1236,6 +1240,14 @@ export function ChatMessageList({
                       | ChatTrustSignal[]
                       | undefined) ?? []
                   }
+                />
+                <ChatActionConfirmationPanel
+                  confirmation={
+                    message.metadata?.actionConfirmation as
+                      | ChatActionConfirmation
+                      | undefined
+                  }
+                  onUseQuery={onDrillDown ?? onReuseMessage}
                 />
                 <ChatSources
                   sources={filterVisibleChatSources(getMessageSources(message))}
