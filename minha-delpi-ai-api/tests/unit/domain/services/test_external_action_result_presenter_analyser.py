@@ -93,11 +93,9 @@ def test_present_product_analyser_expands_structure_and_insights():
 
     body = "\n".join(humanized["linhas"])
 
-    assert "50220013" in body
-    assert "10030015" in body
-    assert "10080031" in body
+    assert "| Campo | Valor |" in body
     assert "Insights" in body
-    assert "10080031" in body
+    assert "árvore" in body.lower() or "tabela" in body.lower()
     assert humanized["apresentacao"]["type"] == "tree"
     assert humanized["apresentacao"]["root"]["children"][0]["label"] == "50220013"
 

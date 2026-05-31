@@ -645,6 +645,29 @@ export function hasDisplayableRichText(text: string | null | undefined): boolean
   return String(text || "").trim().length > 0;
 }
 
+/** Remove dumps técnicos de inspeção (legado) quando há painel estruturado. */
+export function stripRedundantInspectionDumpFromMarkdown(markdown: string): string {
+  const lines = markdown.split("\n");
+  const result: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (
+      trimmed.startsWith("- Product=")
+      || trimmed.includes("Qp6=[")
+      || trimmed.includes("Qp7=[")
+      || trimmed.includes("QP6_PRODUT")
+    ) {
+      continue;
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 export function stripRedundantStructureFromMarkdown(markdown: string): string {
   const lines = markdown.split("\n");
   const result: string[] = [];
@@ -880,6 +903,7 @@ export function resolveCommentaryTextBody(
   if (getTreePresentationFromPair(resolvedPair) || getTablePresentationFromPair(resolvedPair)) {
     body = stripRedundantStructureFromMarkdown(body);
     body = stripRedundantHierarchyListFromMarkdown(body);
+    body = stripRedundantInspectionDumpFromMarkdown(body);
   }
 
   body = stripCoverageNoticeFromMarkdown(body);

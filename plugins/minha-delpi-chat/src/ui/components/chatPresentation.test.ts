@@ -17,6 +17,7 @@ import {
   shouldShowActionResults,
   shouldStackPresentationBlocks,
   shouldSuppressMarkdownForPresentation,
+  stripRedundantInspectionDumpFromMarkdown,
   stripRedundantStructureFromMarkdown,
   tablePresentationToMarkdown,
   type PresentationPair,
@@ -291,6 +292,7 @@ describe("tree presentation", () => {
     {
       name: "execute_external_action",
       metadata: {
+        path: "/products/90260148/analyser",
         availableFormats: ["text", "tree", "table"],
         preferredFormat: "tree",
         presentation: {
@@ -320,7 +322,7 @@ describe("tree presentation", () => {
           type: "markdown",
           title: "Informações completas do produto 90260148",
           markdown:
-            "### Informações completas do produto 90260148\n\nProduto **90260148**: CHICOTE.\n\n**Estrutura do produto 90260148**\n\n| Código | Descrição |\n| --- | --- |\n| 50220013 | PI |\n\n**Insights**\n\n- Custo padrão vigente: R$ 272,80.",
+            "### Informações completas do produto 90260148\n\n| Campo | Valor |\n| --- | --- |\n| Código | 90260148 |\n| Descrição | CHICOTE |\n\nA **estrutura** (BOM) está na visualização em **árvore** ou **tabela** abaixo.\n\n**Insights**\n\n- Custo padrão vigente: R$ 272,80.",
         },
       },
     },
@@ -369,10 +371,10 @@ describe("tree presentation", () => {
 
     const commentary = resolveCommentaryTextBody("", analyserToolCalls, pair);
 
-    expect(commentary).toContain("Produto **90260148**");
+    expect(commentary).toContain("90260148");
     expect(commentary).toContain("Insights");
     expect(commentary).not.toContain("50220013 | PI");
-    expect(commentary).toContain("estrutura");
+    expect(commentary.toLowerCase()).toContain("estrutura");
   });
 
   it("remove markdown duplicado da estrutura quando há árvore", () => {
@@ -381,6 +383,15 @@ describe("tree presentation", () => {
 
     expect(stripRedundantStructureFromMarkdown(markdown)).toBe(
       "Perfil do produto.\n\n**Insights**\n\n- Item 1.",
+    );
+  });
+
+  it("remove dump técnico de inspeção do markdown", () => {
+    const markdown =
+      "**Plano de inspeção**\n\n- Product=90260140, Nível=0, Qp6=[{'QP6_PRODUT': '90260140'}]\n\n| Op. | Ensaio |\n| --- | --- |";
+
+    expect(stripRedundantInspectionDumpFromMarkdown(markdown)).toBe(
+      "**Plano de inspeção**\n\n| Op. | Ensaio |\n| --- | --- |",
     );
   });
 

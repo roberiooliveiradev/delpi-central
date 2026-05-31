@@ -483,6 +483,17 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; pesquisa web pode usar provedor `searxng`.
 
+## Product analyser — roteiro e inspeção legíveis (31/05/2026)
+
+| Antes | Depois |
+|-------|--------|
+| Roteiro em lista densa (`01` OP; `02` OP…) | Tabela markdown: Produto, BOM, Op., Operação, Centro |
+| Plano de inspeção como dump `Qp6=[{…}]` | Tabelas por produto: ensaios dimensionais (QP7) e textuais (QP8) |
+| Estrutura repetida no texto e na árvore | Texto aponta para árvore/tabela; BOM só no painel visual |
+| Ficha do produto em 8 linhas soltas | Tabela Campo × Valor |
+
+**Arquivo:** `ExternalActionResultPresenter` — `_build_product_analyser_body_lines`.
+
 ## Homologação — api-externa local
 
 | Item | Entrega |

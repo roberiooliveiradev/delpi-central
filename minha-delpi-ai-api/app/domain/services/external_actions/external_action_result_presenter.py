@@ -991,36 +991,15 @@ class ExternalActionResultPresenter:
         code = str(product.get("code") or "").strip()
         title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
 
-        linhas = self._build_product_analyser_profile_lines(product)
-        linhas.extend(self._build_product_analyser_collection_sections(root))
+        linhas = self._build_product_analyser_body_lines(root, product)
 
         structure = root.get("structure")
-
-        if isinstance(structure, dict):
-            from app.domain.services.chat_product_structure_presentation_service import (
-                ChatProductStructurePresentationService,
-            )
-
-            structure_markdown = ChatProductStructurePresentationService.format_markdown(
-                structure,
-                source_path=path or f"/products/{code}/analyser",
-            )
-
-            if structure_markdown:
-                linhas.extend(["", structure_markdown])
-
-        insights = self._build_product_analyser_insights(root, product)
-
-        if insights:
-            linhas.extend(["", "**Insights**", ""])
-            linhas.extend(f"- {line}" for line in insights)
-
         structure_table = self._build_analyser_structure_components_table(structure)
         structure_tree = self.build_tree_presentation(root, path=path)
 
         return {
             "titulo": title,
-            "linhas": [line for line in linhas if line is not None],
+            "linhas": linhas,
             "campos": self._alias_dict(
                 self._product_analyser_summary(product),
                 self.PRODUCT_ALIASES,
@@ -1099,6 +1078,320 @@ class ExternalActionResultPresenter:
 
         return lines
 
+    def _escape_markdown_table_cell(self, value) -> str:
+        text = str(value if value is not None else "").strip()
+        return text.replace("|", "\\|").replace("\n", " ")
+
+    def _markdown_table(self, columns: list[tuple[str, str]], rows: list[dict]) -> list[str]:
+        if not rows:
+            return []
+
+        header = "| " + " | ".join(label for _, label in columns) + " |"
+        separator = "| " + " | ".join("---" for _ in columns) + " |"
+        body = [
+            "| "
+            + " | ".join(
+                self._escape_markdown_table_cell(row.get(key))
+                for key, _ in columns
+            )
+            + " |"
+            for row in rows
+        ]
+
+        return [header, separator, *body]
+
+    def _build_product_analyser_profile_markdown(self, product: dict) -> list[str]:
+        purchase = product.get("last_purchase_price")
+
+        if purchase in (None, ""):
+            purchase_display = "0,00"
+        elif isinstance(purchase, (int, float)):
+            purchase_display = self._format_currency(purchase)
+        else:
+            purchase_display = str(purchase)
+
+        rows = [
+            ("code", "Código", product.get("code")),
+            ("description", "Descrição", product.get("description")),
+            ("type", "Tipo", product.get("type")),
+            ("unit", "Unidade", product.get("unit")),
+            ("group_code", "Grupo", product.get("group_code")),
+            ("active", "Ativo", product.get("active")),
+            ("blocked", "Bloqueio", product.get("blocked")),
+            ("default_warehouse", "Armazém padrão", product.get("default_warehouse")),
+            ("customer_reference", "Ref. cliente", product.get("customer_reference")),
+            ("drawing_code", "Código desenho", product.get("drawing_code")),
+            ("last_purchase_price", "Últ. preço compra", purchase_display),
+            (
+                "standard_cost",
+                "Custo padrão",
+                f"R$ {self._format_currency(product.get('standard_cost'))}"
+                if product.get("standard_cost") not in (None, "")
+                else "",
+            ),
+            ("last_revision_date", "Última revisão", product.get("last_revision_date")),
+            ("ncm_ipi_position", "NCM", product.get("ncm_ipi_position")),
+        ]
+
+        table_rows = [
+            {"campo": label, "valor": value}
+            for _, label, value in rows
+            if value not in (None, "")
+        ]
+
+        if not table_rows:
+            return []
+
+        return [
+            "",
+            *self._markdown_table(
+                [("campo", "Campo"), ("valor", "Valor")],
+                table_rows,
+            ),
+        ]
+
+    def _flatten_analyser_guide_rows(self, guide_items: list) -> list[dict]:
+        rows: list[dict] = []
+
+        for item in guide_items:
+            if not isinstance(item, dict):
+                continue
+
+            product_code = str(item.get("product_code") or "?").strip()
+            bom_level = item.get("bom_level", 0)
+            operations = item.get("operations")
+
+            if not isinstance(operations, list) or not operations:
+                op_desc = str(item.get("operation_description") or "").strip()
+
+                if not op_desc:
+                    continue
+
+                rows.append(
+                    {
+                        "product_code": product_code,
+                        "bom_level": bom_level,
+                        "operation_code": item.get("operation_code") or "",
+                        "operation_description": op_desc,
+                        "work_center": item.get("work_center") or "",
+                    }
+                )
+                continue
+
+            for operation in operations:
+                if not isinstance(operation, dict):
+                    continue
+
+                op_desc = str(operation.get("operation_description") or "").strip()
+
+                if not op_desc:
+                    continue
+
+                rows.append(
+                    {
+                        "product_code": product_code,
+                        "bom_level": bom_level,
+                        "operation_code": operation.get("operation_code") or "",
+                        "operation_description": op_desc,
+                        "work_center": operation.get("work_center") or "",
+                    }
+                )
+
+        return rows
+
+    def _build_product_analyser_guide_markdown(self, guide_items: list) -> list[str]:
+        rows = self._flatten_analyser_guide_rows(guide_items)
+
+        if not rows:
+            return []
+
+        return [
+            "",
+            "**Roteiro de produção**",
+            "",
+            *self._markdown_table(
+                [
+                    ("product_code", "Produto"),
+                    ("bom_level", "BOM"),
+                    ("operation_code", "Op."),
+                    ("operation_description", "Operação"),
+                    ("work_center", "Centro"),
+                ],
+                rows,
+            ),
+        ]
+
+    def _has_protheus_inspection_blocks(self, item: dict) -> bool:
+        return any(
+            key in item
+            for key in ("QP6", "QP7", "QP8", "qp6", "qp7", "qp8")
+        )
+
+    def _inspection_list(self, item: dict, *keys: str) -> list:
+        for key in keys:
+            value = item.get(key)
+
+            if isinstance(value, list):
+                return value
+
+        return []
+
+    def _build_product_analyser_inspection_markdown(self, inspection_items: list) -> list[str]:
+        if not inspection_items:
+            return []
+
+        detailed = [
+            item
+            for item in inspection_items
+            if isinstance(item, dict) and self._has_protheus_inspection_blocks(item)
+        ]
+        shallow = [
+            item
+            for item in inspection_items
+            if isinstance(item, dict) and not self._has_protheus_inspection_blocks(item)
+        ]
+
+        sections: list[str] = ["", "**Plano de inspeção**", ""]
+
+        for item in detailed[:6]:
+            product_code = str(
+                item.get("product")
+                or item.get("product_code")
+                or "?"
+            ).strip()
+            level = item.get("level", item.get("bom_level", 0))
+            qp6 = self._inspection_list(item, "QP6", "qp6")
+            header_desc = ""
+
+            if qp6 and isinstance(qp6[0], dict):
+                header_desc = str(qp6[0].get("QP6_DESCPO") or "").strip()
+
+            sections.append("")
+            sections.append(f"**Produto {product_code}** (nível {level})")
+
+            if header_desc:
+                sections.append(f"*{header_desc}*")
+
+            qp7 = self._inspection_list(item, "QP7", "qp7")
+
+            if qp7:
+                dim_rows = []
+
+                for test in qp7:
+                    if not isinstance(test, dict):
+                        continue
+
+                    dim_rows.append(
+                        {
+                            "operation": test.get("QP7_OPERAC") or "",
+                            "test": test.get("QP7_ENSAIO") or "",
+                            "lab": test.get("QP7_LABOR") or "",
+                            "nominal": test.get("QP7_NOMINA") or "",
+                            "lower": test.get("QP7_LIE") or test.get("QP7_LIC") or "",
+                            "upper": test.get("QP7_LSE") or test.get("QP7_LSC") or "",
+                            "unit": test.get("QP7_UNIMED") or "",
+                        }
+                    )
+
+                if dim_rows:
+                    sections.append("")
+                    sections.append("*Ensaios dimensionais*")
+                    sections.extend(
+                        self._markdown_table(
+                            [
+                                ("operation", "Op."),
+                                ("test", "Ensaio"),
+                                ("lab", "Labor."),
+                                ("nominal", "Nominal"),
+                                ("lower", "Lim. inf."),
+                                ("upper", "Lim. sup."),
+                                ("unit", "Unid."),
+                            ],
+                            dim_rows,
+                        )
+                    )
+
+            qp8 = self._inspection_list(item, "QP8", "qp8")
+
+            if qp8:
+                text_rows = []
+
+                for test in qp8:
+                    if not isinstance(test, dict):
+                        continue
+
+                    text_rows.append(
+                        {
+                            "operation": test.get("QP8_OPERAC") or "",
+                            "test": test.get("QP8_ENSAIO") or "",
+                            "text": test.get("QP8_TEXTO") or "",
+                        }
+                    )
+
+                if text_rows:
+                    sections.append("")
+                    sections.append("*Ensaios textuais / referências*")
+                    sections.extend(
+                        self._markdown_table(
+                            [
+                                ("operation", "Op."),
+                                ("test", "Ensaio"),
+                                ("text", "Texto / referência"),
+                            ],
+                            text_rows,
+                        )
+                    )
+
+        if shallow:
+            shallow_rows = []
+
+            for item in shallow[:20]:
+                product_code = str(
+                    item.get("product")
+                    or item.get("product_code")
+                    or item.get("Product")
+                    or "?"
+                ).strip()
+                parent_code = str(
+                    item.get("parentCode")
+                    or item.get("parentcode")
+                    or item.get("Parentcode")
+                    or ""
+                ).strip()
+                level = item.get("level", item.get("Nível", item.get("bom_level", "")))
+
+                shallow_rows.append(
+                    {
+                        "product_code": product_code,
+                        "parent_code": parent_code or "—",
+                        "level": level,
+                        "plan": "Sem detalhe nesta consulta",
+                    }
+                )
+
+            if shallow_rows:
+                sections.append("")
+                sections.append("*Componentes referenciados (sem plano expandido)*")
+                sections.extend(
+                    self._markdown_table(
+                        [
+                            ("product_code", "Componente"),
+                            ("parent_code", "Produto pai"),
+                            ("level", "Nível"),
+                            ("plan", "Plano"),
+                        ],
+                        shallow_rows,
+                    )
+                )
+
+            if len(shallow) > 20:
+                sections.append(f"… e mais **{len(shallow) - 20}** componente(s).")
+
+        if len(detailed) > 6:
+            sections.append(f"… e mais **{len(detailed) - 6}** produto(s) com plano detalhado.")
+
+        return sections
+
     def _build_product_analyser_collection_sections(self, root: dict) -> list[str]:
         sections: list[str] = []
 
@@ -1108,8 +1401,7 @@ class ExternalActionResultPresenter:
             guide_items = guide.get("items") or []
 
             if guide_items:
-                sections.extend(["", "**Roteiro de produção**", ""])
-                sections.extend(self._format_collection_item_lines(guide_items))
+                sections.extend(self._build_product_analyser_guide_markdown(guide_items))
             else:
                 sections.append("Roteiro: 0 registro(s).")
 
@@ -1119,26 +1411,54 @@ class ExternalActionResultPresenter:
             inspection_items = inspection.get("items") or []
 
             if inspection_items:
-                sections.extend(["", "**Plano de inspeção**", ""])
-                sections.extend(self._format_collection_item_lines(inspection_items))
+                sections.extend(
+                    self._build_product_analyser_inspection_markdown(inspection_items)
+                )
             else:
                 sections.append("Inspeção: 0 registro(s).")
 
+        return sections
+
+    def _build_product_analyser_body_lines(self, root: dict, product: dict) -> list[str]:
+        lines: list[str] = []
+        profile_table = self._build_product_analyser_profile_markdown(product)
+
+        if profile_table:
+            lines.extend(profile_table)
+        else:
+            lines.extend(self._build_product_analyser_profile_lines(product))
+
+        lines.extend(self._build_product_analyser_collection_sections(root))
+
+        insights = self._build_product_analyser_insights(root, product)
+
+        if insights:
+            lines.extend(["", "**Insights**", ""])
+            lines.extend(f"- {line}" for line in insights)
+
         structure = root.get("structure")
 
-        if isinstance(structure, dict):
-            structure_total = structure.get("total")
+        if isinstance(structure, dict) and (
+            structure.get("items") or structure.get("total")
+        ):
+            lines.extend(
+                [
+                    "",
+                    "A **estrutura** (BOM) está na visualização em **árvore** ou **tabela** abaixo.",
+                ]
+            )
 
-            if structure_total is not None and not structure.get("items"):
-                sections.append(f"Estrutura: {structure_total} registro(s).")
-
-        return sections
+        return [line for line in lines if line is not None]
 
     def _format_collection_item_lines(self, items: list) -> list[str]:
         lines: list[str] = []
 
         for item in items[:12]:
             if not isinstance(item, dict):
+                continue
+
+            if self._has_protheus_inspection_blocks(item):
+                lines.extend(self._build_product_analyser_inspection_markdown([item]))
                 continue
 
             formatted = self._format_guide_like_item(item)
@@ -2092,6 +2412,12 @@ class ExternalActionResultPresenter:
                 "has_inspection",
                 "measurable_tests",
                 "textual_tests",
+                "QP6",
+                "QP7",
+                "QP8",
+                "qp6",
+                "qp7",
+                "qp8",
             )
         )
 
@@ -2393,22 +2719,7 @@ class ExternalActionResultPresenter:
         code = str(product.get("code") or "").strip()
         title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
 
-        body_parts = self._build_product_analyser_profile_lines(product)
-        body_parts.extend(self._build_product_analyser_collection_sections(root))
-
-        insights = self._build_product_analyser_insights(root, product)
-
-        if insights:
-            body_parts.extend(["", "**Insights**", ""])
-            body_parts.extend(f"- {line}" for line in insights)
-
-        body_parts.extend(
-            [
-                "",
-                "A **estrutura** do produto está na visualização em árvore ou tabela abaixo.",
-            ]
-        )
-
+        body_parts = self._build_product_analyser_body_lines(root, product)
         markdown_parts = [f"### {title}", "", *body_parts]
 
         return {
