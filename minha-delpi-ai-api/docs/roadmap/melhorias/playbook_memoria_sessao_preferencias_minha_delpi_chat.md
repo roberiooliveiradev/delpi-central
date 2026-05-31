@@ -16,7 +16,7 @@
 | 4 | Última action e apresentação | Concluída |
 | 5 | Admin debug e regressão M1–M12 | Concluída |
 
-**Métricas por turno:** `sessionMemoryMetrics` + feedback §21 (motivos memory_*). **Backlog:** agregado §20, UI §18 expandida.
+**UI §18:** resumo + preferência ativa na barra; ack «Combinado» para prefs persistentes. **Backlog:** agregado §20.
 
 ---
 
@@ -64,7 +64,7 @@ Implementado em `workingMemory` / `contextSnapshot`:
 
 ## 18. UI
 
-`contextChips` + `ChatContextBar` (MFE) — produto, filial, período, lousa, preferências.
+`contextChips` + `ChatContextBar` — resumo (`buildActiveContextSummary`), hint de preferência, chips com período/lousa; limpar/dismiss.
 
 ## 19. Testes
 

@@ -359,6 +359,15 @@ class ChatTurnPreparationService:
         workspace_context = dict(workspace_context)
         workspace_context["workingMemory"] = working_memory_snapshot
 
+        from app.application.services.chat_session_memory_direct_answer_service import (
+            ChatSessionMemoryDirectAnswerService,
+        )
+
+        session_memory_direct = ChatSessionMemoryDirectAnswerService.build(
+            message=message,
+            workspace_context=workspace_context,
+        )
+
         from app.domain.services.chat_email_intent_service import ChatEmailIntentService
 
         email_writing_mode = bool(
@@ -377,6 +386,9 @@ class ChatTurnPreparationService:
             workspace_context["emailSubtype"] = email_subtype
             if "email_writing" not in pipeline_stages:
                 pipeline_stages.append("email_writing")
+
+        if session_memory_direct and "session_memory" not in pipeline_stages:
+            pipeline_stages.append("session_memory")
 
         from app.domain.services.chat_text_correction_intent_service import (
             ChatTextCorrectionIntentService,
@@ -660,6 +672,8 @@ class ChatTurnPreparationService:
             direct_answer = utility_direct
         elif web_save_sources_direct:
             direct_answer = web_save_sources_direct
+        elif session_memory_direct:
+            direct_answer = session_memory_direct
         elif attachment_welcome_direct:
             direct_answer = attachment_welcome_direct
         elif interpretation_without_data_answer:
@@ -683,6 +697,8 @@ class ChatTurnPreparationService:
 
         if canvas_action or pre_capability_answer or small_talk_direct or utility_direct or (
             web_save_sources_direct
+        ) or (
+            session_memory_direct
         ) or (
             attachment_welcome_direct
         ) or (

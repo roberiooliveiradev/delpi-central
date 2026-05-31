@@ -25,6 +25,7 @@ Histórico + mensagem
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
 | `ChatSessionMemoryService` | Persistência ai_chat_session_memory, limpeza |
+| `ChatSessionMemoryDirectAnswerService` | Ack preferência + ambiguidade |
 | `ChatBehaviorInstructionService` | Preferências curtas (tabela, tom, resposta curta) |
 
 ## Validação

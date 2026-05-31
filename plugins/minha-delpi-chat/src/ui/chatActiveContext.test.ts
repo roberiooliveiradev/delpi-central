@@ -41,3 +41,28 @@ describe("chatActiveContext", () => {
     expect(contextChipKey(chips[1])).toBe("branch:02");
   });
 });
+
+import {
+  buildActiveContextSummary,
+  extractActivePreferenceHint,
+} from "./chatActiveContext";
+
+describe("context summary", () => {
+  it("monta resumo com separador", () => {
+    const summary = buildActiveContextSummary([
+      { label: "Produto 10080001", kind: "product", value: "10080001" },
+      { label: "Últimos 30 dias", kind: "period", value: "last_30_days" },
+    ]);
+
+    expect(summary).toBe("Produto 10080001 · Últimos 30 dias");
+  });
+
+  it("extrai hint de preferência", () => {
+    const hint = extractActivePreferenceHint([
+      { label: "Produto 10080001", kind: "product", value: "10080001" },
+      { label: "Respostas curtas", kind: "preference", value: "short" },
+    ]);
+
+    expect(hint).toContain("Respostas curtas");
+  });
+});

@@ -22,6 +22,7 @@ echo "== Memória de sessão — testes unitários =="
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   tests/unit/domain/services/test_chat_working_memory_service.py \
   tests/unit/application/services/test_chat_session_memory_metrics_service.py \
+  tests/unit/application/services/test_chat_session_memory_direct_answer_service.py \
   tests/unit/application/services/test_chat_session_memory_service.py \
   tests/unit/domain/services/test_chat_conversation_memory_extractor.py \
   -q

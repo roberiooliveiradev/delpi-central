@@ -27,6 +27,8 @@ export type ChatContextChip = {
 
 type ChatContextBarProps = {
   chips: ChatContextChip[];
+  summary?: string | null;
+  preferenceHint?: string | null;
   onClearContext?: () => void;
   onDismissChip?: (chip: ChatContextChip) => void;
   onChipAction?: (query: string) => void;
@@ -51,6 +53,8 @@ function chipIconForKind(kind: string): LucideIcon {
 
 export function ChatContextBar({
   chips,
+  summary,
+  preferenceHint,
   onClearContext,
   onDismissChip,
   onChipAction,
@@ -92,7 +96,19 @@ export function ChatContextBar({
 
   return (
     <div className="mdc-chat-context-bar" aria-label="Contexto ativo da conversa">
-      <span className="mdc-chat-context-bar__label">Contexto</span>
+      <div className="mdc-chat-context-bar__heading">
+        <span className="mdc-chat-context-bar__label">Contexto</span>
+        {summary ? (
+          <span className="mdc-chat-context-bar__summary" title={summary}>
+            {summary}
+          </span>
+        ) : null}
+      </div>
+      {preferenceHint ? (
+        <span className="mdc-chat-context-bar__preference" title={preferenceHint}>
+          {preferenceHint}
+        </span>
+      ) : null}
 
       <div className="mdc-chat-context-bar__chips" role="list">
         {chips.map((chip) => {

@@ -24,8 +24,10 @@ import {
   type ShortcutPromptOptions,
 } from "../hooks/useChatShortcutPrompt";
 import {
+  buildActiveContextSummary,
   collectActiveContextChips,
   contextChipKey,
+  extractActivePreferenceHint,
 } from "../chatActiveContext";
 import {
   CHAT_SHORTCUT_PROMPT_COPY,
@@ -282,6 +284,16 @@ export function ChatPage({
 
     return mergedContextChips.filter((chip) => !hidden.has(contextChipKey(chip)));
   }, [mergedContextChips, dismissedContextChipKeys]);
+
+  const activeContextSummary = useMemo(
+    () => buildActiveContextSummary(activeContextChips),
+    [activeContextChips],
+  );
+
+  const activePreferenceHint = useMemo(
+    () => extractActivePreferenceHint(activeContextChips),
+    [activeContextChips],
+  );
 
   const shortcutPrefillContext = useMemo(
     () => ({
@@ -2070,6 +2082,8 @@ export function ChatPage({
               <div className="mdc-chat-composer-footer">
                 <ChatContextBar
                   chips={activeContextChips}
+                  summary={activeContextSummary}
+                  preferenceHint={activePreferenceHint}
                   onClearContext={handleClearActiveContext}
                   onDismissChip={handleDismissContextChip}
                   onChipAction={handleDrillDown}

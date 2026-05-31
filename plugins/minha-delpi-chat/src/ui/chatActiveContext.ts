@@ -4,9 +4,13 @@ const CHIP_KIND_ORDER: Record<string, number> = {
   product: 0,
   branch: 1,
   warehouse: 2,
-  format: 3,
-  tone: 4,
-  preference: 5,
+  period: 3,
+  canvas: 4,
+  format: 5,
+  tone: 6,
+  preference: 7,
+  email: 8,
+  textCorrection: 9,
 };
 
 export function contextChipKey(chip: Pick<ChatContextChip, "kind" | "value">): string {
@@ -100,3 +104,25 @@ export function contextChipKindClass(kind: string): string {
 
   return safe ? `mdc-chat-context-bar__chip--${safe}` : "mdc-chat-context-bar__chip--generic";
 }
+
+export function buildActiveContextSummary(chips: ChatContextChip[]): string | null {
+  if (!chips.length) {
+    return null;
+  }
+
+  return chips.map((chip) => chip.label).join(" · ");
+}
+
+export function extractActivePreferenceHint(chips: ChatContextChip[]): string | null {
+  const preference = chips.find(
+    (chip) =>
+      chip.kind === "preference" ||
+      chip.kind === "tone" ||
+      chip.kind === "format" ||
+      chip.kind === "textCorrection" ||
+      chip.kind === "email",
+  );
+
+  return preference ? `Preferência ativa: ${preference.label}` : null;
+}
+

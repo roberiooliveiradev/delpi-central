@@ -1,5 +1,6 @@
 .mdc-chat-context-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--mdc-space-2);
   width: 100%;
@@ -187,4 +188,29 @@
   .mdc-chat-context-bar__chip-dismiss {
     opacity: 1;
   }
+}
+
+.mdc-chat-context-bar__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  max-width: 42%;
+}
+
+.mdc-chat-context-bar__summary {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--mdc-text-muted) 88%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 14rem;
+}
+
+.mdc-chat-context-bar__preference {
+  flex: 1 1 100%;
+  font-size: 0.6875rem;
+  color: color-mix(in srgb, var(--mdc-accent, #3b82f6) 70%, var(--mdc-text-muted));
+  padding-left: 0.1rem;
 }
