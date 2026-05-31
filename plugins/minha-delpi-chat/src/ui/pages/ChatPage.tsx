@@ -17,10 +17,7 @@ import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { useConfirmDialog } from "../components/useConfirmDialog";
 import { useChatShortcutPrompt } from "../hooks/useChatShortcutPrompt";
-import {
-  extractProductCodeFromContextChips,
-  hasUnresolvedShortcutPlaceholders,
-} from "../chatShortcutPrompt";
+import { extractProductCodeFromContextChips } from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -139,7 +136,31 @@ export function ChatPage({
     });
   }, []);
 
-  const onShortcutBlockedRef = useRef<(template: string) => void>(() => {});
+  const resolveShortcutQueryRef = useRef<
+    (
+      rawQuery: string,
+      promptOptions?: {
+        title?: string;
+        description?: string;
+        confirmLabel?: string;
+      },
+    ) => Promise<string | null>
+  >(async () => null);
+  const sendMessageRef = useRef<(params: { content?: string }) => Promise<void>>(async () => undefined);
+  const clearErrorRef = useRef<() => void>(() => undefined);
+
+  const openShortcutPromptForSend = useCallback((template: string) => {
+    clearErrorRef.current();
+    void resolveShortcutQueryRef.current(template, {
+      title: "Consulta ao chat",
+      description: "Informe o código do produto ou o texto da busca antes de enviar.",
+      confirmLabel: "Enviar pergunta",
+    }).then((resolved) => {
+      if (resolved) {
+        void sendMessageRef.current({ content: resolved });
+      }
+    });
+  }, []);
 
   const {
     sessions,
@@ -185,9 +206,6 @@ export function ChatPage({
     getAccessToken,
     projectId: selectedProjectId,
     agentId: requestedAgentId,
-    onShortcutTemplateBlocked: (template) => {
-      onShortcutBlockedRef.current(template);
-    },
     onSessionActivated: (sessionId, context) => {
       const agentId = context?.agentId ?? requestedAgentId;
       const projectId = context?.projectId ?? selectedProjectId;
@@ -205,6 +223,7 @@ export function ChatPage({
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
+    onShortcutPromptRequired: openShortcutPromptForSend,
   });
 
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
@@ -241,30 +260,11 @@ export function ChatPage({
     getPrefillContext: () => shortcutPrefillContext,
   });
 
-  const shortcutPromptOptions = useMemo(
-    () => ({
-      title: "Consulta ao chat",
-      description: "Informe o código do produto ou o texto da busca antes de enviar.",
-      confirmLabel: "Enviar pergunta",
-    }),
-    [],
-  );
-
   useEffect(() => {
-    onShortcutBlockedRef.current = (template: string) => {
-      clearError();
-      void resolveShortcutQuery(template, shortcutPromptOptions).then((resolved) => {
-        if (resolved) {
-          void sendMessage({ content: resolved });
-        }
-      });
-    };
-  }, [
-    clearError,
-    resolveShortcutQuery,
-    sendMessage,
-    shortcutPromptOptions,
-  ]);
+    resolveShortcutQueryRef.current = resolveShortcutQuery;
+    sendMessageRef.current = sendMessage;
+    clearErrorRef.current = clearError;
+  }, [resolveShortcutQuery, sendMessage, clearError]);
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1224,8 +1224,14 @@ export function ChatPage({
   }
 
   function handleHomeStarter(query: string) {
-    clearError();
-    void sendResolvedMessage({ content: query }, shortcutPromptOptions);
+    void sendResolvedMessage(
+      { content: query },
+      {
+        title: "Consulta ao chat",
+        description: "Informe o código do produto ou o texto da busca antes de enviar.",
+        confirmLabel: "Enviar pergunta",
+      },
+    );
   }
 
   async function handleHelpTryPrompt(query: string) {
@@ -1742,20 +1748,6 @@ export function ChatPage({
               }
               details={error || workspaceError}
               onRetry={() => {
-                const candidate = draft.trim() || lastSentUserText.trim();
-
-                if (candidate && hasUnresolvedShortcutPlaceholders(candidate)) {
-                  clearError();
-                  void resolveShortcutQuery(candidate, shortcutPromptOptions).then(
-                    (resolved) => {
-                      if (resolved) {
-                        void sendMessage({ content: resolved });
-                      }
-                    },
-                  );
-                  return;
-                }
-
                 if (draft.trim()) {
                   void handleSubmitMessage();
                   return;
