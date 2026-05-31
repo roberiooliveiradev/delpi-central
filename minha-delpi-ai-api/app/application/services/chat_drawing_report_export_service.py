@@ -30,6 +30,7 @@ class ChatDrawingReportExportService:
 
         payload: dict[str, Any] = {
             "filename": f"relatorio-desenho-{safe_code}-{stamp}.md",
+            "pdfFilename": f"relatorio-desenho-{safe_code}-{stamp}.pdf",
             "mimeType": "text/markdown; charset=utf-8",
             "markdown": str(report_markdown or "").strip(),
         }

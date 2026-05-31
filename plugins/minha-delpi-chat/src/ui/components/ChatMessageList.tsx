@@ -39,6 +39,7 @@ import { ChatMarkdown } from "./ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
   downloadDrawingAnalysisMarkdown,
+  downloadDrawingAnalysisPdf,
   downloadDrawingAnalysisXlsx,
 } from "../utils/drawingAnalysisExport";
 import { ChatActionResults } from "./ChatActionResults";
@@ -1355,6 +1356,23 @@ export function ChatMessageList({
                       type="button"
                       className="mdc-chat-message-action mdc-chat-drawing-export__btn"
                       onClick={() =>
+                        void downloadDrawingAnalysisPdf(
+                          message.metadata!.drawingAnalysisExport!,
+                          message.metadata?.drawingAnalysis as
+                            | Record<string, unknown>
+                            | undefined,
+                        )
+                      }
+                      aria-label="Baixar relatório PDF"
+                      title="Baixar relatório (.pdf)"
+                    >
+                      <Download size={15} aria-hidden="true" />
+                      <span>PDF</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="mdc-chat-message-action mdc-chat-drawing-export__btn"
+                      onClick={() =>
                         downloadDrawingAnalysisMarkdown(
                           message.metadata!.drawingAnalysisExport!,
                         )
@@ -1363,7 +1381,7 @@ export function ChatMessageList({
                       title="Baixar relatório (.md)"
                     >
                       <Download size={15} aria-hidden="true" />
-                      <span>Markdown</span>
+                      <span>MD</span>
                     </button>
                     {message.metadata.drawingAnalysisExport.csv ? (
                       <button

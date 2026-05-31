@@ -115,6 +115,7 @@ def main() -> int:
     )
     check("export CSV não conformidades", bool(export_payload.get("csv")))
     check("export linhas planilha", len(export_payload.get("spreadsheetRows") or []) >= 1)
+    check("export PDF filename", str(export_payload.get("pdfFilename") or "").endswith(".pdf"))
 
     from app.application.services.chat_drawing_follow_up_turn_service import (
         ChatDrawingFollowUpTurnService,

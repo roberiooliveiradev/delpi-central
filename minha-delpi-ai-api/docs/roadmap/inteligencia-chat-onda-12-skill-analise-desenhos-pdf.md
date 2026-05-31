@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 12: Skill de análise de desenhos DELPI (PDF)
 
-**Status:** parcial (MVP Fase 1 em código — maio/2026)  
+**Status:** parcial (Fases 1–5 + export MD/CSV/XLSX/PDF — maio/2026)  
 **Criado:** 2026-05-29  
 **Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`)  
 **Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
@@ -105,7 +105,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 |----|---------|--------|
 | 12.4.1 | Template de relatório (markdown + tabela rica Onda 9) | ✅ (markdown + export `.md` em metadata) |
 | 12.4.2 | UI: indicador de «analisando desenho» no stream (`ChatStreamActivityService`) | ✅ |
-| 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ✅ (CSV + XLSX no MFE; MD completo; PDF export pendente) |
+| 12.4.3 | Export PDF/XLSX do relatório de não conformidades (opcional) | ✅ (PDF/CSV/XLSX/MD no MFE via `drawingAnalysis` + `spreadsheetRows`) |
 
 ### 12.5 — Agentes, testes e operação
 

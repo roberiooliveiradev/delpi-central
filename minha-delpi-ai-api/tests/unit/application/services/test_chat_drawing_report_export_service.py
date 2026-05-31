@@ -11,6 +11,8 @@ def test_build_export_payload():
 
     assert payload["filename"].startswith("relatorio-desenho-90260140")
     assert payload["filename"].endswith(".md")
+    assert payload["pdfFilename"].endswith(".pdf")
+    assert "90260140" in payload["pdfFilename"]
     assert "Relatório" in payload["markdown"]
 
 

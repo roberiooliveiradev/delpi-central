@@ -20,7 +20,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Concluído | Fases 1–5 + salvar fontes no projeto |
 | [playbook_autoajuda_autoconhecimento_chat_minha_delpi.md](./playbook_autoajuda_autoconhecimento_chat_minha_delpi.md) | Concluído | Fases 1–5 (catálogo, painel ?, personalização, identity sync) |
 | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Parcial | Fases 1–4 (heatmap + dashboard); mini dashboards por agente backlog |
-| [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | Fases 1–5 + fixture PDF, export CSV/XLSX, lousa com relatório; PDF export pendente |
+| [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | Fases 1–5 + exports MD/CSV/XLSX/PDF, lousa; Fase 6 (métricas, D1–D12) backlog |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)

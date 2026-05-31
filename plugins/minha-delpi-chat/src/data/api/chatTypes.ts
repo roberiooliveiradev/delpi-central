@@ -377,6 +377,7 @@ export type ChatMessageMetadata = {
   drawingAnalysis?: Record<string, unknown>;
   drawingAnalysisExport?: {
     filename: string;
+    pdfFilename?: string;
     mimeType: string;
     markdown: string;
     csv?: string;
