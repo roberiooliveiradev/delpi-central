@@ -16,6 +16,8 @@
 
 Query opcional em `/chat/assistant/catalog`: `q` (busca), `agentId` (disponibilidade no agente), `limit` (1–50).
 
+Resposta inclui `userContext` (`canUseTools`, `isSuperadmin`, `canOpenAdmin`) e `availability.requiresProfilePermission` (funcionalidades bloqueadas pelo perfil, ocultas em `features`).
+
 | Método | Path | Permissão |
 |---|---|---|
 | POST | `/chat/assistant/help-events` | `chat.access` |

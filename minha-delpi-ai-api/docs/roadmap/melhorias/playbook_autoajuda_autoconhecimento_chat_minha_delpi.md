@@ -1159,7 +1159,7 @@ Motivos se negativo:
 
 ### Fase 5 — Ajuda inteligente
 
-- [ ] Personalizar por usuário.
+- [x] Personalizar por usuário — `userContext`, `requiresProfilePermission`, filtro de cards sem permissão de tools/perfil.
 - [x] Personalizar por agente no painel (`agentId` / `agentName` no catálogo) e chips pós-erro com nome do agente.
 - [x] `ChatHelpErrorFollowUpService` → `helpErrorFollowUpSuggestions` (chips «Ajuda após erro» no MFE).
 - [x] Novidades contextuais — `contextualHighlights` no catálogo, home vazia e painel `?`.

@@ -73,7 +73,14 @@ def main() -> int:
         ChatAssistantCatalogService,
     )
 
-    generated = AssistantCapabilitiesCatalogGenerator.generate(actions=[])
+    actions: list[dict] = []
+
+    try:
+        actions = AssistantCapabilitiesCatalogGenerator.load_actions_from_database()
+    except Exception as exc:
+        print(f"WARN actions DB indisponível no smoke: {exc}", file=sys.stderr)
+
+    generated = AssistantCapabilitiesCatalogGenerator.generate(actions=actions)
     drift = AssistantCapabilitiesCatalogGenerator.drift_report(
         on_disk=AssistantCapabilitiesCatalogGenerator.load_catalog(),
         generated=generated,

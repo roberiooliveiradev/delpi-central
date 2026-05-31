@@ -55,6 +55,10 @@ class ChatAssistantCatalogService:
         query: str | None = None,
         agent_id: str | None = None,
         limit: int = 24,
+        user_permissions: set[str] | None = None,
+        is_superadmin: bool = False,
+        can_use_tools: bool | None = None,
+        can_open_admin: bool | None = None,
     ) -> dict[str, Any]:
         normalized_query = str(query or "").strip()
         web_search_enabled = self._resolve_web_search_enabled()
@@ -76,6 +80,9 @@ class ChatAssistantCatalogService:
             allowed_action_ids=allowed_action_ids,
             action_catalog=action_catalog,
             web_search_enabled=web_search_enabled,
+            user_permissions=user_permissions,
+            is_superadmin=is_superadmin,
+            can_use_tools=can_use_tools,
         )
 
         if normalized_query:
@@ -83,7 +90,28 @@ class ChatAssistantCatalogService:
         else:
             features = AssistantCapabilitiesRegistry.list_features()[:limit]
 
+        profile_blocked_ids = {
+            str(item.get("id") or "").strip()
+            for item in availability.get("requiresProfilePermission") or []
+            if str(item.get("id") or "").strip()
+        }
+
+        if profile_blocked_ids:
+            features = [
+                item
+                for item in features
+                if str(item.get("id") or "").strip() not in profile_blocked_ids
+            ]
+
         categories = self._group_by_category(features)
+        highlights = AssistantCapabilitiesRegistry.list_contextual_highlights(limit=3)
+
+        if profile_blocked_ids:
+            highlights = [
+                item
+                for item in highlights
+                if str(item.get("featureId") or "").strip() not in profile_blocked_ids
+            ]
 
         return {
             "version": AssistantCapabilitiesRegistry.catalog_version(),
@@ -100,9 +128,16 @@ class ChatAssistantCatalogService:
                 limit=4,
             ),
             "releaseVersion": AssistantCapabilitiesRegistry.latest_release_version(),
-            "contextualHighlights": AssistantCapabilitiesRegistry.list_contextual_highlights(
-                limit=3,
-            ),
+            "contextualHighlights": highlights,
+            "userContext": {
+                "canUseTools": AssistantCapabilitiesRegistry.user_can_use_tools(
+                    permissions={str(item).strip() for item in (user_permissions or []) if str(item).strip()},
+                    is_superadmin=is_superadmin,
+                    can_use_tools=can_use_tools,
+                ),
+                "isSuperadmin": bool(is_superadmin),
+                "canOpenAdmin": bool(can_open_admin) if can_open_admin is not None else None,
+            },
         }
 
     @classmethod

@@ -5,6 +5,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from app.application.security.chat_permissions import (
+    CHAT_ADMIN_PERMISSION,
+    CHAT_TOOLS_MANAGE_PERMISSION,
+    CHAT_TOOLS_USE_PERMISSION,
+)
 from app.infrastructure.content.content_service import ContentService
 
 
@@ -109,18 +114,27 @@ class AssistantCapabilitiesRegistry:
         allowed_action_ids: list[str] | None = None,
         action_catalog: list[dict] | None = None,
         web_search_enabled: bool | None = None,
+        user_permissions: set[str] | None = None,
+        is_superadmin: bool = False,
+        can_use_tools: bool | None = None,
     ) -> dict[str, list[dict[str, Any]]]:
         allowed_ids = {str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()}
         catalog = action_catalog or []
+        permissions = {str(item).strip() for item in (user_permissions or []) if str(item).strip()}
+        tools_allowed = cls.user_can_use_tools(
+            permissions=permissions,
+            is_superadmin=is_superadmin,
+            can_use_tools=can_use_tools,
+        )
 
         available_now: list[dict[str, Any]] = []
         requires_agent: list[dict[str, Any]] = []
         requires_permission: list[dict[str, Any]] = []
+        requires_profile_permission: list[dict[str, Any]] = []
         disabled: list[dict[str, Any]] = []
 
         for feature in cls.list_features():
             entry = dict(feature)
-            feature_id = str(entry.get("id") or "")
 
             if entry.get("featureFlag") == "web_search_enabled":
                 if web_search_enabled is False:
@@ -130,8 +144,22 @@ class AssistantCapabilitiesRegistry:
                 available_now.append(entry)
                 continue
 
+            profile_permissions = cls._feature_profile_permissions(entry)
+
+            if profile_permissions and not cls._has_permissions(
+                profile_permissions,
+                permissions=permissions,
+                is_superadmin=is_superadmin,
+            ):
+                requires_profile_permission.append(entry)
+                continue
+
             if not entry.get("requiresAgent"):
                 available_now.append(entry)
+                continue
+
+            if not tools_allowed:
+                requires_profile_permission.append(entry)
                 continue
 
             if not allowed_ids:
@@ -157,8 +185,54 @@ class AssistantCapabilitiesRegistry:
             "availableNow": available_now,
             "requiresAgent": requires_agent,
             "requiresPermission": requires_permission,
+            "requiresProfilePermission": requires_profile_permission,
             "disabled": disabled,
         }
+
+    @classmethod
+    def user_can_use_tools(
+        cls,
+        *,
+        permissions: set[str],
+        is_superadmin: bool,
+        can_use_tools: bool | None,
+    ) -> bool:
+        if is_superadmin:
+            return True
+
+        if can_use_tools is not None:
+            return bool(can_use_tools)
+
+        return (
+            CHAT_TOOLS_USE_PERMISSION in permissions
+            or CHAT_TOOLS_MANAGE_PERMISSION in permissions
+            or CHAT_ADMIN_PERMISSION in permissions
+        )
+
+    @classmethod
+    def _feature_profile_permissions(cls, feature: dict[str, Any]) -> list[str]:
+        raw = feature.get("requiredPermissions") or feature.get("required_permissions")
+
+        if not isinstance(raw, list):
+            return []
+
+        return [str(item).strip() for item in raw if str(item).strip()]
+
+    @classmethod
+    def _has_permissions(
+        cls,
+        required: list[str],
+        *,
+        permissions: set[str],
+        is_superadmin: bool,
+    ) -> bool:
+        if is_superadmin:
+            return True
+
+        if not required:
+            return True
+
+        return all(token in permissions for token in required)
 
     @classmethod
     def format_release_notes_answer(cls, *, limit: int = 6) -> str | None:

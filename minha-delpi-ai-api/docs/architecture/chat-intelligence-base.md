@@ -72,7 +72,7 @@ Mensagem do usuário
 | `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados; `entry_id` estável para atualizar a mesma linha no painel |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
 | `AssistantCapabilitiesRegistry` | Catálogo `features_catalog.json`, busca, disponibilidade e «o que mudou?» (autoajuda Fase 2) |
-| `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, autoajuda Fase 4) |
+| `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, Fase 4–5: agente, `userContext`, filtro por permissão de tools) |
 | `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills (Fase 3, `scripts/generate_assistant_capabilities_catalog.py`) |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |

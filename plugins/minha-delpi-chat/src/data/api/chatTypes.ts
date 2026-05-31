@@ -235,7 +235,14 @@ export type AssistantCatalogAvailability = {
   availableNow: AssistantCatalogFeature[];
   requiresAgent: AssistantCatalogFeature[];
   requiresPermission: AssistantCatalogFeature[];
+  requiresProfilePermission?: AssistantCatalogFeature[];
   disabled: AssistantCatalogFeature[];
+};
+
+export type AssistantCatalogUserContext = {
+  canUseTools: boolean;
+  isSuperadmin: boolean;
+  canOpenAdmin?: boolean | null;
 };
 
 export type AssistantContextualHighlight = {
@@ -260,6 +267,7 @@ export type AssistantCatalogResponse = {
   releaseNotesPreview?: string | null;
   releaseVersion?: string | null;
   contextualHighlights?: AssistantContextualHighlight[];
+  userContext?: AssistantCatalogUserContext;
 };
 
 export type ChatMessageMetadata = {

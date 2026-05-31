@@ -279,6 +279,8 @@ def get_assistant_catalog():
     except ValueError:
         return bad_request("invalid user id")
 
+    capabilities = _get_chat_capabilities_from_request()
+
     payload = ChatAssistantCatalogService(
         agent_repository=PostgresChatAgentRepository(),
     ).build_response(
@@ -286,6 +288,10 @@ def get_assistant_catalog():
         query=query or None,
         agent_id=agent_id or None,
         limit=limit,
+        user_permissions=set(capabilities.get("permissions") or []),
+        is_superadmin=bool(capabilities.get("isSuperadmin")),
+        can_use_tools=bool(capabilities.get("canUseTools")),
+        can_open_admin=bool(capabilities.get("canOpenAdmin")),
     )
 
     return jsonify(payload), 200

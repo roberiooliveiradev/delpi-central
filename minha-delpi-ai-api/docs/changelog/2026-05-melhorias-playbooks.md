@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 5 (personalização por perfil)
+
+| Entrega | Detalhe |
+|---------|---------|
+| API | `userContext`, `availability.requiresProfilePermission`; cards ERP ocultos sem `chat.tools.use` |
+| Registry | `AssistantCapabilitiesRegistry.resolve_availability` diferencia perfil vs agente vs API |
+| MFE | Badges «Seu perfil não tem permissão» / «Agente sem API habilitada» no `ChatHelpPanel` |
+
 ## Autoajuda — Fase 5 (novidades e métricas)
 
 | Entrega | Detalhe |

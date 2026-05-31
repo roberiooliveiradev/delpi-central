@@ -39,12 +39,16 @@ function resolveAvailabilityLabel(
     return { text: "Desligado neste ambiente", tone: "warn" };
   }
 
+  if (buckets.requiresProfilePermission?.some((item) => item.id === id)) {
+    return { text: "Seu perfil não tem permissão", tone: "warn" };
+  }
+
   if (buckets.requiresPermission.some((item) => item.id === id)) {
-    return { text: "Requer permissão ou actions", tone: "warn" };
+    return { text: "Agente sem API habilitada", tone: "warn" };
   }
 
   if (buckets.requiresAgent.some((item) => item.id === id) || feature.requiresAgent) {
-    return { text: "Use um agente com API", tone: "warn" };
+    return { text: "Escolha um agente com API", tone: "warn" };
   }
 
   return { text: "Disponível", tone: "ok" };
@@ -120,11 +124,16 @@ export function ChatHelpPanel({
     return null;
   }
 
+  const profileHint =
+    catalog?.userContext && !catalog.userContext.canUseTools
+      ? "Seu perfil não inclui uso de consultas ERP (tools). "
+      : "";
+
   const agentHint = catalog?.agentName
-    ? `Contexto: agente ${catalog.agentName}`
+    ? `${profileHint}Contexto: agente ${catalog.agentName}`
     : catalog?.agentId
-      ? "Contexto: agente selecionado"
-      : "Sem agente — algumas consultas pedem escolher um agente.";
+      ? `${profileHint}Contexto: agente selecionado`
+      : `${profileHint}Sem agente — algumas consultas pedem escolher um agente.`;
 
   return (
     <ModalPortal>
