@@ -1,11 +1,10 @@
 # Mockup — Ferramentas
 
-> Esqueleto — preencher na revisão da aba 8.
-
 ## Estado atual
 
-- `AdminToolsTab` — LLM, health, actions, logs por agente.
-- `AdminRbacPanel` embutido na mesma aba (RBAC não é «ferramenta»).
+- `AdminToolsTab` — LLM, health, actions, logs por agente, inteligência global do pipeline.
+- `ToolsSummaryStrip` no topo (LLM, saúde, actions globais/chat).
+- **RBAC** movido para a aba **Segurança** (não duplicar aqui).
 
 ## Wireframe
 
@@ -13,12 +12,19 @@
 ┌─────────────────────────────────────────────────────────┐
 │ Ferramentas e integrações           [Atualizar]          │
 ├─────────────────────────────────────────────────────────┤
-│ Provider LLM │ Health actions │ Catálogo rotas          │
+│ KPI strip │ Health │ Catálogo actions │ Logs por agente │
 ├─────────────────────────────────────────────────────────┤
-│ Logs de teste por agente (tabela)                        │
+│ Inteligência do chat (config global)                     │
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Decisão pendente
+## Implementado (incremental, 10 abas planas)
 
-- RBAC vai para **Segurança** ou **Plataforma** — não duplicar na implementação final.
+- MFE: `ToolsSummaryStrip`, toolbar workspace, remoção do card LLM duplicado.
+- RBAC: `AdminRbacPanel` na aba Segurança.
+
+## Critérios de aceite
+
+- [x] KPI strip no topo sem rolar (desktop).
+- [x] RBAC não aparece em Ferramentas.
+- [ ] Reorganização em sub-abas — mockup 11.

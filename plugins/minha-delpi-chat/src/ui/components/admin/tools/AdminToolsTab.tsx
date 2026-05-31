@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   getAdminToolHealth,
@@ -30,6 +30,8 @@ import type {
 } from "../../../../data/api/chatTypes";
 
 import { ChatIntelligenceSettingsPanel } from "../metrics-tab/ChatIntelligenceSettingsPanel";
+import { ToolsSummaryStrip } from "./ToolsSummaryStrip";
+import { computeToolsSummary } from "./toolsSummary";
 
 import "./AdminToolsTab.css";
 
@@ -74,6 +76,11 @@ export function AdminToolsTab({
 
   const canManageTools = Boolean(rbac?.capabilities.canManageTools);
   const canUseTools = Boolean(rbac?.capabilities.canUseTools);
+
+  const toolsSummary = useMemo(
+    () => computeToolsSummary(llmStatus, health, actions.length, chatActions.length),
+    [llmStatus, health, actions.length, chatActions.length],
+  );
 
   async function loadTools() {
     setIsLoading(true);
@@ -185,52 +192,39 @@ export function AdminToolsTab({
 
   return (
     <section className="mdc-admin-tools-tab">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Ferramentas</p>
-            <h2>Operação de tools e actions</h2>
-            <p>
-              Monitore providers, actions, saúde operacional e permissões preparadas para o uso
-              seguro pelo chat.
-            </p>
-          </div>
+      <header className="mdc-admin-tools-tab__toolbar mdc-admin-tab-header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Ferramentas</p>
+          <h2>Ferramentas e integrações</h2>
+          <p>
+            Providers LLM, saúde operacional, catálogo de actions e inteligência global do pipeline.
+          </p>
+        </div>
 
-          <button
-            type="button"
-            className="mdc-admin-btn"
-            disabled={isLoading || !canUseTools}
-            title={
-              canUseTools
-                ? "Atualizar ferramentas"
-                : "Você não tem permissão para visualizar/usar ferramentas."
-            }
-            onClick={() => {
-              void loadTools();
-            }}
-          >
-            {isLoading ? "Atualizando..." : "Atualizar"}
-          </button>
-        </header>
-      </article>
+        <ToolsSummaryStrip summary={toolsSummary} />
+
+        <button
+          type="button"
+          className="mdc-chat-ws-outline-btn"
+          disabled={isLoading || !canUseTools}
+          title={
+            canUseTools
+              ? "Atualizar ferramentas"
+              : "Você não tem permissão para visualizar/usar ferramentas."
+          }
+          onClick={() => {
+            void loadTools();
+          }}
+        >
+          {isLoading ? "Atualizando..." : "Atualizar"}
+        </button>
+      </header>
 
       {error ? (
         <div className="mdc-admin-tools-tab__error" role="alert">
           {error}
         </div>
       ) : null}
-
-      <div className="mdc-admin-tools-tab__llm-row">
-        <article className="mdc-admin-kpi-card">
-          <p className="mdc-chat-eyebrow">LLM</p>
-          <h3>Status do modelo</h3>
-          <strong>{llmStatus?.provider || llmStatus?.model ? "Configurado" : "Indisponível"}</strong>
-          <p>
-            {llmStatus?.provider ?? "Provider não informado"} ·{" "}
-            {llmStatus?.model ?? "Modelo não informado"}
-          </p>
-        </article>
-      </div>
 
       <article className="mdc-admin-panel">
         <h3 className="mdc-admin-tools-tab__section-title">Saúde das ferramentas</h3>

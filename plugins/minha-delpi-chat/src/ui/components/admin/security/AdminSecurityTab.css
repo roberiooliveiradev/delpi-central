@@ -3,6 +3,32 @@
   gap: var(--mdc-space-4);
 }
 
+.mdc-admin-security__toolbar {
+  align-items: flex-end;
+}
+
+.mdc-admin-security__toolbar .mdc-admin-knowledge-summary {
+  flex: 1 1 26rem;
+  margin-bottom: 0;
+}
+
+.mdc-admin-security__toolbar .mdc-admin-knowledge-summary__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.mdc-admin-security__toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-security__toolbar .mdc-admin-knowledge-summary__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .mdc-admin-security__error {
   margin: 0;
   color: var(--mdc-danger);
@@ -80,25 +106,28 @@
   font-size: 0.86rem;
 }
 
-.mdc-admin-security__events table {
+.mdc-admin-security__events-table {
+  overflow-x: auto;
+  margin-top: var(--mdc-space-2);
+}
+
+.mdc-admin-security__events-table table {
   width: 100%;
+  min-width: 32rem;
   border-collapse: collapse;
   font-size: 0.86rem;
 }
 
-.mdc-admin-security__events th,
-.mdc-admin-security__events td {
-  border-bottom: 1px solid var(--mdc-card-border);
+.mdc-admin-security__events-table th,
+.mdc-admin-security__events-table td {
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
   padding: 0.55rem 0.65rem;
   text-align: left;
 }
 
-.mdc-admin-security__events th {
+.mdc-admin-security__events-table th {
   color: var(--mdc-text-muted);
   font-size: 0.76rem;
+  font-weight: 700;
   text-transform: uppercase;
-}
-
-.mdc-admin-security__events .mdc-admin-panel {
-  overflow-x: auto;
 }

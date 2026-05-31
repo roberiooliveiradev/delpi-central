@@ -20,7 +20,7 @@ export function AdminRbacPanel({ rbac }: AdminRbacPanelProps) {
         <div className="mdc-admin-panel__intro">
           <p className="mdc-chat-eyebrow">RBAC</p>
           <h2>Permissões administrativas</h2>
-          <p>Capacidades do seu perfil no painel admin e no catálogo de ferramentas.</p>
+          <p>Capacidades do seu perfil no painel admin (curadoria, auditoria e operações sensíveis).</p>
         </div>
       </header>
 

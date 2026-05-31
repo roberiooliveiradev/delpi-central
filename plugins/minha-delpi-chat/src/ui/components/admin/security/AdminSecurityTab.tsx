@@ -7,19 +7,29 @@ import {
   scanAdminSecurityInput,
 } from "../../../../data/api/adminApi";
 import type {
+  AdminRbacSummary,
   AdminSecurityConfig,
   AdminSecurityEventsResponse,
   AdminSecurityScanResponse,
   AdminSecuritySummary,
 } from "../../../../data/api/adminTypes";
 
+import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
+import { SecuritySummaryStrip } from "./SecuritySummaryStrip";
+
 import "./AdminSecurityTab.css";
 
 type AdminSecurityTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  rbac?: AdminRbacSummary | null;
+  onOpenAudit?: () => void;
 };
 
-export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
+export function AdminSecurityTab({
+  getAccessToken,
+  rbac,
+  onOpenAudit,
+}: AdminSecurityTabProps) {
   const [config, setConfig] = useState<AdminSecurityConfig | null>(null);
   const [summary, setSummary] = useState<AdminSecuritySummary | null>(null);
   const [events, setEvents] = useState<AdminSecurityEventsResponse | null>(null);
@@ -75,46 +85,35 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
 
   return (
     <section className="mdc-admin-security">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Segurança</p>
-            <h2>Segurança operacional</h2>
-            <p>
-              Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas.
-            </p>
-          </div>
+      <header className="mdc-admin-security__toolbar mdc-admin-tab-header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Segurança</p>
+          <h2>Segurança operacional</h2>
+          <p>
+            Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas.
+          </p>
+        </div>
+
+        <SecuritySummaryStrip summary={summary} isLoading={isLoading} />
+
+        <div className="mdc-admin-security__toolbar-actions">
+          {onOpenAudit ? (
+            <button type="button" className="mdc-chat-ws-outline-btn" onClick={onOpenAudit}>
+              Ver auditoria
+            </button>
+          ) : null}
           <button
             type="button"
-            className="mdc-admin-btn"
+            className="mdc-chat-ws-outline-btn"
             disabled={isLoading}
             onClick={() => void loadData()}
           >
-            {isLoading ? "Carregando..." : "Atualizar"}
+            {isLoading ? "Atualizando..." : "Atualizar"}
           </button>
-        </header>
-      </article>
+        </div>
+      </header>
 
       {error ? <p className="mdc-admin-security__error">{error}</p> : null}
-
-      <div className="mdc-admin-kpi-grid">
-        <article className="mdc-admin-kpi-card">
-          <h3>Bloqueios (24h)</h3>
-          <strong>{summary?.blockedCount ?? 0}</strong>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Sinalizados (24h)</h3>
-          <strong>{summary?.flaggedCount ?? 0}</strong>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Scans admin (24h)</h3>
-          <strong>{summary?.scannedCount ?? 0}</strong>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Total eventos</h3>
-          <strong>{summary?.totalEvents ?? 0}</strong>
-        </article>
-      </div>
 
       <div className="mdc-admin-security__layout mdc-admin-split">
         <article className="mdc-admin-split__aside mdc-admin-panel mdc-admin-security__scan">
@@ -122,14 +121,14 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
           <label className="mdc-admin-field">
             <span>Mensagem</span>
             <textarea
-            value={scanMessage}
-            onChange={(event) => setScanMessage(event.target.value)}
+              value={scanMessage}
+              onChange={(event) => setScanMessage(event.target.value)}
               placeholder="Cole uma mensagem para avaliar risco de prompt injection..."
             />
           </label>
           <button
             type="button"
-            className="mdc-admin-btn mdc-admin-btn--primary"
+            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
             disabled={isScanning}
             onClick={() => void handleScan()}
           >
@@ -139,7 +138,8 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
           {scanResult ? (
             <div className="mdc-admin-security__scan-result">
               <strong>
-                Risco {scanResult.analysis.riskLevel} ({Math.round(scanResult.analysis.riskScore * 100)}%)
+                Risco {scanResult.analysis.riskLevel} (
+                {Math.round(scanResult.analysis.riskScore * 100)}%)
               </strong>
               <span>
                 {scanResult.wouldBlock
@@ -217,27 +217,31 @@ export function AdminSecurityTab({ getAccessToken }: AdminSecurityTabProps) {
 
       <article className="mdc-admin-panel mdc-admin-security__events">
         <h3>Eventos recentes</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Quando</th>
-              <th>Ação</th>
-              <th>Risco</th>
-              <th>Flags</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(events?.items ?? []).map((event) => (
-              <tr key={event.id}>
-                <td>{new Date(event.createdAt).toLocaleString("pt-BR")}</td>
-                <td>{event.action}</td>
-                <td>{String(event.metadata?.riskScore ?? "—")}</td>
-                <td>{((event.metadata?.flags as string[]) ?? []).join(", ") || "—"}</td>
+        <div className="mdc-admin-security__events-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Quando</th>
+                <th>Ação</th>
+                <th>Risco</th>
+                <th>Flags</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(events?.items ?? []).map((event) => (
+                <tr key={event.id}>
+                  <td>{new Date(event.createdAt).toLocaleString("pt-BR")}</td>
+                  <td>{event.action}</td>
+                  <td>{String(event.metadata?.riskScore ?? "—")}</td>
+                  <td>{((event.metadata?.flags as string[]) ?? []).join(", ") || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </article>
+
+      <AdminRbacPanel rbac={rbac ?? null} />
     </section>
   );
 }

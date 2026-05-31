@@ -81,6 +81,8 @@ def main() -> int:
         ("GET", "/admin/metrics/summary?hours=24", "sessions"),
         ("GET", "/admin/agents/specialized", None),
         ("GET", "/admin/responses/evaluations/summary", "total"),
+        ("GET", "/admin/security/summary?hours=24", "blockedCount"),
+        ("GET", "/admin/rbac/summary", "roles"),
     ]
 
     for method, path, required_key in checks:

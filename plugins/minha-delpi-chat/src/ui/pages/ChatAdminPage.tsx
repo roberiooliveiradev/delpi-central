@@ -13,7 +13,6 @@ import type { AdminTab, AdminTabItem } from "../components/admin/shell/adminShel
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
 import { AdminToolsTab } from "../components/admin/tools/AdminToolsTab";
-import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
 import { getAdminRbacSummary } from "../../data/api/adminApi";
 import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
@@ -181,18 +180,19 @@ export function ChatAdminPage({
         ) : null}
 
         {activeTab === "security" ? (
-          <AdminSecurityTab getAccessToken={getAccessToken} />
+          <AdminSecurityTab
+            getAccessToken={getAccessToken}
+            rbac={adminRbac}
+            onOpenAudit={() => setActiveTab("audit")}
+          />
         ) : null}
 
         {activeTab === "tools" ? (
-          <div className="mdc-admin-tools-page">
-            <AdminRbacPanel rbac={adminRbac} />
-            <AdminToolsTab
-              llmStatus={admin.llmStatus}
-              getAccessToken={getAccessToken}
-              rbac={adminRbac}
-            />
-          </div>
+          <AdminToolsTab
+            llmStatus={admin.llmStatus}
+            getAccessToken={getAccessToken}
+            rbac={adminRbac}
+          />
         ) : null}
 
         {activeTab === "audit" ? (
