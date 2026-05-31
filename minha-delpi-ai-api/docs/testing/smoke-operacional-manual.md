@@ -147,7 +147,7 @@ Ver eventos SSE em [`../api/02-chat-sessoes-mensagens.md`](../api/02-chat-sessoe
 | 8 | *(mesma sessão)* filtre filial 02 | Só filial 02; não erro «API não retornou registros» |
 | 9 | *(alternativa)* clique numa linha da tabela (menu contextual) | Abre ações (detalhar, estoque, fornecedores…); «Detalhar» envia ex. `filtre filial 02 armazém 01 do produto 10080022` |
 
-**Local:** smokes HTTP exigem `api_externa.*` (`CHAT_PREFER_API_EXTERNA_PROVIDER=true`). Chip «Ver vendas» é omitido — faturamento só em api-delpi.
+**Local:** smokes HTTP exigem `api_externa.*` (`CHAT_PREFER_API_EXTERNA_PROVIDER=true`). Chip «Ver vendas» é omitido — faturamento só em api-delpi. Ajuste de provider: `scripts/upsert_agent_provider.py` ou `PUT /chat/agents/{agentId}/providers` (não migration SQL).
 
 ---
 

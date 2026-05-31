@@ -39,13 +39,16 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/run_onda11_validation.sh` | Regressão Onda 11 + Fase 5 + serviços de melhorias |
 | `scripts/smoke_operational_routing.py` | Estoque com produto não cai em «Sobre esta consulta» |
 | `scripts/smoke_session_memory_persist.py` | Memória persistida + `memory/clear` |
+| `scripts/upsert_agent_provider.py` | Habilitar/desabilitar provider no agente (API, sem migration) |
 
 ## Homologação local (api-externa)
 
 Com **api-delpi** indisponível no ambiente local, use:
 
 - `CHAT_PREFER_API_EXTERNA_PROVIDER=true` no `minha-delpi-ai-api` (já padrão em `docker-compose.dev.yml`)
+- Providers no agente via API: `scripts/upsert_agent_provider.py --provider api-externa --enabled true --provider api-delpi --enabled false` (sem migration de dados)
 - Smokes HTTP com `SMOKE_REQUIRE_API_EXTERNA=true` (padrão) — chip «Ver vendas» é omitido (rota só em api-delpi)
+- Se o Alembic estiver em revision removida `p8q9r0s1t3`: `flask db stamp o7p8q9r0s1t2`
 
 ## Próximo backlog sugerido
 

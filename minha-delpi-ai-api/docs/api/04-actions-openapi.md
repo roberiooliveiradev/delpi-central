@@ -208,6 +208,8 @@ Lista providers vinculados ao agente.
 
 Cria ou atualiza vínculo entre agente e provider existente.
 
+**Configuração de ambiente:** use este endpoint (ou `scripts/upsert_agent_provider.py`) para habilitar/desabilitar `api-delpi` / `api-externa` no agente. **Não** use migration Alembic com `UPDATE` em `ai_chat_agent_action_providers` — o head de schema não deve carregar dados operacionais.
+
 ### Permissão
 
 `minha-delpi.chat.tools.manage`; agente oficial/system exige `chat.admin` ou superadmin.
