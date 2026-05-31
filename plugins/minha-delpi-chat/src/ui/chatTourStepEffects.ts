@@ -1,5 +1,9 @@
 import type { AssistantOnboardingTourStep } from "../data/api/chatTypes";
-import { fillShortcutTemplate, normalizeShortcutTemplate } from "./chatShortcutPrompt";
+import {
+  fillShortcutTemplate,
+  normalizeShortcutTemplate,
+  SEARCH_QUERY_PLACEHOLDER,
+} from "./chatShortcutPrompt";
 
 export type ChatTourDemoSuggestion = {
   label: string;
@@ -78,7 +82,7 @@ export function tourDemoQueryForDisplay(query?: string): string {
 
   return fillShortcutTemplate(template, {
     productCode: "10080001",
-    searchQuery: "manual WEG CFW500",
+    searchQuery: SEARCH_QUERY_PLACEHOLDER,
     period: "últimos 30 dias",
     productDescription: "exemplo de busca",
   });

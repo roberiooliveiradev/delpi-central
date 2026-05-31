@@ -21,6 +21,9 @@ export type ShortcutFieldId =
   | "meetingNotes"
   | "announcementTopic";
 
+/** Exemplo padrão no campo e na prévia de atalhos com `{{searchQuery}}`. */
+export const SEARCH_QUERY_PLACEHOLDER = "DELPI Conexões Elétricas";
+
 export type ShortcutFieldDefinition = {
   id: string;
   label: string;
@@ -43,7 +46,7 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
   searchQuery: {
     id: "searchQuery",
     label: "O que pesquisar",
-    placeholder: "Ex.: manual WEG CFW500",
+    placeholder: SEARCH_QUERY_PLACEHOLDER,
     required: true,
   },
   period: {
@@ -61,7 +64,7 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
   salesOrder: {
     id: "salesOrder",
     label: "Número da OV",
-    placeholder: "Ex.: 123456",
+    placeholder: "Ex.: 003267",
     inputMode: "numeric",
     pattern: /^\d{4,12}$/,
     patternHint: "Informe o número da ordem de venda.",
@@ -69,7 +72,7 @@ const FIELD_DEFINITIONS: Record<ShortcutFieldId, ShortcutFieldDefinition> = {
   ovNumber: {
     id: "ovNumber",
     label: "Número da OV",
-    placeholder: "Ex.: 123456",
+    placeholder: "Ex.: 003267",
     inputMode: "numeric",
     pattern: /^\d{4,12}$/,
     patternHint: "Informe o número da ordem de venda.",

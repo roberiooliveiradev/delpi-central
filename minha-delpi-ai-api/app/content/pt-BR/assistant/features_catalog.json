@@ -301,7 +301,7 @@
       "featureFlag": "web_search_enabled",
       "examples": [
         "pesquise na web sobre {{searchQuery}}",
-        "Busque na internet sobre norma NR-12",
+        "Busque na internet sobre DELPI Conexões Elétricas",
         "Salvar fontes da pesquisa no projeto"
       ],
       "howToUse": [

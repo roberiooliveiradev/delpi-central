@@ -11,6 +11,7 @@ import {
   resolveStarterPromptOptions,
   resolveStarterQueryForFeature,
   validateShortcutValues,
+  SEARCH_QUERY_PLACEHOLDER,
   WEB_SEARCH_STARTER_QUERY,
 } from "./chatShortcutPrompt";
 
@@ -92,7 +93,7 @@ describe("chatShortcutPrompt", () => {
       "me fale do produto Ex.: 10080001",
     );
     expect(formatShortcutTemplateForDisplay("pesquise na web sobre {{searchQuery}}")).toBe(
-      "pesquise na web sobre Ex.: manual WEG CFW500",
+      `pesquise na web sobre ${SEARCH_QUERY_PLACEHOLDER}`,
     );
     expect(formatShortcutTemplateForDisplay("o que você pode fazer?")).toBe(
       "o que você pode fazer?",
