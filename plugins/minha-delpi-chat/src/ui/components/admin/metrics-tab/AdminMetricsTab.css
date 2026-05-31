@@ -13,6 +13,27 @@
   padding: var(--mdc-space-4);
 }
 
+.mdc-admin-metrics-tab__intel-callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem 1rem;
+  margin-bottom: 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--mdc-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mdc-surface) 88%, var(--mdc-accent, #3b82f6) 12%);
+}
+
+.mdc-admin-metrics-tab__intel-callout p {
+  margin: 0;
+  max-width: 42rem;
+  font-size: 0.82rem;
+  color: var(--mdc-muted);
+  line-height: 1.45;
+}
+
 .mdc-admin-metrics-tab__header-actions {
   display: inline-flex;
   flex-wrap: wrap;

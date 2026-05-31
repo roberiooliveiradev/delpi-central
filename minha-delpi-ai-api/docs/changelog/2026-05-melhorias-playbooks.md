@@ -369,6 +369,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | CSV | `dashboardExportCsv.ts` — botão **↓ CSV** no header do `ChatRichDashboard` (KPI + tabela + gráfico) |
 | Smoke | `smoke_api_externa_local.py` — pausa entre smokes para evitar HTTP 429 |
 
+## Admin — atalho Métricas → Inteligência
+
+| Item | Entrega |
+|------|---------|
+| MFE | Callout em `AdminMetricsTab` com botão para Plataforma → Inteligência |
+| UX | Esclarece que toggles de pipeline saíram de Métricas (Playbook 11) |
+
 ## Homologação — api-externa local
 
 | Item | Entrega |

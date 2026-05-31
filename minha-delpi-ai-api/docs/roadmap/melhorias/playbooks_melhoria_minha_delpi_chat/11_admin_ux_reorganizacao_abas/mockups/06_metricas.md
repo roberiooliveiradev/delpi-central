@@ -6,7 +6,7 @@
 ## Estado atual
 
 - `AdminMetricsTab` — KPIs, custo LLM, séries e distribuições (somente observabilidade).
-- `ChatIntelligenceSettingsPanel` movido para a aba **Ferramentas** (configuração global).
+- `ChatIntelligenceSettingsPanel` em **Plataforma → Inteligência**; callout na aba Métricas com atalho.
 - Cabeçalho com seletor de janela e **Atualizar** (`mdc-chat-ws-outline-btn`).
 
 ## Wireframe (somente observabilidade)
@@ -21,12 +21,13 @@
 
 ## Fora de escopo
 
-- Toggles de inteligência → aba **Ferramentas** (seção «Inteligência do chat») até mockup 11.
+- Toggles de inteligência → **Plataforma → Inteligência** (callout + botão em Métricas).
 
 ## Implementado (incremental, 10 abas planas)
 
 - MFE: métricas sem painel de config; refresh no cabeçalho.
-- Ferramentas: bloco `ChatIntelligenceSettingsPanel` com lead explicativo.
+- Métricas: callout «Abrir inteligência do chat» → Plataforma/Inteligência.
+- Plataforma/Inteligência: `ChatIntelligenceSettingsPanel`.
 
 ## Critérios de aceite
 

@@ -257,6 +257,7 @@ export function ChatAdminPage({
               onRefresh={() => void admin.loadAdminData()}
               isRefreshing={admin.isLoading}
               getAccessToken={getAccessToken}
+              onNavigate={navigateTo}
             />
           ) : null}
 

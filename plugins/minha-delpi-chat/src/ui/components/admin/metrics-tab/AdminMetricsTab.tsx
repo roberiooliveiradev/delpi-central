@@ -12,6 +12,7 @@ import type {
   AdminMetricsSummary,
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
+import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
 import "./AdminMetricsTab.css";
 
@@ -22,6 +23,8 @@ type AdminMetricsTabProps = {
   onRefresh?: () => void;
   isRefreshing?: boolean;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  /** Navega para Plataforma → Inteligência (config global do pipeline). */
+  onNavigate?: (nav: AdminNavState) => void;
 };
 
 function formatPercent(value?: number | null): string {
@@ -241,6 +244,7 @@ export function AdminMetricsTab({
   onRefresh,
   isRefreshing = false,
   getAccessToken,
+  onNavigate,
 }: AdminMetricsTabProps) {
   const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
   const [costTable, setCostTable] = useState<AdminLlmCostTableEntry[]>([]);
@@ -338,6 +342,24 @@ export function AdminMetricsTab({
           ) : null}
         </div>
       </header>
+
+      {onNavigate ? (
+        <aside className="mdc-admin-metrics-tab__intel-callout" role="note">
+          <p>
+            Toggles de RAG, router de tools e loop agentic foram movidos para{" "}
+            <strong>Plataforma → Inteligência</strong> (configuram o pipeline, não são métricas).
+          </p>
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn"
+            onClick={() =>
+              onNavigate({ section: "platform", subTab: "intelligence" })
+            }
+          >
+            Abrir inteligência do chat
+          </button>
+        </aside>
+      ) : null}
 
       <div className="mdc-admin-kpi-grid">
         <article className="mdc-admin-kpi-card">
