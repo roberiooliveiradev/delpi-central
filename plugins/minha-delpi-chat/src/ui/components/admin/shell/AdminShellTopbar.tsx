@@ -8,6 +8,7 @@ import {
   type AdminSubTab,
   getAdminSectionConfig,
 } from "../../../../navigation/adminNavigation";
+import { AdminLegacyQuickNav } from "./AdminLegacyQuickNav";
 import { AdminSubTabNav } from "./AdminSubTabNav";
 
 import "./AdminShellTopbar.css";
@@ -149,6 +150,8 @@ export function AdminShellTopbar({
         activeSubTab={nav.subTab}
         onSubTabChange={selectSubTab}
       />
+
+      <AdminLegacyQuickNav nav={nav} onNavChange={onNavChange} />
     </header>
   );
 }

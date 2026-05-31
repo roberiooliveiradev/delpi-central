@@ -1,0 +1,45 @@
+.mdc-admin-legacy-quick {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0  clamp(var(--mdc-space-3), 1.2vw, var(--mdc-space-5));
+}
+
+.mdc-admin-legacy-quick__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-legacy-quick__track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mdc-admin-legacy-quick__track button {
+  border: 1px solid var(--mdc-border);
+  border-radius: 999px;
+  background: var(--mdc-surface);
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  padding: 0.28rem 0.65rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.mdc-admin-legacy-quick__track button.is-active {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-border));
+  background: color-mix(in srgb, var(--mdc-primary) 10%, var(--mdc-surface));
+  color: var(--mdc-text);
+  font-weight: 600;
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-legacy-quick__track {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
+  }
+}

@@ -152,7 +152,7 @@ const SUB_TAB_BY_SLUG = Object.fromEntries(
 
 const LEGACY_TAB_WARNED = new Set<LegacyAdminTab>();
 
-const LEGACY_TAB_TO_NAV: Record<LegacyAdminTab, AdminNavState> = {
+export const LEGACY_TAB_TO_NAV: Record<LegacyAdminTab, AdminNavState> = {
   knowledge: { section: "knowledge", subTab: "documents" },
   guidelines: { section: "knowledge", subTab: "guidelines" },
   skills: { section: "knowledge", subTab: "behaviors" },
@@ -163,6 +163,34 @@ const LEGACY_TAB_TO_NAV: Record<LegacyAdminTab, AdminNavState> = {
   tools: { section: "platform", subTab: "tools" },
   security: { section: "governance", subTab: "security" },
   audit: { section: "governance", subTab: "audit" },
+};
+
+/** Rótulos das 10 abas planas (acesso direto sem perder a organização em seções). */
+export const ADMIN_LEGACY_QUICK_NAV: { tab: LegacyAdminTab; label: string }[] = [
+  { tab: "knowledge", label: "Conhecimento" },
+  { tab: "metrics", label: "Métricas" },
+  { tab: "guidelines", label: "Diretrizes" },
+  { tab: "skills", label: "Skills" },
+  { tab: "simulate", label: "Simulação" },
+  { tab: "evaluations", label: "Avaliações" },
+  { tab: "agents", label: "Agentes" },
+  { tab: "security", label: "Segurança" },
+  { tab: "tools", label: "Ferramentas" },
+  { tab: "audit", label: "Auditoria" },
+];
+
+/** URLs antigas com slug da aba legada (inglês) continuam abrindo o destino correto. */
+const LEGACY_AREA_SLUG: Record<string, LegacyAdminTab> = {
+  knowledge: "knowledge",
+  metrics: "metrics",
+  guidelines: "guidelines",
+  skills: "skills",
+  simulate: "simulate",
+  evaluations: "evaluations",
+  agents: "agents",
+  security: "security",
+  tools: "tools",
+  audit: "audit",
 };
 
 const UUID_RE =
@@ -219,6 +247,17 @@ export function parseAdminRouteSegments(segments: string[]): AdminNavState | { a
   }
 
   const [area, second, third] = segments.map((segment) => decodeURIComponent(segment));
+
+  const legacyTab = area ? LEGACY_AREA_SLUG[area] : undefined;
+
+  if (legacyTab) {
+    const base = LEGACY_TAB_TO_NAV[legacyTab];
+
+    return normalizeAdminNav({
+      ...base,
+      agentId: legacyTab === "agents" && second && isAdminAgentRouteId(second) ? second : base.agentId,
+    });
+  }
 
   if (area === "agentes") {
     if (second && isAdminAgentRouteId(second)) {

@@ -18,6 +18,8 @@ import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeT
 import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminOverviewTab } from "../components/admin/overview/AdminOverviewTab";
 import { AdminPlatformIntelligenceTab } from "../components/admin/platform/AdminPlatformIntelligenceTab";
+import { AdminRbacPanel } from "../components/admin/rbac/AdminRbacPanel";
+import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellStatusStrip } from "../components/admin/shell/AdminShellStatusStrip";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
@@ -194,6 +196,10 @@ export function ChatAdminPage({
           metricsHours={admin.metricsHours}
           onMetricsHoursChange={admin.setMetricsHours}
           getAccessToken={getAccessToken}
+          showIntelligenceSettings
+          onOpenIntelligenceSettings={() =>
+            applyNav({ section: "platform", subTab: "intelligence" })
+          }
         />
       );
     }
@@ -204,11 +210,14 @@ export function ChatAdminPage({
 
     if (nav.section === "platform" && nav.subTab === "tools") {
       return (
-        <AdminToolsTab
-          llmStatus={admin.llmStatus}
-          getAccessToken={getAccessToken}
-          rbac={adminRbac}
-        />
+        <div className="mdc-admin-tools-page">
+          <AdminRbacPanel rbac={adminRbac} />
+          <AdminToolsTab
+            llmStatus={admin.llmStatus}
+            getAccessToken={getAccessToken}
+            rbac={adminRbac}
+          />
+        </div>
       );
     }
 
@@ -245,6 +254,8 @@ export function ChatAdminPage({
           isLoading={admin.isLoading}
           onRefresh={admin.loadAdminData}
         />
+
+        <AdminShellAlerts error={admin.error} successMessage={admin.successMessage} />
 
         <ChatAnimatedPanel
           panelKey={adminNavPanelKey(nav)}

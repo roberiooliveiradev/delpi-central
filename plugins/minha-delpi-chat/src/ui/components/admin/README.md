@@ -32,6 +32,7 @@ Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificaçõe
 ## Regras
 
 1. Não colocar CSS de aba dentro de `ChatAdminPage.css`.
-2. `ChatIntelligenceSettingsPanel` fica em **Plataforma → Inteligência**, não em Qualidade.
-3. `AdminRbacPanel` fica no **Painel**, não em Plataforma.
+2. `ChatIntelligenceSettingsPanel` permanece em **Plataforma → Inteligência** e também em **Qualidade → Métricas** (paridade com o admin anterior).
+3. `AdminRbacPanel` aparece no **Painel** e em **Plataforma → Ferramentas** (como antes do Playbook 11).
+4. Barra **Acesso direto** com as 10 abas planas originais, além das 6 seções.
 4. Contratos em `data/api/adminApi.ts` e `adminTypes.ts`; API em `minha-delpi-ai-api/docs/api/08-admin.md`.

@@ -61,6 +61,22 @@ describe("adminNavigation", () => {
     });
   });
 
+  it("aceita slug legado /admin/metrics", () => {
+    expect(parseChatRoute("/apps/minha-delpi-chat/admin/metrics")).toMatchObject({
+      kind: "admin",
+      section: "quality",
+      subTab: "metrics",
+    });
+  });
+
+  it("aceita slug legado /admin/skills", () => {
+    expect(parseChatRoute("/apps/minha-delpi-chat/admin/skills")).toMatchObject({
+      kind: "admin",
+      section: "knowledge",
+      subTab: "behaviors",
+    });
+  });
+
   it("deep links das seis áreas do admin", () => {
     const cases = [
       { section: "knowledge" as const, subTab: "behaviors" as const, path: "/conhecimento/comportamentos" },

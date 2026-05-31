@@ -12,6 +12,17 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Fase 4:** tabela `ai_chat_session_memory` + `POST /chat/sessions/{id}/memory/clear`.
 
+## Playbook 11 — restauração de funcionalidades (sem desfazer organização)
+
+| Restaurado | Detalhe |
+|------------|---------|
+| 10 abas planas | Barra **Acesso direto** (Conhecimento, Métricas, Diretrizes, Skills, …) |
+| RBAC em Ferramentas | `AdminRbacPanel` de volta em Plataforma → Ferramentas (também no Painel) |
+| Inteligência em Métricas | `ChatIntelligenceSettingsPanel` na aba Métricas + Plataforma → Inteligência |
+| Alertas globais | `AdminShellAlerts` junto com a faixa de status |
+| Sub-abas no mobile | Sub-nav visível com rolagem horizontal (não oculta) |
+| URLs legadas | `/admin/metrics`, `/admin/skills`, etc. redirecionam ao destino correto |
+
 ## Arquitetura — ordem chat base → MFE (maio/2026)
 
 | Camada | Entrega |

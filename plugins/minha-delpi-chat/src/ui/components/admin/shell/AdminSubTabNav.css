@@ -30,6 +30,8 @@
 
 @media (max-width: 767px) {
   .mdc-admin-subtabs {
-    display: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.15rem;
   }
 }
