@@ -81,6 +81,19 @@ def main() -> int:
     else:
         print("OK unit: classify small_talk")
 
+    doc_route = ChatIntentRouterService.classify(
+        "o que esta escrito no arquivo?",
+        attachment_ids=["att-smoke"],
+    )
+    if doc_route.intent != "attachment_document":
+        print(
+            f"FAIL unit: classify anexo -> {doc_route.intent}",
+            file=sys.stderr,
+        )
+        failed += 1
+    else:
+        print("OK unit: classify attachment_document")
+
     try:
         token = _fetch_token()
         agent_id = _first_agent(token)

@@ -420,6 +420,21 @@ class ChatTurnPreparationService:
             and ChatConversationContextService.has_recent_tool_data(history_source)
         )
 
+        request_attachment_ids = list(getattr(request, "attachment_ids", None) or [])
+        from app.domain.services.chat_attachment_document_intent_service import (
+            ChatAttachmentDocumentIntentService,
+        )
+        from app.domain.services.chat_drawing_intent_service import ChatDrawingIntentService
+
+        skip_tools_for_attachment_document = bool(
+            request_attachment_ids
+            and ChatAttachmentDocumentIntentService.is_document_content_question(message)
+            and not ChatDrawingIntentService.is_drawing_analysis_request(
+                message,
+                attachment_ids=request_attachment_ids,
+            )
+        )
+
         if (
             canvas_action
             or pre_capability_answer
@@ -428,6 +443,7 @@ class ChatTurnPreparationService:
             or interpretation_without_data_answer
             or skip_tools_for_user_identity
             or skip_tools_for_data_interpretation
+            or skip_tools_for_attachment_document
             or small_talk_direct
             or utility_direct
             or web_save_sources_direct
@@ -463,6 +479,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("web_save_sources")
             elif attachment_welcome_direct:
                 pipeline_stages.append("attachment_welcome")
+            elif skip_tools_for_attachment_document:
+                pipeline_stages.append("attachment_document")
             elif text_task_pure:
                 pipeline_stages.append("text_task")
             tool_context = {
@@ -470,6 +488,21 @@ class ChatTurnPreparationService:
                 "toolCalls": [],
                 "nativeToolCalling": {},
             }
+            if skip_tools_for_attachment_document:
+                from app.application.services.chat_document_vision_service import (
+                    ChatDocumentVisionService,
+                )
+
+                vision_meta = ChatDocumentVisionService.build_attachment_vision_metadata(
+                    user_id=str(getattr(request, "user_id", "") or ""),
+                    session_id=str(getattr(request, "session_id", "") or ""),
+                    attachment_ids=[str(item) for item in request_attachment_ids],
+                    skills=workspace_context.get("skills"),
+                )
+
+                if vision_meta:
+                    tool_context["documentVision"] = vision_meta
+
             tool_calls = []
             post_tool = ChatIntelligencePipelineService.finalize_after_tools(
                 message,
@@ -819,6 +852,7 @@ class ChatTurnPreparationService:
             skip_rag=bool(skip_rag),
             direct_answer=direct_answer,
             tool_calls=tool_calls,
+            attachment_ids=request_attachment_ids or None,
         ).to_dict()
 
         if f"intent:{intent_route['intent']}" not in pipeline_stages:

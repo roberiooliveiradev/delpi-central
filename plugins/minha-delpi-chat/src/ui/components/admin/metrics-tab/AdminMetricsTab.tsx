@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 
 import {
   getAdminDrawingAnalysisSummary,
+  getAdminDocumentVisionSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
   saveAdminLlmCostTable,
 } from "../../../../data/api/adminApi";
 import type {
   AdminDrawingAnalysisSummary,
+  AdminDocumentVisionSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
   AdminMetricsDistributionItem,
@@ -15,6 +17,7 @@ import type {
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
 import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
+import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
 import "./AdminMetricsTab.css";
@@ -256,6 +259,10 @@ export function AdminMetricsTab({
     null,
   );
   const [isLoadingDrawingSummary, setIsLoadingDrawingSummary] = useState(false);
+  const [documentVisionSummary, setDocumentVisionSummary] =
+    useState<AdminDocumentVisionSummary | null>(null);
+  const [isLoadingDocumentVisionSummary, setIsLoadingDocumentVisionSummary] =
+    useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -293,6 +300,20 @@ export function AdminMetricsTab({
       .then(setDrawingSummary)
       .catch(() => setDrawingSummary(null))
       .finally(() => setIsLoadingDrawingSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setDocumentVisionSummary(null);
+      return;
+    }
+
+    setIsLoadingDocumentVisionSummary(true);
+
+    void getAdminDocumentVisionSummary(metricsHours, { getAccessToken })
+      .then(setDocumentVisionSummary)
+      .catch(() => setDocumentVisionSummary(null))
+      .finally(() => setIsLoadingDocumentVisionSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -464,6 +485,12 @@ export function AdminMetricsTab({
       <AdminDrawingAnalysisMetrics
         summary={drawingSummary}
         isLoading={isLoadingDrawingSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminDocumentVisionMetrics
+        summary={documentVisionSummary}
+        isLoading={isLoadingDocumentVisionSummary}
         windowHours={windowLabel}
       />
 

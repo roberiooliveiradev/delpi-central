@@ -37,6 +37,7 @@ import type {
   AdminLlmCostTableResponse,
   AdminLlmStatus,
   AdminDrawingAnalysisSummary,
+  AdminDocumentVisionSummary,
   AdminMetricsSummary,
   AdminMetricsTimeseriesResponse,
   AdminRbacSummary,
@@ -840,6 +841,21 @@ export async function getAdminDrawingAnalysisSummary(
   );
 
   return parseJsonResponse<AdminDrawingAnalysisSummary>(response);
+}
+
+export async function getAdminDocumentVisionSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminDocumentVisionSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/document-vision/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminDocumentVisionSummary>(response);
 }
 
 export async function getAdminMetricsTimeseries(

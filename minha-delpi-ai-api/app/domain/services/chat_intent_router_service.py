@@ -107,6 +107,7 @@ class ChatIntentRouterService:
         "small_talk": ("small_talk", None, 9),
         "utility_direct": ("utility", None, 9),
         "attachment_welcome": ("attachment_task", "welcome", 7),
+        "attachment_document": ("attachment_document", "read_content", 5),
         "drawing_analysis": ("drawing_analysis", "delpi_pdf", 5),
         "identity_shortcut": ("identity", "user_profile", 9),
         "meta_direct_answer": ("identity", "meta", 9),
@@ -199,6 +200,25 @@ class ChatIntentRouterService:
                 priority_applied=5,
                 resolved_params=params,
                 flags=("drawing_analysis_delpi",),
+            )
+
+        from app.domain.services.chat_attachment_document_intent_service import (
+            ChatAttachmentDocumentIntentService,
+        )
+
+        if (
+            attachment_ids
+            and ChatAttachmentDocumentIntentService.is_document_content_question(normalized)
+        ):
+            return IntentRouteResult(
+                intent="attachment_document",
+                sub_intent="read_content",
+                confidence=0.91,
+                requires_tool=False,
+                requires_rag=True,
+                requires_llm=True,
+                priority_applied=5,
+                flags=("attachment_document", "document_vision"),
             )
 
         if text_task_pure or ChatTextTaskIntentService.is_pure_text_task(
@@ -369,11 +389,13 @@ class ChatIntentRouterService:
         skip_rag: bool = False,
         direct_answer: str | None = None,
         tool_calls: list | None = None,
+        attachment_ids: list[str] | None = None,
     ) -> IntentRouteResult:
         """Intenção efetiva após o turn prep (estágios reais do pipeline)."""
         stages = list(pipeline_stages or [])
         predicted = cls.classify(
             message,
+            attachment_ids=attachment_ids,
             text_task_pure=text_task_pure,
             text_task_category=text_task_category,
             analysis_mode=analysis_mode,
@@ -384,6 +406,10 @@ class ChatIntentRouterService:
         for stage in stages:
             if stage.startswith("intent:"):
                 continue
+
+            if stage == "tools" and not tool_calls:
+                if predicted.intent in {"attachment_document", "attachment_task"}:
+                    continue
 
             mapping = cls._STAGE_INTENT.get(stage)
 

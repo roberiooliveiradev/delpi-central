@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 13: Skill de visão e OCR de documentos (chat base)
 
-**Status:** parcial (13.1–13.2 + 13.4 + OCR imagem + stream MVP; maio/2026)  
+**Status:** parcial (13.1–13.2 + 13.4 + 13.6 + intent `attachment_document`; 13.3/13.5 backlog; maio/2026)  
 **Criado:** 2026-05-31  
 **Playbook:** [playbook_skill_visao_documentos_ocr_delpi.md](./melhorias/playbook_skill_visao_documentos_ocr_delpi.md) (`document-vision-delpi`)  
 **Pré-requisitos:** [Onda 12](./inteligencia-chat-onda-12-skill-analise-desenhos-pdf.md) MVP, [arquitetura chat base](../architecture/chat-intelligence-base.md)
@@ -48,7 +48,7 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 
 | ID | Entrega | Status |
 |----|---------|--------|
-| 13.3.1 | Backend `docling` (MIT) ou `paddleocr` (Apache 2.0) | ⬜ |
+| 13.3.1 | Backend `docling` (MIT) ou `paddleocr` (Apache 2.0) | ⬜ (stub + fallback `auto`; wiring pendente) |
 | 13.3.2 | Extração de tabelas BOM | ⬜ |
 
 ### 13.4 — Integração drawing (Onda 12 Fase 3)
@@ -106,3 +106,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | Stream `document_vision` no chat; README com env vars; validação container + smokes. |
 | 2026-05-31 | Métricas `documentVisionMetrics` + endpoint admin summary; profile compose `vision`. |
 | 2026-05-31 | `documentVision`/`documentVisionTrace` em turnos só com anexo (PDF indexado → snapshot native leve). |
+| 2026-05-31 | Intent `attachment_document` (leitura de anexo sem planejar OpenAPI); painel admin Métricas visão/OCR. |

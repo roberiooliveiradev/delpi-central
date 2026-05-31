@@ -217,6 +217,27 @@ class ChatDocumentVisionService:
                 started=started,
             )
 
+        if backend in {"docling", "paddleocr"}:
+            neural = cls._stage_neural_backend(
+                storage_path,
+                filename=filename,
+                content_type=content_type,
+                backend=backend,
+            )
+
+            if str(neural.get("fullText") or "").strip():
+                stages.append(backend)
+                return cls._finalize_result(
+                    neural,
+                    engine=backend,
+                    stages=stages,
+                    warnings=list(neural.get("warnings") or []),
+                    started=started,
+                )
+
+            warnings.append(f"{backend}_unavailable_fallback_auto")
+            backend = "auto"
+
         native = cls._stage_native(storage_path, filename=filename, content_type=content_type)
         stages.append("native")
         full_text = str(native.get("fullText") or "")
@@ -653,6 +674,57 @@ class ChatDocumentVisionService:
             "fullText": payload.get("fullText") or "",
             "charCount": int(payload.get("charCount") or 0),
         }
+
+    @classmethod
+    def _stage_neural_backend(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        content_type: str,
+        backend: str,
+    ) -> dict[str, Any]:
+        """Backends opcionais (Docling/Paddle) — profile vision; fallback para auto se indisponível."""
+        warnings: list[str] = []
+
+        try:
+            if backend == "docling":
+                return cls._stage_docling(storage_path, filename=filename, warnings=warnings)
+
+            if backend == "paddleocr":
+                return cls._stage_paddleocr(storage_path, filename=filename, warnings=warnings)
+        except Exception as exc:
+            warnings.append(f"{backend}_error:{exc.__class__.__name__}")
+
+        return {"fullText": "", "warnings": warnings}
+
+    @classmethod
+    def _stage_docling(cls, storage_path: str, *, filename: str, warnings: list[str]) -> dict[str, Any]:
+        try:
+            import docling  # noqa: F401
+        except ImportError:
+            warnings.append("docling_not_installed")
+            return {"fullText": "", "warnings": warnings}
+
+        warnings.append("docling_not_wired_yet")
+        return {"fullText": "", "warnings": warnings}
+
+    @classmethod
+    def _stage_paddleocr(
+        cls,
+        storage_path: str,
+        *,
+        filename: str,
+        warnings: list[str],
+    ) -> dict[str, Any]:
+        try:
+            from paddleocr import PaddleOCR  # noqa: F401
+        except ImportError:
+            warnings.append("paddleocr_not_installed")
+            return {"fullText": "", "warnings": warnings}
+
+        warnings.append("paddleocr_not_wired_yet")
+        return {"fullText": "", "warnings": warnings}
 
     @classmethod
     def _is_pdf(cls, content_type: str, filename: str, storage_path: str) -> bool:

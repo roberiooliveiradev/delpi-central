@@ -362,6 +362,27 @@ export type AdminDrawingAnalysisSummary = {
   recent: AdminDrawingAnalysisRecentItem[];
 };
 
+export type AdminDocumentVisionRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  engine?: string | null;
+  context?: string | null;
+  legible?: boolean | null;
+  durationMs?: number | null;
+};
+
+export type AdminDocumentVisionSummary = {
+  windowHours: number;
+  since: string;
+  runsCount: number;
+  byEngine: Record<string, number>;
+  byContext: Record<string, number>;
+  legibleCount: number;
+  legibilityRate: number | null;
+  avgDurationMs: number | null;
+  recent: AdminDocumentVisionRecentItem[];
+};
+
 export type AdminMetricsSummary = {
   windowHours?: number;
   sessions: number;
