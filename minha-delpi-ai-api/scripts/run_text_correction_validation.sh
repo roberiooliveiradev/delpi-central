@@ -17,6 +17,7 @@ echo "== Correção de texto — testes unitários =="
   tests/unit/test_text_correction_skill.py \
   tests/unit/domain/services/test_chat_text_correction_intelligence_regression.py \
   tests/unit/application/services/test_chat_text_correction_metrics_service.py \
+  tests/unit/application/services/test_chat_admin_debug_service.py \
   tests/unit/domain/services/test_chat_text_correction_preference_service.py \
   tests/unit/infrastructure/persistence/test_postgres_chat_session_memory_text_correction.py \
   tests/unit/domain/services/test_chat_text_task_intent_service.py \

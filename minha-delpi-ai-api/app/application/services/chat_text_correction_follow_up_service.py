@@ -84,6 +84,10 @@ class ChatTextCorrectionFollowUpService:
             follow_up_count=len(suggestions),
         )
 
+        from app.application.services.chat_admin_debug_service import ChatAdminDebugService
+
+        ChatAdminDebugService.sync_text_correction_trace(metadata)
+
     @classmethod
     def _attach_preferences_metadata(
         cls,

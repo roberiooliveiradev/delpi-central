@@ -47,11 +47,27 @@ class ChatAdminDebugService:
         admin_debug = (assistant_metadata or {}).get("adminDebug")
 
         if isinstance(admin_debug, dict):
-            for key in ("memory", "contextAssertiveness", "intelligence", "trustSignals"):
+            for key in (
+                "memory",
+                "contextAssertiveness",
+                "intelligence",
+                "trustSignals",
+                "textCorrectionMetrics",
+                "textCorrectionTask",
+                "textCorrectionQuality",
+                "textCorrectionPreferences",
+            ):
                 value = admin_debug.get(key)
 
                 if value is not None:
                     merged[key] = value
+
+            pipeline = admin_debug.get("pipeline")
+
+            if isinstance(pipeline, dict) and pipeline.get("textCorrectionMode") is not None:
+                merged.setdefault("pipeline", {})
+                if isinstance(merged["pipeline"], dict):
+                    merged["pipeline"]["textCorrectionMode"] = pipeline["textCorrectionMode"]
 
         return merged or None
 
@@ -110,6 +126,39 @@ class ChatAdminDebugService:
             admin_debug_payload["trustSignals"] = trust_signals
 
         metadata["adminDebug"] = admin_debug_payload
+
+    @staticmethod
+    def sync_text_correction_trace(metadata: dict) -> None:
+        """Replica métricas de correção textual no adminDebug após attach tardio."""
+        admin_debug = metadata.get("adminDebug")
+
+        if not isinstance(admin_debug, dict):
+            return
+
+        correction_metrics = metadata.get("textCorrectionMetrics")
+
+        if isinstance(correction_metrics, dict):
+            admin_debug["textCorrectionMetrics"] = correction_metrics
+
+        text_task = metadata.get("textTask")
+
+        if isinstance(text_task, dict) and text_task.get("type") == "correction":
+            admin_debug["textCorrectionTask"] = {
+                "subtype": text_task.get("subtype"),
+                "source": text_task.get("source"),
+                "deliverFinalOnly": text_task.get("deliverFinalOnly"),
+                "preserveStyle": text_task.get("preserveStyle"),
+            }
+
+        quality = metadata.get("textCorrectionQuality")
+
+        if isinstance(quality, dict):
+            admin_debug["textCorrectionQuality"] = quality
+
+        preferences = metadata.get("textCorrectionPreferences")
+
+        if isinstance(preferences, dict):
+            admin_debug["textCorrectionPreferences"] = preferences
 
     @staticmethod
     def _compact_intelligence(intelligence_metadata: dict) -> dict:
@@ -202,6 +251,7 @@ class ChatAdminDebugService:
                 "analysisMode": bool(analysis_mode),
                 "fastPath": bool(fast_path),
                 "skipRag": bool(skip_rag),
+                "textCorrectionMode": bool(workspace_context.get("textCorrectionMode")),
                 "historySummary": cls._truncate_text(str(history_summary or ""), limits),
             },
             "intentRoute": intent_route if isinstance(intent_route, dict) else None,

@@ -151,6 +151,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Regressão | `TEXT_CORRECTION_*_CASES` + `test_chat_text_correction_intelligence_regression.py` |
 | Métricas | `ChatTextCorrectionMetricsService` → `textCorrectionMetrics` no metadata |
 | Lousa/anexo | `source` canvas/attachment no intent e suplemento de prompt |
+| AdminDebug | `sync_text_correction_trace` — métricas/tarefa/qualidade no `adminDebug`; `run_chat_text_correction_homologation.sh`; Onda 11 |
 
 **Backlog:** painel admin agregado de métricas (§23 completo).
 

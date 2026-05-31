@@ -95,3 +95,61 @@ def test_resolve_client_admin_debug_merges_assertiveness_from_metadata():
     assert merged["contextAssertiveness"]["score"] == 92.0
     assert merged["memory"]["lastEntities"]["productCode"] == "10080001"
     assert merged["pipeline"]["skipRag"] is True
+
+
+def test_sync_text_correction_trace_copies_metrics_into_admin_debug():
+    metadata = {
+        "adminDebug": {"pipeline": {"skipRag": True}},
+        "textCorrectionMetrics": {"subtype": "text_correct_basic", "source": "user_message"},
+        "textTask": {"type": "correction", "subtype": "text_correct_basic", "source": "user_message"},
+        "textCorrectionQuality": {"passed": True, "checks": []},
+        "textCorrectionPreferences": {"labels": ["Só versão final"]},
+    }
+
+    ChatAdminDebugService.sync_text_correction_trace(metadata)
+
+    admin = metadata["adminDebug"]
+    assert admin["textCorrectionMetrics"]["subtype"] == "text_correct_basic"
+    assert admin["textCorrectionTask"]["subtype"] == "text_correct_basic"
+    assert admin["textCorrectionQuality"]["passed"] is True
+    assert admin["textCorrectionPreferences"]["labels"] == ["Só versão final"]
+
+
+def test_resolve_client_admin_debug_includes_text_correction_trace():
+    build_payload = {"pipeline": {"skipRag": True}}
+    assistant_metadata = {
+        "adminDebug": {
+            "textCorrectionMetrics": {"subtype": "text_formal"},
+            "textCorrectionTask": {"subtype": "text_formal", "source": "user_message"},
+            "pipeline": {"textCorrectionMode": True},
+        }
+    }
+
+    class _Req:
+        admin_debug = True
+
+    merged = ChatAdminDebugService.resolve_client_admin_debug(
+        _Req(),
+        build_payload=build_payload,
+        assistant_metadata=assistant_metadata,
+    )
+
+    assert merged is not None
+    assert merged["textCorrectionMetrics"]["subtype"] == "text_formal"
+    assert merged["pipeline"]["textCorrectionMode"] is True
+
+
+def test_build_pipeline_flags_text_correction_mode():
+    payload = ChatAdminDebugService.build(
+        workspace_context={"agentId": None, "textCorrectionMode": True},
+        tool_context={"context": "", "toolCalls": []},
+        rag={"context": "", "sources": []},
+        llm_messages=[],
+        history_summary="",
+        operational_optimize=False,
+        analysis_mode=False,
+        fast_path=False,
+        skip_rag=True,
+    )
+
+    assert payload["pipeline"]["textCorrectionMode"] is True

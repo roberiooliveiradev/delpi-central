@@ -381,6 +381,18 @@ export type ChatMessageMetadata = {
     labels?: string[];
     persisted?: boolean;
   };
+  textCorrectionMetrics?: {
+    subtype?: string;
+    source?: string;
+    followUpCount?: number;
+    qualityPassed?: boolean;
+    preferenceLabels?: string[];
+  };
+  textCorrectionQuality?: {
+    passed?: boolean;
+    checks?: { criterion: string; ok: boolean; detail?: string }[];
+    warnings?: string[];
+  };
   textTask?: {
     type?: string;
     subtype?: string;

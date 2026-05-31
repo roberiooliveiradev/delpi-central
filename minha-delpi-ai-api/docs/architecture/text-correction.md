@@ -34,11 +34,20 @@ Mensagem
 - `textCorrectionFollowUpSuggestions`: chips de refinamento
 - `textCorrectionQuality`: falhas do validador (opcional)
 - `textCorrectionMetrics`: snapshot leve (subtipo, fonte, preferências, qualidade)
+- `adminDebug.textCorrection*`: mesma trilha para painel admin (`ChatAdminDebugService.sync_text_correction_trace`)
 
 ## Validação
 
 ```bash
 cd minha-delpi-ai-api && ./scripts/run_text_correction_validation.sh
 ```
+
+Homologação (offline + HTTP opcional):
+
+```bash
+./scripts/run_chat_text_correction_homologation.sh
+```
+
+Inclusão na regressão Onda 11: `scripts/run_onda11_validation.sh`.
 
 Playbook: [`../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md`](../roadmap/melhorias/playbook_correcao_texto_minha_delpi_chat.md).
