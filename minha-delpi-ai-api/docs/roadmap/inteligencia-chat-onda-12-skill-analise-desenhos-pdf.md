@@ -123,7 +123,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 | 12.6.1 | Testes D1–D12 (`test_drawing_analysis_skill.py`) | ✅ |
 | 12.6.2 | Regressão intent desenho em `chat_intelligence_regression_cases.py` | ✅ |
 | 12.6.3 | Métricas em metadata, adminDebug e auditoria (`drawingAnalysisMetrics`) | ✅ |
-| 12.6.4 | Dashboard admin agregado (histórico) | ⏳ backlog |
+| 12.6.4 | Resumo admin agregado (`GET /admin/metrics/drawing-analysis/summary`) | ✅ |
 
 ---
 
@@ -189,6 +189,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | 2026-05-31 | Estágio `drawing_analysis` no pipeline; smoke E2E HTTP; `drawingAnalysisExport` em `intelligence`. |
 | 2026-05-31 | Testes regressão D1–D12 (`test_drawing_analysis_skill.py`) + intent drawing na regressão chat. |
 | 2026-05-31 | `ChatDrawingMetricsService` — snapshot em metadata, adminDebug e audit log. |
+| 2026-05-31 | Endpoint admin `GET /admin/metrics/drawing-analysis/summary` (histórico via audit). |
 
 ---
 

@@ -17,6 +17,9 @@ from app.application.use_cases.deactivate_knowledge_document_use_case import (
 from app.application.use_cases.delete_knowledge_document_use_case import (
     DeleteKnowledgeDocumentUseCase,
 )
+from app.application.use_cases.get_admin_drawing_analysis_summary_use_case import (
+    GetAdminDrawingAnalysisSummaryUseCase,
+)
 from app.application.use_cases.get_admin_metrics_summary_use_case import GetAdminMetricsSummaryUseCase
 from app.application.use_cases.get_admin_tools_health_use_case import GetAdminToolsHealthUseCase
 from app.application.use_cases.admin_llm_cost_table_use_cases import (
@@ -173,6 +176,10 @@ def make_list_admin_audit_logs_use_case() -> ListAdminAuditLogsUseCase:
 
 def make_get_admin_metrics_summary_use_case() -> GetAdminMetricsSummaryUseCase:
     return GetAdminMetricsSummaryUseCase(PostgresAdminMetricsRepository())
+
+
+def make_get_admin_drawing_analysis_summary_use_case() -> GetAdminDrawingAnalysisSummaryUseCase:
+    return GetAdminDrawingAnalysisSummaryUseCase(PostgresAuditRepository())
 
 def make_get_admin_system_check_use_case() -> GetAdminSystemCheckUseCase:
     return GetAdminSystemCheckUseCase(PostgresAdminSystemCheckRepository())

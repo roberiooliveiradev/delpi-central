@@ -147,3 +147,81 @@ class ChatDrawingMetricsService:
         )
 
         return audit_metadata
+
+    @classmethod
+    def aggregate_snapshots(
+        cls,
+        entries: list[dict[str, Any]],
+        *,
+        hours: int,
+        since_iso: str,
+    ) -> dict[str, Any]:
+        """Agrega snapshots de auditoria para painel admin (12.6.4)."""
+        by_status: Counter[str] = Counter()
+        products: set[str] = set()
+        total_critical = 0
+        total_errors = 0
+        exported = 0
+        analyser_ok = 0
+        with_pdf = 0
+
+        for entry in entries:
+            snapshot = entry.get("snapshot") if isinstance(entry.get("snapshot"), dict) else entry
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            status = str(snapshot.get("overallStatus") or "unknown")
+            by_status[status] += 1
+            code = str(snapshot.get("productCode") or "").strip()
+
+            if code:
+                products.add(code)
+
+            total_critical += int(snapshot.get("criticalErrors") or 0)
+            total_errors += int(snapshot.get("errors") or 0)
+
+            if snapshot.get("reportExported"):
+                exported += 1
+
+            if snapshot.get("analyserOk") is True:
+                analyser_ok += 1
+
+            if snapshot.get("hasPdfAttachment"):
+                with_pdf += 1
+
+        recent = []
+
+        for entry in entries[:12]:
+            if not isinstance(entry, dict):
+                continue
+
+            snapshot = entry.get("snapshot")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            recent.append(
+                {
+                    "loggedAt": entry.get("loggedAt"),
+                    "action": entry.get("action"),
+                    "productCode": snapshot.get("productCode"),
+                    "overallStatus": snapshot.get("overallStatus"),
+                    "criticalErrors": snapshot.get("criticalErrors"),
+                    "reportExported": snapshot.get("reportExported"),
+                }
+            )
+
+        return {
+            "windowHours": hours,
+            "since": since_iso,
+            "analysesCount": sum(by_status.values()),
+            "uniqueProductCodes": len(products),
+            "byStatus": dict(by_status),
+            "totalCriticalErrors": total_critical,
+            "totalErrors": total_errors,
+            "reportExportedCount": exported,
+            "analyserOkCount": analyser_ok,
+            "withPdfCount": with_pdf,
+            "recent": recent,
+        }

@@ -91,6 +91,14 @@ Resposta:
 }
 ```
 
+### GET `/admin/metrics/drawing-analysis/summary`
+
+Resumo agregado da skill **Análise de Desenhos DELPI** (Onda 12), a partir de snapshots em `ai_audit_logs.metadata.drawingAnalysis`.
+
+Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
+
+Resposta: `analysesCount`, `byStatus`, `totalCriticalErrors`, `reportExportedCount`, `analyserOkCount`, `withPdfCount`, `recent[]`.
+
 ### GET `/admin/metrics/summary`
 
 Resumo de métricas administrativas.

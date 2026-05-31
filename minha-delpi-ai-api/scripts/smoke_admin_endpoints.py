@@ -79,6 +79,7 @@ def main() -> int:
         ("GET", "/admin/knowledge/documents?limit=1", "summary"),
         ("GET", "/admin/guidelines", None),
         ("GET", "/admin/metrics/summary?hours=24", "sessions"),
+        ("GET", "/admin/metrics/drawing-analysis/summary?hours=168", "analysesCount"),
         ("GET", "/admin/agents/specialized", None),
         ("GET", "/admin/responses/evaluations/summary", "total"),
         ("GET", "/admin/security/summary?hours=24", "blockedCount"),
