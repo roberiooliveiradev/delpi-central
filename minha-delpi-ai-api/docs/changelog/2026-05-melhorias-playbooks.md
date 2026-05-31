@@ -140,6 +140,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 2 (catálogo)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Conteúdo | `features_catalog.json`, `assistant_release_notes.json` |
+| Serviço | `AssistantCapabilitiesRegistry` — busca, buckets de disponibilidade |
+| Chat | «O que mudou?»; ajuda por tópico prioriza catálogo |
+| Smoke | `scripts/smoke_features_catalog.py` |
+
 ## Autoajuda — Fase 1 (parcial)
 
 | Entrega | Detalhe |

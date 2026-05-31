@@ -1137,9 +1137,11 @@ Motivos se negativo:
 
 ### Fase 2 — Catálogo único
 
-- Criar `features_catalog.json`.
-- Criar `AssistantCapabilitiesRegistry`.
-- Integrar actions, skills e agentes.
+- [x] `features_catalog.json` — funcionalidades com id, categoria, exemplos e `helpTopicId`.
+- [x] `AssistantCapabilitiesRegistry` — busca, disponibilidade por agente, release notes.
+- [x] `assistant_release_notes.json` + resposta «o que mudou?».
+- [x] Integração com `ChatCapabilitiesService` e chips Explorar via features relacionadas.
+- [ ] Geração automática a partir de actions/skills (Fase 3).
 
 ### Fase 3 — Autoatualização
 

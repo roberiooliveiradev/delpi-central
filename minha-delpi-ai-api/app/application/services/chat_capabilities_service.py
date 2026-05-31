@@ -143,10 +143,35 @@ class ChatCapabilitiesService:
         if cls.is_capabilities_question(message):
             return True
 
+        if cls.is_release_notes_question(message):
+            return True
+
         if cls._is_feature_capability_inquiry(message):
             return True
 
         return False
+
+    @classmethod
+    def is_release_notes_question(cls, message: str) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if len(normalized) > 120:
+            return False
+
+        terms = (
+            "o que mudou",
+            "novidades",
+            "novidade",
+            "changelog",
+            "release notes",
+            "ultima versao",
+            "última versão",
+            "o que tem de novo",
+            "o que ha de novo",
+            "o que há de novo",
+        )
+
+        return any(term in normalized for term in terms)
 
     @classmethod
     def resolve_capability_answer(
@@ -157,6 +182,16 @@ class ChatCapabilitiesService:
         allowed_action_ids: list[str] | None = None,
         action_catalog: list[dict] | None = None,
     ) -> str | None:
+        if cls.is_release_notes_question(message):
+            from app.application.services.assistant_capabilities_registry import (
+                AssistantCapabilitiesRegistry,
+            )
+
+            release_answer = AssistantCapabilitiesRegistry.format_release_notes_answer()
+
+            if release_answer:
+                return release_answer
+
         targeted = cls.build_feature_answer(
             message=message,
             workspace_context=workspace_context,
@@ -373,6 +408,31 @@ class ChatCapabilitiesService:
 
     @classmethod
     def _answer_topic_help(cls, key: str) -> str | None:
+        from app.application.services.assistant_capabilities_registry import (
+            AssistantCapabilitiesRegistry,
+        )
+
+        topic_by_key = {
+            "canvasHelp": "canvas",
+            "chartHelp": "chart",
+            "attachmentHelp": "attachment",
+            "agentHelp": "agent",
+            "webSearchHelp": "web",
+        }
+        registry_topic = topic_by_key.get(key)
+
+        feature = (
+            AssistantCapabilitiesRegistry.find_by_help_topic(registry_topic)
+            if registry_topic
+            else None
+        )
+
+        if feature:
+            formatted = cls._format_catalog_feature_help(feature)
+
+            if formatted:
+                return formatted
+
         texts = _feature_answers().get(key) or {}
 
         if not isinstance(texts, dict):
@@ -385,6 +445,29 @@ class ChatCapabilitiesService:
             return f"{title}\n\n{body}".strip()
 
         return body or None
+
+    @classmethod
+    def _format_catalog_feature_help(cls, feature: dict) -> str | None:
+        title = str(feature.get("title") or "").strip()
+        summary = str(feature.get("summary") or "").strip()
+        how_to = feature.get("howToUse") or []
+        examples = feature.get("examples") or []
+
+        if not title and not summary:
+            return None
+
+        lines = [f"**{title}**" if title else "", "", summary, ""]
+
+        if isinstance(how_to, list) and how_to:
+            lines.append("**Como usar:**")
+            lines.extend(f"- {str(item).strip()}" for item in how_to if str(item).strip())
+            lines.append("")
+
+        if isinstance(examples, list) and examples:
+            lines.append("**Exemplos:**")
+            lines.extend(f"- «{str(item).strip()}»" for item in examples[:4] if str(item).strip())
+
+        return "\n".join(line for line in lines if line is not None).strip()
 
     @classmethod
     def _is_web_search_help_inquiry(cls, normalized: str) -> bool:

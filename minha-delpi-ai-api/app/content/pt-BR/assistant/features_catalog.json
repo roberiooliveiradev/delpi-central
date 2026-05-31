@@ -1,0 +1,155 @@
+{
+  "version": "2026.06.01",
+  "updatedAt": "2026-06-01T12:00:00Z",
+  "features": [
+    {
+      "id": "capabilities_overview",
+      "title": "O que o chat faz",
+      "category": "chat_basic",
+      "status": "available",
+      "summary": "Visão geral de capacidades, agentes e formatos de resposta.",
+      "requiresAgent": false,
+      "helpTopicId": null,
+      "examples": ["O que você pode fazer?", "Quais funcionalidades existem?"],
+      "howToUse": ["Pergunte em linguagem natural.", "Use os chips Explorar após a resposta."],
+      "relatedFeatures": ["web_search", "canvas", "chart", "attachment", "product_lookup"]
+    },
+    {
+      "id": "product_lookup",
+      "title": "Consulta de produto",
+      "category": "operational",
+      "status": "available",
+      "summary": "Ficha e dados principais de produtos no ERP.",
+      "requiresAgent": true,
+      "requiredActions": ["/products"],
+      "helpTopicId": null,
+      "examples": ["Me fale do produto 10080001", "Mostre a ficha do produto 10080001"],
+      "howToUse": [
+        "Selecione um agente com actions de produto.",
+        "Informe o código do produto."
+      ],
+      "relatedFeatures": ["stock_lookup", "sales_lookup", "structure_lookup"]
+    },
+    {
+      "id": "stock_lookup",
+      "title": "Consulta de estoque",
+      "category": "operational",
+      "status": "available",
+      "summary": "Saldo e posição de estoque por produto.",
+      "requiresAgent": true,
+      "requiredActions": ["/stock"],
+      "helpTopicId": null,
+      "examples": ["Qual o estoque do produto 10080001?"],
+      "relatedFeatures": ["product_lookup", "suppliers_lookup"]
+    },
+    {
+      "id": "sales_lookup",
+      "title": "Vendas e OVs",
+      "category": "operational",
+      "status": "available",
+      "summary": "Vendas por produto ou listagem de ordens de venda.",
+      "requiresAgent": true,
+      "requiredActions": ["/sales"],
+      "helpTopicId": null,
+      "examples": ["Mostre vendas do produto 10080001", "Liste OVs de abril/2026"],
+      "relatedFeatures": ["product_lookup", "chart"]
+    },
+    {
+      "id": "web_search",
+      "title": "Pesquisa na internet",
+      "category": "knowledge",
+      "status": "available",
+      "summary": "Busca em fontes públicas com transparência de sites e confiança.",
+      "requiresAgent": false,
+      "helpTopicId": "web",
+      "featureFlag": "web_search_enabled",
+      "examples": [
+        "Pesquise na web sobre manual WEG CFW500",
+        "Busque na internet sobre norma NR-12"
+      ],
+      "howToUse": [
+        "Use «pesquise na web» ou «pesquisa profunda na web».",
+        "Abra Fontes · N para ver etapas e sites."
+      ],
+      "relatedFeatures": ["canvas", "attachment_compare"]
+    },
+    {
+      "id": "canvas",
+      "title": "Lousa (canvas)",
+      "category": "visualization",
+      "status": "available",
+      "summary": "Área de trabalho para resumos, tabelas e rascunhos persistentes na sessão.",
+      "requiresAgent": false,
+      "helpTopicId": "canvas",
+      "examples": [
+        "Coloque na lousa um resumo em tabela",
+        "Abra a lousa com os dados acima"
+      ],
+      "relatedFeatures": ["chart", "web_search"]
+    },
+    {
+      "id": "chart",
+      "title": "Gráficos",
+      "category": "visualization",
+      "status": "available",
+      "summary": "Visualização de dados numéricos após consultas operacionais.",
+      "requiresAgent": true,
+      "helpTopicId": "chart",
+      "examples": [
+        "Gere um gráfico de barras com os dados acima",
+        "Mostre vendas em gráfico de linhas"
+      ],
+      "relatedFeatures": ["sales_lookup", "canvas"]
+    },
+    {
+      "id": "attachment",
+      "title": "Anexos",
+      "category": "knowledge",
+      "status": "available",
+      "summary": "Envio de arquivos para resumo, correção e comparação.",
+      "requiresAgent": false,
+      "helpTopicId": "attachment",
+      "examples": [
+        "Resuma o arquivo anexado",
+        "Compare o anexo com o produto 10080001"
+      ],
+      "relatedFeatures": ["web_search", "text_tasks"]
+    },
+    {
+      "id": "text_tasks",
+      "title": "Textos administrativos",
+      "category": "text",
+      "status": "available",
+      "summary": "Correção, tom formal, tradução e e-mails.",
+      "requiresAgent": false,
+      "helpTopicId": null,
+      "examples": [
+        "Corrija: segue documento em anexo",
+        "Escreva um e-mail formal cobrando prazo"
+      ],
+      "relatedFeatures": ["attachment"]
+    },
+    {
+      "id": "agent_selection",
+      "title": "Agentes especializados",
+      "category": "chat_basic",
+      "status": "available",
+      "summary": "Escolha de agente com APIs e skills adequadas à tarefa.",
+      "requiresAgent": false,
+      "helpTopicId": "agent",
+      "examples": ["Como escolho um agente?", "Qual agente consulta estoque?"],
+      "relatedFeatures": ["product_lookup", "stock_lookup"]
+    },
+    {
+      "id": "rag",
+      "title": "Conhecimento interno (RAG)",
+      "category": "knowledge",
+      "status": "available",
+      "summary": "Respostas com base em documentos e conhecimento autorizado.",
+      "requiresAgent": false,
+      "helpTopicId": null,
+      "examples": ["O que diz o procedimento de compras?", "Resuma a política de qualidade"],
+      "relatedFeatures": ["attachment"]
+    }
+  ]
+}

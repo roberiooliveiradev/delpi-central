@@ -1,0 +1,28 @@
+{
+  "releases": [
+    {
+      "version": "2026.06.01",
+      "date": "2026-06-01",
+      "items": [
+        {
+          "featureId": "web_search",
+          "title": "Pesquisa web com fontes e confiança",
+          "description": "Planejamento rápido/profundo, painel de fontes, chips pós-pesquisa e cruzamento com ERP.",
+          "examples": ["Pesquise na web sobre manual WEG CFW500"]
+        },
+        {
+          "featureId": "canvas",
+          "title": "Lousa e integração com pesquisa",
+          "description": "Chip «Colocar na lousa» após pesquisa web e respostas operacionais.",
+          "examples": ["Coloque na lousa um resumo das fontes"]
+        },
+        {
+          "featureId": "capabilities_overview",
+          "title": "Autoajuda no chat",
+          "description": "Guias «como uso X?» e chips Explorar para web, lousa, gráfico, anexo e agentes.",
+          "examples": ["Como faço pesquisa na web?", "Como uso a lousa?"]
+        }
+      ]
+    }
+  ]
+}

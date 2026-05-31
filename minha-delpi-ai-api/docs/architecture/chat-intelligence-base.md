@@ -71,6 +71,7 @@ Mensagem do usuário
 | `ChatPaginatedExternalActionService` | Orquestra múltiplas chamadas API por turno e merge de payloads paginados |
 | `ChatStreamActivityService` | Log de atividade em streaming SSE (`event: activity`) — fases **Pensar**, **Planejar novos passos**, consultas API, RAG, falhas e ausência de dados; `entry_id` estável para atualizar a mesma linha no painel |
 | `ChatCapabilitiesService` | Perguntas «consegue…?» / capacidades sem chamar API à toa |
+| `AssistantCapabilitiesRegistry` | Catálogo `features_catalog.json`, busca, disponibilidade e «o que mudou?» (autoajuda Fase 2) |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `chat-analysis-insights.md`, `chat-data-interpretation.md`, `chat-context-memory.md`, …) |
