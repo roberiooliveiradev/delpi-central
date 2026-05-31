@@ -19,6 +19,7 @@ Executar após mudanças em contexto, chips ou presenter (com stack e Keycloak n
 | Chips «Próximos passos» | `python scripts/smoke_follow_up_chips.py` |
 | Catálogo + onboarding | `python scripts/smoke_features_catalog.py` |
 | Templates de atalhos (sem código fixo) | `python scripts/smoke_shortcut_placeholders.py` |
+| Product analyser (roteiro/inspeção em tabelas) | `python scripts/smoke_product_analyser_presentation.py` |
 | Pacote atalhos (login + API + conteúdo) | `./scripts/run_chat_shortcut_homologation.sh` |
 | Homologação no container | `docker exec delpi-minha-delpi-ai-api bash -c 'cd /app && PYTHONPATH=/app SMOKE_BASE_URL=http://delpi-gateway ./scripts/run_chat_shortcut_homologation.sh'` (~3 min; pausas de rate limit) |
 | Última execução (31/05) | placeholders + login/perfil + catálogo + chips API — **OK** |
@@ -266,6 +267,7 @@ Valida resumo textual na **primeira resposta** (roteiro, estoque, estrutura, ins
 | # | Pergunta | O que esperar |
 |---|----------|---------------|
 | 70 | roteiro do 90260142 | Tool `GET /products/90260142/guide`; `humanizedSummary` com operações e componentes BOM; tabela abaixo |
+| 70b | `90260140` ou informações completas | Ficha em tabela Campo×Valor; **roteiro** e **inspeção** em tabelas markdown (sem `Qp6=[…]`); BOM só na árvore/tabela |
 | 71 | estrutura do produto 90260047 | Resumo com produto pai, componentes nível 1 e MPs; árvore/tabela abaixo |
 | 72 | inspeção do produto 90260142 | Resumo do plano de inspeção (testes/características); tabela abaixo |
 | 73 | estoque do produto 10080022 | Resumo com filiais, totais disponível/atual e detalhe por armazém; tabela/gráfico |

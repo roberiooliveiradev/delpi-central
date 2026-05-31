@@ -494,6 +494,10 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 
 **Arquivo:** `ExternalActionResultPresenter` — `_build_product_analyser_body_lines`.
 
+**Smoke:** `scripts/smoke_product_analyser_presentation.py` (sem HTTP).
+
+**Revalidação (31/05):** login OK; pytest presenter 9 OK; smoke analyser presentation OK.
+
 ## Homologação — api-externa local
 
 | Item | Entrega |
