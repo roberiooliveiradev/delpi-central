@@ -145,6 +145,10 @@ def main() -> int:
     try:
         token = _fetch_token()
     except Exception as exc:
+        detail = str(exc)
+        if "502" in detail or "503" in detail or "504" in detail:
+            print(f"FAIL API (infra indisponível): {exc}", file=sys.stderr)
+            return 1
         print(f"SKIP API (sem token): {exc}", file=sys.stderr)
         return 1 if unit_errors else 0
 
