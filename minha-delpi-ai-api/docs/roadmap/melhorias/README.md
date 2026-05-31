@@ -15,7 +15,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | **Revertido** no MFE (10 abas planas); mockups Markdown por aba → implementação no final — ver [`11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md`](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas/00_processo_refatoracao.md) |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
-| Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fase **1** (painel `webSearchResearch`); Fases 2–5 backlog |
+| Pesquisa web | [playbook_melhoria_pesquisa_web_minha_delpi_chat.md](./playbook_melhoria_pesquisa_web_minha_delpi_chat.md) | Fases **1–2** (`ChatWebSearchPlanningService`); Fases 3–5 backlog |
 | Gráficos ampliados | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Fase **1** (`chartPresentation`, toggles); Fases 2–5 backlog |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência arquivada — ver [STATUS](./STATUS_ROADMAP_MELHORIAS.md) |
 
@@ -54,6 +54,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/smoke_sql_safety.py` | Bloqueio de SQL destrutivo (Playbook 08) |
 | `scripts/smoke_intent_route.py` | `intentRoute` + estágio `intent:*` (Playbook 01) |
 | `scripts/smoke_product_sales_routing.py` | Vendas do produto → `/sales` (api-delpi), não estoque/busca |
+| `scripts/smoke_web_search_planning.py` | Planejamento web (`plannedQueries`, modo rápido/profundo) |
 
 ## Chat «comum» e atalhos operacionais
 

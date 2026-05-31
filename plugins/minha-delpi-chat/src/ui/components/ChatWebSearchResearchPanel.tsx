@@ -85,6 +85,12 @@ export function ChatWebSearchResearchPanel({
               <h2 id="mdc-chat-web-research-title">Pesquisa web</h2>
               <p className="mdc-chat-web-research-panel__meta">
                 {sourceCount === 1 ? "1 fonte" : `${sourceCount} fontes`}
+                {research.searchMode === "deep"
+                  ? " · pesquisa profunda"
+                  : research.searchMode === "quick"
+                    ? " · pesquisa rápida"
+                    : ""}
+                {research.preferOfficial ? " · fontes oficiais" : ""}
                 {research.provider ? ` · ${research.provider}` : ""}
                 {durationLabel ? ` · ${durationLabel}` : ""}
               </p>

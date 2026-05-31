@@ -171,6 +171,17 @@ Testes: `test_chat_canvas_intent_service.py`, `test_chat_canvas_content_service.
 
 Tabelas operacionais usam `ExternalActionColumnLabelService`: prioridade OpenAPI `title` → `column_labels.json` → humanize do nome técnico. Evita headers crus (`order_number`, `X3_CAMPO`) na UI quando há tradução cadastrada.
 
+### Pesquisa web — planejamento (maio/2026)
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatWebSearchPlanningService` | Modo `quick` (≤3 queries) ou `deep` (até 6); variantes «manual oficial», `site:marca` (WEG, Siemens, …) |
+| `ChatWebSearchIntentService.resolve` | Expõe `plannedQueries`, `searchMode`, `preferOfficial` nos argumentos da tool |
+| `WebSearchHttpGateway` | Executa queries planejadas antes do retry EN; grava `searchMode` no payload |
+| MFE | `ChatWebSearchResearchPanel` exibe modo e preferência por fontes oficiais |
+
+Smoke: `scripts/smoke_web_search_planning.py`. Requer `CHAT_WEB_SEARCH_ENABLED=true` e provider configurado para E2E real.
+
 ### Listagem de OV vs vendas de produto (maio/2026)
 
 | Situação | Rota correta | Erro comum |

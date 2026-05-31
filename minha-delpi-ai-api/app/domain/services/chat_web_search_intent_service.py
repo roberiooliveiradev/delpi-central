@@ -76,15 +76,37 @@ class ChatWebSearchIntentService:
         if not raw or not cls.matches(raw):
             return None
 
-        query = cls.extract_query(raw)
+        from app.domain.services.chat_web_search_planning_service import (
+            ChatWebSearchPlanningService,
+        )
 
-        if not query:
+        plan = ChatWebSearchPlanningService.plan(raw)
+
+        if not plan:
             return None
+
+        reason = "A pergunta solicita informação pública na internet."
+
+        if plan.prefer_official:
+            reason = "A pergunta solicita informação pública com preferência por fontes oficiais."
+
+        if plan.mode == "deep":
+            reason = (
+                f"{reason} Modo de pesquisa profunda "
+                f"({len(plan.queries)} consulta(s) planejada(s))."
+            )
 
         return {
             "name": "web_search",
-            "arguments": {"query": query},
-            "reason": "A pergunta solicita informação pública na internet.",
+            "arguments": {
+                "query": plan.primary_query(),
+                "plannedQueries": list(plan.queries),
+                "limit": plan.max_results,
+                "searchMode": plan.mode,
+                "searchIntent": plan.intent,
+                "preferOfficial": plan.prefer_official,
+            },
+            "reason": reason,
         }
 
     @classmethod

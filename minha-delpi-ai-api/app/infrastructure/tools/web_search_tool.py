@@ -39,8 +39,28 @@ class WebSearchTool(InternalToolPort):
 
         limit = max(1, min(limit, Settings.CHAT_WEB_SEARCH_MAX_RESULTS))
 
-        payload = self.gateway.search(query, max_results=limit)
+        planned_raw = arguments.get("plannedQueries")
+        planned_queries = (
+            [str(item).strip() for item in planned_raw if str(item).strip()]
+            if isinstance(planned_raw, list)
+            else None
+        )
+        search_mode = str(arguments.get("searchMode") or "").strip() or None
+        prefer_official = arguments.get("preferOfficial")
+
+        payload = self.gateway.search(
+            query,
+            max_results=limit,
+            planned_queries=planned_queries,
+            search_mode=search_mode,
+            prefer_official=prefer_official if prefer_official is not None else None,
+        )
         payload = WebSearchPortugueseContentService.localize_payload(payload) or payload
+
+        search_intent = str(arguments.get("searchIntent") or "").strip()
+
+        if search_intent:
+            payload["searchIntent"] = search_intent
 
         return ToolResult(
             name=self.name,
@@ -51,5 +71,8 @@ class WebSearchTool(InternalToolPort):
                 "searchStatus": payload.get("searchStatus"),
                 "count": len(payload.get("results") or []),
                 "limit": limit,
+                "searchMode": search_mode,
+                "preferOfficial": prefer_official,
+                "searchIntent": search_intent or None,
             },
         )

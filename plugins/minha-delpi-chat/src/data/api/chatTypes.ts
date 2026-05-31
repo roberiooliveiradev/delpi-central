@@ -152,6 +152,9 @@ export type ChatWebSearchResearch = {
   query?: string | null;
   attemptedQueries?: string[] | null;
   searchStatus?: string | null;
+  searchMode?: "quick" | "deep" | string | null;
+  searchIntent?: string | null;
+  preferOfficial?: boolean | null;
   synthesized?: boolean;
   steps?: ChatWebSearchResearchStep[];
   sites?: ChatWebSearchResearchSite[];

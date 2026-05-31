@@ -45,7 +45,7 @@ class ChatWebSearchResearchActivityService:
         if not steps and not sites:
             return None
 
-        return {
+        research = {
             "sourceCount": len(sites) or len(web_sources),
             "durationMs": latency_ms,
             "provider": str(payload.get("provider") or "").strip() or None,
@@ -56,6 +56,21 @@ class ChatWebSearchResearchActivityService:
             "steps": steps,
             "sites": sites,
         }
+
+        search_mode = str(payload.get("searchMode") or "").strip()
+
+        if search_mode:
+            research["searchMode"] = search_mode
+
+        if payload.get("preferOfficial") is True:
+            research["preferOfficial"] = True
+
+        search_intent = str(payload.get("searchIntent") or "").strip()
+
+        if search_intent:
+            research["searchIntent"] = search_intent
+
+        return research
 
     @classmethod
     def _resolve_attempted_queries(cls, payload: dict) -> list[str]:

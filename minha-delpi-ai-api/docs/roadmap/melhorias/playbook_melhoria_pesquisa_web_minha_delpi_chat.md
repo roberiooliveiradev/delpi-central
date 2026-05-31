@@ -4,7 +4,7 @@ Projeto: **Minha DELPI Chat IA**
 
 Objetivo: evoluir a funcionalidade de pesquisa na web para que o chat consiga pesquisar melhor, explicar melhor de onde veio a informação, comparar fontes, lidar com notícias recentes, resumir páginas, validar confiabilidade e integrar resultados externos com o contexto interno da DELPI.
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fase 1 concluída** (`webSearchResearch` no metadata, `ChatWebSearchResearchPanel` no MFE, `ChatWebSearchSynthesisService`). Fases 2–5 (planejamento, avaliação de fonte, UX avançada) em backlog.
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–2** (`webSearchResearch`, painel MFE, `ChatWebSearchPlanningService` com modo rápido/profundo e queries oficiais). Fases 3–5 (classificação de fonte, integração avançada) em backlog.
 
 ---
 
@@ -879,9 +879,10 @@ Pesquisar ou dizer limitação.
 
 ## Fase 2 — Planejamento de busca
 
-- Criar `ChatWebSearchPlanningService`.
-- Separar pesquisa rápida e profunda.
-- Preferir fontes oficiais.
+- [x] `ChatWebSearchPlanningService` — modo `quick` / `deep`, `plannedQueries`, `site:weg.net` quando aplicável.
+- [x] `WebSearchHttpGateway` prioriza queries planejadas antes do retry EN.
+- [x] Metadata `searchMode`, `preferOfficial`, `searchIntent` em `webSearchResearch`.
+- [ ] Classificação automática de domínios oficiais além da lista fixa de marcas.
 
 ## Fase 3 — Avaliação de fonte
 

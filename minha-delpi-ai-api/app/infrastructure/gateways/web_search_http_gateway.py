@@ -12,7 +12,15 @@ logger = logging.getLogger("minha-delpi-ai-api.web_search")
 class WebSearchHttpGateway:
     """Orquestra provedores de busca web com retry EN e fallback honesto."""
 
-    def search(self, query: str, *, max_results: int | None = None) -> dict:
+    def search(
+        self,
+        query: str,
+        *,
+        max_results: int | None = None,
+        planned_queries: list[str] | None = None,
+        search_mode: str | None = None,
+        prefer_official: bool | None = None,
+    ) -> dict:
         cleaned_query = WebSearchQueryService.normalize_query(query)
 
         if not cleaned_query:
@@ -26,7 +34,10 @@ class WebSearchHttpGateway:
         for provider in providers:
             last_provider = provider.name
 
-            for candidate_query in self._query_candidates(cleaned_query):
+            for candidate_query in self._query_candidates(
+                cleaned_query,
+                planned_queries=planned_queries,
+            ):
                 if candidate_query in attempted_queries:
                     continue
 
@@ -41,6 +52,12 @@ class WebSearchHttpGateway:
 
                     if len(attempted_queries) > 1:
                         payload["attemptedQueries"] = attempted_queries
+
+                    if search_mode:
+                        payload["searchMode"] = search_mode
+
+                    if prefer_official is not None:
+                        payload["preferOfficial"] = bool(prefer_official)
 
                     return payload
 
@@ -74,5 +91,22 @@ class WebSearchHttpGateway:
 
         return no_results
 
-    def _query_candidates(self, query: str) -> list[str]:
-        return WebSearchQueryService.build_search_candidates(query)
+    def _query_candidates(
+        self,
+        query: str,
+        *,
+        planned_queries: list[str] | None = None,
+    ) -> list[str]:
+        ordered: list[str] = []
+
+        for item in planned_queries or []:
+            cleaned = WebSearchQueryService.normalize_query(str(item or ""))
+
+            if cleaned and cleaned not in ordered:
+                ordered.append(cleaned)
+
+        for candidate in WebSearchQueryService.build_search_candidates(query):
+            if candidate not in ordered:
+                ordered.append(candidate)
+
+        return ordered
