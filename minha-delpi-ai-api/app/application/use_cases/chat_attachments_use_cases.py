@@ -6,6 +6,9 @@ from uuid import UUID
 from werkzeug.utils import secure_filename
 
 from app.application.dto.chat_attachment_response import ChatAttachmentResponse
+from app.application.services.chat_attachment_response_service import (
+    ChatAttachmentResponseService,
+)
 from app.application.dto.create_chat_attachment_request import CreateChatAttachmentRequest
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
@@ -36,21 +39,7 @@ MAX_ATTACHMENT_SIZE_BYTES = 25 * 1024 * 1024
 
 
 def _attachment_to_response(attachment) -> ChatAttachmentResponse:
-    return ChatAttachmentResponse(
-        id=str(attachment.id),
-        session_id=str(attachment.session_id),
-        message_id=str(attachment.message_id) if attachment.message_id else None,
-        project_id=str(attachment.project_id) if attachment.project_id else None,
-        agent_id=str(attachment.agent_id) if attachment.agent_id else None,
-        filename=attachment.filename,
-        original_filename=attachment.original_filename,
-        content_type=attachment.content_type,
-        size_bytes=attachment.size_bytes,
-        status=attachment.status,
-        metadata=attachment.metadata,
-        created_at=attachment.created_at,
-        updated_at=attachment.updated_at,
-    )
+    return ChatAttachmentResponseService.to_response(attachment)
 
 
 class CreateChatAttachmentUseCase:

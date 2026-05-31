@@ -356,6 +356,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Comparação | `ChatAttachmentMultiCompareService` + estágio `attachment_compare` |
 | MFE | Status de leitura no composer e chips de mensagem (`chatAttachmentStatus.ts`) |
 | Chips | «Comparar» em follow-up quando há 2+ anexos |
+| Upload | `readingStatus` + `preview` na resposta do POST; upload antecipado no composer com sessão ativa |
 
 ## Roteamento — pendências ativas e feedback (Playbook 01)
 

@@ -30,6 +30,8 @@ export type ChatInputAttachment = {
   type: string;
   file: File;
   status?: ComposerAttachmentStatus;
+  serverAttachmentId?: string;
+  readingStatus?: string;
 };
 
 type ChatInputProps = {
@@ -214,6 +216,7 @@ export function ChatInput({
                 const isImage = attachment.type.startsWith("image/");
                 const statusLabel = composerAttachmentStatusLabel(
                   attachment.status ?? "queued",
+                  attachment.readingStatus,
                 );
 
                 return (

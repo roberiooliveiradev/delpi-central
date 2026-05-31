@@ -30,8 +30,10 @@ import {
   recordAssistantHelpEvent,
   listProjectSources,
   updateChatArtifact,
+  uploadChatAttachment,
   uploadProjectSource,
 } from "../../data/api/chatApi";
+import { mapApiAttachmentToComposerStatus } from "../chatAttachmentStatus";
 import {
   buildChatAdminAgentHref,
   buildChatAgentActionsHref,
@@ -960,6 +962,45 @@ export function ChatPage({
     return deleteSession(sessionId);
   }
 
+  const uploadComposerAttachment = useCallback(
+    async (sessionId: string, localId: string, file: File) => {
+      setComposerAttachments((current) =>
+        current.map((item) =>
+          item.id === localId ? { ...item, status: "uploading" } : item,
+        ),
+      );
+
+      try {
+        const uploaded = await uploadChatAttachment(sessionId, file, { getAccessToken });
+        const metadata = uploaded.metadata as Record<string, unknown> | null;
+        const readingStatus =
+          typeof metadata?.readingStatus === "string" ? metadata.readingStatus : undefined;
+
+        setComposerAttachments((current) =>
+          current.map((item) =>
+            item.id === localId
+              ? {
+                  ...item,
+                  status: mapApiAttachmentToComposerStatus(uploaded.status),
+                  serverAttachmentId: uploaded.id,
+                  readingStatus,
+                }
+              : item,
+          ),
+        );
+      } catch {
+        setComposerAttachments((current) =>
+          current.map((item) =>
+            item.id === localId
+              ? { ...item, status: "failed", readingStatus: "Falha no envio" }
+              : item,
+          ),
+        );
+      }
+    },
+    [getAccessToken],
+  );
+
   function handleAttachFiles(files: File[]) {
     const validFiles = files.filter((file) => file.size > 0);
 
@@ -967,13 +1008,13 @@ export function ChatPage({
       window.alert("Arquivos vazios não podem ser anexados.");
     }
 
-    const nextAttachments = validFiles.map((file) => ({
+    const nextAttachments: ChatInputAttachment[] = validFiles.map((file) => ({
       id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
       name: file.name,
       size: file.size,
       type: file.type,
       file,
-      status: "queued" as const,
+      status: "queued",
     }));
 
     if (nextAttachments.length === 0) {
@@ -981,6 +1022,12 @@ export function ChatPage({
     }
 
     setComposerAttachments((current) => [...current, ...nextAttachments].slice(0, 10));
+
+    if (activeSession?.id) {
+      for (const attachment of nextAttachments) {
+        void uploadComposerAttachment(activeSession.id, attachment.id, attachment.file);
+      }
+    }
   }
 
   function hasDraggedFiles(event: DragEvent<HTMLElement>) {
@@ -1047,15 +1094,37 @@ export function ChatPage({
 
   async function handleSubmitMessage() {
     const messageToSend = draft.trim();
-    const files = composerAttachments.map((attachment) => attachment.file);
 
     if (!messageToSend) {
       return;
     }
 
+    const presetIds = composerAttachments
+      .map((attachment) => attachment.serverAttachmentId)
+      .filter((value): value is string => Boolean(value));
+    const pendingFiles = composerAttachments
+      .filter((attachment) => !attachment.serverAttachmentId)
+      .map((attachment) => attachment.file);
+    const attachmentPreview = composerAttachments
+      .filter((attachment) => attachment.serverAttachmentId)
+      .map((attachment) => ({
+        id: attachment.serverAttachmentId!,
+        original_filename: attachment.name,
+        size_bytes: attachment.size,
+        content_type: attachment.type || null,
+        status: attachment.status === "indexed" ? "indexed" : "uploaded",
+        parsed: attachment.status === "indexed",
+        readingStatus: attachment.readingStatus,
+      }));
+
     setComposerAttachments([]);
 
-    await sendMessage({ attachments: files });
+    await sendMessage({
+      content: messageToSend,
+      attachments: pendingFiles.length > 0 ? pendingFiles : undefined,
+      attachmentIds: presetIds.length > 0 ? presetIds : undefined,
+      attachmentPreview: attachmentPreview.length > 0 ? attachmentPreview : undefined,
+    });
   }
 
   async function handleDrillDown(query: string) {

@@ -212,13 +212,22 @@ def main() -> int:
         else:
             print(f"OK API: upload indexado status={status}")
 
+        reading_status = meta.get("readingStatus")
+
         if preview.get("columns"):
             print(f"OK API: preview no upload cols={preview['columns'][:3]}")
+        elif reading_status == "Indexado":
+            print("OK API: preview ausente mas readingStatus=Indexado")
         else:
             print(
                 "WARN API: metadata.preview ausente no upload (rebuild/restart da API?)",
                 file=sys.stderr,
             )
+
+        if reading_status:
+            print(f"OK API: readingStatus={reading_status}")
+        else:
+            print("WARN API: readingStatus ausente no upload", file=sys.stderr)
 
         response = _request(
             "POST",

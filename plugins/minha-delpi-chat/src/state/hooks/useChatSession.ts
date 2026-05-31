@@ -1111,7 +1111,20 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     ],
   );
 
-  const sendMessage = useCallback(async (params: { attachments?: File[]; content?: string } = {}) => {
+  const sendMessage = useCallback(async (params: {
+    attachments?: File[];
+    attachmentIds?: string[];
+    attachmentPreview?: {
+      id: string;
+      original_filename: string;
+      size_bytes: number;
+      content_type: string | null;
+      status: string;
+      parsed?: boolean;
+      readingStatus?: string;
+    }[];
+    content?: string;
+  } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
 
@@ -1206,40 +1219,54 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       markSessionPending(sessionForMessage.id);
 
       const uploadedAttachments: ChatAttachment[] = [];
+      const presetAttachmentIds = (params.attachmentIds ?? []).filter(Boolean);
 
-      for (const file of params.attachments ?? []) {
-        setStreamingStatus(`Enviando arquivo ${file.name}...`);
+      if (presetAttachmentIds.length === 0) {
+        for (const file of params.attachments ?? []) {
+          setStreamingStatus(`Enviando arquivo ${file.name}...`);
 
-        const uploaded = await uploadChatAttachment(
-          sessionForMessage.id,
-          file,
-          {
-            getAccessToken: options.getAccessToken,
-          },
-        );
-
-        uploadedAttachments.push(uploaded);
-      }
-
-      const attachmentIds = uploadedAttachments.map((attachment) => attachment.id);
-      const attachmentPreview = uploadedAttachments.map((attachment) => {
-        const indexed =
-          attachment.status === "indexed" ||
-          Boolean(
-            attachment.metadata &&
-              typeof attachment.metadata === "object" &&
-              (attachment.metadata as Record<string, unknown>).indexed,
+          const uploaded = await uploadChatAttachment(
+            sessionForMessage.id,
+            file,
+            {
+              getAccessToken: options.getAccessToken,
+            },
           );
 
-        return {
-          id: attachment.id,
-          original_filename: attachment.original_filename,
-          size_bytes: attachment.size_bytes,
-          content_type: attachment.content_type,
-          status: attachment.status,
-          parsed: indexed,
-        };
-      });
+          uploadedAttachments.push(uploaded);
+        }
+      }
+
+      const attachmentIds =
+        presetAttachmentIds.length > 0
+          ? presetAttachmentIds
+          : uploadedAttachments.map((attachment) => attachment.id);
+
+      const attachmentPreview =
+        params.attachmentPreview ??
+        uploadedAttachments.map((attachment) => {
+          const indexed =
+            attachment.status === "indexed" ||
+            Boolean(
+              attachment.metadata &&
+                typeof attachment.metadata === "object" &&
+                (attachment.metadata as Record<string, unknown>).indexed,
+            );
+
+          const metadata = attachment.metadata as Record<string, unknown> | null;
+          const readingStatus =
+            typeof metadata?.readingStatus === "string" ? metadata.readingStatus : undefined;
+
+          return {
+            id: attachment.id,
+            original_filename: attachment.original_filename,
+            size_bytes: attachment.size_bytes,
+            content_type: attachment.content_type,
+            status: attachment.status,
+            parsed: indexed,
+            readingStatus,
+          };
+        });
 
       if (attachmentPreview.length > 0) {
         setMessages((current) =>

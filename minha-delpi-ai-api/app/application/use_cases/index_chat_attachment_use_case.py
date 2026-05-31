@@ -92,6 +92,7 @@ class IndexChatAttachmentUseCase:
             extracted,
             filename=attachment.original_filename,
         )
+        extractor_meta = dict(extracted.get("metadata") or {})
 
         updated = self.attachment_repository.update_status(
             attachment_id=attachment.id,
@@ -100,7 +101,8 @@ class IndexChatAttachmentUseCase:
                 "indexed": True,
                 "knowledgeDocumentId": document["id"],
                 "chunks": document["chunks"],
-                "extractor": extracted["metadata"],
+                "extractor": str(extractor_meta.get("extractor") or ""),
+                "extractorMeta": extractor_meta,
                 "preview": preview,
             },
         )
