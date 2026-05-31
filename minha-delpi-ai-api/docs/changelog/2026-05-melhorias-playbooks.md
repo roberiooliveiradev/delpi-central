@@ -190,6 +190,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Starters | «Como usar», pesquisa web, lousa em `chatHomeStarters.ts` |
 | Smoke | `scripts/smoke_help_capabilities.py` |
 
+## Pesquisa web — salvar fontes no projeto
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatWebSearchSaveSourcesService` — resposta direta «salvar fontes» → `POST` ingest como `project_source` |
+| UX | Chip «Salvar fontes» no playbook pós-pesquisa |
+
 ## Pesquisa web — Fase 5 (UX)
 
 | Entrega | Detalhe |

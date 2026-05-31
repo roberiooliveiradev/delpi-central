@@ -907,7 +907,7 @@ Pesquisar ou dizer limitação.
 - [x] Chips pós-pesquisa (`webSearchFollowUpSuggestions` via `ChatWebSearchFollowUpService` + playbook).
 - [x] Painel de etapas (`ChatWebSearchResearchPanel` — Fase 1–3).
 - [x] Atalho «Colocar na lousa» no chip pós-pesquisa (query com intent de canvas).
-- [ ] Salvar fontes no projeto (persistência além da lousa).
+- [x] Salvar fontes no projeto (`ChatWebSearchSaveSourcesService` + chip «Salvar fontes»).
 
 ---
 

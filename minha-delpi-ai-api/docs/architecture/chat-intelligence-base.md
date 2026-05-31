@@ -75,6 +75,7 @@ Mensagem do usuário
 | `ChatAssistantCatalogService` | Payload do painel de ajuda (`GET /chat/assistant/catalog`, autoajuda Fase 4) |
 | `AssistantCapabilitiesCatalogGenerator` | Sincroniza `features_catalog.json` com actions/skills (Fase 3, `scripts/generate_assistant_capabilities_catalog.py`) |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
+| `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias em rotas de produto (`/suppliers`, `/stock`, …) — evita «A API retornou dados autorizados» |
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |

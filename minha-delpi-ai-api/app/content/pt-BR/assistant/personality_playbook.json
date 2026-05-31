@@ -133,6 +133,7 @@
     "Extrair parâmetros",
     "Comparar fontes",
     "Colocar na lousa",
+    "Salvar fontes",
     "Só fontes oficiais",
     "Buscar em inglês"
   ],
@@ -148,6 +149,7 @@
     "Extrair parâmetros": "extraia parâmetros técnicos das fontes da pesquisa web sobre {query} em tabela markdown",
     "Comparar fontes": "compare as fontes da pesquisa web sobre {query} e destaque divergências",
     "Colocar na lousa": "coloque na lousa um resumo das fontes da pesquisa web sobre {query} com links",
+    "Salvar fontes": "salve as fontes da pesquisa web no projeto",
     "Só fontes oficiais": "pesquisa profunda na web só em sites oficiais sobre {query}",
     "Buscar em inglês": "busque na internet em inglês sobre {query}",
     "Ampliar busca": "pesquisa profunda na web sobre {query}",

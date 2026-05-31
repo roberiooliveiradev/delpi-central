@@ -107,6 +107,26 @@ def main() -> int:
     else:
         print("OK unit: webSearchFollowUpSuggestions")
 
+    from app.application.services.chat_web_search_save_sources_service import (
+        ChatWebSearchSaveSourcesService,
+    )
+
+    if not ChatWebSearchSaveSourcesService.is_save_request(
+        "salve as fontes da pesquisa web no projeto"
+    ):
+        print("FAIL unit: detecção salvar fontes", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK unit: detecção salvar fontes")
+
+    labels = [item["label"] for item in metadata.get("webSearchFollowUpSuggestions") or []]
+
+    if "Salvar fontes" not in labels:
+        print(f"FAIL unit: chip Salvar fontes ausente ({labels})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK unit: chip Salvar fontes")
+
     if failed:
         return 1
 
