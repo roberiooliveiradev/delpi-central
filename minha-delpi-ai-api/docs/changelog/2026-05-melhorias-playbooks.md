@@ -360,6 +360,19 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
 | OCR imagem | `ChatAttachmentImageOcrService` (Tesseract opcional); preview com `ocr`/`ocrExcerpt` quando há texto |
 
+## Gráficos — salvar na lousa (Fase 5)
+
+| Item | Entrega |
+|------|---------|
+| MFE | Botão **Lousa** em `ChatRichChart` e dashboard; markdown via `chartCanvasMarkdown.ts` |
+| Dados | Exporta visão filtrada (Top/Janela/períodos) como tabela na lousa |
+
+## Homologação — api-externa local
+
+| Item | Entrega |
+|------|---------|
+| Script | `smoke_api_externa_local.py` — `upsert_agent_provider` + smokes operacionais |
+
 ## Gráficos — UX Fase 5 (filtros, zoom, períodos)
 
 | Item | Entrega |

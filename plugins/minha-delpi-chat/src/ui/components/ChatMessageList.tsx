@@ -166,6 +166,7 @@ function renderPresentation(
   toolCalls: ChatToolCall[],
   textContent: string | null | undefined,
   onDrillDown?: (query: string) => void,
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
 ) {
   if (!toolCalls || !toolCalls.length) {
     return null;
@@ -176,6 +177,7 @@ function renderPresentation(
       toolCalls={toolCalls}
       textContent={textContent}
       onDrillDown={onDrillDown}
+      onOpenCanvas={onOpenCanvas}
     />
   );
 }
@@ -1221,11 +1223,7 @@ export function ChatMessageList({
                   onDownloadAttachment={onDownloadAttachment}
                 />
                 {shouldShowRichPresentation(displayContent, messageToolCalls)
-                  ? renderPresentation(
-                      messageToolCalls,
-                      displayContent,
-                      onDrillDown,
-                    )
+                  ? renderPresentation(messageToolCalls, displayContent, onDrillDown, onOpenCanvas)
                   : null}
                 {suppressMessageMarkdown || !displayContent ? null : (
                   <ChatMarkdown content={displayContent} />
@@ -1496,11 +1494,7 @@ export function ChatMessageList({
                 ) : null}
                 {effectiveShowStreamingPresentation ? (
                   <div className="mdc-chat-stream-presentation is-visible">
-                    {renderPresentation(
-                      streamingToolCalls,
-                      streamingAnswer,
-                      onDrillDown,
-                    )}
+                    {renderPresentation(streamingToolCalls, streamingAnswer, onDrillDown, onOpenCanvas)}
                   </div>
                 ) : null}
                 {streamingCanvasOpen ? (

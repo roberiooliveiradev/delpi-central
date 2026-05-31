@@ -1,4 +1,6 @@
-import type { ChatPresentation } from "../../data/api/chatTypes";
+import { LayoutPanelLeft } from "lucide-react";
+import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
+import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTable } from "./ChatRichTable";
@@ -11,6 +13,7 @@ type PanelPresentation = DashboardPresentation["panels"][number]["presentation"]
 function renderPanel(
   presentation: PanelPresentation,
   onDrillDown?: (query: string) => void,
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
 ) {
   switch (presentation.type) {
     case "kpi":
@@ -21,6 +24,7 @@ function renderPanel(
           presentation={presentation}
           hideTitle
           onDrillDown={onDrillDown}
+          onOpenCanvas={onOpenCanvas}
         />
       );
     case "table":
@@ -39,15 +43,30 @@ function renderPanel(
 export function ChatRichDashboard({
   presentation,
   onDrillDown,
+  onOpenCanvas,
 }: {
   presentation: DashboardPresentation;
   onDrillDown?: (query: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
   const { title, panels } = presentation;
 
   return (
     <div className="mdc-rich-dashboard">
-      {title ? <div className="mdc-rich-dashboard__title">{title}</div> : null}
+      <div className="mdc-rich-dashboard__header">
+        {title ? <div className="mdc-rich-dashboard__title">{title}</div> : <span />}
+        {onOpenCanvas ? (
+          <button
+            type="button"
+            className="mdc-rich-chart__btn"
+            onClick={() => onOpenCanvas(presentationToCanvasPayload(presentation))}
+            title="Salvar dashboard na lousa"
+          >
+            <LayoutPanelLeft size={14} aria-hidden="true" />
+            Lousa
+          </button>
+        ) : null}
+      </div>
       <div className="mdc-rich-dashboard__grid">
         {panels.map((panel) => (
           <section key={panel.id} className="mdc-rich-dashboard__panel">
@@ -55,7 +74,7 @@ export function ChatRichDashboard({
               <h4 className="mdc-rich-dashboard__panel-title">{panel.title}</h4>
             ) : null}
             <div className="mdc-rich-dashboard__panel-body">
-              {renderPanel(panel.presentation, onDrillDown)}
+              {renderPanel(panel.presentation, onDrillDown, onOpenCanvas)}
             </div>
           </section>
         ))}

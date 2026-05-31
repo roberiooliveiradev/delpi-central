@@ -1,5 +1,17 @@
 @import "./rich-presentation-shared.css";
 
+.mdc-rich-dashboard__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.mdc-rich-dashboard__header .mdc-rich-dashboard__title {
+  margin: 0;
+}
+
 .mdc-rich-dashboard__title {
   margin: 0 0 0.65rem;
   font-weight: 600;

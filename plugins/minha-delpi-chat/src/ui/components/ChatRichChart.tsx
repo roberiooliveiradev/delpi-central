@@ -1,4 +1,6 @@
+import { LayoutPanelLeft } from "lucide-react";
 import { useState, useCallback, useMemo } from "react";
+import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import {
   BarChart,
   Bar,
@@ -35,6 +37,7 @@ import {
   type ChartZoomWindow,
 } from "./chartPresentationUx";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
+import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
 import { ExpandButton } from "./ChatExpandModal";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
@@ -72,10 +75,12 @@ export function ChatRichChart({
   presentation,
   hideTitle = false,
   onDrillDown,
+  onOpenCanvas,
 }: {
   presentation: ChartPresentation;
   hideTitle?: boolean;
   onDrillDown?: (query: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
@@ -163,6 +168,58 @@ export function ChatRichChart({
     },
     [displayXAxis, onDrillDown],
   );
+
+  const filtersNote = useMemo(() => {
+    const parts: string[] = [];
+
+    if (topFilter !== "all") {
+      parts.push(`Top ${topFilter}`);
+    }
+
+    if (temporalAxis && zoomWindow !== "all") {
+      parts.push(`Janela ${zoomWindow} pontos`);
+    }
+
+    if (periodCompareEnabled) {
+      parts.push("Comparar períodos");
+    }
+
+    if (chartTypeOverride) {
+      parts.push(`Visualização ${CHART_TYPE_LABELS[chartTypeOverride] ?? chartTypeOverride}`);
+    }
+
+    return parts.length ? parts.join(" · ") : undefined;
+  }, [
+    chartTypeOverride,
+    periodCompareEnabled,
+    temporalAxis,
+    topFilter,
+    zoomWindow,
+  ]);
+
+  const openOnCanvas = useCallback(() => {
+    if (!onOpenCanvas || displayData.length === 0) {
+      return;
+    }
+
+    onOpenCanvas(
+      presentationToCanvasPayload(presentation, {
+        rows: displayData,
+        xAxis: displayXAxis,
+        yAxes: displayYAxes,
+        chartType: activeChartType,
+        filtersNote,
+      }),
+    );
+  }, [
+    activeChartType,
+    displayData,
+    displayXAxis,
+    displayYAxes,
+    filtersNote,
+    onOpenCanvas,
+    presentation,
+  ]);
 
   const exportPng = useCallback(() => {
     const svg = document.querySelector(".mdc-rich-chart__container svg");
@@ -282,6 +339,17 @@ export function ChatRichChart({
           >
             {downloadReady ? "✓ Salvo" : "↓ PNG"}
           </button>
+          {onOpenCanvas ? (
+            <button
+              type="button"
+              className="mdc-rich-chart__btn"
+              onClick={openOnCanvas}
+              title="Salvar na lousa"
+            >
+              <LayoutPanelLeft size={14} aria-hidden="true" />
+              Lousa
+            </button>
+          ) : null}
           <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
         </div>
       </div>

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ChatDepthState, ChatPaginationState, ChatToolCall } from "../../data/api/chatTypes";
+import type {
+  ChatCanvasOpenPayload,
+  ChatDepthState,
+  ChatPaginationState,
+  ChatToolCall,
+} from "../../data/api/chatTypes";
 import {
   getDataCoverageNoticeFromToolCalls,
   getDepthStateFromToolCalls,
@@ -31,6 +36,7 @@ type ChatRichPresentationProps = {
   toolCalls: ChatToolCall[];
   textContent?: string | null;
   onDrillDown?: (query: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
 
 function resolveDefaultVisualMode(
@@ -171,6 +177,7 @@ export function ChatRichPresentation({
   toolCalls,
   textContent,
   onDrillDown,
+  onOpenCanvas,
 }: ChatRichPresentationProps) {
   const pair = useMemo(
     () => getPresentationPairFromToolCalls(toolCalls),
@@ -256,7 +263,7 @@ export function ChatRichPresentation({
         <div className="mdc-rich-presentation__toolbar">
           <ExpandButton presentation={primary} />
         </div>
-        <ChatRichDashboard presentation={primary} onDrillDown={onDrillDown} />
+        <ChatRichDashboard presentation={primary} onDrillDown={onDrillDown} onOpenCanvas={onOpenCanvas} />
       </div>
     );
   }
@@ -354,6 +361,7 @@ export function ChatRichPresentation({
               <ChatRichChart
                 presentation={chartPresentation}
                 onDrillDown={onDrillDown}
+                onOpenCanvas={onOpenCanvas}
               />
             ) : null}
 
@@ -361,6 +369,7 @@ export function ChatRichPresentation({
               <ChatRichTree
                 presentation={treePresentation}
                 onDrillDown={onDrillDown}
+                onOpenCanvas={onOpenCanvas}
               />
             ) : null}
 
@@ -368,6 +377,7 @@ export function ChatRichPresentation({
               <ChatRichTable
                 presentation={tablePresentation}
                 onDrillDown={onDrillDown}
+                onOpenCanvas={onOpenCanvas}
               />
             ) : null}
           </>
@@ -376,7 +386,7 @@ export function ChatRichPresentation({
         ) : hasTableView && tablePresentation ? (
           <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
         ) : hasChartView && chartPresentation ? (
-          <ChatRichChart presentation={chartPresentation} onDrillDown={onDrillDown} />
+          <ChatRichChart presentation={chartPresentation} onDrillDown={onDrillDown} onOpenCanvas={onOpenCanvas} />
         ) : null}
       </div>
     );
@@ -403,6 +413,7 @@ export function ChatRichPresentation({
           presentation={chartPresentation}
           hideTitle={showSharedTitle}
           onDrillDown={onDrillDown}
+          onOpenCanvas={onOpenCanvas}
         />
       ) : null}
 

@@ -68,6 +68,7 @@ Com **api-delpi** indisponível no ambiente local, use:
 - `CHAT_PREFER_API_EXTERNA_PROVIDER=true` no `minha-delpi-ai-api` (já padrão em `docker-compose.dev.yml`)
 - Providers no agente via API: `scripts/upsert_agent_provider.py --provider api-externa --enabled true --provider api-delpi --enabled false` (sem migration de dados)
 - Smokes HTTP com `SMOKE_REQUIRE_API_EXTERNA=true` (padrão) — chip «Ver vendas» é omitido (rota só em api-delpi)
+- Smoke único: `PYTHONPATH=. .venv/bin/python scripts/smoke_api_externa_local.py` (configura providers + estoque + chips)
 - Se o Alembic estiver em revision removida `p8q9r0s1t3`: `flask db stamp o7p8q9r0s1t2`
 
 ## Ordem de implementação (arquitetura)
