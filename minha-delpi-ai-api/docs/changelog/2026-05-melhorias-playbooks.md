@@ -416,7 +416,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | `smoke_follow_up_chips.py` | OK — chips API com `{{productCode}}`; ações api-externa |
 | `smoke_features_catalog.py` | OK — onboarding/tour com placeholders (container API) |
 | `smoke_admin_endpoints.py` | OK |
-| Vitest MFE | `chatShortcutPrompt`, `chatHomeStarters`, `exportUtils` — 11 testes OK |
+| Vitest MFE | `chatShortcutPrompt` (6, incl. regressão regex), `chatHomeStarters`, `chatTourTooltipPosition`, `exportUtils` — 15 testes OK |
 | `smoke_shortcut_placeholders.py` | OK — JSON + follow-up service sem `10080001` fixo nas queries de chip |
 | MFE bundle | `App-KpZWzapI.js` — diálogo `Consulta ao chat` + `onShortcutPromptRequired` |
 | Catálogo HTTP | `starterCards` / `demoQuery` com `{{productCode}}` (sem código fixo na API) |
@@ -433,7 +433,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Script:** `./scripts/run_chat_shortcut_homologation.sh` — placeholders + login + catálogo + follow-up (pausa configurável para rate limit).
 
-**Commits:** `f8d571bf`, `5633a777`, `0dcda7da` (diálogo ao bloquear), `6670e510` (XLSX/PDF), `a5c7e9e9` (smoke placeholders), `384cbd45`, `ecac82f4`.
+**Revalidação pós-fix regex (31/05, host):** login Keycloak OK; catálogo Engenharia `Consultar produto` → `{{productCode}}`; smokes placeholders + identity + features_catalog OK; `tsc -b` MFE OK.
+
+**Commits:** `f8d571bf`, `5633a777`, `0dcda7da`, `6670e510`, `a5c7e9e9`, `384cbd45`, `ecac82f4`, `df271df7`, `a1c9c33d`, `2500fc14`, `fd75c884`.
 
 ## Homologação — api-externa local
 

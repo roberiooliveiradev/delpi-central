@@ -29,6 +29,8 @@ Variáveis opcionais: `SMOKE_BASE_URL`, `SMOKE_USER`, `SMOKE_PASSWORD`. Ver [`..
 
 ### Atalhos com preenchimento (MFE)
 
+**Regressão crítica (maio/2026):** após `hasShortcutPlaceholders()`, `listShortcutFieldIds` deve listar campos — teste Vitest `lista campos após hasShortcutPlaceholders`. Se falhar, o clique em **Consultar produto** trava o navegador (loop `sendMessage` ↔ `onShortcutPromptRequired`).
+
 Após alterar `plugins/minha-delpi-chat`, rebuild do container e hard refresh no navegador:
 
 ```bash
