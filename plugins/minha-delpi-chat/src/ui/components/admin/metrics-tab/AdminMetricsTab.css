@@ -4,6 +4,37 @@
   min-width: 0;
 }
 
+.mdc-admin-drawing-metrics {
+  display: grid;
+  gap: var(--mdc-space-3);
+  padding: var(--mdc-space-3);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg, 12px);
+  background: var(--mdc-card-bg);
+}
+
+.mdc-admin-drawing-metrics__header h3 {
+  margin: 0.15rem 0 0.35rem;
+}
+
+.mdc-admin-drawing-metrics__header p {
+  margin: 0;
+  max-width: 44rem;
+  font-size: 0.82rem;
+  color: var(--mdc-muted);
+  line-height: 1.45;
+}
+
+.mdc-admin-drawing-metrics__grid {
+  margin-top: 0.25rem;
+}
+
+.mdc-admin-drawing-metrics .mdc-admin-kpi-card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .mdc-admin-metrics-tab__header {
   align-items: flex-end;
 }

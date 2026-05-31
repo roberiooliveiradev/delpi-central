@@ -1,17 +1,20 @@
 import { useEffect, useState } from "react";
 
 import {
+  getAdminDrawingAnalysisSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
   saveAdminLlmCostTable,
 } from "../../../../data/api/adminApi";
 import type {
+  AdminDrawingAnalysisSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
   AdminMetricsDistributionItem,
   AdminMetricsSummary,
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
+import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
 import "./AdminMetricsTab.css";
@@ -249,6 +252,10 @@ export function AdminMetricsTab({
   const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
   const [costTable, setCostTable] = useState<AdminLlmCostTableEntry[]>([]);
   const [isSavingCostTable, setIsSavingCostTable] = useState(false);
+  const [drawingSummary, setDrawingSummary] = useState<AdminDrawingAnalysisSummary | null>(
+    null,
+  );
+  const [isLoadingDrawingSummary, setIsLoadingDrawingSummary] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -273,6 +280,20 @@ export function AdminMetricsTab({
       .then((response) => setCostTable(response.entries))
       .catch(() => setCostTable(metricsSummary?.advanced?.costTable ?? []));
   }, [getAccessToken, metricsSummary?.advanced?.costTable]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setDrawingSummary(null);
+      return;
+    }
+
+    setIsLoadingDrawingSummary(true);
+
+    void getAdminDrawingAnalysisSummary(metricsHours, { getAccessToken })
+      .then(setDrawingSummary)
+      .catch(() => setDrawingSummary(null))
+      .finally(() => setIsLoadingDrawingSummary(false));
+  }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
     return (
@@ -439,6 +460,12 @@ export function AdminMetricsTab({
           </p>
         </article>
       </div>
+
+      <AdminDrawingAnalysisMetrics
+        summary={drawingSummary}
+        isLoading={isLoadingDrawingSummary}
+        windowHours={windowLabel}
+      />
 
       {effectiveCostTable.length > 0 ? (
         <CostTablePanel

@@ -339,6 +339,29 @@ export type AdminMetricsTimeseriesResponse = {
   buckets: AdminMetricsTimeseriesBucket[];
 };
 
+export type AdminDrawingAnalysisRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  productCode?: string | null;
+  overallStatus?: string | null;
+  criticalErrors?: number | null;
+  reportExported?: boolean | null;
+};
+
+export type AdminDrawingAnalysisSummary = {
+  windowHours: number;
+  since: string;
+  analysesCount: number;
+  uniqueProductCodes: number;
+  byStatus: Record<string, number>;
+  totalCriticalErrors: number;
+  totalErrors: number;
+  reportExportedCount: number;
+  analyserOkCount: number;
+  withPdfCount: number;
+  recent: AdminDrawingAnalysisRecentItem[];
+};
+
 export type AdminMetricsSummary = {
   windowHours?: number;
   sessions: number;
