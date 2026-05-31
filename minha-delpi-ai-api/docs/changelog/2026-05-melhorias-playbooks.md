@@ -625,4 +625,7 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | Referências | `resolve_from_snapshot` — mesmo período, essa tabela, faça o mesmo |
 | Preferências | `answerLength=short`, tom formal, limpeza «esqueça esse produto» |
 | Validação | `run_session_memory_validation.sh`, `test_chat_session_memory.py` |
+| Métricas | `ChatSessionMemoryMetricsService` → `sessionMemoryMetrics` |
+| Feedback | motivos `memory_*` no playbook de personalidade |
+| Homologação | `run_chat_session_memory_homologation.sh` |
 

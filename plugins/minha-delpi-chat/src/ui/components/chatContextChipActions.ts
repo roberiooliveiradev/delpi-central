@@ -13,6 +13,16 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
   switch (chip.kind) {
     case "product":
       return `qual o estoque do produto ${PRODUCT_CODE}?`;
+    case "period":
+      if (value === "last_30_days") {
+        return "use os últimos 30 dias";
+      }
+      if (value === "last_7_days") {
+        return "use os últimos 7 dias";
+      }
+      return `use o mesmo período (${value})`;
+    case "canvas":
+      return "corrija o texto da lousa";
     case "branch":
       return `filtre pela filial ${value}`;
     case "format":
@@ -28,6 +38,10 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
 
       if (value === "simple") {
         return "use linguagem mais simples";
+      }
+
+      if (value === "formal") {
+        return "use tom formal";
       }
 
       return null;
@@ -115,6 +129,19 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
           query: "mostre os mesmos dados em tabela",
         });
       }
+      break;
+    case "period":
+      actions.push({
+        id: "same-period",
+        label: "Mesmo período",
+        query: buildContextChipQuery(chip) ?? "use o mesmo período",
+      });
+      break;
+    case "canvas":
+      actions.push(
+        { id: "fix-canvas", label: "Corrigir lousa", query: "corrija o texto da lousa" },
+        { id: "short-canvas", label: "Versão curta", query: "faça uma versão curta da lousa" },
+      );
       break;
     default:
       break;

@@ -16,7 +16,7 @@
 | 4 | Última action e apresentação | Concluída |
 | 5 | Admin debug e regressão M1–M12 | Concluída |
 
-**Backlog:** métricas agregadas (§20), feedback dedicado (§21), UI §18 expandida.
+**Métricas por turno:** `sessionMemoryMetrics` + feedback §21 (motivos memory_*). **Backlog:** agregado §20, UI §18 expandida.
 
 ---
 
@@ -72,7 +72,9 @@ Implementado em `workingMemory` / `contextSnapshot`:
 
 ## 20–22. Métricas, feedback, anti-padrões
 
-Backlog produto.
+- **Por turno:** `ChatSessionMemoryMetricsService` → `sessionMemoryMetrics`
+- **Feedback:** motivos `memory_*` no `personality_playbook.json`
+- **Agregado admin:** backlog
 
 ## 23. Roadmap
 

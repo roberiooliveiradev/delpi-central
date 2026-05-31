@@ -1,7 +1,9 @@
 import { useState } from "react";
 import {
   Building2,
+  CalendarRange,
   LayoutGrid,
+  Layout,
   MessageSquare,
   Package,
   SlidersHorizontal,
@@ -37,6 +39,10 @@ const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
   format: LayoutGrid,
   tone: MessageSquare,
   preference: SlidersHorizontal,
+  period: CalendarRange,
+  canvas: Layout,
+  email: MessageSquare,
+  textCorrection: SlidersHorizontal,
 };
 
 function chipIconForKind(kind: string): LucideIcon {

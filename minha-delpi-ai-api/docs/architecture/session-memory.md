@@ -34,3 +34,5 @@ cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
 ```
 
 Playbook: `docs/roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md`.
+
+- `sessionMemoryMetrics`: snapshot por turno (entidades, refs, follow-up, lousa)

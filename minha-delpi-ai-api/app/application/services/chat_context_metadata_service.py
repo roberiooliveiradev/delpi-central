@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_context_assertiveness_service import (
     ChatContextAssertivenessService,
 )
+from app.application.services.chat_session_memory_metrics_service import (
+    ChatSessionMemoryMetricsService,
+)
 from app.domain.services.chat_conversation_memory_service import (
     ChatConversationMemoryService,
 )
@@ -51,6 +54,11 @@ class ChatContextMetadataService:
         if context_chips:
             metadata["contextChips"] = context_chips
 
+        ChatSessionMemoryMetricsService.attach_to_assistant_metadata(
+            metadata,
+            snapshot=snapshot,
+        )
+
         admin_debug = metadata.get("adminDebug")
 
         if isinstance(admin_debug, dict):
@@ -66,3 +74,6 @@ class ChatContextMetadataService:
 
             admin_debug["memory"] = memory_debug
             admin_debug["contextAssertiveness"] = assertiveness
+            metrics = metadata.get("sessionMemoryMetrics")
+            if isinstance(metrics, dict):
+                admin_debug["sessionMemoryMetrics"] = metrics

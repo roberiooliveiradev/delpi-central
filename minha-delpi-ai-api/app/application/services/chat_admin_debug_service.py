@@ -57,6 +57,7 @@ class ChatAdminDebugService:
                 "textCorrectionQuality",
                 "textCorrectionPreferences",
                 "textCorrectionCanvasUpdate",
+                "sessionMemoryMetrics",
             ):
                 value = admin_debug.get(key)
 
@@ -160,6 +161,12 @@ class ChatAdminDebugService:
 
         if isinstance(preferences, dict):
             admin_debug["textCorrectionPreferences"] = preferences
+
+
+        session_metrics = metadata.get("sessionMemoryMetrics")
+
+        if isinstance(session_metrics, dict):
+            admin_debug["sessionMemoryMetrics"] = session_metrics
 
         canvas_update = metadata.get("textCorrectionCanvasUpdate")
 

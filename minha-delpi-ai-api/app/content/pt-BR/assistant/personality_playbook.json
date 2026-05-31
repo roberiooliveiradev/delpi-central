@@ -19,36 +19,158 @@
     "suggestFollowUps": true
   },
   "feedbackReasons": [
-    { "id": "lost_context", "label": "Perdeu o contexto" },
-    { "id": "wrong_product", "label": "Usou produto errado" },
-    { "id": "bad_format", "label": "Não seguiu o formato pedido" },
-    { "id": "forgot_previous", "label": "Não lembrou a resposta anterior" },
-    { "id": "wrong_query", "label": "Consulta errada" },
-    { "id": "wrong_intent", "label": "Entendeu a intenção errada" },
-    { "id": "too_long", "label": "Resposta muito longa" },
-    { "id": "too_technical", "label": "Resposta muito técnica" },
-    { "id": "wrong_data", "label": "Dados incorretos" },
-    { "id": "missing_source", "label": "Faltou fonte" },
-    { "id": "no_answer", "label": "Não respondeu" },
-    { "id": "too_short", "label": "Muito curto" },
-    { "id": "other", "label": "Outro" },
-    { "id": "email_wrong_tone", "label": "Tom inadequado no e-mail" },
-    { "id": "email_artificial", "label": "Frase artificial no e-mail" },
-    { "id": "email_invented_signature", "label": "Inventou assinatura" },
-    { "id": "email_invented_info", "label": "Inventou informação no e-mail" },
-    { "id": "email_weak_subject", "label": "Assunto ruim" },
-    { "id": "email_too_generic", "label": "E-mail muito genérico" },
-    { "id": "text_correction_changed_meaning", "label": "Mudou o sentido" },
-    { "id": "text_correction_over_corrected", "label": "Corrigiu demais" },
-    { "id": "text_correction_under_corrected", "label": "Corrigiu de menos" },
-    { "id": "text_correction_style_lost", "label": "Não preservou meu estilo" },
-    { "id": "text_correction_artificial", "label": "Texto ficou artificial" },
-    { "id": "text_correction_too_formal", "label": "Formal demais" },
-    { "id": "text_correction_too_informal", "label": "Informal demais" },
-    { "id": "text_correction_missed_error", "label": "Não corrigiu erro importante" },
-    { "id": "text_correction_altered_code", "label": "Alterou código ou nome" },
-    { "id": "text_correction_over_explained", "label": "Explicou demais" },
-    { "id": "text_correction_under_explained", "label": "Faltou explicar alterações" }
+    {
+      "id": "lost_context",
+      "label": "Perdeu o contexto"
+    },
+    {
+      "id": "wrong_product",
+      "label": "Usou produto errado"
+    },
+    {
+      "id": "bad_format",
+      "label": "Não seguiu o formato pedido"
+    },
+    {
+      "id": "forgot_previous",
+      "label": "Não lembrou a resposta anterior"
+    },
+    {
+      "id": "wrong_query",
+      "label": "Consulta errada"
+    },
+    {
+      "id": "wrong_intent",
+      "label": "Entendeu a intenção errada"
+    },
+    {
+      "id": "too_long",
+      "label": "Resposta muito longa"
+    },
+    {
+      "id": "too_technical",
+      "label": "Resposta muito técnica"
+    },
+    {
+      "id": "wrong_data",
+      "label": "Dados incorretos"
+    },
+    {
+      "id": "missing_source",
+      "label": "Faltou fonte"
+    },
+    {
+      "id": "no_answer",
+      "label": "Não respondeu"
+    },
+    {
+      "id": "too_short",
+      "label": "Muito curto"
+    },
+    {
+      "id": "other",
+      "label": "Outro"
+    },
+    {
+      "id": "email_wrong_tone",
+      "label": "Tom inadequado no e-mail"
+    },
+    {
+      "id": "email_artificial",
+      "label": "Frase artificial no e-mail"
+    },
+    {
+      "id": "email_invented_signature",
+      "label": "Inventou assinatura"
+    },
+    {
+      "id": "email_invented_info",
+      "label": "Inventou informação no e-mail"
+    },
+    {
+      "id": "email_weak_subject",
+      "label": "Assunto ruim"
+    },
+    {
+      "id": "email_too_generic",
+      "label": "E-mail muito genérico"
+    },
+    {
+      "id": "text_correction_changed_meaning",
+      "label": "Mudou o sentido"
+    },
+    {
+      "id": "text_correction_over_corrected",
+      "label": "Corrigiu demais"
+    },
+    {
+      "id": "text_correction_under_corrected",
+      "label": "Corrigiu de menos"
+    },
+    {
+      "id": "text_correction_style_lost",
+      "label": "Não preservou meu estilo"
+    },
+    {
+      "id": "text_correction_artificial",
+      "label": "Texto ficou artificial"
+    },
+    {
+      "id": "text_correction_too_formal",
+      "label": "Formal demais"
+    },
+    {
+      "id": "text_correction_too_informal",
+      "label": "Informal demais"
+    },
+    {
+      "id": "text_correction_missed_error",
+      "label": "Não corrigiu erro importante"
+    },
+    {
+      "id": "text_correction_altered_code",
+      "label": "Alterou código ou nome"
+    },
+    {
+      "id": "text_correction_over_explained",
+      "label": "Explicou demais"
+    },
+    {
+      "id": "text_correction_under_explained",
+      "label": "Faltou explicar alterações"
+    },
+    {
+      "id": "memory_wrong_context",
+      "label": "Usou contexto errado"
+    },
+    {
+      "id": "memory_ignored_preference",
+      "label": "Não respeitou preferência"
+    },
+    {
+      "id": "memory_forgot_product",
+      "label": "Esqueceu produto anterior"
+    },
+    {
+      "id": "memory_forgot_period",
+      "label": "Esqueceu período anterior"
+    },
+    {
+      "id": "memory_wrong_canvas",
+      "label": "Colocou item errado na lousa"
+    },
+    {
+      "id": "memory_wrong_attachment",
+      "label": "Confundiu arquivo"
+    },
+    {
+      "id": "memory_repeated_question",
+      "label": "Perguntou algo que já informei"
+    },
+    {
+      "id": "memory_stale_context",
+      "label": "Manteve contexto que queria limpar"
+    }
   ],
   "feedbackThanks": {
     "up": [
@@ -66,14 +188,38 @@
     "Preferir clareza a personalidade exagerada."
   ],
   "homeStarters": [
-    { "label": "O que você pode fazer?", "query": "o que você pode fazer?" },
-    { "label": "Consultar produto", "query": "me fale do produto {{productCode}}" },
-    { "label": "Ver estoque", "query": "qual o estoque do produto {{productCode}}?" },
-    { "label": "Buscar fornecedor", "query": "quem fornece o produto {{productCode}}?" },
-    { "label": "Ver vendas", "query": "mostre vendas do produto {{productCode}}" },
-    { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
-    { "label": "E-mail formal", "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo" },
-    { "label": "Quem é você?", "query": "quem é você?" }
+    {
+      "label": "O que você pode fazer?",
+      "query": "o que você pode fazer?"
+    },
+    {
+      "label": "Consultar produto",
+      "query": "me fale do produto {{productCode}}"
+    },
+    {
+      "label": "Ver estoque",
+      "query": "qual o estoque do produto {{productCode}}?"
+    },
+    {
+      "label": "Buscar fornecedor",
+      "query": "quem fornece o produto {{productCode}}?"
+    },
+    {
+      "label": "Ver vendas",
+      "query": "mostre vendas do produto {{productCode}}"
+    },
+    {
+      "label": "Corrigir texto",
+      "query": "corrija: segue em anexo os documento solicitado"
+    },
+    {
+      "label": "E-mail formal",
+      "query": "escreva um e-mail formal cobrando retorno do fornecedor sobre prazo"
+    },
+    {
+      "label": "Quem é você?",
+      "query": "quem é você?"
+    }
   ],
   "attachmentWelcome": {
     "title": "Arquivo recebido.",
@@ -89,7 +235,14 @@
     ],
     "hint": "Escolha uma ação nos chips «Com o anexo» abaixo ou descreva o que precisa."
   },
-  "attachmentFollowUpChips": ["Resumir", "Corrigir", "Traduzir", "Extrair pendências", "Criar checklist", "Comparar"],
+  "attachmentFollowUpChips": [
+    "Resumir",
+    "Corrigir",
+    "Traduzir",
+    "Extrair pendências",
+    "Criar checklist",
+    "Comparar"
+  ],
   "emailFollowUpChips": [
     "Deixar mais formal",
     "Deixar mais curto",
@@ -163,11 +316,26 @@
     "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais"
   },
   "textHomeStarters": [
-    { "label": "Corrigir texto", "query": "corrija: segue em anexo os documento solicitado" },
-    { "label": "Tom mais formal", "query": "deixe mais formal: preciso que você envie isso ainda hoje" },
-    { "label": "Traduzir", "query": "traduza para inglês: precisamos confirmar o prazo de entrega" },
-    { "label": "Resumir", "query": "resuma em tópicos o texto abaixo" },
-    { "label": "E-mail", "query": "escreva um e-mail cobrando retorno do fornecedor sobre prazo" }
+    {
+      "label": "Corrigir texto",
+      "query": "corrija: segue em anexo os documento solicitado"
+    },
+    {
+      "label": "Tom mais formal",
+      "query": "deixe mais formal: preciso que você envie isso ainda hoje"
+    },
+    {
+      "label": "Traduzir",
+      "query": "traduza para inglês: precisamos confirmar o prazo de entrega"
+    },
+    {
+      "label": "Resumir",
+      "query": "resuma em tópicos o texto abaixo"
+    },
+    {
+      "label": "E-mail",
+      "query": "escreva um e-mail cobrando retorno do fornecedor sobre prazo"
+    }
   ],
   "composerPlaceholders": {
     "default": "O que vamos resolver hoje? Pode perguntar do seu jeito.",
@@ -176,14 +344,52 @@
     "narrow": "Pergunte algo"
   },
   "followUpChips": {
-    "product": ["Ver estoque", "Ver fornecedores", "Ver estrutura", "Ver vendas", "Onde é usado?"],
-    "stock": ["Ver fornecedores", "Ver compras", "Ver vendas recentes", "Analisar risco"],
-    "sales": ["Gerar gráfico", "Agrupar por cliente", "Comparar período", "Ver notas fiscais"],
-    "empty": ["Tentar por descrição", "Ampliar período", "Verificar código", "O que você pode fazer?"],
-    "error": ["Refinar o pedido", "Verificar código", "O que você pode fazer?"],
-    "warning": ["Detalhar por filial", "Comparar período", "Verificar código"],
-    "generic": ["O que você pode fazer?", "Consultar produto", "Ver estoque"],
-    "text": ["Versão mais curta", "Tom mais formal", "Traduzir para inglês", "Transformar em e-mail"]
+    "product": [
+      "Ver estoque",
+      "Ver fornecedores",
+      "Ver estrutura",
+      "Ver vendas",
+      "Onde é usado?"
+    ],
+    "stock": [
+      "Ver fornecedores",
+      "Ver compras",
+      "Ver vendas recentes",
+      "Analisar risco"
+    ],
+    "sales": [
+      "Gerar gráfico",
+      "Agrupar por cliente",
+      "Comparar período",
+      "Ver notas fiscais"
+    ],
+    "empty": [
+      "Tentar por descrição",
+      "Ampliar período",
+      "Verificar código",
+      "O que você pode fazer?"
+    ],
+    "error": [
+      "Refinar o pedido",
+      "Verificar código",
+      "O que você pode fazer?"
+    ],
+    "warning": [
+      "Detalhar por filial",
+      "Comparar período",
+      "Verificar código"
+    ],
+    "generic": [
+      "O que você pode fazer?",
+      "Consultar produto",
+      "Ver estoque"
+    ],
+    "text": [
+      "Versão mais curta",
+      "Tom mais formal",
+      "Traduzir para inglês",
+      "Transformar em e-mail"
+    ]
   },
   "followUpQueries": {
     "Ver estoque": "qual o estoque do produto {{productCode}}?",
@@ -261,11 +467,31 @@
     "Anexar arquivo"
   ],
   "helpFollowUpChipsByTopic": {
-    "web": ["Pesquisar na web", "Só fontes oficiais", "Colocar na lousa"],
-    "canvas": ["Abrir lousa", "Colocar na lousa", "Ver em tabela"],
-    "chart": ["Gerar gráfico", "Ver em tabela", "Consultar produto"],
-    "attachment": ["Resumir anexo", "Corrigir anexo", "Consultar produto"],
-    "agent": ["O que você pode fazer?", "Consultar produto", "Ver estoque"]
+    "web": [
+      "Pesquisar na web",
+      "Só fontes oficiais",
+      "Colocar na lousa"
+    ],
+    "canvas": [
+      "Abrir lousa",
+      "Colocar na lousa",
+      "Ver em tabela"
+    ],
+    "chart": [
+      "Gerar gráfico",
+      "Ver em tabela",
+      "Consultar produto"
+    ],
+    "attachment": [
+      "Resumir anexo",
+      "Corrigir anexo",
+      "Consultar produto"
+    ],
+    "agent": [
+      "O que você pode fazer?",
+      "Consultar produto",
+      "Ver estoque"
+    ]
   },
   "helpFollowUpQueries": {
     "Consultar produto": "me fale do produto {{productCode}}",
