@@ -529,6 +529,15 @@ class StreamChatMessageUseCase:
             intent_route=prepared.intent_route,
         )
 
+        from app.application.services.chat_drawing_admin_debug_service import (
+            ChatDrawingAdminDebugService,
+        )
+
+        pipeline_stages = ChatDrawingAdminDebugService.extend_pipeline_stages(
+            pipeline_stages,
+            (admin_debug_payload or {}).get("drawingAnalysisTrace"),
+        )
+
         answer_parts: list[str] = []
         started_at = time.perf_counter()
         persist_before_playback = Settings.CHAT_PERSIST_BEFORE_PLAYBACK

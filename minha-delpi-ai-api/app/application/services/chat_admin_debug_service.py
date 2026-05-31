@@ -219,6 +219,25 @@ class ChatAdminDebugService:
         if memory_block is not None:
             payload["memory"] = memory_block
 
+        from app.application.services.chat_drawing_admin_debug_service import (
+            ChatDrawingAdminDebugService,
+        )
+
+        drawing_trace = ChatDrawingAdminDebugService.build_trace(
+            tool_context=tool_context,
+            intent_route=intent_route,
+            workspace_context=workspace_context,
+        )
+
+        if drawing_trace:
+            payload["drawingAnalysisTrace"] = drawing_trace
+            payload["pipeline"]["drawingAnalysisMode"] = True
+            payload["pipeline"]["drawingStages"] = [
+                f"drawing:{phase.get('id')}:{phase.get('status')}"
+                for phase in (drawing_trace.get("phases") or [])
+                if isinstance(phase, dict) and phase.get("id")
+            ]
+
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)
         if len(serialized) > limits.max_json_chars:

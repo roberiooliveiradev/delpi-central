@@ -948,6 +948,15 @@ class ChatToolContextService:
         if drawing_analysis_mode:
             result_payload["drawingAnalysisMode"] = True
 
+            if drawing_pdf_extract:
+                result_payload["drawingPdfExtractSummary"] = {
+                    "productCode": drawing_pdf_extract.get("productCode"),
+                    "revision": drawing_pdf_extract.get("revision"),
+                    "legible": drawing_pdf_extract.get("legible"),
+                    "componentCount": len(drawing_pdf_extract.get("componentCodes") or []),
+                    "reason": drawing_pdf_extract.get("reason"),
+                }
+
             if drawing_analysis_payload and drawing_analysis_payload.get("drawingAnalysis"):
                 result_payload["drawingAnalysis"] = drawing_analysis_payload["drawingAnalysis"]
 

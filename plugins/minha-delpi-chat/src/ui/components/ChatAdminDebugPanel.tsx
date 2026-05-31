@@ -126,6 +126,56 @@ function AdminTrustSignalsSummary({ signals }: { signals: Array<Record<string, u
   );
 }
 
+type DrawingPhase = {
+  id?: string;
+  label?: string;
+  status?: string;
+  detail?: string;
+};
+
+function AdminDrawingAnalysisTraceSummary({
+  trace,
+}: {
+  trace: Record<string, unknown>;
+}) {
+  const phases = Array.isArray(trace.phases) ? (trace.phases as DrawingPhase[]) : [];
+
+  if (!phases.length) {
+    return null;
+  }
+
+  const summary = trace.summary as Record<string, unknown> | undefined;
+  const productCode = summary?.productCode != null ? String(summary.productCode) : "";
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="Análise de desenho (admin)">
+      {productCode ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>desenho</strong> {productCode}
+        </span>
+      ) : null}
+      {phases.map((phase) => {
+        const status = String(phase.status ?? "skip");
+        const warn = status === "warn" || status === "error" || status === "blocked";
+
+        return (
+          <span
+            key={String(phase.id ?? phase.label)}
+            className={
+              warn
+                ? "mdc-chat-admin-debug__timing-chip mdc-chat-admin-debug__assertiveness-chip--warn"
+                : "mdc-chat-admin-debug__timing-chip"
+            }
+            title={String(phase.detail ?? "")}
+          >
+            <strong>{String(phase.label ?? phase.id ?? "fase")}</strong> {status}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 function AdminContextAssertivenessSummary({
   assertiveness,
 }: {
@@ -170,6 +220,8 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const contextAssertiveness =
     (debug?.contextAssertiveness as Record<string, unknown> | undefined) ?? null;
   const intentRoute = (debug?.intentRoute as Record<string, unknown> | undefined) ?? null;
+  const drawingTrace =
+    (debug?.drawingAnalysisTrace as Record<string, unknown> | undefined) ?? null;
   const trustSignals = Array.isArray(debug?.trustSignals)
     ? (debug?.trustSignals as Array<Record<string, unknown>>)
     : [];
@@ -190,12 +242,13 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           <Bug size={16} aria-hidden="true" />
           <span>Diagnóstico (admin)</span>
           <span className="mdc-chat-admin-debug__summary-hint">
-            intenção · tools · RAG · confiança
+            intenção · tools · RAG · desenho
           </span>
         </summary>
 
         <div className="mdc-chat-admin-debug__content">
           {intentRoute ? <AdminIntentRouteSummary intentRoute={intentRoute} /> : null}
+          {drawingTrace ? <AdminDrawingAnalysisTraceSummary trace={drawingTrace} /> : null}
           {trustSignals.length > 0 ? (
             <AdminTrustSignalsSummary signals={trustSignals} />
           ) : null}

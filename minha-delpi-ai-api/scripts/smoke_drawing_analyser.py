@@ -141,6 +141,38 @@ def main() -> int:
     )
     check("skill default com analyser", resolved.get("drawingAnalysis") is True)
 
+    from app.application.services.chat_drawing_admin_debug_service import (
+        ChatDrawingAdminDebugService,
+    )
+
+    trace = ChatDrawingAdminDebugService.build_trace(
+        tool_context={
+            "drawingAnalysisMode": True,
+            "drawingPdfExtractSummary": {"productCode": "90260140", "legible": True},
+            "drawingAnalysis": package_full["drawingAnalysis"],
+            "drawingAnalysisExport": export_payload,
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260140/analyser",
+                        "statusCode": 200,
+                    },
+                    "arguments": {"code": "90260140"},
+                }
+            ],
+        },
+        intent_route={"intent": "drawing_analysis"},
+        workspace_context={"skills": {"drawingAnalysis": True}},
+    )
+    check(
+        "adminDebug drawing trace",
+        bool(trace)
+        and len(trace.get("phases") or []) >= 5
+        and trace["phases"][0]["id"] == "intent",
+    )
+
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)
         return 1

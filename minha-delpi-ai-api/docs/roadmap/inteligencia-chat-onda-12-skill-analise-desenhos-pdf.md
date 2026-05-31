@@ -125,7 +125,7 @@ O agente **só** filtra: skill ativa, actions permitidas, tags RAG de especializ
 - [ ] Agente sem skill `drawing-analyser` **não** entra no pipeline de desenho (ou recebe resposta orientando habilitar skill).
 - [ ] Agente com skill herda comportamento sem duplicar lógica no `system_prompt`.
 - [ ] Regressão: estoque, busca de produto e SQL produção **não** quebram (`smoke_gpt_instructions_improvements.py` + novos casos drawing).
-- [ ] `adminDebug` expõe fases: intent drawing, extração PDF, action analyser, validações.
+- [x] `adminDebug` expõe fases: intent drawing, extração PDF, action analyser, validações (`drawingAnalysisTrace`).
 
 ---
 
