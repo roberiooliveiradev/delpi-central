@@ -236,6 +236,49 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_document_vision_summary(self, *, hours: int = 168) -> dict:
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        entries: list[dict] = []
+
+        for model in models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("documentVision")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        return ChatDocumentVisionMetricsService.aggregate_snapshots(
+            entries,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_security_summary(self, *, hours: int = 24) -> dict:
         since = datetime.now(timezone.utc) - timedelta(hours=max(1, min(hours, 168)))
 

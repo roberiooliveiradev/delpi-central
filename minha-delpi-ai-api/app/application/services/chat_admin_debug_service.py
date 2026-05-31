@@ -254,6 +254,28 @@ class ChatAdminDebugService:
                     analyser_ok=ChatDrawingMetricsService.resolve_analyser_ok(tool_context),
                 )
 
+            from app.application.services.chat_document_vision_metrics_service import (
+                ChatDocumentVisionMetricsService,
+            )
+
+            vision_payload = tool_context.get("documentVision")
+
+            if isinstance(vision_payload, dict) and vision_payload:
+                summary = tool_context.get("drawingPdfExtractSummary")
+                char_count = None
+                legible = None
+
+                if isinstance(summary, dict):
+                    char_count = int(summary.get("charCount") or 0) or None
+                    legible = summary.get("legible")
+
+                payload["documentVisionMetrics"] = ChatDocumentVisionMetricsService.build_snapshot(
+                    vision_payload,
+                    char_count=char_count,
+                    legible=legible,
+                    context="drawing",
+                )
+
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)
         if len(serialized) > limits.max_json_chars:

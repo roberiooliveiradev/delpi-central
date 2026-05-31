@@ -183,6 +183,7 @@ services:
       dockerfile: Dockerfile.dev
     profiles:
       - chat
+      - vision
 
     container_name: delpi-minha-delpi-ai-api
     restart: unless-stopped

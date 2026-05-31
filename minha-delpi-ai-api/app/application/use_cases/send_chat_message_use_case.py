@@ -512,6 +512,16 @@ class SendChatMessageUseCase:
             latency_ms=latency_ms,
         )
 
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        ChatDocumentVisionMetricsService.attach_to_assistant_metadata(
+            assistant_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+        )
+
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,
             role="assistant",
@@ -564,6 +574,16 @@ class SendChatMessageUseCase:
             intelligence=intelligence_metadata,
             tool_context=tool_context,
             latency_ms=latency_ms,
+        )
+
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        ChatDocumentVisionMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
         )
 
         self.audit_repository.log(

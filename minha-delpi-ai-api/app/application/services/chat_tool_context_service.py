@@ -1009,6 +1009,7 @@ class ChatToolContextService:
                     "productCode": drawing_pdf_extract.get("productCode"),
                     "revision": drawing_pdf_extract.get("revision"),
                     "legible": drawing_pdf_extract.get("legible"),
+                    "charCount": drawing_pdf_extract.get("charCount"),
                     "componentCount": len(drawing_pdf_extract.get("componentCodes") or []),
                     "reason": drawing_pdf_extract.get("reason"),
                     "extractor": drawing_pdf_extract.get("extractor"),

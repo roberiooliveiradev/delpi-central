@@ -21,7 +21,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_autoajuda_autoconhecimento_chat_minha_delpi.md](./playbook_autoajuda_autoconhecimento_chat_minha_delpi.md) | Concluído | Fases 1–5 (catálogo, painel ?, personalização, identity sync) |
 | [playbook_ampliacao_graficos_minha_delpi_chat.md](./playbook_ampliacao_graficos_minha_delpi_chat.md) | Parcial | Fases 1–4 (heatmap + dashboard); mini dashboards por agente backlog |
 | [playbook_skill_analise_desenhos_delpi.md](./playbook_skill_analise_desenhos_delpi.md) | Parcial | MVP Onda 12; Fase 3 cotas/OCR → Onda 13 |
-| [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — `ChatDocumentVisionService`, smoke `smoke_document_vision.py` |
+| [playbook_skill_visao_documentos_ocr_delpi.md](./playbook_skill_visao_documentos_ocr_delpi.md) | Parcial | MVP Onda 13 — OCR PDF/imagem, métricas admin, profile `vision` |
 | [sugestoes_perguntas_minha_delpi_chat_ia.md](./sugestoes_perguntas_minha_delpi_chat_ia.md) | Concluído | Referência de homologação |
 
 ### Análises (`analise_*.md`)

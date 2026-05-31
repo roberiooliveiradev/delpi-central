@@ -70,8 +70,8 @@ Implementar no **chat base** a skill **`document-vision-delpi`**: extração est
 |----|---------|--------|
 | 13.6.1 | Stream + adminDebug `documentVision` | ✅ (stream `document_vision`; adminDebug fase `document_vision`) |
 | 13.6.2 | `scripts/smoke_document_vision.py` | ✅ |
-| 13.6.3 | Compose profile `vision` + `requirements-vision.txt` | ⬜ |
-| 13.6.4 | Métricas admin (opcional) | ⬜ |
+| 13.6.3 | Compose profile `vision` + `requirements-vision.txt` | ✅ (profile `vision`; `Dockerfile.vision.dev`; extras Docling backlog) |
+| 13.6.4 | Métricas admin (opcional) | ✅ (`documentVisionMetrics`, audit, `GET /admin/metrics/document-vision/summary`) |
 
 ---
 
@@ -104,3 +104,4 @@ Variáveis: ver tabela `CHAT_DOCUMENT_VISION_*` no [README da API](../../README.
 | 2026-05-31 | MVP: `ChatDocumentVisionService`, skill `document-vision-delpi`, OCR PDF Tesseract + integração drawing. |
 | 2026-05-31 | OCR de imagens (PNG/JPG/WebP) no anexo e no fluxo de desenho; enrich sem depender só de `attachment_context`. |
 | 2026-05-31 | Stream `document_vision` no chat; README com env vars; validação container + smokes. |
+| 2026-05-31 | Métricas `documentVisionMetrics` + endpoint admin summary; profile compose `vision`. |

@@ -802,6 +802,16 @@ class StreamChatMessageUseCase:
             latency_ms=latency_ms,
         )
 
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        ChatDocumentVisionMetricsService.attach_to_assistant_metadata(
+            assistant_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
+        )
+
         if persist_before_playback:
             assistant_metadata = ChatMessageDeliveryService.ready_metadata(
                 assistant_metadata,
@@ -870,6 +880,16 @@ class StreamChatMessageUseCase:
             intelligence=intelligence_metadata,
             tool_context=tool_context,
             latency_ms=latency_ms,
+        )
+
+        from app.application.services.chat_document_vision_metrics_service import (
+            ChatDocumentVisionMetricsService,
+        )
+
+        ChatDocumentVisionMetricsService.enrich_audit_metadata(
+            stream_audit_metadata,
+            intelligence=intelligence_metadata,
+            tool_context=tool_context,
         )
 
         self.audit_repository.log(

@@ -1,0 +1,8 @@
+# Extras opcionais — profile Docker Compose `vision` (Onda 13.3+).
+# O MVP (native + Tesseract) usa apenas requirements.txt.
+#
+# Para habilitar backends neurais, descomente e reconstrua com Dockerfile.vision.dev:
+#
+# docling>=2.7.0
+# paddlepaddle>=2.6.0
+# paddleocr>=2.7.0

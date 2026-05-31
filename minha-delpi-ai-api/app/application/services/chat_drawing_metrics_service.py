@@ -72,7 +72,6 @@ class ChatDrawingMetricsService:
         return None
 
     @classmethod
-    @classmethod
     def resolve_analyser_ok(cls, tool_context: dict | None) -> bool | None:
         if not isinstance(tool_context, dict):
             return None

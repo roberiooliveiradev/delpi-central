@@ -40,6 +40,21 @@ def main() -> int:
     )
     check("skill documentVision com drawing", flags.get("documentVision") is True)
 
+    from app.application.services.chat_document_vision_metrics_service import (
+        ChatDocumentVisionMetricsService,
+    )
+
+    metrics_meta: dict = {}
+    ChatDocumentVisionMetricsService.attach_to_assistant_metadata(
+        metrics_meta,
+        tool_context={
+            "drawingAnalysisMode": True,
+            "documentVision": {"engine": "tesseract", "stages": ["tesseract"]},
+            "drawingPdfExtractSummary": {"legible": True, "charCount": 64},
+        },
+    )
+    check("documentVisionMetrics", bool(metrics_meta.get("documentVisionMetrics")))
+
     text = "DESENHO 90260140 REV.01\nCOD. CLIENTE TESTE"
     parsed = ChatDrawingPdfExtractionService.parse_from_text(text)
     vision = ChatDocumentVisionService._build_from_text(
@@ -90,6 +105,7 @@ def main() -> int:
             "-m",
             "pytest",
             "tests/unit/application/services/test_chat_document_vision_service.py",
+            "tests/unit/application/services/test_chat_document_vision_metrics_service.py",
             "-q",
         ],
         cwd=str(api_root),
