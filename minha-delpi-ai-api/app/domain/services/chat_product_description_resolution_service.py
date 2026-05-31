@@ -145,7 +145,12 @@ class ChatProductDescriptionResolutionService:
             seen.add(key)
             entries.append((normalized_code, desc))
 
-        for presentation_key in ("presentation", "treePresentation", "tablePresentation"):
+        for presentation_key in (
+            "presentation",
+            "treePresentation",
+            "tablePresentation",
+            "chartPresentation",
+        ):
             presentation = metadata.get(presentation_key)
 
             if not isinstance(presentation, dict):

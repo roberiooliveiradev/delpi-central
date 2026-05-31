@@ -369,7 +369,7 @@ Validação: `scripts/validate_stream_incremental_persistence_e2e.py`, [`../test
 
 ### Apresentação rica sem duplicar markdown (maio/2026)
 
-Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`) traz **tabela**, **gráfico** ou **KPI**:
+Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`, `treePresentation`, `chartPresentation` quando não primários) traz **tabela**, **gráfico**, **árvore** ou **KPI**:
 
 | Camada | Regra |
 |--------|--------|

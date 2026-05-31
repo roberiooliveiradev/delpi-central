@@ -305,6 +305,12 @@ class ChatProductStructurePresentationService:
             if isinstance(structure, dict):
                 root_dict = structure
 
+        if isinstance(root_dict, dict) and "/parents" in lowered:
+            normalized = cls._normalize_parents_payload(root_dict)
+
+            if normalized is not None:
+                root_dict = normalized
+
         if not isinstance(root_dict, dict) or not isinstance(root_dict.get("root"), dict):
             return None
 
@@ -329,6 +335,49 @@ class ChatProductStructurePresentationService:
                 model.root.quantity,
                 children=children or None,
             ),
+        }
+
+    @classmethod
+    def _normalize_parents_payload(cls, root_dict: dict) -> dict | None:
+        """Aceita respostas com `root`+`items` ou legado `product`+`parents`."""
+        if not isinstance(root_dict, dict):
+            return None
+
+        if isinstance(root_dict.get("root"), dict) and isinstance(root_dict.get("items"), list):
+            return root_dict
+
+        product = root_dict.get("product")
+        parents = root_dict.get("parents")
+
+        if not isinstance(product, dict) or not isinstance(parents, list) or not parents:
+            return None
+
+        code = str(product.get("code") or "").strip()
+
+        if not code:
+            return None
+
+        return {
+            "root": {
+                "code": code,
+                "description": product.get("description"),
+                "type": product.get("type") or product.get("item_type"),
+                "unit": product.get("unit"),
+                "quantity": product.get("quantity", 1),
+            },
+            "items": [
+                {
+                    "code": parent.get("code"),
+                    "description": parent.get("description"),
+                    "type": parent.get("type"),
+                    "unit": parent.get("unit"),
+                    "quantity": parent.get("quantity", 1),
+                    "parents": parent.get("parents") or [],
+                }
+                for parent in parents
+                if isinstance(parent, dict)
+            ],
+            "total": root_dict.get("total") if root_dict.get("total") is not None else len(parents),
         }
 
     @classmethod

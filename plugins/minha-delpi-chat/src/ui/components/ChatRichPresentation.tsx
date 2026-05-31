@@ -7,6 +7,7 @@ import {
   getPreferredFormatFromToolCalls,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
+  getChartPresentationFromPair,
   getTablePresentationFromPair,
   getTreePresentationFromPair,
   hasDisplayableRichText,
@@ -204,8 +205,10 @@ export function ChatRichPresentation({
     [textContent, toolCalls],
   );
 
-  const chartPresentation =
-    primary?.type === "chart" ? primary : null;
+  const chartPresentation = useMemo(
+    () => getChartPresentationFromPair(pair, toolCalls),
+    [pair, toolCalls],
+  );
   const tablePresentation = useMemo(
     () => getTablePresentationFromPair({ primary, table, tree }),
     [primary, table, tree],

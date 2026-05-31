@@ -16,6 +16,7 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Problema | Correção |
 |----------|----------|
+| Árvore e gráfico sumiram no chat (só Texto/Tabela) | Gráfico lê `stock.items`; parents `product`+`parents` viram árvore; `chartPresentation` no metadata; MFE lê gráfico secundário |
 | «Corrija» + anexo → «sem acesso a documentos» | Instrução textual explícita + policy; `text_task` com contexto de anexo no prompt |
 | «Consulte estoque e escreva e-mail» sem e-mail | `ChatTextTaskComposerService` anexa rascunho após tools no turno misto |
 | «E-mail com dados da tabela» → capacidades/RAG | `is_email_from_operational_data_request` + resposta direta com resumo da consulta |

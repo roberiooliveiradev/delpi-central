@@ -197,9 +197,12 @@ function collectExternalActionPresentations(toolCalls: ChatToolCall[]): {
     const presentation = metadata.presentation;
     const tablePresentation = metadata.tablePresentation;
     const treePresentation = metadata.treePresentation;
+    const chartPresentation = metadata.chartPresentation;
 
     if (isChartPresentation(presentation)) {
       charts.push(presentation);
+    } else if (isChartPresentation(chartPresentation)) {
+      charts.push(chartPresentation);
     }
 
     if (isTreePresentation(presentation)) {
@@ -493,6 +496,23 @@ export function getTreePresentationFromPair(
   }
 
   return null;
+}
+
+export function getChartPresentationFromPair(
+  pair: PresentationPair,
+  toolCalls?: ChatToolCall[],
+): Extract<ChatPresentation, { type: "chart" }> | null {
+  if (pair.primary?.type === "chart") {
+    return pair.primary;
+  }
+
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  const { charts, tables } = collectExternalActionPresentations(toolCalls);
+
+  return mergeChartPresentations(charts, tables);
 }
 
 export function getPresentationTitle(

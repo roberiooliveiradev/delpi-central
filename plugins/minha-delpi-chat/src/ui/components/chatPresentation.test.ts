@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
+  getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
   isShortPresentationCaption,
@@ -174,6 +175,30 @@ describe("getAvailableFormatsFromToolCalls", () => {
         { metadata: { availableFormats: ["text", "table", "chart"] } },
       ]),
     ).toEqual(["text", "table", "chart"]);
+  });
+});
+
+describe("getChartPresentationFromPair", () => {
+  it("lê chartPresentation quando o primário é árvore", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentation: { type: "tree", title: "Onde é usado", root: { id: "1", label: "1" } },
+          chartPresentation: {
+            type: "chart",
+            title: "Extra",
+            chartType: "bar",
+            data: [{ name: "A", value: 1 }],
+            config: { xAxis: "name", yAxis: ["value"] },
+          },
+        },
+      },
+    ];
+    const pair = getPresentationPairFromToolCalls(toolCalls);
+
+    expect(pair.primary?.type).toBe("tree");
+    expect(getChartPresentationFromPair(pair, toolCalls)?.type).toBe("chart");
   });
 });
 

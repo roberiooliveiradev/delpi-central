@@ -104,3 +104,33 @@ def test_build_tree_presentation_for_parents():
     assert tree["title"] == "Onde é usado o produto 10030015"
     assert tree["root"]["children"][0]["label"] == "50220013"
     assert tree["root"]["children"][0]["children"][0]["label"] == "90260148"
+
+
+def test_build_tree_presentation_for_flat_product_parents_payload():
+    tree = ChatProductStructurePresentationService.build_tree_presentation(
+        {
+            "product": {
+                "code": "10070014",
+                "description": "CABO PP",
+                "type": "MP",
+                "unit": "MT",
+                "quantity": 1,
+            },
+            "parents": [
+                {
+                    "code": "90260148",
+                    "description": "CHICOTE",
+                    "type": "PA",
+                    "unit": "UN",
+                    "quantity": 1,
+                    "parents": [],
+                },
+            ],
+        },
+        path="/products/10070014/parents",
+    )
+
+    assert tree is not None
+    assert tree["type"] == "tree"
+    assert tree["root"]["label"] == "10070014"
+    assert tree["root"]["children"][0]["label"] == "90260148"

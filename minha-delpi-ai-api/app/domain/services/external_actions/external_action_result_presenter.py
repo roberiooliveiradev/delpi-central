@@ -2342,6 +2342,18 @@ class ExternalActionResultPresenter:
                     path,
                 )
 
+        if isinstance(root, dict) and "/parents" in lowered:
+            from app.domain.services.chat_product_structure_presentation_service import (
+                ChatProductStructurePresentationService,
+            )
+
+            normalized = ChatProductStructurePresentationService._normalize_parents_payload(
+                root
+            )
+
+            if normalized is not None:
+                root = normalized
+
         if (
             isinstance(root, dict)
             and isinstance(root.get("root"), dict)
@@ -2806,6 +2818,10 @@ class ExternalActionResultPresenter:
                 return self._try_chart_from_rows(root, force=force)
             return None
 
+        stock_items = self._collect_stock_items(root)
+        if stock_items:
+            return self._build_stock_chart(stock_items)
+
         items = root.get("items")
         if isinstance(items, list) and items and isinstance(items[0], dict):
             if self._is_stock_data(items[0]):
@@ -2841,8 +2857,38 @@ class ExternalActionResultPresenter:
             "available_quantity" in row or "current_quantity" in row
         )
 
+    def _collect_stock_items(self, root: dict) -> list | None:
+        """Linhas de estoque em `items` na raiz ou em `stock.items`."""
+        if not isinstance(root, dict):
+            return None
+
+        items = root.get("items")
+
+        if (
+            isinstance(items, list)
+            and items
+            and isinstance(items[0], dict)
+            and self._is_stock_data(items[0])
+        ):
+            return items
+
+        stock = root.get("stock")
+
+        if isinstance(stock, dict):
+            stock_items = stock.get("items")
+
+            if (
+                isinstance(stock_items, list)
+                and stock_items
+                and isinstance(stock_items[0], dict)
+                and self._is_stock_data(stock_items[0])
+            ):
+                return stock_items
+
+        return None
+
     def _build_stock_chart(self, items: list) -> dict | None:
-        if len(items) < 2:
+        if not items:
             return None
 
         chart_data = []
