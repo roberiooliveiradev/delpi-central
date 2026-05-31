@@ -401,6 +401,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | Callout em `AdminMetricsTab` com botão para Plataforma → Inteligência |
 | UX | Esclarece que toggles de pipeline saíram de Métricas (Playbook 11) |
 
+## Exportação tabela expandida — XLSX/PDF (31/05/2026)
+
+| Problema | Correção |
+|----------|----------|
+| XLSX falha em «Estoque por filial/armazém» | `sanitizeSheetName` — aba Excel não aceita `/` no nome |
+| PDF sem tabela | `jspdf-autotable` v5 — usar `autoTable(doc, …)` em vez de `doc.autoTable` |
+
 ## Homologação — atalhos com preenchimento (31/05/2026)
 
 | Verificação | Resultado |
