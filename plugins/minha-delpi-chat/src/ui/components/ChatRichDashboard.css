@@ -12,6 +12,13 @@
   margin: 0;
 }
 
+.mdc-rich-dashboard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .mdc-rich-dashboard__title {
   margin: 0 0 0.65rem;
   font-weight: 600;

@@ -9,8 +9,10 @@ Uso:
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import time
 
 
 def main() -> int:
@@ -35,10 +37,16 @@ def main() -> int:
     if cfg.returncode != 0:
         return cfg.returncode
 
-    for label, script in [
+    pause = int(os.environ.get("SMOKE_RATE_LIMIT_PAUSE", "65"))
+
+    scripts = [
         ("operational routing", "scripts/smoke_operational_routing.py"),
         ("follow-up chips", "scripts/smoke_follow_up_chips.py"),
-    ]:
+    ]
+    for index, (label, script) in enumerate(scripts):
+        if index > 0 and pause > 0:
+            print(f"\n(pausa {pause}s — rate limit chat_messages)\n")
+            time.sleep(pause)
         print(f"\n== {label} ==")
         result = subprocess.run([sys.executable, script], check=False)
         if result.returncode != 0:

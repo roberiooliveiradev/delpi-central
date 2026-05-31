@@ -1,6 +1,7 @@
 import { LayoutPanelLeft } from "lucide-react";
 import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
+import { downloadDashboardCsv } from "./dashboardExportCsv";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTable } from "./ChatRichTable";
@@ -55,17 +56,27 @@ export function ChatRichDashboard({
     <div className="mdc-rich-dashboard">
       <div className="mdc-rich-dashboard__header">
         {title ? <div className="mdc-rich-dashboard__title">{title}</div> : <span />}
-        {onOpenCanvas ? (
+        <div className="mdc-rich-dashboard__actions">
           <button
             type="button"
             className="mdc-rich-chart__btn"
-            onClick={() => onOpenCanvas(presentationToCanvasPayload(presentation))}
-            title="Salvar dashboard na lousa"
+            onClick={() => downloadDashboardCsv(presentation)}
+            title="Baixar dashboard em CSV"
           >
-            <LayoutPanelLeft size={14} aria-hidden="true" />
-            Lousa
+            ↓ CSV
           </button>
-        ) : null}
+          {onOpenCanvas ? (
+            <button
+              type="button"
+              className="mdc-rich-chart__btn"
+              onClick={() => onOpenCanvas(presentationToCanvasPayload(presentation))}
+              title="Salvar dashboard na lousa"
+            >
+              <LayoutPanelLeft size={14} aria-hidden="true" />
+              Lousa
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="mdc-rich-dashboard__grid">
         {panels.map((panel) => (
