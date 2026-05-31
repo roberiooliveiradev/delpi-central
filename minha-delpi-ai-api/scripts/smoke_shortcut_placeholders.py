@@ -25,6 +25,8 @@ _CONTENT_DIR = (
 
 _PLACEHOLDER = re.compile(r"\{\{[a-zA-Z][a-zA-Z0-9]*\}\}")
 _HARDCODED_SMOKE_CODE = re.compile(r"\b10080001\b")
+_LEGACY_WEB_SEARCH_EXAMPLE = re.compile(r"WEG\s+CFW|manual\s+WEG", re.IGNORECASE)
+_DELPI_WEB_SEARCH_EXAMPLE = "DELPI Conexões Elétricas"
 
 
 def _load_json(name: str) -> dict[str, Any]:
@@ -133,6 +135,42 @@ def _check_content_queries() -> list[str]:
     return errors
 
 
+def _check_web_search_examples() -> list[str]:
+    errors: list[str] = []
+    catalog = _load_json("features_catalog.json")
+    capabilities = _load_json("capabilities.json")
+    found_delpi_example = False
+
+    for feature in catalog.get("features") or []:
+        if not isinstance(feature, dict) or feature.get("id") != "web_search":
+            continue
+
+        for example in feature.get("examples") or []:
+            text = str(example)
+
+            if _LEGACY_WEB_SEARCH_EXAMPLE.search(text):
+                errors.append(f"features_catalog.web_search: exemplo legado WEG/CFW — {text!r}")
+
+            if _DELPI_WEB_SEARCH_EXAMPLE in text:
+                found_delpi_example = True
+
+    for label, query in _iter_suggestion_queries(capabilities.get("interactive")):
+        if _DELPI_WEB_SEARCH_EXAMPLE in query:
+            found_delpi_example = True
+            continue
+
+        if "pesquise na web" in query.lower() and _LEGACY_WEB_SEARCH_EXAMPLE.search(query):
+            errors.append(f"capabilities.interactive.{label}: exemplo legado WEG/CFW")
+
+    if not found_delpi_example:
+        errors.append(
+            "conteúdo assistente: falta exemplo de pesquisa web com "
+            f"{_DELPI_WEB_SEARCH_EXAMPLE!r}",
+        )
+
+    return errors
+
+
 def _check_follow_up_service() -> list[str]:
     errors: list[str] = []
 
@@ -157,7 +195,11 @@ def _check_follow_up_service() -> list[str]:
 
 
 def main() -> int:
-    errors = _check_content_queries() + _check_follow_up_service()
+    errors = (
+        _check_content_queries()
+        + _check_web_search_examples()
+        + _check_follow_up_service()
+    )
 
     if errors:
         for message in errors:
@@ -165,6 +207,7 @@ def main() -> int:
         return 1
 
     print("OK conteúdo onboarding/capabilities/playbook — queries sem código fixo")
+    print(f"OK pesquisa web — exemplos sem WEG/CFW; referência {_DELPI_WEB_SEARCH_EXAMPLE!r}")
     print("OK ChatFollowUpSuggestionService — chips com {{productCode}}")
     print("Smoke shortcut placeholders: todas as verificações passaram.")
     return 0

@@ -566,6 +566,24 @@ Após o script: `http://localhost:8088/search?q=weg&format=json` → HTTP 200; p
 | MFE | `ChatContextBar.tsx` — clique/botão direito via `ChatTableRowMenu` |
 | Docs | `BACKLOG_ROADMAP.md`, STATUS/README roadmap sincronizados |
 
+## Placeholder pesquisa web — DELPI Conexões Elétricas (31/05/2026)
+
+| Antes | Depois |
+|-------|--------|
+| Campo «O que pesquisar»: `Ex.: manual WEG CFW500` | `DELPI Conexões Elétricas` (`SEARCH_QUERY_PLACEHOLDER` no MFE) |
+| Prévia/tour com exemplo WEG | Mesma constante em `formatShortcutTemplateForDisplay` e `chatTourStepEffects` |
+| Catálogo/capabilities com WEG em exemplos | `features_catalog` + chip «Exemplo» em `capabilities.json` |
+
+| Verificação | Resultado |
+|-------------|-----------|
+| Vitest `chatShortcutPrompt` | OK — placeholder `searchQuery` + prévia |
+| `smoke_shortcut_placeholders.py` | OK — sem `WEG CFW` / `manual WEG` no JSON; exemplo DELPI presente |
+| Deploy MFE dev | `docker compose -f infra/docker-compose.dev.yml build minha-delpi-chat` + `up -d` |
+
+**Manual:** home ou novidades → **Pesquisar na web** → modal «Pesquisa na web» → placeholder **DELPI Conexões Elétricas** (hard refresh após rebuild do MFE).
+
+**Commits:** `7a0c4cce` (MFE + conteúdo), homologação documentada nesta seção.
+
 ## Testes
 
 - `test_chat_text_task_intent_service.py` (T1/T6/T7 lógica)
