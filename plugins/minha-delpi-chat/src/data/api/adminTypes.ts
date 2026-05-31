@@ -31,8 +31,16 @@ export type AdminKnowledgeDocument = {
   updatedAt: string;
 };
 
+export type AdminKnowledgeDocumentsSummary = {
+  total: number;
+  active: number;
+  inactive: number;
+  pendingIndex: number;
+};
+
 export type AdminKnowledgeDocumentsResponse = {
   items: AdminKnowledgeDocument[];
+  summary?: AdminKnowledgeDocumentsSummary;
   pagination: {
     limit: number;
     offset: number;

@@ -1,4 +1,4 @@
 /* Layout split — mesmo padrão de agentes (admin-shared .mdc-admin-split) */
-.mdc-admin-knowledge.mdc-admin-split {
+.mdc-admin-knowledge__body.mdc-admin-split {
   min-height: 28rem;
 }

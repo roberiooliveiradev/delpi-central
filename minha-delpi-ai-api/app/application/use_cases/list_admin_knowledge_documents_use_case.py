@@ -46,6 +46,22 @@ class ListAdminKnowledgeDocumentsUseCase:
         )
 
         facets = self.knowledge_repository.get_global_curatorial_facets()
+        summary = (
+            self.knowledge_repository.get_global_document_summary()
+            if hasattr(self.knowledge_repository, "get_global_document_summary")
+            else {
+                "total": total,
+                "active": self.knowledge_repository.count_documents(
+                    active=True,
+                    scope="global",
+                ),
+                "inactive": self.knowledge_repository.count_documents(
+                    active=False,
+                    scope="global",
+                ),
+                "pendingIndex": 0,
+            }
+        )
 
         return {
             "items": [
@@ -80,6 +96,7 @@ class ListAdminKnowledgeDocumentsUseCase:
                 "sourceType": source_type or "",
             },
             "facets": facets,
+            "summary": summary,
         }
 
     def _parse_active(self, value: str | None) -> bool | None:

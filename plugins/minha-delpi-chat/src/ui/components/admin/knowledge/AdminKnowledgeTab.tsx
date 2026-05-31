@@ -1,7 +1,10 @@
 import { KnowledgeDocumentsPanel } from "./KnowledgeDocumentsPanel";
 import { KnowledgeIngestionPanel } from "./KnowledgeIngestionPanel";
+import { KnowledgeSummaryStrip } from "./KnowledgeSummaryStrip";
 import type { AdminRbacSummary } from "../../../../data/api/adminTypes";
+import type { AdminKnowledgeDocumentsSummary } from "../../../../data/api/adminTypes";
 import type {
+  DocumentStatusFilter,
   KnowledgeBackendPlaceholders,
   KnowledgeDocumentActions,
   KnowledgeDocumentsState,
@@ -15,6 +18,8 @@ type AdminKnowledgeTabProps = KnowledgeDocumentsState &
   KnowledgeIngestionActions &
   KnowledgeBackendPlaceholders & {
     rbac?: AdminRbacSummary | null;
+    documentSummary?: AdminKnowledgeDocumentsSummary | null;
+    onDocumentStatusFilterChange?: (filter: DocumentStatusFilter) => void;
   };
 
 export function AdminKnowledgeTab({
@@ -51,6 +56,8 @@ export function AdminKnowledgeTab({
   updateDocumentMetadata,
   testDocument,
   rbac,
+  documentSummary,
+  onDocumentStatusFilterChange,
 }: AdminKnowledgeTabProps) {
   const canManageKnowledge = Boolean(
     rbac?.capabilities.canDeleteKnowledgeDocuments ||
@@ -64,7 +71,15 @@ export function AdminKnowledgeTab({
   );
 
   return (
-    <section className="mdc-admin-knowledge mdc-admin-split">
+    <section className="mdc-admin-knowledge">
+      <KnowledgeSummaryStrip
+        summary={documentSummary}
+        activeFilter={documentStatus}
+        isLoading={isLoading}
+        onFilterChange={onDocumentStatusFilterChange}
+      />
+
+      <div className="mdc-admin-knowledge__body mdc-admin-split">
       <div className="mdc-admin-split__aside">
         <KnowledgeIngestionPanel
           isMutating={isMutating}
@@ -110,6 +125,7 @@ export function AdminKnowledgeTab({
         canDeleteKnowledgeDocuments={canDeleteKnowledgeDocuments}
         canReindexKnowledgeDocuments={canReindexKnowledgeDocuments}
         />
+      </div>
       </div>
     </section>
   );

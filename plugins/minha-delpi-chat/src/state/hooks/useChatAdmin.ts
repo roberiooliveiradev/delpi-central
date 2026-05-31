@@ -38,8 +38,16 @@ type UseChatAdminOptions = {
 
 type DocumentStatusFilter = "all" | "active" | "inactive";
 
+const EMPTY_DOCUMENT_SUMMARY = {
+  total: 0,
+  active: 0,
+  inactive: 0,
+  pendingIndex: 0,
+};
+
 const DEFAULT_DOCUMENTS_RESPONSE: AdminKnowledgeDocumentsResponse = {
   items: [],
+  summary: EMPTY_DOCUMENT_SUMMARY,
   pagination: {
     limit: 10,
     offset: 0,
@@ -452,6 +460,7 @@ export function useChatAdmin(options: UseChatAdminOptions = {}) {
     setMetricsHours,
     documents: documentsResponse.items as AdminKnowledgeDocument[],
     documentsPagination: documentsResponse.pagination,
+    documentSummary: documentsResponse.summary ?? EMPTY_DOCUMENT_SUMMARY,
     guidelines,
     documentSearch,
     documentStatus,

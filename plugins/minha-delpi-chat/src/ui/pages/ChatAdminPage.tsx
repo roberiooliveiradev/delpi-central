@@ -99,6 +99,8 @@ export function ChatAdminPage({
             documentTag={admin.documentTag}
             documentSourceType={admin.documentSourceType}
             documentFacets={admin.documentFacets}
+            documentSummary={admin.documentSummary}
+            onDocumentStatusFilterChange={admin.setDocumentStatus}
             isLoading={admin.isLoading}
             isMutating={admin.isMutating}
             setDocumentSearch={admin.setDocumentSearch}

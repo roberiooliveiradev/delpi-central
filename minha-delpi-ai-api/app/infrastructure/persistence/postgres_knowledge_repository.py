@@ -347,6 +347,36 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
             "sourceTypes": sorted(source_types),
         }
 
+    def get_global_document_summary(self) -> dict[str, int]:
+        return {
+            "total": self.count_documents(scope="global"),
+            "active": self.count_documents(active=True, scope="global"),
+            "inactive": self.count_documents(active=False, scope="global"),
+            "pendingIndex": self.count_documents_without_chunks(
+                active=True,
+                scope="global",
+            ),
+        }
+
+    def count_documents_without_chunks(
+        self,
+        *,
+        active: bool | None = True,
+        scope: str | None = "global",
+    ) -> int:
+        query = (
+            db.session.query(AiKnowledgeDocumentModel.id)
+            .outerjoin(
+                AiKnowledgeChunkModel,
+                AiKnowledgeChunkModel.document_id == AiKnowledgeDocumentModel.id,
+            )
+        )
+        query = self._apply_document_filters(query, search=None, active=active, scope=scope)
+        query = query.group_by(AiKnowledgeDocumentModel.id).having(
+            db.func.count(AiKnowledgeChunkModel.id) == 0,
+        )
+
+        return int(query.count())
 
     def list_documents_by_metadata(
         self,

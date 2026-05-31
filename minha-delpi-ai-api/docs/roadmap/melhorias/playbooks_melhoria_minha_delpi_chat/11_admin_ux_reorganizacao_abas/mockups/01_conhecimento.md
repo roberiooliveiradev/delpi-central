@@ -49,7 +49,12 @@
 
 ## Critérios de aceite
 
-- [ ] KPI strip visível sem rolar em desktop 1280px.
+- [x] KPI strip visível sem rolar em desktop 1280px (`KnowledgeSummaryStrip`, maio/2026).
 - [ ] Ingestão abre fluxo sem esconder filtros.
 - [ ] Teste RAG no documento selecionado com resultado legível.
-- [ ] Nenhum link para mockup 11 quebrado enquanto em 10 abas planas.
+- [x] Nenhum link para mockup 11 quebrado enquanto em 10 abas planas.
+
+## Implementado (incremental, 10 abas planas)
+
+- API: `summary` em `GET /admin/knowledge/documents` (`total`, `active`, `inactive`, `pendingIndex`).
+- MFE: `KnowledgeSummaryStrip` no topo da aba; clique em Total/Indexados/Inativos aplica filtro de status.
