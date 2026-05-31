@@ -52,6 +52,19 @@ class ChatPersonalityMetadataService:
             previous_messages=previous_messages,
         )
 
+        from app.application.services.chat_help_error_follow_up_service import (
+            ChatHelpErrorFollowUpService,
+        )
+
+        ChatHelpErrorFollowUpService.attach_to_assistant_metadata(
+            metadata,
+            message=message,
+            answer=answer,
+            tool_calls=tool_calls,
+            issues=issues,
+            workspace_context=workspace_context,
+        )
+
         from app.application.services.chat_trust_metadata_service import (
             ChatTrustMetadataService,
         )

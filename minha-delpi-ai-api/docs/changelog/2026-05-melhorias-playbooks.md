@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 5 (parcial)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatHelpErrorFollowUpService` — chips após falha (`helpErrorFollowUpSuggestions`) |
+| MFE | Grupo «Ajuda após erro» em `ChatMessageList` |
+| CI | `check_help_pr_gate.py` — actions/skills exigem atualização de ajuda |
+
 ## Autoajuda — Fase 3 (geração do catálogo)
 
 | Entrega | Detalhe |

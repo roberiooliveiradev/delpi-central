@@ -1141,7 +1141,7 @@ Motivos se negativo:
 - [x] `AssistantCapabilitiesRegistry` — busca, disponibilidade por agente, release notes.
 - [x] `assistant_release_notes.json` + resposta «o que mudou?».
 - [x] Integração com `ChatCapabilitiesService` e chips Explorar via features relacionadas.
-- [ ] Geração automática a partir de actions/skills (Fase 3).
+- [x] Geração automática a partir de actions/skills (Fase 3).
 
 ### Fase 3 — Autoatualização
 
@@ -1149,7 +1149,7 @@ Motivos se negativo:
 - [x] Guias adicionais: estoque, textos, permissões, ações destrutivas (`featureAnswers`).
 - [x] Job `scripts/generate_assistant_capabilities_catalog.py` (`--check`, `--write`) + `AssistantCapabilitiesCatalogGenerator`.
 - [x] `check_assistant_capabilities_catalog.py` valida JSON e sincronização com actions/skills.
-- [ ] Bloquear PR que altera feature sem atualizar help (hook CI dedicado).
+- [x] `scripts/check_help_pr_gate.py` — bloqueia PR com mudança em actions/skills sem ajuda/catálogo.
 
 ### Fase 4 — UI de ajuda
 
@@ -1159,11 +1159,11 @@ Motivos se negativo:
 
 ### Fase 5 — Ajuda inteligente
 
-- Personalizar por usuário.
-- Personalizar por agente.
-- Sugerir ajuda em erros.
-- Mostrar novidades contextuais.
-- Medir adoção.
+- [ ] Personalizar por usuário.
+- [x] Personalizar por agente no painel (`agentId` / `agentName` no catálogo) e chips pós-erro com nome do agente.
+- [x] `ChatHelpErrorFollowUpService` → `helpErrorFollowUpSuggestions` (chips «Ajuda após erro» no MFE).
+- [ ] Mostrar novidades contextuais na conversa.
+- [ ] Medir adoção do painel de ajuda.
 
 ---
 

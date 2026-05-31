@@ -80,6 +80,28 @@ def main() -> int:
     else:
         print("OK catalog validator")
 
+    from app.application.services.chat_help_error_follow_up_service import (
+        ChatHelpErrorFollowUpService,
+    )
+
+    error_metadata: dict = {}
+    ChatHelpErrorFollowUpService.attach_to_assistant_metadata(
+        error_metadata,
+        message="qual o estoque do produto 1?",
+        answer="erro ao consultar a api",
+        tool_calls=[],
+        issues=["http_500"],
+        workspace_context={"agent": {"name": "ERP"}},
+    )
+
+    if not error_metadata.get("helpErrorFollowUpSuggestions"):
+        print("FAIL chips de ajuda após erro", file=sys.stderr)
+        failed += 1
+    else:
+        print(
+            f"OK erro: {len(error_metadata['helpErrorFollowUpSuggestions'])} chips de ajuda",
+        )
+
     if failed:
         return 1
 

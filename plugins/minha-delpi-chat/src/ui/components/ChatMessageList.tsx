@@ -1285,6 +1285,16 @@ export function ChatMessageList({
                 />
                 <ChatFollowUpChips
                   suggestions={
+                    (message.metadata?.helpErrorFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Ajuda após erro"
+                  ariaLabel="Sugestões de ajuda após falha na consulta"
+                />
+                <ChatFollowUpChips
+                  suggestions={
                     (message.metadata?.attachmentFollowUpSuggestions as
                       | ChatFollowUpSuggestion[]
                       | undefined) ?? []

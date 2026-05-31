@@ -153,6 +153,20 @@
     "Ampliar busca": "pesquisa profunda na web sobre {query}",
     "Usar anexo": "compare o arquivo anexado com informações públicas sobre {query}"
   },
+  "helpErrorFollowUpChips": [
+    "Entender o erro",
+    "Verificar código",
+    "Escolher agente",
+    "O que você pode fazer?",
+    "Como consulto estoque?"
+  ],
+  "helpErrorFollowUpQueries": {
+    "Entender o erro": "por que não consegui fazer essa consulta?",
+    "Verificar código": "como verifico se o código do produto está correto?",
+    "Escolher agente": "qual agente devo usar com {agent_name}?",
+    "O que você pode fazer?": "o que você pode fazer?",
+    "Como consulto estoque?": "como consulto estoque?"
+  },
   "helpFollowUpChipsGeneral": [
     "Consultar produto",
     "Ver estoque",
