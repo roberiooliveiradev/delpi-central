@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 1 (identity ↔ catálogo)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Conteúdo | `identity.json` — `catalogSync`, respostas alinhadas a KPIs/web/?/system |
+| CI | `scripts/check_identity_catalog_alignment.py` — versão e `featureIds` vs `features_catalog` |
+| Catálogo | Feature `production_indicators` |
+
 ## Autoajuda — Fase 5 (personalização por perfil)
 
 | Entrega | Detalhe |

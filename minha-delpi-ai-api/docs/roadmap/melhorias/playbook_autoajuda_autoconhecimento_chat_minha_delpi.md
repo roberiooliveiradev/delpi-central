@@ -1132,7 +1132,7 @@ Motivos se negativo:
 - [x] `ChatHelpFollowUpService` → `helpFollowUpSuggestions` no metadata.
 - [x] Starters no MFE (`chatHomeStarters.ts`) — como usar, pesquisa web, lousa.
 - [x] Chips «Explorar» no `ChatMessageList`.
-- [ ] Revisão completa de `identity.json` alinhada ao catálogo.
+- [x] Revisão completa de `identity.json` alinhada ao catálogo (`catalogSync`, respostas e `check_identity_catalog_alignment.py`).
 - [x] Matriz de testes H1–H10 — `test_chat_self_help.py` + `chat_self_help_cases.py`.
 
 ### Fase 2 — Catálogo único

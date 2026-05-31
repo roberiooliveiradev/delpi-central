@@ -170,6 +170,27 @@
       ]
     },
     {
+      "id": "production_indicators",
+      "title": "Indicadores de produção",
+      "category": "indicators",
+      "status": "available",
+      "summary": "OEE, OTD, eficiência fabril e métricas de chão de fábrica.",
+      "requiresAgent": true,
+      "requiredActions": [
+        "/production"
+      ],
+      "helpTopicId": null,
+      "examples": [
+        "Indicadores de produção do mês",
+        "OEE da filial",
+        "OTD de entregas"
+      ],
+      "relatedFeatures": [
+        "quality_indicators",
+        "chart"
+      ]
+    },
+    {
       "id": "hr_indicators",
       "title": "Indicadores de RH",
       "category": "indicators",
@@ -398,7 +419,7 @@
     }
   ],
   "generation": {
-    "generatedAt": "2026-05-31T03:36:30.931303+00:00",
+    "generatedAt": "2026-05-31T03:42:04.385687+00:00",
     "sources": [
       "external_actions",
       "skills/catalog",

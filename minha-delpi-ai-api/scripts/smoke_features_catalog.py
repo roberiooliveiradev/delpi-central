@@ -110,6 +110,25 @@ def main() -> int:
     else:
         print("OK assistant catalog service (Fase 4)")
 
+    import subprocess
+    import sys as _sys
+
+    identity_check = subprocess.run(
+        [_sys.executable, "scripts/check_identity_catalog_alignment.py"],
+        cwd=None,
+        capture_output=True,
+        text=True,
+    )
+
+    if identity_check.returncode != 0:
+        print(
+            identity_check.stderr.strip() or identity_check.stdout.strip(),
+            file=_sys.stderr,
+        )
+        failed += 1
+    else:
+        print("OK identity ↔ catálogo")
+
     if failed:
         return 1
 

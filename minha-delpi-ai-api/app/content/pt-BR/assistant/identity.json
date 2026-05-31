@@ -257,7 +257,13 @@
       "tutorial do chat",
       "como peco resposta em tabela",
       "como peco um grafico",
-      "como faco uma boa pergunta"
+      "como faco uma boa pergunta",
+      "painel de ajuda",
+      "botao de ajuda",
+      "botão de ajuda",
+      "catalogo de funcionalidades",
+      "catálogo de funcionalidades",
+      "onde vejo novidades"
     ]
   },
   "placeholders": {
@@ -268,13 +274,40 @@
     "platform": {
       "who": "Olá! Sou o assistente da **{platform_name}** — um chat corporativo em português, integrado à plataforma DELPI.\n\nAjudo com documentação autorizada, conversas do dia a dia e, quando você escolhe um **agente especialista**, ganho consultas e ferramentas extras daquele perfil.\n\nNão preciso do seu nome ou e-mail só para me apresentar. Se quiser ver tudo que consigo fazer aqui, pergunte *o que você pode fazer*.",
       "what": "Sou o assistente de conversa da **{platform_name}**: interpreto suas perguntas, uso conhecimento e ferramentas autorizadas para você, e respondo em português claro.\n\nNo chat geral falo sobre documentação e temas amplos; com um **agente** ativo, foco no domínio dele (produtos, indicadores, etc.).",
-      "role": "No chat geral, ajudo a **entender processos e documentação**, organizar ideias e responder dúvidas com o que está autorizado para você.\n\nPara **dados operacionais** (estoque, produto, LMP e similares), o ideal é escolher um agente com as consultas certas — aí busco números reais em vez de chutar.\n\nQuer a lista completa? Pergunte *o que você pode fazer*.",
-      "limits": "Alguns limites importantes:\n\n- **Não invento** dados de produto, estoque, preço ou indicadores — se faltar código ou contexto, pergunto.\n- Só acesso o que seu perfil e o agente ativo **autorizam** (SSO/RBAC).\n- Não substituo sistemas oficiais nem executo ações críticas sem confirmação.\n- Posso errar em interpretação; em dúvida, peça para reformular ou confira na fonte.\n\nPara capacidades detalhadas: *o que você pode fazer*.",
-      "origin": "Funciono com **modelo de linguagem** (IA generativa) orquestrado pelo backend da {platform_name}, com políticas de segurança, RAG em documentação autorizada e, quando configurado, chamadas a APIs reais via agentes.\n\nNão sou uma pessoa: sou software. As respostas são geradas em tempo real e podem ser revisadas no histórico da conversa.",
-      "usage": "Para me usar bem:\n\n1. Escreva em **português**, direto ao ponto — aceito pequenos erros de digitação.\n2. Se souber, informe **código de produto**, OV ou período.\n3. Para números da operação, selecione o **agente** adequado antes de perguntar.\n4. Peça formato (*em tabela*, *gráfico*, *só texto*) quando quiser.\n5. Pergunte *o que você pode fazer* para ver ferramentas e consultas desta sessão.\n\nNão é necessário se identificar com nome/e-mail só para conversar."
+      "role": "No chat geral, ajudo a **entender processos e documentação**, organizar ideias e responder dúvidas com o que está autorizado para você.\n\nCom um **agente** ativo, consulto APIs reais: **produto/estoque/vendas**, **indicadores** (comercial, financeiro, qualidade, RH, produção), **LMP**, **dicionário de dados (/system)**, **SQL leitura**, além de **pesquisa na web**, **lousa**, **gráficos**, **anexos** e **RAG**.\n\nQuer a lista atualizada desta sessão? Pergunte *o que você pode fazer* ou abra o painel **?** (catálogo de ajuda).",
+      "limits": "Alguns limites importantes:\n\n- **Não invento** dados de produto, estoque, preço ou indicadores — se faltar código ou contexto, pergunto.\n- Só acesso o que seu perfil e o agente ativo **autorizam** (SSO/RBAC); o catálogo de ajuda oculta o que seu perfil não pode usar.\n- Não substituo sistemas oficiais nem **altero cadastros** no ERP por chat.\n- Posso errar em interpretação; em dúvida, peça para reformular ou confira na fonte.\n\nCapacidades detalhadas: *o que você pode fazer* ou painel **?**.",
+      "origin": "Funciono com **modelo de linguagem** (IA generativa) orquestrado pelo backend da {platform_name}, com políticas de segurança, RAG em documentação autorizada, catálogo de funcionalidades (`features_catalog`) e, quando configurado, chamadas a APIs reais via agentes.\n\nNão sou uma pessoa: sou software. As respostas são geradas em tempo real e podem ser revisadas no histórico da conversa.",
+      "usage": "Para me usar bem:\n\n1. Escreva em **português**, direto ao ponto — aceito pequenos erros de digitação.\n2. Se souber, informe **código de produto**, OV ou período.\n3. Para números da operação, selecione o **agente** adequado antes de perguntar.\n4. Peça formato (*em tabela*, *gráfico*, *só texto*) quando quiser.\n5. Pergunte *o que você pode fazer* ou use o botão **?** para buscar no catálogo de funcionalidades.\n6. Após **pesquisa na web**, com projeto ativo, use **Salvar fontes** para guardar links no projeto.\n\nNão é necessário se identificar com nome/e-mail só para conversar."
     }
   },
   "followUps": {
-    "capabilitiesHint": "Para ver tudo que consigo fazer nesta sessão, pergunte: *o que você pode fazer*."
+    "capabilitiesHint": "Para ver tudo que consigo fazer nesta sessão, pergunte: *o que você pode fazer* ou abra o painel **?**."
+  },
+  "catalogSync": {
+    "version": "2026.06.03",
+    "featuresCatalogPath": "assistant/features_catalog",
+    "capabilitiesPath": "assistant/capabilities",
+    "featureIds": [
+      "capabilities_overview",
+      "product_lookup",
+      "stock_lookup",
+      "sales_lookup",
+      "commercial_indicators",
+      "financial_indicators",
+      "quality_indicators",
+      "production_indicators",
+      "hr_indicators",
+      "engineering_lmps",
+      "engineering_transforma",
+      "data_sql",
+      "system_metadata",
+      "web_search",
+      "canvas",
+      "chart",
+      "attachment",
+      "text_tasks",
+      "agent_selection",
+      "rag"
+    ]
   }
 }
