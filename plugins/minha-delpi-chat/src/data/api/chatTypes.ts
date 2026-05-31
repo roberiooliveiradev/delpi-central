@@ -238,6 +238,14 @@ export type AssistantCatalogAvailability = {
   disabled: AssistantCatalogFeature[];
 };
 
+export type AssistantContextualHighlight = {
+  featureId?: string | null;
+  title: string;
+  description?: string;
+  exampleQuery?: string | null;
+  releaseVersion?: string | null;
+};
+
 export type AssistantCatalogResponse = {
   version: string;
   query?: string | null;
@@ -250,6 +258,8 @@ export type AssistantCatalogResponse = {
   quickPrompts: AssistantCatalogQuickPrompt[];
   categoryLabels: Record<string, string>;
   releaseNotesPreview?: string | null;
+  releaseVersion?: string | null;
+  contextualHighlights?: AssistantContextualHighlight[];
 };
 
 export type ChatMessageMetadata = {

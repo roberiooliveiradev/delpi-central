@@ -204,6 +204,71 @@ class AssistantCapabilitiesRegistry:
         return "\n".join(lines).strip()
 
     @classmethod
+    def latest_release_version(cls) -> str | None:
+        releases = _release_notes_data().get("releases")
+
+        if not isinstance(releases, list) or not releases:
+            return None
+
+        latest = releases[-1]
+
+        if not isinstance(latest, dict):
+            return None
+
+        version = str(latest.get("version") or "").strip()
+
+        return version or None
+
+    @classmethod
+    def list_contextual_highlights(cls, *, limit: int = 3) -> list[dict[str, Any]]:
+        releases = _release_notes_data().get("releases")
+
+        if not isinstance(releases, list) or not releases:
+            return []
+
+        latest = releases[-1]
+
+        if not isinstance(latest, dict):
+            return []
+
+        version = str(latest.get("version") or "").strip()
+        items = latest.get("items")
+
+        if not isinstance(items, list):
+            return []
+
+        highlights: list[dict[str, Any]] = []
+
+        for item in items[:limit]:
+            if not isinstance(item, dict):
+                continue
+
+            feature_id = str(item.get("featureId") or "").strip()
+            title = str(item.get("title") or "").strip()
+            description = str(item.get("description") or "").strip()
+            examples = item.get("examples")
+
+            example_query = None
+
+            if isinstance(examples, list) and examples:
+                example_query = str(examples[0]).strip() or None
+
+            if not title:
+                continue
+
+            highlights.append(
+                {
+                    "featureId": feature_id or None,
+                    "title": title,
+                    "description": description,
+                    "exampleQuery": example_query,
+                    "releaseVersion": version or None,
+                }
+            )
+
+        return highlights
+
+    @classmethod
     def _matches_actions(
         cls,
         required_tokens: list[str],

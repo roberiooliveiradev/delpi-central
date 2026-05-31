@@ -186,6 +186,19 @@ export async function getAssistantCatalog(
   return parseJsonResponse<AssistantCatalogResponse>(response);
 }
 
+export async function recordAssistantHelpEvent(
+  payload: { event: string; metadata?: Record<string, unknown> | null },
+  options: ChatApiOptions = {},
+): Promise<{ ok: boolean; event: string }> {
+  const response = await fetch(`${API_BASE_URL}/chat/assistant/help-events`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<{ ok: boolean; event: string }>(response);
+}
+
 
 export async function createChatSession(
   payload: CreateChatSessionPayload,

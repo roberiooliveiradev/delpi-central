@@ -168,6 +168,26 @@ export function ChatHelpPanel({
           </div>
 
           <div className="mdc-chat-help-panel__body">
+            {catalog?.contextualHighlights?.length && !searchQuery.trim() ? (
+              <section className="mdc-chat-help-panel__highlights" aria-label="Novidades">
+                <h3 className="mdc-chat-help-panel__section-title">
+                  Novidades
+                  {catalog.releaseVersion ? ` · ${catalog.releaseVersion}` : ""}
+                </h3>
+                {catalog.contextualHighlights.map((highlight) => (
+                  <article key={highlight.featureId ?? highlight.title} className="mdc-chat-help-panel__highlight-card">
+                    <h4>{highlight.title}</h4>
+                    {highlight.description ? <p>{highlight.description}</p> : null}
+                    {highlight.exampleQuery ? (
+                      <button type="button" onClick={() => onTryPrompt(highlight.exampleQuery!)}>
+                        {highlight.exampleQuery}
+                      </button>
+                    ) : null}
+                  </article>
+                ))}
+              </section>
+            ) : null}
+
             {catalog?.quickPrompts?.length ? (
               <div className="mdc-chat-help-panel__quick">
                 {catalog.quickPrompts.map((prompt) => (

@@ -26,6 +26,7 @@ import {
   downloadChatSource,
   getAssistantCatalog,
   getChatCapabilities,
+  recordAssistantHelpEvent,
   listProjectSources,
   updateChatArtifact,
   uploadProjectSource,
@@ -54,6 +55,7 @@ import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import type {
   AssistantCatalogResponse,
+  AssistantContextualHighlight,
   ChatCanvasOpenPayload,
 } from "../../data/api/chatTypes";
 import { useChatSession } from "../../state/hooks/useChatSession";
@@ -103,6 +105,7 @@ export function ChatPage({
   const [helpCatalog, setHelpCatalog] = useState<AssistantCatalogResponse | null>(null);
   const [helpCatalogLoading, setHelpCatalogLoading] = useState(false);
   const [helpCatalogError, setHelpCatalogError] = useState<string | null>(null);
+  const [homeHighlights, setHomeHighlights] = useState<AssistantContextualHighlight[]>([]);
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
     if (!payload.markdown.trim()) {
@@ -304,6 +307,15 @@ export function ChatPage({
       window.clearTimeout(timer);
     };
   }, [getAccessToken, helpAgentId, helpPanelOpen, helpSearchQuery]);
+
+  useEffect(() => {
+    if (!helpPanelOpen) {
+      return;
+    }
+
+    void recordAssistantHelpEvent({ event: "help_panel_open" }, { getAccessToken });
+  }, [getAccessToken, helpPanelOpen]);
+
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -1074,6 +1086,24 @@ export function ChatPage({
 
   const isConversationEmpty = !hasActiveConversation;
 
+  useEffect(() => {
+    if (!isConversationEmpty) {
+      return;
+    }
+
+    void getAssistantCatalog({
+      getAccessToken,
+      agentId: helpAgentId,
+      limit: 8,
+    })
+      .then((payload) => {
+        setHomeHighlights(payload.contextualHighlights ?? []);
+      })
+      .catch(() => {
+        setHomeHighlights([]);
+      });
+  }, [getAccessToken, helpAgentId, isConversationEmpty]);
+
   function getComposerPlaceholder() {
     if (isNarrow) {
       if (selectedProject && contextAgent) {
@@ -1620,6 +1650,7 @@ export function ChatPage({
                   ) : (
                     <ChatEmptyState
                       displayName={userDisplayName}
+                      contextualHighlights={homeHighlights}
                       onUseStarter={handleHomeStarter}
                     />
                   )}

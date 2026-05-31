@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { getFirstDisplayName } from "../../utils/authDisplayName";
+import type { AssistantContextualHighlight } from "../../data/api/chatTypes";
 import { CHAT_HOME_STARTERS, type ChatHomeStarter } from "../chatHomeStarters";
 
 import "./ChatEmptyState.css";
@@ -8,6 +9,7 @@ import "./ChatEmptyState.css";
 type ChatEmptyStateProps = {
   displayName?: string | null;
   starters?: ChatHomeStarter[];
+  contextualHighlights?: AssistantContextualHighlight[];
   onUseStarter?: (query: string) => void;
 };
 
@@ -44,6 +46,7 @@ function pickGreeting(firstName: string | null): string {
 export function ChatEmptyState({
   displayName,
   starters = CHAT_HOME_STARTERS,
+  contextualHighlights = [],
   onUseStarter,
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
@@ -58,6 +61,30 @@ export function ChatEmptyState({
           Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação.
         </p>
       </div>
+
+      {contextualHighlights.length > 0 ? (
+        <div className="mdc-chat-empty-state__highlights" role="region" aria-label="Novidades do chat">
+          <p className="mdc-chat-empty-state__highlights-label">Novidades</p>
+          {contextualHighlights.slice(0, 2).map((highlight) => (
+            <button
+              key={highlight.featureId ?? highlight.title}
+              type="button"
+              className="mdc-chat-empty-state__highlight-chip"
+              title={highlight.description}
+              onClick={() => {
+                if (highlight.exampleQuery) {
+                  onUseStarter?.(highlight.exampleQuery);
+                }
+              }}
+            >
+              <strong>{highlight.title}</strong>
+              {highlight.description ? (
+                <span>{highlight.description}</span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {showStarters ? (
         <div className="mdc-chat-empty-state__starters" role="group" aria-label="Sugestões">

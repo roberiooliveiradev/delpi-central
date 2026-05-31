@@ -1162,8 +1162,8 @@ Motivos se negativo:
 - [ ] Personalizar por usuário.
 - [x] Personalizar por agente no painel (`agentId` / `agentName` no catálogo) e chips pós-erro com nome do agente.
 - [x] `ChatHelpErrorFollowUpService` → `helpErrorFollowUpSuggestions` (chips «Ajuda após erro» no MFE).
-- [ ] Mostrar novidades contextuais na conversa.
-- [ ] Medir adoção do painel de ajuda.
+- [x] Novidades contextuais — `contextualHighlights` no catálogo, home vazia e painel `?`.
+- [x] Métricas leves — `POST /chat/assistant/help-events` (`help_panel_open`, etc.) + log estruturado.
 
 ---
 

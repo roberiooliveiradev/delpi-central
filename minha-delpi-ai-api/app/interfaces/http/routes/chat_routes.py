@@ -291,6 +291,30 @@ def get_assistant_catalog():
     return jsonify(payload), 200
 
 
+@chat_bp.post("/assistant/help-events")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def record_assistant_help_event():
+    from app.application.services.chat_help_adoption_service import ChatHelpAdoptionService
+
+    payload = request.get_json(silent=True) or {}
+    event = str(payload.get("event") or "").strip()
+    metadata = payload.get("metadata")
+
+    if not event:
+        return bad_request("event is required")
+
+    try:
+        result = ChatHelpAdoptionService.record(
+            user_id=str(g.current_user.sub),
+            event=event,
+            metadata=metadata if isinstance(metadata, dict) else None,
+        )
+    except ValueError as exc:
+        return bad_request(str(exc))
+
+    return jsonify(result), 200
+
+
 @chat_bp.get("/agents")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_agents():

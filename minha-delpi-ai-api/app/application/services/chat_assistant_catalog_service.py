@@ -99,6 +99,10 @@ class ChatAssistantCatalogService:
             "releaseNotesPreview": AssistantCapabilitiesRegistry.format_release_notes_answer(
                 limit=4,
             ),
+            "releaseVersion": AssistantCapabilitiesRegistry.latest_release_version(),
+            "contextualHighlights": AssistantCapabilitiesRegistry.list_contextual_highlights(
+                limit=3,
+            ),
         }
 
     @classmethod

@@ -91,6 +91,12 @@ def main() -> int:
         limit=6,
     )
 
+    if not catalog_payload.get("contextualHighlights"):
+        print("FAIL catalog contextualHighlights vazio", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK catalog contextualHighlights (Fase 5)")
+
     if not catalog_payload.get("features") or not catalog_payload.get("quickPrompts"):
         print(f"FAIL assistant catalog API shape ({catalog_payload.keys()})", file=sys.stderr)
         failed += 1

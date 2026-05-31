@@ -16,6 +16,12 @@
 
 Query opcional em `/chat/assistant/catalog`: `q` (busca), `agentId` (disponibilidade no agente), `limit` (1–50).
 
+| Método | Path | Permissão |
+|---|---|---|
+| POST | `/chat/assistant/help-events` | `chat.access` |
+
+Body: `{ "event": "help_panel_open" | "help_panel_search" | "help_highlight_click" | "help_quick_prompt", "metadata": {} }`.
+
 ## Chat — Sessões e mensagens
 
 | Método | Path | Permissão |
