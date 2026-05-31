@@ -34,7 +34,13 @@ export default function App({ getAccessToken, pathname }: AppProps) {
         <ChatAnimatedPanel panelKey="admin" variant="page" className="mdc-chat-page-panel--fill">
           <ChatAdminPage
             getAccessToken={getAccessToken}
-            initialTab={route.kind === "admin-agent" ? "agents" : undefined}
+            initialNav={
+              route.kind === "admin-agent"
+                ? { section: "agents", subTab: "specialization" }
+                : route.kind === "admin"
+                  ? route.nav
+                  : undefined
+            }
             initialAgentId={route.kind === "admin-agent" ? route.agentId : null}
             onBack={() => navigateChatHref(buildChatHref({ kind: "home" }))}
           />
@@ -48,7 +54,9 @@ export default function App({ getAccessToken, pathname }: AppProps) {
       getAccessToken={getAccessToken}
       pathname={pathname}
       initialRoute={route}
-      onOpenAdmin={() => navigateChatHref(buildChatHref({ kind: "admin" }))}
+      onOpenAdmin={() =>
+        navigateChatHref(buildChatHref({ kind: "admin", nav: { section: "overview" } }))
+      }
     />
   );
 }

@@ -1,0 +1,49 @@
+.mdc-admin-overview-tab {
+  display: grid;
+  gap: var(--mdc-space-4, 1rem);
+}
+
+.mdc-admin-overview-tab__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--mdc-space-3, 0.75rem);
+}
+
+.mdc-admin-overview-card {
+  display: grid;
+  gap: 0.2rem;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-radius: var(--mdc-radius-md, 8px);
+  border: 1px solid color-mix(in srgb, var(--mdc-border, #d8dee8) 85%, transparent);
+  background: var(--mdc-surface, #fff);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mdc-admin-overview-card:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary, #2563eb) 45%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--mdc-primary, #2563eb) 10%, transparent);
+}
+
+.mdc-admin-overview-card__label {
+  font-size: 0.82rem;
+  color: var(--mdc-text-muted, #5c6578);
+}
+
+.mdc-admin-overview-card__value {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.mdc-admin-overview-tab__quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mdc-admin-overview-tab__quick-links button {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--mdc-border, #d8dee8);
+  background: transparent;
+}

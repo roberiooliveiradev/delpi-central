@@ -1,0 +1,34 @@
+.mdc-admin-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--mdc-radius-md, 8px);
+  background: color-mix(in srgb, var(--mdc-surface-elevated, #f4f6fa) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mdc-border, #d8dee8) 70%, transparent);
+}
+
+.mdc-admin-status-strip__error {
+  margin: 0;
+  color: var(--mdc-danger, #b42318);
+}
+
+.mdc-admin-status-strip__success {
+  margin: 0;
+  color: var(--mdc-success, #067647);
+}
+
+.mdc-admin-status-strip__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--mdc-text-muted, #5c6578);
+}
+
+.mdc-admin-status-strip__meta button {
+  font-size: inherit;
+}

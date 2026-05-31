@@ -1,0 +1,12 @@
+.mdc-admin-subtab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.15rem 0 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-border, #d8dee8) 80%, transparent);
+}
+
+.mdc-admin-subtab-nav button {
+  flex: 0 0 auto;
+  font-size: 0.88rem;
+}

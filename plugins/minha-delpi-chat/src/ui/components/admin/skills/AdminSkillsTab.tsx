@@ -225,7 +225,7 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
     <section className="mdc-admin-skills" aria-label="Catálogo de habilidades">
       {confirmDialog}
       <header className="mdc-admin-page-header">
-        <h2>Habilidades</h2>
+        <h2>Comportamentos</h2>
         <p>
           Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais habilidades
           estão ativas; a execução de APIs continua nas <strong>Actions</strong>.

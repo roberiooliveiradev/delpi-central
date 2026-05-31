@@ -1,4 +1,18 @@
+import {
+  buildAdminAgentHref,
+  buildAdminHref,
+  legacyTabToNav,
+  normalizeAdminNav,
+  parseAdminPathSegments,
+  type AdminLegacyTab,
+  type AdminNavState,
+  type AdminSection,
+  type AdminSubTab,
+} from "./adminNavigation";
+
 export const CHAT_BASE_PATH = "/apps/minha-delpi-chat";
+
+export type { AdminLegacyTab, AdminNavState, AdminSection, AdminSubTab };
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,7 +30,7 @@ export type ChatRoute =
   | { kind: "agent-actions"; agentId: string; providerKey?: string }
   | { kind: "agents" }
   | { kind: "projects" }
-  | { kind: "admin" }
+  | { kind: "admin"; nav?: AdminNavState }
   | { kind: "admin-agent"; agentId: string };
 
 export function isChatAgentRouteId(value: string): boolean {
@@ -179,14 +193,25 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
       return { kind: "agent", agentId };
     }
     case "admin": {
-      if (sectionSegments[0] === "agentes" && sectionSegments[1]) {
-        return {
-          kind: "admin-agent",
-          agentId: decodeURIComponent(sectionSegments[1]),
-        };
+      if (sectionSegments[0] === "agentes") {
+        const specializationIndex =
+          sectionSegments[1] === "especializacao" ? 2 : 1;
+        const agentSegment = sectionSegments[specializationIndex];
+
+        if (agentSegment && isChatAgentRouteId(decodeURIComponent(agentSegment))) {
+          return {
+            kind: "admin-agent",
+            agentId: decodeURIComponent(agentSegment),
+          };
+        }
       }
 
-      return { kind: "admin" };
+      const nav = parseAdminPathSegments(sectionSegments);
+
+      return {
+        kind: "admin",
+        nav: nav ?? { section: "overview" },
+      };
     }
     default:
       return { kind: "home" };
@@ -222,9 +247,9 @@ export function buildChatHref(route: ChatRoute): string {
     case "projects":
       return `${CHAT_BASE_PATH}/projetos`;
     case "admin":
-      return `${CHAT_BASE_PATH}/admin`;
+      return buildAdminHref(route.nav ?? { section: "overview" });
     case "admin-agent":
-      return `${CHAT_BASE_PATH}/admin/agentes/${encodeURIComponent(route.agentId)}`;
+      return buildAdminAgentHref(route.agentId);
   }
 }
 
@@ -329,5 +354,14 @@ export function buildChatAgentActionsHref(agentId: string, providerKey?: string 
 }
 
 export function buildChatAdminAgentHref(agentId: string) {
-  return buildChatHref({ kind: "admin-agent", agentId });
+  return buildAdminAgentHref(agentId);
+}
+
+export function buildChatAdminHref(nav: AdminNavState) {
+  return buildAdminHref(nav);
+}
+
+/** @deprecated Preferir buildChatAdminHref com AdminNavState */
+export function buildChatAdminLegacyTabHref(tab: AdminLegacyTab) {
+  return buildAdminHref(legacyTabToNav(tab));
 }

@@ -51,12 +51,15 @@ type AdminToolsTabProps = {
   llmStatus?: AdminLlmStatus | null;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   rbac?: AdminRbacSummary | null;
+  /** tools = health/actions; intelligence = só políticas do pipeline */
+  view?: "tools" | "intelligence";
 };
 
 export function AdminToolsTab({
   llmStatus,
   getAccessToken,
   rbac,
+  view = "tools",
 }: AdminToolsTabProps) {
   const [health, setHealth] = useState<AdminToolHealthResponse | null>(null);
   const [actions, setActions] = useState<AdminExternalActionCatalogItem[]>([]);
@@ -190,15 +193,30 @@ export function AdminToolsTab({
     }
   }
 
+  if (view === "intelligence") {
+    return (
+      <section className="mdc-admin-tools-tab mdc-admin-tools-tab--intelligence">
+        <header className="mdc-admin-tab-header">
+          <div className="mdc-admin-page-header">
+            <p className="mdc-chat-eyebrow">Plataforma</p>
+            <h2>Inteligência do chat</h2>
+            <p>
+              Políticas globais do pipeline (roteamento, RAG, tools). Métricas ficam em Qualidade.
+            </p>
+          </div>
+        </header>
+        <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
+      </section>
+    );
+  }
+
   return (
     <section className="mdc-admin-tools-tab">
       <header className="mdc-admin-tools-tab__toolbar mdc-admin-tab-header">
         <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Ferramentas</p>
+          <p className="mdc-chat-eyebrow">Plataforma</p>
           <h2>Ferramentas e integrações</h2>
-          <p>
-            Providers LLM, saúde operacional, catálogo de actions e inteligência global do pipeline.
-          </p>
+          <p>Providers LLM, saúde operacional e catálogo de actions por agente.</p>
         </div>
 
         <ToolsSummaryStrip summary={toolsSummary} />
@@ -593,14 +611,6 @@ export function AdminToolsTab({
         )}
       </article>
 
-      <div className="mdc-admin-tools-tab__intelligence">
-        <h3 className="mdc-chat-ws-section-head">Inteligência do chat</h3>
-        <p className="mdc-chat-ws-section-lead">
-          Políticas globais do pipeline (roteamento, RAG, tools). A aba Métricas concentra apenas
-          observabilidade.
-        </p>
-        <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
-      </div>
     </section>
   );
 }

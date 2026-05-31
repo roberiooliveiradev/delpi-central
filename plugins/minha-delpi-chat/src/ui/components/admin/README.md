@@ -4,11 +4,12 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 
 ## Estrutura
 
-- `shell/`: topbar, abas e alertas do admin.
+- `shell/`: topbar, 6 seções, sub-abas, status strip e alertas.
+- `overview/`: painel inicial (KPIs, RBAC, navegação rápida).
 - `metrics/` e `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.
-- `skills/`: catálogo global de skills (CRUD, policy Markdown).
+- `skills/`: catálogo global de comportamentos/skills (CRUD, policy Markdown) — sub-aba Conhecimento.
 - `shared/`: formulários e checkboxes alinhados (`AdminFormCheckbox`, `admin-shared.css`).
 - `simulate/`: simulação do agente (sessão, sandbox, LLM).
 - `evaluations/`: avaliação de respostas e sugestões.

@@ -1,26 +1,31 @@
 import { ArrowLeft } from "lucide-react";
 
-import type { AdminTab, AdminTabItem } from "./adminShellTypes";
+import {
+  getAdminSectionItem,
+  type AdminNavState,
+  type AdminSection,
+} from "../../../../navigation/adminNavigation";
+import { AdminSectionNav } from "./AdminSectionNav";
 
 import "./AdminShellTopbar.css";
 
 type AdminShellTopbarProps = {
-  activeTab: AdminTab;
-  tabs: AdminTabItem[];
+  nav: AdminNavState;
   isLoading: boolean;
   onRefresh: () => void;
   onBack: () => void;
-  onTabChange: (tab: AdminTab) => void;
+  onSectionChange: (section: AdminSection) => void;
 };
 
 export function AdminShellTopbar({
-  activeTab,
-  tabs,
+  nav,
   isLoading,
   onRefresh,
   onBack,
-  onTabChange,
+  onSectionChange,
 }: AdminShellTopbarProps) {
+  const sectionMeta = getAdminSectionItem(nav.section);
+
   return (
     <header className="mdc-chat-ws-topbar mdc-admin-topbar" aria-label="Administração do chat">
       <div className="mdc-chat-ws-topbar__start">
@@ -32,7 +37,7 @@ export function AdminShellTopbar({
 
       <div className="mdc-chat-ws-topbar__title">
         <span>Administração</span>
-        <small>Minha DELPI Chat</small>
+        <small>{sectionMeta.label} — Minha DELPI Chat</small>
       </div>
 
       <div className="mdc-chat-ws-topbar__actions">
@@ -46,21 +51,7 @@ export function AdminShellTopbar({
         </button>
       </div>
 
-      <nav
-        className="mdc-admin-tabs mdc-chat-project-home__tabs"
-        aria-label="Seções do admin"
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={activeTab === tab.key ? "is-active" : undefined}
-            onClick={() => onTabChange(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+      <AdminSectionNav nav={nav} onNavigate={onSectionChange} />
     </header>
   );
 }

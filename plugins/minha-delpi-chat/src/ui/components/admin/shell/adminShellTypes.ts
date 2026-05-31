@@ -1,16 +1,12 @@
-export type AdminTab =
-  | "knowledge"
-  | "metrics"
-  | "guidelines"
-  | "skills"
-  | "simulate"
-  | "evaluations"
-  | "agents"
-  | "security"
-  | "tools"
-  | "audit";
+export type {
+  AdminLegacyTab as AdminTab,
+  AdminNavState,
+  AdminSection,
+  AdminSubTab,
+} from "../../../../navigation/adminNavigation";
 
+/** @deprecated Use AdminSectionItem em adminNavigation */
 export type AdminTabItem = {
-  key: AdminTab;
+  key: import("../../../../navigation/adminNavigation").AdminLegacyTab;
   label: string;
 };

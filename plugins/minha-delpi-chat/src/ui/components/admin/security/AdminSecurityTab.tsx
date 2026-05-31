@@ -14,7 +14,6 @@ import type {
   AdminSecuritySummary,
 } from "../../../../data/api/adminTypes";
 
-import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
 import { SecuritySummaryStrip } from "./SecuritySummaryStrip";
 
 import "./AdminSecurityTab.css";
@@ -241,7 +240,6 @@ export function AdminSecurityTab({
         </div>
       </article>
 
-      <AdminRbacPanel rbac={rbac ?? null} />
     </section>
   );
 }

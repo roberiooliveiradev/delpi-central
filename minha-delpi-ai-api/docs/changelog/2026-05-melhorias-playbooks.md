@@ -359,6 +359,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Upload | `readingStatus` + `preview` na resposta do POST; upload antecipado no composer com sessão ativa |
 | Formatos legados | `.doc` / `.xls` aceitos no upload com `readingStatus` orientando conversão para DOCX/XLSX |
 
+## Admin UX — 6 seções (Playbook 11)
+
+| Item | Entrega |
+|------|---------|
+| Navegação | Painel, Conhecimento, Agentes, Qualidade, Plataforma, Governança + sub-abas |
+| Rotas | `/admin`, `/admin/<seção>/<sub-aba>`, agente em `/admin/agentes/especializacao/:id` |
+| Painel | `AdminOverviewTab` com KPIs, links rápidos e RBAC |
+| Plataforma | Inteligência separada de Ferramentas; RBAC só no Painel |
+
 ## Roteamento — pendências ativas e feedback (Playbook 01)
 
 | Entrega | Detalhe |
