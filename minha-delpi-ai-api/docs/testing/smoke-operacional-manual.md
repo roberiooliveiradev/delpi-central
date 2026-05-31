@@ -37,7 +37,8 @@ docker compose -f infra/docker-compose.dev.yml up -d minha-delpi-chat
 |-------|----------|
 | Home vazia → **Consultar produto** | Abre diálogo «Consulta ao chat» com campo **Código do produto** |
 | Preencher código → **Enviar pergunta** | Mensagem no histórico **sem** `{{productCode}}` |
-| Colar `me fale do produto {{productCode}}` no composer e Enter | Diálogo ou erro — não envia placeholder cru |
+| Colar `me fale do produto {{productCode}}` no composer e Enter | Abre o diálogo «Consulta ao chat» (não só mensagem de erro) |
+| Clicar atalho com perfil Engenharia → **Consultar produto** | Diálogo com campo **Código do produto** antes de enviar |
 
 ---
 

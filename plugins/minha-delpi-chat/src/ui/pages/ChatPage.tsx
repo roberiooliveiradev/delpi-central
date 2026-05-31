@@ -1,4 +1,4 @@
-import { type DragEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { type DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatCanvas, type ChatCanvasDocument } from "../components/ChatCanvas";
 import { ChatAgentHome } from "../components/ChatAgentHome";
 import { ChatEmptyState } from "../components/ChatEmptyState";
@@ -17,7 +17,10 @@ import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { useConfirmDialog } from "../components/useConfirmDialog";
 import { useChatShortcutPrompt } from "../hooks/useChatShortcutPrompt";
-import { extractProductCodeFromContextChips } from "../chatShortcutPrompt";
+import {
+  extractProductCodeFromContextChips,
+  hasUnresolvedShortcutPlaceholders,
+} from "../chatShortcutPrompt";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -136,6 +139,8 @@ export function ChatPage({
     });
   }, []);
 
+  const onShortcutBlockedRef = useRef<(template: string) => void>(() => {});
+
   const {
     sessions,
     archivedSessions,
@@ -180,6 +185,9 @@ export function ChatPage({
     getAccessToken,
     projectId: selectedProjectId,
     agentId: requestedAgentId,
+    onShortcutTemplateBlocked: (template) => {
+      onShortcutBlockedRef.current(template);
+    },
     onSessionActivated: (sessionId, context) => {
       const agentId = context?.agentId ?? requestedAgentId;
       const projectId = context?.projectId ?? selectedProjectId;
@@ -232,6 +240,31 @@ export function ChatPage({
   const { resolveShortcutQuery, shortcutPromptDialog } = useChatShortcutPrompt({
     getPrefillContext: () => shortcutPrefillContext,
   });
+
+  const shortcutPromptOptions = useMemo(
+    () => ({
+      title: "Consulta ao chat",
+      description: "Informe o código do produto ou o texto da busca antes de enviar.",
+      confirmLabel: "Enviar pergunta",
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    onShortcutBlockedRef.current = (template: string) => {
+      clearError();
+      void resolveShortcutQuery(template, shortcutPromptOptions).then((resolved) => {
+        if (resolved) {
+          void sendMessage({ content: resolved });
+        }
+      });
+    };
+  }, [
+    clearError,
+    resolveShortcutQuery,
+    sendMessage,
+    shortcutPromptOptions,
+  ]);
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1191,14 +1224,8 @@ export function ChatPage({
   }
 
   function handleHomeStarter(query: string) {
-    void sendResolvedMessage(
-      { content: query },
-      {
-        title: "Consulta ao chat",
-        description: "Informe o código do produto ou o texto da busca antes de enviar.",
-        confirmLabel: "Enviar pergunta",
-      },
-    );
+    clearError();
+    void sendResolvedMessage({ content: query }, shortcutPromptOptions);
   }
 
   async function handleHelpTryPrompt(query: string) {
@@ -1715,6 +1742,20 @@ export function ChatPage({
               }
               details={error || workspaceError}
               onRetry={() => {
+                const candidate = draft.trim() || lastSentUserText.trim();
+
+                if (candidate && hasUnresolvedShortcutPlaceholders(candidate)) {
+                  clearError();
+                  void resolveShortcutQuery(candidate, shortcutPromptOptions).then(
+                    (resolved) => {
+                      if (resolved) {
+                        void sendMessage({ content: resolved });
+                      }
+                    },
+                  );
+                  return;
+                }
+
                 if (draft.trim()) {
                   void handleSubmitMessage();
                   return;

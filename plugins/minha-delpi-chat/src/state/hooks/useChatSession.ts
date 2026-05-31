@@ -61,6 +61,8 @@ type UseChatSessionOptions = {
     context?: { agentId?: string | null; projectId?: string | null },
   ) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
+  /** Abre o diálogo de preenchimento quando a mensagem ainda tem `{{placeholders}}`. */
+  onShortcutTemplateBlocked?: (template: string) => void;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -1134,13 +1136,18 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     if (hasUnresolvedShortcutPlaceholders(message)) {
-      setError(
-        "Preencha o código ou os campos da pergunta no diálogo dos atalhos antes de enviar.",
-      );
-
       if (fromDraft) {
         setDraft(message);
       }
+
+      if (options.onShortcutTemplateBlocked) {
+        options.onShortcutTemplateBlocked(message);
+        return;
+      }
+
+      setError(
+        "Preencha o código ou os campos da pergunta no diálogo dos atalhos antes de enviar.",
+      );
 
       return;
     }
