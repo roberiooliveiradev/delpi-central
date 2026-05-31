@@ -77,7 +77,9 @@ class ChatAttachmentTextExtractor:
 
     def _extract_csv(self, path: Path) -> dict:
         raw = path.read_text(encoding="utf-8", errors="ignore")
-        reader = csv.reader(io.StringIO(raw))
+        sample = raw[:4096]
+        delimiter = ";" if sample.count(";") > sample.count(",") else ","
+        reader = csv.reader(io.StringIO(raw), delimiter=delimiter)
 
         rows = []
         for index, row in enumerate(reader):

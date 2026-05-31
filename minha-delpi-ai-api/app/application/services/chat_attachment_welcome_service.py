@@ -9,6 +9,9 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.application.services.chat_attachment_preview_service import (
+    ChatAttachmentPreviewService,
+)
 from app.infrastructure.content.content_service import ContentService
 
 
@@ -101,8 +104,17 @@ class ChatAttachmentWelcomeService:
                 listed = "\n".join(f"- {name}" for name in names[:5])
                 files_line = f"\n\n**Arquivos:**\n{listed}"
 
+        reading_line = ChatAttachmentPreviewService.format_reading_lines(attachments)
+
         bullet_lines = "\n".join(
             f"- {str(item).strip().rstrip('.')};" for item in bullets[:8]
         )
 
-        return f"{title}\n\n{intro}{files_line}\n\n{bullet_lines}\n\n{hint}".strip()
+        parts = [title, "", intro + files_line]
+
+        if reading_line:
+            parts.append(reading_line)
+
+        parts.extend(["", bullet_lines, "", hint])
+
+        return "\n".join(parts).strip()

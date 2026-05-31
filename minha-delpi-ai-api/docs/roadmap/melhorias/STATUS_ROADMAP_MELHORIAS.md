@@ -46,7 +46,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [04 — RAG](./playbooks_melhoria_minha_delpi_chat/04_rag_e_conhecimento_interno.md) | Parcial | RAG, skill company-knowledge |
 | [05 — Feedback](./playbooks_melhoria_minha_delpi_chat/05_feedback_e_melhoria_continua.md) | Parcial | Avaliações admin, thumbs |
 | [06 — Canvas](./playbooks_melhoria_minha_delpi_chat/06_lousa_canvas_area_de_trabalho.md) | Parcial | `ChatCanvasIntentService`, lousa MFE |
-| [07 — Anexos](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Parcial | Welcome anexo, chips; indexação completa backlog |
+| [07 — Anexos](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Parcial | Index PDF/XLSX/CSV + preview colunas no welcome; `smoke_attachment_index_welcome.py` |
 | [08 — Segurança](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | Parcial | SQL safety, trust badges, confirmação escrita |
 | [09 — Gráficos](./playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md) | Parcial | Alinhado a `playbook_ampliacao_graficos` Fase 1 |
 | [10 — Onboarding](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | Backlog | Documentação de produto; pouca implementação dedicada |
@@ -82,6 +82,7 @@ Itens explicitamente **fora do escopo** até mockup 11: drawer auditoria, layout
 | `smoke_identity_profile.py` | Identity |
 | `run_onda11_validation.sh` | Regressão pacote |
 | `smoke_system_table_routing.py` | Metadados Protheus `/system` |
+| `smoke_attachment_index_welcome.py` | 07 — upload + welcome + summaries |
 
 **Backlog ativo:** [BACKLOG_ROADMAP.md](./BACKLOG_ROADMAP.md).
 

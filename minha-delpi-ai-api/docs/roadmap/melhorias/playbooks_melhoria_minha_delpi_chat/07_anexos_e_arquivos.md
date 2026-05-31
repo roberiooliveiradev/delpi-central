@@ -1,6 +1,6 @@
 # Playbook 07 — Anexos e arquivos
 
-> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md) — indexação PDF/XLSX/CSV no upload, welcome automático, preview de colunas, `attachmentSummaries`; backlog: imagens, comparação multi-arquivo, UI status no composer.
 
 
 ## Objetivo

@@ -455,6 +455,7 @@ class SendChatMessageUseCase:
         ChatAttachmentFollowUpService.attach_to_assistant_metadata(
             assistant_metadata,
             had_attachments=bool(getattr(request, "attachment_ids", None)),
+            attachments=attachments,
         )
 
         assistant_message = self.chat_repository.create_message(

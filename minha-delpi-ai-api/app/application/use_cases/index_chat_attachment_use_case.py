@@ -1,6 +1,9 @@
 from uuid import UUID
 
 from app.application.dto.ingest_document_request import IngestDocumentRequest
+from app.application.services.chat_attachment_preview_service import (
+    ChatAttachmentPreviewService,
+)
 from app.application.services.chat_attachment_text_extractor import ChatAttachmentTextExtractor
 from app.application.use_cases.ingest_knowledge_document_use_case import (
     IngestKnowledgeDocumentUseCase,
@@ -85,6 +88,11 @@ class IndexChatAttachmentUseCase:
             )
         )
 
+        preview = ChatAttachmentPreviewService.build_from_extracted(
+            extracted,
+            filename=attachment.original_filename,
+        )
+
         updated = self.attachment_repository.update_status(
             attachment_id=attachment.id,
             status="indexed",
@@ -93,6 +101,7 @@ class IndexChatAttachmentUseCase:
                 "knowledgeDocumentId": document["id"],
                 "chunks": document["chunks"],
                 "extractor": extracted["metadata"],
+                "preview": preview,
             },
         )
 

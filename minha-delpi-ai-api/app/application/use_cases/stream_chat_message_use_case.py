@@ -745,6 +745,7 @@ class StreamChatMessageUseCase:
         ChatAttachmentFollowUpService.attach_to_assistant_metadata(
             assistant_metadata,
             had_attachments=bool(getattr(request, "attachment_ids", None)),
+            attachments=attachments,
         )
 
         if persist_before_playback:

@@ -5,6 +5,9 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from app.application.services.chat_attachment_preview_service import (
+    ChatAttachmentPreviewService,
+)
 from app.infrastructure.content.content_service import ContentService
 
 
@@ -20,9 +23,16 @@ class ChatAttachmentFollowUpService:
         metadata: dict,
         *,
         had_attachments: bool,
+        attachments: list[dict] | None = None,
     ) -> None:
         if not had_attachments:
             return
+
+        if attachments:
+            summaries = ChatAttachmentPreviewService.summarize_attachments(attachments)
+
+            if summaries:
+                metadata["attachmentSummaries"] = summaries
 
         labels = _playbook().get("attachmentFollowUpChips") or [
             "Resumir",

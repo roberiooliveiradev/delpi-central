@@ -289,6 +289,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Anexos — indexação e preview (Playbook 07)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatAttachmentPreviewService` — colunas de planilha, `attachmentSummaries` |
+| Index | `preview` em metadata ao indexar; CSV com separador `;` |
+| Welcome | Linha «Leitura do arquivo» com colunas quando indexado |
+| Smoke | `scripts/smoke_attachment_index_welcome.py` |
+
 ## Roteamento — `resolvedParams` (Playbook 01)
 
 | Entrega | Detalhe |

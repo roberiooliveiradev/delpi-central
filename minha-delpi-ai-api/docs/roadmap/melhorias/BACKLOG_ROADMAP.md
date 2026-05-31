@@ -7,7 +7,7 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 | # | Item | Playbook | Esforço |
 |---|------|----------|---------|
 | 1 | **Admin UX mockup 11** — aprovação produto + PR única (6 seções) | [11](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Grande (MFE) |
-| 2 | **Indexação anexos** — PDF/XLSX no upload + resposta automática | [07](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Médio |
+| 2 | **Anexos** — imagens, comparação multi-arquivo, UI status leitura | [07](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Médio |
 | 3 | **Router pendências ativas** + feedback roteamento errado no MFE | [01](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Médio |
 | 4 | **E2E api-delpi mock** por domínio | [auditoria](../api-delpi-chat-intelligence-audit.md) | Médio |
 
