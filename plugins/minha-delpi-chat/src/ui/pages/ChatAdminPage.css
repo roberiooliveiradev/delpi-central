@@ -6,6 +6,7 @@
 @import "../components/admin/shell/AdminSubTabNav.css";
 @import "../components/admin/shell/AdminShellStatusStrip.css";
 @import "../components/admin/shared/admin-workspace-theme.css";
+@import "../components/admin/shared/admin-design-system.css";
 @import "../components/admin/shared/AdminFileDropzone.css";
 
 .mdc-admin-tools-page {

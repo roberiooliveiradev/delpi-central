@@ -96,10 +96,10 @@
 }
 
 .mdc-admin-root .mdc-admin-kpi-card {
-  border: 0;
+  border: 1px solid var(--mdc-card-border);
   border-radius: var(--mdc-radius-xl);
   background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-elevation-1);
+  box-shadow: var(--mdc-card-shadow);
   padding: var(--mdc-space-4);
   transition:
     background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),

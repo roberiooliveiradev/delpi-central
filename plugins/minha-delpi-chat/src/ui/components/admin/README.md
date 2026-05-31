@@ -10,7 +10,7 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.
 - `skills/`: catálogo global de comportamentos/skills (CRUD, policy Markdown) — sub-aba Conhecimento.
-- `shared/`: formulários e checkboxes alinhados (`AdminFormCheckbox`, `admin-shared.css`).
+- `shared/`: formulários, `admin-shared.css`, `admin-workspace-theme.css` e **`admin-design-system.css`** (cores, KPIs, responsividade).
 - `simulate/`: simulação do agente (sessão, sandbox, LLM).
 - `evaluations/`: avaliação de respostas e sugestões.
 - `agents/`: especialização por agente.

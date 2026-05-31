@@ -21,9 +21,9 @@
   gap: 0.65rem 1rem;
   margin-bottom: 0.85rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--mdc-border);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--mdc-surface) 88%, var(--mdc-accent, #3b82f6) 12%);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg, 12px);
+  background: color-mix(in srgb, var(--mdc-card-bg) 90%, var(--mdc-primary) 10%);
 }
 
 .mdc-admin-metrics-tab__intel-callout p {

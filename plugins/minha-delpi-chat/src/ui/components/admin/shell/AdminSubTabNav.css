@@ -3,7 +3,7 @@
   flex-wrap: wrap;
   gap: 0.35rem;
   padding: 0.15rem 0 0.35rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--mdc-border, #d8dee8) 80%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
 }
 
 .mdc-admin-subtab-nav button {

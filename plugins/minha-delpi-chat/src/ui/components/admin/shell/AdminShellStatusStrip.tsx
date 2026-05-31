@@ -41,8 +41,13 @@ export function AdminShellStatusStrip({
           </span>
         ) : null}
         {onRefresh ? (
-          <button type="button" onClick={onRefresh} disabled={isLoading}>
-            Atualizar dados
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn mdc-admin-status-strip__refresh"
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar dados"}
           </button>
         ) : null}
       </div>

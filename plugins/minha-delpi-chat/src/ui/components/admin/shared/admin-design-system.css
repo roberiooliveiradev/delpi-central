@@ -1,0 +1,303 @@
+/**
+ * Design system do painel admin — cores, layout e responsividade transversais.
+ * Importar após admin-shared.css em ChatAdminPage.css.
+ */
+
+/* ——— Faixa de status (evita bloco cinza claro no tema escuro) ——— */
+.mdc-admin-root .mdc-admin-status-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--mdc-radius-lg, 12px);
+  border: 1px solid var(--mdc-card-border);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-bg));
+  box-shadow: var(--mdc-elevation-1, var(--mdc-card-shadow));
+}
+
+.mdc-admin-root .mdc-admin-status-strip__messages {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-admin-status-strip__meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-root .mdc-admin-status-strip__meta button {
+  min-height: 2.1rem;
+  padding: 0 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mdc-text);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.mdc-admin-root .mdc-admin-status-strip__meta button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-primary) 38%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+  color: var(--mdc-primary);
+}
+
+.mdc-admin-root .mdc-admin-status-strip__meta button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ——— Lead da seção ——— */
+.mdc-admin-root .mdc-chat-ws-directory__lead {
+  margin: 0;
+  max-width: 52rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+/* ——— Sub-abas e navegação ——— */
+.mdc-admin-root .mdc-admin-subtab-nav {
+  gap: 0.35rem;
+  padding: 0 0 0.5rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 75%, transparent);
+}
+
+.mdc-admin-root .mdc-admin-section-nav__mobile-trigger,
+.mdc-admin-root .mdc-admin-section-nav__mobile-menu {
+  border-color: var(--mdc-card-border);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text);
+  box-shadow: var(--mdc-elevation-2, 0 8px 24px color-mix(in srgb, var(--mdc-bg) 40%, transparent));
+}
+
+.mdc-admin-root .mdc-admin-section-nav__mobile-menu button {
+  color: var(--mdc-text);
+}
+
+.mdc-admin-root .mdc-admin-section-nav__mobile-menu button:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  color: var(--mdc-title);
+}
+
+/* ——— Topbar: seções ocupam linha inteira ——— */
+.mdc-admin-root .mdc-admin-topbar .mdc-admin-section-nav,
+.mdc-admin-root .mdc-admin-topbar .mdc-admin-section-nav__mobile {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title small {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* ——— Cabeçalhos com faixa de KPIs (Segurança, Ferramentas, Avaliações…) ——— */
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-page-header {
+  grid-column: 1 / -1;
+}
+
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-knowledge-summary {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 0;
+}
+
+.mdc-admin-root
+  .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary)
+  :is(
+    .mdc-admin-security__toolbar-actions,
+    .mdc-admin-tools-tab__toolbar-actions,
+    .mdc-admin-evaluations__toolbar-actions,
+    .mdc-admin-simulate__toolbar-actions,
+    .mdc-admin-agents__toolbar-actions,
+    .mdc-admin-skills__toolbar-actions
+  ) {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ——— KPIs consistentes ——— */
+.mdc-admin-root .mdc-admin-kpi-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
+}
+
+.mdc-admin-root .mdc-admin-kpi-card {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-card-shadow);
+}
+
+.mdc-admin-root .mdc-admin-kpi-card strong {
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  overflow-wrap: anywhere;
+}
+
+/* ——— Painéis e colunas ——— */
+.mdc-admin-root .mdc-admin-shell__panel {
+  display: grid;
+  gap: var(--mdc-space-4);
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-admin-metrics-tab__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-root .mdc-admin-metrics-tab__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.mdc-admin-root .mdc-admin-metrics-tab__intel-callout {
+  border-color: var(--mdc-card-border);
+  background: color-mix(in srgb, var(--mdc-card-bg) 90%, var(--mdc-primary) 10%);
+}
+
+/* ——— Segurança: config em telas estreitas ——— */
+.mdc-admin-root .mdc-admin-security__config dl div {
+  grid-template-columns: minmax(6.5rem, 9rem) minmax(0, 1fr);
+}
+
+/* ——— Tabelas admin ——— */
+.mdc-admin-root .mdc-admin-metrics-tab__table-wrap,
+.mdc-admin-root .mdc-admin-security__events-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--mdc-radius-md);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
+}
+
+/* ——— Overview ——— */
+.mdc-admin-root .mdc-admin-overview-tab__cards {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+}
+
+/* ——— Inteligência / formulários longos ——— */
+.mdc-admin-root .mdc-chat-intelligence-setting {
+  border-color: var(--mdc-card-border);
+  background: color-mix(in srgb, var(--mdc-card-bg) 96%, var(--mdc-bg));
+}
+
+@media (max-width: 1023px) {
+  .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
+  }
+
+  .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions {
+    justify-self: end;
+  }
+
+  .mdc-admin-root .mdc-admin-status-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-root .mdc-admin-status-strip__meta {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 767px) {
+  .mdc-admin-root .mdc-admin-tab-header,
+  .mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) {
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-admin-root
+    .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary)
+    :is(
+      .mdc-admin-security__toolbar-actions,
+      .mdc-admin-tools-tab__toolbar-actions,
+      .mdc-admin-evaluations__toolbar-actions,
+      .mdc-admin-simulate__toolbar-actions,
+      .mdc-admin-agents__toolbar-actions,
+      .mdc-admin-skills__toolbar-actions
+    ) {
+    justify-content: stretch;
+  }
+
+  .mdc-admin-root
+    .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary)
+    :is(
+      .mdc-admin-security__toolbar-actions,
+      .mdc-admin-tools-tab__toolbar-actions
+    )
+    .mdc-chat-ws-outline-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .mdc-admin-root .mdc-admin-knowledge-summary__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .mdc-admin-root .mdc-admin-metrics-tab__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mdc-admin-root .mdc-admin-metrics-tab__header-actions {
+    justify-content: stretch;
+  }
+
+  .mdc-admin-root .mdc-admin-metrics-tab__header-actions .mdc-admin-field {
+    width: 100%;
+  }
+
+  .mdc-admin-root .mdc-admin-security__config dl div {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+
+  .mdc-admin-root .mdc-admin-tools-tab__llm-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-admin-root .mdc-admin-knowledge-summary__grid,
+  .mdc-admin-root .mdc-admin-kpi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mdc-admin-root .mdc-admin-overview-tab__quick-links {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mdc-admin-root .mdc-admin-overview-tab__quick-links button {
+    width: 100%;
+    justify-content: center;
+  }
+}

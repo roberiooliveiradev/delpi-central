@@ -3,30 +3,13 @@
   gap: var(--mdc-space-4);
 }
 
-.mdc-admin-security__toolbar {
-  align-items: flex-end;
-}
-
-.mdc-admin-security__toolbar .mdc-admin-knowledge-summary {
-  flex: 1 1 26rem;
-  margin-bottom: 0;
-}
-
-.mdc-admin-security__toolbar .mdc-admin-knowledge-summary__grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
+/* Toolbar + KPIs — admin-design-system.css */
 
 .mdc-admin-security__toolbar-actions {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-}
-
-@media (max-width: 960px) {
-  .mdc-admin-security__toolbar .mdc-admin-knowledge-summary__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .mdc-admin-security__error {

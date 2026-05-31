@@ -371,6 +371,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | CSV | `dashboardExportCsv.ts` — botão **↓ CSV** no header do `ChatRichDashboard` (KPI + tabela + gráfico) |
 | Smoke | `smoke_api_externa_local.py` — pausa entre smokes para evitar HTTP 429 |
 
+## Admin — design system e responsividade
+
+| Item | Entrega |
+|------|---------|
+| CSS | `admin-design-system.css` — tema escuro consistente, KPIs, toolbars, breakpoints |
+| Fix | Faixa de status sem fundo cinza claro; mobile nav e KPIs em coluna |
+
 ## Admin — deploy MFE e shell v2
 
 | Item | Entrega |

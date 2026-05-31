@@ -24,9 +24,9 @@
   justify-content: space-between;
   padding: 0.55rem 0.75rem;
   border-radius: var(--mdc-radius-md, 8px);
-  border: 1px solid var(--mdc-border, #d8dee8);
-  background: var(--mdc-surface, #fff);
-  color: var(--mdc-text, #1a1f2c);
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-card-bg);
+  color: var(--mdc-text);
 }
 
 .mdc-admin-section-nav__mobile-menu {
