@@ -102,6 +102,32 @@ def main() -> int:
             f"OK erro: {len(error_metadata['helpErrorFollowUpSuggestions'])} chips de ajuda",
         )
 
+    from app.application.services.chat_guided_flow_service import ChatGuidedFlowService
+
+    guided_meta: dict = {}
+    ChatGuidedFlowService.attach_to_assistant_metadata(
+        guided_meta,
+        message="como consultar estoque do produto?",
+    )
+
+    if not guided_meta.get("guidedFlow") or guided_meta["guidedFlow"].get("id") != "stock":
+        print(f"FAIL fluxo guiado estoque ({guided_meta.get('guidedFlow')})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK fluxo guiado estoque")
+
+    cards_meta: dict = {}
+    ChatGuidedFlowService.attach_to_assistant_metadata(
+        cards_meta,
+        message="o que você pode fazer?",
+    )
+
+    if not cards_meta.get("guidedFlowCards"):
+        print("FAIL cards interativos capacidades", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK cards interativos capacidades")
+
     if failed:
         return 1
 

@@ -1,6 +1,6 @@
 # Playbook — Interatividade no Minha DELPI Chat IA
 
-> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — Fases 1–4 + **fluxos guiados** (Fase 5). Menus contextuais em gráfico/chip: backlog.
 
 
 Projeto: **Minha DELPI Chat IA**
@@ -1394,13 +1394,10 @@ Com regras para:
 
 ## Fase 5 — Fluxos guiados
 
-- Produto.
-- Estoque.
-- OV/LMP.
-- Vendas.
-- Compras.
-- Anexos.
-- Indicadores.
+- [x] `ChatGuidedFlowService` + `guidedFlows` / `interactive.cards` em `capabilities.json`.
+- [x] Metadata `guidedFlow`, `guidedFlowCards`, `guidedFlowSuggestions`.
+- [x] MFE `ChatGuidedFlowBlock` (passos + cards clicáveis).
+- [x] Fluxos: produto, estoque, vendas, web, anexo, indicadores, LMP.
 
 ---
 

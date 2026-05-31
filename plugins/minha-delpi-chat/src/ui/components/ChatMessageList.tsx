@@ -29,6 +29,8 @@ import {
 import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
+import { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
+import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatActionResults } from "./ChatActionResults";
@@ -1282,6 +1284,16 @@ export function ChatMessageList({
                   onUseSuggestion={onDrillDown}
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
+                />
+                <ChatGuidedFlowBlock
+                  flow={message.metadata?.guidedFlow as ChatGuidedFlow | undefined}
+                  cards={message.metadata?.guidedFlowCards as ChatGuidedFlowCard[] | undefined}
+                  suggestions={
+                    (message.metadata?.guidedFlowSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseQuery={onDrillDown}
                 />
                 <ChatFollowUpChips
                   suggestions={

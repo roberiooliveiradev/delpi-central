@@ -652,6 +652,179 @@
       "O que falta para esse produto ficar bem cadastrado?"
     ]
   },
+  "interactive": {
+    "cards": [
+      {
+        "title": "Produtos",
+        "description": "Cadastro, ficha, estrutura e fornecedores.",
+        "flowId": "product",
+        "suggestions": [
+          { "label": "Consultar produto", "query": "me fale do produto 10080001" },
+          { "label": "Visão 360°", "query": "visão 360° do produto 10080001" }
+        ]
+      },
+      {
+        "title": "Estoque",
+        "description": "Saldo por filial e armazém.",
+        "flowId": "stock",
+        "suggestions": [
+          { "label": "Ver estoque", "query": "qual o estoque do produto 10080001?" }
+        ]
+      },
+      {
+        "title": "Vendas e compras",
+        "description": "OVs, faturamento e histórico de compras.",
+        "flowId": "sales",
+        "suggestions": [
+          { "label": "Ver vendas", "query": "mostre vendas do produto 10080001" }
+        ]
+      },
+      {
+        "title": "Pesquisa web",
+        "description": "Fontes públicas com transparência.",
+        "flowId": "web",
+        "suggestions": [
+          { "label": "Pesquisar na web", "query": "pesquise na web sobre norma NR-12" }
+        ]
+      }
+    ]
+  },
+  "guidedFlows": {
+    "product": {
+      "id": "product",
+      "title": "Consultar produto",
+      "intro": "Siga os passos para obter a ficha e dados operacionais de um item.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Selecione no composer um **agente** com actions de produto (ex.: GET /products).",
+          "suggestion": { "label": "Como escolher agente?", "query": "qual agente consulta produto?" }
+        },
+        {
+          "order": 2,
+          "text": "Informe o **código do produto** (8 dígitos) ou peça busca por descrição.",
+          "suggestion": { "label": "Exemplo com código", "query": "me fale do produto 10080001" }
+        },
+        {
+          "order": 3,
+          "text": "Peça **tabela**, **gráfico** ou **texto** na mesma mensagem, se quiser outro formato.",
+          "suggestion": { "label": "Em tabela", "query": "ficha do produto 10080001 em tabela" }
+        }
+      ]
+    },
+    "stock": {
+      "id": "stock",
+      "title": "Consultar estoque",
+      "intro": "Fluxo para saldo e posição de estoque por produto.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Use um **agente** com action de estoque habilitada.",
+          "suggestion": { "label": "Ver capacidades", "query": "o que você pode fazer?" }
+        },
+        {
+          "order": 2,
+          "text": "Informe o código do produto (ex.: 10080001).",
+          "suggestion": { "label": "Exemplo estoque", "query": "qual o estoque do produto 10080001?" }
+        },
+        {
+          "order": 3,
+          "text": "Opcional: peça **em gráfico** ou **por filial** na mesma pergunta.",
+          "suggestion": { "label": "Gráfico", "query": "estoque do produto 10080001 em gráfico" }
+        }
+      ]
+    },
+    "sales": {
+      "id": "sales",
+      "title": "Vendas e OVs",
+      "intro": "Consultas de vendas por produto ou período.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Agente com rota **/sales** ou vendas por produto.",
+          "suggestion": { "label": "Agentes", "query": "como escolho um agente?" }
+        },
+        {
+          "order": 2,
+          "text": "Informe produto e período quando souber.",
+          "suggestion": { "label": "Vendas do item", "query": "vendas do produto 10080001 nos últimos 30 dias" }
+        }
+      ]
+    },
+    "web": {
+      "id": "web",
+      "title": "Pesquisa na internet",
+      "intro": "Busca em fontes públicas; não substitui dados internos do ERP.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Use frases explícitas: «pesquise na web sobre …».",
+          "suggestion": { "label": "Exemplo", "query": "pesquise na web sobre manual WEG CFW500" }
+        },
+        {
+          "order": 2,
+          "text": "Abra **Fontes · N** para ver sites e confiança.",
+          "suggestion": { "label": "Pesquisa profunda", "query": "pesquisa profunda na web sobre NR-12" }
+        },
+        {
+          "order": 3,
+          "text": "Com **projeto** ativo, use **Salvar fontes** após a busca.",
+          "suggestion": { "label": "Salvar fontes", "query": "salve as fontes da pesquisa web no projeto" }
+        }
+      ]
+    },
+    "attachment": {
+      "id": "attachment",
+      "title": "Usar anexos",
+      "intro": "Envie PDF, planilha ou imagem no composer.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Clique no **clipe** e anexe o arquivo antes de enviar a pergunta.",
+          "suggestion": { "label": "Resumir anexo", "query": "resuma o arquivo anexado" }
+        },
+        {
+          "order": 2,
+          "text": "Peça resumo, correção ou comparação com produto interno.",
+          "suggestion": { "label": "Comparar", "query": "compare o anexo com o produto 10080001" }
+        }
+      ]
+    },
+    "indicators": {
+      "id": "indicators",
+      "title": "Indicadores e KPIs",
+      "intro": "Comercial, financeiro, qualidade, RH e produção via agente.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Escolha agente com rotas de **indicadores** (/commercial, /financial, /quality, …).",
+          "suggestion": { "label": "Comercial", "query": "indicadores comerciais do mês" }
+        },
+        {
+          "order": 2,
+          "text": "Peça período ou filial quando aplicável.",
+          "suggestion": { "label": "Gráfico", "query": "mostre em gráfico de linhas" }
+        }
+      ]
+    },
+    "lmp": {
+      "id": "lmp",
+      "title": "LMP / engenharia",
+      "intro": "Listas de materiais de projeto e dashboard.",
+      "steps": [
+        {
+          "order": 1,
+          "text": "Agente com actions **/engineering/lmps**.",
+          "suggestion": { "label": "Listar LMPs", "query": "listar lmps da filial" }
+        },
+        {
+          "order": 2,
+          "text": "Para detalhe, informe número da OV.",
+          "suggestion": { "label": "Detalhe OV", "query": "detalhe da lmp ov 12345" }
+        }
+      ]
+    }
+  },
   "combinedQuestions": [
     "Tenho o código do produto: mostre estoque, fornecedor, estrutura e últimas vendas.",
     "Esse item está sem estoque. Onde ele é usado e quem fornece?",

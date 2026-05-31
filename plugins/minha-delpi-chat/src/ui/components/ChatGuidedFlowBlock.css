@@ -1,0 +1,78 @@
+.mdc-guided-flow-block {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mdc-guided-flow-block__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mdc-title, inherit);
+}
+
+.mdc-guided-flow-block__intro {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--mdc-muted, #64748b);
+  line-height: 1.45;
+}
+
+.mdc-guided-flow-block__steps {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--mdc-text, inherit);
+}
+
+.mdc-guided-flow-block__steps li {
+  margin-bottom: 0.45rem;
+}
+
+.mdc-guided-flow-block__step-action {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--mdc-border, #cbd5e1);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.72rem;
+  cursor: pointer;
+  color: var(--mdc-accent, #0ea5e9);
+}
+
+.mdc-guided-flow-block__step-action:hover {
+  background: var(--mdc-surface-hover, rgba(14, 165, 233, 0.08));
+}
+
+.mdc-guided-flow-block__cards {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+
+.mdc-guided-flow-block__card {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--mdc-border, #e2e8f0);
+  border-radius: 8px;
+  background: var(--mdc-surface-elevated, rgba(255, 255, 255, 0.04));
+}
+
+.mdc-guided-flow-block__card h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
+}
+
+.mdc-guided-flow-block__card p {
+  margin: 0 0 0.4rem;
+  font-size: 0.72rem;
+  color: var(--mdc-muted, #64748b);
+}
+
+.mdc-guided-flow-block__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}

@@ -405,6 +405,15 @@ class SendChatMessageUseCase:
             message=request.message,
         )
 
+        from app.application.services.chat_guided_flow_service import (
+            ChatGuidedFlowService,
+        )
+
+        ChatGuidedFlowService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+        )
+
         if canvas_open_payload:
             assistant_metadata["canvasOpen"] = {
                 "title": canvas_open_payload.title,

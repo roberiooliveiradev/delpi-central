@@ -115,7 +115,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 |----------|----------|
 | 502 em `/core-api/*` após restart de containers | `gateway/nginx.dev.conf` — upstreams com variável + `resolver` (DNS dinâmico Docker) |
 
-**Backlog interatividade:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
+## Interatividade — Fase 5 (fluxos guiados)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatGuidedFlowService` — passos + chips a partir de `capabilities.json` (`guidedFlows`, `interactive.cards`) |
+| Metadata | `guidedFlow`, `guidedFlowCards`, `guidedFlowSuggestions` no assistente |
+| MFE | `ChatGuidedFlowBlock` — passos numerados e cards por área |
+
+**Backlog interatividade:** menu em gráfico/chip de contexto (Fase 4).
 
 ## Admin textos (`playbook_assistente_administrativo_textos`)
 

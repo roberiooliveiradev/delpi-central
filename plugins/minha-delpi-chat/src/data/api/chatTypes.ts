@@ -223,6 +223,26 @@ export type ChatFollowUpSuggestion = {
   query: string;
 };
 
+export type ChatGuidedFlowStep = {
+  order: number;
+  text: string;
+  suggestion?: ChatFollowUpSuggestion | null;
+};
+
+export type ChatGuidedFlow = {
+  id: string;
+  title: string;
+  intro?: string | null;
+  steps: ChatGuidedFlowStep[];
+};
+
+export type ChatGuidedFlowCard = {
+  title: string;
+  description?: string | null;
+  flowId?: string | null;
+  suggestions: ChatFollowUpSuggestion[];
+};
+
 export type AssistantCatalogFeature = {
   id: string;
   title: string;
@@ -296,6 +316,9 @@ export type ChatMessageMetadata = {
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpErrorFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  guidedFlow?: ChatGuidedFlow | null;
+  guidedFlowCards?: ChatGuidedFlowCard[];
+  guidedFlowSuggestions?: ChatFollowUpSuggestion[];
   helpContext?: string;
   followUpOutcome?: string;
   personality?: {
