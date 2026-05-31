@@ -1320,6 +1320,41 @@ EMAIL_PREFERENCE_DETECT_CASES = [
     ("sempre deixe assinatura em branco nos e-mails", {"blankSignature": True}),
 ]
 
+TEXT_CORRECTION_SUBTYPE_CASES = [
+    ("corrija: o estoque esta baixo", "text_correct_basic"),
+    ("corrija e explique: nos vai enviar o pedido", "text_correct_explain"),
+    ("corrija e mostre antes e depois deste texto", "text_correct_compare"),
+    ("corrija sem mudar meu estilo: segue os arquivo", "text_correct_preserve_style"),
+    ("deixe mais formal: preciso que envie isso", "text_correct_formal"),
+    ("reescreva de forma mais profissional este parágrafo", "text_correct_professional"),
+    ("reescreva mantendo o sentido deste trecho", "text_rewrite"),
+]
+
+TEXT_CORRECTION_MODE_CASES = [
+    ("corrija: o estoque esta baixo", True),
+    ("consulte estoque do 10080001", False),
+    ("corrija este e-mail: texto solto", False),
+]
+
+TEXT_CORRECTION_PURE_TEXT_TASK_CASES = [
+    ("corrija: segue em anexo os documento", True),
+    ("consulte produto e corrija o texto depois", False),
+]
+
+TEXT_CORRECTION_PREFERENCE_DETECT_CASES = [
+    (
+        "daqui pra frente entregue só a versão final quando pedir correção",
+        {"deliverFinalOnly": True},
+    ),
+    ("sempre mostre antes e depois ao corrigir texto", {"showBeforeAfter": True}),
+]
+
+TEXT_CORRECTION_SOURCE_CASES = [
+    ("corrija o texto da lousa", "canvas"),
+    ("revise o texto do anexo pdf", "attachment"),
+    ("corrija: o estoque esta baixo", "user_message"),
+]
+
 CONTEXT_ASSERTIVENESS_CASES = [
     {
         "message": "Quem fornece o produto 10080001?",

@@ -13,6 +13,20 @@ from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntent
 
 
 class ChatTextCorrectionIntentService:
+    _CANVAS_SOURCE_MARKERS = (
+        r"\blousa\b",
+        r"\bcanvas\b",
+        r"\btexto\s+da\s+lousa\b",
+        r"\btexto\s+do\s+canvas\b",
+    )
+
+    _ATTACHMENT_SOURCE_MARKERS = (
+        r"\banexo\b",
+        r"\barquivo\s+anexado\b",
+        r"\bdo\s+documento\b",
+        r"\bdo\s+pdf\b",
+    )
+
     _CORRECTION_LEADS = (
         r"\bcorrij",
         r"\brevise\b",
@@ -211,10 +225,12 @@ class ChatTextCorrectionIntentService:
         if prefs.get("showBeforeAfter") and subtype == "text_correct_basic":
             subtype = "text_correct_compare"
 
+        source = cls._resolve_source(normalized)
+
         return {
             "type": "correction",
             "subtype": subtype,
-            "source": "user_message",
+            "source": source,
             "sourceText": source_text,
             "preserveMeaning": True,
             "preserveStyle": preserve_style,
@@ -227,6 +243,27 @@ class ChatTextCorrectionIntentService:
             "preservedCodes": codes,
             "changedMeaningRisk": False,
         }
+
+    @classmethod
+    def _resolve_source(cls, normalized: str) -> str:
+        if any(re.search(pattern, normalized) for pattern in cls._CANVAS_SOURCE_MARKERS):
+            return "canvas"
+
+        if any(
+            re.search(pattern, normalized) for pattern in cls._ATTACHMENT_SOURCE_MARKERS
+        ):
+            return "attachment"
+
+        return "user_message"
+
+    @classmethod
+    def is_canvas_text_correction(cls, message: str | None) -> bool:
+        if not cls.is_text_correction(message):
+            return False
+
+        normalized = (message or "").strip().lower()
+
+        return any(re.search(pattern, normalized) for pattern in cls._CANVAS_SOURCE_MARKERS)
 
     @classmethod
     def extract_source_text(cls, message: str | None) -> str | None:

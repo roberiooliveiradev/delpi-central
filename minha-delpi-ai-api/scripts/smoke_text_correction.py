@@ -94,6 +94,22 @@ def main() -> int:
     else:
         print("OK textCorrectionPreferences metadata")
 
+    canvas_ctx = ChatTextCorrectionIntentService.extract_context(
+        "corrija o texto da lousa de forma mais clara",
+    )
+
+    if canvas_ctx.get("source") != "canvas":
+        print(f"FAIL canvas source ({canvas_ctx})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK canvas text correction source")
+
+    if not pref_meta.get("textCorrectionMetrics"):
+        print(f"FAIL textCorrectionMetrics ({pref_meta})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK textCorrectionMetrics snapshot")
+
     if failed:
         return 1
 

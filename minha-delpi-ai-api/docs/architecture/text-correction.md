@@ -33,6 +33,7 @@ Mensagem
 - `textTask.subtype`: ex. `text_correct_basic`
 - `textCorrectionFollowUpSuggestions`: chips de refinamento
 - `textCorrectionQuality`: falhas do validador (opcional)
+- `textCorrectionMetrics`: snapshot leve (subtipo, fonte, preferências, qualidade)
 
 ## Validação
 

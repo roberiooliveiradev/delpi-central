@@ -71,6 +71,19 @@ class ChatTextCorrectionFollowUpService:
         cls._attach_preferences_metadata(metadata, workspace_context, message)
         cls.merge_guard_metadata(metadata, guard_meta)
 
+        from app.application.services.chat_text_correction_metrics_service import (
+            ChatTextCorrectionMetricsService,
+        )
+
+        ChatTextCorrectionMetricsService.attach_to_assistant_metadata(
+            metadata,
+            message=message,
+            answer=answer,
+            workspace_context=workspace_context,
+            guard_meta=guard_meta,
+            follow_up_count=len(suggestions),
+        )
+
     @classmethod
     def _attach_preferences_metadata(
         cls,

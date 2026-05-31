@@ -76,6 +76,17 @@ class ChatTextCorrectionPromptSupplementService:
                 "- Avalie se o texto está adequado; se necessário, sugira versão corrigida."
             )
 
+        source = ctx.get("source")
+
+        if source == "canvas":
+            lines.append(
+                "- Fonte: texto da lousa/canvas — use o conteúdo atual da lousa como base."
+            )
+        elif source == "attachment":
+            lines.append(
+                "- Fonte: anexo/documento — corrija o texto extraído do arquivo enviado."
+            )
+
         codes = ctx.get("preservedCodes") or []
 
         if codes:

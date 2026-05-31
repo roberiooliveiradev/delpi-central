@@ -148,7 +148,11 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 | Fase 5 | `ChatTextCorrectionPreferenceService` — `textCorrection` persistido, chips de contexto, metadata `textCorrectionPreferences` no MFE |
 
-**Backlog:** métricas (§23); lousa dedicada.
+| Regressão | `TEXT_CORRECTION_*_CASES` + `test_chat_text_correction_intelligence_regression.py` |
+| Métricas | `ChatTextCorrectionMetricsService` → `textCorrectionMetrics` no metadata |
+| Lousa/anexo | `source` canvas/attachment no intent e suplemento de prompt |
+
+**Backlog:** painel admin agregado de métricas (§23 completo).
 
 ## Escrita de e-mails (`playbook_escrita_emails_minha_delpi_chat`)
 

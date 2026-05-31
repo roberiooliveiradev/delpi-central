@@ -2,8 +2,8 @@
 
 **Projeto:** Minha DELPI Chat IA  
 **Habilidade nativa:** correção, revisão e melhoria textual no chat comum  
-**Status implementação:** Fases **1–5** concluídas — maio/2026; métricas (§23) em backlog opcional  
-**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionPreferenceService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionTurnService`, policy `text-correction.md`, `smoke_text_correction.py`, `run_text_correction_validation.sh`
+**Status implementação:** Fases **1–5** + regressão + métricas leves + fonte lousa/anexo — maio/2026  
+**Código:** `ChatTextCorrectionIntentService`, `ChatTextCorrectionPreferenceService`, `ChatTextCorrectionQualityValidator`, `ChatTextCorrectionMetricsService`, `ChatTextCorrectionTurnService`, policy `text-correction.md`, `run_text_correction_validation.sh`
 
 **Objetivo:** fazer o chat corrigir textos com qualidade profissional, preservando sentido, tom, intenção e contexto do usuário.
 
@@ -483,10 +483,11 @@ Motivos em `personality_playbook.json` (alvo):
 
 | Artefato | Conteúdo |
 |----------|----------|
-| `tests/unit/test_text_correction_skill.py` | Casos C1–C12 (planejado) |
-| `tests/fixtures/chat_intelligence_regression_cases.py` | `TEXT_CORRECTION_*_CASES` (planejado) |
-| `scripts/smoke_text_task_routing.py` | Roteamento `correct` sem tools (existente) |
-| `scripts/run_text_correction_validation.sh` | Suite unit + smoke (planejado) |
+| `tests/unit/test_text_correction_skill.py` | Casos C1–C12 |
+| `tests/fixtures/chat_intelligence_regression_cases.py` | `TEXT_CORRECTION_*_CASES` |
+| `tests/unit/domain/services/test_chat_text_correction_intelligence_regression.py` | Regressão parametrizada |
+| `scripts/smoke_text_task_routing.py` | Roteamento `correct` sem tools |
+| `scripts/run_text_correction_validation.sh` | Suite unit + smoke |
 
 ### Casos mínimos
 
@@ -516,7 +517,8 @@ Motivos em `personality_playbook.json` (alvo):
 | **3 — Validador** | `ChatTextCorrectionQualityValidator` + guard pós-LLM | **Concluída** |
 | **4 — Interatividade** | Chips `textCorrectionFollowUpSuggestions`; botão copiar no MFE | **Concluída** |
 | **5 — Memória** | `ChatTextCorrectionPreferenceService`, `textCorrection` em `behaviorInstructions`, chips de contexto | **Concluída** |
-| **6 — Métricas** | Uso, feedback, chips, lousa (§23) | Backlog opcional |
+| **6 — Métricas** | `textCorrectionMetrics` no metadata (snapshot leve por turno) | **Parcial** |
+| **Lousa/anexo** | `source`: canvas / attachment no contexto e prompt | **Concluída** |
 
 **Ordem sugerida:** Fase 2 (subtipos + policy dedicada) → Fase 3 → Fase 4 → Fase 5.
 
