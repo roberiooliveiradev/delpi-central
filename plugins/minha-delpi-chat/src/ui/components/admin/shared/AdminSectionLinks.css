@@ -22,3 +22,22 @@
 .mdc-admin-section-links__btn:hover {
   background: color-mix(in srgb, var(--mdc-primary) 14%, var(--mdc-surface));
 }
+
+@media (max-width: 767px) {
+  .mdc-admin-section-links {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 0.15rem;
+  }
+
+  .mdc-admin-section-links__btn {
+    flex-shrink: 0;
+    max-width: min(18rem, 85vw);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

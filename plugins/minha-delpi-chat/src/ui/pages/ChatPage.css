@@ -23,6 +23,21 @@
   padding-bottom: var(--mdc-space-3);
 }
 
+.mdc-chat-composer-footer {
+  display: grid;
+  grid-template-rows: auto auto;
+  width: 100%;
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.mdc-chat-composer-footer .mdc-chat-input {
+  border-top: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
 .mdc-chat-conversation .mdc-chat-input {
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);

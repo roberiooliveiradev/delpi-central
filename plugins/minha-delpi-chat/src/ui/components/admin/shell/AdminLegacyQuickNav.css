@@ -37,9 +37,32 @@
 }
 
 @media (max-width: 767px) {
+  .mdc-admin-legacy-quick {
+    gap: 0.25rem;
+    padding-inline: var(--mdc-space-3);
+  }
+
   .mdc-admin-legacy-quick__track {
     flex-wrap: nowrap;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
     padding-bottom: 0.15rem;
+  }
+
+  .mdc-admin-legacy-quick__track button {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .mdc-admin-legacy-quick__label {
+    font-size: 0.68rem;
+  }
+
+  .mdc-admin-legacy-quick__track button {
+    font-size: 0.74rem;
+    padding: 0.24rem 0.55rem;
   }
 }

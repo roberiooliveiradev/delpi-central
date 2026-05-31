@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { ArrowRight, Sparkles, X } from "lucide-react";
 import { buildContextChipQuery } from "./chatContextChipActions";
 import "./ChatContextBar.css";
 
@@ -19,51 +19,62 @@ export function ChatContextBar({ chips, onClearContext, onChipAction }: ChatCont
     return null;
   }
 
+  const interactive = Boolean(onChipAction);
+
   return (
     <div className="mdc-chat-context-bar" aria-label="Contexto ativo da conversa">
-      <span className="mdc-chat-context-bar__title">Contexto ativo</span>
-      <div className="mdc-chat-context-bar__chips">
+      <div className="mdc-chat-context-bar__header">
+        <div className="mdc-chat-context-bar__heading">
+          <Sparkles size={14} aria-hidden="true" className="mdc-chat-context-bar__icon" />
+          <span className="mdc-chat-context-bar__title">Contexto ativo</span>
+          {interactive ? (
+            <span className="mdc-chat-context-bar__hint">Toque para consultar</span>
+          ) : null}
+        </div>
+
+        {onClearContext ? (
+          <button
+            type="button"
+            className="mdc-chat-context-bar__clear"
+            onClick={onClearContext}
+            title="Limpar preferências de contexto"
+            aria-label="Limpar contexto ativo"
+          >
+            <X size={14} aria-hidden="true" />
+            <span className="mdc-chat-context-bar__clear-label">Limpar</span>
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mdc-chat-context-bar__chips" role="list">
         {chips.map((chip) => {
           const chipKey = `${chip.kind}-${chip.value}`;
+          const query = interactive ? buildContextChipQuery(chip) : null;
+          const isActionable = interactive && Boolean(query);
 
-          if (onChipAction) {
+          if (isActionable) {
             return (
               <button
                 key={chipKey}
                 type="button"
+                role="listitem"
                 className="mdc-chat-context-bar__chip mdc-chat-context-bar__chip--action"
-                title={`Usar contexto: ${chip.label}`}
-                onClick={() => {
-                  const query = buildContextChipQuery(chip);
-
-                  if (query) {
-                    onChipAction(query);
-                  }
-                }}
+                title={`Consultar: ${chip.label}`}
+                onClick={() => onChipAction?.(query!)}
               >
-                {chip.label}
+                <span className="mdc-chat-context-bar__chip-text">{chip.label}</span>
+                <ArrowRight size={13} aria-hidden="true" className="mdc-chat-context-bar__chip-arrow" />
               </button>
             );
           }
 
           return (
-            <span key={chipKey} className="mdc-chat-context-bar__chip">
+            <span key={chipKey} role="listitem" className="mdc-chat-context-bar__chip">
               {chip.label}
             </span>
           );
         })}
       </div>
-      {onClearContext ? (
-        <button
-          type="button"
-          className="mdc-chat-context-bar__clear"
-          onClick={onClearContext}
-          title="Limpar preferências de contexto"
-        >
-          <X size={14} aria-hidden="true" />
-          Limpar
-        </button>
-      ) : null}
     </div>
   );
 }

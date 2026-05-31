@@ -13,7 +13,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mdc-space-3);
+  flex-wrap: wrap;
+  gap: 0.35rem var(--mdc-space-3);
   font-weight: 600;
   font-size: 0.875rem;
   color: var(--mdc-text);
@@ -130,4 +131,31 @@
   border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-control-border));
   color: var(--mdc-primary);
   background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-control-bg));
+}
+
+@media (max-width: 640px) {
+  .mdc-chat-admin-debug__summary-hint {
+    display: none;
+  }
+
+  .mdc-chat-admin-debug__open-btn {
+    font-size: 0.8125rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .mdc-chat-admin-debug__timings {
+    padding-inline: var(--mdc-space-2);
+  }
+
+  .mdc-chat-admin-debug__timing-chip {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mdc-chat-admin-debug__body {
+    max-height: 280px;
+    font-size: 0.7rem;
+  }
 }

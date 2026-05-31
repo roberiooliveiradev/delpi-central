@@ -179,7 +179,8 @@
     gap: var(--mdc-space-4);
   }
 
-  .mdc-chat-conversation .mdc-chat-input {
+  .mdc-chat-conversation .mdc-chat-input,
+  .mdc-chat-composer-footer .mdc-chat-context-bar {
     padding-inline: var(--mdc-space-3);
   }
 }
@@ -206,9 +207,14 @@
   }
 
   .minha-delpi-chat--narrow .mdc-chat-conversation .mdc-chat-input,
-  .minha-delpi-chat--narrow .mdc-chat-input--center {
+  .minha-delpi-chat--narrow .mdc-chat-input--center,
+  .minha-delpi-chat--narrow .mdc-chat-composer-footer .mdc-chat-context-bar {
     padding-inline: max(0.75rem, env(safe-area-inset-left, 0px))
       max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  .minha-delpi-chat--narrow .mdc-chat-composer-footer .mdc-chat-input {
+    padding-bottom: calc(var(--mdc-space-3) + env(safe-area-inset-bottom, 0px));
   }
 }
 

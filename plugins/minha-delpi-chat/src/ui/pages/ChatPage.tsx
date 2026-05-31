@@ -1608,25 +1608,27 @@ export function ChatPage({
                 lastSentUserText={lastSentUserText}
               />
 
-              <ChatContextBar
-                chips={activeContextChips}
-                onClearContext={handleClearActiveContext}
-                onChipAction={handleDrillDown}
-              />
+              <div className="mdc-chat-composer-footer">
+                <ChatContextBar
+                  chips={activeContextChips}
+                  onClearContext={handleClearActiveContext}
+                  onChipAction={handleDrillDown}
+                />
 
-              <ChatInput
-                value={draft}
-                disabled={false}
-                isSending={isStreamingActiveSession}
-                variant="dock"
-                placeholder={getComposerPlaceholder()}
-                {...composerAttachmentProps}
-                {...composerContextProps}
-                onChange={setDraft}
-                onSubmit={handleSubmitMessage}
-                onCancel={cancelStreaming}
-                onInsertQuery={(query) => setDraft(query)}
-              />
+                <ChatInput
+                  value={draft}
+                  disabled={false}
+                  isSending={isStreamingActiveSession}
+                  variant="dock"
+                  placeholder={getComposerPlaceholder()}
+                  {...composerAttachmentProps}
+                  {...composerContextProps}
+                  onChange={setDraft}
+                  onSubmit={handleSubmitMessage}
+                  onCancel={cancelStreaming}
+                  onInsertQuery={(query) => setDraft(query)}
+                />
+              </div>
             </section>
           )}
         </section>
