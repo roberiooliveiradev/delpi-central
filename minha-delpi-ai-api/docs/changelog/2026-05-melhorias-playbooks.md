@@ -289,6 +289,13 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | MFE | `ChatWebSearchResearchPanel` — tag oficial, confiança, observações |
 | Testes | `test_chat_web_search_source_evaluation_service.py`; smoke estendido |
 
+## Roteamento — `resolvedParams` (Playbook 01)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Router | `intentRoute.resolvedParams` — `productCode` na mensagem ou herdado do histórico |
+| Compat | Alias `resolvedFromMemory` mantido no mesmo payload |
+
 ## Interatividade — Fase 4 (chip de contexto)
 
 | Entrega | Detalhe |

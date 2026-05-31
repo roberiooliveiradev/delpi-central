@@ -87,5 +87,12 @@ def test_classify_operational_follow_up_resolves_product_from_memory():
 
     assert route.intent == "operational_query"
     assert route.is_follow_up is True
-    assert route.resolved_from_memory == {"productCode": "10080001"}
-    assert route.to_dict().get("resolvedFromMemory") == {"productCode": "10080001"}
+    assert route.resolved_params == {"productCode": "10080001"}
+    assert route.to_dict().get("resolvedParams") == {"productCode": "10080001"}
+
+
+def test_classify_operational_includes_product_code_in_resolved_params():
+    route = ChatIntentRouterService.classify("qual o estoque do produto 10080001?")
+
+    assert route.resolved_params == {"productCode": "10080001"}
+    assert route.to_dict()["resolvedParams"]["productCode"] == "10080001"

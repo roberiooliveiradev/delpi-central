@@ -17,7 +17,7 @@ class IntentRouteResult:
     requires_llm: bool = True
     priority_applied: int = 0
     flags: tuple[str, ...] = ()
-    resolved_from_memory: dict[str, str] | None = None
+    resolved_params: dict[str, str] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -36,8 +36,11 @@ class IntentRouteResult:
         if self.flags:
             payload["flags"] = list(self.flags)
 
-        if self.resolved_from_memory:
-            payload["resolvedFromMemory"] = dict(self.resolved_from_memory)
+        if self.resolved_params:
+            params = dict(self.resolved_params)
+            payload["resolvedParams"] = params
+            # Compatibilidade com consumidores que já leem resolvedFromMemory.
+            payload["resolvedFromMemory"] = params
 
         return payload
 
@@ -64,6 +67,29 @@ def _resolve_entities_from_memory(
         return None
 
     return {"productCode": code}
+
+
+def _build_resolved_params(
+    message: str,
+    *,
+    previous_messages: list[Any] | None,
+    memory_entities: dict[str, str] | None,
+) -> dict[str, str] | None:
+    from app.domain.services.chat_product_query_intent_service import (
+        ChatProductQueryIntentService,
+    )
+
+    params: dict[str, str] = {}
+
+    if memory_entities:
+        params.update(memory_entities)
+
+    code_in_message = ChatProductQueryIntentService.extract_product_code(message)
+
+    if code_in_message:
+        params["productCode"] = code_in_message
+
+    return params or None
 
 
 class ChatIntentRouterService:
@@ -198,6 +224,11 @@ class ChatIntentRouterService:
             normalized,
             previous_messages=history,
         )
+        resolved_params = _build_resolved_params(
+            normalized,
+            previous_messages=history,
+            memory_entities=memory_entities,
+        )
 
         if operational_optimize or cls._looks_operational(normalized):
             return IntentRouteResult(
@@ -209,7 +240,7 @@ class ChatIntentRouterService:
                 requires_rag=False,
                 requires_llm=False,
                 priority_applied=6,
-                resolved_from_memory=memory_entities,
+                resolved_params=resolved_params,
             )
 
         if attachment_ids:
@@ -334,7 +365,7 @@ class ChatIntentRouterService:
                 ),
                 priority_applied=priority,
                 flags=tuple(flags),
-                resolved_from_memory=predicted.resolved_from_memory,
+                resolved_params=predicted.resolved_params,
             )
 
             if best is None or priority < best.priority_applied:
