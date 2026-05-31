@@ -29,6 +29,8 @@ import type {
   ChatCapabilities,
 } from "../../../../data/api/chatTypes";
 
+import { ChatIntelligenceSettingsPanel } from "../metrics-tab/ChatIntelligenceSettingsPanel";
+
 import "./AdminToolsTab.css";
 
 function healthStatusClass(status: string): string {
@@ -596,6 +598,15 @@ export function AdminToolsTab({
           </>
         )}
       </article>
+
+      <div className="mdc-admin-tools-tab__intelligence">
+        <h3 className="mdc-chat-ws-section-head">Inteligência do chat</h3>
+        <p className="mdc-chat-ws-section-lead">
+          Políticas globais do pipeline (roteamento, RAG, tools). A aba Métricas concentra apenas
+          observabilidade.
+        </p>
+        <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
+      </div>
     </section>
   );
 }

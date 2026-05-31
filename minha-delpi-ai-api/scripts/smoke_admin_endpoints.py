@@ -80,6 +80,7 @@ def main() -> int:
         ("GET", "/admin/guidelines", None),
         ("GET", "/admin/metrics/summary?hours=24", "sessions"),
         ("GET", "/admin/agents/specialized", None),
+        ("GET", "/admin/responses/evaluations/summary", "total"),
     ]
 
     for method, path, required_key in checks:

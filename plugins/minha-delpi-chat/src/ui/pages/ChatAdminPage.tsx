@@ -140,6 +140,8 @@ export function ChatAdminPage({
             metricsSummary={admin.metricsSummary}
             metricsHours={admin.metricsHours}
             onMetricsHoursChange={admin.setMetricsHours}
+            onRefresh={() => void admin.loadAdminData()}
+            isRefreshing={admin.isLoading}
             getAccessToken={getAccessToken}
           />
         ) : null}

@@ -3,8 +3,23 @@
   gap: var(--mdc-space-4);
 }
 
-.mdc-admin-evaluations__summary {
-  min-width: min(100%, 28rem);
+.mdc-admin-evaluations__toolbar {
+  align-items: flex-end;
+}
+
+.mdc-admin-evaluations__toolbar .mdc-admin-knowledge-summary {
+  flex: 1 1 26rem;
+  margin-bottom: 0;
+}
+
+.mdc-admin-evaluations__toolbar .mdc-admin-knowledge-summary__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .mdc-admin-evaluations__toolbar .mdc-admin-knowledge-summary__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .mdc-admin-evaluations__error {
@@ -30,22 +45,34 @@
 .mdc-admin-evaluations__candidate {
   display: grid;
   width: 100%;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: color-mix(in srgb, var(--mdc-bg-muted) 88%, var(--mdc-card-bg));
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
+  background: transparent;
+  box-shadow: none;
   cursor: pointer;
   text-align: left;
   font: inherit;
-  padding: var(--mdc-space-3);
+  color: inherit;
+  padding: 0.55rem 0.15rem;
 }
 
-.mdc-admin-evaluations__candidate:hover {
-  border-color: color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+.mdc-admin-evaluations__candidate:first-child {
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
+}
+
+.mdc-admin-evaluations__candidate:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-text) 5%, transparent);
+  color: inherit;
 }
 
 .mdc-admin-evaluations__candidate.is-selected {
-  border-color: var(--mdc-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mdc-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+  box-shadow: none;
+}
+
+.mdc-admin-evaluations__candidate.is-selected strong {
+  color: var(--mdc-title);
 }
 
 .mdc-admin-evaluations__detail {
@@ -100,8 +127,9 @@
 
 .mdc-admin-evaluations__score button.is-active {
   border-color: transparent;
-  background: var(--mdc-primary);
-  color: var(--mdc-on-primary);
+  background: color-mix(in srgb, var(--mdc-text) 11%, transparent);
+  color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-tab-active);
 }
 
 .mdc-admin-evaluations__suggestions {
@@ -128,8 +156,3 @@
   color: var(--mdc-text-muted);
 }
 
-@media (max-width: 1180px) {
-  .mdc-admin-evaluations__summary {
-    width: 100%;
-  }
-}

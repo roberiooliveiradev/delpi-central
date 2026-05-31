@@ -4,6 +4,12 @@
   min-width: 0;
 }
 
+.mdc-admin-tools-tab__intelligence {
+  display: grid;
+  gap: var(--mdc-space-3);
+  min-width: 0;
+}
+
 .mdc-admin-tools-tab__error {
   margin: 0;
   border: 1px solid var(--mdc-danger);

@@ -13,6 +13,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import { EvaluationsSummaryStrip } from "./EvaluationsSummaryStrip";
 
 import "./AdminEvaluationsTab.css";
 
@@ -119,43 +120,27 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
   return (
     <section className="mdc-admin-evaluations">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Qualidade</p>
-            <h2>Avaliação de respostas</h2>
-            <p>
-              Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para
-              conhecimento e diretrizes.
-            </p>
-          </div>
+      <header className="mdc-admin-evaluations__toolbar mdc-admin-tab-header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Qualidade</p>
+          <h2>Avaliação de respostas</h2>
+          <p>
+            Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para
+            conhecimento e diretrizes.
+          </p>
+        </div>
 
-          {summary ? (
-            <div className="mdc-admin-kpi-grid mdc-admin-evaluations__summary">
-              <article className="mdc-admin-kpi-card">
-                <h3>Total</h3>
-                <strong>{summary.total}</strong>
-              </article>
-              <article className="mdc-admin-kpi-card">
-                <h3>Média</h3>
-                <strong>{summary.averageScore ?? "—"}</strong>
-              </article>
-              <article className="mdc-admin-kpi-card">
-                <h3>Úteis</h3>
-                <strong>
-                  {summary.helpfulRate !== null && summary.helpfulRate !== undefined
-                    ? `${Math.round(summary.helpfulRate * 100)}%`
-                    : "—"}
-                </strong>
-              </article>
-              <article className="mdc-admin-kpi-card">
-                <h3>Hoje</h3>
-                <strong>{summary.recent24h}</strong>
-              </article>
-            </div>
-          ) : null}
-        </header>
-      </article>
+        <EvaluationsSummaryStrip summary={summary} isLoading={isLoading} />
+
+        <button
+          type="button"
+          className="mdc-chat-ws-outline-btn"
+          disabled={isLoading}
+          onClick={() => void loadCandidates()}
+        >
+          {isLoading ? "Atualizando..." : "Atualizar"}
+        </button>
+      </header>
 
       {error ? <p className="mdc-admin-evaluations__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-evaluations__success">{successMessage}</p> : null}
@@ -170,15 +155,6 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
               onChange={(event) => setSearch(event.target.value)}
             />
           </label>
-
-          <button
-            type="button"
-            className="mdc-admin-btn"
-            disabled={isLoading}
-            onClick={() => void loadCandidates()}
-          >
-            {isLoading ? "Carregando..." : "Atualizar lista"}
-          </button>
 
           <div className="mdc-admin-entity-list mdc-admin-evaluations__candidate-list">
             {candidates.map((candidate) => (
@@ -290,7 +266,7 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
               <button
                 type="button"
-                className="mdc-admin-btn mdc-admin-btn--primary"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
                 disabled={isSaving}
                 onClick={() => void handleSave()}
               >

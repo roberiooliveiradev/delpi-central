@@ -13,13 +13,14 @@ import type {
   AdminMetricsTimeseriesResponse,
 } from "../../../../data/api/adminTypes";
 
-import { ChatIntelligenceSettingsPanel } from "./ChatIntelligenceSettingsPanel";
 import "./AdminMetricsTab.css";
 
 type AdminMetricsTabProps = {
   metricsSummary: AdminMetricsSummary | null;
   metricsHours?: number;
   onMetricsHoursChange?: (hours: number) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
@@ -237,6 +238,8 @@ export function AdminMetricsTab({
   metricsSummary,
   metricsHours = 24,
   onMetricsHoursChange,
+  onRefresh,
+  isRefreshing = false,
   getAccessToken,
 }: AdminMetricsTabProps) {
   const [timeseries, setTimeseries] = useState<AdminMetricsTimeseriesResponse | null>(null);
@@ -308,19 +311,32 @@ export function AdminMetricsTab({
           </p>
         </div>
 
-        {onMetricsHoursChange ? (
-          <label className="mdc-admin-field mdc-admin-metrics-tab__window">
-            <span>Janela</span>
-            <select
-              value={metricsHours}
-              onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+        <div className="mdc-admin-metrics-tab__header-actions">
+          {onMetricsHoursChange ? (
+            <label className="mdc-admin-field mdc-admin-metrics-tab__window">
+              <span>Janela</span>
+              <select
+                value={metricsHours}
+                onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+              >
+                <option value={24}>24 horas</option>
+                <option value={168}>7 dias</option>
+                <option value={720}>30 dias</option>
+              </select>
+            </label>
+          ) : null}
+
+          {onRefresh ? (
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={isRefreshing}
+              onClick={onRefresh}
             >
-              <option value={24}>24 horas</option>
-              <option value={168}>7 dias</option>
-              <option value={720}>30 dias</option>
-            </select>
-          </label>
-        ) : null}
+              {isRefreshing ? "Atualizando..." : "Atualizar"}
+            </button>
+          ) : null}
+        </div>
       </header>
 
       <div className="mdc-admin-kpi-grid">
@@ -401,8 +417,6 @@ export function AdminMetricsTab({
           </p>
         </article>
       </div>
-
-      <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
 
       {effectiveCostTable.length > 0 ? (
         <CostTablePanel

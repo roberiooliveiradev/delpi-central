@@ -13,6 +13,13 @@
   padding: var(--mdc-space-4);
 }
 
+.mdc-admin-metrics-tab__header-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mdc-space-2);
+}
+
 .mdc-admin-metrics-tab__window {
   min-width: 11rem;
 }
