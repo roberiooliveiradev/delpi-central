@@ -6,6 +6,7 @@ from functools import lru_cache
 from typing import Any
 
 from app.domain.services.chat_email_intent_service import ChatEmailIntentService
+from app.domain.services.chat_email_preference_service import ChatEmailPreferenceService
 from app.domain.services.chat_email_quality_validator import ChatEmailQualityValidator
 from app.infrastructure.content.content_service import ContentService
 
@@ -33,7 +34,13 @@ class ChatEmailFollowUpService:
         )
 
         if isinstance(operational, dict) and operational.get("text"):
-            cls._attach_operational_draft(metadata, operational, message=message, answer=answer)
+            cls._attach_operational_draft(
+                metadata,
+                operational,
+                message=message,
+                answer=answer,
+                workspace_context=workspace_context,
+            )
             return
 
         if not ChatEmailIntentService.is_email_writing(message):
@@ -65,6 +72,22 @@ class ChatEmailFollowUpService:
         if quality.get("checks"):
             metadata["emailQuality"] = quality
 
+        cls._attach_preferences_metadata(metadata, workspace_context, message)
+
+    @classmethod
+    def _attach_preferences_metadata(
+        cls,
+        metadata: dict,
+        workspace_context: dict | None,
+        message: str | None,
+    ) -> None:
+        working_memory = (workspace_context or {}).get("workingMemory") or {}
+        prefs = ChatEmailPreferenceService.detect(message, working_memory=working_memory)
+        pref_meta = ChatEmailPreferenceService.build_metadata(prefs)
+
+        if pref_meta:
+            metadata["emailPreferences"] = pref_meta
+
     @classmethod
     def merge_guard_metadata(cls, metadata: dict, guard_meta: dict[str, Any] | None) -> None:
         if not guard_meta:
@@ -86,6 +109,7 @@ class ChatEmailFollowUpService:
         *,
         message: str | None,
         answer: str | None,
+        workspace_context: dict | None = None,
     ) -> None:
         text_task = draft.get("textTask")
 
@@ -110,6 +134,8 @@ class ChatEmailFollowUpService:
 
         if quality.get("checks"):
             metadata["emailQuality"] = quality
+
+        cls._attach_preferences_metadata(metadata, workspace_context, message)
 
     @classmethod
     def build_suggestions(cls, subtype: str | None = None) -> list[dict[str, str]]:

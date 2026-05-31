@@ -397,6 +397,11 @@ export type ChatMessageMetadata = {
     productCode?: string | null;
     lineCount?: number;
   };
+  emailPreferences?: {
+    active?: Record<string, boolean>;
+    labels?: string[];
+    persisted?: boolean;
+  };
   drawingAnalysis?: Record<string, unknown>;
   drawingAnalysisExport?: {
     filename: string;

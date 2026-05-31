@@ -1,3 +1,5 @@
+import json
+
 from app.domain.services.chat_email_preference_service import ChatEmailPreferenceService
 
 
@@ -18,3 +20,52 @@ def test_merge_into_behavior():
         {},
     )
     assert "emailWriting" in merged
+    parsed = json.loads(merged["emailWriting"])
+    assert parsed.get("formalTone") is True
+
+
+def test_merge_accumulates_preferences():
+    first = ChatEmailPreferenceService.merge_into_behavior("sempre e-mails curtos", {})
+    second = ChatEmailPreferenceService.merge_into_behavior(
+        "sempre tom formal nos e-mails",
+        first,
+    )
+    parsed = json.loads(second["emailWriting"])
+    assert parsed.get("shortEmails") is True
+    assert parsed.get("formalTone") is True
+
+
+def test_load_json_from_working_memory():
+    prefs = ChatEmailPreferenceService.detect(
+        "escreva um e-mail",
+        working_memory={
+            "behaviorInstructions": {
+                "emailWriting": json.dumps({"executiveTone": True}),
+            }
+        },
+    )
+    assert prefs.get("executiveTone") is True
+
+
+def test_apply_to_snapshot():
+    snapshot = {"behaviorInstructions": {}}
+    ChatEmailPreferenceService.apply_to_snapshot(
+        snapshot,
+        message="sempre deixe assinatura em branco nos e-mails",
+    )
+    assert snapshot.get("emailPreferences", {}).get("blankSignature") is True
+
+
+def test_build_context_chips():
+    chips = ChatEmailPreferenceService.build_context_chips(
+        {"shortEmails": True, "formalTone": True}
+    )
+    labels = [chip["label"] for chip in chips]
+    assert "E-mails curtos" in labels
+    assert all(chip["kind"] == "emailPreference" for chip in chips)
+
+
+def test_build_metadata():
+    meta = ChatEmailPreferenceService.build_metadata({"copyReady": True})
+    assert meta is not None
+    assert "Pronto para copiar" in (meta.get("labels") or [])

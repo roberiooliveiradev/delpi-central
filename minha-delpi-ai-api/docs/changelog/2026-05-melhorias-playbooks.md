@@ -150,7 +150,9 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Fase 5 | `ChatEmailOperationalComposerService` — e-mail só com `humanizedSummary`, rodapé «Fonte dos dados», metadata `emailDataSource`, turno misto e follow-up sem LLM |
 | Validação | `test_chat_email_operational_composer_service.py`, smoke misto em `smoke_email_writing.py` |
 
-**Backlog:** preferências completas na sessão (Fase 3 ampliada).
+| Fase 3 | Persistência `emailWriting`/`scope` em `ai_chat_session_memory`, merge acumulativo, `emailPreferences` no metadata e chips de contexto |
+
+**Backlog:** nenhum item crítico restante do playbook de e-mails.
 
 ## Descontraído (`playbook_chat_interativo_descontraido`)
 

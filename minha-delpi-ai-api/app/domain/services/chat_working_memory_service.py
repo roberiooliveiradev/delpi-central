@@ -33,12 +33,21 @@ class ChatWorkingMemoryService:
         )
 
         behavior = ChatEmailPreferenceService.merge_into_behavior(message, behavior)
+
+        snapshot = {
+            "lastEntities": last_entities,
+            "behaviorInstructions": behavior,
+        }
+        ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
+        email_preferences = snapshot.get("emailPreferences") or {}
+
         resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
         follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
         return {
             "lastEntities": last_entities,
             "behaviorInstructions": behavior,
+            "emailPreferences": email_preferences,
             "resolvedReferences": resolved,
             "usedMemoryKeys": used_keys,
             "followUpDetected": follow_up,
@@ -87,6 +96,13 @@ class ChatWorkingMemoryService:
                 used.append(memory_key)
 
         snapshot["usedMemoryKeys"] = used
+
+        from app.domain.services.chat_email_preference_service import (
+            ChatEmailPreferenceService,
+        )
+
+        ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
+
         return snapshot
 
     @classmethod
@@ -183,6 +199,7 @@ class ChatWorkingMemoryService:
                 if value not in (None, "", [])
             },
             "activeBehaviorInstructions": behavior,
+            "emailPreferences": snapshot.get("emailPreferences") or {},
             "resolvedReferences": snapshot.get("resolvedReferences") or [],
             "followUpDetected": bool(snapshot.get("followUpDetected")),
             "usedMemoryKeys": snapshot.get("usedMemoryKeys") or [],
@@ -257,6 +274,14 @@ class ChatWorkingMemoryService:
                     "value": branch,
                 }
             )
+
+        from app.domain.services.chat_email_preference_service import (
+            ChatEmailPreferenceService,
+        )
+
+        chips.extend(
+            ChatEmailPreferenceService.build_context_chips(snapshot.get("emailPreferences"))
+        )
 
         if behavior.get("responseFormat") == "table":
             chips.append({"label": "Tabela", "kind": "format", "value": "table"})

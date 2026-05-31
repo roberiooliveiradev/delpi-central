@@ -131,3 +131,25 @@ def test_persist_post_turn_syncs_snapshot():
 
     assert len(repo.synced) == 1
     assert repo.synced[0]["session_id"] == session_id
+
+
+def test_persist_post_turn_syncs_email_writing_preference():
+    import json
+
+    repo = FakeMemoryRepository()
+    service = ChatSessionMemoryService(repo)
+    session_id = uuid4()
+
+    service.persist_post_turn(
+        session_id=session_id,
+        snapshot={
+            "lastEntities": {},
+            "behaviorInstructions": {
+                "emailWriting": json.dumps({"shortEmails": True, "formalTone": True}),
+                "scope": "session",
+            },
+        },
+    )
+
+    assert len(repo.synced) == 1
+    assert "emailWriting" in repo.synced[0]["snapshot"]["behaviorInstructions"]

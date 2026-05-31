@@ -91,7 +91,7 @@ Mensagem do usuário
 | `ChatEmailQualityValidator` | Checklist pós-geração (frases artificiais, assinatura, prazos, assunto fraco) → `emailQuality` |
 | `ChatEmailAnswerGuardService` | Sanitização soft (assinatura inventada, frases artificiais) antes de persistir |
 | `ChatEmailPromptSupplementService` | Contexto no prompt (destinatário, tom, DELPI/IA, preferências) |
-| `ChatEmailPreferenceService` | Preferências «sempre e-mails curtos/formais» na memória da sessão |
+| `ChatEmailPreferenceService` | Preferências de e-mail na sessão (`emailWriting` persistido, `emailPreferences` no metadata/chips) |
 | `ChatEmailTurnService` | Orquestra suplemento de prompt, guard e metadata de follow-up |
 | `ChatEmailOperationalComposerService` | E-mail a partir de consulta autorizada (turno misto / follow-up) + `emailDataSource` |
 | `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
