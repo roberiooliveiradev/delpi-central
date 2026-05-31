@@ -5,13 +5,18 @@ import type {
   AssistantContextualHighlight,
   AssistantOnboardingPayload,
 } from "../../data/api/chatTypes";
-import { CHAT_HOME_STARTERS, type ChatHomeStarter } from "../chatHomeStarters";
+import {
+  CHAT_OPERATIONAL_HOME_STARTERS,
+  CHAT_TEXT_HOME_STARTERS,
+  type ChatHomeStarter,
+} from "../chatHomeStarters";
 
 import "./ChatEmptyState.css";
 
 type ChatEmptyStateProps = {
   displayName?: string | null;
   starters?: ChatHomeStarter[];
+  textStarters?: ChatHomeStarter[];
   contextualHighlights?: AssistantContextualHighlight[];
   onboarding?: AssistantOnboardingPayload | null;
   selectedProfileId?: string | null;
@@ -51,7 +56,8 @@ function pickGreeting(firstName: string | null): string {
 
 export function ChatEmptyState({
   displayName,
-  starters = CHAT_HOME_STARTERS,
+  starters = CHAT_OPERATIONAL_HOME_STARTERS,
+  textStarters = CHAT_TEXT_HOME_STARTERS,
   contextualHighlights = [],
   onboarding,
   selectedProfileId,
@@ -60,7 +66,8 @@ export function ChatEmptyState({
 }: ChatEmptyStateProps) {
   const firstName = getFirstDisplayName(displayName);
   const greeting = useMemo(() => pickGreeting(firstName), [firstName]);
-  const showStarters = Boolean(onUseStarter) && starters.length > 0;
+  const showOperational = Boolean(onUseStarter) && starters.length > 0;
+  const showTextStarters = Boolean(onUseStarter) && textStarters.length > 0;
   const welcomeTitle = onboarding?.welcome?.title?.trim();
   const welcomeSubtitle = onboarding?.welcome?.subtitle?.trim();
   const starterCards = onboarding?.starterCards ?? [];
@@ -147,18 +154,48 @@ export function ChatEmptyState({
         </div>
       ) : null}
 
-      {showStarters ? (
-        <div className="mdc-chat-empty-state__starters" role="group" aria-label="Sugestões">
-          {starters.map((starter) => (
-            <button
-              key={starter.query}
-              type="button"
-              className="mdc-chat-empty-state__chip"
-              onClick={() => onUseStarter?.(starter.query)}
-            >
-              {starter.label}
-            </button>
-          ))}
+      {showOperational ? (
+        <div className="mdc-chat-empty-state__starter-block">
+          <p className="mdc-chat-empty-state__starter-label">Consultas e autoajuda</p>
+          <div
+            className="mdc-chat-empty-state__starters"
+            role="group"
+            aria-label="Sugestões operacionais"
+          >
+            {starters.map((starter) => (
+              <button
+                key={starter.query}
+                type="button"
+                className="mdc-chat-empty-state__chip"
+                onClick={() => onUseStarter?.(starter.query)}
+              >
+                {starter.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {showTextStarters ? (
+        <div className="mdc-chat-empty-state__starter-block">
+          <p className="mdc-chat-empty-state__starter-label">Textos</p>
+          <div
+            className="mdc-chat-empty-state__cards mdc-chat-empty-state__cards--text"
+            role="group"
+            aria-label="Sugestões de texto"
+          >
+            {textStarters.map((starter) => (
+              <button
+                key={starter.query}
+                type="button"
+                className="mdc-chat-empty-state__card mdc-chat-empty-state__card--text"
+                onClick={() => onUseStarter?.(starter.query)}
+              >
+                <strong>{starter.label}</strong>
+                <span>{starter.query}</span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
     </section>

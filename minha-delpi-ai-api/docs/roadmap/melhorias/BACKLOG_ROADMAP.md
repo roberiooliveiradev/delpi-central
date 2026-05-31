@@ -17,7 +17,7 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 | 5 | ~~Mini dashboards por agente~~ (feito) — refinamentos de recomendações | [gráficos](./playbook_ampliacao_graficos_minha_delpi_chat.md) Fase 4 | Baixo |
 | 6 | ~~Gráficos Fase 5 — lousa + export CSV dashboard~~ (feito) — refinamentos PNG multi-painel | Gráficos Fase 5 | Baixo |
 | 7 | ~~Onboarding guiado~~ (feito) — materiais treinamento, analytics adoção | [10](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | Baixo |
-| 8 | Admin textos Fases 3–5 | [textos](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | MFE admin |
+| 8 | Admin textos — Fase 3 parcial (home Textos + modelos +); Fases 4–5 | [textos](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | MFE + chat base |
 
 ## Infra / homologação
 

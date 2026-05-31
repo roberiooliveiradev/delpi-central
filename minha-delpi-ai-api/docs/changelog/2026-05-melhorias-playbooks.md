@@ -130,8 +130,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Entrega | Detalhe |
 |---------|---------|
 | Fase 1–2 | Policy `administrative-writing.md`, `ChatTextTaskIntentService`, estágio `text_task` no turn prep (sem tools/RAG) |
+| Fase 3 (parcial) | Home: blocos «Consultas» + cards «Textos»; menu + com modelos (`chatTextTemplates.ts`) |
+| Smoke | `smoke_text_task_routing.py` — correção sem tools |
 
-**Backlog:** templates no input (Fase 3), skill registry dedicada, testes E2E com LLM.
+**Backlog:** lousa como editor de rascunho (Fase 3), preferências sessão (Fase 4), tarefas mistas (Fase 5).
 
 ## Descontraído (`playbook_chat_interativo_descontraido`)
 

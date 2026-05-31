@@ -116,6 +116,37 @@
   line-height: 1.35;
 }
 
+.mdc-chat-empty-state__starter-block {
+  display: grid;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 42rem;
+}
+
+.mdc-chat-empty-state__starter-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mdc-muted);
+  text-align: center;
+}
+
+.mdc-chat-empty-state__cards--text {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.5rem;
+  max-width: 42rem;
+}
+
+.mdc-chat-empty-state__card--text span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .mdc-chat-empty-state__starters {
   display: flex;
   flex-wrap: wrap;

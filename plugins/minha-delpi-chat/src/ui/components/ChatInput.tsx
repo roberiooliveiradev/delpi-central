@@ -19,6 +19,7 @@ import {
   type ComposerAttachmentStatus,
 } from "../chatAttachmentStatus";
 import { CHAT_TEXT_HOME_STARTERS } from "../chatHomeStarters";
+import { CHAT_TEXT_TEMPLATES } from "../chatTextTemplates";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
 import "./ChatInput.css";
@@ -288,6 +289,22 @@ export function ChatInput({
                     >
                       <FileText size={16} aria-hidden="true" />
                       <span>{starter.label}</span>
+                    </button>
+                  ))}
+
+                  <p className="mdc-chat-input__menu-hint">Modelos</p>
+
+                  {CHAT_TEXT_TEMPLATES.map((template) => (
+                    <button
+                      key={template.label}
+                      type="button"
+                      onClick={() => {
+                        onInsertQuery(template.draft);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <FileText size={16} aria-hidden="true" />
+                      <span>{template.label}</span>
                     </button>
                   ))}
                 </div>

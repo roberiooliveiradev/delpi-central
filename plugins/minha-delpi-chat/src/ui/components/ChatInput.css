@@ -243,6 +243,16 @@
   padding-top: 0.5rem;
 }
 
+.mdc-chat-input__menu-hint {
+  margin: 0.35rem 0 0;
+  padding: 0 0.15rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mdc-muted);
+}
+
 .mdc-chat-input__menu-section strong {
   color: var(--mdc-text-muted);
   font-size: 0.68rem;
