@@ -1,3 +1,5 @@
+import { ArrowLeft } from "lucide-react";
+
 import type { AdminTab, AdminTabItem } from "./adminShellTypes";
 
 import "./AdminShellTopbar.css";
@@ -20,32 +22,34 @@ export function AdminShellTopbar({
   onTabChange,
 }: AdminShellTopbarProps) {
   return (
-    <header className="mdc-admin-topbar">
-      <div className="mdc-admin-topbar__content">
-        <div>
-          <p className="mdc-chat-eyebrow">Administração</p>
-          <h1>Minha DELPI Chat</h1>
-          <p>
-            Curadoria da base global, diretrizes, ferramentas e auditoria operacional.
-          </p>
-        </div>
-
-        <div className="mdc-admin-topbar__actions">
-          <button
-            type="button"
-            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-            onClick={onRefresh}
-            disabled={isLoading}
-          >
-            Atualizar
-          </button>
-          <button type="button" className="mdc-chat-ws-outline-btn" onClick={onBack}>
-            Voltar ao chat
-          </button>
-        </div>
+    <header className="mdc-chat-ws-topbar mdc-admin-topbar" aria-label="Administração do chat">
+      <div className="mdc-chat-ws-topbar__start">
+        <button type="button" className="mdc-chat-ws-topbar__back" onClick={onBack}>
+          <ArrowLeft size={18} aria-hidden="true" />
+          <span>Voltar ao chat</span>
+        </button>
       </div>
 
-      <nav className="mdc-admin-tabs" aria-label="Administração do chat">
+      <div className="mdc-chat-ws-topbar__title">
+        <span>Administração</span>
+        <small>Minha DELPI Chat</small>
+      </div>
+
+      <div className="mdc-chat-ws-topbar__actions">
+        <button
+          type="button"
+          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+          onClick={onRefresh}
+          disabled={isLoading}
+        >
+          Atualizar
+        </button>
+      </div>
+
+      <nav
+        className="mdc-admin-tabs mdc-chat-project-home__tabs"
+        aria-label="Seções do admin"
+      >
         {tabs.map((tab) => (
           <button
             key={tab.key}

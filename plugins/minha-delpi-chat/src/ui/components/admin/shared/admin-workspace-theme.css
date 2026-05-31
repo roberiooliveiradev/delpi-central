@@ -1,0 +1,123 @@
+/* Alinhamento do admin ao DS do workspace (agentes, projetos, builder) */
+
+.mdc-admin-root .mdc-chat-project-home__tabs {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-root .mdc-chat-project-home__tabs button {
+  min-height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 760;
+  padding: 0.4rem 0.8rem;
+}
+
+.mdc-admin-root .mdc-chat-project-home__tabs button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+  color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-1);
+}
+
+.mdc-admin-root .mdc-chat-project-home__tabs button.is-active {
+  background: color-mix(in srgb, var(--mdc-text) 11%, transparent);
+  color: var(--mdc-title);
+  box-shadow: var(--mdc-elevation-tab-active);
+}
+
+.mdc-admin-root.mdc-chat-ws-directory {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.mdc-admin-root .mdc-admin-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.mdc-admin-root .mdc-admin-shell__panel {
+  min-width: 0;
+}
+
+/* Neutraliza o reset global de .minha-delpi-chat button onde o DS do workspace já define o controle */
+.mdc-admin-root .mdc-admin-shell :is(
+    .mdc-admin-tabs button,
+    .mdc-admin-entity-list > button,
+    .mdc-admin-agents__list button,
+    .mdc-admin-skills__list-item,
+    .mdc-admin-evaluations__candidates button,
+    .mdc-admin-knowledge-summary__hit,
+    .mdc-guideline-list-panel__list button
+  ) {
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    color var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    box-shadow var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    border-color var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
+}
+
+.mdc-admin-root .mdc-admin-tabs button:hover:not(:disabled),
+.mdc-admin-root .mdc-admin-entity-list > button:hover:not(:disabled),
+.mdc-admin-root .mdc-admin-agents__list button:hover:not(:disabled),
+.mdc-admin-root .mdc-admin-skills__list-item:hover:not(:disabled),
+.mdc-admin-root .mdc-admin-evaluations__candidates button:hover:not(:disabled),
+.mdc-admin-root .mdc-admin-knowledge-summary__hit:hover:not(:disabled),
+.mdc-admin-root .mdc-guideline-list-panel__list button:hover:not(:disabled) {
+  transform: none;
+}
+
+.mdc-admin-root .mdc-chat-muted {
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.mdc-admin-root .mdc-admin-panel,
+.mdc-admin-root .mdc-admin-agents__list,
+.mdc-admin-root .mdc-admin-agents__editor {
+  border: 0;
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+}
+
+.mdc-admin-root .mdc-admin-kpi-card {
+  border: 0;
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+  padding: var(--mdc-space-4);
+  transition:
+    background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
+    box-shadow var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
+}
+
+.mdc-admin-root .mdc-admin-kpi-card:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
+  box-shadow: var(--mdc-elevation-3);
+}
+
+.mdc-admin-root .mdc-admin-kpi-card.is-active {
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
+  box-shadow:
+    var(--mdc-elevation-3),
+    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+}
+
+.mdc-admin-root .mdc-admin-kpi-card strong {
+  color: var(--mdc-title);
+  font-size: 1.45rem;
+}

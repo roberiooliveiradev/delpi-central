@@ -1,45 +1,15 @@
-.mdc-admin-topbar {
-  display: grid;
-  gap: var(--mdc-space-3);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-elevation-2);
-  padding: var(--mdc-space-4);
-}
+/* Topbar + abas — herda .mdc-chat-ws-topbar e .mdc-chat-project-home__tabs do workspace */
 
-.mdc-admin-topbar__content {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: var(--mdc-space-4);
-}
-
-.mdc-admin-topbar h1 {
-  margin: 0;
-  color: var(--mdc-primary);
-  font-size: clamp(1.45rem, 1.8vw, 1.95rem);
-  letter-spacing: -0.04em;
-  line-height: 1.05;
-}
-
-.mdc-admin-topbar p {
-  margin: 0.25rem 0 0;
-  color: var(--mdc-text-muted);
-  line-height: 1.35;
-}
-
-.mdc-admin-topbar__actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--mdc-space-2);
-}
-
-.mdc-admin-tabs {
-  display: flex;
+.mdc-admin-topbar.mdc-chat-ws-topbar {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.65rem 0.5rem;
+  padding-bottom: 0.55rem;
+}
+
+.mdc-admin-topbar .mdc-admin-tabs {
+  grid-column: 1 / -1;
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
@@ -47,82 +17,38 @@
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 999px;
-  background: var(--mdc-bg-muted);
-  padding: 0.22rem;
+  justify-content: flex-start;
+  padding: 0.1rem 0;
 }
 
-.mdc-admin-tabs button {
-  min-height: 2rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--mdc-text-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 750;
-  line-height: 1;
-  padding: 0.45rem 0.78rem;
-  white-space: nowrap;
-}
-
-.mdc-admin-tabs button:hover:not(:disabled) {
-  color: var(--mdc-primary);
-  background: color-mix(in srgb, var(--mdc-primary) 8%, transparent);
-  box-shadow: none;
-}
-
-.mdc-admin-tabs button.is-active {
-  background: var(--mdc-primary);
-  color: var(--mdc-on-primary);
-  box-shadow: none;
+.mdc-admin-topbar .mdc-admin-tabs button {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 1023px) {
-  .mdc-admin-topbar__content {
-    grid-template-columns: 1fr;
+  .mdc-admin-topbar.mdc-chat-ws-topbar {
+    grid-template-columns: 1fr auto;
   }
 
-  .mdc-admin-topbar__actions {
-    justify-content: flex-start;
-    width: 100%;
+  .mdc-admin-topbar .mdc-chat-ws-topbar__title {
+    grid-column: 1 / -1;
+    justify-self: start;
+    text-align: left;
   }
 
-  .mdc-admin-topbar__actions .mdc-chat-ws-toolbar-btn,
-  .mdc-admin-topbar__actions .mdc-chat-ws-outline-btn {
-    flex: 1 1 auto;
-    min-width: 0;
+  .mdc-admin-topbar .mdc-chat-ws-topbar__title > span,
+  .mdc-admin-topbar .mdc-chat-ws-topbar__title > small {
+    text-align: left;
   }
 }
 
 @media (max-width: 767px) {
-  .mdc-admin-tabs {
-    width: 100%;
-    border-radius: var(--mdc-radius-lg);
-    padding: 0.18rem;
+  .mdc-admin-topbar .mdc-admin-tabs {
+    flex-wrap: nowrap;
   }
 
-  .mdc-admin-tabs button {
-    flex: 0 0 auto;
-    font-size: 0.78rem;
-    padding: 0.4rem 0.65rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .mdc-admin-topbar p {
-    font-size: 0.85rem;
-  }
-
-  .mdc-admin-topbar__actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mdc-admin-topbar__actions .mdc-chat-ws-toolbar-btn,
-  .mdc-admin-topbar__actions .mdc-chat-ws-outline-btn {
-    width: 100%;
+  .mdc-admin-topbar .mdc-admin-tabs button {
+    font-size: 0.82rem;
+    padding: 0.38rem 0.72rem;
   }
 }

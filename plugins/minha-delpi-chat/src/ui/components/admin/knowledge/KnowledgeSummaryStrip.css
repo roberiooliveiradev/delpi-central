@@ -13,8 +13,7 @@
 }
 
 .mdc-admin-knowledge-summary .mdc-admin-kpi-card.is-active {
-  border-color: var(--mdc-color-primary, #2563eb);
-  box-shadow: 0 0 0 1px var(--mdc-color-primary, #2563eb);
+  border-color: transparent;
 }
 
 .mdc-admin-knowledge-summary .mdc-admin-kpi-card.is-clickable {

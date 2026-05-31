@@ -66,16 +66,20 @@ export function ChatAdminPage({
   }, [getAccessToken]);
 
   return (
-    <main className="minha-delpi-chat mdc-admin-root">
-      <section className="mdc-admin-shell">
-        <AdminShellTopbar
-          activeTab={activeTab}
-          tabs={ADMIN_TABS}
-          isLoading={admin.isLoading}
-          onRefresh={admin.loadAdminData}
-          onBack={onBack}
-          onTabChange={setActiveTab}
-        />
+    <main className="minha-delpi-chat mdc-admin-root mdc-chat-ws-directory">
+      <AdminShellTopbar
+        activeTab={activeTab}
+        tabs={ADMIN_TABS}
+        isLoading={admin.isLoading}
+        onRefresh={admin.loadAdminData}
+        onBack={onBack}
+        onTabChange={setActiveTab}
+      />
+
+      <section className="mdc-admin-shell mdc-chat-ws-directory__main">
+        <p className="mdc-chat-ws-directory__lead">
+          Curadoria da base global, diretrizes, ferramentas e auditoria operacional.
+        </p>
 
         <AdminShellAlerts
           error={admin.error}

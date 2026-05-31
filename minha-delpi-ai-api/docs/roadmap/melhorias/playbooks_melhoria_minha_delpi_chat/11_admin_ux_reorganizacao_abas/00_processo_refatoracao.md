@@ -47,6 +47,7 @@ Depois das 10 abas: documento **11_painel_e_navegacao.md** (agrupamento final em
 - Página: `plugins/minha-delpi-chat/src/ui/pages/ChatAdminPage.tsx`
 - Tipos de aba: `plugins/minha-delpi-chat/src/ui/components/admin/shell/adminShellTypes.ts`
 - Rotas: `plugins/minha-delpi-chat/src/navigation/chatRoutes.ts` (`/admin`, `/admin/agentes/:id`)
+- **DS alinhado ao workspace** (fora do escopo da reorganização em 6 seções): layout `mdc-chat-ws-directory`, topbar `mdc-chat-ws-topbar`, abas no padrão `mdc-chat-project-home__tabs`, tema em `admin-workspace-theme.css` + `admin-shared.css`.
 
 ## Quando implementar
 

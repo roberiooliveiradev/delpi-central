@@ -64,23 +64,30 @@
   gap: 0.55rem;
   width: 100%;
   border: 0;
-  border-radius: var(--mdc-radius-md);
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
   color: var(--mdc-text);
   cursor: pointer;
   font: inherit;
-  padding: 0.55rem 0.6rem;
+  padding: 0.55rem 0.15rem;
   text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
   transition: background 0.15s ease;
 }
 
-.mdc-admin-skills__list-item:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent);
+.mdc-admin-skills__list-item:first-child {
+  border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 42%, transparent);
+}
+
+.mdc-admin-skills__list-item:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-text) 5%, transparent);
+  color: var(--mdc-text);
 }
 
 .mdc-admin-skills__list-item.is-selected {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-text) 7%, transparent);
+  color: var(--mdc-title);
 }
 
 .mdc-admin-skills__list-item.is-inactive {

@@ -390,8 +390,10 @@
 
 .mdc-admin-panel__intro h2 {
   margin: 0;
-  color: var(--mdc-primary);
-  font-size: 1.05rem;
+  color: var(--mdc-title);
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
@@ -546,8 +548,10 @@
 }
 
 .mdc-admin-tab-header .mdc-admin-panel__intro h2 {
-  color: var(--mdc-primary);
-  font-size: 1.15rem;
+  color: var(--mdc-title);
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 /* KPIs / cards numéricos */

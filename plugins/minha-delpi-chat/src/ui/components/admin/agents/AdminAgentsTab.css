@@ -59,17 +59,32 @@
 .mdc-admin-agents__list button {
   width: 100%;
   text-align: left;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-bg-muted);
+  border: 0;
+  border-radius: var(--mdc-radius-xl);
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-elevation-1);
+  color: inherit;
   padding: var(--mdc-space-3);
   display: grid;
   gap: 0.25rem;
 }
 
+.mdc-admin-agents__list button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--mdc-primary) 4%, var(--mdc-card-bg));
+  box-shadow: var(--mdc-elevation-3);
+  color: inherit;
+}
+
 .mdc-admin-agents__list button.is-selected {
-  border-color: var(--mdc-primary);
-  box-shadow: var(--mdc-focus-ring);
+  background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
+  box-shadow:
+    var(--mdc-elevation-3),
+    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 18%, transparent);
+}
+
+.mdc-admin-agents__list button.is-selected strong,
+.mdc-admin-agents__list button strong {
+  color: var(--mdc-title);
 }
 
 .mdc-admin-agents__list span,
