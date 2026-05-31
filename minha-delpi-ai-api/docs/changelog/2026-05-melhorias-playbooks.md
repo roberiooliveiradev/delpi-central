@@ -418,13 +418,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | `smoke_admin_endpoints.py` | OK |
 | Vitest MFE | `chatShortcutPrompt`, `chatHomeStarters`, `exportUtils` — 11 testes OK |
 | `smoke_shortcut_placeholders.py` | OK — JSON + follow-up service sem `10080001` fixo nas queries de chip |
-| MFE bundle | `App-Bwrh617t.js` — CSS/JS com `mdc-chat-shortcut-prompt` e textos do diálogo |
+| MFE bundle | `App-KpZWzapI.js` — diálogo `Consulta ao chat` + `onShortcutPromptRequired` |
 | Catálogo HTTP | `starterCards` / `demoQuery` com `{{productCode}}` (sem código fixo na API) |
-| Envio bloqueado | `hasUnresolvedShortcutPlaceholders` em `sendMessage` + `sendResolvedMessage` no `ChatPage` |
+| Diálogo automático | `onShortcutPromptRequired` abre o formulário ao bloquear `{{…}}` (sem só banner de erro) |
+| Z-index modal | `mdc-chat-shortcut-prompt-backdrop` na camada 1400 (`modal-layer.css`) |
 
-**Manual:** na home ou «Próximos passos», «Consultar produto» abre **Consulta ao chat** (campo código + **Enviar pergunta**); não deve ir `{{productCode}}` para o histórico. Hard refresh após rebuild do plugin.
+**Manual:** na home (perfil Engenharia) → **Consultar produto** → modal com **Código do produto** → **Enviar pergunta**. Enter no composer com placeholder também deve abrir o modal.
 
-**Commits:** `f8d571bf` (placeholders + diálogo), `5633a777` (bloqueio e `sendResolvedMessage`), `6670e510` (export XLSX/PDF).
+**Commits:** `f8d571bf`, `5633a777`, `0dcda7da` (diálogo ao bloquear), `6670e510` (XLSX/PDF), `a5c7e9e9` (smoke placeholders).
 
 ## Homologação — api-externa local
 
