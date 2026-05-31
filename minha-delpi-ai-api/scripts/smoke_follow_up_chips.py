@@ -18,6 +18,7 @@ import urllib.request
 from app.application.services.chat_follow_up_suggestion_service import (
     ChatFollowUpSuggestionService,
 )
+from scripts.smoke_api_externa_helpers import validate_chip_action_id
 
 _BASE_URL = os.environ.get("SMOKE_BASE_URL", "http://localhost").strip()
 _REALM = os.environ.get("SMOKE_REALM", "delpi").strip()
@@ -238,20 +239,27 @@ def main() -> int:
         answer_lower = str(response.get("answer") or "").lower()
         hints = _ACTION_HINTS[label]
 
+        ok_provider, provider_msg = validate_chip_action_id(
+            label=label,
+            action_id=action_id,
+            query=query,
+        )
+
+        if provider_msg.startswith("SKIP"):
+            print(provider_msg)
+            continue
+
+        if not ok_provider:
+            print(provider_msg, file=sys.stderr)
+            failed += 1
+            continue
+
         if any(hint in action_id for hint in hints):
-            print(f"OK API chip {label}: {action_id}")
+            print(provider_msg)
             continue
 
         if label == "Ver estoque" and not action_id and "estoque" in answer_lower:
             print("OK API chip Ver estoque: resposta direta (sem nova tool)")
-            continue
-
-        if label == "Ver vendas":
-            print(
-                f"WARN API chip {label!r}: actionId={action_id!r} "
-                f"(query correta; revisar seleção de action de vendas)",
-                file=sys.stderr,
-            )
             continue
 
         print(

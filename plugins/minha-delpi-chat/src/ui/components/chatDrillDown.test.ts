@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDrillDownQuery } from "./chatDrillDown";
+import { buildDrillDownQuery, buildTableRowMenuActions } from "./chatDrillDown";
 
 const stockColumns = [
   { key: "branch", label: "Filial" },
@@ -46,5 +46,26 @@ describe("buildDrillDownQuery", () => {
     );
 
     expect(query).toBe("Detalhe do item 90260077 (Parafuso)");
+  });
+});
+
+describe("buildTableRowMenuActions", () => {
+  it("inclui detalhar e consultas de produto quando há código", () => {
+    const actions = buildTableRowMenuActions(
+      { product_code: "10080001", description: "Item teste" },
+      [
+        { key: "product_code", label: "Produto" },
+        { key: "description", label: "Descrição" },
+      ],
+    );
+
+    const labels = actions.map((action) => action.label);
+
+    expect(labels).toContain("Detalhar item");
+    expect(labels).toContain("Ver estoque");
+    expect(labels).toContain("Ver fornecedores");
+    expect(actions.find((a) => a.id === "stock")?.query).toBe(
+      "qual o estoque do produto 10080001?",
+    );
   });
 });

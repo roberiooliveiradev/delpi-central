@@ -1,6 +1,7 @@
 from app.application.services.external_actions.external_action_selection_service import (
     ExternalActionSelectionService,
 )
+from app.infrastructure.config.settings import Settings
 
 
 class FakeRepository:
@@ -1122,3 +1123,56 @@ def test_listar_nc_5s_does_not_select_product_search():
     )
 
     assert selected is None
+
+
+def test_select_suppliers_prefers_api_externa_when_configured(monkeypatch):
+    from app.domain.services.chat_web_search_intent_service import (
+        ChatWebSearchIntentService,
+    )
+
+    monkeypatch.setenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "true")
+    Settings.CHAT_PREFER_API_EXTERNA_PROVIDER = True
+    monkeypatch.setattr(
+        ChatWebSearchIntentService,
+        "blocks_external_action_selection",
+        lambda message: False,
+    )
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.products.suppliers_products_code_suppliers_get",
+                    "method": "GET",
+                    "path": "/products/{code}/suppliers",
+                    "operationId": "suppliers_products_code_suppliers_get",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+                {
+                    "actionId": "api_externa.products.suppliers_products_code_suppliers_get",
+                    "method": "GET",
+                    "path": "/products/{code}/suppliers",
+                    "operationId": "suppliers_products_code_suppliers_get",
+                    "parametersSchema": [
+                        {"name": "code", "in": "path", "required": True},
+                    ],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "liste os fornecedores do produto 10080001",
+        allowed_action_ids=[
+            "api_delpi.products.suppliers_products_code_suppliers_get",
+            "api_externa.products.suppliers_products_code_suppliers_get",
+        ],
+    )
+
+    assert selected is not None
+    assert (
+        selected["arguments"]["actionId"]
+        == "api_externa.products.suppliers_products_code_suppliers_get"
+    )

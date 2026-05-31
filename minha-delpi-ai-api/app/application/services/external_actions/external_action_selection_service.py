@@ -2521,9 +2521,28 @@ class ExternalActionSelectionService:
             if "structure" in haystack or "estrutura" in haystack:
                 value += 5
 
+            value += self._provider_preference_bonus(action)
+
             return value
 
         return sorted(candidates, key=score, reverse=True)
+
+    @classmethod
+    def _provider_preference_bonus(cls, action: dict) -> int:
+        from app.infrastructure.config.settings import Settings
+
+        if not Settings.CHAT_PREFER_API_EXTERNA_PROVIDER:
+            return 0
+
+        action_id = str(action.get("actionId") or "").lower()
+
+        if action_id.startswith("api_externa."):
+            return 95
+
+        if action_id.startswith("api_delpi."):
+            return -120
+
+        return 0
 
     @classmethod
     def _clamp_max_depth_for_path(cls, value: int, path: str) -> int:

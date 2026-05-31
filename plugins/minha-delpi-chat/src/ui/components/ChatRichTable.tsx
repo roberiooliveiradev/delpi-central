@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ExpandButton } from "./ChatExpandModal";
-import { buildDrillDownQuery } from "./chatDrillDown";
+import { buildTableRowMenuActions } from "./chatDrillDown";
+import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { formatCellValue, getAlignClass } from "./tableCellFormatting";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
@@ -23,6 +24,10 @@ export function ChatRichTable({
   const { title, columns, rows } = presentation;
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [copied, setCopied] = useState(false);
+  const [rowMenu, setRowMenu] = useState<{
+    anchor: { x: number; y: number };
+    actions: ReturnType<typeof buildTableRowMenuActions>;
+  } | null>(null);
 
   const sortedRows = useCallback(() => {
     if (!sortConfig) return rows;
@@ -160,12 +165,21 @@ export function ChatRichTable({
               <tr
                 key={idx}
                 className={onDrillDown ? "mdc-rich-table__tr--clickable" : ""}
-                onClick={() => {
+                onClick={(event) => {
                   if (!onDrillDown) return;
-                  const query = buildDrillDownQuery(row, columns);
-                  if (query) onDrillDown(query);
+
+                  const actions = buildTableRowMenuActions(row, columns);
+
+                  if (!actions.length) {
+                    return;
+                  }
+
+                  setRowMenu({
+                    anchor: { x: event.clientX, y: event.clientY },
+                    actions,
+                  });
                 }}
-                title={onDrillDown ? "Clique para detalhar" : undefined}
+                title={onDrillDown ? "Clique para ver ações" : undefined}
               >
                 {columns.map((col) => (
                   <td
@@ -191,6 +205,15 @@ export function ChatRichTable({
           {rows.length} registro(s)
         </div>
       )}
+
+      {rowMenu && onDrillDown ? (
+        <ChatTableRowMenu
+          actions={rowMenu.actions}
+          anchor={rowMenu.anchor}
+          onSelect={onDrillDown}
+          onClose={() => setRowMenu(null)}
+        />
+      ) : null}
     </div>
   );
 }

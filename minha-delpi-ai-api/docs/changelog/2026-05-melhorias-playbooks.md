@@ -37,7 +37,10 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Chips por outcome `text` | Após tarefas textuais (`followUpChips.text` no playbook) |
 | Starters | Texto administrativo na home (`textHomeStarters` / `CHAT_TEXT_HOME_STARTERS`) |
 
-**Backlog:** menus por linha de tabela, fluxos guiados (`ChatGuidedFlow`).
+| Menu por linha de tabela | `ChatTableRowMenu` + `buildTableRowMenuActions` (Fase 4 interatividade) |
+| Preferência api-externa | `CHAT_PREFER_API_EXTERNA_PROVIDER` + smokes `SMOKE_REQUIRE_API_EXTERNA` |
+
+**Backlog:** menu em gráfico/chip de contexto, fluxos guiados (`ChatGuidedFlow`).
 
 ## Admin textos (`playbook_assistente_administrativo_textos`)
 

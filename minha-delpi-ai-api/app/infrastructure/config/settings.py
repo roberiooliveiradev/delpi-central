@@ -145,6 +145,10 @@ class Settings:
         os.getenv("CHAT_EXTERNAL_ACTION_DIRECT_RESPONSE_ENABLED", "true").lower()
         == "true"
     )
+    # Homologação local: api-delpi costuma estar off; prioriza rotas api_externa.* na seleção.
+    CHAT_PREFER_API_EXTERNA_PROVIDER = (
+        os.getenv("CHAT_PREFER_API_EXTERNA_PROVIDER", "false").lower() == "true"
+    )
     CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS = int(
         os.getenv("CHAT_DIRECT_RESPONSE_STREAM_CHUNK_CHARS", "2")
     )

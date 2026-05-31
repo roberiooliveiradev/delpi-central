@@ -7,7 +7,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
-| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–3** (queries com produto, outcomes erro/vazio/texto); Fases **4–5** em backlog |
+| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–3** + menu por linha de tabela (MFE); Fase **5** guiados em backlog |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** (detecção + policy, sem ERP); Fases **3–5** em backlog |
@@ -40,12 +40,19 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/smoke_operational_routing.py` | Estoque com produto não cai em «Sobre esta consulta» |
 | `scripts/smoke_session_memory_persist.py` | Memória persistida + `memory/clear` |
 
+## Homologação local (api-externa)
+
+Com **api-delpi** indisponível no ambiente local, use:
+
+- `CHAT_PREFER_API_EXTERNA_PROVIDER=true` no `minha-delpi-ai-api` (já padrão em `docker-compose.dev.yml`)
+- Smokes HTTP com `SMOKE_REQUIRE_API_EXTERNA=true` (padrão) — chip «Ver vendas» é omitido (rota só em api-delpi)
+
 ## Próximo backlog sugerido
 
 1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
-3. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
-4. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
-5. **Interatividade Fase 4** — drill-down por linha de tabela / gráfico.
+2. **Interatividade Fase 4** — menu em gráfico / chip de contexto.
+3. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
+4. **Playbook 08** — mensagens de permissão e badges de confiança no presenter.
 
 ## Regra
 

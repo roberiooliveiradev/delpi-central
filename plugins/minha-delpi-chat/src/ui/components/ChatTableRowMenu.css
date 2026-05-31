@@ -1,0 +1,29 @@
+.mdc-table-row-menu {
+  position: fixed;
+  z-index: 1200;
+  min-width: 11rem;
+  max-width: 16rem;
+  padding: 0.35rem 0;
+  border-radius: 8px;
+  border: 1px solid var(--mdc-card-border);
+  background: var(--mdc-bg-elevated, var(--mdc-bg));
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+}
+
+.mdc-table-row-menu__item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.85rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--mdc-text);
+  cursor: pointer;
+}
+
+.mdc-table-row-menu__item:hover,
+.mdc-table-row-menu__item:focus-visible {
+  background: var(--mdc-rich-hover-strong, var(--mdc-rich-hover));
+  outline: none;
+}

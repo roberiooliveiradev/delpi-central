@@ -167,9 +167,12 @@ def main() -> int:
         print("OK API: resposta não é atalho de capacidades")
 
     stock_tool = False
+    stock_action_id = ""
     for call in tool_calls:
         if call.get("name") != "execute_external_action":
             continue
+        args = call.get("arguments") or {}
+        stock_action_id = str(args.get("actionId") or "")
         meta = call.get("metadata") or {}
         path = str(meta.get("path") or "").lower()
         if "/stock" in path or "estoque" in path:
@@ -178,6 +181,14 @@ def main() -> int:
 
     if stock_tool:
         print("OK API: toolCalls inclui consulta de estoque")
+        if stock_action_id.startswith("api_externa."):
+            print(f"OK API: estoque via api-externa ({stock_action_id})")
+        elif stock_action_id.startswith("api_delpi."):
+            print(
+                f"WARN API: estoque via api-delpi ({stock_action_id}); "
+                "prefira CHAT_PREFER_API_EXTERNA_PROVIDER=true no local",
+                file=sys.stderr,
+            )
     else:
         print(f"WARN API: toolCalls sem stock explícito ({len(tool_calls)} calls)", file=sys.stderr)
 
