@@ -78,6 +78,54 @@ function AdminTimingsSummary({ intelligence }: { intelligence: Record<string, un
   );
 }
 
+function AdminIntentRouteSummary({ intentRoute }: { intentRoute: Record<string, unknown> }) {
+  const intent = String(intentRoute.intent ?? "").trim();
+
+  if (!intent) {
+    return null;
+  }
+
+  const subIntent = String(intentRoute.subIntent ?? "").trim();
+  const confidence =
+    typeof intentRoute.confidence === "number" ? Math.round(intentRoute.confidence * 100) : null;
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="Rota de intenção">
+      <span className="mdc-chat-admin-debug__timing-chip">
+        <strong>intenção</strong> {intent}
+        {subIntent ? ` · ${subIntent}` : ""}
+        {confidence !== null ? ` (${confidence}%)` : ""}
+      </span>
+      {intentRoute.requiresTool === true ? (
+        <span className="mdc-chat-admin-debug__timing-chip">tools</span>
+      ) : null}
+      {intentRoute.requiresRag === true ? (
+        <span className="mdc-chat-admin-debug__timing-chip">RAG</span>
+      ) : null}
+    </div>
+  );
+}
+
+function AdminTrustSignalsSummary({ signals }: { signals: Array<Record<string, unknown>> }) {
+  if (!signals.length) {
+    return null;
+  }
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="Sinais de confiança">
+      {signals.map((signal) => (
+        <span
+          key={String(signal.id ?? signal.label)}
+          className="mdc-chat-admin-debug__timing-chip"
+          title={String(signal.id ?? "")}
+        >
+          {String(signal.label ?? signal.id ?? "")}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function AdminContextAssertivenessSummary({
   assertiveness,
 }: {
@@ -121,6 +169,10 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
   const memory = (debug?.memory as Record<string, unknown> | undefined) ?? null;
   const contextAssertiveness =
     (debug?.contextAssertiveness as Record<string, unknown> | undefined) ?? null;
+  const intentRoute = (debug?.intentRoute as Record<string, unknown> | undefined) ?? null;
+  const trustSignals = Array.isArray(debug?.trustSignals)
+    ? (debug?.trustSignals as Array<Record<string, unknown>>)
+    : [];
   const [open, setOpen] = useState(false);
 
   if (!debug) return null;
@@ -138,11 +190,15 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           <Bug size={16} aria-hidden="true" />
           <span>Diagnóstico (admin)</span>
           <span className="mdc-chat-admin-debug__summary-hint">
-            tools · RAG · memória · assertividade
+            intenção · tools · RAG · confiança
           </span>
         </summary>
 
         <div className="mdc-chat-admin-debug__content">
+          {intentRoute ? <AdminIntentRouteSummary intentRoute={intentRoute} /> : null}
+          {trustSignals.length > 0 ? (
+            <AdminTrustSignalsSummary signals={trustSignals} />
+          ) : null}
           {intelligence ? <AdminTimingsSummary intelligence={intelligence} /> : null}
           {contextAssertiveness ? (
             <AdminContextAssertivenessSummary assertiveness={contextAssertiveness} />

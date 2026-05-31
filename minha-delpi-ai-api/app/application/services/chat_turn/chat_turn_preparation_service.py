@@ -40,6 +40,7 @@ from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_operational_parameter_service import (
     ChatOperationalParameterService,
 )
+from app.domain.services.chat_intent_router_service import ChatIntentRouterService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.config.settings import Settings
@@ -76,6 +77,7 @@ class ChatTurnPreparationResult:
     pipeline_stages: list[str]
     text_task_mode: bool = False
     text_task_category: str | None = None
+    intent_route: dict | None = None
 
 
 class ChatTurnPreparationService:
@@ -761,6 +763,20 @@ class ChatTurnPreparationService:
                     )
                 )
 
+        intent_route = ChatIntentRouterService.resolve_executed(
+            message=message,
+            pipeline_stages=pipeline_stages,
+            analysis_mode=bool(analysis_mode),
+            text_task_pure=bool(text_task_pure),
+            text_task_category=text_task_category if text_task_pure else None,
+            skip_rag=bool(skip_rag),
+            direct_answer=direct_answer,
+            tool_calls=tool_calls,
+        ).to_dict()
+
+        if f"intent:{intent_route['intent']}" not in pipeline_stages:
+            pipeline_stages.append(f"intent:{intent_route['intent']}")
+
         return ChatTurnPreparationResult(
             operational_optimize=bool(operational_optimize),
             analysis_mode=bool(analysis_mode),
@@ -778,5 +794,6 @@ class ChatTurnPreparationService:
             pipeline_stages=pipeline_stages,
             text_task_mode=bool(text_task_pure),
             text_task_category=text_task_category if text_task_pure else None,
+            intent_route=intent_route,
         )
 

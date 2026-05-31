@@ -224,3 +224,93 @@ export function buildTreeDrillDownQuery(node: {
     ],
   );
 }
+
+function extractTreeNodeCode(node: {
+  id?: string;
+  label?: string;
+  subtitle?: string;
+}): string {
+  const label = String(node.label ?? "").trim();
+  const normalized = normalizeCode(label);
+
+  if (/^\d{5,}$/.test(normalized)) {
+    return normalized;
+  }
+
+  const id = String(node.id ?? "").trim();
+  const idNormalized = normalizeCode(id);
+
+  if (/^\d{5,}$/.test(idNormalized)) {
+    return idNormalized;
+  }
+
+  return normalized || idNormalized;
+}
+
+export function buildTreePointMenuActions(node: {
+  id?: string;
+  label?: string;
+  subtitle?: string;
+}): TableRowMenuAction[] {
+  const detailQuery = buildTreeDrillDownQuery(node);
+  const code = extractTreeNodeCode(node);
+  const desc = String(node.subtitle ?? "").trim();
+  const actions: TableRowMenuAction[] = [];
+
+  if (detailQuery) {
+    actions.push({
+      id: "detail",
+      label: "Detalhar item",
+      query: detailQuery,
+    });
+  }
+
+  if (code && /^\d{5,}$/.test(code)) {
+    const suffix = desc ? ` (${desc})` : "";
+
+    actions.push(
+      {
+        id: "stock",
+        label: "Ver estoque",
+        query: `qual o estoque do produto ${code}?`,
+      },
+      {
+        id: "suppliers",
+        label: "Ver fornecedores",
+        query: `liste os fornecedores do produto ${code}`,
+      },
+      {
+        id: "structure",
+        label: "Ver estrutura",
+        query: `mostre a estrutura do produto ${code}`,
+      },
+      {
+        id: "parents",
+        label: "Onde é usado?",
+        query: `onde o produto ${code} é usado?`,
+      },
+      {
+        id: "product",
+        label: "Consultar produto",
+        query: `me fale do produto ${code}${suffix}`,
+      },
+    );
+  } else if (detailQuery) {
+    actions.push({
+      id: "explain",
+      label: "Explicar nó",
+      query: `explique o papel de ${String(node.label ?? "este item").trim()} nesta estrutura`,
+    });
+  }
+
+  const seen = new Set<string>();
+
+  return actions.filter((action) => {
+    if (seen.has(action.query)) {
+      return false;
+    }
+
+    seen.add(action.query);
+    return true;
+  });
+}

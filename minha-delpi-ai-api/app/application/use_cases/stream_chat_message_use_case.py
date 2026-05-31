@@ -526,6 +526,7 @@ class StreamChatMessageUseCase:
             analysis_mode=analysis_mode,
             fast_path=fast_path,
             skip_rag=skip_rag,
+            intent_route=prepared.intent_route,
         )
 
         answer_parts: list[str] = []

@@ -34,6 +34,15 @@
   border: 1px solid var(--mdc-control-border);
 }
 
+.mdc-chat-context-bar__chip--action {
+  cursor: pointer;
+}
+
+.mdc-chat-context-bar__chip--action:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-control-border));
+  color: var(--mdc-primary);
+}
+
 .mdc-chat-context-bar__clear {
   display: inline-flex;
   align-items: center;

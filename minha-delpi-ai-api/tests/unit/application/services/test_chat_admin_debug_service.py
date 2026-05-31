@@ -37,6 +37,23 @@ def test_no_sources_note_when_rag_empty():
     assert "sourcesNote" not in payload["rag"]
 
 
+def test_build_includes_intent_route_when_provided():
+    payload = ChatAdminDebugService.build(
+        workspace_context={"agentId": None, "skills": {}},
+        tool_context={"context": "", "toolCalls": []},
+        rag={"context": "", "sources": []},
+        llm_messages=[],
+        history_summary="",
+        operational_optimize=True,
+        analysis_mode=False,
+        fast_path=False,
+        skip_rag=True,
+        intent_route={"intent": "operational_query", "subIntent": "stock_lookup"},
+    )
+
+    assert payload["intentRoute"]["intent"] == "operational_query"
+
+
 def test_attach_includes_intelligence_timings():
     admin_debug = {"pipeline": {"skipRag": True}}
     intelligence = {

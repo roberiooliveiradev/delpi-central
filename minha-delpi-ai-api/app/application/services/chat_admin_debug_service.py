@@ -47,7 +47,7 @@ class ChatAdminDebugService:
         admin_debug = (assistant_metadata or {}).get("adminDebug")
 
         if isinstance(admin_debug, dict):
-            for key in ("memory", "contextAssertiveness", "intelligence"):
+            for key in ("memory", "contextAssertiveness", "intelligence", "trustSignals"):
                 value = admin_debug.get(key)
 
                 if value is not None:
@@ -69,6 +69,7 @@ class ChatAdminDebugService:
         analysis_mode: bool,
         fast_path: bool,
         skip_rag: bool,
+        intent_route: dict | None = None,
         limits: ChatAdminDebugLimits | None = None,
     ) -> dict:
         _ = request  # reservado; persistência não depende de permissão do solicitante
@@ -83,6 +84,7 @@ class ChatAdminDebugService:
             analysis_mode=analysis_mode,
             fast_path=fast_path,
             skip_rag=skip_rag,
+            intent_route=intent_route,
             limits=limits,
         )
         payload["recordedAt"] = datetime.now(timezone.utc).isoformat()
@@ -101,6 +103,11 @@ class ChatAdminDebugService:
             admin_debug_payload["intelligence"] = ChatAdminDebugService._compact_intelligence(
                 intelligence_metadata
             )
+
+        trust_signals = metadata.get("trustSignals")
+
+        if isinstance(trust_signals, list) and trust_signals:
+            admin_debug_payload["trustSignals"] = trust_signals
 
         metadata["adminDebug"] = admin_debug_payload
 
@@ -137,6 +144,7 @@ class ChatAdminDebugService:
         analysis_mode: bool,
         fast_path: bool,
         skip_rag: bool,
+        intent_route: dict | None = None,
         limits: ChatAdminDebugLimits | None = None,
     ) -> dict:
         limits = limits or ChatAdminDebugLimits()
@@ -196,6 +204,7 @@ class ChatAdminDebugService:
                 "skipRag": bool(skip_rag),
                 "historySummary": cls._truncate_text(str(history_summary or ""), limits),
             },
+            "intentRoute": intent_route if isinstance(intent_route, dict) else None,
             "tooling": {
                 "toolCalls": tool_context.get("toolCalls") or [],
                 "selectedExternalAction": tool_context.get("selectedExternalAction"),

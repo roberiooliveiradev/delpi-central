@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { ChatPresentation, ChatTreeNode } from "../../data/api/chatTypes";
-import { buildTreeDrillDownQuery } from "./chatDrillDown";
+import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
+import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 import {
   exportTreeToCsv,
@@ -88,35 +89,45 @@ function TreeNodeRow({
   const [expanded, setExpanded] = useState(defaultExpanded || depth === 0);
   const badgeClass = BADGE_COLORS[String(node.badge || "").toUpperCase()] ?? "";
   const metaText = formatMeta(node.meta);
-  const drillDownQuery = onDrillDown ? buildTreeDrillDownQuery(node) : null;
+  const menuActions = onDrillDown ? buildTreePointMenuActions(node) : [];
+  const hasMenu = menuActions.length > 0;
+  const [rowMenu, setRowMenu] = useState<{
+    anchor: { x: number; y: number };
+    actions: TableRowMenuAction[];
+  } | null>(null);
 
-  function handleDrillDown() {
-    if (!onDrillDown || !drillDownQuery) {
+  function openRowMenu(event: React.MouseEvent) {
+    if (!onDrillDown || !menuActions.length) {
       return;
     }
 
-    onDrillDown(drillDownQuery);
+    event.stopPropagation();
+    setRowMenu({
+      anchor: { x: event.clientX, y: event.clientY },
+      actions: menuActions,
+    });
   }
 
   return (
     <li className="mdc-rich-tree__item">
       <div
-        className={`mdc-rich-tree__row ${drillDownQuery ? "mdc-rich-tree__row--clickable" : ""}`}
+        className={`mdc-rich-tree__row ${hasMenu ? "mdc-rich-tree__row--clickable" : ""}`}
         style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
-        onClick={drillDownQuery ? handleDrillDown : undefined}
+        onContextMenu={hasMenu ? openRowMenu : undefined}
+        onClick={hasMenu ? openRowMenu : undefined}
         onKeyDown={
-          drillDownQuery
+          hasMenu
             ? (event) => {
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
-                  handleDrillDown();
+                  openRowMenu(event as unknown as React.MouseEvent);
                 }
               }
             : undefined
         }
-        role={drillDownQuery ? "button" : undefined}
-        tabIndex={drillDownQuery ? 0 : undefined}
-        title={drillDownQuery ? "Clique para detalhar" : undefined}
+        role={hasMenu ? "button" : undefined}
+        tabIndex={hasMenu ? 0 : undefined}
+        title={hasMenu ? "Clique para ver ações" : undefined}
       >
         {hasChildren ? (
           <button
@@ -167,6 +178,16 @@ function TreeNodeRow({
             />
           ))}
         </ul>
+      ) : null}
+
+      {rowMenu && onDrillDown ? (
+        <ChatTableRowMenu
+          actions={rowMenu.actions}
+          anchor={rowMenu.anchor}
+          onSelect={onDrillDown}
+          onClose={() => setRowMenu(null)}
+          menuLabel="Ações do nó"
+        />
       ) : null}
     </li>
   );

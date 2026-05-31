@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
+import { CHAT_TEXT_HOME_STARTERS } from "../chatHomeStarters";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
 import "./ChatInput.css";
@@ -45,6 +46,7 @@ type ChatInputProps = {
   onAttachFiles?: (files: File[]) => void;
   onRemoveAttachment?: (attachmentId: string) => void;
   onClearAttachments?: () => void;
+  onInsertQuery?: (query: string) => void;
 };
 
 function formatFileSize(size: number): string {
@@ -79,6 +81,7 @@ export function ChatInput({
   onAttachFiles,
   onRemoveAttachment,
   onClearAttachments,
+  onInsertQuery,
 }: ChatInputProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -248,6 +251,26 @@ export function ChatInput({
                   <span>Anexar arquivos</span>
                 </button>
               </div>
+
+              {onInsertQuery ? (
+                <div className="mdc-chat-input__menu-section">
+                  <strong>Textos</strong>
+
+                  {CHAT_TEXT_HOME_STARTERS.map((starter) => (
+                    <button
+                      key={starter.label}
+                      type="button"
+                      onClick={() => {
+                        onInsertQuery(starter.query);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <FileText size={16} aria-hidden="true" />
+                      <span>{starter.label}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
 
               <div className="mdc-chat-input__menu-section">
                 <strong>Usar agente neste contexto</strong>

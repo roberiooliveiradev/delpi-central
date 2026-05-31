@@ -1611,6 +1611,7 @@ export function ChatPage({
               <ChatContextBar
                 chips={activeContextChips}
                 onClearContext={handleClearActiveContext}
+                onChipAction={handleDrillDown}
               />
 
               <ChatInput
@@ -1624,6 +1625,7 @@ export function ChatPage({
                 onChange={setDraft}
                 onSubmit={handleSubmitMessage}
                 onCancel={cancelStreaming}
+                onInsertQuery={(query) => setDraft(query)}
               />
             </section>
           )}

@@ -7,12 +7,12 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
 | Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
-| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–3** + menu por linha de tabela e **ponto de gráfico** (MFE); Fase **5** guiados em backlog |
+| Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–4** (tabela, gráfico, **árvore**, chip contexto); Fase **5** guiados em backlog |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL seguro, trust badges, falha de API, confirmação de escrita + painel MFE; mensagem amigável em `ToolPermissionDeniedError` |
 | Chat descontraído / personalidade | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial — `personality_playbook.json`, starters, chips texto |
 | Admin UX — abas (11) | [playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Fases **1–4** concluídas (6 seções, Painel, status strip, cross-links, mobile) |
-| Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** (detecção + policy, sem ERP); Fases **3–5** em backlog |
+| Assistente administrativo (textos) | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Fases **1–2** + templates **Textos** no menu `+` (MFE); Fases **3–5** avançadas em backlog |
 | Análises pontuais | `analise_*.md`, `sugestoes_perguntas_*.md` | Referência; itens críticos migrados para código/testes |
 
 **Changelogs:**
@@ -35,6 +35,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatTrustSignalsService` | Playbook 08 — sinais de confiança no metadata |
 | `ChatSecurityMessagingService` | Playbook 08 — mensagens quando API falha |
 | `ChatWriteConfirmationService` | Playbook 08 — confirmação antes de escrita/destrutiva |
+| `ChatIntentRouterService` | Playbook 01 — roteamento de intenção (`adminDebug.intentRoute`) |
 
 ## Smokes automatizados
 
@@ -47,6 +48,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `scripts/smoke_session_memory_persist.py` | Memória persistida + `memory/clear` |
 | `scripts/upsert_agent_provider.py` | Habilitar/desabilitar provider no agente (API, sem migration) |
 | `scripts/smoke_sql_safety.py` | Bloqueio de SQL destrutivo (Playbook 08) |
+| `scripts/smoke_intent_route.py` | `intentRoute` + estágio `intent:*` (Playbook 01) |
 
 ## Chat «comum» e atalhos operacionais
 
@@ -61,12 +63,18 @@ Com **api-delpi** indisponível no ambiente local, use:
 - Smokes HTTP com `SMOKE_REQUIRE_API_EXTERNA=true` (padrão) — chip «Ver vendas» é omitido (rota só em api-delpi)
 - Se o Alembic estiver em revision removida `p8q9r0s1t3`: `flask db stamp o7p8q9r0s1t2`
 
+## Ordem de implementação (arquitetura)
+
+1. **Chat base** — `ChatIntentRouterService`, `adminDebug.intentRoute`, estágio `intent:*` no pipeline.
+2. **Playbook 08** — `trustSignals` espelhados no painel admin debug.
+3. **MFE** — menu contextual na árvore, chips de contexto clicáveis, seção «Textos» no menu `+`.
+4. **Backlog** — Playbook 07 indexação completa; interatividade Fase 5 guiados.
+
 ## Próximo backlog sugerido
 
 1. **Playbook 07 completo** — indexação PDF/Excel; resposta automática ao upload.
-2. **Interatividade Fase 4** — menu por nó de árvore / chip de contexto (gráfico feito no MFE).
-3. **Admin textos Fase 3** — templates no composer e seção «Textos» no menu `+`.
-4. **Playbook 08** — badges de confiança no admin debug ampliado.
+2. **Playbook 01** — `resolvedParams` e pendências ativas no router.
+3. **Interatividade Fase 5** — fluxos guiados no MFE.
 
 ## Regra
 

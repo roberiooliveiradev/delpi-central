@@ -43,6 +43,7 @@ Mensagem do usuário
 | Serviço | Função |
 |---------|--------|
 | `ChatIntelligencePipelineService` | Orquestra decisões pré/pós-tools compartilhadas |
+| `ChatIntentRouterService` | Classificação de intenção (Playbook 01): `classify` pré-turno, `resolve_executed` pós-prep; `metadata.adminDebug.intentRoute` e estágio `intent:{nome}` |
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
 | `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |

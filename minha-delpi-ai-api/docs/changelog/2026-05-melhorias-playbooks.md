@@ -12,6 +12,15 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Fase 4:** tabela `ai_chat_session_memory` + `POST /chat/sessions/{id}/memory/clear`.
 
+## Arquitetura — ordem chat base → MFE (maio/2026)
+
+| Camada | Entrega |
+|--------|---------|
+| Chat base | `ChatIntentRouterService` (`classify`, `resolve_executed`); `intentRoute` em `adminDebug`; estágio `intent:{nome}` |
+| Playbook 08 | `trustSignals` mesclados no `adminDebug` (cliente admin) + resumo no `ChatAdminDebugPanel` |
+| MFE | `buildTreePointMenuActions` + menu na árvore; chips de contexto clicáveis; seção **Textos** no menu `+` (`CHAT_TEXT_HOME_STARTERS`) |
+| Smoke | `scripts/smoke_intent_route.py` — valida `adminDebug.intentRoute` e `intent:*` no pipeline |
+
 ## Correções (problemas reportados em homologação)
 
 | Problema | Correção |
