@@ -153,6 +153,8 @@
       "há como"
     ],
     "inquiryTopics": [
+      "internet",
+      "web",
       "buscar",
       "pesquisar",
       "consultar",
@@ -208,6 +210,11 @@
     "genericInquiry": {
       "title": "**Sobre esta consulta**",
       "body": "Entendi que você quer saber **se eu consigo** executar algo — não que eu execute agora.\n\n{hint}\n\nPara ver tudo que está liberado nesta sessão, pergunte também: *o que você pode fazer?*"
+    },
+    "webSearchHelp": {
+      "title": "**Pesquisa na internet (web)**",
+      "enabled": "Sim. Use frases explícitas como **«pesquise na web sobre …»** ou **«busque na internet …»**.\n\n**Modos:**\n- **Rápida** — resumo com poucas fontes.\n- **Profunda** — mais consultas e fontes (ex.: «pesquisa profunda na web …»).\n- **Oficial** — prioriza fabricante/manual (ex.: «manual oficial WEG …»).\n\n**Integração:**\n- Com **produto interno**: «consulte nosso produto 10080001 e pesquise datasheet na web».\n- Com **anexo**: envie o arquivo e peça para comparar com fontes públicas.\n\nApós a busca, use os chips **Após pesquisa web** (resumir, lousa, comparar fontes). O painel **Fontes · N** mostra sites consultados.",
+      "disabled": "A **pesquisa na internet** está desligada neste ambiente. Um administrador pode habilitar em **Admin → Inteligência** (`webSearchEnabled`) e configurar o provedor (Tavily, Serper, SearXNG, etc.).\n\nEnquanto isso, use **RAG** e documentos internos para conhecimento da empresa."
     }
   },
   "pathRules": [

@@ -4,7 +4,7 @@ Projeto: **Minha DELPI Chat IA**
 
 Objetivo: evoluir a funcionalidade de pesquisa na web para que o chat consiga pesquisar melhor, explicar melhor de onde veio a informação, comparar fontes, lidar com notícias recentes, resumir páginas, validar confiabilidade e integrar resultados externos com o contexto interno da DELPI.
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–5** no chat base e MFE (planejamento, avaliação de fontes, integração anexo/ERP, chips pós-pesquisa, cards de fontes). Backlog: cruzamento automático pós-ERP e salvar fontes em projeto.
+> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–5** no chat base e MFE. Backlog: salvar fontes no projeto.
 
 ---
 
@@ -899,7 +899,7 @@ Pesquisar ou dizer limitação.
 - [x] Híbrido produto interno não bloqueia actions DELPI no mesmo turno (`blocks_external_action_selection`).
 - [x] Contexto de anexo repassado ao `ToolSelectionService` / `resolve` da web.
 - [x] Síntese e resposta direta com notas de integração (não substituir dado interno).
-- [ ] Cruzamento automático pós-consulta ERP (comparar JSON interno com web no mesmo pipeline).
+- [x] `ChatWebSearchErpCrossReferenceService` — bloco «Cruzamento ERP × web» quando ERP + web no mesmo turno.
 
 ## Fase 5 — UX
 

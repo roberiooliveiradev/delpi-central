@@ -216,6 +216,9 @@ class ChatCapabilitiesService:
                 catalog=catalog,
             )
 
+        if cls._is_web_search_help_inquiry(normalized):
+            return cls._answer_web_search_help()
+
         generic = _feature_answers().get("genericInquiry") or {}
 
         if isinstance(generic, dict):
@@ -323,6 +326,50 @@ class ChatCapabilitiesService:
             return False
 
         return any(verb in normalized for verb in cls._COMMAND_VERBS)
+
+    @classmethod
+    def _is_web_search_help_inquiry(cls, normalized: str) -> bool:
+        if "web" not in normalized and "internet" not in normalized:
+            return False
+
+        help_markers = (
+            "como ",
+            "como faço",
+            "como faco",
+            "como uso",
+            "como usar",
+            "me ensine",
+            "me explique",
+            "o que e",
+            "o que é",
+        )
+
+        search_markers = (
+            "pesquisa",
+            "pesquisar",
+            "busca",
+            "buscar",
+            "web",
+            "internet",
+            "google",
+        )
+
+        return any(marker in normalized for marker in help_markers) and any(
+            marker in normalized for marker in search_markers
+        )
+
+    @classmethod
+    def _answer_web_search_help(cls) -> str:
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        texts = _feature_answers().get("webSearchHelp") or {}
+        title = str(texts.get("title") or "**Pesquisa na internet**")
+        body_key = "enabled" if ChatWebSearchIntentService.is_feature_enabled() else "disabled"
+        body = str(texts.get(body_key) or texts.get("enabled") or "")
+
+        return f"{title}\n\n{body}".strip()
 
     @classmethod
     def _answer_product_search_by_group(

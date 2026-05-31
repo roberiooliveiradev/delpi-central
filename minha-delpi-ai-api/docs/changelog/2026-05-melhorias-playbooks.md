@@ -133,6 +133,19 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 
 **Backlog:** ampliar `stream.json` / variantes por outcome.
 
+## Pesquisa web — Fase 4 (cruzamento ERP)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
+| Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
+
+## Autoajuda — Fase 1 (parcial)
+
+| Entrega | Detalhe |
+|---------|---------|
+| `capabilities.json` | `featureAnswers.webSearchHelp` — «como pesquisar na web?» |
+
 ## Pesquisa web — Fase 5 (UX)
 
 | Entrega | Detalhe |

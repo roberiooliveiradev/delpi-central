@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
@@ -138,3 +140,20 @@ def test_capability_inquiry_without_agent_explains_common_chat():
     )
     assert answer
     assert "chat comum" in answer.lower() or "agente" in answer.lower()
+
+
+@patch(
+    "app.domain.services.chat_web_search_intent_service.ChatWebSearchIntentService.is_feature_enabled",
+    return_value=True,
+)
+def test_web_search_help_feature_answer(_enabled):
+    answer = ChatCapabilitiesService.build_feature_answer(
+        message="como faço pesquisa na web?",
+        workspace_context={"agent": {"name": "Default"}},
+        allowed_action_ids=[],
+        action_catalog=[],
+    )
+
+    assert answer is not None
+    assert "Pesquisa na internet" in answer or "pesquisa na internet" in answer.lower()
+    assert "pesquise na web" in answer.lower()

@@ -214,6 +214,15 @@ Testes: `test_chat_web_search_integration_service.py`.
 
 Testes: `test_chat_web_search_follow_up_service.py`.
 
+### Pesquisa web — cruzamento ERP (maio/2026)
+
+| Camada | Comportamento |
+|--------|----------------|
+| `ChatWebSearchErpCrossReferenceService` | Após ERP + `web_search` no mesmo turno, anexa bloco comparativo e `erpCrossReference` no payload |
+| `ChatToolContextService` | Propaga `webSources` mesmo quando a resposta direta veio do ERP |
+
+Testes: `test_chat_web_search_erp_cross_reference_service.py`.
+
 ### Listagem de OV vs vendas de produto (maio/2026)
 
 | Situação | Rota correta | Erro comum |

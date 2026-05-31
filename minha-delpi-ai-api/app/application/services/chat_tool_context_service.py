@@ -730,6 +730,33 @@ class ChatToolContextService:
                     external_action_results,
                 )
 
+        if isinstance(last_web_search_data, dict):
+            from app.domain.services.chat_web_search_erp_cross_reference_service import (
+                ChatWebSearchErpCrossReferenceService,
+            )
+            from app.domain.services.chat_web_search_direct_answer_service import (
+                ChatWebSearchDirectAnswerService,
+            )
+
+            direct_answer, last_web_search_data = (
+                ChatWebSearchErpCrossReferenceService.append_to_direct_answer(
+                    direct_answer=direct_answer,
+                    internal_data=last_external_action_data,
+                    web_payload=last_web_search_data,
+                    message=raw_message,
+                )
+            )
+            web_search_payload = last_web_search_data
+
+            if (
+                str(last_web_search_data.get("searchStatus") or "") == "success"
+                and not web_sources
+            ):
+                web_sources = ChatWebSearchDirectAnswerService.build_sources(
+                    last_web_search_data
+                )
+                skip_rag = True
+
         if (
             not direct_answer
             and len(safe_tool_calls) == 1
