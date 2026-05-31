@@ -24,6 +24,9 @@ class ChatDrawingAdminDebugService:
         if intent_name != "drawing_analysis" and not drawing_mode:
             return None
 
+        if drawing_mode and intent_name != "drawing_analysis":
+            intent_name = "drawing_analysis"
+
         skills = workspace_context.get("skills") if isinstance(
             workspace_context.get("skills"), dict
         ) else {}

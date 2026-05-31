@@ -51,6 +51,31 @@ def test_resolve_executed_from_pipeline_stages():
     assert "stage:small_talk" in route.flags
 
 
+def test_resolve_executed_drawing_analysis_beats_tools():
+    route = ChatIntentRouterService.resolve_executed(
+        message="analise o desenho 90260140",
+        pipeline_stages=[
+            "ingress",
+            "tools",
+            "drawing_analysis",
+            "post_tool",
+            "skip_rag",
+            "direct_answer",
+        ],
+        skip_rag=True,
+        direct_answer="# Relatório",
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "path": "/products/90260140/analyser"},
+            }
+        ],
+    )
+
+    assert route.intent == "drawing_analysis"
+    assert "stage:drawing_analysis" in route.flags
+
+
 def test_resolve_executed_text_task_stage():
     route = ChatIntentRouterService.resolve_executed(
         message="resuma o texto abaixo",

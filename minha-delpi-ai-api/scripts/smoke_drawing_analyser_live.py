@@ -417,11 +417,13 @@ def _run_preparation_e2e(token: str, pdf_path: Path) -> list[str]:
                 f"preparation: intent executado={intent} sem drawingAnalysisMode"
             )
         elif intent != "drawing_analysis":
-            print(
-                f"WARN preparation: intent executado={intent} "
-                f"(classificado drawing_analysis; estágio tools no pipeline)",
-                file=sys.stderr,
-            )
+            stages = prepared.pipeline_stages or []
+
+            if "drawing_analysis" not in stages:
+                errors.append(
+                    f"preparation: intent={intent} sem estágio drawing_analysis "
+                    f"(classificado {classified.intent})"
+                )
 
     return errors
 

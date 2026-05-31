@@ -1,6 +1,6 @@
 # Inteligência do chat — Onda 12: Skill de análise de desenhos DELPI (PDF)
 
-**Status:** parcial (Fases 1–5 + export MD/CSV/XLSX/PDF — maio/2026)  
+**Status:** parcial (Fases 1–5 + E2E live + intent `drawing_analysis` no pipeline — maio/2026)  
 **Criado:** 2026-05-29  
 **Playbook de produto:** [playbook_skill_analise_desenhos_delpi.md](./melhorias/playbook_skill_analise_desenhos_delpi.md) (`drawing-analysis-delpi`)  
 **Pré-requisitos:** [Onda 11](./inteligencia-chat-onda-11-paridade-assistentes.md), [arquitetura chat base](../architecture/chat-intelligence-base.md), sync GPT_instructions ([coverage map](../knowledge/gpt-instructions-coverage-map.md))
@@ -175,6 +175,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app \\
 | Data | Alteração |
 |------|-----------|
 | 2026-05-29 | Criação: backlog Onda 12 a partir de paridade com ChatGPT DELPI (análise PDF); skill herdável na camada base. |
+| 2026-05-31 | Estágio `drawing_analysis` no pipeline; smoke E2E HTTP; `drawingAnalysisExport` em `intelligence`. |
 
 ---
 

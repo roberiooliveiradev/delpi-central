@@ -524,6 +524,10 @@ class ChatTurnPreparationService:
                 if "canvas" not in pipeline_stages:
                     pipeline_stages.append("canvas")
 
+        if isinstance(tool_context, dict) and tool_context.get("drawingAnalysisMode"):
+            if "drawing_analysis" not in pipeline_stages:
+                pipeline_stages.append("drawing_analysis")
+
         pipeline_stages.append("post_tool")
 
         resolved_skills = workspace_context.get("skills") or {}
