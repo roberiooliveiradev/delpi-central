@@ -176,12 +176,23 @@ def _validate_chat_e2e(token: str) -> list[str]:
     meta = system_call.get("metadata") or {}
 
     if meta.get("ok"):
-        print("OK chat: tool executada com sucesso")
+        preview = str(meta.get("humanizedSummary") or meta.get("responsePreview") or "")
+        if "SB1" in preview.upper():
+            print("OK chat: tool executada com sucesso (SB1 na resposta)")
+        else:
+            print("OK chat: tool executada com sucesso")
     else:
-        print(
-            "OK chat: roteamento e tool corretos "
-            f"(execução ok={meta.get('ok')}, status={meta.get('statusCode')})"
-        )
+        answer = str(payload.get("answer") or "").lower()
+        if "protheus" in answer or "erp indispon" in answer or "dicionário" in answer:
+            print(
+                "OK chat: roteamento correto + mensagem de ERP indisponível "
+                f"(status={meta.get('statusCode')})",
+            )
+        else:
+            print(
+                "OK chat: roteamento e tool corretos "
+                f"(execução ok={meta.get('ok')}, status={meta.get('statusCode')})",
+            )
 
     return errors
 
@@ -205,7 +216,7 @@ def main() -> int:
         return 1 if failed else 0
 
     # API-delpi: rota existe (pode falhar se SQL Server indisponível)
-    api_path = "/apps/api-delpi/system/tables/search?description=produto&page=1&limit=3"
+    api_path = "/apps/api-delpi/system/tables/search?description=produto&page=1&limit=5"
     try:
         request = urllib.request.Request(
             f"{_BASE_URL}{api_path}",
@@ -213,14 +224,40 @@ def main() -> int:
         )
         with urllib.request.urlopen(request, timeout=120) as response:
             payload = json.loads(response.read().decode("utf-8"))
-        if payload.get("success") is True or isinstance(payload.get("data"), list):
-            print(f"OK API: GET {api_path}")
+
+        data = payload.get("data") if isinstance(payload, dict) else None
+        results = []
+
+        if isinstance(data, dict):
+            results = data.get("results") or []
+        elif isinstance(data, list):
+            results = data
+
+        if payload.get("success") is True and results:
+            codes = [
+                str(row.get("X2_ARQUIVO") or row.get("table_name") or "")
+                for row in results
+                if isinstance(row, dict)
+            ]
+
+            if any(code.upper() == "SB1" for code in codes):
+                print(f"OK API: GET {api_path} (SB1 presente)")
+            else:
+                print(
+                    f"OK API: GET {api_path} ({len(results)} tabela(s), SB1 não no top)",
+                )
+        elif payload.get("success") is True:
+            print(f"OK API: GET {api_path} (sem resultados)")
         else:
             print(f"WARN API: resposta inesperada {str(payload)[:120]}", file=sys.stderr)
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
         if exc.code in {400, 500, 503} and ("banco" in body.lower() or "timeout" in body.lower()):
-            print(f"WARN API: rota alcançada, DB indisponível (HTTP {exc.code})", file=sys.stderr)
+            print(
+                f"WARN API: rota alcançada, DB indisponível (HTTP {exc.code}). "
+                "Ver docs/testing/smoke-system-metadata-homologacao.md",
+                file=sys.stderr,
+            )
         else:
             print(f"FAIL API: HTTP {exc.code} {body[:200]}", file=sys.stderr)
             failed += 1

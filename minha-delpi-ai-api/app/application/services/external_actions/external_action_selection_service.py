@@ -2302,19 +2302,14 @@ class ExternalActionSelectionService:
         wants_billing = any(
             term in normalized for term in ("faturamento", "billing", "faturado")
         )
-        wants_sales = any(
+        wants_open_orders = any(
             term in normalized
-            for term in (
-                "venda",
-                "vendas",
-                "carteira",
-                "pedidos em aberto",
-                "pedido em aberto",
-            )
-        ) or (
-            "faturamento" in normalized
-            and not wants_billing
+            for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
         )
+        wants_sales = (
+            any(term in normalized for term in ("venda", "vendas"))
+            or ("faturamento" in normalized and not wants_billing)
+        ) and not wants_open_orders
         wants_product_summary = any(
             term in normalized
             for term in (
@@ -2342,10 +2337,6 @@ class ExternalActionSelectionService:
                 "informações completas",
                 "tudo sobre o produto",
             )
-        )
-        wants_open_orders = any(
-            term in normalized
-            for term in ("carteira", "pedidos em aberto", "pedido em aberto", "open-orders")
         )
         wants_structure = any(
             term in normalized

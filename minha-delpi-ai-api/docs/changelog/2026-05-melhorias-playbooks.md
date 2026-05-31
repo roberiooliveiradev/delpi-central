@@ -213,6 +213,8 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Testes | Regressão + `test_select_system_table_search_with_article_qual_a_tabela` |
 | Apresentação | `_present_system_tables_search` (lista SX2 com relevância) |
 | Erros | `systemMetadataQueryFailed` quando ERP/SQL indisponível; `error` no metadata da tool |
+| Fix | Carteira de pedidos em aberto não cai mais em `/sales` genérico (`wants_open_orders` vs `wants_sales`) |
+| Doc | [smoke-system-metadata-homologacao.md](../testing/smoke-system-metadata-homologacao.md) |
 
 ## Autoajuda — Fase 3 (geração do catálogo)
 

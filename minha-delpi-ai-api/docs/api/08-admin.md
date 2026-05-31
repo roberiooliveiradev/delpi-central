@@ -520,3 +520,11 @@ Perfil do usuário no chat:
 SMOKE_BASE_URL=http://localhost python3 scripts/smoke_identity_profile.py
 ```
 
+Metadados Protheus (tabelas SX2 — «qual a tabela de produtos?»):
+
+```bash
+SMOKE_BASE_URL=http://localhost PYTHONPATH=. python3 scripts/smoke_system_table_routing.py
+```
+
+Checklist e diagnóstico de DB: [smoke-system-metadata-homologacao.md](../testing/smoke-system-metadata-homologacao.md).
+

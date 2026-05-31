@@ -267,6 +267,8 @@ docker compose -f infra/docker-compose.dev.yml exec -T minha-delpi-ai-api pytest
 | 2026-05-27 | `223c8438` | Limite documento 2M chars |
 | 2026-05-27 | `e1a99363` | Auditoria rotas: KPI dept, summary/analyser, billing, LMP dashboard, Transforma+, sistema Protheus, roadmap |
 | 2026-05-27 | `9895bd43` | Fix: «grupo 1008» → `/products/search`, não `/analyser` |
+| 2026-05-31 | `db38c4ed` | Roteamento «qual a tabela de produtos?» → `/system/tables/search` |
+| 2026-05-31 | `f311dd43` | Apresentação SX2 + mensagem ERP indisponível + smoke E2E |
 
 ---
 
