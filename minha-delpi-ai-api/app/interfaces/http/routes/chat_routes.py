@@ -254,6 +254,43 @@ def get_chat_capabilities():
     return jsonify(_get_chat_capabilities_from_request()), 200
 
 
+@chat_bp.get("/assistant/catalog")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_assistant_catalog():
+    from uuid import UUID
+
+    from app.application.services.chat_assistant_catalog_service import (
+        ChatAssistantCatalogService,
+    )
+
+    query = (request.args.get("q") or request.args.get("query") or "").strip()
+    agent_id = (request.args.get("agentId") or request.args.get("agent_id") or "").strip()
+
+    try:
+        limit = int(request.args.get("limit", 24))
+    except (TypeError, ValueError):
+        return bad_request("limit must be a number")
+
+    if limit < 1 or limit > 50:
+        return bad_request("limit must be between 1 and 50")
+
+    try:
+        user_id = UUID(str(g.current_user.sub))
+    except ValueError:
+        return bad_request("invalid user id")
+
+    payload = ChatAssistantCatalogService(
+        agent_repository=PostgresChatAgentRepository(),
+    ).build_response(
+        user_id=user_id,
+        query=query or None,
+        agent_id=agent_id or None,
+        limit=limit,
+    )
+
+    return jsonify(payload), 200
+
+
 @chat_bp.get("/agents")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def list_agents():

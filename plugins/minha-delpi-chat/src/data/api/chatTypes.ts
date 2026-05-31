@@ -206,6 +206,52 @@ export type ChatFollowUpSuggestion = {
   query: string;
 };
 
+export type AssistantCatalogFeature = {
+  id: string;
+  title: string;
+  category: string;
+  status?: string;
+  summary?: string;
+  requiresAgent?: boolean;
+  helpTopicId?: string | null;
+  examples?: string[];
+  howToUse?: string[];
+  relatedFeatures?: string[];
+};
+
+export type AssistantCatalogQuickPrompt = {
+  id: string;
+  label: string;
+  query: string;
+};
+
+export type AssistantCatalogCategory = {
+  id: string;
+  label: string;
+  features: AssistantCatalogFeature[];
+};
+
+export type AssistantCatalogAvailability = {
+  availableNow: AssistantCatalogFeature[];
+  requiresAgent: AssistantCatalogFeature[];
+  requiresPermission: AssistantCatalogFeature[];
+  disabled: AssistantCatalogFeature[];
+};
+
+export type AssistantCatalogResponse = {
+  version: string;
+  query?: string | null;
+  webSearchEnabled: boolean;
+  agentId?: string | null;
+  agentName?: string | null;
+  features: AssistantCatalogFeature[];
+  categories: AssistantCatalogCategory[];
+  availability: AssistantCatalogAvailability;
+  quickPrompts: AssistantCatalogQuickPrompt[];
+  categoryLabels: Record<string, string>;
+  releaseNotesPreview?: string | null;
+};
+
 export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];

@@ -140,6 +140,14 @@ Implementação incremental dos playbooks além da Fase 5 de contexto/assertivid
 | Serviço | `ChatWebSearchErpCrossReferenceService` — seção «Cruzamento ERP × web» |
 | Pipeline | `ChatToolContextService` mantém fontes web em turno híbrido |
 
+## Autoajuda — Fase 4 (painel de ajuda)
+
+| Entrega | Detalhe |
+|---------|---------|
+| API | `GET /chat/assistant/catalog?q=&agentId=` — catálogo, busca e buckets de disponibilidade |
+| Serviço | `ChatAssistantCatalogService` |
+| MFE | `ChatHelpPanel`, botão `?` na topbar, exemplos enviam pergunta ao chat |
+
 ## Autoajuda — Fase 3 (validação e H1–H10)
 
 | Entrega | Detalhe |

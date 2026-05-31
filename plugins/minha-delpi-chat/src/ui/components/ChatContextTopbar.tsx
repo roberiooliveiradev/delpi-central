@@ -1,5 +1,6 @@
 import {
   Bot,
+  CircleHelp,
   Folder,
   MessageSquare,
   MoreHorizontal,
@@ -27,6 +28,7 @@ type ChatContextTopbarProps = {
   onManageAgents?: () => void;
   onClearAgent?: () => void;
   onOpenSidebar?: () => void;
+  onOpenHelp?: () => void;
 };
 
 export function ChatContextTopbar({
@@ -41,6 +43,7 @@ export function ChatContextTopbar({
   onManageAgents,
   onClearAgent,
   onOpenSidebar,
+  onOpenHelp,
 }: ChatContextTopbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -76,6 +79,18 @@ export function ChatContextTopbar({
       </div>
 
       <div className="mdc-chat-context-topbar__end">
+        {onOpenHelp ? (
+          <button
+            type="button"
+            className="mdc-chat-context-topbar__help-trigger"
+            aria-label="Ajuda do chat"
+            title="Ajuda do chat"
+            onClick={onOpenHelp}
+          >
+            <CircleHelp size={18} aria-hidden="true" />
+          </button>
+        ) : null}
+
         {onOpenAdmin && mode === "general" ? (
           <button type="button" onClick={onOpenAdmin}>
             Administração

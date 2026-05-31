@@ -18,6 +18,7 @@ import type {
   ChatAgentStats,
   ChatProjectShare,
   ChatDirectoryUser,
+  AssistantCatalogResponse,
   ChatArtifact,
   ChatAttachment,
   ChatMessage,
@@ -153,6 +154,36 @@ export async function getChatCapabilities(
   });
 
   return parseJsonResponse<ChatCapabilities>(response);
+}
+
+export async function getAssistantCatalog(
+  options: ChatApiOptions & { query?: string; agentId?: string; limit?: number } = {},
+): Promise<AssistantCatalogResponse> {
+  const params = new URLSearchParams();
+
+  if (options.query?.trim()) {
+    params.set("q", options.query.trim());
+  }
+
+  if (options.agentId?.trim()) {
+    params.set("agentId", options.agentId.trim());
+  }
+
+  if (typeof options.limit === "number") {
+    params.set("limit", String(options.limit));
+  }
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `${API_BASE_URL}/chat/assistant/catalog?${queryString}`
+    : `${API_BASE_URL}/chat/assistant/catalog`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AssistantCatalogResponse>(response);
 }
 
 

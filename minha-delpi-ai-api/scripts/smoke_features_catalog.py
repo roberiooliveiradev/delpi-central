@@ -64,6 +64,24 @@ def main() -> int:
     else:
         print("OK resolve «o que mudou?»")
 
+    from uuid import uuid4
+
+    from app.application.services.chat_assistant_catalog_service import (
+        ChatAssistantCatalogService,
+    )
+
+    catalog_payload = ChatAssistantCatalogService(agent_repository=None).build_response(
+        user_id=uuid4(),
+        query="estoque",
+        limit=6,
+    )
+
+    if not catalog_payload.get("features") or not catalog_payload.get("quickPrompts"):
+        print(f"FAIL assistant catalog API shape ({catalog_payload.keys()})", file=sys.stderr)
+        failed += 1
+    else:
+        print("OK assistant catalog service (Fase 4)")
+
     if failed:
         return 1
 

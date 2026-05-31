@@ -1,0 +1,219 @@
+import { CircleHelp, Search, X } from "lucide-react";
+import { useMemo } from "react";
+
+import type {
+  AssistantCatalogFeature,
+  AssistantCatalogResponse,
+} from "../../data/api/chatTypes";
+import { ModalPortal } from "./ModalPortal";
+
+import "./ChatHelpPanel.css";
+
+type ChatHelpPanelProps = {
+  open: boolean;
+  catalog: AssistantCatalogResponse | null;
+  loading: boolean;
+  error: string | null;
+  searchQuery: string;
+  onSearchQueryChange: (value: string) => void;
+  onClose: () => void;
+  onTryPrompt: (query: string) => void;
+};
+
+function resolveAvailabilityLabel(
+  feature: AssistantCatalogFeature,
+  catalog: AssistantCatalogResponse | null,
+): { text: string; tone: "ok" | "warn" | "muted" } {
+  if (!catalog) {
+    return { text: "", tone: "muted" };
+  }
+
+  const id = feature.id;
+  const buckets = catalog.availability;
+
+  if (buckets.availableNow.some((item) => item.id === id)) {
+    return { text: "Disponível agora", tone: "ok" };
+  }
+
+  if (buckets.disabled.some((item) => item.id === id)) {
+    return { text: "Desligado neste ambiente", tone: "warn" };
+  }
+
+  if (buckets.requiresPermission.some((item) => item.id === id)) {
+    return { text: "Requer permissão ou actions", tone: "warn" };
+  }
+
+  if (buckets.requiresAgent.some((item) => item.id === id) || feature.requiresAgent) {
+    return { text: "Use um agente com API", tone: "warn" };
+  }
+
+  return { text: "Disponível", tone: "ok" };
+}
+
+function FeatureCard({
+  feature,
+  catalog,
+  onTryPrompt,
+}: {
+  feature: AssistantCatalogFeature;
+  catalog: AssistantCatalogResponse | null;
+  onTryPrompt: (query: string) => void;
+}) {
+  const badge = resolveAvailabilityLabel(feature, catalog);
+  const examples = (feature.examples ?? []).slice(0, 3);
+
+  return (
+    <article className="mdc-chat-help-panel__card">
+      <h3>{feature.title}</h3>
+      {badge.text ? (
+        <em className={`mdc-chat-help-panel__badge mdc-chat-help-panel__badge--${badge.tone}`}>
+          {badge.text}
+        </em>
+      ) : null}
+      {feature.summary ? <p>{feature.summary}</p> : null}
+      {examples.length > 0 ? (
+        <div className="mdc-chat-help-panel__examples">
+          {examples.map((example) => (
+            <button
+              key={example}
+              type="button"
+              onClick={() => onTryPrompt(example)}
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+export function ChatHelpPanel({
+  open,
+  catalog,
+  loading,
+  error,
+  searchQuery,
+  onSearchQueryChange,
+  onClose,
+  onTryPrompt,
+}: ChatHelpPanelProps) {
+  const sections = useMemo(() => {
+    if (!catalog) {
+      return [];
+    }
+
+    if (catalog.categories.length > 0) {
+      return catalog.categories;
+    }
+
+    return [
+      {
+        id: "all",
+        label: "Funcionalidades",
+        features: catalog.features,
+      },
+    ];
+  }, [catalog]);
+
+  if (!open) {
+    return null;
+  }
+
+  const agentHint = catalog?.agentName
+    ? `Contexto: agente ${catalog.agentName}`
+    : catalog?.agentId
+      ? "Contexto: agente selecionado"
+      : "Sem agente — algumas consultas pedem escolher um agente.";
+
+  return (
+    <ModalPortal>
+      <div className="mdc-chat-help-backdrop" onClick={onClose}>
+        <aside
+          className="mdc-chat-help-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="mdc-chat-help-title"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <header className="mdc-chat-help-panel__header">
+            <div>
+              <h2 id="mdc-chat-help-title" className="mdc-chat-help-panel__title">
+                <CircleHelp size={18} aria-hidden="true" />
+                <span>Ajuda do chat</span>
+              </h2>
+              <p>{agentHint}</p>
+            </div>
+            <button
+              type="button"
+              className="mdc-chat-help-panel__close"
+              aria-label="Fechar ajuda"
+              onClick={onClose}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </header>
+
+          <div className="mdc-chat-help-panel__search">
+            <div className="mdc-chat-help-panel__search-wrap">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={searchQuery}
+                placeholder="Buscar funcionalidade (ex.: estoque, gráfico)"
+                aria-label="Buscar na ajuda"
+                onChange={(event) => onSearchQueryChange(event.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="mdc-chat-help-panel__body">
+            {catalog?.quickPrompts?.length ? (
+              <div className="mdc-chat-help-panel__quick">
+                {catalog.quickPrompts.map((prompt) => (
+                  <button
+                    key={prompt.id}
+                    type="button"
+                    onClick={() => onTryPrompt(prompt.query)}
+                  >
+                    {prompt.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {loading ? (
+              <p className="mdc-chat-help-panel__status">Carregando catálogo…</p>
+            ) : null}
+
+            {error ? (
+              <p className="mdc-chat-help-panel__status mdc-chat-help-panel__status--error">
+                {error}
+              </p>
+            ) : null}
+
+            {!loading && !error
+              ? sections.map((section) => (
+                  <section key={section.id}>
+                    <h3 className="mdc-chat-help-panel__section-title">{section.label}</h3>
+                    {section.features.map((feature) => (
+                      <FeatureCard
+                        key={feature.id}
+                        feature={feature}
+                        catalog={catalog}
+                        onTryPrompt={onTryPrompt}
+                      />
+                    ))}
+                  </section>
+                ))
+              : null}
+
+            {catalog?.releaseNotesPreview && !searchQuery.trim() ? (
+              <div className="mdc-chat-help-panel__release">{catalog.releaseNotesPreview}</div>
+            ) : null}
+          </div>
+        </aside>
+      </div>
+    </ModalPortal>
+  );
+}

@@ -12,6 +12,9 @@
 |---|---|---|
 | GET | `/chat/status` | `chat.access` |
 | GET | `/chat/capabilities` | `chat.access` |
+| GET | `/chat/assistant/catalog` | `chat.access` |
+
+Query opcional em `/chat/assistant/catalog`: `q` (busca), `agentId` (disponibilidade no agente), `limit` (1–50).
 
 ## Chat — Sessões e mensagens
 

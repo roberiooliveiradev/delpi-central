@@ -1152,10 +1152,9 @@ Motivos se negativo:
 
 ### Fase 4 — UI de ajuda
 
-- Criar painel de ajuda.
-- Criar busca de funcionalidades.
-- Criar cards e guias rápidos.
-- Criar botão `?`.
+- [x] `GET /chat/assistant/catalog` — busca, categorias, disponibilidade e atalhos.
+- [x] Painel lateral `ChatHelpPanel` no MFE (busca, cards, exemplos clicáveis).
+- [x] Botão `?` na topbar (`ChatContextTopbar`).
 
 ### Fase 5 — Ajuda inteligente
 

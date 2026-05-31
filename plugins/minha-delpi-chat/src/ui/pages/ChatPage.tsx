@@ -10,6 +10,7 @@ import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatContextBar, type ChatContextChip } from "../components/ChatContextBar";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
+import { ChatHelpPanel } from "../components/ChatHelpPanel";
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
@@ -23,6 +24,7 @@ import {
   deleteChatSource,
   downloadChatAttachment,
   downloadChatSource,
+  getAssistantCatalog,
   getChatCapabilities,
   listProjectSources,
   updateChatArtifact,
@@ -50,7 +52,10 @@ import {
 } from "../../navigation/chatRoutes";
 import { navigateChatHref } from "../../navigation/chatNavigation";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
-import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
+import type {
+  AssistantCatalogResponse,
+  ChatCanvasOpenPayload,
+} from "../../data/api/chatTypes";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
@@ -93,6 +98,11 @@ export function ChatPage({
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const requestedAgentId = activeAgentPageId ?? contextAgentId ?? null;
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
+  const [helpPanelOpen, setHelpPanelOpen] = useState(false);
+  const [helpSearchQuery, setHelpSearchQuery] = useState("");
+  const [helpCatalog, setHelpCatalog] = useState<AssistantCatalogResponse | null>(null);
+  const [helpCatalogLoading, setHelpCatalogLoading] = useState(false);
+  const [helpCatalogError, setHelpCatalogError] = useState<string | null>(null);
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
     if (!payload.markdown.trim()) {
@@ -257,6 +267,43 @@ export function ChatPage({
   const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
   const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
   const contextAgent = agents.find((agent) => agent.id === contextAgentId);
+  const helpAgentId = contextAgentId ?? conversationAgentId ?? activeAgentPageId ?? undefined;
+
+  useEffect(() => {
+    if (!helpPanelOpen) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setHelpCatalogLoading(true);
+      setHelpCatalogError(null);
+
+      void getAssistantCatalog({
+        getAccessToken,
+        query: helpSearchQuery,
+        agentId: helpAgentId,
+      })
+        .then((payload) => {
+          setHelpCatalog(payload);
+        })
+        .catch((error: unknown) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Não foi possível carregar a ajuda do chat.";
+
+          setHelpCatalogError(message);
+          setHelpCatalog(null);
+        })
+        .finally(() => {
+          setHelpCatalogLoading(false);
+        });
+    }, 280);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [getAccessToken, helpAgentId, helpPanelOpen, helpSearchQuery]);
   const selectedProjectSessions = selectedProjectId
     ? sessions.filter((session) => session.project_id === selectedProjectId)
     : [];
@@ -1007,6 +1054,19 @@ export function ChatPage({
     await sendMessage({ content: trimmed });
   }
 
+  async function handleHelpTryPrompt(query: string) {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      return;
+    }
+
+    setHelpPanelOpen(false);
+    setHelpSearchQuery("");
+    setDraft("");
+    await sendMessage({ content: trimmed });
+  }
+
   const hasActiveConversation =
     messages.length > 0 ||
     isStreamingActiveSession ||
@@ -1348,6 +1408,7 @@ export function ChatPage({
                 : undefined
             }
             onOpenAdmin={openAdmin}
+            onOpenHelp={() => setHelpPanelOpen(true)}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;
@@ -1640,6 +1701,22 @@ export function ChatPage({
           onChange={setCanvasDocument}
           onSave={saveCanvasDocument}
           onClose={() => setCanvasDocument(null)}
+        />
+
+        <ChatHelpPanel
+          open={helpPanelOpen}
+          catalog={helpCatalog}
+          loading={helpCatalogLoading}
+          error={helpCatalogError}
+          searchQuery={helpSearchQuery}
+          onSearchQueryChange={setHelpSearchQuery}
+          onClose={() => {
+            setHelpPanelOpen(false);
+            setHelpSearchQuery("");
+          }}
+          onTryPrompt={(query) => {
+            void handleHelpTryPrompt(query);
+          }}
         />
       </section>
     </main>

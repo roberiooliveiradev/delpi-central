@@ -109,6 +109,10 @@
   padding: 0 0.55rem;
 }
 
+.mdc-chat-context-topbar__help-trigger {
+  padding: 0 !important;
+}
+
 .mdc-chat-context-topbar__end > button,
 .mdc-chat-context-topbar__menu-trigger {
   display: inline-flex;
