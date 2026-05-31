@@ -95,7 +95,7 @@ export function AuditFiltersPanel({
       <div className="mdc-audit-filters__actions">
         <button
           type="button"
-          className="mdc-admin-btn mdc-admin-btn--primary"
+          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
           disabled={!reloadAuditLogs}
           onClick={() => {
             void reloadAuditLogs?.(filters);
@@ -106,7 +106,7 @@ export function AuditFiltersPanel({
 
         <button
           type="button"
-          className="mdc-admin-btn"
+          className="mdc-chat-ws-outline-btn"
           disabled={!exportAuditLogs || !canExport}
           title={canExport ? "Exportar JSON" : "Sem permissão para exportar"}
           onClick={() => {
@@ -118,7 +118,7 @@ export function AuditFiltersPanel({
 
         <button
           type="button"
-          className="mdc-admin-btn"
+          className="mdc-chat-ws-outline-btn"
           disabled={!exportAuditLogsCsv || !canExport}
           title={canExport ? "Exportar CSV" : "Sem permissão para exportar"}
           onClick={() => {

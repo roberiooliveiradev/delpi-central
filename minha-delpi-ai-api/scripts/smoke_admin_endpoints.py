@@ -83,6 +83,7 @@ def main() -> int:
         ("GET", "/admin/responses/evaluations/summary", "total"),
         ("GET", "/admin/security/summary?hours=24", "blockedCount"),
         ("GET", "/admin/rbac/summary", "roles"),
+        ("GET", "/admin/audit-logs?limit=1&offset=0", "items"),
     ]
 
     for method, path, required_key in checks:

@@ -17,7 +17,7 @@ import type {
 
 import { AuditFiltersPanel } from "./AuditFiltersPanel";
 import { AuditPagination } from "./AuditPagination";
-import { AuditSummaryPanel } from "./AuditSummaryPanel";
+import { AuditSummaryStrip } from "./AuditSummaryStrip";
 import { AuditTablePanel } from "./AuditTablePanel";
 import { AuditTimelinePanel } from "./AuditTimelinePanel";
 import { DEFAULT_AUDIT_FILTERS, type AuditFilters } from "./auditTypes";
@@ -220,22 +220,32 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
   return (
     <section className="mdc-admin-audit-tab">
-      <article className="mdc-admin-panel">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-panel__intro">
-            <p className="mdc-chat-eyebrow">Auditoria</p>
-            <h2>Eventos administrativos</h2>
-            <p>
-              Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade
-              operacional.
-            </p>
-          </div>
+      <header className="mdc-admin-audit-tab__toolbar mdc-admin-tab-header">
+        <div className="mdc-admin-page-header">
+          <p className="mdc-chat-eyebrow">Auditoria</p>
+          <h2>Eventos administrativos</h2>
+          <p>
+            Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade
+            operacional.
+          </p>
+        </div>
 
-          <span className="mdc-admin-badge mdc-admin-badge--muted">
-            {response?.pagination.total ?? 0} evento(s)
-          </span>
-        </header>
-      </article>
+        <AuditSummaryStrip
+          logs={logs}
+          total={response?.pagination.total}
+          timelineDayCount={timelineDays.length}
+          isLoading={isLoading}
+        />
+
+        <button
+          type="button"
+          className="mdc-chat-ws-outline-btn"
+          disabled={isLoading}
+          onClick={() => void loadLogs(filters, response?.pagination.offset ?? 0)}
+        >
+          {isLoading ? "Atualizando..." : "Atualizar"}
+        </button>
+      </header>
 
       {error ? <p className="mdc-admin-audit-error">{error}</p> : null}
 
@@ -247,8 +257,6 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
         exportAuditLogs={handleExport}
         exportAuditLogsCsv={handleExportCsv}
       />
-
-      <AuditSummaryPanel auditLogs={logs} />
 
       <AuditTimelinePanel
         days={timelineDays}

@@ -512,4 +512,11 @@ cd minha-delpi-ai-api
 SMOKE_BASE_URL=http://localhost python scripts/smoke_admin_endpoints.py
 ```
 
-Verifica: `GET /admin/knowledge/documents` (campo `summary`), `guidelines`, `metrics/summary`, `agents/specialized`, `responses/evaluations/summary`, `security/summary`, `rbac/summary` e `POST /admin/agent/simulate`.
+Verifica: `GET /admin/knowledge/documents` (campo `summary`), `guidelines`, `metrics/summary`, `agents/specialized`, `responses/evaluations/summary`, `security/summary`, `rbac/summary`, `audit-logs` e `POST /admin/agent/simulate`.
+
+Perfil do usuário no chat:
+
+```bash
+SMOKE_BASE_URL=http://localhost python3 scripts/smoke_identity_profile.py
+```
+
