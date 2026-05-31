@@ -827,7 +827,6 @@ export function ChatMessageList({
       pinAlignmentAppliedForRef.current = null;
 
       if (shouldScroll) {
-        pendingScrollToResponseRef.current = true;
         userScrollIntentRef.current = false;
 
         requestAnimationFrame(() => {
@@ -838,8 +837,11 @@ export function ChatMessageList({
               return;
             }
 
-            scrollToBottom("auto");
-            pendingScrollToResponseRef.current = false;
+            if (scrollResponseStartIntoView(currentList)) {
+              pendingScrollToResponseRef.current = false;
+            } else {
+              pendingScrollToResponseRef.current = true;
+            }
 
             updateScrollAffordances();
           });
