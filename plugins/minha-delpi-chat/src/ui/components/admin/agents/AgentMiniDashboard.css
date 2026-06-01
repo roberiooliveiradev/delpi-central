@@ -63,7 +63,7 @@
 }
 
 .mdc-agent-mini-dashboard--compact .mdc-rich-chart__ux-toolbar,
-.mdc-agent-mini-dashboard--compact .mdc-rich-chart__type-toggle {
+.mdc-agent-mini-dashboard--compact .mdc-rich-chart__toolbar-row--types {
   display: none;
 }
 

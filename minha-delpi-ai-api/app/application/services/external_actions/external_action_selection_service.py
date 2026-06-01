@@ -2406,8 +2406,8 @@ class ExternalActionSelectionService:
         )
         wants_suppliers = any(
             term in normalized
-            for term in ("fornecedor", "fornecedore", "supplier")
-        )
+            for term in ("fornecedor", "fornecedore", "fornece", "supplier")
+        ) or bool(re.search(r"\bfornece\b", normalized))
         wants_pricing = any(
             term in normalized
             for term in ("preço", "preco", "pricing", "tabela de preço", "tabela de preco", "quanto custa", "custo do")

@@ -55,6 +55,6 @@
   margin-bottom: 0.25rem;
 }
 
-.mdc-rich-dashboard__panel-body .mdc-rich-chart__type-toggle {
+.mdc-rich-dashboard__panel-body .mdc-rich-chart__toolbar-row--types {
   display: none;
 }

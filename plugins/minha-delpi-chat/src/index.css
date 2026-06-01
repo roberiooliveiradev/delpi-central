@@ -51,6 +51,11 @@
   --mdc-accent: var(--mdc-primary);
   --mdc-warning: var(--warning, #d97706);
 
+  /* Aliases usados em componentes legados (herdam claro/escuro via tokens acima). */
+  --mdc-muted: var(--mdc-text-muted);
+  --mdc-border: var(--mdc-control-border);
+  --mdc-surface-elevated: var(--mdc-bg-soft);
+
   --mdc-trend-up: var(--mdc-success);
   --mdc-trend-down: var(--mdc-danger);
   --mdc-trend-stable: var(--mdc-text-muted);
@@ -219,8 +224,19 @@
   min-height: 100%;
   color: var(--mdc-text);
   font-family: var(--mdc-font-family);
+  color-scheme: light;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+:root[data-theme="dark"] .minha-delpi-chat {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .minha-delpi-chat {
+    color-scheme: dark;
+  }
 }
 
 .minha-delpi-chat button,

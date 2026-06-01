@@ -257,100 +257,107 @@ export function ChatRichChart({
         ) : (
           <span className="mdc-rich-chart__title">{title}</span>
         )}
-        <div className="mdc-rich-chart__actions">
-          {data.length > 0 && activeChartType !== "heatmap" ? (
-            <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
-              {!periodCompareEnabled ? (
-                <label className="mdc-rich-chart__ux-field">
-                  <span>Top</span>
-                  <select
-                    value={topFilter}
-                    onChange={(event) =>
-                      setTopFilter(event.target.value as ChartTopFilter)
-                    }
-                  >
-                    <option value="all">Todos</option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                  </select>
-                </label>
-              ) : null}
-              {temporalAxis && !periodCompareEnabled ? (
-                <label className="mdc-rich-chart__ux-field">
-                  <span>Janela</span>
-                  <select
-                    value={zoomWindow}
-                    onChange={(event) =>
-                      setZoomWindow(event.target.value as ChartZoomWindow)
-                    }
-                  >
-                    <option value="all">Tudo</option>
-                    <option value="6">6</option>
-                    <option value="12">12</option>
-                    <option value="24">24</option>
-                  </select>
-                </label>
-              ) : null}
-              {periodCompareSpec ? (
-                <label className="mdc-rich-chart__ux-toggle">
-                  <input
-                    type="checkbox"
-                    checked={periodCompareEnabled}
-                    onChange={(event) => {
-                      const enabled = event.target.checked;
-                      setPeriodCompareEnabled(enabled);
-
-                      if (enabled) {
-                        setChartTypeOverride("grouped_bar");
+        <div className="mdc-rich-chart__toolbar">
+          <div className="mdc-rich-chart__toolbar-row mdc-rich-chart__toolbar-row--controls">
+            {data.length > 0 && activeChartType !== "heatmap" ? (
+              <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
+                {!periodCompareEnabled ? (
+                  <label className="mdc-rich-chart__ux-field">
+                    <span>Top</span>
+                    <select
+                      value={topFilter}
+                      onChange={(event) =>
+                        setTopFilter(event.target.value as ChartTopFilter)
                       }
-                    }}
-                  />
-                  <span>Comparar períodos</span>
-                </label>
-              ) : null}
-            </div>
-          ) : null}
-          {data.length > 0 ? (
-            <div
-              className="mdc-rich-presentation__format-toggle mdc-rich-chart__type-toggle"
-              role="group"
-              aria-label="Tipo de gráfico"
-            >
-              {CHART_TYPE_ALTERNATES.map((token) => (
+                    >
+                      <option value="all">Todos</option>
+                      <option value="5">5</option>
+                      <option value="10">10</option>
+                      <option value="20">20</option>
+                    </select>
+                  </label>
+                ) : null}
+                {temporalAxis && !periodCompareEnabled ? (
+                  <label className="mdc-rich-chart__ux-field">
+                    <span>Janela</span>
+                    <select
+                      value={zoomWindow}
+                      onChange={(event) =>
+                        setZoomWindow(event.target.value as ChartZoomWindow)
+                      }
+                    >
+                      <option value="all">Tudo</option>
+                      <option value="6">6</option>
+                      <option value="12">12</option>
+                      <option value="24">24</option>
+                    </select>
+                  </label>
+                ) : null}
+                {periodCompareSpec ? (
+                  <label className="mdc-rich-chart__ux-toggle">
+                    <input
+                      type="checkbox"
+                      checked={periodCompareEnabled}
+                      onChange={(event) => {
+                        const enabled = event.target.checked;
+                        setPeriodCompareEnabled(enabled);
+
+                        if (enabled) {
+                          setChartTypeOverride("grouped_bar");
+                        }
+                      }}
+                    />
+                    <span>Comparar períodos</span>
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="mdc-rich-chart__command-group" role="group" aria-label="Ações do gráfico">
+              <button
+                className="mdc-rich-chart__btn"
+                onClick={exportPng}
+                title="Baixar PNG"
+                type="button"
+              >
+                {downloadReady ? "✓ Salvo" : "↓ PNG"}
+              </button>
+              {onOpenCanvas ? (
                 <button
-                  key={token}
                   type="button"
-                  className={`mdc-rich-chart__toggle-btn${activeChartType === token ? " mdc-rich-chart__toggle-btn--active" : ""}`}
-                  onClick={() =>
-                    setChartTypeOverride((current) => (current === token ? null : token))
-                  }
-                  title={CHART_TYPE_LABELS[token] ?? token}
+                  className="mdc-rich-chart__btn"
+                  onClick={openOnCanvas}
+                  title="Salvar na lousa"
                 >
-                  {CHART_TYPE_LABELS[token] ?? token}
+                  <LayoutPanelLeft size={14} aria-hidden="true" />
+                  Lousa
                 </button>
-              ))}
+              ) : null}
+              <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+            </div>
+          </div>
+          {data.length > 0 ? (
+            <div className="mdc-rich-chart__toolbar-row mdc-rich-chart__toolbar-row--types">
+              <div
+                className="mdc-rich-chart__type-toggle"
+                role="group"
+                aria-label="Tipo de gráfico"
+              >
+                {CHART_TYPE_ALTERNATES.map((token) => (
+                  <button
+                    key={token}
+                    type="button"
+                    className={`mdc-rich-chart__toggle-btn${activeChartType === token ? " mdc-rich-chart__toggle-btn--active" : ""}`}
+                    onClick={() =>
+                      setChartTypeOverride((current) => (current === token ? null : token))
+                    }
+                    title={CHART_TYPE_LABELS[token] ?? token}
+                  >
+                    {CHART_TYPE_LABELS[token] ?? token}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
-          <button
-            className="mdc-rich-chart__btn"
-            onClick={exportPng}
-            title="Baixar PNG"
-          >
-            {downloadReady ? "✓ Salvo" : "↓ PNG"}
-          </button>
-          {onOpenCanvas ? (
-            <button
-              type="button"
-              className="mdc-rich-chart__btn"
-              onClick={openOnCanvas}
-              title="Salvar na lousa"
-            >
-              <LayoutPanelLeft size={14} aria-hidden="true" />
-              Lousa
-            </button>
-          ) : null}
-          <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
         </div>
       </div>
 
