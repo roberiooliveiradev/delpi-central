@@ -105,6 +105,21 @@ class ChatSqlOperationalIntentService:
         if cls._looks_like_aggregate_sql_question(message, normalized):
             return True
 
+        return cls.requires_production_sql_knowledge(message)
+
+    @classmethod
+    def requires_production_sql_knowledge(cls, message: str | None) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if any(marker in normalized for marker in _CATALOG_SEARCH_MARKERS):
+            return False
+
+        if cls._looks_like_aggregate_sql_question(message, normalized):
+            return False
+
         if any(phrase in normalized for phrase in _PRODUCTION_SQL_PHRASES):
             return True
 

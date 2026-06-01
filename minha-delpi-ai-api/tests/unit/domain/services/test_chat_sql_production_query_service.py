@@ -60,3 +60,9 @@ def test_resolve_execute_for_production_tomorrow():
     assert resolution.mode == "execute"
     assert "amanhã" in resolution.title
     assert "CAST(GETDATE()" not in resolution.sql
+
+
+def test_resolve_does_not_match_inventory_below_minimum():
+    assert ChatSqlProductionQueryService.resolve(
+        "Liste os produtos com estoque abaixo do mínimo"
+    ) is None

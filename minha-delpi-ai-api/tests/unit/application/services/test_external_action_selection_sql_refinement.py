@@ -66,3 +66,29 @@ def test_select_action_sql_refinement_adds_filial_column():
     assert selected is not None
     assert "OP.C2_FILIAL AS FILIAL" in selected["arguments"]["body"]["sql"]
     assert "Refinamento da consulta SQL anterior" in selected["reason"]
+
+
+def test_select_action_inventory_below_minimum_uses_sb2010_sql():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.data.execute_readonly_sql",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "summary": "Executar SQL somente leitura",
+                }
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Liste os produtos com estoque abaixo do mínimo",
+        allowed_action_ids=["api_delpi.data.execute_readonly_sql"],
+    )
+
+    assert selected is not None
+    sql = selected["arguments"]["body"]["sql"]
+    assert "SB2010" in sql
+    assert "B1_EMIN" in sql
+    assert "SC2010" not in sql

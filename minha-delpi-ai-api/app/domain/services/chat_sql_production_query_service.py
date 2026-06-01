@@ -54,7 +54,7 @@ class ChatSqlProductionQueryService:
 
     @classmethod
     def resolve(cls, message: str | None) -> SqlProductionResolution | None:
-        if not ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+        if not ChatSqlOperationalIntentService.requires_production_sql_knowledge(message):
             return None
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)

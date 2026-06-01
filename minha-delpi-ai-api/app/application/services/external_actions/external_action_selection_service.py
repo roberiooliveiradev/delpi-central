@@ -143,8 +143,8 @@ class ExternalActionSelectionService:
 
             if not ChatSqlIntentService.is_authoring_request(message):
                 for resolver in (
-                    ChatSqlProductionQueryService,
                     ChatSqlInventoryQueryService,
+                    ChatSqlProductionQueryService,
                 ):
                     resolution = resolver.resolve(message)
 
