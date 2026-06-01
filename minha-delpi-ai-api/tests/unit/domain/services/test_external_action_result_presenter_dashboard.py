@@ -59,15 +59,17 @@ def test_build_dashboard_items_panel_includes_chart_for_efficiency_rows():
         },
         "items": [
             {
-                "branch": "01",
-                "work_order": "OP1",
-                "product_code": "10080077",
+                "filial": "01",
+                "op": "OP1",
+                "produto": "10080077",
+                "tempo_real_horas": 1.5,
                 "eficiencia_percentual": 120.5,
             },
             {
-                "branch": "02",
-                "work_order": "OP2",
-                "product_code": "10080078",
+                "filial": "02",
+                "op": "OP2",
+                "produto": "10080078",
+                "tempo_real_horas": 2.0,
                 "eficiencia_percentual": 88.2,
             },
         ],
@@ -83,3 +85,17 @@ def test_build_dashboard_items_panel_includes_chart_for_efficiency_rows():
     items_panel = next(panel for panel in dashboard["panels"] if panel["id"] == "items")
     assert items_panel["presentation"]["type"] == "table"
     assert items_panel.get("chartPresentation", {}).get("type") == "chart"
+    kpi_labels = {
+        card["label"]
+        for panel in dashboard["panels"]
+        if panel["presentation"]["type"] == "kpi"
+        for card in panel["presentation"]["cards"]
+    }
+    assert "Eficiência ponderada (%)" in kpi_labels
+    assert "Resultado MOD total" in kpi_labels
+    assert "Qtd. de apontamentos" in kpi_labels
+    table_columns = {
+        column["label"] for column in items_panel["presentation"]["columns"]
+    }
+    assert "Eficiência (%)" in table_columns
+    assert "Tempo real (h)" in table_columns

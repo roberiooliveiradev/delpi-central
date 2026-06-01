@@ -356,6 +356,26 @@
         ["total_value", "Valor total"]
       ]
     },
+    "eficienciaFabril": {
+      "detect": {
+        "pathContains": ["eficiencia-fabril"],
+        "anyKeys": ["eficiencia_percentual", "tempo_real_horas"]
+      },
+      "preferredColumns": [
+        ["filial", "Filial"],
+        ["op", "OP"],
+        ["produto", "Produto"],
+        ["centro_trabalho", "Centro de trabalho"],
+        ["operacao", "Operação"],
+        ["nome_operador", "Operador"],
+        ["data_producao", "Data de produção"],
+        ["tempo_real_horas", "Tempo real (h)"],
+        ["tempo_previsto_horas", "Tempo previsto (h)"],
+        ["eficiencia_percentual", "Eficiência (%)"],
+        ["resultado_mod", "Resultado MOD"],
+        ["status_registro", "Status do registro"]
+      ]
+    },
     "production": {
       "detect": {
         "anyKeys": ["production_order", "scheduled_quantity", "produced_quantity"]

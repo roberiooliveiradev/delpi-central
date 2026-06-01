@@ -74,6 +74,32 @@ def test_detect_guide_profile_for_sg2_schema():
     assert profile == "guide"
 
 
+def test_label_for_eficiencia_fabril_summary_and_items():
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("weighted_efficiency_pct") == "Eficiência ponderada (%)"
+    assert service.label_for("total_mod_result") == "Resultado MOD total"
+    assert service.label_for("appointment_count") == "Qtd. de apontamentos"
+    assert service.label_for("tempo_real_horas") == "Tempo real (h)"
+    assert service.label_for("eficiencia_percentual") == "Eficiência (%)"
+
+
+def test_detect_eficiencia_fabril_profile():
+    service = ExternalActionColumnLabelService()
+
+    profile = service.detect_table_profile(
+        {
+            "filial": "01",
+            "op": "24546401001",
+            "eficiencia_percentual": 98.5,
+            "tempo_real_horas": 1.2,
+        },
+        path="/production/eficiencia-fabril/dashboard",
+    )
+
+    assert profile == "eficienciaFabril"
+
+
 def test_preferred_columns_for_guide_profile():
     service = ExternalActionColumnLabelService()
     row = {
