@@ -1110,20 +1110,23 @@ class ChatIntentRouterService:
 
         lowered = message.lower()
 
-        if any(
-            term in lowered
-            for term in (
-                "estoque",
-                "fornecedor",
-                "venda",
-                "compra",
-                "estrutura",
-                "roteiro",
-                "inspeção",
-                "inspecao",
-                "preço",
-                "preco",
+        if (
+            any(
+                term in lowered
+                for term in (
+                    "estoque",
+                    "fornecedor",
+                    "venda",
+                    "compra",
+                    "estrutura",
+                    "roteiro",
+                    "inspeção",
+                    "inspecao",
+                    "preço",
+                    "preco",
+                )
             )
+            or ChatIntentRouterService._mentions_supplier(lowered)
         ):
             return False, ()
 
@@ -1142,6 +1145,10 @@ class ChatIntentRouterService:
         return True, candidates
 
     @staticmethod
+    def _mentions_supplier(lowered: str) -> bool:
+        return "fornecedor" in lowered or bool(re.search(r"\bfornece", lowered))
+
+    @staticmethod
     def _looks_operational(message: str) -> bool:
         lowered = message.lower()
 
@@ -1151,6 +1158,7 @@ class ChatIntentRouterService:
                 "estoque",
                 "produto",
                 "fornecedor",
+                "fornece",
                 "roteiro",
                 "estrutura",
                 "inspeção",
@@ -1195,7 +1203,7 @@ class ChatIntentRouterService:
         if "compra" in lowered:
             return "purchase_lookup"
 
-        if "fornecedor" in lowered:
+        if ChatIntentRouterService._mentions_supplier(lowered):
             return "supplier_lookup"
 
         if "preço" in lowered or "preco" in lowered:

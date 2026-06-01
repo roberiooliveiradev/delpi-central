@@ -22,6 +22,15 @@ def test_classify_operational_stock():
     assert route.requires_tool is False or route.requires_tool is True
 
 
+def test_classify_supplier_question_quem_fornece_not_ambiguous():
+    route = ChatIntentRouterService.classify("quem fornece o produto 10080022?")
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "supplier_lookup"
+    assert route.ambiguous is False
+    assert route.resolved_params == {"productCode": "10080022"}
+
+
 def test_classify_system_metadata_table_question():
     route = ChatIntentRouterService.classify(
         "qual a tabela de produtos?",
