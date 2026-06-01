@@ -15,5 +15,5 @@ class ChatProjectResponse:
     color: str | None
     archived_at: str | None
     metadata: dict | None
-    share_conversation_context: bool = False
     access_role: str
+    share_conversation_context: bool = False
