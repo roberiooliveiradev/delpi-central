@@ -15,10 +15,27 @@
   min-height: 0;
   overflow: hidden;
   grid-template-columns: var(--mdc-sidebar-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .mdc-chat-shell--sidebar-collapsed {
   grid-template-columns: var(--mdc-sidebar-rail) minmax(0, 1fr);
+}
+
+.mdc-chat-shell > .mdc-chat-sidebar {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.mdc-chat-shell > .mdc-chat-view-host {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.mdc-chat-shell > .mdc-chat-sidebar-backdrop {
+  grid-column: 1 / -1;
+  grid-row: 1;
 }
 
 .mdc-chat-main {
@@ -52,6 +69,11 @@
   .mdc-chat-shell,
   .mdc-chat-shell--sidebar-collapsed {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mdc-chat-shell > .mdc-chat-sidebar,
+  .mdc-chat-shell > .mdc-chat-view-host {
+    grid-column: 1;
   }
 
   .mdc-chat-sidebar--collapsed {

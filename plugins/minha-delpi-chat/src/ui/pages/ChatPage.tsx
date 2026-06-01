@@ -1922,6 +1922,8 @@ export function ChatPage({
           {isConversationEmpty ? (
             <section className="mdc-chat-empty-composer">
               {selectedProject ? (
+                <div className="mdc-chat-empty-composer__column mdc-chat-empty-composer__column--project">
+                  <div className="mdc-chat-empty-composer__scroll">
                 <ChatProjectHome
                   project={selectedProject}
                   sessions={selectedProjectSessions}
@@ -2028,6 +2030,8 @@ export function ChatPage({
                     />
                   }
                 />
+                  </div>
+                </div>
               ) : (
                 <div className="mdc-chat-empty-composer__column">
                   <div className="mdc-chat-empty-composer__scroll">

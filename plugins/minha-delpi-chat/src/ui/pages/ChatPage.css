@@ -24,8 +24,9 @@
 }
 
 .mdc-chat-composer-footer {
-  display: grid;
-  grid-template-rows: auto auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   border-top: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
   background: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
@@ -49,7 +50,8 @@
 
 .mdc-chat-empty-composer {
   display: grid;
-  justify-items: stretch;
+  justify-items: center;
+  align-content: stretch;
   min-height: 0;
   height: 100%;
   width: 100%;

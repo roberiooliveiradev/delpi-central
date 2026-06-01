@@ -3,9 +3,17 @@
  */
 
 /* ——— Home vazia ——— */
+.mdc-chat-content-column {
+  width: min(100%, var(--mdc-chat-column-max));
+  max-width: var(--mdc-chat-column-max);
+  margin-inline: auto;
+  box-sizing: border-box;
+}
+
 .mdc-chat-empty-composer {
   width: 100%;
   box-sizing: border-box;
+  justify-items: center;
 }
 
 .mdc-chat-empty-composer__column {
@@ -18,7 +26,14 @@
   min-height: 0;
   margin-inline: auto;
   justify-items: stretch;
+  justify-self: center;
   align-content: stretch;
+}
+
+.mdc-chat-empty-composer__column--project {
+  grid-template-rows: minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .mdc-chat-empty-composer__scroll {
@@ -37,7 +52,8 @@
 }
 
 .mdc-chat-empty-composer__scroll > .mdc-chat-empty-state,
-.mdc-chat-empty-composer__scroll > .mdc-chat-agent-home {
+.mdc-chat-empty-composer__scroll > .mdc-chat-agent-home,
+.mdc-chat-empty-composer__scroll > .mdc-chat-project-home {
   width: 100%;
 }
 
