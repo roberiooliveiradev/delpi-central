@@ -1110,6 +1110,27 @@ class ChatIntentRouterService:
 
         lowered = message.lower()
 
+        sub_intent = ChatIntentRouterService._operational_sub_intent(message)
+
+        if sub_intent and sub_intent != "product_lookup":
+            return False, ()
+
+        if sub_intent == "product_lookup" and any(
+            term in lowered
+            for term in (
+                "me fale",
+                "fale do",
+                "fale sobre",
+                "informacoes sobre",
+                "informações sobre",
+                "dados do produto",
+                "cadastro",
+                "ficha",
+                "resumo do produto",
+            )
+        ):
+            return False, ()
+
         if (
             any(
                 term in lowered

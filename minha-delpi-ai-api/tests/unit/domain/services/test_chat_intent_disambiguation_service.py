@@ -29,3 +29,18 @@ def test_try_build_not_ambiguous_for_quem_fornece():
     )
 
     assert result is None
+
+
+def test_try_build_not_ambiguous_for_home_starter_queries():
+    queries = [
+        "me fale do produto 10080022",
+        "qual o estoque do produto 10080022?",
+        "mostre vendas do produto 10080022",
+        "onde o produto 10080022 é usado?",
+    ]
+
+    for query in queries:
+        assert ChatIntentDisambiguationService.try_build(
+            query,
+            allowed_action_ids=["action-1"],
+        ) is None, query
