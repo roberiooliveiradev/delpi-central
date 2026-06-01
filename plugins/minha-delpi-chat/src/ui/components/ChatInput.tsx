@@ -128,8 +128,9 @@ export function ChatInput({
     showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
   const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
     value,
-    topInset: variant === "dock" ? 96 : 72,
-    maxHeightViewportRatio: 0.25,
+    topInset: variant === "dock" ? 112 : 88,
+    maxHeightViewportRatio: 0.28,
+    maxHeightCapPx: 184,
   });
 
   useEffect(() => {
@@ -457,42 +458,48 @@ export function ChatInput({
           </div>
         ) : null}
 
-        <div className="mdc-chat-input__composer-row">
-          {plusControl}
-
-          <textarea
-            ref={textareaRef}
-            className="mdc-auto-grow-textarea"
-            data-tour="composer-input"
-            value={value}
-            disabled={disabled || isSending}
-            placeholder={placeholder}
-            rows={1}
-            onChange={(event) => {
-              onChange(event.target.value);
-              requestAnimationFrame(() => syncHeight());
-            }}
-            onInput={() => {
-              requestAnimationFrame(() => syncHeight());
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                onSubmit();
-              }
-            }}
-          />
-
-          {showResponseMode ? (
-            <ChatResponseModeSelector
-              modes={responseModes}
-              value={responseMode}
+        <div className="mdc-chat-input__composer-stack">
+          <div className="mdc-chat-input__composer-field">
+            <textarea
+              ref={textareaRef}
+              className="mdc-auto-grow-textarea"
+              data-tour="composer-input"
+              value={value}
               disabled={disabled || isSending}
-              onChange={onResponseModeChange}
+              placeholder={placeholder}
+              rows={1}
+              onChange={(event) => {
+                onChange(event.target.value);
+                requestAnimationFrame(() => syncHeight());
+              }}
+              onInput={() => {
+                requestAnimationFrame(() => syncHeight());
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSubmit();
+                }
+              }}
             />
-          ) : null}
+          </div>
 
-          {sendControl}
+          <div className="mdc-chat-input__composer-toolbar">
+            <div className="mdc-chat-input__composer-toolbar-start">
+              {plusControl}
+
+              {showResponseMode ? (
+                <ChatResponseModeSelector
+                  modes={responseModes}
+                  value={responseMode}
+                  disabled={disabled || isSending}
+                  onChange={onResponseModeChange}
+                />
+              ) : null}
+            </div>
+
+            <div className="mdc-chat-input__composer-toolbar-end">{sendControl}</div>
+          </div>
         </div>
       </div>
 

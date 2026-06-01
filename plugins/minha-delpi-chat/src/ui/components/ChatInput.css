@@ -11,31 +11,60 @@
 }
 
 .mdc-chat-input__box {
-  --mdc-composer-control-h: 2.35rem;
+  --mdc-composer-control-h: 2.25rem;
+  --mdc-composer-text-max-h: 11.5rem;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 0.3rem;
-  min-height: 3.25rem;
+  min-height: 3.35rem;
   border: 1px solid var(--mdc-card-border);
   border-radius: 1.6rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 94%, transparent);
-  padding: 0.35rem 0.45rem 0.35rem 0.65rem;
+  padding: 0.45rem 0.5rem 0.4rem 0.55rem;
 }
 
-.mdc-chat-input__composer-row {
+/* Estilo ChatGPT: texto em cima, barra de ações embaixo */
+.mdc-chat-input__composer-stack {
   display: flex;
-  flex-direction: row;
-  align-items: flex-end;
-  gap: 0.35rem;
+  flex-direction: column;
+  gap: 0.2rem;
   width: 100%;
   min-width: 0;
 }
 
-.mdc-chat-input__composer-row .mdc-chat-input__plus-wrap,
-.mdc-chat-input__composer-row .mdc-chat-response-mode,
-.mdc-chat-input__composer-row .mdc-chat-input__send {
+.mdc-chat-input__composer-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.mdc-chat-input__composer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: var(--mdc-composer-control-h);
+  padding: 0.05rem 0.15rem 0.1rem;
+}
+
+.mdc-chat-input__composer-toolbar-start {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.mdc-chat-input__composer-toolbar-end {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mdc-chat-input__composer-toolbar .mdc-chat-input__plus-wrap,
+.mdc-chat-input__composer-toolbar .mdc-chat-response-mode,
+.mdc-chat-input__composer-toolbar .mdc-chat-input__send {
   flex-shrink: 0;
 }
 
@@ -129,10 +158,11 @@
 
 .mdc-chat-input textarea,
 .mdc-auto-grow-textarea {
-  flex: 1 1 auto;
+  display: block;
   width: 100%;
   min-width: 0;
-  min-height: var(--mdc-composer-control-h);
+  min-height: 1.65rem;
+  max-height: var(--mdc-composer-text-max-h);
   resize: none;
   overflow-x: hidden;
   overflow-y: hidden;
@@ -143,13 +173,17 @@
   background: transparent !important;
   color: var(--mdc-text);
   font: inherit;
-  line-height: 1.45;
-  padding: 0.48rem 0.55rem 0.48rem 0.75rem;
+  line-height: 1.5;
+  padding: 0.2rem 0.45rem 0.15rem 0.5rem;
   outline: none;
   box-shadow: none !important;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+.mdc-chat-input__composer-field textarea {
+  padding-inline: 0.15rem 0.35rem;
 }
 
 .mdc-chat-input textarea:focus,
@@ -197,6 +231,17 @@
   text-align: left;
 }
 
+@media (max-width: 720px) {
+  .mdc-chat-input__box {
+    --mdc-composer-text-max-h: 10rem;
+    border-radius: 1.35rem;
+  }
+
+  .mdc-chat-input__composer-toolbar {
+    gap: 0.35rem;
+  }
+}
+
 @media (max-width: 480px) {
   .mdc-chat-input {
     padding: var(--mdc-space-2) max(0.75rem, env(safe-area-inset-left, 0px))
@@ -209,13 +254,20 @@
   }
 
   .mdc-chat-input__box {
+    --mdc-composer-control-h: 2.15rem;
+    --mdc-composer-text-max-h: 8.5rem;
     min-height: 3rem;
-    padding-inline: 0.35rem 0.4rem;
+    padding: 0.4rem 0.38rem 0.35rem 0.42rem;
+    border-radius: 1.2rem;
   }
 
   .mdc-chat-input textarea {
     font-size: 1rem;
-    padding: 0.55rem 0.4rem 0.55rem 0.5rem;
+    line-height: 1.45;
+  }
+
+  .mdc-chat-input__composer-toolbar-start {
+    gap: 0.28rem;
   }
 
   .mdc-chat-input small {
@@ -226,6 +278,26 @@
 
   .mdc-chat-input--center small {
     text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .mdc-chat-input__box {
+    --mdc-composer-text-max-h: 7.5rem;
+  }
+
+  .mdc-chat-input__composer-toolbar {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .mdc-chat-input__composer-toolbar-start {
+    flex: 1 1 auto;
+    min-width: min(100%, 12rem);
+  }
+
+  .mdc-chat-input__composer-toolbar-end {
+    margin-left: auto;
   }
 }
 

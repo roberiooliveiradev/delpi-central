@@ -8,11 +8,11 @@
 .mdc-chat-response-mode__trigger {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  max-width: min(100%, 12.5rem);
-  height: var(--mdc-composer-control-h, 2.35rem);
-  min-height: var(--mdc-composer-control-h, 2.35rem);
-  padding: 0 0.7rem 0 0.55rem;
+  gap: 0.35rem;
+  max-width: min(100%, 11.5rem);
+  height: var(--mdc-composer-control-h, 2.25rem);
+  min-height: var(--mdc-composer-control-h, 2.25rem);
+  padding: 0 0.65rem 0 0.5rem;
   box-sizing: border-box;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
   border-radius: 999px;
@@ -97,4 +97,18 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+}
+
+@media (max-width: 480px) {
+  .mdc-chat-response-mode__trigger {
+    max-width: min(100%, 9.25rem);
+    font-size: 0.78rem;
+    padding-inline: 0.5rem 0.55rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .mdc-chat-response-mode__trigger {
+    max-width: min(100%, 7.5rem);
+  }
 }
