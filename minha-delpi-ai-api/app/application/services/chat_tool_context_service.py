@@ -506,26 +506,34 @@ class ChatToolContextService:
                 }
 
         if not selected_tools:
+            from app.domain.services.chat_sql_inventory_query_service import (
+                ChatSqlInventoryQueryService,
+            )
             from app.domain.services.chat_sql_production_query_service import (
                 ChatSqlProductionQueryService,
             )
 
-            sql_resolution = ChatSqlProductionQueryService.resolve(message)
-            if sql_resolution and sql_resolution.mode == "authoring":
-                return self._finalize_tool_context_result(
-                    message=raw_message,
-                    previous_messages=previous_messages,
-                    result={
-                        "context": "",
-                        "toolCalls": [],
-                        "nativeToolCalling": native_meta,
-                        "directAnswer": ChatSqlProductionQueryService.format_authoring_answer(
-                            sql_resolution
-                        ),
-                        "skipRag": True,
-                        "currentMessage": raw_message,
-                    },
-                )
+            for resolver in (
+                ChatSqlProductionQueryService,
+                ChatSqlInventoryQueryService,
+            ):
+                sql_resolution = resolver.resolve(message)
+
+                if sql_resolution and sql_resolution.mode == "authoring":
+                    return self._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result={
+                            "context": "",
+                            "toolCalls": [],
+                            "nativeToolCalling": native_meta,
+                            "directAnswer": resolver.format_authoring_answer(
+                                sql_resolution
+                            ),
+                            "skipRag": True,
+                            "currentMessage": raw_message,
+                        },
+                    )
 
         if (
             actions_enabled

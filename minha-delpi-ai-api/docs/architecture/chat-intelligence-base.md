@@ -76,8 +76,9 @@ Mensagem do usuário
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
 | `ChatCompositeDirectAnswerService` | Monta resposta direta única com sucesso/erro por consulta |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
-| `ChatSqlOperationalIntentService` | Perguntas SQL de produção/programação do dia (não catálogo) |
+| `ChatSqlOperationalIntentService` | Perguntas SQL analíticas sem rota REST (produção, estoque agregado, vendas/ranking) |
 | `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
+| `ChatSqlInventoryQueryService` | Template SB2010+SB1010 (estoque abaixo do mínimo) + `/data/sql` |
 | `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |

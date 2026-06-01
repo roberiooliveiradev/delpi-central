@@ -39,6 +39,39 @@ _CATALOG_SEARCH_MARKERS = (
     "informacoes sobre o produto",
 )
 
+# Consultas agregadas sem GET /products/{code}/… — rota via POST /data/sql + playbooks SQL.
+_INVENTORY_AGGREGATE_MARKERS = (
+    "estoque abaixo",
+    "abaixo do minimo",
+    "abaixo do mínimo",
+    "saldo abaixo",
+    "ruptura de estoque",
+    "produtos com estoque",
+    "liste os produtos com estoque",
+    "lista de produtos com estoque",
+    "itens com estoque abaixo",
+)
+
+_SALES_AGGREGATE_MARKERS = (
+    "vendas por mes",
+    "vendas por mês",
+    "evolucao de vendas",
+    "evolução de vendas",
+    "faturamento por mes",
+    "faturamento por mês",
+    "faturamento do mes",
+    "faturamento do mês",
+    "ranking dos",
+    "ranking de clientes",
+    "ranking de cliente",
+    "top 10 clientes",
+    "top 5 clientes",
+    "clientes que mais compraram",
+    "participacao do faturamento",
+    "participação do faturamento",
+    "por cliente em rosca",
+)
+
 _TEMPORAL_TERMS = (
     "hoje",
     "ontem",
@@ -69,6 +102,9 @@ class ChatSqlOperationalIntentService:
         if any(marker in normalized for marker in _CATALOG_SEARCH_MARKERS):
             return False
 
+        if cls._looks_like_aggregate_sql_question(message, normalized):
+            return True
+
         if any(phrase in normalized for phrase in _PRODUCTION_SQL_PHRASES):
             return True
 
@@ -86,5 +122,32 @@ class ChatSqlOperationalIntentService:
                 )
             ):
                 return True
+
+        return False
+
+    @classmethod
+    def _looks_like_aggregate_sql_question(
+        cls,
+        message: str | None,
+        normalized: str,
+    ) -> bool:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        if ChatProductQueryIntentService.extract_product_code(message):
+            return False
+
+        if ChatProductQueryIntentService.references_previous_product(message):
+            return False
+
+        if re.search(r"\bproduto\s+\d", normalized):
+            return False
+
+        if any(marker in normalized for marker in _INVENTORY_AGGREGATE_MARKERS):
+            return True
+
+        if any(marker in normalized for marker in _SALES_AGGREGATE_MARKERS):
+            return True
 
         return False

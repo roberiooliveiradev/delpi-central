@@ -199,6 +199,21 @@ class ChatOperationalParameterService:
         if ChatProductQueryIntentService.extract_product_code(message):
             return None
 
+        from app.domain.services.chat_sql_operational_intent_service import (
+            ChatSqlOperationalIntentService,
+        )
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            if not ChatProductQueryIntentService.references_previous_product(message):
+                inherited = ChatProductQueryIntentService.resolve_product_code(
+                    message,
+                    conversation_context,
+                    previous_messages=previous_messages,
+                )
+
+                if not inherited:
+                    return None
+
         intent = ChatProductQueryIntentService.detect(message)
 
         if intent not in cls._INTENTS_REQUIRING_CODE:

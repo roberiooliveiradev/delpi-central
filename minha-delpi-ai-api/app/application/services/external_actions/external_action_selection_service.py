@@ -134,20 +134,38 @@ class ExternalActionSelectionService:
                     return selected
 
         if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            from app.domain.services.chat_sql_inventory_query_service import (
+                ChatSqlInventoryQueryService,
+            )
             from app.domain.services.chat_sql_production_query_service import (
                 ChatSqlProductionQueryService,
             )
 
             if not ChatSqlIntentService.is_authoring_request(message):
-                resolution = ChatSqlProductionQueryService.resolve(message)
-                if resolution and resolution.mode == "execute":
-                    selected = self._select_sql_or_data_action(
-                        message,
-                        allowed_action_ids=allowed_action_ids,
-                        sql=resolution.sql,
-                    )
-                    if selected:
-                        return selected
+                for resolver in (
+                    ChatSqlProductionQueryService,
+                    ChatSqlInventoryQueryService,
+                ):
+                    resolution = resolver.resolve(message)
+
+                    if resolution and resolution.mode == "execute":
+                        selected = self._select_sql_or_data_action(
+                            message,
+                            allowed_action_ids=allowed_action_ids,
+                            sql=resolution.sql,
+                        )
+
+                        if selected:
+                            return selected
+
+            if ChatSqlIntentService.should_auto_execute_sql(message):
+                selected = self._select_sql_or_data_action(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                )
+
+                if selected:
+                    return selected
 
             return None
 
@@ -1832,6 +1850,13 @@ class ExternalActionSelectionService:
         return 5
 
     def _looks_like_sql_or_data_query(self, message: str) -> bool:
+        from app.domain.services.chat_sql_operational_intent_service import (
+            ChatSqlOperationalIntentService,
+        )
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            return True
+
         normalized = str(message or "").lower()
 
         return any(

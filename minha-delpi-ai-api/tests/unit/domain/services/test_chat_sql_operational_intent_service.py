@@ -37,3 +37,21 @@ def test_detects_production_question_for_tomorrow():
     assert ChatSqlOperationalIntentService.requires_sql_knowledge(
         "o que vai ser produzido amanhã?"
     )
+
+
+def test_detects_aggregate_stock_below_minimum():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "Liste os produtos com estoque abaixo do mínimo"
+    )
+
+
+def test_detects_aggregate_sales_by_month():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "Vendas por mês em 2025"
+    )
+
+
+def test_does_not_flag_single_product_stock_without_code():
+    assert not ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "estoque do produto"
+    )

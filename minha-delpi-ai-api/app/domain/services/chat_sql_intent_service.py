@@ -114,6 +114,13 @@ class ChatSqlIntentService:
         if not normalized:
             return False
 
+        from app.domain.services.chat_sql_operational_intent_service import (
+            ChatSqlOperationalIntentService,
+        )
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            return not cls.is_authoring_request(message)
+
         if any(term in normalized for term in _AUTHORING_TERMS):
             return False
 
