@@ -83,6 +83,31 @@ export function sanitizeMessagesAfterStreamDismiss(
   });
 }
 
+export function shouldAppendPendingUserMessage(
+  messages: ChatMessage[],
+  pendingUserMessage: ChatMessage,
+): boolean {
+  if (messages.some((message) => message.id === pendingUserMessage.id)) {
+    return false;
+  }
+
+  const pendingContent = pendingUserMessage.content.trim();
+
+  if (!pendingContent) {
+    return true;
+  }
+
+  const lastUserMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === "user");
+
+  if (lastUserMessage && lastUserMessage.content.trim() === pendingContent) {
+    return false;
+  }
+
+  return true;
+}
+
 export function sessionAwaitingAssistantResponse(messages: ChatMessage[]): boolean {
   if (!messages.length) {
     return false;

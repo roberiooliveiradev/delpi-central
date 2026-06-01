@@ -29,6 +29,7 @@ import {
   isAssistantGenerating,
   sanitizeMessagesAfterStreamDismiss,
   sessionAwaitingAssistantResponse,
+  shouldAppendPendingUserMessage,
 } from "../chatMessageDelivery";
 import {
   applyStreamHandoffToMessages,
@@ -353,7 +354,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           if (!sessionAwaitingAssistantResponse(data)) {
             userDismissedBackgroundStreamRef.current.delete(sessionId);
           }
-        } else {
+        } else if (!userDismissedBackgroundStreamRef.current.has(sessionId)) {
           const serverStillAwaiting = sessionAwaitingAssistantResponse(data);
 
           if (serverStillAwaiting) {
@@ -801,7 +802,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       userDismissedBackgroundStreamRef.current.add(sessionId);
       markSessionCancelling(sessionId);
       cancelSessionStreaming(sessionId);
-      finishSending(sessionId);
       clearSessionStreamUi(sessionId);
 
       setMessages((current) =>
@@ -829,7 +829,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, [
     cancelSessionStreaming,
     clearSessionStreamUi,
-    finishSending,
     lastSentUserText,
     loadMessages,
     markSessionCancelling,
@@ -860,32 +859,34 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
-          setMessages((current) =>
-            current.map((item) =>
-              item.id === optimisticUserMessageId
+          flushSync(() => {
+            setMessages((current) =>
+              current.map((item) =>
+                item.id === optimisticUserMessageId
+                  ? {
+                      ...item,
+                      id: messageId,
+                      metadata: {
+                        ...(item.metadata ?? {}),
+                        optimistic: false,
+                      },
+                    }
+                  : item,
+              ),
+            );
+            setPendingUserMessage((current) =>
+              current && current.id === optimisticUserMessageId
                 ? {
-                    ...item,
+                    ...current,
                     id: messageId,
                     metadata: {
-                      ...(item.metadata ?? {}),
+                      ...(current.metadata ?? {}),
                       optimistic: false,
                     },
                   }
-                : item,
-            ),
-          );
-          setPendingUserMessage((current) =>
-            current && current.id === optimisticUserMessageId
-              ? {
-                  ...current,
-                  id: messageId,
-                  metadata: {
-                    ...(current.metadata ?? {}),
-                    optimistic: false,
-                  },
-                }
-              : current,
-          );
+                : current,
+            );
+          });
 
           if (streamOptions?.refreshOnUserPersisted) {
             void loadMessages(sessionId);
@@ -1394,7 +1395,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         if (sessionForMessage) {
           userDismissedBackgroundStreamRef.current.add(sessionForMessage.id);
           markSessionCancelling(sessionForMessage.id);
-          finishSending(sessionForMessage.id);
           clearSessionStreamUi(sessionForMessage.id);
 
           setMessages((current) =>
@@ -1578,10 +1578,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    if (userDismissedBackgroundStreamRef.current.has(activeSession.id)) {
+      void loadMessages(activeSession.id, { userDismissedBackground: true });
+      return;
+    }
+
     if (
       (isSessionPending(activeSession.id) ||
         isSessionStreaming(activeSession.id) ||
-        pendingUserMessage) &&
+        pendingUserMessage ||
+        cancellingSessionIds.has(activeSession.id)) &&
       messages.length > 0
     ) {
       return;
@@ -1594,6 +1600,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionStreaming,
     loadMessages,
     messages.length,
+    cancellingSessionIds,
     pendingUserMessage,
   ]);
 
@@ -1677,7 +1684,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return list;
     }
 
-    if (list.some((message) => message.id === pendingUserMessage.id)) {
+    if (!shouldAppendPendingUserMessage(list, pendingUserMessage)) {
       return list;
     }
 

@@ -5,6 +5,7 @@ import {
   isAssistantGenerating,
   sanitizeMessagesAfterStreamDismiss,
   sessionAwaitingAssistantResponse,
+  shouldAppendPendingUserMessage,
 } from "./chatMessageDelivery";
 
 function userMessage(
@@ -91,6 +92,29 @@ describe("sanitizeMessagesAfterStreamDismiss", () => {
     ];
 
     expect(sanitizeMessagesAfterStreamDismiss(messages)).toEqual(messages);
+  });
+});
+
+describe("shouldAppendPendingUserMessage", () => {
+  it("não duplica quando a pergunta já foi persistida com outro id", () => {
+    expect(
+      shouldAppendPendingUserMessage(
+        [userMessage("user-1", "vvbbvb")],
+        {
+          ...userMessage("optimistic-1", "vvbbvb"),
+          metadata: { optimistic: true },
+        },
+      ),
+    ).toBe(false);
+  });
+
+  it("mantém placeholder enquanto a pergunta ainda não apareceu na lista", () => {
+    expect(
+      shouldAppendPendingUserMessage(
+        [],
+        userMessage("optimistic-1", "vvbbvb"),
+      ),
+    ).toBe(true);
   });
 });
 
