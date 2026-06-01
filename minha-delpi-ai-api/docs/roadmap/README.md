@@ -22,6 +22,7 @@ Documentação de evolução do painel administrativo e da API `minha-delpi-ai-a
 | [../changelog/2026-05-inteligencia-chat-entregas.md](../changelog/2026-05-inteligencia-chat-entregas.md) | **Maio/2026:** SQL produção (G1–G3), download fontes/anexos, bundle agente, Normas global, catálogo api-delpi, utility/small talk. |
 | [api-delpi-chat-intelligence-audit.md](./api-delpi-chat-intelligence-audit.md) | Auditoria maio/2026: cobertura api-delpi, heurísticas de seleção, typos, regressão e backlog. |
 | [playbook-04-autoajuda-chat.md](./playbook-04-autoajuda-chat.md) | **Playbook 04:** autoajuda — manual vivo do chat (catálogo, ajuda contextual, regressão A1–A12). |
+| [playbook-05-anexos-lousa.md](./playbook-05-anexos-lousa.md) | **Playbook 05:** anexos e lousa — welcome, chips, ambiguidade, metadata de versão (L1–L12). |
 | [melhorias/README.md](./melhorias/README.md) | Playbooks pós-Onda 11: status, smokes e índice. |
 | [melhorias/BACKLOG_ROADMAP.md](./melhorias/BACKLOG_ROADMAP.md) | Backlog ativo priorizado (admin 11, anexos, heatmap, onboarding). |
 | [../testing/smoke-system-metadata-homologacao.md](../testing/smoke-system-metadata-homologacao.md) | Homologação `/system` (SX2). |

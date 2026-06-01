@@ -63,6 +63,11 @@ Mensagem do usuário
 | `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo?», campos da descrição técnica → RAG `Normas_Tecnicas_DELPI.md` (global), sem API de catálogo |
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
+| `ChatAttachmentWelcomeService` | Welcome ao anexar + preview de leitura (Playbook 05) |
+| `ChatAttachmentFollowUpService` | Chips «Com o anexo» e `attachmentSummaries` |
+| `ChatAttachmentLargeFileService` | Aviso e chips para arquivos extensos |
+| `ChatCanvasAmbiguityService` | Desambigua «coloque isso na lousa» |
+| `ChatCanvasSessionMetadataService` | Metadata `canvas` / `canvasVersion` por operação |
 | `ChatAgentProfileService` | Perfil dinâmico do agente ativo (`name`, `description`, `systemPrompt`) para identidade e small talk |
 | `ChatAssistantIdentityService` | «Quem é você?» — resposta direta dinâmica (sem RAG/LLM no default) |
 | `ChatMetaDirectAnswerService` | Perguntas compostas meta («quem sou eu, o que consigo fazer, quem é você?») em seções |

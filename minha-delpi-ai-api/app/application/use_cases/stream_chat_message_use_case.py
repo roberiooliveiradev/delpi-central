@@ -850,6 +850,35 @@ class StreamChatMessageUseCase:
                 "sourceMessageId": canvas_open_payload.source_message_id,
             }
 
+            from app.application.services.chat_canvas_session_metadata_service import (
+                ChatCanvasSessionMetadataService,
+            )
+            from app.domain.services.chat_canvas_intent_service import (
+                ChatCanvasIntentService,
+            )
+            from app.domain.services.chat_message_normalization_service import (
+                ChatMessageNormalizationService,
+            )
+
+            operation = "open"
+
+            if ChatCanvasIntentService.is_canvas_update_request(request.message):
+                operation = "append"
+
+            normalized_canvas = ChatMessageNormalizationService.normalize_for_matching(
+                request.message
+            )
+
+            if any(token in normalized_canvas for token in ("substitu", "substitua", "trocar")):
+                operation = "replace"
+
+            ChatCanvasSessionMetadataService.attach_open(
+                assistant_metadata,
+                open_payload=canvas_open_payload,
+                operation=operation,
+                previous_messages=context_box.get("history_source") or previous_messages,
+            )
+
         from app.application.services.chat_onboarding_milestone_service import (
             ChatOnboardingMilestoneService,
         )

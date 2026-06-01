@@ -4,6 +4,9 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from app.application.services.chat_canvas_ambiguity_service import (
+    ChatCanvasAmbiguityService,
+)
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
 
 
@@ -49,6 +52,14 @@ class ChatCanvasContentService:
 
         if ChatCanvasIntentService.is_canvas_operational_update_request(message):
             return None
+
+        if ChatCanvasAmbiguityService.is_deictic_canvas_request(message):
+            clarification = ChatCanvasAmbiguityService.build_clarification_answer(
+                previous_messages=previous_messages,
+            )
+
+            if clarification:
+                return ChatCanvasAction(answer=clarification, open_payload=None)
 
         if ChatCanvasIntentService.is_canvas_update_request(message):
             return cls._resolve_content_append(message, previous_messages)

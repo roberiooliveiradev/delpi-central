@@ -51,4 +51,10 @@ export const CHAT_FEEDBACK_REASONS: ChatFeedbackReason[] = [
   { id: "no_answer", label: "Não respondeu" },
   { id: "too_short", label: "Muito curto" },
   { id: "other", label: "Outro" },
+  { id: "attachment_not_used", label: "Não usou o arquivo" },
+  { id: "attachment_wrong_file", label: "Leu o arquivo errado" },
+  { id: "attachment_incomplete_summary", label: "Resumo incompleto" },
+  { id: "canvas_not_updated", label: "Não colocou na lousa" },
+  { id: "canvas_overwrote", label: "Sobrescreveu a lousa" },
+  { id: "canvas_lost_format", label: "Perdeu formatação na lousa" },
 ];

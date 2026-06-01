@@ -5,6 +5,9 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
+from app.application.services.chat_attachment_large_file_service import (
+    ChatAttachmentLargeFileService,
+)
 from app.application.services.chat_attachment_preview_service import (
     ChatAttachmentPreviewService,
 )
@@ -41,12 +44,19 @@ class ChatAttachmentFollowUpService:
                 "Corrigir",
                 "Traduzir",
                 "Extrair pendências",
+                "Criar checklist",
+                "Colocar na lousa",
             ]
         )
         queries = _playbook().get("attachmentFollowUpQueries") or {}
 
         if attachments and len(attachments) >= 2 and "Comparar" not in labels:
             labels.append("Comparar")
+
+        if attachments and ChatAttachmentLargeFileService.has_large_attachment(attachments):
+            for label in ChatAttachmentLargeFileService.follow_up_labels():
+                if label not in labels:
+                    labels.insert(0, label)
 
         suggestions: list[dict[str, str]] = []
 

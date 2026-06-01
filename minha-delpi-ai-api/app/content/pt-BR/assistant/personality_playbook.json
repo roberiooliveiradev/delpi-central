@@ -333,8 +333,24 @@
     "Traduzir",
     "Extrair pendências",
     "Criar checklist",
+    "Criar ata",
+    "Colocar na lousa",
     "Comparar"
   ],
+  "attachmentLargeFile": {
+    "body": "O arquivo é **extenso**. Posso começar por um resumo geral ou trabalhar por seções — não prometo leitura integral de todas as páginas de uma vez.",
+    "chips": [
+      "Resumo geral",
+      "Trabalhar por seção",
+      "Extrair pendências",
+      "Procurar termo",
+      "Criar checklist",
+      "Colocar na lousa"
+    ]
+  },
+  "attachmentUnreadable": {
+    "body": "Não consegui ler o arquivo com segurança nesta sessão. Você pode reenviar em PDF/DOCX, melhorar a qualidade da imagem, converter para texto ou descrever o que precisa que eu analise."
+  },
   "emailFollowUpChips": [
     "Deixar mais formal",
     "Deixar mais curto",
@@ -405,7 +421,12 @@
     "Traduzir": "traduza o conteúdo do arquivo anexado para português",
     "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
     "Criar checklist": "transforme o arquivo anexado em um checklist",
-    "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais"
+    "Criar ata": "transforme o arquivo anexado em ata de reunião",
+    "Colocar na lousa": "resuma o arquivo anexado e coloque o resultado na lousa",
+    "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais",
+    "Resumo geral": "faça um resumo geral do arquivo anexado em tópicos",
+    "Trabalhar por seção": "analise o arquivo anexado seção por seção, começando pelo início",
+    "Procurar termo": "procure no arquivo anexado o termo "
   },
   "textHomeStarters": [
     {

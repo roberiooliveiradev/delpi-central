@@ -9,6 +9,9 @@ from typing import Any
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.application.services.chat_attachment_large_file_service import (
+    ChatAttachmentLargeFileService,
+)
 from app.application.services.chat_attachment_preview_service import (
     ChatAttachmentPreviewService,
 )
@@ -114,6 +117,26 @@ class ChatAttachmentWelcomeService:
 
         if reading_line:
             parts.append(reading_line)
+
+        if ChatAttachmentLargeFileService.has_large_attachment(attachments):
+            large_notice = ChatAttachmentLargeFileService.format_notice()
+
+            if large_notice:
+                parts.extend(["", large_notice])
+
+        unreadable = [
+            item
+            for item in (attachments or [])
+            if isinstance(item, dict)
+            and str(item.get("status") or "") in {"unsupported", "index_failed"}
+        ]
+
+        if unreadable and len(unreadable) == len(list(attachments or [])):
+            block = _playbook().get("attachmentUnreadable") or {}
+            unreadable_body = str(block.get("body") or "").strip()
+
+            if unreadable_body:
+                parts.extend(["", unreadable_body])
 
         parts.extend(["", bullet_lines, "", hint])
 
