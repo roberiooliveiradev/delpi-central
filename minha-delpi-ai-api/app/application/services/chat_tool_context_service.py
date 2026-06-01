@@ -9,6 +9,7 @@ from app.domain.services.chat_external_action_direct_answer_service import (
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
 from app.domain.services.external_actions.external_action_result_presenter import ExternalActionResultPresenter
@@ -145,6 +146,7 @@ class ChatToolContextService:
             drawing_turn and drawing_turn.active and drawing_turn.skill_enabled
         )
         drawing_product_code = drawing_turn.product_code if drawing_turn else None
+        drawing_product_code_source = "turn" if drawing_product_code else None
         drawing_has_pdf = bool(drawing_turn and drawing_turn.has_pdf_attachment)
 
         drawing_pdf_extract = None
@@ -191,12 +193,19 @@ class ChatToolContextService:
                 skills=drawing_runtime_skills,
             )
 
-            if (
-                drawing_pdf_extract
-                and drawing_pdf_extract.get("productCode")
-                and not drawing_product_code
-            ):
-                drawing_product_code = str(drawing_pdf_extract["productCode"])
+            if drawing_pdf_extract and drawing_pdf_extract.get("productCode"):
+                extracted_product_code = str(drawing_pdf_extract["productCode"])
+                extracted_source = (
+                    "document_vision"
+                    if drawing_pdf_extract.get("documentVision")
+                    else "attachment_context"
+                )
+
+                if not drawing_product_code:
+                    drawing_product_code = extracted_product_code
+                    drawing_product_code_source = extracted_source
+                elif str(drawing_product_code) == extracted_product_code:
+                    drawing_product_code_source = extracted_source
 
             if vision_will_run and on_stream_activity and drawing_pdf_extract:
                 char_count = int(drawing_pdf_extract.get("charCount") or 0)
@@ -221,6 +230,36 @@ class ChatToolContextService:
                 on_stream_activity,
                 has_pdf=drawing_has_pdf,
                 phase="start",
+            )
+
+        if drawing_analysis_mode and drawing_has_pdf and not drawing_product_code:
+            from app.domain.services.chat_drawing_intent_service import (
+                ChatDrawingIntentService,
+            )
+
+            result = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": {"used": False, "providerSupports": False},
+                "directAnswer": ChatDrawingIntentService.build_missing_product_code_answer(),
+                "skipRag": True,
+                "drawingAnalysisMode": True,
+                "currentMessage": raw_message,
+            }
+
+            if drawing_pdf_extract:
+                result["drawingPdfExtractSummary"] = self._build_drawing_pdf_extract_summary(
+                    drawing_pdf_extract,
+                    product_code_source=drawing_product_code_source,
+                )
+
+                if drawing_pdf_extract.get("documentVision"):
+                    result["documentVision"] = drawing_pdf_extract["documentVision"]
+
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result=result,
             )
 
         from app.domain.services.chat_sql_query_refinement_service import (
@@ -454,6 +493,7 @@ class ChatToolContextService:
 
         selected_external_action = None
         selected_external_action_meta = None
+        drawing_action_required = bool(drawing_analysis_mode and drawing_product_code)
 
         if (
             self.external_action_selection_service
@@ -489,6 +529,18 @@ class ChatToolContextService:
                 max_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
                 workspace_context={"skills": drawing_runtime_skills},
+                forced_product_code=drawing_product_code if drawing_action_required else None,
+                forced_intent=(
+                    ChatProductQueryIntent.ANALYSER
+                    if drawing_action_required
+                    else None
+                ),
+                forced_reason=(
+                    "Produto extra\u00eddo do PDF de desenho t\u00e9cnico; "
+                    "a an\u00e1lise deve usar GET /products/{code}/analyser."
+                    if drawing_action_required
+                    else None
+                ),
             )
 
             if planned_external_actions:
@@ -506,6 +558,37 @@ class ChatToolContextService:
                     "reason": first.get("reason"),
                     "plannedCount": len(planned_external_actions),
                 }
+
+                if drawing_action_required:
+                    selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
+                    selected_external_action_meta["productCode"] = drawing_product_code
+                    selected_external_action_meta[
+                        "productCodeSource"
+                    ] = drawing_product_code_source
+
+        if drawing_action_required and not selected_external_action:
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": native_meta,
+                    "directAnswer": (
+                        f"Identifiquei o produto **{drawing_product_code}** no PDF, "
+                        "mas n\u00e3o encontrei uma action autorizada para consultar "
+                        "`/products/{code}/analyser` neste agente. Habilite a action de "
+                        "an\u00e1lise t\u00e9cnica do produto e tente novamente."
+                    ),
+                    "skipRag": True,
+                    "drawingAnalysisMode": True,
+                    "drawingPdfExtractSummary": self._build_drawing_pdf_extract_summary(
+                        drawing_pdf_extract,
+                        product_code_source=drawing_product_code_source,
+                    ),
+                    "currentMessage": raw_message,
+                },
+            )
 
         if not selected_tools:
             from app.domain.services.chat_sql_inventory_query_service import (
@@ -1075,16 +1158,12 @@ class ChatToolContextService:
             result_payload["drawingAnalysisMode"] = True
 
             if drawing_pdf_extract:
-                result_payload["drawingPdfExtractSummary"] = {
-                    "productCode": drawing_pdf_extract.get("productCode"),
-                    "revision": drawing_pdf_extract.get("revision"),
-                    "legible": drawing_pdf_extract.get("legible"),
-                    "charCount": drawing_pdf_extract.get("charCount"),
-                    "componentCount": len(drawing_pdf_extract.get("componentCodes") or []),
-                    "reason": drawing_pdf_extract.get("reason"),
-                    "extractor": drawing_pdf_extract.get("extractor"),
-                    "documentVision": drawing_pdf_extract.get("documentVision"),
-                }
+                result_payload[
+                    "drawingPdfExtractSummary"
+                ] = self._build_drawing_pdf_extract_summary(
+                    drawing_pdf_extract,
+                    product_code_source=drawing_product_code_source,
+                )
 
                 if drawing_pdf_extract.get("documentVision"):
                     result_payload["documentVision"] = drawing_pdf_extract["documentVision"]
@@ -1828,6 +1907,35 @@ class ChatToolContextService:
             arguments=arguments,
             metadata=metadata,
         )
+
+    def _build_drawing_pdf_extract_summary(
+        self,
+        pdf_extract: dict | None,
+        *,
+        product_code_source: str | None = None,
+    ) -> dict:
+        if not isinstance(pdf_extract, dict):
+            return {}
+
+        component_codes = pdf_extract.get("componentCodes")
+        if not isinstance(component_codes, list):
+            component_codes = []
+
+        summary = {
+            "productCode": pdf_extract.get("productCode"),
+            "revision": pdf_extract.get("revision"),
+            "legible": pdf_extract.get("legible"),
+            "charCount": pdf_extract.get("charCount"),
+            "componentCount": len(component_codes),
+            "reason": pdf_extract.get("reason"),
+            "extractor": pdf_extract.get("extractor"),
+            "documentVision": pdf_extract.get("documentVision"),
+        }
+
+        if product_code_source:
+            summary["productCodeSource"] = product_code_source
+
+        return summary
 
     def _build_drawing_analysis_enrichment(
         self,

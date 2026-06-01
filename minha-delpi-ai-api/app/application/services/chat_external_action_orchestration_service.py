@@ -40,6 +40,10 @@ class ChatExternalActionOrchestrationService:
         max_calls: int | None = None,
         on_stream_activity=None,
         workspace_context: dict | None = None,
+        forced_product_code: str | None = None,
+        forced_intent: str | None = None,
+        forced_reason: str | None = None,
+        forced_route_segment: str | None = None,
     ) -> list[dict]:
         if not selection_service or not allowed_action_ids:
             return []
@@ -63,6 +67,21 @@ class ChatExternalActionOrchestrationService:
                 )
 
             return planned
+
+        if forced_product_code and forced_intent:
+            selected = selection_service.select_action_for_product(
+                message,
+                product_code=forced_product_code,
+                allowed_action_ids=allowed_action_ids,
+                intent=forced_intent,
+                route_segment=forced_route_segment,
+                previous_messages=previous_messages,
+            )
+
+            if selected and forced_reason:
+                selected["reason"] = forced_reason
+
+            return _return_planned([selected] if selected else [])
 
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,

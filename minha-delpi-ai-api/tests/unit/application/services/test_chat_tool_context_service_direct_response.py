@@ -2,7 +2,11 @@ from dataclasses import dataclass
 
 from app.application.services.chat_tool_context_service import ChatToolContextService
 from app.domain.entities.tool_result import ToolResult
+from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
 from app.domain.services.tool_selection_service import ToolSelectionService
+from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
+    _analyser_payload_with_guide_and_inspection,
+)
 
 
 @dataclass
@@ -58,6 +62,127 @@ class FakeExternalActionSelectionService:
         }
 
 
+class EmptyToolSelectionService:
+    def select_tools(self, message, **kwargs):
+        return []
+
+
+class DrawingAnalyserSelectionService:
+    def __init__(self, action_id: str = "get_product_analyser"):
+        self.action_id = action_id
+        self.product_calls: list[dict] = []
+        self.generic_calls = 0
+
+    def select_action_for_product(
+        self,
+        message,
+        *,
+        product_code,
+        allowed_action_ids=None,
+        intent=None,
+        route_segment=None,
+        previous_messages=None,
+    ):
+        self.product_calls.append(
+            {
+                "productCode": product_code,
+                "intent": intent,
+                "routeSegment": route_segment,
+            }
+        )
+
+        if self.action_id not in (allowed_action_ids or []):
+            return None
+
+        return {
+            "name": "execute_external_action",
+            "arguments": {
+                "actionId": self.action_id,
+                "parameters": {"code": product_code},
+            },
+            "reason": "Analise tecnica do desenho",
+        }
+
+    def select_action(self, *args, **kwargs):
+        self.generic_calls += 1
+        raise AssertionError("drawing analysis must not use generic action selection")
+
+
+class DrawingAnalyserExecuteToolUseCase:
+    def __init__(self):
+        self.calls: list[dict] = []
+
+    def execute(self, request):
+        arguments = request.arguments or {}
+        parameters = arguments.get("parameters") or {}
+        product_code = str(parameters.get("code") or "")
+        self.calls.append(arguments)
+
+        payload = _analyser_payload_with_guide_and_inspection()
+        payload["product"]["code"] = product_code
+
+        return ToolResult(
+            name="execute_external_action",
+            data={"data": payload},
+            metadata={
+                "ok": True,
+                "statusCode": 200,
+                "actionId": arguments.get("actionId"),
+                "path": "/products/{code}/analyser",
+                "operationId": "get_product_analyser",
+                "provider": "api_delpi",
+                "authorizedResult": {"data": payload},
+            },
+        )
+
+
+def _drawing_agent_context():
+    return {
+        "metadata": {
+            "skills": {
+                "drawing-analysis-delpi": {"engineering": True},
+                "document-vision-delpi": {"enabled": True},
+            }
+        }
+    }
+
+
+def _drawing_attachment_context(product_code: str = "90264231") -> str:
+    return (
+        "### 90264231.pdf\n"
+        f"CODIGO DO PRODUTO: {product_code}\n"
+        "REV. 00\n"
+        "COMPONENTE 50212194\n"
+        "COMPRIMENTO TOTAL: 1400 mm\n"
+    )
+
+
+def _patch_document_vision(monkeypatch):
+    from app.application.services.chat_document_vision_service import (
+        ChatDocumentVisionService,
+    )
+
+    def enrich(parsed, **kwargs):
+        payload = dict(parsed or {})
+        payload.setdefault("productCode", "90264231")
+        payload.setdefault("revision", "00")
+        payload.setdefault("componentCodes", ["50212194"])
+        payload.setdefault("charCount", 96)
+        payload.setdefault("legible", True)
+        payload["documentVision"] = {
+            "engine": "unit_test",
+            "charCount": payload.get("charCount"),
+            "legible": payload.get("legible"),
+        }
+        return payload
+
+    monkeypatch.setattr(
+        ChatDocumentVisionService,
+        "enrich_drawing_extract",
+        staticmethod(enrich),
+    )
+
+
 def test_build_context_sets_direct_answer_for_successful_external_action():
     service = ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
@@ -81,6 +206,79 @@ def test_build_context_sets_direct_answer_for_successful_external_action():
     summary_lines = (metadata.get("humanizedSummary") or {}).get("linhas") or []
     assert any("10080055" in line for line in summary_lines)
     assert any("| Campo | Valor |" in line for line in summary_lines)
+
+
+def test_drawing_pdf_product_code_forces_product_analyser_action(monkeypatch):
+    _patch_document_vision(monkeypatch)
+    execute_tool = DrawingAnalyserExecuteToolUseCase()
+    selection_service = DrawingAnalyserSelectionService()
+    service = ChatToolContextService(
+        tool_selection_service=EmptyToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=selection_service,
+    )
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="analise o desenho",
+        allowed_action_ids=["transforma-summary", "get_product_analyser"],
+        agent_context=_drawing_agent_context(),
+        attachment_ids=["attachment-1"],
+        attachment_context=_drawing_attachment_context(),
+    )
+
+    assert selection_service.generic_calls == 0
+    assert selection_service.product_calls == [
+        {
+            "productCode": "90264231",
+            "intent": ChatProductQueryIntent.ANALYSER,
+            "routeSegment": None,
+        }
+    ]
+    assert execute_tool.calls == [
+        {
+            "actionId": "get_product_analyser",
+            "parameters": {"code": "90264231"},
+        }
+    ]
+    assert result["drawingAnalysisMode"] is True
+    assert result["selectedExternalAction"]["forcedBy"] == "drawing_analysis_pdf"
+    assert result["selectedExternalAction"]["productCode"] == "90264231"
+    assert result["toolCalls"][0]["arguments"]["actionId"] == "get_product_analyser"
+    assert result["toolCalls"][0]["metadata"]["path"] == "/products/{code}/analyser"
+    assert result["drawingAnalysis"]["productCode"] == "90264231"
+
+
+def test_drawing_pdf_does_not_fall_back_to_operational_action_when_analyser_missing(
+    monkeypatch,
+):
+    _patch_document_vision(monkeypatch)
+    execute_tool = DrawingAnalyserExecuteToolUseCase()
+    selection_service = DrawingAnalyserSelectionService()
+    service = ChatToolContextService(
+        tool_selection_service=EmptyToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=selection_service,
+    )
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="analise o desenho",
+        allowed_action_ids=["transforma-summary"],
+        agent_context=_drawing_agent_context(),
+        attachment_ids=["attachment-1"],
+        attachment_context=_drawing_attachment_context(),
+    )
+
+    assert selection_service.generic_calls == 0
+    assert selection_service.product_calls[0]["productCode"] == "90264231"
+    assert execute_tool.calls == []
+    assert result["toolCalls"] == []
+    assert result["skipRag"] is True
+    assert "90264231" in result["directAnswer"]
+    assert "/products/{code}/analyser" in result["directAnswer"]
 
 
 def test_compact_direct_answer_for_rich_presentation_keeps_title_only():
@@ -727,4 +925,3 @@ def test_build_context_coloque_em_uma_tabela_without_system_tables_route():
     assert metadata.get("presentation", {}).get("type") == "table"
     assert len(metadata.get("presentation", {}).get("rows") or []) == 1
     assert "/system/tables" not in str(metadata.get("path") or "")
-
