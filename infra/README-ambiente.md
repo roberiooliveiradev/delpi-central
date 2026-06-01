@@ -74,7 +74,8 @@ Documentação detalhada da API de chat: `minha-delpi-ai-api/README.md`.
 |----------|----------------------|------------------------------|
 | `CHAT_DOCUMENT_VISION_ENABLED` | `true` | `true` se usar OCR/anexos/desenhos |
 | `CHAT_DOCUMENT_VISION_BACKEND` | `auto` | `auto` (ou `tesseract` / `docling` se imagem vision) |
-| `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` | opcional | `qwen2.5vl:7b` só com backend `ollama_vlm` |
+| `CHAT_DOCUMENT_VISION_OLLAMA_MODEL` | `qwen2.5vl:7b` | `qwen2.5vl:7b` com `ollama_vlm` ou fallback em `auto` (`CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK=true`) |
+| `CHAT_RESPONSE_MODE_*` | modos composer | `FAST_MODEL=1.5b`, `OLLAMA_MODEL=3b` para normal/pensador |
 
 Backend `docling` exige imagem buildada com `docker-compose.vision.yml`. Sem isso, o código faz **fallback** para `native` + Tesseract.
 

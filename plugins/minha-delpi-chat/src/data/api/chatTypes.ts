@@ -630,11 +630,31 @@ export type ChatAttachment = {
   updated_at: string;
 };
 
+export type ChatResponseModeId = "fast" | "normal" | "thinker";
+
+export type ChatResponseModeOption = {
+  id: ChatResponseModeId;
+  label: string;
+  description: string;
+  default?: boolean;
+  model?: string;
+  maxTokens?: number;
+  numCtx?: number;
+};
+
+export type ChatResponseModesResponse = {
+  enabled: boolean;
+  defaultMode: ChatResponseModeId;
+  provider: string;
+  modes: ChatResponseModeOption[];
+};
+
 export type SendChatMessagePayload = {
   message: string;
   context?: string;
   attachmentIds?: string[];
   agentId?: string | null;
+  responseMode?: ChatResponseModeId;
 };
 
 export type SendChatMessageResponse = {

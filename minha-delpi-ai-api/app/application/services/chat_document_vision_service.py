@@ -21,6 +21,66 @@ class ChatDocumentVisionService:
         return Settings.CHAT_DOCUMENT_VISION_ENABLED
 
     @classmethod
+    def _auto_vlm_fallback_enabled(cls) -> bool:
+        return bool(
+            Settings.CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK
+            and Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
+        )
+
+    @classmethod
+    def _needs_vlm_fallback(cls, text: str, *, legible: bool | None = None) -> bool:
+        min_legible = max(1, int(Settings.CHAT_DOCUMENT_VISION_MIN_LEGIBLE_CHARS))
+        normalized = str(text or "").strip()
+
+        if legible is False:
+            return True
+
+        return len(normalized) < min_legible
+
+    @classmethod
+    def _maybe_vlm_fallback(
+        cls,
+        payload: dict[str, Any],
+        *,
+        storage_path: str,
+        filename: str,
+        content_type: str,
+        stages: list[str],
+        warnings: list[str],
+    ) -> dict[str, Any]:
+        if not cls._auto_vlm_fallback_enabled():
+            return payload
+
+        if not cls._needs_vlm_fallback(
+            str(payload.get("fullText") or ""),
+            legible=payload.get("legible"),
+        ):
+            return payload
+
+        vlm = cls._stage_ollama_vlm(
+            storage_path,
+            filename=filename,
+            content_type=content_type,
+        )
+        warnings.extend(vlm.get("warnings") or [])
+
+        vlm_text = str(vlm.get("fullText") or "").strip()
+
+        if not vlm_text:
+            warnings.append("ollama_vlm_fallback_empty")
+            return payload
+
+        stages.append("ollama_vlm")
+        return cls._build_from_text(
+            vlm_text,
+            engine="ollama_vlm",
+            stages=stages,
+            page_count=payload.get("pageCount"),
+            warnings=warnings,
+            source_metadata={"vlmFallback": True},
+        )
+
+    @classmethod
     def should_run_for_attachment(cls, skills: dict | None = None) -> bool:
         if not cls.is_enabled():
             return False
@@ -382,6 +442,16 @@ class ChatDocumentVisionService:
                 )
             elif ocr.get("warnings"):
                 warnings.extend(ocr["warnings"])
+
+        if backend == "auto":
+            native = cls._maybe_vlm_fallback(
+                native,
+                storage_path=storage_path,
+                filename=filename,
+                content_type=content_type,
+                stages=stages,
+                warnings=warnings,
+            )
 
         return cls._finalize_result(
             native,
@@ -768,6 +838,16 @@ class ChatDocumentVisionService:
             warnings=warnings,
         )
 
+        if backend == "auto":
+            payload = cls._maybe_vlm_fallback(
+                payload,
+                storage_path=storage_path,
+                filename=filename,
+                content_type=content_type,
+                stages=stages,
+                warnings=warnings,
+            )
+
         return cls._finalize_result(
             payload,
             engine=str(payload.get("engine") or "tesseract"),
@@ -1042,10 +1122,10 @@ class ChatDocumentVisionService:
         content_type: str,
     ) -> dict[str, Any]:
         warnings: list[str] = []
-        model = os.getenv("CHAT_DOCUMENT_VISION_OLLAMA_MODEL", "qwen2.5vl:7b").strip()
-        base_url = os.getenv(
-            "CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL",
-            os.getenv("OLLAMA_BASE_URL", "http://ollama:11434"),
+        model = Settings.CHAT_DOCUMENT_VISION_OLLAMA_MODEL
+        base_url = (
+            Settings.CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL
+            or Settings.OLLAMA_BASE_URL
         ).strip().rstrip("/")
         max_vlm_pages = max(1, min(3, int(Settings.CHAT_DOCUMENT_VISION_MAX_PAGES)))
 

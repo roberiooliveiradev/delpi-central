@@ -4,6 +4,7 @@ import { resendChatMessage, streamChatMessage } from "../../data/api/chatApi";
 import type {
   ChatCanvasOpenPayload,
   ChatPlaybackEvent,
+  ChatResponseModeId,
   ChatSource,
   ChatStreamActivityEntry,
   ChatToolCall,
@@ -20,6 +21,7 @@ type StreamMessageParams = {
   context?: string;
   attachmentIds?: string[];
   agentId?: string | null;
+  responseMode?: ChatResponseModeId;
   onStatus?: (message: string) => void;
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -135,6 +137,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       context,
       attachmentIds,
       agentId,
+      responseMode,
       onStatus,
       onActivity,
       onSources,
@@ -156,6 +159,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               context,
               attachmentIds,
               agentId: agentId ?? undefined,
+              responseMode,
             },
             streamCallbacks,
             {
@@ -186,6 +190,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       messageId,
       content,
       context,
+      responseMode,
       onStatus,
       onActivity,
       onSources,
@@ -201,6 +206,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       messageId: string;
       content: string;
       context?: string;
+      responseMode?: ChatResponseModeId;
       onStatus?: (message: string) => void;
       onActivity?: (entry: ChatStreamActivityEntry) => void;
       onSources?: (sources: ChatSource[]) => void;
@@ -219,6 +225,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
             getAccessToken: options.getAccessToken,
             signal,
             context,
+            responseMode,
           }),
         {
           onStatus,

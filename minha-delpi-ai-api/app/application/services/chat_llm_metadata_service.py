@@ -1,0 +1,31 @@
+from app.application.dto.send_chat_message_request import SendChatMessageRequest
+from app.domain.services.chat_response_mode_service import ChatResponseModeService
+from app.infrastructure.config.settings import Settings
+from app.infrastructure.llm.llm_request_context import get_active_config
+
+
+class ChatLlmMetadataService:
+    @staticmethod
+    def resolve_generation_config(request: SendChatMessageRequest):
+        return ChatResponseModeService.resolve(request.response_mode)
+
+    @staticmethod
+    def build_assistant_llm_fields() -> dict[str, object]:
+        active = get_active_config()
+
+        return {
+            "provider": Settings.LLM_PROVIDER,
+            "model": active.model,
+            "responseMode": active.response_mode,
+            "llm": {
+                "maxTokens": active.max_tokens,
+                "numCtx": active.num_ctx,
+                "temperature": active.temperature,
+            },
+        }
+
+    @staticmethod
+    def user_message_response_mode(request: SendChatMessageRequest) -> dict[str, str]:
+        mode = ChatResponseModeService.normalize(request.response_mode)
+
+        return {"responseMode": mode}

@@ -18,6 +18,10 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
 
+### Modos de resposta (rápida / normal / pensador)
+
+O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `ChatResponseModeService` resolve modelo e limites (`LlmGenerationConfig`); `llm_request_context` propaga o preset a **todas** as chamadas LLM do turno (tools, RAG synthesis, stream). Catálogo: `GET /chat/response-modes`. Configuração: variáveis `CHAT_RESPONSE_MODE_*` em `infra/.env`.
+
 ---
 
 ## Pipeline base

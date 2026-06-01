@@ -33,6 +33,8 @@ import type {
   CreateChatSessionPayload,
   ChatCanvasOpenPayload,
   ChatPlaybackEvent,
+  ChatResponseModeId,
+  ChatResponseModesResponse,
   SendChatMessagePayload,
   SendChatMessageResponse,
   ShareChatAgentPayload,
@@ -220,6 +222,17 @@ export async function createChatSession(
   });
 
   return parseJsonResponse<ChatSession>(response);
+}
+
+export async function getChatResponseModes(
+  options: ChatApiOptions = {},
+): Promise<ChatResponseModesResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/response-modes`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatResponseModesResponse>(response);
 }
 
 export async function listChatSessions(
@@ -561,13 +574,18 @@ export async function resendChatMessage(
   messageId: string,
   content: string,
   callbacks: StreamCallbacks,
-  options: ChatApiOptions & { signal?: AbortSignal; context?: string } = {},
+  options: ChatApiOptions & {
+    signal?: AbortSignal;
+    context?: string;
+    responseMode?: ChatResponseModeId;
+  } = {},
 ): Promise<void> {
   await openChatMessageStream(
     `${API_BASE_URL}/chat/sessions/${sessionId}/messages/${messageId}/resend/stream`,
     {
       content,
       context: options.context,
+      responseMode: options.responseMode,
     },
     callbacks,
     options,

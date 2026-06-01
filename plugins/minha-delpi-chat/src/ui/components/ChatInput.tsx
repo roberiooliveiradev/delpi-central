@@ -13,7 +13,13 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import type { ChatAgent, ChatProject } from "../../data/api/chatTypes";
+import type {
+  ChatAgent,
+  ChatProject,
+  ChatResponseModeId,
+  ChatResponseModeOption,
+} from "../../data/api/chatTypes";
+import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import {
   composerAttachmentStatusLabel,
   type ComposerAttachmentStatus,
@@ -58,6 +64,10 @@ type ChatInputProps = {
   onInsertQuery?: (query: string) => void;
   plusMenuOpen?: boolean;
   onPlusMenuOpenChange?: (open: boolean) => void;
+  responseModes?: ChatResponseModeOption[];
+  responseMode?: ChatResponseModeId;
+  onResponseModeChange?: (mode: ChatResponseModeId) => void;
+  showResponseModeSelector?: boolean;
 };
 
 function formatFileSize(size: number): string {
@@ -95,6 +105,10 @@ export function ChatInput({
   onInsertQuery,
   plusMenuOpen,
   onPlusMenuOpenChange,
+  responseModes = [],
+  responseMode = "normal",
+  onResponseModeChange,
+  showResponseModeSelector = false,
 }: ChatInputProps) {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
@@ -155,6 +169,186 @@ export function ChatInput({
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const hasAttachments = attachments.length > 0;
+  const stackedComposer =
+    showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
+
+  const plusControl = (
+    <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
+      <button
+        type="button"
+        className="mdc-chat-input__plus"
+        onClick={() => setMenuOpen(!isMenuOpen)}
+        aria-label="Mais opções"
+        aria-expanded={isMenuOpen}
+      >
+        <Plus size={20} aria-hidden="true" />
+      </button>
+
+      {isMenuOpen ? (
+        <div className="mdc-chat-input__menu">
+          <div className="mdc-chat-input__menu-section">
+            <strong>Arquivos</strong>
+
+            <button
+              type="button"
+              data-tour="composer-attach"
+              onClick={() => {
+                fileInputRef.current?.click();
+                setMenuOpen(false);
+              }}
+            >
+              <Upload size={16} aria-hidden="true" />
+              <span>Anexar arquivos</span>
+            </button>
+          </div>
+
+          {onInsertQuery ? (
+            <div className="mdc-chat-input__menu-section">
+              <strong>Textos</strong>
+
+              {CHAT_TEXT_HOME_STARTERS.map((starter) => (
+                <button
+                  key={starter.label}
+                  type="button"
+                  onClick={() => {
+                    onInsertQuery(starter.query);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <FileText size={16} aria-hidden="true" />
+                  <span>{starter.label}</span>
+                </button>
+              ))}
+
+              <p className="mdc-chat-input__menu-hint">Modelos</p>
+
+              {CHAT_TEXT_TEMPLATES.map((template) => (
+                <button
+                  key={template.label}
+                  type="button"
+                  onClick={() => {
+                    onInsertQuery(template.draft);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <FileText size={16} aria-hidden="true" />
+                  <span>{template.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
+            <strong>Usar agente neste contexto</strong>
+
+            {selectedAgent ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectAgent?.(null);
+                  setMenuOpen(false);
+                }}
+              >
+                <X size={16} aria-hidden="true" />
+                <span>Remover agente deste contexto</span>
+              </button>
+            ) : null}
+
+            {agents.map((agent) => (
+              <div key={agent.id} className="mdc-chat-input__agent-menu-row">
+                <button
+                  type="button"
+                  className={
+                    agent.id === selectedAgentId
+                      ? "mdc-chat-input__menu-item--active"
+                      : undefined
+                  }
+                  onClick={() => {
+                    onSelectAgent?.(agent.id);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <Bot size={16} aria-hidden="true" />
+                  <span>{agent.name}</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="mdc-chat-input__open-agent"
+                  onClick={() => {
+                    onOpenAgentPage?.(agent.id);
+                    setMenuOpen(false);
+                  }}
+                  title={`Abrir página de ${agent.name}`}
+                  aria-label={`Abrir página de ${agent.name}`}
+                >
+                  <ArrowUpRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="mdc-chat-input__menu-section">
+            <strong>Usar projeto neste contexto</strong>
+
+            {selectedProject ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectProject?.(null);
+                  setMenuOpen(false);
+                }}
+              >
+                <X size={16} aria-hidden="true" />
+                <span>Remover projeto deste contexto</span>
+              </button>
+            ) : null}
+
+            {projects.slice(0, 8).map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                className={
+                  project.id === selectedProjectId
+                    ? "mdc-chat-input__menu-item--active"
+                    : undefined
+                }
+                onClick={() => {
+                  onSelectProject?.(project.id);
+                  setMenuOpen(false);
+                }}
+              >
+                <Folder size={16} aria-hidden="true" />
+                <span>{project.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+
+  const sendControl = isSending ? (
+    <button
+      type="button"
+      className="mdc-chat-input__send mdc-chat-input__send--cancel"
+      onClick={onCancel}
+      aria-label="Cancelar resposta"
+      title="Cancelar"
+    >
+      <span aria-hidden="true" />
+    </button>
+  ) : (
+    <button
+      type="submit"
+      className="mdc-chat-input__send"
+      disabled={disabled || !value.trim()}
+      aria-label="Enviar mensagem"
+      title="Enviar"
+    >
+      <ArrowUp size={18} aria-hidden="true" />
+    </button>
+  );
 
   return (
     <form
@@ -191,6 +385,7 @@ export function ChatInput({
           "mdc-chat-input__box",
           selectedAgent ? "mdc-chat-input__box--with-agent" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
+          stackedComposer ? "mdc-chat-input__box--stacked-composer" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -262,159 +457,7 @@ export function ChatInput({
           </div>
         ) : null}
 
-        <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
-          <button
-            type="button"
-            className="mdc-chat-input__plus"
-            onClick={() => setMenuOpen(!isMenuOpen)}
-            aria-label="Mais opções"
-            aria-expanded={isMenuOpen}
-          >
-            <Plus size={20} aria-hidden="true" />
-          </button>
-
-          {isMenuOpen ? (
-            <div className="mdc-chat-input__menu">
-              <div className="mdc-chat-input__menu-section">
-                <strong>Arquivos</strong>
-
-                <button
-                  type="button"
-                  data-tour="composer-attach"
-                  onClick={() => {
-                    fileInputRef.current?.click();
-                    setMenuOpen(false);
-                  }}
-                >
-                  <Upload size={16} aria-hidden="true" />
-                  <span>Anexar arquivos</span>
-                </button>
-              </div>
-
-              {onInsertQuery ? (
-                <div className="mdc-chat-input__menu-section">
-                  <strong>Textos</strong>
-
-                  {CHAT_TEXT_HOME_STARTERS.map((starter) => (
-                    <button
-                      key={starter.label}
-                      type="button"
-                      onClick={() => {
-                        onInsertQuery(starter.query);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <FileText size={16} aria-hidden="true" />
-                      <span>{starter.label}</span>
-                    </button>
-                  ))}
-
-                  <p className="mdc-chat-input__menu-hint">Modelos</p>
-
-                  {CHAT_TEXT_TEMPLATES.map((template) => (
-                    <button
-                      key={template.label}
-                      type="button"
-                      onClick={() => {
-                        onInsertQuery(template.draft);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <FileText size={16} aria-hidden="true" />
-                      <span>{template.label}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
-                <strong>Usar agente neste contexto</strong>
-
-                {selectedAgent ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectAgent?.(null);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <X size={16} aria-hidden="true" />
-                    <span>Remover agente deste contexto</span>
-                  </button>
-                ) : null}
-
-                {agents.map((agent) => (
-                  <div key={agent.id} className="mdc-chat-input__agent-menu-row">
-                    <button
-                      type="button"
-                      className={
-                        agent.id === selectedAgentId
-                          ? "mdc-chat-input__menu-item--active"
-                          : undefined
-                      }
-                      onClick={() => {
-                        onSelectAgent?.(agent.id);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <Bot size={16} aria-hidden="true" />
-                      <span>{agent.name}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="mdc-chat-input__open-agent"
-                      onClick={() => {
-                        onOpenAgentPage?.(agent.id);
-                        setMenuOpen(false);
-                      }}
-                      title={`Abrir página de ${agent.name}`}
-                      aria-label={`Abrir página de ${agent.name}`}
-                    >
-                      <ArrowUpRight size={15} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mdc-chat-input__menu-section">
-                <strong>Usar projeto neste contexto</strong>
-
-                {selectedProject ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onSelectProject?.(null);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <X size={16} aria-hidden="true" />
-                    <span>Remover projeto deste contexto</span>
-                  </button>
-                ) : null}
-
-                {projects.slice(0, 8).map((project) => (
-                  <button
-                    key={project.id}
-                    type="button"
-                    className={
-                      project.id === selectedProjectId
-                        ? "mdc-chat-input__menu-item--active"
-                        : undefined
-                    }
-                    onClick={() => {
-                      onSelectProject?.(project.id);
-                      setMenuOpen(false);
-                    }}
-                  >
-                    <Folder size={16} aria-hidden="true" />
-                    <span>{project.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-        </div>
+        {!stackedComposer ? plusControl : null}
 
         <textarea
           ref={textareaRef}
@@ -439,26 +482,21 @@ export function ChatInput({
           }}
         />
 
-        {isSending ? (
-          <button
-            type="button"
-            className="mdc-chat-input__send mdc-chat-input__send--cancel"
-            onClick={onCancel}
-            aria-label="Cancelar resposta"
-            title="Cancelar"
-          >
-            <span aria-hidden="true" />
-          </button>
+        {stackedComposer ? (
+          <div className="mdc-chat-input__composer-bar">
+            <div className="mdc-chat-input__composer-bar-start">
+              {plusControl}
+              <ChatResponseModeSelector
+                modes={responseModes}
+                value={responseMode}
+                disabled={disabled || isSending}
+                onChange={onResponseModeChange}
+              />
+            </div>
+            {sendControl}
+          </div>
         ) : (
-          <button
-            type="submit"
-            className="mdc-chat-input__send"
-            disabled={disabled || !value.trim()}
-            aria-label="Enviar mensagem"
-            title="Enviar"
-          >
-            <ArrowUp size={18} aria-hidden="true" />
-          </button>
+          sendControl
         )}
       </div>
 

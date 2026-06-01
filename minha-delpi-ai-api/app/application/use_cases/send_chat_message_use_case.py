@@ -34,6 +34,8 @@ from app.application.services.chat_web_search_synthesis_service import (
     ChatWebSearchSynthesisService,
 )
 from app.application.services.chat_admin_debug_service import ChatAdminDebugService
+from app.application.services.chat_llm_metadata_service import ChatLlmMetadataService
+from app.infrastructure.llm.llm_request_context import get_active_config, llm_generation_scope
 from app.domain.exceptions.chat_exceptions import (
     ChatSessionAccessDeniedError,
     ChatSessionNotFoundError,
@@ -100,6 +102,12 @@ class SendChatMessageUseCase:
         )
 
     def execute(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
+        generation_config = ChatLlmMetadataService.resolve_generation_config(request)
+
+        with llm_generation_scope(generation_config):
+            return self._execute_turn(request)
+
+    def _execute_turn(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         user_id = UUID(request.user_id)
         message = self.message_security_service.secure_message(
             request.message,
@@ -149,6 +157,7 @@ class SendChatMessageUseCase:
                 "agent": workspace_context.get("agent"),
                 "project": workspace_context.get("project"),
                 "attachments": attachments,
+                **ChatLlmMetadataService.user_message_response_mode(request),
                 "delivery": {"status": "submitted"},
             },
         )
@@ -434,8 +443,7 @@ class SendChatMessageUseCase:
         )
 
         assistant_metadata = {
-            "provider": Settings.LLM_PROVIDER,
-            "model": Settings.OLLAMA_MODEL,
+            **ChatLlmMetadataService.build_assistant_llm_fields(),
             "agentId": workspace_context.get("agentId"),
             "agent": workspace_context.get("agent"),
             "project": workspace_context.get("project"),
@@ -795,8 +803,7 @@ class SendChatMessageUseCase:
 
         audit_metadata = {
             "session_id": str(session_id),
-            "provider": Settings.LLM_PROVIDER,
-            "model": Settings.OLLAMA_MODEL,
+            **ChatLlmMetadataService.build_assistant_llm_fields(),
             "agentId": workspace_context.get("agentId"),
             "agent": workspace_context.get("agent"),
             "project": workspace_context.get("project"),
@@ -1058,9 +1065,11 @@ class SendChatMessageUseCase:
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
+        active = get_active_config()
+
         return LlmCostEstimatorService().estimate_cost(
             provider=Settings.LLM_PROVIDER,
-            model=Settings.OLLAMA_MODEL if Settings.LLM_PROVIDER != "vllm" else Settings.VLLM_MODEL,
+            model=active.model,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )

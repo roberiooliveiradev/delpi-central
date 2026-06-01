@@ -9,6 +9,7 @@ from app.domain.exceptions.llm_exceptions import LlmProviderUnavailableError
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.llm_tool_argument_parser import parse_llm_tool_arguments
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.llm.llm_request_context import get_active_config
 
 
 logger = logging.getLogger("minha-delpi-ai-api.ollama")
@@ -20,19 +21,26 @@ class OllamaLlmGateway(LlmGatewayPort):
         self.model = Settings.OLLAMA_MODEL
         self.timeout = Settings.OLLAMA_TIMEOUT_SECONDS
 
+    def _active(self):
+        return get_active_config()
+
     def _build_options(self) -> dict:
+        active = self._active()
         options = {
-            "temperature": Settings.LLM_TEMPERATURE,
-            "num_predict": Settings.LLM_MAX_TOKENS,
+            "temperature": active.temperature,
+            "num_predict": active.max_tokens,
         }
 
-        if Settings.OLLAMA_NUM_CTX > 0:
-            options["num_ctx"] = Settings.OLLAMA_NUM_CTX
+        if active.num_ctx > 0:
+            options["num_ctx"] = active.num_ctx
 
         if Settings.OLLAMA_NUM_THREAD > 0:
             options["num_thread"] = Settings.OLLAMA_NUM_THREAD
 
         return options
+
+    def _resolve_model(self) -> str:
+        return self._active().model
 
     def supports_native_tools(self) -> bool:
         return True
@@ -45,7 +53,7 @@ class OllamaLlmGateway(LlmGatewayPort):
         url = f"{self.base_url}/api/chat"
 
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
             "tools": tools,
             "stream": False,
@@ -88,7 +96,7 @@ class OllamaLlmGateway(LlmGatewayPort):
         url = f"{self.base_url}/api/chat"
 
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
             "stream": False,
             "options": self._build_options(),
@@ -116,7 +124,7 @@ class OllamaLlmGateway(LlmGatewayPort):
         url = f"{self.base_url}/api/chat"
 
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
             "stream": True,
             "options": self._build_options(),

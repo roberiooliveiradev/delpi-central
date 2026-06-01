@@ -252,6 +252,50 @@ def status():
     return jsonify(result), 200
 
 
+@chat_bp.get("/response-modes")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def list_response_modes():
+    from app.application.use_cases.get_chat_response_modes_use_case import (
+        GetChatResponseModesUseCase,
+    )
+
+    return jsonify(GetChatResponseModesUseCase().execute()), 200
+
+
+def _parse_response_mode(payload: dict) -> str | None:
+    raw = payload.get("responseMode")
+    if raw is None:
+        raw = payload.get("response_mode")
+    if raw is None:
+        return None
+    return str(raw).strip() or None
+
+
+def _build_send_chat_message_request(
+    *,
+    session_id: str,
+    payload: dict,
+    resend_from_message_id: str | None = None,
+) -> SendChatMessageRequest:
+    message = payload.get("message", "")
+
+    if resend_from_message_id is not None:
+        message = payload.get("content", message)
+
+    return SendChatMessageRequest(
+        user_id=g.current_user.sub,
+        session_id=session_id,
+        message=message,
+        context=payload.get("context"),
+        access_token=g.access_token,
+        attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
+        agent_id=payload.get("agentId") or payload.get("agent_id") or None,
+        resend_from_message_id=resend_from_message_id,
+        response_mode=_parse_response_mode(payload),
+        admin_debug=_can_use_admin_debug(),
+    )
+
+
 
 
 
@@ -2632,18 +2676,10 @@ def send_message(session_id: str):
     use_case = make_send_chat_message_use_case()
 
     try:
-        # admin_debug: expõe diagnóstico na resposta; persistência no DB é em todo turno.
-        admin_debug = _can_use_admin_debug()
         result = use_case.execute(
-            SendChatMessageRequest(
-                user_id=g.current_user.sub,
+            _build_send_chat_message_request(
                 session_id=session_id,
-                message=payload.get("message", ""),
-                context=payload.get("context"),
-                access_token=g.access_token,
-                attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
-                agent_id=payload.get("agentId") or payload.get("agent_id") or None,
-                admin_debug=admin_debug,
+                payload=payload,
             )
         )
 
@@ -2664,15 +2700,10 @@ def resend_message_stream(session_id: str, message_id: str):
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
 
-    request_dto = SendChatMessageRequest(
-        user_id=g.current_user.sub,
+    request_dto = _build_send_chat_message_request(
         session_id=session_id,
-        message=payload.get("content", payload.get("message", "")),
-        context=payload.get("context"),
-        access_token=g.access_token,
-        attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
+        payload=payload,
         resend_from_message_id=message_id,
-        admin_debug=_can_use_admin_debug(),
     )
 
     return _stream_chat_response(session_id, request_dto)
@@ -2687,15 +2718,9 @@ def stream_message(session_id: str):
     if not isinstance(payload, dict):
         return bad_request("Request body must be a JSON object")
 
-    request_dto = SendChatMessageRequest(
-        user_id=g.current_user.sub,
+    request_dto = _build_send_chat_message_request(
         session_id=session_id,
-        message=payload.get("message", ""),
-        context=payload.get("context"),
-        access_token=g.access_token,
-        attachment_ids=payload.get("attachmentIds") or payload.get("attachment_ids"),
-        agent_id=payload.get("agentId") or payload.get("agent_id") or None,
-        admin_debug=_can_use_admin_debug(),
+        payload=payload,
     )
 
     return _stream_chat_response(session_id, request_dto)

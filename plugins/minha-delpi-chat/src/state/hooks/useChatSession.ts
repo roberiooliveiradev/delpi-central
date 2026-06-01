@@ -20,6 +20,7 @@ import type {
   ChatAttachment,
   ChatCanvasOpenPayload,
   ChatMessage,
+  ChatResponseModeId,
   ChatSession,
   ChatSource,
   ChatStreamActivityEntry,
@@ -66,6 +67,8 @@ type UseChatSessionOptions = {
   onShortcutPromptRequired?: (template: string) => void;
   /** Evita reabrir o diálogo enquanto o usuário já está preenchendo. */
   isShortcutPromptOpen?: () => boolean;
+  /** Modo de resposta LLM (rápida / normal / pensador) escolhido no composer. */
+  getResponseMode?: () => ChatResponseModeId;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -93,6 +96,8 @@ function createOptimisticUserMessage(
 export function useChatSession(options: UseChatSessionOptions = {}) {
   const onShortcutPromptRequiredRef = useRef(options.onShortcutPromptRequired);
   onShortcutPromptRequiredRef.current = options.onShortcutPromptRequired;
+  const getResponseModeRef = useRef(options.getResponseMode);
+  getResponseModeRef.current = options.getResponseMode;
   const isShortcutPromptOpenRef = useRef(options.isShortcutPromptOpen);
   isShortcutPromptOpenRef.current = options.isShortcutPromptOpen;
 
@@ -1383,6 +1388,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
         agentId: options.agentId,
+        responseMode: getResponseModeRef.current?.() ?? "normal",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
     } catch (err) {
@@ -1510,6 +1516,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           messageId,
           content: normalizedContent,
           context: activeSession.context ?? "geral",
+          responseMode: getResponseModeRef.current?.() ?? "normal",
           ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
         });
 

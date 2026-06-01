@@ -52,6 +52,8 @@ from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 from app.application.services.chat_admin_debug_service import ChatAdminDebugService
+from app.application.services.chat_llm_metadata_service import ChatLlmMetadataService
+from app.infrastructure.llm.llm_request_context import get_active_config, llm_generation_scope
 
 
 logger = logging.getLogger("minha-delpi-ai-api.stream_chat")
@@ -106,6 +108,13 @@ class StreamChatMessageUseCase:
         )
 
     def stream(self, request: SendChatMessageRequest) -> Iterator[dict]:
+        generation_config = ChatLlmMetadataService.resolve_generation_config(request)
+
+        with llm_generation_scope(generation_config):
+            yield from self._stream_turn(request)
+
+    def _stream_turn(self, request: SendChatMessageRequest) -> Iterator[dict]:
+        turn_generation_config = ChatLlmMetadataService.resolve_generation_config(request)
         user_id = UUID(request.user_id)
         message = self.message_security_service.secure_message(
             request.message,
@@ -176,6 +185,7 @@ class StreamChatMessageUseCase:
                         "forkedFromMessageId": str(anchor.id),
                         "variantIndex": len(siblings) + 1,
                     },
+                    **ChatLlmMetadataService.user_message_response_mode(request),
                     "delivery": {"status": "submitted"},
                 },
             )
@@ -210,6 +220,7 @@ class StreamChatMessageUseCase:
                     "project": workspace_context.get("project"),
                     "attachments": attachments,
                     "stream": True,
+                    **ChatLlmMetadataService.user_message_response_mode(request),
                     "delivery": {"status": "submitted"},
                 },
             )
@@ -369,11 +380,12 @@ class StreamChatMessageUseCase:
 
         def _prepare_worker() -> None:
             try:
-                if flask_app is not None:
-                    with flask_app.app_context():
+                with llm_generation_scope(turn_generation_config):
+                    if flask_app is not None:
+                        with flask_app.app_context():
+                            _run_prepare()
+                    else:
                         _run_prepare()
-                else:
-                    _run_prepare()
             except Exception as exc:
                 prepare_error_box["error"] = exc
             finally:
@@ -721,8 +733,7 @@ class StreamChatMessageUseCase:
         )
 
         assistant_metadata = {
-            "provider": Settings.LLM_PROVIDER,
-            "model": Settings.OLLAMA_MODEL,
+            **ChatLlmMetadataService.build_assistant_llm_fields(),
             "agentId": workspace_context.get("agentId"),
             "agent": workspace_context.get("agent"),
             "project": workspace_context.get("project"),
@@ -1102,8 +1113,7 @@ class StreamChatMessageUseCase:
 
         stream_audit_metadata = {
             "session_id": str(session_id),
-            "provider": Settings.LLM_PROVIDER,
-            "model": Settings.OLLAMA_MODEL,
+            **ChatLlmMetadataService.build_assistant_llm_fields(),
             "agentId": workspace_context.get("agentId"),
             "agent": workspace_context.get("agent"),
             "project": workspace_context.get("project"),
@@ -1657,9 +1667,11 @@ class StreamChatMessageUseCase:
         )
 
     def _estimate_cost(self, *, prompt_tokens: int, completion_tokens: int) -> float | None:
+        active = get_active_config()
+
         return LlmCostEstimatorService().estimate_cost(
             provider=Settings.LLM_PROVIDER,
-            model=Settings.OLLAMA_MODEL if Settings.LLM_PROVIDER != "vllm" else Settings.VLLM_MODEL,
+            model=active.model,
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
         )

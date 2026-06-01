@@ -96,6 +96,7 @@ import type {
   AssistantContextualHighlight,
   ChatCanvasOpenPayload,
 } from "../../data/api/chatTypes";
+import { useChatResponseMode } from "../../state/hooks/useChatResponseMode";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
 import { getDisplayNameFromAccessToken } from "../../utils/authDisplayName";
@@ -212,6 +213,15 @@ export function ChatPage({
   const catalogProfileSyncedRef = useRef(false);
 
   const {
+    enabled: responseModesEnabled,
+    modes: responseModes,
+    responseMode,
+    setResponseMode,
+  } = useChatResponseMode({ getAccessToken });
+
+  const getResponseMode = useCallback(() => responseMode, [responseMode]);
+
+  const {
     sessions,
     archivedSessions,
     activeSession,
@@ -255,6 +265,7 @@ export function ChatPage({
     getAccessToken,
     projectId: selectedProjectId,
     agentId: requestedAgentId,
+    getResponseMode,
     onSessionActivated: (sessionId, context) => {
       const agentId = context?.agentId ?? requestedAgentId;
       const projectId = context?.projectId ?? selectedProjectId;
@@ -1629,6 +1640,13 @@ export function ChatPage({
     onClearAttachments: () => setComposerAttachments([]),
   };
 
+  const composerResponseModeProps = {
+    showResponseModeSelector: responseModesEnabled,
+    responseModes,
+    responseMode,
+    onResponseModeChange: setResponseMode,
+  };
+
   const shellClassName = [
     "mdc-chat-shell",
     isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
@@ -2065,6 +2083,7 @@ export function ChatPage({
                       variant="center"
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
+                      {...composerResponseModeProps}
                       {...composerContextProps}
                       onChange={setDraft}
                       onSubmit={handleSubmitMessage}
@@ -2136,6 +2155,7 @@ export function ChatPage({
                     variant="center"
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
+                    {...composerResponseModeProps}
                     {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
                     plusMenuOpen={tourPlusMenuOpen ?? undefined}
                     onPlusMenuOpenChange={setTourPlusMenuOpen}
@@ -2212,6 +2232,7 @@ export function ChatPage({
                   variant="dock"
                   placeholder={getComposerPlaceholder()}
                   {...composerAttachmentProps}
+                  {...composerResponseModeProps}
                   {...composerContextProps}
                   onChange={setDraft}
                   onSubmit={handleSubmitMessage}

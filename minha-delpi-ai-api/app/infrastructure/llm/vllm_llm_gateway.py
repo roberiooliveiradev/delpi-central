@@ -9,6 +9,7 @@ from app.domain.exceptions.llm_exceptions import LlmProviderUnavailableError
 from app.domain.ports.llm_gateway_port import LlmGatewayPort
 from app.domain.services.llm_tool_argument_parser import parse_llm_tool_arguments
 from app.infrastructure.config.settings import Settings
+from app.infrastructure.llm.llm_request_context import get_active_config
 
 
 logger = logging.getLogger("minha-delpi-ai-api.vllm")
@@ -21,6 +22,12 @@ class VllmLlmGateway(LlmGatewayPort):
         self.api_key = Settings.VLLM_API_KEY
         self.timeout = Settings.VLLM_TIMEOUT_SECONDS
 
+    def _active(self):
+        return get_active_config()
+
+    def _resolve_model(self) -> str:
+        return self._active().model
+
     def supports_native_tools(self) -> bool:
         return True
 
@@ -29,13 +36,14 @@ class VllmLlmGateway(LlmGatewayPort):
         messages: list[dict],
         tools: list[dict],
     ) -> LlmGenerationResult:
+        active = self._active()
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
             "tools": tools,
             "tool_choice": "auto",
-            "temperature": Settings.LLM_TEMPERATURE,
-            "max_tokens": Settings.LLM_MAX_TOKENS,
+            "temperature": active.temperature,
+            "max_tokens": active.max_tokens,
             "stream": False,
         }
 
@@ -82,11 +90,12 @@ class VllmLlmGateway(LlmGatewayPort):
         return LlmGenerationResult(content=content, tool_calls=tool_calls)
 
     def generate(self, messages: list[dict]) -> str:
+        active = self._active()
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
-            "temperature": Settings.LLM_TEMPERATURE,
-            "max_tokens": Settings.LLM_MAX_TOKENS,
+            "temperature": active.temperature,
+            "max_tokens": active.max_tokens,
             "stream": False,
         }
 
@@ -119,11 +128,12 @@ class VllmLlmGateway(LlmGatewayPort):
         return str(content).strip()
 
     def stream(self, messages: list[dict]) -> Iterator[str]:
+        active = self._active()
         payload = {
-            "model": self.model,
+            "model": self._resolve_model(),
             "messages": messages,
-            "temperature": Settings.LLM_TEMPERATURE,
-            "max_tokens": Settings.LLM_MAX_TOKENS,
+            "temperature": active.temperature,
+            "max_tokens": active.max_tokens,
             "stream": True,
         }
 

@@ -162,6 +162,25 @@ class Settings:
     CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED = (
         os.getenv("CHAT_DOCUMENT_VISION_STAMP_CROP_ENABLED", "true").lower() == "true"
     )
+    CHAT_DOCUMENT_VISION_TESSERACT_LANG = os.getenv(
+        "CHAT_DOCUMENT_VISION_TESSERACT_LANG",
+        "por+eng",
+    ).strip()
+    CHAT_DOCUMENT_VISION_OLLAMA_MODEL = os.getenv(
+        "CHAT_DOCUMENT_VISION_OLLAMA_MODEL",
+        "qwen2.5vl:7b",
+    ).strip()
+    CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL = os.getenv(
+        "CHAT_DOCUMENT_VISION_OLLAMA_BASE_URL",
+        "",
+    ).strip()
+    # Com backend=auto: tenta qwen2.5vl após Tesseract se o texto ainda for insuficiente.
+    CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK = (
+        os.getenv("CHAT_DOCUMENT_VISION_AUTO_VLM_FALLBACK", "true").lower() == "true"
+    )
+    CHAT_RESPONSE_MODES_ENABLED = (
+        os.getenv("CHAT_RESPONSE_MODES_ENABLED", "true").lower() == "true"
+    )
 
     EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED = (
         os.getenv("EXTERNAL_ACTION_SEMANTIC_RANK_ENABLED", "true").lower() == "true"

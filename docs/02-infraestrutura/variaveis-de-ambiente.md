@@ -140,6 +140,11 @@ Definidas no Compose (dev) — ver também `minha-delpi-ai-api` settings:
 | `OLLAMA_NUM_PARALLEL` / `OLLAMA_KEEP_ALIVE` | Serviço `ollama` no Compose |
 | `LLM_MAX_TOKENS` | `num_predict` Ollama. **Recomendado:** `1536`; mínimo: `384`. Ou use `CHAT_LLM_LATENCY_PROFILE=operational_cpu` (384) |
 | `CHAT_LLM_LATENCY_PROFILE` | Preset de latência quando `LLM_MAX_TOKENS`/`OLLAMA_NUM_CTX` não estão explícitos: `operational_cpu` (384/1536), `balanced` (1536/2048), `documental` (768/4096). **Homolog CPU:** `operational_cpu` |
+| `CHAT_RESPONSE_MODES_ENABLED` | `true` — modos **Rápida / Normal / Pensador** no composer (`responseMode` no POST stream/send). Ver `GET /chat/response-modes` |
+| `CHAT_RESPONSE_MODE_FAST_MODEL` | Modelo Ollama/vLLM do modo rápida (ex.: `qwen2.5:1.5b`). Requer `ollama pull` |
+| `CHAT_RESPONSE_MODE_FAST_MAX_TOKENS` / `FAST_NUM_CTX` | Limites do modo rápida (default 384 / 1536) |
+| `CHAT_RESPONSE_MODE_THINKER_MODEL` | Opcional — modelo maior; vazio = mesmo `OLLAMA_MODEL` com mais contexto |
+| `CHAT_RESPONSE_MODE_THINKER_MAX_TOKENS` / `THINKER_NUM_CTX` | Modo pensador (default 1536 / 4096) |
 | `LLM_TEMPERATURE` | Criatividade das respostas. **Recomendado:** `0.4` (natural); `0.2` (mais determinístico) |
 | `CHAT_SESSION_TITLE_LLM_ENABLED` | `true` recomendado — títulos automáticos melhoram UX |
 | `CHAT_FAST_PATH_ENABLED` | `true` — pula RAG/tools em cumprimentos curtos (`olá`, `oi`). Max chars: `30` |

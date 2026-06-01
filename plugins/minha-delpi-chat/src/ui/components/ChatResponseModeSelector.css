@@ -1,0 +1,89 @@
+.mdc-chat-response-mode {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mdc-chat-response-mode__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.28rem 0.7rem 0.28rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mdc-text) 8%, transparent);
+  color: var(--mdc-title, var(--mdc-text-primary, #e4e4e7));
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.mdc-chat-response-mode__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+}
+
+.mdc-chat-response-mode__trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mdc-chat-response-mode__trigger svg {
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+
+.mdc-chat-response-mode__menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.5rem);
+  z-index: 60;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 15rem;
+  padding: 0.4rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 1rem;
+  background: var(--mdc-card-bg);
+  box-shadow:
+    0 18px 48px color-mix(in srgb, #000 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mdc-card-border) 40%, transparent);
+}
+
+.mdc-chat-response-mode__option {
+  display: grid;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.58rem 0.68rem;
+  border: 0;
+  border-radius: 0.72rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mdc-chat-response-mode__option strong {
+  font-size: 0.84rem;
+  color: var(--mdc-title, var(--mdc-text-primary, #fafafa));
+}
+
+.mdc-chat-response-mode__option small {
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--mdc-text-muted, #a1a1aa);
+}
+
+.mdc-chat-response-mode__option:hover,
+.mdc-chat-response-mode__option--active {
+  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+}
+
+.mdc-chat-response-mode__option-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
