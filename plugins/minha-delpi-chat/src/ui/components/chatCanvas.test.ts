@@ -25,7 +25,7 @@ describe("chatCanvas", () => {
           title: "Lousa",
           markdown: "Conteúdo",
         },
-      }),
-    )?.markdown).toBe("Conteúdo");
+      })?.markdown,
+    ).toBe("Conteúdo");
   });
 });
