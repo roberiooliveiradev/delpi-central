@@ -55,6 +55,18 @@ No container:
 docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py up
 ```
 
+Se o startup falhar com **checksum divergente** em migration já aplicada (ex.: V028 tornada idempotente após o `up`):
+
+```bash
+docker stop delpi-strategic-indicators-api   # se estiver em restart loop
+docker run --rm --network infra_delpi-network \
+  -v "$(pwd)/strategic-indicators-api:/app" \
+  --env-file infra/.env \
+  -e PLUGINS_DB_HOST=postgres-plugins \
+  infra-strategic-indicators-api python3 scripts/run_migrations.py repair-checksums
+docker start delpi-strategic-indicators-api
+```
+
 ## Startup automático
 
 `SI_RUN_MIGRATIONS_ON_STARTUP=true` aplica migrations pendentes antes do warm-up (recomendado em dev).

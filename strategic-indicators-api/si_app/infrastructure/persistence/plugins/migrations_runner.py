@@ -156,20 +156,62 @@ def apply_migration(conn: Any, path: Path) -> None:
         raise MigrationError(f"Falha ao aplicar migration {path.name}: {exc}") from exc
 
 
-def validate_migration_history(conn: Any, files: list[Path]) -> None:
+def find_checksum_mismatches(
+    conn: Any, files: list[Path]
+) -> list[tuple[str, str, str, str]]:
+    """Retorna (version, name, checksum_aplicado, checksum_atual) para divergências."""
     applied = get_applied_migrations(conn)
+    mismatches: list[tuple[str, str, str, str]] = []
 
     for path in files:
-        version, _ = parse_version_and_name(path)
+        version, name = parse_version_and_name(path)
         checksum = calculate_checksum(path)
 
-        if version in applied:
-            applied_checksum = applied[version]["checksum"]
-            if checksum != applied_checksum:
-                raise MigrationError(
-                    f"Checksum divergente para {path.name}. "
-                    f"A migration já aplicada foi alterada."
-                )
+        if version not in applied:
+            continue
+
+        applied_checksum = applied[version]["checksum"]
+        if checksum != applied_checksum:
+            mismatches.append((version, name, applied_checksum, checksum))
+
+    return mismatches
+
+
+def repair_checksum_mismatches(conn: Any, files: list[Path]) -> list[str]:
+    """Atualiza checksums registrados para bater com o arquivo no disco.
+
+    Use quando a migration já foi aplicada e o SQL no repositório foi tornado
+    idempotente (sem mudança de schema pendente). Não reexecuta o SQL.
+    """
+    repaired: list[str] = []
+
+    for version, name, _old, new_checksum in find_checksum_mismatches(conn, files):
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                UPDATE "{SI_SCHEMA_NAME}".schema_migrations
+                SET checksum = %s
+                WHERE version = %s
+                """,
+                (new_checksum, version),
+            )
+        conn.commit()
+        repaired.append(f"{version} ({name})")
+
+    return repaired
+
+
+def validate_migration_history(conn: Any, files: list[Path]) -> None:
+    mismatches = find_checksum_mismatches(conn, files)
+
+    if mismatches:
+        labels = ", ".join(f"{version}__{name}.sql" for version, name, *_ in mismatches)
+        raise MigrationError(
+            f"Checksum divergente para {labels}. "
+            f"A migration já aplicada foi alterada no repositório. "
+            f"Se o schema já reflete a migration e o SQL atual é só idempotente, "
+            f"execute: python3 scripts/run_migrations.py repair-checksums"
+        )
 
 
 def reset_migrations() -> None:
@@ -238,14 +280,33 @@ def show_status() -> None:
             print(f"- {version} | {name} | {status}")
 
 
+def repair_checksums() -> None:
+    files = list_migration_files()
+
+    with get_connection() as conn:
+        ensure_migrations_table(conn)
+        repaired = repair_checksum_mismatches(conn, files)
+
+    if not repaired:
+        print("[strategic-indicators] Nenhum checksum divergente.")
+        return
+
+    print("[strategic-indicators] Checksums reparados:")
+    for item in repaired:
+        print(f"  - {item}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Runner de migrations Postgres do Strategic Indicators API.",
     )
     parser.add_argument(
         "command",
-        choices=["up", "status", "reset"],
-        help="up: aplica pendentes | status: lista status | reset: remove schema strategic_indicators",
+        choices=["up", "status", "reset", "repair-checksums"],
+        help=(
+            "up: aplica pendentes | status: lista status | reset: remove schema "
+            "| repair-checksums: alinha checksums já aplicados com os arquivos atuais"
+        ),
     )
 
     args = parser.parse_args()
@@ -260,6 +321,10 @@ def main() -> None:
 
     if args.command == "reset":
         reset_migrations()
+        return
+
+    if args.command == "repair-checksums":
+        repair_checksums()
         return
 
 

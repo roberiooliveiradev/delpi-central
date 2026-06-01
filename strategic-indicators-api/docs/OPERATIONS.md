@@ -63,6 +63,20 @@ docker exec delpi-strategic-indicators-api grep -A2 "pg_indexes" /app/migrations
 
 Se `period_scores` já tiver colunas `version_number` / `is_clean` e o índice `uq_si_period_scores_scope_version`, a V028 só registra o que falta (idempotente).
 
+### Checksum divergente (ex.: V028 após pull)
+
+**Sintoma:** `delpi-strategic-indicators-api` em restart com  
+`Checksum divergente para V028__period_scores_versions.sql`.
+
+**Causa:** a V028 já rodou no banco e o arquivo no Git foi ajustado depois (SQL idempotente, sem schema novo).
+
+**Correção** (não reexecuta o SQL; só alinha o registro em `schema_migrations`):
+
+```bash
+docker exec delpi-strategic-indicators-api python3 scripts/run_migrations.py repair-checksums
+docker restart delpi-strategic-indicators-api
+```
+
 ## Health checks
 
 | URL | Esperado |
