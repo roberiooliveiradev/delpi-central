@@ -121,6 +121,46 @@ def test_resolve_scatter_for_two_numeric_columns():
     assert chart_type == "scatter"
 
 
+def test_resolve_efficiency_fabril_as_horizontal_bar_not_scatter():
+    rows = [
+        {
+            "nome_operador": "Operador A",
+            "qtd_apontada": 1.8,
+            "tempo_real_horas": 0.5,
+            "tempo_previsto_horas": 0.76,
+            "eficiencia_percentual": 147.87,
+        },
+        {
+            "nome_operador": "Operador B",
+            "qtd_apontada": 6,
+            "tempo_real_horas": 3.7,
+            "tempo_previsto_horas": 2.06,
+            "eficiencia_percentual": 54.45,
+        },
+        {
+            "nome_operador": "Operador C",
+            "qtd_apontada": 0.15,
+            "tempo_real_horas": 0.11,
+            "tempo_previsto_horas": 0.34,
+            "eficiencia_percentual": 292.29,
+        },
+    ]
+
+    chart_type = ChatChartTypeSelectionService.resolve(
+        rows=rows,
+        label_key="nome_operador",
+        numeric_keys=[
+            "qtd_apontada",
+            "tempo_real_horas",
+            "tempo_previsto_horas",
+            "eficiencia_percentual",
+        ],
+        user_message="qual a eficiencia fabril de hoje?",
+    )
+
+    assert chart_type == "horizontal_bar"
+
+
 def test_resolve_histogram_for_many_buckets():
     chart_type = ChatChartTypeSelectionService.resolve(
         rows=[{"bucket": f"B{i}", "count": i} for i in range(10)],

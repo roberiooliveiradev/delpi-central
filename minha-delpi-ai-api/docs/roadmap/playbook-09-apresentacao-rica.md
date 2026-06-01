@@ -17,6 +17,7 @@ Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md)
 | `ChatPresentationDecisionService` | Formato preferido, fallback, `availableViews`, motivo |
 | `ChatPresentationInsightService` | Insight automático curto (§16) |
 | `ChatPresentationChartPolicyService` | Limites de fatias/pontos e agrupamento «Outros» (§25) |
+| `ChatPresentationAxisPreferenceService` | Eixos X/Y padrão (eficiência, operador) + colunas no `config` |
 | `ChatChartTypeSelectionService` | Subtipo de gráfico (linha, barra H, rosca, combo, …) |
 | `ExternalActionResultPresenter` | Monta `presentation` / `tablePresentation` / `chartPresentation` |
 | `ExecuteExternalActionUseCase` | Enriquece metadata com `presentationDecision` |
@@ -80,8 +81,9 @@ Dados da action → Presenter (table/chart/tree/kpi)
 | P13 | Pedido de tabela | `table` |
 | P14 | Dados vazios | `text` |
 | P15 | Formato pedido (linha) | `line_chart` |
+| P16 | Eficiência fabril (LMP, várias métricas) | `horizontal_bar` + eixo Y `eficiencia_percentual` |
 
-Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/services/test_rich_presentation.py`.
+Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/services/test_rich_presentation.py`, `test_chat_presentation_axis_preference_service.py`, `test_chat_chart_type_selection_service.py`.
 
 ---
 
@@ -91,10 +93,10 @@ Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/servic
 |------|--------|
 | 1 — Decisão básica de formato | **Concluída** — API + MFE (`presentationDecision`, insight, toggle inicial, chips de alternância) |
 | 2 — Gráficos ampliados | **Concluída** — sync `chartType`, limites, insight, política de fatias |
-| 3 — Alternância de visualização | **Em andamento** — toggle MFE + chips; feedback §38 no playbook |
-| 4 — Interatividade | Parcial (drill-down, menus de linha/nó) |
+| 3 — Alternância de visualização | **Concluída** — toggle Texto/Tabela/Gráfico/Árvore, chips «Ver tabela» / «Gerar gráfico» / «Explique esse gráfico», seletores de eixo X/Y no gráfico, motivos `presentation_*` no feedback |
+| 4 — Interatividade | Parcial — drill-down, menus, zoom temporal, comparação de períodos, export PNG/lousa; backlog: filtros cruzados, «explicar» sem novo turno LLM |
 | 5 — Dashboards e insights | Parcial (`ChatDashboardPresentationService`) |
-| 6 — Métricas e otimização | Backlog (feedback por formato, admin) |
+| 6 — Métricas e otimização | **Em andamento** — `help-events`: `presentation_view_switch`, `presentation_chart_type_switch`, `presentation_axis_change`, `presentation_chart_export_png`; backlog: painel admin e agregação |
 
 ---
 

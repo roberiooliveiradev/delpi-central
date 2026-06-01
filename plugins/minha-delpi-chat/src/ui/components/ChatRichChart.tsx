@@ -45,6 +45,7 @@ import {
   isNumericAxisChartType,
 } from "./chartAxisSelection";
 import { ExpandButton } from "./ChatExpandModal";
+import { recordPresentationTelemetry } from "./presentationTelemetry";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
@@ -263,9 +264,13 @@ export function ChatRichChart({
 
   const exportPng = useCallback(() => {
     exportChartElementToPng(chartContainerRef.current, title || "grafico");
+    recordPresentationTelemetry("presentation_chart_export_png", {
+      chartType: activeChartType,
+      title: title || undefined,
+    });
     setDownloadReady(true);
     setTimeout(() => setDownloadReady(false), 2000);
-  }, [title]);
+  }, [activeChartType, title]);
 
   return (
     <div
@@ -292,7 +297,15 @@ export function ChatRichChart({
                     <span>Eixo Y</span>
                     <select
                       value={resolvedY}
-                      onChange={(event) => setAxisYOverride(event.target.value)}
+                      onChange={(event) => {
+                        const column = event.target.value;
+                        setAxisYOverride(column);
+                        recordPresentationTelemetry("presentation_axis_change", {
+                          axis: "y",
+                          column,
+                          chartType: activeChartType,
+                        });
+                      }}
                       title="Valor numérico no eixo vertical"
                     >
                       {axisDefaults.numericColumns.map((column) => (
@@ -311,7 +324,15 @@ export function ChatRichChart({
                     <span>{scatterMode ? "Eixo X" : "Categoria"}</span>
                     <select
                       value={resolvedX}
-                      onChange={(event) => setAxisXOverride(event.target.value)}
+                      onChange={(event) => {
+                        const column = event.target.value;
+                        setAxisXOverride(column);
+                        recordPresentationTelemetry("presentation_axis_change", {
+                          axis: scatterMode ? "x" : "category",
+                          column,
+                          chartType: activeChartType,
+                        });
+                      }}
                       title={
                         scatterMode
                           ? "Valor numérico no eixo horizontal"
@@ -415,9 +436,18 @@ export function ChatRichChart({
                     key={token}
                     type="button"
                     className={`mdc-rich-chart__toggle-btn${activeChartType === token ? " mdc-rich-chart__toggle-btn--active" : ""}`}
-                    onClick={() =>
-                      setChartTypeOverride((current) => (current === token ? null : token))
-                    }
+                    onClick={() => {
+                      setChartTypeOverride((current) => {
+                        const next = current === token ? null : token;
+
+                        recordPresentationTelemetry("presentation_chart_type_switch", {
+                          from: current ?? chartType,
+                          to: next ?? chartType,
+                        });
+
+                        return next;
+                      });
+                    }}
                     title={CHART_TYPE_LABELS[token] ?? token}
                   >
                     {CHART_TYPE_LABELS[token] ?? token}

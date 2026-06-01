@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   ChatCanvasOpenPayload,
   ChatDepthState,
@@ -31,6 +31,7 @@ import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTree } from "./ChatRichTree";
 import { ExpandButton } from "./ChatExpandModal";
+import { recordPresentationTelemetry } from "./presentationTelemetry";
 import "./ChatRichKpi.css";
 import "./ChatRichTree.css";
 import "./ChatExpandModal.css";
@@ -216,6 +217,19 @@ export function ChatRichPresentation({
 
   const [viewMode, setViewMode] = useState<ViewFormat>(defaultMode);
 
+  const switchViewMode = useCallback((mode: ViewFormat) => {
+    setViewMode((previous) => {
+      if (previous !== mode) {
+        recordPresentationTelemetry("presentation_view_switch", {
+          from: previous,
+          to: mode,
+        });
+      }
+
+      return mode;
+    });
+  }, []);
+
   useEffect(() => {
     setViewMode(defaultMode);
   }, [defaultMode, toolCalls]);
@@ -289,28 +303,28 @@ export function ChatRichPresentation({
           <FormatToggle
             active={viewMode === "text"}
             label="Texto"
-            onClick={() => setViewMode("text")}
+            onClick={() => switchViewMode("text")}
           />
         ) : null}
         {formatToggles.showTree ? (
           <FormatToggle
             active={viewMode === "tree"}
             label="Árvore"
-            onClick={() => setViewMode("tree")}
+            onClick={() => switchViewMode("tree")}
           />
         ) : null}
         {formatToggles.showTable ? (
           <FormatToggle
             active={viewMode === "table"}
             label="Tabela"
-            onClick={() => setViewMode("table")}
+            onClick={() => switchViewMode("table")}
           />
         ) : null}
         {formatToggles.showChart ? (
           <FormatToggle
             active={viewMode === "chart"}
             label="Gráfico"
-            onClick={() => setViewMode("chart")}
+            onClick={() => switchViewMode("chart")}
           />
         ) : null}
       </div>

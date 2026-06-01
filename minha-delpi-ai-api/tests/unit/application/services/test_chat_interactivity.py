@@ -133,6 +133,25 @@ def test_presentation_decision_adds_view_switch_chips():
     assert "Gerar gráfico" in labels
 
 
+def test_presentation_chart_includes_explain_chip():
+    suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
+        [
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "presentation": {"type": "chart"}},
+            }
+        ]
+    )
+
+    labels = [item["label"] for item in suggestions]
+
+    assert "Explique esse gráfico" in labels
+
+    explain = next(item for item in suggestions if item["label"] == "Explique esse gráfico")
+
+    assert "insight" in explain["query"].lower()
+
+
 def test_presentation_kpi_ver_em_tabela_query():
     suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
         [

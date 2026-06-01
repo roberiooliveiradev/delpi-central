@@ -51,6 +51,23 @@ def test_attach_skips_without_direct_answer():
     assert "helpSelfHelp" not in metadata
 
 
+def test_adoption_presentation_events():
+    for event in (
+        "presentation_view_switch",
+        "presentation_chart_type_switch",
+        "presentation_axis_change",
+        "presentation_chart_export_png",
+    ):
+        result = ChatHelpAdoptionService.record(
+            user_id="user-1",
+            event=event,
+            metadata={"from": "table", "to": "chart"},
+        )
+
+        assert result["ok"] is True
+        assert result["event"] == event
+
+
 def test_adoption_self_help_events():
     for event in (
         "self_help_feedback",

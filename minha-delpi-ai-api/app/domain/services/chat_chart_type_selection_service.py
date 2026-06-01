@@ -46,6 +46,25 @@ _HORIZONTAL_HINTS = (
     "maiores",
 )
 
+_EFFICIENCY_HINTS = (
+    "eficiencia",
+    "eficiência",
+    "efficiency",
+    "fabril",
+    "produtividade",
+    "oee",
+    "yield",
+)
+
+_EFFICIENCY_METRIC_TOKENS = (
+    "eficiencia",
+    "eficiência",
+    "efficiency",
+    "percentual",
+    "yield",
+    "oee",
+)
+
 _STACKED_HINTS = (
     "empilh",
     "stacked",
@@ -86,7 +105,10 @@ class ChatChartTypeSelectionService:
         if cls._looks_gauge(rows, numeric_keys):
             return "gauge"
 
-        if cls._looks_scatter(rows, label_key, numeric_keys):
+        if cls._looks_efficiency_ranking(rows, numeric_keys, message):
+            return "horizontal_bar"
+
+        if cls._looks_scatter(rows, label_key, numeric_keys, message):
             return "scatter"
 
         if cls._looks_combo(numeric_keys):
@@ -139,6 +161,10 @@ class ChatChartTypeSelectionService:
 
         if any(token in message for token in ("dispers", "scatter", "correla", "correlação")):
             return "scatter"
+
+        if any(token in message for token in _EFFICIENCY_HINTS):
+            if not any(token in message for token in ("dispers", "scatter", "correla")):
+                return "horizontal_bar"
 
         if any(token in message for token in ("histograma", "distribui", "frequencia", "frequência")):
             return "histogram"
@@ -267,13 +293,40 @@ class ChatChartTypeSelectionService:
         return has_target and has_value
 
     @classmethod
+    def _looks_efficiency_ranking(
+        cls,
+        rows: list[dict[str, Any]],
+        numeric_keys: list[str],
+        message: str,
+    ) -> bool:
+        if len(rows) < 3 or len(numeric_keys) < 2:
+            return False
+
+        lowered = [str(key or "").lower() for key in numeric_keys]
+        has_efficiency_metric = any(
+            any(token in key for token in _EFFICIENCY_METRIC_TOKENS) for key in lowered
+        )
+
+        if not has_efficiency_metric:
+            return False
+
+        if message and any(token in message for token in _EFFICIENCY_HINTS):
+            return True
+
+        return len(rows) >= 6
+
+    @classmethod
     def _looks_scatter(
         cls,
         rows: list[dict[str, Any]],
         label_key: str,
         numeric_keys: list[str],
+        message: str = "",
     ) -> bool:
         if len(numeric_keys) < 2 or len(rows) < 3:
+            return False
+
+        if cls._looks_efficiency_ranking(rows, numeric_keys, message):
             return False
 
         if cls._looks_temporal(rows, label_key):

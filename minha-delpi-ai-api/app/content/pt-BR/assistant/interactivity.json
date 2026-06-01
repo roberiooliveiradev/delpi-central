@@ -60,6 +60,7 @@
     ],
     "chart": [
       "Ver como tabela",
+      "Explique esse gráfico",
       "Baixar PNG",
       "Colocar na lousa"
     ],
@@ -80,6 +81,7 @@
     "Ver como tabela": "mostre o último resultado em tabela",
     "Ver em tabela": "mostre o último resultado em tabela",
     "Baixar PNG": "exporte o gráfico acima como imagem",
+    "Explique esse gráfico": "explique o gráfico acima em linguagem simples, destacando o insight principal e como ler os eixos",
     "Ver estoque": "qual o estoque do produto {{productCode}}?",
     "Onde é usado?": "onde o produto {{productCode}} é usado?",
     "Colocar na lousa": "coloque o resultado acima na lousa"
