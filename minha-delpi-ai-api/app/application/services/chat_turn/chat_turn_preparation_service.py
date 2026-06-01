@@ -325,6 +325,15 @@ class ChatTurnPreparationService:
             previous_messages=history_source,
         )
 
+        from app.domain.services.chat_web_search_source_follow_up_service import (
+            ChatWebSearchSourceFollowUpService,
+        )
+
+        web_list_sources_direct = ChatWebSearchSourceFollowUpService.build_list_links_answer(
+            message,
+            history_source,
+        )
+
         from app.application.services.chat_attachment_welcome_service import (
             ChatAttachmentWelcomeService,
         )
@@ -541,6 +550,7 @@ class ChatTurnPreparationService:
             or small_talk_direct
             or utility_direct
             or web_save_sources_direct
+            or web_list_sources_direct
             or attachment_welcome_direct
             or text_task_pure
         ) and not canvas_operational_update:
@@ -573,6 +583,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("utility_direct")
             elif web_save_sources_direct:
                 pipeline_stages.append("web_save_sources")
+            elif web_list_sources_direct:
+                pipeline_stages.append("web_list_sources")
             elif attachment_welcome_direct:
                 pipeline_stages.append("attachment_welcome")
             elif skip_tools_for_attachment_document:
@@ -688,6 +700,7 @@ class ChatTurnPreparationService:
             or bool(small_talk_direct)
             or bool(utility_direct)
             or bool(web_save_sources_direct)
+            or bool(web_list_sources_direct)
             or bool(attachment_welcome_direct)
             or bool(text_task_pure)
             or operational_optimize
@@ -704,6 +717,8 @@ class ChatTurnPreparationService:
             direct_answer = small_talk_direct
         elif utility_direct:
             direct_answer = utility_direct
+        elif web_list_sources_direct:
+            direct_answer = web_list_sources_direct
         elif web_save_sources_direct:
             direct_answer = web_save_sources_direct
         elif session_memory_direct:
@@ -730,6 +745,8 @@ class ChatTurnPreparationService:
             )
 
         if canvas_action or pre_capability_answer or small_talk_direct or utility_direct or (
+            web_list_sources_direct
+        ) or (
             web_save_sources_direct
         ) or (
             session_memory_direct

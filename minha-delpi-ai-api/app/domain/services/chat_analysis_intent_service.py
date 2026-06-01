@@ -260,21 +260,42 @@ class ChatAnalysisIntentService:
         limit: int = 10,
     ) -> bool:
         for item in reversed(previous_messages[-limit:]):
-            metadata = item if isinstance(item, dict) else getattr(item, "metadata", None)
-
-            if not isinstance(item, dict):
-                metadata = getattr(item, "metadata", None)
-            else:
+            if isinstance(item, dict):
                 metadata = item.get("metadata")
+            else:
+                metadata = getattr(item, "metadata", None)
 
             if not isinstance(metadata, dict):
                 continue
+
+            research = metadata.get("webSearchResearch")
+
+            if isinstance(research, dict):
+                status = str(research.get("searchStatus") or "").strip()
+
+                if status == "success" or int(research.get("sourceCount") or 0) > 0:
+                    return True
 
             for tool_call in metadata.get("toolCalls") or []:
                 if not isinstance(tool_call, dict):
                     continue
 
-                if str(tool_call.get("name") or "") != "execute_external_action":
+                name = str(tool_call.get("name") or "")
+
+                if name == "web_search":
+                    tool_meta = tool_call.get("metadata") or {}
+
+                    if tool_meta.get("ok") is True:
+                        return True
+
+                    data = tool_call.get("data")
+
+                    if isinstance(data, dict) and str(data.get("searchStatus") or "") == "success":
+                        return True
+
+                    continue
+
+                if name != "execute_external_action":
                     continue
 
                 tool_meta = tool_call.get("metadata") or {}
@@ -295,6 +316,30 @@ class ChatAnalysisIntentService:
 
         if not normalized:
             return False
+
+        from app.domain.services.chat_web_search_history_service import (
+            ChatWebSearchHistoryService,
+        )
+        from app.domain.services.chat_web_search_source_follow_up_service import (
+            ChatWebSearchSourceFollowUpService,
+        )
+
+        if ChatWebSearchSourceFollowUpService.is_list_sources_request(normalized):
+            return False
+
+        if ChatWebSearchHistoryService.has_recent_web_search(previous_messages or []):
+            if any(
+                term in normalized
+                for term in (
+                    "fonte",
+                    "link",
+                    "url",
+                    "pesquisa web",
+                    "busca na web",
+                    "internet",
+                )
+            ):
+                return False
 
         if cls._has_recent_successful_tool_data(previous_messages or []):
             return False

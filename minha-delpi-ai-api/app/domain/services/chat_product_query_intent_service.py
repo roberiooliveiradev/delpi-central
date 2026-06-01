@@ -238,6 +238,9 @@ class ChatProductQueryIntentService:
             if cls._is_example_product_code_token(raw, match):
                 continue
 
+            if cls._is_phone_contact_token(raw, match):
+                continue
+
             code = cls.normalize_product_code(token)
 
             if cls.is_plausible_product_code(code):
@@ -248,6 +251,27 @@ class ChatProductQueryIntentService:
     @classmethod
     def _is_date_numeric_token(cls, token: str) -> bool:
         return bool(cls._DATE_TOKEN_RE.match(str(token or "").strip()))
+
+    @classmethod
+    def _is_phone_contact_token(cls, text: str, match: re.Match[str]) -> bool:
+        token = str(match.group(0) or "").strip()
+        window = text[max(0, match.start() - 18) : min(len(text), match.end() + 18)]
+
+        if re.search(r"\(\s*\d{2}\s*\)\s*[\d\s\-–]{5,}", window):
+            return True
+
+        if re.fullmatch(r"\d{3,4}-\d{4}", token):
+            return True
+
+        digits = re.sub(r"\D", "", token)
+
+        if len(digits) in {7, 8}:
+            prefix = text[max(0, match.start() - 12) : match.start()]
+
+            if ")" in prefix or re.search(r"\(\s*\d{2}", prefix):
+                return True
+
+        return False
 
     @classmethod
     def _is_group_code_numeric_token(cls, text: str, match: re.Match[str]) -> bool:
@@ -307,6 +331,9 @@ class ChatProductQueryIntentService:
                 continue
 
             if cls._is_example_product_code_token(raw, match):
+                continue
+
+            if cls._is_phone_contact_token(raw, match):
                 continue
 
             code = cls.normalize_product_code(match.group(0))

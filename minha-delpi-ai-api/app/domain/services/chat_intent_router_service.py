@@ -212,6 +212,7 @@ class ChatIntentRouterService:
         "canvas": ("canvas_task", None, 4),
         "data_interpretation": ("follow_up", "data_interpretation", 5),
         "data_interpretation_empty": ("follow_up", "data_interpretation_empty", 5),
+        "web_list_sources": ("follow_up", "web_list_sources", 5),
         "operational_parameter": ("clarification", "missing_params", 2),
         "intent_disambiguation": ("operational_query", "scope_clarification", 6),
         "tools": ("operational_query", None, 6),
@@ -553,6 +554,33 @@ class ChatIntentRouterService:
         is_follow_up = bool(memory_entities) or ChatFollowUpIntentService.is_operational_follow_up(
             normalized
         )
+
+        from app.domain.services.chat_web_search_history_service import (
+            ChatWebSearchHistoryService,
+        )
+        from app.domain.services.chat_web_search_source_follow_up_service import (
+            ChatWebSearchSourceFollowUpService,
+        )
+
+        if (
+            history
+            and ChatWebSearchSourceFollowUpService.is_list_sources_request(normalized)
+            and ChatWebSearchHistoryService.has_recent_web_search(history)
+        ):
+            return cls._with_decision(
+                IntentRouteResult(
+                    intent="follow_up",
+                    sub_intent="web_list_sources",
+                    is_follow_up=True,
+                    confidence=0.92,
+                    requires_tool=False,
+                    requires_rag=False,
+                    requires_llm=False,
+                    priority_applied=5,
+                ),
+                decision="follow_up",
+                reason="web_search_list_sources",
+            )
 
         if history and ChatAnalysisIntentService.is_data_interpretation_request(normalized, history):
             return cls._with_decision(

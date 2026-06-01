@@ -55,7 +55,11 @@ class ChatWebSearchSaveSourcesService:
                 "e repita o pedido (ex.: «salve as fontes da pesquisa no projeto»)."
             )
 
-        bundle = cls._extract_recent_web_search(previous_messages)
+        from app.domain.services.chat_web_search_history_service import (
+            ChatWebSearchHistoryService,
+        )
+
+        bundle = ChatWebSearchHistoryService.extract_recent_bundle(previous_messages)
 
         if not bundle:
             return (
@@ -98,108 +102,6 @@ class ChatWebSearchSaveSourcesService:
             "Elas ficam disponíveis em **Fontes do projeto** e podem ser usadas em novas "
             "perguntas neste projeto."
         )
-
-    @classmethod
-    def _extract_recent_web_search(cls, previous_messages: list[Any] | None) -> dict | None:
-        if not previous_messages:
-            return None
-
-        for item in reversed(previous_messages[-16:]):
-            role = str(getattr(item, "role", None) or cls._dict_value(item, "role") or "").lower()
-
-            if role != "assistant":
-                continue
-
-            metadata = cls._message_metadata(item)
-
-            if not metadata:
-                continue
-
-            research = metadata.get("webSearchResearch")
-
-            if not isinstance(research, dict):
-                sources = [
-                    entry
-                    for entry in (metadata.get("sources") or [])
-                    if isinstance(entry, dict)
-                    and str(entry.get("sourceType") or entry.get("scope") or "") in {
-                        "web",
-                        "web_search",
-                    }
-                ]
-
-                if not sources:
-                    continue
-
-                return {
-                    "query": "",
-                    "sources": sources,
-                    "research": None,
-                }
-
-            payload_sources = cls._sources_from_research(research, metadata)
-
-            if not payload_sources:
-                continue
-
-            query = str(research.get("query") or "").strip()
-
-            return {
-                "query": query,
-                "sources": payload_sources,
-                "research": research,
-                "projectName": None,
-            }
-
-        return None
-
-    @classmethod
-    def _sources_from_research(cls, research: dict, metadata: dict) -> list[dict]:
-        sites = research.get("sites")
-
-        if isinstance(sites, list) and sites:
-            collected: list[dict] = []
-
-            for site in sites:
-                if not isinstance(site, dict):
-                    continue
-
-                url = str(site.get("url") or "").strip()
-
-                if not url:
-                    continue
-
-                collected.append(
-                    {
-                        "title": str(site.get("title") or site.get("hostname") or url).strip(),
-                        "sourceRef": url,
-                        "sourceType": "web",
-                        "isOfficial": site.get("isOfficial"),
-                    }
-                )
-
-            if collected:
-                return collected
-
-        payload = {"searchStatus": "success", "results": []}
-        tool_calls = metadata.get("toolCalls") or []
-
-        for tool_call in reversed(tool_calls):
-            if not isinstance(tool_call, dict):
-                continue
-
-            if str(tool_call.get("name") or "") != "web_search":
-                continue
-
-            data = tool_call.get("data")
-
-            if isinstance(data, dict):
-                payload = data
-                break
-
-        built = ChatWebSearchDirectAnswerService.build_sources(payload)
-
-        return built
 
     @classmethod
     def _build_title(cls, bundle: dict) -> str:
