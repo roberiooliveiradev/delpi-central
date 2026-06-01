@@ -16,7 +16,7 @@ Escopo: falhas, respostas sem dados, permissão negada, parâmetros ausentes, AP
 | `ChatErrorHandlingService` | Metadata `errorHandling`, `errorRecoveryFollowUpSuggestions`, debug admin |
 | `ChatErrorHandlingTelemetryService` | Log estruturado `error_handling` |
 | `ChatHelpErrorFollowUpService` | Fallback quando não há chips de recuperação tipados |
-| MFE `ChatErrorHandlingCard` | Card com título, motivos e chips «Recuperar consulta» |
+| MFE `ChatErrorHandlingCard` | Card com título, motivos e chips «Recuperar consulta» (sem chips duplicados quando `interactivity.consolidated`) |
 
 Legado relacionado: `ChatOperationalParameterService` (parâmetro ausente), `ChatSecurityMessagingService` (falhas API), `attachmentUnreadable` (Playbook 05).
 

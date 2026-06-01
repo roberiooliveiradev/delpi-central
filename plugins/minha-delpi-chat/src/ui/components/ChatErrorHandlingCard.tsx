@@ -6,11 +6,14 @@ import "./ChatErrorHandlingCard.css";
 type ChatErrorHandlingCardProps = {
   metadata: ChatMessageMetadata;
   onUseSuggestion?: (query: string) => void;
+  /** Quando true, chips ficam só no bloco consolidado (Playbook 07). */
+  showRecoveryChips?: boolean;
 };
 
 export function ChatErrorHandlingCard({
   metadata,
   onUseSuggestion,
+  showRecoveryChips = true,
 }: ChatErrorHandlingCardProps) {
   const handling = metadata.errorHandling;
 
@@ -50,12 +53,14 @@ export function ChatErrorHandlingCard({
         </p>
       ) : null}
 
-      <ChatFollowUpChips
-        suggestions={suggestions}
-        onUseSuggestion={onUseSuggestion}
-        groupLabel="Recuperar consulta"
-        ariaLabel="Ações sugeridas após erro ou resultado vazio"
-      />
+      {showRecoveryChips && suggestions.length > 0 ? (
+        <ChatFollowUpChips
+          suggestions={suggestions}
+          onUseSuggestion={onUseSuggestion}
+          groupLabel="Recuperar consulta"
+          ariaLabel="Ações sugeridas após erro ou resultado vazio"
+        />
+      ) : null}
     </section>
   );
 }

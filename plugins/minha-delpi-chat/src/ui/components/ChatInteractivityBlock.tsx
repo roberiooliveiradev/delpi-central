@@ -14,6 +14,8 @@ type ChatInteractivityBlockProps = {
   interactivity: InteractivityPayload;
   onUseSuggestion?: (query: string) => void;
   onRecordClick?: (payload: { label: string; query: string; group?: string }) => void;
+  /** Destaque suave quando há erro/vazio (Playbook 06 + 07). */
+  variant?: "default" | "recovery";
 };
 
 const GROUP_LABELS: Record<string, string> = {
@@ -52,6 +54,7 @@ export function ChatInteractivityBlock({
   interactivity,
   onUseSuggestion,
   onRecordClick,
+  variant = "default",
 }: ChatInteractivityBlockProps) {
   const [menu, setMenu] = useState<{
     anchor: { x: number; y: number };
@@ -97,7 +100,13 @@ export function ChatInteractivityBlock({
 
   return (
     <div
-      className="mdc-chat-interactivity mdc-chat-follow-up"
+      className={[
+        "mdc-chat-interactivity",
+        "mdc-chat-follow-up",
+        variant === "recovery" ? "mdc-chat-interactivity--recovery" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       role="group"
       aria-label="Ações sugeridas após a resposta"
     >
@@ -106,7 +115,9 @@ export function ChatInteractivityBlock({
           {interactivity.contextBar.summary}
         </p>
       ) : null}
-      <p className="mdc-chat-follow-up__label">Próximos passos</p>
+      <p className="mdc-chat-follow-up__label">
+        {variant === "recovery" ? "Recuperar consulta" : "Próximos passos"}
+      </p>
       <div className="mdc-chat-follow-up__chips">
         {primary.map((suggestion) => {
           const disabled = Boolean(suggestion.disabledReason);

@@ -1299,9 +1299,17 @@ export function ChatMessageList({
                   sources={filterVisibleChatSources(getMessageSources(message))}
                   webSearchResearch={getWebSearchResearch(message)}
                 />
+                {message.metadata?.errorHandling ? (
+                  <ChatErrorHandlingCard
+                    metadata={message.metadata}
+                    onUseSuggestion={onDrillDown}
+                    showRecoveryChips={!message.metadata?.interactivity?.consolidated}
+                  />
+                ) : null}
                 {message.metadata?.interactivity?.consolidated ? (
                   <ChatInteractivityBlock
                     interactivity={message.metadata.interactivity}
+                    variant={message.metadata?.errorHandling ? "recovery" : "default"}
                     onUseSuggestion={onDrillDown}
                     onRecordClick={({ label, query, group }) => {
                       onRecordHelpEvent?.({
@@ -1430,12 +1438,6 @@ export function ChatMessageList({
                   }
                   onUseQuery={onDrillDown}
                 />
-                {message.metadata?.errorHandling ? (
-                  <ChatErrorHandlingCard
-                    metadata={message.metadata}
-                    onUseSuggestion={onDrillDown}
-                  />
-                ) : null}
                 {!message.metadata?.interactivity?.consolidated &&
                 !message.metadata?.errorHandling ? (
                   <ChatFollowUpChips

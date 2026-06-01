@@ -6,7 +6,7 @@
 
 .mdc-chat-follow-up__label {
   margin: 0;
-  color: var(--mdc-muted);
+  color: var(--mdc-text-muted);
   font-size: 0.82rem;
   font-weight: 650;
 }
@@ -17,20 +17,48 @@
   gap: var(--mdc-space-2);
 }
 
-.mdc-chat-follow-up__chip {
+/* Especificidade acima de `.minha-delpi-chat button` (evita chips “sólidos” no card de erro). */
+.minha-delpi-chat .mdc-chat-follow-up__chip {
   border: 1px solid var(--mdc-border);
   border-radius: 999px;
   padding: 0.4rem 0.85rem;
   background: transparent;
   color: var(--mdc-text);
   font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.2;
   cursor: pointer;
+  box-shadow: none;
   transition:
     border-color 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
-.mdc-chat-follow-up__chip:hover {
+.minha-delpi-chat .mdc-chat-follow-up__chip:hover:not(:disabled) {
   border-color: var(--mdc-accent, #3b82f6);
-  background: rgba(59, 130, 246, 0.08);
+  background: color-mix(in srgb, var(--mdc-accent, #3b82f6) 12%, transparent);
+  color: var(--mdc-text);
+  box-shadow: none;
+  transform: none;
+}
+
+.minha-delpi-chat .mdc-chat-follow-up__chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-accent, #3b82f6) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.minha-delpi-chat .mdc-chat-follow-up__chip--disabled,
+.minha-delpi-chat .mdc-chat-follow-up__chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.minha-delpi-chat .mdc-chat-follow-up__chip--primary {
+  border-color: color-mix(in srgb, var(--mdc-accent, #3b82f6) 55%, var(--mdc-border));
+  font-weight: 600;
+}
+
+.minha-delpi-chat .mdc-chat-follow-up__chip--more {
+  border-style: dashed;
 }
