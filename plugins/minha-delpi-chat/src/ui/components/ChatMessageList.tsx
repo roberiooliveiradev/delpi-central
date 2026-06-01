@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { useStreamingTextReveal } from "../../state/hooks/useStreamingTextReveal";
+import { useChatFeedbackReasons } from "../../state/hooks/useChatFeedbackReasons";
 import { attachmentReadingStatusLabel } from "../chatAttachmentStatus";
 
 import type {
@@ -132,6 +133,7 @@ type ChatMessageListProps = {
     event: string;
     metadata?: Record<string, unknown> | null;
   }) => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 function resolveUserMessageContent(
@@ -498,7 +500,10 @@ export function ChatMessageList({
   onOpenCanvas,
   lastSentUserText = "",
   onRecordHelpEvent,
+  getAccessToken,
 }: ChatMessageListProps) {
+  const { reasons: feedbackReasons, primaryReasonIds: feedbackPrimaryReasonIds } =
+    useChatFeedbackReasons({ getAccessToken });
   const [feedbackThanksByMessageId, setFeedbackThanksByMessageId] = useState<
     Record<string, string>
   >({});
@@ -1743,6 +1748,8 @@ export function ChatMessageList({
                   </div>
                 ) : null}
                 <ChatMessageFeedbackPanel
+                  reasons={feedbackReasons}
+                  primaryReasonIds={feedbackPrimaryReasonIds}
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}
                   showExtendedReasons={feedbackExtendedReasonsFor === message.id}

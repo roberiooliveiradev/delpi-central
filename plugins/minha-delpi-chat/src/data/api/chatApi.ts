@@ -23,6 +23,7 @@ import type {
   ChatAttachment,
   ChatMessage,
   ChatMessageFeedbackResponse,
+  ChatFeedbackReasonsPayload,
   ChatProject,
   ChatSession,
   ChatStreamActivityEntry,
@@ -318,6 +319,17 @@ export async function upsertChatMessageFeedback(
   );
 
   return parseJsonResponse<ChatMessageFeedbackResponse>(response);
+}
+
+export async function getChatFeedbackReasons(
+  options: ChatApiOptions = {},
+): Promise<ChatFeedbackReasonsPayload> {
+  const response = await fetch(`${API_BASE_URL}/chat/assistant/feedback-reasons`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<ChatFeedbackReasonsPayload>(response);
 }
 
 export async function sendChatMessage(

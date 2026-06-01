@@ -88,6 +88,9 @@ Mensagem do usuário
 | `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
 | `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
 | `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |
+| `ChatQualityUnifiedMetricsService` | Visão unificada adoção/eficiência/segurança (`GET /admin/metrics/quality/unified`) |
+| `ChatWeeklyQualityReportService` | Relatório semanal markdown + persistência (`POST /admin/reports/quality/weekly/generate`) |
+| `ChatFeedbackIssueService` | Issues automáticas a partir de alertas recorrentes (`ai_chat_quality_issues`) |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |

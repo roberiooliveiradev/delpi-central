@@ -41,6 +41,9 @@ import type {
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
   AdminFeedbackSummary,
+  AdminQualityUnifiedSummary,
+  AdminQualityReport,
+  AdminQualityIssue,
   AdminInteractivitySummary,
   AdminPresentationSummary,
   AdminTextTaskSummary,
@@ -938,6 +941,82 @@ export async function getAdminFeedbackSummary(
   );
 
   return parseJsonResponse<AdminFeedbackSummary>(response);
+}
+
+export async function getAdminQualityUnifiedSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminQualityUnifiedSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/quality/unified?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminQualityUnifiedSummary>(response);
+}
+
+export async function getLatestWeeklyQualityReport(
+  options: AdminApiOptions = {},
+): Promise<{ report: AdminQualityReport | null }> {
+  const response = await fetch(`${API_BASE_URL}/admin/reports/quality/weekly/latest`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<{ report: AdminQualityReport | null }>(response);
+}
+
+export async function generateWeeklyQualityReport(
+  options: AdminApiOptions = {},
+  createIssues = true,
+): Promise<{ report: AdminQualityReport; issuesCreated: AdminQualityIssue[] }> {
+  const response = await fetch(`${API_BASE_URL}/admin/reports/quality/weekly/generate`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ createIssues }),
+  });
+
+  return parseJsonResponse<{ report: AdminQualityReport; issuesCreated: AdminQualityIssue[] }>(
+    response,
+  );
+}
+
+export async function listAdminQualityIssues(
+  options: AdminApiOptions = {},
+  params: { status?: string; limit?: number; offset?: number } = {},
+): Promise<{ items: AdminQualityIssue[] }> {
+  const query = new URLSearchParams();
+
+  if (params.status) {
+    query.set("status", params.status);
+  }
+
+  query.set("limit", String(params.limit ?? 20));
+  query.set("offset", String(params.offset ?? 0));
+
+  const response = await fetch(`${API_BASE_URL}/admin/quality/issues?${query.toString()}`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<{ items: AdminQualityIssue[] }>(response);
+}
+
+export async function updateAdminQualityIssueStatus(
+  issueId: number,
+  status: string,
+  options: AdminApiOptions = {},
+): Promise<AdminQualityIssue> {
+  const response = await fetch(`${API_BASE_URL}/admin/quality/issues/${issueId}`, {
+    method: "PATCH",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify({ status }),
+  });
+
+  return parseJsonResponse<AdminQualityIssue>(response);
 }
 
 export async function getAdminTextTaskSummary(

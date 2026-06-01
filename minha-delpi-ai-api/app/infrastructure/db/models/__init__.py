@@ -19,6 +19,8 @@ from app.infrastructure.db.models.response_evaluation_model import AiResponseEva
 from app.infrastructure.db.models.external_action_test_log_model import ExternalActionTestLogModel
 from app.infrastructure.db.models.chat_message_feedback_model import AiChatMessageFeedbackModel
 from app.infrastructure.db.models.admin_runtime_settings_model import AiAdminRuntimeSettingsModel
+from app.infrastructure.db.models.chat_quality_report_model import AiChatQualityReportModel
+from app.infrastructure.db.models.chat_quality_issue_model import AiChatQualityIssueModel
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -42,4 +44,6 @@ __all__ = [
     "ExternalActionTestLogModel",
     "AiChatMessageFeedbackModel",
     "AiAdminRuntimeSettingsModel",
+    "AiChatQualityReportModel",
+    "AiChatQualityIssueModel",
 ]

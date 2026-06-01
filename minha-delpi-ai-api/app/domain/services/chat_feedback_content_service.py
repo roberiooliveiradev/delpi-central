@@ -30,6 +30,56 @@ class ChatFeedbackContentService:
         return allowed
 
     @classmethod
+    def list_reasons(cls) -> list[dict[str, str]]:
+        reasons = _playbook().get("feedbackReasons") or []
+        payload: list[dict[str, str]] = []
+
+        for item in reasons:
+            if not isinstance(item, dict):
+                continue
+
+            reason_id = str(item.get("id") or "").strip()
+            label = str(item.get("label") or "").strip()
+
+            if reason_id and label:
+                payload.append({"id": reason_id, "label": label})
+
+        return payload
+
+    @classmethod
+    def primary_reason_ids(cls) -> list[str]:
+        playbook = _playbook()
+        configured = playbook.get("feedbackPrimaryReasonIds")
+
+        if isinstance(configured, list) and configured:
+            return [str(item).strip() for item in configured if str(item).strip()]
+
+        return [
+            "no_answer",
+            "wrong_data",
+            "wrong_query",
+            "lost_context",
+            "missing_source",
+            "bad_format",
+            "text_artificial",
+            "too_long",
+            "too_short",
+            "chip_irrelevant",
+            "other",
+        ]
+
+    @classmethod
+    def public_payload(cls) -> dict[str, object]:
+        thanks = (_playbook().get("feedbackThanks") or {}) if isinstance(_playbook().get("feedbackThanks"), dict) else {}
+
+        return {
+            "reasons": cls.list_reasons(),
+            "primaryReasonIds": cls.primary_reason_ids(),
+            "downPrompt": thanks.get("downPrompt"),
+            "correctiveActions": (_playbook().get("feedbackCorrectiveActions") or []),
+        }
+
+    @classmethod
     def normalize_reason(cls, value: object) -> str | None:
         if value is None:
             return None

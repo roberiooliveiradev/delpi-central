@@ -435,6 +435,69 @@ export type AdminFeedbackAlert = {
   message: string;
 };
 
+export type AdminQualityUnifiedSummary = {
+  windowHours: number;
+  since: string;
+  health: {
+    csat?: number | null;
+    errorRate?: number | null;
+    toolUsageRate?: number | null;
+    latencyAvgMs?: number | null;
+    assertivenessRate?: number | null;
+    lostContextCount?: number | null;
+  };
+  feedback: {
+    total?: number;
+    positive?: number;
+    negative?: number;
+    topReasons?: AdminFeedbackCountRow[];
+    topIntents?: AdminFeedbackCountRow[];
+    alerts?: AdminFeedbackAlert[];
+  };
+  adoption: {
+    activeUsers?: number;
+    activeSessions?: number;
+    messagesSent?: number;
+    interactivityClicks?: number;
+    chipClickRate?: number | null;
+    feedbackRate?: number | null;
+  };
+  efficiency: {
+    latencyAvgMs?: number | null;
+    messagesPerSession?: number | null;
+    tokensUsed?: number | null;
+    estimatedCost?: number | null;
+  };
+  security: {
+    blockedCount?: number;
+    flaggedCount?: number;
+    scannedCount?: number;
+    totalEvents?: number;
+  };
+};
+
+export type AdminQualityReport = {
+  id: number;
+  reportType: string;
+  periodStart: string;
+  periodEnd: string;
+  summary: Record<string, unknown>;
+  markdown: string;
+  createdAt: string;
+};
+
+export type AdminQualityIssue = {
+  id: number;
+  code: string;
+  title: string;
+  description: string;
+  status: string;
+  source: string;
+  externalUrl?: string | null;
+  createdAt?: string;
+  metadata?: Record<string, unknown>;
+};
+
 export type AdminFeedbackSummary = {
   windowHours: number;
   since: string;

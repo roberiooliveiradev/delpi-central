@@ -352,6 +352,19 @@
     ],
     "downPrompt": "Obrigado pelo aviso. O que faltou nesta resposta?"
   },
+  "feedbackPrimaryReasonIds": [
+    "no_answer",
+    "wrong_data",
+    "wrong_query",
+    "lost_context",
+    "missing_source",
+    "bad_format",
+    "text_artificial",
+    "too_long",
+    "too_short",
+    "chip_irrelevant",
+    "other"
+  ],
   "feedbackCorrectiveActions": [
     {
       "id": "retry",

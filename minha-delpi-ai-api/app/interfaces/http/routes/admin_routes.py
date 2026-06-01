@@ -707,6 +707,131 @@ def admin_feedback_metrics_summary():
     return jsonify(use_case.execute(hours=hours)), 200
 
 
+@admin_bp.get("/metrics/quality/unified")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_quality_unified_metrics():
+    from app.composition.admin_composer import make_get_admin_quality_unified_summary_use_case
+
+    use_case = make_get_admin_quality_unified_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours must be an integer",
+                        "path": "hours",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
+@admin_bp.get("/reports/quality/weekly/latest")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_latest_weekly_quality_report():
+    from app.infrastructure.persistence.postgres_chat_quality_report_repository import (
+        PostgresChatQualityReportRepository,
+    )
+
+    report = PostgresChatQualityReportRepository().get_latest(report_type="weekly")
+
+    if not report:
+        return jsonify({"report": None}), 200
+
+    return jsonify({"report": report}), 200
+
+
+@admin_bp.get("/reports/quality/weekly")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_weekly_quality_reports():
+    from app.infrastructure.persistence.postgres_chat_quality_report_repository import (
+        PostgresChatQualityReportRepository,
+    )
+
+    limit_raw = request.args.get("limit", 12)
+
+    try:
+        limit = int(limit_raw)
+    except (TypeError, ValueError):
+        return bad_request("limit must be an integer")
+
+    reports = PostgresChatQualityReportRepository().list_recent(
+        report_type="weekly",
+        limit=limit,
+    )
+
+    return jsonify({"items": reports}), 200
+
+
+@admin_bp.post("/reports/quality/weekly/generate")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_generate_weekly_quality_report():
+    from app.composition.admin_composer import make_generate_weekly_quality_report_use_case
+
+    payload = request.get_json(silent=True) or {}
+    create_issues = bool(payload.get("createIssues", True)) if isinstance(payload, dict) else True
+
+    use_case = make_generate_weekly_quality_report_use_case()
+
+    try:
+        result = use_case.execute(create_issues=create_issues)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.get("/quality/issues")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_quality_issues():
+    from app.composition.admin_composer import make_list_admin_quality_issues_use_case
+
+    status = (request.args.get("status") or "").strip() or None
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_admin_quality_issues_use_case()
+    return jsonify(use_case.execute(status=status, limit=limit, offset=offset)), 200
+
+
+@admin_bp.patch("/quality/issues/<int:issue_id>")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_update_quality_issue_status(issue_id: int):
+    from app.composition.admin_composer import make_update_admin_quality_issue_status_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("status"):
+        return bad_request("status is required")
+
+    use_case = make_update_admin_quality_issue_status_use_case()
+
+    try:
+        updated = use_case.execute(issue_id=issue_id, status=str(payload.get("status")))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(updated), 200
+
+
 @admin_bp.get("/metrics/text-tasks/summary")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_text_task_metrics_summary():

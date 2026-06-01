@@ -1,5 +1,3 @@
-import { CHAT_FEEDBACK_REASONS } from "../chatFeedbackReasons";
-
 import "./ChatMessageFeedbackPanel.css";
 
 export type ChatFeedbackCorrectiveAction = {
@@ -9,7 +7,14 @@ export type ChatFeedbackCorrectiveAction = {
   query?: string;
 };
 
+export type ChatFeedbackReason = {
+  id: string;
+  label: string;
+};
+
 type ChatMessageFeedbackPanelProps = {
+  reasons: ChatFeedbackReason[];
+  primaryReasonIds: string[];
   thanksMessage?: string | null;
   showReasonPicker?: boolean;
   showExtendedReasons?: boolean;
@@ -21,29 +26,9 @@ type ChatMessageFeedbackPanelProps = {
   onDismissCorrective?: () => void;
 };
 
-const PRIMARY_REASON_IDS = [
-  "no_answer",
-  "wrong_data",
-  "wrong_query",
-  "lost_context",
-  "missing_source",
-  "bad_format",
-  "text_artificial",
-  "too_long",
-  "too_short",
-  "chip_irrelevant",
-  "other",
-] as const;
-
-function resolvePrimaryReasons() {
-  const byId = new Map(CHAT_FEEDBACK_REASONS.map((reason) => [reason.id, reason]));
-
-  return PRIMARY_REASON_IDS.map((id) => byId.get(id)).filter(
-    (reason): reason is (typeof CHAT_FEEDBACK_REASONS)[number] => Boolean(reason),
-  );
-}
-
 export function ChatMessageFeedbackPanel({
+  reasons,
+  primaryReasonIds,
   thanksMessage,
   showReasonPicker = false,
   showExtendedReasons = false,
@@ -98,10 +83,13 @@ export function ChatMessageFeedbackPanel({
     return null;
   }
 
-  const primaryReasons = resolvePrimaryReasons();
+  const byId = new Map(reasons.map((reason) => [reason.id, reason]));
+  const primaryReasons = primaryReasonIds
+    .map((id) => byId.get(id))
+    .filter((reason): reason is ChatFeedbackReason => Boolean(reason));
   const primaryIds = new Set(primaryReasons.map((reason) => reason.id));
   const extendedReasons = showExtendedReasons
-    ? CHAT_FEEDBACK_REASONS.filter((reason) => !primaryIds.has(reason.id))
+    ? reasons.filter((reason) => !primaryIds.has(reason.id))
     : [];
   const visibleReasons = [...primaryReasons, ...extendedReasons];
 

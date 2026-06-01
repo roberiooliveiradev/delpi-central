@@ -231,6 +231,38 @@ def make_get_admin_feedback_summary_use_case():
     return GetAdminFeedbackSummaryUseCase()
 
 
+def make_get_admin_quality_unified_summary_use_case():
+    from app.application.use_cases.get_admin_quality_unified_summary_use_case import (
+        GetAdminQualityUnifiedSummaryUseCase,
+    )
+
+    return GetAdminQualityUnifiedSummaryUseCase()
+
+
+def make_generate_weekly_quality_report_use_case():
+    from app.application.use_cases.generate_weekly_quality_report_use_case import (
+        GenerateWeeklyQualityReportUseCase,
+    )
+
+    return GenerateWeeklyQualityReportUseCase()
+
+
+def make_list_admin_quality_issues_use_case():
+    from app.application.use_cases.chat_quality_issues_use_cases import (
+        ListAdminQualityIssuesUseCase,
+    )
+
+    return ListAdminQualityIssuesUseCase()
+
+
+def make_update_admin_quality_issue_status_use_case():
+    from app.application.use_cases.chat_quality_issues_use_cases import (
+        UpdateAdminQualityIssueStatusUseCase,
+    )
+
+    return UpdateAdminQualityIssueStatusUseCase()
+
+
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
 

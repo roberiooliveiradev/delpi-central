@@ -591,6 +591,13 @@ export type ChatMessage = {
   branch?: ChatMessageBranch | null;
 };
 
+export type ChatFeedbackReasonsPayload = {
+  reasons: Array<{ id: string; label: string }>;
+  primaryReasonIds: string[];
+  downPrompt?: string | null;
+  correctiveActions?: Array<Record<string, unknown>>;
+};
+
 export type ChatMessageFeedbackResponse = {
   messageId: string;
   userId: string;

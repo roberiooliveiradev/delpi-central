@@ -2297,6 +2297,7 @@ export function ChatPage({
                   });
                 }}
                 onMessageFeedback={setMessageFeedback}
+                getAccessToken={getAccessToken}
                 onDownloadAttachment={async (attachmentId) => {
                   await downloadChatAttachment(attachmentId, { getAccessToken });
                 }}

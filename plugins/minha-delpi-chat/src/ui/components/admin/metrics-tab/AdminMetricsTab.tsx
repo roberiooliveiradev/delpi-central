@@ -7,6 +7,11 @@ import {
   getAdminErrorHandlingSummary,
   getAdminWebSearchSummary,
   getAdminFeedbackSummary,
+  getAdminQualityUnifiedSummary,
+  getLatestWeeklyQualityReport,
+  generateWeeklyQualityReport,
+  listAdminQualityIssues,
+  updateAdminQualityIssueStatus,
   getAdminInteractivitySummary,
   getAdminPresentationSummary,
   getAdminTextTaskSummary,
@@ -21,6 +26,9 @@ import type {
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
   AdminFeedbackSummary,
+  AdminQualityUnifiedSummary,
+  AdminQualityReport,
+  AdminQualityIssue,
   AdminInteractivitySummary,
   AdminPresentationSummary,
   AdminTextTaskSummary,
@@ -36,6 +44,8 @@ import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
 import { AdminWebSearchMetrics } from "./AdminWebSearchMetrics";
 import { AdminFeedbackMetrics } from "./AdminFeedbackMetrics";
+import { AdminQualityUnifiedMetrics } from "./AdminQualityUnifiedMetrics";
+import { AdminQualityOperations } from "./AdminQualityOperations";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
 import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
@@ -310,6 +320,16 @@ export function AdminMetricsTab({
   const [isLoadingWebSearchSummary, setIsLoadingWebSearchSummary] = useState(false);
   const [feedbackSummary, setFeedbackSummary] = useState<AdminFeedbackSummary | null>(null);
   const [isLoadingFeedbackSummary, setIsLoadingFeedbackSummary] = useState(false);
+  const [qualityUnifiedSummary, setQualityUnifiedSummary] =
+    useState<AdminQualityUnifiedSummary | null>(null);
+  const [isLoadingQualityUnifiedSummary, setIsLoadingQualityUnifiedSummary] =
+    useState(false);
+  const [latestQualityReport, setLatestQualityReport] = useState<AdminQualityReport | null>(
+    null,
+  );
+  const [qualityIssues, setQualityIssues] = useState<AdminQualityIssue[]>([]);
+  const [isLoadingQualityOps, setIsLoadingQualityOps] = useState(false);
+  const [isGeneratingQualityReport, setIsGeneratingQualityReport] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -460,6 +480,44 @@ export function AdminMetricsTab({
       .catch(() => setFeedbackSummary(null))
       .finally(() => setIsLoadingFeedbackSummary(false));
   }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setQualityUnifiedSummary(null);
+      return;
+    }
+
+    setIsLoadingQualityUnifiedSummary(true);
+
+    void getAdminQualityUnifiedSummary(metricsHours, { getAccessToken })
+      .then(setQualityUnifiedSummary)
+      .catch(() => setQualityUnifiedSummary(null))
+      .finally(() => setIsLoadingQualityUnifiedSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setLatestQualityReport(null);
+      setQualityIssues([]);
+      return;
+    }
+
+    setIsLoadingQualityOps(true);
+
+    void Promise.all([
+      getLatestWeeklyQualityReport({ getAccessToken }),
+      listAdminQualityIssues({ getAccessToken }, { status: "open", limit: 20 }),
+    ])
+      .then(([reportResponse, issuesResponse]) => {
+        setLatestQualityReport(reportResponse.report);
+        setQualityIssues(issuesResponse.items ?? []);
+      })
+      .catch(() => {
+        setLatestQualityReport(null);
+        setQualityIssues([]);
+      })
+      .finally(() => setIsLoadingQualityOps(false));
+  }, [getAccessToken]);
 
   if (!metricsSummary) {
     return (
@@ -661,6 +719,46 @@ export function AdminMetricsTab({
         summary={feedbackSummary}
         isLoading={isLoadingFeedbackSummary}
         windowHours={windowLabel}
+      />
+
+      <AdminQualityUnifiedMetrics
+        summary={qualityUnifiedSummary}
+        isLoading={isLoadingQualityUnifiedSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminQualityOperations
+        latestReport={latestQualityReport}
+        issues={qualityIssues}
+        isLoading={isLoadingQualityOps}
+        isGenerating={isGeneratingQualityReport}
+        onGenerateReport={() => {
+          if (!getAccessToken) {
+            return;
+          }
+
+          setIsGeneratingQualityReport(true);
+
+          void generateWeeklyQualityReport({ getAccessToken }, true)
+            .then((response) => {
+              setLatestQualityReport(response.report);
+              setQualityIssues((current) => [...(response.issuesCreated ?? []), ...current]);
+            })
+            .finally(() => setIsGeneratingQualityReport(false));
+        }}
+        onResolveIssue={(issueId) => {
+          if (!getAccessToken) {
+            return;
+          }
+
+          void updateAdminQualityIssueStatus(issueId, "resolved", { getAccessToken }).then(
+            (updated) => {
+              setQualityIssues((current) =>
+                current.map((issue) => (issue.id === updated.id ? updated : issue)),
+              );
+            },
+          );
+        }}
       />
 
       <AdminTextTaskMetrics

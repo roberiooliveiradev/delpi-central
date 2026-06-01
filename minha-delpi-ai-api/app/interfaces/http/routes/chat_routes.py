@@ -375,6 +375,14 @@ def get_assistant_catalog():
     return jsonify(payload), 200
 
 
+@chat_bp.get("/assistant/feedback-reasons")
+@require_permission(CHAT_ACCESS_PERMISSION)
+def get_assistant_feedback_reasons():
+    from app.domain.services.chat_feedback_content_service import ChatFeedbackContentService
+
+    return jsonify(ChatFeedbackContentService.public_payload()), 200
+
+
 @chat_bp.post("/assistant/help-events")
 @require_permission(CHAT_ACCESS_PERMISSION)
 def record_assistant_help_event():
@@ -2766,6 +2774,24 @@ def upsert_message_feedback(session_id: str, message_id: str):
             result.pop("auditMetadata", None)
 
         db.session.commit()
+
+        if rating == -1:
+            from app.application.use_cases.chat_quality_issues_use_cases import (
+                EvaluateFeedbackIssuesUseCase,
+            )
+            from app.application.use_cases.get_admin_feedback_summary_use_case import (
+                GetAdminFeedbackSummaryUseCase,
+            )
+
+            feedback_summary = GetAdminFeedbackSummaryUseCase().execute(hours=168)
+            created_issues = EvaluateFeedbackIssuesUseCase().execute(
+                alerts=feedback_summary.get("alerts"),
+                feedback_summary=feedback_summary,
+            )
+
+            if created_issues and isinstance(result, dict):
+                db.session.commit()
+                result["issuesCreated"] = created_issues
     except ValueError as exc:
         db.session.rollback()
         return bad_request(str(exc))
