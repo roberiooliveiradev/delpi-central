@@ -213,6 +213,9 @@ class ChatIntentRouterService:
         "data_interpretation": ("follow_up", "data_interpretation", 5),
         "data_interpretation_empty": ("follow_up", "data_interpretation_empty", 5),
         "web_list_sources": ("follow_up", "web_list_sources", 5),
+        "web_summarize": ("follow_up", "web_summarize", 5),
+        "web_extract_params": ("follow_up", "web_extract_params", 5),
+        "web_compare_sources": ("follow_up", "web_compare_sources", 5),
         "operational_parameter": ("clarification", "missing_params", 2),
         "intent_disambiguation": ("operational_query", "scope_clarification", 6),
         "tools": ("operational_query", None, 6),
@@ -562,25 +565,70 @@ class ChatIntentRouterService:
             ChatWebSearchSourceFollowUpService,
         )
 
-        if (
-            history
-            and ChatWebSearchSourceFollowUpService.is_list_sources_request(normalized)
-            and ChatWebSearchHistoryService.has_recent_web_search(history)
-        ):
-            return cls._with_decision(
-                IntentRouteResult(
-                    intent="follow_up",
-                    sub_intent="web_list_sources",
-                    is_follow_up=True,
-                    confidence=0.92,
-                    requires_tool=False,
-                    requires_rag=False,
-                    requires_llm=False,
-                    priority_applied=5,
-                ),
-                decision="follow_up",
-                reason="web_search_list_sources",
-            )
+        if history and ChatWebSearchHistoryService.has_recent_web_search(history):
+            if ChatWebSearchSourceFollowUpService.is_list_sources_request(normalized):
+                return cls._with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="web_list_sources",
+                        is_follow_up=True,
+                        confidence=0.92,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=False,
+                        priority_applied=5,
+                    ),
+                    decision="follow_up",
+                    reason="web_search_list_sources",
+                )
+
+            if ChatWebSearchSourceFollowUpService.is_summarize_request(normalized):
+                return cls._with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="web_summarize",
+                        is_follow_up=True,
+                        confidence=0.9,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=False,
+                        priority_applied=5,
+                    ),
+                    decision="follow_up",
+                    reason="web_search_summarize",
+                )
+
+            if ChatWebSearchSourceFollowUpService.is_extract_params_request(normalized):
+                return cls._with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="web_extract_params",
+                        is_follow_up=True,
+                        confidence=0.9,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=False,
+                        priority_applied=5,
+                    ),
+                    decision="follow_up",
+                    reason="web_search_extract_params",
+                )
+
+            if ChatWebSearchSourceFollowUpService.is_compare_sources_request(normalized):
+                return cls._with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="web_compare_sources",
+                        is_follow_up=True,
+                        confidence=0.9,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=False,
+                        priority_applied=5,
+                    ),
+                    decision="follow_up",
+                    reason="web_search_compare_sources",
+                )
 
         if history and ChatAnalysisIntentService.is_data_interpretation_request(normalized, history):
             return cls._with_decision(

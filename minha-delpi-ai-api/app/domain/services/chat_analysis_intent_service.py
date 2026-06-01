@@ -324,7 +324,9 @@ class ChatAnalysisIntentService:
             ChatWebSearchSourceFollowUpService,
         )
 
-        if ChatWebSearchSourceFollowUpService.is_list_sources_request(normalized):
+        if ChatWebSearchSourceFollowUpService.is_web_research_follow_up_request(
+            normalized
+        ):
             return False
 
         if ChatWebSearchHistoryService.has_recent_web_search(previous_messages or []):
@@ -337,6 +339,8 @@ class ChatAnalysisIntentService:
                     "pesquisa web",
                     "busca na web",
                     "internet",
+                    "parametr",
+                    "divergenc",
                 )
             ):
                 return False

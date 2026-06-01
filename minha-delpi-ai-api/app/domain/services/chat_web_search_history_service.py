@@ -46,11 +46,14 @@ class ChatWebSearchHistoryService:
                     "query": "",
                     "sources": sources,
                     "research": None,
+                    "results": cls._results_from_metadata(metadata),
                 }
 
             payload_sources = cls._sources_from_research(research, metadata)
+            status = str(research.get("searchStatus") or "").strip()
+            source_count = int(research.get("sourceCount") or 0)
 
-            if not payload_sources:
+            if not payload_sources and status != "success" and source_count <= 0:
                 continue
 
             query = str(research.get("query") or "").strip()
@@ -59,6 +62,7 @@ class ChatWebSearchHistoryService:
                 "query": query,
                 "sources": payload_sources,
                 "research": research,
+                "results": cls._results_from_metadata(metadata),
             }
 
         return None
@@ -66,6 +70,30 @@ class ChatWebSearchHistoryService:
     @classmethod
     def has_recent_web_search(cls, previous_messages: list[Any] | None) -> bool:
         return cls.extract_recent_bundle(previous_messages) is not None
+
+    @classmethod
+    def _results_from_metadata(cls, metadata: dict) -> list[dict]:
+        for tool_call in reversed(metadata.get("toolCalls") or []):
+            if not isinstance(tool_call, dict):
+                continue
+
+            if str(tool_call.get("name") or "") != "web_search":
+                continue
+
+            data = tool_call.get("data")
+
+            if not isinstance(data, dict):
+                data = tool_call.get("metadata")
+
+            if not isinstance(data, dict):
+                continue
+
+            useful = ChatWebSearchDirectAnswerService.extract_useful_results(data)
+
+            if useful:
+                return useful
+
+        return []
 
     @classmethod
     def _sources_from_research(cls, research: dict, metadata: dict) -> list[dict]:

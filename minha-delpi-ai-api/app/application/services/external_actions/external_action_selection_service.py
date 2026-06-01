@@ -101,6 +101,16 @@ class ExternalActionSelectionService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return None
 
+        from app.domain.services.chat_web_search_source_follow_up_service import (
+            ChatWebSearchSourceFollowUpService,
+        )
+
+        if ChatWebSearchSourceFollowUpService.blocks_external_action_selection(
+            message,
+            previous_messages,
+        ):
+            return None
+
         from app.domain.services.chat_drawing_intent_service import (
             ChatDrawingIntentService,
         )

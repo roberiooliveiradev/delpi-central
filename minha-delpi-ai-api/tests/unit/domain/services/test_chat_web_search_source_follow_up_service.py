@@ -73,6 +73,98 @@ def test_data_reference_without_tool_allows_web_follow_up():
     )
 
 
+def test_summarize_from_web_snippets():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "webSearchResearch": {
+                    "searchStatus": "success",
+                    "query": "motor weg",
+                    "sourceCount": 1,
+                    "sites": [{"title": "WEG", "url": "https://weg.net/", "isOfficial": True}],
+                },
+                "toolCalls": [
+                    {
+                        "name": "web_search",
+                        "data": {
+                            "searchStatus": "success",
+                            "results": [
+                                {
+                                    "title": "Catálogo WEG",
+                                    "url": "https://weg.net/cat",
+                                    "snippet": "Motor trifásico 5 CV, tensão 380 V.",
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        },
+    ]
+
+    answer = ChatWebSearchSourceFollowUpService.build_summarize_answer(
+        "resuma em tópicos os resultados da pesquisa web sobre motor weg",
+        history,
+    )
+
+    assert answer is not None
+    assert "Motor trifásico" in answer or "5 CV" in answer
+
+
+def test_compare_sources_requires_two_snippets():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "webSearchResearch": {"searchStatus": "success", "query": "delpi"},
+                "toolCalls": [
+                    {
+                        "name": "web_search",
+                        "data": {
+                            "searchStatus": "success",
+                            "results": [
+                                {
+                                    "title": "A",
+                                    "url": "https://a.example/",
+                                    "snippet": "Dado A 10 mm.",
+                                },
+                                {
+                                    "title": "B",
+                                    "url": "https://b.example/",
+                                    "snippet": "Dado B 20 mm.",
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+        },
+    ]
+
+    answer = ChatWebSearchSourceFollowUpService.build_compare_sources_answer(
+        "compare as fontes da pesquisa web sobre delpi e destaque divergências",
+        history,
+    )
+
+    assert answer is not None
+    assert "Comparação" in answer
+
+
+def test_blocks_external_when_web_follow_up():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {"webSearchResearch": {"searchStatus": "success", "sourceCount": 1}},
+        },
+    ]
+
+    assert ChatWebSearchSourceFollowUpService.blocks_external_action_selection(
+        "resuma em tópicos os resultados da pesquisa web sobre delpi",
+        history,
+    )
+
+
 def test_phone_in_web_summary_is_not_product_code():
     text = "Contato (47) 3370-5502 — Jaraguá do Sul SC"
 
