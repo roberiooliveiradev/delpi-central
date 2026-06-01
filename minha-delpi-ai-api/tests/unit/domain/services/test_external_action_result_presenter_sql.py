@@ -6,6 +6,81 @@ from app.domain.services.external_actions.external_action_result_presenter impor
 )
 
 
+def test_present_sql_resultsets_empty_inventory_below_minimum():
+    presenter = ExternalActionResultPresenter()
+
+    humanized = presenter.present(
+        {
+            "success": True,
+            "data": {
+                "sql": (
+                    "SELECT SB2.B2_COD AS product_code, SB1.B1_EMIN AS minimum_stock "
+                    "FROM SB2010 SB2 INNER JOIN SB1010 SB1 ON SB1.B1_COD = SB2.B2_COD"
+                ),
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "columns": [
+                            "product_code",
+                            "product_description",
+                            "branch",
+                            "warehouse",
+                            "current_quantity",
+                            "minimum_stock",
+                            "available_quantity",
+                        ],
+                        "total": 0,
+                        "data": [],
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert humanized["titulo"] == "Produtos com estoque abaixo do mínimo"
+    assert humanized["linhas"] == [
+        "Nenhum produto com estoque abaixo do mínimo cadastrado."
+    ]
+
+
+def test_build_presentation_empty_inventory_resultset_table():
+    presenter = ExternalActionResultPresenter()
+
+    table = presenter.build_presentation(
+        {
+            "success": True,
+            "data": {
+                "sql": (
+                    "SELECT SB2.B2_COD AS product_code, COALESCE(SBZ.BZ_ESTSEG, SB1.B1_EMIN) "
+                    "AS minimum_stock FROM SB2010 SB2 LEFT JOIN SBZ010 SBZ ON SBZ.BZ_COD = SB2.B2_COD"
+                ),
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "columns": [
+                            "product_code",
+                            "product_description",
+                            "minimum_stock",
+                            "current_quantity",
+                        ],
+                        "total": 0,
+                        "data": [],
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert table is not None
+    assert table["type"] == "table"
+    assert table["title"] == "Produtos com estoque abaixo do mínimo"
+    assert table["rows"] == []
+    assert any(col.get("key") == "minimum_stock" for col in table["columns"])
+
+
 def test_present_sql_resultsets_empty_production():
     presenter = ExternalActionResultPresenter()
 

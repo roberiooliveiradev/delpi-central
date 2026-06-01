@@ -120,6 +120,22 @@ class ChatErrorHandlingClassifier:
                 record_count=tool_summary.get("record_count"),
             )
 
+        inventory_empty_type = cls._resolve_empty_result_type(message, tool_calls)
+
+        if (
+            inventory_empty_type == "empty_inventory_minimum"
+            and tool_summary.get("success_count")
+            and cls._tool_calls_have_empty_records(tool_calls)
+        ):
+            return cls._stub_classification(
+                inventory_empty_type,
+                action=tool_summary.get("action"),
+                params=tool_summary.get("params") or {},
+                attempted=tool_summary.get("attempted"),
+                record_count=0,
+                affirms_non_existence=True,
+            )
+
         if issues:
             return cls._stub_classification(
                 "tool_error",
@@ -141,13 +157,15 @@ class ChatErrorHandlingClassifier:
         )
 
         if outcome == "empty":
+            empty_type = cls._resolve_empty_result_type(message, tool_calls)
+
             return cls._stub_classification(
-                "empty_result",
+                empty_type,
                 action=tool_summary.get("action"),
                 params=tool_summary.get("params") or {},
                 attempted=tool_summary.get("attempted"),
                 record_count=0,
-                affirms_non_existence=cls._affirms_non_existence(answer, api_failed=False),
+                affirms_non_existence=empty_type == "empty_inventory_minimum",
             )
 
         if outcome == "error":
@@ -166,6 +184,99 @@ class ChatErrorHandlingClassifier:
             return cls._stub_classification("empty_result")
 
         return None
+
+    @classmethod
+    def _resolve_empty_result_type(cls, message: str, tool_calls: list | None) -> str:
+        from app.domain.services.chat_sql_inventory_query_service import (
+            ChatSqlInventoryQueryService,
+        )
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
+
+        if ChatSqlInventoryQueryService.resolve(message):
+            return "empty_inventory_minimum"
+
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+
+            if str(call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = call.get("metadata")
+
+            if isinstance(metadata, dict):
+                executed_sql = metadata.get("executedSql")
+
+                if ExternalActionSqlCapabilityService.looks_like_inventory_below_minimum_sql(
+                    executed_sql
+                ):
+                    return "empty_inventory_minimum"
+
+            arguments = call.get("arguments")
+
+            if not isinstance(arguments, dict):
+                continue
+
+            body = arguments.get("body")
+
+            if not isinstance(body, dict):
+                continue
+
+            for key in ("sql", "query", "statement"):
+                if ExternalActionSqlCapabilityService.looks_like_inventory_below_minimum_sql(
+                    body.get(key)
+                ):
+                    return "empty_inventory_minimum"
+
+        return "empty_result"
+
+    @classmethod
+    def _tool_calls_have_empty_records(cls, tool_calls: list | None) -> bool:
+        for call in tool_calls or []:
+            if not isinstance(call, dict):
+                continue
+
+            if str(call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            humanized = metadata.get("humanizedSummary")
+
+            if isinstance(humanized, dict):
+                linhas = [
+                    str(line).strip()
+                    for line in (humanized.get("linhas") or [])
+                    if str(line).strip()
+                ]
+
+                empty_phrases = (
+                    "nenhum registro",
+                    "nenhum produto",
+                    "não retornou registros",
+                    "nao retornou registros",
+                    "não encontrei",
+                    "nao encontrei",
+                )
+
+                if linhas and any(
+                    phrase in line.lower()
+                    for line in linhas
+                    for phrase in empty_phrases
+                ):
+                    return True
+
+            preview = str(metadata.get("responsePreview") or "")
+
+            if '"total": 0' in preview or '"rows": 0' in preview:
+                return True
+
+        return False
 
     @classmethod
     def _stub_classification(

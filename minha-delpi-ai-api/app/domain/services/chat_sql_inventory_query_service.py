@@ -148,16 +148,20 @@ class ChatSqlInventoryQueryService:
     SB2.B2_FILIAL AS branch,
     RTRIM(SB2.B2_LOCAL) AS warehouse,
     SB2.B2_QATU AS current_quantity,
-    SB1.B1_EMIN AS minimum_stock,
+    COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)) AS minimum_stock,
     (SB2.B2_QATU - SB2.B2_QEMP - ISNULL(SB2.B2_RESERVA, 0)) AS available_quantity
 FROM SB2010 SB2
 INNER JOIN SB1010 SB1
     ON SB1.B1_COD = SB2.B2_COD
     AND SB1.D_E_L_E_T_ = ''
+LEFT JOIN SBZ010 SBZ
+    ON SBZ.BZ_COD = SB2.B2_COD
+    AND SBZ.BZ_FILIAL = SB2.B2_FILIAL
+    AND SBZ.D_E_L_E_T_ = ''
 WHERE SB2.D_E_L_E_T_ = ''
-  AND SB1.B1_EMIN > 0
-  AND (SB2.B2_QATU - SB2.B2_QEMP - ISNULL(SB2.B2_RESERVA, 0)) < SB1.B1_EMIN{branch_filter}
+  AND COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)) > 0
+  AND SB2.B2_QATU < COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)){branch_filter}
 ORDER BY
     SB2.B2_FILIAL,
-    available_quantity ASC,
+    SB2.B2_QATU ASC,
     SB2.B2_COD"""

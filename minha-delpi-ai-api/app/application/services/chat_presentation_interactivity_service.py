@@ -19,7 +19,10 @@ class ChatPresentationInteractivityService:
         presentation_type = cls._detect_presentation_type(tool_calls)
 
         if not presentation_type:
-            return []
+            if cls._detect_sql_tool_call(tool_calls):
+                presentation_type = "sql"
+            else:
+                return []
 
         chip_labels = list(
             (_content().get("presentationChips") or {}).get(presentation_type) or []
@@ -42,6 +45,15 @@ class ChatPresentationInteractivityService:
         suggestions.extend(
             cls._chips_from_presentation_decision(tool_calls, queries=queries)
         )
+
+        if cls._detect_sql_tool_call(tool_calls):
+            sql_labels = list(
+                (_content().get("presentationChips") or {}).get("sql") or []
+            )
+
+            for label in sql_labels[:4]:
+                template = str(queries.get(label) or label).strip()
+                suggestions.append({"label": str(label), "query": template})
 
         return cls._dedupe_suggestions(suggestions)[:8]
 
@@ -155,3 +167,23 @@ class ChatPresentationInteractivityService:
                 return token
 
         return None
+
+    @classmethod
+    def _detect_sql_tool_call(cls, tool_calls: list | None) -> bool:
+        for call in reversed(tool_calls or []):
+            if not isinstance(call, dict):
+                continue
+
+            metadata = call.get("metadata")
+
+            if not isinstance(metadata, dict) or not metadata.get("ok"):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+            sensitivity = str(metadata.get("sensitivity") or "").lower()
+            action_id = str(metadata.get("actionId") or "").lower()
+
+            if path == "/data/sql" or sensitivity == "sql" or "sql" in action_id:
+                return True
+
+        return False

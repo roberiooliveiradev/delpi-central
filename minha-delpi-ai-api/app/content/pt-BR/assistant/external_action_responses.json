@@ -12,6 +12,11 @@
     "emptyWithSuggestions": "A consulta não retornou registros. Verifique filtros de data, código, filial ou status do cadastro.",
     "largeResultHint": "O resultado parece grande — peça *resumo*, *mais linhas* ou agrupamento por período."
   },
+  "inventoryBelowMinimum": {
+    "title": "Produtos com estoque abaixo do mínimo",
+    "emptyMessage": "Nenhum produto com estoque abaixo do mínimo cadastrado.",
+    "summaryWithCount": "**{count}** produto(s) com estoque abaixo do mínimo."
+  },
   "productionSchedule": {
     "title": "Produtos programados para produção {label}",
     "titleTodayFallback": "Produtos programados para produção hoje",
@@ -24,6 +29,7 @@
     "bomCheckSuggestion": "Posso abrir a estrutura/BOM dos itens programados."
   },
   "selectionReasons": {
+    "inventorySqlFastPath": "Consulta SQL de estoque abaixo do mínimo reconhecida — execução direta via POST /data/sql.",
     "productionSqlFastPath": "Consulta SQL de produção reconhecida — execução direta via POST /data/sql.",
     "sqlRefinement": "Refinamento da consulta SQL anterior — reexecução via POST /data/sql.",
     "genericSql": "A pergunta solicita execução de consulta SQL via action OpenAPI autorizada do agente.",

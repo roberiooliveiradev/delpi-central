@@ -91,4 +91,56 @@ def test_select_action_inventory_below_minimum_uses_sb2010_sql():
     sql = selected["arguments"]["body"]["sql"]
     assert "SB2010" in sql
     assert "B1_EMIN" in sql
+    assert "SBZ010" in sql
     assert "SC2010" not in sql
+    assert "estoque abaixo do mínimo" in selected["reason"].lower()
+
+
+def test_select_action_sql_refinement_filters_inventory_branches():
+    from app.domain.services.chat_sql_inventory_query_service import (
+        ChatSqlInventoryQueryService,
+    )
+
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.data.execute_readonly_sql",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "summary": "Executar SQL somente leitura",
+                }
+            ]
+        )
+    )
+    sql = ChatSqlInventoryQueryService.resolve(
+        "liste os produtos com estoque abaixo do minimo"
+    ).sql
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/data/sql",
+                            "sensitivity": "sql",
+                            "executedSql": sql,
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    selected = service.select_action(
+        "filial 01 e 02",
+        allowed_action_ids=["api_delpi.data.execute_readonly_sql"],
+        previous_messages=history,
+    )
+
+    assert selected is not None
+    assert "SB2.B2_FILIAL IN ('01', '02')" in selected["arguments"]["body"]["sql"]
+    assert "Refinamento da consulta SQL anterior" in selected["reason"]

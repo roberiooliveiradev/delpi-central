@@ -243,3 +243,19 @@ class ExternalActionSqlCapabilityService:
         if "SC2010" in text and "H8_DTINI" in text:
             return True
         return "@FILIAL" in text and "DECLARE @DATA DATE" in text and "C2_PRODUTO" in text
+
+    @classmethod
+    def looks_like_inventory_below_minimum_sql(cls, sql: str | None) -> bool:
+        text = str(sql or "").upper()
+
+        if "SB2010" not in text:
+            return False
+
+        return any(
+            token in text
+            for token in (
+                "B1_EMIN",
+                "BZ_ESTSEG",
+                "MINIMUM_STOCK",
+            )
+        )

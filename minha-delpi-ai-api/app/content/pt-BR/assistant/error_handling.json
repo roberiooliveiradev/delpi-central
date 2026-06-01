@@ -36,6 +36,24 @@
         "Tentar novamente"
       ]
     },
+    "empty_inventory_minimum": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Nenhum produto abaixo do mínimo",
+      "userMessage": "Não encontrei produtos com estoque abaixo do mínimo cadastrado.",
+      "reasons": [
+        "todos os itens estão dentro do estoque mínimo",
+        "estoque mínimo não cadastrado (B1_EMIN ou BZ_ESTSEG)",
+        "filtro de filial muito restrito"
+      ],
+      "alternativesIntro": "Posso tentar:",
+      "chips": [
+        "Filtrar por filial",
+        "Remover filtros",
+        "Verificar cadastro de mínimo",
+        "Tentar novamente"
+      ]
+    },
     "missing_parameter": {
       "severity": "info",
       "recoverable": true,
@@ -284,6 +302,7 @@
     ],
     "strategiesByType": {
       "empty_result": "retry_last",
+      "empty_inventory_minimum": "remove_filters",
       "invalid_parameter": "retry_last",
       "api_unavailable": "retry_last",
       "timeout": "widen_period",
@@ -301,7 +320,8 @@
     }
   },
   "chipQueries": {
-    "Buscar por descrição": "busque produto por descrição",
+    "Filtrar por filial": "filtre a lista de produtos abaixo do mínimo por filial",
+    "Verificar cadastro de mínimo": "como verifico o estoque mínimo cadastrado no Protheus?",
     "Ampliar período": "amplie o período da consulta",
     "Remover filtros": "repita a consulta sem filtros opcionais",
     "Verificar código": "como verifico se o código do produto está correto?",

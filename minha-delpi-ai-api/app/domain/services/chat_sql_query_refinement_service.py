@@ -56,6 +56,22 @@ class ChatSqlQueryRefinementService:
         "elimine",
         "elimina",
     )
+    _ALTER_TERMS = (
+        "altere",
+        "altera",
+        "ajuste",
+        "ajusta",
+        "atualize",
+        "atualiza",
+        "modifique",
+        "modifica",
+        "mude",
+        "muda",
+        "refine",
+        "refina",
+        "troque",
+        "troca",
+    )
     _SHOW_QUERY_TERMS = (
         "mostre a query",
         "mostra a query",
@@ -71,10 +87,31 @@ class ChatSqlQueryRefinementService:
         "mostre o sql",
         "mostra o sql",
         "exiba o sql",
+        "exibe o sql",
         "qual sql",
         "query executada",
         "consulta executada",
         "consulta usada",
+        "me mostre o sql",
+        "me mostra o sql",
+        "ver sql",
+        "ver a query",
+        "ver o sql",
+        "ver consulta",
+        "codigo sql",
+        "código sql",
+        "codigo da query",
+        "código da query",
+        "mostre o codigo",
+        "mostra o codigo",
+        "mostre o código",
+        "mostra o código",
+        "somente a query",
+        "so a query",
+        "só a query",
+        "apenas a query",
+        "sem executar",
+        "sem rodar",
     )
     _FILTER_TERMS = (
         "filtre",
@@ -88,10 +125,20 @@ class ChatSqlQueryRefinementService:
         "limitar",
         "limita ",
     )
+    _REMOVE_BRANCH_TERMS = (
+        "todas as filiais",
+        "todas filiais",
+        "remover filtro de filial",
+        "remova filtro de filial",
+        "retire filtro de filial",
+        "sem filtro de filial",
+        "sem filial",
+    )
     _BRANCH_RE = re.compile(
         r"\b(?:filial|fil\.?)\s*[_-]?\s*(\d{1,2})\b",
         re.IGNORECASE,
     )
+    _TOP_RE = re.compile(r"\btop\s*(\d{1,3})\b", re.IGNORECASE)
     _COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
         "filial": {
             "aliases": ("filial", "cod filial", "codigo filial", "branch"),
@@ -149,6 +196,54 @@ class ChatSqlQueryRefinementService:
             "result_alias": "DATA_INICIO_OPERACAO",
         },
     }
+    _INVENTORY_COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
+        "filial": {
+            "aliases": ("filial", "cod filial", "codigo filial", "branch"),
+            "select": "SB2.B2_FILIAL AS branch",
+            "group_by": "SB2.B2_FILIAL",
+            "result_alias": "branch",
+        },
+        "armazem": {
+            "aliases": ("armazem", "armazém", "local", "warehouse"),
+            "select": "RTRIM(SB2.B2_LOCAL) AS warehouse",
+            "group_by": "SB2.B2_LOCAL",
+            "result_alias": "warehouse",
+        },
+        "descricao produto": {
+            "aliases": (
+                "descricao produto",
+                "descrição produto",
+                "descricao do produto",
+                "descrição do produto",
+                "descricao",
+                "descrição",
+            ),
+            "select": "RTRIM(SB1.B1_DESC) AS product_description",
+            "group_by": "SB1.B1_DESC",
+            "result_alias": "product_description",
+        },
+        "cod produto": {
+            "aliases": ("cod produto", "codigo produto", "código produto", "produto"),
+            "select": "SB2.B2_COD AS product_code",
+            "group_by": "SB2.B2_COD",
+            "result_alias": "product_code",
+        },
+        "estoque minimo": {
+            "aliases": (
+                "estoque minimo",
+                "estoque mínimo",
+                "minimo",
+                "mínimo",
+                "minimum stock",
+            ),
+            "select": (
+                "COALESCE(NULLIF(SBZ.BZ_ESTSEG, 0), NULLIF(SB1.B1_EMIN, 0)) "
+                "AS minimum_stock"
+            ),
+            "group_by": "",
+            "result_alias": "minimum_stock",
+        },
+    }
 
     @classmethod
     def is_sql_follow_up(
@@ -184,7 +279,31 @@ class ChatSqlQueryRefinementService:
                 reason="A mensagem solicita exibir a consulta SQL da pesquisa anterior.",
             )
 
-        column_key = cls._extract_column_key(normalized)
+        if cls._looks_like_remove_branch_filter(normalized):
+            updated = cls.remove_branch_filter(recent.sql)
+
+            if updated != recent.sql:
+                return SqlQueryRefinement(
+                    mode="execute",
+                    sql=updated,
+                    title=recent.title,
+                    reason="Refinamento SQL: filtro de filial removido da consulta anterior.",
+                )
+
+        top_limit = cls._extract_top_limit(normalized)
+
+        if top_limit is not None and cls._looks_like_limit_adjustment(normalized):
+            updated = cls.apply_top_limit(recent.sql, top_limit)
+
+            if updated != recent.sql:
+                return SqlQueryRefinement(
+                    mode="execute",
+                    sql=updated,
+                    title=recent.title,
+                    reason="Refinamento SQL: limite TOP ajustado na consulta anterior.",
+                )
+
+        column_key = cls._extract_column_key(normalized, sql=recent.sql)
 
         if column_key and cls._looks_like_add_column(normalized):
             updated = cls.add_column(recent.sql, column_key)
@@ -212,10 +331,10 @@ class ChatSqlQueryRefinementService:
                 reason="Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
             )
 
-        branch = cls._extract_branch_code(normalized)
+        branches = cls._extract_branch_codes(normalized)
 
-        if branch and cls._looks_like_filter_adjustment(normalized):
-            updated = cls.apply_branch_filter(recent.sql, branch)
+        if branches and cls._looks_like_filter_adjustment(normalized, branches=branches):
+            updated = cls.apply_branch_filter(recent.sql, branches)
 
             if updated == recent.sql:
                 return None
@@ -276,7 +395,7 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def add_column(cls, sql: str, column_key: str) -> str:
-        definition = cls._column_definitions().get(column_key)
+        definition = cls._column_definitions_for_sql(sql).get(column_key)
 
         if not definition:
             return sql
@@ -312,7 +431,7 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def remove_column(cls, sql: str, column_key: str) -> str:
-        definition = cls._column_definitions().get(column_key)
+        definition = cls._column_definitions_for_sql(sql).get(column_key)
 
         if not definition:
             return sql
@@ -340,13 +459,42 @@ class ChatSqlQueryRefinementService:
         return updated
 
     @classmethod
-    def apply_branch_filter(cls, sql: str, branch_code: str) -> str:
-        branch = str(branch_code or "").zfill(2)[:2]
+    def apply_branch_filter(cls, sql: str, branch_codes: list[str]) -> str:
+        branches = [
+            str(code).zfill(2)[:2]
+            for code in branch_codes
+            if str(code or "").strip()
+        ]
+
+        if not branches:
+            return sql
 
         if re.search(r"DECLARE\s+@FILIAL\s+CHAR\(2\)\s*=", sql, flags=re.I):
             return re.sub(
                 r"(DECLARE\s+@FILIAL\s+CHAR\(2\)\s*=\s*')(\d{2})(';\s*)",
-                rf"\g<1>{branch}\3",
+                rf"\g<1>{branches[0]}\3",
+                sql,
+                count=1,
+                flags=re.I,
+            )
+
+        predicate = cls._branch_predicate("SB2.B2_FILIAL", branches)
+
+        replaced = re.sub(
+            r"\n\s*AND\s+SB2\.B2_FILIAL\s+(?:=\s*'\d{2}'|IN\s*\([^)]+\))",
+            f"\n  AND {predicate}",
+            sql,
+            count=1,
+            flags=re.I,
+        )
+
+        if replaced != sql:
+            return replaced
+
+        if re.search(r"\bSB2010\b", sql, flags=re.I):
+            return re.sub(
+                r"(\nORDER BY\b)",
+                f"\n  AND {predicate}\\1",
                 sql,
                 count=1,
                 flags=re.I,
@@ -355,20 +503,61 @@ class ChatSqlQueryRefinementService:
         return sql
 
     @classmethod
+    def remove_branch_filter(cls, sql: str) -> str:
+        updated = re.sub(
+            r"\n\s*AND\s+SB2\.B2_FILIAL\s+(?:=\s*'\d{2}'|IN\s*\([^)]+\))",
+            "",
+            sql,
+            count=1,
+            flags=re.I,
+        )
+
+        return updated
+
+    @classmethod
+    def apply_top_limit(cls, sql: str, limit: int) -> str:
+        bounded = max(1, min(int(limit), 500))
+
+        if not re.search(r"\bSELECT\s+TOP\s+\d+\b", sql, flags=re.I):
+            return sql
+
+        return re.sub(
+            r"(\bSELECT\s+TOP\s+)\d+",
+            rf"\g<1>{bounded}",
+            sql,
+            count=1,
+            flags=re.I,
+        )
+
+    @classmethod
     def format_show_sql_answer(cls, refinement: SqlQueryRefinement) -> str:
         title = refinement.title or "Consulta SQL"
         return (
             f"### {title}\n\n"
             "Consulta SQL utilizada na pesquisa anterior:\n\n"
-            f"```sql\n{refinement.sql.strip()}\n```"
+            f"```sql\n{refinement.sql.strip()}\n```\n\n"
+            "Peça alterações em linguagem natural — por exemplo: "
+            "*filial 01 e 02*, *top 100* ou *acrescente a coluna de armazém*."
         )
 
     @classmethod
-    def _column_definitions(cls) -> dict[str, dict[str, Any]]:
+    def _column_definitions_for_sql(cls, sql: str) -> dict[str, dict[str, Any]]:
+        if "SB2010" in str(sql or "").upper():
+            return cls._INVENTORY_COLUMN_DEFINITIONS
+
         return cls._COLUMN_DEFINITIONS
 
     @classmethod
-    def _extract_column_key(cls, normalized: str) -> str | None:
+    def _branch_predicate(cls, column: str, branches: list[str]) -> str:
+        if len(branches) == 1:
+            return f"{column} = '{branches[0]}'"
+
+        joined = ", ".join(f"'{branch}'" for branch in branches)
+
+        return f"{column} IN ({joined})"
+
+    @classmethod
+    def _extract_column_key(cls, normalized: str, *, sql: str = "") -> str | None:
         match = re.search(
             r"\bcoluna(?:s)?\s+(?:de\s+|da\s+|do\s+)?(.+)$",
             normalized,
@@ -376,7 +565,7 @@ class ChatSqlQueryRefinementService:
 
         candidate = match.group(1).strip() if match else normalized
 
-        for key, definition in cls._column_definitions().items():
+        for key, definition in cls._column_definitions_for_sql(sql).items():
             aliases = definition.get("aliases") or ()
 
             if any(alias in candidate for alias in aliases):
@@ -401,22 +590,80 @@ class ChatSqlQueryRefinementService:
 
     @classmethod
     def _looks_like_show_query(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._SHOW_QUERY_TERMS)
+        if any(term in normalized for term in cls._SHOW_QUERY_TERMS):
+            return True
+
+        if "sql" in normalized and any(
+            token in normalized for token in ("mostre", "mostra", "exiba", "exibe", "ver", "qual")
+        ):
+            return True
+
+        return False
 
     @classmethod
-    def _looks_like_filter_adjustment(cls, normalized: str) -> bool:
-        return any(term in normalized for term in cls._FILTER_TERMS) or bool(
-            cls._extract_branch_code(normalized)
+    def _looks_like_filter_adjustment(
+        cls,
+        normalized: str,
+        *,
+        branches: list[str] | None = None,
+    ) -> bool:
+        if any(term in normalized for term in cls._FILTER_TERMS):
+            return True
+
+        if any(term in normalized for term in cls._ALTER_TERMS) and branches:
+            return True
+
+        return bool(branches)
+
+    @classmethod
+    def _looks_like_remove_branch_filter(cls, normalized: str) -> bool:
+        return any(term in normalized for term in cls._REMOVE_BRANCH_TERMS)
+
+    @classmethod
+    def _looks_like_limit_adjustment(cls, normalized: str) -> bool:
+        return cls._extract_top_limit(normalized) is not None and (
+            "top" in normalized
+            or any(term in normalized for term in cls._ALTER_TERMS + cls._FILTER_TERMS)
+            or re.search(r"\b\d{1,3}\s+produtos?\b", normalized)
+            or re.search(r"\b\d{1,3}\s+registros?\b", normalized)
         )
 
     @classmethod
-    def _extract_branch_code(cls, normalized: str) -> str | None:
-        match = cls._BRANCH_RE.search(normalized)
+    def _extract_branch_codes(cls, normalized: str) -> list[str]:
+        match = re.search(r"\b(?:filial(?:is)?|fil\.?)\s*(.+)$", normalized)
 
-        if not match:
-            return None
+        if match:
+            tail = match.group(1)
+            codes = re.findall(r"\d{1,2}", tail)
 
-        return str(match.group(1)).zfill(2)
+            if codes:
+                return [str(code).zfill(2)[:2] for code in codes]
+
+        single = cls._BRANCH_RE.search(normalized)
+
+        if single:
+            return [str(single.group(1)).zfill(2)]
+
+        return []
+
+    @classmethod
+    def _extract_top_limit(cls, normalized: str) -> int | None:
+        match = cls._TOP_RE.search(normalized)
+
+        if match:
+            return min(int(match.group(1)), 500)
+
+        match = re.search(r"\b(\d{1,3})\s+produtos?\b", normalized)
+
+        if match:
+            return min(int(match.group(1)), 500)
+
+        match = re.search(r"\b(\d{1,3})\s+registros?\b", normalized)
+
+        if match:
+            return min(int(match.group(1)), 500)
+
+        return None
 
     @classmethod
     def _extract_title(cls, metadata: dict) -> str | None:

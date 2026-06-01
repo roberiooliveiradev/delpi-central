@@ -1965,6 +1965,12 @@ class ExternalActionResultPresenter:
         return rows
 
     def _sql_result_title(self, root: dict, path: str) -> str:
+        if self._looks_like_inventory_below_minimum_sql_context(root, path):
+            return ExternalActionResponseContentService.get(
+                "inventoryBelowMinimum",
+                "title",
+            )
+
         if self._looks_like_production_sql_context(root, path):
             schedule = self._resolve_production_schedule_from_root(root)
             if schedule:
@@ -1982,6 +1988,12 @@ class ExternalActionResultPresenter:
         return ExternalActionResponseContentService.get("sql", "defaultTitle")
 
     def _sql_empty_message(self, root: dict, path: str) -> str:
+        if self._looks_like_inventory_below_minimum_sql_context(root, path):
+            return ExternalActionResponseContentService.get(
+                "inventoryBelowMinimum",
+                "emptyMessage",
+            )
+
         if self._looks_like_production_sql_context(root, path):
             schedule = self._resolve_production_schedule_from_root(root)
             if schedule:
@@ -2064,6 +2076,50 @@ class ExternalActionResultPresenter:
                 return True
 
         return False
+
+    def _looks_like_inventory_below_minimum_sql_context(self, root: dict, path: str) -> bool:
+        rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+
+        if rows and self._looks_like_inventory_below_minimum_row(rows[0]):
+            return True
+
+        resultsets = root.get("resultsets") if isinstance(root, dict) else None
+
+        if isinstance(resultsets, list):
+            for resultset in resultsets:
+                if not isinstance(resultset, dict):
+                    continue
+
+                columns = {
+                    str(column).lower()
+                    for column in (resultset.get("columns") or [])
+                }
+
+                if {"product_code", "minimum_stock"}.issubset(columns):
+                    return True
+
+        if not isinstance(root, dict):
+            return False
+
+        for key in ("sql", "query", "statement"):
+            value = root.get(key)
+
+            if isinstance(value, str) and ExternalActionSqlCapabilityService.looks_like_inventory_below_minimum_sql(
+                value
+            ):
+                return True
+
+        return False
+
+    def _looks_like_inventory_below_minimum_row(self, row: dict) -> bool:
+        if not isinstance(row, dict):
+            return False
+
+        keys = {str(key).lower() for key in row.keys()}
+
+        return "product_code" in keys and (
+            "minimum_stock" in keys or "available_quantity" in keys
+        )
 
     def _present_sql_dict_rows(self, rows: list[dict], *, title: str | None = None) -> dict:
         resolved_title = title or ExternalActionResponseContentService.get(
@@ -2999,12 +3055,24 @@ class ExternalActionResultPresenter:
 
         if isinstance(root.get("resultsets"), list):
             rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+            title = self._sql_result_title(root, path)
 
             if rows:
                 return self._build_items_table(
                     rows,
-                    title=self._sql_result_title(root, path),
+                    title=title,
+                    path=path,
                 )
+
+            if self._looks_like_inventory_below_minimum_sql_context(root, path):
+                empty_table = self._build_sql_resultset_empty_table(
+                    root,
+                    title=title,
+                    path=path,
+                )
+
+                if empty_table:
+                    return empty_table
 
         return None
 
@@ -3214,6 +3282,57 @@ class ExternalActionResultPresenter:
         if data_type:
             col["dataType"] = data_type
         return col
+
+    def _build_sql_resultset_empty_table(
+        self,
+        root: dict,
+        *,
+        title: str,
+        path: str = "",
+    ) -> dict | None:
+        resultsets = root.get("resultsets")
+
+        if not isinstance(resultsets, list) or not resultsets:
+            return None
+
+        first = resultsets[0]
+
+        if not isinstance(first, dict):
+            return None
+
+        columns_raw = first.get("columns")
+
+        if not isinstance(columns_raw, list) or not columns_raw:
+            return None
+
+        sample = {str(column): None for column in columns_raw}
+        profile_name = self._column_labels.detect_table_profile(sample, path=path)
+        preferred = None
+
+        if profile_name:
+            preferred = self._column_labels.preferred_columns(
+                profile_name,
+                sample,
+                schema_labels=self._active_schema_labels,
+            )
+
+        if preferred:
+            columns = [
+                self._enrich_column(key, label)
+                for key, label in preferred
+            ]
+        else:
+            columns = [
+                self._enrich_column(str(column), self._humanize_key(str(column)))
+                for column in columns_raw[:15]
+            ]
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": columns,
+            "rows": [],
+        }
 
     def _build_items_table(
         self,

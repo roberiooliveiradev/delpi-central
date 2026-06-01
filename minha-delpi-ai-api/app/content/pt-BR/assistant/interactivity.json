@@ -78,6 +78,11 @@
       "Explique esse painel",
       "Baixar CSV",
       "Colocar na lousa"
+    ],
+    "sql": [
+      "Ver SQL",
+      "Filtrar por filial",
+      "Aumentar limite"
     ]
   },
   "presentationQueries": {
@@ -90,7 +95,10 @@
     "Explique esse painel": "explique o painel acima em linguagem simples, destacando os blocos e como interpretar cada gráfico",
     "Ver estoque": "qual o estoque do produto {{productCode}}?",
     "Onde é usado?": "onde o produto {{productCode}} é usado?",
-    "Colocar na lousa": "coloque o resultado acima na lousa"
+    "Colocar na lousa": "coloque o resultado acima na lousa",
+    "Ver SQL": "mostre o sql da consulta anterior",
+    "Filtrar por filial": "filtre a consulta anterior por filial 01",
+    "Aumentar limite": "aumente o top da consulta anterior para 100"
   },
   "refinementChips": {
     "pagination": ["Traga tudo", "Continue buscando"],

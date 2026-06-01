@@ -16,6 +16,8 @@ def test_requires_sql_for_below_minimum_stock_list():
     assert resolution.mode == "execute"
     assert "SB2010" in resolution.sql
     assert "B1_EMIN" in resolution.sql
+    assert "SBZ010" in resolution.sql
+    assert "BZ_ESTSEG" in resolution.sql
     assert "SC2010" not in resolution.sql
 
 

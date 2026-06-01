@@ -111,6 +111,30 @@ class ExternalActionSelectionService:
         ):
             return None
 
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+
+        sql_refinement = ChatSqlQueryRefinementService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if sql_refinement and sql_refinement.mode == "execute":
+            selected = self._select_sql_or_data_action(
+                message,
+                allowed_action_ids=allowed_action_ids,
+                sql=sql_refinement.sql,
+                selection_reason_key="sqlRefinement",
+            )
+
+            if selected:
+                selected["reason"] = ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "sqlRefinement",
+                )
+                return selected
+
         from app.domain.services.chat_drawing_intent_service import (
             ChatDrawingIntentService,
         )
@@ -142,9 +166,9 @@ class ExternalActionSelectionService:
             )
 
             if not ChatSqlIntentService.is_authoring_request(message):
-                for resolver in (
-                    ChatSqlInventoryQueryService,
-                    ChatSqlProductionQueryService,
+                for resolver, reason_key in (
+                    (ChatSqlInventoryQueryService, "inventorySqlFastPath"),
+                    (ChatSqlProductionQueryService, "productionSqlFastPath"),
                 ):
                     resolution = resolver.resolve(message)
 
@@ -153,6 +177,7 @@ class ExternalActionSelectionService:
                             message,
                             allowed_action_ids=allowed_action_ids,
                             sql=resolution.sql,
+                            selection_reason_key=reason_key,
                         )
 
                         if selected:
@@ -232,25 +257,6 @@ class ExternalActionSelectionService:
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
         )
-
-        sql_refinement = ChatSqlQueryRefinementService.resolve(
-            message,
-            previous_messages=previous_messages,
-        )
-
-        if sql_refinement and sql_refinement.mode == "execute":
-            selected = self._select_sql_or_data_action(
-                message,
-                allowed_action_ids=allowed_action_ids,
-                sql=sql_refinement.sql,
-            )
-
-            if selected:
-                selected["reason"] = ExternalActionResponseContentService.get(
-                    "selectionReasons",
-                    "sqlRefinement",
-                )
-                return selected
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
@@ -1898,6 +1904,7 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         *,
         sql: str | None = None,
+        selection_reason_key: str | None = None,
     ) -> dict | None:
         from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
 
@@ -1954,16 +1961,9 @@ class ExternalActionSelectionService:
             else {"message": message}
         )
 
-        reason = (
-            ExternalActionResponseContentService.get(
-                "selectionReasons",
-                "productionSqlFastPath",
-            )
-            if sql
-            else ExternalActionResponseContentService.get(
-                "selectionReasons",
-                "genericSql",
-            )
+        reason = ExternalActionResponseContentService.get(
+            "selectionReasons",
+            selection_reason_key or ("productionSqlFastPath" if sql else "genericSql"),
         )
 
         return {

@@ -1,3 +1,6 @@
+from app.domain.services.chat_sql_inventory_query_service import (
+    ChatSqlInventoryQueryService,
+)
 from app.domain.services.chat_sql_production_query_service import (
     ChatSqlProductionQueryService,
 )
@@ -10,8 +13,14 @@ SAMPLE_SQL = ChatSqlProductionQueryService.resolve(
     "o que sera produzido segunda feira?"
 ).sql
 
+INVENTORY_SQL = ChatSqlInventoryQueryService.resolve(
+    "liste os produtos com estoque abaixo do minimo"
+).sql
 
-def _history_with_sql(sql: str = SAMPLE_SQL):
+
+def _history_with_sql(sql: str = SAMPLE_SQL, *, title: str | None = None):
+    presentation_title = title or "Consulta SQL"
+
     return [
         {
             "role": "assistant",
@@ -29,7 +38,8 @@ def _history_with_sql(sql: str = SAMPLE_SQL):
                             "sensitivity": "sql",
                             "executedSql": sql,
                             "presentation": {
-                                "title": "Produtos programados para produção segunda-feira (01/06/2026)",
+                                "type": "table",
+                                "title": presentation_title,
                             },
                         },
                     }
@@ -62,10 +72,60 @@ def test_show_sql_from_history():
     assert "SC2010" in refinement.sql
 
 
-def test_apply_branch_filter():
-    updated = ChatSqlQueryRefinementService.apply_branch_filter(SAMPLE_SQL, "02")
+def test_apply_branch_filter_production():
+    updated = ChatSqlQueryRefinementService.apply_branch_filter(SAMPLE_SQL, ["02"])
 
     assert "DECLARE @FILIAL CHAR(2) = '02';" in updated
+
+
+def test_apply_branch_filter_inventory_single_branch():
+    updated = ChatSqlQueryRefinementService.apply_branch_filter(INVENTORY_SQL, ["01"])
+
+    assert "SB2.B2_FILIAL = '01'" in updated
+
+
+def test_apply_branch_filter_inventory_multiple_branches():
+    updated = ChatSqlQueryRefinementService.apply_branch_filter(INVENTORY_SQL, ["01", "02"])
+
+    assert "SB2.B2_FILIAL IN ('01', '02')" in updated
+
+
+def test_resolve_filial_01_e_02_after_inventory_sql():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "filial 01 e 02",
+        previous_messages=_history_with_sql(
+            INVENTORY_SQL,
+            title="Produtos com estoque abaixo do mínimo",
+        ),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "SB2.B2_FILIAL IN ('01', '02')" in refinement.sql
+
+
+def test_remove_branch_filter_inventory():
+    filtered = ChatSqlQueryRefinementService.apply_branch_filter(INVENTORY_SQL, ["01"])
+    updated = ChatSqlQueryRefinementService.remove_branch_filter(filtered)
+
+    assert "AND SB2.B2_FILIAL" not in updated
+
+
+def test_apply_top_limit():
+    updated = ChatSqlQueryRefinementService.apply_top_limit(INVENTORY_SQL, 50)
+
+    assert "SELECT TOP 50" in updated
+
+
+def test_resolve_top_limit_follow_up():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "top 50",
+        previous_messages=_history_with_sql(INVENTORY_SQL),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "SELECT TOP 50" in refinement.sql
 
 
 def test_remove_column():
