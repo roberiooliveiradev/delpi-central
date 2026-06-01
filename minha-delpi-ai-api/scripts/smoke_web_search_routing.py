@@ -81,26 +81,32 @@ def main() -> int:
         return 1
     print("OK unit: gatilho de pesquisa na web")
 
-    if not ChatWebSearchIntentService.blocks_external_action_selection(_WEB_MESSAGE):
-        print("FAIL unit: não bloqueia actions externas", file=sys.stderr)
-        return 1
-    print("OK unit: bloqueia actions OpenAPI")
+    from app.main import app
 
-    enabled = ChatWebSearchIntentService.is_feature_enabled()
-    print(f"INFO: CHAT_WEB_SEARCH_ENABLED={Settings.CHAT_WEB_SEARCH_ENABLED!r} resolved={enabled}")
+    with app.app_context():
+        if not ChatWebSearchIntentService.blocks_external_action_selection(_WEB_MESSAGE):
+            print("FAIL unit: não bloqueia actions externas", file=sys.stderr)
+            return 1
+        print("OK unit: bloqueia actions OpenAPI")
 
-    if enabled:
-        tools = ToolSelectionService().select_tools(_WEB_MESSAGE)
-        if not any(t.get("name") == "web_search" for t in tools):
-            print(f"FAIL unit: tools sem web_search ({tools})", file=sys.stderr)
-            return 1
-        print("OK unit: ToolSelectionService inclui web_search")
-    else:
-        resolved = ChatWebSearchIntentService.resolve(_WEB_MESSAGE)
-        if resolved is not None:
-            print(f"FAIL unit: resolve deveria ser None ({resolved})", file=sys.stderr)
-            return 1
-        print("OK unit: feature off — resolve None (sem product search)")
+        enabled = ChatWebSearchIntentService.is_feature_enabled()
+        print(
+            f"INFO: CHAT_WEB_SEARCH_ENABLED={Settings.CHAT_WEB_SEARCH_ENABLED!r} "
+            f"resolved={enabled}"
+        )
+
+        if enabled:
+            tools = ToolSelectionService().select_tools(_WEB_MESSAGE)
+            if not any(t.get("name") == "web_search" for t in tools):
+                print(f"FAIL unit: tools sem web_search ({tools})", file=sys.stderr)
+                return 1
+            print("OK unit: ToolSelectionService inclui web_search")
+        else:
+            resolved = ChatWebSearchIntentService.resolve(_WEB_MESSAGE)
+            if resolved is not None:
+                print(f"FAIL unit: resolve deveria ser None ({resolved})", file=sys.stderr)
+                return 1
+            print("OK unit: feature off — resolve None (sem product search)")
 
     try:
         token = _fetch_token()
