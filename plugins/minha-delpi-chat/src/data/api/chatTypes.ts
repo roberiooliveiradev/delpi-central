@@ -379,6 +379,25 @@ export type ChatMessageMetadata = {
     filenames?: string[];
     note?: string;
   } | null;
+  errorHandling?: {
+    type?: string;
+    severity?: string;
+    recoverable?: boolean;
+    title?: string;
+    userMessage?: string;
+    reasons?: string[];
+    alternativesIntro?: string;
+    apiFailed?: boolean;
+    affirmsNonExistence?: boolean;
+    suggestions?: string[];
+    action?: string;
+    params?: Record<string, unknown>;
+    attempted?: string;
+    records?: number;
+    durationMs?: number;
+  } | null;
+  errorRecoveryFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  errorHandlingEnrichedAnswer?: string | null;
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];

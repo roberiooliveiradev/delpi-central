@@ -68,6 +68,7 @@ import {
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
 import { ChatMessageEditField } from "./ChatMessageEditField";
+import { ChatErrorHandlingCard } from "./ChatErrorHandlingCard";
 import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "./chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
@@ -1401,16 +1402,24 @@ export function ChatMessageList({
                   }
                   onUseQuery={onDrillDown}
                 />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.helpErrorFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Ajuda após erro"
-                  ariaLabel="Sugestões de ajuda após falha na consulta"
-                />
+                {message.metadata?.errorHandling ? (
+                  <ChatErrorHandlingCard
+                    metadata={message.metadata}
+                    onUseSuggestion={onDrillDown}
+                  />
+                ) : null}
+                {!message.metadata?.errorHandling ? (
+                  <ChatFollowUpChips
+                    suggestions={
+                      (message.metadata?.helpErrorFollowUpSuggestions as
+                        | ChatFollowUpSuggestion[]
+                        | undefined) ?? []
+                    }
+                    onUseSuggestion={onDrillDown}
+                    groupLabel="Ajuda após erro"
+                    ariaLabel="Sugestões de ajuda após falha na consulta"
+                  />
+                ) : null}
                 <ChatFollowUpChips
                   suggestions={
                     (message.metadata?.attachmentFollowUpSuggestions as

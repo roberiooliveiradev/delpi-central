@@ -1,0 +1,37 @@
+.mdc-chat-error-handling {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--mdc-color-border, #d8dee9) 80%, #f59e0b);
+  background: color-mix(in srgb, var(--mdc-color-surface, #fff) 92%, #fff7ed);
+}
+
+.mdc-chat-error-handling__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.mdc-chat-error-handling__message {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.mdc-chat-error-handling__label {
+  margin: 0 0 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.mdc-chat-error-handling__reasons ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+}
+
+.mdc-chat-error-handling__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--mdc-color-muted, #5c6570);
+}

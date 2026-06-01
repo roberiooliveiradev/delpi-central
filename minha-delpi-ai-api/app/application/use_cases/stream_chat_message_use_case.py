@@ -914,7 +914,18 @@ class StreamChatMessageUseCase:
             tool_calls=tool_calls,
             workspace_context=workspace_context,
             previous_messages=context_box.get("history_source") or previous_messages,
+            issues=intelligence_metadata.get("issues")
+            if isinstance(intelligence_metadata, dict)
+            else None,
+            attachments=attachments,
+            latency_ms=latency_ms,
         )
+
+        from app.application.services.chat_error_handling_telemetry_service import (
+            ChatErrorHandlingTelemetryService,
+        )
+
+        ChatErrorHandlingTelemetryService.log_classification(assistant_metadata)
 
         from app.application.services.chat_context_metadata_service import (
             ChatContextMetadataService,

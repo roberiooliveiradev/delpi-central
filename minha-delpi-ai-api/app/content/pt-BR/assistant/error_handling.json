@@ -1,0 +1,310 @@
+{
+  "coldAnswerPatterns": [
+    "não encontrei.",
+    "nao encontrei.",
+    "não foi possível.",
+    "nao foi possivel.",
+    "erro.",
+    "falha na consulta.",
+    "tente novamente."
+  ],
+  "apiFailureNonExistencePhrases": [
+    "não existe",
+    "nao existe",
+    "produto não existe",
+    "produto nao existe",
+    "cadastro inexistente"
+  ],
+  "types": {
+    "empty_result": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Nenhum resultado encontrado",
+      "userMessage": "Não encontrei registros para esse filtro.",
+      "reasons": [
+        "código incorreto ou incompleto",
+        "produto sem movimentação no período",
+        "período ou filial muito restritos",
+        "cadastro inexistente na fonte consultada"
+      ],
+      "alternativesIntro": "Posso tentar:",
+      "chips": [
+        "Buscar por descrição",
+        "Ampliar período",
+        "Remover filtros",
+        "Verificar código",
+        "Tentar novamente"
+      ]
+    },
+    "missing_parameter": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Falta um dado para consultar",
+      "userMessage": "Para concluir essa consulta, preciso de mais informação.",
+      "reasons": [
+        "código do produto, OV, período ou filial não informados"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Informar código",
+        "Buscar por descrição",
+        "Ver exemplo",
+        "Escolher agente"
+      ]
+    },
+    "invalid_parameter": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Valor inválido",
+      "userMessage": "O valor informado parece inválido para essa consulta.",
+      "reasons": [
+        "formato de código, data ou filtro incompatível com a API"
+      ],
+      "alternativesIntro": "Corrija o valor e tente novamente, ou peça:",
+      "chips": [
+        "Verificar código",
+        "Buscar por descrição",
+        "Tentar novamente"
+      ]
+    },
+    "permission_denied": {
+      "severity": "permission",
+      "recoverable": true,
+      "title": "Acesso não permitido",
+      "userMessage": "Não consegui acessar essa informação com as permissões atuais.",
+      "reasons": [
+        "o agente ativo pode não ter essa action",
+        "seu perfil pode não ter acesso a esse dado",
+        "a integração pode não estar habilitada nesta sessão"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Escolher agente",
+        "Ver o que posso acessar",
+        "Pedir ajuda",
+        "Reformular pergunta"
+      ]
+    },
+    "api_unavailable": {
+      "severity": "unavailable",
+      "recoverable": true,
+      "title": "Consulta indisponível",
+      "userMessage": "Não consegui concluir a consulta agora porque a API não respondeu como esperado.",
+      "reasons": [
+        "indisponibilidade temporária do sistema",
+        "falha de rede ou timeout upstream"
+      ],
+      "alternativesIntro": "Isso pode ser temporário. Você pode:",
+      "chips": [
+        "Tentar novamente",
+        "Reduzir filtros",
+        "Ver diagnóstico",
+        "Tentar mais tarde"
+      ]
+    },
+    "timeout": {
+      "severity": "unavailable",
+      "recoverable": true,
+      "title": "Consulta interrompida",
+      "userMessage": "A consulta demorou mais do que o esperado e foi interrompida.",
+      "reasons": [
+        "muitos registros ou período amplo",
+        "API lenta no momento"
+      ],
+      "alternativesIntro": "Você pode tentar:",
+      "chips": [
+        "Reduzir período",
+        "Filtrar por produto",
+        "Tentar novamente",
+        "Ver consulta resumida"
+      ]
+    },
+    "partial_result": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Resultado parcial",
+      "userMessage": "Consegui obter apenas parte das informações solicitadas.",
+      "reasons": [
+        "uma ou mais fontes falharam ou retornaram vazio",
+        "limite de paginação ou truncamento"
+      ],
+      "alternativesIntro": "A resposta considera só o que estava disponível. Posso:",
+      "chips": [
+        "Tentar novamente",
+        "Detalhar por filial",
+        "Ampliar período"
+      ]
+    },
+    "ambiguous_request": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Preciso de mais detalhes",
+      "userMessage": "Sua pergunta pode ter mais de uma interpretação.",
+      "reasons": [
+        "não ficou claro se deseja cadastro, estoque, vendas ou outra visão"
+      ],
+      "alternativesIntro": "O que você quer consultar?",
+      "chips": [
+        "Cadastro",
+        "Estoque",
+        "Fornecedores",
+        "Estrutura",
+        "Vendas",
+        "Compras"
+      ]
+    },
+    "context_missing": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Referência não identificada",
+      "userMessage": "Não consegui identificar a que você está se referindo.",
+      "reasons": [
+        "expressões como «isso» ou «esse produto» sem histórico suficiente"
+      ],
+      "alternativesIntro": "Você quer usar:",
+      "chips": [
+        "Última resposta",
+        "Última tabela",
+        "Último arquivo",
+        "Informar novamente"
+      ]
+    },
+    "rag_no_source": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Sem documentação autorizada",
+      "userMessage": "Não encontrei documentação autorizada suficiente para responder com segurança.",
+      "reasons": [
+        "RAG sem trechos acima do limiar de confiança"
+      ],
+      "alternativesIntro": "Posso:",
+      "chips": [
+        "Buscar com outros termos",
+        "Usar anexo",
+        "Pesquisar na web",
+        "O que você pode fazer?"
+      ]
+    },
+    "web_no_source": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Web sem fonte confiável",
+      "userMessage": "Não encontrei uma fonte externa confiável suficiente para responder com segurança.",
+      "reasons": [
+        "poucos resultados ou sites não confiáveis na pesquisa"
+      ],
+      "alternativesIntro": "Posso tentar:",
+      "chips": [
+        "Só fontes oficiais",
+        "Buscar em inglês",
+        "Ampliar busca",
+        "Pesquisar novamente"
+      ]
+    },
+    "file_unreadable": {
+      "severity": "error",
+      "recoverable": true,
+      "title": "Arquivo ilegível",
+      "userMessage": "Não consegui ler o arquivo com segurança nesta sessão.",
+      "reasons": [
+        "arquivo protegido, imagem de baixa qualidade ou erro de processamento"
+      ],
+      "alternativesIntro": "Você pode tentar:",
+      "chips": [
+        "Reenviar arquivo",
+        "Enviar em PDF",
+        "Enviar imagem melhor",
+        "Trabalhar por partes"
+      ]
+    },
+    "unsupported_file": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Arquivo não suportado",
+      "userMessage": "Esse tipo de arquivo ainda não é suportado nesta funcionalidade.",
+      "reasons": [
+        "formato fora de PDF, DOCX, planilhas, texto ou imagens comuns"
+      ],
+      "alternativesIntro": "Converta para PDF, DOCX, XLSX ou TXT e reenvie.",
+      "chips": [
+        "Reenviar arquivo",
+        "O que você pode fazer?"
+      ]
+    },
+    "tool_error": {
+      "severity": "error",
+      "recoverable": true,
+      "title": "Falha na ferramenta",
+      "userMessage": "A ferramenta necessária para essa ação falhou durante a execução.",
+      "reasons": [
+        "erro retornado pela integração ou validação interna"
+      ],
+      "alternativesIntro": "Você pode tentar:",
+      "chips": [
+        "Tentar novamente",
+        "Refinar o pedido",
+        "Escolher agente",
+        "Pedir ajuda"
+      ]
+    },
+    "action_not_available": {
+      "severity": "permission",
+      "recoverable": true,
+      "title": "Action indisponível",
+      "userMessage": "Essa consulta existe na plataforma, mas não está disponível no agente atual.",
+      "reasons": [
+        "action não habilitada no builder do agente"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Escolher agente",
+        "Ver o que posso acessar",
+        "O que você pode fazer?",
+        "Reformular pergunta"
+      ]
+    }
+  },
+  "chipQueries": {
+    "Buscar por descrição": "busque produto por descrição",
+    "Ampliar período": "amplie o período da consulta",
+    "Remover filtros": "repita a consulta sem filtros opcionais",
+    "Verificar código": "como verifico se o código do produto está correto?",
+    "Tentar novamente": "tente novamente a consulta anterior",
+    "Informar código": "me fale do produto {{productCode}}",
+    "Ver exemplo": "mostre um exemplo de boa pergunta com código de produto",
+    "Escolher agente": "qual agente devo usar para consultas operacionais?",
+    "Reduzir filtros": "repita com filtros mais restritos",
+    "Ver diagnóstico": "por que não consegui fazer essa consulta?",
+    "Tentar mais tarde": "tente novamente a mesma consulta",
+    "Reduzir período": "reduza o período da consulta",
+    "Filtrar por produto": "filtre por um código de produto específico",
+    "Ver consulta resumida": "mostre um resumo da consulta anterior",
+    "Detalhar por filial": "detalhe por filial",
+    "Cadastro": "mostre o cadastro do produto {{productCode}}",
+    "Estoque": "qual o estoque do produto {{productCode}}?",
+    "Fornecedores": "liste fornecedores do produto {{productCode}}",
+    "Estrutura": "mostre a estrutura do produto {{productCode}}",
+    "Vendas": "mostre vendas do produto {{productCode}}",
+    "Compras": "mostre compras do produto {{productCode}}",
+    "Última resposta": "use a última resposta do assistente como referência",
+    "Última tabela": "mostre novamente a última tabela desta conversa",
+    "Último arquivo": "resuma o último arquivo anexado",
+    "Informar novamente": "vou informar o código ou referência novamente",
+    "Buscar com outros termos": "busque na base de conhecimento com outros termos",
+    "Usar anexo": "use o arquivo anexado como fonte",
+    "Pesquisar na web": "pesquise na web sobre o tema",
+    "Só fontes oficiais": "pesquise na web só em sites oficiais",
+    "Buscar em inglês": "busque na internet em inglês",
+    "Ampliar busca": "amplie a pesquisa na web",
+    "Pesquisar novamente": "pesquise novamente na web",
+    "Reenviar arquivo": "vou reenviar o arquivo em outro formato",
+    "Enviar em PDF": "como envio um PDF legível?",
+    "Enviar imagem melhor": "como melhorar a qualidade da imagem anexada?",
+    "Trabalhar por partes": "analise só a primeira seção do arquivo",
+    "Refinar o pedido": "pode detalhar o resultado anterior?",
+    "Pedir ajuda": "o que você pode fazer?",
+    "Reformular pergunta": "como reformulo essa pergunta?",
+    "Ver o que posso acessar": "o que você pode fazer?",
+    "O que você pode fazer?": "o que você pode fazer?"
+  }
+}

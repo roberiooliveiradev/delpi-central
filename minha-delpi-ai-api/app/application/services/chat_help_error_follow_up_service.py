@@ -39,6 +39,9 @@ class ChatHelpErrorFollowUpService:
         if not suggestions:
             return
 
+        if metadata.get("errorRecoveryFollowUpSuggestions"):
+            return
+
         metadata["helpErrorFollowUpSuggestions"] = suggestions
         metadata["helpContext"] = "error"
 

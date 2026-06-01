@@ -102,7 +102,10 @@ Mensagem do usuário
 | `ChatEmailTurnService` | Orquestra suplemento de prompt, guard e metadata de follow-up |
 | `ChatEmailOperationalComposerService` | E-mail a partir de consulta autorizada (turno misto / follow-up) + `emailDataSource` |
 | `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
-| `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
+| `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, fallback) |
+| `ChatErrorHandlingClassifier` | Classifica tipo de erro/vazio (Playbook 06) |
+| `ChatErrorHandlingService` | Metadata `errorHandling` + `errorRecoveryFollowUpSuggestions` + enrich |
+| `ChatErrorHandlingTelemetryService` | Log `error_handling type=…` |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |

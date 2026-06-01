@@ -21,6 +21,9 @@ _ALLOWED_EVENTS = frozenset(
         "canvas_transform",
         "attachment_follow_up_click",
         "canvas_follow_up_click",
+        "error_empty_result",
+        "error_recovery_click",
+        "error_feedback",
     }
 )
 
