@@ -133,11 +133,12 @@ export function ChatOnboardingTour({
   );
 
   useEffect(() => {
-    if (!autoStart || steps.length === 0 || isOnboardingTourCompleted()) {
+    if (!autoStart || steps.length === 0) {
       return;
     }
 
     setVisible(true);
+    setIndex(0);
   }, [autoStart, steps.length]);
 
   useEffect(() => {

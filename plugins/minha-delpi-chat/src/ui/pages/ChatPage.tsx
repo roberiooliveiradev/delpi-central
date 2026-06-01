@@ -1376,10 +1376,10 @@ export function ChatPage({
     [homeOnboarding?.tourSteps],
   );
 
-  const hasOnboardingTour =
-    homeTourSteps.length > 0 && !isOnboardingTourCompleted();
+  const hasOnboardingTourSteps = homeTourSteps.length > 0;
 
-  const canOfferOnboardingTour = hasOnboardingTour && isConversationEmpty;
+  const canOfferOnboardingTour =
+    hasOnboardingTourSteps && isConversationEmpty && !isOnboardingTourCompleted();
 
   const isHomeChatSurface =
     chatRoute.kind === "home" &&
@@ -2185,7 +2185,7 @@ export function ChatPage({
           onTryPrompt={(query, context) => {
             void handleHelpTryPrompt(query, context);
           }}
-          onStartTour={hasOnboardingTour ? startOnboardingTour : undefined}
+          onStartTour={hasOnboardingTourSteps ? startOnboardingTour : undefined}
         />
       </section>
     </main>
