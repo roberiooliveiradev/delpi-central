@@ -29,7 +29,12 @@ class ChatPresentationInteractivityService:
 
         for label in chip_labels[:6]:
             template = str(queries.get(label) or label).strip()
-            suggestions.append({"label": str(label), "query": template})
+            item: dict[str, str] = {"label": str(label), "query": template}
+
+            if str(label).strip() == "Explique esse gráfico":
+                item["inlineAction"] = "explain_chart"
+
+            suggestions.append(item)
 
         suggestions.extend(
             cls._chips_from_presentation_decision(tool_calls, queries=queries)

@@ -7,7 +7,10 @@ import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTree } from "./ChatRichTree";
 import { ModalPortal } from "./ModalPortal";
-import { exportToXlsx, exportToPdf, exportChartToPng, exportTreeToPdf, exportTreeToXlsx } from "./exportUtils";
+import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
+import type { ChartViewState } from "./chartViewState";
+import { exportChartElementToPng } from "./chartPngExport";
+import { exportToXlsx, exportToPdf, exportTreeToPdf, exportTreeToXlsx } from "./exportUtils";
 import { treePresentationToClipboardText } from "./treePresentationUtils";
 
 function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi" }>) {
@@ -19,12 +22,16 @@ function copyKpiToClipboard(presentation: Extract<ChatPresentation, { type: "kpi
 
 export function ChatExpandModal({
   presentation,
+  chartViewState,
   onClose,
   onDrillDown,
+  onOpenCanvas,
 }: {
   presentation: ChatPresentation;
+  chartViewState?: ChartViewState;
   onClose: () => void;
   onDrillDown?: (query: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -78,7 +85,12 @@ export function ChatExpandModal({
               {presentation.type === "chart" && (
                 <button
                   className="mdc-expand-modal__tool-btn"
-                  onClick={() => exportChartToPng(chartRef.current, title)}
+                  onClick={() =>
+                    exportChartElementToPng(
+                      chartRef.current?.querySelector(".mdc-rich-chart__container"),
+                      title,
+                    )
+                  }
                   title="Exportar PNG"
                 >
                   <Image size={15} /> PNG
@@ -141,7 +153,14 @@ export function ChatExpandModal({
               />
             )}
             {presentation.type === "chart" && (
-              <ChatRichChart presentation={presentation} hideToolbar hideTitle />
+              <ChatRichChart
+                presentation={presentation}
+                hideTitle
+                expanded
+                initialViewState={chartViewState}
+                onDrillDown={onDrillDown}
+                onOpenCanvas={onOpenCanvas}
+              />
             )}
             {presentation.type === "kpi" && (
               <ChatRichKpi presentation={presentation} />
@@ -169,11 +188,15 @@ export function ChatExpandModal({
 
 export function ExpandButton({
   presentation,
+  chartViewState,
   onDrillDown,
+  onOpenCanvas,
   disabled = false,
 }: {
   presentation: ChatPresentation;
+  chartViewState?: ChartViewState;
   onDrillDown?: (query: string) => void;
+  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   /** Evita abrir outro modal quando já está em contexto expandido. */
   disabled?: boolean;
 }) {
@@ -198,8 +221,10 @@ export function ExpandButton({
       {open ? (
         <ChatExpandModal
           presentation={presentation}
+          chartViewState={chartViewState}
           onClose={() => setOpen(false)}
           onDrillDown={onDrillDown}
+          onOpenCanvas={onOpenCanvas}
         />
       ) : null}
     </>

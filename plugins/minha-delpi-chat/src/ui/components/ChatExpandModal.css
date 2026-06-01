@@ -101,10 +101,30 @@
   max-height: none;
 }
 
-.mdc-expand-modal__body .mdc-rich-chart--embedded .mdc-rich-chart__container {
+.mdc-expand-modal__body .mdc-rich-chart--embedded .mdc-rich-chart__container,
+.mdc-expand-modal__body .mdc-rich-chart--expanded .mdc-rich-chart__container {
   flex: 1;
   min-height: 320px;
   height: min(62vh, 520px);
+}
+
+.mdc-expand-modal__body .mdc-rich-chart--expanded {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.mdc-expand-modal__body .mdc-rich-chart--expanded .mdc-rich-chart__header {
+  flex-shrink: 0;
+}
+
+.mdc-expand-modal__body .mdc-rich-chart--expanded .mdc-rich-chart__toolbar-row--types {
+  flex-shrink: 0;
 }
 
 .mdc-expand-modal__body .mdc-rich-table--embedded .mdc-rich-table__footer,

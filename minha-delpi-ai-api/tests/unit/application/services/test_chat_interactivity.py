@@ -149,7 +149,7 @@ def test_presentation_chart_includes_explain_chip():
 
     explain = next(item for item in suggestions if item["label"] == "Explique esse gráfico")
 
-    assert "insight" in explain["query"].lower()
+    assert explain.get("inlineAction") == "explain_chart"
 
 
 def test_presentation_kpi_ver_em_tabela_query():

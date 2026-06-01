@@ -79,6 +79,25 @@
   );
 }
 
+.mdc-rich-chart__explanation {
+  margin: 0 0.5rem 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--mdc-border) 70%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-accent, #2563eb) 8%);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--mdc-body);
+}
+
+.mdc-rich-chart__explanation p {
+  margin: 0 0 0.5rem;
+}
+
+.mdc-rich-chart__explanation p:last-child {
+  margin-bottom: 0;
+}
+
 .mdc-rich-presentation__toolbar {
   display: flex;
   align-items: center;

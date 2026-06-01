@@ -94,6 +94,9 @@ def test_build_dashboard_items_panel_includes_chart_for_efficiency_rows():
     assert "Eficiência ponderada (%)" in kpi_labels
     assert "Resultado MOD total" in kpi_labels
     assert "Qtd. de apontamentos" in kpi_labels
+    assert items_panel["presentation"]["title"] == "Eficiência fabril"
+    assert items_panel["title"] == "Eficiência fabril"
+    assert dashboard["title"] == "Painel de eficiência fabril"
     table_columns = {
         column["label"] for column in items_panel["presentation"]["columns"]
     }

@@ -168,6 +168,11 @@ class ChatInteractivitySuggestionService:
             enriched["disabledReason"] = disabled
             enriched["kind"] = "ghost"
 
+        inline_action = str(item.get("inlineAction") or "").strip()
+
+        if inline_action:
+            enriched["inlineAction"] = inline_action
+
         return enriched
 
     @classmethod

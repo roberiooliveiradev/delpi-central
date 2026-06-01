@@ -104,7 +104,9 @@ class ChatDashboardPresentationService:
 
         title = "Dashboard"
 
-        if "lmp" in lowered:
+        if "eficiencia-fabril" in lowered or "eficiencia_fabril" in lowered:
+            title = "Painel de eficiência fabril"
+        elif "lmp" in lowered:
             title = "Dashboard de LMPs"
         elif "engineering" in lowered:
             title = "Painel de engenharia"

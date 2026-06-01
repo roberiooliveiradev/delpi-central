@@ -24,6 +24,7 @@ import {
   resolveRichTextBody,
   type ViewFormat,
 } from "./chatPresentation";
+import { getChartExplanationFromToolCalls } from "./chartExplain";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
@@ -41,6 +42,8 @@ type ChatRichPresentationProps = {
   textContent?: string | null;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
+  requestChartExplanation?: boolean;
+  onChartExplanationHandled?: () => void;
 };
 
 function FormatToggle({
@@ -131,6 +134,8 @@ export function ChatRichPresentation({
   textContent,
   onDrillDown,
   onOpenCanvas,
+  requestChartExplanation = false,
+  onChartExplanationHandled,
 }: ChatRichPresentationProps) {
   const pair = useMemo(
     () => getPresentationPairFromToolCalls(toolCalls),
@@ -216,6 +221,24 @@ export function ChatRichPresentation({
   });
 
   const [viewMode, setViewMode] = useState<ViewFormat>(defaultMode);
+  const [chartExplanationOpen, setChartExplanationOpen] = useState(false);
+  const chartExplanation = useMemo(
+    () => getChartExplanationFromToolCalls(toolCalls),
+    [toolCalls],
+  );
+
+  useEffect(() => {
+    if (!requestChartExplanation) {
+      return;
+    }
+
+    if (hasChartView) {
+      setViewMode("chart");
+      setChartExplanationOpen(true);
+    }
+
+    onChartExplanationHandled?.();
+  }, [hasChartView, onChartExplanationHandled, requestChartExplanation]);
 
   const switchViewMode = useCallback((mode: ViewFormat) => {
     setViewMode((previous) => {
@@ -366,6 +389,9 @@ export function ChatRichPresentation({
             {viewMode === "chart" && formatToggles.showChart && hasChartView && chartPresentation ? (
               <ChatRichChart
                 presentation={chartPresentation}
+                chartExplanation={chartExplanation}
+                showExplanation={chartExplanationOpen}
+                onShowExplanationChange={setChartExplanationOpen}
                 onDrillDown={onDrillDown}
                 onOpenCanvas={onOpenCanvas}
               />
@@ -376,7 +402,14 @@ export function ChatRichPresentation({
         ) : hasTableView && tablePresentation ? (
           <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
         ) : hasChartView && chartPresentation ? (
-          <ChatRichChart presentation={chartPresentation} onDrillDown={onDrillDown} onOpenCanvas={onOpenCanvas} />
+          <ChatRichChart
+            presentation={chartPresentation}
+            chartExplanation={chartExplanation}
+            showExplanation={chartExplanationOpen}
+            onShowExplanationChange={setChartExplanationOpen}
+            onDrillDown={onDrillDown}
+            onOpenCanvas={onOpenCanvas}
+          />
         ) : null}
       </div>
     );
@@ -419,6 +452,9 @@ export function ChatRichPresentation({
         <ChatRichChart
           presentation={chartPresentation}
           hideTitle={showSharedTitle}
+          chartExplanation={chartExplanation}
+          showExplanation={chartExplanationOpen}
+          onShowExplanationChange={setChartExplanationOpen}
           onDrillDown={onDrillDown}
           onOpenCanvas={onOpenCanvas}
         />

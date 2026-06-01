@@ -224,6 +224,7 @@ export type ChatPresentationDecision = {
   fallback?: string | null;
   reason?: string | null;
   insight?: string | null;
+  chartExplanation?: string | null;
   policyNotice?: string | null;
   availableViews?: string[] | null;
   dataShape?: {
@@ -280,6 +281,8 @@ export type ChatFollowUpSuggestion = {
   requiresConfirmation?: boolean;
   confirmationMessage?: string;
   disabledReason?: string;
+  /** Ação no cliente sem novo turno (ex.: explain_chart). */
+  inlineAction?: string;
 };
 
 export type ChatGuidedFlowStep = {

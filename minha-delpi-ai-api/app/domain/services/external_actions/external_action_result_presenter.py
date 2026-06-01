@@ -735,44 +735,56 @@ class ExternalActionResultPresenter:
         }
 
     def _infer_items_title(self, items: list, path: str) -> str | None:
-        if not path:
-            if items and isinstance(items[0], dict):
-                if "level" in items[0] or "quantity" in items[0]:
-                    if "code" in items[0]:
-                        return "Estrutura do produto"
-                if "branch" in items[0] or "warehouse" in items[0]:
-                    return "Estoque do produto"
+        lowered = str(path or "").lower()
+
+        if lowered:
+            if "eficiencia-fabril" in lowered or "eficiencia_fabril" in lowered:
+                return "Eficiência fabril"
+            if "/structure" in lowered:
+                return "Estrutura do produto"
+            if "/parents" in lowered:
+                return "Produtos pai (onde é usado)"
+            if "/stock" in lowered:
+                return "Estoque do produto"
+            if "/suppliers" in lowered:
+                return "Fornecedores do produto"
+            if "/customers" in lowered:
+                return "Clientes do produto"
+            if "/guide" in lowered:
+                return "Roteiro do produto"
+            if "/inspection" in lowered:
+                return "Inspeção do produto"
+            if "/internal-movements" in lowered:
+                return "Movimentações internas"
+            if "/inbound-invoice" in lowered:
+                return "Notas fiscais de entrada"
+            if "/outbound-invoice" in lowered:
+                return "Notas fiscais de saída"
+            if "/purchases" in lowered:
+                return "Compras do produto"
+            if "/sales" in lowered:
+                return "Vendas do produto"
+            if "/lmp" in lowered:
+                return "Lista de LMPs"
+            if "/oee" in lowered:
+                return "OEE — eficiência dos equipamentos"
+            if "/otd" in lowered:
+                return "OTD — entrega no prazo"
+            if "/sale-order" in lowered or "/orders" in lowered:
+                return "Ordens de venda"
             return None
 
-        lowered = path.lower()
-        if "/structure" in lowered:
-            return "Estrutura do produto"
-        if "/parents" in lowered:
-            return "Produtos pai (onde é usado)"
-        if "/stock" in lowered:
-            return "Estoque do produto"
-        if "/suppliers" in lowered:
-            return "Fornecedores do produto"
-        if "/customers" in lowered:
-            return "Clientes do produto"
-        if "/guide" in lowered:
-            return "Roteiro do produto"
-        if "/inspection" in lowered:
-            return "Inspeção do produto"
-        if "/internal-movements" in lowered:
-            return "Movimentações internas"
-        if "/inbound-invoice" in lowered:
-            return "Notas fiscais de entrada"
-        if "/outbound-invoice" in lowered:
-            return "Notas fiscais de saída"
-        if "/purchases" in lowered:
-            return "Compras do produto"
-        if "/sales" in lowered:
-            return "Vendas do produto"
-        if "/lmp" in lowered or "/production" in lowered:
-            return "Lista de LMPs"
-        if "/sale-order" in lowered or "/orders" in lowered:
-            return "Ordens de venda"
+        if items and isinstance(items[0], dict):
+            if "level" in items[0] or "quantity" in items[0]:
+                if "code" in items[0]:
+                    return "Estrutura do produto"
+            if "branch" in items[0] or "warehouse" in items[0]:
+                return "Estoque do produto"
+            if "eficiencia_percentual" in items[0] and (
+                "tempo_real_horas" in items[0] or "centro_trabalho" in items[0]
+            ):
+                return "Eficiência fabril"
+
         return None
 
     def _is_product_operational_path(cls, path: str) -> bool:
@@ -3306,7 +3318,8 @@ class ExternalActionResultPresenter:
             build_lmp_table=self._build_lmp_table,
             build_items_table=lambda items, title: self._build_items_table(
                 items,
-                title=title,
+                title=self._infer_items_title(items, path) or title,
+                path=path,
             ),
             build_items_chart=lambda items, root, route: self.build_chart_presentation(
                 {**root, "items": items},
@@ -3326,7 +3339,7 @@ class ExternalActionResultPresenter:
 
         if not isinstance(root, dict):
             if isinstance(root, list) and root and isinstance(root[0], dict):
-                return self._try_chart_from_rows(root, force=force)
+                return self._try_chart_from_rows(root, force=force, path=path)
             return None
 
         stock_items = self._collect_stock_items(root)
@@ -3338,7 +3351,7 @@ class ExternalActionResultPresenter:
             if self._is_stock_data(items[0]):
                 return self._build_stock_chart(items)
 
-            return self._try_chart_from_rows(items, force=force)
+            return self._try_chart_from_rows(items, force=force, path=path)
 
         if self._looks_like_kpi_response(root, path):
             stock_value_kpi = self._build_stock_value_kpi(root, path)
@@ -3631,6 +3644,7 @@ class ExternalActionResultPresenter:
         rows: list,
         *,
         force: bool = False,
+        path: str = "",
         user_message: str | None = None,
     ) -> dict | None:
         """Gera gráfico APENAS quando os dados são naturalmente visuais (ou force=True)."""
@@ -3717,9 +3731,11 @@ class ExternalActionResultPresenter:
             config["gaugeValueKey"] = chart_numeric_slice[0]
             config["gaugeTargetKey"] = chart_numeric_slice[1] if len(chart_numeric_slice) > 1 else None
 
+        chart_title = self._infer_items_title(rows, path) or "Visualização dos dados"
+
         return {
             "type": "chart",
-            "title": "Visualização dos dados",
+            "title": chart_title,
             "chartType": chart_type,
             "data": rows[:12],
             "config": config,

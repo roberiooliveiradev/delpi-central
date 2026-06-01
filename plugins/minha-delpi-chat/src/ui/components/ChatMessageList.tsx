@@ -51,6 +51,7 @@ import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatAssistantMessageMenu } from "./ChatAssistantMessageMenu";
+import { messageHasChartPresentation } from "./chartExplain";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
@@ -185,6 +186,10 @@ function renderPresentation(
   textContent: string | null | undefined,
   onDrillDown?: (query: string) => void,
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
+  chartExplain?: {
+    request: boolean;
+    onHandled: () => void;
+  },
 ) {
   if (!toolCalls || !toolCalls.length) {
     return null;
@@ -196,6 +201,8 @@ function renderPresentation(
       textContent={textContent}
       onDrillDown={onDrillDown}
       onOpenCanvas={onOpenCanvas}
+      requestChartExplanation={chartExplain?.request}
+      onChartExplanationHandled={chartExplain?.onHandled}
     />
   );
 }
@@ -496,6 +503,9 @@ export function ChatMessageList({
   const userScrollIntentRef = useRef(false);
   const pendingScrollToResponseRef = useRef(false);
 
+  const [inlineExplainMessageId, setInlineExplainMessageId] = useState<string | null>(
+    null,
+  );
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -1252,7 +1262,10 @@ export function ChatMessageList({
                   onDownloadAttachment={onDownloadAttachment}
                 />
                 {shouldShowRichPresentation(displayContent, messageToolCalls)
-                  ? renderPresentation(messageToolCalls, displayContent, onDrillDown, onOpenCanvas)
+                  ? renderPresentation(messageToolCalls, displayContent, onDrillDown, onOpenCanvas, {
+                      request: inlineExplainMessageId === message.id,
+                      onHandled: () => setInlineExplainMessageId(null),
+                    })
                   : null}
                 {suppressMessageMarkdown || !displayContent ? null : (
                   <ChatMarkdown content={displayContent} />
@@ -1312,6 +1325,11 @@ export function ChatMessageList({
                     interactivity={message.metadata.interactivity}
                     variant={message.metadata?.errorHandling ? "recovery" : "default"}
                     onUseSuggestion={onDrillDown}
+                    onExplainChart={
+                      messageHasChartPresentation(messageToolCalls)
+                        ? () => setInlineExplainMessageId(message.id)
+                        : undefined
+                    }
                     onRecordClick={({ label, query, group }) => {
                       onRecordHelpEvent?.({
                         event: "interactivity_suggestion_clicked",

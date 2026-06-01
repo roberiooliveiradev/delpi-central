@@ -410,6 +410,25 @@ class ChatPresentationDecisionService:
             decision["policyNotice"] = policy_notice
             decision["insight"] = f"{decision['insight']} {policy_notice}".strip()
 
+        chart_presentation = metadata.get("chartPresentation") or metadata.get("presentation")
+
+        if (
+            isinstance(chart_presentation, dict)
+            and chart_presentation.get("type") == "chart"
+        ):
+            from app.domain.services.chat_presentation_chart_explain_service import (
+                ChatPresentationChartExplainService,
+            )
+
+            explanation = ChatPresentationChartExplainService.build(
+                presentation=chart_presentation,
+                decision=decision,
+                insight=str(decision.get("insight") or ""),
+            )
+
+            if explanation:
+                decision["chartExplanation"] = explanation
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))

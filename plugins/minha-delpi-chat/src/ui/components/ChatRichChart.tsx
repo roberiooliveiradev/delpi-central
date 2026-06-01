@@ -44,7 +44,9 @@ import {
   inferDefaultChartAxes,
   isNumericAxisChartType,
 } from "./chartAxisSelection";
+import { ChatMarkdown } from "./ChatMarkdown";
 import { ExpandButton } from "./ChatExpandModal";
+import type { ChartViewState } from "./chartViewState";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
 import {
   applyCategoryFilter,
@@ -86,33 +88,69 @@ export function ChatRichChart({
   presentation,
   hideTitle = false,
   hideToolbar = false,
+  expanded = false,
+  initialViewState,
+  chartExplanation,
+  showExplanation = false,
+  onShowExplanationChange,
   onDrillDown,
   onOpenCanvas,
 }: {
   presentation: ChartPresentation;
   hideTitle?: boolean;
-  /** Oculta toolbar de filtros/ações (ex.: modal expandido). */
+  /** Oculta toolbar (legado). No modal expandido use `expanded` para manter os controles. */
   hideToolbar?: boolean;
+  expanded?: boolean;
+  initialViewState?: ChartViewState;
+  chartExplanation?: string;
+  showExplanation?: boolean;
+  onShowExplanationChange?: (open: boolean) => void;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
-  const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(null);
-  const [axisXOverride, setAxisXOverride] = useState<string | null>(null);
-  const [axisYOverride, setAxisYOverride] = useState<string | null>(null);
-  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
-  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
-  const [topFilter, setTopFilter] = useState<ChartTopFilter>("all");
-  const [zoomWindow, setZoomWindow] = useState<ChartZoomWindow>("all");
-  const [periodCompareEnabled, setPeriodCompareEnabled] = useState(false);
+  const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(
+    initialViewState?.chartTypeOverride ?? null,
+  );
+  const [axisXOverride, setAxisXOverride] = useState<string | null>(
+    initialViewState?.axisXOverride ?? null,
+  );
+  const [axisYOverride, setAxisYOverride] = useState<string | null>(
+    initialViewState?.axisYOverride ?? null,
+  );
+  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(
+    initialViewState?.categoryFilterKey ?? null,
+  );
+  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(
+    initialViewState?.categoryFilterValue ?? null,
+  );
+  const [topFilter, setTopFilter] = useState<ChartTopFilter>(
+    initialViewState?.topFilter ?? "all",
+  );
+  const [zoomWindow, setZoomWindow] = useState<ChartZoomWindow>(
+    initialViewState?.zoomWindow ?? "all",
+  );
+  const [periodCompareEnabled, setPeriodCompareEnabled] = useState(
+    initialViewState?.periodCompareEnabled ?? false,
+  );
   const activeChartType = chartTypeOverride || chartType;
+  const skipAxisResetOnMountRef = useRef(Boolean(initialViewState));
 
   useEffect(() => {
+    if (skipAxisResetOnMountRef.current) {
+      skipAxisResetOnMountRef.current = false;
+      return;
+    }
+
+    setChartTypeOverride(null);
     setAxisXOverride(null);
     setAxisYOverride(null);
     setCategoryFilterKey(null);
     setCategoryFilterValue(null);
+    setTopFilter("all");
+    setZoomWindow("all");
+    setPeriodCompareEnabled(false);
   }, [data, title, chartType]);
 
   const [pointMenu, setPointMenu] = useState<{
@@ -302,16 +340,42 @@ export function ChatRichChart({
     setTimeout(() => setDownloadReady(false), 2000);
   }, [activeChartType, title]);
 
+  const chartViewState = useMemo<ChartViewState>(
+    () => ({
+      chartTypeOverride,
+      axisXOverride,
+      axisYOverride,
+      categoryFilterKey,
+      categoryFilterValue,
+      topFilter,
+      zoomWindow,
+      periodCompareEnabled,
+    }),
+    [
+      axisXOverride,
+      axisYOverride,
+      categoryFilterKey,
+      categoryFilterValue,
+      chartTypeOverride,
+      periodCompareEnabled,
+      topFilter,
+      zoomWindow,
+    ],
+  );
+
+  const showToolbar = !hideToolbar || expanded;
+
   return (
     <div
       className={[
         "mdc-rich-chart",
-        hideToolbar ? "mdc-rich-chart--embedded" : "",
+        expanded ? "mdc-rich-chart--expanded" : "",
+        hideToolbar && !expanded ? "mdc-rich-chart--embedded" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {!hideToolbar ? (
+      {showToolbar ? (
       <div className="mdc-rich-chart__header">
         {hideTitle ? (
           <span className="mdc-rich-chart__title" aria-hidden="true" />
@@ -484,6 +548,17 @@ export function ChatRichChart({
               </div>
             ) : null}
             <div className="mdc-rich-chart__command-group" role="group" aria-label="Ações do gráfico">
+              {chartExplanation ? (
+                <button
+                  type="button"
+                  className={`mdc-rich-chart__btn${showExplanation ? " mdc-rich-chart__toggle-btn--active" : ""}`}
+                  onClick={() => onShowExplanationChange?.(!showExplanation)}
+                  title="Explicar como ler este gráfico"
+                  aria-expanded={showExplanation}
+                >
+                  Explicar
+                </button>
+              ) : null}
               <button
                 className="mdc-rich-chart__btn"
                 onClick={exportPng}
@@ -503,7 +578,14 @@ export function ChatRichChart({
                   Lousa
                 </button>
               ) : null}
-              <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+              {!expanded ? (
+                <ExpandButton
+                  presentation={presentation}
+                  chartViewState={chartViewState}
+                  onDrillDown={onDrillDown}
+                  onOpenCanvas={onOpenCanvas}
+                />
+              ) : null}
             </div>
           </div>
           {data.length > 0 ? (
@@ -542,6 +624,16 @@ export function ChatRichChart({
       </div>
       ) : null}
 
+      {showExplanation && chartExplanation ? (
+        <div
+          className="mdc-rich-chart__explanation"
+          role="region"
+          aria-label="Explicação do gráfico"
+        >
+          <ChatMarkdown content={chartExplanation} />
+        </div>
+      ) : null}
+
       <div
         ref={chartContainerRef}
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
@@ -563,7 +655,7 @@ export function ChatRichChart({
             onPointClick={onDrillDown ? openPointMenu : undefined}
           />
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={expanded ? 420 : 280}>
             {renderChart(activeChartType, displayData, displayXAxis, displayYAxes, colors, showLegend, config, {
               gridColor,
               tickStyle,
