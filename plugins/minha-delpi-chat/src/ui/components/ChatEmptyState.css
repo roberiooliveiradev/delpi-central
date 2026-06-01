@@ -242,3 +242,21 @@
   outline: 2px solid var(--mdc-accent, #3b82f6);
   outline-offset: 2px;
 }
+
+@media (max-width: 767px) {
+  .mdc-chat-empty-state {
+    gap: var(--mdc-space-3);
+  }
+
+  .mdc-chat-empty-state__cards {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mdc-chat-empty-state__card,
+  .mdc-chat-empty-state__cards--text .mdc-chat-empty-state__card {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}

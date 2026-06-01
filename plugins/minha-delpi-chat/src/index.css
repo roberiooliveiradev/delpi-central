@@ -118,6 +118,13 @@
   --mdc-chat-column-max: 52rem;
 }
 
+@media (max-width: 767px) {
+  :root {
+    --mdc-chat-column-max: 100%;
+    --mdc-content-max: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   :root {
     --mdc-chat-column-max: 100%;

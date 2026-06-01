@@ -316,6 +316,22 @@
     line-height: 1.35;
     text-align: center;
   }
+
+  .mdc-chat-input__menu {
+    left: 50%;
+    right: auto;
+    width: min(22rem, calc(100vw - max(1rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px))));
+    transform: translateX(-50%);
+  }
+
+  .mdc-chat-input__menu-section button {
+    min-height: 2.75rem;
+    padding-block: 0.65rem;
+  }
+
+  .mdc-chat-input__menu-section strong {
+    font-size: 0.64rem;
+  }
 }
 
 @media (max-width: 480px) {

@@ -169,16 +169,56 @@
 }
 
 @media (max-width: 767px) {
+  .mdc-chat-onboarding-tour {
+    left: max(0.75rem, env(safe-area-inset-left, 0px));
+    right: max(0.75rem, env(safe-area-inset-right, 0px));
+    width: auto;
+    max-width: none;
+    padding: 1rem 1.05rem;
+  }
+
   .mdc-chat-onboarding-tour--anchored {
-    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
+    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)));
   }
 
   .mdc-chat-onboarding-tour--placement-above {
-    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
+    max-width: calc(100vw - max(1.5rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)));
+  }
+
+  .mdc-chat-onboarding-tour h3 {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
+
+  .mdc-chat-onboarding-tour p {
+    font-size: 0.84rem;
+  }
+
+  .mdc-chat-onboarding-tour__actions {
+    flex-wrap: wrap;
+    justify-content: stretch;
+    gap: 0.55rem;
+  }
+
+  .mdc-chat-onboarding-tour__skip,
+  .mdc-chat-onboarding-tour__next {
+    flex: 1 1 calc(50% - 0.3rem);
+    min-height: 2.75rem;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.86rem;
+  }
+
+  .mdc-chat-onboarding-tour__close {
+    width: 2.25rem;
+    height: 2.25rem;
   }
 
   .mdc-chat-tour-follow-up-anchor {
-    bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
+    left: max(0.75rem, env(safe-area-inset-left, 0px));
+    right: max(0.75rem, env(safe-area-inset-right, 0px));
+    width: auto;
+    transform: none;
+    bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 
