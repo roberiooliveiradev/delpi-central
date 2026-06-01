@@ -1,4 +1,5 @@
 import type { ChatRoute } from "./chatRoutes";
+import { normalizeAgentRouteId, normalizeProjectRouteId } from "./chatRoutes";
 
 export type ChatSidebarView = "chat" | "agents" | "projects";
 
@@ -21,15 +22,21 @@ export function getInitialAgentEditRequest(route: ChatRoute | undefined) {
     return null;
   }
 
+  const agentId = normalizeAgentRouteId(route.agentId);
+
+  if (!agentId) {
+    return null;
+  }
+
   return {
-    id: route.agentId,
+    id: agentId,
     requestKey: 0,
   };
 }
 
 export function getInitialActiveAgentPageId(route: ChatRoute | undefined): string | null {
   if (route?.kind === "agent" || route?.kind === "agent-session") {
-    return route.agentId;
+    return normalizeAgentRouteId(route.agentId);
   }
 
   return null;
@@ -41,7 +48,7 @@ export function getInitialSelectedProjectId(route: ChatRoute | undefined): strin
     route?.kind === "project-session" ||
     route?.kind === "project-config"
   ) {
-    return route.projectId;
+    return normalizeProjectRouteId(route.projectId);
   }
 
   return null;

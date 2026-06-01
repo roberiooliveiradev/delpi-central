@@ -81,6 +81,12 @@ describe("chatRoutes agents", () => {
     expect(buildChatAgentHref("undefined")).toBe("/apps/minha-delpi-chat/agentes");
   });
 
+  it("trata /agentes/undefined como listagem de agentes", () => {
+    expect(parseChatRoute("/apps/minha-delpi-chat/agentes/undefined")).toEqual({
+      kind: "agents",
+    });
+  });
+
   it("monta href de sessão priorizando agente", () => {
     expect(
       buildChatSessionHrefForSession({

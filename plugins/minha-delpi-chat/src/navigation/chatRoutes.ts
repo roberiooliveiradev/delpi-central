@@ -158,6 +158,11 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
       }
 
       const agentId = decodeURIComponent(sectionSegments[0]);
+      const normalizedAgentId = normalizeAgentRouteId(agentId);
+
+      if (!normalizedAgentId) {
+        return { kind: "agents" };
+      }
 
       if (sectionSegments[1] === "conversas") {
         const sessionId = sectionSegments[2];
@@ -165,17 +170,17 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
         if (sessionId) {
           return {
             kind: "agent-session",
-            agentId,
+            agentId: normalizedAgentId,
             sessionId: decodeURIComponent(sessionId),
           };
         }
 
-        return { kind: "agent", agentId };
+        return { kind: "agent", agentId: normalizedAgentId };
       }
 
       if (sectionSegments[1] === "configurar") {
         if (sectionSegments[2] === "skills") {
-          return { kind: "agent-skills", agentId };
+          return { kind: "agent-skills", agentId: normalizedAgentId };
         }
 
         if (sectionSegments[2] === "actions") {
@@ -183,13 +188,13 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
             ? decodeURIComponent(sectionSegments[3])
             : undefined;
 
-          return { kind: "agent-actions", agentId, providerKey };
+          return { kind: "agent-actions", agentId: normalizedAgentId, providerKey };
         }
 
-        return { kind: "agent-config", agentId };
+        return { kind: "agent-config", agentId: normalizedAgentId };
       }
 
-      return { kind: "agent", agentId };
+      return { kind: "agent", agentId: normalizedAgentId };
     }
     case "admin": {
       if (sectionSegments[0] === "agentes") {
@@ -217,6 +222,39 @@ export function parseChatRoute(pathname?: string | null): ChatRoute {
   }
 }
 
+function requireAgentRouteId(agentId: string | null | undefined): string {
+  const normalized = normalizeAgentRouteId(agentId);
+
+  if (!normalized) {
+    throw new Error("agentId inválido para rota de agente");
+  }
+
+  return normalized;
+}
+
+function requireProjectRouteId(projectId: string | null | undefined): string {
+  const normalized = normalizeProjectRouteId(projectId);
+
+  if (!normalized) {
+    throw new Error("projectId inválido para rota de projeto");
+  }
+
+  return normalized;
+}
+
+function formatAgentHref(agentId: string, ...pathSegments: string[]): string {
+  const segments = pathSegments
+    .map((segment) => String(segment ?? "").trim())
+    .filter(Boolean)
+    .map((segment) => encodeURIComponent(segment));
+
+  if (!segments.length) {
+    return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(agentId)}`;
+  }
+
+  return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(agentId)}/${segments.join("/")}`;
+}
+
 export function buildChatHref(route: ChatRoute): string {
   switch (route.kind) {
     case "home":
@@ -224,23 +262,43 @@ export function buildChatHref(route: ChatRoute): string {
     case "session":
       return `${CHAT_BASE_PATH}/conversas/${encodeURIComponent(route.sessionId)}`;
     case "project":
-      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(route.projectId)}`;
+      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(requireProjectRouteId(route.projectId))}`;
     case "project-session":
-      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(route.projectId)}/conversas/${encodeURIComponent(route.sessionId)}`;
+      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(requireProjectRouteId(route.projectId))}/conversas/${encodeURIComponent(route.sessionId)}`;
     case "project-config":
-      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(route.projectId)}/configurar`;
+      return `${CHAT_BASE_PATH}/projetos/${encodeURIComponent(requireProjectRouteId(route.projectId))}/configurar`;
     case "agent":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}`;
-    case "agent-session":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/conversas/${encodeURIComponent(route.sessionId)}`;
+      return buildChatAgentHref(route.agentId);
+    case "agent-session": {
+      const agentId = normalizeAgentRouteId(route.agentId);
+      const sessionId = String(route.sessionId ?? "").trim();
+
+      if (!agentId || !sessionId) {
+        return sessionId
+          ? `${CHAT_BASE_PATH}/conversas/${encodeURIComponent(sessionId)}`
+          : `${CHAT_BASE_PATH}/agentes`;
+      }
+
+      return formatAgentHref(agentId, "conversas", sessionId);
+    }
     case "agent-config":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar`;
+      return formatAgentHref(requireAgentRouteId(route.agentId), "configurar");
     case "agent-skills":
-      return `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/skills`;
-    case "agent-actions":
-      return route.providerKey
-        ? `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/actions/${encodeURIComponent(route.providerKey)}`
-        : `${CHAT_BASE_PATH}/agentes/${encodeURIComponent(route.agentId)}/configurar/actions`;
+      return formatAgentHref(requireAgentRouteId(route.agentId), "configurar", "skills");
+    case "agent-actions": {
+      const agentId = requireAgentRouteId(route.agentId);
+
+      if (route.providerKey?.trim()) {
+        return formatAgentHref(
+          agentId,
+          "configurar",
+          "actions",
+          route.providerKey.trim(),
+        );
+      }
+
+      return formatAgentHref(agentId, "configurar", "actions");
+    }
     case "agents":
       return `${CHAT_BASE_PATH}/agentes`;
     case "projects":
@@ -294,10 +352,10 @@ export function buildChatAgentHref(agentId: string | null | undefined) {
   const normalized = normalizeAgentRouteId(agentId);
 
   if (!normalized) {
-    return buildChatHref({ kind: "agents" });
+    return `${CHAT_BASE_PATH}/agentes`;
   }
 
-  return buildChatHref({ kind: "agent", agentId: normalized });
+  return formatAgentHref(normalized);
 }
 
 export function buildChatAgentSessionHref(
@@ -310,14 +368,10 @@ export function buildChatAgentSessionHref(
   if (!normalizedAgentId || !normalizedSessionId) {
     return normalizedSessionId
       ? buildChatSessionHref(normalizedSessionId)
-      : buildChatHref({ kind: "home" });
+      : CHAT_BASE_PATH;
   }
 
-  return buildChatHref({
-    kind: "agent-session",
-    agentId: normalizedAgentId,
-    sessionId: normalizedSessionId,
-  });
+  return formatAgentHref(normalizedAgentId, "conversas", normalizedSessionId);
 }
 
 export function buildChatSessionHrefForSession(session: {
@@ -337,19 +391,22 @@ export function buildChatSessionHrefForSession(session: {
 }
 
 export function buildChatAgentConfigHref(agentId: string) {
-  return buildChatHref({ kind: "agent-config", agentId });
+  return formatAgentHref(requireAgentRouteId(agentId), "configurar");
 }
 
 export function buildChatAgentSkillsHref(agentId: string) {
-  return buildChatHref({ kind: "agent-skills", agentId });
+  return formatAgentHref(requireAgentRouteId(agentId), "configurar", "skills");
 }
 
 export function buildChatAgentActionsHref(agentId: string, providerKey?: string | null) {
-  return buildChatHref({
-    kind: "agent-actions",
-    agentId,
-    providerKey: providerKey?.trim() || undefined,
-  });
+  const normalizedAgentId = requireAgentRouteId(agentId);
+  const provider = providerKey?.trim();
+
+  if (provider) {
+    return formatAgentHref(normalizedAgentId, "configurar", "actions", provider);
+  }
+
+  return formatAgentHref(normalizedAgentId, "configurar", "actions");
 }
 
 export function buildChatAdminAgentHref(agentId: string) {
