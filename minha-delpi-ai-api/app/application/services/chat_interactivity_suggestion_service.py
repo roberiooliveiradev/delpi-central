@@ -35,6 +35,7 @@ class ChatInteractivitySuggestionService:
         workspace_context: dict | None = None,
         tool_calls: list | None = None,
         intent_route: dict | None = None,
+        message: str | None = None,
     ) -> None:
         presentation = ChatPresentationInteractivityService.build_from_tool_calls(tool_calls)
 
@@ -47,6 +48,18 @@ class ChatInteractivitySuggestionService:
 
         if refinement:
             metadata["operationalRefinementFollowUpSuggestions"] = refinement
+
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        sql_authoring = ChatSqlAuthoringGuidanceService.build_follow_up_suggestions(
+            message=str(message or metadata.get("userMessage") or ""),
+            tool_calls=tool_calls,
+        )
+
+        if sql_authoring:
+            metadata["sqlAuthoringFollowUpSuggestions"] = sql_authoring
 
         raw = cls._collect_raw(metadata)
         usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)

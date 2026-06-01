@@ -425,6 +425,33 @@ export type AdminWebSearchCountRow = {
   count: number;
 };
 
+export type AdminFeedbackCountRow = {
+  key: string;
+  count: number;
+};
+
+export type AdminFeedbackAlert = {
+  code: string;
+  message: string;
+};
+
+export type AdminFeedbackSummary = {
+  windowHours: number;
+  since: string;
+  totalFeedback: number;
+  positiveCount: number;
+  negativeCount: number;
+  csat: number | null;
+  lostContextCount: number;
+  feedbackByReason: AdminFeedbackCountRow[];
+  feedbackByIntent: AdminFeedbackCountRow[];
+  feedbackByAgent: AdminFeedbackCountRow[];
+  feedbackByToolPath: AdminFeedbackCountRow[];
+  feedbackByPresentation: AdminFeedbackCountRow[];
+  recentFeedback: Record<string, unknown>[];
+  alerts: AdminFeedbackAlert[];
+};
+
 export type AdminWebSearchSummary = {
   windowHours: number;
   since: string;

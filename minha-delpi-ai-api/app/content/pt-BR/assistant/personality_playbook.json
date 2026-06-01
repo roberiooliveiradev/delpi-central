@@ -352,6 +352,110 @@
     ],
     "downPrompt": "Obrigado pelo aviso. O que faltou nesta resposta?"
   },
+  "feedbackCorrectiveActions": [
+    {
+      "id": "retry",
+      "label": "Tentar corrigir",
+      "action": "send_query",
+      "queryTemplate": "Por favor, refaça a resposta anterior corrigindo: {{reasonLabel}}."
+    },
+    {
+      "id": "explain",
+      "label": "Explicar problema",
+      "action": "send_query",
+      "queryTemplate": "Explique por que a resposta anterior não atendeu ({{reasonLabel}})."
+    },
+    {
+      "id": "dismiss",
+      "label": "Encerrar",
+      "action": "dismiss"
+    }
+  ],
+  "feedbackCorrectiveActionsByReason": {
+    "lost_context": [
+      {
+        "id": "retry_context",
+        "label": "Tentar corrigir",
+        "action": "send_query",
+        "queryTemplate": "Refaça usando o contexto anterior da conversa. Problema reportado: {{reasonLabel}}."
+      },
+      {
+        "id": "explain_context",
+        "label": "Explicar problema",
+        "action": "send_query",
+        "queryTemplate": "Explique por que perdeu o contexto da conversa."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "bad_format": [
+      {
+        "id": "change_format",
+        "label": "Trocar formato",
+        "action": "send_query",
+        "queryTemplate": "Mostre a mesma informação em outro formato (tabela ou gráfico)."
+      },
+      {
+        "id": "retry",
+        "label": "Tentar corrigir",
+        "action": "send_query",
+        "queryTemplate": "Refaça a resposta com formato mais claro."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "missing_source": [
+      {
+        "id": "official_source",
+        "label": "Buscar fonte oficial",
+        "action": "send_query",
+        "queryTemplate": "Refaça citando fontes confiáveis e oficiais."
+      },
+      {
+        "id": "retry",
+        "label": "Tentar corrigir",
+        "action": "send_query",
+        "queryTemplate": "Refaça incluindo as fontes usadas."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "text_artificial": [
+      {
+        "id": "rewrite",
+        "label": "Reescrever",
+        "action": "send_query",
+        "queryTemplate": "Reescreva o texto anterior com tom mais natural e direto."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "text_meaning_changed": [
+      {
+        "id": "rewrite_meaning",
+        "label": "Reescrever sem mudar sentido",
+        "action": "send_query",
+        "queryTemplate": "Refaça preservando exatamente o sentido original."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ]
+  },
   "defaultRules": [
     "Não inventar dados operacionais.",
     "Não brincar com erro, permissão ou alerta crítico.",

@@ -25,6 +25,7 @@ _ALLOWED_EVENTS = frozenset(
         "error_recovery_click",
         "error_feedback",
         "interactivity_suggestion_clicked",
+        "feedback_corrective_clicked",
         "presentation_view_switch",
         "presentation_chart_type_switch",
         "presentation_axis_change",

@@ -64,3 +64,77 @@ class ChatFeedbackContentService:
             return str(prompt).strip() if prompt else None
 
         return None
+
+    @classmethod
+    def reason_label(cls, reason_id: str | None) -> str:
+        if not reason_id:
+            return "feedback negativo"
+
+        reasons = _playbook().get("feedbackReasons") or []
+
+        for item in reasons:
+            if isinstance(item, dict) and str(item.get("id") or "") == reason_id:
+                return str(item.get("label") or reason_id)
+
+        return reason_id
+
+    @classmethod
+    def corrective_actions_for_reason(cls, reason: str | None) -> list[dict[str, str]]:
+        if not reason:
+            return cls._default_corrective_actions()
+
+        playbook = _playbook()
+        by_reason = playbook.get("feedbackCorrectiveActionsByReason") or {}
+        specific = by_reason.get(reason) if isinstance(by_reason, dict) else None
+
+        if isinstance(specific, list) and specific:
+            return cls._normalize_corrective_actions(specific, reason)
+
+        return cls._default_corrective_actions(reason)
+
+    @classmethod
+    def _default_corrective_actions(cls, reason: str | None = None) -> list[dict[str, str]]:
+        playbook = _playbook()
+        defaults = playbook.get("feedbackCorrectiveActions") or []
+        reason_label = cls.reason_label(reason)
+
+        return cls._normalize_corrective_actions(defaults, reason, reason_label=reason_label)
+
+    @classmethod
+    def _normalize_corrective_actions(
+        cls,
+        items: list,
+        reason: str | None,
+        *,
+        reason_label: str | None = None,
+    ) -> list[dict[str, str]]:
+        normalized: list[dict[str, str]] = []
+        label = reason_label or cls.reason_label(reason)
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            action_id = str(item.get("id") or "").strip()
+            action_label = str(item.get("label") or "").strip()
+            query = str(item.get("query") or item.get("queryTemplate") or "").strip()
+            action_type = str(item.get("action") or "send_query").strip()
+
+            if not action_id or not action_label:
+                continue
+
+            if query:
+                query = query.replace("{{reasonLabel}}", label).replace("{{reasonId}}", reason or "")
+
+            payload: dict[str, str] = {
+                "id": action_id,
+                "label": action_label,
+                "action": action_type,
+            }
+
+            if query:
+                payload["query"] = query
+
+            normalized.append(payload)
+
+        return normalized[:4]

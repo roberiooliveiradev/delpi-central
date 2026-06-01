@@ -770,8 +770,20 @@ class SendChatMessageUseCase:
             workspace_context=workspace_context,
             tool_calls=tool_calls,
             intent_route=intent_route if isinstance(intent_route, dict) else None,
+            message=request.message,
         )
         ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
+
+        from app.domain.services.chat_response_metadata_service import (
+            ChatResponseMetadataService,
+        )
+
+        ChatResponseMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            workspace_context=workspace_context,
+            session_id=str(session_id),
+            duration_ms=latency_ms,
+        )
 
         assistant_message = self.chat_repository.create_message(
             session_id=session_id,

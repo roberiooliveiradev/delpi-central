@@ -111,7 +111,15 @@ type ChatMessageListProps = {
     messageId: string,
     rating: -1 | 1 | null,
     reason?: string | null,
-  ) => Promise<{ thanksMessage?: string } | void>;
+  ) => Promise<{
+    thanksMessage?: string;
+    correctiveActions?: Array<{
+      id: string;
+      label: string;
+      action: string;
+      query?: string;
+    }>;
+  } | void>;
   onDownloadAttachment?: (attachmentId: string) => Promise<void>;
   onSwitchMessageBranch?: (
     anchorUserMessageId: string,
@@ -497,6 +505,20 @@ export function ChatMessageList({
   const [feedbackReasonPickerFor, setFeedbackReasonPickerFor] = useState<string | null>(
     null,
   );
+  const [feedbackExtendedReasonsFor, setFeedbackExtendedReasonsFor] = useState<
+    string | null
+  >(null);
+  const [feedbackCorrectiveByMessageId, setFeedbackCorrectiveByMessageId] = useState<
+    Record<
+      string,
+      Array<{
+        id: string;
+        label: string;
+        action: string;
+        query?: string;
+      }>
+    >
+  >({});
   const listRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
@@ -1723,13 +1745,67 @@ export function ChatMessageList({
                 <ChatMessageFeedbackPanel
                   thanksMessage={feedbackThanksByMessageId[message.id]}
                   showReasonPicker={feedbackReasonPickerFor === message.id}
+                  showExtendedReasons={feedbackExtendedReasonsFor === message.id}
+                  correctiveActions={feedbackCorrectiveByMessageId[message.id]}
                   onPickReason={(reasonId) => {
                     void (async () => {
-                      await onMessageFeedback?.(message.id, -1, reasonId);
+                      const result = await onMessageFeedback?.(message.id, -1, reasonId);
                       setFeedbackReasonPickerFor(null);
+                      setFeedbackExtendedReasonsFor(null);
+
+                      if (
+                        result &&
+                        "correctiveActions" in result &&
+                        result.correctiveActions?.length
+                      ) {
+                        setFeedbackCorrectiveByMessageId((current) => ({
+                          ...current,
+                          [message.id]: result.correctiveActions ?? [],
+                        }));
+                      }
                     })();
                   }}
-                  onDismissReasons={() => setFeedbackReasonPickerFor(null)}
+                  onShowExtendedReasons={() => setFeedbackExtendedReasonsFor(message.id)}
+                  onDismissReasons={() => {
+                    setFeedbackReasonPickerFor(null);
+                    setFeedbackExtendedReasonsFor(null);
+                  }}
+                  onCorrectiveAction={(action) => {
+                    if (action.action === "dismiss") {
+                      setFeedbackCorrectiveByMessageId((current) => {
+                        const next = { ...current };
+                        delete next[message.id];
+                        return next;
+                      });
+                      return;
+                    }
+
+                    if (action.query && onDrillDown) {
+                      onDrillDown(action.query);
+                    }
+
+                    onRecordHelpEvent?.({
+                      event: "feedback_corrective_clicked",
+                      metadata: {
+                        messageId: message.id,
+                        actionId: action.id,
+                        reason: message.user_feedback_reason,
+                      },
+                    });
+
+                    setFeedbackCorrectiveByMessageId((current) => {
+                      const next = { ...current };
+                      delete next[message.id];
+                      return next;
+                    });
+                  }}
+                  onDismissCorrective={() => {
+                    setFeedbackCorrectiveByMessageId((current) => {
+                      const next = { ...current };
+                      delete next[message.id];
+                      return next;
+                    });
+                  }}
                 />
                 <ChatAdminDebugPanel
                   debug={

@@ -39,6 +39,7 @@ class ChatExternalActionOrchestrationService:
         previous_messages: list | None = None,
         max_calls: int | None = None,
         on_stream_activity=None,
+        workspace_context: dict | None = None,
     ) -> list[dict]:
         if not selection_service or not allowed_action_ids:
             return []
@@ -62,6 +63,26 @@ class ChatExternalActionOrchestrationService:
                 )
 
             return planned
+
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        if ChatSqlAuthoringGuidanceService.should_prefetch_schema(
+            message=message,
+            workspace_context=workspace_context,
+            previous_messages=previous_messages,
+        ):
+            prefetch = ChatSqlAuthoringGuidanceService.plan_schema_prefetch(
+                selection_service,
+                message=message,
+                allowed_action_ids=allowed_action_ids,
+                conversation_context=conversation_context,
+                previous_messages=previous_messages,
+            )
+
+            if prefetch:
+                return _return_planned(prefetch)
 
         if not Settings.CHAT_MULTI_ACTION_ENABLED:
             selected = selection_service.select_action(

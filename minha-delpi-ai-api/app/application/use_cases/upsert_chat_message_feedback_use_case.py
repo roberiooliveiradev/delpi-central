@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from app.domain.exceptions.chat_exceptions import (
@@ -5,7 +6,11 @@ from app.domain.exceptions.chat_exceptions import (
     ChatSessionNotFoundError,
 )
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+from app.domain.services.chat_feedback_admin_metrics_service import (
+    ChatFeedbackAdminMetricsService,
+)
 from app.domain.services.chat_feedback_content_service import ChatFeedbackContentService
+from app.domain.services.chat_feedback_context_service import ChatFeedbackContextService
 from app.infrastructure.persistence.postgres_chat_message_feedback_repository import (
     PostgresChatMessageFeedbackRepository,
 )
@@ -28,6 +33,7 @@ class UpsertChatMessageFeedbackUseCase:
         message_id: str,
         rating: int | None,
         reason: str | None = None,
+        comment: str | None = None,
     ) -> dict | None:
         session = self.session_repository.get_session_by_id(UUID(session_id))
 
@@ -66,11 +72,21 @@ class UpsertChatMessageFeedbackUseCase:
         if rating == 1:
             normalized_reason = None
 
+        assistant_meta = getattr(assistant, "metadata", None) or {}
+        context_metadata = ChatFeedbackContextService.snapshot_from_assistant_metadata(
+            assistant_meta if isinstance(assistant_meta, dict) else None,
+            session_id=session_id,
+            agent_id=str(session.agent_id) if session.agent_id else None,
+        )
+        sanitized_comment = ChatFeedbackContextService.sanitize_comment(comment)
+
         result = self.feedback_repository.upsert_feedback(
             message_id=message_uuid,
             user_id=user_uuid,
             rating=rating,
             reason=normalized_reason,
+            comment=sanitized_comment,
+            context_metadata=context_metadata,
         )
 
         if rating == -1:
@@ -81,13 +97,19 @@ class UpsertChatMessageFeedbackUseCase:
             if ChatActivePendingService.should_attach_routing_snapshot(
                 normalized_reason,
             ):
-                assistant_meta = getattr(assistant, "metadata", None) or {}
                 snapshot = ChatActivePendingService.routing_snapshot_from_assistant_metadata(
                     assistant_meta if isinstance(assistant_meta, dict) else None,
                 )
 
                 if snapshot:
                     result["routingSnapshot"] = snapshot
+
+            corrective = ChatFeedbackContentService.corrective_actions_for_reason(
+                normalized_reason,
+            )
+
+            if corrective:
+                result["correctiveActions"] = corrective
 
         if rating == 1:
             thanks = ChatFeedbackContentService.thanks_for_rating(
@@ -97,5 +119,14 @@ class UpsertChatMessageFeedbackUseCase:
 
             if thanks:
                 result["thanksMessage"] = thanks
+
+        result["auditMetadata"] = ChatFeedbackAdminMetricsService.feedback_audit_metadata(
+            message_id=message_id,
+            session_id=session_id,
+            rating=rating,
+            reason=normalized_reason,
+            comment=sanitized_comment,
+            context=context_metadata,
+        )
 
         return result

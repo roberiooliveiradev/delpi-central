@@ -551,7 +551,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       messageId: string,
       rating: -1 | 1 | null,
       reason?: string | null,
-    ): Promise<{ thanksMessage?: string } | void> => {
+    ): Promise<{
+      thanksMessage?: string;
+      correctiveActions?: Array<{
+        id: string;
+        label: string;
+        action: string;
+        query?: string;
+      }>;
+    } | void> => {
       if (!activeSession) {
         return;
       }
@@ -585,6 +593,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
       if (result && "thanksMessage" in result && result.thanksMessage) {
         return { thanksMessage: result.thanksMessage };
+      }
+
+      if (result && "correctiveActions" in result && result.correctiveActions?.length) {
+        return { correctiveActions: result.correctiveActions };
       }
     },
     [activeSession, options.getAccessToken],

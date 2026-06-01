@@ -2707,6 +2707,7 @@ def upsert_message_feedback(session_id: str, message_id: str):
 
     rating_raw = payload.get("rating")
     reason_raw = payload.get("reason")
+    comment_raw = payload.get("comment")
 
     rating = None
 
@@ -2720,6 +2721,7 @@ def upsert_message_feedback(session_id: str, message_id: str):
 
     try:
         reason_value = str(reason_raw).strip() if reason_raw is not None else None
+        comment_value = str(comment_raw).strip() if comment_raw is not None else None
 
         result = use_case.execute(
             user_id=g.current_user.sub,
@@ -2727,26 +2729,41 @@ def upsert_message_feedback(session_id: str, message_id: str):
             message_id=message_id,
             rating=rating,
             reason=reason_value,
+            comment=comment_value,
         )
 
-        if rating == -1 and reason_value:
-            from app.domain.services.chat_web_search_admin_metrics_service import (
-                ChatWebSearchAdminMetricsService,
-            )
+        if rating in (-1, 1):
             from app.infrastructure.persistence.postgres_audit_repository import (
                 PostgresAuditRepository,
             )
 
-            if ChatWebSearchAdminMetricsService.is_web_feedback_reason(reason_value):
+            audit_metadata = (result or {}).get("auditMetadata") or {}
+
+            if audit_metadata:
                 PostgresAuditRepository().log(
                     user_id=UUID(str(g.current_user.sub)),
-                    action="chat.feedback.web",
-                    metadata=ChatWebSearchAdminMetricsService.feedback_audit_metadata(
-                        message_id=message_id,
-                        reason=reason_value,
-                        rating=rating,
-                    ),
+                    action="chat.feedback.submitted",
+                    metadata=audit_metadata,
                 )
+
+            if rating == -1 and reason_value:
+                from app.domain.services.chat_web_search_admin_metrics_service import (
+                    ChatWebSearchAdminMetricsService,
+                )
+
+                if ChatWebSearchAdminMetricsService.is_web_feedback_reason(reason_value):
+                    PostgresAuditRepository().log(
+                        user_id=UUID(str(g.current_user.sub)),
+                        action="chat.feedback.web",
+                        metadata=ChatWebSearchAdminMetricsService.feedback_audit_metadata(
+                            message_id=message_id,
+                            reason=reason_value,
+                            rating=rating,
+                        ),
+                    )
+
+        if isinstance(result, dict):
+            result.pop("auditMetadata", None)
 
         db.session.commit()
     except ValueError as exc:

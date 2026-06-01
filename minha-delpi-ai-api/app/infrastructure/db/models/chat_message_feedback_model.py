@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from app.extensions.db import db
 
@@ -18,6 +18,8 @@ class AiChatMessageFeedbackModel(db.Model):
     user_id = db.Column(UUID(as_uuid=True), nullable=False, index=True)
     rating = db.Column(db.SmallInteger, nullable=False)
     reason = db.Column(db.String(64), nullable=True)
+    comment = db.Column(db.String(500), nullable=True)
+    context_metadata = db.Column(JSONB, nullable=True)
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,

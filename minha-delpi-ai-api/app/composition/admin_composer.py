@@ -223,6 +223,14 @@ def make_get_admin_web_search_summary_use_case() -> GetAdminWebSearchSummaryUseC
     return GetAdminWebSearchSummaryUseCase(PostgresAuditRepository())
 
 
+def make_get_admin_feedback_summary_use_case():
+    from app.application.use_cases.get_admin_feedback_summary_use_case import (
+        GetAdminFeedbackSummaryUseCase,
+    )
+
+    return GetAdminFeedbackSummaryUseCase()
+
+
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
 

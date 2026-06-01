@@ -292,11 +292,20 @@ export async function upsertChatMessageFeedback(
   rating: -1 | 1 | null,
   options: ChatApiOptions = {},
   reason?: string | null,
+  comment?: string | null,
 ): Promise<ChatMessageFeedbackResponse> {
-  const body: { rating: -1 | 1 | null; reason?: string } = { rating };
+  const body: {
+    rating: -1 | 1 | null;
+    reason?: string;
+    comment?: string;
+  } = { rating };
 
   if (reason) {
     body.reason = reason;
+  }
+
+  if (comment) {
+    body.comment = comment;
   }
 
   const response = await fetch(

@@ -487,6 +487,7 @@ class ChatToolContextService:
                 previous_messages=previous_messages,
                 max_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
+                workspace_context={"skills": drawing_runtime_skills},
             )
 
             if planned_external_actions:

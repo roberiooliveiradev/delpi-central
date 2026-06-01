@@ -84,6 +84,10 @@ Mensagem do usuário
 | `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
 | `ChatSqlInventoryQueryService` | Template SB2010+SB1010 (estoque abaixo do mínimo) + `/data/sql` |
 | `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
+| `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo: prefetch `/system/tables/*` antes do LLM montar query; chips de follow-up (executar, colunas, schema) |
+| `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
+| `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
+| `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |
 | `ExternalActionSelectionService` | Roteamento OpenAPI (não dispara consulta em pedido analítico, Normas ou **cópia simples** para lousa) |
 | `ChatDepartmentKpiIntentService` | KPIs departamentais (`/commercial`, `/financial`, `/production`, `/hr`, `/quality`, `/system`) |
 | `ChatOperationalParameterService` | Consultas operacionais sem parâmetro (código de produto, etc.) |

@@ -6,6 +6,7 @@ import {
   getAdminIntentRoutingSummary,
   getAdminErrorHandlingSummary,
   getAdminWebSearchSummary,
+  getAdminFeedbackSummary,
   getAdminInteractivitySummary,
   getAdminPresentationSummary,
   getAdminTextTaskSummary,
@@ -19,6 +20,7 @@ import type {
   AdminIntentRoutingSummary,
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
+  AdminFeedbackSummary,
   AdminInteractivitySummary,
   AdminPresentationSummary,
   AdminTextTaskSummary,
@@ -33,6 +35,7 @@ import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
 import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
 import { AdminWebSearchMetrics } from "./AdminWebSearchMetrics";
+import { AdminFeedbackMetrics } from "./AdminFeedbackMetrics";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
 import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
@@ -305,6 +308,8 @@ export function AdminMetricsTab({
     null,
   );
   const [isLoadingWebSearchSummary, setIsLoadingWebSearchSummary] = useState(false);
+  const [feedbackSummary, setFeedbackSummary] = useState<AdminFeedbackSummary | null>(null);
+  const [isLoadingFeedbackSummary, setIsLoadingFeedbackSummary] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -440,6 +445,20 @@ export function AdminMetricsTab({
       .then(setWebSearchSummary)
       .catch(() => setWebSearchSummary(null))
       .finally(() => setIsLoadingWebSearchSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setFeedbackSummary(null);
+      return;
+    }
+
+    setIsLoadingFeedbackSummary(true);
+
+    void getAdminFeedbackSummary(metricsHours, { getAccessToken })
+      .then(setFeedbackSummary)
+      .catch(() => setFeedbackSummary(null))
+      .finally(() => setIsLoadingFeedbackSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -635,6 +654,12 @@ export function AdminMetricsTab({
       <AdminWebSearchMetrics
         summary={webSearchSummary}
         isLoading={isLoadingWebSearchSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminFeedbackMetrics
+        summary={feedbackSummary}
+        isLoading={isLoadingFeedbackSummary}
         windowHours={windowLabel}
       />
 

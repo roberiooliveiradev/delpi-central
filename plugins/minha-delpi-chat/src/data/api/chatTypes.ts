@@ -596,6 +596,14 @@ export type ChatMessageFeedbackResponse = {
   userId: string;
   rating: -1 | 1;
   reason?: string;
+  comment?: string;
+  contextMetadata?: Record<string, unknown>;
+  correctiveActions?: Array<{
+    id: string;
+    label: string;
+    action: string;
+    query?: string;
+  }>;
   thanksMessage?: string;
   createdAt: string;
   updatedAt: string;

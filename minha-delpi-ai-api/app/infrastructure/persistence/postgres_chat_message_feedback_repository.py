@@ -16,6 +16,8 @@ class PostgresChatMessageFeedbackRepository:
         user_id: UUID,
         rating: int,
         reason: str | None = None,
+        comment: str | None = None,
+        context_metadata: dict | None = None,
     ) -> dict:
         now = datetime.now(timezone.utc)
         row = (
@@ -28,6 +30,8 @@ class PostgresChatMessageFeedbackRepository:
         if row:
             row.rating = rating
             row.reason = reason
+            row.comment = comment
+            row.context_metadata = context_metadata
             row.updated_at = now
         else:
             row = AiChatMessageFeedbackModel(
@@ -35,6 +39,8 @@ class PostgresChatMessageFeedbackRepository:
                 user_id=user_id,
                 rating=rating,
                 reason=reason,
+                comment=comment,
+                context_metadata=context_metadata,
                 created_at=now,
                 updated_at=now,
             )
@@ -111,6 +117,18 @@ class PostgresChatMessageFeedbackRepository:
 
         return row.session_id
 
+    def list_feedback_since(self, *, since: datetime) -> list[dict]:
+        rows = (
+            AiChatMessageFeedbackModel.query.filter(
+                AiChatMessageFeedbackModel.created_at >= since,
+            )
+            .order_by(AiChatMessageFeedbackModel.created_at.desc())
+            .limit(5000)
+            .all()
+        )
+
+        return [self._to_dict(row) for row in rows]
+
     def _to_dict(self, row: AiChatMessageFeedbackModel) -> dict:
         payload = {
             "messageId": str(row.message_id),
@@ -122,5 +140,11 @@ class PostgresChatMessageFeedbackRepository:
 
         if row.reason:
             payload["reason"] = str(row.reason)
+
+        if row.comment:
+            payload["comment"] = str(row.comment)
+
+        if isinstance(row.context_metadata, dict):
+            payload["contextMetadata"] = dict(row.context_metadata)
 
         return payload

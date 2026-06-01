@@ -1064,8 +1064,22 @@ class StreamChatMessageUseCase:
             workspace_context=workspace_context,
             tool_calls=tool_calls,
             intent_route=intent_route if isinstance(intent_route, dict) else None,
+            message=message,
         )
         ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
+
+        from app.domain.services.chat_response_metadata_service import (
+            ChatResponseMetadataService,
+        )
+
+        ChatResponseMetadataService.attach_to_assistant_metadata(
+            assistant_metadata,
+            workspace_context=workspace_context,
+            session_id=str(session_id),
+            duration_ms=intelligence_metadata.get("latencyMs")
+            if isinstance(intelligence_metadata, dict)
+            else None,
+        )
 
         if persist_before_playback:
             assistant_metadata = ChatMessageDeliveryService.ready_metadata(

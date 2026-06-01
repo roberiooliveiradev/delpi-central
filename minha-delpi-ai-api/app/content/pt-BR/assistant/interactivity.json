@@ -85,6 +85,20 @@
       "Aumentar limite"
     ]
   },
+  "sqlAuthoringChips": {
+    "default": [
+      "Ver colunas da tabela",
+      "Ver schema completo",
+      "Executar query",
+      "Ajustar filtros"
+    ]
+  },
+  "sqlAuthoringQueries": {
+    "Ver colunas da tabela": "mostre as colunas da tabela {{tableName}}",
+    "Ver schema completo": "mostre o schema da tabela {{tableName}}",
+    "Executar query": "execute a consulta acima no banco",
+    "Ajustar filtros": "ajuste a query anterior incluindo filtro por filial 01"
+  },
   "presentationQueries": {
     "Exportar CSV": "exporte a última tabela em CSV",
     "Gerar gráfico": "gere um gráfico com os dados acima",
@@ -130,6 +144,7 @@
     { "key": "onboardingFollowUpSuggestions", "group": "ajuda", "priority": 50 },
     { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },
     { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 },
-    { "key": "operationalRefinementFollowUpSuggestions", "group": "refinar", "priority": 8 }
+    { "key": "operationalRefinementFollowUpSuggestions", "group": "refinar", "priority": 8 },
+    { "key": "sqlAuthoringFollowUpSuggestions", "group": "consultar", "priority": 14 }
   ]
 }
