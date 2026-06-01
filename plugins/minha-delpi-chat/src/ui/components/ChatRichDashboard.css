@@ -1,5 +1,13 @@
 @import "./rich-presentation-shared.css";
 
+.mdc-rich-dashboard {
+  container-type: inline-size;
+  container-name: mdc-dashboard;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .mdc-rich-dashboard__header {
   display: flex;
   align-items: center;
@@ -26,10 +34,18 @@
   color: var(--mdc-title);
 }
 
+/* Empilha por padrão; lado a lado só quando o painel tem largura real */
 .mdc-rich-dashboard__grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+}
+
+@container mdc-dashboard (min-width: 44rem) {
+  .mdc-rich-dashboard__grid:has(.mdc-rich-dashboard__panel:nth-child(2)) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
 }
 
 .mdc-rich-dashboard__panel {
@@ -38,6 +54,8 @@
   background: color-mix(in srgb, var(--mdc-surface) 92%, transparent);
   padding: 0.55rem 0.6rem 0.65rem;
   min-width: 0;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .mdc-rich-dashboard__panel-title {
@@ -49,6 +67,24 @@
 
 .mdc-rich-dashboard__panel-body {
   min-width: 0;
+  max-width: 100%;
+}
+
+/* Evita tabela/gráfico/KPI “vazarem” sobre o painel vizinho */
+.mdc-rich-dashboard__panel-body .mdc-rich-table,
+.mdc-rich-dashboard__panel-body .mdc-rich-chart,
+.mdc-rich-dashboard__panel-body .mdc-rich-kpi {
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.mdc-rich-dashboard__panel-body .mdc-rich-kpi__grid {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)) !important;
+}
+
+.mdc-rich-dashboard__panel-body .mdc-rich-table__scroll {
+  max-width: 100%;
 }
 
 .mdc-rich-dashboard__panel-body .mdc-rich-chart__header {
