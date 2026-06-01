@@ -5,6 +5,7 @@ import {
   formatShortcutTemplateForDisplay,
   hasShortcutPlaceholders,
   hasUnresolvedShortcutPlaceholders,
+  isWebSearchStarterQuery,
   listShortcutFieldIds,
   normalizeShortcutTemplate,
   resolveShortcutFields,
@@ -68,6 +69,14 @@ describe("chatShortcutPrompt", () => {
     expect(
       resolveStarterQueryForFeature("consultar produto", { starterId: "product" }),
     ).toBe("consultar produto");
+  });
+
+  it("não trata follow-up de pesquisa web como atalho da home", () => {
+    const followUp = "liste os links das fontes da pesquisa web acima";
+
+    expect(isWebSearchStarterQuery(followUp)).toBe(false);
+    expect(starterRequiresShortcutModal(followUp, {})).toBe(false);
+    expect(resolveStarterPromptOptions(followUp, {}).title).not.toBe("Pesquisa na web");
   });
 
   it("detecta quando o atalho da home exige modal", () => {

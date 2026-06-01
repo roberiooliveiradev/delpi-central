@@ -21,3 +21,12 @@ def test_resolve_keeps_placeholder_when_unknown():
     )
 
     assert query == "Busque {{searchQuery}}"
+
+
+def test_resolve_search_query_from_web_research_metadata():
+    query = ChatInteractivityQueryResolver.resolve(
+        "Refaça a busca: {{searchQuery}}",
+        metadata={"webSearchResearch": {"query": "IP67 norma ABNT"}},
+    )
+
+    assert query == "Refaça a busca: IP67 norma ABNT"

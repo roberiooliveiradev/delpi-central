@@ -51,6 +51,10 @@ def _web_follow_up_labels() -> frozenset[str]:
 
 class ChatWebSearchAdminMetricsService:
     @classmethod
+    def web_follow_up_labels(cls) -> frozenset[str]:
+        return _web_follow_up_labels()
+
+    @classmethod
     def is_web_feedback_reason(cls, reason: str | None) -> bool:
         normalized = str(reason or "").strip()
 

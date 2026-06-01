@@ -371,7 +371,7 @@ def record_assistant_help_event():
                     ChatWebSearchAdminMetricsService,
                 )
 
-                allowed_web_labels = ChatWebSearchAdminMetricsService._web_follow_up_labels()
+                allowed_web_labels = ChatWebSearchAdminMetricsService.web_follow_up_labels()
 
                 if (
                     str(click_snapshot.get("group") or "") == "web_search"

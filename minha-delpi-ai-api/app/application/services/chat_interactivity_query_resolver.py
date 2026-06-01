@@ -84,10 +84,23 @@ class ChatInteractivityQueryResolver:
             if kind in {"warehouse", "armazem"}:
                 output.setdefault("warehouse", value)
 
-        follow_outcome = str((metadata or {}).get("followUpOutcome") or "").strip()
+        research = (metadata or {}).get("webSearchResearch")
 
-        if follow_outcome and not output.get("searchQuery"):
-            output.setdefault("searchQuery", follow_outcome)
+        if isinstance(research, dict):
+            search_query = str(research.get("query") or "").strip()
+
+            if search_query:
+                output.setdefault("searchQuery", search_query)
+
+            attempted = research.get("attemptedQueries") or []
+
+            if not output.get("searchQuery") and isinstance(attempted, list):
+                for item in attempted:
+                    token = str(item or "").strip()
+
+                    if token:
+                        output.setdefault("searchQuery", token)
+                        break
 
         return output
 

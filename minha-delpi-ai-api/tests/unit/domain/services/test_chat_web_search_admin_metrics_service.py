@@ -97,6 +97,12 @@ def test_build_admin_debug_web_search():
     assert debug["queries"] == ["WEG CFW500 manual"]
 
 
+def test_web_follow_up_labels_exposed_on_service_class():
+    labels = ChatWebSearchAdminMetricsService.web_follow_up_labels()
+
+    assert isinstance(labels, frozenset)
+
+
 def test_security_redacted_triggers_public_query():
     result = ChatWebSearchQuerySecurityService.sanitize(
         "cliente ABC preco interno R$ 10",

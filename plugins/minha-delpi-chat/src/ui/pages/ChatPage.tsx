@@ -1303,10 +1303,21 @@ export function ChatPage({
   }
 
   function handleDrillDown(query: string) {
-    void promptAndSendMessage(
-      { content: query },
-      resolveStarterPromptOptions(query, {}),
-    );
+    const normalized = normalizeShortcutTemplate(query.trim());
+
+    if (!normalized) {
+      return;
+    }
+
+    const promptOptions = resolveStarterPromptOptions(normalized, {});
+
+    if (!starterRequiresShortcutModal(normalized, {})) {
+      clearError();
+      void sendMessage({ content: normalized });
+      return;
+    }
+
+    void promptAndSendMessage({ content: normalized }, promptOptions);
   }
 
   async function handleHomeStarter(query: string, context: StarterInvokeContext = {}) {
@@ -2172,7 +2183,9 @@ export function ChatPage({
                       },
                     },
                     { getAccessToken },
-                  );
+                  ).catch(() => {
+                    /* telemetria opcional — não bloquear chips/modal */
+                  });
                 }}
                 onMessageFeedback={setMessageFeedback}
                 onDownloadAttachment={async (attachmentId) => {

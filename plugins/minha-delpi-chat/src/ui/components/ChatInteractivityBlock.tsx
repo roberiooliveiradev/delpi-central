@@ -147,6 +147,7 @@ export function ChatInteractivityBlock({
             type="button"
             className="mdc-chat-follow-up__chip mdc-chat-follow-up__chip--more"
             onClick={(event) => {
+              event.stopPropagation();
               setMenu({
                 anchor: { x: event.clientX, y: event.clientY },
                 actions: overflow.map(

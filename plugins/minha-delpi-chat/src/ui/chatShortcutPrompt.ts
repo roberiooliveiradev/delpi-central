@@ -282,13 +282,15 @@ export function extractProductCodeFromContextChips(
 /** Template padrão ao clicar em novidades/atalho de pesquisa web. */
 export const WEB_SEARCH_STARTER_QUERY = "pesquise na web sobre {{searchQuery}}";
 
+/** Novo pedido de pesquisa web — não chips de follow-up (“fontes da pesquisa web acima”). */
 export function isWebSearchStarterQuery(query: string): boolean {
   const normalized = normalizeShortcutTemplate(query.trim());
 
-  return (
-    normalized.includes("{{searchQuery}}") ||
-    /\b(pesquise|pesquisa|busque|busca)\b.*\b(web|internet|online)\b/i.test(normalized)
-  );
+  if (normalized.includes("{{searchQuery}}")) {
+    return true;
+  }
+
+  return /^(pesquise|busque)\s+(na\s+)?(web|internet|online)\s+sobre\b/i.test(normalized);
 }
 
 export type StarterInvokeContext = {
@@ -329,8 +331,12 @@ export function starterRequiresShortcutModal(
     return false;
   }
 
-  if (context.featureId === "web_search" || isWebSearchStarterQuery(normalized)) {
-    return true;
+  if (context.featureId === "web_search") {
+    return hasShortcutPlaceholders(normalized);
+  }
+
+  if (isWebSearchStarterQuery(normalized)) {
+    return hasShortcutPlaceholders(normalized);
   }
 
   return hasShortcutPlaceholders(normalized);
@@ -343,7 +349,10 @@ export function resolveStarterPromptOptions(
 ): (typeof CHAT_SHORTCUT_PROMPT_COPY)[keyof typeof CHAT_SHORTCUT_PROMPT_COPY] {
   const normalized = normalizeShortcutTemplate(query.trim());
 
-  if (context.featureId === "web_search" || isWebSearchStarterQuery(normalized)) {
+  if (
+    context.featureId === "web_search" ||
+    (isWebSearchStarterQuery(normalized) && hasShortcutPlaceholders(normalized))
+  ) {
     return CHAT_SHORTCUT_PROMPT_COPY.webSearch;
   }
 
