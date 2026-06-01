@@ -41,8 +41,8 @@ class GetNonconformitySeriesUseCase:
         for bucket in buckets_result.buckets:
             total, registros = self._repository.sum_returned_quantity(
                 list_request,
-                regist_date_start=bucket.date_start,
-                regist_date_end=bucket.date_end,
+                occurrence_date_start=bucket.date_start,
+                occurrence_date_end=bucket.date_end,
             )
 
             points.append(

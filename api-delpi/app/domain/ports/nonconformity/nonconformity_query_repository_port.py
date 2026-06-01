@@ -21,7 +21,7 @@ class NonconformityQueryRepositoryPort(ABC):
         self,
         request: ListNonconformityRequest,
         *,
-        regist_date_start: str | None = None,
-        regist_date_end: str | None = None,
+        occurrence_date_start: str | None = None,
+        occurrence_date_end: str | None = None,
     ) -> tuple[float, int]:
         raise NotImplementedError

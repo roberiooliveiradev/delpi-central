@@ -56,10 +56,10 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             qb_nc.eq("QI2_FILIAL", request.branch)
 
         if date_start:
-            qb_nc.gte("QI2_REGIST", date_start)
+            qb_nc.gte("QI2_OCORRE", date_start)
 
         if date_end_exclusive:
-            qb_nc.lt("QI2_REGIST", date_end_exclusive)
+            qb_nc.lt("QI2_OCORRE", date_end_exclusive)
 
         qb_nc.raw(self._type_filter(request.type))
 
@@ -201,11 +201,11 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         nc_params: list[str] = []
 
         if date_start_protheus:
-            nc_filters.append("QI2_REGIST >= ?")
+            nc_filters.append("QI2_OCORRE >= ?")
             nc_params.append(date_start_protheus)
 
         if date_end_exclusive:
-            nc_filters.append("QI2_REGIST < ?")
+            nc_filters.append("QI2_OCORRE < ?")
             nc_params.append(date_end_exclusive)
 
         prod_filters = [
@@ -266,10 +266,10 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             qb.eq("QI2_FILIAL", request.branch)
 
         if date_start:
-            qb.gte("QI2_REGIST", date_start)
+            qb.gte("QI2_OCORRE", date_start)
 
         if date_end_exclusive:
-            qb.lt("QI2_REGIST", date_end_exclusive)
+            qb.lt("QI2_OCORRE", date_end_exclusive)
 
         qb.raw(self._type_filter(request.type))
 
@@ -290,7 +290,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             select_sql = f"""
                 SELECT
                     QI2_FILIAL AS branch,
-                    FORMAT(TRY_CONVERT(date, QI2_REGIST, 112), 'dd/MM/yyyy') AS registered_date,
+                    FORMAT(TRY_CONVERT(date, QI2_OCORRE, 112), 'dd/MM/yyyy') AS registered_date,
                     QI2_FNC AS code,
                     QI2_REV AS revision,
                     QI2_TIPO AS ppm_type,
@@ -319,7 +319,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_REGIST DESC, QI2_FNC DESC
+                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC
                     OFFSET ? ROWS
                     FETCH NEXT ? ROWS ONLY
                 """
@@ -331,7 +331,7 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
                 sql = f"""
                     {select_sql}
-                    ORDER BY QI2_REGIST DESC, QI2_FNC DESC
+                    ORDER BY QI2_OCORRE DESC, QI2_FNC DESC
                 """
 
                 final_params = params

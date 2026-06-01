@@ -147,8 +147,8 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
         self,
         request: ListNonconformityRequest,
         *,
-        regist_date_start: str | None = None,
-        regist_date_end: str | None = None,
+        occurrence_date_start: str | None = None,
+        occurrence_date_end: str | None = None,
     ) -> tuple[float, int]:
         qb = QueryBuilder()
 
@@ -158,9 +158,9 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
         qb.eq("QI2_ITEM", request.item_code)
         qb.like("QI2_DESCR", request.description, case_insensitive=True)
         qb.date_range(
-            field="QI2_REGIST",
-            start=regist_date_start,
-            end=regist_date_end,
+            field="QI2_OCORRE",
+            start=occurrence_date_start,
+            end=occurrence_date_end,
         )
 
         if request.type == "internal":

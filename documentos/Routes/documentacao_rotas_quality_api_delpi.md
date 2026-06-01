@@ -214,8 +214,8 @@ Regras atuais:
 | `QI2_ITEM` | Item/produto | Produto ou item associado à NC |
 | `QI2_DESCR` | Descrição resumida | Descrição exibida na listagem |
 | `QI2_QTDDEV` | Quantidade devolvida/rejeitada | Numerador do PPM quando preenchido |
-| `QI2_REGIST` | Data de registro | Data base das rotas de NC e PPM |
-| `QI2_OCORRE` | Data da ocorrência | Informação complementar de ocorrência |
+| `QI2_REGIST` | Data de registro | Exibição em `registered_date` na listagem de NC |
+| `QI2_OCORRE` | Data da ocorrência | Data base do filtro de período em NC, PPM e série de NC |
 | `QI2_STATUS` | Status da FNC | Situação da NC |
 | `QI2_CODCLI` | Código do cliente | Usado para NC externa cliente |
 | `QI2_LOJCLI` | Loja do cliente | Usado para NC externa cliente |
@@ -510,7 +510,7 @@ Campos usados:
 | Campo | Uso |
 |---|---|
 | `QI2_QTDDEV` | Quantidade devolvida/rejeitada em unidade |
-| `QI2_REGIST` | Data base do filtro do numerador |
+| `QI2_OCORRE` | Data base do filtro do numerador |
 | `QI2_TIPO` | Classificação interna, cliente ou fornecedor |
 | `QI2_FILIAL` | Filial da FNC |
 | `D_E_L_E_T_` | Exclusão lógica |
@@ -519,7 +519,7 @@ Regras:
 
 - considerar apenas registros ativos: `D_E_L_E_T_ = ' '`;
 - filtrar por `QI2_FILIAL` quando `branch` for informado;
-- filtrar o período por `QI2_REGIST`;
+- filtrar o período por `QI2_OCORRE`;
 - `internal` usa `QI2_TIPO = '1'`;
 - `external` usa `QI2_TIPO IN ('2','3')`;
 - `QI2_QTDDEV` está em unidade.
@@ -719,8 +719,8 @@ WITH nc AS (
     FROM QI2010
     WHERE
         D_E_L_E_T_ = ' '
-        AND QI2_REGIST >= :date_start
-        AND QI2_REGIST < :date_end
+        AND QI2_OCORRE >= :date_start
+        AND QI2_OCORRE < :date_end
         -- AND QI2_FILIAL = :branch, quando informado
         -- AND QI2_TIPO = '1', para internal
         -- AND QI2_TIPO IN ('2','3'), para external
@@ -999,14 +999,14 @@ Exemplo observado:
 
 ### 5. Campo de data do numerador
 
-O numerador usa `QI2_REGIST`, ou seja, a data de registro da FNC.
+O numerador usa `QI2_OCORRE`, ou seja, a data de ocorrência da FNC.
 
-A `QI2010` também possui `QI2_OCORRE`, data de ocorrência. Essa data pode ser diferente da data de registro.
+A `QI2010` também possui `QI2_REGIST`, data de registro. Essa data pode ser diferente da data de ocorrência e continua exposta em `registered_date` na listagem de NC.
 
 Para o PPM atual, a regra adotada é:
 
 ```text
-Data base do numerador = QI2_REGIST
+Data base do numerador = QI2_OCORRE
 ```
 
 ---
@@ -1229,7 +1229,7 @@ O módulo já está preparado para consumo por frontend usando dois padrões pri
 No caso específico do PPM, as regras consolidadas atuais são:
 
 - numerador em `QI2010.QI2_QTDDEV`;
-- data do numerador em `QI2_REGIST`;
+- data do numerador em `QI2_OCORRE`;
 - tipos definidos por `QI2_TIPO`;
 - denominador calculado por produção ajustada, não soma direta;
 - base do denominador em `SH6010.H6_QTDPROD`;
