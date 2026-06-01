@@ -1376,10 +1376,35 @@ export function ChatPage({
     [homeOnboarding?.tourSteps],
   );
 
-  const canOfferOnboardingTour =
-    isConversationEmpty &&
-    homeTourSteps.length > 0 &&
-    !isOnboardingTourCompleted();
+  const hasOnboardingTour =
+    homeTourSteps.length > 0 && !isOnboardingTourCompleted();
+
+  const canOfferOnboardingTour = hasOnboardingTour && isConversationEmpty;
+
+  const isHomeChatSurface =
+    chatRoute.kind === "home" &&
+    currentView === "chat" &&
+    !activeAgentPageId &&
+    !selectedProjectId;
+
+  const startOnboardingTour = useCallback(() => {
+    setHelpPanelOpen(false);
+    setHelpSearchQuery("");
+    closeMobileSidebar();
+
+    const needsTourHomeNavigation = !isHomeChatSurface || !isConversationEmpty;
+
+    if (needsTourHomeNavigation) {
+      navigateChatHref(buildChatHref({ kind: "home" }));
+      applyChatRoute({ kind: "home" });
+    }
+
+    setOnboardingTourOpen(true);
+  }, [
+    applyChatRoute,
+    isConversationEmpty,
+    isHomeChatSurface,
+  ]);
 
   useEffect(() => {
     if (!isConversationEmpty) {
@@ -2038,9 +2063,7 @@ export function ChatPage({
                           onSelectProfile={handleSelectOnboardingProfile}
                           onUseStarter={handleHomeStarter}
                           onStartTour={
-                            canOfferOnboardingTour
-                              ? () => setOnboardingTourOpen(true)
-                              : undefined
+                            canOfferOnboardingTour ? startOnboardingTour : undefined
                           }
                         />
 
@@ -2162,15 +2185,7 @@ export function ChatPage({
           onTryPrompt={(query, context) => {
             void handleHelpTryPrompt(query, context);
           }}
-          onStartTour={
-            canOfferOnboardingTour
-              ? () => {
-                  setHelpPanelOpen(false);
-                  setHelpSearchQuery("");
-                  setOnboardingTourOpen(true);
-                }
-              : undefined
-          }
+          onStartTour={hasOnboardingTour ? startOnboardingTour : undefined}
         />
       </section>
     </main>
