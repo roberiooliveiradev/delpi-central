@@ -124,6 +124,8 @@ export function ChatInput({
   }
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
+  const showResponseMode =
+    showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
   const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
     value,
     topInset: variant === "dock" ? 96 : 72,
@@ -169,8 +171,6 @@ export function ChatInput({
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
   const hasAttachments = attachments.length > 0;
-  const stackedComposer =
-    showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
 
   const plusControl = (
     <div className="mdc-chat-input__plus-wrap" ref={plusMenuRef} data-tour="composer-plus">
@@ -385,9 +385,7 @@ export function ChatInput({
           "mdc-chat-input__box",
           selectedAgent ? "mdc-chat-input__box--with-agent" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
-          stackedComposer
-            ? "mdc-chat-input__box--stacked-composer mdc-chat-input__box--with-response-mode"
-            : "",
+          showResponseMode ? "mdc-chat-input__box--with-response-mode" : "",
         ]
           .filter(Boolean)
           .join(" ")}
@@ -459,7 +457,7 @@ export function ChatInput({
           </div>
         ) : null}
 
-        {!stackedComposer ? plusControl : null}
+        {plusControl}
 
         <textarea
           ref={textareaRef}
@@ -484,22 +482,16 @@ export function ChatInput({
           }}
         />
 
-        {stackedComposer ? (
-          <div className="mdc-chat-input__composer-bar">
-            <div className="mdc-chat-input__composer-bar-start">
-              {plusControl}
-              <ChatResponseModeSelector
-                modes={responseModes}
-                value={responseMode}
-                disabled={disabled || isSending}
-                onChange={onResponseModeChange}
-              />
-            </div>
-            {sendControl}
-          </div>
-        ) : (
-          sendControl
-        )}
+        {showResponseMode ? (
+          <ChatResponseModeSelector
+            modes={responseModes}
+            value={responseMode}
+            disabled={disabled || isSending}
+            onChange={onResponseModeChange}
+          />
+        ) : null}
+
+        {sendControl}
       </div>
 
       <small>

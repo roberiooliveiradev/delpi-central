@@ -108,7 +108,8 @@
 /* Clean override: conversas como lista simples, sem cards/bordas */
 .mdc-chat-sidebar .mdc-chat-session-row {
   grid-template-columns: minmax(0, 1fr) 1.85rem;
-  min-height: 2.18rem;
+  align-items: center;
+  min-height: 2.55rem;
   border: 0 !important;
   outline: 0 !important;
   box-shadow: none !important;
@@ -153,12 +154,20 @@
 .mdc-chat-sidebar .mdc-chat-session span {
   font-size: 0.78rem;
   font-weight: 820;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .mdc-chat-sidebar .mdc-chat-session small {
   font-size: 0.63rem;
-  line-height: 1.08;
+  line-height: 1.15;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item {
+  min-height: 2.35rem;
+}
+
+.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item__content {
+  gap: 0.08rem;
 }
 
 .mdc-chat-sidebar .mdc-chat-session-actions {
@@ -171,34 +180,6 @@
   opacity: 1;
   pointer-events: auto;
 }
-
-
-/* Clean conversation rows using ChatConversationListItem */
-.mdc-chat-sidebar .mdc-chat-session-row {
-  grid-template-columns: minmax(0, 1fr) 1.85rem;
-  min-height: 2.18rem;
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  border-radius: 0.58rem;
-  padding: 0.02rem;
-}
-
-.mdc-chat-sidebar .mdc-chat-session-row:hover {
-  background: color-mix(in srgb, var(--mdc-primary) 7%, transparent) !important;
-}
-
-.mdc-chat-sidebar .mdc-chat-session-row--active {
-  background: color-mix(in srgb, var(--mdc-primary) 12%, transparent) !important;
-}
-
-.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item,
-.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item:hover,
-.mdc-chat-sidebar .mdc-chat-session-row .mdc-chat-conversation-item--active {
-  background: transparent !important;
-}
-
 /* Sidebar agora tem scroll geral; a lista não deve ter scroll próprio */
 .mdc-chat-session-list {
   overflow: visible !important;
