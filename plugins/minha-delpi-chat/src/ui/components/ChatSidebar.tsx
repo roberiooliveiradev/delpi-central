@@ -303,7 +303,7 @@ export function ChatSidebar({
             <button
               type="button"
               className="mdc-chat-sidebar__rail-button mdc-chat-sidebar__rail-button--admin"
-              onClick={onOpenAdmin}
+              onClick={() => onOpenAdmin()}
               aria-label="Administração"
               title="Administração"
             >
@@ -461,7 +461,7 @@ export function ChatSidebar({
           <button
             type="button"
             className="mdc-chat-sidebar__footer-admin"
-            onClick={onOpenAdmin}
+            onClick={() => onOpenAdmin()}
           >
             <Settings2 size={16} aria-hidden="true" />
             <span>Administração</span>

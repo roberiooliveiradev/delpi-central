@@ -247,7 +247,15 @@ export function parseAdminPathSegments(segments: string[]): AdminNavState | null
     return { section: "overview" };
   }
 
-  const subTab = second ? SLUG_TO_SUB[second] : undefined;
+  if (!second) {
+    return { section: "overview" };
+  }
+
+  const subTab = SLUG_TO_SUB[second];
+
+  if (!subTab) {
+    return { section: "overview" };
+  }
 
   return normalizeAdminNav({ section, subTab });
 }

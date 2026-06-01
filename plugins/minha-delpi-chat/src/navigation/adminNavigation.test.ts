@@ -37,11 +37,30 @@ describe("adminNavigation", () => {
       subTab: "guidelines",
     });
   });
+
+  it("trata /admin/agentes sem sub-aba como painel", () => {
+    expect(parseAdminPathSegments(["agentes"])).toEqual({
+      section: "overview",
+    });
+  });
+
+  it("ignora sub-aba desconhecida", () => {
+    expect(parseAdminPathSegments(["qualidade", "inexistente"])).toEqual({
+      section: "overview",
+    });
+  });
 });
 
 describe("chatRoutes admin", () => {
   it("parseia /admin como painel", () => {
     expect(parseChatRoute("/apps/minha-delpi-chat/admin")).toEqual({
+      kind: "admin",
+      nav: { section: "overview" },
+    });
+  });
+
+  it("parseia /admin/agentes incompleto como painel", () => {
+    expect(parseChatRoute("/apps/minha-delpi-chat/admin/agentes")).toEqual({
       kind: "admin",
       nav: { section: "overview" },
     });

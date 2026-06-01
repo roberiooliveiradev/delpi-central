@@ -1600,8 +1600,10 @@ export function ChatPage({
   const openAdmin =
     canOpenAdmin && onOpenAdmin
       ? (agentId?: string) => {
-          if (agentId) {
-            openAdminForAgent(agentId);
+          const normalizedAgentId = normalizeAgentRouteId(agentId);
+
+          if (normalizedAgentId) {
+            openAdminForAgent(normalizedAgentId);
             return;
           }
 

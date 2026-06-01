@@ -95,7 +95,7 @@ export function ChatContextTopbar({
           <button
             type="button"
             className="mdc-chat-context-topbar__admin-btn"
-            onClick={onOpenAdmin}
+            onClick={() => onOpenAdmin()}
           >
             <span className="mdc-chat-context-topbar__admin-label--long">Administração</span>
             <span className="mdc-chat-context-topbar__admin-label--short">Admin</span>
