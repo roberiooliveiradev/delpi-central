@@ -1,6 +1,6 @@
 # Playbook — Especialista SQL Avançado do Minha DELPI Chat IA
 
-> **Status de implementação:** Fases 1–5 e 7 (base) implementadas. Fase 6 (EXPLAIN/índices automáticos) parcial via performance advisor.
+> **Status de implementação:** Fases 1–7 implementadas (base). Fase 6 completa via advisor de otimização; EXPLAIN automático depende de ferramenta dedicada na API.
 
 Projeto: Minha DELPI Chat IA
 Escopo: chat comum, skill SQL avançada, construção de consultas SQL complexas, validação de schema, execução segura, otimização, explicação, inferência e análise de resultados.

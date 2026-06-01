@@ -45,6 +45,9 @@ class ChatAdvancedSqlMetricsService:
             "executedRowCount": result_analysis.get("rowCount"),
             "emptyResult": bool(result_analysis.get("isEmpty")),
             "recommendedChartType": visualization.get("chartType"),
+            "optimizationPriority": (advanced.get("optimization") or {}).get("priority"),
+            "optimizationSuggestionCount": len((advanced.get("optimization") or {}).get("suggestions") or []),
+            "patternHintCount": len((advanced.get("patternAdvice") or {}).get("hints") or []),
         }
 
     @classmethod
@@ -98,6 +101,9 @@ class ChatAdvancedSqlMetricsService:
             "executedRowCount": result_analysis.get("rowCount"),
             "emptyResult": bool(result_analysis.get("isEmpty")),
             "recommendedChartType": visualization.get("chartType"),
+            "optimizationPriority": (advanced.get("optimization") or {}).get("priority"),
+            "optimizationSuggestionCount": len((advanced.get("optimization") or {}).get("suggestions") or []),
+            "patternHintCount": len((advanced.get("patternAdvice") or {}).get("hints") or []),
         }
 
     @classmethod

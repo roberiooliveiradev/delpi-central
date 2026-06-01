@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   getAdminDrawingAnalysisSummary,
   getAdminDocumentVisionSummary,
+  getAdminSqlAdvancedSummary,
   getAdminIntentRoutingSummary,
   getAdminErrorHandlingSummary,
   getAdminWebSearchSummary,
@@ -22,6 +23,7 @@ import {
 import type {
   AdminDrawingAnalysisSummary,
   AdminDocumentVisionSummary,
+  AdminSqlAdvancedSummary,
   AdminIntentRoutingSummary,
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
@@ -40,6 +42,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
+import { AdminSqlAdvancedMetrics } from "./AdminSqlAdvancedMetrics";
 import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
 import { AdminWebSearchMetrics } from "./AdminWebSearchMetrics";
@@ -294,6 +297,10 @@ export function AdminMetricsTab({
     useState<AdminDocumentVisionSummary | null>(null);
   const [isLoadingDocumentVisionSummary, setIsLoadingDocumentVisionSummary] =
     useState(false);
+  const [sqlAdvancedSummary, setSqlAdvancedSummary] = useState<AdminSqlAdvancedSummary | null>(
+    null,
+  );
+  const [isLoadingSqlAdvancedSummary, setIsLoadingSqlAdvancedSummary] = useState(false);
   const [intentRoutingSummary, setIntentRoutingSummary] =
     useState<AdminIntentRoutingSummary | null>(null);
   const [isLoadingIntentRoutingSummary, setIsLoadingIntentRoutingSummary] =
@@ -381,6 +388,20 @@ export function AdminMetricsTab({
       .then(setDocumentVisionSummary)
       .catch(() => setDocumentVisionSummary(null))
       .finally(() => setIsLoadingDocumentVisionSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setSqlAdvancedSummary(null);
+      return;
+    }
+
+    setIsLoadingSqlAdvancedSummary(true);
+
+    void getAdminSqlAdvancedSummary(metricsHours, { getAccessToken })
+      .then(setSqlAdvancedSummary)
+      .catch(() => setSqlAdvancedSummary(null))
+      .finally(() => setIsLoadingSqlAdvancedSummary(false));
   }, [getAccessToken, metricsHours]);
 
   useEffect(() => {
@@ -776,6 +797,12 @@ export function AdminMetricsTab({
       <AdminDocumentVisionMetrics
         summary={documentVisionSummary}
         isLoading={isLoadingDocumentVisionSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminSqlAdvancedMetrics
+        summary={sqlAdvancedSummary}
+        isLoading={isLoadingSqlAdvancedSummary}
         windowHours={windowLabel}
       />
 

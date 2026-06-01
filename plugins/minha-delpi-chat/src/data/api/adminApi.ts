@@ -48,6 +48,7 @@ import type {
   AdminPresentationSummary,
   AdminTextTaskSummary,
   AdminDocumentVisionSummary,
+  AdminSqlAdvancedSummary,
   AdminMetricsSummary,
   AdminMetricsTimeseriesResponse,
   AdminRbacSummary,
@@ -1047,6 +1048,21 @@ export async function getAdminDocumentVisionSummary(
   );
 
   return parseJsonResponse<AdminDocumentVisionSummary>(response);
+}
+
+export async function getAdminSqlAdvancedSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminSqlAdvancedSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/sql-advanced/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminSqlAdvancedSummary>(response);
 }
 
 export async function getAdminMetricsTimeseries(

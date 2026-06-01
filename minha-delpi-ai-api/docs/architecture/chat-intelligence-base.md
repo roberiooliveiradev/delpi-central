@@ -92,7 +92,9 @@ Mensagem do usuário
 | `ChatSqlMemoryWorkspaceService` | Memória da query ativa na sessão (edição incremental) |
 | `ChatSqlResultAnalyzerService` | Interpretação pós-execução: contagem, vazio, insights, recuperação |
 | `ChatSqlVisualizationAdvisorService` | Recomendação de gráfico/tabela/KPI/lousa (Playbook §40) |
-| `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` em metadata e auditoria |
+| `ChatSqlOptimizationAdvisorService` | Índices, EXPLAIN (quando aplicável) e refatoração (Playbook §35–38) |
+| `ChatSqlQueryPatternAdvisorService` | Padrões CTE/window/comparação de períodos (Playbook §25–31) |
+| `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` + `GET /admin/metrics/sql-advanced/summary` |
 | `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
 | `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
 | `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |

@@ -309,6 +309,12 @@ class ChatAdvancedSqlSpecialistService:
         from app.domain.services.chat_sql_visualization_advisor_service import (
             ChatSqlVisualizationAdvisorService,
         )
+        from app.domain.services.chat_sql_optimization_advisor_service import (
+            ChatSqlOptimizationAdvisorService,
+        )
+        from app.domain.services.chat_sql_query_pattern_advisor_service import (
+            ChatSqlQueryPatternAdvisorService,
+        )
 
         result_analysis = ChatSqlResultAnalyzerService.analyze_tool_calls(tool_calls)
         visualization = ChatSqlVisualizationAdvisorService.recommend(
@@ -316,13 +322,24 @@ class ChatAdvancedSqlSpecialistService:
             mode=mode,
             result_analysis=result_analysis,
         )
+        pattern_advice = ChatSqlQueryPatternAdvisorService.recommend(message)
+        optimization = None
+
+        if sql_text and mode in {"optimize", "review", "execute", "create"}:
+            optimization = ChatSqlOptimizationAdvisorService.advise(
+                str(sql_text),
+                dialect=str(dialect["dialect"]),
+                mode=mode,
+            )
 
         return {
             "mode": mode,
             "dialect": dialect,
             "workspace": workspace,
-            "plannerHints": cls.build_planner_hints(message),
+            "plannerHints": cls.build_planner_hints(message) + list(pattern_advice.get("hints") or []),
+            "patternAdvice": pattern_advice,
             "performance": performance,
+            "optimization": optimization,
             "review": review,
             "blocked": blocked,
             "resultAnalysis": result_analysis,
@@ -425,6 +442,12 @@ class ChatAdvancedSqlSpecialistService:
             if isinstance(snapshot.get("visualizationAdvice"), dict)
             else None
         )
+        optimization = (
+            snapshot.get("optimization") if isinstance(snapshot.get("optimization"), dict) else None
+        )
+        pattern_advice = (
+            snapshot.get("patternAdvice") if isinstance(snapshot.get("patternAdvice"), dict) else None
+        )
 
         lines = [
             "[Especialista SQL Avançado]",
@@ -473,6 +496,20 @@ class ChatAdvancedSqlSpecialistService:
                 f"Visualização sugerida: {visualization.get('suggestedLabel')} "
                 f"({visualization.get('reason')})"
             )
+
+        if pattern_advice and pattern_advice.get("patterns"):
+            lines.append("Padrões SQL recomendados:")
+
+            for pattern in pattern_advice.get("patterns") or []:
+                if isinstance(pattern, dict):
+                    lines.append(f"- {pattern.get('guidance')}")
+
+        if optimization and optimization.get("suggestions"):
+            lines.append("Otimização:")
+
+            for item in optimization.get("suggestions") or []:
+                if isinstance(item, dict) and item.get("severity") in {"warn", "info"}:
+                    lines.append(f"- {item.get('message')}")
 
         lines.append(
             "Regras: somente SELECT; valide schema via /system/tables/*; "

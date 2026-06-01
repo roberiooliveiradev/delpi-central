@@ -632,6 +632,31 @@ export type AdminDocumentVisionSummary = {
   recent: AdminDocumentVisionRecentItem[];
 };
 
+export type AdminSqlAdvancedRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  mode?: string | null;
+  dialect?: string | null;
+  blocked?: boolean | null;
+};
+
+export type AdminSqlAdvancedSummary = {
+  windowHours: number;
+  since: string;
+  runsCount: number;
+  blockedCount: number;
+  cteUsageCount: number;
+  windowFunctionUsageCount: number;
+  incrementalEditCount: number;
+  schemaPrefetchCount: number;
+  emptyResultCount: number;
+  executedWithRowCount: number;
+  byMode: Record<string, number>;
+  byDialect: Record<string, number>;
+  byChartType: Record<string, number>;
+  recent: AdminSqlAdvancedRecentItem[];
+};
+
 export type AdminMetricsSummary = {
   windowHours?: number;
   sessions: number;
