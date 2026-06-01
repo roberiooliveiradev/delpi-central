@@ -457,41 +457,43 @@ export function ChatInput({
           </div>
         ) : null}
 
-        {plusControl}
+        <div className="mdc-chat-input__composer-row">
+          {plusControl}
 
-        <textarea
-          ref={textareaRef}
-          className="mdc-auto-grow-textarea"
-          data-tour="composer-input"
-          value={value}
-          disabled={disabled || isSending}
-          placeholder={placeholder}
-          rows={1}
-          onChange={(event) => {
-            onChange(event.target.value);
-            requestAnimationFrame(() => syncHeight());
-          }}
-          onInput={() => {
-            requestAnimationFrame(() => syncHeight());
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              onSubmit();
-            }
-          }}
-        />
-
-        {showResponseMode ? (
-          <ChatResponseModeSelector
-            modes={responseModes}
-            value={responseMode}
+          <textarea
+            ref={textareaRef}
+            className="mdc-auto-grow-textarea"
+            data-tour="composer-input"
+            value={value}
             disabled={disabled || isSending}
-            onChange={onResponseModeChange}
+            placeholder={placeholder}
+            rows={1}
+            onChange={(event) => {
+              onChange(event.target.value);
+              requestAnimationFrame(() => syncHeight());
+            }}
+            onInput={() => {
+              requestAnimationFrame(() => syncHeight());
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                onSubmit();
+              }
+            }}
           />
-        ) : null}
 
-        {sendControl}
+          {showResponseMode ? (
+            <ChatResponseModeSelector
+              modes={responseModes}
+              value={responseMode}
+              disabled={disabled || isSending}
+              onChange={onResponseModeChange}
+            />
+          ) : null}
+
+          {sendControl}
+        </div>
       </div>
 
       <small>

@@ -695,6 +695,52 @@ export async function clearChatSessionMemory(
   return parseJsonResponse<{ cleared: number }>(response);
 }
 
+export type SessionMemoryContextResponse = {
+  chips: Array<{ label: string; kind: string; value: string }>;
+};
+
+export async function getChatSessionMemoryContext(
+  sessionId: string,
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/context`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
+export async function addChatSessionMemoryPin(
+  sessionId: string,
+  payload: { kind: string; value: string },
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/memory/pins`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
+export async function removeChatSessionMemoryPin(
+  sessionId: string,
+  kind: string,
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/memory/pins/${encodeURIComponent(kind)}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
 
 export async function listChatArtifacts(
   sessionId: string,

@@ -104,6 +104,7 @@ from app.composition.chat_composer import (
     make_set_chat_session_archived_use_case,
     make_set_chat_session_pinned_use_case,
     make_clear_chat_session_memory_use_case,
+    make_chat_session_memory_pins_use_case,
     make_send_chat_message_use_case,
     make_stream_chat_message_use_case,
 )
@@ -2479,6 +2480,100 @@ def clear_session_memory(session_id: str):
         raise
 
     return jsonify({"cleared": cleared}), 200
+
+
+@chat_bp.get("/sessions/<session_id>/memory/context")
+@require_permission(CHAT_ASK_PERMISSION)
+def get_session_memory_context(session_id: str):
+    from uuid import UUID
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.get_context(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+        )
+    except ChatSessionNotFoundError:
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        return jsonify({"error": "forbidden"}), 403
+    except Exception:
+        raise
+
+    return jsonify(result), 200
+
+
+@chat_bp.post("/sessions/<session_id>/memory/pins")
+@require_permission(CHAT_ASK_PERMISSION)
+def add_session_memory_pin(session_id: str):
+    from uuid import UUID
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    kind = payload.get("kind")
+    value = payload.get("value")
+
+    if not kind or not value:
+        return bad_request("kind and value are required")
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.add_pin(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+            kind=str(kind),
+            value=str(value),
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@chat_bp.delete("/sessions/<session_id>/memory/pins/<kind>")
+@require_permission(CHAT_ASK_PERMISSION)
+def remove_session_memory_pin(session_id: str, kind: str):
+    from uuid import UUID
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.remove_pin(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+            kind=str(kind),
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
 
 
 @chat_bp.patch("/messages/<message_id>")

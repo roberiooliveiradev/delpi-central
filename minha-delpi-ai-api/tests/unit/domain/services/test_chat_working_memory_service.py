@@ -56,3 +56,14 @@ def test_build_context_chips_from_snapshot():
     assert "branch" in kinds
     assert "format" in kinds
     assert "tone" in kinds
+
+
+def test_build_context_chips_includes_warehouse():
+    chips = ChatWorkingMemoryService.build_context_chips(
+        {"lastEntities": {"warehouse": "01", "branch": "02"}}
+    )
+
+    by_kind = {chip["kind"]: chip for chip in chips}
+
+    assert by_kind["warehouse"]["label"] == "Armazém 01"
+    assert by_kind["branch"]["value"] == "02"

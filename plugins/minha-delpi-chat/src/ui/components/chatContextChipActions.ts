@@ -25,6 +25,8 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
       return "corrija o texto da lousa";
     case "branch":
       return `filtre pela filial ${value}`;
+    case "warehouse":
+      return `filtre pelo armazém ${value}`;
     case "format":
       if (value === "table") {
         return "mostre em tabela";
@@ -112,6 +114,20 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
           id: "stock-branch",
           label: "Estoque da filial",
           query: `qual o estoque total da filial ${value}?`,
+        },
+      );
+      break;
+    case "warehouse":
+      actions.push(
+        {
+          id: "filter-warehouse",
+          label: "Filtrar neste armazém",
+          query: `filtre pelo armazém ${value}`,
+        },
+        {
+          id: "stock-warehouse",
+          label: "Estoque do armazém",
+          query: `qual o estoque do armazém ${value}?`,
         },
       );
       break;

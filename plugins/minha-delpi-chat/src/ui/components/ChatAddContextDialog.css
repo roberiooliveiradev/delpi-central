@@ -1,0 +1,95 @@
+.mdc-chat-add-context-backdrop {
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: color-mix(in srgb, #020617 55%, transparent);
+}
+
+.mdc-chat-add-context {
+  width: min(100%, 24rem);
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  border-radius: 1rem;
+  background: var(--mdc-card-bg);
+  box-shadow: var(--mdc-shadow-lg, 0 18px 48px color-mix(in srgb, #000 28%, transparent));
+}
+
+.mdc-chat-add-context__header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--mdc-text);
+}
+
+.mdc-chat-add-context__header p {
+  margin: 0.35rem 0 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.mdc-chat-add-context__form {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.mdc-chat-add-context__field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.mdc-chat-add-context__field span {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-add-context__field input,
+.mdc-chat-add-context__field select {
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
+  color: var(--mdc-text);
+  font-size: 0.92rem;
+}
+
+.mdc-chat-add-context__field input:focus,
+.mdc-chat-add-context__field select:focus {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.mdc-chat-add-context__error {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #ef4444;
+}
+
+.mdc-chat-add-context__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.mdc-chat-add-context__secondary,
+.mdc-chat-add-context__primary {
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.mdc-chat-add-context__secondary {
+  border: 1px solid var(--mdc-card-border);
+  background: transparent;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-add-context__primary {
+  border: none;
+  background: var(--mdc-primary);
+  color: #fff;
+}

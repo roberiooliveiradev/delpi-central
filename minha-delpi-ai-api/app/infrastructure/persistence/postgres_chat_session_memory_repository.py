@@ -11,7 +11,7 @@ from app.infrastructure.db.models.chat_session_memory_model import AiChatSession
 
 
 class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
-    _ENTITY_KEYS = frozenset({"productCode", "branch", "period"})
+    _ENTITY_KEYS = frozenset({"productCode", "branch", "warehouse", "period"})
     _BEHAVIOR_KEYS = frozenset(
         {
             "responseFormat",
@@ -123,6 +123,48 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         )
         self._set_clear_marker(session_id, now=now)
         return int(updated or 0)
+
+    def upsert_entity(
+        self,
+        session_id: UUID,
+        key: str,
+        value: str,
+        *,
+        source_message_id: UUID | None = None,
+    ) -> None:
+        if key not in self._ENTITY_KEYS or not str(value or "").strip():
+            return
+
+        now = datetime.now(timezone.utc)
+        self._clear_clear_marker(session_id, now=now)
+        self._upsert_row(
+            session_id=session_id,
+            memory_type="entity",
+            key=key,
+            value_json=str(value).strip(),
+            source_message_id=source_message_id,
+            expires_at=now + timedelta(days=30),
+            now=now,
+        )
+
+    def deactivate_entity(self, session_id: UUID, key: str) -> bool:
+        if key not in self._ENTITY_KEYS:
+            return False
+
+        now = datetime.now(timezone.utc)
+        updated = (
+            AiChatSessionMemoryModel.query.filter(
+                AiChatSessionMemoryModel.session_id == session_id,
+                AiChatSessionMemoryModel.memory_type == "entity",
+                AiChatSessionMemoryModel.key == key,
+                AiChatSessionMemoryModel.active.is_(True),
+            )
+            .update(
+                {"active": False, "updated_at": now},
+                synchronize_session=False,
+            )
+        )
+        return int(updated or 0) > 0
 
     def expire_stale(self, *, older_than_days: int = 30) -> int:
         cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)

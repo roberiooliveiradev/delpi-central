@@ -3,7 +3,6 @@
   flex: 0 1 auto;
   min-width: 0;
   max-width: 100%;
-  align-self: end;
 }
 
 .mdc-chat-response-mode__trigger {
@@ -11,8 +10,10 @@
   align-items: center;
   gap: 0.4rem;
   max-width: min(100%, 12.5rem);
-  min-height: 2.25rem;
-  padding: 0.28rem 0.7rem 0.28rem 0.55rem;
+  height: var(--mdc-composer-control-h, 2.35rem);
+  min-height: var(--mdc-composer-control-h, 2.35rem);
+  padding: 0 0.7rem 0 0.55rem;
+  box-sizing: border-box;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
   border-radius: 999px;
   background: color-mix(in srgb, var(--mdc-text) 8%, transparent);

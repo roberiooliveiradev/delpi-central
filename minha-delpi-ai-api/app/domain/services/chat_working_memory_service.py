@@ -348,6 +348,17 @@ class ChatWorkingMemoryService:
                 }
             )
 
+        warehouse = str(entities.get("warehouse") or "").strip()
+
+        if warehouse:
+            chips.append(
+                {
+                    "label": f"Armazém {warehouse}",
+                    "kind": "warehouse",
+                    "value": warehouse,
+                }
+            )
+
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
         )

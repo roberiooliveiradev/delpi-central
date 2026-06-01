@@ -6,6 +6,7 @@ import {
   Layout,
   MessageSquare,
   Package,
+  Plus,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -32,6 +33,7 @@ type ChatContextBarProps = {
   onClearContext?: () => void;
   onDismissChip?: (chip: ChatContextChip) => void;
   onChipAction?: (query: string) => void;
+  onAddContext?: () => void;
 };
 
 const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
@@ -58,18 +60,20 @@ export function ChatContextBar({
   onClearContext,
   onDismissChip,
   onChipAction,
+  onAddContext,
 }: ChatContextBarProps) {
   const [chipMenu, setChipMenu] = useState<{
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildContextChipMenuActions>;
   } | null>(null);
 
-  if (!chips.length) {
+  if (!chips.length && !onAddContext) {
     return null;
   }
 
   const interactive = Boolean(onChipAction);
   const showClear = Boolean(onClearContext) && chips.length > 0;
+  const showAdd = Boolean(onAddContext);
 
   function openChipMenu(chip: ChatContextChip, clientX: number, clientY: number) {
     if (!onChipAction) {
@@ -191,6 +195,18 @@ export function ChatContextBar({
           aria-label="Limpar todo o contexto"
         >
           <X size={14} aria-hidden="true" />
+        </button>
+      ) : null}
+
+      {showAdd ? (
+        <button
+          type="button"
+          className="mdc-chat-context-bar__add"
+          onClick={onAddContext}
+          title="Adicionar filial, armazém ou produto ao contexto"
+          aria-label="Adicionar ao contexto"
+        >
+          <Plus size={14} aria-hidden="true" />
         </button>
       ) : null}
 

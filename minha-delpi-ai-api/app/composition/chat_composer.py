@@ -80,6 +80,9 @@ from app.application.services.chat_session_memory_service import ChatSessionMemo
 from app.application.use_cases.clear_chat_session_memory_use_case import (
     ClearChatSessionMemoryUseCase,
 )
+from app.application.use_cases.chat_session_memory_pins_use_case import (
+    ChatSessionMemoryPinsUseCase,
+)
 from app.application.use_cases.send_chat_message_use_case import SendChatMessageUseCase
 from app.application.use_cases.stream_chat_message_use_case import StreamChatMessageUseCase
 from app.infrastructure.persistence.postgres_chat_session_memory_repository import (
@@ -241,6 +244,13 @@ def make_chat_session_memory_service() -> ChatSessionMemoryService:
 
 def make_clear_chat_session_memory_use_case() -> ClearChatSessionMemoryUseCase:
     return ClearChatSessionMemoryUseCase(
+        PostgresChatSessionRepository(),
+        PostgresChatSessionMemoryRepository(),
+    )
+
+
+def make_chat_session_memory_pins_use_case() -> ChatSessionMemoryPinsUseCase:
+    return ChatSessionMemoryPinsUseCase(
         PostgresChatSessionRepository(),
         PostgresChatSessionMemoryRepository(),
     )

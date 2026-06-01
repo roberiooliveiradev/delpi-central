@@ -105,6 +105,12 @@ export function contextChipKindClass(kind: string): string {
   return safe ? `mdc-chat-context-bar__chip--${safe}` : "mdc-chat-context-bar__chip--generic";
 }
 
+const PINNABLE_CONTEXT_KINDS = new Set(["branch", "warehouse", "product"]);
+
+export function isPinnableContextKind(kind: string): boolean {
+  return PINNABLE_CONTEXT_KINDS.has(String(kind || "").trim().toLowerCase());
+}
+
 export function buildActiveContextSummary(chips: ChatContextChip[]): string | null {
   if (!chips.length) {
     return null;
