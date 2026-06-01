@@ -385,7 +385,9 @@ export function ChatInput({
           "mdc-chat-input__box",
           selectedAgent ? "mdc-chat-input__box--with-agent" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
-          stackedComposer ? "mdc-chat-input__box--stacked-composer" : "",
+          stackedComposer
+            ? "mdc-chat-input__box--stacked-composer mdc-chat-input__box--with-response-mode"
+            : "",
         ]
           .filter(Boolean)
           .join(" ")}

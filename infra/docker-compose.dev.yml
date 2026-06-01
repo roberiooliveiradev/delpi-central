@@ -404,6 +404,8 @@ services:
 
     volumes:
       - ../plugins/minha-delpi-chat:/app
+      # nginx serve o build estático da imagem; em dev montamos dist do host para refletir `npm run build` sem rebuild da imagem
+      - ../plugins/minha-delpi-chat/dist:/usr/share/nginx/html:ro
       - /app/node_modules
 
     networks:
