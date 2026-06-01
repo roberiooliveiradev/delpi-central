@@ -445,29 +445,6 @@
 }
 
 @media (max-width: 760px) {
-  .mdc-chat-agent-builder__topbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 0.35rem 0.5rem;
-  }
-
-  .mdc-chat-agent-builder__topbar-title {
-    justify-self: center;
-    justify-items: center;
-    text-align: center;
-  }
-
-  .mdc-chat-agent-builder__topbar-meta {
-    display: none;
-  }
-
-  .mdc-chat-agent-builder__topbar-actions {
-    justify-self: end;
-    justify-content: flex-end;
-    max-width: none;
-  }
-
   .mdc-chat-agent-builder__grid,
   .mdc-chat-agent-builder__grid--three,
   .mdc-chat-agent-builder__preview-icebreakers {
@@ -1586,19 +1563,102 @@
   }
 }
 
-@media (max-width: 480px) {
+/* Mobile — topbar empilhada; ações em faixa horizontal rolável */
+@media (max-width: 767px) {
   .mdc-chat-agent-builder__topbar {
-    min-height: 2.75rem;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    row-gap: 0.45rem;
+    column-gap: 0.45rem;
+    padding: 0.45rem 0.65rem 0.55rem;
+    min-height: 0;
   }
 
-  .mdc-chat-agent-builder__topbar-title strong {
-    font-size: 0.92rem;
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__start {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
   }
 
-  .mdc-chat-agent-builder__panel {
-    padding-inline: 0.65rem;
+  .mdc-chat-agent-builder__topbar-title,
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__title {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: stretch;
+    justify-items: start;
+    text-align: left;
+    max-width: none;
   }
 
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__title > span {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .mdc-chat-agent-builder__topbar-meta {
+    display: block;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.35;
+  }
+
+  .mdc-chat-agent-builder__topbar-actions,
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    width: 100%;
+    max-width: none;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.05rem;
+  }
+
+  .mdc-chat-agent-builder__topbar-actions::-webkit-scrollbar,
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mdc-chat-agent-builder__topbar-actions .mdc-chat-ws-toolbar-btn,
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions .mdc-chat-ws-toolbar-btn {
+    flex: 0 0 auto;
+    width: 2.25rem;
+    min-width: 2.25rem;
+    max-width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .mdc-chat-agent-builder__switch {
+    width: 100%;
+    max-width: none;
+  }
+
+  .mdc-chat-agent-builder__hero {
+    padding-inline: 0.15rem;
+  }
+
+  .mdc-chat-agent-builder__hero-name {
+    font-size: clamp(1.25rem, 6vw, 1.55rem);
+  }
+
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split)
+    .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-builder__preview {
+    max-height: min(40vh, 18rem);
+  }
+}
+
+@media (max-width: 480px) {
   .mdc-chat-agent-builder__icebreaker-row {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
@@ -1640,5 +1700,42 @@
     min-height: 3.2rem;
     border-radius: 0.85rem;
     padding-inline: 0.85rem;
+  }
+
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__back {
+    min-height: 2.1rem;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__title > span {
+    font-size: 0.88rem;
+  }
+
+  .mdc-chat-agent-builder__topbar-meta {
+    font-size: 0.66rem;
+  }
+
+  .mdc-chat-agent-builder__panel {
+    padding-inline: 0.55rem;
+    gap: 1rem;
+  }
+
+  .mdc-chat-agent-builder__layout:not(.mdc-chat-agent-builder__layout--split)
+    .mdc-chat-agent-builder__preview,
+  .mdc-chat-agent-builder__preview {
+    max-height: min(36vh, 15rem);
+    padding: 0.65rem 0.55rem 0.85rem;
+  }
+
+  .mdc-chat-agent-builder__preview-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .mdc-chat-agent-builder__section-title h2 {
+    font-size: 0.94rem;
+  }
+
+  .mdc-chat-agent-builder__section-title p {
+    font-size: 0.8rem;
   }
 }

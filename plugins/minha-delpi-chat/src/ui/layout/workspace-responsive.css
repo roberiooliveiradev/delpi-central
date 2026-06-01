@@ -83,6 +83,11 @@
 
   .mdc-chat-ws-topbar__actions {
     justify-self: end;
+    flex-wrap: wrap;
+  }
+
+  .mdc-chat-agent-builder__topbar .mdc-chat-ws-topbar__actions,
+  .mdc-chat-agent-builder__topbar-actions {
     flex-wrap: nowrap;
   }
 
