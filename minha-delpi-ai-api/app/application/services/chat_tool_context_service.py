@@ -1390,9 +1390,12 @@ class ChatToolContextService:
                 metadata["tablePresentation"] = None
 
     _FORMAT_TABLE_HINTS = (
-        "em tabela", "formato tabela", "em formato de tabela",
+        "em tabela", "em uma tabela", "numa tabela", "na tabela",
+        "formato tabela", "em formato de tabela",
         "mostra em tabela", "mostre em tabela", "como tabela",
         "exibir tabela", "exiba em tabela",
+        "coloque em tabela", "coloque em uma tabela",
+        "põe em tabela", "poe em tabela", "ponha em tabela",
         "tabela completa", "lista em tabela", "listagem em tabela",
         "completa em tabela", "completo em tabela",
     )

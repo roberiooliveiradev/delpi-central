@@ -12,6 +12,9 @@ from app.domain.services.chat_pagination_consolidation_service import (
 class ChatPresentationFormatRefinementService:
     _FORMAT_TABLE_HINTS = (
         "em tabela",
+        "em uma tabela",
+        "numa tabela",
+        "na tabela",
         "formato tabela",
         "em formato de tabela",
         "mostra em tabela",
@@ -21,6 +24,31 @@ class ChatPresentationFormatRefinementService:
         "ver em tabela",
         "exibir tabela",
         "exiba em tabela",
+        "coloque em tabela",
+        "coloque em uma tabela",
+        "põe em tabela",
+        "poe em tabela",
+        "ponha em tabela",
+    )
+    _IMPERATIVE_FORMAT_VERBS = (
+        "coloque",
+        "coloca",
+        "mostre",
+        "mostra",
+        "exiba",
+        "exibe",
+        "põe",
+        "poe",
+        "ponha",
+        "transforme",
+        "converta",
+        "passe",
+        "mude",
+        "troque",
+        "gere",
+        "gera",
+        "apresente",
+        "apresenta",
     )
     _FORMAT_CHART_HINTS = (
         "em gráfico",
@@ -104,7 +132,21 @@ class ChatPresentationFormatRefinementService:
         ):
             return True
 
+        if has_format and cls._has_imperative_format_intent(lowered):
+            return True
+
         return False
+
+    @classmethod
+    def _has_imperative_format_intent(cls, lowered: str) -> bool:
+        if not any(verb in lowered for verb in cls._IMPERATIVE_FORMAT_VERBS):
+            return False
+
+        return any(hint in lowered for hint in cls._FORMAT_TABLE_HINTS) or any(
+            hint in lowered for hint in cls._FORMAT_CHART_HINTS
+        ) or any(hint in lowered for hint in cls._FORMAT_TEXT_HINTS) or any(
+            hint in lowered for hint in cls._FORMAT_TREE_HINTS
+        )
 
     @classmethod
     def detect_requested_format(cls, message: str) -> str | None:
@@ -185,26 +227,29 @@ class ChatPresentationFormatRefinementService:
         if isinstance(cached, dict) and cached.get("items"):
             return {"data": cached}
 
-        presentation = operation.get("metadata") or {}
-        table_pres = presentation.get("tablePresentation")
-        primary = presentation.get("presentation")
+        meta = operation.get("metadata") or {}
 
-        for candidate in (table_pres, primary):
+        for candidate in (
+            meta.get("tablePresentation"),
+            meta.get("presentation"),
+            meta.get("chartPresentation"),
+        ):
             if not isinstance(candidate, dict):
                 continue
 
-            rows = candidate.get("rows")
+            if candidate.get("type") == "table":
+                rows = candidate.get("rows")
 
-            if isinstance(rows, list) and rows:
-                return {
-                    "data": {
-                        "items": rows,
-                        "total": len(rows),
-                        "page": 1,
-                        "page_size": len(rows),
-                        "total_pages": 1,
+                if isinstance(rows, list) and rows:
+                    return {
+                        "data": {
+                            "items": rows,
+                            "total": len(rows),
+                            "page": 1,
+                            "page_size": len(rows),
+                            "total_pages": 1,
+                        }
                     }
-                }
 
         return None
 

@@ -56,6 +56,18 @@ def test_looks_like_format_refinement_with_same_data_phrase():
     )
 
 
+def test_looks_like_format_refinement_coloque_em_uma_tabela():
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
+        "coloque em uma tabela",
+    )
+
+
+def test_intent_router_skips_presentation_task_for_coloque_em_tabela():
+    result = ChatIntentRouterService.classify("coloque em uma tabela")
+
+    assert result.intent != "presentation_task"
+
+
 def test_collect_last_successful_operation_skips_system_tables():
     history = _STOCK_HISTORY + [
         {

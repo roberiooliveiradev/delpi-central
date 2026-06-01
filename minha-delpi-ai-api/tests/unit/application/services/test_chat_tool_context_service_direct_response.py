@@ -658,3 +658,73 @@ def test_build_context_format_refinement_without_system_tables_route():
     assert result.get("skipRag") is True
     assert "/system/tables" not in str(metadata.get("path") or "")
 
+
+def test_build_context_coloque_em_uma_tabela_without_system_tables_route():
+    execute_tool = _StockFormatRefinementExecuteToolUseCase()
+    service = ChatToolContextService(
+        tool_selection_service=ToolSelectionService(),
+        execute_tool_use_case=execute_tool,
+        external_action_selection_service=_SystemTableSelectionService(),
+    )
+    stock_rows = [
+        {
+            "branch": "01",
+            "warehouse": "01",
+            "current_quantity": 160242,
+        }
+    ]
+    previous_messages = [
+        {"role": "user", "content": "estoque do produto 10080077"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"productCode": "10080077"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080077/stock",
+                            "actionId": "stock-action",
+                            "preferredFormat": "chart",
+                            "availableFormats": ["text", "table", "chart"],
+                            "presentation": {
+                                "type": "chart",
+                                "title": "Estoque",
+                                "data": [{"name": "01/01", "Qtd. atual": 160242}],
+                            },
+                            "tablePresentation": {
+                                "type": "table",
+                                "title": "Estoque",
+                                "columns": [
+                                    {"key": "branch", "label": "Filial"},
+                                    {"key": "current_quantity", "label": "Qtd. atual"},
+                                ],
+                                "rows": stock_rows,
+                            },
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    result = service.build_context(
+        user_id="user-1",
+        access_token="token",
+        message="coloque em uma tabela",
+        previous_messages=previous_messages,
+        allowed_action_ids=["stock-action", "system-tables"],
+    )
+
+    assert execute_tool.calls == 0
+    metadata = result["toolCalls"][0]["metadata"]
+    assert metadata.get("preferredFormat") == "table"
+    assert metadata.get("presentation", {}).get("type") == "table"
+    assert len(metadata.get("presentation", {}).get("rows") or []) == 1
+    assert "/system/tables" not in str(metadata.get("path") or "")
+
