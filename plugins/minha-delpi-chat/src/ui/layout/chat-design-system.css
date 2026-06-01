@@ -33,6 +33,10 @@
   align-self: center;
 }
 
+.mdc-chat-empty-composer__column > .mdc-chat-input {
+  flex: 0 0 auto;
+}
+
 .mdc-chat-empty-composer__column--project {
   flex: 1 1 auto;
   min-height: 0;
@@ -49,6 +53,7 @@
   flex: 1 1 auto;
   flex-direction: column;
   align-items: stretch;
+  justify-content: center;
   gap: var(--mdc-space-4);
   width: 100%;
   min-height: 0;
@@ -57,9 +62,24 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  padding-top: clamp(1rem, 2.5vh, 1.75rem);
-  padding-bottom: var(--mdc-space-2);
+  padding-block: clamp(0.75rem, 2vh, 1.25rem);
   scrollbar-gutter: stable;
+}
+
+.mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
+  justify-content: flex-start;
+  padding-top: clamp(0.5rem, 1.5vh, 1rem);
+  padding-bottom: var(--mdc-space-2);
+}
+
+@supports (justify-content: safe center) {
+  .mdc-chat-empty-composer__scroll {
+    justify-content: safe center;
+  }
+
+  .mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
+    justify-content: flex-start;
+  }
 }
 
 .mdc-chat-empty-composer__scroll > .mdc-chat-empty-state,
@@ -222,7 +242,12 @@
 
   .mdc-chat-empty-composer__scroll {
     gap: var(--mdc-space-3);
-    padding-top: clamp(0.5rem, 1.25vh, 0.85rem);
+    padding-block: clamp(0.5rem, 1.25vh, 0.85rem);
+  }
+
+  .mdc-chat-empty-composer__column--project .mdc-chat-empty-composer__scroll {
+    padding-top: clamp(0.35rem, 1vh, 0.65rem);
+    padding-bottom: var(--mdc-space-2);
   }
 
   .mdc-chat-empty-composer .mdc-chat-empty-state {
