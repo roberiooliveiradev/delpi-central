@@ -76,7 +76,7 @@
   "presentationQueries": {
     "Exportar CSV": "exporte a última tabela em CSV",
     "Gerar gráfico": "gere um gráfico com os dados acima",
-    "Ver como tabela": "mostre os dados acima em tabela",
+    "Ver como tabela": "mostre o último resultado em tabela",
     "Baixar PNG": "exporte o gráfico acima como imagem",
     "Ver estoque": "qual o estoque do produto {{productCode}}?",
     "Onde é usado?": "onde o produto {{productCode}} é usado?",

@@ -348,6 +348,26 @@ class ChatToolContextService:
                 reason="Consolidação completa da consulta paginada.",
             )
 
+        format_refinement = paginated_service.fetch_format_refinement_from_history(
+            user_id=user_id,
+            access_token=access_token,
+            message=raw_message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )
+
+        if format_refinement:
+            merged_data, merged_metadata, arguments, _continue_prompt = format_refinement
+            return self._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
+                previous_messages=previous_messages,
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=None,
+                reason="Reapresentação do último resultado no formato solicitado.",
+            )
+
         native_meta = {"used": False, "providerSupports": False}
         native_selections: list[dict] = []
 

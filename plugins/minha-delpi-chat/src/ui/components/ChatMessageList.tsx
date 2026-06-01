@@ -1272,14 +1272,6 @@ export function ChatMessageList({
                 {!shouldShowActionResults(displayContent, messageToolCalls) ? null : (
                   <ChatActionResults toolCalls={messageToolCalls} />
                 )}
-                <ChatAdminDebugPanel
-                  debug={
-                    (message.metadata?.adminDebug as Record<
-                      string,
-                      unknown
-                    > | null) ?? null
-                  }
-                />
                 <ChatTrustBadges
                   signals={
                     (message.metadata?.trustSignals as
@@ -1684,6 +1676,14 @@ export function ChatMessageList({
                   }}
                   onDismissReasons={() => setFeedbackReasonPickerFor(null)}
                 />
+                <ChatAdminDebugPanel
+                  debug={
+                    (message.metadata?.adminDebug as Record<
+                      string,
+                      unknown
+                    > | null) ?? null
+                  }
+                />
               </>
             ) : null}
           </div>
@@ -1839,14 +1839,14 @@ export function ChatMessageList({
                   <ChatActionResults toolCalls={streamingToolCalls} />
                 </div>
               ) : null}
-              <ChatAdminDebugPanel
-                debug={(streamingAdminDebug as Record<string, unknown> | null) ?? null}
-              />
               {filterVisibleChatSources(streamingSources).length > 0 ? (
                 <div className="mdc-chat-stream-extras is-visible">
                   <ChatSources sources={filterVisibleChatSources(streamingSources)} />
                 </div>
               ) : null}
+              <ChatAdminDebugPanel
+                debug={(streamingAdminDebug as Record<string, unknown> | null) ?? null}
+              />
             </div>
           </article>
         ) : null}

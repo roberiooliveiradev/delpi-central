@@ -146,6 +146,43 @@ describe("shouldSuppressMarkdownForPresentation", () => {
       }),
     ).toBe(false);
   });
+
+  it("suprime markdown duplicado com painel multi-formato (estoque em texto)", () => {
+    const multiFormatCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          availableFormats: ["text", "table", "chart"],
+          preferredFormat: "text",
+          presentation: {
+            type: "markdown",
+            markdown: "### Estoque\n\nFilial 01, armazém 01: atual 160242.",
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Estoque",
+            columns: [{ key: "branch", label: "Filial" }],
+            rows: [{ branch: "01" }],
+          },
+          chartPresentation: {
+            type: "chart",
+            title: "Estoque",
+            chartType: "bar",
+            config: { xAxis: "name", yAxis: ["Qtd. atual"], legend: true },
+            data: [{ name: "Fil.01/01", "Qtd. atual": 160242 }],
+          },
+        },
+      },
+    ]);
+    const pair = getPresentationPairFromToolCalls(multiFormatCalls);
+    const longProse =
+      "Filial 01, armazém 01: atual 160242, disponível 160242. " +
+      "Filial 02, armazém 99: atual 8436, disponível -35883.";
+
+    expect(
+      shouldSuppressMarkdownForPresentation(longProse, pair, multiFormatCalls),
+    ).toBe(true);
+  });
 });
 
 describe("tablePresentationToMarkdown", () => {

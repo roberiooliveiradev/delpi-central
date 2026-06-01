@@ -1084,11 +1084,21 @@ export function shouldSuppressMarkdownForPresentation(
   pair: PresentationPair,
   toolCalls?: ChatToolCall[],
 ): boolean {
+  const trimmed = String(content || "").trim();
+
+  if (hasMultiFormatPresentation(toolCalls)) {
+    if (!trimmed) {
+      return true;
+    }
+
+    if (isShortPresentationCaption(trimmed, toolCalls)) {
+      return true;
+    }
+  }
+
   if (!hasRichPresentation(pair)) {
     return false;
   }
-
-  const trimmed = String(content || "").trim();
 
   if (shouldStackPresentationBlocks(toolCalls, pair)) {
     if (!trimmed) {

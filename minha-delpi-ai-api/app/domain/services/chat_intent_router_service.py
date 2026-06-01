@@ -525,7 +525,13 @@ class ChatIntentRouterService:
                 reason="canvas_request",
             )
 
-        if cls._looks_presentation(normalized):
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        if cls._looks_presentation(normalized) and not (
+            ChatPresentationFormatRefinementService.looks_like_format_refinement(normalized)
+        ):
             return cls._with_decision(
                 IntentRouteResult(
                     intent="presentation_task",

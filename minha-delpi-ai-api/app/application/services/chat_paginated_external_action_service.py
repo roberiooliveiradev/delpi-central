@@ -121,6 +121,75 @@ class ChatPaginatedExternalActionService:
 
         return merged_data, merged_metadata, arguments, continue_prompt
 
+    def fetch_format_refinement_from_history(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        previous_messages: list | None,
+        on_stream_activity=None,
+    ) -> tuple[object, dict, dict, str | None] | None:
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
+
+        if not ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return None
+
+        operation = ChatPresentationFormatRefinementService.collect_last_successful_operation(
+            previous_messages,
+        )
+
+        if not operation:
+            return None
+
+        action_id = str(operation.get("actionId") or "").strip()
+        parameters = dict(operation.get("parameters") or {})
+        path = str(operation.get("path") or "")
+
+        if not action_id and not path:
+            return None
+
+        payload = ChatPresentationFormatRefinementService.resolve_payload(
+            previous_messages,
+            operation=operation,
+        )
+
+        if payload is None and action_id:
+            try:
+                result = self.execute_tool_use_case.execute(
+                    ExecuteToolRequest(
+                        user_id=user_id,
+                        access_token=access_token,
+                        tool_name="execute_external_action",
+                        arguments={
+                            "actionId": action_id,
+                            "parameters": parameters,
+                        },
+                    )
+                )
+            except Exception:
+                return None
+
+            if not (result.metadata or {}).get("ok"):
+                return None
+
+            payload = result.data
+            base_metadata = dict(result.metadata or {})
+        else:
+            base_metadata = dict(operation.get("metadata") or {})
+
+        if payload is None:
+            return None
+
+        arguments = {
+            "actionId": action_id,
+            "parameters": parameters,
+        }
+
+        return payload, base_metadata, arguments, None
+
     def maybe_consolidate(
         self,
         *,
