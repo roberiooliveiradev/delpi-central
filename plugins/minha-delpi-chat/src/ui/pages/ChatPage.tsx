@@ -1987,56 +1987,60 @@ export function ChatPage({
                 />
               ) : (
                 <div className="mdc-chat-empty-composer__column">
-                  {activeAgentPage ? (
-                    <ChatAgentHome
-                      agent={activeAgentPage}
-                      onUseSuggestion={(query) => {
-                        void handleAgentIcebreaker(query);
-                      }}
-                      canManageAgent={canManageAgents}
-                      onManageAgent={() => {
-                        if (!canManageAgents || !activeAgentPage?.id) {
-                          return;
-                        }
+                  <div className="mdc-chat-empty-composer__scroll">
+                    {activeAgentPage ? (
+                      <ChatAgentHome
+                        agent={activeAgentPage}
+                        onUseSuggestion={(query) => {
+                          void handleAgentIcebreaker(query);
+                        }}
+                        canManageAgent={canManageAgents}
+                        onManageAgent={() => {
+                          if (!canManageAgents || !activeAgentPage?.id) {
+                            return;
+                          }
 
-                        setAgentEditRequest({
-                          id: activeAgentPage.id,
-                          requestKey: Date.now(),
-                        });
-                        setCurrentView("agents");
-                        navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
-                      }}
-                    />
-                  ) : (
-                    <ChatEmptyState
-                      displayName={userDisplayName}
-                      contextualHighlights={homeHighlights}
-                      onboarding={homeOnboarding}
-                      catalogLoading={homeCatalogLoading}
-                      catalogError={homeCatalogError}
-                      selectedProfileId={onboardingProfileId}
-                      onSelectProfile={handleSelectOnboardingProfile}
-                      onUseStarter={handleHomeStarter}
-                      onStartTour={
-                        canOfferOnboardingTour
-                          ? () => setOnboardingTourOpen(true)
-                          : undefined
-                      }
-                    />
-                  )}
+                          setAgentEditRequest({
+                            id: activeAgentPage.id,
+                            requestKey: Date.now(),
+                          });
+                          setCurrentView("agents");
+                          navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <ChatEmptyState
+                          displayName={userDisplayName}
+                          contextualHighlights={homeHighlights}
+                          onboarding={homeOnboarding}
+                          catalogLoading={homeCatalogLoading}
+                          catalogError={homeCatalogError}
+                          selectedProfileId={onboardingProfileId}
+                          onSelectProfile={handleSelectOnboardingProfile}
+                          onUseStarter={handleHomeStarter}
+                          onStartTour={
+                            canOfferOnboardingTour
+                              ? () => setOnboardingTourOpen(true)
+                              : undefined
+                          }
+                        />
 
-                  {onboardingTourOpen && homeTourSteps.length > 0 ? (
-                    <ChatOnboardingTour
-                      autoStart
-                      steps={homeTourSteps}
-                      onDemoQuery={setDraft}
-                      onPlusMenuOpen={setTourPlusMenuOpen}
-                      onDismiss={() => {
-                        setOnboardingTourOpen(false);
-                        setTourPlusMenuOpen(null);
-                      }}
-                    />
-                  ) : null}
+                        {onboardingTourOpen && homeTourSteps.length > 0 ? (
+                          <ChatOnboardingTour
+                            autoStart
+                            steps={homeTourSteps}
+                            onDemoQuery={setDraft}
+                            onPlusMenuOpen={setTourPlusMenuOpen}
+                            onDismiss={() => {
+                              setOnboardingTourOpen(false);
+                              setTourPlusMenuOpen(null);
+                            }}
+                          />
+                        ) : null}
+                      </>
+                    )}
+                  </div>
 
                   <ChatInput
                     value={draft}

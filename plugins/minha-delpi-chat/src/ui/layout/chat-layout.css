@@ -22,10 +22,21 @@
 }
 
 .mdc-chat-main {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   height: 100%;
+}
+
+.mdc-chat-main > .mdc-chat-context-topbar,
+.mdc-chat-main > .mdc-chat-alert {
+  flex: 0 0 auto;
+}
+
+.mdc-chat-main > .mdc-chat-empty-composer,
+.mdc-chat-main > .mdc-chat-conversation {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .mdc-chat-sidebar-backdrop {
@@ -197,13 +208,10 @@
   }
 
   .minha-delpi-chat--narrow .mdc-chat-empty-composer {
-    align-content: start;
-    justify-items: center;
-    overflow-y: auto;
+    justify-items: stretch;
     padding: var(--mdc-space-3) max(0.75rem, env(safe-area-inset-right, 0px))
-      calc(var(--mdc-space-5) + env(safe-area-inset-bottom, 0px))
+      max(0.5rem, env(safe-area-inset-bottom, 0px))
       max(0.75rem, env(safe-area-inset-left, 0px));
-    gap: var(--mdc-space-4);
   }
 
   .minha-delpi-chat--narrow .mdc-chat-empty-composer__column {
