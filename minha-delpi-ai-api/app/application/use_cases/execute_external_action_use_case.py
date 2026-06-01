@@ -325,7 +325,54 @@ class ExecuteExternalActionUseCase:
             axis_user_message=user_message,
         )
 
+        self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
+
         return metadata
+
+    @staticmethod
+    def _normalize_eficiencia_fabril_titles(metadata: dict, path: str) -> None:
+        lowered = str(path or "").lower()
+
+        if "eficiencia-fabril" not in lowered and "eficiencia_fabril" not in lowered:
+            return
+
+        title = ExternalActionResultPresenter()._infer_items_title([], path) or "Eficiência fabril"
+        wrong_titles = {"Lista de LMPs", "LMPs", "Visualização dos dados"}
+
+        for key in ("tablePresentation", "chartPresentation", "textPresentation"):
+            presentation = metadata.get(key)
+
+            if not isinstance(presentation, dict):
+                continue
+
+            current = str(presentation.get("title") or "").strip()
+
+            if not current or current in wrong_titles:
+                presentation["title"] = title
+
+        dashboard = metadata.get("presentation")
+
+        if isinstance(dashboard, dict) and dashboard.get("type") == "dashboard":
+            for panel in dashboard.get("panels") or []:
+                if not isinstance(panel, dict):
+                    continue
+
+                for nested_key in ("presentation", "chartPresentation"):
+                    nested = panel.get(nested_key)
+
+                    if not isinstance(nested, dict):
+                        continue
+
+                    current = str(nested.get("title") or "").strip()
+
+                    if nested.get("type") in {"table", "chart"} and (
+                        not current or current in wrong_titles
+                    ):
+                        nested["title"] = (
+                            title
+                            if nested.get("type") == "chart"
+                            else panel.get("title") or "Itens do painel"
+                        )
 
     @staticmethod
     def _resolve_action_path(path: str, parameters: dict) -> str:

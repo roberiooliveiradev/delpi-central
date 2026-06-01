@@ -465,6 +465,11 @@ export type AdminPresentationSummary = {
   axisChangeCount: number;
   exportPngCount: number;
   categoryFilterCount: number;
+  switchToTableCount: number;
+  engagementRate: number;
+  viewSwitchRate: number;
+  axisChangeRate: number;
+  switchToTableRate: number;
   bySelected: Record<string, number>;
   byPresentationType: Record<string, number>;
   byChartType: Record<string, number>;
@@ -474,8 +479,12 @@ export type AdminPresentationSummary = {
   byFilterKey: Record<string, number>;
   topSelected: AdminPresentationLabelCount[];
   topEvents: AdminPresentationLabelCount[];
+  topViewTargets: AdminPresentationLabelCount[];
+  topAxisColumns: AdminPresentationLabelCount[];
+  topFilterKeys: AdminPresentationLabelCount[];
   recentImpressions: Record<string, unknown>[];
   recentEvents: Record<string, unknown>[];
+  alerts: string[];
 };
 
 export type AdminInteractivitySummary = {

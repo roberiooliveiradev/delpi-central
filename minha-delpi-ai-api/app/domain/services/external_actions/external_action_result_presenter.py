@@ -3697,6 +3697,15 @@ class ExternalActionResultPresenter:
             user_message=user_message,
         )
 
+        lowered_path = str(path or "").lower()
+
+        if chart_type == "scatter" and (
+            "eficiencia-fabril" in lowered_path or "eficiencia_fabril" in lowered_path
+        ):
+            if "filial" in string_keys:
+                chart_type = "bar"
+                label_key = "filial"
+
         config: dict = {
             "xAxis": label_key,
             "yAxis": chart_numeric_slice,
@@ -3733,13 +3742,26 @@ class ExternalActionResultPresenter:
 
         chart_title = self._infer_items_title(rows, path) or "Visualização dos dados"
 
-        return {
+        presentation = {
             "type": "chart",
             "title": chart_title,
             "chartType": chart_type,
-            "data": rows[:12],
+            "data": rows[:100],
             "config": config,
         }
+
+        from app.domain.services.chat_chart_data_aggregation_service import (
+            ChatChartDataAggregationService,
+        )
+
+        ChatChartDataAggregationService.apply_to_chart_presentation(presentation)
+
+        capped = presentation.get("data") or []
+
+        if isinstance(capped, list):
+            presentation["data"] = capped[:24]
+
+        return presentation
 
     def _try_heatmap_from_rows(
         self,

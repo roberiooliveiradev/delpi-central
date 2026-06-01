@@ -63,3 +63,51 @@ def test_aggregate_presentation_metrics():
     assert summary["eventsCount"] == 2
     assert summary["viewSwitchCount"] == 1
     assert summary["axisChangeCount"] == 1
+    assert summary["switchToTableCount"] == 0
+    assert summary["engagementRate"] == 2.0
+    assert summary["topViewTargets"] == [{"label": "chart", "count": 1}]
+    assert isinstance(summary["alerts"], list)
+
+
+def test_aggregate_alerts_high_view_switch_rate():
+    impressions = [
+        {
+            "loggedAt": "2026-06-01T12:00:00Z",
+            "snapshot": {"selected": "chart", "presentationType": "chart"},
+        }
+        for _ in range(10)
+    ]
+    events = [
+        {
+            "loggedAt": "2026-06-01T12:01:00Z",
+            "snapshot": {
+                "event": "presentation_view_switch",
+                "from": "chart",
+                "to": "table",
+            },
+        }
+        for _ in range(6)
+    ]
+
+    summary = ChatPresentationAdminMetricsService.aggregate(
+        impression_entries=impressions,
+        event_entries=events,
+        hours=168,
+        since_iso="2026-05-25T12:00:00Z",
+    )
+
+    assert summary["viewSwitchRate"] >= 0.45
+    assert any("troca de formato" in alert.lower() for alert in summary["alerts"])
+    assert any("tabela" in alert.lower() for alert in summary["alerts"])
+
+
+def test_aggregate_alerts_no_impressions():
+    summary = ChatPresentationAdminMetricsService.aggregate(
+        impression_entries=[],
+        event_entries=[],
+        hours=24,
+        since_iso="2026-05-31T12:00:00Z",
+    )
+
+    assert summary["alerts"]
+    assert "Nenhuma resposta" in summary["alerts"][0]

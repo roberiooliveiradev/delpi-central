@@ -655,20 +655,43 @@ export function getChartPresentationFromPair(
   return mergeChartPresentations(charts, tables);
 }
 
+function inferPresentationTitleFromToolPath(path: string): string | null {
+  const lowered = path.toLowerCase();
+
+  if (lowered.includes("eficiencia-fabril") || lowered.includes("eficiencia_fabril")) {
+    return "Eficiência fabril";
+  }
+
+  if (lowered.includes("/lmp")) {
+    return "Lista de LMPs";
+  }
+
+  return null;
+}
+
+const STALE_LMP_TITLE = "Lista de LMPs";
+
 export function getPresentationTitle(
   messageContent: string | null | undefined,
   toolCalls?: ChatToolCall[],
 ): string {
+  const pathTitle = inferPresentationTitleFromToolPath(getPathFromToolCalls(toolCalls ?? []));
   const textTitle = getTextPresentationTitleFromToolCalls(toolCalls);
 
-  if (textTitle) {
+  if (textTitle && (!pathTitle || textTitle !== STALE_LMP_TITLE)) {
     return textTitle;
   }
 
   const pair = getPresentationPairFromToolCalls(toolCalls);
 
   if (pair.primary?.type === "chart" && pair.primary.title) {
-    return pair.primary.title;
+    const chartTitle = pair.primary.title;
+
+    if (pathTitle && chartTitle === STALE_LMP_TITLE) {
+      return pathTitle;
+    }
+
+    return chartTitle;
   }
 
   const tree = getTreePresentationFromPair(pair);
@@ -680,7 +703,15 @@ export function getPresentationTitle(
   const table = getTablePresentationFromPair(pair);
 
   if (table?.title) {
+    if (pathTitle && table.title === STALE_LMP_TITLE) {
+      return pathTitle;
+    }
+
     return table.title;
+  }
+
+  if (pathTitle) {
+    return pathTitle;
   }
 
   return String(messageContent || "").trim() || "Resultado";

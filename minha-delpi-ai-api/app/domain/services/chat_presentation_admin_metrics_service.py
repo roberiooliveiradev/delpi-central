@@ -213,25 +213,61 @@ class ChatPresentationAdminMetricsService:
                 }
             )
 
-        top_selected = [
-            {"label": label, "count": count}
-            for label, count in by_selected.most_common(10)
-        ]
-        top_events = [
-            {"label": label, "count": count}
-            for label, count in by_event.most_common(10)
-        ]
+        view_switch_count = by_event.get("presentation_view_switch", 0)
+        axis_change_count = by_event.get("presentation_axis_change", 0)
+        switch_to_table_count = by_view_target.get("table", 0)
+
+        engagement_rate = (
+            round(events_count / responses_with_rich, 4) if responses_with_rich else 0.0
+        )
+        view_switch_rate = (
+            round(view_switch_count / responses_with_rich, 4) if responses_with_rich else 0.0
+        )
+        axis_change_rate = (
+            round(axis_change_count / responses_with_rich, 4) if responses_with_rich else 0.0
+        )
+        switch_to_table_rate = (
+            round(switch_to_table_count / view_switch_count, 4)
+            if view_switch_count
+            else 0.0
+        )
+
+        def _top(counter: Counter[str], limit: int = 8) -> list[dict[str, Any]]:
+            return [
+                {"label": label, "count": count}
+                for label, count in counter.most_common(limit)
+            ]
+
+        top_selected = _top(by_selected, 10)
+        top_events = _top(by_event, 10)
+
+        alerts = cls._build_alerts(
+            responses_with_rich=responses_with_rich,
+            events_count=events_count,
+            view_switch_count=view_switch_count,
+            axis_change_count=axis_change_count,
+            switch_to_table_count=switch_to_table_count,
+            engagement_rate=engagement_rate,
+            view_switch_rate=view_switch_rate,
+            axis_change_rate=axis_change_rate,
+            switch_to_table_rate=switch_to_table_rate,
+        )
 
         return {
             "windowHours": hours,
             "since": since_iso,
             "responsesWithRichPresentation": responses_with_rich,
             "eventsCount": events_count,
-            "viewSwitchCount": by_event.get("presentation_view_switch", 0),
+            "viewSwitchCount": view_switch_count,
             "chartTypeSwitchCount": by_event.get("presentation_chart_type_switch", 0),
-            "axisChangeCount": by_event.get("presentation_axis_change", 0),
+            "axisChangeCount": axis_change_count,
             "exportPngCount": by_event.get("presentation_chart_export_png", 0),
             "categoryFilterCount": by_event.get("presentation_category_filter", 0),
+            "switchToTableCount": switch_to_table_count,
+            "engagementRate": engagement_rate,
+            "viewSwitchRate": view_switch_rate,
+            "axisChangeRate": axis_change_rate,
+            "switchToTableRate": switch_to_table_rate,
             "bySelected": dict(by_selected),
             "byPresentationType": dict(by_presentation_type),
             "byChartType": dict(by_chart_type),
@@ -241,6 +277,65 @@ class ChatPresentationAdminMetricsService:
             "byFilterKey": dict(by_filter_key),
             "topSelected": top_selected,
             "topEvents": top_events,
+            "topViewTargets": _top(by_view_target),
+            "topAxisColumns": _top(by_axis_column),
+            "topFilterKeys": _top(by_filter_key),
             "recentImpressions": recent_impressions,
             "recentEvents": recent_events,
+            "alerts": alerts,
         }
+
+    @classmethod
+    def _build_alerts(
+        cls,
+        *,
+        responses_with_rich: int,
+        events_count: int,
+        view_switch_count: int,
+        axis_change_count: int,
+        switch_to_table_count: int,
+        engagement_rate: float,
+        view_switch_rate: float,
+        axis_change_rate: float,
+        switch_to_table_rate: float,
+    ) -> list[str]:
+        alerts: list[str] = []
+
+        if responses_with_rich == 0:
+            alerts.append(
+                "Nenhuma resposta com apresentação rica na janela — verificar auditoria "
+                "(`presentationMetrics` em chat.message.sent/streamed)."
+            )
+            return alerts
+
+        if responses_with_rich >= 5 and view_switch_rate >= 0.45:
+            alerts.append(
+                "Alta taxa de troca de formato (≥45% das respostas ricas) — revisar "
+                "`ChatPresentationDecisionService` e recomendações automáticas."
+            )
+
+        if view_switch_count >= 3 and switch_to_table_rate >= 0.5:
+            alerts.append(
+                "Usuários mudam frequentemente para tabela após o formato inicial — "
+                "priorizar tabela ou ajustar subtipo de gráfico (`ChatChartTypeSelectionService`)."
+            )
+
+        if responses_with_rich >= 5 and axis_change_rate >= 0.25:
+            alerts.append(
+                "Muitas alterações de eixo na janela — revisar "
+                "`ChatPresentationAxisPreferenceService` (ex.: eficiência no eixo Y)."
+            )
+
+        if responses_with_rich >= 10 and engagement_rate < 0.05 and events_count == 0:
+            alerts.append(
+                "Respostas ricas sem eventos de UI na janela — confirmar telemetria "
+                "`POST /chat/assistant/help-events` no MFE."
+            )
+
+        if events_count >= 8 and switch_to_table_count == 0 and view_switch_count >= 5:
+            alerts.append(
+                "Trocas de vista sem destino «tabela» — usuários alternam entre gráfico/texto; "
+                "revisar toggles e chips de formato."
+            )
+
+        return alerts

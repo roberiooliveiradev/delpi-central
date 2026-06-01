@@ -1608,8 +1608,16 @@ class ChatToolContextService:
                 ]
 
                 if humanized.get("titulo") or linhas:
+                    titulo = str(humanized.get("titulo") or "").strip()
+
+                    if titulo == "Lista de LMPs" and (
+                        "eficiencia-fabril" in path.lower()
+                        or "eficiencia_fabril" in path.lower()
+                    ):
+                        titulo = "Eficiência fabril"
+
                     safe_metadata["humanizedSummary"] = {
-                        "titulo": humanized.get("titulo"),
+                        "titulo": titulo,
                         "linhas": linhas,
                     }
 
@@ -1717,6 +1725,14 @@ class ChatToolContextService:
         if isinstance(coverage, dict) and coverage.get("message"):
             linhas.append(str(coverage["message"]))
 
+        titulo = str(humanized.get("titulo") or "").strip()
+        path_text = str(path or "").lower()
+
+        if titulo == "Lista de LMPs" and (
+            "eficiencia-fabril" in path_text or "eficiencia_fabril" in path_text
+        ):
+            titulo = "Eficiência fabril"
+
         payload = {
             "tool": "execute_external_action",
             "reason": reason,
@@ -1726,7 +1742,7 @@ class ChatToolContextService:
             "statusCode": status_code,
             "ok": ok,
             "humanizedSummary": {
-                "titulo": humanized.get("titulo"),
+                "titulo": titulo,
                 "linhas": linhas,
             },
         }

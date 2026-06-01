@@ -1,4 +1,5 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
+import { aggregateChartRowsByCategory } from "./chartCategoryAggregation";
 import { inferDefaultChartAxes, listCategoryColumns, listNumericColumns } from "./chartAxisSelection";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
@@ -28,20 +29,23 @@ export function buildChartPresentationFromTable(
     return null;
   }
 
-  const slice = rows.slice(0, 24);
   const chartType =
     categoryColumns.length >= 1 && numericColumns.length >= 1 ? "bar" : "scatter";
-  const axes = inferDefaultChartAxes(slice, chartType);
+  const axes = inferDefaultChartAxes(rows.slice(0, 24), chartType);
   const yAxis = [
     axes.yKey,
     ...numericColumns.filter((key) => key !== axes.yKey),
   ].slice(0, 3);
+  const chartRows =
+    chartType === "bar"
+      ? aggregateChartRowsByCategory(rows.slice(0, 100), axes.xKey, yAxis).slice(0, 24)
+      : rows.slice(0, 24);
 
   return {
     type: "chart",
     title: table.title || "Gráfico",
     chartType,
-    data: slice,
+    data: chartRows,
     config: {
       xAxis: axes.xKey,
       yAxis: yAxis,

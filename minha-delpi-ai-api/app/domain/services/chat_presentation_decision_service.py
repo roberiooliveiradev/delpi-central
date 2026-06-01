@@ -466,6 +466,8 @@ class ChatPresentationDecisionService:
         if recommendations:
             decision["recommendations"] = recommendations
 
+        cls._apply_chart_category_aggregation(metadata)
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))
@@ -511,6 +513,39 @@ class ChatPresentationDecisionService:
             },
             "intent": str(intent or "").strip() or None,
         }
+
+    @classmethod
+    def _apply_chart_category_aggregation(cls, metadata: dict[str, Any]) -> None:
+        from app.domain.services.chat_chart_data_aggregation_service import (
+            ChatChartDataAggregationService,
+        )
+
+        for key in ("chartPresentation", "presentation"):
+            presentation = metadata.get(key)
+
+            if not isinstance(presentation, dict) or presentation.get("type") != "chart":
+                continue
+
+            ChatChartDataAggregationService.apply_to_chart_presentation(presentation)
+
+        dashboard = metadata.get("presentation")
+
+        if not isinstance(dashboard, dict) or dashboard.get("type") != "dashboard":
+            return
+
+        for panel in dashboard.get("panels") or []:
+            if not isinstance(panel, dict):
+                continue
+
+            chart = panel.get("chartPresentation")
+
+            if isinstance(chart, dict) and chart.get("type") == "chart":
+                ChatChartDataAggregationService.apply_to_chart_presentation(chart)
+
+            presentation = panel.get("presentation")
+
+            if isinstance(presentation, dict) and presentation.get("type") == "chart":
+                ChatChartDataAggregationService.apply_to_chart_presentation(presentation)
 
     @classmethod
     def _apply_chart_policy_to_metadata(
@@ -566,6 +601,12 @@ class ChatPresentationDecisionService:
                 presentation,
                 user_message=user_message,
             )
+
+            from app.domain.services.chat_chart_data_aggregation_service import (
+                ChatChartDataAggregationService,
+            )
+
+            ChatChartDataAggregationService.apply_to_chart_presentation(presentation)
 
             notice = ChatPresentationChartPolicyService.fallback_notice(
                 chart_type,

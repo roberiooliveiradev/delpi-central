@@ -36,6 +36,7 @@ import {
   type ChartTopFilter,
   type ChartZoomWindow,
 } from "./chartPresentationUx";
+import { aggregateChartRowsByCategory } from "./chartCategoryAggregation";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
 import { exportChartElementToPng } from "./chartPngExport";
@@ -212,6 +213,10 @@ export function ChatRichChart({
       axes = compared.yAxes;
       axisKey = periodCompareSpec.categoryKey;
     } else {
+      if (!scatterMode && axisKey) {
+        rows = aggregateChartRowsByCategory(rows, axisKey, axes);
+      }
+
       rows = applyChartTopFilter(rows, axisKey, valueKey, topFilter);
 
       if (temporalAxis) {
@@ -226,6 +231,7 @@ export function ChatRichChart({
     periodCompareEnabled,
     periodCompareSpec,
     temporalAxis,
+    scatterMode,
     topFilter,
     valueKey,
     xAxis,
