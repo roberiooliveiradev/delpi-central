@@ -101,9 +101,9 @@ Smokes: `scripts/smoke_web_search_planning.py`, `scripts/smoke_web_search_routin
 | 2 — Planejamento | Concluída + heurística ABNT/gov e domínio inferido |
 | 3 — Avaliação de fonte | Concluída + `sourceQuality` por site |
 | 4 — Integração avançada | Concluída (anexo, ERP, lousa, chips) |
-| 5 — Segurança | Em evolução (`ChatWebSearchQuerySecurityService`, auditoria admin pendente) |
+| 5 — Segurança e governança | Concluída (`ChatWebSearchQuerySecurityService`, `webSearchMetrics`, feedback web, painel admin, `adminDebug.webSearch`) |
 
-Pendências Fase 5: métricas admin dedicadas, feedback “fonte ruim/desatualizada”, alertas operacionais.
+Endpoint admin: `GET /admin/metrics/web-search/summary`. Auditoria: `chat.web_search.blocked`, `chat.web_search.query_redacted`, `chat.feedback.web`, `chat.web_search.follow_up_clicked`.
 
 ---
 

@@ -375,6 +375,18 @@ class ChatAdminDebugService:
             }
             payload["pipeline"]["documentVision"] = True
 
+        from app.domain.services.chat_web_search_admin_metrics_service import (
+            ChatWebSearchAdminMetricsService,
+        )
+
+        web_search_debug = ChatWebSearchAdminMetricsService.build_admin_debug_web_search(
+            tool_context=tool_context,
+        )
+
+        if web_search_debug:
+            payload["webSearch"] = web_search_debug
+            payload["pipeline"]["webSearch"] = True
+
         # Evita explodir a resposta com payload gigante acidental.
         serialized = json.dumps(payload, ensure_ascii=False, default=str)
         if len(serialized) > limits.max_json_chars:

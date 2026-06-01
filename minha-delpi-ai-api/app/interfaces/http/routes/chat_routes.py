@@ -367,6 +367,22 @@ def record_assistant_help_event():
                         metadata=click_snapshot,
                     )
 
+                from app.domain.services.chat_web_search_admin_metrics_service import (
+                    ChatWebSearchAdminMetricsService,
+                )
+
+                allowed_web_labels = ChatWebSearchAdminMetricsService._web_follow_up_labels()
+
+                if (
+                    str(click_snapshot.get("group") or "") == "web_search"
+                    or str(click_snapshot.get("label") or "") in allowed_web_labels
+                ):
+                    PostgresAuditRepository().log(
+                        user_id=UUID(str(g.current_user.sub)),
+                        action="chat.web_search.follow_up_clicked",
+                        metadata=click_snapshot,
+                    )
+
         db.session.commit()
 
     return jsonify(result), 200
@@ -2500,13 +2516,35 @@ def upsert_message_feedback(session_id: str, message_id: str):
     use_case = make_upsert_chat_message_feedback_use_case()
 
     try:
+        reason_value = str(reason_raw).strip() if reason_raw is not None else None
+
         result = use_case.execute(
             user_id=g.current_user.sub,
             session_id=session_id,
             message_id=message_id,
             rating=rating,
-            reason=str(reason_raw).strip() if reason_raw is not None else None,
+            reason=reason_value,
         )
+
+        if rating == -1 and reason_value:
+            from app.domain.services.chat_web_search_admin_metrics_service import (
+                ChatWebSearchAdminMetricsService,
+            )
+            from app.infrastructure.persistence.postgres_audit_repository import (
+                PostgresAuditRepository,
+            )
+
+            if ChatWebSearchAdminMetricsService.is_web_feedback_reason(reason_value):
+                PostgresAuditRepository().log(
+                    user_id=UUID(str(g.current_user.sub)),
+                    action="chat.feedback.web",
+                    metadata=ChatWebSearchAdminMetricsService.feedback_audit_metadata(
+                        message_id=message_id,
+                        reason=reason_value,
+                        rating=rating,
+                    ),
+                )
+
         db.session.commit()
     except ValueError as exc:
         db.session.rollback()

@@ -629,6 +629,32 @@ def admin_error_handling_metrics_summary():
     return jsonify(use_case.execute(hours=hours)), 200
 
 
+@admin_bp.get("/metrics/web-search/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_web_search_metrics_summary():
+    from app.composition.admin_composer import make_get_admin_web_search_summary_use_case
+
+    use_case = make_get_admin_web_search_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours must be an integer",
+                        "path": "hours",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
 @admin_bp.get("/metrics/text-tasks/summary")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_text_task_metrics_summary():

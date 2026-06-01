@@ -528,6 +528,121 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_web_search_summary(self, *, hours: int = 168) -> dict:
+        from app.domain.services.chat_web_search_admin_metrics_service import (
+            ChatWebSearchAdminMetricsService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        entries: list[dict] = []
+
+        for model in models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("webSearchMetrics")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        blocked_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.web_search.blocked",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(500)
+            .all()
+        )
+        blocked_events = [
+            {
+                "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                "snapshot": model.audit_metadata if isinstance(model.audit_metadata, dict) else {},
+            }
+            for model in blocked_models
+        ]
+
+        redacted_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.web_search.query_redacted",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(500)
+            .all()
+        )
+        redacted_events = [
+            {
+                "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                "snapshot": model.audit_metadata if isinstance(model.audit_metadata, dict) else {},
+            }
+            for model in redacted_models
+        ]
+
+        feedback_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.feedback.web",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(1000)
+            .all()
+        )
+        feedback_events = [
+            {
+                "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                "snapshot": model.audit_metadata if isinstance(model.audit_metadata, dict) else {},
+            }
+            for model in feedback_models
+        ]
+
+        follow_up_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.web_search.follow_up_clicked",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(2000)
+            .all()
+        )
+        follow_up_clicks = [
+            {
+                "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                "snapshot": model.audit_metadata if isinstance(model.audit_metadata, dict) else {},
+            }
+            for model in follow_up_models
+        ]
+
+        return ChatWebSearchAdminMetricsService.aggregate(
+            entries=entries,
+            blocked_events=blocked_events,
+            redacted_events=redacted_events,
+            feedback_events=feedback_events,
+            follow_up_clicks=follow_up_clicks,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_security_summary(self, *, hours: int = 24) -> dict:
         since = datetime.now(timezone.utc) - timedelta(hours=max(1, min(hours, 168)))
 

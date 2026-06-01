@@ -5,6 +5,7 @@ import {
   getAdminDocumentVisionSummary,
   getAdminIntentRoutingSummary,
   getAdminErrorHandlingSummary,
+  getAdminWebSearchSummary,
   getAdminInteractivitySummary,
   getAdminTextTaskSummary,
   getAdminLlmCostTable,
@@ -16,6 +17,7 @@ import type {
   AdminDocumentVisionSummary,
   AdminIntentRoutingSummary,
   AdminErrorHandlingSummary,
+  AdminWebSearchSummary,
   AdminInteractivitySummary,
   AdminTextTaskSummary,
   AdminLlmCostBreakdownItem,
@@ -28,6 +30,7 @@ import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
 import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
+import { AdminWebSearchMetrics } from "./AdminWebSearchMetrics";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
@@ -291,6 +294,10 @@ export function AdminMetricsTab({
     useState<AdminErrorHandlingSummary | null>(null);
   const [isLoadingErrorHandlingSummary, setIsLoadingErrorHandlingSummary] =
     useState(false);
+  const [webSearchSummary, setWebSearchSummary] = useState<AdminWebSearchSummary | null>(
+    null,
+  );
+  const [isLoadingWebSearchSummary, setIsLoadingWebSearchSummary] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -398,6 +405,20 @@ export function AdminMetricsTab({
       .then(setErrorHandlingSummary)
       .catch(() => setErrorHandlingSummary(null))
       .finally(() => setIsLoadingErrorHandlingSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setWebSearchSummary(null);
+      return;
+    }
+
+    setIsLoadingWebSearchSummary(true);
+
+    void getAdminWebSearchSummary(metricsHours, { getAccessToken })
+      .then(setWebSearchSummary)
+      .catch(() => setWebSearchSummary(null))
+      .finally(() => setIsLoadingWebSearchSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -581,6 +602,12 @@ export function AdminMetricsTab({
       <AdminErrorHandlingMetrics
         summary={errorHandlingSummary}
         isLoading={isLoadingErrorHandlingSummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminWebSearchMetrics
+        summary={webSearchSummary}
+        isLoading={isLoadingWebSearchSummary}
         windowHours={windowLabel}
       />
 

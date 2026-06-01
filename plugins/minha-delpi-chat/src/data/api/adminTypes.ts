@@ -416,6 +416,40 @@ export type AdminErrorHandlingSummary = {
   recent: Record<string, unknown>[];
 };
 
+export type AdminWebSearchCountRow = {
+  status?: string;
+  mode?: string;
+  confidence?: string;
+  reason?: string;
+  label?: string;
+  count: number;
+};
+
+export type AdminWebSearchSummary = {
+  windowHours: number;
+  since: string;
+  totalSearches: number;
+  officialSourceRate: number;
+  withOfficialSourceCount: number;
+  lowConfidenceCount: number;
+  noResultCount: number;
+  redactedQueryCount: number;
+  synthesizedCount: number;
+  preferOfficialCount: number;
+  blockedBySecurityCount: number;
+  queryRedactedAuditCount: number;
+  averageDurationMs?: number | null;
+  followUpClicksCount: number;
+  negativeFeedbackCount: number;
+  byStatus: AdminWebSearchCountRow[];
+  byMode: AdminWebSearchCountRow[];
+  byConfidence: AdminWebSearchCountRow[];
+  feedbackByReason: AdminWebSearchCountRow[];
+  followUpByLabel: AdminWebSearchCountRow[];
+  recent: Record<string, unknown>[];
+  alerts: string[];
+};
+
 export type AdminInteractivitySummary = {
   windowHours: number;
   since: string;

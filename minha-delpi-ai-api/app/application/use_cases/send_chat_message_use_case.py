@@ -861,6 +861,21 @@ class SendChatMessageUseCase:
             assistant_metadata=assistant_metadata,
         )
 
+        from app.domain.services.chat_web_search_admin_metrics_service import (
+            ChatWebSearchAdminMetricsService,
+        )
+
+        ChatWebSearchAdminMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            assistant_metadata=assistant_metadata,
+        )
+
+        ChatWebSearchAdminMetricsService.log_security_events_if_needed(
+            self.audit_repository,
+            user_id=user_id,
+            message=message,
+        )
+
         self.audit_repository.log(
             user_id=user_id,
             action="chat.message.sent",

@@ -241,6 +241,50 @@ function AdminDrawingAnalysisTraceSummary({
   );
 }
 
+function AdminWebSearchTraceSummary({ trace }: { trace: Record<string, unknown> }) {
+  const queries = Array.isArray(trace.queries) ? (trace.queries as string[]) : [];
+  const warnings = Array.isArray(trace.warnings) ? (trace.warnings as string[]) : [];
+  const confidence = trace.confidence != null ? String(trace.confidence) : "";
+  const provider = trace.provider != null ? String(trace.provider) : "";
+
+  return (
+    <div className="mdc-chat-admin-debug__timings" aria-label="Pesquisa web (admin)">
+      {provider ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>web</strong> {provider}
+        </span>
+      ) : null}
+      {confidence ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>confiança</strong> {confidence}
+        </span>
+      ) : null}
+      {typeof trace.sourceCount === "number" ? (
+        <span className="mdc-chat-admin-debug__timing-chip">
+          <strong>fontes</strong> {trace.sourceCount}
+        </span>
+      ) : null}
+      {queries.slice(0, 3).map((query) => (
+        <span
+          key={query}
+          className="mdc-chat-admin-debug__timing-chip"
+          title={query}
+        >
+          <strong>query</strong> {query.length > 48 ? `${query.slice(0, 48)}…` : query}
+        </span>
+      ))}
+      {warnings.slice(0, 2).map((warning) => (
+        <span
+          key={warning}
+          className="mdc-chat-admin-debug__timing-chip mdc-chat-admin-debug__assertiveness-chip--warn"
+        >
+          {warning}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function AdminContextAssertivenessSummary({
   assertiveness,
 }: {
@@ -289,6 +333,7 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
     (debug?.drawingAnalysisTrace as Record<string, unknown> | undefined) ?? null;
   const documentVisionTrace =
     (debug?.documentVisionTrace as Record<string, unknown> | undefined) ?? null;
+  const webSearchTrace = (debug?.webSearch as Record<string, unknown> | undefined) ?? null;
   const trustSignals = Array.isArray(debug?.trustSignals)
     ? (debug?.trustSignals as Array<Record<string, unknown>>)
     : [];
@@ -315,6 +360,7 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
 
         <div className="mdc-chat-admin-debug__content">
           {intentRoute ? <AdminIntentRouteSummary intentRoute={intentRoute} /> : null}
+          {webSearchTrace ? <AdminWebSearchTraceSummary trace={webSearchTrace} /> : null}
           {documentVisionTrace ? (
             <AdminDocumentVisionTraceSummary trace={documentVisionTrace} />
           ) : null}

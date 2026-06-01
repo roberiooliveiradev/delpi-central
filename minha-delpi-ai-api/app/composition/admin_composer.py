@@ -26,6 +26,9 @@ from app.application.use_cases.get_admin_intent_routing_summary_use_case import 
 from app.application.use_cases.get_admin_error_handling_summary_use_case import (
     GetAdminErrorHandlingSummaryUseCase,
 )
+from app.application.use_cases.get_admin_web_search_summary_use_case import (
+    GetAdminWebSearchSummaryUseCase,
+)
 from app.application.use_cases.get_admin_interactivity_summary_use_case import (
     GetAdminInteractivitySummaryUseCase,
 )
@@ -207,6 +210,10 @@ def make_get_admin_interactivity_summary_use_case() -> GetAdminInteractivitySumm
 
 def make_get_admin_error_handling_summary_use_case() -> GetAdminErrorHandlingSummaryUseCase:
     return GetAdminErrorHandlingSummaryUseCase(PostgresAuditRepository())
+
+
+def make_get_admin_web_search_summary_use_case() -> GetAdminWebSearchSummaryUseCase:
+    return GetAdminWebSearchSummaryUseCase(PostgresAuditRepository())
 
 
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:

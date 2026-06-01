@@ -100,6 +100,38 @@
       "label": "Faltou fonte"
     },
     {
+      "id": "web_bad_source",
+      "label": "Fonte ruim na pesquisa web"
+    },
+    {
+      "id": "web_outdated_source",
+      "label": "Fonte desatualizada"
+    },
+    {
+      "id": "web_missing_official",
+      "label": "Faltou fonte oficial"
+    },
+    {
+      "id": "web_superficial",
+      "label": "Pesquisa superficial"
+    },
+    {
+      "id": "web_should_english",
+      "label": "Deveria buscar em inglês"
+    },
+    {
+      "id": "web_mixed_internal",
+      "label": "Misturou dado interno com web"
+    },
+    {
+      "id": "web_no_sources_shown",
+      "label": "Não mostrou fontes"
+    },
+    {
+      "id": "web_divergence_unexplained",
+      "label": "Fontes divergentes sem explicar"
+    },
+    {
       "id": "no_answer",
       "label": "Não respondeu"
     },
