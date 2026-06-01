@@ -1,5 +1,5 @@
 import { LayoutPanelLeft } from "lucide-react";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import {
   BarChart,
@@ -38,6 +38,12 @@ import {
 } from "./chartPresentationUx";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
+import { exportChartElementToPng } from "./chartPngExport";
+import {
+  formatChartColumnLabel,
+  inferDefaultChartAxes,
+  isNumericAxisChartType,
+} from "./chartAxisSelection";
 import { ExpandButton } from "./ChatExpandModal";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
@@ -88,18 +94,41 @@ export function ChatRichChart({
   const { title, chartType, data, config } = presentation;
   const [downloadReady, setDownloadReady] = useState(false);
   const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(null);
+  const [axisXOverride, setAxisXOverride] = useState<string | null>(null);
+  const [axisYOverride, setAxisYOverride] = useState<string | null>(null);
   const [topFilter, setTopFilter] = useState<ChartTopFilter>("all");
   const [zoomWindow, setZoomWindow] = useState<ChartZoomWindow>("all");
   const [periodCompareEnabled, setPeriodCompareEnabled] = useState(false);
   const activeChartType = chartTypeOverride || chartType;
+
+  useEffect(() => {
+    setAxisXOverride(null);
+    setAxisYOverride(null);
+  }, [data, title, chartType]);
+
   const [pointMenu, setPointMenu] = useState<{
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildChartPointMenuActions>;
   } | null>(null);
   const isDark = useMdcDarkMode();
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  const xAxis = config?.xAxis || guessXAxis(data);
-  const baseYAxes = normalizeYAxes(config?.yAxis, data, xAxis);
+  const axisDefaults = useMemo(
+    () => inferDefaultChartAxes(data, activeChartType, config),
+    [activeChartType, config, data],
+  );
+
+  const scatterMode = isNumericAxisChartType(activeChartType);
+  const resolvedX = axisXOverride ?? axisDefaults.xKey;
+  const resolvedY = axisYOverride ?? axisDefaults.yKey;
+  const xAxis = scatterMode ? resolvedX : resolvedX || config?.xAxis || guessXAxis(data);
+  const baseYAxes = scatterMode
+    ? [resolvedY]
+    : normalizeYAxes(
+        axisYOverride ? [axisYOverride] : config?.yAxis,
+        data,
+        xAxis,
+      );
   const valueKey = firstNumericValueKey(data, xAxis, baseYAxes);
   const temporalAxis = useMemo(
     () => isTemporalChartAxis(xAxis, data),
@@ -149,7 +178,7 @@ export function ChatRichChart({
   const chartTheme = useMemo(() => readMdcChartTheme(isDark), [isDark]);
   const colors = config?.colors || chartTheme.seriesColors;
   const showLegend = config?.legend !== false && displayYAxes.length > 1;
-  const { gridColor, tickFill, tooltipStyle, exportBackground } = chartTheme;
+  const { gridColor, tickFill, tooltipStyle } = chartTheme;
   const tickStyle = { fontSize: 11, fill: tickFill };
 
   const openPointMenu = useCallback(
@@ -191,10 +220,18 @@ export function ChatRichChart({
       parts.push(`Visualização ${CHART_TYPE_LABELS[chartTypeOverride] ?? chartTypeOverride}`);
     }
 
+    if (axisXOverride || axisYOverride) {
+      parts.push(`Eixos: ${formatChartColumnLabel(resolvedX)} × ${formatChartColumnLabel(resolvedY)}`);
+    }
+
     return parts.length ? parts.join(" · ") : undefined;
   }, [
+    axisXOverride,
+    axisYOverride,
     chartTypeOverride,
     periodCompareEnabled,
+    resolvedX,
+    resolvedY,
     temporalAxis,
     topFilter,
     zoomWindow,
@@ -225,32 +262,10 @@ export function ChatRichChart({
   ]);
 
   const exportPng = useCallback(() => {
-    const svg = document.querySelector(".mdc-rich-chart__container svg");
-    if (!svg) return;
-
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
-
-    img.onload = () => {
-      canvas.width = img.width * 2;
-      canvas.height = img.height * 2;
-      ctx!.scale(2, 2);
-      ctx!.fillStyle = exportBackground;
-      ctx!.fillRect(0, 0, canvas.width, canvas.height);
-      ctx!.drawImage(img, 0, 0);
-
-      const a = document.createElement("a");
-      a.download = `${title || "grafico"}.png`;
-      a.href = canvas.toDataURL("image/png");
-      a.click();
-      setDownloadReady(true);
-      setTimeout(() => setDownloadReady(false), 2000);
-    };
-
-    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
-  }, [exportBackground, title]);
+    exportChartElementToPng(chartContainerRef.current, title || "grafico");
+    setDownloadReady(true);
+    setTimeout(() => setDownloadReady(false), 2000);
+  }, [title]);
 
   return (
     <div
@@ -272,6 +287,48 @@ export function ChatRichChart({
           <div className="mdc-rich-chart__toolbar-row mdc-rich-chart__toolbar-row--controls">
             {data.length > 0 && activeChartType !== "heatmap" ? (
               <div className="mdc-rich-chart__ux-toolbar" role="group" aria-label="Filtros do gráfico">
+                {axisDefaults.numericColumns.length > 0 ? (
+                  <label className="mdc-rich-chart__ux-field">
+                    <span>Eixo Y</span>
+                    <select
+                      value={resolvedY}
+                      onChange={(event) => setAxisYOverride(event.target.value)}
+                      title="Valor numérico no eixo vertical"
+                    >
+                      {axisDefaults.numericColumns.map((column) => (
+                        <option key={column} value={column}>
+                          {formatChartColumnLabel(column)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+                {(scatterMode
+                  ? axisDefaults.numericColumns
+                  : axisDefaults.categoryColumns
+                ).length > 0 ? (
+                  <label className="mdc-rich-chart__ux-field">
+                    <span>{scatterMode ? "Eixo X" : "Categoria"}</span>
+                    <select
+                      value={resolvedX}
+                      onChange={(event) => setAxisXOverride(event.target.value)}
+                      title={
+                        scatterMode
+                          ? "Valor numérico no eixo horizontal"
+                          : "Campo exibido no eixo horizontal"
+                      }
+                    >
+                      {(scatterMode
+                        ? axisDefaults.numericColumns
+                        : axisDefaults.categoryColumns
+                      ).map((column) => (
+                        <option key={column} value={column}>
+                          {formatChartColumnLabel(column)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 {!periodCompareEnabled ? (
                   <label className="mdc-rich-chart__ux-field">
                     <span>Top</span>
@@ -374,6 +431,7 @@ export function ChatRichChart({
       ) : null}
 
       <div
+        ref={chartContainerRef}
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}
       >
         {activeChartType === "heatmap" ? (
@@ -617,7 +675,7 @@ function renderChart(
     }
 
     case "scatter": {
-      const scatterX = chartConfig?.xAxis || yAxes[0] || xAxis;
+      const scatterX = xAxis;
       const scatterY = yAxes[0] || "value";
 
       return (

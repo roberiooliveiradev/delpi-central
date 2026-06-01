@@ -3684,9 +3684,24 @@ class ExternalActionResultPresenter:
             "legend": len(chart_numeric_slice) > 1,
         }
 
-        if chart_type == "scatter" and len(chart_numeric_slice) >= 2:
-            config["xAxis"] = chart_numeric_slice[0]
-            config["yAxis"] = [chart_numeric_slice[1]]
+        from app.domain.services.chat_presentation_axis_preference_service import (
+            ChatPresentationAxisPreferenceService,
+        )
+
+        axis = ChatPresentationAxisPreferenceService.resolve(
+            rows=rows[:12],
+            chart_type=chart_type,
+            label_key=label_key,
+            numeric_keys=chart_numeric_slice,
+            user_message=user_message,
+        )
+
+        config["xAxis"] = axis["xAxis"]
+        config["yAxis"] = axis["yAxis"]
+        config["numericColumns"] = axis["numericColumns"]
+        config["categoryColumns"] = axis["categoryColumns"]
+
+        if chart_type == "scatter":
             config["legend"] = False
 
         if chart_type == "combo" and len(chart_numeric_slice) >= 2:

@@ -80,6 +80,9 @@ export type ChatPresentation =
         xAxis?: string;
         yAxis?: string | string[];
         valueKey?: string;
+        numericColumns?: string[];
+        categoryColumns?: string[];
+        recommendedChartType?: string;
         colors?: string[];
         legend?: boolean;
         comboBarKey?: string;

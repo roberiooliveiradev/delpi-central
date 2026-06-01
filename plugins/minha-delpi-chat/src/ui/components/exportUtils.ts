@@ -1,5 +1,5 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
-import { readMdcCssVar } from "../theme/mdcCssVars";
+import { exportChartElementToPng } from "./chartPngExport";
 import { treePresentationToTable } from "./treePresentationUtils";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
@@ -68,32 +68,7 @@ export function exportToPdf(presentation: TablePresentation) {
 }
 
 export function exportChartToPng(chartRef: HTMLDivElement | null, title: string) {
-  if (!chartRef) return;
-  const svg = chartRef.querySelector("svg");
-  if (!svg) return;
-
-  const clone = svg.cloneNode(true) as SVGElement;
-  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-
-  const svgData = new XMLSerializer().serializeToString(clone);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  const img = new Image();
-  img.onload = () => {
-    canvas.width = img.width * 2;
-    canvas.height = img.height * 2;
-    ctx.scale(2, 2);
-    ctx.fillStyle = readMdcCssVar("--mdc-chart-export-bg", readMdcCssVar("--mdc-card-bg"));
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-    const link = document.createElement("a");
-    link.download = `${sanitizeFilename(title)}.png`;
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-  };
-  img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
+  exportChartElementToPng(chartRef, title);
 }
 
 export function exportTreeToXlsx(presentation: TreePresentation) {
@@ -116,7 +91,7 @@ export function sanitizeSheetName(name: string): string {
   return base.length <= 31 ? base : `${base.slice(0, 28).trimEnd()}...`;
 }
 
-function sanitizeFilename(name: string): string {
+export function sanitizeFilename(name: string): string {
   return name
     .replace(/[^a-zA-Z0-9À-ÿ\s_-]/g, "")
     .replace(/\s+/g, "_")

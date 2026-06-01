@@ -322,6 +322,7 @@ class ExecuteExternalActionUseCase:
             intent=str(action.get("intent") or action.get("name") or "").strip() or None,
             user_message=user_message,
             user_preference=preferred_format,
+            axis_user_message=user_message,
         )
 
         return metadata

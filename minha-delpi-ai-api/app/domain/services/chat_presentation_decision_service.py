@@ -366,6 +366,7 @@ class ChatPresentationDecisionService:
         intent: str | None = None,
         user_message: str | None = None,
         user_preference: str | None = None,
+        axis_user_message: str | None = None,
     ) -> dict[str, Any]:
         decision = cls.decide(
             intent=intent,
@@ -399,7 +400,11 @@ class ChatPresentationDecisionService:
             reason=str(decision.get("reason") or ""),
         )
 
-        policy_notice = cls._apply_chart_policy_to_metadata(metadata, decision)
+        policy_notice = cls._apply_chart_policy_to_metadata(
+            metadata,
+            decision,
+            user_message=axis_user_message or user_message,
+        )
 
         if policy_notice:
             decision["policyNotice"] = policy_notice
@@ -456,6 +461,8 @@ class ChatPresentationDecisionService:
         cls,
         metadata: dict[str, Any],
         decision: dict[str, Any],
+        *,
+        user_message: str | None = None,
     ) -> str | None:
         selected = str(decision.get("selected") or "")
         chart_type = _SELECTED_TO_CHART_TYPE.get(selected)
@@ -494,6 +501,15 @@ class ChatPresentationDecisionService:
             presentation["chartType"] = chart_type
             config["recommendedChartType"] = chart_type
             presentation["data"] = capped
+
+            from app.domain.services.chat_presentation_axis_preference_service import (
+                ChatPresentationAxisPreferenceService,
+            )
+
+            ChatPresentationAxisPreferenceService.apply_to_chart_config(
+                presentation,
+                user_message=user_message,
+            )
 
             notice = ChatPresentationChartPolicyService.fallback_notice(
                 chart_type,
