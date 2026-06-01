@@ -1156,19 +1156,27 @@ class ChatToolContextService:
 
     @classmethod
     def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:
-        for key in (
-            "presentation",
-            "tablePresentation",
-            "treePresentation",
-            "chartPresentation",
-        ):
-            presentation = metadata.get(key)
+        tree_presentation = metadata.get("treePresentation")
 
-            if isinstance(presentation, dict):
-                presentation_type = str(presentation.get("type") or "").strip().lower()
+        if isinstance(tree_presentation, dict) and str(tree_presentation.get("type") or "") == "tree":
+            return tree_presentation
 
-                if presentation_type in {"table", "chart", "kpi", "tree"}:
-                    return presentation
+        presentation = metadata.get("presentation")
+
+        if isinstance(presentation, dict):
+            presentation_type = str(presentation.get("type") or "").strip().lower()
+
+            if presentation_type in {"tree", "table", "chart", "kpi"}:
+                return presentation
+
+        for key in ("tablePresentation", "chartPresentation"):
+            nested = metadata.get(key)
+
+            if isinstance(nested, dict):
+                nested_type = str(nested.get("type") or "").strip().lower()
+
+                if nested_type in {"table", "chart", "kpi"}:
+                    return nested
 
         return None
 

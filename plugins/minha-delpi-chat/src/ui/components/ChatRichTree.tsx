@@ -216,7 +216,14 @@ export function ChatRichTree({
   }
 
   return (
-    <div className="mdc-rich-tree">
+    <div
+      className={[
+        "mdc-rich-tree",
+        hideToolbar ? "mdc-rich-tree--embedded" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {!hideToolbar ? (
         <div className="mdc-rich-tree__header">
           <span

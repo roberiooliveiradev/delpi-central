@@ -74,11 +74,14 @@ const CHART_TYPE_ALTERNATES = [
 export function ChatRichChart({
   presentation,
   hideTitle = false,
+  hideToolbar = false,
   onDrillDown,
   onOpenCanvas,
 }: {
   presentation: ChartPresentation;
   hideTitle?: boolean;
+  /** Oculta toolbar de filtros/ações (ex.: modal expandido). */
+  hideToolbar?: boolean;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
@@ -250,7 +253,15 @@ export function ChatRichChart({
   }, [exportBackground, title]);
 
   return (
-    <div className="mdc-rich-chart">
+    <div
+      className={[
+        "mdc-rich-chart",
+        hideToolbar ? "mdc-rich-chart--embedded" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {!hideToolbar ? (
       <div className="mdc-rich-chart__header">
         {hideTitle ? (
           <span className="mdc-rich-chart__title" aria-hidden="true" />
@@ -360,6 +371,7 @@ export function ChatRichChart({
           ) : null}
         </div>
       </div>
+      ) : null}
 
       <div
         className={`mdc-rich-chart__container${onDrillDown ? " mdc-rich-chart__container--interactive" : ""}`}

@@ -15,10 +15,13 @@ type SortConfig = {
 export function ChatRichTable({
   presentation,
   hideTitle = false,
+  hideToolbar = false,
   onDrillDown,
 }: {
   presentation: TablePresentation;
   hideTitle?: boolean;
+  /** Oculta cabeçalho com ações (ex.: dentro do modal expandido). */
+  hideToolbar?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
   const { title, columns, rows } = presentation;
@@ -110,31 +113,40 @@ export function ChatRichTable({
   const sorted = sortedRows();
 
   return (
-    <div className="mdc-rich-table">
-      <div className="mdc-rich-table__header">
-        {hideTitle ? (
-          <span className="mdc-rich-table__title" aria-hidden="true" />
-        ) : (
-          <span className="mdc-rich-table__title">{title}</span>
-        )}
-        <div className="mdc-rich-table__actions">
-          <button
-            className="mdc-rich-table__btn"
-            onClick={copyToClipboard}
-            title="Copiar tabela"
-          >
-            {copied ? "✓ Copiado" : "Copiar"}
-          </button>
-          <button
-            className="mdc-rich-table__btn"
-            onClick={exportCsv}
-            title="Baixar CSV"
-          >
-            ↓ CSV
-          </button>
-          <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+    <div
+      className={[
+        "mdc-rich-table",
+        hideToolbar ? "mdc-rich-table--embedded" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {!hideToolbar ? (
+        <div className="mdc-rich-table__header">
+          {hideTitle ? (
+            <span className="mdc-rich-table__title" aria-hidden="true" />
+          ) : (
+            <span className="mdc-rich-table__title">{title}</span>
+          )}
+          <div className="mdc-rich-table__actions">
+            <button
+              className="mdc-rich-table__btn"
+              onClick={copyToClipboard}
+              title="Copiar tabela"
+            >
+              {copied ? "✓ Copiado" : "Copiar"}
+            </button>
+            <button
+              className="mdc-rich-table__btn"
+              onClick={exportCsv}
+              title="Baixar CSV"
+            >
+              ↓ CSV
+            </button>
+            <ExpandButton presentation={presentation} onDrillDown={onDrillDown} />
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <div className="mdc-rich-table__scroll">
         <table className="mdc-rich-table__table">

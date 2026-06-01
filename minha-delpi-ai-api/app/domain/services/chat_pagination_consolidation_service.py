@@ -506,25 +506,30 @@ class ChatPaginationConsolidationService:
                 preferred = str(tool_meta.get("preferredFormat") or "").strip().lower()
 
                 if preferred in {"table", "tree", "chart", "text"}:
+                    if preferred == "table" and isinstance(tool_meta.get("treePresentation"), dict):
+                        return "tree"
                     return preferred
+
+                tree_presentation = tool_meta.get("treePresentation")
+
+                if isinstance(tree_presentation, dict):
+                    return "tree"
 
                 presentation = tool_meta.get("presentation")
 
                 if isinstance(presentation, dict):
                     presentation_type = str(presentation.get("type") or "").strip().lower()
 
-                    if presentation_type in {"table", "tree", "chart", "kpi"}:
+                    if presentation_type == "tree":
+                        return "tree"
+
+                    if presentation_type in {"table", "chart", "kpi"}:
                         return "chart" if presentation_type == "kpi" else presentation_type
 
                 table_presentation = tool_meta.get("tablePresentation")
 
                 if isinstance(table_presentation, dict):
                     return "table"
-
-                tree_presentation = tool_meta.get("treePresentation")
-
-                if isinstance(tree_presentation, dict):
-                    return "tree"
 
         return None
 

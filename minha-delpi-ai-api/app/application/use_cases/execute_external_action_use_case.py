@@ -230,9 +230,13 @@ class ExecuteExternalActionUseCase:
 
         if chart_presentation:
             available_formats.append("chart")
-        elif table_presentation and not any(
-            token in str(resolved_path or "").lower()
-            for token in ("/structure", "/parents", "/analyser")
+        elif (
+            table_presentation
+            and not tree_presentation
+            and not any(
+                token in str(resolved_path or "").lower()
+                for token in ("/structure", "/parents", "/analyser")
+            )
         ):
             forced_chart = self.presenter.build_chart_presentation(
                 sanitized_data,
@@ -245,21 +249,16 @@ class ExecuteExternalActionUseCase:
                 available_formats.append("chart")
 
         path_lower = str(resolved_path or "").lower()
-        structure_like = any(
-            token in path_lower for token in ("/structure", "/parents", "/analyser")
-        )
         stock_like = "/stock" in path_lower
 
         if dashboard_presentation:
             primary_presentation = dashboard_presentation
-        elif tree_presentation and structure_like:
+        elif tree_presentation:
             primary_presentation = tree_presentation
         elif chart_presentation:
             primary_presentation = chart_presentation
         elif table_presentation:
             primary_presentation = table_presentation
-        elif tree_presentation:
-            primary_presentation = tree_presentation
         else:
             primary_presentation = None
 
@@ -267,7 +266,7 @@ class ExecuteExternalActionUseCase:
 
         if dashboard_presentation:
             preferred_format = "dashboard"
-        elif tree_presentation and structure_like:
+        elif tree_presentation:
             preferred_format = "tree"
         elif chart_presentation and stock_like:
             preferred_format = "chart"

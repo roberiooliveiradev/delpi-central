@@ -70,17 +70,47 @@
 
 .mdc-expand-modal__body {
   flex: 1;
-  min-height: 300px;
-  padding: 1.2rem;
-  overflow: auto;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.mdc-expand-modal__body .mdc-rich-table {
+.mdc-expand-modal__body .mdc-rich-table--embedded,
+.mdc-expand-modal__body .mdc-rich-tree--embedded,
+.mdc-expand-modal__body .mdc-rich-chart--embedded {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mdc-expand-modal__body .mdc-rich-table--embedded .mdc-rich-table__scroll {
+  flex: 1;
+  min-height: 0;
   max-height: none;
 }
 
-.mdc-expand-modal__body .mdc-rich-chart__container {
-  height: 420px;
+.mdc-expand-modal__body .mdc-rich-tree--embedded .mdc-rich-tree__scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.mdc-expand-modal__body .mdc-rich-chart--embedded .mdc-rich-chart__container {
+  flex: 1;
+  min-height: 320px;
+  height: min(62vh, 520px);
+}
+
+.mdc-expand-modal__body .mdc-rich-table--embedded .mdc-rich-table__footer,
+.mdc-expand-modal__body .mdc-rich-tree--embedded .mdc-rich-tree__footer {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem 0.75rem;
 }
 
 .mdc-expand-modal__body .mdc-rich-kpi__grid {

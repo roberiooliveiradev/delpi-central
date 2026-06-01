@@ -9,8 +9,10 @@ import {
   getDataCoverageNoticeFromToolCalls,
   getDepthStateFromToolCalls,
   getPaginationStateFromToolCalls,
-  getPreferredFormatFromToolCalls,
+  countRichVisualFormats,
   getPresentationPairFromToolCalls,
+  resolveDefaultRichViewMode,
+  resolveRichFormatToggles,
   getPresentationTitle,
   getChartPresentationFromPair,
   getTablePresentationFromPair,
@@ -38,57 +40,6 @@ type ChatRichPresentationProps = {
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 };
-
-function resolveDefaultVisualMode(
-  toolCalls: ChatToolCall[],
-  hasChart: boolean,
-  hasTable: boolean,
-  hasTree: boolean,
-): ViewFormat {
-  const preferred = getPreferredFormatFromToolCalls(toolCalls);
-
-  if (preferred === "tree" && hasTree) {
-    return "tree";
-  }
-
-  if (preferred === "chart" && hasChart) {
-    return "chart";
-  }
-
-  if (preferred === "table" && hasTable) {
-    return "table";
-  }
-
-  if (hasTree) {
-    return "tree";
-  }
-
-  if (hasChart) {
-    return "chart";
-  }
-
-  if (hasTable) {
-    return "table";
-  }
-
-  return "tree";
-}
-
-function resolveDefaultViewMode(
-  toolCalls: ChatToolCall[],
-  hasText: boolean,
-  hasChart: boolean,
-  hasTable: boolean,
-  hasTree: boolean,
-): ViewFormat {
-  const preferred = getPreferredFormatFromToolCalls(toolCalls);
-
-  if (preferred === "text" && hasText) {
-    return "text";
-  }
-
-  return resolveDefaultVisualMode(toolCalls, hasChart, hasTable, hasTree);
-}
 
 function FormatToggle({
   active,
@@ -233,14 +184,30 @@ export function ChatRichPresentation({
   const hasTreeView = Boolean(treePresentation);
   const isCommentaryVisual = layoutMode === "commentary-visual";
 
-  const visualFormatCount = [hasChartView, hasTableView, hasTreeView].filter(Boolean).length;
+  const formatToggles = resolveRichFormatToggles({
+    hasText,
+    hasChart: hasChartView,
+    hasTable: hasTableView,
+    hasTree: hasTreeView,
+    isCommentaryVisual,
+  });
+  const visualFormatCount = countRichVisualFormats(formatToggles);
   const showVisualToggle = isCommentaryVisual
     ? visualFormatCount >= 2
-    : [hasText, hasChartView, hasTableView, hasTreeView].filter(Boolean).length >= 2;
+    : [
+        formatToggles.showText,
+        formatToggles.showTree,
+        formatToggles.showTable,
+        formatToggles.showChart,
+      ].filter(Boolean).length >= 2;
 
-  const defaultMode = isCommentaryVisual
-    ? resolveDefaultVisualMode(toolCalls, hasChartView, hasTableView, hasTreeView)
-    : resolveDefaultViewMode(toolCalls, hasText, hasChartView, hasTableView, hasTreeView);
+  const defaultMode = resolveDefaultRichViewMode(toolCalls, {
+    hasText,
+    hasChart: hasChartView,
+    hasTable: hasTableView,
+    hasTree: hasTreeView,
+    commentaryVisual: isCommentaryVisual,
+  });
 
   const [viewMode, setViewMode] = useState<ViewFormat>(defaultMode);
 
@@ -307,32 +274,32 @@ export function ChatRichPresentation({
         role="group"
         aria-label="Formato da visualização"
       >
-        {!isCommentaryVisual && hasText ? (
+        {formatToggles.showText ? (
           <FormatToggle
             active={viewMode === "text"}
             label="Texto"
             onClick={() => setViewMode("text")}
           />
         ) : null}
-        {hasChartView ? (
-          <FormatToggle
-            active={viewMode === "chart"}
-            label="Gráfico"
-            onClick={() => setViewMode("chart")}
-          />
-        ) : null}
-        {hasTreeView ? (
+        {formatToggles.showTree ? (
           <FormatToggle
             active={viewMode === "tree"}
             label="Árvore"
             onClick={() => setViewMode("tree")}
           />
         ) : null}
-        {hasTableView ? (
+        {formatToggles.showTable ? (
           <FormatToggle
             active={viewMode === "table"}
             label="Tabela"
             onClick={() => setViewMode("table")}
+          />
+        ) : null}
+        {formatToggles.showChart ? (
+          <FormatToggle
+            active={viewMode === "chart"}
+            label="Gráfico"
+            onClick={() => setViewMode("chart")}
           />
         ) : null}
       </div>
@@ -357,20 +324,20 @@ export function ChatRichPresentation({
 
         {showVisualToggle ? (
           <>
-            {viewMode === "chart" && hasChartView && chartPresentation ? (
-              <ChatRichChart
-                presentation={chartPresentation}
-                onDrillDown={onDrillDown}
-                onOpenCanvas={onOpenCanvas}
-              />
-            ) : null}
-
             {viewMode === "tree" && hasTreeView && treePresentation ? (
               <ChatRichTree presentation={treePresentation} onDrillDown={onDrillDown} />
             ) : null}
 
             {viewMode === "table" && hasTableView && tablePresentation ? (
               <ChatRichTable presentation={tablePresentation} onDrillDown={onDrillDown} />
+            ) : null}
+
+            {viewMode === "chart" && formatToggles.showChart && hasChartView && chartPresentation ? (
+              <ChatRichChart
+                presentation={chartPresentation}
+                onDrillDown={onDrillDown}
+                onOpenCanvas={onOpenCanvas}
+              />
             ) : null}
           </>
         ) : hasTreeView && treePresentation ? (
@@ -400,15 +367,6 @@ export function ChatRichPresentation({
         </div>
       ) : null}
 
-      {viewMode === "chart" && hasChartView && chartPresentation ? (
-        <ChatRichChart
-          presentation={chartPresentation}
-          hideTitle={showSharedTitle}
-          onDrillDown={onDrillDown}
-          onOpenCanvas={onOpenCanvas}
-        />
-      ) : null}
-
       {viewMode === "tree" && hasTreeView && treePresentation ? (
         <ChatRichTree
           presentation={treePresentation}
@@ -422,6 +380,15 @@ export function ChatRichPresentation({
           presentation={tablePresentation}
           hideTitle={showSharedTitle}
           onDrillDown={onDrillDown}
+        />
+      ) : null}
+
+      {viewMode === "chart" && formatToggles.showChart && hasChartView && chartPresentation ? (
+        <ChatRichChart
+          presentation={chartPresentation}
+          hideTitle={showSharedTitle}
+          onDrillDown={onDrillDown}
+          onOpenCanvas={onOpenCanvas}
         />
       ) : null}
     </div>

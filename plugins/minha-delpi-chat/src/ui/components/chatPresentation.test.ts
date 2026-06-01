@@ -7,6 +7,9 @@ import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
+  isStructureLikeToolCalls,
+  resolveDefaultRichViewMode,
+  resolveRichFormatToggles,
   isShortPresentationCaption,
   resolveRichTextBody,
   resolveCommentaryTextBody,
@@ -221,8 +224,116 @@ describe("getAvailableFormatsFromToolCalls", () => {
   });
 });
 
+describe("isStructureLikeToolCalls", () => {
+  it("detecta rotas de estrutura", () => {
+    expect(
+      isStructureLikeToolCalls(
+        fixtureToolCalls([
+          {
+            metadata: { path: "/products/90260174/analyser" },
+          },
+        ]),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("resolveRichFormatToggles", () => {
+  it("expõe Texto, Árvore e Tabela e oculta gráfico quando há árvore", () => {
+    expect(
+      resolveRichFormatToggles({
+        hasText: true,
+        hasChart: true,
+        hasTable: true,
+        hasTree: true,
+        isCommentaryVisual: false,
+      }),
+    ).toEqual({
+      showText: true,
+      showTree: true,
+      showTable: true,
+      showChart: false,
+    });
+  });
+
+  it("mantém gráfico quando não há árvore", () => {
+    expect(
+      resolveRichFormatToggles({
+        hasText: false,
+        hasChart: true,
+        hasTable: true,
+        hasTree: false,
+        isCommentaryVisual: false,
+      }).showChart,
+    ).toBe(true);
+  });
+});
+
+describe("resolveDefaultRichViewMode", () => {
+  it("inicia em árvore quando há apresentação em árvore", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          path: "/products/1/analyser",
+          preferredFormat: "table",
+          presentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "1", label: "1" },
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Tabela",
+            columns: [{ key: "c", label: "C" }],
+            rows: [{ c: "1" }],
+          },
+        },
+      },
+    ]);
+
+    expect(
+      resolveDefaultRichViewMode(toolCalls, {
+        hasText: true,
+        hasChart: false,
+        hasTable: true,
+        hasTree: true,
+        commentaryVisual: true,
+      }),
+    ).toBe("tree");
+  });
+});
+
+describe("getPresentationPairFromToolCalls", () => {
+  it("prioriza árvore como primary em rotas de estrutura", () => {
+    const pair = getPresentationPairFromToolCalls(
+      fixtureToolCalls([
+        {
+          name: "execute_external_action",
+          metadata: {
+            path: "/products/90260174/analyser",
+            presentation: {
+              type: "tree",
+              title: "Estrutura",
+              root: { id: "90260174", label: "90260174" },
+            },
+            tablePresentation: {
+              type: "table",
+              title: "Componentes",
+              columns: [{ key: "code", label: "Código" }],
+              rows: [{ code: "10030015" }],
+            },
+          },
+        },
+      ]),
+    );
+
+    expect(pair.primary?.type).toBe("tree");
+    expect(pair.table?.type).toBe("table");
+  });
+});
+
 describe("getChartPresentationFromPair", () => {
-  it("expõe árvore em pair.tree e gráfico em pair.primary/chartPresentation", () => {
+  it("prioriza árvore no primary e ainda resolve gráfico complementar", () => {
     const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
@@ -241,7 +352,7 @@ describe("getChartPresentationFromPair", () => {
     const pair = getPresentationPairFromToolCalls(toolCalls);
 
     expect(pair.tree?.type).toBe("tree");
-    expect(pair.primary?.type).toBe("chart");
+    expect(pair.primary?.type).toBe("tree");
     expect(getChartPresentationFromPair(pair, toolCalls)?.title).toBe("Extra");
   });
 });

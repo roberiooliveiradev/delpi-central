@@ -228,6 +228,11 @@ function getPresentationFromToolCalls(
   }
 
   const { charts, tables, trees } = collectExternalActionPresentations(toolCalls);
+
+  if (trees.length > 0) {
+    return trees[0];
+  }
+
   const mergedChart = mergeChartPresentations(charts, tables);
 
   if (mergedChart) {
@@ -821,6 +826,100 @@ export function getDepthStateFromToolCalls(
   };
 }
 
+export function isStructureLikeToolCalls(toolCalls?: ChatToolCall[]): boolean {
+  const path = getPathFromToolCalls(toolCalls).toLowerCase();
+
+  return (
+    path.includes("/structure") ||
+    path.includes("/parents") ||
+    path.includes("/analyser")
+  );
+}
+
+export function hasTreePresentationAvailable(
+  toolCalls?: ChatToolCall[],
+  pair?: PresentationPair,
+): boolean {
+  const resolvedPair = pair ?? getPresentationPairFromToolCalls(toolCalls);
+
+  return Boolean(getTreePresentationFromPair(resolvedPair));
+}
+
+export type RichFormatToggleOptions = {
+  showText: boolean;
+  showTree: boolean;
+  showTable: boolean;
+  showChart: boolean;
+};
+
+/** Texto + árvore + tabela; oculta gráfico quando há árvore hierárquica. */
+export function resolveRichFormatToggles(options: {
+  hasText: boolean;
+  hasChart: boolean;
+  hasTable: boolean;
+  hasTree: boolean;
+  isCommentaryVisual: boolean;
+}): RichFormatToggleOptions {
+  const { hasText, hasChart, hasTable, hasTree, isCommentaryVisual } = options;
+  const hierarchyWithTree = hasTree;
+
+  return {
+    showText: !isCommentaryVisual && hasText,
+    showTree: hasTree,
+    showTable: hasTable,
+    showChart: hasChart && !hierarchyWithTree,
+  };
+}
+
+export function countRichVisualFormats(toggles: RichFormatToggleOptions): number {
+  return [toggles.showTree, toggles.showTable, toggles.showChart].filter(Boolean).length;
+}
+
+/** Modo visual inicial: árvore quando existir; texto só se não houver árvore. */
+export function resolveDefaultRichViewMode(
+  toolCalls: ChatToolCall[] | undefined,
+  options: {
+    hasText: boolean;
+    hasChart: boolean;
+    hasTable: boolean;
+    hasTree: boolean;
+    commentaryVisual?: boolean;
+  },
+): ViewFormat {
+  const { hasText, hasChart, hasTable, hasTree, commentaryVisual = false } = options;
+  const preferred = getPreferredFormatFromToolCalls(toolCalls);
+
+  if (!commentaryVisual && preferred === "text" && hasText && !hasTree) {
+    return "text";
+  }
+
+  if (hasTree) {
+    return "tree";
+  }
+
+  if (preferred === "chart" && hasChart) {
+    return "chart";
+  }
+
+  if (preferred === "table" && hasTable) {
+    return "table";
+  }
+
+  if (hasChart) {
+    return "chart";
+  }
+
+  if (hasTable) {
+    return "table";
+  }
+
+  if (!commentaryVisual && hasText) {
+    return "text";
+  }
+
+  return "tree";
+}
+
 export function getPathFromToolCalls(toolCalls?: ChatToolCall[]): string {
   if (!Array.isArray(toolCalls)) {
     return "";
@@ -856,6 +955,10 @@ export function resolvePresentationLayoutMode(
 
   if (!hasVisual || !hasDisplayableRichText(commentary)) {
     return "toggle";
+  }
+
+  if (hasTree && hasDisplayableRichText(commentary)) {
+    return "commentary-visual";
   }
 
   if (

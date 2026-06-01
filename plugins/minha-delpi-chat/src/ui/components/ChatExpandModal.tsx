@@ -133,10 +133,15 @@ export function ChatExpandModal({
           </div>
           <div className="mdc-expand-modal__body" ref={chartRef}>
             {presentation.type === "table" && (
-              <ChatRichTable presentation={presentation} onDrillDown={onDrillDown} />
+              <ChatRichTable
+                presentation={presentation}
+                hideToolbar
+                hideTitle
+                onDrillDown={onDrillDown}
+              />
             )}
             {presentation.type === "chart" && (
-              <ChatRichChart presentation={presentation} />
+              <ChatRichChart presentation={presentation} hideToolbar hideTitle />
             )}
             {presentation.type === "kpi" && (
               <ChatRichKpi presentation={presentation} />
@@ -151,6 +156,7 @@ export function ChatExpandModal({
               <ChatRichTree
                 presentation={presentation}
                 hideToolbar
+                hideTitle
                 onDrillDown={onDrillDown}
               />
             )}
@@ -164,28 +170,38 @@ export function ChatExpandModal({
 export function ExpandButton({
   presentation,
   onDrillDown,
+  disabled = false,
 }: {
   presentation: ChatPresentation;
   onDrillDown?: (query: string) => void;
+  /** Evita abrir outro modal quando já está em contexto expandido. */
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+
+  if (disabled) {
+    return null;
+  }
 
   return (
     <>
       <button
+        type="button"
         className="mdc-rich-chart__btn"
         onClick={() => setOpen(true)}
         title="Expandir"
+        aria-haspopup="dialog"
+        aria-expanded={open}
       >
         <Maximize2 size={12} /> Expandir
       </button>
-      {open && (
+      {open ? (
         <ChatExpandModal
           presentation={presentation}
           onClose={() => setOpen(false)}
           onDrillDown={onDrillDown}
         />
-      )}
+      ) : null}
     </>
   );
 }
