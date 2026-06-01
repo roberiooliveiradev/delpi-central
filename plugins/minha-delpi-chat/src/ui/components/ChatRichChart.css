@@ -79,12 +79,6 @@
   );
 }
 
-.mdc-rich-chart__toggle {
-  display: flex;
-  gap: 0.3rem;
-  margin-left: 0.5rem;
-}
-
 .mdc-rich-presentation__toolbar {
   display: flex;
   align-items: center;
@@ -176,18 +170,6 @@
   margin-left: auto;
 }
 
-.mdc-rich-presentation--stacked .mdc-rich-presentation__stack {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.mdc-rich-presentation--stacked .mdc-rich-tree,
-.mdc-rich-presentation--stacked .mdc-rich-table,
-.mdc-rich-presentation--stacked .mdc-rich-chart {
-  margin: 0;
-}
-
 .mdc-rich-presentation--commentary .mdc-rich-presentation__text--commentary {
   margin-bottom: 0.65rem;
 }
@@ -196,21 +178,6 @@
 .mdc-rich-presentation--commentary .mdc-rich-table,
 .mdc-rich-presentation--commentary .mdc-rich-chart {
   margin-top: 0;
-}
-
-.mdc-rich-presentation__actions {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  margin: 0.5rem 0 0.25rem 0;
-}
-
-.mdc-rich-presentation__toggle {
-  display: flex;
-  gap: 0.3rem;
-  margin: 0.5rem 0 0 0;
-  justify-content: flex-end;
 }
 
 .mdc-rich-chart__ux-toolbar {

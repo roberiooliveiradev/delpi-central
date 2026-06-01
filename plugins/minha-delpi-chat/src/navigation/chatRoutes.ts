@@ -1,7 +1,6 @@
 import {
   buildAdminAgentHref,
   buildAdminHref,
-  legacyTabToNav,
   parseAdminPathSegments,
   type AdminLegacyTab,
   type AdminNavState,
@@ -417,7 +416,3 @@ export function buildChatAdminHref(nav: AdminNavState) {
   return buildAdminHref(nav);
 }
 
-/** @deprecated Preferir buildChatAdminHref com AdminNavState */
-export function buildChatAdminLegacyTabHref(tab: AdminLegacyTab) {
-  return buildAdminHref(legacyTabToNav(tab));
-}

@@ -36,12 +36,6 @@ export const CHAT_TEXT_HOME_STARTERS: ChatHomeStarter[] = [
   },
 ];
 
-/** União legada (home/help). */
-export const CHAT_HOME_STARTERS: ChatHomeStarter[] = [
-  ...CHAT_OPERATIONAL_HOME_STARTERS,
-  ...CHAT_TEXT_HOME_STARTERS,
-];
-
 /** Quebra-gelos padrão na home do agente (sem código fixo). */
 export const DEFAULT_AGENT_ICEBREAKERS: string[] = [
   "me fale do produto {{productCode}}",

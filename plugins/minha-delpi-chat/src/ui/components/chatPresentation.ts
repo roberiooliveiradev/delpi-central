@@ -1,7 +1,6 @@
 import type {
   ChatDataCoverageNotice,
   ChatDepthState,
-  ChatMessage,
   ChatPaginationState,
   ChatPresentation,
   ChatToolCall,
@@ -911,15 +910,6 @@ export function resolveCommentaryTextBody(
   return body.trim();
 }
 
-/** @deprecated Prefer resolveCommentaryTextBody */
-export function resolveRichTextBodyForStackedPresentation(
-  messageContent: string | null | undefined,
-  toolCalls?: ChatToolCall[],
-  pair?: PresentationPair,
-): string {
-  return resolveCommentaryTextBody(messageContent, toolCalls, pair);
-}
-
 /** Corpo markdown da aba Texto (tabela em GFM), sem repetir o título do cabeçalho. */
 export function resolveRichTextBody(
   messageContent: string | null | undefined,
@@ -1022,28 +1012,6 @@ export function getPresentationPairFromToolCalls(
     table: getTablePresentationFromToolCalls(toolCalls),
     tree: getTreePresentationFromToolCalls(toolCalls),
   };
-}
-
-export function getPresentationFromMessages(
-  messages: ChatMessage[],
-): ChatPresentation | null {
-  for (const message of [...messages].reverse()) {
-    const toolCalls = message.metadata?.toolCalls;
-
-    const presentation = getPresentationFromToolCalls(toolCalls);
-
-    if (presentation) {
-      return presentation;
-    }
-  }
-
-  return null;
-}
-
-export function getPresentationFromStreamingToolCalls(
-  toolCalls?: ChatToolCall[],
-): ChatPresentation | null {
-  return getPresentationFromToolCalls(toolCalls);
 }
 
 const RICH_PRESENTATION_TYPES = new Set([

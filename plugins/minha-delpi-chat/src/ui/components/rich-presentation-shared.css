@@ -30,7 +30,7 @@
 
 .mdc-rich-presentation--enter .mdc-rich-table,
 .mdc-rich-presentation--enter .mdc-rich-chart,
-.mdc-rich-presentation--enter .mdc-rich-kpi-grid {
+.mdc-rich-presentation--enter .mdc-rich-kpi__grid {
   animation: mdc-rich-presentation-enter var(--mdc-motion-duration-slow) var(--mdc-motion-ease-out)
     both;
 }
