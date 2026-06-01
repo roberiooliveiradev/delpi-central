@@ -1,0 +1,19 @@
+.mdc-chat-interactivity {
+  display: grid;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-chat-follow-up__chip--more {
+  border-style: dashed;
+}
+
+.mdc-chat-follow-up__chip--disabled,
+.mdc-chat-follow-up__chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.mdc-chat-follow-up__chip--primary {
+  border-color: color-mix(in srgb, var(--mdc-accent, #3b82f6) 55%, var(--mdc-border));
+  font-weight: 600;
+}

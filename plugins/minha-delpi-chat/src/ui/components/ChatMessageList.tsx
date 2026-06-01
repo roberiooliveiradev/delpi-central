@@ -31,6 +31,7 @@ import {
 import { ChatBranchNavigator } from "./ChatBranchNavigator";
 import { ChatEmptyState } from "./ChatEmptyState";
 import { ChatFollowUpChips, type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
+import { ChatInteractivityBlock } from "./ChatInteractivityBlock";
 import { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
 import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
@@ -1298,24 +1299,45 @@ export function ChatMessageList({
                   sources={filterVisibleChatSources(getMessageSources(message))}
                   webSearchResearch={getWebSearchResearch(message)}
                 />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.followUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.webSearchFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Após pesquisa web"
-                  ariaLabel="Ações sugeridas após pesquisa na internet"
-                />
+                {message.metadata?.interactivity?.consolidated ? (
+                  <ChatInteractivityBlock
+                    interactivity={message.metadata.interactivity}
+                    onUseSuggestion={onDrillDown}
+                    onRecordClick={({ label, query, group }) => {
+                      onRecordHelpEvent?.({
+                        event: "interactivity_suggestion_clicked",
+                        metadata: {
+                          label,
+                          query,
+                          group: group ?? null,
+                          messageId: message.id,
+                        },
+                      });
+                    }}
+                  />
+                ) : (
+                  <>
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.followUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                    />
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.webSearchFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Após pesquisa web"
+                      ariaLabel="Ações sugeridas após pesquisa na internet"
+                    />
+                  </>
+                )}
+                {!message.metadata?.interactivity?.consolidated ? (
                 <ChatFollowUpChips
                   suggestions={
                     (message.metadata?.helpFollowUpSuggestions as
@@ -1346,6 +1368,7 @@ export function ChatMessageList({
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
                 />
+                ) : null}
                 {message.metadata?.helpSelfHelp ? (
                   <ChatHelpSelfHelpFeedback
                     topic={
@@ -1365,16 +1388,18 @@ export function ChatMessageList({
                     }}
                   />
                 ) : null}
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.routingDisambiguationSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Sobre o produto"
-                  ariaLabel="Escolha o que consultar sobre o produto"
-                />
+                {!message.metadata?.interactivity?.consolidated ? (
+                  <ChatFollowUpChips
+                    suggestions={
+                      (message.metadata?.routingDisambiguationSuggestions as
+                        | ChatFollowUpSuggestion[]
+                        | undefined) ?? []
+                    }
+                    onUseSuggestion={onDrillDown}
+                    groupLabel="Sobre o produto"
+                    ariaLabel="Escolha o que consultar sobre o produto"
+                  />
+                ) : null}
                 <ChatMilestoneCelebration
                   celebrations={
                     (message.metadata?.milestoneCelebrations as
@@ -1382,16 +1407,18 @@ export function ChatMessageList({
                       | undefined) ?? []
                   }
                 />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.onboardingFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Primeiros passos"
-                  ariaLabel="Sugestões do guia de uso"
-                />
+                {!message.metadata?.interactivity?.consolidated ? (
+                  <ChatFollowUpChips
+                    suggestions={
+                      (message.metadata?.onboardingFollowUpSuggestions as
+                        | ChatFollowUpSuggestion[]
+                        | undefined) ?? []
+                    }
+                    onUseSuggestion={onDrillDown}
+                    groupLabel="Primeiros passos"
+                    ariaLabel="Sugestões do guia de uso"
+                  />
+                ) : null}
                 <ChatGuidedFlowBlock
                   flow={message.metadata?.guidedFlow as ChatGuidedFlow | undefined}
                   cards={message.metadata?.guidedFlowCards as ChatGuidedFlowCard[] | undefined}
@@ -1408,7 +1435,8 @@ export function ChatMessageList({
                     onUseSuggestion={onDrillDown}
                   />
                 ) : null}
-                {!message.metadata?.errorHandling ? (
+                {!message.metadata?.interactivity?.consolidated &&
+                !message.metadata?.errorHandling ? (
                   <ChatFollowUpChips
                     suggestions={
                       (message.metadata?.helpErrorFollowUpSuggestions as
@@ -1420,26 +1448,30 @@ export function ChatMessageList({
                     ariaLabel="Sugestões de ajuda após falha na consulta"
                   />
                 ) : null}
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.attachmentFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Com o anexo"
-                  ariaLabel="Ações sugeridas para o arquivo anexado"
-                />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.canvasFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Na lousa"
-                  ariaLabel="Ações sugeridas para a lousa"
-                />
+                {!message.metadata?.interactivity?.consolidated ? (
+                  <>
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.attachmentFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Com o anexo"
+                      ariaLabel="Ações sugeridas para o arquivo anexado"
+                    />
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.canvasFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Na lousa"
+                      ariaLabel="Ações sugeridas para a lousa"
+                    />
+                  </>
+                ) : null}
                 {message.metadata?.attachmentSourceCitation?.note ? (
                   <p className="mdc-chat-source-citation">
                     {String(message.metadata.attachmentSourceCitation.note)}
@@ -1513,46 +1545,50 @@ export function ChatMessageList({
                     ) : null}
                   </div>
                 ) : null}
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.drawingFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Análise de desenho"
-                  ariaLabel="Ações sugeridas após análise de desenho técnico"
-                />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.textCorrectionFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Refinar texto"
-                  ariaLabel="Ações sugeridas após correção de texto"
-                />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.textTaskFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Refinar texto"
-                  ariaLabel="Sugestões para tarefas textuais"
-                />
-                <ChatFollowUpChips
-                  suggestions={
-                    (message.metadata?.emailFollowUpSuggestions as
-                      | ChatFollowUpSuggestion[]
-                      | undefined) ?? []
-                  }
-                  onUseSuggestion={onDrillDown}
-                  groupLabel="Refinar e-mail"
-                  ariaLabel="Ações sugeridas após geração de e-mail"
-                />
+                {!message.metadata?.interactivity?.consolidated ? (
+                  <>
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.drawingFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Análise de desenho"
+                      ariaLabel="Ações sugeridas após análise de desenho técnico"
+                    />
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.textCorrectionFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Refinar texto"
+                      ariaLabel="Ações sugeridas após correção de texto"
+                    />
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.textTaskFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Refinar texto"
+                      ariaLabel="Sugestões para tarefas textuais"
+                    />
+                    <ChatFollowUpChips
+                      suggestions={
+                        (message.metadata?.emailFollowUpSuggestions as
+                          | ChatFollowUpSuggestion[]
+                          | undefined) ?? []
+                      }
+                      onUseSuggestion={onDrillDown}
+                      groupLabel="Refinar e-mail"
+                      ariaLabel="Ações sugeridas após geração de e-mail"
+                    />
+                  </>
+                ) : null}
                 {(message.metadata?.emailPreferences?.labels?.length ?? 0) > 0 ? (
                   <p className="mdc-chat-message-list__email-meta" role="note">
                     Preferências de e-mail:{" "}

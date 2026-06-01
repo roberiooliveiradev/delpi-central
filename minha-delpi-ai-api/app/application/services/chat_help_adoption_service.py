@@ -24,6 +24,7 @@ _ALLOWED_EVENTS = frozenset(
         "error_empty_result",
         "error_recovery_click",
         "error_feedback",
+        "interactivity_suggestion_clicked",
     }
 )
 

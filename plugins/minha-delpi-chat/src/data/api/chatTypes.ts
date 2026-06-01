@@ -235,8 +235,16 @@ export type ChatMessageBranch = {
 };
 
 export type ChatFollowUpSuggestion = {
+  id?: string;
   label: string;
   query: string;
+  icon?: string;
+  group?: string;
+  kind?: "primary" | "secondary" | "ghost" | "danger";
+  tooltip?: string;
+  requiresConfirmation?: boolean;
+  confirmationMessage?: string;
+  disabledReason?: string;
 };
 
 export type ChatGuidedFlowStep = {
@@ -398,6 +406,21 @@ export type ChatMessageMetadata = {
   } | null;
   errorRecoveryFollowUpSuggestions?: ChatFollowUpSuggestion[];
   errorHandlingEnrichedAnswer?: string | null;
+  interactivity?: {
+    consolidated?: boolean;
+    maxPrimary?: number;
+    suggestions?: ChatFollowUpSuggestion[];
+    moreSuggestions?: Record<string, ChatFollowUpSuggestion[]>;
+    contextBar?: {
+      items?: { label: string; kind: string; value: string }[];
+      summary?: string | null;
+    } | null;
+    sourceIntent?: string | null;
+    suggestionsShown?: string[];
+  } | null;
+  presentationFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  attachmentFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  routingDisambiguationSuggestions?: ChatFollowUpSuggestion[];
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];

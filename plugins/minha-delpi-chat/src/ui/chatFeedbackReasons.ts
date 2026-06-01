@@ -68,4 +68,13 @@ export const CHAT_FEEDBACK_REASONS: ChatFeedbackReason[] = [
   { id: "error_should_widen_search", label: "Deveria ter ampliado busca" },
   { id: "error_invented_result", label: "Inventou resultado" },
   { id: "error_partial_not_disclosed", label: "Não avisou que era parcial" },
+  { id: "chip_did_not_work", label: "Botão não funcionou" },
+  { id: "chip_irrelevant", label: "Sugestão não fazia sentido" },
+  { id: "chip_missing_option", label: "Faltou opção útil" },
+  { id: "chip_too_many", label: "Muitas opções" },
+  { id: "chip_confusing", label: "Opção confusa" },
+  { id: "chip_wrong_action", label: "Ação errada ao clicar" },
+  { id: "chip_disabled_unexplained", label: "Botão desabilitado sem explicação" },
+  { id: "chip_missing_copy", label: "Faltou botão de copiar" },
+  { id: "chip_missing_canvas", label: "Faltou botão de lousa" },
 ];

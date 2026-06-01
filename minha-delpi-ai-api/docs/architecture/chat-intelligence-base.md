@@ -106,6 +106,9 @@ Mensagem do usuário
 | `ChatErrorHandlingClassifier` | Classifica tipo de erro/vazio (Playbook 06) |
 | `ChatErrorHandlingService` | Metadata `errorHandling` + `errorRecoveryFollowUpSuggestions` + enrich |
 | `ChatErrorHandlingTelemetryService` | Log `error_handling type=…` |
+| `ChatInteractivitySuggestionService` | Consolida chips em `metadata.interactivity` (Playbook 07) |
+| `ChatPresentationInteractivityService` | Chips pós-tabela/gráfico/árvore |
+| `ChatInteractivityTelemetryService` | Log de sugestões primárias e grupos no overflow |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |

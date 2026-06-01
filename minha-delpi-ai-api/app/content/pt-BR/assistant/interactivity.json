@@ -1,0 +1,102 @@
+{
+  "maxPrimary": 4,
+  "moreOptionsLabel": "Mais opções",
+  "groupLabels": {
+    "consultar": "Consultar",
+    "visualizar": "Visualizar",
+    "exportar": "Exportar",
+    "formatar": "Formatar",
+    "corrigir": "Corrigir",
+    "ajuda": "Ajuda",
+    "web": "Web",
+    "lousa": "Lousa",
+    "recuperar": "Recuperar",
+    "anexo": "Anexo",
+    "apresentacao": "Apresentação"
+  },
+  "labelGroups": {
+    "Ver estoque": "consultar",
+    "Ver fornecedores": "consultar",
+    "Ver estrutura": "consultar",
+    "Ver vendas": "consultar",
+    "Ver compras": "consultar",
+    "Onde é usado?": "consultar",
+    "Consultar produto": "consultar",
+    "Buscar por descrição": "consultar",
+    "Gerar gráfico": "visualizar",
+    "Ver em tabela": "visualizar",
+    "Exportar CSV": "exportar",
+    "Colocar na lousa": "lousa",
+    "Deixar mais formal": "formatar",
+    "Deixar mais curto": "formatar",
+    "Traduzir": "formatar",
+    "Corrigir texto": "corrigir",
+    "Resumir": "anexo",
+    "Tentar novamente": "recuperar",
+    "Pesquisar na web": "web",
+    "O que você pode fazer?": "ajuda"
+  },
+  "primaryLabels": [
+    "Ver estoque",
+    "Ver fornecedores",
+    "Colocar na lousa",
+    "Tentar novamente",
+    "Resumir",
+    "Deixar mais formal"
+  ],
+  "sensitiveQueries": [
+    "limpar a lousa",
+    "limpe a lousa",
+    "substitua a lousa",
+    "substituir a lousa",
+    "apague a lousa"
+  ],
+  "presentationChips": {
+    "table": [
+      "Exportar CSV",
+      "Gerar gráfico",
+      "Colocar na lousa"
+    ],
+    "chart": [
+      "Ver como tabela",
+      "Baixar PNG",
+      "Colocar na lousa"
+    ],
+    "tree": [
+      "Ver estoque",
+      "Onde é usado?",
+      "Colocar na lousa"
+    ],
+    "kpi": [
+      "Ver em tabela",
+      "Gerar gráfico",
+      "Colocar na lousa"
+    ]
+  },
+  "presentationQueries": {
+    "Exportar CSV": "exporte a última tabela em CSV",
+    "Gerar gráfico": "gere um gráfico com os dados acima",
+    "Ver como tabela": "mostre os dados acima em tabela",
+    "Baixar PNG": "exporte o gráfico acima como imagem",
+    "Ver estoque": "qual o estoque do produto {{productCode}}?",
+    "Onde é usado?": "onde o produto {{productCode}} é usado?",
+    "Colocar na lousa": "coloque o resultado acima na lousa"
+  },
+  "metadataSources": [
+    { "key": "followUpSuggestions", "group": "consultar", "priority": 10 },
+    { "key": "errorRecoveryFollowUpSuggestions", "group": "recuperar", "priority": 5 },
+    { "key": "attachmentFollowUpSuggestions", "group": "anexo", "priority": 20 },
+    { "key": "canvasFollowUpSuggestions", "group": "lousa", "priority": 25 },
+    { "key": "textCorrectionFollowUpSuggestions", "group": "formatar", "priority": 30 },
+    { "key": "textTaskFollowUpSuggestions", "group": "formatar", "priority": 31 },
+    { "key": "emailFollowUpSuggestions", "group": "formatar", "priority": 32 },
+    { "key": "webSearchFollowUpSuggestions", "group": "web", "priority": 15 },
+    { "key": "drawingFollowUpSuggestions", "group": "consultar", "priority": 18 },
+    { "key": "helpFollowUpSuggestions", "group": "ajuda", "priority": 40 },
+    { "key": "helpErrorFollowUpSuggestions", "group": "ajuda", "priority": 6 },
+    { "key": "routingDisambiguationSuggestions", "group": "consultar", "priority": 12 },
+    { "key": "onboardingFollowUpSuggestions", "group": "ajuda", "priority": 50 },
+    { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },
+    { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 }
+  ]
+}

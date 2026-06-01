@@ -1039,6 +1039,23 @@ class StreamChatMessageUseCase:
             tool_context=tool_context,
         )
 
+        from app.application.services.chat_interactivity_suggestion_service import (
+            ChatInteractivitySuggestionService,
+        )
+        from app.application.services.chat_interactivity_telemetry_service import (
+            ChatInteractivityTelemetryService,
+        )
+
+        intent_route = assistant_metadata.get("intentRouting")
+
+        ChatInteractivitySuggestionService.attach_to_assistant_metadata(
+            assistant_metadata,
+            workspace_context=workspace_context,
+            tool_calls=tool_calls,
+            intent_route=intent_route if isinstance(intent_route, dict) else None,
+        )
+        ChatInteractivityTelemetryService.log_from_metadata(assistant_metadata)
+
         if persist_before_playback:
             assistant_metadata = ChatMessageDeliveryService.ready_metadata(
                 assistant_metadata,

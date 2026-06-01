@@ -1,0 +1,275 @@
+"""Consolidação de chips e sugestões — Playbook 07."""
+
+from __future__ import annotations
+
+import hashlib
+from functools import lru_cache
+from typing import Any
+
+from app.application.services.chat_presentation_interactivity_service import (
+    ChatPresentationInteractivityService,
+)
+from app.infrastructure.content.content_service import ContentService
+
+
+@lru_cache(maxsize=1)
+def _content() -> dict[str, Any]:
+    return ContentService.load_json("assistant/interactivity")
+
+
+class ChatInteractivitySuggestionService:
+    @classmethod
+    def attach_to_assistant_metadata(
+        cls,
+        metadata: dict,
+        *,
+        workspace_context: dict | None = None,
+        tool_calls: list | None = None,
+        intent_route: dict | None = None,
+    ) -> None:
+        presentation = ChatPresentationInteractivityService.build_from_tool_calls(tool_calls)
+
+        if presentation:
+            metadata["presentationFollowUpSuggestions"] = presentation
+
+        raw = cls._collect_raw(metadata)
+        enriched = [cls._enrich(item, workspace_context=workspace_context) for item in raw]
+        deduped = cls._dedupe(enriched)
+        ranked = cls._rank(deduped, metadata=metadata, intent_route=intent_route)
+        primary, more = cls._partition(ranked)
+
+        context_bar = cls._build_context_bar(metadata)
+
+        metadata["interactivity"] = {
+            "consolidated": True,
+            "maxPrimary": cls._max_primary(),
+            "suggestions": primary,
+            "moreSuggestions": more,
+            "contextBar": context_bar,
+            "sourceIntent": (
+                str(intent_route.get("intent") or "").strip()
+                if isinstance(intent_route, dict)
+                else None
+            ),
+            "suggestionsShown": [item.get("label") for item in primary + sum(more.values(), [])],
+        }
+
+        admin_debug = metadata.get("adminDebug")
+
+        if isinstance(admin_debug, dict):
+            admin_debug["interactivity"] = {
+                "primaryCount": len(primary),
+                "moreCount": sum(len(items) for items in more.values()),
+                "sourceIntent": metadata["interactivity"].get("sourceIntent"),
+            }
+
+    @classmethod
+    def _collect_raw(cls, metadata: dict) -> list[dict[str, Any]]:
+        collected: list[dict[str, Any]] = []
+
+        for source in _content().get("metadataSources") or []:
+            if not isinstance(source, dict):
+                continue
+
+            key = str(source.get("key") or "").strip()
+            items = metadata.get(key)
+
+            if not isinstance(items, list):
+                continue
+
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+
+                label = str(item.get("label") or "").strip()
+                query = str(item.get("query") or "").strip()
+
+                if not label or not query:
+                    continue
+
+                collected.append(
+                    {
+                        "label": label,
+                        "query": query,
+                        "group": str(source.get("group") or "consultar"),
+                        "priority": int(source.get("priority") or 100),
+                        "sourceKey": key,
+                    }
+                )
+
+        return collected
+
+    @classmethod
+    def _enrich(
+        cls,
+        item: dict[str, Any],
+        *,
+        workspace_context: dict | None,
+    ) -> dict[str, Any]:
+        label = str(item.get("label") or "").strip()
+        query = str(item.get("query") or "").strip()
+        group = cls._resolve_group(label, str(item.get("group") or ""))
+        kind = "primary" if label in (_content().get("primaryLabels") or []) else "secondary"
+        suggestion_id = hashlib.sha1(f"{label}:{query}".encode()).hexdigest()[:12]
+
+        enriched: dict[str, Any] = {
+            "id": suggestion_id,
+            "label": label,
+            "query": query,
+            "group": group,
+            "kind": kind,
+            "priority": item.get("priority", 100),
+            "sourceKey": item.get("sourceKey"),
+        }
+
+        normalized_query = query.lower()
+
+        if any(token in normalized_query for token in _content().get("sensitiveQueries") or []):
+            enriched["requiresConfirmation"] = True
+            enriched["tooltip"] = "Esta ação pede confirmação antes de executar."
+
+        disabled = cls._disabled_reason(label, workspace_context=workspace_context)
+
+        if disabled:
+            enriched["disabledReason"] = disabled
+            enriched["kind"] = "ghost"
+
+        return enriched
+
+    @classmethod
+    def _disabled_reason(
+        cls,
+        label: str,
+        *,
+        workspace_context: dict | None,
+    ) -> str | None:
+        capabilities = (workspace_context or {}).get("capabilities") or {}
+
+        if label == "Colocar na lousa" and capabilities.get("canvas") is False:
+            return "A lousa não está habilitada neste agente."
+
+        if label in {"Ver estoque", "Ver fornecedores", "Ver estrutura", "Ver vendas"}:
+            if not (workspace_context or {}).get("userActivatedAgent") and not (
+                workspace_context or {}
+            ).get("actionsEnabled"):
+                return "Ative um agente com consultas operacionais para usar esta ação."
+
+        return None
+
+    @classmethod
+    def _resolve_group(cls, label: str, fallback: str) -> str:
+        mapping = _content().get("labelGroups") or {}
+
+        if isinstance(mapping, dict) and label in mapping:
+            return str(mapping[label])
+
+        return fallback or "consultar"
+
+    @classmethod
+    def _dedupe(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        seen: set[str] = set()
+        output: list[dict[str, Any]] = []
+
+        for item in items:
+            token = f"{item.get('label')}|{item.get('query')}".lower()
+
+            if token in seen:
+                continue
+
+            seen.add(token)
+            output.append(item)
+
+        return output
+
+    @classmethod
+    def _rank(
+        cls,
+        items: list[dict[str, Any]],
+        *,
+        metadata: dict,
+        intent_route: dict | None,
+    ) -> list[dict[str, Any]]:
+        intent = (
+            str(intent_route.get("intent") or "").strip().lower()
+            if isinstance(intent_route, dict)
+            else ""
+        )
+        has_error = isinstance(metadata.get("errorHandling"), dict)
+
+        def sort_key(item: dict[str, Any]) -> tuple[int, int, str]:
+            priority = int(item.get("priority") or 100)
+            kind_rank = 0 if item.get("kind") == "primary" else 1
+            disabled_rank = 1 if item.get("disabledReason") else 0
+
+            intent_boost = 0
+
+            if intent.startswith("text") and item.get("group") == "formatar":
+                intent_boost = -15
+
+            if intent in {"product_lookup", "operational_query", "self_help"} and item.get(
+                "group"
+            ) == "consultar":
+                intent_boost = -15
+
+            if item.get("group") == "recuperar" and has_error:
+                intent_boost = -20
+
+            return (disabled_rank, priority + intent_boost + kind_rank, str(item.get("label")))
+
+        return sorted(items, key=sort_key)
+
+    @classmethod
+    def _partition(
+        cls,
+        items: list[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], dict[str, list[dict[str, Any]]]]:
+        max_primary = cls._max_primary()
+        enabled = [item for item in items if not item.get("disabledReason")]
+        disabled = [item for item in items if item.get("disabledReason")]
+
+        primary = enabled[:max_primary]
+        overflow = enabled[max_primary:] + disabled
+        more: dict[str, list[dict[str, Any]]] = {}
+        group_labels = _content().get("groupLabels") or {}
+
+        for item in overflow:
+            group = str(item.get("group") or "consultar")
+            more.setdefault(group, []).append(item)
+
+        if not more:
+            return primary, {}
+
+        ordered: dict[str, list[dict[str, Any]]] = {}
+
+        for group in sorted(more.keys(), key=lambda g: str(group_labels.get(g) or g)):
+            ordered[group] = more[group][:8]
+
+        return primary, ordered
+
+    @classmethod
+    def _build_context_bar(cls, metadata: dict) -> dict[str, Any] | None:
+        chips = metadata.get("contextChips")
+
+        if not isinstance(chips, list) or not chips:
+            return None
+
+        snapshot = metadata.get("contextSnapshot")
+
+        summary = None
+
+        if isinstance(snapshot, dict):
+            summary = str(snapshot.get("summary") or "").strip() or None
+
+        return {
+            "items": chips,
+            "summary": summary,
+        }
+
+    @classmethod
+    def _max_primary(cls) -> int:
+        token = _content().get("maxPrimary")
+
+        if isinstance(token, int) and token > 0:
+            return token
+
+        return 4
