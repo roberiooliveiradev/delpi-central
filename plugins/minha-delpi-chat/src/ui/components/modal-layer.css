@@ -13,6 +13,7 @@
 .mdc-modal-portal .mdc-chat-canvas-backdrop,
 .mdc-modal-portal .mdc-chat-project-settings-backdrop,
 .mdc-modal-portal .mdc-chat-shortcut-prompt-backdrop,
+.mdc-modal-portal .mdc-chat-add-context-backdrop,
 .mdc-modal-portal .mdc-expand-modal__backdrop {
   position: fixed;
   inset: 0;
@@ -33,6 +34,12 @@
   max-width: min(100%, 42rem);
 }
 
+.mdc-modal-portal .mdc-chat-add-context {
+  box-sizing: border-box;
+  max-height: calc(100dvh - (var(--mdc-space-4) * 2));
+  overflow: auto;
+}
+
 .mdc-modal-portal .mdc-chat-projects-modal,
 .mdc-modal-portal .mdc-chat-agents-modal {
   box-sizing: border-box;
@@ -47,7 +54,8 @@
   .mdc-modal-portal .mdc-chat-archived-backdrop,
   .mdc-modal-portal .mdc-chat-confirm-backdrop,
   .mdc-modal-portal .mdc-chat-project-settings-backdrop,
-  .mdc-modal-portal .mdc-chat-shortcut-prompt-backdrop {
+  .mdc-modal-portal .mdc-chat-shortcut-prompt-backdrop,
+  .mdc-modal-portal .mdc-chat-add-context-backdrop {
     align-items: flex-end;
     justify-items: stretch;
     padding: 0;
@@ -58,9 +66,15 @@
   .mdc-modal-portal .mdc-chat-agents-modal,
   .mdc-modal-portal .mdc-chat-archived-dialog,
   .mdc-modal-portal .mdc-chat-confirm,
-  .mdc-modal-portal .mdc-chat-project-settings {
+  .mdc-modal-portal .mdc-chat-project-settings,
+  .mdc-modal-portal .mdc-chat-add-context {
     width: 100%;
     max-width: 100%;
+  }
+
+  .mdc-modal-portal .mdc-chat-add-context {
+    max-height: 100dvh;
+    border-radius: 1rem 1rem 0 0;
   }
 
   .mdc-modal-portal .mdc-chat-confirm-backdrop {
