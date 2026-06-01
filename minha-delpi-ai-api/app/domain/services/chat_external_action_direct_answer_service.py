@@ -176,12 +176,20 @@ class ChatExternalActionDirectAnswerService:
                 "sql",
                 "emptyNoRows",
             )
-            if (
-                schedule
-                and schedule.empty_message != message_text
-                and today_label in message_text
-            ):
-                message_text = schedule.empty_message
+            if schedule:
+                fallback_title = ExternalActionResponseContentService.get(
+                    "productionSchedule",
+                    "titleTodayFallback",
+                )
+
+                if title == fallback_title or today_label in title.lower():
+                    title = schedule.title
+
+                if (
+                    schedule.empty_message != message_text
+                    and today_label in message_text
+                ):
+                    message_text = schedule.empty_message
             return f"**{title}**\n\n{message_text}"
 
         if rows and cls._looks_like_production_schedule_row(rows[0]):

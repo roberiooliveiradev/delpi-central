@@ -395,6 +395,13 @@ class ChatCapabilitiesService:
         """Consulta operacional real (ex.: estoque de produto), não pergunta «consegue?»."""
         normalized = normalized or ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_sql_operational_intent_service import (
+            ChatSqlOperationalIntentService,
+        )
+
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            return True
+
         if any(re.search(pattern, normalized) for pattern in cls._OPERATIONAL_QUERY_PATTERNS):
             return True
 

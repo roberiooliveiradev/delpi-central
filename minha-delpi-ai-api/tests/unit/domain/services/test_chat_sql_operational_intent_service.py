@@ -39,6 +39,18 @@ def test_detects_production_question_for_tomorrow():
     )
 
 
+def test_detects_scheduled_production_tomorrow_phrase():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "Produtos programados para produção amanhã"
+    )
+
+
+def test_detects_ruptura_stock_below_minimum():
+    assert ChatSqlOperationalIntentService.requires_sql_knowledge(
+        "Ruptura de estoque — quais produtos estão abaixo do mínimo?"
+    )
+
+
 def test_detects_aggregate_stock_below_minimum():
     assert ChatSqlOperationalIntentService.requires_sql_knowledge(
         "Liste os produtos com estoque abaixo do mínimo"

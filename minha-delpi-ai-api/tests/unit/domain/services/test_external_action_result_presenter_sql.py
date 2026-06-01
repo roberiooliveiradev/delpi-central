@@ -214,3 +214,36 @@ def test_format_sql_direct_answer_for_monday():
     assert answer is not None
     assert "segunda-feira" in answer.lower()
     assert "Nenhum produto programado" in answer
+
+
+def test_present_sql_empty_production_title_from_message_when_sql_missing():
+    presenter = ExternalActionResultPresenter()
+
+    humanized = presenter.present(
+        {
+            "success": True,
+            "data": {
+                "success": True,
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "columns": ["COD_PRODUTO", "DESCRICAO_PRODUTO"],
+                        "total": 0,
+                        "data": [],
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    answer = ChatExternalActionDirectAnswerService.format(
+        humanized,
+        message="quais produtos serão produzidos na segunda-feira?",
+        path="/data/sql",
+    )
+
+    assert answer is not None
+    assert "segunda-feira" in answer.lower()
+    assert "hoje" not in answer.lower().split("programados para produção", 1)[-1][:40]

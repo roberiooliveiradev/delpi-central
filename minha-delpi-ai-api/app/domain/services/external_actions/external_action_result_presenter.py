@@ -2036,10 +2036,19 @@ class ExternalActionResultPresenter:
         if not isinstance(root, dict):
             return None
 
-        for key in ("sql", "query", "statement"):
+        for key in ("sql", "query", "statement", "executedSql"):
             value = root.get(key)
             if isinstance(value, str) and value.strip():
                 return ChatSqlProductionScheduleDateService.infer_from_sql(value)
+
+        dados = root.get("dados")
+
+        if isinstance(dados, dict):
+            for key in ("sql", "query", "statement", "executedSql"):
+                value = dados.get(key)
+
+                if isinstance(value, str) and value.strip():
+                    return ChatSqlProductionScheduleDateService.infer_from_sql(value)
 
         return None
 

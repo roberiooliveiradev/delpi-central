@@ -319,6 +319,43 @@ def test_production_schedule_question_does_not_select_product_search():
     assert "search" not in selected["arguments"]["actionId"]
 
 
+def test_scheduled_production_tomorrow_selects_sql_not_parent_products():
+    service = ExternalActionSelectionService(
+        FakeRepository(
+            [
+                {
+                    "actionId": "api_delpi.products.parents_products_code_parents_get",
+                    "method": "GET",
+                    "path": "/products/{code}/parents",
+                    "operationId": "parents_products_code_parents_get",
+                    "summary": "Produtos pai",
+                    "parametersSchema": [{"name": "code"}],
+                },
+                {
+                    "actionId": "sql-action",
+                    "method": "POST",
+                    "path": "/data/sql",
+                    "operationId": "execute_sql",
+                    "summary": "Executar SQL",
+                    "parametersSchema": [{"name": "query"}],
+                },
+            ]
+        )
+    )
+
+    selected = service.select_action(
+        "Produtos programados para produção amanhã",
+        allowed_action_ids=[
+            "api_delpi.products.parents_products_code_parents_get",
+            "sql-action",
+        ],
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "sql-action"
+    assert "SC2010" in selected["arguments"]["body"]["sql"]
+
+
 def test_execute_query_selects_sql_action():
     service = ExternalActionSelectionService(
         FakeRepository(
