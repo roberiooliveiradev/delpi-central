@@ -22,12 +22,15 @@ export function ChatRichTable({
   presentation,
   hideTitle = false,
   hideToolbar = false,
+  embeddedInDashboard = false,
   onDrillDown,
 }: {
   presentation: TablePresentation;
   hideTitle?: boolean;
   /** Oculta cabeçalho com ações (ex.: dentro do modal expandido). */
   hideToolbar?: boolean;
+  /** Toolbar compacta alinhada (painel de itens do dashboard). */
+  embeddedInDashboard?: boolean;
   onDrillDown?: (query: string) => void;
 }) {
   const { title, columns, rows } = presentation;
@@ -140,6 +143,7 @@ export function ChatRichTable({
       className={[
         "mdc-rich-table",
         hideToolbar ? "mdc-rich-table--embedded" : "",
+        embeddedInDashboard ? "mdc-rich-table--dashboard" : "",
       ]
         .filter(Boolean)
         .join(" ")}

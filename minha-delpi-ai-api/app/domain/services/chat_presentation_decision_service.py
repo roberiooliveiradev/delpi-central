@@ -453,6 +453,19 @@ class ChatPresentationDecisionService:
             if dashboard_explanation:
                 decision["dashboardExplanation"] = dashboard_explanation
 
+        from app.domain.services.chat_presentation_recommendation_service import (
+            ChatPresentationRecommendationService,
+        )
+
+        recommendations = ChatPresentationRecommendationService.build(
+            decision=decision,
+            user_message=axis_user_message or user_message,
+            metadata=metadata,
+        )
+
+        if recommendations:
+            decision["recommendations"] = recommendations
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))

@@ -227,6 +227,12 @@ export type ChatPresentationDecision = {
   insight?: string | null;
   chartExplanation?: string | null;
   dashboardExplanation?: string | null;
+  recommendations?: Array<{
+    view?: string;
+    label: string;
+    reason?: string;
+    query: string;
+  }> | null;
   policyNotice?: string | null;
   availableViews?: string[] | null;
   dataShape?: {

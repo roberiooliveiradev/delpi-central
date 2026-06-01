@@ -127,6 +127,51 @@
   margin-top: 0.15rem;
 }
 
+.mdc-rich-presentation__recommendations {
+  margin: 0 0 0.65rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px dashed color-mix(in srgb, var(--mdc-border) 80%, transparent);
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-accent, #2563eb) 6%);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--mdc-body);
+}
+
+.mdc-rich-presentation__recommendations-label {
+  font-weight: 600;
+  margin-right: 0.35rem;
+}
+
+.mdc-rich-presentation__recommendations-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.mdc-rich-presentation__recommendations-list li {
+  margin: 0.15rem 0;
+}
+
+.mdc-rich-presentation__recommendation-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--mdc-accent, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.mdc-rich-presentation__recommendation-link:disabled {
+  color: var(--mdc-muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+.mdc-rich-presentation__recommendation-reason {
+  color: var(--mdc-muted);
+}
+
 .mdc-rich-presentation__insight {
   margin: 0 0 0.65rem;
   font-size: 0.82rem;

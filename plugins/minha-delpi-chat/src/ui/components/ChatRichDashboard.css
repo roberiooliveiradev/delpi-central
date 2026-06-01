@@ -24,7 +24,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
+}
+
+.mdc-rich-dashboard__actions .mdc-rich-chart__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .mdc-rich-dashboard__title {
@@ -90,11 +103,68 @@
 }
 
 .mdc-rich-dashboard__data-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.3rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.mdc-rich-dashboard__data-toggle .mdc-rich-chart__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 0.4rem 0.5rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.35rem;
   margin-left: auto;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-chart__ux-field {
+  margin: 0;
+  min-width: 0;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter span {
+  font-size: 0.68rem;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__btn,
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-chart__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-chart__ux-field select {
+  min-height: 1.85rem;
+  font-size: 0.75rem;
 }
 
 .mdc-rich-dashboard__panel-body {

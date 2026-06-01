@@ -14,6 +14,7 @@ import {
   resolveDefaultRichViewMode,
   resolveRichFormatToggles,
   getPresentationInsightFromToolCalls,
+  getPresentationRecommendationsFromToolCalls,
   getPresentationTitle,
   getChartPresentationFromPair,
   getTablePresentationFromPair,
@@ -173,6 +174,10 @@ export function ChatRichPresentation({
     () => getPresentationInsightFromToolCalls(toolCalls),
     [toolCalls],
   );
+  const presentationRecommendations = useMemo(
+    () => getPresentationRecommendationsFromToolCalls(toolCalls),
+    [toolCalls],
+  );
   const commentaryBody = useMemo(
     () => resolveCommentaryTextBody(textContent, toolCalls, pair),
     [textContent, toolCalls, pair],
@@ -290,9 +295,6 @@ export function ChatRichPresentation({
             {dataCoverageNotice.message}
           </div>
         ) : null}
-        <div className="mdc-rich-presentation__toolbar">
-          <ExpandButton presentation={primary} />
-        </div>
         <ChatRichDashboard
           presentation={primary}
           toolCalls={toolCalls}
@@ -333,6 +335,38 @@ export function ChatRichPresentation({
       {presentationInsight}
     </p>
   ) : null;
+
+  const recommendationsBanner =
+    presentationRecommendations.length > 0 ? (
+      <div
+        className="mdc-rich-presentation__recommendations"
+        role="note"
+        aria-label="Sugestões de visualização"
+      >
+        <span className="mdc-rich-presentation__recommendations-label">Sugestão:</span>
+        <ul className="mdc-rich-presentation__recommendations-list">
+          {presentationRecommendations.map((item) => (
+            <li key={`${item.label}-${item.query}`}>
+              <button
+                type="button"
+                className="mdc-rich-presentation__recommendation-link"
+                title={item.reason}
+                onClick={() => onDrillDown?.(item.query)}
+                disabled={!onDrillDown}
+              >
+                {item.label}
+              </button>
+              {item.reason ? (
+                <span className="mdc-rich-presentation__recommendation-reason">
+                  {" "}
+                  — {item.reason}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
 
   const coverageNavigation = (
     <CoverageNavigation
@@ -388,6 +422,7 @@ export function ChatRichPresentation({
       <div className="mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
         {coverageBanner}
         {insightBanner}
+        {recommendationsBanner}
         {coverageNavigation}
 
         {hasCommentary ? (
@@ -443,6 +478,7 @@ export function ChatRichPresentation({
     <div className="mdc-rich-presentation mdc-rich-presentation--enter">
       {coverageBanner}
       {insightBanner}
+      {recommendationsBanner}
       {coverageNavigation}
       {formatToolbar}
 

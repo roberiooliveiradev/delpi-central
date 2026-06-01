@@ -10,6 +10,7 @@ import {
 import { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichChart } from "./ChatRichChart";
+import { ExpandButton } from "./ChatExpandModal";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import "./ChatRichDashboard.css";
@@ -125,6 +126,7 @@ export function ChatRichDashboard({
               Lousa
             </button>
           ) : null}
+          <ExpandButton presentation={presentation} onOpenCanvas={onOpenCanvas} />
         </div>
       </div>
 

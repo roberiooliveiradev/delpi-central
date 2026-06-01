@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ChatCanvasOpenPayload, ChatPresentation } from "../../data/api/chatTypes";
+import { buildChartPresentationFromTable } from "./buildChartPresentationFromTable";
 import {
   resolveRichFormatToggles,
   tablePresentationToMarkdown,
@@ -50,9 +51,15 @@ export function ChatDashboardDataPanel({
     () => tablePresentationToMarkdown(table, { includeTitle: false }),
     [table],
   );
+
+  const resolvedChart = useMemo(
+    () => chart ?? buildChartPresentationFromTable(table),
+    [chart, table],
+  );
+
   const hasText = Boolean(textBody.trim());
   const hasTable = Boolean(table.rows?.length || table.columns?.length);
-  const hasChart = Boolean(chart?.data?.length);
+  const hasChart = Boolean(resolvedChart?.data?.length);
 
   const formatToggles = resolveRichFormatToggles({
     hasText,
@@ -62,11 +69,10 @@ export function ChatDashboardDataPanel({
     isCommentaryVisual: false,
   });
 
-  const toggleCount = [
-    formatToggles.showText,
-    formatToggles.showTable,
-    formatToggles.showChart,
-  ].filter(Boolean).length;
+  const showFormatToggles =
+    [formatToggles.showText, formatToggles.showTable, formatToggles.showChart].filter(
+      Boolean,
+    ).length >= 2;
 
   const [viewMode, setViewMode] = useState<ViewFormat>("table");
 
@@ -88,7 +94,7 @@ export function ChatDashboardDataPanel({
     <section className="mdc-rich-dashboard__panel mdc-rich-dashboard__panel--data">
       <div className="mdc-rich-dashboard__data-header">
         {title ? <h4 className="mdc-rich-dashboard__panel-title">{title}</h4> : <span />}
-        {toggleCount >= 2 ? (
+        {showFormatToggles ? (
           <div
             className="mdc-rich-dashboard__data-toggle"
             role="group"
@@ -127,14 +133,19 @@ export function ChatDashboardDataPanel({
         ) : null}
 
         {viewMode === "table" && hasTable ? (
-          <ChatRichTable presentation={table} hideTitle onDrillDown={onDrillDown} />
+          <ChatRichTable
+            presentation={table}
+            hideTitle
+            embeddedInDashboard
+            onDrillDown={onDrillDown}
+          />
         ) : null}
 
-        {viewMode === "chart" && hasChart && chart ? (
+        {viewMode === "chart" && resolvedChart ? (
           <ChatRichChart
-            presentation={chart}
+            presentation={resolvedChart}
             hideTitle
-            chartExplanation={chart.chartExplanation}
+            chartExplanation={resolvedChart.chartExplanation}
             onDrillDown={onDrillDown}
             onOpenCanvas={onOpenCanvas}
           />

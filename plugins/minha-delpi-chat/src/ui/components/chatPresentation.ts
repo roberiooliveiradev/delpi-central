@@ -391,6 +391,24 @@ export function getPresentationInsightFromToolCalls(
   return insight || reason;
 }
 
+export function getPresentationRecommendationsFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): Array<{ label: string; reason?: string; query: string }> {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+
+  if (!decision?.recommendations || !Array.isArray(decision.recommendations)) {
+    return [];
+  }
+
+  return decision.recommendations
+    .map((item) => ({
+      label: String(item.label ?? "").trim(),
+      reason: item.reason ? String(item.reason).trim() : undefined,
+      query: String(item.query ?? "").trim(),
+    }))
+    .filter((item) => item.label && item.query);
+}
+
 export function mapPresentationDecisionToViewFormat(
   selected: string | null | undefined,
 ): ViewFormat | null {

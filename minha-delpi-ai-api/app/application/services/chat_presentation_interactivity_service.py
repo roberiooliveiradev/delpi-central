@@ -101,6 +101,18 @@ class ChatPresentationInteractivityService:
                     }
                 )
 
+            for item in decision.get("recommendations") or []:
+                if not isinstance(item, dict):
+                    continue
+
+                label = str(item.get("label") or "").strip()
+                query = str(item.get("query") or queries.get(label) or label).strip()
+
+                if not label or not query:
+                    continue
+
+                output.append({"label": label, "query": query})
+
             break
 
         return output
