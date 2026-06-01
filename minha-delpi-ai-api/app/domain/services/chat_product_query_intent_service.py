@@ -29,6 +29,7 @@ class ChatProductQueryIntentService:
         r"^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$",
         re.IGNORECASE,
     )
+    _CALENDAR_YEAR_RE = re.compile(r"^(19|20)\d{2}$")
     _EXAMPLE_CODE_PREFIX_RE = re.compile(
         r"(?:\bex\.?\s*:?|\bexemplo\s*:?|\binforme\s+(?:o\s+)?(?:c[óo]digo|codigo)|\bpor\s+exemplo)\s*$",
         re.IGNORECASE,
@@ -232,6 +233,9 @@ class ChatProductQueryIntentService:
             if cls._is_date_numeric_token(token):
                 continue
 
+            if cls._is_calendar_year_token(raw, match):
+                continue
+
             if cls._is_specification_numeric_token(token):
                 continue
 
@@ -251,6 +255,99 @@ class ChatProductQueryIntentService:
     @classmethod
     def _is_date_numeric_token(cls, token: str) -> bool:
         return bool(cls._DATE_TOKEN_RE.match(str(token or "").strip()))
+
+    @classmethod
+    def _is_calendar_year_token(cls, text: str, match: re.Match[str]) -> bool:
+        token = str(match.group(0) or "").strip()
+
+        if not cls._CALENDAR_YEAR_RE.match(token):
+            return False
+
+        prefix = text[max(0, match.start() - 32) : match.start()].lower()
+
+        if re.search(
+            r"(?:\bproduto|\bitem|\bc[oó]digo|\bcode|\brefer[eê]ncia)\s*$",
+            prefix,
+            flags=re.IGNORECASE,
+        ):
+            return False
+
+        return True
+
+    @classmethod
+    def looks_like_scope_reset_operational_query(cls, message: str | None) -> bool:
+        """Consulta agregada/temporal — não reaproveitar productCode da sessão."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        scope_markers = (
+            "ranking dos",
+            "ranking de",
+            "top 10",
+            "top 5",
+            " os 10 ",
+            " os 5 ",
+            "liste os",
+            "lista de produtos",
+            "produtos com estoque",
+            "estoque abaixo",
+            "abaixo do minimo",
+            "abaixo do mínimo",
+            "vendas por mes",
+            "vendas por mês",
+            "por mes em",
+            "por mês em",
+            "participacao do faturamento",
+            "participação do faturamento",
+            "por cliente em rosca",
+            "faturamento do mes",
+            "faturamento do mês",
+            "compare vendas por",
+            "evolucao de vendas",
+            "evolução de vendas",
+        )
+
+        if any(marker in normalized for marker in scope_markers):
+            return True
+
+        if cls.references_previous_product(message):
+            return False
+
+        if re.search(r"\b20\d{2}\b", normalized) and any(
+            term in normalized
+            for term in (
+                "vendas",
+                "faturamento",
+                "mes",
+                "mês",
+                "ano",
+                "periodo",
+                "período",
+                "trimestre",
+            )
+        ):
+            return True
+
+        return False
+
+    @classmethod
+    def should_inherit_product_code(cls, message: str | None) -> bool:
+        if cls.looks_like_scope_reset_operational_query(message):
+            return False
+
+        if cls.extract_product_code(message):
+            return True
+
+        if cls.references_previous_product(message):
+            return True
+
+        from app.domain.services.chat_follow_up_intent_service import (
+            ChatFollowUpIntentService,
+        )
+
+        return ChatFollowUpIntentService.is_operational_follow_up(message)
 
     @classmethod
     def _is_phone_contact_token(cls, text: str, match: re.Match[str]) -> bool:
@@ -488,6 +585,9 @@ class ChatProductQueryIntentService:
 
             if resolved:
                 return resolved
+
+        if cls.looks_like_scope_reset_operational_query(message):
+            return cls.extract_product_code(message)
 
         code = cls.extract_product_code(message)
 

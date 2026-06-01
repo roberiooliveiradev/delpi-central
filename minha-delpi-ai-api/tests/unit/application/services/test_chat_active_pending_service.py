@@ -34,6 +34,17 @@ def test_try_resolve_product_code_from_short_reply():
     assert resolved["requiresTool"] is True
 
 
+def test_try_resolve_does_not_bind_year_as_product_code():
+    pending = {"kind": "missing_product_code", "expectedParam": "productCode"}
+
+    resolved = ChatActivePendingService.try_resolve(
+        "Vendas por mês em 2026",
+        pending,
+    )
+
+    assert resolved is None
+
+
 def test_classify_resolves_active_pending_before_operational():
     history = [
         {"role": "user", "content": "qual o estoque do produto?"},
@@ -58,6 +69,37 @@ def test_classify_resolves_active_pending_before_operational():
     assert route.sub_intent == "missing_product_code"
     assert route.resolved_params == {"productCode": "10080099"}
     assert "active_pending_resolved" in route.flags
+
+
+def test_classify_does_not_inherit_product_code_for_ranking_query():
+    history = [
+        {
+            "role": "assistant",
+            "content": "Resultado",
+            "metadata": {
+                "memory": {"activeEntities": {"productCode": "2026"}},
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/2026/sales",
+                        },
+                    }
+                ],
+            },
+        },
+    ]
+
+    route = ChatIntentRouterService.classify(
+        "Ranking dos 10 clientes que mais compraram",
+        previous_messages=history,
+        workspace_context={
+            "workingMemory": {"activeEntities": {"productCode": "2026"}},
+        },
+    )
+
+    assert route.resolved_params is None or route.resolved_params.get("productCode") != "2026"
 
 
 def test_routing_snapshot_from_admin_debug():

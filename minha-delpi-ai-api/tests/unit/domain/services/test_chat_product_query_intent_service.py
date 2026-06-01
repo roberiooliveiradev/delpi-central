@@ -309,3 +309,46 @@ def test_format_direct_answer_structure_uses_hierarchical_markdown():
     assert "90260077" in answer
     assert "50230002" in answer
     assert "10030048" in answer
+
+
+def test_extract_product_code_ignores_calendar_year_in_temporal_phrase():
+    assert (
+        ChatProductQueryIntentService.extract_product_code("Vendas por mês em 2026")
+        is None
+    )
+    assert (
+        ChatProductQueryIntentService.extract_product_code(
+            "Participação do faturamento por cliente em rosca"
+        )
+        is None
+    )
+
+
+def test_resolve_product_code_does_not_inherit_for_aggregate_sales_query():
+    history = [
+        {
+            "role": "assistant",
+            "content": "Produto 2026",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/2026/sales"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    code = ChatProductQueryIntentService.resolve_product_code(
+        "Vendas por mês em 2026",
+        previous_messages=history,
+    )
+
+    assert code is None
+
+
+def test_should_inherit_product_code_false_for_stock_list_query():
+    assert not ChatProductQueryIntentService.should_inherit_product_code(
+        "Liste os produtos com estoque abaixo do mínimo"
+    )

@@ -122,7 +122,6 @@ def _resolve_entities_from_memory(
     previous_messages: list[Any] | None,
     workspace_context: dict | None = None,
 ) -> dict[str, str] | None:
-    from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
     from app.domain.services.chat_product_query_intent_service import (
         ChatProductQueryIntentService,
     )
@@ -132,6 +131,9 @@ def _resolve_entities_from_memory(
 
     wm_entities = _working_memory_entities(workspace_context)
     params: dict[str, str] = dict(wm_entities)
+
+    if ChatProductQueryIntentService.looks_like_scope_reset_operational_query(message):
+        params.pop("productCode", None)
 
     if previous_messages:
         from app.domain.services.chat_conversation_memory_extractor import (
@@ -160,11 +162,10 @@ def _resolve_entities_from_memory(
         previous_messages=previous_messages,
     )
 
-    if code and not code_in_message:
-        if ChatProductQueryIntentService.references_previous_product(message):
-            params.setdefault("productCode", code)
-        elif ChatFollowUpIntentService.is_operational_follow_up(message):
-            params.setdefault("productCode", code)
+    if code and not code_in_message and ChatProductQueryIntentService.should_inherit_product_code(
+        message
+    ):
+        params.setdefault("productCode", code)
 
     if params:
         return params
@@ -172,9 +173,8 @@ def _resolve_entities_from_memory(
     if not code or code_in_message:
         return None
 
-    if not ChatProductQueryIntentService.references_previous_product(message):
-        if not ChatFollowUpIntentService.is_operational_follow_up(message):
-            return None
+    if not ChatProductQueryIntentService.should_inherit_product_code(message):
+        return None
 
     return {"productCode": code}
 

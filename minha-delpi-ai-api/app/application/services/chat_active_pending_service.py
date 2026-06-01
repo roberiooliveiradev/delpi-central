@@ -148,10 +148,18 @@ class ChatActivePendingService:
             return None
 
         if kind == "missing_product_code":
+            if ChatProductQueryIntentService.looks_like_scope_reset_operational_query(
+                normalized
+            ):
+                return None
+
             code = ChatProductQueryIntentService.extract_product_code(normalized)
 
             if not code and re.fullmatch(r"\d{5,}", normalized.replace(".", "")):
                 code = normalized.replace(".", "").strip()
+
+            if code and ChatProductQueryIntentService._CALENDAR_YEAR_RE.fullmatch(code):
+                return None
 
             if code:
                 return {
