@@ -235,6 +235,7 @@ class Settings:
     CHAT_DEFAULT_SQL_AUTHORING_SKILL = (
         os.getenv("CHAT_DEFAULT_SQL_AUTHORING_SKILL", "true").lower() == "true"
     )
+    CHAT_DEFAULT_SQL_DIALECT = os.getenv("CHAT_DEFAULT_SQL_DIALECT", "sqlserver").strip().lower()
     CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL = (
         os.getenv("CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL", "true").lower() == "true"
     )

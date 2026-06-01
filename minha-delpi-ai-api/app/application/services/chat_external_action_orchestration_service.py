@@ -67,8 +67,11 @@ class ChatExternalActionOrchestrationService:
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,
         )
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
 
-        if ChatSqlAuthoringGuidanceService.should_prefetch_schema(
+        if ChatAdvancedSqlSpecialistService.should_prefetch_schema(
             message=message,
             workspace_context=workspace_context,
             previous_messages=previous_messages,

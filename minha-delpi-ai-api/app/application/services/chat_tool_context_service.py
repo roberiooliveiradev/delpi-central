@@ -62,6 +62,7 @@ class ChatToolContextService:
         )
 
         raw_message = str(message or "").strip()
+        self._build_workspace_context = self._resolve_workspace_context(agent_context)
 
         from app.application.services.chat_capabilities_service import ChatCapabilitiesService
         from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
@@ -1161,7 +1162,38 @@ class ChatToolContextService:
         )
         finalized = post_tool.tool_context
 
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+
+        finalized = ChatAdvancedSqlSpecialistService.enrich_tool_context(
+            message=message,
+            result=finalized,
+            workspace_context=getattr(self, "_build_workspace_context", None),
+            previous_messages=previous_messages,
+        )
+
         return finalized
+
+    @classmethod
+    def _resolve_workspace_context(cls, agent_context: dict | None) -> dict | None:
+        if not isinstance(agent_context, dict):
+            return None
+
+        skills = agent_context.get("skills")
+
+        if isinstance(skills, dict) and skills:
+            return {"skills": skills}
+
+        metadata = agent_context.get("metadata")
+
+        if isinstance(metadata, dict):
+            runtime_skills = metadata.get("skills")
+
+            if isinstance(runtime_skills, dict) and runtime_skills:
+                return {"skills": runtime_skills}
+
+        return None
 
     @classmethod
     def _rich_presentation_from_metadata(cls, metadata: dict) -> dict | None:

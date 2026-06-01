@@ -99,6 +99,91 @@
     "Executar query": "execute a consulta acima no banco",
     "Ajustar filtros": "ajuste a query anterior incluindo filtro por filial 01"
   },
+  "sqlAdvancedChips": {
+    "default": [
+      "Ver colunas da tabela",
+      "Executar query",
+      "Explicar query",
+      "Otimizar query"
+    ],
+    "create": [
+      "Ver schema completo",
+      "Executar query",
+      "Adicionar coluna",
+      "Comparar períodos"
+    ],
+    "review": [
+      "Corrigir riscos",
+      "Otimizar query",
+      "Explicar query",
+      "Executar query"
+    ],
+    "explain": [
+      "Mostrar SQL",
+      "Executar query",
+      "Otimizar query",
+      "Gerar gráfico"
+    ],
+    "optimize": [
+      "Mostrar SQL otimizado",
+      "Executar query",
+      "Explicar mudanças",
+      "Ver schema completo"
+    ],
+    "execute": [
+      "Interpretar resultado",
+      "Gerar gráfico",
+      "Ajustar filtros",
+      "Mostrar SQL"
+    ],
+    "schema_explore": [
+      "Ver colunas da tabela",
+      "Ver relações",
+      "Montar SELECT",
+      "Executar query"
+    ],
+    "incremental_edit": [
+      "Adicionar coluna",
+      "Remover coluna",
+      "Agrupar por mês",
+      "Executar query"
+    ],
+    "analyze_result": [
+      "Gerar gráfico",
+      "Ampliar período",
+      "Ajustar filtros",
+      "Mostrar SQL"
+    ],
+    "visualize": [
+      "Ver em tabela",
+      "Colocar na lousa",
+      "Explicar gráfico",
+      "Ajustar filtros"
+    ]
+  },
+  "sqlAdvancedQueries": {
+    "Ver colunas da tabela": "mostre as colunas da tabela {{tableName}}",
+    "Ver schema completo": "mostre o schema da tabela {{tableName}}",
+    "Ver relações": "mostre as relações da tabela {{tableName}}",
+    "Executar query": "execute a consulta acima no banco",
+    "Explicar query": "explique a query acima em linguagem simples",
+    "Otimizar query": "otimize a performance da consulta anterior",
+    "Corrigir riscos": "corrija os riscos apontados na query anterior",
+    "Mostrar SQL": "mostre o sql da consulta anterior sem executar",
+    "Mostrar SQL otimizado": "mostre a versão otimizada da consulta anterior",
+    "Explicar mudanças": "explique o que mudou na otimização da query",
+    "Interpretar resultado": "interprete o resultado da última consulta SQL",
+    "Gerar gráfico": "gere um gráfico com os dados da última consulta",
+    "Adicionar coluna": "adicione a coluna cidade na consulta anterior",
+    "Remover coluna": "remova a coluna valor líquido da consulta anterior",
+    "Agrupar por mês": "agrupa a consulta anterior por mês",
+    "Comparar períodos": "compare o período atual com o anterior na consulta",
+    "Ajustar filtros": "ajuste a query anterior incluindo filtro por filial 01",
+    "Ampliar período": "amplie o período da última consulta SQL",
+    "Ver em tabela": "mostre o último resultado em tabela",
+    "Colocar na lousa": "coloque o resultado acima na lousa",
+    "Explicar gráfico": "explique o gráfico acima em linguagem simples"
+  },
   "presentationQueries": {
     "Exportar CSV": "exporte a última tabela em CSV",
     "Gerar gráfico": "gere um gráfico com os dados acima",
@@ -145,6 +230,7 @@
     { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },
     { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 },
     { "key": "operationalRefinementFollowUpSuggestions", "group": "refinar", "priority": 8 },
-    { "key": "sqlAuthoringFollowUpSuggestions", "group": "consultar", "priority": 14 }
+    { "key": "sqlAuthoringFollowUpSuggestions", "group": "consultar", "priority": 14 },
+    { "key": "sqlAdvancedFollowUpSuggestions", "group": "consultar", "priority": 13 }
   ]
 }

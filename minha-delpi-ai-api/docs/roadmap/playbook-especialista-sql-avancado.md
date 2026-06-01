@@ -1,5 +1,7 @@
 # Playbook — Especialista SQL Avançado do Minha DELPI Chat IA
 
+> **Status de implementação:** Fases 1–4 e 7 (base) em `ChatAdvancedSqlSpecialistService` + serviços associados. Testes: `tests/unit/domain/services/test_advanced_sql_specialist.py` (SQL1–SQL20).
+
 Projeto: Minha DELPI Chat IA
 Escopo: chat comum, skill SQL avançada, construção de consultas SQL complexas, validação de schema, execução segura, otimização, explicação, inferência e análise de resultados.
 

@@ -85,6 +85,12 @@ Mensagem do usuário
 | `ChatSqlInventoryQueryService` | Template SB2010+SB1010 (estoque abaixo do mínimo) + `/data/sql` |
 | `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
 | `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo: prefetch `/system/tables/*` antes do LLM montar query; chips de follow-up (executar, colunas, schema) |
+| `ChatAdvancedSqlSpecialistService` | Copiloto SQL avançado: modos (criação, revisão, explicação, otimização, execução, schema, incremental); planner hints; supplement no tool context |
+| `ChatSqlDialectResolverService` | Dialeto SQL (default `CHAT_DEFAULT_SQL_DIALECT`, detecção na mensagem) |
+| `ChatSqlPerformanceAdvisorService` | Alertas de performance (SELECT *, DISTINCT, paginação, funções em WHERE) |
+| `ChatSqlReviewService` | Checklist de revisão para SQL colada |
+| `ChatSqlMemoryWorkspaceService` | Memória da query ativa na sessão (edição incremental) |
+| `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` em metadata e auditoria |
 | `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
 | `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
 | `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |

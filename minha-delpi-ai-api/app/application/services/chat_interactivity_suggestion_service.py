@@ -61,6 +61,18 @@ class ChatInteractivitySuggestionService:
         if sql_authoring:
             metadata["sqlAuthoringFollowUpSuggestions"] = sql_authoring
 
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+
+        sql_advanced = ChatAdvancedSqlSpecialistService.build_follow_up_suggestions(
+            message=str(message or metadata.get("userMessage") or ""),
+            tool_calls=tool_calls,
+        )
+
+        if sql_advanced:
+            metadata["sqlAdvancedFollowUpSuggestions"] = sql_advanced
+
         raw = cls._collect_raw(metadata)
         usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)
         enriched = [

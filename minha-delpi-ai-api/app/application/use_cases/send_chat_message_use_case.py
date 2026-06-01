@@ -756,6 +756,25 @@ class SendChatMessageUseCase:
             tool_context=tool_context,
         )
 
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+        from app.domain.services.chat_advanced_sql_metrics_service import (
+            ChatAdvancedSqlMetricsService,
+        )
+
+        ChatAdvancedSqlSpecialistService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+            workspace_context=workspace_context,
+            previous_messages=previous_messages,
+            tool_calls=tool_calls,
+        )
+        ChatAdvancedSqlMetricsService.attach_to_assistant_metadata(
+            assistant_metadata,
+            tool_context=tool_context,
+        )
+
         from app.application.services.chat_interactivity_suggestion_service import (
             ChatInteractivitySuggestionService,
         )
@@ -845,6 +864,16 @@ class SendChatMessageUseCase:
         ChatDocumentVisionMetricsService.enrich_audit_metadata(
             audit_metadata,
             intelligence=intelligence_metadata,
+            tool_context=tool_context,
+        )
+
+        from app.domain.services.chat_advanced_sql_metrics_service import (
+            ChatAdvancedSqlMetricsService,
+        )
+
+        ChatAdvancedSqlMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            assistant_metadata=assistant_metadata,
             tool_context=tool_context,
         )
 
