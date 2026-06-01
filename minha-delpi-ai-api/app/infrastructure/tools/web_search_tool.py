@@ -87,6 +87,11 @@ class WebSearchTool(InternalToolPort):
         if search_intent:
             payload["searchIntent"] = search_intent
 
+        query_security = arguments.get("querySecurity")
+
+        if isinstance(query_security, dict):
+            payload["querySecurity"] = query_security
+
         return ToolResult(
             name=self.name,
             data=payload,

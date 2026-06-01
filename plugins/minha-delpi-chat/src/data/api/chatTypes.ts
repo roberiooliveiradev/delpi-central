@@ -163,6 +163,12 @@ export type ChatStreamActivityEntry = {
   actionId?: string;
 };
 
+export type ChatWebSearchSourceQuality = {
+  hostname?: string;
+  type?: string | null;
+  confidence?: "high" | "medium" | "low" | string | null;
+};
+
 export type ChatWebSearchResearchSite = {
   hostname: string;
   url: string;
@@ -170,6 +176,7 @@ export type ChatWebSearchResearchSite = {
   sourceType?: string | null;
   qualityScore?: number | null;
   isOfficial?: boolean | null;
+  sourceQuality?: ChatWebSearchSourceQuality | null;
 };
 
 export type ChatWebSearchResearchStep = {
@@ -191,6 +198,10 @@ export type ChatWebSearchResearch = {
   searchMode?: "quick" | "deep" | string | null;
   searchIntent?: string | null;
   preferOfficial?: boolean | null;
+  querySecurity?: {
+    redacted?: boolean;
+    warnings?: string[];
+  } | null;
   confidence?: "high" | "medium" | "low" | string | null;
   sourceTypes?: string[] | null;
   warnings?: string[] | null;

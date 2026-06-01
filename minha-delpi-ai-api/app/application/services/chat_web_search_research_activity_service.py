@@ -7,6 +7,9 @@ from urllib.parse import urlparse
 from app.domain.services.chat_web_search_direct_answer_service import (
     ChatWebSearchDirectAnswerService,
 )
+from app.domain.services.chat_web_search_research_service import (
+    ChatWebSearchResearchService,
+)
 from app.domain.services.web_search_query_service import USELESS_RESULT_SOURCES
 
 
@@ -82,6 +85,11 @@ class ChatWebSearchResearchActivityService:
 
         if integration_mode:
             research["integrationMode"] = integration_mode
+
+        query_security = payload.get("querySecurity")
+
+        if isinstance(query_security, dict):
+            research["querySecurity"] = query_security
 
         if payload.get("integrationProductCode"):
             research["integrationProductCode"] = payload.get("integrationProductCode")
@@ -166,9 +174,30 @@ class ChatWebSearchResearchActivityService:
                     if key in item:
                         site_entry[key] = item.get(key)
 
+                site_entry["sourceQuality"] = cls._source_quality_for_site(
+                    url,
+                    title=title,
+                    item=item,
+                )
+
                 sites.append(site_entry)
 
         return sites
+
+    @classmethod
+    def _source_quality_for_site(
+        cls,
+        url: str,
+        *,
+        title: str,
+        item: dict,
+    ) -> dict:
+        if isinstance(item.get("sourceQuality"), dict):
+            return dict(item["sourceQuality"])
+
+        evaluation = ChatWebSearchResearchService.evaluate_source(url, title=title)
+
+        return ChatWebSearchResearchService.source_quality_metadata(evaluation)
 
     @classmethod
     def _build_steps(

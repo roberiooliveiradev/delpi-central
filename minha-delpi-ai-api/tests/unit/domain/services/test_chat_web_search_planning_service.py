@@ -34,6 +34,16 @@ def test_plan_deep_mode_with_official_queries(_enabled):
 
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_plan_abnt_official_domain_hint(_enabled):
+    plan = ChatWebSearchPlanningService.plan(
+        "pesquise na web norma abnt cabos eletricos"
+    )
+
+    assert plan is not None
+    assert any("site:abnt.org.br" in query for query in plan.queries)
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
 def test_resolve_includes_planned_queries(_enabled):
     result = ChatWebSearchIntentService.resolve(
         "busque na web sobre datasheet motor WEG W22"

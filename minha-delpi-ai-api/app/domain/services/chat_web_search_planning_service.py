@@ -77,19 +77,29 @@ class ChatWebSearchPlanningService:
         ("festo", "festo.com"),
     )
 
+    _STANDARDS_DOMAIN_HINTS: tuple[tuple[str, str], ...] = (
+        ("abnt", "abnt.org.br"),
+        ("nr-10", "gov.br"),
+        ("nr 10", "gov.br"),
+        ("norma nr", "gov.br"),
+        ("iso ", "iso.org"),
+        ("iec ", "iec.ch"),
+    )
+
     @classmethod
     def plan(
         cls,
         message: str,
         *,
         integration: object | None = None,
+        base_query_override: str | None = None,
     ) -> WebSearchPlan | None:
         raw = str(message or "").strip()
 
         if not raw or not ChatWebSearchIntentService.matches(raw):
             return None
 
-        base_query = ChatWebSearchIntentService.extract_query(raw)
+        base_query = str(base_query_override or "").strip() or ChatWebSearchIntentService.extract_query(raw)
 
         if not base_query:
             return None
@@ -208,5 +218,28 @@ class ChatWebSearchPlanningService:
         for brand, domain in cls._KNOWN_BRAND_DOMAINS:
             if brand in haystack:
                 return f"site:{domain} {base_query}"
+
+        for hint, domain in cls._STANDARDS_DOMAIN_HINTS:
+            if hint in haystack:
+                if domain == "gov.br":
+                    return f"site:gov.br {base_query}"
+
+                return f"site:{domain} {base_query}"
+
+        inferred = cls._infer_official_domain_from_query(base_query)
+
+        if inferred:
+            return f"site:{inferred} {base_query}"
+
+        return None
+
+    @classmethod
+    def _infer_official_domain_from_query(cls, base_query: str) -> str | None:
+        tokens = re.findall(r"[a-z0-9][\w-]{2,}", str(base_query or "").lower())
+
+        for token in tokens:
+            for brand, domain in cls._KNOWN_BRAND_DOMAINS:
+                if token == brand or token in domain.split(".")[0]:
+                    return domain
 
         return None

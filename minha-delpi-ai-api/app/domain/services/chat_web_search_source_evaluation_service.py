@@ -18,7 +18,7 @@ class WebSourceEvaluation:
 
 class ChatWebSearchSourceEvaluationService:
     _QUALITY_BY_TYPE: dict[str, float] = {
-        "official": 1.0,
+        "official": 0.93,
         "government": 0.95,
         "manufacturer": 0.95,
         "recognized_distributor": 0.8,
@@ -42,6 +42,25 @@ class ChatWebSearchSourceEvaluationService:
             "te.com",
             "schneider-electric.com",
         }
+    )
+
+    _OFFICIAL_STANDARDS_HOSTS: frozenset[str] = frozenset(
+        {
+            "abnt.org.br",
+            "iso.org",
+            "iec.ch",
+            "inmetro.gov.br",
+        }
+    )
+
+    _MANUFACTURER_DOMAIN_SUFFIXES: tuple[str, ...] = (
+        ".weg.net",
+        ".siemens.com",
+        ".abb.com",
+        ".omron.com",
+        ".festo.com",
+        ".rockwellautomation.com",
+        ".schneider-electric.com",
     )
 
     _DISTRIBUTOR_MARKERS = (
@@ -91,6 +110,9 @@ class ChatWebSearchSourceEvaluationService:
         source_type = cls._classify(hostname, haystack)
         score = cls._QUALITY_BY_TYPE.get(source_type, 0.2)
         is_official = source_type in {"official", "government", "manufacturer"}
+
+        if source_type == "official":
+            score = max(score, 0.92)
 
         return WebSourceEvaluation(
             source_type=source_type,
@@ -268,13 +290,25 @@ class ChatWebSearchSourceEvaluationService:
     def _classify(cls, hostname: str, haystack: str) -> str:
         host = hostname.lower()
 
+        if host in cls._OFFICIAL_STANDARDS_HOSTS:
+            return "official"
+
         if any(host.endswith(suffix) for suffix in cls._GOVERNMENT_SUFFIXES):
             return "government"
 
         if host in cls._MANUFACTURER_DOMAINS or any(
-            brand in host for brand in ("weg.net", "siemens.", "abb.com")
+            host.endswith(suffix) for suffix in cls._MANUFACTURER_DOMAIN_SUFFIXES
         ):
             return "manufacturer"
+
+        if ".pdf" in haystack:
+            if any(marker in host for marker in cls._MANUFACTURER_DOMAINS) or any(
+                host.endswith(suffix) for suffix in cls._MANUFACTURER_DOMAIN_SUFFIXES
+            ):
+                return "official"
+
+            if any(host.endswith(suffix) for suffix in cls._GOVERNMENT_SUFFIXES):
+                return "official"
 
         if any(marker in haystack for marker in cls._FORUM_MARKERS):
             return "forum"

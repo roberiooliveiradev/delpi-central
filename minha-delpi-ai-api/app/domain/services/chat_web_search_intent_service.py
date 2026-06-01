@@ -7,6 +7,9 @@ import re
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.chat_web_search_query_security_service import (
+    ChatWebSearchQuerySecurityService,
+)
 from app.domain.services.web_search_query_service import WebSearchQueryService
 from app.infrastructure.config.settings import Settings
 
@@ -126,7 +129,19 @@ class ChatWebSearchIntentService:
             attachment_context=attachment_context,
             previous_messages=previous_messages,
         )
-        plan = ChatWebSearchPlanningService.plan(raw, integration=integration)
+        security = ChatWebSearchQuerySecurityService.sanitize(
+            raw,
+            extracted_query=ChatWebSearchIntentService.extract_query(raw),
+        )
+
+        if security.blocked:
+            return None
+
+        plan = ChatWebSearchPlanningService.plan(
+            raw,
+            integration=integration,
+            base_query_override=security.query if security.redacted else None,
+        )
 
         if not plan:
             return None
@@ -164,6 +179,12 @@ class ChatWebSearchIntentService:
             "preferOfficial": plan.prefer_official,
         }
 
+        if security.redacted or security.warnings:
+            arguments["querySecurity"] = {
+                "redacted": security.redacted,
+                "warnings": list(security.warnings),
+            }
+
         if integration:
             arguments["integrationMode"] = integration.mode
 
@@ -193,5 +214,10 @@ class ChatWebSearchIntentService:
         normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
 
         sanitized = WebSearchQueryService.sanitize_query(normalized)
+        base = sanitized or normalized or query
+        security = ChatWebSearchQuerySecurityService.sanitize(query, extracted_query=base)
 
-        return sanitized or normalized or query
+        if security.blocked:
+            return base
+
+        return security.query or base
