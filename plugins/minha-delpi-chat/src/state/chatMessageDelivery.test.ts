@@ -82,7 +82,8 @@ describe("sanitizeMessagesAfterStreamDismiss", () => {
     const result = sanitizeMessagesAfterStreamDismiss(messages);
 
     expect(result).toHaveLength(1);
-    expect(result[0]?.metadata?.delivery?.status).toBe("cancelled");
+    const delivery = result[0]?.metadata?.delivery as { status?: string } | undefined;
+    expect(delivery?.status).toBe("cancelled");
   });
 
   it("não altera conversa já concluída", () => {

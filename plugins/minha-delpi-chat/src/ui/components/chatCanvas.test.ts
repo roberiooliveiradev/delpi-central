@@ -15,6 +15,8 @@ describe("chatCanvas", () => {
       markdown: "### Produto\n\nDetalhes",
       messageId: null,
       sourceMessageId: "msg-1",
+      version: null,
+      documentType: null,
     });
   });
 

@@ -6,7 +6,7 @@ describe("computeToolsSummary", () => {
   it("resume LLM, saúde e contagens de actions", () => {
     expect(
       computeToolsSummary(
-        { provider: "ollama", model: "qwen" },
+        { provider: "ollama", model: "qwen", temperature: 0.2, maxTokens: 4096 },
         { status: "ok", items: [] },
         4,
         12,

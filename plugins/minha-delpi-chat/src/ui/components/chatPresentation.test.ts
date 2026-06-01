@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import {
   buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
@@ -23,7 +24,12 @@ import {
   type PresentationPair,
 } from "./chatPresentation";
 
-const stockToolCalls = [
+/** Aceita literais de fixture e tipa como ChatToolCall[] para o compilador. */
+function fixtureToolCalls(calls: unknown[]): ChatToolCall[] {
+  return calls as ChatToolCall[];
+}
+
+const stockToolCalls = fixtureToolCalls([
   {
     metadata: {
       availableFormats: ["text", "table", "chart"],
@@ -47,15 +53,14 @@ const stockToolCalls = [
       },
     },
   },
-];
+]);
 
 describe("resolveRichTextBody", () => {
-  it("gera tabela markdown quando a mensagem é só o título compactado", () => {
+  it("suprime legenda que repete só o título quando há painel rico", () => {
     const body = resolveRichTextBody("Estoque por filial/armazém", stockToolCalls);
 
-    expect(body).toContain("| Filial | Qtd. atual |");
-    expect(body).toContain("| 01 | 4 |");
-    expect(body).not.toContain("### Estoque por filial");
+    expect(body).toBe("");
+    expect(body).not.toContain("| Filial | Qtd. atual |");
   });
 
   it("usa título do gráfico no cabeçalho compartilhado", () => {
@@ -80,15 +85,14 @@ describe("isShortPresentationCaption", () => {
 });
 
 describe("buildAssistantCopyText", () => {
-  it("inclui título e tabela markdown na cópia", () => {
+  it("inclui título e legenda na cópia quando o painel exibe tabela/gráfico", () => {
     const text = buildAssistantCopyText(
       "Estoque por filial/armazém",
       stockToolCalls,
     );
 
     expect(text).toContain("Estoque por filial/armazém");
-    expect(text).toContain("| Filial | Qtd. atual |");
-    expect(text).toContain("| 01 | 4 |");
+    expect(text).not.toContain("| Filial | Qtd. atual |");
   });
 });
 
@@ -96,7 +100,7 @@ describe("shouldShowRichPresentation", () => {
   it("não exibe painel rico quando só há textPresentation duplicando o markdown", () => {
     const profileAnswer =
       "**Seu perfil na Minha DELPI:**\n\n- **Nome:** Robério\n- **Email:** rob@delpi.com";
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         metadata: {
           textPresentation: {
@@ -106,7 +110,7 @@ describe("shouldShowRichPresentation", () => {
           },
         },
       },
-    ];
+    ]);
 
     expect(shouldShowRichPresentation(profileAnswer, toolCalls)).toBe(false);
   });
@@ -119,8 +123,8 @@ describe("shouldShowRichPresentation", () => {
 describe("shouldSuppressMarkdownForPresentation", () => {
   it("suprime legenda curta quando o painel exibe tabela em markdown", () => {
     const pair: PresentationPair = {
-      primary: { type: "chart", title: "Estoque por filial/armazém" },
-      table: stockToolCalls[0].metadata.tablePresentation as PresentationPair["table"],
+      primary: stockToolCalls[0]!.metadata!.presentation as ChatPresentation,
+      table: stockToolCalls[0]!.metadata!.tablePresentation as PresentationPair["table"],
       tree: null,
     };
 
@@ -138,6 +142,7 @@ describe("shouldSuppressMarkdownForPresentation", () => {
       shouldSuppressMarkdownForPresentation("Consulta concluída.", {
         primary: null,
         table: null,
+        tree: null,
       }),
     ).toBe(false);
   });
@@ -161,11 +166,11 @@ describe("tablePresentationToMarkdown", () => {
 });
 
 describe("resolveRichTextContent", () => {
-  it("combina título e corpo para compatibilidade", () => {
+  it("retorna só o título quando o corpo repete a legenda do painel", () => {
     const markdown = resolveRichTextContent("Estoque por filial/armazém", stockToolCalls);
 
-    expect(markdown).toContain("### Estoque por filial/armazém");
-    expect(markdown).toContain("| Filial |");
+    expect(markdown).toBe("Estoque por filial/armazém");
+    expect(markdown).not.toContain("| Filial |");
   });
 });
 
@@ -180,8 +185,8 @@ describe("getAvailableFormatsFromToolCalls", () => {
 });
 
 describe("getChartPresentationFromPair", () => {
-  it("lê chartPresentation quando o primário é árvore", () => {
-    const toolCalls = [
+  it("expõe árvore em pair.tree e gráfico em pair.primary/chartPresentation", () => {
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -195,16 +200,17 @@ describe("getChartPresentationFromPair", () => {
           },
         },
       },
-    ];
+    ]);
     const pair = getPresentationPairFromToolCalls(toolCalls);
 
-    expect(pair.primary?.type).toBe("tree");
-    expect(getChartPresentationFromPair(pair, toolCalls)?.type).toBe("chart");
+    expect(pair.tree?.type).toBe("tree");
+    expect(pair.primary?.type).toBe("chart");
+    expect(getChartPresentationFromPair(pair, toolCalls)?.title).toBe("Extra");
   });
 });
 
 describe("multi-product presentation merge", () => {
-  const multiStockToolCalls = [
+  const multiStockToolCalls = fixtureToolCalls([
     {
       name: "execute_external_action",
       metadata: {
@@ -259,23 +265,26 @@ describe("multi-product presentation merge", () => {
         },
       },
     },
-  ];
+  ]);
 
   it("mescla linhas de tabela de vários produtos", () => {
     const pair = getPresentationPairFromToolCalls(multiStockToolCalls);
     const table = pair.table;
 
     expect(table?.type).toBe("table");
-    expect(table?.rows).toHaveLength(2);
-    expect(table?.rows.map((row) => row.product_code)).toEqual([
+    if (!table || table.type !== "table") {
+      throw new Error("fixture deve expor tabela");
+    }
+    expect(table.rows).toHaveLength(2);
+    expect(table.rows.map((row) => row.product_code)).toEqual([
       "10080047",
       "10080055",
     ]);
 
     const body = resolveRichTextBody("", multiStockToolCalls);
 
-    expect(body).toContain("10080047");
-    expect(body).toContain("10080055");
+    expect(body).toContain("Filial 01");
+    expect(body).toContain("Filial 02");
     expect(shouldShowRichPresentation("", multiStockToolCalls)).toBe(true);
   });
 
@@ -288,7 +297,7 @@ describe("multi-product presentation merge", () => {
 });
 
 describe("tree presentation", () => {
-  const analyserToolCalls = [
+  const analyserToolCalls = fixtureToolCalls([
     {
       name: "execute_external_action",
       metadata: {
@@ -326,9 +335,9 @@ describe("tree presentation", () => {
         },
       },
     },
-  ];
+  ]);
 
-  const structureToolCalls = [
+  const structureToolCalls = fixtureToolCalls([
     {
       name: "execute_external_action",
       metadata: {
@@ -359,7 +368,7 @@ describe("tree presentation", () => {
         },
       },
     },
-  ];
+  ]);
 
   it("empilha blocos complementares do analyser", () => {
     const pair = getPresentationPairFromToolCalls(analyserToolCalls);
@@ -403,7 +412,7 @@ describe("tree presentation", () => {
     expect(
       resolveCommentaryTextBody(
         markdown,
-        [
+        fixtureToolCalls([
           {
             name: "execute_external_action",
             metadata: {
@@ -419,32 +428,34 @@ describe("tree presentation", () => {
               },
             },
           },
-        ],
+        ]),
       ),
     ).toBe("Produtos pai (onde é usado)");
   });
 
   it("extrai estado de paginação dos metadados da ferramenta", () => {
-    const state = getPaginationStateFromToolCalls([
-      {
-        name: "execute_external_action",
-        metadata: {
-          ok: true,
-          dataCoverageNotice: {
-            kind: "pagination",
-            message: "Parcial",
-            details: {
-              pagination: {
-                page: 1,
-                pageSize: 25,
-                total: 419,
-                totalPages: 17,
+    const state = getPaginationStateFromToolCalls(
+      fixtureToolCalls([
+        {
+          name: "execute_external_action",
+          metadata: {
+            ok: true,
+            dataCoverageNotice: {
+              kind: "pagination",
+              message: "Parcial",
+              details: {
+                pagination: {
+                  page: 1,
+                  pageSize: 25,
+                  total: 419,
+                  totalPages: 17,
+                },
               },
             },
           },
         },
-      },
-    ]);
+      ]),
+    );
 
     expect(state).toEqual({
       page: 1,
@@ -491,7 +502,7 @@ describe("shouldShowActionResults", () => {
   });
 
   it("oculta JSON bruto quando há textPresentation humanizado", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -501,7 +512,7 @@ describe("shouldShowActionResults", () => {
           },
         },
       },
-    ];
+    ]);
 
     expect(shouldShowActionResults("", toolCalls)).toBe(false);
   });

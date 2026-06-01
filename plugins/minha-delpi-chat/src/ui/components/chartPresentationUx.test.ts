@@ -19,9 +19,16 @@ describe("chartPresentationUx", () => {
   });
 
   it("aplica zoom na cauda da série", () => {
-    const data = [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }];
+    const data = Array.from({ length: 8 }, (_, index) => ({ n: index + 1 }));
 
-    expect(applyChartZoomWindow(data, "2")).toEqual([{ n: 3 }, { n: 4 }]);
+    expect(applyChartZoomWindow(data, "6")).toEqual([
+      { n: 3 },
+      { n: 4 },
+      { n: 5 },
+      { n: 6 },
+      { n: 7 },
+      { n: 8 },
+    ]);
   });
 
   it("monta comparação por período", () => {
