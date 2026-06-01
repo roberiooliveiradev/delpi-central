@@ -555,14 +555,29 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
                 )
             )
 
-        session_id = filters.get("session_id")
-        if session_id:
+        shared_session_ids = [
+            str(item)
+            for item in (filters.get("shared_session_ids") or [])
+            if item
+        ]
+
+        if shared_session_ids:
             allowed_clauses.append(
                 db.and_(
                     metadata["scope"].astext == "session_source",
-                    metadata["sessionId"].astext == str(session_id),
+                    metadata["sessionId"].astext.in_(shared_session_ids),
                 )
             )
+        else:
+            session_id = filters.get("session_id")
+
+            if session_id:
+                allowed_clauses.append(
+                    db.and_(
+                        metadata["scope"].astext == "session_source",
+                        metadata["sessionId"].astext == str(session_id),
+                    )
+                )
 
         project_id = filters.get("project_id")
         if project_id:

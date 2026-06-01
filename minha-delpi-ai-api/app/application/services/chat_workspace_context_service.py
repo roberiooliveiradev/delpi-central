@@ -9,6 +9,7 @@ from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryP
 from app.application.services.chat_platform_default_agent_service import (
     ChatPlatformDefaultAgentService,
 )
+from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
 
 
 class ChatWorkspaceContextService:
@@ -87,6 +88,9 @@ class ChatWorkspaceContextService:
             "instructions": project.instructions,
             "defaultAgentId": str(project.default_agent_id) if project.default_agent_id else None,
             "metadata": project.metadata,
+            "shareConversationContext": ChatProjectSettingsService.share_conversation_context_enabled(
+                project.metadata
+            ),
         }
 
     def _agent_metadata(self, agent) -> dict | None:

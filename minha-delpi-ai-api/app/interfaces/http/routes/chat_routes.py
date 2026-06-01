@@ -129,6 +129,33 @@ logger = logging.getLogger("minha-delpi-ai-api.chat")
 chat_bp = Blueprint("chat", __name__, url_prefix="/chat")
 
 
+def _parse_optional_bool(payload: dict, *keys: str) -> bool | None:
+    for key in keys:
+        if key not in payload:
+            continue
+
+        value = payload.get(key)
+
+        if value is None:
+            return None
+
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+
+            if normalized in {"true", "1", "yes", "sim"}:
+                return True
+
+            if normalized in {"false", "0", "no", "nao", "não"}:
+                return False
+
+        return bool(value)
+
+    return None
+
+
 def _sse(event: str, payload: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
@@ -1680,6 +1707,11 @@ def create_project():
                 icon=payload.get("icon"),
                 color=payload.get("color"),
                 metadata=payload.get("metadata"),
+                share_conversation_context=_parse_optional_bool(
+                    payload,
+                    "shareConversationContext",
+                    "share_conversation_context",
+                ),
             )
         )
 
@@ -1714,6 +1746,11 @@ def update_project(project_id: str):
                 icon=payload.get("icon"),
                 color=payload.get("color"),
                 metadata=payload.get("metadata"),
+                share_conversation_context=_parse_optional_bool(
+                    payload,
+                    "shareConversationContext",
+                    "share_conversation_context",
+                ),
                 archived=payload.get("archived"),
             )
         )

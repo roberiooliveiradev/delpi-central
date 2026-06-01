@@ -737,6 +737,8 @@ export type ChatProject = {
   color: string | null;
   archived_at: string | null;
   metadata: Record<string, unknown> | null;
+  share_conversation_context?: boolean;
+  shareConversationContext?: boolean;
   access_role: "owner" | "editor" | "viewer" | string;
   created_at: string;
   updated_at: string;
@@ -751,6 +753,7 @@ export type CreateChatProjectPayload = {
   icon?: string | null;
   color?: string | null;
   metadata?: Record<string, unknown> | null;
+  shareConversationContext?: boolean;
 };
 
 export type UpdateChatProjectPayload = {
@@ -762,6 +765,7 @@ export type UpdateChatProjectPayload = {
   icon?: string | null;
   color?: string | null;
   metadata?: Record<string, unknown> | null;
+  shareConversationContext?: boolean;
   archived?: boolean;
 };
 

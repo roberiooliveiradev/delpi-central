@@ -42,6 +42,9 @@ from app.domain.services.chat_operational_parameter_service import (
 )
 from app.domain.services.chat_intent_router_service import ChatIntentRouterService
 from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+from app.domain.services.chat_project_conversation_context_service import (
+    ChatProjectConversationContextService,
+)
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 from app.infrastructure.config.settings import Settings
 
@@ -368,7 +371,23 @@ class ChatTurnPreparationService:
             previous_agent_id=previous_agent_id,
         )
 
+        peer_context = ChatProjectConversationContextService.build(
+            project=workspace_context.get("project"),
+            session_id=getattr(session, "id", None) if session is not None else None,
+            user_id=user_id,
+        )
+
+        if peer_context:
+            working_memory_snapshot = ChatProjectConversationContextService.merge_memory_overlay(
+                working_memory_snapshot,
+                peer_context.memory_overlay,
+            )
+
         workspace_context = dict(workspace_context)
+
+        if peer_context:
+            workspace_context["projectPeerSessionIds"] = peer_context.peer_session_ids
+
         workspace_context["workingMemory"] = working_memory_snapshot
 
         from app.domain.services.chat_intent_disambiguation_service import (
@@ -463,6 +482,13 @@ class ChatTurnPreparationService:
             memory_prompt,
             base_conversation_context,
         )
+
+        if peer_context and peer_context.conversation_text:
+            conversation_context = ChatWorkingMemoryService.merge_conversation_context(
+                conversation_context,
+                peer_context.conversation_text,
+            )
+            pipeline_stages.append("project_shared_context")
 
         from app.application.services.chat_attachment_multi_compare_service import (
             ChatAttachmentMultiCompareService,

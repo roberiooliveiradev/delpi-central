@@ -196,3 +196,25 @@ def test_scope_filters_include_attachment_ids_when_present():
     assert "attachment-2" in rendered
     assert "session_source" in rendered
     assert "session-1" in rendered
+
+
+def test_scope_filters_shared_session_ids_use_in_clause():
+    repository = PostgresKnowledgeRepository()
+    query = FakeQuery()
+
+    result = repository._apply_scope_filters(
+        query,
+        {
+            "include_global": False,
+            "user_id": "user-1",
+            "shared_session_ids": ["session-current", "session-peer-1"],
+        },
+    )
+
+    assert result is query
+
+    rendered = _render_filters(query)
+
+    assert "session_source" in rendered
+    assert "session-current" in rendered
+    assert "session-peer-1" in rendered

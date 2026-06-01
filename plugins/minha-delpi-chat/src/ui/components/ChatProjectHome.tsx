@@ -93,6 +93,7 @@ type ChatProjectHomeProps = {
       instructions?: string | null;
       defaultAgentId?: string | null;
       visibility?: string;
+      shareConversationContext?: boolean;
       archived?: boolean;
     },
   ) => Promise<ChatProject | null>;
@@ -149,6 +150,13 @@ export function ChatProjectHome({
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
   const [instructions, setInstructions] = useState(project.instructions || "");
+  const [shareConversationContext, setShareConversationContext] = useState(
+    Boolean(
+      project.shareConversationContext
+        ?? project.share_conversation_context
+        ?? project.metadata?.shareConversationContext,
+    ),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [sourceTitle, setSourceTitle] = useState("");
   const [sourceContent, setSourceContent] = useState("");
@@ -195,7 +203,21 @@ export function ChatProjectHome({
     setName(project.name);
     setDescription(project.description || "");
     setInstructions(project.instructions || "");
-  }, [project.description, project.instructions, project.name]);
+    setShareConversationContext(
+      Boolean(
+        project.shareConversationContext
+          ?? project.share_conversation_context
+          ?? project.metadata?.shareConversationContext,
+      ),
+    );
+  }, [
+    project.description,
+    project.instructions,
+    project.metadata,
+    project.name,
+    project.shareConversationContext,
+    project.share_conversation_context,
+  ]);
 
   const loadProjectShares = useCallback(async () => {
     if (!getAccessToken || project.access_role !== "owner") {
@@ -288,6 +310,7 @@ export function ChatProjectHome({
         name: name.trim() || project.name,
         description: description.trim() || null,
         instructions: instructions.trim() || null,
+        shareConversationContext,
       });
 
       closeSettings();
@@ -840,6 +863,21 @@ export function ChatProjectHome({
               <small className="mdc-chat-project-settings__help">
                 O projeto só usa estas instruções nas conversas deste espaço.
               </small>
+            </label>
+
+            <label className="mdc-chat-project-settings__toggle">
+              <input
+                type="checkbox"
+                checked={shareConversationContext}
+                onChange={(event) => setShareConversationContext(event.target.checked)}
+              />
+              <span>
+                <strong>Compartilhar contexto entre conversas</strong>
+                <small>
+                  Novas mensagens podem usar resumos das outras conversas deste projeto
+                  (consultas, filial, período e anexos indexados na sessão).
+                </small>
+              </span>
             </label>
 
             <div className="mdc-chat-project-settings__link">

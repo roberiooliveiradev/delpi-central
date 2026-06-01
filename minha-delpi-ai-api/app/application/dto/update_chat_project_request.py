@@ -13,4 +13,5 @@ class UpdateChatProjectRequest:
     icon: str | None = None
     color: str | None = None
     metadata: dict | None = None
+    share_conversation_context: bool | None = None
     archived: bool | None = None

@@ -3,6 +3,7 @@ from uuid import UUID
 from app.application.services.agent_specialization_service import (
     AgentSpecializationService,
 )
+from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
 
 
 class ChatKnowledgeScopeService:
@@ -23,13 +24,32 @@ class ChatKnowledgeScopeService:
         skills = workspace_context.get("skills") or {}
         include_global = bool(skills.get("companyKnowledge", True))
 
+        project_meta = project if isinstance(project, dict) else {}
+        share_context = bool(
+            project_meta.get("shareConversationContext")
+        ) or ChatProjectSettingsService.share_conversation_context_enabled(
+            project_meta.get("metadata")
+        )
+        peer_session_ids = [
+            str(item)
+            for item in (workspace_context.get("projectPeerSessionIds") or [])
+            if item
+        ]
+
         filters = {
             "user_id": str(user_id),
-            "session_id": str(session.id),
             "project_id": str(project_id) if project_id else None,
             "agent_id": workspace_context.get("agentId"),
             "include_global": include_global,
         }
+
+        if share_context and peer_session_ids:
+            filters["shared_session_ids"] = [
+                str(session.id),
+                *peer_session_ids,
+            ]
+        else:
+            filters["session_id"] = str(session.id)
 
         cleaned_attachment_ids = [
             str(item)

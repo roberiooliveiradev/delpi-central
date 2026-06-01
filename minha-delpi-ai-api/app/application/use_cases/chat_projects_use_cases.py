@@ -7,6 +7,7 @@ from app.application.dto.update_chat_project_request import UpdateChatProjectReq
 from app.domain.entities.chat_project import ChatProject
 from app.domain.exceptions.chat_exceptions import InvalidChatSessionInputError
 from app.domain.ports.chat_project_repository_port import ChatProjectRepositoryPort
+from app.domain.services.chat_project_settings_service import ChatProjectSettingsService
 
 
 ALLOWED_VISIBILITY = {"private", "public"}
@@ -37,6 +38,9 @@ def _to_response(project: ChatProject, access_role: str = "viewer") -> ChatProje
         color=project.color,
         archived_at=project.archived_at.isoformat() if project.archived_at else None,
         metadata=project.metadata,
+        share_conversation_context=ChatProjectSettingsService.share_conversation_context_enabled(
+            project.metadata
+        ),
         access_role=access_role,
         created_at=project.created_at.isoformat(),
         updated_at=project.updated_at.isoformat(),
@@ -81,6 +85,12 @@ class CreateChatProjectUseCase:
         if visibility not in ALLOWED_VISIBILITY:
             raise InvalidChatSessionInputError("Invalid project visibility")
 
+        metadata = ChatProjectSettingsService.merge_metadata(
+            None,
+            patch=request.metadata,
+            share_conversation_context=request.share_conversation_context,
+        )
+
         project = self.repository.create(
             user_id=UUID(request.user_id),
             name=_validate_text(request.name, 120, required=True),
@@ -90,7 +100,7 @@ class CreateChatProjectUseCase:
             visibility=visibility,
             icon=_validate_text(request.icon, 60),
             color=_validate_text(request.color, 40),
-            metadata=request.metadata,
+            metadata=metadata,
         )
 
         return _to_response(project, "owner")
@@ -104,6 +114,22 @@ class UpdateChatProjectUseCase:
         if request.visibility is not None and request.visibility not in ALLOWED_VISIBILITY:
             raise InvalidChatSessionInputError("Invalid project visibility")
 
+        project_metadata = None
+
+        if request.metadata is not None or request.share_conversation_context is not None:
+            current = self.repository.get_accessible_by_id(
+                project_id=UUID(request.project_id),
+                user_id=UUID(request.user_id),
+            )
+
+            existing_meta = current[0].metadata if current else {}
+
+            project_metadata = ChatProjectSettingsService.merge_metadata(
+                existing_meta,
+                patch=request.metadata,
+                share_conversation_context=request.share_conversation_context,
+            )
+
         project = self.repository.update(
             project_id=UUID(request.project_id),
             user_id=UUID(request.user_id),
@@ -116,7 +142,7 @@ class UpdateChatProjectUseCase:
             visibility=request.visibility,
             icon=_validate_text(request.icon, 60) if request.icon is not None else None,
             color=_validate_text(request.color, 40) if request.color is not None else None,
-            project_metadata=request.metadata,
+            project_metadata=project_metadata,
             archived=request.archived,
         )
 

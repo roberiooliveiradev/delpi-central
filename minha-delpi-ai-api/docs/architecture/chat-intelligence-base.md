@@ -13,7 +13,7 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 |----------|--------|
 | **Chat (sessão)** | Pipeline de mensagens, histórico, tools, RAG, LLM |
 | **Agente** | `system_prompt`, skills, actions permitidas, especialização de conhecimento |
-| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões |
+| **Projeto** | Prompt de projeto, agente padrão, agrupamento de sessões; opcionalmente `metadata.shareConversationContext` para resumo/memória/RAG entre conversas do mesmo projeto |
 | **Simulação / admin** | Mesmo pipeline, com rascunho ou sandbox |
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
@@ -123,6 +123,8 @@ Mensagem do usuário
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
 | `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
 | `ChatSessionMemoryService` | Fase 4: overlay em `ai_chat_session_memory` (reload da sessão) |
+| `ChatProjectSettingsService` | Flags em `metadata` do projeto (`shareConversationContext`) |
+| `ChatProjectConversationContextService` | Com share ativo: resumo de até 5 conversas irmãs + overlay de memória; estágio `project_shared_context` |
 | `ChatBehaviorInstructionService` | Instruções de comportamento da sessão injetadas no contexto operacional |
 | `ChatContextAssertivenessService` | Score 0–100 e flags (`follow_up_entity_reused`, `humanized_none_fields`, …) |
 | `ChatContextMetadataService` | Grava `contextSnapshot`, `contextAssertiveness` e espelha em `adminDebug` |
