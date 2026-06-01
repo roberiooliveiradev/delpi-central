@@ -28,7 +28,7 @@ export function ChatRichTable({
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [copied, setCopied] = useState(false);
   const [rowMenu, setRowMenu] = useState<{
-    anchor: { x: number; y: number };
+    anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildTableRowMenuActions>;
   } | null>(null);
 
@@ -187,7 +187,7 @@ export function ChatRichTable({
                   }
 
                   setRowMenu({
-                    anchor: { x: event.clientX, y: event.clientY },
+                    anchor: { point: { x: event.clientX, y: event.clientY } },
                     actions,
                   });
                 }}

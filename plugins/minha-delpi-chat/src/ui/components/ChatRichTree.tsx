@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ChatPresentation, ChatTreeNode } from "../../data/api/chatTypes";
 import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
-import { ChatTableRowMenu } from "./ChatTableRowMenu";
+import { ChatTableRowMenu, type TableRowMenuAnchor } from "./ChatTableRowMenu";
 import { ExpandButton } from "./ChatExpandModal";
 import {
   exportTreeToCsv,
@@ -38,6 +38,16 @@ function TreeChevronIcon({ expanded }: { expanded: boolean }) {
           strokeLinejoin="round"
         />
       )}
+    </svg>
+  );
+}
+
+function TreeMoreIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="3.25" r="1.25" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.25" fill="currentColor" />
+      <circle cx="8" cy="12.75" r="1.25" fill="currentColor" />
     </svg>
   );
 }
@@ -91,8 +101,9 @@ function TreeNodeRow({
   const metaText = formatMeta(node.meta);
   const menuActions = onDrillDown ? buildTreePointMenuActions(node) : [];
   const hasMenu = menuActions.length > 0;
+  const contentRef = useRef<HTMLDivElement>(null);
   const [rowMenu, setRowMenu] = useState<{
-    anchor: { x: number; y: number };
+    anchor: TableRowMenuAnchor;
     actions: TableRowMenuAction[];
   } | null>(null);
 
@@ -101,9 +112,17 @@ function TreeNodeRow({
       return;
     }
 
+    event.preventDefault();
     event.stopPropagation();
+
+    const rect = contentRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      return;
+    }
+
     setRowMenu({
-      anchor: { x: event.clientX, y: event.clientY },
+      anchor: { rect },
       actions: menuActions,
     });
   }
@@ -111,23 +130,8 @@ function TreeNodeRow({
   return (
     <li className="mdc-rich-tree__item">
       <div
-        className={`mdc-rich-tree__row ${hasMenu ? "mdc-rich-tree__row--clickable" : ""}`}
+        className="mdc-rich-tree__row"
         style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
-        onContextMenu={hasMenu ? openRowMenu : undefined}
-        onClick={hasMenu ? openRowMenu : undefined}
-        onKeyDown={
-          hasMenu
-            ? (event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  openRowMenu(event as unknown as React.MouseEvent);
-                }
-              }
-            : undefined
-        }
-        role={hasMenu ? "button" : undefined}
-        tabIndex={hasMenu ? 0 : undefined}
-        title={hasMenu ? "Clique para ver ações" : undefined}
       >
         {hasChildren ? (
           <button
@@ -148,7 +152,25 @@ function TreeNodeRow({
           <span className="mdc-rich-tree__toggle-spacer" aria-hidden="true" />
         )}
 
-        <div className="mdc-rich-tree__content">
+        <div
+          ref={contentRef}
+          className={`mdc-rich-tree__content ${hasMenu ? "mdc-rich-tree__content--interactive" : ""}`}
+          onClick={hasMenu ? openRowMenu : undefined}
+          onContextMenu={hasMenu ? openRowMenu : undefined}
+          onKeyDown={
+            hasMenu
+              ? (event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openRowMenu(event as unknown as React.MouseEvent);
+                  }
+                }
+              : undefined
+          }
+          role={hasMenu ? "button" : undefined}
+          tabIndex={hasMenu ? 0 : undefined}
+          title={hasMenu ? "Clique para ver ações deste item" : undefined}
+        >
           <div className="mdc-rich-tree__primary">
             <span className="mdc-rich-tree__label">{node.label}</span>
             {node.badge ? (
@@ -164,6 +186,18 @@ function TreeNodeRow({
             <div className="mdc-rich-tree__subtitle">{node.subtitle}</div>
           ) : null}
         </div>
+
+        {hasMenu ? (
+          <button
+            type="button"
+            className="mdc-rich-tree__more"
+            aria-label={`Ações do item ${node.label}`}
+            aria-haspopup="menu"
+            onClick={openRowMenu}
+          >
+            <TreeMoreIcon />
+          </button>
+        ) : null}
       </div>
 
       {hasChildren && expanded ? (

@@ -57,7 +57,7 @@ export function ChatInteractivityBlock({
   variant = "default",
 }: ChatInteractivityBlockProps) {
   const [menu, setMenu] = useState<{
-    anchor: { x: number; y: number };
+    anchor: { point: { x: number; y: number } };
     actions: TableRowMenuAction[];
   } | null>(null);
 
@@ -149,7 +149,7 @@ export function ChatInteractivityBlock({
             onClick={(event) => {
               event.stopPropagation();
               setMenu({
-                anchor: { x: event.clientX, y: event.clientY },
+                anchor: { point: { x: event.clientX, y: event.clientY } },
                 actions: overflow.map(
                   (item): TableRowMenuAction => ({
                     id: item.id ?? item.query,

@@ -93,7 +93,7 @@ export function ChatRichChart({
   const [periodCompareEnabled, setPeriodCompareEnabled] = useState(false);
   const activeChartType = chartTypeOverride || chartType;
   const [pointMenu, setPointMenu] = useState<{
-    anchor: { x: number; y: number };
+    anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildChartPointMenuActions>;
   } | null>(null);
   const isDark = useMdcDarkMode();
@@ -165,7 +165,7 @@ export function ChatRichChart({
       }
 
       setPointMenu({
-        anchor: { x: clientX, y: clientY },
+        anchor: { point: { x: clientX, y: clientY } },
         actions,
       });
     },

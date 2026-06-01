@@ -50,25 +50,67 @@
   display: flex;
   align-items: flex-start;
   gap: 0.25rem;
-  padding: 0.35rem 0.75rem 0.35rem 0;
+  padding: 0.35rem 0.5rem 0.35rem 0;
 }
 
-.mdc-rich-tree__row:hover {
+.mdc-rich-tree__row:hover .mdc-rich-tree__content--interactive,
+.mdc-rich-tree__row:focus-within .mdc-rich-tree__content--interactive {
   background: var(--mdc-rich-hover);
 }
 
-.mdc-rich-tree__row--clickable {
+.mdc-rich-tree__content--interactive {
   cursor: pointer;
+  border-radius: var(--mdc-radius-sm, 8px);
+  padding: 0.15rem 0.35rem;
+  margin: -0.15rem 0;
   transition: background 0.1s ease;
 }
 
-.mdc-rich-tree__row--clickable:hover {
-  background: var(--mdc-rich-hover-strong, var(--mdc-rich-hover));
+.mdc-rich-tree__content--interactive:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
+  outline-offset: 1px;
 }
 
-.mdc-rich-tree__row--clickable:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--mdc-primary, #2563eb) 55%, transparent);
-  outline-offset: -2px;
+.mdc-rich-tree__more {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: 0.05rem;
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: var(--mdc-radius-sm, 8px);
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.mdc-rich-tree__row:hover .mdc-rich-tree__more,
+.mdc-rich-tree__row:focus-within .mdc-rich-tree__more,
+.mdc-rich-tree__more:focus-visible {
+  opacity: 1;
+}
+
+.mdc-rich-tree__more:hover,
+.mdc-rich-tree__more:focus-visible {
+  color: var(--mdc-primary);
+  background: var(--mdc-rich-hover-strong, var(--mdc-rich-hover));
+  border-color: color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  outline: none;
+}
+
+@media (hover: none) {
+  .mdc-rich-tree__more {
+    opacity: 1;
+  }
 }
 
 .mdc-rich-tree__toggle,

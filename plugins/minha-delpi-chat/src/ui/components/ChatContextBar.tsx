@@ -60,7 +60,7 @@ export function ChatContextBar({
   onChipAction,
 }: ChatContextBarProps) {
   const [chipMenu, setChipMenu] = useState<{
-    anchor: { x: number; y: number };
+    anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildContextChipMenuActions>;
   } | null>(null);
 
@@ -89,7 +89,7 @@ export function ChatContextBar({
     }
 
     setChipMenu({
-      anchor: { x: clientX, y: clientY },
+      anchor: { point: { x: clientX, y: clientY } },
       actions,
     });
   }

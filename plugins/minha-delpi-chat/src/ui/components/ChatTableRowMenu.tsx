@@ -1,8 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import type { TableRowMenuAction } from "./chatDrillDown";
+import {
+  estimateMenuHeight,
+  type MenuAnchorRect,
+  resolveMenuPosition,
+  resolveMenuPositionFromPoint,
+} from "./menuPositionUtils";
 import "./ChatTableRowMenu.css";
+
+export type TableRowMenuAnchor =
+  | { point: { x: number; y: number } }
+  | { rect: MenuAnchorRect };
 
 export function ChatTableRowMenu({
   actions,
@@ -12,17 +22,12 @@ export function ChatTableRowMenu({
   menuLabel = "Ações da linha",
 }: {
   actions: TableRowMenuAction[];
-  anchor: { x: number; y: number };
+  anchor: TableRowMenuAnchor;
   onSelect: (query: string) => void;
   onClose: () => void;
   menuLabel?: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const [canUsePortal, setCanUsePortal] = useState(false);
-
-  useEffect(() => {
-    setCanUsePortal(true);
-  }, []);
 
   useEffect(() => {
     if (!actions.length) {
@@ -67,27 +72,35 @@ export function ChatTableRowMenu({
     };
   }, [actions.length, onClose]);
 
-  if (!actions.length) {
+  useLayoutEffect(() => {
+    panelRef.current?.focus({ preventScroll: true });
+  }, [actions]);
+
+  if (!actions.length || typeof document === "undefined") {
     return null;
   }
 
-  const left = Math.min(anchor.x, window.innerWidth - 240);
-  const top = Math.min(anchor.y, window.innerHeight - 280);
+  const position =
+    "rect" in anchor
+      ? resolveMenuPosition({ rect: anchor.rect, itemCount: actions.length })
+      : resolveMenuPositionFromPoint(anchor.point, actions.length);
 
   const menu = (
     <>
       <div
         className="mdc-table-row-menu__scrim"
         role="presentation"
+        aria-hidden="true"
         onMouseDown={onClose}
       />
 
       <div
         ref={panelRef}
         className="mdc-table-row-menu"
-        style={{ left, top }}
+        style={{ left: position.left, top: position.top }}
         role="menu"
         aria-label={menuLabel}
+        tabIndex={-1}
         onMouseDown={(event) => event.stopPropagation()}
       >
         {actions.map((action) => (
@@ -108,9 +121,7 @@ export function ChatTableRowMenu({
     </>
   );
 
-  if (canUsePortal) {
-    return createPortal(menu, document.body);
-  }
-
-  return menu;
+  return createPortal(menu, document.body);
 }
+
+export { estimateMenuHeight };
