@@ -22,7 +22,7 @@ export type ShortcutFieldId =
   | "announcementTopic";
 
 /** Exemplo padrão no campo e na prévia de atalhos com `{{searchQuery}}`. */
-export const SEARCH_QUERY_PLACEHOLDER = "DELPI Conexões Elétricas";
+export const SEARCH_QUERY_PLACEHOLDER = "Ex.: DELPI Conexões Elétricas";
 
 export type ShortcutFieldDefinition = {
   id: string;

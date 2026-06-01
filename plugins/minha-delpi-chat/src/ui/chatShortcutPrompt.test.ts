@@ -88,12 +88,12 @@ describe("chatShortcutPrompt", () => {
     ).toBe("Consulta operacional");
   });
 
-  it("usa DELPI Conexões Elétricas no placeholder de pesquisa web", () => {
+  it("usa Ex.: DELPI Conexões Elétricas no placeholder de pesquisa web", () => {
     const fields = resolveShortcutFields("pesquise na web sobre {{searchQuery}}");
     const searchField = fields.find((field) => field.id === "searchQuery");
 
     expect(searchField?.placeholder).toBe(SEARCH_QUERY_PLACEHOLDER);
-    expect(SEARCH_QUERY_PLACEHOLDER).toBe("DELPI Conexões Elétricas");
+    expect(SEARCH_QUERY_PLACEHOLDER).toBe("Ex.: DELPI Conexões Elétricas");
   });
 
   it("substitui {{campo}} por dica legível na exibição", () => {
