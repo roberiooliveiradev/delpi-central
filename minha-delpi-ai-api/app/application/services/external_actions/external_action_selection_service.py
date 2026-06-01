@@ -1608,6 +1608,12 @@ class ExternalActionSelectionService:
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
+        if ChatWebSearchIntentService.matches(value):
+            return False
 
         if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(value):
             return False

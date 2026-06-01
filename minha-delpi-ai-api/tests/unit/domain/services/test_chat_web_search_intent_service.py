@@ -42,12 +42,20 @@ def test_resolve_disabled_when_feature_off(_enabled):
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=False)
 def test_blocks_external_action_when_disabled(_enabled):
-    assert (
-        ChatWebSearchIntentService.blocks_external_action_selection(
-            "pesquise na internet sobre python"
-        )
-        is False
+    assert ChatWebSearchIntentService.blocks_external_action_selection(
+        "pesquise na internet sobre python"
     )
+
+
+def test_product_search_heuristic_ignores_explicit_web_request():
+    from app.application.services.external_actions.external_action_selection_service import (
+        ExternalActionSelectionService,
+    )
+
+    service = ExternalActionSelectionService(None)
+    normalized = "pesquise na web sobre delpi conexoes eletricas"
+
+    assert not service._looks_like_product_search(normalized)
 
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)

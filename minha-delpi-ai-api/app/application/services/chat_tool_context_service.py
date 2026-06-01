@@ -283,6 +283,26 @@ class ChatToolContextService:
             raw_message
         )
 
+        if (
+            web_search_exclusive
+            and ChatWebSearchIntentService.matches(raw_message)
+            and not ChatWebSearchIntentService.is_feature_enabled()
+        ):
+            return self._finalize_tool_context_result(
+                message=raw_message,
+                previous_messages=previous_messages,
+                result={
+                    "context": "",
+                    "toolCalls": [],
+                    "nativeToolCalling": {"used": False, "providerSupports": False},
+                    "directAnswer": ChatWebSearchIntentService.format_disabled_notice(
+                        raw_message
+                    ),
+                    "skipRag": True,
+                    "currentMessage": raw_message,
+                },
+            )
+
         from app.application.services.chat_paginated_external_action_service import (
             ChatPaginatedExternalActionService,
         )

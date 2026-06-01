@@ -61,13 +61,13 @@ class ChatWebSearchIntentService:
     @classmethod
     def blocks_external_action_selection(cls, message: str) -> bool:
         """Busca explícita na web não dispara actions OpenAPI no mesmo turno."""
-        if not cls.is_feature_enabled():
-            return False
-
         raw = str(message or "").strip()
 
         if not cls.matches(raw):
             return False
+
+        if not cls.is_feature_enabled():
+            return True
 
         from app.domain.services.chat_web_search_integration_service import (
             ChatWebSearchIntegrationService,
@@ -77,6 +77,21 @@ class ChatWebSearchIntentService:
             return False
 
         return True
+
+    @classmethod
+    def format_disabled_notice(cls, message: str | None = None) -> str:
+        query = cls.extract_query(message or "") if message else ""
+
+        detail = (
+            f" Consulta identificada: **{query}**." if query else ""
+        )
+
+        return (
+            "A **pesquisa na web** não está habilitada neste ambiente "
+            "(configure `CHAT_WEB_SEARCH_ENABLED=true` e um provedor, por exemplo SearXNG).\n\n"
+            "Não usei busca de produtos no ERP para esta pergunta — ela pedia fontes públicas na internet."
+            f"{detail}"
+        )
 
     @classmethod
     def resolve(
