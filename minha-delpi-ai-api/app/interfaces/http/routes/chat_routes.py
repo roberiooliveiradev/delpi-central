@@ -383,7 +383,30 @@ def record_assistant_help_event():
                         metadata=click_snapshot,
                     )
 
+    if event.startswith("presentation_"):
+        from app.domain.services.chat_presentation_admin_metrics_service import (
+            ChatPresentationAdminMetricsService,
+        )
+        from app.infrastructure.persistence.postgres_audit_repository import (
+            PostgresAuditRepository,
+        )
+
+        event_snapshot = ChatPresentationAdminMetricsService.snapshot_from_event(
+            event=event,
+            metadata=safe_meta,
+        )
+
+        if event_snapshot:
+            PostgresAuditRepository().log(
+                user_id=UUID(str(g.current_user.sub)),
+                action="chat.presentation.event",
+                metadata=event_snapshot,
+            )
+
+    try:
         db.session.commit()
+    except Exception:
+        db.session.rollback()
 
     return jsonify(result), 200
 

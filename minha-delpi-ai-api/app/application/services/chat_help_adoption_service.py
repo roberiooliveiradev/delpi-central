@@ -29,6 +29,7 @@ _ALLOWED_EVENTS = frozenset(
         "presentation_chart_type_switch",
         "presentation_axis_change",
         "presentation_chart_export_png",
+        "presentation_category_filter",
     }
 )
 

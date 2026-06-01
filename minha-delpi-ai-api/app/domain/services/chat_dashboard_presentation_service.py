@@ -23,6 +23,7 @@ class ChatDashboardPresentationService:
         build_kpi,
         build_lmp_table,
         build_items_table,
+        build_items_chart=None,
     ) -> dict[str, Any] | None:
         if not isinstance(root, dict):
             return None
@@ -84,13 +85,19 @@ class ChatDashboardPresentationService:
                 table = build_items_table(items, title="Itens do painel")
 
             if table and table.get("type") == "table":
-                panels.append(
-                    {
-                        "id": "items",
-                        "title": str(table.get("title") or "Itens"),
-                        "presentation": table,
-                    }
-                )
+                items_panel: dict[str, Any] = {
+                    "id": "items",
+                    "title": str(table.get("title") or "Itens"),
+                    "presentation": table,
+                }
+
+                if build_items_chart:
+                    chart = build_items_chart(items, root, path)
+
+                    if isinstance(chart, dict) and chart.get("type") == "chart":
+                        items_panel["chartPresentation"] = chart
+
+                panels.append(items_panel)
 
         if len(panels) < 2:
             return None

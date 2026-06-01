@@ -450,6 +450,34 @@ export type AdminWebSearchSummary = {
   alerts: string[];
 };
 
+export type AdminPresentationLabelCount = {
+  label: string;
+  count: number;
+};
+
+export type AdminPresentationSummary = {
+  windowHours: number;
+  since: string;
+  responsesWithRichPresentation: number;
+  eventsCount: number;
+  viewSwitchCount: number;
+  chartTypeSwitchCount: number;
+  axisChangeCount: number;
+  exportPngCount: number;
+  categoryFilterCount: number;
+  bySelected: Record<string, number>;
+  byPresentationType: Record<string, number>;
+  byChartType: Record<string, number>;
+  byEvent: Record<string, number>;
+  byViewTarget: Record<string, number>;
+  byAxisColumn: Record<string, number>;
+  byFilterKey: Record<string, number>;
+  topSelected: AdminPresentationLabelCount[];
+  topEvents: AdminPresentationLabelCount[];
+  recentImpressions: Record<string, unknown>[];
+  recentEvents: Record<string, unknown>[];
+};
+
 export type AdminInteractivitySummary = {
   windowHours: number;
   since: string;

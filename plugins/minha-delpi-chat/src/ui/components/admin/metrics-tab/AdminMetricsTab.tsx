@@ -7,6 +7,7 @@ import {
   getAdminErrorHandlingSummary,
   getAdminWebSearchSummary,
   getAdminInteractivitySummary,
+  getAdminPresentationSummary,
   getAdminTextTaskSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
@@ -19,6 +20,7 @@ import type {
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
   AdminInteractivitySummary,
+  AdminPresentationSummary,
   AdminTextTaskSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
@@ -32,6 +34,7 @@ import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
 import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
 import { AdminWebSearchMetrics } from "./AdminWebSearchMetrics";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
+import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
@@ -290,6 +293,10 @@ export function AdminMetricsTab({
     useState<AdminInteractivitySummary | null>(null);
   const [isLoadingInteractivitySummary, setIsLoadingInteractivitySummary] =
     useState(false);
+  const [presentationSummary, setPresentationSummary] =
+    useState<AdminPresentationSummary | null>(null);
+  const [isLoadingPresentationSummary, setIsLoadingPresentationSummary] =
+    useState(false);
   const [errorHandlingSummary, setErrorHandlingSummary] =
     useState<AdminErrorHandlingSummary | null>(null);
   const [isLoadingErrorHandlingSummary, setIsLoadingErrorHandlingSummary] =
@@ -391,6 +398,20 @@ export function AdminMetricsTab({
       .then(setInteractivitySummary)
       .catch(() => setInteractivitySummary(null))
       .finally(() => setIsLoadingInteractivitySummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setPresentationSummary(null);
+      return;
+    }
+
+    setIsLoadingPresentationSummary(true);
+
+    void getAdminPresentationSummary(metricsHours, { getAccessToken })
+      .then(setPresentationSummary)
+      .catch(() => setPresentationSummary(null))
+      .finally(() => setIsLoadingPresentationSummary(false));
   }, [getAccessToken, metricsHours]);
 
   useEffect(() => {
@@ -596,6 +617,12 @@ export function AdminMetricsTab({
       <AdminInteractivityMetrics
         summary={interactivitySummary}
         isLoading={isLoadingInteractivitySummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminPresentationMetrics
+        summary={presentationSummary}
+        isLoading={isLoadingPresentationSummary}
         windowHours={windowLabel}
       />
 

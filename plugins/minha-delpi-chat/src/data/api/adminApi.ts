@@ -41,6 +41,7 @@ import type {
   AdminErrorHandlingSummary,
   AdminWebSearchSummary,
   AdminInteractivitySummary,
+  AdminPresentationSummary,
   AdminTextTaskSummary,
   AdminDocumentVisionSummary,
   AdminMetricsSummary,
@@ -876,6 +877,21 @@ export async function getAdminInteractivitySummary(
   );
 
   return parseJsonResponse<AdminInteractivitySummary>(response);
+}
+
+export async function getAdminPresentationSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminPresentationSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/presentation/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminPresentationSummary>(response);
 }
 
 export async function getAdminErrorHandlingSummary(

@@ -106,6 +106,8 @@ export type ChatPresentation =
           ChatPresentation,
           { type: "kpi" } | { type: "chart" } | { type: "table" }
         >;
+        /** Gráfico alternativo para o painel de itens (toggle no MFE). */
+        chartPresentation?: Extract<ChatPresentation, { type: "chart" }>;
       }[];
     }
   | {

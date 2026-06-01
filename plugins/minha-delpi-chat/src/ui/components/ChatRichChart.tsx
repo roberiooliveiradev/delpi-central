@@ -46,6 +46,10 @@ import {
 } from "./chartAxisSelection";
 import { ExpandButton } from "./ChatExpandModal";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
+import {
+  applyCategoryFilter,
+  buildCategoryFilterOptions,
+} from "./presentationCategoryFilter";
 
 type ChartPresentation = Extract<ChatPresentation, { type: "chart" }>;
 
@@ -97,6 +101,8 @@ export function ChatRichChart({
   const [chartTypeOverride, setChartTypeOverride] = useState<string | null>(null);
   const [axisXOverride, setAxisXOverride] = useState<string | null>(null);
   const [axisYOverride, setAxisYOverride] = useState<string | null>(null);
+  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
+  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
   const [topFilter, setTopFilter] = useState<ChartTopFilter>("all");
   const [zoomWindow, setZoomWindow] = useState<ChartZoomWindow>("all");
   const [periodCompareEnabled, setPeriodCompareEnabled] = useState(false);
@@ -105,6 +111,8 @@ export function ChatRichChart({
   useEffect(() => {
     setAxisXOverride(null);
     setAxisYOverride(null);
+    setCategoryFilterKey(null);
+    setCategoryFilterValue(null);
   }, [data, title, chartType]);
 
   const [pointMenu, setPointMenu] = useState<{
@@ -114,34 +122,48 @@ export function ChatRichChart({
   const isDark = useMdcDarkMode();
   const chartContainerRef = useRef<HTMLDivElement>(null);
 
+  const categoryFilterOptions = useMemo(
+    () =>
+      buildCategoryFilterOptions(
+        data,
+        config?.categoryColumns?.length ? config.categoryColumns : undefined,
+      ),
+    [config?.categoryColumns, data],
+  );
+
+  const filteredData = useMemo(
+    () => applyCategoryFilter(data, categoryFilterKey, categoryFilterValue),
+    [categoryFilterKey, categoryFilterValue, data],
+  );
+
   const axisDefaults = useMemo(
-    () => inferDefaultChartAxes(data, activeChartType, config),
-    [activeChartType, config, data],
+    () => inferDefaultChartAxes(filteredData, activeChartType, config),
+    [activeChartType, config, filteredData],
   );
 
   const scatterMode = isNumericAxisChartType(activeChartType);
   const resolvedX = axisXOverride ?? axisDefaults.xKey;
   const resolvedY = axisYOverride ?? axisDefaults.yKey;
-  const xAxis = scatterMode ? resolvedX : resolvedX || config?.xAxis || guessXAxis(data);
+  const xAxis = scatterMode ? resolvedX : resolvedX || config?.xAxis || guessXAxis(filteredData);
   const baseYAxes = scatterMode
     ? [resolvedY]
     : normalizeYAxes(
         axisYOverride ? [axisYOverride] : config?.yAxis,
-        data,
+        filteredData,
         xAxis,
       );
-  const valueKey = firstNumericValueKey(data, xAxis, baseYAxes);
+  const valueKey = firstNumericValueKey(filteredData, xAxis, baseYAxes);
   const temporalAxis = useMemo(
-    () => isTemporalChartAxis(xAxis, data),
-    [data, xAxis],
+    () => isTemporalChartAxis(xAxis, filteredData),
+    [filteredData, xAxis],
   );
   const periodCompareSpec = useMemo(
-    () => detectPeriodCompare(data, xAxis, valueKey),
-    [data, valueKey, xAxis],
+    () => detectPeriodCompare(filteredData, xAxis, valueKey),
+    [filteredData, valueKey, xAxis],
   );
 
   const chartView = useMemo(() => {
-    let rows = [...data];
+    let rows = [...filteredData];
     let axes = [...baseYAxes];
     let axisKey = xAxis;
 
@@ -162,7 +184,7 @@ export function ChatRichChart({
     return { rows, axes, axisKey };
   }, [
     baseYAxes,
-    data,
+    filteredData,
     periodCompareEnabled,
     periodCompareSpec,
     temporalAxis,
@@ -225,10 +247,18 @@ export function ChatRichChart({
       parts.push(`Eixos: ${formatChartColumnLabel(resolvedX)} × ${formatChartColumnLabel(resolvedY)}`);
     }
 
+    if (categoryFilterKey && categoryFilterValue) {
+      parts.push(
+        `Filtro: ${formatChartColumnLabel(categoryFilterKey)} = ${categoryFilterValue}`,
+      );
+    }
+
     return parts.length ? parts.join(" · ") : undefined;
   }, [
     axisXOverride,
     axisYOverride,
+    categoryFilterKey,
+    categoryFilterValue,
     chartTypeOverride,
     periodCompareEnabled,
     resolvedX,
@@ -349,6 +379,58 @@ export function ChatRichChart({
                       ))}
                     </select>
                   </label>
+                ) : null}
+                {categoryFilterOptions.length > 0 ? (
+                  <>
+                    <label className="mdc-rich-chart__ux-field">
+                      <span>Filtrar</span>
+                      <select
+                        value={categoryFilterKey ?? ""}
+                        onChange={(event) => {
+                          const key = event.target.value || null;
+                          setCategoryFilterKey(key);
+                          setCategoryFilterValue(null);
+                        }}
+                        title="Coluna para filtrar os dados"
+                      >
+                        <option value="">Todos</option>
+                        {categoryFilterOptions.map((option) => (
+                          <option key={option.key} value={option.key}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    {categoryFilterKey ? (
+                      <label className="mdc-rich-chart__ux-field">
+                        <span>Valor</span>
+                        <select
+                          value={categoryFilterValue ?? ""}
+                          onChange={(event) => {
+                            const value = event.target.value || null;
+                            setCategoryFilterValue(value);
+                            if (value) {
+                              recordPresentationTelemetry("presentation_category_filter", {
+                                filterKey: categoryFilterKey,
+                                filterValue: value,
+                                chartType: activeChartType,
+                              });
+                            }
+                          }}
+                          title="Valor do filtro"
+                        >
+                          <option value="">Todos</option>
+                          {categoryFilterOptions
+                            .find((option) => option.key === categoryFilterKey)
+                            ?.values.map((value) => (
+                              <option key={value} value={value}>
+                                {value}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                    ) : null}
+                  </>
                 ) : null}
                 {!periodCompareEnabled ? (
                   <label className="mdc-rich-chart__ux-field">

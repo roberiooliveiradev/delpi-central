@@ -436,6 +436,80 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_presentation_summary(self, *, hours: int = 168) -> dict:
+        from app.domain.services.chat_presentation_admin_metrics_service import (
+            ChatPresentationAdminMetricsService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        impression_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        event_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.presentation.event",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        impression_entries: list[dict] = []
+
+        for model in impression_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("presentationMetrics")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            impression_entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        event_entries: list[dict] = []
+
+        for model in event_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = ChatPresentationAdminMetricsService.snapshot_from_event(
+                event=str(metadata.get("event") or ""),
+                metadata=metadata,
+            )
+
+            if not snapshot:
+                continue
+
+            event_entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        return ChatPresentationAdminMetricsService.aggregate(
+            impression_entries=impression_entries,
+            event_entries=event_entries,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_error_handling_summary(self, *, hours: int = 168) -> dict:
         from app.domain.services.chat_error_handling_admin_metrics_service import (
             ChatErrorHandlingAdminMetricsService,

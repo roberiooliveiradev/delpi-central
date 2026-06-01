@@ -852,6 +852,15 @@ class SendChatMessageUseCase:
             assistant_metadata=assistant_metadata,
         )
 
+        from app.domain.services.chat_presentation_admin_metrics_service import (
+            ChatPresentationAdminMetricsService,
+        )
+
+        ChatPresentationAdminMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            assistant_metadata=assistant_metadata,
+        )
+
         from app.domain.services.chat_error_handling_admin_metrics_service import (
             ChatErrorHandlingAdminMetricsService,
         )

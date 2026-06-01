@@ -249,7 +249,12 @@ export function ChatRichPresentation({
         <div className="mdc-rich-presentation__toolbar">
           <ExpandButton presentation={primary} />
         </div>
-        <ChatRichDashboard presentation={primary} onDrillDown={onDrillDown} onOpenCanvas={onOpenCanvas} />
+        <ChatRichDashboard
+          presentation={primary}
+          toolCalls={toolCalls}
+          onDrillDown={onDrillDown}
+          onOpenCanvas={onOpenCanvas}
+        />
       </div>
     );
   }

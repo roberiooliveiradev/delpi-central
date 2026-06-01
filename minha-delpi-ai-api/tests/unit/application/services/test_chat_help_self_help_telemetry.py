@@ -57,6 +57,7 @@ def test_adoption_presentation_events():
         "presentation_chart_type_switch",
         "presentation_axis_change",
         "presentation_chart_export_png",
+        "presentation_category_filter",
     ):
         result = ChatHelpAdoptionService.record(
             user_id="user-1",

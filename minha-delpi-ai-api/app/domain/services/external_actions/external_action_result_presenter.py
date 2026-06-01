@@ -3308,6 +3308,11 @@ class ExternalActionResultPresenter:
                 items,
                 title=title,
             ),
+            build_items_chart=lambda items, root, route: self.build_chart_presentation(
+                {**root, "items": items},
+                path=route,
+                force=True,
+            ),
         )
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:

@@ -1,9 +1,15 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { ChatPresentation } from "../../data/api/chatTypes";
 import { ExpandButton } from "./ChatExpandModal";
 import { buildTableRowMenuActions } from "./chatDrillDown";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
 import { formatCellValue, getAlignClass } from "./tableCellFormatting";
+import {
+  applyCategoryFilter,
+  buildCategoryFilterOptions,
+} from "./presentationCategoryFilter";
+import { formatChartColumnLabel } from "./chartAxisSelection";
+import { recordPresentationTelemetry } from "./presentationTelemetry";
 
 type TablePresentation = Extract<ChatPresentation, { type: "table" }>;
 
@@ -26,16 +32,33 @@ export function ChatRichTable({
 }) {
   const { title, columns, rows } = presentation;
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [categoryFilterKey, setCategoryFilterKey] = useState<string | null>(null);
+  const [categoryFilterValue, setCategoryFilterValue] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [rowMenu, setRowMenu] = useState<{
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildTableRowMenuActions>;
   } | null>(null);
 
-  const sortedRows = useCallback(() => {
-    if (!sortConfig) return rows;
+  useEffect(() => {
+    setCategoryFilterKey(null);
+    setCategoryFilterValue(null);
+  }, [rows, title]);
 
-    return [...rows].sort((a, b) => {
+  const categoryFilterOptions = useMemo(
+    () => buildCategoryFilterOptions(rows, columns.map((column) => column.key)),
+    [columns, rows],
+  );
+
+  const filteredRows = useMemo(
+    () => applyCategoryFilter(rows, categoryFilterKey, categoryFilterValue),
+    [categoryFilterKey, categoryFilterValue, rows],
+  );
+
+  const sortedRows = useCallback(() => {
+    if (!sortConfig) return filteredRows;
+
+    return [...filteredRows].sort((a, b) => {
       const aVal = a[sortConfig.key];
       const bVal = b[sortConfig.key];
 
@@ -55,7 +78,7 @@ export function ChatRichTable({
       const cmp = aStr.localeCompare(bStr, "pt-BR");
       return sortConfig.direction === "asc" ? cmp : -cmp;
     });
-  }, [rows, sortConfig]);
+  }, [filteredRows, sortConfig]);
 
   function handleSort(key: string) {
     setSortConfig((prev) => {
@@ -71,7 +94,7 @@ export function ChatRichTable({
   function exportCsv() {
     const BOM = "\uFEFF";
     const header = columns.map((c) => c.label).join(";");
-    const body = rows
+    const body = filteredRows
       .map((row) =>
         columns
           .map((col) => {
@@ -98,7 +121,7 @@ export function ChatRichTable({
 
   function copyToClipboard() {
     const header = columns.map((c) => c.label).join("\t");
-    const body = rows
+    const body = filteredRows
       .map((row) =>
         columns.map((col) => String(row[col.key] ?? "")).join("\t"),
       )
@@ -129,6 +152,55 @@ export function ChatRichTable({
             <span className="mdc-rich-table__title">{title}</span>
           )}
           <div className="mdc-rich-table__actions">
+            {categoryFilterOptions.length > 0 ? (
+              <>
+                <label className="mdc-rich-chart__ux-field mdc-rich-table__filter">
+                  <span>Filtrar</span>
+                  <select
+                    value={categoryFilterKey ?? ""}
+                    onChange={(event) => {
+                      setCategoryFilterKey(event.target.value || null);
+                      setCategoryFilterValue(null);
+                    }}
+                  >
+                    <option value="">Todos</option>
+                    {categoryFilterOptions.map((option) => (
+                      <option key={option.key} value={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {categoryFilterKey ? (
+                  <label className="mdc-rich-chart__ux-field mdc-rich-table__filter">
+                    <span>{formatChartColumnLabel(categoryFilterKey)}</span>
+                    <select
+                      value={categoryFilterValue ?? ""}
+                      onChange={(event) => {
+                        const value = event.target.value || null;
+                        setCategoryFilterValue(value);
+                        if (value) {
+                          recordPresentationTelemetry("presentation_category_filter", {
+                            filterKey: categoryFilterKey,
+                            filterValue: value,
+                            surface: "table",
+                          });
+                        }
+                      }}
+                    >
+                      <option value="">Todos</option>
+                      {categoryFilterOptions
+                        .find((option) => option.key === categoryFilterKey)
+                        ?.values.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                ) : null}
+              </>
+            ) : null}
             <button
               className="mdc-rich-table__btn"
               onClick={copyToClipboard}

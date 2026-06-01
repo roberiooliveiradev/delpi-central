@@ -44,3 +44,42 @@ def test_build_dashboard_presentation_for_lmp_payload():
         panel["presentation"]["type"] == "chart"
         for panel in dashboard["panels"]
     )
+    items_panel = next(panel for panel in dashboard["panels"] if panel["id"] == "items")
+    assert items_panel["presentation"]["type"] == "table"
+    assert items_panel.get("chartPresentation", {}).get("type") == "chart"
+
+
+def test_build_dashboard_items_panel_includes_chart_for_efficiency_rows():
+    presenter = ExternalActionResultPresenter()
+    payload = {
+        "summary": {
+            "weighted_efficiency_pct": 98.5,
+            "total_mod_result": -2400,
+            "appointment_count": 190,
+        },
+        "items": [
+            {
+                "branch": "01",
+                "work_order": "OP1",
+                "product_code": "10080077",
+                "eficiencia_percentual": 120.5,
+            },
+            {
+                "branch": "02",
+                "work_order": "OP2",
+                "product_code": "10080078",
+                "eficiencia_percentual": 88.2,
+            },
+        ],
+        "total": 2,
+    }
+
+    dashboard = presenter.build_dashboard_presentation(
+        payload,
+        path="/production/eficiencia-fabril/dashboard",
+    )
+
+    assert dashboard is not None
+    items_panel = next(panel for panel in dashboard["panels"] if panel["id"] == "items")
+    assert items_panel["presentation"]["type"] == "table"
+    assert items_panel.get("chartPresentation", {}).get("type") == "chart"
