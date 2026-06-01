@@ -20,6 +20,8 @@ _PRODUCTION_SQL_PHRASES = (
     "producao hoje",
     "programacao de producao",
     "programacao produtiva",
+    "programados para producao",
+    "produtos programados",
     "ordens de producao",
     "ordem de producao",
     "planejamento de producao",
@@ -134,9 +136,16 @@ class ChatSqlOperationalIntentService:
                     "que produtos",
                     "o que",
                     "qual produto",
+                    "produtos programados",
                 )
             ):
                 return True
+
+        if (
+            re.search(r"\bprogramad\w*\b", normalized)
+            and re.search(r"\bproduc\w*\b", normalized)
+        ):
+            return True
 
         return False
 
