@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
@@ -21,5 +22,10 @@ export default defineConfig({
     target: "esnext",
     modulePreload: false,
     cssCodeSplit: false
-  }
+  },
+
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+  },
 });
