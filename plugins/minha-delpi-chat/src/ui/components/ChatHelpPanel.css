@@ -57,6 +57,27 @@
   padding: 0.75rem 1rem;
 }
 
+.mdc-chat-help-panel__tour {
+  padding: 0 1rem 0.65rem;
+}
+
+.mdc-chat-help-panel__tour-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mdc-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.mdc-chat-help-panel__tour-link:hover {
+  color: color-mix(in srgb, var(--mdc-primary) 80%, var(--mdc-text));
+}
+
 .mdc-chat-help-panel__search input {
   width: 100%;
   border: 1px solid var(--mdc-card-border);

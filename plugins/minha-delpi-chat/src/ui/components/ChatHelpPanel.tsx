@@ -22,6 +22,8 @@ type ChatHelpPanelProps = {
   onSearchQueryChange: (value: string) => void;
   onClose: () => void;
   onTryPrompt: (query: string, context?: StarterInvokeContext) => void;
+  /** Inicia o tour guiado (home vazia, passos disponíveis). */
+  onStartTour?: () => void;
 };
 
 function resolveAvailabilityLabel(
@@ -114,6 +116,7 @@ export function ChatHelpPanel({
   onSearchQueryChange,
   onClose,
   onTryPrompt,
+  onStartTour,
 }: ChatHelpPanelProps) {
   const sections = useMemo(() => {
     if (!catalog) {
@@ -188,6 +191,14 @@ export function ChatHelpPanel({
               />
             </div>
           </div>
+
+          {onStartTour ? (
+            <div className="mdc-chat-help-panel__tour">
+              <button type="button" className="mdc-chat-help-panel__tour-link" onClick={onStartTour}>
+                Ver tour rápido do chat
+              </button>
+            </div>
+          ) : null}
 
           <div className="mdc-chat-help-panel__body">
             {catalog?.contextualHighlights?.length && !searchQuery.trim() ? (

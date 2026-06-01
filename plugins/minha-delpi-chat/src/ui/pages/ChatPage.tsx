@@ -2162,6 +2162,15 @@ export function ChatPage({
           onTryPrompt={(query, context) => {
             void handleHelpTryPrompt(query, context);
           }}
+          onStartTour={
+            canOfferOnboardingTour
+              ? () => {
+                  setHelpPanelOpen(false);
+                  setHelpSearchQuery("");
+                  setOnboardingTourOpen(true);
+                }
+              : undefined
+          }
         />
       </section>
     </main>
