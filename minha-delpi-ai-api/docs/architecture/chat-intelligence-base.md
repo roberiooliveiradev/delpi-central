@@ -107,6 +107,8 @@ Mensagem do usuário
 | `ChatErrorHandlingService` | Metadata `errorHandling` + `errorRecoveryFollowUpSuggestions` + enrich |
 | `ChatErrorHandlingTelemetryService` | Log `error_handling type=…` |
 | `ChatInteractivitySuggestionService` | Consolida chips em `metadata.interactivity` (Playbook 07) |
+| `ChatInteractivityQueryResolver` | Preenche `{{productCode}}` e entidades do snapshot |
+| `ChatInteractivityPreferenceService` | Ranking por uso (`interactivityUsage` na sessão) |
 | `ChatPresentationInteractivityService` | Chips pós-tabela/gráfico/árvore |
 | `ChatInteractivityTelemetryService` | Log de sugestões primárias e grupos no overflow |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |

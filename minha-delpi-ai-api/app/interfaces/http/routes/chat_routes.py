@@ -307,6 +307,10 @@ def get_assistant_catalog():
 @require_permission(CHAT_ACCESS_PERMISSION)
 def record_assistant_help_event():
     from app.application.services.chat_help_adoption_service import ChatHelpAdoptionService
+    from app.application.services.chat_interactivity_preference_service import (
+        ChatInteractivityPreferenceService,
+    )
+    from app.composition.chat_composer import make_chat_session_memory_service
 
     payload = request.get_json(silent=True) or {}
     event = str(payload.get("event") or "").strip()
@@ -315,14 +319,30 @@ def record_assistant_help_event():
     if not event:
         return bad_request("event is required")
 
+    safe_meta = metadata if isinstance(metadata, dict) else {}
+
     try:
         result = ChatHelpAdoptionService.record(
             user_id=str(g.current_user.sub),
             event=event,
-            metadata=metadata if isinstance(metadata, dict) else None,
+            metadata=safe_meta or None,
         )
     except ValueError as exc:
         return bad_request(str(exc))
+
+    if event == "interactivity_suggestion_clicked":
+        label = str(safe_meta.get("label") or "").strip()
+        session_id = safe_meta.get("sessionId") or safe_meta.get("session_id")
+
+        if label and session_id:
+            memory_service = make_chat_session_memory_service()
+
+            ChatInteractivityPreferenceService.record_click(
+                repository=memory_service.repository,
+                session_id=session_id,
+                label=label,
+            )
+            db.session.commit()
 
     return jsonify(result), 200
 

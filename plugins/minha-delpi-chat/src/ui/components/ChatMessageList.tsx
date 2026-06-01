@@ -1311,6 +1311,7 @@ export function ChatMessageList({
                           query,
                           group: group ?? null,
                           messageId: message.id,
+                          sessionId: conversationKey ?? null,
                         },
                       });
                     }}

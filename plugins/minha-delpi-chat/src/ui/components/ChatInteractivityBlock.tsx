@@ -101,6 +101,11 @@ export function ChatInteractivityBlock({
       role="group"
       aria-label="Ações sugeridas após a resposta"
     >
+      {interactivity.contextBar?.summary ? (
+        <p className="mdc-chat-interactivity__context" title="Contexto ativo">
+          {interactivity.contextBar.summary}
+        </p>
+      ) : null}
       <p className="mdc-chat-follow-up__label">Próximos passos</p>
       <div className="mdc-chat-follow-up__chips">
         {primary.map((suggestion) => {

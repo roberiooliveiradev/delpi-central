@@ -1,3 +1,10 @@
+.mdc-chat-interactivity__context {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--mdc-color-text-secondary, #5f6368);
+}
+
 .mdc-chat-interactivity {
   display: grid;
   gap: var(--mdc-space-2);

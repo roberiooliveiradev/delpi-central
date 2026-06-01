@@ -1305,11 +1305,7 @@ export function ChatPage({
   function handleDrillDown(query: string) {
     void promptAndSendMessage(
       { content: query },
-      {
-        title: "Preencha para continuar",
-        description: "Informe o código ou o texto antes de enviar a pergunta.",
-        confirmLabel: "Enviar pergunta",
-      },
+      resolveStarterPromptOptions(query, {}),
     );
   }
 
@@ -2164,7 +2160,19 @@ export function ChatPage({
                 }}
                 onDrillDown={handleDrillDown}
                 onRecordHelpEvent={(payload) => {
-                  void recordAssistantHelpEvent(payload, { getAccessToken });
+                  void recordAssistantHelpEvent(
+                    {
+                      ...payload,
+                      metadata: {
+                        ...(payload.metadata ?? {}),
+                        sessionId:
+                          payload.metadata?.sessionId ??
+                          activeSession?.id ??
+                          null,
+                      },
+                    },
+                    { getAccessToken },
+                  );
                 }}
                 onMessageFeedback={setMessageFeedback}
                 onDownloadAttachment={async (attachmentId) => {

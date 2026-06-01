@@ -77,6 +77,18 @@ def test_interactivity_cases(case):
         assert interactivity.get("contextBar")
         assert interactivity["contextBar"].get("items")
 
+    if case.get("expect_resolved_query"):
+        queries = " ".join(
+            item.get("query", "")
+            for item in interactivity["suggestions"]
+            + sum((interactivity.get("moreSuggestions") or {}).values(), [])
+        )
+        assert case["expect_resolved_query"] in queries
+
+    if case.get("expect_primary_label"):
+        labels = [item["label"] for item in interactivity["suggestions"]]
+        assert labels[0] == case["expect_primary_label"]
+
 
 def test_presentation_table_chips():
     suggestions = ChatPresentationInteractivityService.build_from_tool_calls(

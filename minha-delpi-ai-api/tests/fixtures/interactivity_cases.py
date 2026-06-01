@@ -90,13 +90,48 @@ INTERACTIVITY_CASES: list[dict] = [
         "id": "I14",
         "metadata": {
             "contextChips": [
-                {"label": "Produto 10080001", "kind": "entity", "value": "10080001"},
+                {"label": "Produto 10080001", "kind": "product", "value": "10080001"},
             ],
-            "contextSnapshot": {"summary": "Produto 10080001"},
+            "contextSnapshot": {
+                "summary": "Produto 10080001",
+                "lastEntities": {"productCode": "10080001"},
+            },
             "followUpSuggestions": [
                 {"label": "Ver fornecedores", "query": "fornecedores"},
             ],
         },
         "expect_context_bar": True,
+    },
+    {
+        "id": "I15",
+        "metadata": {
+            "followUpSuggestions": [
+                {
+                    "label": "Ver estoque",
+                    "query": "Qual o estoque do produto {{productCode}}?",
+                },
+            ],
+            "contextSnapshot": {"lastEntities": {"productCode": "10080001"}},
+        },
+        "expect_resolved_query": "10080001",
+    },
+    {
+        "id": "I16",
+        "metadata": {
+            "followUpSuggestions": [
+                {"label": "Colocar na lousa", "query": "coloque na lousa"},
+                {"label": "Ver estoque", "query": "estoque"},
+            ],
+        },
+        "workspace_context": {
+            "capabilities": {"canvas": True},
+            "userActivatedAgent": True,
+            "workingMemory": {
+                "behaviorInstructions": {
+                    "interactivityUsage": '{"Colocar na lousa": 5}',
+                },
+            },
+        },
+        "expect_primary_label": "Colocar na lousa",
     },
 ]

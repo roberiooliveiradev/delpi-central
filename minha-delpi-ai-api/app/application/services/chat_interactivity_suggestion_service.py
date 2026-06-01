@@ -6,6 +6,12 @@ import hashlib
 from functools import lru_cache
 from typing import Any
 
+from app.application.services.chat_interactivity_preference_service import (
+    ChatInteractivityPreferenceService,
+)
+from app.application.services.chat_interactivity_query_resolver import (
+    ChatInteractivityQueryResolver,
+)
 from app.application.services.chat_presentation_interactivity_service import (
     ChatPresentationInteractivityService,
 )
@@ -33,9 +39,22 @@ class ChatInteractivitySuggestionService:
             metadata["presentationFollowUpSuggestions"] = presentation
 
         raw = cls._collect_raw(metadata)
-        enriched = [cls._enrich(item, workspace_context=workspace_context) for item in raw]
+        usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)
+        enriched = [
+            cls._enrich(
+                item,
+                metadata=metadata,
+                workspace_context=workspace_context,
+            )
+            for item in raw
+        ]
         deduped = cls._dedupe(enriched)
-        ranked = cls._rank(deduped, metadata=metadata, intent_route=intent_route)
+        ranked = cls._rank(
+            deduped,
+            metadata=metadata,
+            intent_route=intent_route,
+            usage=usage,
+        )
         primary, more = cls._partition(ranked)
 
         context_bar = cls._build_context_bar(metadata)
@@ -104,10 +123,15 @@ class ChatInteractivitySuggestionService:
         cls,
         item: dict[str, Any],
         *,
+        metadata: dict | None = None,
         workspace_context: dict | None,
     ) -> dict[str, Any]:
         label = str(item.get("label") or "").strip()
-        query = str(item.get("query") or "").strip()
+        query = ChatInteractivityQueryResolver.resolve(
+            str(item.get("query") or "").strip(),
+            metadata=metadata,
+            workspace_context=workspace_context,
+        )
         group = cls._resolve_group(label, str(item.get("group") or ""))
         kind = "primary" if label in (_content().get("primaryLabels") or []) else "secondary"
         suggestion_id = hashlib.sha1(f"{label}:{query}".encode()).hexdigest()[:12]
@@ -188,6 +212,7 @@ class ChatInteractivitySuggestionService:
         *,
         metadata: dict,
         intent_route: dict | None,
+        usage: dict[str, int] | None = None,
     ) -> list[dict[str, Any]]:
         intent = (
             str(intent_route.get("intent") or "").strip().lower()
@@ -214,7 +239,16 @@ class ChatInteractivitySuggestionService:
             if item.get("group") == "recuperar" and has_error:
                 intent_boost = -20
 
-            return (disabled_rank, priority + intent_boost + kind_rank, str(item.get("label")))
+            preference_boost = ChatInteractivityPreferenceService.rank_boost(
+                str(item.get("label") or ""),
+                usage,
+            )
+
+            return (
+                disabled_rank,
+                priority + intent_boost + kind_rank + preference_boost,
+                str(item.get("label")),
+            )
 
         return sorted(items, key=sort_key)
 

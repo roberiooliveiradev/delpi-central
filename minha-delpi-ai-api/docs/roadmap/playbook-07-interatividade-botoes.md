@@ -62,10 +62,10 @@ Menus por linha/ponto/nó: já em `ChatRichTable`, `ChatRichChart`, `ChatRichTre
 | Fase | Status |
 |------|--------|
 | 1 — Chips básicos | Concluída (consolidação + contrato expandido) |
-| 2 — Contexto e memória | Parcial (`contextBar` em metadata; `ChatContextBar` no MFE) |
+| 2 — Contexto e memória | Concluída (`contextBar` no bloco; `ChatInteractivityQueryResolver`; preferência por sessão em `interactivityUsage`) |
 | 3 — Menus contextuais | Concluída (tabela/gráfico/árvore/contexto) |
 | 4 — Ações avançadas | Parcial (apresentação, lousa, export nos menus) |
-| 5 — Métricas | Parcial (log + `interactivity_suggestion_clicked`; CTR admin pendente) |
+| 5 — Métricas | Parcial (log + clique persistido; CTR admin pendente) |
 
 ---
 
