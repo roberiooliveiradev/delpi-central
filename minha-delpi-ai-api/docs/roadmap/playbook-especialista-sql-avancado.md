@@ -1,9 +1,22 @@
 # Playbook — Especialista SQL Avançado do Minha DELPI Chat IA
 
-> **Status de implementação:** Fases 1–7 implementadas (base). Fase 6 completa via advisor de otimização; EXPLAIN automático depende de ferramenta dedicada na API.
+> **Status de implementação:** Fases 1–7 na camada **chat base** (inteligência). Execução/schema via API ficam no **agente** (actions).
 
 Projeto: Minha DELPI Chat IA
-Escopo: chat comum, skill SQL avançada, construção de consultas SQL complexas, validação de schema, execução segura, otimização, explicação, inferência e análise de resultados.
+Escopo: tornar o **chat comum** um especialista SQL de alto nível (elaborar, revisar, explicar, otimizar); o **agente** herda a skill e **executa** via actions (`POST /data/sql`, `/system/tables/*`).
+
+---
+
+## 1.1 Chat base vs agente (regra de arquitetura)
+
+| Camada | Papel SQL |
+|--------|-----------|
+| **Chat base** | Intenção, modos, dialeto, segurança, revisão, performance, padrões (CTE/window), workspace, policy, chips de orientação, métricas |
+| **Agente** | Actions permitidas: executar SQL, buscar schema, interpretar resultado real do banco |
+
+O chat base **não chama API diretamente**. Sem agente/actions, responde com SQL em ```sql```, explicações e perguntas de esclarecimento. Com agente, o pipeline **planeja** prefetch/execução; as tools rodam só se `actionsEnabled` + `allowedActionIds`.
+
+Serviços do playbook na base (`ChatAdvancedSqlSpecialistService`, advisors, métricas) orientam o LLM e o operador — **não substituem** actions do agente.
 
 ---
 

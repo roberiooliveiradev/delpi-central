@@ -18,6 +18,8 @@ O **chat** é onde a inteligência transversal evolui. **Agentes** são instânc
 
 Melhorias de inteligência (comparação, insights, fast path operacional, resposta direta, contexto de ferramentas no histórico) devem ser implementadas na **camada base** e **herdadas** automaticamente por agentes, projetos e demais consumidores.
 
+**SQL avançado:** o chat base elabora/revisa/explica (skill + advisors); **execução e metadados Protheus** (`POST /data/sql`, `/system/tables/*`) são responsabilidade do **agente** com actions habilitadas — a base não dispara essas chamadas sem `actionsEnabled`.
+
 ### Modos de resposta (rápida / normal / pensador)
 
 O composer envia `responseMode` (`fast` | `normal` | `thinker`) em cada mensagem. `ChatResponseModeService` resolve modelo e limites (`LlmGenerationConfig`); `llm_request_context` propaga o preset a **todas** as chamadas LLM do turno (tools, RAG synthesis, stream). Catálogo: `GET /chat/response-modes`. Configuração: variáveis `CHAT_RESPONSE_MODE_*` em `infra/.env`.
@@ -84,8 +86,8 @@ Mensagem do usuário
 | `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
 | `ChatSqlInventoryQueryService` | Template SB2010+SB1010 (estoque abaixo do mínimo) + `/data/sql` |
 | `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
-| `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo: prefetch `/system/tables/*` antes do LLM montar query; chips de follow-up (executar, colunas, schema) |
-| `ChatAdvancedSqlSpecialistService` | Copiloto SQL avançado: modos (criação, revisão, explicação, otimização, execução, schema, incremental); planner hints; supplement no tool context |
+| `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo; prefetch `/system/tables/*` **somente com agente/actions**; chips de follow-up |
+| `ChatAdvancedSqlSpecialistService` | Copiloto SQL avançado: modos, dialeto, workspace, supplement; prefetch gated por `actionsEnabled` |
 | `ChatSqlDialectResolverService` | Dialeto SQL (default `CHAT_DEFAULT_SQL_DIALECT`, detecção na mensagem) |
 | `ChatSqlPerformanceAdvisorService` | Alertas de performance (SELECT *, DISTINCT, paginação, funções em WHERE) |
 | `ChatSqlReviewService` | Checklist de revisão para SQL colada |

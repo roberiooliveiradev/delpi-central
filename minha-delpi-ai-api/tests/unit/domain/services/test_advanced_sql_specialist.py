@@ -160,6 +160,17 @@ def test_sql12_select_star_suggests_columns():
 def test_sql13_schema_prefetch_on_explore():
     assert ChatAdvancedSqlSpecialistService.should_prefetch_schema(
         message="quais colunas existem na tabela SB1",
+        workspace_context={
+            **_ctx(),
+            "actionsEnabled": True,
+            "allowedActionIds": ["system-columns"],
+        },
+    )
+
+
+def test_schema_prefetch_requires_agent_actions():
+    assert not ChatAdvancedSqlSpecialistService.should_prefetch_schema(
+        message="quais colunas existem na tabela SB1",
         workspace_context=_ctx(),
     )
 

@@ -51,6 +51,14 @@ class ChatSqlAuthoringGuidanceService:
         return True
 
     @classmethod
+    def agent_actions_available(cls, workspace_context: dict | None) -> bool:
+        """Prefetch/execução de schema SQL exige agente com actions — chat base não chama API."""
+        ctx = workspace_context or {}
+        allowed = ctx.get("allowedActionIds") or ctx.get("allowed_action_ids") or []
+
+        return bool(ctx.get("actionsEnabled")) and bool(allowed)
+
+    @classmethod
     def should_prefetch_schema(
         cls,
         *,
@@ -58,6 +66,9 @@ class ChatSqlAuthoringGuidanceService:
         workspace_context: dict | None = None,
         previous_messages: list[Any] | None = None,
     ) -> bool:
+        if not cls.agent_actions_available(workspace_context):
+            return False
+
         if not cls.is_custom_sql_authoring(message):
             return False
 

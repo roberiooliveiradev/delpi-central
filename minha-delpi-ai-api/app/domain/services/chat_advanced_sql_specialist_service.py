@@ -332,10 +332,17 @@ class ChatAdvancedSqlSpecialistService:
                 mode=mode,
             )
 
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
+        agent_actions = ChatSqlAuthoringGuidanceService.agent_actions_available(workspace_context)
+
         return {
             "mode": mode,
             "dialect": dialect,
             "workspace": workspace,
+            "agentActionsAvailable": agent_actions,
             "plannerHints": cls.build_planner_hints(message) + list(pattern_advice.get("hints") or []),
             "patternAdvice": pattern_advice,
             "performance": performance,
@@ -384,12 +391,15 @@ class ChatAdvancedSqlSpecialistService:
 
         resolved_mode = mode or cls.classify_mode(message, previous_messages=previous_messages)
 
-        if resolved_mode in {"schema_explore", "create", "incremental_edit", "review"}:
-            return True
-
         from app.domain.services.chat_sql_authoring_guidance_service import (
             ChatSqlAuthoringGuidanceService,
         )
+
+        if not ChatSqlAuthoringGuidanceService.agent_actions_available(workspace_context):
+            return False
+
+        if resolved_mode in {"schema_explore", "create", "incremental_edit", "review"}:
+            return True
 
         return ChatSqlAuthoringGuidanceService.should_prefetch_schema(
             message=str(message or ""),
@@ -449,12 +459,21 @@ class ChatAdvancedSqlSpecialistService:
             snapshot.get("patternAdvice") if isinstance(snapshot.get("patternAdvice"), dict) else None
         )
 
+        agent_actions = bool(snapshot.get("agentActionsAvailable"))
+
         lines = [
             "[Especialista SQL Avançado]",
             f"Modo: {mode}",
             f"Dialeto: {dialect.get('dialect')} ({'assumido' if dialect.get('assumed') else 'informado'})",
             f"Limite/paginação: {dialect.get('limitSyntax')}",
         ]
+
+        if not agent_actions:
+            lines.append(
+                "Chat base (sem agente/actions): elabore/revise/explique SQL em ```sql```; "
+                "não chame API. Oriente ativar agente com POST /data/sql e /system/tables/* "
+                "para executar ou validar schema."
+            )
 
         if workspace.get("currentSql"):
             lines.append("Query ativa na sessão — prefira editar incrementalmente.")

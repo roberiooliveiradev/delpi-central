@@ -218,6 +218,19 @@ class ChatInteractivitySuggestionService:
             ).get("actionsEnabled"):
                 return "Ative um agente com consultas operacionais para usar esta ação."
 
+        sql_action_labels = {
+            "Executar query",
+            "Ver colunas da tabela",
+            "Ver schema completo",
+            "Ver relações",
+            "Interpretar resultado",
+            "Gerar gráfico",
+            "Colocar na lousa",
+        }
+
+        if label in sql_action_labels and not (workspace_context or {}).get("actionsEnabled"):
+            return "Ative um agente com actions SQL/schema para consultar ou executar no banco."
+
         return None
 
     @classmethod

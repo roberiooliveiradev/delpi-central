@@ -22,7 +22,18 @@ def test_extract_domain_hint_from_authoring_message():
 def test_should_prefetch_when_domain_hint_present():
     assert ChatSqlAuthoringGuidanceService.should_prefetch_schema(
         message="crie uma query de vendas por filial sem rodar",
-        workspace_context={"skills": {"sqlAuthoring": True}},
+        workspace_context={
+            "skills": {"sqlAuthoring": True},
+            "actionsEnabled": True,
+            "allowedActionIds": ["system-search"],
+        },
+    )
+
+
+def test_should_not_prefetch_without_agent_actions():
+    assert not ChatSqlAuthoringGuidanceService.should_prefetch_schema(
+        message="crie uma query de vendas por filial",
+        workspace_context={"skills": {"sqlAuthoring": True}, "actionsEnabled": False},
     )
 
 
