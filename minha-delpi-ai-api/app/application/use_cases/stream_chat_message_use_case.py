@@ -1150,6 +1150,15 @@ class StreamChatMessageUseCase:
             assistant_metadata=assistant_metadata,
         )
 
+        from app.domain.services.chat_interactivity_admin_metrics_service import (
+            ChatInteractivityAdminMetricsService,
+        )
+
+        ChatInteractivityAdminMetricsService.enrich_audit_metadata(
+            stream_audit_metadata,
+            assistant_metadata=assistant_metadata,
+        )
+
         self.audit_repository.log(
             user_id=user_id,
             action="chat.message.streamed",

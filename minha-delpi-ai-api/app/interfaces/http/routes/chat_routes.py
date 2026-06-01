@@ -331,6 +331,13 @@ def record_assistant_help_event():
         return bad_request(str(exc))
 
     if event == "interactivity_suggestion_clicked":
+        from app.domain.services.chat_interactivity_admin_metrics_service import (
+            ChatInteractivityAdminMetricsService,
+        )
+        from app.infrastructure.persistence.postgres_audit_repository import (
+            PostgresAuditRepository,
+        )
+
         label = str(safe_meta.get("label") or "").strip()
         session_id = safe_meta.get("sessionId") or safe_meta.get("session_id")
 
@@ -342,7 +349,18 @@ def record_assistant_help_event():
                 session_id=session_id,
                 label=label,
             )
-            db.session.commit()
+
+        if label:
+            click_snapshot = ChatInteractivityAdminMetricsService.snapshot_from_click(safe_meta)
+
+            if click_snapshot:
+                PostgresAuditRepository().log(
+                    user_id=UUID(str(g.current_user.sub)),
+                    action="chat.interactivity.clicked",
+                    metadata=click_snapshot,
+                )
+
+        db.session.commit()
 
     return jsonify(result), 200
 

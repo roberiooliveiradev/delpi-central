@@ -54,6 +54,13 @@ def test_interactivity_cases(case):
     if case.get("expect_presentation"):
         assert metadata.get("presentationFollowUpSuggestions")
 
+    if case.get("expect_presentation_label"):
+        labels = [
+            item.get("label")
+            for item in metadata.get("presentationFollowUpSuggestions") or []
+        ]
+        assert case["expect_presentation_label"] in labels
+
     if case.get("expect_requires_confirmation"):
         all_items = list(interactivity["suggestions"]) + sum(
             (interactivity.get("moreSuggestions") or {}).values(),

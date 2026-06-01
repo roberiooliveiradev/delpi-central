@@ -111,6 +111,7 @@ Mensagem do usuário
 | `ChatInteractivityPreferenceService` | Ranking por uso (`interactivityUsage` na sessão) |
 | `ChatPresentationInteractivityService` | Chips pós-tabela/gráfico/árvore |
 | `ChatInteractivityTelemetryService` | Log de sugestões primárias e grupos no overflow |
+| `ChatInteractivityAdminMetricsService` | Auditoria `interactivityMetrics` + CTR (`GET /admin/metrics/interactivity/summary`) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |

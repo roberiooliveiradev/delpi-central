@@ -4,6 +4,27 @@ from __future__ import annotations
 
 INTERACTIVITY_CASES: list[dict] = [
     {
+        "id": "I2",
+        "metadata": {
+            "followUpSuggestions": [
+                {"label": "Ver fornecedores", "query": "fornecedores"},
+                {"label": "Gerar gráfico", "query": "gráfico de estoque"},
+            ],
+            "followUpOutcome": "stock",
+        },
+        "expect_in_suggestions": "Ver fornecedores",
+    },
+    {
+        "id": "I4",
+        "metadata": {
+            "emailFollowUpSuggestions": [
+                {"label": "Deixar mais formal", "query": "deixe o e-mail mais formal"},
+                {"label": "Tom mais executivo", "query": "tom mais executivo"},
+            ],
+        },
+        "expect_group": "formatar",
+    },
+    {
         "id": "I1",
         "metadata": {
             "followUpSuggestions": [
@@ -53,6 +74,42 @@ INTERACTIVITY_CASES: list[dict] = [
             ],
         },
         "expect_more": True,
+    },
+    {
+        "id": "I7",
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "presentation": {"type": "table", "title": "Produtos"},
+                },
+            }
+        ],
+        "expect_presentation_label": "Exportar CSV",
+    },
+    {
+        "id": "I8",
+        "tool_calls": [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "presentation": {"type": "chart", "title": "Vendas"},
+                },
+            }
+        ],
+        "expect_presentation_label": "Ver como tabela",
+    },
+    {
+        "id": "I9",
+        "metadata": {
+            "canvasFollowUpSuggestions": [
+                {"label": "Corrigir", "query": "corrija o texto da lousa"},
+                {"label": "Resumir", "query": "resuma a lousa"},
+            ],
+        },
+        "expect_in_suggestions": "Corrigir",
     },
     {
         "id": "I6",

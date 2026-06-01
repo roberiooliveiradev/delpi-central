@@ -365,6 +365,77 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_interactivity_summary(self, *, hours: int = 168) -> dict:
+        from app.domain.services.chat_interactivity_admin_metrics_service import (
+            ChatInteractivityAdminMetricsService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        impression_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        click_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.interactivity.clicked",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        impression_entries: list[dict] = []
+
+        for model in impression_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("interactivityMetrics")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            impression_entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        click_entries: list[dict] = []
+
+        for model in click_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = ChatInteractivityAdminMetricsService.snapshot_from_click(metadata)
+
+            if not snapshot:
+                continue
+
+            click_entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        return ChatInteractivityAdminMetricsService.aggregate(
+            impression_entries=impression_entries,
+            click_entries=click_entries,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_security_summary(self, *, hours: int = 24) -> dict:
         since = datetime.now(timezone.utc) - timedelta(hours=max(1, min(hours, 168)))
 

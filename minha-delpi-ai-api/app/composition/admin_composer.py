@@ -23,6 +23,9 @@ from app.application.use_cases.get_admin_drawing_analysis_summary_use_case impor
 from app.application.use_cases.get_admin_intent_routing_summary_use_case import (
     GetAdminIntentRoutingSummaryUseCase,
 )
+from app.application.use_cases.get_admin_interactivity_summary_use_case import (
+    GetAdminInteractivitySummaryUseCase,
+)
 from app.application.use_cases.get_admin_text_task_summary_use_case import (
     GetAdminTextTaskSummaryUseCase,
 )
@@ -193,6 +196,10 @@ def make_get_admin_drawing_analysis_summary_use_case() -> GetAdminDrawingAnalysi
 
 def make_get_admin_intent_routing_summary_use_case() -> GetAdminIntentRoutingSummaryUseCase:
     return GetAdminIntentRoutingSummaryUseCase(PostgresAuditRepository())
+
+
+def make_get_admin_interactivity_summary_use_case() -> GetAdminInteractivitySummaryUseCase:
+    return GetAdminInteractivitySummaryUseCase(PostgresAuditRepository())
 
 
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:

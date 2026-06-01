@@ -391,6 +391,30 @@ export type AdminTextTaskSummary = {
   recent: AdminTextTaskRecentItem[];
 };
 
+export type AdminInteractivityLabelCount = {
+  label: string;
+  count: number;
+};
+
+export type AdminInteractivitySummary = {
+  windowHours: number;
+  since: string;
+  responsesWithChips: number;
+  clicksCount: number;
+  suggestionsShownTotal: number;
+  moreOptionsResponses: number;
+  clickThroughRate: number;
+  byIntent: Record<string, number>;
+  byLabelShown: Record<string, number>;
+  byLabelClicked: Record<string, number>;
+  byGroupClicked: Record<string, number>;
+  ctrByLabel: Record<string, number>;
+  topShown: AdminInteractivityLabelCount[];
+  topClicked: AdminInteractivityLabelCount[];
+  recentImpressions: Record<string, unknown>[];
+  recentClicks: Record<string, unknown>[];
+};
+
 export type AdminDrawingAnalysisSummary = {
   windowHours: number;
   since: string;
