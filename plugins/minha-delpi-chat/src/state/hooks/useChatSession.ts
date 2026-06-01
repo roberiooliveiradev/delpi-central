@@ -125,6 +125,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [isLoadingArchivedSessions, setIsLoadingArchivedSessions] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [pendingSessionIds, setPendingSessionIds] = useState<Set<string>>(() => new Set());
+  const [cancellingSessionIds, setCancellingSessionIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
   const [branchSwitchingMessageId, setBranchSwitchingMessageId] = useState<string | null>(
     null,
@@ -181,6 +182,30 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     });
   }, []);
 
+  const markSessionCancelling = useCallback((sessionId: string) => {
+    setCancellingSessionIds((current) => {
+      if (current.has(sessionId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(sessionId);
+      return next;
+    });
+  }, []);
+
+  const unmarkSessionCancelling = useCallback((sessionId: string) => {
+    setCancellingSessionIds((current) => {
+      if (!current.has(sessionId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.delete(sessionId);
+      return next;
+    });
+  }, []);
+
   const isSessionPending = useCallback(
     (sessionId: string) => pendingSessionIds.has(sessionId),
     [pendingSessionIds],
@@ -188,8 +213,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
   const isSessionProcessing = useCallback(
     (sessionId: string) =>
-      pendingSessionIds.has(sessionId) || isSessionStreaming(sessionId),
-    [pendingSessionIds, isSessionStreaming],
+      pendingSessionIds.has(sessionId) ||
+      isSessionStreaming(sessionId) ||
+      cancellingSessionIds.has(sessionId),
+    [cancellingSessionIds, pendingSessionIds, isSessionStreaming],
   );
 
   const isActiveSessionBusy = useCallback(() => {
@@ -320,13 +347,26 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           loadOptions?.userDismissedBackground ||
           userDismissedBackgroundStreamRef.current.has(sessionId);
 
-        const serverStillAwaiting = sessionAwaitingAssistantResponse(data);
-
         if (userDismissed) {
           data = sanitizeMessagesAfterStreamDismiss(data);
 
-          if (!serverStillAwaiting) {
+          if (!sessionAwaitingAssistantResponse(data)) {
             userDismissedBackgroundStreamRef.current.delete(sessionId);
+          }
+        } else {
+          const serverStillAwaiting = sessionAwaitingAssistantResponse(data);
+
+          if (serverStillAwaiting) {
+            markSessionPending(sessionId);
+            restoreStreamUiForSession(sessionId);
+          } else {
+            unmarkSessionPending(sessionId);
+
+            if (activeSessionIdRef.current === sessionId) {
+              setStreamingStatus((current) =>
+                current === "Finalizando resposta em segundo plano..." ? null : current,
+              );
+            }
           }
         }
 
@@ -345,17 +385,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
         if (keepDismissedUi) {
           unmarkSessionPending(sessionId);
-
-          if (activeSessionIdRef.current === sessionId) {
-            setStreamingStatus((current) =>
-              current === "Finalizando resposta em segundo plano..." ? null : current,
-            );
-          }
-        } else if (sessionAwaitingAssistantResponse(data)) {
-          markSessionPending(sessionId);
-          restoreStreamUiForSession(sessionId);
-        } else {
-          unmarkSessionPending(sessionId);
+          unmarkSessionCancelling(sessionId);
 
           if (activeSessionIdRef.current === sessionId) {
             setStreamingStatus((current) =>
@@ -375,7 +405,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
       }
     },
-    [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionPending],
+    [markSessionPending, options.getAccessToken, restoreStreamUiForSession, unmarkSessionCancelling, unmarkSessionPending],
   );
 
   const finalizeAssistantTurn = useCallback(
@@ -769,8 +799,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
     if (sessionId) {
       userDismissedBackgroundStreamRef.current.add(sessionId);
+      markSessionCancelling(sessionId);
       cancelSessionStreaming(sessionId);
-      unmarkSessionPending(sessionId);
       finishSending(sessionId);
       clearSessionStreamUi(sessionId);
 
@@ -780,7 +810,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         ),
       );
 
-      void loadMessages(sessionId, { userDismissedBackground: true });
+      void loadMessages(sessionId, { userDismissedBackground: true }).finally(() => {
+        unmarkSessionCancelling(sessionId);
+      });
     }
 
     setPendingUserMessage(null);
@@ -800,8 +832,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     finishSending,
     lastSentUserText,
     loadMessages,
+    markSessionCancelling,
     resetStreamingUi,
-    unmarkSessionPending,
+    unmarkSessionCancelling,
   ]);
 
   const buildStreamCallbacks = useCallback(
@@ -811,9 +844,15 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       streamOptions?: { refreshOnUserPersisted?: boolean },
     ) => {
       const sessionId = sessionForMessage.id;
+      const shouldIgnoreStreamEvent = () =>
+        userDismissedBackgroundStreamRef.current.has(sessionId);
 
       return {
         onUserPersisted: (messageId: string) => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
           if (!isStreamForActiveSession(sessionId) || !optimisticUserMessageId) {
             if (streamOptions?.refreshOnUserPersisted && isStreamForActiveSession(sessionId)) {
               void loadMessages(sessionId);
@@ -853,7 +892,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           }
         },
         onStatus: (statusMessage: string) => {
-          if (!statusMessage.trim()) {
+          if (shouldIgnoreStreamEvent() || !statusMessage.trim()) {
             return;
           }
 
@@ -868,6 +907,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus(snapshot.status);
         },
         onActivity: (entry: ChatStreamActivityEntry) => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
           const cached = getSessionStreamUi(sessionId);
           const activityLog = upsertStreamingActivityEntry(cached.activityLog, entry);
           const status = resolveActivityStatusMessage(entry, cached.status);
@@ -889,6 +932,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           });
         },
         onSources: (sources: ChatSource[]) => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
           const status =
             sources.length > 0
               ? "Consultando a base de conhecimento..."
@@ -903,6 +950,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus(snapshot.status);
         },
         onToolCalls: (toolCalls: ChatToolCall[]) => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
           const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
           const status = hasRichPresentation
             ? "Finalizando apresentação..."
@@ -921,6 +972,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus(snapshot.status);
         },
         onAssistantPending: () => {
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
+
           const snapshot = patchSessionStreamUi(sessionId, {
             status: "Gerando resposta em linguagem natural...",
           });
@@ -932,7 +987,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setStreamingStatus(snapshot.status);
         },
         onPlayback: (payload) => {
-          if (!isStreamForActiveSession(sessionId)) {
+          if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
             return;
           }
 
@@ -954,7 +1009,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setPlaybackPayload(enriched);
         },
         onCanvasOpen: (payload) => {
-          if (!isStreamForActiveSession(sessionId)) {
+          if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
             return;
           }
 
@@ -962,7 +1017,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           options.onOpenCanvas?.(payload);
         },
         onToken: (token: string) => {
-          if (!isStreamForActiveSession(sessionId)) {
+          if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
             return;
           }
 
@@ -975,6 +1030,10 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         },
         onDone: async (response) => {
           finishSending(sessionId);
+
+          if (shouldIgnoreStreamEvent()) {
+            return;
+          }
 
           try {
             await loadSessions();
@@ -1101,7 +1160,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         onError: (streamError: string) => {
           finishSending(sessionId);
 
-          if (!isStreamForActiveSession(sessionId)) {
+          if (shouldIgnoreStreamEvent() || !isStreamForActiveSession(sessionId)) {
             return;
           }
 
@@ -1325,8 +1384,16 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
+        if (
+          sessionForMessage?.id &&
+          userDismissedBackgroundStreamRef.current.has(sessionForMessage.id)
+        ) {
+          return;
+        }
+
         if (sessionForMessage) {
           userDismissedBackgroundStreamRef.current.add(sessionForMessage.id);
+          markSessionCancelling(sessionForMessage.id);
           finishSending(sessionForMessage.id);
           clearSessionStreamUi(sessionForMessage.id);
 
@@ -1336,7 +1403,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             ),
           );
 
-          void loadMessages(sessionForMessage.id, { userDismissedBackground: true });
+          void loadMessages(sessionForMessage.id, { userDismissedBackground: true }).finally(
+            () => {
+              unmarkSessionCancelling(sessionForMessage.id);
+            },
+          );
         }
 
         setPendingUserMessage(null);
@@ -1366,6 +1437,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     lastSentUserText,
     loadMessages,
     loadSessions,
+    markSessionCancelling,
     markSessionPending,
     options.agentId,
     options.getAccessToken,
@@ -1373,6 +1445,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     resetStreamingUi,
     streamMessage,
     buildStreamCallbacks,
+    unmarkSessionCancelling,
   ]);
 
   const editAndResendMessage = useCallback(
@@ -1591,6 +1664,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       Boolean(activeSession) &&
       (isSessionStreaming(activeSession.id) ||
         isSessionPending(activeSession.id) ||
+        cancellingSessionIds.has(activeSession.id) ||
         playbackPayload) &&
       list.length > 0 &&
       isAssistantGenerating(list[list.length - 1]);
@@ -1608,11 +1682,12 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     }
 
     return [...list, pendingUserMessage];
-  }, [activeSession, isSessionPending, isSessionStreaming, messages, pendingUserMessage, playbackPayload]);
+  }, [activeSession, cancellingSessionIds, isSessionPending, isSessionStreaming, messages, pendingUserMessage, playbackPayload]);
 
   const isComposerBusy = isActiveSessionBusy();
   const isStreamingActiveSession =
     Boolean(activeSession) &&
+    !cancellingSessionIds.has(activeSession.id) &&
     (isSessionStreaming(activeSession.id) ||
       isSessionPending(activeSession.id) ||
       isPlaybackActive);

@@ -466,7 +466,7 @@ async function consumeChatMessageStream(
   }
   } catch (error) {
     if (isAbortError(error, signal)) {
-      return;
+      throw new DOMException("The operation was aborted.", "AbortError");
     }
 
     throw error;
@@ -506,7 +506,7 @@ async function openChatMessageStream(
     });
   } catch (error) {
     if (isAbortError(error, options.signal)) {
-      return;
+      throw new DOMException("The operation was aborted.", "AbortError");
     }
 
     throw error;

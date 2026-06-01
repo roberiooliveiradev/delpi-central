@@ -1093,6 +1093,7 @@ export function ChatMessageList({
                   <time dateTime={message.created_at}>{messageTime}</time>
                 ) : null}
 
+                {!isAssistantGenerating(message) ? (
                 <div className="mdc-chat-message-actions">
                   <button
                     className={`mdc-chat-message-action${
@@ -1213,6 +1214,7 @@ export function ChatMessageList({
                     </button>
                   ) : null}
                 </div>
+                ) : null}
               </div>
             </div>
 

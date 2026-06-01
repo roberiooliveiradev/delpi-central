@@ -49,11 +49,7 @@ export function sanitizeMessagesAfterStreamDismiss(
   while (list.length > 0) {
     const last = list[list.length - 1];
 
-    if (
-      last.role === "assistant" &&
-      isAssistantGenerating(last) &&
-      !String(last.content ?? "").trim()
-    ) {
+    if (last.role === "assistant" && isAssistantGenerating(last)) {
       list = list.slice(0, -1);
       continue;
     }
