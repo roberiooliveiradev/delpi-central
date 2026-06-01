@@ -2,8 +2,8 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 
 export type UseAutoGrowTextareaOptions = {
   value: string;
-  /** Espaço reservado abaixo do campo até a borda da viewport (px). */
-  bottomInset?: number;
+  /** Margem reservada acima do campo ao calcular quanto ele pode crescer (px). */
+  topInset?: number;
   /** Fração da altura visível da viewport (ex.: 0.25 = 25%). */
   maxHeightViewportRatio?: number;
   /** Teto opcional de altura em px (além do ratio). */
@@ -76,7 +76,7 @@ function getViewportWidth(): number {
 
 export function useAutoGrowTextarea({
   value,
-  bottomInset = 16,
+  topInset = 24,
   maxHeightViewportRatio,
   maxHeightCapPx,
   autoWidth = false,
@@ -97,17 +97,15 @@ export function useAutoGrowTextarea({
     const minHeightPx = Number.parseFloat(computed.minHeight) || 0;
     const contentHeight = measureTextareaContentHeight(element);
     const viewportHeight = getViewportHeight();
-    const spaceBelow = Math.max(
-      minHeightPx,
-      viewportHeight - element.getBoundingClientRect().top - bottomInset,
-    );
+    const rect = element.getBoundingClientRect();
+    const growCap = Math.max(minHeightPx, rect.top - topInset);
 
     const ratioCap =
       maxHeightViewportRatio != null
         ? Math.floor(viewportHeight * maxHeightViewportRatio)
         : null;
 
-    const caps = [spaceBelow];
+    const caps = [growCap];
 
     if (ratioCap != null) {
       caps.push(ratioCap);
@@ -118,11 +116,12 @@ export function useAutoGrowTextarea({
     }
 
     const maxHeight = Math.min(...caps);
-    const nextHeight = Math.min(Math.max(contentHeight, minHeightPx), maxHeight);
+    const naturalHeight = Math.max(contentHeight, minHeightPx);
+    const nextHeight = Math.min(naturalHeight, maxHeight);
 
     element.style.height = `${nextHeight}px`;
     element.style.maxHeight = `${maxHeight}px`;
-    element.style.overflowY = contentHeight > maxHeight ? "auto" : "hidden";
+    element.style.overflowY = naturalHeight > maxHeight ? "auto" : "hidden";
 
     if (autoWidth) {
       const minWidthFromStyle = Number.parseFloat(computed.minWidth) || 0;
@@ -139,7 +138,7 @@ export function useAutoGrowTextarea({
     }
   }, [
     autoWidth,
-    bottomInset,
+    topInset,
     maxHeightCapPx,
     maxHeightViewportRatio,
     maxWidthCapPx,

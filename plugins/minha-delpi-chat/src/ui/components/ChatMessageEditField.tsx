@@ -2,18 +2,18 @@ import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
 function resolveEditFieldLayout() {
   if (typeof window === "undefined") {
-    return { bottomInset: 32, maxHeightViewportRatio: 0.32 };
+    return { topInset: 32, maxHeightViewportRatio: 0.32 };
   }
 
   if (window.matchMedia("(max-width: 480px)").matches) {
-    return { bottomInset: 112, maxHeightViewportRatio: 0.42 };
+    return { topInset: 112, maxHeightViewportRatio: 0.42 };
   }
 
   if (window.matchMedia("(max-width: 720px)").matches) {
-    return { bottomInset: 88, maxHeightViewportRatio: 0.38 };
+    return { topInset: 88, maxHeightViewportRatio: 0.38 };
   }
 
-  return { bottomInset: 40, maxHeightViewportRatio: 0.34 };
+  return { topInset: 40, maxHeightViewportRatio: 0.34 };
 }
 
 type ChatMessageEditFieldProps = {
@@ -34,7 +34,7 @@ export function ChatMessageEditField({
   const layout = resolveEditFieldLayout();
   const { ref, syncHeight } = useAutoGrowTextarea({
     value,
-    bottomInset: layout.bottomInset,
+    topInset: layout.topInset,
     maxHeightViewportRatio: layout.maxHeightViewportRatio,
   });
 

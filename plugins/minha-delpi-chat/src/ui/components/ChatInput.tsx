@@ -112,7 +112,7 @@ export function ChatInput({
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
   const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
     value,
-    bottomInset: variant === "dock" ? 88 : 56,
+    topInset: variant === "dock" ? 96 : 72,
     maxHeightViewportRatio: 0.25,
   });
 
