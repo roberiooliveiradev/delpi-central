@@ -71,6 +71,9 @@ class AuditRepositoryPort(ABC):
     def get_document_vision_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 
+    def get_sql_advanced_summary(self, *, hours: int = 168) -> dict:
+        raise NotImplementedError
+
     def get_intent_routing_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 

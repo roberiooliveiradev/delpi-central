@@ -90,6 +90,8 @@ Mensagem do usuário
 | `ChatSqlPerformanceAdvisorService` | Alertas de performance (SELECT *, DISTINCT, paginação, funções em WHERE) |
 | `ChatSqlReviewService` | Checklist de revisão para SQL colada |
 | `ChatSqlMemoryWorkspaceService` | Memória da query ativa na sessão (edição incremental) |
+| `ChatSqlResultAnalyzerService` | Interpretação pós-execução: contagem, vazio, insights, recuperação |
+| `ChatSqlVisualizationAdvisorService` | Recomendação de gráfico/tabela/KPI/lousa (Playbook §40) |
 | `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` em metadata e auditoria |
 | `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
 | `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |

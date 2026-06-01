@@ -22,6 +22,14 @@ class ChatAdvancedSqlMetricsService:
         features = performance.get("features") if isinstance(performance.get("features"), dict) else {}
         review = advanced.get("review") if isinstance(advanced.get("review"), dict) else {}
         workspace = advanced.get("workspace") if isinstance(advanced.get("workspace"), dict) else {}
+        result_analysis = (
+            advanced.get("resultAnalysis") if isinstance(advanced.get("resultAnalysis"), dict) else {}
+        )
+        visualization = (
+            advanced.get("visualizationAdvice")
+            if isinstance(advanced.get("visualizationAdvice"), dict)
+            else {}
+        )
 
         return {
             "mode": mode,
@@ -34,6 +42,9 @@ class ChatAdvancedSqlMetricsService:
             "reviewRiskLevel": review.get("riskLevel"),
             "hasActiveQuery": bool(workspace.get("hasActiveQuery")),
             "incrementalEditReady": bool(workspace.get("incrementalEditReady")),
+            "executedRowCount": result_analysis.get("rowCount"),
+            "emptyResult": bool(result_analysis.get("isEmpty")),
+            "recommendedChartType": visualization.get("chartType"),
         }
 
     @classmethod
@@ -63,6 +74,14 @@ class ChatAdvancedSqlMetricsService:
         review = advanced.get("review") if isinstance(advanced.get("review"), dict) else {}
         workspace = advanced.get("workspace") if isinstance(advanced.get("workspace"), dict) else {}
         dialect = advanced.get("dialect") if isinstance(advanced.get("dialect"), dict) else {}
+        result_analysis = (
+            advanced.get("resultAnalysis") if isinstance(advanced.get("resultAnalysis"), dict) else {}
+        )
+        visualization = (
+            advanced.get("visualizationAdvice")
+            if isinstance(advanced.get("visualizationAdvice"), dict)
+            else {}
+        )
 
         return {
             "mode": advanced.get("mode"),
@@ -76,6 +95,9 @@ class ChatAdvancedSqlMetricsService:
             "reviewRiskLevel": review.get("riskLevel"),
             "hasActiveQuery": bool(workspace.get("hasActiveQuery")),
             "incrementalEditReady": bool(workspace.get("incrementalEditReady")),
+            "executedRowCount": result_analysis.get("rowCount"),
+            "emptyResult": bool(result_analysis.get("isEmpty")),
+            "recommendedChartType": visualization.get("chartType"),
         }
 
     @classmethod
@@ -120,6 +142,9 @@ class ChatAdvancedSqlMetricsService:
         window_count = 0
         incremental = 0
         schema_prefetch = 0
+        empty_results = 0
+        executed_count = 0
+        by_chart: Counter[str] = Counter()
         recent: list[dict[str, Any]] = []
 
         for entry in entries:
@@ -145,6 +170,17 @@ class ChatAdvancedSqlMetricsService:
 
             if snapshot.get("schemaPrefetchRecommended"):
                 schema_prefetch += 1
+
+            if snapshot.get("emptyResult"):
+                empty_results += 1
+
+            if snapshot.get("executedRowCount") is not None:
+                executed_count += 1
+
+            chart = str(snapshot.get("recommendedChartType") or "").strip()
+
+            if chart:
+                by_chart[chart] += 1
 
         for entry in entries[:12]:
             snapshot = entry.get("snapshot")
@@ -173,7 +209,10 @@ class ChatAdvancedSqlMetricsService:
             "windowFunctionUsageCount": window_count,
             "incrementalEditCount": incremental,
             "schemaPrefetchCount": schema_prefetch,
+            "emptyResultCount": empty_results,
+            "executedWithRowCount": executed_count,
             "byMode": dict(by_mode),
             "byDialect": dict(by_dialect),
+            "byChartType": dict(by_chart),
             "recent": recent,
         }

@@ -35,6 +35,7 @@ from app.composition.admin_composer import (
     make_get_llm_provider_status_use_case,
     make_get_admin_drawing_analysis_summary_use_case,
     make_get_admin_document_vision_summary_use_case,
+    make_get_admin_sql_advanced_summary_use_case,
     make_get_admin_intent_routing_summary_use_case,
     make_get_admin_text_task_summary_use_case,
     make_get_admin_metrics_summary_use_case,
@@ -860,6 +861,30 @@ def admin_text_task_metrics_summary():
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_document_vision_metrics_summary():
     use_case = make_get_admin_document_vision_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours must be an integer",
+                        "path": "hours",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
+@admin_bp.get("/metrics/sql-advanced/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_sql_advanced_metrics_summary():
+    use_case = make_get_admin_sql_advanced_summary_use_case()
     hours_raw = request.args.get("hours", 168)
 
     try:

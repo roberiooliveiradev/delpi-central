@@ -303,6 +303,20 @@ class ChatAdvancedSqlSpecialistService:
             else None
         )
 
+        from app.domain.services.chat_sql_result_analyzer_service import (
+            ChatSqlResultAnalyzerService,
+        )
+        from app.domain.services.chat_sql_visualization_advisor_service import (
+            ChatSqlVisualizationAdvisorService,
+        )
+
+        result_analysis = ChatSqlResultAnalyzerService.analyze_tool_calls(tool_calls)
+        visualization = ChatSqlVisualizationAdvisorService.recommend(
+            message=message,
+            mode=mode,
+            result_analysis=result_analysis,
+        )
+
         return {
             "mode": mode,
             "dialect": dialect,
@@ -311,6 +325,8 @@ class ChatAdvancedSqlSpecialistService:
             "performance": performance,
             "review": review,
             "blocked": blocked,
+            "resultAnalysis": result_analysis,
+            "visualizationAdvice": visualization,
             "schemaPrefetchRecommended": cls.should_prefetch_schema(
                 message=message,
                 mode=mode,
@@ -401,6 +417,14 @@ class ChatAdvancedSqlSpecialistService:
         hints = snapshot.get("plannerHints") if isinstance(snapshot.get("plannerHints"), list) else []
         performance = snapshot.get("performance") if isinstance(snapshot.get("performance"), dict) else {}
         review = snapshot.get("review") if isinstance(snapshot.get("review"), dict) else None
+        result_analysis = (
+            snapshot.get("resultAnalysis") if isinstance(snapshot.get("resultAnalysis"), dict) else None
+        )
+        visualization = (
+            snapshot.get("visualizationAdvice")
+            if isinstance(snapshot.get("visualizationAdvice"), dict)
+            else None
+        )
 
         lines = [
             "[Especialista SQL Avançado]",
@@ -435,6 +459,21 @@ class ChatAdvancedSqlSpecialistService:
         if snapshot.get("blocked"):
             lines.append("BLOQUEIO: comando destrutivo detectado — recuse execução.")
 
+        if result_analysis:
+            lines.append(f"Registros retornados: {result_analysis.get('rowCount', 'n/d')}")
+
+            for insight in result_analysis.get("insights") or []:
+                lines.append(f"- {insight}")
+
+            if result_analysis.get("isEmpty"):
+                lines.append("Recuperação sugerida: ampliar período, revisar filtros ou validar schema.")
+
+        if visualization:
+            lines.append(
+                f"Visualização sugerida: {visualization.get('suggestedLabel')} "
+                f"({visualization.get('reason')})"
+            )
+
         lines.append(
             "Regras: somente SELECT; valide schema via /system/tables/*; "
             "explique assunções; sugira próximo passo."
@@ -463,7 +502,22 @@ class ChatAdvancedSqlSpecialistService:
         queries = content.get("sqlAdvancedQueries") or {}
         workspace = snapshot.get("workspace") if isinstance(snapshot.get("workspace"), dict) else {}
         table_name = (workspace.get("tableNames") or ["{{tableName}}"])[0]
+        result_analysis = (
+            snapshot.get("resultAnalysis") if isinstance(snapshot.get("resultAnalysis"), dict) else None
+        )
+        visualization = (
+            snapshot.get("visualizationAdvice")
+            if isinstance(snapshot.get("visualizationAdvice"), dict)
+            else None
+        )
         suggestions: list[dict[str, str]] = []
+
+        if isinstance(result_analysis, dict) and result_analysis.get("isEmpty"):
+            from app.domain.services.chat_sql_result_analyzer_service import (
+                ChatSqlResultAnalyzerService,
+            )
+
+            suggestions.extend(ChatSqlResultAnalyzerService.build_empty_recovery_follow_ups())
 
         for label in labels:
             if not isinstance(label, str) or not label.strip():
@@ -473,6 +527,13 @@ class ChatAdvancedSqlSpecialistService:
             query = template.replace("{{tableName}}", table_name)
 
             suggestions.append({"label": label, "query": query})
+
+        if visualization and isinstance(visualization.get("suggestedLabel"), str):
+            label = str(visualization["suggestedLabel"]).strip()
+            query = queries.get(label, f"gere um gráfico com os dados da última consulta")
+
+            if label and not any(item.get("label") == label for item in suggestions):
+                suggestions.insert(0, {"label": label, "query": query})
 
         return suggestions
 
