@@ -99,7 +99,8 @@ Mensagem do usuário
 | `ChatEmailFollowUpService` | Chips `emailFollowUpSuggestions` + `textTask` após rascunho de e-mail |
 | `ChatHelpErrorFollowUpService` | Chips de autoajuda após erro operacional (`helpErrorFollowUpSuggestions`, Fase 5) |
 | `ChatWebSearchSaveSourcesService` | Persiste fontes da última pesquisa web como `project_source` (chip «Salvar fontes») |
-| `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` (`POST /chat/assistant/help-events`) |
+| `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
+| `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
 | `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; `chartPresentation` com tipos ampliados |
 | `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |

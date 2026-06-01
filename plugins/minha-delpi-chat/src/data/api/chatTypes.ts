@@ -369,6 +369,13 @@ export type ChatMessageMetadata = {
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];
   helpFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  helpSelfHelp?: {
+    topic?: string;
+    resolved?: boolean;
+    source?: string;
+    agentId?: string | null;
+    agentName?: string | null;
+  };
   onboardingFollowUpSuggestions?: ChatFollowUpSuggestion[];
   milestoneCelebrations?: { id: string; label?: string; message: string }[];
   onboardingMilestonesAchieved?: string[];

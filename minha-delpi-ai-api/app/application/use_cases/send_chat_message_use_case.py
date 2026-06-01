@@ -522,6 +522,17 @@ class SendChatMessageUseCase:
             message=request.message,
         )
 
+        from app.application.services.chat_help_self_help_telemetry_service import (
+            ChatHelpSelfHelpTelemetryService,
+        )
+
+        ChatHelpSelfHelpTelemetryService.attach_to_assistant_metadata(
+            assistant_metadata,
+            message=request.message,
+            workspace_context=workspace_context,
+            had_direct_answer=bool(direct_answer),
+        )
+
         from app.application.services.chat_onboarding_follow_up_service import (
             ChatOnboardingFollowUpService,
         )

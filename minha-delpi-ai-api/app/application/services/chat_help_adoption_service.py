@@ -13,6 +13,9 @@ _ALLOWED_EVENTS = frozenset(
         "help_panel_search",
         "help_highlight_click",
         "help_quick_prompt",
+        "self_help_requested",
+        "self_help_feedback",
+        "self_help_suggestion_clicked",
     }
 )
 

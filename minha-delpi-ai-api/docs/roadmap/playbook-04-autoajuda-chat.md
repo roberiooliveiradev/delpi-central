@@ -777,7 +777,7 @@ Arquivos:
 | 2 — Catálogo único | Concluída |
 | 3 — Autoatualização / CI | Concluída (`check_help_pr_gate.py`, gerador) |
 | 4 — UI de ajuda (`?`) | Concluída |
-| 5 — Ajuda inteligente contextual | Parcial (chips, agente, permissões) |
+| 5 — Ajuda inteligente contextual | Concluída (telemetria, feedback «Isso ajudou?», clique em chips) |
 
 ---
 

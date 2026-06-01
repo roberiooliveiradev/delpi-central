@@ -35,6 +35,10 @@ import { ChatGuidedFlowBlock } from "./ChatGuidedFlowBlock";
 import { ChatMilestoneCelebration } from "./ChatMilestoneCelebration";
 import type { ChatGuidedFlow, ChatGuidedFlowCard } from "../../data/api/chatTypes";
 import { ChatMessageFeedbackPanel } from "./ChatMessageFeedbackPanel";
+import {
+  ChatHelpSelfHelpFeedback,
+  type HelpSelfHelpFeedbackPayload,
+} from "./ChatHelpSelfHelpFeedback";
 import { ChatMarkdown } from "./ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
@@ -109,6 +113,10 @@ type ChatMessageListProps = {
   branchSwitchingMessageId?: string | null;
   onContinueFromMessage?: (messageId: string) => Promise<void>;
   lastSentUserText?: string;
+  onRecordHelpEvent?: (payload: {
+    event: string;
+    metadata?: Record<string, unknown> | null;
+  }) => void;
 };
 
 function resolveUserMessageContent(
@@ -465,6 +473,7 @@ export function ChatMessageList({
   onContinueFromMessage,
   onOpenCanvas,
   lastSentUserText = "",
+  onRecordHelpEvent,
 }: ChatMessageListProps) {
   const [feedbackThanksByMessageId, setFeedbackThanksByMessageId] = useState<
     Record<string, string>
@@ -1302,10 +1311,49 @@ export function ChatMessageList({
                       | ChatFollowUpSuggestion[]
                       | undefined) ?? []
                   }
-                  onUseSuggestion={onDrillDown}
+                  onUseSuggestion={(query) => {
+                    const helpSuggestions =
+                      (message.metadata?.helpFollowUpSuggestions as
+                        | ChatFollowUpSuggestion[]
+                        | undefined) ?? [];
+                    const match = helpSuggestions.find((item) => item.query === query);
+                    const helpSelfHelp = message.metadata?.helpSelfHelp as
+                      | { topic?: string }
+                      | undefined;
+
+                    onRecordHelpEvent?.({
+                      event: "self_help_suggestion_clicked",
+                      metadata: {
+                        query,
+                        label: match?.label ?? null,
+                        topic: helpSelfHelp?.topic ?? null,
+                        messageId: message.id,
+                      },
+                    });
+                    onDrillDown?.(query);
+                  }}
                   groupLabel="Explorar"
                   ariaLabel="Sugestões para explorar o chat"
                 />
+                {message.metadata?.helpSelfHelp ? (
+                  <ChatHelpSelfHelpFeedback
+                    topic={
+                      (message.metadata.helpSelfHelp as { topic?: string } | undefined)?.topic ??
+                      null
+                    }
+                    onFeedback={(payload: HelpSelfHelpFeedbackPayload) => {
+                      onRecordHelpEvent?.({
+                        event: "self_help_feedback",
+                        metadata: {
+                          helpful: payload.helpful,
+                          reasonId: payload.reasonId ?? null,
+                          topic: payload.topic ?? null,
+                          messageId: message.id,
+                        },
+                      });
+                    }}
+                  />
+                ) : null}
                 <ChatFollowUpChips
                   suggestions={
                     (message.metadata?.routingDisambiguationSuggestions as

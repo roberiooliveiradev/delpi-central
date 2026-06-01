@@ -2130,6 +2130,9 @@ export function ChatPage({
                   void handleReuseMessage(content);
                 }}
                 onDrillDown={handleDrillDown}
+                onRecordHelpEvent={(payload) => {
+                  void recordAssistantHelpEvent(payload, { getAccessToken });
+                }}
                 onMessageFeedback={setMessageFeedback}
                 onDownloadAttachment={async (attachmentId) => {
                   await downloadChatAttachment(attachmentId, { getAccessToken });
