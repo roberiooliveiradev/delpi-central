@@ -8,6 +8,7 @@ from app.application.services.chat_canvas_ambiguity_service import (
     ChatCanvasAmbiguityService,
 )
 from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
+from app.domain.services.chat_canvas_transform_service import ChatCanvasTransformService
 
 
 @dataclass(frozen=True)
@@ -38,7 +39,10 @@ class ChatCanvasContentService:
         previous_messages: list[Any] | None,
         workspace_context: dict | None,
     ) -> ChatCanvasAction | None:
-        if not ChatCanvasIntentService.is_canvas_request(message):
+        if not (
+            ChatCanvasIntentService.is_canvas_request(message)
+            or ChatCanvasIntentService.is_canvas_transform_request(message)
+        ):
             return None
 
         if not cls._canvas_enabled(workspace_context):
@@ -49,6 +53,9 @@ class ChatCanvasContentService:
                 ),
                 open_payload=None,
             )
+
+        if ChatCanvasIntentService.is_canvas_transform_request(message):
+            return cls._resolve_transform(message, previous_messages)
 
         if ChatCanvasIntentService.is_canvas_operational_update_request(message):
             return None
@@ -121,6 +128,48 @@ class ChatCanvasContentService:
             open_payload=ChatCanvasOpenPayload(
                 title=base_title,
                 markdown=merged_markdown,
+                source_message_id=source_message_id,
+            ),
+        )
+
+    @classmethod
+    def _resolve_transform(
+        cls,
+        message: str,
+        previous_messages: list[Any] | None,
+    ) -> ChatCanvasAction:
+        kind = ChatCanvasTransformService.detect_kind(message)
+
+        if not kind:
+            return ChatCanvasAction(
+                answer="Não identifiquei o formato desejado para a lousa.",
+                open_payload=None,
+            )
+
+        base_markdown, base_title, source_message_id = cls._resolve_base_canvas_content(
+            previous_messages
+        )
+
+        if not base_markdown:
+            return ChatCanvasAction(
+                answer=(
+                    "Ainda não há conteúdo na lousa para transformar. "
+                    "Peça primeiro para colocar uma resposta ou texto na lousa."
+                ),
+                open_payload=None,
+            )
+
+        transformed, label = ChatCanvasTransformService.transform(base_markdown, kind)
+        title = f"{label} — {base_title}" if base_title else label
+
+        return ChatCanvasAction(
+            answer=(
+                f"Transformei a lousa em **{label}**. "
+                "Você pode editar, visualizar e salvar o conteúdo quando quiser."
+            ),
+            open_payload=ChatCanvasOpenPayload(
+                title=title[:120],
+                markdown=transformed,
                 source_message_id=source_message_id,
             ),
         )

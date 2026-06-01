@@ -415,6 +415,22 @@
     "Colocar na lousa": "coloque o relatório de análise do desenho {{productCode}} na lousa",
     "Reanalisar desenho": "reanalise o desenho técnico {{productCode}} com o PDF anexado"
   },
+  "canvasFollowUpChips": [
+    "Transformar em checklist",
+    "Transformar em relatório",
+    "Deixar mais formal",
+    "Acrescentar à lousa",
+    "Traduzir lousa",
+    "Colocar resumo na lousa"
+  ],
+  "canvasFollowUpQueries": {
+    "Transformar em checklist": "transforme o conteúdo da lousa em checklist",
+    "Transformar em relatório": "transforme o conteúdo da lousa em relatório",
+    "Deixar mais formal": "deixe mais formal o texto da lousa",
+    "Acrescentar à lousa": "acrescente a última resposta na lousa",
+    "Traduzir lousa": "traduza o conteúdo da lousa para inglês",
+    "Colocar resumo na lousa": "resuma a última resposta e coloque na lousa"
+  },
   "attachmentFollowUpQueries": {
     "Resumir": "resuma o conteúdo do arquivo anexado",
     "Corrigir": "corrija o texto do arquivo anexado",
@@ -462,19 +478,22 @@
       "Ver fornecedores",
       "Ver estrutura",
       "Ver vendas",
-      "Onde é usado?"
+      "Onde é usado?",
+      "Colocar na lousa"
     ],
     "stock": [
       "Ver fornecedores",
       "Ver compras",
       "Ver vendas recentes",
-      "Analisar risco"
+      "Analisar risco",
+      "Colocar na lousa"
     ],
     "sales": [
       "Gerar gráfico",
       "Agrupar por cliente",
       "Comparar período",
-      "Ver notas fiscais"
+      "Ver notas fiscais",
+      "Colocar na lousa"
     ],
     "empty": [
       "Tentar por descrição",
@@ -490,7 +509,8 @@
     "warning": [
       "Detalhar por filial",
       "Comparar período",
-      "Verificar código"
+      "Verificar código",
+      "Colocar na lousa"
     ],
     "generic": [
       "O que você pode fazer?",

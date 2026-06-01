@@ -11,9 +11,19 @@ from app.application.services.chat_canvas_content_service import (
     ChatCanvasContentService,
     ChatCanvasOpenPayload,
 )
+from app.application.services.chat_attachment_artifact_telemetry_service import (
+    ChatAttachmentArtifactTelemetryService,
+)
+from app.application.services.chat_attachment_source_citation_service import (
+    ChatAttachmentSourceCitationService,
+)
+from app.application.services.chat_canvas_follow_up_service import (
+    ChatCanvasFollowUpService,
+)
 from app.application.services.chat_canvas_session_metadata_service import (
     ChatCanvasSessionMetadataService,
 )
+from app.domain.services.chat_canvas_transform_service import ChatCanvasTransformService
 from tests.fixtures.attachments_canvas_cases import ATTACHMENTS_CANVAS_CASES
 
 
@@ -116,6 +126,122 @@ def test_canvas_session_metadata_versioning():
     assert metadata["canvas"]["version"] == 3
     assert metadata["canvas"]["active"] is True
     assert metadata["canvasVersion"]["operation"] == "open"
+
+
+def test_l3_attachment_summary_to_canvas_query():
+    case = _case("L3")
+    action = ChatCanvasContentService.resolve(
+        case["message"],
+        case["previous_messages"],
+        {"capabilities": {"canvas": True}},
+    )
+
+    assert action
+    assert action.open_payload is not None
+
+
+def test_l4_canvas_append_merges_sections():
+    case = _case("L4")
+    action = ChatCanvasContentService.resolve(
+        case["message"],
+        case["previous_messages"],
+        {"capabilities": {"canvas": True}},
+    )
+
+    assert action
+    assert action.open_payload is not None
+
+    for token in case["expect_substrings"]:
+        assert token in action.open_payload.markdown
+
+
+def test_l6_canvas_transform_checklist():
+    case = _case("L6")
+    action = ChatCanvasContentService.resolve(
+        case["message"],
+        case["previous_messages"],
+        {"capabilities": {"canvas": True}},
+    )
+
+    assert action
+    assert action.open_payload is not None
+
+    for token in case["expect_markdown_substrings"]:
+        assert token in action.open_payload.markdown
+
+
+def test_l9_canvas_version_increments():
+    case = _case("L9")
+    metadata: dict = {}
+    payload = ChatCanvasOpenPayload(
+        title="Doc",
+        markdown="# Doc",
+        source_message_id="m1",
+    )
+
+    ChatCanvasSessionMetadataService.attach_open(
+        metadata,
+        open_payload=payload,
+        operation="transform",
+        previous_messages=[{"role": "assistant", "metadata": {"canvas": {"version": 3}}}],
+    )
+
+    assert metadata["canvas"]["version"] == case["expect_version"]
+
+
+def test_l10_attachment_source_citation_metadata():
+    case = _case("L10")
+    metadata: dict = {}
+
+    ChatAttachmentSourceCitationService.attach_to_assistant_metadata(
+        metadata,
+        attachments=case["attachments"],
+        answer=case["answer"],
+    )
+
+    assert case["expect_citation"] is bool(metadata.get("attachmentSourceCitation"))
+
+
+def test_canvas_follow_up_when_lousa_active():
+    metadata: dict = {}
+
+    ChatCanvasFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        workspace_context={"capabilities": {"canvas": True}},
+        previous_messages=[
+            {
+                "role": "assistant",
+                "metadata": {
+                    "canvasOpen": {"title": "X", "markdown": "## X\n\nConteúdo."},
+                },
+            }
+        ],
+    )
+
+    labels = [item["label"] for item in metadata.get("canvasFollowUpSuggestions") or []]
+
+    assert "Transformar em checklist" in labels
+
+
+def test_canvas_transform_service_checklist():
+    markdown, label = ChatCanvasTransformService.transform(
+        "Revisar estoque\nEnviar e-mail",
+        ChatCanvasTransformService.KIND_CHECKLIST,
+    )
+
+    assert label == "Checklist"
+    assert "- [ ]" in markdown
+
+
+def test_attachment_artifact_telemetry_canvas():
+    metadata: dict = {"canvas": {"version": 2, "documentType": "report"}}
+
+    ChatAttachmentArtifactTelemetryService.attach_canvas_open(
+        metadata,
+        operation="transform",
+    )
+
+    assert metadata["canvasArtifact"]["operation"] == "transform"
 
 
 def test_canvas_ambiguity_service_detects_multiple_referents():

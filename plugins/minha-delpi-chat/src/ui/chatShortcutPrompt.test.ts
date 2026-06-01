@@ -10,6 +10,7 @@ import {
   resolveShortcutFields,
   resolveStarterPromptOptions,
   resolveStarterQueryForFeature,
+  starterRequiresShortcutModal,
   validateShortcutValues,
   SEARCH_QUERY_PLACEHOLDER,
   WEB_SEARCH_STARTER_QUERY,
@@ -67,6 +68,22 @@ describe("chatShortcutPrompt", () => {
     expect(
       resolveStarterQueryForFeature("consultar produto", { starterId: "product" }),
     ).toBe("consultar produto");
+  });
+
+  it("detecta quando o atalho da home exige modal", () => {
+    expect(
+      starterRequiresShortcutModal("qual o estoque do produto {{productCode}}?", {
+        starterId: "stock",
+      }),
+    ).toBe(true);
+    expect(
+      starterRequiresShortcutModal("mostre KPIs comerciais do mês passado", {
+        starterId: "kpi",
+      }),
+    ).toBe(false);
+    expect(starterRequiresShortcutModal("estoque do {product_code}", { starterId: "stock" })).toBe(
+      true,
+    );
   });
 
   it("escolhe diálogo por tipo de atalho", () => {

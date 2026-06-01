@@ -34,7 +34,9 @@ import {
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
   hasShortcutPlaceholders,
+  normalizeShortcutTemplate,
   resolveStarterPromptOptions,
+  starterRequiresShortcutModal,
   type StarterInvokeContext,
 } from "../chatShortcutPrompt";
 import {
@@ -175,6 +177,8 @@ export function ChatPage({
       title: payload.title || "Conteúdo do chat",
       markdown: payload.markdown,
       messageId: payload.sourceMessageId ?? payload.messageId ?? null,
+      version: payload.version ?? null,
+      documentType: payload.documentType ?? null,
     });
   }, []);
 
@@ -270,10 +274,7 @@ export function ChatPage({
     onOpenCanvas: openCanvasPanel,
     isShortcutPromptOpen: () => isShortcutPromptOpenRef.current(),
     onShortcutPromptRequired: (template) => {
-      if (
-        isShortcutPromptOpenRef.current() ||
-        shortcutPromptResolvingRef.current
-      ) {
+      if (isShortcutPromptOpenRef.current()) {
         return;
       }
 
@@ -369,6 +370,13 @@ export function ChatPage({
       }
 
       if (hasUnresolvedShortcutPlaceholders(resolved)) {
+        const recovered = await resolveShortcutQuery(raw, promptOptions);
+
+        if (!recovered || hasUnresolvedShortcutPlaceholders(recovered)) {
+          return;
+        }
+
+        await sendMessage({ ...params, content: recovered });
         return;
       }
 
@@ -1305,14 +1313,39 @@ export function ChatPage({
     );
   }
 
-  function handleHomeStarter(query: string, context: StarterInvokeContext = {}) {
-    if (shortcutPromptResolvingRef.current) {
+  async function handleHomeStarter(query: string, context: StarterInvokeContext = {}) {
+    if (shortcutPromptResolvingRef.current || isShortcutPromptOpen()) {
       return;
     }
 
-    const promptOptions = resolveStarterPromptOptions(query, context);
+    const normalized = normalizeShortcutTemplate(query.trim());
 
-    void promptAndSendMessage({ content: query }, promptOptions);
+    if (!normalized) {
+      return;
+    }
+
+    const promptOptions = resolveStarterPromptOptions(normalized, context);
+
+    if (!starterRequiresShortcutModal(normalized, context)) {
+      clearError();
+      await sendMessage({ content: normalized });
+      return;
+    }
+
+    shortcutPromptResolvingRef.current = true;
+
+    try {
+      const resolved = await resolveShortcutQuery(normalized, promptOptions);
+
+      if (!resolved || hasUnresolvedShortcutPlaceholders(resolved)) {
+        return;
+      }
+
+      clearError();
+      await sendMessage({ content: resolved });
+    } finally {
+      shortcutPromptResolvingRef.current = false;
+    }
   }
 
   async function handleHelpTryPrompt(query: string, context: StarterInvokeContext = {}) {
@@ -1351,7 +1384,7 @@ export function ChatPage({
   }
 
   function handleAgentIcebreaker(query: string) {
-    handleHomeStarter(query);
+    void handleHomeStarter(query);
   }
 
   async function handleEditAndResendMessage(messageId: string, content: string) {

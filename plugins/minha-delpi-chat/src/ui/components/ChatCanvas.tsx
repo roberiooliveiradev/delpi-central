@@ -1,4 +1,4 @@
-import { Check, Copy, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-react";
+import { Check, Copy, Download, Edit3, Eye, Maximize2, Minimize2, Save, X } from "lucide-react";
 import { useState } from "react";
 import { ChatMarkdown } from "./ChatMarkdown";
 
@@ -10,6 +10,8 @@ export type ChatCanvasDocument = {
   messageId?: string | null;
   title: string;
   markdown: string;
+  version?: number | null;
+  documentType?: string | null;
   isSaving?: boolean;
   isSaved?: boolean;
 };
@@ -31,6 +33,20 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
 
   async function copyCanvas() {
     await navigator.clipboard?.writeText(document.markdown);
+  }
+
+  function downloadCanvasMarkdown() {
+    const safeTitle = (document.title || "lousa")
+      .trim()
+      .replace(/[^\w\-]+/g, "_")
+      .slice(0, 80);
+    const blob = new Blob([document.markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = window.document.createElement("a");
+    link.href = url;
+    link.download = `${safeTitle || "lousa"}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   function updateDocument(next: ChatCanvasDocument) {
@@ -65,7 +81,13 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
       >
         <header className="mdc-chat-canvas__header">
           <div className="mdc-chat-canvas__title-area">
-            <p className="mdc-chat-eyebrow">Lousa</p>
+            <p className="mdc-chat-eyebrow">
+              Lousa
+              {typeof document.version === "number" && document.version > 0
+                ? ` · v${document.version}`
+                : null}
+              {document.documentType ? ` · ${document.documentType}` : null}
+            </p>
             <input
               value={document.title}
               onChange={(event) =>
@@ -126,6 +148,16 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
               aria-label="Copiar markdown"
             >
               <Copy size={16} aria-hidden="true" />
+            </button>
+
+            <button
+              type="button"
+              className="mdc-chat-canvas__action mdc-chat-canvas__action--icon"
+              onClick={downloadCanvasMarkdown}
+              title="Baixar markdown"
+              aria-label="Baixar markdown"
+            >
+              <Download size={16} aria-hidden="true" />
             </button>
 
             <button

@@ -68,7 +68,7 @@ import {
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "./ChatInlineCanvas";
 import { ChatMessageEditField } from "./ChatMessageEditField";
-import { getCanvasOpenFromMetadata } from "./chatCanvas";
+import { enrichCanvasOpenFromSessionMetadata, getCanvasOpenFromMetadata } from "./chatCanvas";
 import { filterVisibleChatSources } from "./chatSourcesFilter";
 
 import "./ChatMessageList.css";
@@ -1249,7 +1249,17 @@ export function ChatMessageList({
                 {messageCanvasOpen ? (
                   <ChatInlineCanvas
                     payload={messageCanvasOpen}
-                    onOpen={onOpenCanvas}
+                    onOpen={
+                      onOpenCanvas
+                        ? (payload) =>
+                            onOpenCanvas(
+                              enrichCanvasOpenFromSessionMetadata(
+                                payload,
+                                message.metadata,
+                              ),
+                            )
+                        : undefined
+                    }
                   />
                 ) : null}
               </>
@@ -1411,6 +1421,21 @@ export function ChatMessageList({
                   groupLabel="Com o anexo"
                   ariaLabel="Ações sugeridas para o arquivo anexado"
                 />
+                <ChatFollowUpChips
+                  suggestions={
+                    (message.metadata?.canvasFollowUpSuggestions as
+                      | ChatFollowUpSuggestion[]
+                      | undefined) ?? []
+                  }
+                  onUseSuggestion={onDrillDown}
+                  groupLabel="Na lousa"
+                  ariaLabel="Ações sugeridas para a lousa"
+                />
+                {message.metadata?.attachmentSourceCitation?.note ? (
+                  <p className="mdc-chat-source-citation">
+                    {String(message.metadata.attachmentSourceCitation.note)}
+                  </p>
+                ) : null}
                 {message.metadata?.drawingAnalysisExport?.markdown ? (
                   <div className="mdc-chat-drawing-export">
                     <button

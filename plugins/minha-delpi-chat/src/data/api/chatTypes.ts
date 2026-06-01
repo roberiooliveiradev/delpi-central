@@ -224,6 +224,8 @@ export type ChatCanvasOpenPayload = {
   markdown: string;
   messageId?: string | null;
   sourceMessageId?: string | null;
+  version?: number | null;
+  documentType?: string | null;
 };
 
 export type ChatMessageBranch = {
@@ -365,6 +367,18 @@ export type ChatMessageMetadata = {
   sources?: ChatSource[];
   toolCalls?: ChatToolCall[];
   canvasOpen?: ChatCanvasOpenPayload | null;
+  canvas?: {
+    active?: boolean;
+    title?: string;
+    documentType?: string;
+    version?: number;
+    lastOperation?: string;
+  } | null;
+  canvasFollowUpSuggestions?: ChatFollowUpSuggestion[];
+  attachmentSourceCitation?: {
+    filenames?: string[];
+    note?: string;
+  } | null;
   webSearchResearch?: ChatWebSearchResearch | null;
   followUpSuggestions?: ChatFollowUpSuggestion[];
   webSearchFollowUpSuggestions?: ChatFollowUpSuggestion[];

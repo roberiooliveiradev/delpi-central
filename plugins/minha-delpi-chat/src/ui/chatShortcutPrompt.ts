@@ -309,12 +309,41 @@ export function resolveStarterQueryForFeature(
   return trimmed || null;
 }
 
+const PRODUCT_STARTER_IDS = new Set([
+  "product",
+  "stock",
+  "supplier",
+  "structure",
+  "sales",
+  "purchases",
+]);
+
+/** Indica se o clique no card da home deve abrir o diálogo de preenchimento. */
+export function starterRequiresShortcutModal(
+  query: string,
+  context: StarterInvokeContext = {},
+): boolean {
+  const normalized = normalizeShortcutTemplate(query.trim());
+
+  if (!normalized) {
+    return false;
+  }
+
+  if (context.featureId === "web_search" || isWebSearchStarterQuery(normalized)) {
+    return true;
+  }
+
+  return hasShortcutPlaceholders(normalized);
+}
+
 /** Diálogo adequado ao tipo de atalho (produto, web, textos administrativos). */
 export function resolveStarterPromptOptions(
   query: string,
   context: StarterInvokeContext = {},
 ): (typeof CHAT_SHORTCUT_PROMPT_COPY)[keyof typeof CHAT_SHORTCUT_PROMPT_COPY] {
-  if (context.featureId === "web_search" || isWebSearchStarterQuery(query)) {
+  const normalized = normalizeShortcutTemplate(query.trim());
+
+  if (context.featureId === "web_search" || isWebSearchStarterQuery(normalized)) {
     return CHAT_SHORTCUT_PROMPT_COPY.webSearch;
   }
 
@@ -332,11 +361,11 @@ export function resolveStarterPromptOptions(
     return CHAT_SHORTCUT_PROMPT_COPY.textMinutes;
   }
 
-  if (hasShortcutPlaceholders(query)) {
-    if (query.includes("{{productCode}}")) {
-      return CHAT_SHORTCUT_PROMPT_COPY.product;
-    }
+  if (PRODUCT_STARTER_IDS.has(starterId) || normalized.includes("{{productCode}}")) {
+    return CHAT_SHORTCUT_PROMPT_COPY.product;
+  }
 
+  if (hasShortcutPlaceholders(normalized)) {
     return CHAT_SHORTCUT_PROMPT_COPY.generic;
   }
 

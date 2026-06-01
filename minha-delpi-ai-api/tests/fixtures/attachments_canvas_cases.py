@@ -48,6 +48,71 @@ ATTACHMENTS_CANVAS_CASES: list[dict] = [
         "expect_substrings": ("não consegui ler", "reenviar"),
     },
     {
+        "id": "L3",
+        "kind": "attachment_to_canvas",
+        "message": "resuma o arquivo anexado e coloque o resultado na lousa",
+        "previous_messages": [
+            {
+                "role": "assistant",
+                "content": "Resumo do PDF: vendas Q1 estáveis.",
+                "metadata": {
+                    "attachmentSummaries": [{"filename": "relatorio.pdf", "parsed": True}],
+                },
+            }
+        ],
+        "expect_open": True,
+    },
+    {
+        "id": "L4",
+        "kind": "canvas_append",
+        "message": "acrescente isso na lousa",
+        "previous_messages": [
+            {
+                "role": "assistant",
+                "content": "## Base\n\nTexto base.",
+                "metadata": {
+                    "canvasOpen": {
+                        "title": "Base",
+                        "markdown": "## Base\n\nTexto base.",
+                    }
+                },
+            },
+            {"role": "assistant", "content": "## Novo\n\nSegunda parte."},
+        ],
+        "expect_open": True,
+        "expect_substrings": ("Texto base", "Segunda parte"),
+    },
+    {
+        "id": "L6",
+        "kind": "canvas_transform",
+        "message": "transforme o conteúdo da lousa em checklist",
+        "previous_messages": [
+            {
+                "role": "assistant",
+                "metadata": {
+                    "canvasOpen": {
+                        "title": "Pendências",
+                        "markdown": "Revisar estoque\nEnviar e-mail",
+                    }
+                },
+            }
+        ],
+        "expect_open": True,
+        "expect_markdown_substrings": ("- [ ]",),
+    },
+    {
+        "id": "L9",
+        "kind": "canvas_version",
+        "expect_version": 4,
+    },
+    {
+        "id": "L10",
+        "kind": "source_citation",
+        "attachments": [{"original_filename": "contrato.pdf", "status": "indexed"}],
+        "answer": "O prazo de entrega é de 30 dias.",
+        "expect_citation": True,
+    },
+    {
         "id": "L12",
         "kind": "canvas_ambiguity",
         "message": "coloque isso na lousa",

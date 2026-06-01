@@ -862,7 +862,9 @@ class StreamChatMessageUseCase:
 
             operation = "open"
 
-            if ChatCanvasIntentService.is_canvas_update_request(request.message):
+            if ChatCanvasIntentService.is_canvas_transform_request(request.message):
+                operation = "transform"
+            elif ChatCanvasIntentService.is_canvas_update_request(request.message):
                 operation = "append"
 
             normalized_canvas = ChatMessageNormalizationService.normalize_for_matching(
@@ -877,6 +879,15 @@ class StreamChatMessageUseCase:
                 open_payload=canvas_open_payload,
                 operation=operation,
                 previous_messages=context_box.get("history_source") or previous_messages,
+            )
+
+            from app.application.services.chat_attachment_artifact_telemetry_service import (
+                ChatAttachmentArtifactTelemetryService,
+            )
+
+            ChatAttachmentArtifactTelemetryService.attach_canvas_open(
+                assistant_metadata,
+                operation=operation,
             )
 
         from app.application.services.chat_onboarding_milestone_service import (
@@ -927,6 +938,35 @@ class StreamChatMessageUseCase:
             assistant_metadata,
             had_attachments=bool(getattr(request, "attachment_ids", None)),
             attachments=attachments,
+        )
+
+        from app.application.services.chat_attachment_artifact_telemetry_service import (
+            ChatAttachmentArtifactTelemetryService,
+        )
+        from app.application.services.chat_attachment_source_citation_service import (
+            ChatAttachmentSourceCitationService,
+        )
+        from app.application.services.chat_canvas_follow_up_service import (
+            ChatCanvasFollowUpService,
+        )
+
+        if bool(getattr(request, "attachment_ids", None)):
+            ChatAttachmentArtifactTelemetryService.attach_attachment_welcome(
+                assistant_metadata,
+                attachments=attachments,
+            )
+
+        ChatAttachmentSourceCitationService.attach_to_assistant_metadata(
+            assistant_metadata,
+            attachments=attachments,
+            answer=answer,
+        )
+
+        ChatCanvasFollowUpService.attach_to_assistant_metadata(
+            assistant_metadata,
+            workspace_context=workspace_context,
+            previous_messages=context_box.get("history_source") or previous_messages,
+            opened_canvas_this_turn=bool(canvas_open_payload),
         )
 
         from app.application.services.chat_drawing_follow_up_service import (

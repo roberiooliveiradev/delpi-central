@@ -16,6 +16,11 @@ _ALLOWED_EVENTS = frozenset(
         "self_help_requested",
         "self_help_feedback",
         "self_help_suggestion_clicked",
+        "attachment_welcome",
+        "canvas_opened",
+        "canvas_transform",
+        "attachment_follow_up_click",
+        "canvas_follow_up_click",
     }
 )
 

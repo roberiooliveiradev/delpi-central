@@ -3,7 +3,7 @@
 Projeto: Minha DELPI Chat IA  
 Escopo: arquivos anexados, lousa/canvas, transformação de respostas em documentos.
 
-> **Implementação (jun/2026):** `ChatAttachmentWelcomeService`, `ChatAttachmentFollowUpService`, `ChatAttachmentPreviewService`, `ChatCanvasContentService`, `ChatCanvasAmbiguityService`, `ChatCanvasSessionMetadataService`, `ChatAttachmentLargeFileService`. Legado: [melhorias/playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./melhorias/playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md).
+> **Implementação (jun/2026):** `ChatAttachmentWelcomeService`, `ChatAttachmentFollowUpService`, `ChatAttachmentPreviewService`, `ChatCanvasContentService`, `ChatCanvasAmbiguityService`, `ChatCanvasSessionMetadataService`, `ChatAttachmentLargeFileService`, `ChatCanvasTransformService`, `ChatCanvasFollowUpService`, `ChatAttachmentArtifactTelemetryService`, `ChatAttachmentSourceCitationService`. Legado: [melhorias/playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./melhorias/playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md).
 
 ---
 
@@ -48,8 +48,13 @@ Escopo: arquivos anexados, lousa/canvas, transformação de respostas em documen
 | L7 | arquivo grande | aviso + chips de seção |
 | L11 | index_failed | pede reenvio |
 | L12 | isso + múltiplas fontes | pergunta de desambiguação |
+| L3 | resumo + lousa | abre com última resposta |
+| L4 | acrescente na lousa | merge com canvas existente |
+| L6 | transforme em checklist | markdown com `- [ ]` |
+| L9 | nova abertura | `canvas.version` incrementa |
+| L10 | resposta com anexo | `attachmentSourceCitation` |
 
-Arquivos: `tests/fixtures/attachments_canvas_cases.py`, `tests/unit/application/services/test_attachments_canvas.py`, `scripts/smoke_attachment_index_welcome.py`.
+Arquivos: `tests/fixtures/attachments_canvas_cases.py`, `tests/unit/application/services/test_attachments_canvas.py`, `scripts/smoke_attachments_canvas.py`, `scripts/smoke_attachment_index_welcome.py`.
 
 ---
 
@@ -60,8 +65,8 @@ Arquivos: `tests/fixtures/attachments_canvas_cases.py`, `tests/unit/application/
 | 1 — Upload com ações | Concluída |
 | 2 — Processamento por tipo | Concluída (indexação + OCR/visão) |
 | 3 — Lousa básica | Concluída |
-| 4 — Lousa avançada | Parcial (versão em metadata; export no front) |
-| 5 — Integração completa | Parcial (chips cruzados; fluxos anexo→lousa) |
+| 4 — Lousa avançada | Concluída (transformações, chips na lousa, export `.md`, versão no painel) |
+| 5 — Integração completa | Concluída (chips operacionais «Colocar na lousa», telemetria `attachmentArtifact`/`canvasArtifact`, citação de fonte) |
 
 ---
 

@@ -122,6 +122,26 @@ class ChatCanvasIntentService:
         "conta canva",
     )
 
+    _TRANSFORM_VERBS = (
+        "transforme",
+        "transformar",
+        "converter",
+        "converta",
+        "virar",
+        "vire",
+        "reformate",
+        "reformatar",
+    )
+
+    _LOUSA_CONTENT_TERMS = (
+        "lousa",
+        "canvas",
+        "canva",
+        "conteudo da lousa",
+        "conteúdo da lousa",
+        "texto da lousa",
+    )
+
     @classmethod
     def is_canvas_request(cls, message: str) -> bool:
         return cls.is_canvas_placement_request(message) or cls.is_canvas_update_request(
@@ -180,7 +200,32 @@ class ChatCanvasIntentService:
         return any(term in normalized for term in cls._OPERATIONAL_DATA_TERMS)
 
     @classmethod
+    def is_canvas_transform_request(cls, message: str) -> bool:
+        from app.domain.services.chat_canvas_transform_service import (
+            ChatCanvasTransformService,
+        )
+
+        normalized = cls._normalize(message)
+
+        if not normalized:
+            return False
+
+        if any(term in normalized for term in cls._EXTERNAL_CANVA_BLOCK):
+            return False
+
+        if not ChatCanvasTransformService.detect_kind(message):
+            return False
+
+        has_transform = any(term in normalized for term in cls._TRANSFORM_VERBS)
+        has_canvas_ref = any(term in normalized for term in cls._LOUSA_CONTENT_TERMS)
+
+        return bool(has_transform and has_canvas_ref)
+
+    @classmethod
     def blocks_external_action_selection(cls, message: str) -> bool:
+        if cls.is_canvas_transform_request(message):
+            return True
+
         return cls.is_canvas_request(message) and not cls.is_canvas_operational_update_request(
             message
         )
