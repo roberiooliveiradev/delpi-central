@@ -24,7 +24,10 @@ import {
   resolveRichTextBody,
   type ViewFormat,
 } from "./chatPresentation";
-import { getChartExplanationFromToolCalls } from "./chartExplain";
+import {
+  getChartExplanationFromToolCalls,
+  getDashboardExplanationFromToolCalls,
+} from "./chartExplain";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichChart } from "./ChatRichChart";
@@ -44,6 +47,8 @@ type ChatRichPresentationProps = {
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   requestChartExplanation?: boolean;
   onChartExplanationHandled?: () => void;
+  requestDashboardExplanation?: boolean;
+  onDashboardExplanationHandled?: () => void;
 };
 
 function FormatToggle({
@@ -136,6 +141,8 @@ export function ChatRichPresentation({
   onOpenCanvas,
   requestChartExplanation = false,
   onChartExplanationHandled,
+  requestDashboardExplanation = false,
+  onDashboardExplanationHandled,
 }: ChatRichPresentationProps) {
   const pair = useMemo(
     () => getPresentationPairFromToolCalls(toolCalls),
@@ -226,6 +233,11 @@ export function ChatRichPresentation({
     () => getChartExplanationFromToolCalls(toolCalls),
     [toolCalls],
   );
+  const dashboardExplanation = useMemo(
+    () => getDashboardExplanationFromToolCalls(toolCalls),
+    [toolCalls],
+  );
+  const [dashboardExplanationOpen, setDashboardExplanationOpen] = useState(false);
 
   useEffect(() => {
     if (!requestChartExplanation) {
@@ -239,6 +251,15 @@ export function ChatRichPresentation({
 
     onChartExplanationHandled?.();
   }, [hasChartView, onChartExplanationHandled, requestChartExplanation]);
+
+  useEffect(() => {
+    if (!requestDashboardExplanation) {
+      return;
+    }
+
+    setDashboardExplanationOpen(true);
+    onDashboardExplanationHandled?.();
+  }, [onDashboardExplanationHandled, requestDashboardExplanation]);
 
   const switchViewMode = useCallback((mode: ViewFormat) => {
     setViewMode((previous) => {
@@ -275,6 +296,9 @@ export function ChatRichPresentation({
         <ChatRichDashboard
           presentation={primary}
           toolCalls={toolCalls}
+          dashboardExplanation={dashboardExplanation}
+          showDashboardExplanation={dashboardExplanationOpen}
+          onShowDashboardExplanationChange={setDashboardExplanationOpen}
           onDrillDown={onDrillDown}
           onOpenCanvas={onOpenCanvas}
         />

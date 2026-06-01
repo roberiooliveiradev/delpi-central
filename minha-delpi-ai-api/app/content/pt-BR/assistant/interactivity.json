@@ -73,6 +73,11 @@
       "Ver em tabela",
       "Gerar gráfico",
       "Colocar na lousa"
+    ],
+    "dashboard": [
+      "Explique esse painel",
+      "Baixar CSV",
+      "Colocar na lousa"
     ]
   },
   "presentationQueries": {
@@ -82,6 +87,7 @@
     "Ver em tabela": "mostre o último resultado em tabela",
     "Baixar PNG": "exporte o gráfico acima como imagem",
     "Explique esse gráfico": "explique o gráfico acima em linguagem simples, destacando o insight principal e como ler os eixos",
+    "Explique esse painel": "explique o painel acima em linguagem simples, destacando os blocos e como interpretar cada gráfico",
     "Ver estoque": "qual o estoque do produto {{productCode}}?",
     "Onde é usado?": "onde o produto {{productCode}} é usado?",
     "Colocar na lousa": "coloque o resultado acima na lousa"

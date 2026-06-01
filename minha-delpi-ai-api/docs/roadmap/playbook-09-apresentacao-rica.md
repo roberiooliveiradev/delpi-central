@@ -94,8 +94,8 @@ Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/servic
 | 1 — Decisão básica de formato | **Concluída** — API + MFE (`presentationDecision`, insight, toggle inicial, chips de alternância) |
 | 2 — Gráficos ampliados | **Concluída** — sync `chartType`, limites, insight, política de fatias |
 | 3 — Alternância de visualização | **Concluída** — toggle Texto/Tabela/Gráfico/Árvore, chips «Ver tabela» / «Gerar gráfico» / «Explique esse gráfico», seletores de eixo X/Y no gráfico, motivos `presentation_*` no feedback |
-| 4 — Interatividade | **Em andamento** — filtros por categoria; **explicar gráfico inline** (`chartExplanation` + chip `inlineAction: explain_chart` + botão Explicar); drill-down, zoom, export PNG/lousa |
-| 5 — Dashboards e insights | Parcial (`ChatDashboardPresentationService`) |
+| 4 — Interatividade | **Concluída** — filtros por categoria, eixos configuráveis, explicar gráfico inline (`chartExplanation`, `explain_chart`), drill-down, zoom, export PNG/lousa |
+| 5 — Dashboards e insights | **Em andamento** — `ChatDashboardPresentationService`, explicar painel inline (`dashboardExplanation`, `explain_dashboard`), chips e CSV do dashboard |
 | 6 — Métricas e otimização | **Em andamento** — auditoria `presentationMetrics` + `chat.presentation.event`; painel admin `GET /admin/metrics/presentation/summary` + `AdminPresentationMetrics` |
 
 ---

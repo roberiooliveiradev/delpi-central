@@ -429,6 +429,30 @@ class ChatPresentationDecisionService:
             if explanation:
                 decision["chartExplanation"] = explanation
 
+        dashboard_presentation = metadata.get("presentation")
+
+        if (
+            isinstance(dashboard_presentation, dict)
+            and dashboard_presentation.get("type") == "dashboard"
+        ):
+            from app.domain.services.chat_presentation_dashboard_explain_service import (
+                ChatPresentationDashboardExplainService,
+            )
+
+            ChatPresentationDashboardExplainService.enrich_panel_charts(
+                dashboard_presentation,
+                decision=decision,
+            )
+
+            dashboard_explanation = ChatPresentationDashboardExplainService.build(
+                presentation=dashboard_presentation,
+                decision=decision,
+                insight=str(decision.get("insight") or ""),
+            )
+
+            if dashboard_explanation:
+                decision["dashboardExplanation"] = dashboard_explanation
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))

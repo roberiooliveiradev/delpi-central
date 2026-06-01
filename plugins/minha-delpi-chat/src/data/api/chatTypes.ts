@@ -90,6 +90,7 @@ export type ChatPresentation =
         gaugeValueKey?: string;
         gaugeTargetKey?: string | null;
       };
+      chartExplanation?: string;
     }
   | {
       type: "kpi";
@@ -225,6 +226,7 @@ export type ChatPresentationDecision = {
   reason?: string | null;
   insight?: string | null;
   chartExplanation?: string | null;
+  dashboardExplanation?: string | null;
   policyNotice?: string | null;
   availableViews?: string[] | null;
   dataShape?: {

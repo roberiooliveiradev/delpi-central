@@ -34,6 +34,9 @@ class ChatPresentationInteractivityService:
             if str(label).strip() == "Explique esse gráfico":
                 item["inlineAction"] = "explain_chart"
 
+            if str(label).strip() == "Explique esse painel":
+                item["inlineAction"] = "explain_dashboard"
+
             suggestions.append(item)
 
         suggestions.extend(
@@ -137,6 +140,6 @@ class ChatPresentationInteractivityService:
             token = str(presentation.get("type") or "").strip().lower()
 
             if token in {"table", "chart", "tree", "kpi", "dashboard"}:
-                return "kpi" if token == "dashboard" else token
+                return token
 
         return None

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
-import { isExplainChartSuggestion } from "./chartExplain";
+import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./chartExplain";
 import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import type { TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
@@ -15,6 +15,7 @@ type ChatInteractivityBlockProps = {
   interactivity: InteractivityPayload;
   onUseSuggestion?: (query: string) => void;
   onExplainChart?: () => void;
+  onExplainDashboard?: () => void;
   onRecordClick?: (payload: { label: string; query: string; group?: string }) => void;
   /** Destaque suave quando há erro/vazio (Playbook 06 + 07). */
   variant?: "default" | "recovery";
@@ -56,6 +57,7 @@ export function ChatInteractivityBlock({
   interactivity,
   onUseSuggestion,
   onExplainChart,
+  onExplainDashboard,
   onRecordClick,
   variant = "default",
 }: ChatInteractivityBlockProps) {
@@ -101,6 +103,11 @@ export function ChatInteractivityBlock({
 
     if (isExplainChartSuggestion(suggestion) && onExplainChart) {
       onExplainChart();
+      return;
+    }
+
+    if (isExplainDashboardSuggestion(suggestion) && onExplainDashboard) {
+      onExplainDashboard();
       return;
     }
 

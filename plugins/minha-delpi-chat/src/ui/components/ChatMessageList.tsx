@@ -51,7 +51,10 @@ import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
 import { ChatAssistantMessageMenu } from "./ChatAssistantMessageMenu";
-import { messageHasChartPresentation } from "./chartExplain";
+import {
+  messageHasChartPresentation,
+  messageHasDashboardPresentation,
+} from "./chartExplain";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
@@ -187,7 +190,8 @@ function renderPresentation(
   onDrillDown?: (query: string) => void,
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
   chartExplain?: {
-    request: boolean;
+    requestChart: boolean;
+    requestDashboard: boolean;
     onHandled: () => void;
   },
 ) {
@@ -201,8 +205,10 @@ function renderPresentation(
       textContent={textContent}
       onDrillDown={onDrillDown}
       onOpenCanvas={onOpenCanvas}
-      requestChartExplanation={chartExplain?.request}
+      requestChartExplanation={chartExplain?.requestChart}
       onChartExplanationHandled={chartExplain?.onHandled}
+      requestDashboardExplanation={chartExplain?.requestDashboard}
+      onDashboardExplanationHandled={chartExplain?.onHandled}
     />
   );
 }
@@ -504,6 +510,9 @@ export function ChatMessageList({
   const pendingScrollToResponseRef = useRef(false);
 
   const [inlineExplainMessageId, setInlineExplainMessageId] = useState<string | null>(
+    null,
+  );
+  const [inlineExplainKind, setInlineExplainKind] = useState<"chart" | "dashboard" | null>(
     null,
   );
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -1263,8 +1272,16 @@ export function ChatMessageList({
                 />
                 {shouldShowRichPresentation(displayContent, messageToolCalls)
                   ? renderPresentation(messageToolCalls, displayContent, onDrillDown, onOpenCanvas, {
-                      request: inlineExplainMessageId === message.id,
-                      onHandled: () => setInlineExplainMessageId(null),
+                      requestChart:
+                        inlineExplainMessageId === message.id &&
+                        inlineExplainKind === "chart",
+                      requestDashboard:
+                        inlineExplainMessageId === message.id &&
+                        inlineExplainKind === "dashboard",
+                      onHandled: () => {
+                        setInlineExplainMessageId(null);
+                        setInlineExplainKind(null);
+                      },
                     })
                   : null}
                 {suppressMessageMarkdown || !displayContent ? null : (
@@ -1327,7 +1344,18 @@ export function ChatMessageList({
                     onUseSuggestion={onDrillDown}
                     onExplainChart={
                       messageHasChartPresentation(messageToolCalls)
-                        ? () => setInlineExplainMessageId(message.id)
+                        ? () => {
+                            setInlineExplainMessageId(message.id);
+                            setInlineExplainKind("chart");
+                          }
+                        : undefined
+                    }
+                    onExplainDashboard={
+                      messageHasDashboardPresentation(messageToolCalls)
+                        ? () => {
+                            setInlineExplainMessageId(message.id);
+                            setInlineExplainKind("dashboard");
+                          }
                         : undefined
                     }
                     onRecordClick={({ label, query, group }) => {

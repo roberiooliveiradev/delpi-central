@@ -134,6 +134,7 @@ export function ChatDashboardDataPanel({
           <ChatRichChart
             presentation={chart}
             hideTitle
+            chartExplanation={chart.chartExplanation}
             onDrillDown={onDrillDown}
             onOpenCanvas={onOpenCanvas}
           />

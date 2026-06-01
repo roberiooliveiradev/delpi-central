@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { LayoutPanelLeft } from "lucide-react";
 import type { ChatCanvasOpenPayload, ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import { presentationToCanvasPayload } from "./chartCanvasMarkdown";
@@ -8,8 +8,10 @@ import {
   getPresentationPairFromToolCalls,
 } from "./chatPresentation";
 import { ChatDashboardDataPanel } from "./ChatDashboardDataPanel";
+import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatRichChart } from "./ChatRichChart";
 import { ChatRichKpi } from "./ChatRichKpi";
+import { getChartExplanationFromToolCalls } from "./chartExplain";
 import "./ChatRichDashboard.css";
 
 type DashboardPresentation = Extract<ChatPresentation, { type: "dashboard" }>;
@@ -20,10 +22,14 @@ function renderAuxChartPanel(
   onDrillDown?: (query: string) => void,
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
 ) {
+  const explanation =
+    presentation.chartExplanation?.trim() || undefined;
+
   return (
     <ChatRichChart
       presentation={presentation}
       hideTitle
+      chartExplanation={explanation}
       onDrillDown={onDrillDown}
       onOpenCanvas={onOpenCanvas}
     />
@@ -33,15 +39,26 @@ function renderAuxChartPanel(
 export function ChatRichDashboard({
   presentation,
   toolCalls,
+  dashboardExplanation,
+  showDashboardExplanation = false,
+  onShowDashboardExplanationChange,
   onDrillDown,
   onOpenCanvas,
 }: {
   presentation: DashboardPresentation;
   toolCalls?: ChatToolCall[];
+  dashboardExplanation?: string;
+  showDashboardExplanation?: boolean;
+  onShowDashboardExplanationChange?: (open: boolean) => void;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
   const { title, panels } = presentation;
+  const [localExplainOpen, setLocalExplainOpen] = useState(false);
+  const explainOpen = showDashboardExplanation || localExplainOpen;
+  const setExplainOpen = onShowDashboardExplanationChange ?? setLocalExplainOpen;
+  const resolvedDashboardExplanation =
+    dashboardExplanation?.trim() || undefined;
 
   const { kpiPanels, chartPanels, tablePanels } = useMemo(() => {
     const kpis: DashboardPresentation["panels"] = [];
@@ -78,6 +95,17 @@ export function ChatRichDashboard({
       <div className="mdc-rich-dashboard__header">
         {title ? <div className="mdc-rich-dashboard__title">{title}</div> : <span />}
         <div className="mdc-rich-dashboard__actions">
+          {resolvedDashboardExplanation ? (
+            <button
+              type="button"
+              className={`mdc-rich-chart__btn${explainOpen ? " mdc-rich-chart__toggle-btn--active" : ""}`}
+              onClick={() => setExplainOpen(!explainOpen)}
+              title="Explicar como ler este painel"
+              aria-expanded={explainOpen}
+            >
+              Explicar painel
+            </button>
+          ) : null}
           <button
             type="button"
             className="mdc-rich-chart__btn"
@@ -99,6 +127,16 @@ export function ChatRichDashboard({
           ) : null}
         </div>
       </div>
+
+      {explainOpen && resolvedDashboardExplanation ? (
+        <div
+          className="mdc-rich-chart__explanation mdc-rich-dashboard__explanation"
+          role="region"
+          aria-label="Explicação do painel"
+        >
+          <ChatMarkdown content={resolvedDashboardExplanation} />
+        </div>
+      ) : null}
 
       <div className="mdc-rich-dashboard__stack">
         {kpiPanels.length > 0 ? (
@@ -145,12 +183,25 @@ export function ChatRichDashboard({
             fallbackItemsChart ??
             null;
 
+          const itemsChartExplanation =
+            chart?.chartExplanation ||
+            getChartExplanationFromToolCalls(toolCalls) ||
+            undefined;
+
           return (
             <ChatDashboardDataPanel
               key={panel.id}
               title={panel.title}
               table={panel.presentation}
-              chart={chart}
+              chart={
+                chart
+                  ? {
+                      ...chart,
+                      chartExplanation:
+                        chart.chartExplanation || itemsChartExplanation,
+                    }
+                  : null
+              }
               onDrillDown={onDrillDown}
               onOpenCanvas={onOpenCanvas}
             />

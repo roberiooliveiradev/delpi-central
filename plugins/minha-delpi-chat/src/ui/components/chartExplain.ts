@@ -4,6 +4,8 @@ import { getPresentationDecisionFromToolCalls } from "./chatPresentation";
 
 export const EXPLAIN_CHART_CHIP_LABEL = "Explique esse gráfico";
 export const EXPLAIN_CHART_INLINE_ACTION = "explain_chart";
+export const EXPLAIN_DASHBOARD_CHIP_LABEL = "Explique esse painel";
+export const EXPLAIN_DASHBOARD_INLINE_ACTION = "explain_dashboard";
 
 const CHART_TYPE_LABELS: Record<string, string> = {
   bar: "gráfico de barras",
@@ -26,6 +28,39 @@ export function isExplainChartSuggestion(suggestion: {
     suggestion.inlineAction === EXPLAIN_CHART_INLINE_ACTION ||
     String(suggestion.label ?? "").trim() === EXPLAIN_CHART_CHIP_LABEL
   );
+}
+
+export function isExplainDashboardSuggestion(suggestion: {
+  label?: string;
+  inlineAction?: string;
+}): boolean {
+  return (
+    suggestion.inlineAction === EXPLAIN_DASHBOARD_INLINE_ACTION ||
+    String(suggestion.label ?? "").trim() === EXPLAIN_DASHBOARD_CHIP_LABEL
+  );
+}
+
+export function getDashboardExplanationFromToolCalls(toolCalls?: ChatToolCall[]): string {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+
+  return String(decision?.dashboardExplanation ?? "").trim();
+}
+
+export function messageHasDashboardPresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  return toolCalls.some((toolCall) => {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const presentation = metadata?.presentation;
+
+    return (
+      presentation &&
+      typeof presentation === "object" &&
+      (presentation as { type?: string }).type === "dashboard"
+    );
+  });
 }
 
 export function getChartExplanationFromToolCalls(toolCalls?: ChatToolCall[]): string {
