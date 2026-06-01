@@ -71,6 +71,11 @@ class ChatPresentationFormatRefinementService:
         "apresentados acima",
         "acima em",
         "dados acima",
+        "mesmos dados",
+        "mesmo dado",
+        "mesmo resultado",
+        "mesmos resultados",
+        "mesma resposta",
     )
 
     @classmethod

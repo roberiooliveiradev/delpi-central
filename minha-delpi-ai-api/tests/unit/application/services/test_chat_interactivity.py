@@ -111,6 +111,21 @@ def test_presentation_table_chips():
     assert any("Exportar" in item["label"] or "Gráfico" in item["label"] for item in suggestions)
 
 
+def test_presentation_kpi_ver_em_tabela_query():
+    suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
+        [
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "presentation": {"type": "kpi"}},
+            }
+        ]
+    )
+
+    table_chip = next(item for item in suggestions if item["label"] == "Ver em tabela")
+
+    assert table_chip["query"] == "mostre o último resultado em tabela"
+
+
 def test_max_primary_is_four():
     metadata = {
         "followUpSuggestions": [

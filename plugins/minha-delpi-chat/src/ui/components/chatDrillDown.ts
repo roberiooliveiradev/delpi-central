@@ -193,7 +193,7 @@ export function buildChartPointMenuActions(
   actions.push({
     id: "as-table",
     label: "Ver como tabela",
-    query: "mostre os mesmos dados em tabela",
+    query: "mostre o último resultado em tabela",
   });
 
   const seen = new Set<string>();

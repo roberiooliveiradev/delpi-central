@@ -50,6 +50,12 @@ def test_looks_like_format_refinement_with_last_result_phrase():
     )
 
 
+def test_looks_like_format_refinement_with_same_data_phrase():
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
+        "mostre os mesmos dados em tabela",
+    )
+
+
 def test_collect_last_successful_operation_skips_system_tables():
     history = _STOCK_HISTORY + [
         {

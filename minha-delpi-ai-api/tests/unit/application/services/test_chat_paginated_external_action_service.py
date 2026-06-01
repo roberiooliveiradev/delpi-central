@@ -129,3 +129,59 @@ def test_fetch_continue_plan_resumes_from_previous_state():
     assert merged_metadata["paginationConsolidation"]["completed"] is True
     assert arguments["actionId"] == "parents-action"
     assert continue_prompt is None
+
+
+def test_fetch_format_refinement_reuses_cached_stock_payload():
+    execute_tool = FakeExecuteToolUseCase()
+    service = ChatPaginatedExternalActionService(execute_tool)
+    stock_rows = [{"branch": "01", "current_quantity": 100}]
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "arguments": {
+                            "actionId": "stock-action",
+                            "parameters": {"productCode": "10080077"},
+                        },
+                        "metadata": {
+                            "ok": True,
+                            "actionId": "stock-action",
+                            "path": "/products/10080077/stock",
+                            "paginationConsolidation": {
+                                "consolidatedPayload": {
+                                    "items": stock_rows,
+                                    "total": 1,
+                                    "page": 1,
+                                    "page_size": 1,
+                                    "total_pages": 1,
+                                },
+                            },
+                            "tablePresentation": {
+                                "type": "table",
+                                "columns": [{"key": "branch", "label": "Filial"}],
+                                "rows": stock_rows,
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    result = service.fetch_format_refinement_from_history(
+        user_id="user-1",
+        access_token="token",
+        message="mostre o último resultado em tabela",
+        previous_messages=previous_messages,
+    )
+
+    assert result is not None
+    merged_data, merged_metadata, arguments, continue_prompt = result
+    assert execute_tool.calls == []
+    root = ChatPaginationConsolidationService._unwrap(merged_data)
+    assert root["items"] == stock_rows
+    assert arguments["actionId"] == "stock-action"
+    assert merged_metadata["actionId"] == "stock-action"
+    assert continue_prompt is None

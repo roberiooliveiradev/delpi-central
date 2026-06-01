@@ -120,13 +120,13 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
         actions.push({
           id: "chart",
           label: "Ver como gráfico",
-          query: "mostre os mesmos dados em gráfico",
+          query: "mostre o último resultado em gráfico",
         });
       } else if (value === "chart") {
         actions.push({
           id: "table",
           label: "Ver como tabela",
-          query: "mostre os mesmos dados em tabela",
+          query: "mostre o último resultado em tabela",
         });
       }
       break;
