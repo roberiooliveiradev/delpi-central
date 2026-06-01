@@ -81,38 +81,52 @@ export function ChatEmptyState({
     !catalogLoading &&
     starterCards.length > 0 &&
     Boolean(onUseStarter);
-  const showCatalogSkeleton = catalogLoading;
+  const showCatalogSkeleton = catalogLoading && starterCards.length === 0;
+  const showHeroSkeleton = catalogLoading && !welcomeTitle;
   const showCatalogError =
     !catalogLoading && catalogError && starterCards.length === 0;
 
   return (
     <section className="mdc-chat-empty-state" aria-label="Início da conversa">
       <div className="mdc-chat-empty-state__hero">
-        <h2 className="mdc-chat-empty-state__headline">
-          {headlineParts ? (
-            <>
-              <span className="mdc-chat-empty-state__headline-main">{headlineParts.lead}</span>
-              {headlineParts.accent ? (
-                <span className="mdc-chat-empty-state__headline-accent">{headlineParts.accent}</span>
-              ) : null}
-            </>
-          ) : (
-            <span className="mdc-chat-empty-state__headline-main">{greeting}</span>
-          )}
-        </h2>
-        <p className="mdc-chat-empty-state__hint">
-          {welcomeSubtitle ||
-            "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
-        </p>
-        {onStartTour ? (
-          <button
-            type="button"
-            className="mdc-chat-empty-state__tour-link"
-            onClick={onStartTour}
+        {showHeroSkeleton ? (
+          <div
+            className="mdc-chat-empty-state__hero-skeleton"
+            aria-busy="true"
+            aria-label="Carregando boas-vindas"
           >
-            Ver tour rápido do chat
-          </button>
-        ) : null}
+            <div className="mdc-chat-empty-state__skeleton-headline" />
+            <div className="mdc-chat-empty-state__skeleton-hint" />
+          </div>
+        ) : (
+          <>
+            <h2 className="mdc-chat-empty-state__headline">
+              {headlineParts ? (
+                <>
+                  <span className="mdc-chat-empty-state__headline-main">{headlineParts.lead}</span>
+                  {headlineParts.accent ? (
+                    <span className="mdc-chat-empty-state__headline-accent">{headlineParts.accent}</span>
+                  ) : null}
+                </>
+              ) : (
+                <span className="mdc-chat-empty-state__headline-main">{greeting}</span>
+              )}
+            </h2>
+            <p className="mdc-chat-empty-state__hint">
+              {welcomeSubtitle ||
+                "Escolha uma sugestão ou escreva do seu jeito. Aceito pequenos errinhos de digitação."}
+            </p>
+            {onStartTour ? (
+              <button
+                type="button"
+                className="mdc-chat-empty-state__tour-link"
+                onClick={onStartTour}
+              >
+                Ver tour rápido do chat
+              </button>
+            ) : null}
+          </>
+        )}
       </div>
 
       {showCatalogSkeleton ? (

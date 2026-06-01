@@ -37,6 +37,11 @@ import {
   resolveStarterPromptOptions,
   type StarterInvokeContext,
 } from "../chatShortcutPrompt";
+import {
+  readHomeCatalogCache,
+  readStoredOnboardingProfileId,
+  writeHomeCatalogCache,
+} from "../chatOnboardingCache";
 import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
@@ -143,21 +148,23 @@ export function ChatPage({
   const [helpCatalog, setHelpCatalog] = useState<AssistantCatalogResponse | null>(null);
   const [helpCatalogLoading, setHelpCatalogLoading] = useState(false);
   const [helpCatalogError, setHelpCatalogError] = useState<string | null>(null);
-  const [homeHighlights, setHomeHighlights] = useState<AssistantContextualHighlight[]>([]);
-  const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
-    null,
+  const initialOnboardingProfileId = readStoredOnboardingProfileId();
+  const initialHomeCatalogCache = readHomeCatalogCache(initialOnboardingProfileId);
+  const [homeHighlights, setHomeHighlights] = useState<AssistantContextualHighlight[]>(
+    () => initialHomeCatalogCache?.highlights ?? [],
   );
-  const [homeCatalogLoading, setHomeCatalogLoading] = useState(true);
+  const [homeOnboarding, setHomeOnboarding] = useState<AssistantOnboardingPayload | null>(
+    () => initialHomeCatalogCache?.onboarding ?? null,
+  );
+  const [homeCatalogLoading, setHomeCatalogLoading] = useState(
+    () => !initialHomeCatalogCache?.onboarding,
+  );
   const [homeCatalogError, setHomeCatalogError] = useState(false);
   const [tourPlusMenuOpen, setTourPlusMenuOpen] = useState<boolean | null>(null);
   const [onboardingTourOpen, setOnboardingTourOpen] = useState(false);
-  const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem("minha-delpi-chat:onboarding-profile");
-    } catch {
-      return null;
-    }
-  });
+  const [onboardingProfileId, setOnboardingProfileId] = useState<string | null>(
+    initialOnboardingProfileId,
+  );
 
   const openCanvasPanel = useCallback((payload: ChatCanvasOpenPayload) => {
     if (!payload.markdown.trim()) {
@@ -1408,6 +1415,10 @@ export function ChatPage({
 
         setHomeHighlights(payload.contextualHighlights ?? []);
         setHomeOnboarding(payload.onboarding ?? null);
+        writeHomeCatalogCache(onboardingProfileId, {
+          onboarding: payload.onboarding ?? null,
+          highlights: payload.contextualHighlights ?? [],
+        });
 
         const selected = payload.onboarding?.selectedProfileId;
 
@@ -1448,6 +1459,13 @@ export function ChatPage({
 
   function handleSelectOnboardingProfile(profileId: string) {
     setOnboardingProfileId(profileId);
+
+    const cached = readHomeCatalogCache(profileId);
+
+    if (cached?.onboarding) {
+      setHomeOnboarding(cached.onboarding);
+      setHomeHighlights(cached.highlights ?? []);
+    }
 
     try {
       localStorage.setItem("minha-delpi-chat:onboarding-profile", profileId);
