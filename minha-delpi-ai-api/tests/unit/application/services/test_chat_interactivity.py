@@ -111,6 +111,28 @@ def test_presentation_table_chips():
     assert any("Exportar" in item["label"] or "Gráfico" in item["label"] for item in suggestions)
 
 
+def test_presentation_decision_adds_view_switch_chips():
+    suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
+        [
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "presentation": {"type": "table"},
+                    "presentationDecision": {
+                        "selected": "table",
+                        "availableViews": ["table", "line_chart", "chart"],
+                    },
+                },
+            }
+        ]
+    )
+
+    labels = [item["label"] for item in suggestions]
+
+    assert "Gerar gráfico" in labels
+
+
 def test_presentation_kpi_ver_em_tabela_query():
     suggestions = ChatPresentationInteractivityService.build_from_tool_calls(
         [

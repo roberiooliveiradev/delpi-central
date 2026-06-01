@@ -13,6 +13,7 @@ import {
   getPresentationPairFromToolCalls,
   resolveDefaultRichViewMode,
   resolveRichFormatToggles,
+  getPresentationInsightFromToolCalls,
   getPresentationTitle,
   getChartPresentationFromPair,
   getTablePresentationFromPair,
@@ -155,6 +156,10 @@ export function ChatRichPresentation({
     () => getPresentationTitle(textContent, toolCalls),
     [textContent, toolCalls],
   );
+  const presentationInsight = useMemo(
+    () => getPresentationInsightFromToolCalls(toolCalls),
+    [toolCalls],
+  );
   const commentaryBody = useMemo(
     () => resolveCommentaryTextBody(textContent, toolCalls, pair),
     [textContent, toolCalls, pair],
@@ -257,6 +262,12 @@ export function ChatRichPresentation({
     </div>
   ) : null;
 
+  const insightBanner = presentationInsight ? (
+    <p className="mdc-rich-presentation__insight" role="note" title="Por que este formato">
+      {presentationInsight}
+    </p>
+  ) : null;
+
   const coverageNavigation = (
     <CoverageNavigation
       pagination={paginationState}
@@ -310,6 +321,7 @@ export function ChatRichPresentation({
     return (
       <div className="mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
         {coverageBanner}
+        {insightBanner}
         {coverageNavigation}
 
         {hasCommentary ? (
@@ -354,6 +366,7 @@ export function ChatRichPresentation({
   return (
     <div className="mdc-rich-presentation mdc-rich-presentation--enter">
       {coverageBanner}
+      {insightBanner}
       {coverageNavigation}
       {formatToolbar}
 

@@ -285,7 +285,7 @@ class ExecuteExternalActionUseCase:
             table_presentation=table_presentation,
         )
 
-        return {
+        metadata = {
             "presentation": primary_presentation,
             "tablePresentation": (
                 table_presentation
@@ -310,6 +310,21 @@ class ExecuteExternalActionUseCase:
             "preferredFormat": preferred_format,
             "dataCoverageNotice": data_coverage_notice,
         }
+
+        from app.domain.services.chat_presentation_decision_service import (
+            ChatPresentationDecisionService,
+        )
+
+        user_message = str(request_parameters.get("userMessage") or "").strip() or None
+
+        ChatPresentationDecisionService.enrich_metadata(
+            metadata,
+            intent=str(action.get("intent") or action.get("name") or "").strip() or None,
+            user_message=user_message,
+            user_preference=preferred_format,
+        )
+
+        return metadata
 
     @staticmethod
     def _resolve_action_path(path: str, parameters: dict) -> str:

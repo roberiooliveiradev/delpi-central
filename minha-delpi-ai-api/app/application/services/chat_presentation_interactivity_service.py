@@ -31,7 +31,87 @@ class ChatPresentationInteractivityService:
             template = str(queries.get(label) or label).strip()
             suggestions.append({"label": str(label), "query": template})
 
-        return suggestions
+        suggestions.extend(
+            cls._chips_from_presentation_decision(tool_calls, queries=queries)
+        )
+
+        return cls._dedupe_suggestions(suggestions)[:8]
+
+    @classmethod
+    def _chips_from_presentation_decision(
+        cls,
+        tool_calls: list | None,
+        *,
+        queries: dict[str, Any],
+    ) -> list[dict[str, str]]:
+        output: list[dict[str, str]] = []
+
+        for call in reversed(tool_calls or []):
+            if not isinstance(call, dict):
+                continue
+
+            metadata = call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            decision = metadata.get("presentationDecision")
+
+            if not isinstance(decision, dict):
+                continue
+
+            selected = str(decision.get("selected") or "").strip().lower()
+            views = decision.get("availableViews") or []
+
+            if not isinstance(views, list):
+                continue
+
+            normalized_views = {
+                str(view or "").strip().lower()
+                for view in views
+                if str(view or "").strip()
+            }
+
+            if selected != "table" and "table" in normalized_views:
+                label = "Ver como tabela"
+                output.append(
+                    {
+                        "label": label,
+                        "query": str(queries.get(label) or "mostre o último resultado em tabela"),
+                    }
+                )
+
+            if selected not in {"chart", "line_chart", "horizontal_bar", "donut"} and (
+                "chart" in normalized_views
+                or "line_chart" in normalized_views
+            ):
+                label = "Gerar gráfico"
+                output.append(
+                    {
+                        "label": label,
+                        "query": str(queries.get(label) or "gere um gráfico com os dados acima"),
+                    }
+                )
+
+            break
+
+        return output
+
+    @staticmethod
+    def _dedupe_suggestions(suggestions: list[dict[str, str]]) -> list[dict[str, str]]:
+        seen: set[str] = set()
+        output: list[dict[str, str]] = []
+
+        for item in suggestions:
+            label = str(item.get("label") or "").strip()
+
+            if not label or label in seen:
+                continue
+
+            seen.add(label)
+            output.append(item)
+
+        return output
 
     @classmethod
     def _detect_presentation_type(cls, tool_calls: list | None) -> str | None:

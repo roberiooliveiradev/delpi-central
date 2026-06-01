@@ -214,11 +214,28 @@ export type ChatWebSearchResearch = {
   sites?: ChatWebSearchResearchSite[];
 };
 
+export type ChatPresentationDecision = {
+  selected?: string | null;
+  fallback?: string | null;
+  reason?: string | null;
+  availableViews?: string[] | null;
+  dataShape?: {
+    rows?: number;
+    columns?: number;
+    hasDate?: boolean;
+    hasNumeric?: boolean;
+    hasCategory?: boolean;
+    hasHierarchy?: boolean;
+  } | null;
+  intent?: string | null;
+};
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;
   reason?: string | null;
   metadata?: (Record<string, unknown> & {
+    presentationDecision?: ChatPresentationDecision | null;
     presentation?: ChatPresentation | null;
     responsePreview?: string | null;
     actionId?: string | null;
@@ -575,6 +592,8 @@ export type CreateChatSessionPayload = {
   agentId?: string | null;
   forkFromSessionId?: string | null;
   forkUntilMessageId?: string | null;
+  /** Ao continuar de uma pergunta user: não copia a resposta antiga e reexecuta no cliente. */
+  forkResendUserMessage?: boolean;
 };
 
 export type ChatAttachment = {

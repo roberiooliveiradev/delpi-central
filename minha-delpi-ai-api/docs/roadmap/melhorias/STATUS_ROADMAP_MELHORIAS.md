@@ -55,7 +55,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [06 — Canvas](./playbooks_melhoria_minha_delpi_chat/06_lousa_canvas_area_de_trabalho.md) | Parcial | `ChatCanvasIntentService`, lousa MFE |
 | [07 — Anexos](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Parcial | Index PDF/XLSX/CSV + preview colunas no welcome; `smoke_attachment_index_welcome.py` |
 | [08 — Segurança](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | Parcial | SQL safety, trust badges, confirmação escrita |
-| [09 — Gráficos](./playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md) | Parcial | Alinhado a `playbook_ampliacao_graficos` Fase 1 |
+| [09 — Gráficos](./playbooks_melhoria_minha_delpi_chat/09_dashboards_graficos_apresentacao_rica.md) | Parcial | Fase 1 PB09: `ChatPresentationDecisionService` + P1–P15 — ver [`playbook-09-apresentacao-rica.md`](../playbook-09-apresentacao-rica.md) |
 | [10 — Onboarding](./playbooks_melhoria_minha_delpi_chat/10_onboarding_e_adoção_de_usuarios.md) | Backlog | Documentação de produto; pouca implementação dedicada |
 | [11 — Admin UX](./playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md) | Parcial | 10 abas + DS workspace; refatoração 6 seções **aguardando** mockup 11 |
 

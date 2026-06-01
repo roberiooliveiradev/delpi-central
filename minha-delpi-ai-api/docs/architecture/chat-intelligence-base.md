@@ -491,6 +491,16 @@ Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`, `treePresent
 
 Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
 
+### Playbook 09 — decisão de formato (jun/2026)
+
+| Serviço | Papel |
+|---------|--------|
+| `ChatPresentationDataShapeAnalyzer` | Detecta data, numérico, hierarquia e cardinalidade |
+| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`) |
+| `ExecuteExternalActionUseCase` | Chama `enrich_metadata` após montar `presentation` / `tablePresentation` / `chartPresentation` |
+
+Regressão: casos P1–P15 em `tests/fixtures/rich_presentation_cases.py`. MFE: `getPresentationDecisionFromToolCalls`, insight abaixo do título, `resolveDefaultRichViewMode` respeita `selected`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).
+
 ### Consolidação paginada (total / completo / continuar) — maio/2026
 
 Quando a API retorna resposta parcial (`page`, `total`, `total_pages`), o chat pode buscar **várias páginas** e consolidar numa única resposta — em **qualquer formato** (tabela, árvore, gráfico ou texto).

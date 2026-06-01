@@ -3,6 +3,7 @@ import type {
   ChatDepthState,
   ChatPaginationState,
   ChatPresentation,
+  ChatPresentationDecision,
   ChatToolCall,
 } from "../../data/api/chatTypes";
 
@@ -342,6 +343,106 @@ export function getDataCoverageNoticeFromToolCalls(
   return null;
 }
 
+const CHART_DECISION_TOKENS = new Set([
+  "chart",
+  "line_chart",
+  "area_chart",
+  "bar_chart",
+  "horizontal_bar",
+  "donut",
+  "grouped_bar",
+  "stacked_bar",
+  "combo_chart",
+  "histogram",
+  "heatmap",
+  "gauge",
+  "scatter",
+]);
+
+export function getPresentationDecisionFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatPresentationDecision | null {
+  if (!Array.isArray(toolCalls)) {
+    return null;
+  }
+
+  for (const toolCall of toolCalls) {
+    const decision = (toolCall.metadata as Record<string, unknown>)?.presentationDecision;
+
+    if (
+      decision &&
+      typeof decision === "object" &&
+      typeof (decision as ChatPresentationDecision).selected === "string"
+    ) {
+      return decision as ChatPresentationDecision;
+    }
+  }
+
+  return null;
+}
+
+export function getPresentationInsightFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): string {
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const reason = String(decision?.reason ?? "").trim();
+
+  return reason;
+}
+
+export function mapPresentationDecisionToViewFormat(
+  selected: string | null | undefined,
+): ViewFormat | null {
+  const token = String(selected ?? "").trim().toLowerCase();
+
+  if (!token) {
+    return null;
+  }
+
+  if (token === "table") {
+    return "table";
+  }
+
+  if (token === "tree") {
+    return "tree";
+  }
+
+  if (token === "text" || token === "canvas" || token === "checklist") {
+    return "text";
+  }
+
+  if (CHART_DECISION_TOKENS.has(token) || token.includes("chart") || token.includes("bar")) {
+    return "chart";
+  }
+
+  return null;
+}
+
+function mapViewTokenToLegacyFormat(token: string): string | null {
+  const normalized = token.trim().toLowerCase();
+
+  if (normalized === "table" || normalized === "tree" || normalized === "text") {
+    return normalized;
+  }
+
+  if (
+    CHART_DECISION_TOKENS.has(normalized) ||
+    normalized.includes("chart") ||
+    normalized.includes("bar") ||
+    normalized === "donut" ||
+    normalized === "heatmap" ||
+    normalized === "gauge"
+  ) {
+    return "chart";
+  }
+
+  if (normalized === "kpi" || normalized === "dashboard") {
+    return normalized;
+  }
+
+  return null;
+}
+
 export function getAvailableFormatsFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): string[] {
@@ -350,6 +451,22 @@ export function getAvailableFormatsFromToolCalls(
   }
 
   for (const toolCall of toolCalls) {
+    const decision = (toolCall.metadata as Record<string, unknown>)?.presentationDecision;
+
+    if (decision && typeof decision === "object") {
+      const views = (decision as ChatPresentationDecision).availableViews;
+
+      if (Array.isArray(views) && views.length > 0) {
+        const mapped = views
+          .map((view) => mapViewTokenToLegacyFormat(String(view)))
+          .filter((format): format is string => Boolean(format));
+
+        if (mapped.length > 0) {
+          return [...new Set(mapped)];
+        }
+      }
+    }
+
     const formats = (toolCall.metadata as Record<string, unknown>)?.availableFormats;
 
     if (Array.isArray(formats)) {
@@ -888,12 +1005,30 @@ export function resolveDefaultRichViewMode(
 ): ViewFormat {
   const { hasText, hasChart, hasTable, hasTree, commentaryVisual = false } = options;
   const preferred = getPreferredFormatFromToolCalls(toolCalls);
+  const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const decisionView = mapPresentationDecisionToViewFormat(decision?.selected);
+
+  if (decisionView === "tree" && hasTree) {
+    return "tree";
+  }
+
+  if (decisionView === "chart" && hasChart) {
+    return "chart";
+  }
+
+  if (decisionView === "table" && hasTable) {
+    return "table";
+  }
+
+  if (!commentaryVisual && decisionView === "text" && hasText && !hasTree) {
+    return "text";
+  }
 
   if (!commentaryVisual && preferred === "text" && hasText && !hasTree) {
     return "text";
   }
 
-  if (hasTree) {
+  if (hasTree && (!decisionView || decisionView === "tree")) {
     return "tree";
   }
 

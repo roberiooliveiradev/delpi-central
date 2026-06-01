@@ -4,6 +4,9 @@ import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
 import {
   buildAssistantCopyText,
   getAvailableFormatsFromToolCalls,
+  getPresentationDecisionFromToolCalls,
+  getPresentationInsightFromToolCalls,
+  mapPresentationDecisionToViewFormat,
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
@@ -266,6 +269,72 @@ describe("resolveRichFormatToggles", () => {
         isCommentaryVisual: false,
       }).showChart,
     ).toBe(true);
+  });
+});
+
+describe("presentationDecision (Playbook 09)", () => {
+  it("mapeia line_chart para modo gráfico", () => {
+    expect(mapPresentationDecisionToViewFormat("line_chart")).toBe("chart");
+    expect(mapPresentationDecisionToViewFormat("horizontal_bar")).toBe("chart");
+    expect(mapPresentationDecisionToViewFormat("table")).toBe("table");
+  });
+
+  it("usa availableViews do metadata", () => {
+    const formats = getAvailableFormatsFromToolCalls(
+      fixtureToolCalls([
+        {
+          metadata: {
+            presentationDecision: {
+              selected: "line_chart",
+              availableViews: ["line_chart", "table", "chart"],
+            },
+          },
+        },
+      ]),
+    );
+
+    expect(formats).toContain("chart");
+    expect(formats).toContain("table");
+  });
+
+  it("inicia em gráfico quando decision pede line_chart", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        metadata: {
+          presentationDecision: {
+            selected: "line_chart",
+            reason: "dados temporais com valor numérico",
+            availableViews: ["line_chart", "table"],
+          },
+          preferredFormat: "chart",
+          presentation: {
+            type: "chart",
+            title: "Vendas",
+            chartType: "line",
+            data: [],
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Tabela",
+            columns: [{ key: "month", label: "Mês" }],
+            rows: [{ month: "jan", value: 1 }],
+          },
+        },
+      },
+    ]);
+
+    expect(
+      resolveDefaultRichViewMode(toolCalls, {
+        hasText: false,
+        hasChart: true,
+        hasTable: true,
+        hasTree: false,
+      }),
+    ).toBe("chart");
+
+    expect(getPresentationInsightFromToolCalls(toolCalls)).toBe(
+      "dados temporais com valor numérico",
+    );
   });
 });
 
