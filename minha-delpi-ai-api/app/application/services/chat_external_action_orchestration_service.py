@@ -187,6 +187,7 @@ class ChatExternalActionOrchestrationService:
         codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
             message,
             conversation_context,
+            previous_messages=previous_messages,
         )
         intent = ChatProductQueryIntentService.resolve_product_intent(
             message,
@@ -197,27 +198,35 @@ class ChatExternalActionOrchestrationService:
             previous_messages=previous_messages,
         )
 
+        explicit_route_segment = ChatRouteContextService.segment_from_message(message)
+
         if intent == ChatProductQueryIntent.FULL:
             intent = cls._resolve_product_intent(message, normalized)
 
         recent_batch = ChatRouteContextService.collect_recent_product_route_batch(
             previous_messages,
-            route_segment=route_segment,
+            route_segment=None if explicit_route_segment else route_segment,
         )
 
         if (
             not codes
             and recent_batch
-            and ChatProductQueryIntentService.references_previous_product(message)
+            and (
+                ChatProductQueryIntentService.references_previous_product(message)
+                or ChatRouteContextService.is_product_route_segment(route_segment)
+                or ChatRouteContextService.is_product_route_segment(explicit_route_segment)
+            )
         ):
             codes = list(recent_batch.product_codes)
             route_segment = route_segment or recent_batch.route_segment
-            inherited_intent = ChatRouteContextService.intent_for_product_segment(
-                recent_batch.route_segment
-            )
 
-            if inherited_intent:
-                intent = inherited_intent
+            if not explicit_route_segment:
+                inherited_intent = ChatRouteContextService.intent_for_product_segment(
+                    recent_batch.route_segment
+                )
+
+                if inherited_intent:
+                    intent = inherited_intent
 
         multi_product = len(codes) > 1 and (
             intent in cls._MULTI_PRODUCT_INTENTS

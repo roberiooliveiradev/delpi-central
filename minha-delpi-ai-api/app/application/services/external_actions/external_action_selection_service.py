@@ -406,12 +406,19 @@ class ExternalActionSelectionService:
                 return selected
 
         if product_code and product_intent == ChatProductQueryIntent.SALES:
+            sales_route_segment = product_route_segment or "sales"
+            sales_intent = (
+                ChatProductQueryIntent.FULL
+                if sales_route_segment in ("outbound-invoice", "inbound-invoice")
+                else ChatProductQueryIntent.SALES
+            )
+
             selected = self._select_product_action(
                 message,
                 product_code,
                 allowed_action_ids=allowed_action_ids,
-                intent=ChatProductQueryIntent.SALES,
-                route_segment=product_route_segment or "sales",
+                intent=sales_intent,
+                route_segment=sales_route_segment,
             )
 
             if selected:
@@ -2002,7 +2009,19 @@ class ExternalActionSelectionService:
             if action.get("method") == "GET"
         ] or candidates
 
-        if intent == ChatProductQueryIntent.SALES:
+        invoice_segment = str(route_segment or "").strip().lower()
+        if invoice_segment in ("outbound-invoice", "inbound-invoice"):
+            invoice_candidates = [
+                action
+                for action in candidates
+                if f"/{invoice_segment}" in str(action.get("path") or "").lower()
+            ]
+
+            if invoice_candidates:
+                candidates = invoice_candidates
+            else:
+                return None
+        elif intent == ChatProductQueryIntent.SALES:
             sales_candidates = [
                 action
                 for action in candidates

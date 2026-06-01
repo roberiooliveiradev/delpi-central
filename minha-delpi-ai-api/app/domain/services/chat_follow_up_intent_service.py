@@ -13,6 +13,8 @@ class ChatFollowUpIntentService:
     _FOLLOW_UP_PATTERNS = (
         r"\bfornecedores?\b",
         r"\bestoque\b",
+        r"\bnotas?\s+fiscais?\b",
+        r"\bnf(?:e)?\s+de\s+sa[ií]da\b",
         r"\broteiro\b",
         r"\bestrutura\b",
         r"\binspe[cç][aã]o\b",
@@ -49,6 +51,11 @@ class ChatFollowUpIntentService:
 
         if re.search(r"\bfornecedores?\b", normalized):
             return "supplier"
+
+        if re.search(r"\bnotas?\s+fiscais?\b", normalized) and re.search(
+            r"\bsa[ií]da\b", normalized
+        ):
+            return "outbound_invoice"
 
         if re.search(r"\bestoque\b", normalized):
             return "stock"

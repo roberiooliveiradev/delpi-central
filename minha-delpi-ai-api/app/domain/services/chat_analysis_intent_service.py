@@ -391,6 +391,8 @@ class ChatAnalysisIntentService:
         cls,
         message: str,
         conversation_context: str | None = None,
+        *,
+        previous_messages: list | None = None,
     ) -> list[str]:
         """Códigos para planejar consultas paralelas à API.
 
@@ -406,10 +408,20 @@ class ChatAnalysisIntentService:
         if codes_in_message:
             return codes_in_message
 
-        if ChatProductQueryIntentService.references_previous_product(message):
+        from app.domain.services.chat_route_context_service import (
+            ChatRouteContextService,
+        )
+
+        if (
+            ChatProductQueryIntentService.references_previous_product(message)
+            or ChatRouteContextService.is_product_route_segment(
+                ChatRouteContextService.segment_from_message(message)
+            )
+        ):
             code = ChatProductQueryIntentService.resolve_product_code(
                 message,
                 conversation_context,
+                previous_messages=previous_messages,
             )
 
             return [code] if code else []

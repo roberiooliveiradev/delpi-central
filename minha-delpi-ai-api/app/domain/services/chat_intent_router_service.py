@@ -980,6 +980,7 @@ class ChatIntentRouterService:
             "stock": "stock_lookup",
             "structure": "structure_lookup",
             "routing": "guide_lookup",
+            "outbound_invoice": "sales_lookup",
         }
 
         return mapping.get(follow_type or "")
@@ -1148,6 +1149,7 @@ class ChatIntentRouterService:
                 )
             )
             or ChatIntentRouterService._mentions_supplier(lowered)
+            or ChatIntentRouterService._mentions_outbound_invoice(lowered)
         ):
             return False, ()
 
@@ -1168,6 +1170,46 @@ class ChatIntentRouterService:
     @staticmethod
     def _mentions_supplier(lowered: str) -> bool:
         return "fornecedor" in lowered or bool(re.search(r"\bfornece", lowered))
+
+    @staticmethod
+    def _mentions_outbound_invoice(lowered: str) -> bool:
+        if any(
+            term in lowered
+            for term in (
+                "notas fiscais de entrada",
+                "nota de entrada",
+                "notas de entrada",
+            )
+        ):
+            return False
+
+        if any(
+            term in lowered
+            for term in (
+                "notas fiscais de saída",
+                "notas fiscais de saida",
+                "nota fiscal de saída",
+                "nota fiscal de saida",
+                "notas de saída",
+                "notas de saida",
+                "nota de saída",
+                "nota de saida",
+                "nf de saída",
+                "nf de saida",
+                "nfe de saída",
+                "nfe de saida",
+            )
+        ):
+            return True
+
+        if "notas fiscais" in lowered and (
+            "saída" in lowered or "saida" in lowered or "venda" in lowered
+        ):
+            return True
+
+        return bool(re.search(r"\bnf(?:e)?\b", lowered)) and (
+            "saída" in lowered or "saida" in lowered
+        )
 
     @staticmethod
     def _looks_operational(message: str) -> bool:
@@ -1208,6 +1250,9 @@ class ChatIntentRouterService:
 
         if "estoque" in lowered:
             return "stock_lookup"
+
+        if ChatIntentRouterService._mentions_outbound_invoice(lowered):
+            return "sales_lookup"
 
         if any(
             term in lowered
