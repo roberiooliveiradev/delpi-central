@@ -88,6 +88,8 @@ class ChatMessageBranchService:
         messages: list[ChatMessage],
         until_message_id: UUID,
         active_leaf_message_id: UUID | None = None,
+        *,
+        include_assistant_reply: bool = True,
     ) -> list[ChatMessage]:
         """Caminho copiado no fork — inclui resposta assistant se existir no ramo ativo."""
         path = cls.build_path_to_message(messages, until_message_id)
@@ -97,7 +99,7 @@ class ChatMessageBranchService:
 
         until_message = path[-1]
 
-        if until_message.role != "user":
+        if until_message.role != "user" or not include_assistant_reply:
             return path
 
         active_path = cls.build_active_path(messages, active_leaf_message_id)

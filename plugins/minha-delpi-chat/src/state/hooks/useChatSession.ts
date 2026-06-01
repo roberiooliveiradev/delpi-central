@@ -1194,6 +1194,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       readingStatus?: string;
     }[];
     content?: string;
+    /** Sessão alvo (ex.: logo após fork) quando o state ainda não atualizou. */
+    session?: ChatSession;
   } = {}) => {
     const message = (params.content ?? draft).trim();
     const fromDraft = params.content == null;
@@ -1224,7 +1226,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
     setLastSentUserText(message);
     const optimisticId = `optimistic-${Date.now()}`;
-    let sessionForMessage = activeSession;
+    let sessionForMessage = params.session ?? activeSession;
 
     setError(null);
     if (fromDraft) {
@@ -1235,20 +1237,20 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingToolCalls([]);
     setStreamingActivityLog([]);
     setStreamingShowPresentation(false);
-    const initialStatus = activeSession
+    const initialStatus = sessionForMessage
       ? "Preparando sua pergunta..."
       : "Criando conversa e preparando sua pergunta...";
     setStreamingStatus(initialStatus);
 
-    if (activeSession) {
-      clearSessionStreamUi(activeSession.id);
-      patchSessionStreamUi(activeSession.id, {
+    if (sessionForMessage) {
+      clearSessionStreamUi(sessionForMessage.id);
+      patchSessionStreamUi(sessionForMessage.id, {
         activityLog: [],
         status: initialStatus,
         sources: [],
         toolCalls: [],
       });
-      markSessionPending(activeSession.id);
+      markSessionPending(sessionForMessage.id);
     }
 
     const optimisticMessage: ChatMessage = {
@@ -1740,6 +1742,23 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         return;
       }
 
+      if (messageId.startsWith("optimistic-")) {
+        setError("Aguarde a mensagem ser salva antes de continuar a partir daqui.");
+        return;
+      }
+
+      const sourceMessage = messages.find((item) => item.id === messageId);
+
+      if (!sourceMessage) {
+        setError("Não encontrei a mensagem para continuar a partir daqui.");
+        return;
+      }
+
+      const resendUserMessage = sourceMessage.role === "user";
+      const questionText = resendUserMessage
+        ? String(sourceMessage.content || "").trim()
+        : "";
+
       setError(null);
 
       try {
@@ -1753,17 +1772,28 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             agentId: activeSession.agent_id,
             forkFromSessionId: activeSession.id,
             forkUntilMessageId: messageId,
+            forkResendUserMessage: resendUserMessage,
           },
           { getAccessToken: options.getAccessToken },
         );
 
         setSessions((current) => [newSession, ...current]);
         resetStreamingUi();
-        selectSession(newSession);
+        activeSessionIdRef.current = newSession.id;
+        setActiveSession(newSession);
+        setMessages([]);
+        setPendingUserMessage(null);
+
+        await loadMessages(newSession.id);
+
         options.onSessionActivated?.(newSession.id, {
           agentId: newSession.agent_id ?? options.agentId ?? null,
           projectId: newSession.project_id ?? options.projectId ?? null,
         });
+
+        if (resendUserMessage && questionText) {
+          await sendMessage({ session: newSession, content: questionText });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Erro ao continuar conversa.");
       }
@@ -1771,9 +1801,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [
       activeSession,
       isActiveSessionBusy,
+      loadMessages,
+      messages,
       options,
       resetStreamingUi,
-      selectSession,
+      sendMessage,
     ],
   );
 

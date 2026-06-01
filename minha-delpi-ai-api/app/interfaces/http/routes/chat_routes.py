@@ -2095,6 +2095,10 @@ def create_session():
                 fork_until_message_id=(
                     payload.get("forkUntilMessageId") or payload.get("fork_until_message_id")
                 ),
+                fork_resend_user_message=bool(
+                    payload.get("forkResendUserMessage")
+                    or payload.get("fork_resend_user_message")
+                ),
             )
         )
 

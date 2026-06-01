@@ -10,3 +10,4 @@ class CreateChatSessionRequest:
     agent_id: str | None = None
     fork_from_session_id: str | None = None
     fork_until_message_id: str | None = None
+    fork_resend_user_message: bool = False

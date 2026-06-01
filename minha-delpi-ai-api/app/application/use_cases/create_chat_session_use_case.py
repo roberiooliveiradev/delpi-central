@@ -87,14 +87,26 @@ class CreateChatSessionUseCase:
             raise ChatMessageNotFoundError()
 
         all_messages = self.repository.list_all_messages_by_session(source_session_id)
-        path_to_fork = ChatMessageBranchService.build_fork_path(
-            all_messages,
-            until_message_id,
-            source_session.active_leaf_message_id,
-        )
 
-        if not path_to_fork or path_to_fork[-1].id != until_message_id:
-            raise ChatMessageNotFoundError()
+        if request.fork_resend_user_message and until_message.role == "user":
+            # Copia só o contexto anterior — a pergunta será reenviada uma vez pelo cliente.
+            if until_message.parent_message_id:
+                path_to_fork = ChatMessageBranchService.build_path_to_message(
+                    all_messages,
+                    until_message.parent_message_id,
+                )
+            else:
+                path_to_fork = []
+        else:
+            path_to_fork = ChatMessageBranchService.build_fork_path(
+                all_messages,
+                until_message_id,
+                source_session.active_leaf_message_id,
+                include_assistant_reply=not request.fork_resend_user_message,
+            )
+
+            if not path_to_fork or path_to_fork[-1].id != until_message_id:
+                raise ChatMessageNotFoundError()
 
         title = self._normalize_optional_text(request.title, max_length=150)
         if not title:

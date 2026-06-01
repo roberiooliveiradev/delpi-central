@@ -118,3 +118,24 @@ def test_build_fork_path_includes_assistant_after_user_on_active_branch():
 
     assert [item.role for item in path] == ["user", "assistant", "user", "assistant"]
     assert path[-1].content == "refine ok"
+
+
+def test_build_fork_path_omits_assistant_when_resending_user_message():
+    root = _message(role="user", content="pergunta", created_offset=0)
+    assistant = _message(
+        role="assistant",
+        content="resposta",
+        parent_message_id=root.id,
+        created_offset=1,
+    )
+    messages = [root, assistant]
+
+    path = ChatMessageBranchService.build_fork_path(
+        messages,
+        root.id,
+        assistant.id,
+        include_assistant_reply=False,
+    )
+
+    assert [item.role for item in path] == ["user"]
+    assert path[-1].content == "pergunta"
