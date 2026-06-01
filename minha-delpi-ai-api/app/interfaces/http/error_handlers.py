@@ -1,5 +1,7 @@
 from werkzeug.exceptions import HTTPException
+from sqlalchemy.exc import OperationalError
 
+from app.extensions.db import db
 from app.domain.exceptions.auth_exceptions import (
     AuthenticationError,
     InvalidClaimsError,
@@ -24,6 +26,20 @@ from app.interfaces.http.utils.errors import error_response, not_found, server_e
 
 
 def register_error_handlers(app):
+    @app.errorhandler(OperationalError)
+    def handle_db_operational_error(error):
+        db.session.rollback()
+        db.session.remove()
+        app.logger.warning(
+            "Database operational error — session recycled: %s",
+            error,
+        )
+        return error_response(
+            status_code=503,
+            code="database.unavailable",
+            message="Banco temporariamente indisponível. Tente novamente.",
+        )
+
     @app.errorhandler(AuthenticationError)
     def handle_authentication_error(error):
         return error_response(

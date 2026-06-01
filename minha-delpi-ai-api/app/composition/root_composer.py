@@ -29,6 +29,11 @@ def create_application() -> Flask:
     app.config["ENV"] = Settings.ENV
     app.config["SQLALCHEMY_DATABASE_URI"] = Settings.DATABASE_URL
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        # Recicla conexões mortas após restart do Postgres (evita 500 intermitente).
+        "pool_pre_ping": True,
+        "pool_recycle": 300,
+    }
 
     # Import necessário para registrar models no metadata antes do Alembic.
     from app.infrastructure.db import models  # noqa: F401

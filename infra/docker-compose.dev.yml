@@ -301,10 +301,14 @@ services:
       - ../shared/delpi_auth:/app/delpi_auth
 
     depends_on:
-      - core-api
-      - postgres-plugins
-      - ollama
-      - searxng
+      core-api:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+      searxng:
+        condition: service_started
     networks:
       - delpi-network
 
@@ -802,6 +806,13 @@ services:
       POSTGRES_USER: ${PLUGINS_DB_USER}
       POSTGRES_PASSWORD: ${PLUGINS_DB_PASSWORD}
       TZ: ${TZ}
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
     ports:
       - "5433:5432"
