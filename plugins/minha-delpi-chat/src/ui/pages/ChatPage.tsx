@@ -1343,14 +1343,8 @@ export function ChatPage({
     }
   }
 
-  async function handleAgentIcebreaker(query: string) {
-    const resolved = await resolveShortcutQuery(query, CHAT_SHORTCUT_PROMPT_COPY.insert);
-
-    if (!resolved) {
-      return;
-    }
-
-    setDraft(resolved);
+  function handleAgentIcebreaker(query: string) {
+    handleHomeStarter(query);
   }
 
   async function handleEditAndResendMessage(messageId: string, content: string) {

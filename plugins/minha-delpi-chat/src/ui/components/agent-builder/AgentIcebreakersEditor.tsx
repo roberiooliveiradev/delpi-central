@@ -124,9 +124,9 @@ export function AgentIcebreakersEditor({
 
       <p className="mdc-agent-icebreakers-editor__help">
         Use texto livre ou campos editáveis como{" "}
-        <code>{buildIcebreakerPlaceholderToken("productCode")}</code> — no clique, o usuário
-        preenche o valor antes de enviar (até {AGENT_ICEBREAKER_MAX_COUNT} sugestões,{" "}
-        {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada).
+        <code>{buildIcebreakerPlaceholderToken("productCode")}</code> — na home, o clique envia
+        a pergunta (com diálogo para placeholders). Até {AGENT_ICEBREAKER_MAX_COUNT} sugestões,{" "}
+        {AGENT_ICEBREAKER_MAX_CHARS} caracteres cada.
       </p>
 
       <div className="mdc-agent-icebreakers-editor__templates" aria-label="Modelos de quebra-gelo">
@@ -204,7 +204,7 @@ export function AgentIcebreakersEditor({
               >
                 <span>Prévia no card:</span> {formatIcebreakerForDisplay(icebreaker)}
                 {hasShortcutPlaceholders(icebreaker) ? (
-                  <em> — ao clicar, abre campos para preencher.</em>
+                  <em> — na home, pede o valor e envia ao clicar.</em>
                 ) : null}
               </p>
             ) : null}

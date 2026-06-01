@@ -80,7 +80,7 @@ export function ChatAgentHome({
         >
           {usingDefaultIcebreakers ? (
             <p className="mdc-chat-agent-home__icebreakers-hint">
-              Sugestões padrão — clique para preencher campos ou digite do seu jeito.
+              Sugestões padrão — clique para enviar a pergunta ao agente.
             </p>
           ) : null}
           {icebreakers.map((icebreaker) => {
