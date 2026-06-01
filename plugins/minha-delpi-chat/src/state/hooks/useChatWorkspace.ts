@@ -32,8 +32,8 @@ type UseChatWorkspaceOptions = {
 export function useChatWorkspace(options: UseChatWorkspaceOptions = {}) {
   const [agents, setAgents] = useState<ChatAgent[]>([]);
   const [projects, setProjects] = useState<ChatProject[]>([]);
-  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(true);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
 
   const loadAgents = useCallback(async (includeDisabled = false, includeStats = false) => {

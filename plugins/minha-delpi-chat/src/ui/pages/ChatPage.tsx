@@ -76,6 +76,12 @@ import {
   type ChatRoute,
 } from "../../navigation/chatRoutes";
 import { navigateChatHref } from "../../navigation/chatNavigation";
+import {
+  getChatSidebarViewForRoute,
+  getInitialActiveAgentPageId,
+  getInitialAgentEditRequest,
+  getInitialSelectedProjectId,
+} from "../../navigation/chatRouteInitialState";
 import { useChatRouteSync } from "../../state/hooks/useChatRouteSync";
 import type {
   AssistantCatalogResponse,
@@ -101,22 +107,29 @@ type ChatPageProps = {
 export function ChatPage({
   getAccessToken,
   pathname,
+  initialRoute,
   onOpenAdmin,
 }: ChatPageProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [activeAgentPageId, setActiveAgentPageId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() =>
+    getInitialSelectedProjectId(initialRoute),
+  );
+  const [activeAgentPageId, setActiveAgentPageId] = useState<string | null>(() =>
+    getInitialActiveAgentPageId(initialRoute),
+  );
   const [agentEditRequest, setAgentEditRequest] = useState<{
     id: string;
     requestKey: number;
-  } | null>(null);
+  } | null>(() => getInitialAgentEditRequest(initialRoute));
   const [canManageAgents, setCanManageAgents] = useState(false);
   const [canManageOfficialAgents, setCanManageOfficialAgents] = useState(false);
   const [hasLoadedManageAgentsPermission, setHasLoadedManageAgentsPermission] = useState(false);
   const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
   const [contextAgentId, setContextAgentId] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<ChatSidebarView>("chat");
+  const [currentView, setCurrentView] = useState<ChatSidebarView>(() =>
+    initialRoute ? getChatSidebarViewForRoute(initialRoute) : "chat",
+  );
   const chatRoute = useMemo(() => parseChatRoute(pathname), [pathname]);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
@@ -869,6 +882,7 @@ export function ChatPage({
     pathname,
     sessions,
     workspaceReady: !isLoadingAgents && !isLoadingProjects,
+    workspaceRevision: agents.length + projects.length,
     onApplyRoute: applyChatRoute,
   });
 

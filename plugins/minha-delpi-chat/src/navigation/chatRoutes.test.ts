@@ -25,6 +25,17 @@ const AGENTS = [
 ];
 
 describe("chatRoutes agents", () => {
+  it("parseia rota de agente configurar", () => {
+    expect(
+      parseChatRoute(
+        `/apps/minha-delpi-chat/agentes/${AGENTS[0].id}/configurar`,
+      ),
+    ).toEqual({
+      kind: "agent-config",
+      agentId: AGENTS[0].id,
+    });
+  });
+
   it("parseia rota de agente por uuid", () => {
     expect(
       parseChatRoute(

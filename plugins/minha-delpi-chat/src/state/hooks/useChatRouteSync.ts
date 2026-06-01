@@ -7,6 +7,7 @@ type UseChatRouteSyncOptions = {
   pathname?: string;
   sessions: ChatSession[];
   workspaceReady?: boolean;
+  workspaceRevision?: number;
   onApplyRoute: (route: ChatRoute) => void;
 };
 
@@ -14,12 +15,14 @@ export function useChatRouteSync({
   pathname,
   sessions,
   workspaceReady = true,
+  workspaceRevision = 0,
   onApplyRoute,
 }: UseChatRouteSyncOptions) {
   const isApplyingRouteRef = useRef(false);
   const lastAppliedPathnameRef = useRef<string | null>(null);
   const lastAppliedSessionCountRef = useRef<number>(0);
   const lastAppliedWorkspaceReadyRef = useRef<boolean>(workspaceReady);
+  const lastAppliedWorkspaceRevisionRef = useRef<number>(workspaceRevision);
 
   useEffect(() => {
     if (!pathname) {
@@ -38,17 +41,26 @@ export function useChatRouteSync({
     const workspaceBecameReady =
       workspaceReady && !lastAppliedWorkspaceReadyRef.current;
 
-    if (!pathnameChanged && !sessionsGrew && !workspaceBecameReady) {
+    const workspaceDataChanged =
+      workspaceRevision !== lastAppliedWorkspaceRevisionRef.current;
+
+    if (
+      !pathnameChanged &&
+      !sessionsGrew &&
+      !workspaceBecameReady &&
+      !workspaceDataChanged
+    ) {
+      return;
+    }
+
+    if (!workspaceReady) {
       return;
     }
 
     lastAppliedPathnameRef.current = pathname;
     lastAppliedSessionCountRef.current = sessions.length;
     lastAppliedWorkspaceReadyRef.current = workspaceReady;
-
-    if (!workspaceReady) {
-      return;
-    }
+    lastAppliedWorkspaceRevisionRef.current = workspaceRevision;
 
     isApplyingRouteRef.current = true;
 
@@ -57,7 +69,7 @@ export function useChatRouteSync({
     } finally {
       isApplyingRouteRef.current = false;
     }
-  }, [pathname, sessions, workspaceReady, onApplyRoute]);
+  }, [pathname, sessions, workspaceReady, workspaceRevision, onApplyRoute]);
 
   return { isApplyingRouteRef };
 }

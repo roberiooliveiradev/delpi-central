@@ -86,13 +86,13 @@
   flex: 1 1 auto;
   min-width: 0;
   width: auto;
-  min-height: 2.75rem;
+  height: 4rem;
+  min-height: 4rem;
+  max-height: 4rem;
   padding: 0.7rem 0.8rem;
   line-height: 1.45;
-  resize: vertical;
-  field-sizing: content;
-  min-block-size: 2.75rem;
-  max-block-size: 6.5rem;
+  resize: none;
+  overflow-y: auto;
 }
 
 .mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-count {

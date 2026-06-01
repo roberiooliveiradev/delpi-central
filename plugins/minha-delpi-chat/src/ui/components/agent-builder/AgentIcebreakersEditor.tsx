@@ -173,7 +173,7 @@ export function AgentIcebreakersEditor({
                 }}
                 className="mdc-chat-agent-builder__icebreaker-field"
                 value={icebreaker}
-                rows={2}
+                rows={1}
                 maxLength={AGENT_ICEBREAKER_MAX_CHARS}
                 onChange={(event) => updateIcebreaker(index, event.target.value)}
                 onFocus={() => setFocusedIndex(index)}

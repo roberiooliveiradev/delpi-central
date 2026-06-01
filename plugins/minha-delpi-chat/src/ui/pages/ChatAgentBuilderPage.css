@@ -220,7 +220,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: stretch;
-  min-height: 2.75rem;
+  min-height: 4rem;
   border: 1px solid color-mix(in srgb, var(--mdc-card-border) 78%, transparent);
   border-radius: 0.78rem;
   overflow: hidden;
@@ -1608,8 +1608,13 @@
   .mdc-chat-agent-builder__icebreakers input,
   .mdc-chat-agent-builder__icebreakers textarea {
     grid-column: 1 / -1;
-    min-height: 2.6rem;
     padding: 0.65rem 0.75rem;
+  }
+
+  .mdc-agent-icebreakers-editor__row .mdc-chat-agent-builder__icebreaker-field {
+    height: 4rem;
+    min-height: 4rem;
+    max-height: 4rem;
   }
 
   .mdc-chat-agent-builder__icebreaker-count {
