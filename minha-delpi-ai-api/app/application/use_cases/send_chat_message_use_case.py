@@ -870,6 +870,20 @@ class SendChatMessageUseCase:
             metadata=audit_metadata,
         )
 
+        for tool_call in tool_calls or []:
+            if not isinstance(tool_call, dict):
+                continue
+
+            attempt = (tool_call.get("metadata") or {}).get("errorRecoveryAttempt")
+
+            if isinstance(attempt, dict):
+                self.audit_repository.log(
+                    user_id=user_id,
+                    action="chat.error_recovery.attempted",
+                    metadata=attempt,
+                )
+                break
+
         return SendChatMessageResponse(
             messageId=str(assistant_message.id),
             answer=answer,

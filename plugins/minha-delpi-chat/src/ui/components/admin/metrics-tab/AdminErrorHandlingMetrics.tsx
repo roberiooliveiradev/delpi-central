@@ -14,6 +14,14 @@ function formatNumber(value?: number | null): string {
   return new Intl.NumberFormat("pt-BR").format(value);
 }
 
+function formatPercent(value?: number | null): string {
+  if (typeof value !== "number") {
+    return "—";
+  }
+
+  return `${Math.round(value * 100)}%`;
+}
+
 export function AdminErrorHandlingMetrics({
   summary,
   isLoading = false,
@@ -62,6 +70,24 @@ export function AdminErrorHandlingMetrics({
               <h4>Falha de API</h4>
               <strong>{formatNumber(summary.apiFailedCount)}</strong>
               <p>Sem afirmar inexistência de dados.</p>
+            </article>
+            <article className="mdc-admin-kpi-card">
+              <h4>Planos auto-recuperação</h4>
+              <strong>{formatNumber(summary.autoRecoveryPlans)}</strong>
+              <p>Respostas com plano para reexecutar consulta.</p>
+            </article>
+            <article className="mdc-admin-kpi-card">
+              <h4>Cliques recuperar</h4>
+              <strong>{formatNumber(summary.recoveryClicksCount)}</strong>
+              <p>Chips do grupo «recuperar» acionados.</p>
+            </article>
+            <article className="mdc-admin-kpi-card">
+              <h4>Tentativas automáticas</h4>
+              <strong>{formatNumber(summary.recoveryAttemptsCount)}</strong>
+              <p>
+                Sucesso: {formatNumber(summary.recoverySuccessCount)} (
+                {formatPercent(summary.recoverySuccessRate)})
+              </p>
             </article>
           </div>
 

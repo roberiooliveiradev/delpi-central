@@ -104,6 +104,23 @@ class ChatErrorHandlingService:
         if suggestions:
             metadata["errorRecoveryFollowUpSuggestions"] = suggestions
 
+        from app.domain.services.chat_error_auto_recovery_service import (
+            ChatErrorAutoRecoveryService,
+        )
+
+        auto_recovery = ChatErrorAutoRecoveryService.build_plan(
+            error_type=classification.error_type,
+            tool_calls=tool_calls,
+            previous_messages=(workspace_context or {}).get("previousMessages"),
+        )
+
+        if auto_recovery:
+            metadata["errorAutoRecovery"] = auto_recovery
+            payload = metadata.get("errorHandling")
+
+            if isinstance(payload, dict):
+                payload["autoRecovery"] = auto_recovery
+
         if structured_answer and cls._should_enrich_answer(answer, classification):
             metadata["errorHandlingEnrichedAnswer"] = structured_answer
 

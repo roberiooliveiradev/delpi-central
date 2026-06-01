@@ -407,6 +407,11 @@ export type AdminErrorHandlingSummary = {
   totalEvents: number;
   recoverableCount: number;
   apiFailedCount: number;
+  autoRecoveryPlans?: number;
+  recoveryClicksCount?: number;
+  recoveryAttemptsCount?: number;
+  recoverySuccessCount?: number;
+  recoverySuccessRate?: number;
   byType: AdminErrorHandlingTypeCount[];
   recent: Record<string, unknown>[];
 };

@@ -348,6 +348,26 @@ class ChatToolContextService:
                 reason="Consolidação completa da consulta paginada.",
             )
 
+        error_recovery = paginated_service.fetch_error_recovery_from_history(
+            user_id=user_id,
+            access_token=access_token,
+            message=raw_message,
+            previous_messages=previous_messages,
+            on_stream_activity=on_stream_activity,
+        )
+
+        if error_recovery:
+            merged_data, merged_metadata, arguments, _continue_prompt = error_recovery
+            return self._finalize_paginated_consolidation_result(
+                raw_message=raw_message,
+                previous_messages=previous_messages,
+                merged_data=merged_data,
+                merged_metadata=merged_metadata,
+                arguments=arguments,
+                continue_prompt=None,
+                reason="Recuperação automática da consulta anterior.",
+            )
+
         format_refinement = paginated_service.fetch_format_refinement_from_history(
             user_id=user_id,
             access_token=access_token,

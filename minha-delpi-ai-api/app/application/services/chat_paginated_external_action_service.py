@@ -190,6 +190,80 @@ class ChatPaginatedExternalActionService:
 
         return payload, base_metadata, arguments, None
 
+    def fetch_error_recovery_from_history(
+        self,
+        *,
+        user_id: str,
+        access_token: str,
+        message: str,
+        previous_messages: list | None,
+        on_stream_activity=None,
+    ) -> tuple[object, dict, dict, str | None] | None:
+        from app.domain.services.chat_error_auto_recovery_service import (
+            ChatErrorAutoRecoveryService,
+        )
+
+        if not ChatErrorAutoRecoveryService.looks_like_recovery_request(message):
+            return None
+
+        strategy = ChatErrorAutoRecoveryService.resolve_strategy(message)
+        operation = ChatErrorAutoRecoveryService.collect_operation(
+            None,
+            previous_messages=previous_messages,
+            prefer_failed=True,
+        )
+
+        if not operation:
+            operation = ChatErrorAutoRecoveryService.collect_operation(
+                None,
+                previous_messages=previous_messages,
+                prefer_failed=False,
+            )
+
+        if not operation:
+            return None
+
+        action_id = str(operation.get("actionId") or "").strip()
+        parameters = ChatErrorAutoRecoveryService.apply_strategy(
+            strategy,
+            operation,
+            message,
+        )
+
+        if not action_id:
+            return None
+
+        try:
+            result = self.execute_tool_use_case.execute(
+                ExecuteToolRequest(
+                    user_id=user_id,
+                    access_token=access_token,
+                    tool_name="execute_external_action",
+                    arguments={
+                        "actionId": action_id,
+                        "parameters": parameters,
+                    },
+                )
+            )
+        except Exception:
+            return None
+
+        if not (result.metadata or {}).get("ok"):
+            return None
+
+        arguments = {
+            "actionId": action_id,
+            "parameters": parameters,
+        }
+
+        audit_meta = dict(result.metadata or {})
+        audit_meta["errorRecoveryAttempt"] = {
+            "strategy": strategy,
+            "ok": True,
+        }
+
+        return result.data, audit_meta, arguments, None
+
     def maybe_consolidate(
         self,
         *,

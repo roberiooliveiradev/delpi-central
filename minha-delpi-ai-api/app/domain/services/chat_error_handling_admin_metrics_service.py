@@ -24,12 +24,15 @@ class ChatErrorHandlingAdminMetricsService:
 
         suggestions = error_handling.get("suggestions") or []
 
+        auto_recovery = error_handling.get("autoRecovery")
+
         return {
             "type": error_type,
             "severity": error_handling.get("severity"),
             "recoverable": bool(error_handling.get("recoverable")),
             "apiFailed": bool(error_handling.get("apiFailed")),
             "suggestionCount": len(suggestions) if isinstance(suggestions, list) else 0,
+            "hasAutoRecovery": isinstance(auto_recovery, dict),
         }
 
     @classmethod
@@ -51,12 +54,15 @@ class ChatErrorHandlingAdminMetricsService:
         cls,
         *,
         entries: list[dict[str, Any]],
+        recovery_clicks: list[dict[str, Any]] | None = None,
+        recovery_attempts: list[dict[str, Any]] | None = None,
         hours: int,
         since_iso: str,
     ) -> dict[str, Any]:
         by_type: Counter[str] = Counter()
         recoverable = 0
         api_failed = 0
+        auto_recovery_plans = 0
         recent: list[dict[str, Any]] = []
 
         for entry in entries:
@@ -74,6 +80,9 @@ class ChatErrorHandlingAdminMetricsService:
             if snapshot.get("apiFailed"):
                 api_failed += 1
 
+            if snapshot.get("hasAutoRecovery"):
+                auto_recovery_plans += 1
+
             if len(recent) < 12:
                 recent.append(
                     {
@@ -85,6 +94,14 @@ class ChatErrorHandlingAdminMetricsService:
                 )
 
         total = sum(by_type.values())
+        clicks = recovery_clicks or []
+        attempts = recovery_attempts or []
+        successful_attempts = sum(
+            1
+            for entry in attempts
+            if isinstance(entry.get("snapshot"), dict)
+            and entry["snapshot"].get("ok")
+        )
 
         return {
             "windowHours": hours,
@@ -92,6 +109,13 @@ class ChatErrorHandlingAdminMetricsService:
             "totalEvents": total,
             "recoverableCount": recoverable,
             "apiFailedCount": api_failed,
+            "autoRecoveryPlans": auto_recovery_plans,
+            "recoveryClicksCount": len(clicks),
+            "recoveryAttemptsCount": len(attempts),
+            "recoverySuccessCount": successful_attempts,
+            "recoverySuccessRate": (
+                successful_attempts / len(attempts) if attempts else 0.0
+            ),
             "byType": [
                 {"type": error_type, "count": count}
                 for error_type, count in by_type.most_common(12)

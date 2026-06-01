@@ -473,8 +473,57 @@ class PostgresAuditRepository(AuditRepositoryPort):
                 }
             )
 
+        recovery_click_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.interactivity.clicked",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(2000)
+            .all()
+        )
+
+        recovery_attempt_models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action == "chat.error_recovery.attempted",
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(2000)
+            .all()
+        )
+
+        recovery_clicks: list[dict] = []
+
+        for model in recovery_click_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+
+            if str(metadata.get("group") or "") != "recuperar":
+                continue
+
+            recovery_clicks.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "snapshot": metadata,
+                }
+            )
+
+        recovery_attempts: list[dict] = []
+
+        for model in recovery_attempt_models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+
+            recovery_attempts.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "snapshot": metadata,
+                }
+            )
+
         return ChatErrorHandlingAdminMetricsService.aggregate(
             entries=entries,
+            recovery_clicks=recovery_clicks,
+            recovery_attempts=recovery_attempts,
             hours=safe_hours,
             since_iso=since.isoformat(),
         )

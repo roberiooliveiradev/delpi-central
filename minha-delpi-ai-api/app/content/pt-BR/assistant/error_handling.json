@@ -264,6 +264,42 @@
       ]
     }
   },
+  "autoRecovery": {
+    "retryTriggers": [
+      "tente novamente",
+      "tente novamente a consulta anterior",
+      "repita a consulta",
+      "tentar novamente",
+      "tente de novo"
+    ],
+    "removeFiltersTriggers": [
+      "sem filtros",
+      "repita a consulta sem filtros",
+      "remover filtros"
+    ],
+    "widenPeriodTriggers": [
+      "amplie o período",
+      "amplie o periodo",
+      "ampliar período"
+    ],
+    "strategiesByType": {
+      "empty_result": "retry_last",
+      "invalid_parameter": "retry_last",
+      "api_unavailable": "retry_last",
+      "timeout": "widen_period",
+      "tool_error": "retry_last",
+      "partial_result": "retry_last",
+      "permission_denied": "retry_last"
+    },
+    "strategyByChipLabel": {
+      "Tentar novamente": "retry_last",
+      "Tentar mais tarde": "retry_last",
+      "Remover filtros": "remove_filters",
+      "Ampliar período": "widen_period",
+      "Reduzir filtros": "remove_filters",
+      "Reduzir período": "widen_period"
+    }
+  },
   "chipQueries": {
     "Buscar por descrição": "busque produto por descrição",
     "Ampliar período": "amplie o período da consulta",

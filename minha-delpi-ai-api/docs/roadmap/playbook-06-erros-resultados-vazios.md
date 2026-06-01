@@ -15,7 +15,8 @@ Escopo: falhas, respostas sem dados, permissão negada, parâmetros ausentes, AP
 | `ChatErrorHandlingClassifier` | Classifica a partir de tools, resposta, anexos e trust signals |
 | `ChatErrorHandlingService` | Metadata `errorHandling`, `errorRecoveryFollowUpSuggestions`, debug admin |
 | `ChatErrorHandlingTelemetryService` | Log estruturado `error_handling` |
-| `ChatErrorHandlingAdminMetricsService` | Auditoria `errorHandlingMetrics` + painel admin |
+| `ChatErrorAutoRecoveryService` | Plano `errorAutoRecovery` + reexecução ao pedir «tente novamente» |
+| `ChatErrorHandlingAdminMetricsService` | Auditoria `errorHandlingMetrics` + cliques/tentativas de recuperação |
 | `ChatHelpErrorFollowUpService` | Fallback quando não há chips de recuperação tipados |
 | MFE `ChatErrorHandlingCard` | Card com título, motivos e chips «Recuperar consulta» (sem chips duplicados quando `interactivity.consolidated`) |
 
@@ -74,8 +75,8 @@ Arquivos: `tests/fixtures/error_empty_states_cases.py`, `tests/unit/application/
 | 1 — Templates de erro | Concluída |
 | 2 — Metadata e debug | Concluída |
 | 3 — Chips de recuperação | Concluída |
-| 4 — Recuperação automática | Parcial (normalização de código/data já no pipeline operacional) |
-| 5 — Métricas e alertas | Concluída (telemetria log + `GET /admin/metrics/error-handling/summary` + `AdminErrorHandlingMetrics`) |
+| 4 — Recuperação automática | Concluída (`errorAutoRecovery`, reexecução em `ChatToolContextService`, estratégias em `error_handling.json`) |
+| 5 — Métricas e alertas | Concluída (telemetria, `errorHandlingMetrics`, cliques `recuperar`, `chat.error_recovery.attempted`, painel admin) |
 
 ---
 

@@ -360,6 +360,13 @@ def record_assistant_help_event():
                     metadata=click_snapshot,
                 )
 
+                if str(click_snapshot.get("group") or "") == "recuperar":
+                    PostgresAuditRepository().log(
+                        user_id=UUID(str(g.current_user.sub)),
+                        action="chat.error_recovery.clicked",
+                        metadata=click_snapshot,
+                    )
+
         db.session.commit()
 
     return jsonify(result), 200
