@@ -396,6 +396,21 @@ export type AdminInteractivityLabelCount = {
   count: number;
 };
 
+export type AdminErrorHandlingTypeCount = {
+  type: string;
+  count: number;
+};
+
+export type AdminErrorHandlingSummary = {
+  windowHours: number;
+  since: string;
+  totalEvents: number;
+  recoverableCount: number;
+  apiFailedCount: number;
+  byType: AdminErrorHandlingTypeCount[];
+  recent: Record<string, unknown>[];
+};
+
 export type AdminInteractivitySummary = {
   windowHours: number;
   since: string;

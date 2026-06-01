@@ -4,6 +4,7 @@ import {
   getAdminDrawingAnalysisSummary,
   getAdminDocumentVisionSummary,
   getAdminIntentRoutingSummary,
+  getAdminErrorHandlingSummary,
   getAdminInteractivitySummary,
   getAdminTextTaskSummary,
   getAdminLlmCostTable,
@@ -14,6 +15,7 @@ import type {
   AdminDrawingAnalysisSummary,
   AdminDocumentVisionSummary,
   AdminIntentRoutingSummary,
+  AdminErrorHandlingSummary,
   AdminInteractivitySummary,
   AdminTextTaskSummary,
   AdminLlmCostBreakdownItem,
@@ -25,6 +27,7 @@ import type {
 import { AdminDrawingAnalysisMetrics } from "./AdminDrawingAnalysisMetrics";
 import { AdminDocumentVisionMetrics } from "./AdminDocumentVisionMetrics";
 import { AdminIntentRoutingMetrics } from "./AdminIntentRoutingMetrics";
+import { AdminErrorHandlingMetrics } from "./AdminErrorHandlingMetrics";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
@@ -284,6 +287,10 @@ export function AdminMetricsTab({
     useState<AdminInteractivitySummary | null>(null);
   const [isLoadingInteractivitySummary, setIsLoadingInteractivitySummary] =
     useState(false);
+  const [errorHandlingSummary, setErrorHandlingSummary] =
+    useState<AdminErrorHandlingSummary | null>(null);
+  const [isLoadingErrorHandlingSummary, setIsLoadingErrorHandlingSummary] =
+    useState(false);
 
   useEffect(() => {
     if (!getAccessToken || metricsHours <= 24) {
@@ -377,6 +384,20 @@ export function AdminMetricsTab({
       .then(setInteractivitySummary)
       .catch(() => setInteractivitySummary(null))
       .finally(() => setIsLoadingInteractivitySummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setErrorHandlingSummary(null);
+      return;
+    }
+
+    setIsLoadingErrorHandlingSummary(true);
+
+    void getAdminErrorHandlingSummary(metricsHours, { getAccessToken })
+      .then(setErrorHandlingSummary)
+      .catch(() => setErrorHandlingSummary(null))
+      .finally(() => setIsLoadingErrorHandlingSummary(false));
   }, [getAccessToken, metricsHours]);
 
   if (!metricsSummary) {
@@ -554,6 +575,12 @@ export function AdminMetricsTab({
       <AdminInteractivityMetrics
         summary={interactivitySummary}
         isLoading={isLoadingInteractivitySummary}
+        windowHours={windowLabel}
+      />
+
+      <AdminErrorHandlingMetrics
+        summary={errorHandlingSummary}
+        isLoading={isLoadingErrorHandlingSummary}
         windowHours={windowLabel}
       />
 

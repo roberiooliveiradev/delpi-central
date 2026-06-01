@@ -14,6 +14,8 @@ Escopo: chips, menus contextuais, sugestões de próximos passos e interface gui
 | `interactivity.json` | Grupos, prioridades, fontes de metadata, chips de apresentação |
 | `ChatInteractivitySuggestionService` | Consolida sugestões → `metadata.interactivity` (até 4 primários + «Mais opções») |
 | `ChatPresentationInteractivityService` | Chips pós-tabela/gráfico/árvore |
+| `ChatOperationalRefinementInteractivityService` | Chips de refinamento (paginação, estoque, período) |
+| `ChatAssistantMessageMenu` (MFE) | Menu «Mais ações» na resposta (formato, lousa) |
 | `ChatInteractivityBlock` (MFE) | UI unificada com confirmação e botões desabilitados |
 | `ChatFollowUpChips` | Contrato expandido (`id`, `group`, `kind`, `disabledReason`, …) |
 | `ChatInteractivityQueryResolver` / `ChatInteractivityPreferenceService` | Placeholders + ranking por uso na sessão |
@@ -62,11 +64,11 @@ Menus por linha/ponto/nó: já em `ChatRichTable`, `ChatRichChart`, `ChatRichTre
 | 1 — Chips básicos | Concluída (consolidação + contrato expandido) |
 | 2 — Contexto e memória | Concluída (`contextBar` no bloco; `ChatInteractivityQueryResolver`; preferência por sessão em `interactivityUsage`) |
 | 3 — Menus contextuais | Concluída (tabela/gráfico/árvore/contexto) |
-| 4 — Ações avançadas | Parcial (apresentação, lousa, export nos menus) |
+| 4 — Ações avançadas | Concluída (refinamento operacional, menu da mensagem, apresentação/lousa/export) |
 | 5 — Métricas | Concluída (`interactivityMetrics` + `chat.interactivity.clicked`, `GET /admin/metrics/interactivity/summary`, painel `AdminInteractivityMetrics`) |
 
 ---
 
 ## Resumo executivo
 
-O chat consolida sugestões em um bloco único, com contexto, preferência por sessão e painel admin de CTR. Evolução futura: A/B de ranking e feedback agregado no admin.
+O chat consolida sugestões em um bloco único, com contexto, preferência por sessão e painel admin de CTR. Evolução futura opcional: A/B de ranking e feedback agregado além do CTR.

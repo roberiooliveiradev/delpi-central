@@ -50,6 +50,7 @@ import {
 import { ChatActionResults } from "./ChatActionResults";
 import { ChatAdminDebugPanel } from "./ChatAdminDebugPanel";
 import { isAssistantGenerating } from "../../state/chatMessageDelivery";
+import { ChatAssistantMessageMenu } from "./ChatAssistantMessageMenu";
 import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
@@ -1106,6 +1107,14 @@ export function ChatMessageList({
 
                 {!isAssistantGenerating(message) ? (
                 <div className="mdc-chat-message-actions">
+                  {onDrillDown && messageToolCalls.length > 0 ? (
+                    <ChatAssistantMessageMenu
+                      toolCalls={messageToolCalls}
+                      disabled={Boolean(isStreaming)}
+                      onSelect={onDrillDown}
+                    />
+                  ) : null}
+
                   <button
                     className={`mdc-chat-message-action${
                       message.user_feedback === 1 ? " is-active" : ""

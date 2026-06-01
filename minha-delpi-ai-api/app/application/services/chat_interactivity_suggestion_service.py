@@ -12,6 +12,9 @@ from app.application.services.chat_interactivity_preference_service import (
 from app.application.services.chat_interactivity_query_resolver import (
     ChatInteractivityQueryResolver,
 )
+from app.application.services.chat_operational_refinement_interactivity_service import (
+    ChatOperationalRefinementInteractivityService,
+)
 from app.application.services.chat_presentation_interactivity_service import (
     ChatPresentationInteractivityService,
 )
@@ -37,6 +40,13 @@ class ChatInteractivitySuggestionService:
 
         if presentation:
             metadata["presentationFollowUpSuggestions"] = presentation
+
+        refinement = ChatOperationalRefinementInteractivityService.build_from_tool_calls(
+            tool_calls,
+        )
+
+        if refinement:
+            metadata["operationalRefinementFollowUpSuggestions"] = refinement
 
         raw = cls._collect_raw(metadata)
         usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)

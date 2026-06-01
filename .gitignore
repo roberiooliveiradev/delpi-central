@@ -44,6 +44,10 @@ Thumbs.dbdist/
 infra/docker-compose.local.yml
 infra/docker-compose.override.yml
 
+# SearXNG — sobrescrito pelo container (volume rw); use os .example
+infra/searxng/settings.yml
+infra/searxng/limiter.toml
+
 # Notas pessoais locais (não commitar)
 .local/
 api-delpi/data/

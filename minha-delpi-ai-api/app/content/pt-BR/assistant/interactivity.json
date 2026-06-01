@@ -12,7 +12,8 @@
     "lousa": "Lousa",
     "recuperar": "Recuperar",
     "anexo": "Anexo",
-    "apresentacao": "Apresentação"
+    "apresentacao": "Apresentação",
+    "refinar": "Refinar"
   },
   "labelGroups": {
     "Ver estoque": "consultar",
@@ -83,6 +84,20 @@
     "Onde é usado?": "onde o produto {{productCode}} é usado?",
     "Colocar na lousa": "coloque o resultado acima na lousa"
   },
+  "refinementChips": {
+    "pagination": ["Traga tudo", "Continue buscando"],
+    "stock": ["Só com saldo", "Ver em gráfico"],
+    "depth": ["Aumentar profundidade"],
+    "period": ["Ampliar período"]
+  },
+  "refinementQueries": {
+    "Traga tudo": "traga tudo",
+    "Continue buscando": "sim, continue",
+    "Só com saldo": "mostre só posições com saldo disponível no último resultado",
+    "Ver em gráfico": "mostre o último resultado em gráfico",
+    "Aumentar profundidade": "aumente a profundidade da consulta anterior",
+    "Ampliar período": "amplie o período da última consulta"
+  },
   "metadataSources": [
     { "key": "followUpSuggestions", "group": "consultar", "priority": 10 },
     { "key": "errorRecoveryFollowUpSuggestions", "group": "recuperar", "priority": 5 },
@@ -98,6 +113,7 @@
     { "key": "routingDisambiguationSuggestions", "group": "consultar", "priority": 12 },
     { "key": "onboardingFollowUpSuggestions", "group": "ajuda", "priority": 50 },
     { "key": "guidedFlowSuggestions", "group": "ajuda", "priority": 45 },
-    { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 }
+    { "key": "presentationFollowUpSuggestions", "group": "apresentacao", "priority": 22 },
+    { "key": "operationalRefinementFollowUpSuggestions", "group": "refinar", "priority": 8 }
   ]
 }

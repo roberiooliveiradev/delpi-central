@@ -38,6 +38,7 @@ import type {
   AdminLlmStatus,
   AdminDrawingAnalysisSummary,
   AdminIntentRoutingSummary,
+  AdminErrorHandlingSummary,
   AdminInteractivitySummary,
   AdminTextTaskSummary,
   AdminDocumentVisionSummary,
@@ -874,6 +875,21 @@ export async function getAdminInteractivitySummary(
   );
 
   return parseJsonResponse<AdminInteractivitySummary>(response);
+}
+
+export async function getAdminErrorHandlingSummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminErrorHandlingSummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/error-handling/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminErrorHandlingSummary>(response);
 }
 
 export async function getAdminTextTaskSummary(
