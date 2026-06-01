@@ -15,6 +15,8 @@ Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md)
 |------------|------------------|
 | `ChatPresentationDataShapeAnalyzer` | Linhas/colunas, data, numérico, hierarquia, recomendação interna |
 | `ChatPresentationDecisionService` | Formato preferido, fallback, `availableViews`, motivo |
+| `ChatPresentationInsightService` | Insight automático curto (§16) |
+| `ChatPresentationChartPolicyService` | Limites de fatias/pontos e agrupamento «Outros» (§25) |
 | `ChatChartTypeSelectionService` | Subtipo de gráfico (linha, barra H, rosca, combo, …) |
 | `ExternalActionResultPresenter` | Monta `presentation` / `tablePresentation` / `chartPresentation` |
 | `ExecuteExternalActionUseCase` | Enriquece metadata com `presentationDecision` |
@@ -42,6 +44,7 @@ Dados da action → Presenter (table/chart/tree/kpi)
     "selected": "line_chart",
     "fallback": "table",
     "reason": "dados temporais com valor numérico",
+    "insight": "O maior valor ocorreu em mar/2026; o menor, em jan/2026.",
     "availableViews": ["line_chart", "table", "chart"],
     "dataShape": {
       "rows": 12,
@@ -87,8 +90,8 @@ Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/servic
 | Fase | Status |
 |------|--------|
 | 1 — Decisão básica de formato | **Concluída** — API + MFE (`presentationDecision`, insight, toggle inicial, chips de alternância) |
-| 2 — Gráficos ampliados | Parcial (Onda 9 + `ChatChartTypeSelectionService`) |
-| 3 — Alternância de visualização | Parcial (MFE toggle, refinamento de formato) |
+| 2 — Gráficos ampliados | **Concluída** — sync `chartType`, limites, insight, política de fatias |
+| 3 — Alternância de visualização | **Em andamento** — toggle MFE + chips; feedback §38 no playbook |
 | 4 — Interatividade | Parcial (drill-down, menus de linha/nó) |
 | 5 — Dashboards e insights | Parcial (`ChatDashboardPresentationService`) |
 | 6 — Métricas e otimização | Backlog (feedback por formato, admin) |

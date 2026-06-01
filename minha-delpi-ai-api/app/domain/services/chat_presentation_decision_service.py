@@ -8,9 +8,31 @@ from typing import Any
 from app.domain.services.chat_chart_type_selection_service import (
     ChatChartTypeSelectionService,
 )
+from app.domain.services.chat_presentation_chart_policy_service import (
+    ChatPresentationChartPolicyService,
+)
 from app.domain.services.chat_presentation_data_shape_analyzer import (
     ChatPresentationDataShapeAnalyzer,
 )
+from app.domain.services.chat_presentation_insight_service import (
+    ChatPresentationInsightService,
+)
+
+_SELECTED_TO_CHART_TYPE = {
+    "line_chart": "line",
+    "area_chart": "area",
+    "bar_chart": "bar",
+    "horizontal_bar": "horizontal_bar",
+    "donut": "donut",
+    "grouped_bar": "grouped_bar",
+    "stacked_bar": "stacked_bar",
+    "combo_chart": "combo",
+    "histogram": "histogram",
+    "heatmap": "heatmap",
+    "gauge": "gauge",
+    "scatter": "scatter",
+    "chart": "bar",
+}
 
 _CHART_TYPE_TO_SELECTED = {
     "line": "line_chart",
@@ -166,8 +188,14 @@ class ChatPresentationDecisionService:
         if chart_presentation or (
             primary_presentation and primary_presentation.get("type") == "chart"
         ):
-            chart = chart_presentation or primary_presentation or {}
-            chart_type = str(chart.get("chartType") or "bar")
+            chart_type = cls._resolve_chart_type(
+                table_rows=table_rows,
+                shape=shape,
+                user_message=message,
+                fallback_chart=str(
+                    (chart_presentation or primary_presentation or {}).get("chartType") or "bar"
+                ),
+            )
             selected = _CHART_TYPE_TO_SELECTED.get(chart_type, "chart")
 
             return cls._build(
@@ -359,6 +387,24 @@ class ChatPresentationDecisionService:
             available_formats=metadata.get("availableFormats"),
         )
 
+        table_rows = cls._rows_from_presentation(metadata.get("tablePresentation")) or cls._rows_from_presentation(
+            metadata.get("presentation")
+        )
+        shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
+
+        decision["insight"] = ChatPresentationInsightService.build(
+            selected=str(decision.get("selected") or ""),
+            rows=table_rows,
+            data_shape={**shape, "labelKey": shape.get("labelKey")},
+            reason=str(decision.get("reason") or ""),
+        )
+
+        policy_notice = cls._apply_chart_policy_to_metadata(metadata, decision)
+
+        if policy_notice:
+            decision["policyNotice"] = policy_notice
+            decision["insight"] = f"{decision['insight']} {policy_notice}".strip()
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))
@@ -399,9 +445,66 @@ class ChatPresentationDecisionService:
                 "hasNumeric": shape.get("hasNumeric", False),
                 "hasCategory": shape.get("hasCategory", False),
                 "hasHierarchy": shape.get("hasHierarchy", False),
+                "labelKey": shape.get("labelKey"),
+                "numericKeys": shape.get("numericKeys") or [],
             },
             "intent": str(intent or "").strip() or None,
         }
+
+    @classmethod
+    def _apply_chart_policy_to_metadata(
+        cls,
+        metadata: dict[str, Any],
+        decision: dict[str, Any],
+    ) -> str | None:
+        selected = str(decision.get("selected") or "")
+        chart_type = _SELECTED_TO_CHART_TYPE.get(selected)
+
+        if not chart_type:
+            return None
+
+        notices: list[str] = []
+
+        for key in ("presentation", "chartPresentation"):
+            presentation = metadata.get(key)
+
+            if not isinstance(presentation, dict) or presentation.get("type") != "chart":
+                continue
+
+            config = presentation.get("config")
+
+            if not isinstance(config, dict):
+                config = {}
+                presentation["config"] = config
+
+            label_key = str(config.get("xAxis") or decision.get("dataShape", {}).get("labelKey") or "")
+            y_axis = config.get("yAxis")
+            value_key = y_axis[0] if isinstance(y_axis, list) and y_axis else None
+
+            original = presentation.get("data") or []
+            original_count = len(original) if isinstance(original, list) else 0
+
+            capped = ChatPresentationChartPolicyService.apply(
+                original if isinstance(original, list) else [],
+                chart_type,
+                label_key=label_key or None,
+                value_key=str(value_key) if value_key else None,
+            )
+
+            presentation["chartType"] = chart_type
+            config["recommendedChartType"] = chart_type
+            presentation["data"] = capped
+
+            notice = ChatPresentationChartPolicyService.fallback_notice(
+                chart_type,
+                original_count,
+                len(capped),
+            )
+
+            if notice:
+                notices.append(notice)
+
+        return notices[0] if notices else None
 
     @classmethod
     def _decision_for_preference(
@@ -545,6 +648,28 @@ class ChatPresentationDecisionService:
             output.append(legacy)
 
         return output
+
+    @classmethod
+    def _resolve_chart_type(
+        cls,
+        *,
+        table_rows: list[dict[str, Any]],
+        shape: dict[str, Any],
+        user_message: str,
+        fallback_chart: str,
+    ) -> str:
+        if table_rows and shape.get("hasNumeric"):
+            label_key = str(shape.get("labelKey") or "label")
+            numeric_keys = list(shape.get("numericKeys") or ["value"])
+
+            return ChatChartTypeSelectionService.resolve(
+                rows=table_rows[:24],
+                label_key=label_key,
+                numeric_keys=numeric_keys,
+                user_message=user_message or None,
+            )
+
+        return str(fallback_chart or "bar").strip() or "bar"
 
     @classmethod
     def _chart_reason(cls, chart_type: str, shape: dict[str, Any]) -> str:

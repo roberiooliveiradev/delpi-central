@@ -497,6 +497,8 @@ Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compa
 |---------|--------|
 | `ChatPresentationDataShapeAnalyzer` | Detecta data, numérico, hierarquia e cardinalidade |
 | `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`) |
+| `ChatPresentationInsightService` | Gera `insight` curto para o MFE |
+| `ChatPresentationChartPolicyService` | Limita pontos/fatias e agrupa «Outros» em rosca/pizza |
 | `ExecuteExternalActionUseCase` | Chama `enrich_metadata` após montar `presentation` / `tablePresentation` / `chartPresentation` |
 
 Regressão: casos P1–P15 em `tests/fixtures/rich_presentation_cases.py`. MFE: `getPresentationDecisionFromToolCalls`, insight abaixo do título, `resolveDefaultRichViewMode` respeita `selected`. Roadmap: [`../roadmap/playbook-09-apresentacao-rica.md`](../roadmap/playbook-09-apresentacao-rica.md).

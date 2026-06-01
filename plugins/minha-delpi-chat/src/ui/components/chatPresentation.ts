@@ -385,9 +385,10 @@ export function getPresentationInsightFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): string {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
+  const insight = String(decision?.insight ?? "").trim();
   const reason = String(decision?.reason ?? "").trim();
 
-  return reason;
+  return insight || reason;
 }
 
 export function mapPresentationDecisionToViewFormat(

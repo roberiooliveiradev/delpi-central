@@ -132,6 +132,54 @@
       "label": "Fontes divergentes sem explicar"
     },
     {
+      "id": "presentation_bad_format",
+      "label": "Formato ruim"
+    },
+    {
+      "id": "presentation_wrong_chart",
+      "label": "Gráfico errado"
+    },
+    {
+      "id": "presentation_confusing_table",
+      "label": "Tabela confusa"
+    },
+    {
+      "id": "presentation_missing_chart",
+      "label": "Faltou gráfico"
+    },
+    {
+      "id": "presentation_missing_table",
+      "label": "Faltou tabela"
+    },
+    {
+      "id": "presentation_missing_kpi",
+      "label": "Faltou KPI"
+    },
+    {
+      "id": "presentation_missing_insight",
+      "label": "Faltou insight"
+    },
+    {
+      "id": "presentation_hard_to_read",
+      "label": "Difícil de ler"
+    },
+    {
+      "id": "presentation_too_much_info",
+      "label": "Informação demais"
+    },
+    {
+      "id": "presentation_slow",
+      "label": "Visualização lenta"
+    },
+    {
+      "id": "presentation_no_export",
+      "label": "Não exportou"
+    },
+    {
+      "id": "presentation_no_canvas",
+      "label": "Não colocou na lousa"
+    },
+    {
       "id": "no_answer",
       "label": "Não respondeu"
     },

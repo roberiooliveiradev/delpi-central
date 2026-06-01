@@ -218,6 +218,8 @@ export type ChatPresentationDecision = {
   selected?: string | null;
   fallback?: string | null;
   reason?: string | null;
+  insight?: string | null;
+  policyNotice?: string | null;
   availableViews?: string[] | null;
   dataShape?: {
     rows?: number;

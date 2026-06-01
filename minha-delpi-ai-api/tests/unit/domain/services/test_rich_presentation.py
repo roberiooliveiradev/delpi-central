@@ -37,6 +37,57 @@ def test_data_shape_analyzer_temporal():
     assert shape["recommended"] == "line_chart"
 
 
+def test_chart_policy_groups_donut_slices():
+    from app.domain.services.chat_presentation_chart_policy_service import (
+        ChatPresentationChartPolicyService,
+    )
+
+    rows = [{"name": f"C{i}", "value": i} for i in range(1, 10)]
+    capped = ChatPresentationChartPolicyService.apply(rows, "donut", label_key="name", value_key="value")
+
+    assert len(capped) <= 6
+    assert any(row.get("name") == "Outros" for row in capped)
+
+
+def test_enrich_metadata_adds_insight_and_syncs_chart_type():
+    from app.domain.services.chat_presentation_decision_service import (
+        ChatPresentationDecisionService,
+    )
+
+    metadata = {
+        "presentation": {
+            "type": "chart",
+            "title": "Vendas",
+            "chartType": "bar",
+            "data": [
+                {"month": "jan/2026", "value": 10},
+                {"month": "fev/2026", "value": 20},
+                {"month": "mar/2026", "value": 15},
+            ],
+            "config": {"xAxis": "month", "yAxis": ["value"]},
+        },
+        "tablePresentation": {
+            "type": "table",
+            "title": "Tabela",
+            "columns": [{"key": "month", "label": "Mês"}, {"key": "value", "label": "Valor"}],
+            "rows": [
+                {"month": "jan/2026", "value": 10},
+                {"month": "fev/2026", "value": 20},
+                {"month": "mar/2026", "value": 15},
+            ],
+        },
+        "availableFormats": ["chart", "table"],
+        "preferredFormat": "chart",
+    }
+
+    ChatPresentationDecisionService.enrich_metadata(metadata)
+
+    decision = metadata["presentationDecision"]
+
+    assert decision.get("insight")
+    assert metadata["presentation"]["chartType"] in {"line", "multi_line"}
+
+
 def test_enrich_metadata_attaches_presentation_decision():
     metadata = {
         "presentation": {
