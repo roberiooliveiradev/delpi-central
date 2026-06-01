@@ -48,21 +48,58 @@ _ISO_YMD_RE = re.compile(r"\b(\d{4})[/-](\d{1,2})[/-](\d{1,2})\b")
 
 _RANGE_MARKERS = (
     "semana passada",
+    "semana anterior",
     "semana que vem",
     "proxima semana",
+    "esta semana",
+    "semana atual",
     "mes passado",
     "mes que vem",
     "proximo mes",
     "mes atual",
     "este mes",
     "ano passado",
+    "este ano",
+    "ano atual",
+    "trimestre passado",
+    "ultimo trimestre",
+    "trimestre atual",
+    "este trimestre",
     "ultimos ",
     "ultimas ",
     "ultima semana",
     "ultimos 7 dias",
     "competencia ",
+    "dia atual",
+    "data atual",
+    "data de hoje",
     " de ",
     " a ",
+)
+
+_TODAY_PATTERNS = (
+    r"\bhoje\b",
+    r"\bhj\b",
+    r"\bdia atual\b",
+    r"\bdata atual\b",
+    r"\bneste dia\b",
+    r"\bno dia de hoje\b",
+    r"\bdata de hoje\b",
+    r"\bdia de hoje\b",
+    r"\bnesta data\b",
+)
+
+_YESTERDAY_PATTERNS = (
+    r"\bontem\b",
+    r"\bdia anterior\b",
+    r"\bdia previo\b",
+    r"\bno dia anterior\b",
+)
+
+_TOMORROW_PATTERNS = (
+    r"\bamanha\b",
+    r"\bproximo dia\b",
+    r"\bdia seguinte\b",
 )
 
 
@@ -117,8 +154,9 @@ class ChatTemporalIntentService:
         if weekday:
             return weekday
 
-        if re.search(r"\bhoje\b", normalized):
-            return cls._for_today(reference)
+        for pattern in _TODAY_PATTERNS:
+            if re.search(pattern, normalized):
+                return cls._for_today(reference)
 
         return cls._maybe_default_today(reference, default_today=default_today)
 
@@ -222,18 +260,19 @@ class ChatTemporalIntentService:
                 ),
             )
 
-        if re.search(r"\bontem\b", normalized):
-            target = reference - timedelta(days=1)
-            return cls._build_point(
-                target,
-                reference,
-                kind="relative",
-                relative=ExternalActionResponseContentService.get(
-                    "temporal",
-                    "yesterday",
-                    default="ontem",
-                ),
-            )
+        for pattern in _YESTERDAY_PATTERNS:
+            if re.search(pattern, normalized):
+                target = reference - timedelta(days=1)
+                return cls._build_point(
+                    target,
+                    reference,
+                    kind="relative",
+                    relative=ExternalActionResponseContentService.get(
+                        "temporal",
+                        "yesterday",
+                        default="ontem",
+                    ),
+                )
 
         if re.search(r"\bdepois de amanha\b", normalized):
             target = reference + timedelta(days=2)
@@ -248,18 +287,19 @@ class ChatTemporalIntentService:
                 ),
             )
 
-        if re.search(r"\bamanha\b", normalized):
-            target = reference + timedelta(days=1)
-            return cls._build_point(
-                target,
-                reference,
-                kind="relative",
-                relative=ExternalActionResponseContentService.get(
-                    "temporal",
-                    "tomorrow",
-                    default="amanhã",
-                ),
-            )
+        for pattern in _TOMORROW_PATTERNS:
+            if re.search(pattern, normalized):
+                target = reference + timedelta(days=1)
+                return cls._build_point(
+                    target,
+                    reference,
+                    kind="relative",
+                    relative=ExternalActionResponseContentService.get(
+                        "temporal",
+                        "tomorrow",
+                        default="amanhã",
+                    ),
+                )
 
         return None
 

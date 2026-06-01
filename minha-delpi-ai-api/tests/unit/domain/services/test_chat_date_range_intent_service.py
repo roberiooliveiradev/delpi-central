@@ -6,6 +6,60 @@ from app.domain.services.chat_operational_parameter_service import (
 )
 
 
+def test_resolve_hoje_as_single_day_range():
+    resolved = ChatDateRangeIntentService.resolve(
+        "qual a eficiencia fabril de hoje?",
+        today=date(2026, 6, 1),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-06-2026"
+    assert resolved.end_date == "01-06-2026"
+
+
+def test_resolve_dia_atual_as_single_day_range():
+    resolved = ChatDateRangeIntentService.resolve(
+        "oee do dia atual",
+        today=date(2026, 6, 1),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == resolved.end_date == "01-06-2026"
+
+
+def test_resolve_esta_semana_calendar_range():
+    resolved = ChatDateRangeIntentService.resolve(
+        "faturamento desta semana",
+        today=date(2026, 6, 4),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-06-2026"
+    assert resolved.end_date == "07-06-2026"
+
+
+def test_resolve_trimestre_passado():
+    resolved = ChatDateRangeIntentService.resolve(
+        "ebitda do trimestre passado",
+        today=date(2026, 6, 1),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-01-2026"
+    assert resolved.end_date == "31-03-2026"
+
+
+def test_resolve_ultimas_duas_semanas():
+    resolved = ChatDateRangeIntentService.resolve(
+        "otd das ultimas 2 semanas",
+        today=date(2026, 6, 1),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "19-05-2026"
+    assert resolved.end_date == "01-06-2026"
+
+
 def test_resolve_last_month():
     resolved = ChatDateRangeIntentService.resolve(
         "qual o cpv do mes passado",

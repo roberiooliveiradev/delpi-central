@@ -546,6 +546,7 @@ class ExternalActionSelectionService:
         return self._select_generic_allowed_action(
             message,
             allowed_action_ids=allowed_action_ids,
+            previous_messages=previous_messages,
         )
 
     def _looks_like_product_question(self, value: str) -> bool:
@@ -1953,6 +1954,8 @@ class ExternalActionSelectionService:
         self,
         message: str,
         allowed_action_ids: list[str],
+        *,
+        previous_messages: list | None = None,
     ) -> dict | None:
         if not allowed_action_ids:
             return None
@@ -1980,14 +1983,25 @@ class ExternalActionSelectionService:
         if action.get("selectionScore") is None:
             return None
 
+        parameters = self._build_date_branch_parameters(
+            action,
+            message,
+            previous_messages=previous_messages,
+        )
+
+        arguments: dict = {
+            "actionId": action["actionId"],
+            "body": {
+                "message": message,
+            },
+        }
+
+        if parameters:
+            arguments["parameters"] = parameters
+
         return {
             "name": "execute_external_action",
-            "arguments": {
-                "actionId": action["actionId"],
-                "body": {
-                    "message": message,
-                },
-            },
+            "arguments": arguments,
             "reason": action.get("selectionReason")
             or "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
         }

@@ -66,12 +66,170 @@ _PERIOD_METRIC_TERMS = (
     "giro",
     "kpi",
     "indicador",
+    "indicadores",
     "ebitda",
+    "ebita",
     "faturamento",
+    "receita",
+    "vendas",
     "ppm",
     "oee",
     "pmr",
+    "eficiencia",
+    "eficacia",
+    "fabril",
+    "producao",
+    "apontamento",
+    "apontamentos",
+    "absorcao",
+    "custo",
+    "margem",
+    "pedido",
+    "pedidos",
+    "entrega",
+    "lead time",
+    "disponibilidade",
+    "performance",
+    "rendimento",
+    "scrap",
+    "refugo",
+    "qualidade",
+    "auditoria",
+    "absenteismo",
+    "turnover",
+    "headcount",
+    "estoque",
+    "inventario",
+    "comercial",
+    "financeiro",
+    "dashboard",
+    "serie",
+    "evolucao",
 )
+
+_POINT_AS_RANGE_PHRASES = (
+    "hoje",
+    "hj",
+    "ontem",
+    "anteontem",
+    "antes de ontem",
+    "amanha",
+    "depois de amanha",
+    "dia atual",
+    "data atual",
+    "neste dia",
+    "no dia de hoje",
+    "data de hoje",
+    "dia de hoje",
+    "nesta data",
+    "ate o momento",
+    "ate hoje",
+    "dia ",
+    " de janeiro",
+    " de fevereiro",
+    " de marco",
+    " de abril",
+    " de maio",
+    " de junho",
+    " de julho",
+    " de agosto",
+    " de setembro",
+    " de outubro",
+    " de novembro",
+    " de dezembro",
+)
+
+_WEEK_OFFSET_PHRASES: dict[int, tuple[str, ...]] = {
+    -1: (
+        "semana passada",
+        "semana anterior",
+        "ultima semana",
+        "na semana passada",
+        "da semana passada",
+    ),
+    0: (
+        "esta semana",
+        "semana atual",
+        "semana corrente",
+        "nesta semana",
+        "na semana atual",
+        "da semana atual",
+    ),
+    1: (
+        "semana que vem",
+        "proxima semana",
+        "proximo semana",
+        "semana seguinte",
+        "na proxima semana",
+        "da proxima semana",
+    ),
+}
+
+_NEXT_MONTH_PHRASES = (
+    "mes que vem",
+    "proximo mes",
+    "no proximo mes",
+    "do proximo mes",
+)
+
+_PREVIOUS_MONTH_PHRASES = (
+    "mes passado",
+    "ultimo mes",
+    "mes anterior",
+    "no mes passado",
+    "do mes passado",
+)
+
+_CURRENT_MONTH_PHRASES = (
+    "mes atual",
+    "este mes",
+    "mes corrente",
+    "neste mes",
+    "no mes atual",
+    "do mes atual",
+)
+
+_CURRENT_YEAR_PHRASES = (
+    "este ano",
+    "ano atual",
+    "ano corrente",
+    "neste ano",
+    "no ano atual",
+    "do ano atual",
+)
+
+_LAST_YEAR_PHRASES = (
+    "ano passado",
+    "ultimo ano",
+    "ano anterior",
+    "no ano passado",
+)
+
+_ROLLING_LAST_WEEK_PHRASES = (
+    "ultima semana",
+    "ultimos 7 dias",
+    "ultimos sete dias",
+    "sete ultimos dias",
+)
+
+_PREVIOUS_QUARTER_PHRASES = (
+    "trimestre passado",
+    "ultimo trimestre",
+    "trimestre anterior",
+    "no trimestre passado",
+)
+
+_CURRENT_QUARTER_PHRASES = (
+    "este trimestre",
+    "trimestre atual",
+    "trimestre corrente",
+    "neste trimestre",
+    "no trimestre atual",
+)
+
+
+def _contains_any(normalized: str, phrases: tuple[str, ...]) -> bool:
+    return any(phrase in normalized for phrase in phrases)
 
 
 @dataclass(frozen=True)
@@ -106,6 +264,10 @@ class ChatDateRangeIntentService:
     _YEAR_MONTH_RE = re.compile(r"\b(\d{4})-(\d{1,2})\b")
     _LAST_N_DAYS_RE = re.compile(
         r"\bultim[ao]s?\s+(\d{1,3})\s+dias?\b",
+        re.IGNORECASE,
+    )
+    _LAST_N_WEEKS_RE = re.compile(
+        r"\bultim[ao]s?\s+(\d{1,2})\s+semanas?\b",
         re.IGNORECASE,
     )
     _YEAR_ONLY_RE = re.compile(r"^\s*(\d{4})\s*$")
@@ -144,23 +306,17 @@ class ChatDateRangeIntentService:
             ChatTemporalIntentService,
         )
 
-        if any(
-            term in normalized
-            for term in (
-                "semana passada",
-                "semana que vem",
-                "proxima semana",
-                "mes que vem",
-                "proximo mes",
-            )
-        ):
-            week_range = cls._resolve_calendar_week_phrases(normalized, reference)
-            if week_range:
-                return week_range
+        week_range = cls._resolve_calendar_week_phrases(normalized, reference)
+        if week_range:
+            return week_range
 
-            month_range = cls._resolve_next_month_phrases(normalized, reference)
-            if month_range:
-                return month_range
+        month_range = cls._resolve_next_month_phrases(normalized, reference)
+        if month_range:
+            return month_range
+
+        quarter_range = cls._resolve_quarter_phrases(normalized, reference)
+        if quarter_range:
+            return quarter_range
 
         point = ChatTemporalIntentService.resolve_point(
             message,
@@ -183,6 +339,18 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("competence"),
             )
 
+        last_weeks = cls._LAST_N_WEEKS_RE.search(normalized)
+
+        if last_weeks:
+            weeks = max(1, min(int(last_weeks.group(1)), 52))
+            start = reference - timedelta(days=weeks * 7 - 1)
+
+            return cls._from_dates(
+                start,
+                reference,
+                reason=cls._reason("lastNWeeks", weeks=weeks),
+            )
+
         last_days = cls._LAST_N_DAYS_RE.search(normalized)
 
         if last_days:
@@ -195,28 +363,35 @@ class ChatDateRangeIntentService:
                 reason=cls._reason("lastNDays", days=days),
             )
 
-        if any(term in normalized for term in ("ultima semana", "última semana", "ultimos 7 dias")):
+        if _contains_any(normalized, _ROLLING_LAST_WEEK_PHRASES):
             start = reference - timedelta(days=6)
 
             return cls._from_dates(start, reference, reason=cls._reason("rollingLastWeek"))
 
-        if any(term in normalized for term in ("mes passado", "mês passado", "ultimo mes", "último mês")):
+        if _contains_any(normalized, _PREVIOUS_MONTH_PHRASES):
             return cls._previous_month(reference, reason=cls._reason("previousMonth"))
 
-        if any(term in normalized for term in ("mes atual", "mês atual", "este mes", "este mês")):
+        if _contains_any(normalized, _CURRENT_MONTH_PHRASES):
             return cls._month_range(
                 reference.year,
                 reference.month,
                 reason=cls._reason("currentMonth"),
             )
 
-        if "ano passado" in normalized:
+        if _contains_any(normalized, _LAST_YEAR_PHRASES):
             year = reference.year - 1
 
             return cls._from_dates(
                 date(year, 1, 1),
                 date(year, 12, 31),
                 reason=cls._reason("lastYear"),
+            )
+
+        if _contains_any(normalized, _CURRENT_YEAR_PHRASES):
+            return cls._from_dates(
+                date(reference.year, 1, 1),
+                date(reference.year, 12, 31),
+                reason=cls._reason("currentYear"),
             )
 
         month_match = cls._parse_named_month(normalized, reference)
@@ -508,29 +683,7 @@ class ChatDateRangeIntentService:
         if any(term in normalized for term in _PERIOD_METRIC_TERMS):
             return True
 
-        return any(
-            term in normalized
-            for term in (
-                "ontem",
-                "anteontem",
-                "antes de ontem",
-                "amanha",
-                "depois de amanha",
-                "dia ",
-                " de janeiro",
-                " de fevereiro",
-                " de marco",
-                " de abril",
-                " de maio",
-                " de junho",
-                " de julho",
-                " de agosto",
-                " de setembro",
-                " de outubro",
-                " de novembro",
-                " de dezembro",
-            )
-        )
+        return _contains_any(normalized, _POINT_AS_RANGE_PHRASES)
 
     @classmethod
     def _resolve_calendar_week_phrases(
@@ -542,19 +695,25 @@ class ChatDateRangeIntentService:
             ChatTemporalIntentService,
         )
 
-        if "semana passada" in normalized:
-            start, end = ChatTemporalIntentService.calendar_week_range(
-                reference,
-                offset_weeks=-1,
-            )
-            return cls._from_dates(start, end, reason=cls._reason("lastWeekCalendar"))
+        reason_by_offset = {
+            -1: "lastWeekCalendar",
+            0: "currentWeekCalendar",
+            1: "nextWeekCalendar",
+        }
 
-        if any(term in normalized for term in ("semana que vem", "proxima semana")):
+        for offset, phrases in _WEEK_OFFSET_PHRASES.items():
+            if not _contains_any(normalized, phrases):
+                continue
+
             start, end = ChatTemporalIntentService.calendar_week_range(
                 reference,
-                offset_weeks=1,
+                offset_weeks=offset,
             )
-            return cls._from_dates(start, end, reason=cls._reason("nextWeekCalendar"))
+            return cls._from_dates(
+                start,
+                end,
+                reason=cls._reason(reason_by_offset[offset]),
+            )
 
         return None
 
@@ -564,13 +723,61 @@ class ChatDateRangeIntentService:
         normalized: str,
         reference: date,
     ) -> ResolvedDateRange | None:
-        if any(
-            term in normalized
-            for term in ("mes que vem", "mês que vem", "proximo mes", "próximo mês")
-        ):
+        if _contains_any(normalized, _NEXT_MONTH_PHRASES):
             return cls._next_month(reference, reason=cls._reason("nextMonth"))
 
         return None
+
+    @classmethod
+    def _resolve_quarter_phrases(
+        cls,
+        normalized: str,
+        reference: date,
+    ) -> ResolvedDateRange | None:
+        if _contains_any(normalized, _PREVIOUS_QUARTER_PHRASES):
+            return cls._quarter_range(
+                reference,
+                offset=-1,
+                reason=cls._reason("previousQuarter"),
+            )
+
+        if _contains_any(normalized, _CURRENT_QUARTER_PHRASES):
+            return cls._quarter_range(
+                reference,
+                offset=0,
+                reason=cls._reason("currentQuarter"),
+            )
+
+        return None
+
+    @classmethod
+    def _quarter_range(
+        cls,
+        reference: date,
+        *,
+        offset: int,
+        reason: str,
+    ) -> ResolvedDateRange:
+        quarter = (reference.month - 1) // 3 + 1 + offset
+        year = reference.year
+
+        while quarter < 1:
+            quarter += 4
+            year -= 1
+
+        while quarter > 4:
+            quarter -= 4
+            year += 1
+
+        start_month = (quarter - 1) * 3 + 1
+        end_month = start_month + 2
+        last_day = monthrange(year, end_month)[1]
+
+        return cls._from_dates(
+            date(year, start_month, 1),
+            date(year, end_month, last_day),
+            reason=reason,
+        )
 
     @classmethod
     def _next_month(cls, reference: date, *, reason: str) -> ResolvedDateRange:
