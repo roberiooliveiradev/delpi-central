@@ -30,6 +30,13 @@
 .mdc-chat-shell > .mdc-chat-view-host {
   grid-column: 2;
   grid-row: 1;
+  width: 100%;
+  min-width: 0;
+}
+
+.mdc-chat-view-host.mdc-chat-page-panel,
+.mdc-chat-view-host.mdc-chat-page-panel > .mdc-chat-main {
+  width: 100%;
   min-width: 0;
 }
 
@@ -230,7 +237,7 @@
   }
 
   .minha-delpi-chat--narrow .mdc-chat-empty-composer {
-    justify-items: stretch;
+    align-items: stretch;
     padding: var(--mdc-space-3) max(0.75rem, env(safe-area-inset-right, 0px))
       max(0.5rem, env(safe-area-inset-bottom, 0px))
       max(0.75rem, env(safe-area-inset-left, 0px));
@@ -239,6 +246,7 @@
   .minha-delpi-chat--narrow .mdc-chat-empty-composer__column {
     width: 100%;
     max-width: none;
+    align-self: stretch;
   }
 
   .minha-delpi-chat--narrow .mdc-chat-conversation .mdc-chat-input,

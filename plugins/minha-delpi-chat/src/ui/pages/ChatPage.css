@@ -48,14 +48,12 @@
   margin-inline: auto;
 }
 
-.mdc-chat-empty-composer {
-  display: grid;
-  justify-items: center;
-  align-content: stretch;
+.mdc-chat-main > .mdc-chat-empty-composer {
+  flex: 1 1 auto;
+  align-self: stretch;
   min-height: 0;
   height: 100%;
   width: 100%;
-  box-sizing: border-box;
   overflow: hidden;
 }
 
