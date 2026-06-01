@@ -13,7 +13,7 @@
     ]
   },
   "maxMessageLength": 260,
-  "categoryPriority": ["who", "limits", "origin", "usage", "role", "what"],
+  "categoryPriority": ["who", "limits", "origin", "goodQuestion", "usage", "role", "what"],
   "userIdentityExclusions": [
     "quem sou eu",
     "quem sou",
@@ -227,6 +227,14 @@
       "como voce decide qual action usar",
       "como as permissoes funcionam"
     ],
+    "goodQuestion": [
+      "como faco uma boa pergunta",
+      "como faço uma boa pergunta",
+      "como fazer uma boa pergunta",
+      "boa pergunta",
+      "dica de pergunta",
+      "como perguntar melhor"
+    ],
     "usage": [
       "como usar",
       "como te usar",
@@ -257,7 +265,6 @@
       "tutorial do chat",
       "como peco resposta em tabela",
       "como peco um grafico",
-      "como faco uma boa pergunta",
       "painel de ajuda",
       "botao de ajuda",
       "botão de ajuda",
@@ -277,7 +284,8 @@
       "role": "No chat geral, ajudo a **entender processos e documentação**, organizar ideias e responder dúvidas com o que está autorizado para você.\n\nCom um **agente** ativo, consulto APIs reais: **produto/estoque/vendas**, **indicadores** (comercial, financeiro, qualidade, RH, produção), **LMP**, **dicionário de dados (/system)**, **SQL leitura**, além de **pesquisa na web**, **lousa**, **gráficos**, **anexos** e **RAG**.\n\nQuer a lista atualizada desta sessão? Pergunte *o que você pode fazer* ou abra o painel **?** (catálogo de ajuda).",
       "limits": "Alguns limites importantes:\n\n- **Não invento** dados de produto, estoque, preço ou indicadores — se faltar código ou contexto, pergunto.\n- Só acesso o que seu perfil e o agente ativo **autorizam** (SSO/RBAC); o catálogo de ajuda oculta o que seu perfil não pode usar.\n- Não substituo sistemas oficiais nem **altero cadastros** no ERP por chat.\n- Posso errar em interpretação; em dúvida, peça para reformular ou confira na fonte.\n\nCapacidades detalhadas: *o que você pode fazer* ou painel **?**.",
       "origin": "Funciono com **modelo de linguagem** (IA generativa) orquestrado pelo backend da {platform_name}, com políticas de segurança, RAG em documentação autorizada, catálogo de funcionalidades (`features_catalog`) e, quando configurado, chamadas a APIs reais via agentes.\n\nNão sou uma pessoa: sou software. As respostas são geradas em tempo real e podem ser revisadas no histórico da conversa.",
-      "usage": "Para me usar bem:\n\n1. Escreva em **português**, direto ao ponto — aceito pequenos erros de digitação.\n2. Se souber, informe **código de produto**, OV ou período.\n3. Para números da operação, selecione o **agente** adequado antes de perguntar.\n4. Peça formato (*em tabela*, *gráfico*, *só texto*) quando quiser.\n5. Pergunte *o que você pode fazer* ou use o botão **?** para buscar no catálogo de funcionalidades.\n6. Após **pesquisa na web**, com projeto ativo, use **Salvar fontes** para guardar links no projeto.\n\nNão é necessário se identificar com nome/e-mail só para conversar."
+      "goodQuestion": "Uma **boa pergunta** costuma ter três partes:\n\n1. **O que você quer** — estoque, fornecedor, vendas, correção de texto, resumo de PDF.\n2. **O identificador** — código do produto, OV, cliente ou período (quando existir).\n3. **O formato** — tabela, gráfico, resumo, checklist ou lousa.\n\n**Exemplos:**\n- «Mostre o estoque do produto 10080001 em tabela.»\n- «Corrija este texto mantendo o sentido original.»\n\nSe faltar código, posso orientar a buscar por descrição ou sugerir um agente.",
+      "usage": "Você pode usar o chat de **três formas principais**:\n\n1. **Perguntar livremente** — ex.: «O que você pode fazer?»\n2. **Consultar dados com um agente** — ex.: «Estoque do produto 10080001» (selecione o agente no menu **+** antes de enviar).\n3. **Textos e arquivos** — ex.: «Corrija este texto» ou «Resuma o PDF anexado».\n\n**Dicas rápidas:**\n- Informe código de produto ou OV quando souber.\n- Peça *em tabela*, *gráfico* ou *na lousa*.\n- Use o botão **?** ou *o que você pode fazer* para ver o catálogo atualizado.\n\nNão precisa enviar nome/e-mail só para começar."
     }
   },
   "followUps": {

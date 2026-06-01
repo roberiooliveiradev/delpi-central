@@ -174,6 +174,12 @@ class ChatAssistantIdentityService:
 
     @classmethod
     def _build_agent_identity_answer(cls, category: str, profile) -> str:
+        if category in {"goodQuestion", "usage"}:
+            platform = cls._build_platform_identity_answer(category)
+
+            if platform:
+                return platform
+
         builders = {
             "who": cls._agent_who,
             "what": cls._agent_what,

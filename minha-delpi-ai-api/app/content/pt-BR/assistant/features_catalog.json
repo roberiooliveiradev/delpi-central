@@ -372,7 +372,7 @@
       "status": "available",
       "summary": "Correção, tradução, e-mails corporativos e refinamento por chips.",
       "requiresAgent": false,
-      "helpTopicId": null,
+      "helpTopicId": "text",
       "examples": [
         "Corrija: segue documento em anexo",
         "Escreva um e-mail formal cobrando prazo",

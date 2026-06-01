@@ -69,6 +69,11 @@ def _feature_answers() -> dict:
     return _capabilities_content().get("featureAnswers") or {}
 
 
+@lru_cache(maxsize=1)
+def _self_help_agent_context() -> dict:
+    return _capabilities_content().get("selfHelpAgentContext") or {}
+
+
 class ChatCapabilitiesService:
     """Responde perguntas sobre o que o chat/agente consegue fazer."""
 
@@ -151,6 +156,9 @@ class ChatCapabilitiesService:
         if cls._is_permission_help_inquiry(normalized):
             return True
 
+        if cls.is_help_about_topic_inquiry(message):
+            return True
+
         if cls._is_feature_capability_inquiry(message):
             return True
 
@@ -195,6 +203,17 @@ class ChatCapabilitiesService:
 
         if training:
             return training
+
+        if cls.is_help_about_topic_inquiry(message):
+            help_about = cls.build_help_about_answer(
+                message=message,
+                workspace_context=workspace_context,
+                allowed_action_ids=allowed_action_ids,
+                action_catalog=action_catalog,
+            )
+
+            if help_about:
+                return help_about
 
         if cls.is_release_notes_question(message):
             from app.application.services.assistant_capabilities_registry import (
@@ -333,7 +352,11 @@ class ChatCapabilitiesService:
             return True
 
         help_prefix_max = int(detection.get("helpPrefixMaxLength") or 80)
-        if normalized.startswith(("ajuda ", "help ")) and len(normalized) < help_prefix_max:
+        if (
+            normalized.startswith(("ajuda ", "help "))
+            and len(normalized) < help_prefix_max
+            and not cls.is_help_about_topic_inquiry(message)
+        ):
             return True
 
         capaz_tokens = tuple(str(item) for item in (detection.get("capazTokens") or ()))
@@ -456,7 +479,7 @@ class ChatCapabilitiesService:
             "stockHelp": "stock_lookup",
             "destructiveAction": None,
             "permissionsHelp": None,
-            "textTasksHelp": "text_tasks",
+            "textTasksHelp": "text",
         }
         registry_topic = topic_by_key.get(key)
 
@@ -699,6 +722,102 @@ class ChatCapabilitiesService:
         return False
 
     @classmethod
+    def is_help_about_topic_inquiry(cls, message: str) -> bool:
+        detection = _detection()
+        max_length = int(detection.get("helpAboutMaxLength") or 120)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized or len(normalized) > max_length:
+            return False
+
+        prefixes = tuple(str(item) for item in (detection.get("helpAboutPrefixes") or ()))
+
+        return any(normalized.startswith(prefix) for prefix in prefixes)
+
+    @classmethod
+    def extract_help_about_topic(cls, message: str) -> str:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        prefixes = tuple(str(item) for item in (_detection().get("helpAboutPrefixes") or ()))
+
+        for prefix in prefixes:
+            if normalized.startswith(prefix):
+                return normalized[len(prefix) :].strip()
+
+        return normalized.strip()
+
+    @classmethod
+    def build_help_about_answer(
+        cls,
+        *,
+        message: str,
+        workspace_context: dict,
+        allowed_action_ids: list[str] | None = None,
+        action_catalog: list[dict] | None = None,
+    ) -> str | None:
+        from app.application.services.assistant_capabilities_registry import (
+            AssistantCapabilitiesRegistry,
+        )
+
+        topic = cls.extract_help_about_topic(message)
+
+        if not topic:
+            return None
+
+        feature = AssistantCapabilitiesRegistry.find_by_help_topic(topic)
+
+        if not feature:
+            for candidate in AssistantCapabilitiesRegistry.search(topic, limit=1):
+                feature = candidate
+                break
+
+        if feature:
+            formatted = cls._format_catalog_feature_help(feature)
+
+            if formatted:
+                intro = cls._self_help_context_intro(workspace_context)
+
+                if intro:
+                    return f"{intro}\n\n{formatted}".strip()
+
+                return formatted
+
+        texts = _feature_answers().get("helpAboutFallback") or {}
+
+        if isinstance(texts, dict):
+            title = str(texts.get("title") or "").strip()
+            body = str(texts.get("body") or "").format(topic=topic).strip()
+
+            if title and body:
+                return f"{title}\n\n{body}".strip()
+
+        return None
+
+    @classmethod
+    def _self_help_context_intro(cls, workspace_context: dict) -> str | None:
+        from app.application.services.chat_onboarding_service import (
+            ChatOnboardingService,
+        )
+
+        agent = workspace_context.get("agent") or {}
+        agent_name = str(agent.get("name") or "").strip()
+        agent_category = str(agent.get("category") or "").strip()
+        contexts = _self_help_agent_context()
+
+        if agent_name or agent_category:
+            profile_id = ChatOnboardingService.infer_profile_from_agent(
+                agent_name=agent_name,
+                agent_category=agent_category,
+            )
+            intro = str((contexts.get(profile_id or "") or "")).strip()
+
+            if intro:
+                return intro
+
+            return str(contexts.get("engineering") or "").strip() or None
+
+        return str(contexts.get("common") or "").strip() or None
+
+    @classmethod
     def build_direct_answer(
         cls,
         *,
@@ -708,11 +827,23 @@ class ChatCapabilitiesService:
     ) -> str | None:
         content = _capabilities_content()
         sections = _sections()
-        lines: list[str] = [
-            str(content.get("intro") or "Posso ajudar você nestes formatos:"),
-            "",
-            str(sections.get("alwaysAvailableTitle") or "**Sempre disponíveis (chat comum e agentes)**"),
-        ]
+        lines: list[str] = []
+
+        context_intro = cls._self_help_context_intro(workspace_context)
+
+        if context_intro:
+            lines.extend([context_intro, ""])
+
+        lines.extend(
+            [
+                str(content.get("intro") or "Posso ajudar você nestes formatos:"),
+                "",
+                str(
+                    sections.get("alwaysAvailableTitle")
+                    or "**Sempre disponíveis (chat comum e agentes)**"
+                ),
+            ]
+        )
 
         for tool in sections.get("platformTools") or []:
             if isinstance(tool, dict) and tool.get("description"):

@@ -61,6 +61,9 @@
     "questionTerms": [
       "o que voce pode fazer",
       "o que você pode fazer",
+      "o que voce faz",
+      "o que você faz",
+      "o que vc faz",
       "o que vc pode fazer",
       "o que voce e capaz de fazer",
       "o que vc e capaz de fazer",
@@ -207,9 +210,26 @@
       "ppm"
     ],
     "maxMessageLength": 280,
-    "helpPrefixMaxLength": 80
+    "helpPrefixMaxLength": 80,
+    "helpAboutPrefixes": [
+      "ajuda sobre ",
+      "help sobre "
+    ],
+    "helpAboutMaxLength": 120
+  },
+  "selfHelpAgentContext": {
+    "common": "Você está no **chat comum**. Posso ajudar com textos, anexos, dúvidas gerais, pesquisa web, lousa e orientação sobre qual agente usar.",
+    "engineering": "Neste agente, posso ajudar com **produto**, estoque, fornecedores, estrutura, compras, vendas e visão 360°.",
+    "purchases": "Neste agente, posso ajudar com **fornecedores**, histórico de compras, preços, lead time, notas de entrada e itens críticos.",
+    "commercial": "Neste agente, posso ajudar com **vendas**, clientes, pedidos, faturamento, OV e comparações por período.",
+    "admin": "Neste agente, posso ajudar com **e-mails**, textos, atas, comunicados, traduções, resumos e checklists.",
+    "executive": "Neste agente, posso ajudar com **indicadores**, resumos executivos e visões consolidadas autorizadas."
   },
   "featureAnswers": {
+    "helpAboutFallback": {
+      "title": "**Ajuda no chat**",
+      "body": "Não encontrei um tópico exato para «{topic}». Tente *ajuda sobre estoque*, *lousa*, *gráfico*, *anexo* ou *pesquisa web*.\n\nPara ver tudo: *o que você pode fazer?* ou o painel **?**."
+    },
     "productSearchByGroup": {
       "title": "**Busca de produtos por grupo (código de grupo)**",
       "supported": "Sim. Neste agente posso usar `GET /products/search` com o parâmetro **`group_code`** — informe o **código cadastral do grupo** (campo de grupo do produto no ERP).\n\n**Exemplos de pedido:**\n- «Liste produtos do grupo *01*»\n- «Busque produtos com group_code *MP*»\n\nTambém aceito busca por **descrição/termo** (`description`) ou **código do produto** (`code`), como na consulta «liste 3 exemplos de TERM».",
