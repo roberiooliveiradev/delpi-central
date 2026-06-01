@@ -232,6 +232,9 @@ class ChatOperationalParameterService:
 
         # «estoque do produto» sem código explícito não herda exemplo do assistente.
         if not ChatProductQueryIntentService.references_previous_product(message):
+            if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+                return None
+
             return intent
 
         product_code = ChatProductQueryIntentService.resolve_product_code(

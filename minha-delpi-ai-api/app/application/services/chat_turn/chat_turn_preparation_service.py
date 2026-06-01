@@ -511,13 +511,28 @@ class ChatTurnPreparationService:
         interpretation_without_data_answer = None
 
         if not canvas_action and not pre_capability_answer and not analysis_mode and not text_task_pure:
-            missing_product_code_answer = (
-                ChatOperationalParameterService.resolve_missing_product_code_answer(
-                    message,
-                    conversation_context=conversation_context,
-                    previous_messages=history_source,
-                )
+            from app.domain.services.chat_product_query_intent_service import (
+                ChatProductQueryIntentService,
             )
+            from app.domain.services.chat_sql_operational_intent_service import (
+                ChatSqlOperationalIntentService,
+            )
+
+            skip_missing_product_prompt = (
+                ChatSqlOperationalIntentService.requires_sql_knowledge(message)
+                and not ChatProductQueryIntentService.extract_product_code(message)
+            )
+
+            if skip_missing_product_prompt:
+                missing_product_code_answer = None
+            else:
+                missing_product_code_answer = (
+                    ChatOperationalParameterService.resolve_missing_product_code_answer(
+                        message,
+                        conversation_context=conversation_context,
+                        previous_messages=history_source,
+                    )
+                )
             ambiguous_period_answer = (
                 ChatOperationalParameterService.resolve_ambiguous_period_answer(
                     message,
