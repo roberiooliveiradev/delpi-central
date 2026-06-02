@@ -162,6 +162,38 @@ class VinculoRepository(PluginBaseRepository):
             (revisao_id,),
         )
 
+    def list_by_recurso(self, recurso_id: str) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            f"""
+            {self._VINCULO_SELECT},
+                rv.versao_revisao,
+                rv.cenario_tipo,
+                rv.revisao_ativa,
+                rv.data_inicio_vigencia AS revisao_data_inicio_vigencia,
+                rv.data_implantacao AS revisao_data_implantacao,
+                rv.data_fim_vigencia AS revisao_data_fim_vigencia,
+                p.processo_id,
+                p.codigo_processo,
+                p.nome_processo,
+                p.filial_id,
+                p.setor_id,
+                p.status_processo,
+                p.familia_processo,
+                p.gestor_responsavel
+            JOIN transformometro.revisoes rv
+              ON rv.revisao_id = v.revisao_id
+             AND rv.deletado = FALSE
+            JOIN transformometro.processos p
+              ON p.processo_id = rv.processo_id
+             AND p.deletado = FALSE
+            WHERE v.recurso_compartilhado_id = %s
+              AND v.deletado = FALSE
+              AND r.deletado = FALSE
+            ORDER BY v.ativo DESC, p.codigo_processo ASC, rv.data_inicio_vigencia DESC
+            """,
+            (recurso_id,),
+        )
+
     def get(self, vinculo_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             f"""
