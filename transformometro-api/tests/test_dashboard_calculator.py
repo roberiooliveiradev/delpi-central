@@ -70,3 +70,105 @@ def test_max_zero_when_melhoria_piora_tempo():
         if row["revisao_id"] == "r-melhoria" and row["competencia"] == "2025-03"
     ]
     assert rows[0]["economia_tempo"] == 0.0
+
+
+def test_recurring_investment_spreads_over_active_months():
+    raw = TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-0001",
+                "nome_processo": "Processo Recorrente",
+                "filial_id": "01",
+                "setor_id": "engenharia",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-baseline",
+                "processo_id": "p1",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "processo_id": "p1",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-02-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            {
+                "revisao_id": "r-baseline",
+                "volume_mensal": 100,
+                "tempo_medio_execucao_min": 60,
+                "percentual_retrabalho": 0.1,
+                "custo_hora_mao_obra": 50,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 10,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "volume_mensal": 100,
+                "tempo_medio_execucao_min": 30,
+                "percentual_retrabalho": 0.05,
+                "custo_hora_mao_obra": 50,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 10,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+        ],
+        investimentos=[
+            {
+                "investimento_id": "i1",
+                "revisao_id": "r-melhoria",
+                "tipo_investimento": "fixo",
+                "categoria_investimento": "infra",
+                "descricao_item": "Assinatura",
+                "quantidade": 1,
+                "valor_unitario": 1200,
+                "valor_total": 1200,
+                "data_investimento": "2025-02-01",
+                "recorrencia": "mensal",
+                "meses_vigencia": 3,
+                "centro_custo": "TI",
+                "observacoes": None,
+                "deletado": False,
+            }
+        ],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+
+    calc = DashboardCalculatorService()
+    rows = [
+        row for row in calc.build_dashboard_rows(raw) if row["revisao_id"] == "r-melhoria"
+    ]
+    assert len(rows) >= 3
+    feb = next(row for row in rows if row["competencia"] == "2025-02")
+    mar = next(row for row in rows if row["competencia"] == "2025-03")
+    apr = next(row for row in rows if row["competencia"] == "2025-04")
+    may = next(row for row in rows if row["competencia"] == "2025-05")
+
+    assert feb["custo_recorrente_mes"] == 1200.0
+    assert mar["custo_recorrente_mes"] == 1200.0
+    assert apr["custo_recorrente_mes"] == 1200.0
+    assert may["custo_recorrente_mes"] == 0.0
+    assert feb["investimento_total_mes"] == 1200.0
+    assert mar["investimento_total_mes"] == 1200.0
+    assert apr["investimento_total_mes"] == 1200.0
+    assert may["investimento_total_mes"] == 0.0

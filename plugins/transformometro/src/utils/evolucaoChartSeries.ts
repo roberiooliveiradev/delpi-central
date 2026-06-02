@@ -69,8 +69,10 @@ export function buildEvolucaoSavingsSeries(
     const current = byMonth.get(key) ?? { bruta: 0, liquida: 0, investimento: 0 };
     current.bruta += Number(item.economia_bruta ?? 0);
     current.liquida += Number(item.economia_liquida_mes ?? 0);
-    current.investimento +=
-      Number(item.investimento_unico_mes ?? 0) + Number(item.custo_recorrente_mes ?? 0);
+    current.investimento += Number(
+      item.investimento_total_mes ??
+        (Number(item.investimento_unico_mes ?? 0) + Number(item.custo_recorrente_mes ?? 0))
+    );
     byMonth.set(key, current);
   }
 
@@ -113,7 +115,7 @@ export function buildEvolucaoSavingsSeries(
         sortKey: bucket.key,
         bruta: Number((row?.bruta ?? 0).toFixed(2)),
         liquida: Number((row?.liquida ?? 0).toFixed(2)),
-        investimento: Number((row?.investimento ?? 0).toFixed(2)),
+        investimento: Number((row?.investimento ?? row?.investimento_total_mes ?? 0).toFixed(2)),
       };
     });
 
