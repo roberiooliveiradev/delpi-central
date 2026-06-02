@@ -8,6 +8,7 @@ export type RevisaoVigenciaForm = {
   data_inicio_vigencia: string;
   data_implantacao: string;
   data_fim_vigencia: string;
+  revisao_ativa: boolean;
   descricao_revisao: string;
   motivo_revisao: string;
   observacoes: string;
@@ -21,11 +22,13 @@ type Props = {
 };
 
 export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onSubmit }: Props) {
+  const isBaseline = revisaoVigencia.cenario_tipo === "baseline";
+
   return (
     <CadastroSection
       embedded
       title="Vigência e identificação"
-      hint="Versão, cenário e período usados no dashboard. Deixe fim vazio para vigência aberta."
+      hint="Versão, cenário e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
     >
       <form onSubmit={onSubmit}>
         <div className="ds-filters-row">
@@ -42,7 +45,14 @@ export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onS
             <select
               required
               value={revisaoVigencia.cenario_tipo}
-              onChange={(e) => onChange({ ...revisaoVigencia, cenario_tipo: e.target.value })}
+              onChange={(e) => {
+                const cenario = e.target.value;
+                onChange({
+                  ...revisaoVigencia,
+                  cenario_tipo: cenario,
+                  revisao_ativa: cenario === "baseline" ? false : revisaoVigencia.revisao_ativa,
+                });
+              }}
             >
               {options.cenario_tipo.map((c) => (
                 <option key={c} value={c}>
@@ -78,9 +88,24 @@ export function RevisaoVigenciaSection({ revisaoVigencia, options, onChange, onS
               type="date"
               value={revisaoVigencia.data_fim_vigencia}
               onChange={(e) =>
-                onChange({ ...revisaoVigencia, data_fim_vigencia: e.target.value })
+                onChange({
+                  ...revisaoVigencia,
+                  data_fim_vigencia: e.target.value,
+                  revisao_ativa: e.target.value || isBaseline ? false : revisaoVigencia.revisao_ativa,
+                })
               }
             />
+          </label>
+          <label className="ds-filter-box ds-filter-box--checkbox">
+            <input
+              type="checkbox"
+              checked={revisaoVigencia.revisao_ativa}
+              disabled={isBaseline || Boolean(revisaoVigencia.data_fim_vigencia)}
+              onChange={(e) =>
+                onChange({ ...revisaoVigencia, revisao_ativa: e.target.checked })
+              }
+            />
+            Marcar como revisão ativa
           </label>
         </div>
         <label className="ds-filter-box ds-filter-box--wide">
@@ -126,6 +151,7 @@ export function buildRevisaoVigenciaFromRevisao(revisao: Revisao): RevisaoVigenc
     data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
     data_implantacao: toDateInputValue(revisao.data_implantacao),
     data_fim_vigencia: toDateInputValue(revisao.data_fim_vigencia),
+    revisao_ativa: Boolean(revisao.revisao_ativa),
     descricao_revisao: revisao.descricao_revisao ?? "",
     motivo_revisao: revisao.motivo_revisao ?? "",
     observacoes: revisao.observacoes ?? "",
@@ -139,6 +165,7 @@ export function revisaoPayloadFromVigenciaForm(form: RevisaoVigenciaForm) {
     data_inicio_vigencia: form.data_inicio_vigencia,
     data_implantacao: optionalDateField(form.data_implantacao),
     data_fim_vigencia: optionalDateField(form.data_fim_vigencia),
+    revisao_ativa: form.cenario_tipo === "baseline" ? false : form.revisao_ativa,
     descricao_revisao: form.descricao_revisao.trim() || undefined,
     motivo_revisao: form.motivo_revisao.trim() || undefined,
     observacoes: form.observacoes.trim() || undefined,
