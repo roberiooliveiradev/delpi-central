@@ -234,7 +234,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [processos]
   );
 
-  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[](
+  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
     () => [
       { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
       {
@@ -272,7 +272,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     []
   );
 
-  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[](
+  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
     () => [
       {
         key: "codigo",
