@@ -69,22 +69,6 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           </select>
         </label>
         <label className="ds-filter-box">
-          Valor mensal atual (R$) *
-          <input
-            type="number"
-            min={0}
-            step="any"
-            required
-            value={form.valor_total_recorrente}
-            onChange={(e) =>
-              onChange({
-                ...form,
-                valor_total_recorrente: Number(e.target.value),
-              })
-            }
-          />
-        </label>
-        <label className="ds-filter-box">
           Critério de rateio *
           <select
             value={form.criterio_rateio}
@@ -118,7 +102,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           />
         </label>
         <label className="ds-filter-box">
-          Início vigência
+          Início vigência do recurso
           <input
             type="date"
             value={form.data_inicio_vigencia}
@@ -126,7 +110,7 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
           />
         </label>
         <label className="ds-filter-box">
-          Fim vigência
+          Fim vigência do recurso
           <input
             type="date"
             value={form.data_fim_vigencia}
