@@ -11,18 +11,17 @@ import {
   fetchInvestimentos,
   fetchMedicao,
   fetchRecursos,
-  fetchRevisaoDiagnosticoRateio,
   fetchVinculos,
   updateRevisao,
   upsertMedicao,
   type Investimento,
   type Medicao,
   type OptionsData,
-  type RateioDiagnostic,
   type RecursoCompartilhado,
   type Revisao,
   type VinculoRecurso,
 } from "../../data/api/transformometroApi";
+import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { CadastroTabs, type CadastroTabId } from "../revisao/cadastro/CadastroTabs";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";
@@ -33,6 +32,34 @@ import {
   RevisaoVigenciaSection,
   revisaoPayloadFromVigenciaForm,
 } from "../revisao/cadastro/RevisaoVigenciaSection";
+
+type RateioDiagnostic = {
+  revisao_id: string;
+  processo_id: string;
+  competencia?: string | null;
+  economia_bruta: number;
+  custo_recursos_compartilhados_mes: number;
+  economia_liquida_mes: number;
+  rateio_excede_ganho: boolean;
+  message: string;
+};
+
+type ApiEnvelope<T> = { success: boolean; message: string; data: T };
+
+async function fetchRevisaoDiagnosticoRateio(
+  revisaoId: string,
+  getAccessToken?: () => string | undefined
+): Promise<RateioDiagnostic> {
+  const response = await fetch(
+    `${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/diagnostico-rateio`,
+    { headers: buildAuthHeaders(getAccessToken) }
+  );
+  const payload = (await response.json()) as ApiEnvelope<RateioDiagnostic>;
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || `Erro HTTP ${response.status}`);
+  }
+  return payload.data;
+}
 
 const emptyMedicao = (revisaoId: string): Medicao => ({
   revisao_id: revisaoId,
