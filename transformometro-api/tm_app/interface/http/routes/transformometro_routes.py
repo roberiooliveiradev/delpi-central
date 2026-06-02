@@ -3,11 +3,9 @@ from fastapi import APIRouter
 from tm_app.core.catalogs import options_payload
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import ok
-from tm_app.infrastructure.persistence.repositories.processo_repository import (
-    ProcessoRepository,
-)
+from tm_app.infrastructure.persistence.repositories.processo_repository import ProcessoRepository
 
-router = APIRouter(prefix="/transformometro", tags=["Transformômetro"])
+router = APIRouter(prefix="/transformometro", tags=["Transformometro"])
 
 
 @router.get("/health")
@@ -22,10 +20,7 @@ def module_health():
         )
         db_ready = bool(row and row.get("processos_table"))
         if not db_ready:
-            db_hint = (
-                "Tabela transformometro.processos não encontrada. "
-                "Defina TM_RUN_MIGRATIONS_ON_STARTUP=true e reinicie transformometro-api."
-            )
+            db_hint = "Tabela transformometro.processos nao encontrada. Reinicie a API com migrations habilitadas."
     except Exception as exc:
         db_hint = format_api_error(exc)
 
@@ -36,3 +31,8 @@ def module_health():
         "db_ready": db_ready,
         "db_hint": db_hint,
     }
+
+
+@router.get("/options")
+def get_options():
+    return ok(options_payload())
