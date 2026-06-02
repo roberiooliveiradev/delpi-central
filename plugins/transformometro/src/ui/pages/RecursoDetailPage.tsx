@@ -38,6 +38,23 @@ type VinculoEditForm = {
   observacoes: string;
 };
 
+type DetailMetricProps = {
+  label: string;
+  value: string | number;
+  highlight?: boolean;
+};
+
+function DetailMetric({ label, value, highlight = false }: DetailMetricProps) {
+  return (
+    <div className="ds-summary-metric">
+      <dt>{label}</dt>
+      <dd className={highlight ? "ds-summary-metric__value--accent" : undefined}>
+        {value}
+      </dd>
+    </div>
+  );
+}
+
 function formFromVinculo(vinculo: VinculoRecurso): VinculoEditForm {
   return {
     ativo: Boolean(vinculo.ativo),
@@ -141,6 +158,9 @@ export function RecursoDetailPage({
   }
 
   const ativos = useMemo(() => vinculos.filter((v) => v.ativo).length, [vinculos]);
+  const vigenciaRecurso = recurso
+    ? `${toDateInputValue(recurso.data_inicio_vigencia) || "…"} → ${toDateInputValue(recurso.data_fim_vigencia) || "…"}`
+    : "—";
 
   const columns = useMemo<DataTableColumn<VinculoRecurso>[]>(
     () => [
@@ -227,7 +247,7 @@ export function RecursoDetailPage({
         ),
       },
     ],
-    [editingId, onNavigate]
+    [onNavigate]
   );
 
   if (loading && !recurso) {
@@ -273,17 +293,21 @@ export function RecursoDetailPage({
 
       {recurso ? (
         <section className="ds-card ds-cadastro-subsection">
-          <h2 className="ds-section-title">Dados do recurso</h2>
-          <div className="ds-detail-grid">
-            <div><span>CÓDIGO</span><strong>{recurso.codigo_recurso}</strong></div>
-            <div><span>STATUS</span><strong>{recurso.status_recurso}</strong></div>
-            <div><span>CATEGORIA</span><strong>{recurso.categoria_recurso || "—"}</strong></div>
-            <div><span>FORNECEDOR</span><strong>{recurso.fornecedor || "—"}</strong></div>
-            <div><span>TIPO / RECORRÊNCIA</span><strong>{recurso.tipo_custo} · {recurso.recorrencia}</strong></div>
-            <div><span>RATEIO</span><strong>{labelCriterioRateio(recurso.criterio_rateio)}</strong></div>
-            <div><span>CUSTO MÊS VIGENTE</span><strong>{formatCurrency(recurso.valor_total_recorrente)}</strong></div>
-            <div><span>VÍNCULOS ATIVOS</span><strong>{ativos}</strong></div>
+          <div className="ds-table-section__header">
+            <h2 className="ds-section-title">Dados do recurso</h2>
+            <span className="ds-table-section__meta">{vinculos.length} vínculo(s)</span>
           </div>
+          <dl className="ds-summary-metrics ds-summary-metrics--resource-detail">
+            <DetailMetric label="Código" value={recurso.codigo_recurso} highlight />
+            <DetailMetric label="Status" value={recurso.status_recurso} />
+            <DetailMetric label="Categoria" value={recurso.categoria_recurso || "—"} />
+            <DetailMetric label="Fornecedor" value={recurso.fornecedor || "—"} />
+            <DetailMetric label="Tipo / recorrência" value={`${recurso.tipo_custo} · ${recurso.recorrencia}`} />
+            <DetailMetric label="Rateio" value={labelCriterioRateio(recurso.criterio_rateio)} />
+            <DetailMetric label="Custo mês vigente" value={formatCurrency(recurso.valor_total_recorrente)} highlight />
+            <DetailMetric label="Vínculos ativos" value={ativos} highlight />
+            <DetailMetric label="Vigência do recurso" value={vigenciaRecurso} />
+          </dl>
         </section>
       ) : null}
 
