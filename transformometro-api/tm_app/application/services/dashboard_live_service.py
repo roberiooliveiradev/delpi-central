@@ -144,6 +144,12 @@ class DashboardLiveService:
         if not target_rows:
             return []
 
+        proration_factor = self._calculate_rows_proration_factor(
+            target_rows,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
+
         raw = self.load_filtered_raw(filial_id=filial_id, setor_id=setor_id)
         processos_by_id = {
             str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
@@ -191,7 +197,13 @@ class DashboardLiveService:
             implementation_date = self._calculator._review_implementation_date(
                 implementation_review
             )
-            liquida = totals["economia_liquida_mes"]
+            liquida_full = totals["economia_liquida_mes"]
+            liquida = liquida_full * proration_factor
+            bruta = totals["economia_bruta"] * proration_factor
+            investimento_unico = totals["investimento_unico_mes"] * proration_factor
+            custo_recorrente = totals["custo_recorrente_mes"] * proration_factor
+            custo_recursos = totals["custo_recursos_compartilhados_mes"] * proration_factor
+            investimento_total = totals["investimento_total_mes"] * proration_factor
             month_count = max(len(totals["competencias"]), 1)
             ranking.append(
                 {
@@ -201,14 +213,12 @@ class DashboardLiveService:
                     "filial_id": proc.get("filial_id"),
                     "setor_id": proc.get("setor_id"),
                     "economia_liquida_mes": round(liquida, 2),
-                    "economia_bruta": round(totals["economia_bruta"], 2),
-                    "investimento_unico_mes": round(totals["investimento_unico_mes"], 2),
-                    "custo_recorrente_mes": round(totals["custo_recorrente_mes"], 2),
-                    "custo_recursos_compartilhados_mes": round(
-                        totals["custo_recursos_compartilhados_mes"], 2
-                    ),
-                    "investimento_total_mes": round(totals["investimento_total_mes"], 2),
-                    "economia_diaria": round(liquida / (30.0 * month_count), 2),
+                    "economia_bruta": round(bruta, 2),
+                    "investimento_unico_mes": round(investimento_unico, 2),
+                    "custo_recorrente_mes": round(custo_recorrente, 2),
+                    "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
+                    "investimento_total_mes": round(investimento_total, 2),
+                    "economia_diaria": round(liquida_full / (30.0 * month_count), 2),
                     "competencia": (
                         max(totals["competencias"])
                         if totals["competencias"]
@@ -225,6 +235,49 @@ class DashboardLiveService:
 
         ranking.sort(key=lambda item: float(item.get("economia_liquida_mes") or 0), reverse=True)
         return ranking[:limit]
+
+    def _calculate_rows_proration_factor(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        competencia_inicio: str | None,
+        competencia_fim: str | None,
+    ) -> float:
+        if not competencia_inicio or not competencia_fim:
+            return 1.0
+
+        by_competencia: dict[str, dict[str, float | str]] = {}
+        for row in rows:
+            competencia = str(row.get("competencia") or "")
+            if not competencia:
+                continue
+            bucket = by_competencia.setdefault(
+                competencia,
+                {
+                    "competencia": competencia,
+                    "economia_bruta": 0.0,
+                    "investimento_unico_mes": 0.0,
+                    "custo_recorrente_mes": 0.0,
+                    "investimento_total_mes": 0.0,
+                    "custo_recursos_compartilhados_mes": 0.0,
+                    "economia_liquida_mes": 0.0,
+                },
+            )
+            bucket["economia_bruta"] = float(bucket["economia_bruta"]) + float(row.get("economia_bruta") or 0)
+            bucket["investimento_unico_mes"] = float(bucket["investimento_unico_mes"]) + float(row.get("investimento_unico_mes") or 0)
+            bucket["custo_recorrente_mes"] = float(bucket["custo_recorrente_mes"]) + float(row.get("custo_recorrente_mes") or 0)
+            bucket["investimento_total_mes"] = float(bucket["investimento_total_mes"]) + float(row.get("investimento_total_mes") or 0)
+            bucket["custo_recursos_compartilhados_mes"] = float(bucket["custo_recursos_compartilhados_mes"]) + float(
+                row.get("custo_recursos_compartilhados_mes") or 0
+            )
+            bucket["economia_liquida_mes"] = float(bucket["economia_liquida_mes"]) + float(row.get("economia_liquida_mes") or 0)
+
+        monthly_breakdown = [by_competencia[key] for key in sorted(by_competencia)]
+        return self._calculator._calculate_date_range_proration_factor(
+            start_date=competencia_inicio,
+            end_date=competencia_fim,
+            monthly_breakdown=monthly_breakdown,
+        )
 
     def query_resumo_por_familia(
         self,
