@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -25,6 +25,7 @@ import {
 import { labelCriterioRateio } from "../../utils/catalogLabels";
 import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
+import { buildRecursoPath } from "../../utils/routeParser";
 import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import {
   emptyRecursoForm,
@@ -120,17 +121,42 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   }
 
   const columns: DataTableColumn<RecursoCompartilhado>[] = [
-    { key: "codigo", header: "Código", render: (r) => r.codigo_recurso, sortable: true },
+    {
+      key: "codigo",
+      header: "Código",
+      render: (r) => (
+        <button
+          type="button"
+          className="ds-link-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
+          }}
+        >
+          {r.codigo_recurso}
+        </button>
+      ),
+      sortable: true,
+      sortValue: (r) => r.codigo_recurso,
+    },
     {
       key: "nome",
       header: "Nome",
       sortable: true,
       className: "ds-table__col--wide",
+      sortValue: (r) => r.nome_recurso,
       render: (r) => (
-        <>
+        <button
+          type="button"
+          className="ds-link-btn"
+          onClick={(event) => {
+            event.stopPropagation();
+            onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
+          }}
+        >
           <strong>{r.nome_recurso}</strong>
           {r.fornecedor ? <span className="ds-table__sub"> · {r.fornecedor}</span> : null}
-        </>
+        </button>
       ),
     },
     {
@@ -159,6 +185,17 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       className: "ds-table__actions",
       render: (r) => (
         <>
+          <button
+            type="button"
+            className="ds-ghost-btn"
+            onClick={(event) => {
+              event.stopPropagation();
+              onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
+            }}
+          >
+            <Eye size={15} />
+            Detalhes
+          </button>
           <button
             type="button"
             className="ds-ghost-btn"
