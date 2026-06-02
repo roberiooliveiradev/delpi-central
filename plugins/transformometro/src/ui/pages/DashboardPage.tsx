@@ -234,7 +234,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [processos]
   );
 
-  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
+  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[](
     () => [
       { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
       {
@@ -272,7 +272,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     []
   );
 
-  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
+  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[](
     () => [
       {
         key: "codigo",
@@ -337,6 +337,23 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             </span>
           );
         },
+      },
+      {
+        key: "investimentos",
+        header: "Invest. vigentes",
+        sortable: true,
+        className: "ds-table__col--numeric",
+        sortValue: (row) => (row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0),
+        render: (row) =>
+          formatCurrency((row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0)),
+      },
+      {
+        key: "recursos",
+        header: "Recursos vigentes",
+        sortable: true,
+        className: "ds-table__col--numeric",
+        sortValue: (row) => row.custo_recursos_compartilhados_mes ?? 0,
+        render: (row) => formatCurrency(row.custo_recursos_compartilhados_mes ?? 0),
       },
       {
         key: "month",
