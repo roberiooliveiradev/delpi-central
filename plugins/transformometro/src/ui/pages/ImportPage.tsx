@@ -6,16 +6,56 @@ import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
+import type { ImportApplyResult, ImportPreviewResult } from "../../data/api/transformometroApi";
 import {
-  applySheetImport,
-  previewSheetImport,
-  type ImportPreviewResult,
-} from "../../data/api/transformometroApi";
+  TRANSFORMOMETRO_API_BASE,
+  buildAuthHeaders,
+} from "../../data/api/transformometroApiBase";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
   onNavigate: (path: string) => void;
 };
+
+type ApiEnvelope<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+};
+
+async function requestSheetImport<T>(
+  path: string,
+  getAccessToken?: () => string | undefined,
+  init?: RequestInit
+): Promise<T> {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...buildAuthHeaders(getAccessToken),
+      ...(init?.headers ?? {}),
+    },
+  });
+  const payload = (await response.json()) as ApiEnvelope<T>;
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.message || `Erro HTTP ${response.status}`);
+  }
+  return payload.data;
+}
+
+function previewSheetImport(getAccessToken?: () => string | undefined) {
+  return requestSheetImport<ImportPreviewResult>("/import/preview", getAccessToken);
+}
+
+function applySheetImport(
+  payload: { replace_existing: boolean; recalc_dashboard: boolean },
+  getAccessToken?: () => string | undefined
+) {
+  return requestSheetImport<ImportApplyResult>("/import/apply", getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
 
 export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [preview, setPreview] = useState<ImportPreviewResult | null>(null);
@@ -41,7 +81,7 @@ export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
     if (
       replaceExisting &&
       !window.confirm(
-        "Substituir apaga todo o cadastro e o dashboard materializado. Continuar?"
+        "Substituir o cadastro existente e continuar com a importação?"
       )
     ) {
       return;
@@ -89,7 +129,7 @@ export function ImportPage({ getAccessToken, pathname, onNavigate }: Props) {
               checked={replaceExisting}
               onChange={(e) => setReplaceExisting(e.target.checked)}
             />
-            Substituir cadastro existente (truncate)
+            Substituir cadastro existente
           </label>
         </div>
 
