@@ -302,6 +302,7 @@ class DashboardCalculatorService:
             economia_bruta_mes = 0.0
             investimento_unico_mes = 0.0
             custo_recorrente_mes = 0.0
+            custo_recursos_compartilhados_mes = 0.0
             economia_liquida_mes = 0.0
 
             for process_id, process_row in context.processos_by_id.items():
@@ -338,6 +339,7 @@ class DashboardCalculatorService:
                     economia_bruta_mes += row["economia_bruta"]
                     investimento_unico_mes += row["investimento_unico_mes"]
                     custo_recorrente_mes += row["custo_recorrente_mes"]
+                    custo_recursos_compartilhados_mes += row["custo_recursos_compartilhados_mes"]
                     economia_liquida_mes += row["economia_liquida_mes"]
                     calculation_rows.append(row)
 
@@ -347,6 +349,10 @@ class DashboardCalculatorService:
                     "economia_bruta": self._round_final(economia_bruta_mes),
                     "investimento_unico_mes": self._round_final(investimento_unico_mes),
                     "custo_recorrente_mes": self._round_final(custo_recorrente_mes),
+                    "investimento_total_mes": self._round_final(
+                        investimento_unico_mes + custo_recorrente_mes
+                    ),
+                    "custo_recursos_compartilhados_mes": self._round_final(custo_recursos_compartilhados_mes),
                     "economia_liquida_mes": self._round_final(economia_liquida_mes),
                 }
             )

@@ -537,6 +537,8 @@ export type DashboardEvolucaoItem = {
   economia_bruta: number;
   investimento_unico_mes?: number;
   custo_recorrente_mes: number;
+  investimento_total_mes?: number;
+  custo_recursos_compartilhados_mes?: number;
   economia_liquida_mes: number;
 };
 

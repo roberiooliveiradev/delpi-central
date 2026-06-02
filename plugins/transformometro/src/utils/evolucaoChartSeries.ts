@@ -115,7 +115,7 @@ export function buildEvolucaoSavingsSeries(
         sortKey: bucket.key,
         bruta: Number((row?.bruta ?? 0).toFixed(2)),
         liquida: Number((row?.liquida ?? 0).toFixed(2)),
-        investimento: Number((row?.investimento ?? row?.investimento_total_mes ?? 0).toFixed(2)),
+        investimento: Number((row?.investimento ?? 0).toFixed(2)),
       };
     });
 
