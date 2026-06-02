@@ -61,7 +61,6 @@ import {
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
 import {
-  dateInputToCompetencia,
   formatPeriodLabel,
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
@@ -101,10 +100,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const apiParams = useMemo(() => {
     const params: Record<string, string> = {};
-    const inicio = dateInputToCompetencia(dateStart);
-    const fim = dateInputToCompetencia(dateEnd);
-    if (inicio) params.competencia_inicio = inicio;
-    if (fim) params.competencia_fim = fim;
+    if (dateStart) params.competencia_inicio = dateStart;
+    if (dateEnd) params.competencia_fim = dateEnd;
     if (branch) params.filial_id = branch;
     if (setorId) params.setor_id = setorId;
     return params;
@@ -238,23 +235,29 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
     () => [
-      { key: "familia", header: "Família", render: (row) => row.familia_processo },
+      { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
       {
         key: "processos",
         header: "Processos",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.processos,
         render: (row) => formatInteger(row.processos),
       },
       {
         key: "bruta",
         header: "Economia bruta",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_bruta,
         render: (row) => formatCurrency(row.economia_bruta),
       },
       {
         key: "liquida",
         header: "Economia líquida",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_liquida_mes,
         render: (row) => {
           const negative = row.economia_liquida_mes < 0;
           return (
@@ -273,6 +276,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "codigo",
         header: "Código",
+        sortable: true,
         render: (row) =>
           row.processo_id ? (
             <button
@@ -292,6 +296,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "nome",
         header: "Processo",
+        sortable: true,
         className: "ds-table__col--wide",
         render: (row) =>
           row.processo_id ? (
@@ -312,7 +317,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "daily",
         header: "Economia/dia",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_diaria ?? 0,
         render: (row) => {
           const value = row.economia_diaria;
           const negative = value != null && value < 0;
@@ -326,7 +333,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "month",
         header: "Líquida no mês",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_liquida_mes ?? 0,
         render: (row) => {
           const value = row.economia_liquida_mes;
           const negative = value != null && value < 0;
@@ -340,7 +349,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "bruta",
         header: "Bruta no mês",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_bruta ?? 0,
         render: (row) => formatCurrency(row.economia_bruta),
       },
     ],

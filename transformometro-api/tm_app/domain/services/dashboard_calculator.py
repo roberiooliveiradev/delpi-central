@@ -96,6 +96,13 @@ class DashboardCalculatorService:
             end_date=end_date,
         )
 
+        # Apply date range proration if filtering by partial months
+        monthly_breakdown = self._apply_date_range_proration(
+            monthly_breakdown=monthly_breakdown,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
         implemented_solutions_count = len(
             {
                 row["revisao_id"]
@@ -960,6 +967,73 @@ class DashboardCalculatorService:
                     candidates.append(implementation_date)
 
         return min(candidates) if candidates else None
+
+    def _apply_date_range_proration(
+        self,
+        monthly_breakdown: List[dict],
+        start_date: Optional[str],
+        end_date: Optional[str],
+    ) -> List[dict]:
+        """
+        Apply temporal proration to monthly breakdown when filtering by a date range.
+        If the user filters by specific days (e.g., 2026-06-01 to 2026-06-02),
+        this prorates the monthly values to reflect only the filtered period.
+        
+        E.g., if filtering 2 days of a 30-day month, multiply monthly values by 2/30.
+        """
+        # Only apply proration if we have specific day-level dates (YYYY-MM-DD format)
+        if not start_date or not end_date or len(start_date) < 10 or len(end_date) < 10:
+            return monthly_breakdown
+
+        try:
+            start_date_obj = self._parse_date(start_date)
+            end_date_obj = self._parse_date(end_date)
+        except (ValueError, TypeError):
+            return monthly_breakdown
+
+        if not start_date_obj or not end_date_obj:
+            return monthly_breakdown
+
+        prorated_breakdown: List[dict] = []
+
+        for item in monthly_breakdown:
+            competencia_str = item.get("competencia", "")
+            try:
+                # Parse competencia (YYYY-MM) to get month boundaries
+                competencia_date = datetime.strptime(competencia_str, "%Y-%m").date()
+                year = competencia_date.year
+                month = competencia_date.month
+                first_day = date(year, month, 1)
+                last_day = date(year, month, calendar.monthrange(year, month)[1])
+
+                # Calculate the overlap between filtered range and this month
+                effective_start = max(first_day, start_date_obj)
+                effective_end = min(last_day, end_date_obj)
+
+                # If no overlap, skip this item
+                if effective_end < effective_start:
+                    continue
+
+                # Calculate proration factor
+                days_in_range = (effective_end - effective_start).days + 1
+                days_in_month = (last_day - first_day).days + 1
+                proration_factor = days_in_range / days_in_month
+
+                # Apply proration to all monetary values
+                prorated_item = dict(item)
+                for key in ["economia_bruta", "investimento_unico_mes", 
+                           "custo_recorrente_mes", "economia_liquida_mes"]:
+                    if key in prorated_item and prorated_item[key] is not None:
+                        original_value = float(prorated_item[key])
+                        prorated_item[key] = original_value * proration_factor
+
+                prorated_breakdown.append(prorated_item)
+
+            except (ValueError, TypeError):
+                # If we can't parse the competencia, keep the original item
+                prorated_breakdown.append(item)
+
+        return prorated_breakdown
 
     def _build_range_summary(
         self,

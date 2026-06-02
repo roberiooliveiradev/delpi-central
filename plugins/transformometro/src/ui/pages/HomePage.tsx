@@ -47,7 +47,6 @@ import {
 import { fetchTransformometroHealth } from "../../data/api/transformometroHealthApi";
 import type { ChartGranularity } from "../../types/chart";
 import {
-  dateInputToCompetencia,
   formatPeriodLabel,
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
@@ -80,10 +79,8 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const apiParams = useMemo(() => {
     const params: Record<string, string> = {};
-    const inicio = dateInputToCompetencia(dateStart);
-    const fim = dateInputToCompetencia(dateEnd);
-    if (inicio) params.competencia_inicio = inicio;
-    if (fim) params.competencia_fim = fim;
+    if (dateStart) params.competencia_inicio = dateStart;
+    if (dateEnd) params.competencia_fim = dateEnd;
     return params;
   }, [dateEnd, dateStart]);
 
@@ -159,6 +156,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "codigo",
         header: "Código",
+        sortable: true,
         render: (row) =>
           row.processo_id ? (
             <button
@@ -175,6 +173,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "nome",
         header: "Processo",
+        sortable: true,
         className: "ds-table__col--wide",
         render: (row) =>
           row.processo_id ? (
@@ -192,7 +191,9 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "liquida",
         header: "Líquida/mês",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_liquida_mes ?? 0,
         render: (row) => {
           const value = row.economia_liquida_mes;
           const negative = value != null && value < 0;
@@ -206,7 +207,9 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "daily",
         header: "Economia/dia",
+        sortable: true,
         className: "ds-table__col--numeric",
+        sortValue: (row) => row.economia_diaria ?? 0,
         render: (row) => formatCurrency(row.economia_diaria),
       },
     ],

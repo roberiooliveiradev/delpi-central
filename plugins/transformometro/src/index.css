@@ -373,6 +373,13 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.dashboard-transformometro .ds-kpi-header > div:first-child {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .dashboard-transformometro .ds-kpi-title {
@@ -380,6 +387,8 @@
   font-size: var(--ds-font-sm);
   font-weight: 600;
   color: var(--ds-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-transformometro .ds-kpi-value {
@@ -387,11 +396,15 @@
   font-size: var(--ds-font-kpi);
   line-height: 1.1;
   color: var(--ds-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-transformometro .ds-kpi-subtitle {
   font-size: var(--ds-font-xs);
   color: var(--ds-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dashboard-transformometro .ds-kpi-icon {
