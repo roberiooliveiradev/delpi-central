@@ -27,11 +27,58 @@ class DashboardLiveService:
         familia_processo: str | None = None,
     ) -> TransformometroRawData:
         raw = self._data_repo.load_raw()
-        return self._calculator.filter_raw(
+        return self._filter_raw_preserving_resource_rateio(
             raw,
             filial_id=filial_id,
             setor_id=setor_id,
             familia_processo=familia_processo,
+        )
+
+    def _filter_raw_preserving_resource_rateio(
+        self,
+        raw: TransformometroRawData,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        familia_processo: str | None = None,
+    ) -> TransformometroRawData:
+        filtered = self._calculator.filter_raw(
+            raw,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            familia_processo=familia_processo,
+        )
+        if filtered is raw:
+            return raw
+
+        target_resource_ids = {
+            str(v.get("recurso_compartilhado_id"))
+            for v in filtered.revisao_recursos_compartilhados
+            if v.get("recurso_compartilhado_id") is not None
+        }
+        if not target_resource_ids:
+            return filtered
+
+        return TransformometroRawData(
+            processos=filtered.processos,
+            revisoes=filtered.revisoes,
+            medicoes=filtered.medicoes,
+            investimentos=filtered.investimentos,
+            recursos_compartilhados=[
+                r
+                for r in raw.recursos_compartilhados
+                if str(r.get("recurso_compartilhado_id")) in target_resource_ids
+            ],
+            revisao_recursos_compartilhados=[
+                v
+                for v in raw.revisao_recursos_compartilhados
+                if str(v.get("recurso_compartilhado_id")) in target_resource_ids
+            ],
+            recurso_custos=[
+                c
+                for c in raw.recurso_custos
+                if str(c.get("recurso_compartilhado_id")) in target_resource_ids
+            ],
         )
 
     def calculation_rows(
@@ -64,8 +111,7 @@ class DashboardLiveService:
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
     ) -> dict[str, Any]:
-        raw = self._data_repo.load_raw()
-        filtered = self._calculator.filter_raw(raw, filial_id=filial_id, setor_id=setor_id)
+        filtered = self.load_filtered_raw(filial_id=filial_id, setor_id=setor_id)
         summary = self._calculator.build_summary(
             filtered,
             filial_id=None,
