@@ -175,6 +175,17 @@ def test_schema_prefetch_requires_agent_actions():
     )
 
 
+def test_schema_discovery_snapshot_contains_candidates():
+    snapshot = ChatAdvancedSqlSpecialistService.build_pipeline_snapshot(
+        message="monte uma consulta de clientes na tabela SB1",
+        workspace_context=_ctx(),
+    )
+
+    assert snapshot is not None
+    assert snapshot["schemaDiscovery"]["tableCandidates"] == ["SB1"]
+    assert "cliente" in (snapshot["schemaDiscovery"]["domainHint"] or "").lower()
+
+
 def test_sql14_empty_result_recovery_mode():
     mode = ChatAdvancedSqlSpecialistService.classify_mode(
         "interprete o resultado vazio da consulta anterior"

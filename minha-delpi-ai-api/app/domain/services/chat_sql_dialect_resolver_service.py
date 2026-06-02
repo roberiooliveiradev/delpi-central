@@ -14,6 +14,11 @@ SqlDialect = Literal[
     "mysql",
     "oracle",
     "sqlite",
+    "bigquery",
+    "snowflake",
+    "redshift",
+    "databricks",
+    "duckdb",
     "generic",
 ]
 
@@ -33,6 +38,12 @@ _DIALECT_HINTS: tuple[tuple[str, SqlDialect], ...] = (
     ("oracle", "oracle"),
     ("plsql", "oracle"),
     ("sqlite", "sqlite"),
+    ("bigquery", "bigquery"),
+    ("bq", "bigquery"),
+    ("snowflake", "snowflake"),
+    ("redshift", "redshift"),
+    ("databricks", "databricks"),
+    ("duckdb", "duckdb"),
 )
 
 
@@ -43,7 +54,19 @@ class ChatSqlDialectResolverService:
 
         token = str(Settings.CHAT_DEFAULT_SQL_DIALECT or "sqlserver").strip().lower()
 
-        if token in {"sqlserver", "postgresql", "mysql", "oracle", "sqlite", "generic"}:
+        if token in {
+            "sqlserver",
+            "postgresql",
+            "mysql",
+            "oracle",
+            "sqlite",
+            "bigquery",
+            "snowflake",
+            "redshift",
+            "databricks",
+            "duckdb",
+            "generic",
+        }:
             return token  # type: ignore[return-value]
 
         return "sqlserver"
@@ -107,5 +130,20 @@ class ChatSqlDialectResolverService:
 
         if dialect == "oracle":
             return "TRUNC, ADD_MONTHS, SYSDATE"
+
+        if dialect == "bigquery":
+            return "DATE_SUB, DATETIME_SUB, CURRENT_DATE()"
+
+        if dialect == "snowflake":
+            return "DATEADD, DATE_TRUNC, CURRENT_DATE()"
+
+        if dialect == "redshift":
+            return "DATEADD, DATE_TRUNC, CURRENT_DATE"
+
+        if dialect == "databricks":
+            return "DATEADD, DATE_TRUNC, CURRENT_DATE()"
+
+        if dialect == "duckdb":
+            return "DATE_TRUNC, INTERVAL, CURRENT_DATE"
 
         return "funções de data do dialeto escolhido"

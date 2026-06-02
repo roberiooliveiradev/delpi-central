@@ -297,6 +297,15 @@ class ChatAdvancedSqlSpecialistService:
                 dialect=str(dialect["dialect"]),
             )
         )
+
+        from app.domain.services.chat_sql_schema_discovery_service import (
+            ChatSqlSchemaDiscoveryService,
+        )
+
+        schema_discovery = ChatSqlSchemaDiscoveryService.build_schema_snapshot(
+            message=message,
+            tool_calls=tool_calls,
+        )
         review = (
             ChatSqlReviewService.review(str(sql_text), dialect=str(dialect["dialect"]))
             if sql_text and mode in {"review", "optimize", "execute"}
@@ -351,6 +360,7 @@ class ChatAdvancedSqlSpecialistService:
             "blocked": blocked,
             "resultAnalysis": result_analysis,
             "visualizationAdvice": visualization,
+            "schemaDiscovery": schema_discovery,
             "schemaPrefetchRecommended": cls.should_prefetch_schema(
                 message=message,
                 mode=mode,
@@ -478,6 +488,21 @@ class ChatAdvancedSqlSpecialistService:
         if workspace.get("currentSql"):
             lines.append("Query ativa na sessão — prefira editar incrementalmente.")
             lines.append(f"Tabelas detectadas: {', '.join(workspace.get('tableNames') or []) or 'n/d'}")
+
+        schema_discovery = snapshot.get("schemaDiscovery") if isinstance(snapshot.get("schemaDiscovery"), dict) else {}
+
+        if schema_discovery.get("tableCandidates"):
+            lines.append(
+                f"Tabelas candidatas da mensagem: {', '.join(schema_discovery.get('tableCandidates') or [])}"
+            )
+
+        if schema_discovery.get("columnCandidates"):
+            lines.append(
+                f"Colunas/contexto de coluna detectadas: {', '.join(schema_discovery.get('columnCandidates') or [])}"
+            )
+
+        if schema_discovery.get("domainHint"):
+            lines.append(f"Domínio semântico detectado: {schema_discovery.get('domainHint')}")
 
         if hints:
             lines.append(f"Dicas de planejamento: {', '.join(str(item) for item in hints)}")
