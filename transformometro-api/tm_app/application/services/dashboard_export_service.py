@@ -20,6 +20,8 @@ EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
     ("economia_liquida_mes", "Economia líquida mês"),
     ("investimento_unico_mes", "Investimento único mês"),
     ("custo_recorrente_mes", "Custo recorrente mês"),
+    ("custo_recursos_compartilhados_mes", "Custo recursos compartilhados mês"),
+    ("investimento_total_mes", "Investimento total mês"),
     ("horas_economizadas_mes", "Horas economizadas mês"),
 )
 

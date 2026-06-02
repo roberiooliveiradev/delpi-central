@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import calendar
 from collections import defaultdict
-from datetime import date
 from typing import Any
 
 from tm_app.domain.raw_data import TransformometroRawData
@@ -145,6 +143,10 @@ class DashboardLiveService:
             lambda: {
                 "economia_liquida_mes": 0.0,
                 "economia_bruta": 0.0,
+                "investimento_unico_mes": 0.0,
+                "custo_recorrente_mes": 0.0,
+                "custo_recursos_compartilhados_mes": 0.0,
+                "investimento_total_mes": 0.0,
                 "competencias": set(),
             }
         )
@@ -156,18 +158,15 @@ class DashboardLiveService:
             implementation_review = implementation_review_by_process.get(pid)
             if not implementation_review:
                 continue
-            implementation_date = self._calculator._review_implementation_date(
-                implementation_review
-            )
-            if has_period_filter and not self._is_date_in_filter_period(
-                implementation_date,
-                competencia_inicio,
-                competencia_fim,
-            ):
-                continue
             bucket = by_processo[pid]
             bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0)
             bucket["economia_bruta"] += float(row.get("economia_bruta") or 0)
+            bucket["investimento_unico_mes"] += float(row.get("investimento_unico_mes") or 0)
+            bucket["custo_recorrente_mes"] += float(row.get("custo_recorrente_mes") or 0)
+            bucket["custo_recursos_compartilhados_mes"] += float(
+                row.get("custo_recursos_compartilhados_mes") or 0
+            )
+            bucket["investimento_total_mes"] += float(row.get("investimento_total_mes") or 0)
             bucket["competencias"].add(str(row.get("competencia") or ""))
 
         ranking: list[dict[str, Any]] = []
@@ -188,6 +187,12 @@ class DashboardLiveService:
                     "setor_id": proc.get("setor_id"),
                     "economia_liquida_mes": round(liquida, 2),
                     "economia_bruta": round(totals["economia_bruta"], 2),
+                    "investimento_unico_mes": round(totals["investimento_unico_mes"], 2),
+                    "custo_recorrente_mes": round(totals["custo_recorrente_mes"], 2),
+                    "custo_recursos_compartilhados_mes": round(
+                        totals["custo_recursos_compartilhados_mes"], 2
+                    ),
+                    "investimento_total_mes": round(totals["investimento_total_mes"], 2),
                     "economia_diaria": round(liquida / (30.0 * month_count), 2),
                     "competencia": (
                         max(totals["competencias"])
@@ -205,33 +210,6 @@ class DashboardLiveService:
 
         ranking.sort(key=lambda item: float(item.get("economia_liquida_mes") or 0), reverse=True)
         return ranking[:limit]
-
-    def _is_date_in_filter_period(
-        self,
-        value: date | None,
-        competencia_inicio: str | None,
-        competencia_fim: str | None,
-    ) -> bool:
-        if value is None:
-            return False
-
-        start_date = (
-            self._calculator._parse_date(competencia_inicio)
-            if competencia_inicio
-            else None
-        )
-        end_date = self._calculator._parse_date(competencia_fim) if competencia_fim else None
-
-        if end_date and competencia_fim and len(competencia_fim.strip()) <= 7:
-            end_date = end_date.replace(
-                day=calendar.monthrange(end_date.year, end_date.month)[1]
-            )
-
-        if start_date and value < start_date:
-            return False
-        if end_date and value > end_date:
-            return False
-        return True
 
     def query_resumo_por_familia(
         self,
@@ -377,6 +355,10 @@ class DashboardLiveService:
                     "economia_liquida_mes": row.get("economia_liquida_mes"),
                     "investimento_unico_mes": row.get("investimento_unico_mes"),
                     "custo_recorrente_mes": row.get("custo_recorrente_mes"),
+                    "custo_recursos_compartilhados_mes": row.get(
+                        "custo_recursos_compartilhados_mes"
+                    ),
+                    "investimento_total_mes": row.get("investimento_total_mes"),
                     "horas_economizadas_mes": row.get("horas_economizadas_mes"),
                 }
             )

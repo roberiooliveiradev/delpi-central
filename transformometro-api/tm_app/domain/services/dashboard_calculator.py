@@ -33,7 +33,8 @@ class DashboardCalculatorService:
                 continue
 
             revisoes = context.revisoes_by_processo.get(process_id, [])
-            display_review = self._pick_display_review(revisoes)
+            process_active = self._is_process_active(revisoes)
+            display_review = self._pick_display_review(revisoes) if process_active else None
             implementation_review = self._pick_first_non_baseline_review(revisoes)
             baseline_review = self._pick_baseline_review(revisoes)
 
@@ -111,6 +112,10 @@ class DashboardCalculatorService:
         total_gross_savings = sum(item["economia_bruta"] for item in monthly_breakdown)
         total_recurring = sum(item["custo_recorrente_mes"] for item in monthly_breakdown)
         total_unique = sum(item["investimento_unico_mes"] for item in monthly_breakdown)
+        total_shared_resources = sum(
+            item["custo_recursos_compartilhados_mes"] for item in monthly_breakdown
+        )
+        total_investment = sum(item["investimento_total_mes"] for item in monthly_breakdown)
         average_roi = self._calculate_average_roi(calculation_rows)
 
         # Apply date range proration to the accumulated totals only
@@ -135,6 +140,10 @@ class DashboardCalculatorService:
             "horas_economizadas_total": self._round_final(total_hours_saved * proration_factor),
             "investimento_unico_total": self._round_final(total_unique * proration_factor),
             "custo_recorrente_total": self._round_final(total_recurring * proration_factor),
+            "custo_recursos_compartilhados_total": self._round_final(
+                total_shared_resources * proration_factor
+            ),
+            "investimento_total": self._round_final(total_investment * proration_factor),
             "roi_medio": self._round_final(average_roi),
             "evolucao_mensal": monthly_breakdown,  # Keep original monthly values
             "periodo": range_summary,
@@ -308,6 +317,9 @@ class DashboardCalculatorService:
 
             for process_id, process_row in context.processos_by_id.items():
                 revisoes = context.revisoes_by_processo.get(process_id, [])
+                if not self._is_process_active(revisoes):
+                    continue
+
                 baseline_review = self._pick_baseline_review(revisoes)
                 baseline_id = (
                     self._empty_to_none(baseline_review.get("revisao_id"))
@@ -424,7 +436,7 @@ class DashboardCalculatorService:
             competencia_date=competencia_date,
         )
 
-        economia_liquida_mes = savings["economia_bruta"] - custo_recorrente_mes
+        economia_liquida_mes = savings["economia_bruta"] - custo_recorrente_mes - current_shared_cost
 
         horas_economizadas_mes = 0.0
         if self._is_comparable_review(review):
@@ -1043,7 +1055,8 @@ class DashboardCalculatorService:
     def _select_reviews_for_month(self, reviews: List[dict], competencia_date: date) -> List[dict]:
         valid_reviews = [
             review for review in reviews
-            if self._is_review_valid_for_month(review, competencia_date)
+            if self._is_comparable_review(review)
+            and self._is_review_valid_for_month(review, competencia_date)
         ]
 
         active_reviews = [
@@ -1056,14 +1069,17 @@ class DashboardCalculatorService:
 
         return valid_reviews
 
+    def _is_process_active(self, reviews: List[dict]) -> bool:
+        return any(
+            not self._is_deleted(review) and self._is_true(review.get("revisao_ativa"))
+            for review in reviews
+        )
+
     def _is_review_valid_for_month(self, review: dict, competencia_date: date) -> bool:
         if self._is_deleted(review):
             return False
 
-        start_date = (
-            self._parse_date(review.get("data_inicio_vigencia"))
-            or self._parse_date(review.get("data_implantacao"))
-        )
+        start_date = self._review_calculation_start_date(review)
         end_date = self._parse_date(review.get("data_fim_vigencia"))
 
         if start_date is None:
@@ -1079,6 +1095,18 @@ class DashboardCalculatorService:
             return False
 
         return True
+
+    def _review_calculation_start_date(self, review: dict) -> Optional[date]:
+        start_date = self._parse_date(review.get("data_inicio_vigencia"))
+        implementation_date = self._parse_date(review.get("data_implantacao"))
+
+        if not self._is_comparable_review(review):
+            return start_date or implementation_date
+
+        if start_date and implementation_date:
+            return max(start_date, implementation_date)
+
+        return implementation_date or start_date
 
     def _determine_timeline_start(
         self,
@@ -1240,10 +1268,7 @@ class DashboardCalculatorService:
         return sorted(reviews, key=sort_key)
 
     def _active_fraction_in_month(self, review: dict, month_date: date) -> float:
-        start_date = (
-            self._parse_date(review.get("data_inicio_vigencia"))
-            or self._parse_date(review.get("data_implantacao"))
-        )
+        start_date = self._review_calculation_start_date(review)
         end_date = self._parse_date(review.get("data_fim_vigencia")) or date.today()
 
         if start_date is None:

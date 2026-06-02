@@ -28,7 +28,7 @@ def test_build_summary_marks_live_source(mock_repo):
 
 
 @patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
-def test_query_ranking_processos_filters_by_first_non_baseline_implementation_date(mock_repo):
+def test_query_ranking_processos_uses_first_implementation_date_but_keeps_later_active_rows(mock_repo):
     raw = TransformometroRawData(
         processos=[
             {
@@ -171,6 +171,9 @@ def test_query_ranking_processos_filters_by_first_non_baseline_implementation_da
         competencia_fim="2025-06-30",
     )
 
-    assert [row["processo_id"] for row in rows] == ["p2"]
-    assert rows[0]["data_implantacao"] == "2025-06-05"
-    assert rows[0]["revisao_implantacao_id"] == "p2-melhoria"
+    assert [row["processo_id"] for row in rows] == ["p1", "p2"]
+    assert rows[0]["data_implantacao"] == "2025-02-10"
+    assert rows[0]["revisao_implantacao_id"] == "p1-melhoria"
+    assert rows[0]["investimento_total_mes"] == 0.0
+    assert rows[1]["data_implantacao"] == "2025-06-05"
+    assert rows[1]["revisao_implantacao_id"] == "p2-melhoria"

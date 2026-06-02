@@ -497,9 +497,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           loading={isBusy && !resumo}
         />
         <KpiCard
-          title="Investimento único"
-          value={formatCurrency(resumo?.investimento_unico_total)}
-          subtitle="Soma no período"
+          title="Investimento total"
+          value={formatCurrency(resumo?.investimento_total ?? resumo?.investimento_unico_total)}
+          subtitle="Único, recorrente e recursos"
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />

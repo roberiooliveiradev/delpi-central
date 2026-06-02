@@ -29,10 +29,12 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
     assert row["economia_tempo"] == 2500.0
     assert row["economia_bruta"] >= 2500.0
     assert row["economia_recursos_compartilhados"] == 0.0
-    assert row["economia_liquida_mes"] == row["economia_bruta"]
+    assert row["custo_recursos_compartilhados_mes"] == 150.0
+    assert row["investimento_total_mes"] == 150.0
+    assert row["economia_liquida_mes"] == row["economia_bruta"] - 150.0
 
 
-def test_baseline_row_economia_bruta_zero():
+def test_baseline_row_is_not_materialized():
     raw = _load_fixture("golden_baseline_melhoria.json")
     calc = DashboardCalculatorService()
 
@@ -41,8 +43,18 @@ def test_baseline_row_economia_bruta_zero():
         for row in calc.build_dashboard_rows(raw)
         if row["revisao_id"] == "r-baseline" and row["competencia"] == "2025-01"
     ]
-    assert len(rows) == 1
-    assert rows[0]["economia_bruta"] == 0.0
+    assert rows == []
+
+
+def test_process_without_active_revision_does_not_calculate():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    raw.revisoes = [
+        {**review, "revisao_ativa": False}
+        for review in raw.revisoes
+    ]
+    calc = DashboardCalculatorService()
+
+    assert calc.build_dashboard_rows(raw) == []
 
 
 def test_process_list_daily_savings_from_liquida():
@@ -166,6 +178,22 @@ def test_recurring_investment_spreads_over_active_months():
         ],
         investimentos=[
             {
+                "investimento_id": "i0",
+                "revisao_id": "r-melhoria",
+                "tipo_investimento": "unico",
+                "categoria_investimento": "setup",
+                "descricao_item": "Implantação",
+                "quantidade": 1,
+                "valor_unitario": 300,
+                "valor_total": 300,
+                "data_investimento": "2025-02-01",
+                "recorrencia": "unico",
+                "meses_vigencia": None,
+                "centro_custo": "TI",
+                "observacoes": None,
+                "deletado": False,
+            },
+            {
                 "investimento_id": "i1",
                 "revisao_id": "r-melhoria",
                 "tipo_investimento": "fixo",
@@ -197,11 +225,13 @@ def test_recurring_investment_spreads_over_active_months():
     apr = next(row for row in rows if row["competencia"] == "2025-04")
     may = next(row for row in rows if row["competencia"] == "2025-05")
 
+    assert feb["investimento_unico_mes"] == 300.0
+    assert mar["investimento_unico_mes"] == 0.0
     assert feb["custo_recorrente_mes"] == 1200.0
     assert mar["custo_recorrente_mes"] == 1200.0
     assert apr["custo_recorrente_mes"] == 1200.0
     assert may["custo_recorrente_mes"] == 0.0
-    assert feb["investimento_total_mes"] == 1200.0
+    assert feb["investimento_total_mes"] == 1500.0
     assert mar["investimento_total_mes"] == 1200.0
     assert apr["investimento_total_mes"] == 1200.0
     assert may["investimento_total_mes"] == 0.0

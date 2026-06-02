@@ -528,6 +528,8 @@ export type DashboardResumo = {
   horas_economizadas_total?: number;
   investimento_unico_total?: number;
   custo_recorrente_total?: number;
+  custo_recursos_compartilhados_total?: number;
+  investimento_total?: number;
   roi_medio: number | null;
   linhas_materializadas?: number;
 };
@@ -549,6 +551,10 @@ export type DashboardProcessoItem = {
   economia_diaria: number | null;
   economia_liquida_mes?: number;
   economia_bruta?: number;
+  investimento_unico_mes?: number;
+  custo_recorrente_mes?: number;
+  custo_recursos_compartilhados_mes?: number;
+  investimento_total_mes?: number;
   data_implantacao?: string | null;
   revisao_implantacao_id?: string | null;
 };
