@@ -132,7 +132,6 @@ export function RevisaoCadastroPanel({
         revisao.revisao_id,
         {
           processo_id: revisao.processo_id,
-          revisao_ativa: revisao.revisao_ativa,
           ...revisaoPayloadFromVigenciaForm(revisaoVigencia),
         },
         getAccessToken
