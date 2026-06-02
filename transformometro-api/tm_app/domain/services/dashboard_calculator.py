@@ -96,13 +96,6 @@ class DashboardCalculatorService:
             end_date=end_date,
         )
 
-        # Apply date range proration if filtering by partial months
-        monthly_breakdown = self._apply_date_range_proration(
-            monthly_breakdown=monthly_breakdown,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
         implemented_solutions_count = len(
             {
                 row["revisao_id"]
@@ -111,6 +104,7 @@ class DashboardCalculatorService:
             }
         )
 
+        # Get base monthly totals (no proration for individual months)
         total_net_savings = sum(item["economia_liquida_mes"] for item in monthly_breakdown)
         total_hours_saved = sum(row["horas_economizadas_mes"] for row in calculation_rows)
         total_gross_savings = sum(item["economia_bruta"] for item in monthly_breakdown)
@@ -118,21 +112,30 @@ class DashboardCalculatorService:
         total_unique = sum(item["investimento_unico_mes"] for item in monthly_breakdown)
         average_roi = self._calculate_average_roi(calculation_rows)
 
-        range_summary = self._build_range_summary(
+        # Apply date range proration to the accumulated totals only
+        # (evolucao_mensal keeps original monthly values for chart consistency)
+        proration_factor = self._calculate_date_range_proration_factor(
             start_date=start_date,
             end_date=end_date,
             monthly_breakdown=monthly_breakdown,
         )
 
+        range_summary = self._build_range_summary(
+            start_date=start_date,
+            end_date=end_date,
+            monthly_breakdown=monthly_breakdown,
+            proration_factor=proration_factor,
+        )
+
         return {
             "solucoes_implementadas": implemented_solutions_count,
-            "economia_liquida_total": self._round_final(total_net_savings),
-            "economia_bruta_total": self._round_final(total_gross_savings),
-            "horas_economizadas_total": self._round_final(total_hours_saved),
-            "investimento_unico_total": self._round_final(total_unique),
-            "custo_recorrente_total": self._round_final(total_recurring),
+            "economia_liquida_total": self._round_final(total_net_savings * proration_factor),
+            "economia_bruta_total": self._round_final(total_gross_savings * proration_factor),
+            "horas_economizadas_total": self._round_final(total_hours_saved * proration_factor),
+            "investimento_unico_total": self._round_final(total_unique * proration_factor),
+            "custo_recorrente_total": self._round_final(total_recurring * proration_factor),
             "roi_medio": self._round_final(average_roi),
-            "evolucao_mensal": monthly_breakdown,
+            "evolucao_mensal": monthly_breakdown,  # Keep original monthly values
             "periodo": range_summary,
         }
 
@@ -968,85 +971,107 @@ class DashboardCalculatorService:
 
         return min(candidates) if candidates else None
 
-    def _apply_date_range_proration(
+    def _calculate_date_range_proration_factor(
         self,
-        monthly_breakdown: List[dict],
         start_date: Optional[str],
         end_date: Optional[str],
-    ) -> List[dict]:
+        monthly_breakdown: List[dict],
+    ) -> float:
         """
-        Apply temporal proration to monthly breakdown when filtering by a date range.
-        If the user filters by specific days (e.g., 2026-06-01 to 2026-06-02),
-        this prorates the monthly values to reflect only the filtered period.
+        Calculate proration for totals when filtering by a partial date range.
         
-        E.g., if filtering 2 days of a 30-day month, multiply monthly values by 2/30.
+        Only applies proration when BOTH conditions are true:
+        1. Using YYYY-MM-DD format (not YYYY-MM)
+        2. The filtered range spans partial months (not starting day 1 or not ending on last day)
+        
+        Returns:
+        - 1.0 if no special filtering needed
+        - < 1.0 if the period has partial months at start/end
         """
         # Only apply proration if we have specific day-level dates (YYYY-MM-DD format)
         if not start_date or not end_date or len(start_date) < 10 or len(end_date) < 10:
-            return monthly_breakdown
+            return 1.0
 
         try:
             start_date_obj = self._parse_date(start_date)
             end_date_obj = self._parse_date(end_date)
         except (ValueError, TypeError):
-            return monthly_breakdown
+            return 1.0
 
         if not start_date_obj or not end_date_obj:
-            return monthly_breakdown
+            return 1.0
 
-        prorated_breakdown: List[dict] = []
+        # If monthly breakdown is empty, no proration needed
+        if not monthly_breakdown:
+            return 1.0
 
-        for item in monthly_breakdown:
-            competencia_str = item.get("competencia", "")
-            try:
-                # Parse competencia (YYYY-MM) to get month boundaries
-                competencia_date = datetime.strptime(competencia_str, "%Y-%m").date()
-                year = competencia_date.year
-                month = competencia_date.month
-                first_day = date(year, month, 1)
-                last_day = date(year, month, calendar.monthrange(year, month)[1])
+        # Get the first and last months in the breakdown
+        first_competencia = monthly_breakdown[0].get("competencia", "")
+        last_competencia = monthly_breakdown[-1].get("competencia", "")
 
-                # Calculate the overlap between filtered range and this month
-                effective_start = max(first_day, start_date_obj)
-                effective_end = min(last_day, end_date_obj)
+        try:
+            first_month_date = datetime.strptime(first_competencia, "%Y-%m").date()
+            last_month_date = datetime.strptime(last_competencia, "%Y-%m").date()
+        except (ValueError, TypeError):
+            return 1.0
 
-                # If no overlap, skip this item
-                if effective_end < effective_start:
-                    continue
+        # Calculate days in first month
+        first_month_days = calendar.monthrange(first_month_date.year, first_month_date.month)[1]
+        
+        # Calculate days in last month
+        last_month_days = calendar.monthrange(last_month_date.year, last_month_date.month)[1]
 
-                # Calculate proration factor
-                days_in_range = (effective_end - effective_start).days + 1
-                days_in_month = (last_day - first_day).days + 1
-                proration_factor = days_in_range / days_in_month
+        # Determine effective first and last days
+        first_day_in_month = start_date_obj.day
+        last_day_in_month = end_date_obj.day
 
-                # Apply proration to all monetary values
-                prorated_item = dict(item)
-                for key in ["economia_bruta", "investimento_unico_mes", 
-                           "custo_recorrente_mes", "economia_liquida_mes"]:
-                    if key in prorated_item and prorated_item[key] is not None:
-                        original_value = float(prorated_item[key])
-                        prorated_item[key] = original_value * proration_factor
+        # If start is not on day 1, prorate the first month
+        if first_day_in_month > 1:
+            first_days_in_range = first_month_days - first_day_in_month + 1
+            proration_from_first = first_days_in_range / first_month_days
+        else:
+            proration_from_first = 1.0
 
-                prorated_breakdown.append(prorated_item)
+        # If end is not on last day of month, prorate the last month
+        if last_day_in_month < last_month_days:
+            proration_from_last = last_day_in_month / last_month_days
+        else:
+            proration_from_last = 1.0
 
-            except (ValueError, TypeError):
-                # If we can't parse the competencia, keep the original item
-                prorated_breakdown.append(item)
+        # Count total months in breakdown
+        total_months = len(monthly_breakdown)
 
-        return prorated_breakdown
+        # If only 1 month, apply both prorations (it's the same month)
+        if total_months == 1 and first_competencia == last_competencia:
+            # Both are in the same month
+            effective_days = 0
+            for day in range(first_day_in_month, last_day_in_month + 1):
+                effective_days += 1
+            return effective_days / first_month_days
+
+        # If 2+ months, average the partial proration
+        # (first month partial, middle months full, last month partial)
+        if proration_from_first < 1.0 or proration_from_last < 1.0:
+            # Average the reduction across all months
+            total_reduction = (1.0 - proration_from_first) + (1.0 - proration_from_last)
+            avg_reduction = total_reduction / total_months
+            return 1.0 - avg_reduction
+
+        return 1.0
 
     def _build_range_summary(
         self,
         start_date: Optional[str],
         end_date: Optional[str],
         monthly_breakdown: List[dict],
+        proration_factor: float = 1.0,
     ) -> dict:
         if not start_date and not end_date:
             accumulated = sum(item["economia_liquida_mes"] for item in monthly_breakdown)
             return {
                 "competencia_inicio": None,
                 "competencia_fim": None,
-                "economia_liquida_acumulada": self._round_final(accumulated),
+                "economia_liquida_acumulada": self._round_final(accumulated * proration_factor),
             }
 
         start_month = self._month_start(self._parse_date(start_date)) if start_date else None
@@ -1067,7 +1092,7 @@ class DashboardCalculatorService:
         return {
             "competencia_inicio": start_date,
             "competencia_fim": end_date,
-            "economia_liquida_acumulada": self._round_final(accumulated),
+            "economia_liquida_acumulada": self._round_final(accumulated * proration_factor),
         }
 
     def _sort_reviews(self, reviews: List[dict]) -> List[dict]:

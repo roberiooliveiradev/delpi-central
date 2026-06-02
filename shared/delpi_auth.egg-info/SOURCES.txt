@@ -1,13 +1,17 @@
 pyproject.toml
+delpi_api_client/__init__.py
+delpi_api_client/client.py
 delpi_auth/__init__.py
 delpi_auth/authorization.py
 delpi_auth/authz_core.py
 delpi_auth/context_resolver.py
+delpi_auth/credential_guard.py
 delpi_auth/decorators.py
 delpi_auth/jwt_validator.py
 delpi_auth/policy_engine.py
 delpi_auth/policy_registry.py
 delpi_auth/request_context.py
+delpi_auth/service_token.py
 delpi_auth.egg-info/PKG-INFO
 delpi_auth.egg-info/SOURCES.txt
 delpi_auth.egg-info/dependency_links.txt
@@ -16,3 +20,7 @@ delpi_auth.egg-info/requires.txt
 delpi_auth.egg-info/top_level.txt
 delpi_auth/middleware/fastapi_auth.py
 delpi_auth/middleware/flask_auth.py
+strategic_indicators_client/__init__.py
+strategic_indicators_client/client.py
+transformometro_client/__init__.py
+transformometro_client/client.py
