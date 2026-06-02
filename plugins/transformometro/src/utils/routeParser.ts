@@ -5,6 +5,7 @@ export type TransformometroView =
   | "dashboard"
   | "import"
   | "recursos"
+  | "recurso"
   | "processos"
   | "processo";
 
@@ -12,6 +13,7 @@ export type ParsedTransformometroRoute = {
   view: TransformometroView;
   processoId?: string;
   revisaoId?: string;
+  recursoId?: string;
 };
 
 export function normalizeTransformometroPath(pathname: string): string {
@@ -41,6 +43,11 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return { view: "processo", processoId: processoMatch[1] };
   }
 
+  const recursoMatch = path.match(/^\/apps\/transformometro\/recursos\/([^/]+)$/);
+  if (recursoMatch) {
+    return { view: "recurso", recursoId: recursoMatch[1] };
+  }
+
   if (path === TRANSFORMOMETRO_ROUTES.dashboard || path.endsWith("/dashboard")) {
     return { view: "dashboard" };
   }
@@ -66,4 +73,8 @@ export function buildProcessoPath(processoId: string, revisaoId?: string | null)
     return `${base}/revisoes/${revisaoId}`;
   }
   return base;
+}
+
+export function buildRecursoPath(recursoId: string): string {
+  return `${TRANSFORMOMETRO_ROUTES.recursos}/${recursoId}`;
 }
