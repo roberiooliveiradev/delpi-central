@@ -71,6 +71,11 @@ import { suggestGranularity } from "../../utils/periodBuckets";
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from "../../utils/format";
 
 const CHART_HEIGHT = 320;
+const ECONOMIA_COLOR = "#47bfff";
+const INVESTIMENTO_COLOR = "#f87171";
+
+const economyValueStyle = { color: ECONOMIA_COLOR, fontWeight: 700 };
+const investmentValueStyle = { color: INVESTIMENTO_COLOR, fontWeight: 700 };
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -234,7 +239,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [processos]
   );
 
-  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
+  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[](
     () => [
       { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
       {
@@ -251,7 +256,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_bruta,
-        render: (row) => formatCurrency(row.economia_bruta),
+        render: (row) => <span style={economyValueStyle}>{formatCurrency(row.economia_bruta)}</span>,
       },
       {
         key: "liquida",
@@ -262,7 +267,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         render: (row) => {
           const negative = row.economia_liquida_mes < 0;
           return (
-            <span className={negative ? "ds-table__value--negative" : undefined}>
+            <span
+              className={negative ? "ds-table__value--negative" : undefined}
+              style={negative ? undefined : economyValueStyle}
+            >
               {formatCurrency(row.economia_liquida_mes)}
             </span>
           );
@@ -272,7 +280,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     []
   );
 
-  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
+  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[](
     () => [
       {
         key: "codigo",
@@ -332,7 +340,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           const value = row.economia_diaria;
           const negative = value != null && value < 0;
           return (
-            <span className={negative ? "ds-table__value--negative" : undefined}>
+            <span
+              className={negative ? "ds-table__value--negative" : undefined}
+              style={negative ? undefined : economyValueStyle}
+            >
               {formatCurrency(value)}
             </span>
           );
@@ -344,8 +355,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => (row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0),
-        render: (row) =>
-          formatCurrency((row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0)),
+        render: (row) => (
+          <span style={investmentValueStyle}>
+            {formatCurrency((row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0))}
+          </span>
+        ),
       },
       {
         key: "recursos",
@@ -353,7 +367,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => row.custo_recursos_compartilhados_mes ?? 0,
-        render: (row) => formatCurrency(row.custo_recursos_compartilhados_mes ?? 0),
+        render: (row) => (
+          <span style={investmentValueStyle}>
+            {formatCurrency(row.custo_recursos_compartilhados_mes ?? 0)}
+          </span>
+        ),
       },
       {
         key: "month",
@@ -365,7 +383,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           const value = row.economia_liquida_mes;
           const negative = value != null && value < 0;
           return (
-            <span className={negative ? "ds-table__value--negative" : undefined}>
+            <span
+              className={negative ? "ds-table__value--negative" : undefined}
+              style={negative ? undefined : economyValueStyle}
+            >
               {formatCurrency(value)}
             </span>
           );
@@ -377,7 +398,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_bruta ?? 0,
-        render: (row) => formatCurrency(row.economia_bruta),
+        render: (row) => <span style={economyValueStyle}>{formatCurrency(row.economia_bruta)}</span>,
       },
     ],
     [onNavigate]
@@ -552,17 +573,17 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                   type="monotone"
                   dataKey="liquida"
                   name="Economia líquida"
-                  stroke={CHART_COLORS[0]}
-                  fill={CHART_COLORS[0]}
+                  stroke={ECONOMIA_COLOR}
+                  fill={ECONOMIA_COLOR}
                   fillOpacity={0.5}
                 />
                 <Area
                   type="monotone"
                   dataKey="investimento"
                   name="Investimento"
-                  stroke={CHART_COLORS[4]}
-                  fill={CHART_COLORS[4]}
-                  fillOpacity={0.5}
+                  stroke={INVESTIMENTO_COLOR}
+                  fill={INVESTIMENTO_COLOR}
+                  fillOpacity={0.45}
                 />
               </AreaChart>
             </ResponsiveContainer>
