@@ -384,24 +384,28 @@ def list_recursos():
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
+@router.get("/recursos-compartilhados/{recurso_id}")
+def get_recurso(recurso_id: str):
+    row = RecursoRepository().get(recurso_id)
+    if not row:
+        return fail("Recurso não encontrado.", 404)
+    return ok(row_to_json(row))
+
+
 @router.post("/recursos-compartilhados")
 def create_recurso(body: RecursoBody, request: Request):
     try:
         assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
         assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
         assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
-        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        if body.categoria_recurso:
+            assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
         row = RecursoRepository().create(body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)
 
     rid = str(row["recurso_compartilhado_id"])
-    RecursoCustoRepository().create_initial(
-        rid,
-        float(body.valor_total_recorrente),
-        body.data_inicio_vigencia,
-    )
-    row = RecursoRepository().get(rid) or row
     _audit(request, "recurso", rid, "create", body.model_dump())
     return ok(row_to_json(row), "Recurso criado.", 201)
 
@@ -410,9 +414,11 @@ def create_recurso(body: RecursoBody, request: Request):
 def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
     try:
         assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
+        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
         assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
         assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
-        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+        if body.categoria_recurso:
+            assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
         row = RecursoRepository().update(recurso_id, body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)
@@ -430,6 +436,14 @@ def delete_recurso(recurso_id: str, request: Request):
         return fail("Recurso não encontrado.", 404)
     _audit(request, "recurso", recurso_id, "delete", {})
     return ok(message="Recurso excluído.")
+
+
+@router.get("/recursos-compartilhados/{recurso_id}/vinculos")
+def list_recurso_vinculos(recurso_id: str):
+    if not RecursoRepository().get(recurso_id):
+        return fail("Recurso não encontrado.", 404)
+    rows = VinculoRepository().list_by_recurso(recurso_id)
+    return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
 @router.get("/recursos-compartilhados/{recurso_id}/custos")
@@ -556,8 +570,3 @@ def delete_vinculo(vinculo_id: str, request: Request):
         return fail("Vínculo não encontrado.", 404)
     _audit(request, "vinculo", vinculo_id, "delete", {})
     return ok(message="Vínculo excluído.")
-
-
-@router.get("/options")
-def get_options():
-    return ok(options_payload())
