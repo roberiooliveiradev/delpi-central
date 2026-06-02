@@ -27,6 +27,7 @@ class ImportPersistence(PluginBaseRepository):
                 transformometro.dashboard_calculos,
                 transformometro.audit_logs,
                 transformometro.revisao_recursos_compartilhados,
+                transformometro.recurso_custos,
                 transformometro.investimentos,
                 transformometro.medicoes,
                 transformometro.revisoes,

@@ -1,6 +1,6 @@
 from tm_app.application.services.sheet_import_service import SheetImportService
 from tm_app.domain.raw_data import TransformometroRawData
-from tm_app.infrastructure.persistence.import_persistence import normalize_raw_rows
+from tm_app.infrastructure.persistence.import_persistence import ImportPersistence, normalize_raw_rows
 
 
 def _minimal_raw() -> TransformometroRawData:
@@ -52,6 +52,40 @@ def test_validate_ok_for_minimal_fixture():
     validation = SheetImportService().validate(raw)
     assert validation.ok is True
     assert validation.sheet_counts["processos"] == 1
+
+
+def test_truncate_cadastro_includes_recurso_custos():
+    executed_queries: list[str] = []
+
+    class FakeCursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def execute(self, query, params=None):
+            executed_queries.append(query)
+
+    class FakeConnection:
+        def __init__(self):
+            self.committed = False
+            self.rolled_back = False
+
+        def cursor(self):
+            return FakeCursor()
+
+        def commit(self):
+            self.committed = True
+
+        def rollback(self):
+            self.rolled_back = True
+
+    repo = ImportPersistence(connection=FakeConnection())
+    repo.truncate_cadastro()
+
+    assert any("TRUNCATE TABLE" in query for query in executed_queries)
+    assert any("transformometro.recurso_custos" in query for query in executed_queries)
 
 
 def test_reconcile_remaps_processo_id_by_codigo():
