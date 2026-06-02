@@ -350,7 +350,7 @@ class DashboardCalculatorService:
                     "investimento_unico_mes": self._round_final(investimento_unico_mes),
                     "custo_recorrente_mes": self._round_final(custo_recorrente_mes),
                     "investimento_total_mes": self._round_final(
-                        investimento_unico_mes + custo_recorrente_mes
+                        investimento_unico_mes + custo_recorrente_mes + custo_recursos_compartilhados_mes
                     ),
                     "custo_recursos_compartilhados_mes": self._round_final(custo_recursos_compartilhados_mes),
                     "economia_liquida_mes": self._round_final(economia_liquida_mes),
@@ -454,7 +454,7 @@ class DashboardCalculatorService:
             "economia_bruta": savings["economia_bruta"],
             "investimento_unico_mes": investimento_unico_mes,
             "custo_recorrente_mes": custo_recorrente_mes,
-            "investimento_total_mes": investimento_unico_mes + custo_recorrente_mes,
+            "investimento_total_mes": investimento_unico_mes + custo_recorrente_mes + current_shared_cost,
             "economia_liquida_mes": economia_liquida_mes,
             "custo_recursos_compartilhados_mes": current_shared_cost,
             "horas_economizadas_mes": horas_economizadas_mes,
