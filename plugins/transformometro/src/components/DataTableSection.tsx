@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { isValidElement, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Search } from "lucide-react";
 
 import { useClientPagination } from "../hooks/useClientPagination";
@@ -12,15 +12,24 @@ import { Pagination } from "./Pagination";
 
 export const DEFAULT_TABLE_PAGE_SIZE = 20;
 
+function extractTextFromNode(node: ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractTextFromNode).join(" ");
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    return extractTextFromNode(node.props.children);
+  }
+  return "";
+}
+
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
   return columns
     .map((column) => {
-      const value = column.render(row);
-      if (value == null || value === false) return "";
-      if (typeof value === "string" || typeof value === "number") {
-        return String(value);
+      if (column.sortValue) {
+        const sortValue = column.sortValue(row);
+        if (sortValue != null) return String(sortValue);
       }
-      return "";
+      return extractTextFromNode(column.render(row));
     })
     .join(" ")
     .toLowerCase();
@@ -111,7 +120,7 @@ export function DataTableSection<T>({
           if (value == null || value === false) return "";
           if (typeof value === "number" || typeof value === "boolean") return value;
           if (typeof value === "string") return value.toLowerCase();
-          return "";
+          return extractTextFromNode(value).toLowerCase();
         };
 
     const directionFactor = sortDirection === "asc" ? 1 : -1;
