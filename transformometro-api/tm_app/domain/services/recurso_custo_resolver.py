@@ -45,7 +45,7 @@ def resolve_recurso_valor_mensal(
     custos: list[dict],
     competencia_date: date,
 ) -> float:
-    """Retorna o valor mensal do recurso na competência (histórico ou campo legado)."""
+    """Retorna o valor mensal do recurso na competencia usando a tabela historica."""
     resource_id = str(resource.get("recurso_compartilhado_id") or "")
     eligible: list[dict] = []
     for row in custos:
@@ -60,17 +60,14 @@ def resolve_recurso_valor_mensal(
         if _covers_month(competencia_date, start, end):
             eligible.append(row)
 
-    if eligible:
-        eligible.sort(
-            key=lambda item: _parse_date(item.get("data_inicio_vigencia")) or date.min,
-            reverse=True,
-        )
-        try:
-            return float(eligible[0].get("valor_mensal") or 0)
-        except (TypeError, ValueError):
-            return 0.0
+    if not eligible:
+        return 0.0
 
+    eligible.sort(
+        key=lambda item: _parse_date(item.get("data_inicio_vigencia")) or date.min,
+        reverse=True,
+    )
     try:
-        return float(resource.get("valor_total_recorrente") or 0)
+        return float(eligible[0].get("valor_mensal") or 0)
     except (TypeError, ValueError):
         return 0.0
