@@ -75,6 +75,34 @@ class ProcessRevisionCompareService:
             for r in raw.revisoes
             if str(r.get("processo_id")) == processo_id
         }
+        target_resource_ids = {
+            str(v.get("recurso_compartilhado_id"))
+            for v in raw.revisao_recursos_compartilhados
+            if str(v.get("revisao_id")) in revisao_ids
+            and v.get("recurso_compartilhado_id") is not None
+        }
+
+        # O comparativo calcula somente as revisoes do processo selecionado, mas
+        # precisa enxergar todos os vinculos dos recursos usados por ele. Caso
+        # contrario, o rateio igualitario considera apenas 1 vinculo e cobra o
+        # custo integral do recurso no processo em vez de dividir entre todos os
+        # vinculos ativos da competencia.
+        related_resource_links = [
+            v
+            for v in raw.revisao_recursos_compartilhados
+            if str(v.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+        related_resources = [
+            r
+            for r in raw.recursos_compartilhados
+            if str(r.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+        related_resource_costs = [
+            c
+            for c in raw.recurso_custos
+            if str(c.get("recurso_compartilhado_id")) in target_resource_ids
+        ]
+
         return TransformometroRawData(
             processos=processos,
             revisoes=[r for r in raw.revisoes if str(r.get("revisao_id")) in revisao_ids],
@@ -82,13 +110,9 @@ class ProcessRevisionCompareService:
             investimentos=[
                 i for i in raw.investimentos if str(i.get("revisao_id")) in revisao_ids
             ],
-            recursos_compartilhados=raw.recursos_compartilhados,
-            revisao_recursos_compartilhados=[
-                v
-                for v in raw.revisao_recursos_compartilhados
-                if str(v.get("revisao_id")) in revisao_ids
-            ],
-            recurso_custos=raw.recurso_custos,
+            recursos_compartilhados=related_resources,
+            revisao_recursos_compartilhados=related_resource_links,
+            recurso_custos=related_resource_costs,
         )
 
     def _sum_revision_rows(self, rows: list[dict]) -> dict[str, float]:
