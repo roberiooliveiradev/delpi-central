@@ -164,8 +164,31 @@ class VinculoRepository(PluginBaseRepository):
 
     def list_by_recurso(self, recurso_id: str) -> list[dict[str, Any]]:
         return self.fetch_all(
-            f"""
-            {self._VINCULO_SELECT},
+            """
+            SELECT
+                v.vinculo_id,
+                v.revisao_id,
+                v.recurso_compartilhado_id,
+                v.data_inicio_uso,
+                v.data_fim_uso,
+                v.ativo,
+                v.peso_rateio,
+                v.observacoes,
+                v.created_at,
+                v.updated_at,
+                r.codigo_recurso,
+                r.nome_recurso,
+                r.categoria_recurso,
+                r.fornecedor,
+                r.tipo_custo,
+                r.recorrencia,
+                r.valor_total_recorrente,
+                r.data_inicio_vigencia AS recurso_data_inicio_vigencia,
+                r.data_fim_vigencia AS recurso_data_fim_vigencia,
+                r.centro_custo,
+                r.criterio_rateio,
+                r.status_recurso,
+                r.observacoes AS recurso_observacoes,
                 rv.versao_revisao,
                 rv.cenario_tipo,
                 rv.revisao_ativa,
@@ -180,6 +203,10 @@ class VinculoRepository(PluginBaseRepository):
                 p.status_processo,
                 p.familia_processo,
                 p.gestor_responsavel
+            FROM transformometro.revisao_recursos_compartilhados v
+            JOIN transformometro.recursos_compartilhados r
+              ON r.recurso_compartilhado_id = v.recurso_compartilhado_id
+             AND r.deletado = FALSE
             JOIN transformometro.revisoes rv
               ON rv.revisao_id = v.revisao_id
              AND rv.deletado = FALSE
@@ -188,7 +215,6 @@ class VinculoRepository(PluginBaseRepository):
              AND p.deletado = FALSE
             WHERE v.recurso_compartilhado_id = %s
               AND v.deletado = FALSE
-              AND r.deletado = FALSE
             ORDER BY v.ativo DESC, p.codigo_processo ASC, rv.data_inicio_vigencia DESC
             """,
             (recurso_id,),
