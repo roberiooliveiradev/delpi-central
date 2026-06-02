@@ -69,15 +69,6 @@
       "showInMenu": true
     },
     {
-      "path": "/apps/transformometro/dashboard",
-      "label": "Dashboard",
-      "permission": "transformometro.view",
-      "icon": "chart",
-      "entry": null,
-      "order": 21,
-      "showInMenu": true
-    },
-    {
       "path": "/apps/transformometro/processos",
       "label": "Processos",
       "permission": "transformometro.processes.manage",

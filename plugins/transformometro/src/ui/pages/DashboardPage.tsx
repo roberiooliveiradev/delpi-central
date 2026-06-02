@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -499,7 +499,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <section className="ds-charts-grid">
         <ChartCard
-          title="Economia no período"
+          title="Economia vs Investimento"
           hint={savingsChartHint}
           toolbar={
             <div className="ds-no-print">
@@ -518,28 +518,28 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             </p>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <LineChart data={savingsChartData}>
+              <AreaChart data={savingsChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={72} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Line
-                  type="monotone"
-                  dataKey="bruta"
-                  name="Bruta"
-                  stroke={CHART_COLORS[1]}
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="liquida"
-                  name="Líquida"
+                  name="Economia líquida"
                   stroke={CHART_COLORS[0]}
-                  strokeWidth={2}
-                  dot={false}
+                  fill={CHART_COLORS[0]}
+                  fillOpacity={0.5}
                 />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="investimento"
+                  name="Investimento"
+                  stroke={CHART_COLORS[4]}
+                  fill={CHART_COLORS[4]}
+                  fillOpacity={0.5}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </ChartCard>

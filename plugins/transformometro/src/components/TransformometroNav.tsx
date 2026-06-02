@@ -7,7 +7,6 @@ type TransformometroNavProps = {
 
 /** Alinhado ao manifest (routes showInMenu) e ao menu lateral do portal. */
 const LINKS = [
-  { path: TRANSFORMOMETRO_ROUTES.home, label: "Início" },
   { path: TRANSFORMOMETRO_ROUTES.dashboard, label: "Dashboard" },
   { path: TRANSFORMOMETRO_ROUTES.processos, label: "Processos" },
   { path: TRANSFORMOMETRO_ROUTES.recursos, label: "Recursos" },
@@ -16,13 +15,7 @@ const LINKS = [
 
 function isActive(path: string, currentPath?: string): boolean {
   if (!currentPath) {
-    return path === TRANSFORMOMETRO_ROUTES.home;
-  }
-  if (path === TRANSFORMOMETRO_ROUTES.home) {
-    return (
-      currentPath === TRANSFORMOMETRO_ROUTES.home ||
-      currentPath === `${TRANSFORMOMETRO_ROUTES.home}/`
-    );
+    return path === TRANSFORMOMETRO_ROUTES.dashboard;
   }
   if (path === TRANSFORMOMETRO_ROUTES.processos) {
     return (

@@ -69,7 +69,8 @@ export function buildEvolucaoSavingsSeries(
     const current = byMonth.get(key) ?? { bruta: 0, liquida: 0, investimento: 0 };
     current.bruta += Number(item.economia_bruta ?? 0);
     current.liquida += Number(item.economia_liquida_mes ?? 0);
-    current.investimento += Number(item.investimento_unico_mes ?? 0);
+    current.investimento +=
+      Number(item.investimento_unico_mes ?? 0) + Number(item.custo_recorrente_mes ?? 0);
     byMonth.set(key, current);
   }
 

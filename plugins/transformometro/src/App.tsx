@@ -1,5 +1,4 @@
 import { DashboardPage } from "./ui/pages/DashboardPage";
-import { HomePage } from "./ui/pages/HomePage";
 import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { ImportPage } from "./ui/pages/ImportPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
@@ -73,6 +72,6 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }
 
   return (
-    <HomePage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
+    <DashboardPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />
   );
 }
