@@ -239,7 +239,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [processos]
   );
 
-  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[](
+  const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
     () => [
       { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
       {
@@ -280,7 +280,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     []
   );
 
-  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[](
+  const processColumns = useMemo<DataTableColumn<DashboardProcessoItem>[]>(
     () => [
       {
         key: "codigo",
@@ -545,7 +545,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <section className="ds-charts-grid">
         <ChartCard
-          title="Economia vs Investimento"
+          title="Economia bruta vs Investimento"
           hint={savingsChartHint}
           toolbar={
             <div className="ds-no-print">
@@ -571,8 +571,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Area
                   type="monotone"
-                  dataKey="liquida"
-                  name="Economia líquida"
+                  dataKey="bruta"
+                  name="Economia bruta"
                   stroke={ECONOMIA_COLOR}
                   fill={ECONOMIA_COLOR}
                   fillOpacity={0.5}
