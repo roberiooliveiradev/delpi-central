@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
@@ -11,7 +12,14 @@ class RevisaoRepository(PluginBaseRepository):
     def list_by_processo(self, processo_id: str) -> list[dict[str, Any]]:
         return self.fetch_all(
             """
-            SELECT * FROM transformometro.revisoes
+            SELECT
+                *,
+                CASE
+                    WHEN lower(coalesce(cenario_tipo, '')) = 'baseline' THEN FALSE
+                    WHEN data_fim_vigencia IS NOT NULL AND data_fim_vigencia < CURRENT_DATE THEN FALSE
+                    ELSE revisao_ativa
+                END AS revisao_ativa
+            FROM transformometro.revisoes
             WHERE processo_id = %s AND deletado = FALSE
             ORDER BY data_inicio_vigencia DESC, versao_revisao DESC
             """,
@@ -21,13 +29,21 @@ class RevisaoRepository(PluginBaseRepository):
     def get(self, revisao_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             """
-            SELECT * FROM transformometro.revisoes
+            SELECT
+                *,
+                CASE
+                    WHEN lower(coalesce(cenario_tipo, '')) = 'baseline' THEN FALSE
+                    WHEN data_fim_vigencia IS NOT NULL AND data_fim_vigencia < CURRENT_DATE THEN FALSE
+                    ELSE revisao_ativa
+                END AS revisao_ativa
+            FROM transformometro.revisoes
             WHERE revisao_id = %s AND deletado = FALSE
             """,
             (revisao_id,),
         )
 
     def create(self, data: dict[str, Any], *, auto_commit: bool = True) -> dict[str, Any]:
+        data = self._normalize_lifecycle_payload(data)
         chave = f"{data['processo_id']}|{data['versao_revisao']}"
         row = self.execute_returning_one(
             """
@@ -53,15 +69,20 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("observacoes"),
                 data.get("status_aprovacao", "aprovada"),
             ),
-            auto_commit=auto_commit,
+            auto_commit=False,
         )
         if row is None:
             raise RuntimeError("Falha ao criar revisão.")
+
+        row = self._apply_revision_lifecycle(row, auto_commit=False)
+        if auto_commit:
+            self._connection.commit()
         return row
 
     def update(self, revisao_id: str, data: dict[str, Any]) -> dict[str, Any] | None:
+        data = self._normalize_lifecycle_payload(data)
         chave = f"{data['processo_id']}|{data['versao_revisao']}"
-        return self.execute_returning_one(
+        row = self.execute_returning_one(
             """
             UPDATE transformometro.revisoes SET
                 processo_id = %s,
@@ -93,7 +114,15 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("observacoes"),
                 revisao_id,
             ),
+            auto_commit=False,
         )
+        if row is None:
+            self._connection.commit()
+            return None
+
+        row = self._apply_revision_lifecycle(row, auto_commit=False)
+        self._connection.commit()
+        return row
 
     def set_status_aprovacao(
         self,
@@ -127,25 +156,33 @@ class RevisaoRepository(PluginBaseRepository):
         current = self.get(revisao_id)
         if not current:
             return None
+        if self._is_baseline(current):
+            return self.execute_returning_one(
+                """
+                UPDATE transformometro.revisoes
+                SET revisao_ativa = FALSE, updated_at = NOW()
+                WHERE revisao_id = %s AND deletado = FALSE
+                RETURNING *
+                """,
+                (revisao_id,),
+            )
 
         self.execute(
             """
             UPDATE transformometro.revisoes
-            SET revisao_ativa = FALSE, updated_at = NOW()
-            WHERE processo_id = %s AND deletado = FALSE
-            """,
-            (str(current["processo_id"]),),
-            auto_commit=False,
-        )
-        return self.execute_returning_one(
-            """
-            UPDATE transformometro.revisoes
-            SET revisao_ativa = TRUE, updated_at = NOW()
+            SET revisao_ativa = TRUE, data_fim_vigencia = NULL, updated_at = NOW()
             WHERE revisao_id = %s AND deletado = FALSE
-            RETURNING *
             """,
             (revisao_id,),
+            auto_commit=False,
         )
+        current = self.get(revisao_id)
+        if not current:
+            self._connection.commit()
+            return None
+        row = self._apply_revision_lifecycle(current, auto_commit=False)
+        self._connection.commit()
+        return row
 
     def soft_delete(self, revisao_id: str) -> bool:
         row = self.execute_returning_one(
@@ -158,3 +195,93 @@ class RevisaoRepository(PluginBaseRepository):
             (revisao_id,),
         )
         return row is not None
+
+    def _normalize_lifecycle_payload(self, data: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(data)
+        if self._is_baseline(normalized):
+            normalized["revisao_ativa"] = False
+        elif normalized.get("data_fim_vigencia"):
+            normalized["revisao_ativa"] = False
+        return normalized
+
+    def _apply_revision_lifecycle(
+        self,
+        revision: dict[str, Any],
+        *,
+        auto_commit: bool,
+    ) -> dict[str, Any]:
+        revision_id = str(revision["revisao_id"])
+        processo_id = str(revision["processo_id"])
+
+        if self._is_baseline(revision):
+            self.execute(
+                """
+                UPDATE transformometro.revisoes
+                SET revisao_ativa = FALSE, updated_at = NOW()
+                WHERE revisao_id = %s AND deletado = FALSE
+                """,
+                (revision_id,),
+                auto_commit=False,
+            )
+            return self.get(revision_id) or revision
+
+        if revision.get("data_fim_vigencia"):
+            self.execute(
+                """
+                UPDATE transformometro.revisoes
+                SET revisao_ativa = FALSE, updated_at = NOW()
+                WHERE revisao_id = %s AND deletado = FALSE
+                """,
+                (revision_id,),
+                auto_commit=False,
+            )
+            return self.get(revision_id) or revision
+
+        if not bool(revision.get("revisao_ativa")):
+            self.execute(
+                """
+                UPDATE transformometro.revisoes
+                SET data_fim_vigencia = COALESCE(data_fim_vigencia, CURRENT_DATE),
+                    updated_at = NOW()
+                WHERE revisao_id = %s AND deletado = FALSE
+                """,
+                (revision_id,),
+                auto_commit=False,
+            )
+            if auto_commit:
+                self._connection.commit()
+            return self.get(revision_id) or revision
+
+        boundary_date = revision.get("data_implantacao") or revision.get("data_inicio_vigencia")
+        self.execute(
+            """
+            UPDATE transformometro.revisoes
+            SET revisao_ativa = FALSE,
+                data_fim_vigencia = COALESCE(data_fim_vigencia, %s),
+                updated_at = NOW()
+            WHERE processo_id = %s
+              AND revisao_id <> %s
+              AND deletado = FALSE
+            """,
+            (boundary_date, processo_id, revision_id),
+            auto_commit=False,
+        )
+        row = self.execute_returning_one(
+            """
+            UPDATE transformometro.revisoes
+            SET revisao_ativa = TRUE,
+                data_fim_vigencia = NULL,
+                updated_at = NOW()
+            WHERE revisao_id = %s AND deletado = FALSE
+            RETURNING *
+            """,
+            (revision_id,),
+            auto_commit=False,
+        )
+        if auto_commit:
+            self._connection.commit()
+        return row or revision
+
+    @staticmethod
+    def _is_baseline(data: dict[str, Any]) -> bool:
+        return str(data.get("cenario_tipo") or "").lower() == "baseline"
