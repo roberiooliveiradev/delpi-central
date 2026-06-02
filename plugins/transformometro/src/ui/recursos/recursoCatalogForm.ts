@@ -7,7 +7,6 @@ export type RecursoCatalogFormState = {
   fornecedor: string;
   tipo_custo: string;
   recorrencia: string;
-  valor_total_recorrente: number;
   criterio_rateio: string;
   status_recurso: string;
   centro_custo: string;
@@ -23,7 +22,6 @@ export function emptyRecursoForm(): RecursoCatalogFormState {
     fornecedor: "",
     tipo_custo: "assinatura",
     recorrencia: "mensal",
-    valor_total_recorrente: 0,
     criterio_rateio: "igualitario",
     status_recurso: "ativo",
     centro_custo: "",
@@ -40,7 +38,6 @@ export function recursoFormFromEntity(r: RecursoCompartilhado): RecursoCatalogFo
     fornecedor: r.fornecedor ?? "",
     tipo_custo: r.tipo_custo,
     recorrencia: r.recorrencia,
-    valor_total_recorrente: r.valor_total_recorrente,
     criterio_rateio: r.criterio_rateio,
     status_recurso: r.status_recurso,
     centro_custo: r.centro_custo ?? "",
@@ -55,7 +52,6 @@ export function payloadFromRecursoForm(form: RecursoCatalogFormState) {
     nome_recurso: form.nome_recurso.trim(),
     tipo_custo: form.tipo_custo,
     recorrencia: form.recorrencia,
-    valor_total_recorrente: form.valor_total_recorrente,
     criterio_rateio: form.criterio_rateio,
     status_recurso: form.status_recurso,
     categoria_recurso: form.categoria_recurso.trim() || undefined,
