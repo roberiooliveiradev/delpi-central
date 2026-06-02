@@ -771,6 +771,39 @@
   white-space: nowrap;
 }
 
+.dashboard-transformometro .ds-table__col--sortable {
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-table__sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-transformometro .ds-table__sort-button:hover,
+.dashboard-transformometro .ds-table__sort-button:focus-visible {
+  text-decoration: underline;
+}
+
+.dashboard-transformometro .ds-table__sort-indicator {
+  color: var(--ds-text-muted);
+  font-size: 0.9em;
+}
+
+.dashboard-transformometro .ds-table-toolbar__filters {
+  flex: 1 1 auto;
+}
+
 .dashboard-transformometro .ds-table__empty {
   text-align: center;
   color: var(--ds-text-muted);

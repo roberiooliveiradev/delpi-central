@@ -4,6 +4,8 @@ export type DataTableColumn<T> = {
   key: string;
   header: string;
   render: (row: T) => ReactNode;
+  sortable?: boolean;
+  sortValue?: (row: T) => string | number | boolean | null | undefined;
   className?: string;
 };
 
@@ -16,6 +18,9 @@ type DataTableProps<T> = {
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   compact?: boolean;
+  sortKey?: string | null;
+  sortDirection?: "asc" | "desc";
+  onSortChange?: (columnKey: string) => void;
 };
 
 export function DataTable<T>({
@@ -27,6 +32,9 @@ export function DataTable<T>({
   onRowClick,
   getRowClassName,
   compact = false,
+  sortKey,
+  sortDirection = "asc",
+  onSortChange,
 }: DataTableProps<T>) {
   const tableClass = [
     "ds-table",
@@ -41,11 +49,35 @@ export function DataTable<T>({
       <table className={tableClass}>
         <thead>
           <tr>
-            {columns.map((column) => (
-              <th key={column.key} className={column.className}>
-                {column.header}
-              </th>
-            ))}
+            {columns.map((column) => {
+              const isSorted = sortKey === column.key;
+              const sortClass = column.sortable ? "ds-table__col--sortable" : "";
+              const headerClass = [column.className, sortClass].filter(Boolean).join(" ");
+
+              return (
+                <th
+                  key={column.key}
+                  className={headerClass || undefined}
+                  aria-sort={column.sortable ? (isSorted ? (sortDirection === "asc" ? "ascending" : "descending") : "none") : undefined}
+                >
+                  {column.sortable && onSortChange ? (
+                    <button
+                      type="button"
+                      className="ds-table__sort-button"
+                      onClick={() => onSortChange(column.key)}
+                      aria-label={`Ordenar por ${column.header}`}
+                    >
+                      <span>{column.header}</span>
+                      <span className="ds-table__sort-indicator">
+                        {isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "↕"}
+                      </span>
+                    </button>
+                  ) : (
+                    column.header
+                  )}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>

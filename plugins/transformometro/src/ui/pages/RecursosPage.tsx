@@ -137,10 +137,11 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
   }
 
   const columns: DataTableColumn<RecursoCompartilhado>[] = [
-    { key: "codigo", header: "Código", render: (r) => r.codigo_recurso },
+    { key: "codigo", header: "Código", render: (r) => r.codigo_recurso, sortable: true },
     {
       key: "nome",
       header: "Nome",
+      sortable: true,
       className: "ds-table__col--wide",
       render: (r) => (
         <>
@@ -152,18 +153,20 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
     {
       key: "custo",
       header: "Custo/mês (atual)",
+      sortable: true,
       className: "ds-table__col--numeric",
+      sortValue: (r) => r.valor_total_recorrente,
       render: (r) => formatCurrency(r.valor_total_recorrente),
     },
-    { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio) },
-    { key: "status", header: "Status", render: (r) => r.status_recurso },
+    { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio), sortable: true },
+    { key: "status", header: "Status", render: (r) => r.status_recurso, sortable: true },
     {
       key: "vigencia",
       header: "Vigência",
+      sortable: true,
       render: (r) => (
         <>
-          {toDateInputValue(r.data_inicio_vigencia) || "…"} →{" "}
-          {toDateInputValue(r.data_fim_vigencia) || "…"}
+          {toDateInputValue(r.data_inicio_vigencia) || "…"} → {toDateInputValue(r.data_fim_vigencia) || "…"}
         </>
       ),
     },

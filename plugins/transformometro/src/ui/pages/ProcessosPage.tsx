@@ -160,17 +160,23 @@ export function ProcessosPage({
 
   const columns = useMemo<DataTableColumn<Processo>[]>(
     () => [
-      { key: "codigo", header: "Código", render: (row) => row.codigo_processo },
+      { key: "codigo", header: "Código", render: (row) => row.codigo_processo, sortable: true },
       {
         key: "nome",
         header: "Processo",
+        sortable: true,
         className: "ds-table__col--wide",
         render: (row) => row.nome_processo,
       },
-      { key: "filial", header: "Filial", render: (row) => row.filial_id },
-      { key: "setor", header: "Setor", render: (row) => row.setor_id },
-      { key: "familia", header: "Família", render: (row) => row.familia_processo ?? "—" },
-      { key: "status", header: "Status", render: (row) => row.status_processo },
+      { key: "filial", header: "Filial", render: (row) => row.filial_id, sortable: true },
+      { key: "setor", header: "Setor", render: (row) => row.setor_id, sortable: true },
+      {
+        key: "familia",
+        header: "Família",
+        render: (row) => row.familia_processo ?? "—",
+        sortable: true,
+      },
+      { key: "status", header: "Status", render: (row) => row.status_processo, sortable: true },
       {
         key: "acoes",
         header: "",
@@ -232,74 +238,6 @@ export function ProcessosPage({
         }
       />
 
-      <section className="ds-filters-row ds-filters-row--extended">
-        <div className="ds-filter-box ds-filter-box--wide">
-          <label htmlFor="tm-proc-q">Buscar</label>
-          <input
-            id="tm-proc-q"
-            type="search"
-            placeholder="Nome ou código…"
-            value={searchQ}
-            onChange={(e) => setSearchQ(e.target.value)}
-          />
-        </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-proc-list-filial">Filial</label>
-          <select
-            id="tm-proc-list-filial"
-            value={filialId}
-            onChange={(e) => setFilialId(e.target.value)}
-          >
-            <option value="">Todas</option>
-            {(options?.filiais ?? []).map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.id} — {f.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-proc-list-setor">Setor</label>
-          <select
-            id="tm-proc-list-setor"
-            value={setorId}
-            onChange={(e) => setSetorId(e.target.value)}
-          >
-            <option value="">Todos</option>
-            {(options?.setores ?? []).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-proc-list-status">Status</label>
-          <select
-            id="tm-proc-list-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos</option>
-            {(options?.status_processo ?? []).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="ds-filter-box">
-          <label htmlFor="tm-proc-list-familia">Família</label>
-          <input
-            id="tm-proc-list-familia"
-            type="search"
-            placeholder="ex.: ia"
-            value={familiaFilter}
-            onChange={(e) => setFamiliaFilter(e.target.value)}
-          />
-        </div>
-      </section>
-
       <StatusAlerts
         error={error}
         loading={loading}
@@ -334,6 +272,75 @@ export function ProcessosPage({
       <DataTableSection
         title="Lista de processos"
         hint="Filtros acima aplicam na API · Editar/Excluir ou clique na linha para revisões"
+        filters={
+          <section className="ds-filters-row ds-filters-row--extended">
+            <div className="ds-filter-box ds-filter-box--wide">
+              <label htmlFor="tm-proc-q">Buscar</label>
+              <input
+                id="tm-proc-q"
+                type="search"
+                placeholder="Nome ou código…"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+              />
+            </div>
+            <div className="ds-filter-box">
+              <label htmlFor="tm-proc-list-filial">Filial</label>
+              <select
+                id="tm-proc-list-filial"
+                value={filialId}
+                onChange={(e) => setFilialId(e.target.value)}
+              >
+                <option value="">Todas</option>
+                {(options?.filiais ?? []).map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.id} — {f.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ds-filter-box">
+              <label htmlFor="tm-proc-list-setor">Setor</label>
+              <select
+                id="tm-proc-list-setor"
+                value={setorId}
+                onChange={(e) => setSetorId(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {(options?.setores ?? []).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ds-filter-box">
+              <label htmlFor="tm-proc-list-status">Status</label>
+              <select
+                id="tm-proc-list-status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {(options?.status_processo ?? []).map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="ds-filter-box">
+              <label htmlFor="tm-proc-list-familia">Família</label>
+              <input
+                id="tm-proc-list-familia"
+                type="search"
+                placeholder="ex.: ia"
+                value={familiaFilter}
+                onChange={(e) => setFamiliaFilter(e.target.value)}
+              />
+            </div>
+          </section>
+        }
         columns={columns}
         rows={items}
         rowKey={(row) => row.processo_id}
