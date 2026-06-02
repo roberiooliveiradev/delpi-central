@@ -56,6 +56,39 @@ def test_process_list_daily_savings_from_liquida():
     assert daily > 0
 
 
+def test_process_list_uses_first_non_baseline_implementation_date():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    raw.revisoes[1] = {
+        **raw.revisoes[1],
+        "data_implantacao": "2025-02-10",
+        "revisao_ativa": False,
+    }
+    raw.revisoes.append(
+        {
+            "revisao_id": "r-automacao",
+            "processo_id": "p1",
+            "versao_revisao": "3.0.0",
+            "cenario_tipo": "automacao",
+            "data_implantacao": "2025-04-15",
+            "data_inicio_vigencia": "2025-04-01",
+            "revisao_ativa": True,
+            "deletado": False,
+        }
+    )
+    raw.medicoes.append(
+        {
+            **raw.medicoes[1],
+            "revisao_id": "r-automacao",
+            "tempo_medio_execucao_min": 20,
+        }
+    )
+    calc = DashboardCalculatorService()
+
+    items = calc.build_process_list(raw)
+
+    assert items[0]["data_implantacao"] == "10/02/2025"
+
+
 def test_max_zero_when_melhoria_piora_tempo():
     raw = _load_fixture("golden_baseline_melhoria.json")
     raw.revisoes[1] = {**raw.revisoes[1], "data_inicio_vigencia": "2025-03-01"}

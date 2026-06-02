@@ -61,6 +61,7 @@ import {
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
 import {
+  formatDisplayDate,
   formatPeriodLabel,
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
@@ -315,6 +316,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           ),
       },
       {
+        key: "implantacao",
+        header: "Implantação",
+        sortable: true,
+        sortValue: (row) => row.data_implantacao ?? "",
+        render: (row) => formatDisplayDate(row.data_implantacao),
+      },
+      {
         key: "daily",
         header: "Economia/dia",
         sortable: true,
@@ -332,7 +340,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       },
       {
         key: "month",
-        header: "Líquida no mês",
+        header: "Líquida no recorte",
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_liquida_mes ?? 0,
@@ -348,7 +356,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       },
       {
         key: "bruta",
-        header: "Bruta no mês",
+        header: "Bruta no recorte",
         sortable: true,
         className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_bruta ?? 0,

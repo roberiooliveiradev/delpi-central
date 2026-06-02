@@ -549,6 +549,8 @@ export type DashboardProcessoItem = {
   economia_diaria: number | null;
   economia_liquida_mes?: number;
   economia_bruta?: number;
+  data_implantacao?: string | null;
+  revisao_implantacao_id?: string | null;
 };
 
 export type DashboardRecalcResult = {

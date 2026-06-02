@@ -74,12 +74,16 @@ def dashboard_processos(
     filial_id: str | None = None,
     setor_id: str | None = None,
     competencia: str | None = None,
+    competencia_inicio: str | None = None,
+    competencia_fim: str | None = None,
     limit: int = Query(default=50, ge=1, le=200),
 ):
     rows = _live.query_ranking_processos(
         filial_id=filial_id,
         setor_id=setor_id,
         competencia=competencia,
+        competencia_inicio=competencia_inicio,
+        competencia_fim=competencia_fim,
         limit=limit,
     )
     return ok({"total": len(rows), "items": rows_to_json(rows)})

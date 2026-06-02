@@ -34,6 +34,7 @@ class DashboardCalculatorService:
 
             revisoes = context.revisoes_by_processo.get(process_id, [])
             display_review = self._pick_display_review(revisoes)
+            implementation_review = self._pick_first_non_baseline_review(revisoes)
             baseline_review = self._pick_baseline_review(revisoes)
 
             daily_savings = self._calculate_process_daily_savings(
@@ -49,10 +50,10 @@ class DashboardCalculatorService:
             )
 
             implementation_date = None
-            if display_review:
+            if implementation_review:
                 implementation_date = self._format_display_date(
-                    display_review.get("data_implantacao")
-                    or display_review.get("data_inicio_vigencia")
+                    implementation_review.get("data_implantacao")
+                    or implementation_review.get("data_inicio_vigencia")
                 )
 
             items.append(
@@ -1006,6 +1007,38 @@ class DashboardCalculatorService:
             return None
 
         return self._sort_reviews(active_reviews)[0]
+
+    def _pick_first_non_baseline_review(self, reviews: List[dict]) -> Optional[dict]:
+        """Return the earliest review that is not a baseline and is not deleted.
+
+        This is used as the project's implementation reference for filtering: if
+        there are multiple improvements the first (earliest) non-baseline review
+        should be considered the implementation date rather than the latest.
+        """
+        if not reviews:
+            return None
+
+        sorted_reviews = sorted(reviews, key=self._implementation_sort_key)
+        for rev in sorted_reviews:
+            cenario = (self._empty_to_none(rev.get("cenario_tipo")) or "").lower()
+            if cenario != "baseline" and not self._is_deleted(rev):
+                return rev
+
+        return None
+
+    def _implementation_sort_key(self, review: dict) -> Tuple[date, date, str]:
+        implementation_date = self._review_implementation_date(review) or date.max
+        start_date = self._parse_date(review.get("data_inicio_vigencia")) or date.max
+        version = self._empty_to_none(review.get("versao_revisao")) or ""
+        return (implementation_date, start_date, version)
+
+    def _review_implementation_date(self, review: Optional[dict]) -> Optional[date]:
+        if not review:
+            return None
+        return (
+            self._parse_date(review.get("data_implantacao"))
+            or self._parse_date(review.get("data_inicio_vigencia"))
+        )
 
     def _select_reviews_for_month(self, reviews: List[dict], competencia_date: date) -> List[dict]:
         valid_reviews = [
