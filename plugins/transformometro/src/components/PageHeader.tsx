@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Gauge, ListFilter } from "lucide-react";
 import { TransformometroNav } from "./TransformometroNav";
+import "./PageHeader.css";
 
 type PageHeaderProps = {
   title: string;
@@ -27,7 +28,7 @@ export function PageHeader({
         <div className="ds-header__icon" aria-hidden="true">
           <Gauge size={28} strokeWidth={1.75} />
         </div>
-        <div>
+        <div className="ds-page-header__content">
           <p className="ds-eyebrow">DELPI • Transformômetro</p>
           <h1>{title}</h1>
           <span className="ds-page-subtitle">{subtitle}</span>
