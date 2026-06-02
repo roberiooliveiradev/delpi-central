@@ -72,8 +72,23 @@ class DashboardLiveService:
             start_date=competencia_inicio,
             end_date=competencia_fim,
         )
+        summary["roi_medio"] = self._calculate_consolidated_roi(summary)
         summary["fonte"] = "cadastro_tempo_real"
         return summary
+
+    @staticmethod
+    def _calculate_consolidated_roi(summary: dict[str, Any]) -> float:
+        """Calcula o ROI consolidado do recorte usando os totais do dashboard.
+
+        Mantem a chave ``roi_medio`` por compatibilidade com o frontend, mas evita
+        a media simples de percentuais por revisao, que distorce o indicador quando
+        uma revisao pequena tem economia negativa.
+        """
+        total_net_savings = float(summary.get("economia_liquida_total") or 0)
+        total_investment = float(summary.get("investimento_total") or 0)
+        if total_investment <= 0:
+            return 0.0
+        return (total_net_savings - total_investment) / total_investment
 
     def query_evolucao(
         self,
