@@ -366,7 +366,7 @@
 }
 
 .dashboard-transformometro .ds-kpi-grid--responsive {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
 }
 
 .dashboard-transformometro .ds-kpi-header {

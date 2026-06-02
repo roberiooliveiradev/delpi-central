@@ -137,6 +137,13 @@ class DashboardCalculatorService:
             "roi_medio": self._round_final(average_roi),
             "evolucao_mensal": monthly_breakdown,  # Keep original monthly values
             "periodo": range_summary,
+            "_debug": {
+                "calculation_rows_count": len(calculation_rows),
+                "comparable_rows": len([r for r in calculation_rows if r["cenario_tipo"] in self.COMPARABLE_SCENARIOS]),
+                "revisoes_with_investment": len([r for r in calculation_rows if r["investimento_unico_mes"] > 0]),
+                "total_investment_acumulated": self._round_final(total_unique),
+                "total_economy_acumulated": self._round_final(total_net_savings),
+            }
         }
 
     def filter_raw(
@@ -579,9 +586,24 @@ class DashboardCalculatorService:
         return total_unique_investment / economia_liquida_mes
 
     def _calculate_average_roi(self, calculation_rows: List[dict]) -> float:
+        """
+        Calculate average ROI based on cumulative economy vs unique investment per review.
+        
+        ROI = (Total Economy - Total Investment) / Total Investment
+        
+        Includes:
+        - Only reviews with COMPARABLE_SCENARIOS (melhoria, automacao, correcao)
+        - Only reviews with investimento_unico_acumulado > 0 (must have investment to calculate ROI)
+        
+        Returns:
+        - Average ROI across all reviewed projects
+        - 0.0 if no investable projects found (data completeness issue)
+        """
+        # Group by review, summing economy and investment
         grouped: Dict[str, dict] = {}
 
         for row in calculation_rows:
+            # Only include comparable scenarios (improvements with measurable ROI)
             if row["cenario_tipo"] not in self.COMPARABLE_SCENARIOS:
                 continue
 
@@ -591,24 +613,37 @@ class DashboardCalculatorService:
                 {
                     "economia_liquida_acumulada": 0.0,
                     "investimento_unico_acumulado": 0.0,
+                    "custo_recorrente_acumulado": 0.0,  # Track recurring costs too
                 },
             )
             grouped[revisao_id]["economia_liquida_acumulada"] += row["economia_liquida_mes"]
             grouped[revisao_id]["investimento_unico_acumulado"] += row["investimento_unico_mes"]
+            grouped[revisao_id]["custo_recorrente_acumulado"] += row["custo_recorrente_mes"]
 
         rois: List[float] = []
+        valid_reviews = 0
+        zero_investment_reviews = 0
 
-        for values in grouped.values():
+        for revisao_id, values in grouped.items():
             investment = values["investimento_unico_acumulado"]
+            economia = values["economia_liquida_acumulada"]
+            
+            valid_reviews += 1
+
+            # Skip reviews without investment (can't calculate ROI on free improvements)
             if investment <= 0:
+                zero_investment_reviews += 1
                 continue
 
-            roi = (
-                values["economia_liquida_acumulada"] - investment
-            ) / investment
+            # ROI = (Net Savings - Investment) / Investment
+            # Negative ROI means investment hasn't paid back yet
+            roi = (economia - investment) / investment
             rois.append(roi)
 
+        # Return average ROI, or 0.0 if no valid projects with investment
         if not rois:
+            # Log why: helps diagnose data issues
+            # (would use logger in production)
             return 0.0
 
         return sum(rois) / len(rois)
@@ -812,21 +847,46 @@ class DashboardCalculatorService:
         investments: List[dict],
         competencia_date: date,
     ) -> float:
+        """
+        Calculate recurring (monthly/annual) investment costs for a specific month.
+        
+        Recurring costs are divided by their recurrence period:
+        - Mensal (monthly): valor_total per month
+        - Trimestral (quarterly): valor_total / 3
+        - Semestral (semi-annual): valor_total / 6
+        - Anual (annual): valor_total / 12
+        
+        Only includes costs active during the month (within data_investimento + meses_vigencia).
+        
+        Args:
+            investments: List of investment/cost records
+            competencia_date: The month to calculate costs for
+            
+        Returns:
+            Total recurring investment cost for the month
+        """
         total = 0.0
 
         for item in investments:
+            # Skip deleted or invalid investments
             if self._is_deleted(item):
                 continue
 
             recurrence = (self._empty_to_none(item.get("recorrencia")) or "").lower()
-            if recurrence not in {"mensal", "anual"}:
+            
+            # Only process recurring investments (not one-time)
+            if recurrence not in {"mensal", "trimestral", "semestral", "anual"}:
                 continue
 
+            # Check if investment is active during this month
             if not self._is_investment_active_in_month(item, competencia_date):
                 continue
 
             value = self._to_float(item.get("valor_total")) or 0.0
+            if value <= 0:
+                continue
 
+            # Distribute value based on recurrence period
             if recurrence == "mensal":
                 total += value
             elif recurrence == "trimestral":
@@ -843,10 +903,25 @@ class DashboardCalculatorService:
         investments: List[dict],
         competencia_date: date,
     ) -> float:
+        """
+        Calculate unique (one-time) investments allocated to a specific month.
+        
+        A one-time investment is allocated to the month it was made (data_investimento).
+        If an investment spans multiple months via "meses_vigencia", it distributes
+        across that period.
+        
+        Args:
+            investments: List of investment records
+            competencia_date: The month to calculate investments for
+            
+        Returns:
+            Total unique investment value for the month
+        """
         total = 0.0
         current_month = self._month_start(competencia_date)
 
         for item in investments:
+            # Skip deleted or invalid investments
             if self._is_deleted(item):
                 continue
 
@@ -854,14 +929,34 @@ class DashboardCalculatorService:
             if recurrence != "unico":
                 continue
 
+            # Get the investment date
             investment_date = self._parse_date(item.get("data_investimento"))
             if investment_date is None:
                 continue
 
-            if self._month_start(investment_date) != current_month:
-                continue
-
-            total += self._to_float(item.get("valor_total")) or 0.0
+            investment_month = self._month_start(investment_date)
+            
+            # Check if meses_vigencia extends the investment across multiple months
+            meses_vigencia = self._to_int(item.get("meses_vigencia"))
+            
+            # If investment is allocated to only one month
+            if meses_vigencia is None or meses_vigencia <= 0:
+                # Allocate full investment to the investment month
+                if investment_month == current_month:
+                    total += self._to_float(item.get("valor_total")) or 0.0
+            else:
+                # Investment spans multiple months - distribute evenly
+                investment_value = self._to_float(item.get("valor_total")) or 0.0
+                if investment_value <= 0:
+                    continue
+                    
+                end_month = self._add_months(investment_month, meses_vigencia - 1)
+                
+                # Check if current month is within the investment period
+                if investment_month <= current_month <= end_month:
+                    # Distribute investment across vigencia months
+                    monthly_allocation = investment_value / max(meses_vigencia, 1)
+                    total += monthly_allocation
 
         return total
 
@@ -1172,9 +1267,25 @@ class DashboardCalculatorService:
         return True
 
     def _is_investment_active_in_month(self, item: dict, competencia_date: date) -> bool:
+        """
+        Determine if an investment is active during a given month.
+        
+        Rules:
+        - For one-time (unico): active only in the investment month
+        - For recurring: active from investment month through (investment_month + meses_vigencia - 1)
+        - If no end date specified, assumes indefinite vigency
+        
+        Args:
+            item: Investment record
+            competencia_date: Month to check
+            
+        Returns:
+            True if investment is active during the month
+        """
         if self._is_deleted(item):
             return False
 
+        # Parse investment start date
         investment_date = self._parse_date(item.get("data_investimento"))
         if investment_date is None:
             return False
@@ -1183,16 +1294,21 @@ class DashboardCalculatorService:
         current_month = self._month_start(competencia_date)
         start_month = self._month_start(investment_date)
 
+        # For one-time investments, only active in investment month
         if recurrence == "unico":
             return current_month == start_month
 
+        # For recurring investments, check vigency
         if current_month < start_month:
             return False
 
+        # If no vigency period specified, assumes it continues indefinitely
         meses_vigencia = self._to_int(item.get("meses_vigencia"))
         if meses_vigencia is None or meses_vigencia <= 0:
+            # No end date, still active
             return True
 
+        # Check if within vigency period
         end_month = self._add_months(start_month, meses_vigencia - 1)
         return current_month <= end_month
 

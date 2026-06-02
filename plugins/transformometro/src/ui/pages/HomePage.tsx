@@ -10,12 +10,12 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Line,
-  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -28,6 +28,7 @@ import { ChartGranularityToggle } from "../../components/ChartGranularityToggle"
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DataSourceBanner } from "../../components/DataSourceBanner";
+import { FilterBar } from "../../components/FilterBar";
 import { KpiCard } from "../../components/KpiCard";
 import { ModuleShortcut } from "../../components/ModuleShortcut";
 import { PageHeader } from "../../components/PageHeader";
@@ -40,9 +41,11 @@ import {
   fetchDashboardEvolucao,
   fetchDashboardProcessos,
   fetchDashboardResumo,
+  fetchOptions,
   type DashboardEvolucaoItem,
   type DashboardProcessoItem,
   type DashboardResumo,
+  type OptionsData,
 } from "../../data/api/transformometroApi";
 import { fetchTransformometroHealth } from "../../data/api/transformometroHealthApi";
 import type { ChartGranularity } from "../../types/chart";
@@ -65,13 +68,16 @@ type Props = Pick<AppProps, "getAccessToken"> & {
 };
 
 export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
-  const [dateStart] = useState(getFirstDayOfMonthInputValue);
-  const [dateEnd] = useState(getTodayInputValue);
+  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
+  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
+  const [branch, setBranch] = useState("");
+  const [setorId, setSetorId] = useState("");
   const [state, setState] = useState<LoadState>("loading");
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
   const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
+  const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
     suggestGranularity(getFirstDayOfMonthInputValue(), getTodayInputValue())
@@ -81,8 +87,10 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
     const params: Record<string, string> = {};
     if (dateStart) params.competencia_inicio = dateStart;
     if (dateEnd) params.competencia_fim = dateEnd;
+    if (branch) params.filial_id = branch;
+    if (setorId) params.setor_id = setorId;
     return params;
-  }, [dateEnd, dateStart]);
+  }, [dateEnd, dateStart, branch, setorId]);
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -93,16 +101,18 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
     setState("loading");
     setError(null);
     try {
-      const [healthPayload, r, ev, proc] = await Promise.all([
+      const [healthPayload, r, ev, proc, opts] = await Promise.all([
         fetchTransformometroHealth(getAccessToken),
         fetchDashboardResumo(getAccessToken, apiParams),
         fetchDashboardEvolucao(getAccessToken, apiParams),
         fetchDashboardProcessos(getAccessToken, apiParams),
+        fetchOptions(getAccessToken),
       ]);
       setHealth(healthPayload as Record<string, unknown>);
       setResumo(r);
       setEvolucao(ev.items);
       setProcessos(proc.items);
+      setOptions(opts);
       setState("ok");
     } catch (err) {
       setState("error");
@@ -241,6 +251,22 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <DataSourceBanner />
 
+      <FilterBar
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
+        onNavigate={onNavigate}
+        dateStart={dateStart}
+        dateEnd={dateEnd}
+        branch={branch}
+        setorId={setorId}
+        options={options}
+        onDateStartChange={setDateStart}
+        onDateEndChange={setDateEnd}
+        onBranchChange={setBranch}
+        onSetorChange={setSetorId}
+        onRefresh={() => void load()}
+        refreshing={isLoading}
+      />
+
       <StatusAlerts
         error={error}
         loading={isLoading}
@@ -297,7 +323,7 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
 
       <section className="ds-charts-grid">
         <ChartCard
-          title="Economia no período"
+          title="Economia vs Investimento"
           hint={savingsChartHint}
           toolbar={
             <ChartGranularityToggle
@@ -311,28 +337,33 @@ export function HomePage({ getAccessToken, pathname, onNavigate }: Props) {
             <p className="ds-state-box">Sem competências no período. Abra o dashboard ou recalcule.</p>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT_HOME}>
-              <LineChart data={savingsChartData}>
+              <AreaChart data={savingsChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={68} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Line
-                  type="monotone"
-                  dataKey="bruta"
-                  name="Bruta"
-                  stroke={CHART_COLORS[1]}
-                  strokeWidth={2}
-                  dot={false}
+                <Tooltip 
+                  formatter={(v) => formatCurrency(Number(v))} 
+                  contentStyle={{ backgroundColor: "var(--ds-card-bg)", border: "1px solid var(--ds-card-border)" }}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="liquida"
-                  name="Líquida"
+                  name="Economia Líquida"
+                  fill={CHART_COLORS[0]}
                   stroke={CHART_COLORS[0]}
-                  strokeWidth={2}
-                  dot={false}
+                  fillOpacity={0.6}
+                  stackId="economia"
                 />
-              </LineChart>
+                <Area
+                  type="monotone"
+                  dataKey="investimento"
+                  name="Investimento"
+                  fill={CHART_COLORS[4]}
+                  stroke={CHART_COLORS[4]}
+                  fillOpacity={0.6}
+                  stackId="investimento"
+                />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </ChartCard>
