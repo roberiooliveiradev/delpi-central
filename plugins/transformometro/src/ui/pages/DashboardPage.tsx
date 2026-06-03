@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
+  BarChart3,
+  CalendarDays,
+  Clock,
+  Coins,
+  Database,
+  Download,
+  FileDown,
+  Lightbulb,
+  Percent,
+  RefreshCw,
+} from "lucide-react";
+import {
   Area,
   AreaChart,
   Bar,
@@ -11,38 +24,20 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import {
-  AlertTriangle,
-  Clock,
-  Coins,
-  Download,
-  FileSpreadsheet,
-  Lightbulb,
-  Percent,
-} from "lucide-react";
 
 import type { AppProps } from "../../App";
-import { ChartCard } from "../../components/ChartCard";
-import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
-import { DataSourceBanner } from "../../components/DataSourceBanner";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
-import { FilterBar } from "../../components/FilterBar";
+import { DateField } from "../../components/DateField";
 import { KpiCard } from "../../components/KpiCard";
-import { PrintReportButton } from "../../components/PrintReportButton";
-import { PrintReportSummary } from "../../components/PrintReportSummary";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
-  EMPTY_REQUEST_PROGRESS,
-  runParallelWithProgress,
   useLoadingProgress,
-  type RequestProgress,
+  useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { CHART_COLORS } from "../../constants/chartColors";
-import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
-import { buildProcessoPath } from "../../utils/routeParser";
 import {
   downloadDashboardCsv,
   downloadDashboardExcel,
@@ -51,189 +46,251 @@ import {
   fetchDashboardPorFamilia,
   fetchDashboardProcessos,
   fetchDashboardResumo,
-  fetchOptions,
+  recalcularDashboard,
   type DashboardAlertItem,
   type DashboardEvolucaoItem,
   type DashboardFamiliaItem,
   type DashboardProcessoItem,
   type DashboardResumo,
-  type OptionsData,
 } from "../../data/api/transformometroApi";
-import type { ChartGranularity } from "../../types/chart";
-import {
-  formatDisplayDate,
-  formatPeriodLabel,
-  getFirstDayOfMonthInputValue,
-  getTodayInputValue,
-} from "../../utils/dates";
-import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
-import { suggestGranularity } from "../../utils/periodBuckets";
-import { formatCurrency, formatDecimal, formatInteger, formatPercent } from "../../utils/format";
+import { formatCurrency, formatDecimal, formatPercent } from "../../utils/format";
+import { buildProcessoPath } from "../../utils/routeParser";
 
-const CHART_HEIGHT = 320;
-const ECONOMIA_COLOR = "#47bfff";
-const INVESTIMENTO_COLOR = "#f87171";
-
-const economyValueStyle = { color: ECONOMIA_COLOR, fontWeight: 700 };
-const investmentValueStyle = { color: INVESTIMENTO_COLOR, fontWeight: 700 };
+const CHART_COLORS = [
+  "#1aa7d9",
+  "#0b4f80",
+  "#4fc3f7",
+  "#8a18ff",
+  "#2e7d32",
+  "#ff9f00",
+];
+const ECONOMIA_COLOR = "#4fc3f7";
+const INVESTIMENTO_COLOR = "#ff6b6b";
+const CHART_HEIGHT = 300;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
-  pathname?: string;
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
 };
 
-export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
-  const [dateStart, setDateStart] = useState(getFirstDayOfMonthInputValue);
-  const [dateEnd, setDateEnd] = useState(getTodayInputValue);
-  const [branch, setBranch] = useState("");
-  const [setorId, setSetorId] = useState("");
+type Filters = {
+  dataInicial: string;
+  dataFinal: string;
+  filialId: string;
+  setorId: string;
+};
+
+type ChartGranularity = "day" | "month" | "year";
+
+type ChartPoint = {
+  name: string;
+  bruta: number;
+  investimento: number;
+};
+
+type TopDailyPoint = {
+  name: string;
+  value: number;
+};
+
+const today = new Date();
+const formatDateInput = (date: Date) => date.toISOString().slice(0, 10);
+const defaultStart = new Date(today.getFullYear(), today.getMonth() - 10, 1);
+const defaultFilters: Filters = {
+  dataInicial: formatDateInput(defaultStart),
+  dataFinal: formatDateInput(today),
+  filialId: "",
+  setorId: "",
+};
+
+function buildParams(filters: Filters) {
+  const params: Record<string, string> = {};
+  if (filters.dataInicial) params.competencia_inicio = filters.dataInicial;
+  if (filters.dataFinal) params.competencia_fim = filters.dataFinal;
+  if (filters.filialId) params.filial_id = filters.filialId;
+  if (filters.setorId) params.setor_id = filters.setorId;
+  return params;
+}
+
+function formatPeriod(filters: Filters) {
+  return `${filters.dataInicial.split("-").reverse().join("/")} — ${filters.dataFinal
+    .split("-")
+    .reverse()
+    .join("/")}`;
+}
+
+function monthName(competencia: string) {
+  const [year, month] = competencia.split("-");
+  const date = new Date(Number(year), Number(month) - 1, 1);
+  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+}
+
+function aggregateChart(items: DashboardEvolucaoItem[], granularity: ChartGranularity): ChartPoint[] {
+  const grouped = new Map<string, ChartPoint>();
+  items.forEach((item) => {
+    const key =
+      granularity === "year"
+        ? item.competencia.slice(0, 4)
+        : granularity === "month"
+          ? monthName(item.competencia)
+          : item.competencia;
+    const current = grouped.get(key) ?? { name: key, bruta: 0, investimento: 0 };
+    current.bruta += item.economia_bruta ?? 0;
+    current.investimento += item.investimento_total_mes ?? item.custo_recorrente_mes ?? 0;
+    grouped.set(key, current);
+  });
+  return Array.from(grouped.values());
+}
+
+function ChartGranularityToggle({
+  idPrefix,
+  value,
+  onChange,
+}: {
+  idPrefix: string;
+  value: ChartGranularity;
+  onChange: (value: ChartGranularity) => void;
+}) {
+  const options: { value: ChartGranularity; label: string }[] = [
+    { value: "day", label: "Dia" },
+    { value: "month", label: "Mês" },
+    { value: "year", label: "Ano" },
+  ];
+  return (
+    <div className="tm-chart-toggle" role="group" aria-label="Granularidade do gráfico">
+      {options.map((option) => (
+        <button
+          key={option.value}
+          id={`${idPrefix}-${option.value}`}
+          type="button"
+          className={option.value === value ? "is-active" : undefined}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ChartCard({
+  title,
+  hint,
+  toolbar,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  toolbar?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="ds-card ds-chart-card">
+      <div className="ds-chart-card__header">
+        <div>
+          <h2 className="ds-section-title">{title}</h2>
+          {hint ? <p className="ds-hint">{hint}</p> : null}
+        </div>
+        {toolbar}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export function DashboardPage({ getAccessToken, onNavigate }: Props) {
+  const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
   const [processos, setProcessos] = useState<DashboardProcessoItem[]>([]);
-  const [options, setOptions] = useState<OptionsData | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [alertas, setAlertas] = useState<DashboardAlertItem[]>([]);
   const [porFamilia, setPorFamilia] = useState<DashboardFamiliaItem[]>([]);
-  const [exportando, setExportando] = useState(false);
-  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
-    suggestGranularity(getFirstDayOfMonthInputValue(), getTodayInputValue())
-  );
-  const [requestProgress, setRequestProgress] = useState<RequestProgress>(
-    EMPTY_REQUEST_PROGRESS
-  );
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState<"csv" | "excel" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>("month");
 
-  const apiParams = useMemo(() => {
-    const params: Record<string, string> = {};
-    if (dateStart) params.competencia_inicio = dateStart;
-    if (dateEnd) params.competencia_fim = dateEnd;
-    if (branch) params.filial_id = branch;
-    if (setorId) params.setor_id = setorId;
-    return params;
-  }, [branch, dateEnd, dateStart, setorId]);
+  const params = useMemo(() => buildParams(filters), [filters]);
+  const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
 
   const load = useCallback(async () => {
-    const controller = new AbortController();
     setRefreshing(true);
     setError(null);
     try {
-      const results = await runParallelWithProgress(
-        [
-          async () => fetchDashboardResumo(getAccessToken, apiParams),
-          async () => fetchDashboardEvolucao(getAccessToken, apiParams),
-          async () => fetchDashboardProcessos(getAccessToken, apiParams),
-          async () => fetchOptions(getAccessToken),
-          async () =>
-            fetchDashboardAlertas(getAccessToken, {
-              ...apiParams,
-              meses_consecutivos: "3",
-            }),
-          async () => fetchDashboardPorFamilia(getAccessToken, apiParams),
-        ] as ReadonlyArray<(signal: AbortSignal) => Promise<unknown>>,
-        controller.signal,
-        setRequestProgress
-      );
-
-      const [r, ev, proc, opts, al, fam] = results.map((result) => {
-        if (result.status === "rejected") {
-          throw result.reason;
-        }
-        return result.value;
-      });
-
-      setResumo(r as DashboardResumo);
-      setEvolucao((ev as { items: DashboardEvolucaoItem[] }).items);
-      setProcessos((proc as { items: DashboardProcessoItem[] }).items);
-      setOptions(opts as OptionsData);
-      setAlertas((al as { items: DashboardAlertItem[] }).items);
-      setPorFamilia((fam as { items: DashboardFamiliaItem[] }).items);
+      const [resumoData, evolucaoData, processosData, alertasData, familiaData] =
+        await Promise.all([
+          fetchDashboardResumo(getAccessToken, params),
+          fetchDashboardEvolucao(getAccessToken, params),
+          fetchDashboardProcessos(getAccessToken, params),
+          fetchDashboardAlertas(getAccessToken, params),
+          fetchDashboardPorFamilia(getAccessToken, params),
+        ]);
+      setResumo(resumoData);
+      setEvolucao(evolucaoData.items);
+      setProcessos(processosData.items);
+      setAlertas(alertasData.items);
+      setPorFamilia(familiaData.items);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar dashboard");
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [apiParams, getAccessToken]);
+  }, [getAccessToken, params]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
-  useEffect(() => {
-    setSavingsGranularity(suggestGranularity(dateStart, dateEnd));
-  }, [dateStart, dateEnd]);
-
-  async function handleExportCsv() {
-    setExportando(true);
+  async function handleRecalculate() {
+    setRefreshing(true);
     setError(null);
     try {
-      await downloadDashboardCsv(getAccessToken, apiParams);
+      await recalcularDashboard(getAccessToken, params);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao recalcular dashboard");
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  async function handleDownloadCsv() {
+    setExporting("csv");
+    setError(null);
+    try {
+      await downloadDashboardCsv(getAccessToken, params);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao exportar CSV");
     } finally {
-      setExportando(false);
+      setExporting(null);
     }
   }
 
-  async function handleExportExcel() {
-    setExportando(true);
+  async function handleDownloadExcel() {
+    setExporting("excel");
     setError(null);
     try {
-      await downloadDashboardExcel(getAccessToken, apiParams);
+      await downloadDashboardExcel(getAccessToken, params);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao exportar Excel");
     } finally {
-      setExportando(false);
+      setExporting(null);
     }
   }
 
-  const periodLabel = useMemo(
-    () => formatPeriodLabel(dateStart, dateEnd),
-    [dateStart, dateEnd]
-  );
-  const branchLabel = branch ? `Filial ${branch}` : "Consolidado";
-  const printBranchLabel = useMemo(() => {
-    if (!branch) return "Consolidado";
-    const found = options?.filiais?.find((f) => f.id === branch);
-    return found ? `${found.id} — ${found.label}` : branch;
-  }, [branch, options?.filiais]);
-  const printSetorLabel = setorId || "Todos";
-  const isBusy = loading || refreshing;
-  const hasData = resumo !== null || evolucao.length > 0 || processos.length > 0;
-  const refreshLoadingProgress = useLoadingProgress(refreshing && hasData, requestProgress);
-
-  const savingsChart = useMemo(
-    () => buildEvolucaoSavingsSeries(evolucao, dateStart, dateEnd, savingsGranularity),
-    [dateEnd, dateStart, evolucao, savingsGranularity]
+  const savingsChartData = useMemo(
+    () => aggregateChart(evolucao, savingsGranularity),
+    [evolucao, savingsGranularity]
   );
 
-  const savingsChartData = savingsChart.points;
-
-  const savingsChartHint = useMemo(() => {
-    const parts = [periodLabel];
-    if (savingsGranularity === "day" && savingsChart.dayProrated) {
-      parts.push("economia diária proporcional ao total mensal");
-    }
-    if (savingsGranularity === "year") {
-      parts.push("soma por ano");
-    }
-    if (savingsChart.truncated) {
-      parts.push("primeiros 60 intervalos");
-    }
-    return parts.join(" · ");
-  }, [periodLabel, savingsChart.dayProrated, savingsChart.truncated, savingsGranularity]);
-
-  const topDailyChart = useMemo(
+  const topDailyChart = useMemo<TopDailyPoint[]>(
     () =>
-      [...processos]
-        .sort((a, b) => (b.economia_diaria ?? 0) - (a.economia_diaria ?? 0))
+      processos
+        .filter((item) => (item.economia_diaria ?? 0) > 0)
         .slice(0, 10)
         .map((item) => ({
-          name:
-            (item.nome_processo?.length ?? 0) > 28
-              ? `${item.nome_processo.slice(0, 28)}…`
-              : item.nome_processo,
+          name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
           value: item.economia_diaria ?? 0,
         })),
     [processos]
@@ -241,40 +298,21 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const familiaColumns = useMemo<DataTableColumn<DashboardFamiliaItem>[]>(
     () => [
-      { key: "familia", header: "Família", render: (row) => row.familia_processo, sortable: true },
-      {
-        key: "processos",
-        header: "Processos",
-        sortable: true,
-        className: "ds-table__col--numeric",
-        sortValue: (row) => row.processos,
-        render: (row) => formatInteger(row.processos),
-      },
+      { key: "familia", header: "Família", render: (row) => row.familia_processo || "—", sortable: true },
+      { key: "processos", header: "Processos", render: (row) => row.processos, sortable: true },
       {
         key: "bruta",
         header: "Economia bruta",
+        render: (row) => formatCurrency(row.economia_bruta),
         sortable: true,
-        className: "ds-table__col--numeric",
-        sortValue: (row) => row.economia_bruta,
-        render: (row) => <span style={economyValueStyle}>{formatCurrency(row.economia_bruta)}</span>,
+        className: "tm-table__money--positive",
       },
       {
         key: "liquida",
         header: "Economia líquida",
+        render: (row) => formatCurrency(row.economia_liquida_mes),
         sortable: true,
-        className: "ds-table__col--numeric",
-        sortValue: (row) => row.economia_liquida_mes,
-        render: (row) => {
-          const negative = row.economia_liquida_mes < 0;
-          return (
-            <span
-              className={negative ? "ds-table__value--negative" : undefined}
-              style={negative ? undefined : economyValueStyle}
-            >
-              {formatCurrency(row.economia_liquida_mes)}
-            </span>
-          );
-        },
+        className: "tm-table__money--positive",
       },
     ],
     []
@@ -285,224 +323,221 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       {
         key: "codigo",
         header: "Código",
+        render: (row) => (
+          <button
+            type="button"
+            className="ds-link-btn"
+            onClick={() => onNavigate?.(buildProcessoPath(row.processo_id))}
+          >
+            {row.codigo_processo}
+          </button>
+        ),
         sortable: true,
-        render: (row) =>
-          row.processo_id ? (
-            <button
-              type="button"
-              className="ds-link-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                onNavigate(buildProcessoPath(row.processo_id));
-              }}
-            >
-              {row.codigo_processo ?? "—"}
-            </button>
-          ) : (
-            row.codigo_processo ?? "—"
-          ),
+        sortValue: (row) => row.codigo_processo,
       },
       {
-        key: "nome",
+        key: "processo",
         header: "Processo",
+        render: (row) => (
+          <button
+            type="button"
+            className="ds-link-btn"
+            onClick={() => onNavigate?.(buildProcessoPath(row.processo_id))}
+          >
+            {row.nome_processo}
+          </button>
+        ),
         sortable: true,
-        className: "ds-table__col--wide",
-        render: (row) =>
-          row.processo_id ? (
-            <button
-              type="button"
-              className="ds-link-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                onNavigate(buildProcessoPath(row.processo_id));
-              }}
-            >
-              {row.nome_processo ?? "—"}
-            </button>
-          ) : (
-            row.nome_processo ?? "—"
-          ),
+        sortValue: (row) => row.nome_processo,
       },
       {
         key: "implantacao",
         header: "Implantação",
+        render: (row) => row.data_implantacao?.split("-").reverse().join("/") ?? "—",
         sortable: true,
         sortValue: (row) => row.data_implantacao ?? "",
-        render: (row) => formatDisplayDate(row.data_implantacao),
       },
       {
-        key: "daily",
+        key: "economia_diaria",
         header: "Economia/dia",
+        render: (row) => formatCurrency(row.economia_diaria),
         sortable: true,
-        className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_diaria ?? 0,
-        render: (row) => {
-          const value = row.economia_diaria;
-          const negative = value != null && value < 0;
-          return (
-            <span
-              className={negative ? "ds-table__value--negative" : undefined}
-              style={negative ? undefined : economyValueStyle}
-            >
-              {formatCurrency(value)}
-            </span>
-          );
-        },
+        className: "tm-table__money--positive",
       },
       {
         key: "investimentos",
         header: "Invest. vigentes",
+        render: (row) => formatCurrency(row.investimento_unico_mes),
         sortable: true,
-        className: "ds-table__col--numeric",
-        sortValue: (row) => (row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0),
-        render: (row) => (
-          <span style={investmentValueStyle}>
-            {formatCurrency((row.investimento_unico_mes ?? 0) + (row.custo_recorrente_mes ?? 0))}
-          </span>
-        ),
+        sortValue: (row) => row.investimento_unico_mes ?? 0,
+        className: "tm-table__money--negative",
       },
       {
         key: "recursos",
         header: "Recursos vigentes",
+        render: (row) => formatCurrency(row.custo_recursos_compartilhados_mes),
         sortable: true,
-        className: "ds-table__col--numeric",
         sortValue: (row) => row.custo_recursos_compartilhados_mes ?? 0,
-        render: (row) => (
-          <span style={investmentValueStyle}>
-            {formatCurrency(row.custo_recursos_compartilhados_mes ?? 0)}
-          </span>
-        ),
+        className: "tm-table__money--negative",
       },
       {
-        key: "month",
+        key: "liquida",
         header: "Líquida no recorte",
+        render: (row) => formatCurrency(row.economia_liquida_mes),
         sortable: true,
-        className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_liquida_mes ?? 0,
-        render: (row) => {
-          const value = row.economia_liquida_mes;
-          const negative = value != null && value < 0;
-          return (
-            <span
-              className={negative ? "ds-table__value--negative" : undefined}
-              style={negative ? undefined : economyValueStyle}
-            >
-              {formatCurrency(value)}
-            </span>
-          );
-        },
+        className: (row) =>
+          (row.economia_liquida_mes ?? 0) < 0
+            ? "tm-table__money--negative"
+            : "tm-table__money--positive",
       },
       {
         key: "bruta",
         header: "Bruta no recorte",
+        render: (row) => formatCurrency(row.economia_bruta),
         sortable: true,
-        className: "ds-table__col--numeric",
         sortValue: (row) => row.economia_bruta ?? 0,
-        render: (row) => <span style={economyValueStyle}>{formatCurrency(row.economia_bruta)}</span>,
+        className: "tm-table__money--positive",
       },
     ],
     [onNavigate]
   );
 
+  const isBusy = loading || refreshing;
+  const dashboardFetchProgress = useTrackedSingleFetchProgress(loading && !resumo);
+  const dashboardLoadingProgress = useLoadingProgress(
+    loading && !resumo,
+    dashboardFetchProgress
+  );
+
+  if (loading && !resumo) {
+    return (
+      <TransformometroShell>
+        <PageHeader
+          title="Dashboard Transformômetro"
+          subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
+          currentPath="/"
+          onNavigate={onNavigate}
+        />
+        <LoadingActivityCard
+          title="Carregando indicadores do Transformômetro"
+          description="Consolidando economia, investimentos e recursos compartilhados."
+          progressPercent={dashboardLoadingProgress}
+        />
+      </TransformometroShell>
+    );
+  }
+
+  const savingsChartHint = `${periodLabel} · economia diária proporcional ao total mensal`;
+
   return (
-    <TransformometroShell printRoot>
-      <FilterBar
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
+    <TransformometroShell>
+      <PageHeader
+        title="Dashboard Transformômetro"
+        subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
+        currentPath="/"
         onNavigate={onNavigate}
-        dateStart={dateStart}
-        dateEnd={dateEnd}
-        branch={branch}
-        setorId={setorId}
-        options={options}
-        onDateStartChange={setDateStart}
-        onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
-        onSetorChange={setSetorId}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
-        headerActions={
+        actions={
           <>
-            <PrintReportButton disabled={isBusy && !hasData} />
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={exportando || isBusy}
-              onClick={() => void handleExportCsv()}
-            >
+            <button type="button" className="ds-ghost-btn" onClick={handleDownloadCsv} disabled={exporting !== null}>
               <Download size={16} />
-              {exportando ? "Exportando…" : "CSV"}
+              {exporting === "csv" ? "Gerando..." : "CSV"}
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={exportando || isBusy}
-              onClick={() => void handleExportExcel()}
-            >
-              <FileSpreadsheet size={16} />
-              Excel
+            <button type="button" className="ds-ghost-btn" onClick={handleDownloadExcel} disabled={exporting !== null}>
+              <FileDown size={16} />
+              {exporting === "excel" ? "Gerando..." : "Excel"}
+            </button>
+            <button type="button" className="ds-primary-btn" onClick={handleRecalculate} disabled={refreshing}>
+              <RefreshCw size={16} />
+              {refreshing ? "Atualizando..." : "Atualizar"}
             </button>
           </>
         }
       />
 
-      <PrintReportSummary
-        title="Dashboard Transformômetro"
-        dateStart={dateStart}
-        dateEnd={dateEnd}
-        branchLabel={printBranchLabel}
-        setorLabel={printSetorLabel}
+      <section className="ds-card ds-filters-panel ds-no-print">
+        <div className="ds-filters-row">
+          <DateField
+            label="Data inicial"
+            value={filters.dataInicial}
+            onChange={(value) => setFilters((prev) => ({ ...prev, dataInicial: value }))}
+          />
+          <DateField
+            label="Data final"
+            value={filters.dataFinal}
+            onChange={(value) => setFilters((prev) => ({ ...prev, dataFinal: value }))}
+          />
+          <label className="ds-filter-box">
+            Filial
+            <select
+              value={filters.filialId}
+              onChange={(e) => setFilters((prev) => ({ ...prev, filialId: e.target.value }))}
+            >
+              <option value="">Consolidado</option>
+              <option value="01">Filial 01</option>
+              <option value="02">Filial 02</option>
+            </select>
+          </label>
+          <label className="ds-filter-box">
+            Setor
+            <select
+              value={filters.setorId}
+              onChange={(e) => setFilters((prev) => ({ ...prev, setorId: e.target.value }))}
+            >
+              <option value="">Todos</option>
+              <option value="engenharia">Engenharia</option>
+              <option value="qualidade">Qualidade</option>
+              <option value="pcp">PCP</option>
+              <option value="producao">Produção</option>
+              <option value="comercial">Comercial</option>
+              <option value="compras">Compras</option>
+              <option value="almoxarifado">Almoxarifado</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="ds-info-banner">
+        <Database size={18} />
+        <div>
+          <strong>PostgreSQL — Transformômetro</strong>
+          <p>
+            KPIs e gráficos são calculados em tempo real a partir do cadastro (revisões,
+            medições, investimentos e recursos), respeitando vigências e competências de cada mês.
+          </p>
+        </div>
+      </section>
+
+      <StatusAlerts
+        error={error}
+        loading={isBusy}
+        hasData={Boolean(resumo)}
+        onRetry={() => void load()}
       />
 
-      <div className="ds-no-print">
-        <DataSourceBanner />
-      </div>
-
-      <div className="ds-no-print">
-        <StatusAlerts
-        error={error}
-        loading={loading}
-        hasData={hasData}
-        requestProgress={requestProgress}
-        onRetry={() => void load()}
-        />
-      </div>
-
-      {refreshing && hasData ? (
-        <div className="ds-no-print">
-          <LoadingActivityCard
-            title="Atualizando dashboard"
-            description="Atualizando KPIs, gráficos e ranking de processos."
-            variant="compact"
-            sticky
-            progressPercent={refreshLoadingProgress}
-          />
-        </div>
-      ) : null}
-
       {alertas.length > 0 ? (
-        <section className="ds-card ds-alert-panel ds-no-print">
-          <h2 className="ds-section-title">
-            <AlertTriangle size={18} />
-            Alertas — economia líquida negativa (≥3 meses)
-          </h2>
-          <ul className="ds-alert-list">
-            {alertas.map((item) => (
-              <li key={item.processo_id}>
-                <strong>{item.codigo_processo}</strong> — {item.nome_processo}:{" "}
-                {item.months} meses ({item.competencia_inicio} → {item.competencia_fim}), acumulado{" "}
-                {formatCurrency(item.economia_liquida_acumulada)}
-                {item.familia_processo ? ` · família ${item.familia_processo}` : ""}
-              </li>
-            ))}
-          </ul>
+        <section className="ds-card ds-alert-card">
+          <AlertTriangle size={18} />
+          <div>
+            <h2 className="ds-section-title">Alertas — economia líquida negativa (&ge;3 meses)</h2>
+            <ul>
+              {alertas.slice(0, 12).map((alerta) => (
+                <li key={alerta.processo_id}>
+                  <strong>{alerta.codigo_processo}</strong> — {alerta.nome_processo}: {alerta.months} meses (
+                  {alerta.competencia_inicio} → {alerta.competencia_fim}), acumulado {formatCurrency(alerta.economia_liquida_acumulada)}
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
       ) : null}
 
-      <section className="ds-kpi-grid" aria-busy={isBusy}>
+      <section className="ds-kpi-grid">
         <KpiCard
           title="Economia líquida"
           value={formatCurrency(resumo?.economia_liquida_total)}
-          subtitle={`${branchLabel} · ${periodLabel}`}
+          subtitle={`Consolidado · ${periodLabel}`}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
@@ -515,7 +550,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="Soluções implementadas"
-          value={formatInteger(resumo?.solucoes_implementadas)}
+          value={formatDecimal(resumo?.solucoes_implementadas, 0)}
           subtitle="Melhoria, automação e correção"
           icon={<Lightbulb size={22} />}
           loading={isBusy && !resumo}
@@ -528,9 +563,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           loading={isBusy && !resumo}
         />
         <KpiCard
-          title="ROI médio"
+          title="ROI acumulado"
           value={formatPercent(resumo?.roi_medio, 1)}
-          subtitle="Fórmula spec (acumulado)"
+          subtitle="Economia líquida / investimento total"
           icon={<Percent size={22} />}
           loading={isBusy && !resumo}
         />
