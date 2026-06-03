@@ -40,7 +40,15 @@ from tests.fixtures.chat_intelligence_regression_cases import (
     PRESENTER_HUMANIZED_CASES,
     PRODUCT_CODE_CASES,
     SELECTION_CASES,
+    SIMPLE_TURN_GATE_CASES,
     STOCK_REFINEMENT_SELECTION_CASES,
+    UNCLEAR_REQUEST_CASES,
+)
+from app.domain.services.chat_simple_turn_gate_service import (
+    ChatSimpleTurnGateService,
+)
+from app.domain.services.chat_unclear_request_service import (
+    ChatUnclearRequestService,
 )
 
 
@@ -249,6 +257,26 @@ def test_direct_answer_regression(case):
 
     for token in case["must_contain"]:
         assert token in answer
+
+
+@pytest.mark.parametrize("message,expected_intent", SIMPLE_TURN_GATE_CASES)
+def test_simple_turn_gate_regression(message, expected_intent):
+    decision = ChatSimpleTurnGateService.evaluate(message=message)
+
+    if expected_intent is None:
+        assert decision.matched is False
+        assert decision.hide_activity is False
+    else:
+        assert decision.matched is True
+        assert decision.intent == expected_intent
+        assert decision.hide_activity is True
+        assert decision.requires_tool is False
+        assert decision.requires_rag is False
+
+
+@pytest.mark.parametrize("message,expected_category", UNCLEAR_REQUEST_CASES)
+def test_unclear_request_regression(message, expected_category):
+    assert ChatUnclearRequestService.classify(message) == expected_category
 
 
 @pytest.mark.parametrize("case", PRESENTER_HUMANIZED_CASES)

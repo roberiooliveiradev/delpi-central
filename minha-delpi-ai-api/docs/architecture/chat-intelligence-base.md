@@ -145,7 +145,9 @@ Mensagem do usuário
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
 | `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; `chartPresentation` com tipos ampliados |
 | `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
-| `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, …) |
+| `ChatSimpleTurnGateService` | Gate de turno simples (identidade, saudação, agradecimento, hora/data, capacidades, «não entendi») — decide, **antes** de qualquer atividade técnica, que o turno não deve exibir etapas no streaming |
+| `ChatUnclearRequestService` | Fallback honesto: pedidos vagos sem referente («faz isso», «arruma», «isso») recebem pedido de esclarecimento — sem inventar intenção nem chamar ferramentas |
+| `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, «como vc s chama»→«como voce se chama», «oq vc faz», «num entendi»→«nao entendi», …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
 | `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
@@ -201,6 +203,21 @@ Se o consentimento `ai_context` não estiver concedido e `LGPD_REQUIRE_AI_CONSEN
 Saudações, despedidas, agradecimentos, confirmações e interações sociais curtas → `ChatSmallTalkService.build_direct_answer` com padrões em `small_talk.json` (fonte única via `ChatSmallTalkPatternService`): **sem RAG**, **sem** loop agentic, **sem** LLM. Catálogo inspirado em expressões conversacionais PT-BR ([cumprimentos/despedidas](https://philipebrazuca.com/pt-br/cumprimentos-e-despedidas-em-portugues/), intents de [atendimento BR](https://huggingface.co/datasets/RichardSakaguchiMS/brazilian-customer-service-conversations)). Categorias: `greeting`, `wellbeing`, `thanks`, `apology`, `praise`, `farewell`, `ack`, `laughter`.
 
 Typos de saudação (`bo dia`, `bao dia`) são normalizados em `ChatMessageNormalizationService` antes do match.
+
+### Gate de turno simples e fallback honesto (jun/2026)
+
+Playbook de inteligência (seções 4-8, 11, 28). Corrige a experiência artificial em que perguntas simples disparavam etapas técnicas visíveis («contexto da sessão carregado», «histórico pronto», «intenção e rota OpenAPI», «planejando ferramentas») antes de qualquer resposta.
+
+| Etapa | Comportamento |
+|-------|----------------|
+| Detecção | `ChatSimpleTurnGateService.evaluate` / `is_simple_turn` — fonte única; reaproveita identidade, small talk, utilidades, capacidades e `ChatUnclearRequestService`; aplica guarda de termos operacionais/anexo/lousa/web (não vira turno simples se a mensagem citar produto, estoque, SQL, gráfico, etc.) |
+| Streaming | `StreamChatMessageUseCase` avalia o gate **antes** de emitir a primeira atividade; em turno simples, `_on_stream_activity` é suprimido (nenhuma etapa técnica no painel). A resposta direta continua sendo montada pelos serviços existentes. |
+| Send | Não emite atividade; herda a resposta direta normalmente. |
+| Fallback honesto | `ChatUnclearRequestService` classifica pedidos vagos curtos (`action`, `fix`, `reference`) e devolve esclarecimento de `unclear_requests.json`; estágio `unclear_request`, intent `clarification/unclear`, `skip_rag`, **sem** tools/LLM |
+
+O gate **não altera a resposta** — apenas classifica e controla a visibilidade das etapas; no pior caso, um turno simples mostra brevemente uma etapa técnica, nunca uma resposta errada.
+
+Conteúdo: `assistant/unclear_requests.json`. Testes: `test_chat_simple_turn_gate_service.py`, `test_chat_unclear_request_service.py`, casos `SIMPLE_TURN_GATE_CASES` / `UNCLEAR_REQUEST_CASES` em `chat_intelligence_regression_cases.py`.
 
 ### Perguntas utilitárias — hora, data, ano (maio/2026)
 

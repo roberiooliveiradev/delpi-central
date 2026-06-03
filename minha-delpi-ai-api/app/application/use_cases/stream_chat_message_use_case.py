@@ -262,12 +262,36 @@ class StreamChatMessageUseCase:
 
         flask_app = current_app._get_current_object() if has_app_context() else None
 
+        # Gate de turno simples (Playbook, seções 4-8): para perguntas simples
+        # (identidade, saudação, agradecimento, hora/data, capacidades, "não entendi"),
+        # nenhuma etapa técnica é exibida. A resposta direta continua sendo montada
+        # pelos serviços existentes. Mutável para ser lido dentro de _run_prepare.
+        suppress_activity = {"value": False}
+
         def _on_stream_activity(entry: dict) -> None:
+            if suppress_activity["value"]:
+                return
             activity_queue.put(("activity", entry))
 
         def _run_prepare() -> None:
             from app.application.services.chat_stream_activity_service import (
                 ChatStreamActivityService,
+            )
+
+            workspace_context = context_box["workspace_context"]
+            attachments = context_box["attachments"]
+            previous_messages = context_box["previous_messages"]
+            existing_user_message = None
+
+            from app.domain.services.chat_simple_turn_gate_service import (
+                ChatSimpleTurnGateService,
+            )
+
+            suppress_activity["value"] = ChatSimpleTurnGateService.is_simple_turn(
+                message=message,
+                workspace_context=workspace_context,
+                previous_messages=previous_messages,
+                attachment_ids=getattr(request, "attachment_ids", None),
             )
 
             _on_stream_activity(
@@ -283,11 +307,6 @@ class StreamChatMessageUseCase:
                     entry_id="prepare-session-context",
                 )
             )
-
-            workspace_context = context_box["workspace_context"]
-            attachments = context_box["attachments"]
-            previous_messages = context_box["previous_messages"]
-            existing_user_message = None
 
             if resend_from_message_id:
                 branch_user_message = context_box.get("user_message")

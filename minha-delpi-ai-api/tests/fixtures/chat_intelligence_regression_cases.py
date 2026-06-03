@@ -1420,3 +1420,47 @@ CONTEXT_ASSERTIVENESS_CASES = [
         "max_score": 60.0,
     },
 ]
+
+
+# Gate de turno simples (Playbook de Inteligência, seções 4-8).
+# (mensagem, intent_esperado_ou_None). None = não deve ser turno simples (mostra etapas).
+SIMPLE_TURN_GATE_CASES = [
+    ("ola", "small_talk"),
+    ("oi", "small_talk"),
+    ("bom dia", "small_talk"),
+    ("obg", "small_talk"),
+    ("vlw", "small_talk"),
+    ("tchau", "small_talk"),
+    ("como vc s chama?", "assistant_identity"),
+    ("qual seu nom", "assistant_identity"),
+    ("qm e vc", "assistant_identity"),
+    ("quem e voce", "assistant_identity"),
+    ("que horas sao", "utility"),
+    ("que dia e hoje", "utility"),
+    ("o que voce pode fazer", "capabilities"),
+    # "oq vc faz" normaliza para "o que voce faz" → identity.role (resposta direta, turno simples).
+    ("oq vc faz", "assistant_identity"),
+    ("faz isso", "unclear_request"),
+    ("arruma", "unclear_request"),
+    # Não simples: consulta operacional / ferramenta / texto com dados.
+    ("qual o estoque do produto 10080001?", None),
+    ("liste os fornecedores do produto 10080001", None),
+    ("pesquise na web sobre normas iso", None),
+    ("coloque isso na lousa", None),
+]
+
+
+# Fallback honesto — pedidos não entendidos (Playbook, seções 11/28).
+UNCLEAR_REQUEST_CASES = [
+    ("faz isso", "action"),
+    ("manda", "action"),
+    ("arruma", "fix"),
+    ("ajusta isso", "fix"),
+    ("isso", "reference"),
+    ("aquilo", "reference"),
+    ("tira isso", "reference"),
+    # Não deve acionar fallback (intenção clara ou contexto suficiente).
+    ("estoque do produto 10080001", None),
+    ("coloque isso na lousa", None),
+    ("corrija o texto do e-mail", None),
+]

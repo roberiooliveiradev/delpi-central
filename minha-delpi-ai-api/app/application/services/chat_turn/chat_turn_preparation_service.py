@@ -327,6 +327,19 @@ class ChatTurnPreparationService:
             message=message,
         )
 
+        from app.domain.services.chat_unclear_request_service import (
+            ChatUnclearRequestService,
+        )
+
+        # Fallback honesto (Playbook, seções 11/28): só ativa em pedidos vagos curtos,
+        # sem termos operacionais/anexo/lousa/web. Mantém o turno sem ferramentas.
+        unclear_direct = None
+        if not attachment_ids and not small_talk_direct and not utility_direct:
+            unclear_direct = ChatUnclearRequestService.build_direct_answer(
+                message=message,
+                previous_messages=history_source,
+            )
+
         from app.application.services.chat_web_search_save_sources_service import (
             ChatWebSearchSaveSourcesService,
         )
@@ -614,6 +627,7 @@ class ChatTurnPreparationService:
             or web_save_sources_direct
             or web_post_search_direct
             or attachment_welcome_direct
+            or unclear_direct
             or text_task_pure
         ) and not canvas_operational_update:
             if skip_tools_for_user_identity:
@@ -651,6 +665,8 @@ class ChatTurnPreparationService:
                 pipeline_stages.append("attachment_welcome")
             elif skip_tools_for_attachment_document:
                 pipeline_stages.append("attachment_document")
+            elif unclear_direct:
+                pipeline_stages.append("unclear_request")
             elif text_task_pure:
                 pipeline_stages.append("text_task")
             tool_context = {
@@ -883,6 +899,13 @@ class ChatTurnPreparationService:
         if not direct_answer and interpretation_without_data_answer:
             direct_answer = interpretation_without_data_answer
             skip_rag = True
+
+        if not direct_answer and unclear_direct:
+            direct_answer = unclear_direct
+            skip_rag = True
+
+            if "unclear_request" not in pipeline_stages:
+                pipeline_stages.append("unclear_request")
 
         if not direct_answer and skip_tools_for_data_interpretation:
             from app.application.services.chat_data_interpretation_answer_service import (

@@ -153,6 +153,20 @@ _TYPO_REPLACEMENTS: tuple[tuple[str, str], ...] = (
     (r"\bobg\b", r"obrigado"),
     (r"\bobgd\b", r"obrigado"),
     (r"\bvlw\b", r"valeu"),
+    # Identidade / perguntas curtas ao assistente (typos contextuais)
+    # Importante: padrões contextuais primeiro; não transformar "s" → "se" globalmente.
+    (r"\boq\b", r"o que"),
+    (r"\bqm\b", r"quem"),
+    (r"\bcmo\b", r"como"),
+    (r"\bcm\b", r"como"),
+    (r"\bqual eh\b", r"qual e"),
+    (r"\bseu nom\b", r"seu nome"),
+    (r"\bvc s chama\b", r"voce se chama"),
+    (r"\bvoce s chama\b", r"voce se chama"),
+    # Não entendimento (antes de `num` → `numero`)
+    (r"\bnaum entendi\b", r"nao entendi"),
+    (r"\bnum entendi\b", r"nao entendi"),
+    (r"\bnaum\b", r"nao"),
     # Abreviações comuns
     (r"\bvc\b", r"voce"),
     (r"\btb\b", r"tambem"),
