@@ -60,6 +60,13 @@ class GetStrategicIndicatorsTrendsRealUseCase:
 
     @staticmethod
     def _filter_response_to_department(response: dict, department_id: str) -> dict:
+        """Restringe a resposta de trends ao departamento pedido.
+
+        ``igd_series`` permanece global (é a série da empresa); apenas
+        ``departments``, ``indicator_series_by_department_id`` e ``errors`` são
+        filtrados. Ver docs/ARCHITECTURE.md — "Base única de leitura por
+        departamento".
+        """
         filtered = dict(response)
         filtered["departments"] = [
             dept

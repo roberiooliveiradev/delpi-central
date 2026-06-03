@@ -86,6 +86,8 @@ Modelos de snapshot (`StrategicIndicatorsPeriodSnapshot`, etc.) ficam em `strate
 4. **Cálculo** (`StrategicIndicatorsCalculator`) → scores, IGD, classificação.
 5. **Cache** in-process (TTL) + opcional **`si_period_scores`** (Postgres) para séries em trends.
 
+> Para evitar divergência entre telas, a leitura por departamento sempre parte do **snapshot global** e filtra o departamento depois — detalhes em [Base única de leitura por departamento](#base-única-de-leitura-por-departamento-escopo-global).
+
 ## Ausência de medição vs. zero real
 
 O painel precisa distinguir **“não houve dado no período”** de **“o realizado foi zero”** (relevante para indicadores `lower_is_better`, onde `0` pode ser excelência).
@@ -144,9 +146,22 @@ Recomendação de negócio: duplicar metas para anos anteriores via admin (`dupl
 | Medições / catálogo in-process | `snapshot_shared_cache.py` | `SI_SNAPSHOT_CACHE_TTL_SECONDS` (default 600s) |
 | Coletores (Transforma+, LMP, etc.) | providers | TTL próprio por fonte |
 | HTTP leitura | `Cache-Control`, `ETag` | 300s (`si_read_route_support`) |
-| `period_scores` | Postgres V010 | Persiste snapshot calculado por competência/escopo |
+| `period_scores` | Postgres V010 | Persiste snapshot calculado por competência/escopo. **Leitura para exibição usa sempre o escopo global** (`scope_department_id=''`) e filtra o departamento em memória — ver [Base única de leitura por departamento](#base-única-de-leitura-por-departamento-escopo-global). |
 
 Mutações em **settings**, **metas** ou estrutura admin chamam `invalidate_strategic_indicators_snapshot_cache()` (limpa cache in-process e apaga `period_scores` + `calculation_snapshots` no Postgres). Com `SI_PERIOD_SCORES_REFRESH_ON_CONFIG_CHANGE=true` (padrão), um refresh materializado debounced (~2s) recalcula `period_scores` em background. Leituras com cache antigo também são descartadas quando `catalog_inputs_hash` ≠ fingerprint atual do catálogo.
+
+## Base única de leitura por departamento (escopo global)
+
+> **Regra:** toda leitura para exibição usa **sempre a base materializada global** (`scope_department_id = ''`); o `department_id` apenas **filtra o retorno** em memória. Vale para **todos os departamentos** e **todas as telas**.
+
+Motivação — o `period_scores` é particionado por escopo (`scope_branch`, `scope_department_id`, `competence`). Quando cada tela lia a sua própria linha por departamento, a linha de um departamento (ex.: `supplies`) podia envelhecer em ritmo diferente da linha global, porque competências passadas ainda **abertas** (recebendo lançamentos no TOTVS) só eram recalculadas no escopo global. Resultado: o **CPV** de Suprimentos aparecia como `49,96%` na página de departamento e `50,86%` no dashboard/árvore.
+
+Implementação:
+
+- `StrategicIndicatorsSnapshotService.get_current_and_previous_snapshot` força o cômputo/leitura no escopo global (`_compute_comparative_snapshot(department_id=None)`) e, se um `department_id` foi pedido, aplica `_filter_comparative_to_department` (restringe `calculated_departments`, `calculated_indicators` e `measurement_errors`; **IGD/classificação permanecem globais**, pois são da empresa). Cobre: detalhes do departamento, resumo executivo, lista de departamentos, indicadores e alertas.
+- `GetStrategicIndicatorsTrendsRealUseCase` segue a mesma regra: lê a série no escopo global e filtra o departamento solicitado (`_filter_response_to_department`).
+
+Consequência operacional — a materialização **por departamento** deixou de ser lida. Por isso `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` passa a ter **default `false`** (evita trabalho/IO desnecessário no job de refresh) e fica apenas como flag de diagnóstico. Apenas o escopo global (e os `scope_branch` configurados) é materializado e lido.
 
 ## Warm-up
 

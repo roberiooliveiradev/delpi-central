@@ -296,12 +296,16 @@ class StrategicIndicatorsSnapshotService:
         branch: str | None = None,
         force_compute: bool = False,
     ) -> StrategicIndicatorsComparativeSnapshot:
-        # Regra única para TODOS os departamentos: a leitura para exibição usa
-        # SEMPRE a base materializada global (scope_department_id="") e o
-        # ``department_id`` apenas filtra o retorno. Sem isso, cada tela poderia
-        # ler uma linha de ``period_scores`` por departamento que envelhece em
-        # ritmo diferente do global, gerando divergência (ex.: CPV de
-        # Suprimentos divergindo entre página de departamento e dashboard/árvore).
+        """Snapshot comparativo (atual + anterior) para exibição.
+
+        Regra única para TODOS os departamentos: a leitura usa SEMPRE a base
+        materializada global (``scope_department_id=""``) e o ``department_id``
+        apenas filtra o retorno. Sem isso, cada tela poderia ler uma linha de
+        ``period_scores`` por departamento que envelhece em ritmo diferente do
+        global, gerando divergência (ex.: CPV de Suprimentos divergindo entre a
+        página de departamento e o dashboard/árvore). Ver docs/ARCHITECTURE.md
+        — "Base única de leitura por departamento".
+        """
         comparative = self._compute_comparative_snapshot(
             competence=competence,
             start_date=start_date,
@@ -322,6 +326,7 @@ class StrategicIndicatorsSnapshotService:
         comparative: StrategicIndicatorsComparativeSnapshot,
         department_id: str,
     ) -> StrategicIndicatorsComparativeSnapshot:
+        """Restringe o snapshot global ao departamento pedido (atual + anterior)."""
         return StrategicIndicatorsComparativeSnapshot(
             catalog=comparative.catalog,
             current=cls._filter_period_to_department(
@@ -374,6 +379,11 @@ class StrategicIndicatorsSnapshotService:
         branch: str | None = None,
         force_compute: bool = False,
     ) -> StrategicIndicatorsComparativeSnapshot:
+        """Motor interno: lê/computa o snapshot no escopo recebido.
+
+        Não chamar direto para exibição — use ``get_current_and_previous_snapshot``,
+        que garante a leitura no escopo global e o filtro por departamento.
+        """
         started = time.perf_counter()
         current_period = resolve_period(
             competence=competence,
