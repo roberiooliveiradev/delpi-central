@@ -20,6 +20,19 @@ def _content() -> dict[str, Any]:
 
 class ChatSqlAuthoringGuidanceService:
     _TABLE_CODE_RE = re.compile(r"\b([A-Z]{2,4}\d{0,4})\b", re.IGNORECASE)
+    # Palavras funcionais que aparecem após "tabela"/"colunas de" e NÃO são nome de
+    # tabela (ex.: "qual a tabela QUE guarda informações de produto?" → "que" é
+    # pronome, não a tabela QUE). Sem isto o prefetch buscava o schema errado.
+    _TABLE_NAME_STOPWORDS = frozenset(
+        {
+            "que", "de", "do", "da", "dos", "das", "com", "para", "pra", "por",
+            "sobre", "onde", "qual", "quais", "essa", "esse", "esta", "este",
+            "isso", "isto", "uma", "uns", "umas", "sua", "seu", "suas", "seus",
+            "tem", "num", "numa", "dele", "dela", "deles", "delas", "ou", "em",
+            "no", "na", "nos", "nas", "ao", "aos", "se", "como", "qro", "quero",
+            "guarda", "guardam", "armazena", "contem", "possui",
+        }
+    )
     _DOMAIN_HINT_PATTERNS = (
         r"(?:monte|crie|gera|gere|elabore|escreva|construa|ajuste|corrija|refine)\s+"
         r"(?:uma\s+)?(?:consulta|query|sql)\s+(?:de|sobre|para|com)\s+(.+?)(?:\?|$)",
@@ -220,7 +233,7 @@ class ChatSqlAuthoringGuidanceService:
         ):
             match = re.search(pattern, normalized, flags=re.IGNORECASE)
 
-            if match:
+            if match and cls._is_table_name_candidate(match.group(1)):
                 return match.group(1).upper()
 
         for token in cls._TABLE_CODE_RE.findall(raw):
@@ -235,6 +248,19 @@ class ChatSqlAuthoringGuidanceService:
             return candidate
 
         return None
+
+    @classmethod
+    def _is_table_name_candidate(cls, token: str | None) -> bool:
+        candidate = str(token or "").strip().lower()
+
+        if not candidate:
+            return False
+
+        # Códigos com dígito (SB1, SA1010) são sempre tabela; palavras funcionais não.
+        if any(char.isdigit() for char in candidate):
+            return True
+
+        return candidate not in cls._TABLE_NAME_STOPWORDS
 
     @classmethod
     def extract_domain_hint(cls, message: str | None) -> str | None:

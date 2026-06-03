@@ -55,6 +55,33 @@ def test_plan_prefetch_table_search(monkeypatch):
     assert "qual a tabela de" in selection._select_system_metadata_action.call_args.args[0]
 
 
+def test_extract_table_name_ignores_que_stopword():
+    # "qual a tabela QUE guarda informações de produto?" → "que" é pronome,
+    # não a tabela QUE. Não pode virar nome de tabela.
+    assert (
+        ChatSqlAuthoringGuidanceService.extract_table_name(
+            "qual a tabela que guarda informações de produto?"
+        )
+        is None
+    )
+
+
+def test_extract_table_name_keeps_real_table_code():
+    assert (
+        ChatSqlAuthoringGuidanceService.extract_table_name("colunas da tabela SB1")
+        == "SB1"
+    )
+
+
+def test_extract_table_names_empty_for_que_question():
+    assert (
+        ChatSqlAuthoringGuidanceService.extract_table_names(
+            "qual a tabela que guarda informações de produto?"
+        )
+        == []
+    )
+
+
 def test_build_follow_up_suggestions_for_authoring():
     suggestions = ChatSqlAuthoringGuidanceService.build_follow_up_suggestions(
         message="monte uma query na tabela SB1",

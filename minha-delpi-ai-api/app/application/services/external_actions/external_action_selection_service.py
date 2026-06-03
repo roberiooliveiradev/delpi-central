@@ -1458,17 +1458,33 @@ class ExternalActionSelectionService:
         for pattern in (
             r"(?:buscar|pesquisar|procurar)\s+tabelas?\s+(.+?)(?:\?|$)",
             r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+(?:de|do|da|dos|das)\s+(.+?)(?:\?|$)",
+            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+(?:que\s+)?"
+            r"(?:guarda|guardam|armazena|armazenam|contem|possui|tem|registra|grava)\s+"
+            r"(.+?)(?:\?|$)",
             r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+guarda(?:m)?\s+(.+?)(?:\?|$)",
         ):
             match = re.search(pattern, normalized, flags=re.IGNORECASE)
 
             if match:
-                query = match.group(1).strip(" .?")
+                query = self._clean_table_search_description(match.group(1))
 
                 if len(query) >= 2:
                     return query[:120]
 
         return None
+
+    @staticmethod
+    def _clean_table_search_description(value: str) -> str:
+        query = str(value or "").strip(" .?")
+        # Remove preâmbulo genérico ("informações de produto" → "produto").
+        query = re.sub(
+            r"^(?:as?\s+|os?\s+)?(?:informacoes?|dados|registros?)\s+(?:de|do|da|dos|das|sobre)\s+",
+            "",
+            query,
+            flags=re.IGNORECASE,
+        )
+
+        return query.strip(" .?")
 
     def _select_transforma_action(
         self,
@@ -1613,13 +1629,19 @@ class ExternalActionSelectionService:
         raw = str(text or "")
         normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
 
+        from app.domain.services.chat_sql_authoring_guidance_service import (
+            ChatSqlAuthoringGuidanceService,
+        )
+
         table_match = re.search(
             r"\btabela\s+([a-z]{2,4}\d{0,4})\b",
             normalized,
             flags=re.IGNORECASE,
         )
 
-        if table_match:
+        if table_match and ChatSqlAuthoringGuidanceService._is_table_name_candidate(
+            table_match.group(1)
+        ):
             return table_match.group(1).upper()
 
         inline_match = re.search(
@@ -1628,7 +1650,9 @@ class ExternalActionSelectionService:
             flags=re.IGNORECASE,
         )
 
-        if inline_match:
+        if inline_match and ChatSqlAuthoringGuidanceService._is_table_name_candidate(
+            inline_match.group(1)
+        ):
             return inline_match.group(1).upper()
 
         return None
