@@ -139,6 +139,15 @@ class ChatSqlQueryRefinementService:
         re.IGNORECASE,
     )
     _TOP_RE = re.compile(r"\btop\s*(\d{1,3})\b", re.IGNORECASE)
+    # Pares "Rótulo: valor" / "Rótulo = valor" vindos do drill-down de linha
+    # (ex.: "A1 cod: 000167; A1 nome: CARLOS ..."). O em dash separa o verbo do
+    # conteúdo e fica fora da classe de caracteres do rótulo.
+    _VALUE_FILTER_PAIR_RE = re.compile(
+        r"([0-9A-Za-zÀ-ÿ][0-9A-Za-zÀ-ÿ _.]*?)\s*[:=]\s*([^;]+?)(?:\s*;|\s*$)"
+    )
+    _CODE_LIKE_COLUMN_RE = re.compile(
+        r"(COD|CODIGO|^ID$|_ID$|NUM|SKU|PRODUTO|PRODUCT|CHAVE)",
+    )
     _COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
         "filial": {
             "aliases": ("filial", "cod filial", "codigo filial", "branch"),
@@ -349,6 +358,27 @@ class ChatSqlQueryRefinementService:
                     reason="Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
                 )
 
+        if cls._looks_like_filter_adjustment(normalized):
+            value_filters = cls._extract_value_filters(message, active_sql)
+
+            if value_filters:
+                predicates = [
+                    f"RTRIM({expr}) = '{cls._escape_sql_literal(value)}'"
+                    for expr, value in value_filters
+                ]
+                updated = cls.apply_value_filters(active_sql, predicates)
+
+                if updated != active_sql:
+                    return SqlQueryRefinement(
+                        mode=mode,
+                        sql=updated,
+                        title=title,
+                        reason=(
+                            "Refinamento SQL: filtro por valor da linha aplicado "
+                            "na consulta anterior."
+                        ),
+                    )
+
         branches = cls._extract_branch_codes(normalized)
 
         if branches and cls._looks_like_filter_adjustment(normalized, branches=branches):
@@ -548,6 +578,177 @@ class ChatSqlQueryRefinementService:
         )
 
         return updated
+
+    @classmethod
+    def apply_value_filters(cls, sql: str, predicates: list[str]) -> str:
+        """Acrescenta predicados de igualdade à consulta anterior (WHERE/AND)."""
+        clean = [str(predicate).strip() for predicate in predicates if str(predicate).strip()]
+
+        if not clean:
+            return sql
+
+        combined = " AND ".join(f"({predicate})" for predicate in clean)
+
+        boundary = re.search(r"\b(GROUP\s+BY|ORDER\s+BY|HAVING)\b", sql, flags=re.I)
+        insert_at = boundary.start() if boundary else len(sql)
+        head = sql[:insert_at].rstrip()
+        tail = sql[insert_at:]
+
+        connector = "AND" if re.search(r"\bWHERE\b", head, flags=re.I) else "WHERE"
+        snippet = f"\n  {connector} {combined}"
+
+        if tail.strip():
+            return f"{head}{snippet}\n{tail.lstrip(chr(10))}"
+
+        return f"{head}{snippet}"
+
+    @classmethod
+    def _extract_value_filters(
+        cls,
+        message: str | None,
+        sql: str,
+    ) -> list[tuple[str, str]]:
+        """Mapeia pares "rótulo: valor" da linha para colunas reais da consulta."""
+        raw = str(message or "")
+        columns = cls._sql_selected_columns(sql)
+
+        if not raw or not columns:
+            return []
+
+        matched: list[tuple[str, str, str]] = []
+        seen: set[str] = set()
+
+        for pair in cls._VALUE_FILTER_PAIR_RE.finditer(raw):
+            label = pair.group(1).strip()
+            value = pair.group(2).strip().strip("'\"").strip()
+
+            if not value:
+                continue
+
+            resolved = cls._match_column_from_label(label, columns)
+
+            if not resolved:
+                continue
+
+            key, expr = resolved
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            matched.append((key, expr, value))
+
+        if not matched:
+            return []
+
+        # Prioriza colunas identificadoras (código/id) para não filtrar por nome,
+        # que costuma ter espaços/acentos e zera o resultado.
+        code_like = [
+            (expr, value)
+            for key, expr, value in matched
+            if cls._is_code_like_column(key)
+        ]
+
+        if code_like:
+            return code_like
+
+        return [(expr, value) for _key, expr, value in matched]
+
+    @classmethod
+    def _sql_selected_columns(cls, sql: str) -> dict[str, str]:
+        """Colunas simples do SELECT mapeadas para a expressão usável no WHERE."""
+        match = re.search(r"\bSELECT\b(.*?)\bFROM\b", str(sql or ""), flags=re.I | re.S)
+
+        if not match:
+            return {}
+
+        body = re.sub(
+            r"^\s*(?:DISTINCT\s+)?(?:TOP\s+\d+\s+)?",
+            "",
+            match.group(1),
+            flags=re.I,
+        )
+
+        columns: dict[str, str] = {}
+
+        for item in cls._split_select_items(body):
+            expr = item.strip()
+
+            if not expr:
+                continue
+
+            alias_match = re.search(
+                r"\bAS\b\s+([A-Za-z_][A-Za-z0-9_]*)\s*$",
+                expr,
+                flags=re.I,
+            )
+            alias = alias_match.group(1) if alias_match else None
+
+            if alias_match:
+                expr = expr[: alias_match.start()].strip()
+
+            simple = re.fullmatch(
+                r"([A-Za-z_][A-Za-z0-9_]*\.)?([A-Za-z_][A-Za-z0-9_]*)",
+                expr,
+            )
+
+            if simple:
+                columns[simple.group(2).upper()] = expr
+
+                if alias:
+                    columns[alias.upper()] = expr
+
+        return columns
+
+    @staticmethod
+    def _split_select_items(body: str) -> list[str]:
+        items: list[str] = []
+        depth = 0
+        current: list[str] = []
+
+        for char in body:
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth = max(0, depth - 1)
+
+            if char == "," and depth == 0:
+                items.append("".join(current))
+                current = []
+            else:
+                current.append(char)
+
+        if current:
+            items.append("".join(current))
+
+        return items
+
+    @classmethod
+    def _match_column_from_label(
+        cls,
+        label: str,
+        columns: dict[str, str],
+    ) -> tuple[str, str] | None:
+        words = re.findall(r"[0-9A-Za-zÀ-ÿ]+", str(label or ""))
+
+        if not words:
+            return None
+
+        for size in range(min(4, len(words)), 0, -1):
+            candidate = "_".join(words[-size:]).upper()
+
+            if candidate in columns:
+                return candidate, columns[candidate]
+
+        return None
+
+    @classmethod
+    def _is_code_like_column(cls, column_key: str) -> bool:
+        return bool(cls._CODE_LIKE_COLUMN_RE.search(str(column_key or "").upper()))
+
+    @staticmethod
+    def _escape_sql_literal(value: str) -> str:
+        return str(value or "").replace("'", "''")
 
     @classmethod
     def apply_top_limit(cls, sql: str, limit: int) -> str:

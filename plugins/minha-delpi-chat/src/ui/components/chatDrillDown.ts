@@ -104,6 +104,19 @@ export function buildDrillDownQuery(
     : null;
 }
 
+export function buildRowFilterQuery(
+  row: Record<string, unknown>,
+  columns: DrillDownColumn[],
+): string | null {
+  const pairs = buildRowPairs(row, columns);
+
+  if (pairs.length === 0) {
+    return null;
+  }
+
+  return `filtre a consulta — ${pairs.join("; ")}`;
+}
+
 function buildRowPairs(
   row: Record<string, unknown>,
   columns: DrillDownColumn[],
@@ -129,6 +142,7 @@ export function buildTableRowMenuActions(
   columns: DrillDownColumn[],
 ): TableRowMenuAction[] {
   const detailQuery = buildDrillDownQuery(row, columns);
+  const filterQuery = buildRowFilterQuery(row, columns);
   const { code, desc } = extractRowContext(row, columns);
   const actions: TableRowMenuAction[] = [];
 
@@ -137,6 +151,14 @@ export function buildTableRowMenuActions(
       id: "detail",
       label: "Detalhar item",
       query: detailQuery,
+    });
+  }
+
+  if (filterQuery) {
+    actions.push({
+      id: "filter",
+      label: "Filtrar registro",
+      query: filterQuery,
     });
   }
 

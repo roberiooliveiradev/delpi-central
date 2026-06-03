@@ -143,3 +143,62 @@ def test_does_not_match_without_history():
         )
         is None
     )
+
+
+CUSTOMER_SQL = "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
+
+
+def test_filter_query_by_row_value_uses_code_column():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "filtre a consulta — A1 cod: 000167; A1 nome: CARLOS ROBERTO DOS SANTOS",
+        previous_messages=_history_with_sql(CUSTOMER_SQL, title="Consulta SQL"),
+    )
+
+    assert refinement is not None
+    assert refinement.mode == "execute"
+    assert "RTRIM(A1_COD) = '000167'" in refinement.sql
+    # Não filtra por nome (coluna não identificadora) para evitar zerar o resultado.
+    assert "A1_NOME" not in refinement.sql.split("WHERE", 1)[1]
+    assert "product" not in refinement.reason.lower()
+
+
+def test_filter_query_by_row_value_without_code_uses_all_columns():
+    sql = "SELECT A1_MUN, A1_EST\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
+
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "filtre a consulta — A1 mun: JARAGUA DO SUL; A1 est: SC",
+        previous_messages=_history_with_sql(sql),
+    )
+
+    assert refinement is not None
+    assert "RTRIM(A1_MUN) = 'JARAGUA DO SUL'" in refinement.sql
+    assert "RTRIM(A1_EST) = 'SC'" in refinement.sql
+
+
+def test_filter_query_escapes_single_quote():
+    sql = "SELECT A1_COD, A1_NOME\nFROM SA1010"
+
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "filtre a consulta — A1 nome: MALHARIA D'ITALIA",
+        previous_messages=_history_with_sql(sql),
+    )
+
+    assert refinement is not None
+    assert "RTRIM(A1_NOME) = 'MALHARIA D''ITALIA'" in refinement.sql
+    assert "WHERE" in refinement.sql
+
+
+def test_filter_query_is_recognized_as_sql_follow_up():
+    assert ChatSqlQueryRefinementService.is_sql_follow_up(
+        "filtre a consulta — A1 cod: 000167; A1 nome: CARLOS ROBERTO DOS SANTOS",
+        previous_messages=_history_with_sql(CUSTOMER_SQL),
+    )
+
+
+def test_filter_query_ignores_columns_absent_from_sql():
+    refinement = ChatSqlQueryRefinementService.resolve(
+        "filtre a consulta — B1 cod: 10080022",
+        previous_messages=_history_with_sql(CUSTOMER_SQL),
+    )
+
+    assert refinement is None

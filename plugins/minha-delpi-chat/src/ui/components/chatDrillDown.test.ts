@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildChartPointMenuActions,
   buildDrillDownQuery,
+  buildRowFilterQuery,
   buildTableRowMenuActions,
 } from "./chatDrillDown";
 
@@ -68,7 +69,40 @@ describe("buildDrillDownQuery", () => {
   });
 });
 
+describe("buildRowFilterQuery", () => {
+  it("gera filtro da consulta com os pares da linha", () => {
+    const query = buildRowFilterQuery(
+      { A1_COD: "000167", A1_NOME: "CARLOS ROBERTO DOS SANTOS" },
+      [
+        { key: "A1_COD", label: "A1 cod" },
+        { key: "A1_NOME", label: "A1 nome" },
+      ],
+    );
+
+    expect(query).toBe(
+      "filtre a consulta — A1 cod: 000167; A1 nome: CARLOS ROBERTO DOS SANTOS",
+    );
+  });
+});
+
 describe("buildTableRowMenuActions", () => {
+  it("oferece filtrar registro para linha genérica de consulta", () => {
+    const actions = buildTableRowMenuActions(
+      { A1_COD: "000167", A1_NOME: "CARLOS ROBERTO DOS SANTOS" },
+      [
+        { key: "A1_COD", label: "A1 cod" },
+        { key: "A1_NOME", label: "A1 nome" },
+      ],
+    );
+
+    const filter = actions.find((action) => action.id === "filter");
+
+    expect(filter?.label).toBe("Filtrar registro");
+    expect(filter?.query).toBe(
+      "filtre a consulta — A1 cod: 000167; A1 nome: CARLOS ROBERTO DOS SANTOS",
+    );
+  });
+
   it("inclui detalhar e consultas de produto quando há código", () => {
     const actions = buildTableRowMenuActions(
       { product_code: "10080001", description: "Item teste" },
