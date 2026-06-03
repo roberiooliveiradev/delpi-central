@@ -79,8 +79,11 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str] | None = None,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        *,
+        raw_message: str | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
+        sql_source = str(raw_message or message).strip()
 
         if ChatAnalysisIntentService.is_data_interpretation_request(
             message,
@@ -145,6 +148,7 @@ class ExternalActionSelectionService:
                 allowed_action_ids=allowed_action_ids,
                 sql=sql_refinement.sql,
                 selection_reason_key="sqlRefinement",
+                raw_message=sql_source,
             )
 
             if selected:
@@ -197,6 +201,7 @@ class ExternalActionSelectionService:
                             allowed_action_ids=allowed_action_ids,
                             sql=resolution.sql,
                             selection_reason_key=reason_key,
+                            raw_message=sql_source,
                         )
 
                         if selected:
@@ -206,6 +211,7 @@ class ExternalActionSelectionService:
                 selected = self._select_sql_or_data_action(
                     message,
                     allowed_action_ids=allowed_action_ids,
+                    raw_message=sql_source,
                 )
 
                 if selected:
@@ -561,6 +567,7 @@ class ExternalActionSelectionService:
                 return self._select_sql_or_data_action(
                     message,
                     allowed_action_ids=allowed_action_ids,
+                    raw_message=sql_source,
                 )
 
         from app.domain.services.chat_operational_parameter_service import (
@@ -1926,6 +1933,13 @@ class ExternalActionSelectionService:
         if marker:
             return ExternalActionSqlCapabilityService.normalize_extracted_sql(marker.group(1))
 
+        execute_match = re.search(r"execute\s*:\s*(.+)$", raw, flags=re.I | re.S)
+        if execute_match:
+            candidate = execute_match.group(1).strip()
+
+            if re.search(r"\bselect\b", candidate, flags=re.I):
+                return ExternalActionSqlCapabilityService.normalize_extracted_sql(candidate)
+
         select_match = re.search(r"(select\s+.+)$", raw, flags=re.I | re.S)
         if select_match:
             return ExternalActionSqlCapabilityService.normalize_extracted_sql(
@@ -1941,6 +1955,7 @@ class ExternalActionSelectionService:
         *,
         sql: str | None = None,
         selection_reason_key: str | None = None,
+        raw_message: str | None = None,
     ) -> dict | None:
         from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
 
@@ -1990,7 +2005,9 @@ class ExternalActionSelectionService:
         if not action:
             return None
 
-        sql_query = (sql or "").strip() or self._extract_sql_query(message)
+        sql_query = (sql or "").strip() or self._extract_sql_query(
+            str(raw_message or message).strip()
+        )
         body = (
             ExternalActionSqlCapabilityService.build_sql_request_body(sql_query)
             if sql_query

@@ -60,6 +60,19 @@ class ChatSecurityMessagingService:
                     "systemMetadataQueryFailed",
                 )
 
+        if "/data/sql" in lowered_path:
+            from app.domain.services.chat_sql_execution_error_interpretation_service import (
+                ChatSqlExecutionErrorInterpretationService,
+            )
+
+            friendly = ChatSqlExecutionErrorInterpretationService.user_facing_message(
+                error,
+                path=lowered_path,
+            )
+
+            if friendly:
+                return friendly
+
         if code is not None and code >= 500:
             return ExternalActionResponseContentService.get(
                 "security",
@@ -72,6 +85,17 @@ class ChatSecurityMessagingService:
             )
 
         if error and not cls._looks_like_technical_only(error):
+            if "/data/sql" in lowered_path:
+                from app.domain.services.chat_sql_execution_error_interpretation_service import (
+                    ChatSqlExecutionErrorInterpretationService,
+                )
+
+                if ChatSqlExecutionErrorInterpretationService.is_raw_driver_dump(error):
+                    return ExternalActionResponseContentService.get(
+                        "security",
+                        "operationalQueryFailed",
+                    )
+
             return error
 
         if code is not None:

@@ -22,3 +22,13 @@ def test_extract_sql_query_preserves_protheus_delete_flag_literal():
     assert sql is not None
     assert "D_E_L_E_T_ = ''" in sql
     assert sql.endswith("= ''")
+
+
+def test_extract_sql_query_handles_execute_prefix():
+    service = ExternalActionSelectionService(_Repo())
+    message = "execute:\nSELECT A1_COD FROM SA1010 WHERE D_E_L_E_T_ = ''"
+
+    sql = service._extract_sql_query(message)
+
+    assert sql is not None
+    assert sql.startswith("SELECT A1_COD")

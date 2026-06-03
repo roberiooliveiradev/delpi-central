@@ -185,8 +185,19 @@ class ExternalActionSqlCapabilityService:
         return raw
 
     @classmethod
+    def prepare_sql_for_execution(cls, text: str | None) -> str:
+        """
+        Protheus/SQL Server neste ambiente exige identificadores sem aspas em maiúsculas.
+        O matching de intenção usa mensagem normalizada em minúsculas; aqui restauramos
+        o formato executável antes do POST /data/sql.
+        """
+        sql = cls.normalize_extracted_sql(text) or ""
+
+        return sql.strip().upper() if sql.strip() else ""
+
+    @classmethod
     def build_sql_request_body(cls, sql: str) -> dict[str, str]:
-        query = cls.normalize_extracted_sql(sql) or ""
+        query = cls.prepare_sql_for_execution(sql)
 
         return {
             "query": query,

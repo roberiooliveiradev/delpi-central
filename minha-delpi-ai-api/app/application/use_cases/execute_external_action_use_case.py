@@ -74,6 +74,15 @@ class ExecuteExternalActionUseCase:
         sanitized_data = self.policy.sanitize_response(result["data"])
         action_path = action.get("path") or ""
         resolved_path = self._resolve_action_path(action_path, request_parameters)
+        from app.domain.services.chat_sql_execution_error_interpretation_service import (
+            ChatSqlExecutionErrorInterpretationService,
+        )
+
+        logical_failure = ChatSqlExecutionErrorInterpretationService.has_logical_failure(
+            sanitized_data,
+            path=resolved_path,
+        )
+        effective_ok = bool(result["ok"]) and not logical_failure
 
         self.audit_repository.log(
             user_id=UUID(user_id),
@@ -117,7 +126,7 @@ class ExecuteExternalActionUseCase:
             **presentation_metadata,
         }
 
-        if not result["ok"]:
+        if not effective_ok:
             api_error = self._extract_api_error_message(sanitized_data)
 
             if api_error:
@@ -129,23 +138,20 @@ class ExecuteExternalActionUseCase:
             "method": action["method"],
             "path": resolved_path,
             "statusCode": result["statusCode"],
-            "ok": result["ok"],
+            "ok": effective_ok,
             "data": sanitized_data,
             "metadata": execution_metadata,
         }
 
     @staticmethod
     def _extract_api_error_message(data) -> str | None:
-        if not isinstance(data, dict):
-            return None
+        from app.domain.services.chat_sql_execution_error_interpretation_service import (
+            ChatSqlExecutionErrorInterpretationService,
+        )
 
-        for key in ("message", "error", "detail", "errorMessage"):
-            value = data.get(key)
+        text = ChatSqlExecutionErrorInterpretationService.extract_error_text(data)
 
-            if value is not None and str(value).strip():
-                return str(value).strip()
-
-        return None
+        return text or None
 
     def build_metadata_for_data(
         self,

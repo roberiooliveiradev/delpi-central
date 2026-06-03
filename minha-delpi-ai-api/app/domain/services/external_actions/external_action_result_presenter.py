@@ -44,7 +44,7 @@ class ExternalActionResultPresenter:
     }
 
     def present(self, data, *, path: str = "") -> dict:
-        error = self._detect_api_error(data)
+        error = self._detect_api_error(data, path=path)
         if error:
             return error
 
@@ -826,7 +826,7 @@ class ExternalActionResultPresenter:
 
         return None
 
-    def _detect_api_error(self, data) -> dict | None:
+    def _detect_api_error(self, data, *, path: str = "") -> dict | None:
         if not isinstance(data, dict):
             return None
 
@@ -842,7 +842,22 @@ class ExternalActionResultPresenter:
 
         if not is_error_detail and not is_error_status:
             if isinstance(data.get("success"), bool) and not data["success"]:
-                msg = str(data.get("message") or "Erro desconhecido na API.")
+                from app.domain.services.chat_sql_execution_error_interpretation_service import (
+                    ChatSqlExecutionErrorInterpretationService,
+                )
+
+                raw_msg = str(data.get("message") or "Erro desconhecido na API.")
+                friendly = ChatSqlExecutionErrorInterpretationService.user_facing_message(
+                    raw_msg,
+                    path=path,
+                )
+                msg = friendly or raw_msg
+
+                if ChatSqlExecutionErrorInterpretationService.is_raw_driver_dump(raw_msg):
+                    msg = friendly or (
+                        "Não foi possível executar a consulta SQL neste ambiente."
+                    )
+
                 return {
                     "titulo": "Erro na consulta",
                     "linhas": [msg],

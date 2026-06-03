@@ -96,11 +96,12 @@ def test_normalize_extracted_sql_unwraps_double_quoted_statement():
     assert normalized == "select a1_cod from sa1010 where d_e_l_e_t_ = ''"
 
 
-def test_build_sql_request_body_keeps_trailing_empty_literal():
+def test_build_sql_request_body_uppercases_protheus_identifiers():
     body = ExternalActionSqlCapabilityService.build_sql_request_body(
         "select a1_cod from sa1010 where d_e_l_e_t_ = ''"
     )
 
+    assert body["sql"] == "SELECT A1_COD FROM SA1010 WHERE D_E_L_E_T_ = ''"
     assert body["sql"].endswith("= ''")
 
 

@@ -675,6 +675,12 @@ class SendChatMessageUseCase:
 
         ChatErrorHandlingTelemetryService.log_classification(assistant_metadata)
 
+        from app.application.services.chat_error_handling_service import (
+            ChatErrorHandlingService,
+        )
+
+        answer = ChatErrorHandlingService.resolve_display_answer(answer, assistant_metadata)
+
         from app.application.services.chat_context_metadata_service import (
             ChatContextMetadataService,
         )

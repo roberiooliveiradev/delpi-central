@@ -111,6 +111,15 @@ class ChatErrorHandlingClassifier:
                 api_failed=False,
             )
 
+        if tool_summary.get("sql_invalid_object"):
+            return cls._stub_classification(
+                "sql_invalid_object",
+                action=tool_summary.get("action"),
+                params=tool_summary.get("params") or {},
+                attempted=tool_summary.get("attempted"),
+                api_failed=False,
+            )
+
         if tool_summary.get("api_unavailable"):
             return cls._stub_classification(
                 "api_unavailable",
@@ -338,6 +347,63 @@ class ChatErrorHandlingClassifier:
         )
 
     @classmethod
+    def _resolve_tool_error_text(cls, metadata: dict) -> str:
+        from app.domain.services.chat_sql_execution_error_interpretation_service import (
+            ChatSqlExecutionErrorInterpretationService,
+        )
+
+        error_text = ChatSqlExecutionErrorInterpretationService.extract_error_text(metadata)
+
+        if error_text:
+            return error_text.lower()
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            joined = " ".join(
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line).strip()
+            )
+
+            if joined:
+                return joined.lower()
+
+        preview = str(metadata.get("responsePreview") or "").strip()
+
+        if preview:
+            extracted = ChatSqlExecutionErrorInterpretationService.extract_error_text(
+                {"message": preview}
+            )
+
+            if extracted:
+                return extracted.lower()
+
+            return preview.lower()
+
+        return ""
+
+    @classmethod
+    def _looks_like_sql_invalid_object(cls, error_text: str, metadata: dict) -> bool:
+        path = str(metadata.get("path") or "").lower()
+        action_id = str(metadata.get("actionId") or metadata.get("action_id") or "").lower()
+
+        if "/data/sql" not in path and "sql" not in action_id:
+            return False
+
+        lowered = str(error_text or "").lower()
+
+        return any(
+            token in lowered
+            for token in (
+                "invalid object name",
+                "nome de objeto inválido",
+                "42s02",
+                "objeto inválido",
+            )
+        )
+
+    @classmethod
     def _summarize_tool_calls(cls, tool_calls: list | None) -> dict[str, Any]:
         summary: dict[str, Any] = {
             "had_failure": False,
@@ -384,12 +450,7 @@ class ChatErrorHandlingClassifier:
             except (TypeError, ValueError):
                 status_code = 0
 
-            error_text = str(
-                metadata.get("error")
-                or metadata.get("errorMessage")
-                or metadata.get("detail")
-                or "",
-            ).lower()
+            error_text = cls._resolve_tool_error_text(metadata)
 
             if not metadata.get("ok"):
                 summary["had_failure"] = True
@@ -398,7 +459,9 @@ class ChatErrorHandlingClassifier:
                 if status_code in (401, 403):
                     summary["permission_denied"] = True
 
-                if cls._looks_like_sql_syntax_error(error_text, metadata):
+                if cls._looks_like_sql_invalid_object(error_text, metadata):
+                    summary["sql_invalid_object"] = True
+                elif cls._looks_like_sql_syntax_error(error_text, metadata):
                     summary["sql_syntax_error"] = True
                 elif status_code >= 500 or "unavailable" in error_text:
                     summary["api_unavailable"] = True
@@ -431,6 +494,9 @@ class ChatErrorHandlingClassifier:
                 return summary
 
             if summary.get("sql_syntax_error"):
+                return summary
+
+            if summary.get("sql_invalid_object"):
                 return summary
 
             summary["api_unavailable"] = summary.get("api_unavailable", True)

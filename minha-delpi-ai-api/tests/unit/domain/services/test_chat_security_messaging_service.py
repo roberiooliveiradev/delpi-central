@@ -23,6 +23,20 @@ def test_permission_failure_uses_no_access():
     assert "permiss" in message.lower()
 
 
+def test_sql_invalid_object_failure_message():
+    message = ChatSecurityMessagingService.resolve_api_failure(
+        {
+            "ok": False,
+            "statusCode": 200,
+            "error": "500: ('42S02', \"Invalid object name 'SA1010'.\")",
+        },
+        path="/data/sql",
+    )
+
+    assert "SA1010" in message
+    assert "indispon" not in message.lower()
+
+
 def test_system_metadata_db_failure_message():
     message = ChatSecurityMessagingService.resolve_api_failure(
         {

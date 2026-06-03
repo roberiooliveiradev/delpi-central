@@ -91,7 +91,6 @@ class ChatErrorHandlingService:
             return
 
         config = cls.type_config(classification.error_type)
-        structured_answer = cls.build_structured_answer(classification, config=config)
         suggestions = cls.build_recovery_suggestions(classification.error_type)
 
         metadata["errorHandling"] = cls.build_metadata_payload(
@@ -99,6 +98,25 @@ class ChatErrorHandlingService:
             config=config,
             suggestions=suggestions,
             latency_ms=latency_ms,
+        )
+
+        payload = metadata.get("errorHandling")
+
+        if isinstance(payload, dict):
+            cls._apply_sql_reasons_from_tools(payload, tool_calls=tool_calls)
+
+        enriched_config = dict(config)
+
+        if isinstance(payload, dict):
+            if payload.get("userMessage"):
+                enriched_config["userMessage"] = payload["userMessage"]
+
+            if payload.get("reasons"):
+                enriched_config["reasons"] = payload["reasons"]
+
+        structured_answer = cls.build_structured_answer(
+            classification,
+            config=enriched_config,
         )
 
         if suggestions:
@@ -116,7 +134,6 @@ class ChatErrorHandlingService:
 
         if auto_recovery:
             metadata["errorAutoRecovery"] = auto_recovery
-            payload = metadata.get("errorHandling")
 
             if isinstance(payload, dict):
                 payload["autoRecovery"] = auto_recovery
@@ -168,6 +185,61 @@ class ChatErrorHandlingService:
             payload["durationMs"] = latency_ms
 
         return payload
+
+    @classmethod
+    def resolve_display_answer(cls, answer: str, metadata: dict) -> str:
+        enriched = metadata.get("errorHandlingEnrichedAnswer")
+
+        if isinstance(enriched, str) and enriched.strip():
+            return enriched.strip()
+
+        return str(answer or "").strip()
+
+    @classmethod
+    def _apply_sql_reasons_from_tools(
+        cls,
+        payload: dict[str, Any],
+        *,
+        tool_calls: list | None,
+    ) -> None:
+        from app.domain.services.chat_sql_execution_error_interpretation_service import (
+            ChatSqlExecutionErrorInterpretationService,
+        )
+
+        error_type = str(payload.get("type") or "").strip()
+
+        if not error_type.startswith("sql_"):
+            return
+
+        for call in tool_calls or []:
+            if not isinstance(call, dict) or call.get("name") != "execute_external_action":
+                continue
+
+            meta = call.get("metadata")
+
+            if not isinstance(meta, dict):
+                continue
+
+            path = str(meta.get("path") or "")
+            error_text = ChatSqlExecutionErrorInterpretationService.extract_error_text(meta)
+
+            if not error_text:
+                error_text = ChatSqlExecutionErrorInterpretationService.extract_error_text(
+                    meta.get("responsePreview")
+                )
+
+            interpretation = ChatSqlExecutionErrorInterpretationService.interpret(error_text)
+
+            if not interpretation or interpretation.error_type != error_type:
+                continue
+
+            if interpretation.reasons:
+                payload["reasons"] = interpretation.reasons
+
+            if interpretation.summary:
+                payload["userMessage"] = interpretation.summary
+
+            return
 
     @classmethod
     def build_structured_answer(
@@ -255,6 +327,20 @@ class ChatErrorHandlingService:
             "timeout",
             "permission_denied",
         }:
+            return True
+
+        if classification.error_type in {
+            "sql_invalid_object",
+            "sql_syntax_error",
+            "sql_execution_error",
+        }:
+            return True
+
+        from app.domain.services.chat_sql_execution_error_interpretation_service import (
+            ChatSqlExecutionErrorInterpretationService,
+        )
+
+        if ChatSqlExecutionErrorInterpretationService.is_raw_driver_dump(stripped):
             return True
 
         return False

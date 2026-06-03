@@ -35,6 +35,7 @@ class ChatExternalActionOrchestrationService:
         *,
         message: str,
         allowed_action_ids: list[str] | None,
+        raw_message: str | None = None,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
         max_calls: int | None = None,
@@ -112,6 +113,7 @@ class ChatExternalActionOrchestrationService:
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
+                raw_message=raw_message,
             )
 
             return _return_planned([selected] if selected else [])
@@ -165,6 +167,7 @@ class ChatExternalActionOrchestrationService:
                 allowed_action_ids=allowed_action_ids,
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
+                raw_message=raw_message,
             )
 
             return _return_planned([selected] if selected else [])
@@ -201,6 +204,7 @@ class ChatExternalActionOrchestrationService:
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
+                        raw_message=raw_message,
                     )
                 elif refinement.kind == "pagination_refinement":
                     selected = selection_service.select_action(
@@ -208,6 +212,7 @@ class ChatExternalActionOrchestrationService:
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
+                        raw_message=raw_message,
                     )
                 elif refinement.kind == "depth_refinement":
                     selected = selection_service.select_action(
@@ -215,6 +220,7 @@ class ChatExternalActionOrchestrationService:
                         allowed_action_ids=allowed_action_ids,
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
+                        raw_message=raw_message,
                     )
                 else:
                     selected = None
@@ -299,6 +305,7 @@ class ChatExternalActionOrchestrationService:
             allowed_action_ids=allowed_action_ids,
             conversation_context=conversation_context,
             previous_messages=previous_messages,
+            raw_message=raw_message,
         )
 
         return _return_planned([selected] if selected else [])

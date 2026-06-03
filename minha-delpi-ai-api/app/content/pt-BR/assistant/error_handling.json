@@ -103,6 +103,24 @@
         "Ver schema"
       ]
     },
+    "sql_invalid_object": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Tabela ou objeto SQL não encontrado",
+      "userMessage": "O banco não reconheceu a tabela ou coluna usada na consulta. Confira o sufixo Protheus (ex.: SA1010) e os nomes reais das colunas antes de executar de novo.",
+      "reasons": [
+        "nome físico da tabela diferente do ambiente (sufixo 010 ou filial)",
+        "tabela ainda não existe nesta base de dados",
+        "identificadores em minúsculas em banco com collation case-sensitive"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Mostrar SQL",
+        "Ver schema completo",
+        "Corrigir consulta",
+        "Tentar novamente"
+      ]
+    },
     "permission_denied": {
       "severity": "permission",
       "recoverable": true,

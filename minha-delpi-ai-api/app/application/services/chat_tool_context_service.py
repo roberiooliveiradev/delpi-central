@@ -536,6 +536,7 @@ class ChatToolContextService:
             planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
                 self.external_action_selection_service,
                 message=message,
+                raw_message=raw_message,
                 allowed_action_ids=allowed_action_ids or [],
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
