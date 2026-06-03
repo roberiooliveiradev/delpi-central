@@ -83,6 +83,11 @@ class ChatReferenceResolutionService:
         if not normalized:
             return resolved, used_keys
 
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if ChatSqlSafetyService.looks_like_sql_payload(message):
+            return resolved, used_keys
+
         product_code = str(entities.get("productCode") or "").strip()
         branch = str(entities.get("branch") or "").strip()
         period = str(entities.get("period") or "").strip()
