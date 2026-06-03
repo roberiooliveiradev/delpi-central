@@ -406,11 +406,9 @@ services:
     environment:
       TZ: ${TZ}
 
-    volumes:
-      - ../plugins/minha-delpi-chat:/app
-      # nginx serve o build estático da imagem; em dev montamos dist do host para refletir `npm run build` sem rebuild da imagem
-      # - ../plugins/minha-delpi-chat/dist:/usr/share/nginx/html:ro
-      - /app/node_modules
+    # Sem volume em /app ou dist: o container é nginx com build da imagem (igual prod e demais MFEs).
+    # Após alterar o plugin: docker compose -f infra/docker-compose.dev.yml --profile chat build minha-delpi-chat
+    # e recrie o serviço (up -d --force-recreate minha-delpi-chat). Iteração rápida: npm run dev no plugin.
 
     networks:
       - delpi-network
