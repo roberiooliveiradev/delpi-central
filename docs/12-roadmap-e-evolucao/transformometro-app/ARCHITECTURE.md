@@ -80,7 +80,7 @@ plugins/transformometro/
 | **interface/http** | Rotas REST, validação Pydantic, códigos HTTP, OpenAPI |
 | **application** | Orquestração, transações, políticas (ativar revisão desativa outras) |
 | **domain** | Entidades, calculador, regras de vigência e rateio |
-| **infrastructure** | Postgres, auditoria, (opcional) job de recálculo |
+| **infrastructure** | Postgres, auditoria, cache materializado opcional |
 
 Sem regra de negócio em controllers; calculador **puro** (testável com fixtures da planilha).
 
@@ -101,20 +101,49 @@ Schema sugerido: `transformometro`.
 
 Todas com `deletado BOOLEAN DEFAULT false`, `created_at`, `updated_at` TIMESTAMPTZ.
 
-### Tabela derivada
+### Tabela derivada / cache do dashboard
 
 | Tabela | Chave lógica | Conteúdo |
 |--------|--------------|----------|
-| `dashboard_calculos` | `revisao_id` + `competencia` CHAR(7) | Colunas da spec §14 + índices por filial/setor/processo |
+| `dashboard_calculos` | `revisao_id` + `competencia` CHAR(7) | Cache/materialização das linhas calculadas pelo `DashboardCalculatorService` |
 
-Recálculo:
+A tabela `dashboard_calculos` **não é a fonte primária da regra de negócio**. Ela é um cache materializado auxiliar. As rotas atuais do dashboard calculam os dados em tempo real a partir das tabelas cadastrais, usando `DashboardLiveService` + `DashboardCalculatorService`. Portanto, toda alteração de regra de cálculo deve ser implementada primeiro no cálculo em tempo real e, depois, refletida no recálculo materializado.
 
-1. Truncar/particionar competências afetadas, ou upsert por `(revisao_id, competencia)`
-2. Gerar timeline de `min(data_inicio)` até mês atual
-3. Para cada revisão elegível no mês, aplicar calculador com baseline resolvida
-4. Persistir linha em `dashboard_calculos`
+Regra obrigatória: o resultado gravado em `dashboard_calculos` deve bater com o resultado em tempo real para a mesma competência, revisão, processo, filtros e vigências. O `DashboardRecalcService` deve usar o mesmo `DashboardCalculatorService` e os mesmos patches/regras de vigência usados pelo fluxo live.
 
-Trigger: `POST /transformometro/dashboard/recalcular` (admin) e/ou fila após mutações críticas (debounced).
+Recálculo do cache:
+
+1. Carregar os dados cadastrais atuais via `DashboardDataRepository.load_raw()`.
+2. Aplicar exatamente o mesmo calculador usado pelo dashboard em tempo real.
+3. Respeitar vigência histórica das revisões: revisão descontinuada hoje ainda calcula nos meses em que estava vigente.
+4. Preservar rateio global de recursos compartilhados, mesmo quando o recorte exibido é de apenas um processo/filtro.
+5. Truncar/particionar competências afetadas, ou fazer upsert por `(revisao_id, competencia)`.
+6. Persistir as linhas em `dashboard_calculos` apenas como cache.
+
+Trigger operacional: `POST /transformometro/dashboard/recalcular` (admin/JWT) e/ou execução interna do serviço `DashboardRecalcService().recalculate()` no container. Após recálculo, validar a coerência do cache com a fórmula da economia líquida.
+
+Validação mínima obrigatória após mudanças de regra:
+
+```sql
+SELECT
+    competencia,
+    ROUND(SUM(economia_liquida_mes), 2) AS liquida_gravada,
+    ROUND(SUM(economia_bruta - investimento_unico_mes - custo_recorrente_mes - custo_recursos_compartilhados_mes), 2) AS liquida_calculada,
+    ROUND(
+        SUM(economia_liquida_mes)
+        - SUM(economia_bruta - investimento_unico_mes - custo_recorrente_mes - custo_recursos_compartilhados_mes),
+        2
+    ) AS diferenca
+FROM transformometro.dashboard_calculos
+GROUP BY competencia
+HAVING ABS(
+    SUM(economia_liquida_mes)
+    - SUM(economia_bruta - investimento_unico_mes - custo_recorrente_mes - custo_recursos_compartilhados_mes)
+) > 0.05
+ORDER BY competencia;
+```
+
+O esperado é retornar **0 linhas**. Qualquer diferença acima de R$ 0,05 indica que o cache está desalinhado com a regra de cálculo.
 
 ## API REST (prefixo gateway)
 
@@ -147,20 +176,27 @@ Respostas envelope (padrão api-delpi):
 
 ## Serviço de cálculo
 
-Extrair e adaptar `ProcessSummaryCalculator`:
+O serviço central é o `DashboardCalculatorService`. Ele é a fonte de verdade para:
 
-| Método atual | Uso no app |
-|--------------|------------|
-| `build_process_list` | Listagem com economia/dia (opcional cache) |
-| `build_summary` | Cards resumo + série mensal |
-| `_calculate_review_month_result` | Persistência em `dashboard_calculos` |
+| Método | Uso no app |
+|--------|------------|
+| `build_process_list` | Listagem com economia/dia |
+| `build_summary` | Cards resumo + série mensal em tempo real |
+| `build_dashboard_rows` | Linhas usadas pelo cache `dashboard_calculos` |
+| `_calculate_review_month_result` | Cálculo mensal por revisão/competência |
 
-Ajustes para aderir à spec:
+Regras de cálculo que devem permanecer alinhadas entre tempo real e cache:
 
-1. Incluir `economia_recursos_compartilhados` na economia bruta (delta baseline vs atual)
-2. `economia_liquida_mes` sem subtrair custo compartilhado duas vezes
-3. Investimento único só em ROI/payback acumulado na tabela derivada
-4. Testes golden file com CSV exportado da planilha `193G5ff5...`
+1. A competência é calculada pela vigência da revisão, não apenas por `revisao_ativa` atual.
+2. Revisões descontinuadas devem calcular nos meses em que estavam vigentes.
+3. Baseline serve como referência, mas não deve ser tratada como solução ativa.
+4. O custo de recursos compartilhados deve respeitar a tabela de custos vigente e o rateio global dos vínculos elegíveis.
+5. `investimento_unico_mes` entra no mês do investimento, ou é distribuído por `meses_vigencia` quando informado.
+6. `custo_recorrente_mes` entra conforme recorrência e vigência.
+7. `economia_bruta` mantém o ganho operacional antes dos investimentos da melhoria.
+8. `economia_liquida_mes = economia_bruta - investimento_unico_mes - custo_recorrente_mes - custo_recursos_compartilhados_mes`.
+9. O ROI/payback devem usar os mesmos componentes de investimento e economia líquida adotados no dashboard.
+10. Toda mudança nessas regras exige teste do dashboard em tempo real e recálculo/validação do cache `dashboard_calculos`.
 
 ## Microfrontend
 
@@ -219,8 +255,9 @@ Script `scripts/migrate_transforma_mais_sheet.py`:
 1. Export CSV por aba (mesmos GIDs de `infra/.env`)
 2. Validar integridade referencial
 3. Insert em transação
-4. `POST /dashboard/recalcular`
+4. `POST /dashboard/recalcular` ou `DashboardRecalcService().recalculate()`
 5. Relatório de diff vs `dashboard_calculos` da planilha (se existir)
+6. Validar que `dashboard_calculos` ficou alinhada ao cálculo em tempo real
 
 ## Segurança
 
