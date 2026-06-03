@@ -4,13 +4,15 @@ import ReactMarkdown from "react-markdown";
 import { Check, Code2, Copy } from "lucide-react";
 import remarkGfm from "remark-gfm";
 
-import { prepareMarkdownContent } from "./chatMarkdown";
+import { applySoftLineBreaks, prepareMarkdownContent } from "./chatMarkdown";
 
 import "./ChatMarkdown.css";
 
 type ChatMarkdownProps = {
   content: string;
   compact?: boolean;
+  /** Preserva quebras de linha simples como hard breaks (ex.: mensagem do usuário). */
+  softBreaks?: boolean;
 };
 
 type ChatCodeBlockProps = {
@@ -110,8 +112,9 @@ const markdownComponents: Components = {
   },
 };
 
-export function ChatMarkdown({ content, compact }: ChatMarkdownProps) {
-  const normalized = prepareMarkdownContent(content);
+export function ChatMarkdown({ content, compact, softBreaks }: ChatMarkdownProps) {
+  const prepared = prepareMarkdownContent(content);
+  const normalized = softBreaks ? applySoftLineBreaks(prepared) : prepared;
 
   if (!normalized.trim()) {
     return null;

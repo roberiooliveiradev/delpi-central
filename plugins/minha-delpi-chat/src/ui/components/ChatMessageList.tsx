@@ -44,6 +44,7 @@ import {
   type HelpSelfHelpFeedbackPayload,
 } from "./ChatHelpSelfHelpFeedback";
 import { ChatAssistantContent } from "./ChatAssistantContent";
+import { ChatMarkdown } from "./ChatMarkdown";
 import {
   downloadDrawingAnalysisCsv,
   downloadDrawingAnalysisMarkdown,
@@ -1118,7 +1119,9 @@ export function ChatMessageList({
                     onDownloadAttachment={onDownloadAttachment}
                   />
                   {displayContent ? (
-                    <p className="mdc-chat-message-user-text">{displayContent}</p>
+                    <div className="mdc-chat-message-user-text">
+                      <ChatMarkdown content={displayContent} compact softBreaks />
+                    </div>
                   ) : null}
                 </>
               )}
