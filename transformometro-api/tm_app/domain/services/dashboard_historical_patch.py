@@ -8,6 +8,39 @@ from tm_app.domain.services.dashboard_calculator import (
     DashboardCalculatorService,
 )
 
+_ORIGINAL_MONTH_RESULT = DashboardCalculatorService._calculate_review_month_result
+
+
+def _calculate_review_month_result_net_after_investments(
+    self: DashboardCalculatorService,
+    process_row: dict,
+    review: dict,
+    baseline_review: dict,
+    baseline_measurement: dict,
+    context: CalculationContext,
+    competencia_date: date,
+) -> dict | None:
+    row = _ORIGINAL_MONTH_RESULT(
+        self,
+        process_row=process_row,
+        review=review,
+        baseline_review=baseline_review,
+        baseline_measurement=baseline_measurement,
+        context=context,
+        competencia_date=competencia_date,
+    )
+    if row is None:
+        return None
+
+    investimento_total_mes = (
+        float(row.get("investimento_unico_mes") or 0)
+        + float(row.get("custo_recorrente_mes") or 0)
+        + float(row.get("custo_recursos_compartilhados_mes") or 0)
+    )
+    row["investimento_total_mes"] = investimento_total_mes
+    row["economia_liquida_mes"] = float(row.get("economia_bruta") or 0) - investimento_total_mes
+    return row
+
 
 def _calculate_monthly_series_historical(
     self: DashboardCalculatorService,
@@ -15,13 +48,7 @@ def _calculate_monthly_series_historical(
     start_date: Optional[str],
     end_date: Optional[str],
 ) -> tuple[List[dict], List[dict]]:
-    """Calcula historico por vigencia da revisao, nao pelo status ativo atual.
-
-    Uma revisao descontinuada hoje ainda deve gerar linhas nos meses em que ficou
-    vigente. O status ``revisao_ativa`` representa a situacao operacional atual,
-    mas o dashboard filtrado por periodo precisa respeitar ``data_inicio`` /
-    ``data_implantacao`` / ``data_fim_vigencia``.
-    """
+    """Calcula historico por vigencia da revisao, nao pelo status ativo atual."""
     timeline_start = self._determine_timeline_start(
         processos_by_id=context.processos_by_id,
         revisoes_by_processo=context.revisoes_by_processo,
@@ -115,4 +142,5 @@ def _calculate_monthly_series_historical(
 
 
 def apply_historical_revision_patch() -> None:
+    DashboardCalculatorService._calculate_review_month_result = _calculate_review_month_result_net_after_investments
     DashboardCalculatorService._calculate_monthly_series = _calculate_monthly_series_historical
