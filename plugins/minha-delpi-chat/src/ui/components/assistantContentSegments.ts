@@ -147,13 +147,24 @@ function extractSqlFromFence(fence: string): string {
 }
 
 function collectUniqueAuthoringProse(content: string): string[] {
-  const scratch = content
-    .replace(SQL_FENCE_RE, "\n")
-    .replace(SQL_AUTHORING_INTRO_RE, "\n");
-  const paragraphs = scratch
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean);
+  const fragments: string[] = [];
+  let cursor = 0;
+
+  for (const match of content.matchAll(SQL_FENCE_RE)) {
+    const index = match.index ?? 0;
+    fragments.push(content.slice(cursor, index));
+    cursor = index + match[0].length;
+  }
+
+  fragments.push(content.slice(cursor));
+
+  const paragraphs = fragments.flatMap((fragment) =>
+    fragment
+      .replace(SQL_AUTHORING_INTRO_RE, "\n")
+      .split(/\n\s*\n/)
+      .map((part) => part.trim())
+      .filter(Boolean),
+  );
   const kept: string[] = [];
 
   for (const paragraph of paragraphs) {
@@ -178,7 +189,13 @@ function canonicalizeSqlAuthoringMarkdown(content: string): string {
     return content.trim();
   }
 
-  const sqlBody = extractSqlFromFence(blocks[0][0]);
+  const sqlBody = blocks
+    .map((block) => extractSqlFromFence(block[0]))
+    .sort((left, right) => {
+      const lineDelta = right.split("\n").length - left.split("\n").length;
+
+      return lineDelta || right.length - left.length;
+    })[0];
 
   if (!sqlBody) {
     return content.trim();

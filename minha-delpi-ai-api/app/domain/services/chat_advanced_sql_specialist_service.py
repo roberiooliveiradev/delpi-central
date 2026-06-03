@@ -767,9 +767,23 @@ class ChatAdvancedSqlSpecialistService:
 
     @classmethod
     def _collect_unique_authoring_prose(cls, text: str) -> list[str]:
-        scratch = cls._SQL_BLOCK_RE.sub("\n", text)
-        scratch = cls._SQL_AUTHORING_INTRO_RE.sub("\n", scratch)
-        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", scratch) if part.strip()]
+        fragments: list[str] = []
+        cursor = 0
+
+        for match in cls._SQL_BLOCK_RE.finditer(text):
+            fragments.append(text[cursor : match.start()])
+            cursor = match.end()
+
+        fragments.append(text[cursor:])
+
+        paragraphs: list[str] = []
+
+        for fragment in fragments:
+            scratch = cls._SQL_AUTHORING_INTRO_RE.sub("\n", fragment)
+            paragraphs.extend(
+                part.strip() for part in re.split(r"\n\s*\n", scratch) if part.strip()
+            )
+
         kept: list[str] = []
 
         for paragraph in paragraphs:
@@ -790,7 +804,10 @@ class ChatAdvancedSqlSpecialistService:
         if not blocks:
             return text.strip()
 
-        sql_body = cls._extract_sql_from_fence(blocks[0])
+        sql_body = max(
+            (cls._extract_sql_from_fence(block) for block in blocks),
+            key=lambda body: (body.count("\n"), len(body)),
+        )
 
         if not sql_body:
             return text.strip()

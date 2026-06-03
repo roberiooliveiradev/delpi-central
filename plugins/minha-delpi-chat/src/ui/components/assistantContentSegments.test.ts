@@ -60,6 +60,28 @@ describe("assistantContentSegments", () => {
     expect(output.match(/Esta consulta SQL/gi)?.length).toBe(1);
   });
 
+  it("colapsa fence SQL inline duplicado com bloco renderizável", () => {
+    const before =
+      "Com base nas permissões do papel Superadministrador que você possui, " +
+      "você pode consultar a tabela SA1 para obter apenas os códigos e nomes " +
+      "dos clientes ativos. Aqui está uma consulta SQL simples para isso:";
+    const explanation =
+      "Esta consulta retornará apenas os códigos e nomes dos clientes cujo status é " +
+      "'ATIVO'. Certifique-se de que você tem permissões suficientes para acessar " +
+      "a tabela SA1.";
+    const inlineSql = "SELECT A1_COD, A1_NOME FROM SA1010 WHERE D_E_L_E_T_ = ''";
+    const blockSql = "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''";
+    const input =
+      `${before} \`\`\`sql ${inlineSql} \`\`\` ${explanation}\n\n` +
+      `${before}\n\n\`\`\`sql\n${blockSql}\n\`\`\`\n\n${explanation}`;
+
+    const output = dedupeSqlFencesInMarkdown(input);
+
+    expect(output.match(/```sql/gi)?.length).toBe(1);
+    expect(output.match(/Com base nas permissões/gi)?.length).toBe(1);
+    expect(output.match(/Esta consulta retornará/gi)?.length).toBe(1);
+  });
+
   it("separa texto explicativo e bloco SQL", () => {
     const segments = parseMarkdownAndCodeSegments(
       "Segue a consulta:\n\n```sql\nSELECT A1_COD, A1_NOME FROM SA1010\n```",

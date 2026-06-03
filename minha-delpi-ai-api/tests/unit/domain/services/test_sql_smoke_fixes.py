@@ -157,6 +157,30 @@ def test_format_sql_authoring_answer_collapses_duplicate_sql_blocks_with_prose()
     assert formatted.count(explanation) == 1
 
 
+def test_format_sql_authoring_answer_collapses_inline_fence_duplicate():
+    before = (
+        "Com base nas permissões do papel Superadministrador que você possui, "
+        "você pode consultar a tabela SA1 para obter apenas os códigos e nomes "
+        "dos clientes ativos. Aqui está uma consulta SQL simples para isso:"
+    )
+    explanation = (
+        "Esta consulta retornará apenas os códigos e nomes dos clientes cujo status é "
+        "'ATIVO'. Certifique-se de que você tem permissões suficientes para acessar "
+        "a tabela SA1."
+    )
+    inline_sql = "SELECT A1_COD, A1_NOME FROM SA1010 WHERE D_E_L_E_T_ = ''"
+    block_sql = "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
+    raw = (
+        f"{before} ```sql {inline_sql} ``` {explanation}\n\n"
+        f"{before}\n\n```sql\n{block_sql}\n```\n\n{explanation}"
+    )
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+
+    assert formatted.lower().count("```sql") == 1
+    assert formatted.count(before) == 1
+    assert formatted.count(explanation) == 1
+
+
 def test_normalize_protheus_sql_replaces_generic_columns():
     answer = (
         "Segue:\n\n```sql\nSELECT CodigoCliente, NomeCliente FROM SA1 WHERE Status = 'Ativo';\n```"
