@@ -2156,6 +2156,8 @@ Métricas:
 
 ## 81. Roadmap de implementação
 
+**Fase 1 entregue (03/06/2026):** `ChatConversationStateService` + integração em `ChatConversationMemoryService` (equivalente a ConversationStateManager do §9).
+
 ### Fase 1 — Estado de sessão
 
 - Criar ConversationStateManager.
