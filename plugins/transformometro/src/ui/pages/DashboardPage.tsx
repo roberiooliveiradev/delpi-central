@@ -33,6 +33,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -512,17 +513,24 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         </div>
       </section>
 
-      <section className="ds-info-banner">
-        <Database size={18} aria-hidden />
-        <div>
-          <strong>PostgreSQL — Transformômetro</strong>
-          <p>
-            KPIs e gráficos em tempo real a partir do cadastro (revisões, medições, investimentos
-            e recursos), no recorte das datas dos filtros. Competências mensais cheias entram nos
-            totais; a visão <em>Dia</em> reparte o mês nos dias do período filtrado.
-          </p>
-        </div>
-      </section>
+      <CollapsiblePanel
+        className="ds-info-banner"
+        triggerClassName="ds-info-banner__trigger"
+        bodyClassName="ds-info-banner__body"
+        defaultOpen
+        header={
+          <>
+            <Database size={18} aria-hidden />
+            <strong className="ds-info-banner__title">PostgreSQL — Transformômetro</strong>
+          </>
+        }
+      >
+        <p className="ds-info-banner__description">
+          KPIs e gráficos em tempo real a partir do cadastro (revisões, medições, investimentos e
+          recursos), no recorte das datas dos filtros. Competências mensais cheias entram nos totais;
+          a visão <em>Dia</em> reparte o mês nos dias do período filtrado.
+        </p>
+      </CollapsiblePanel>
 
       <StatusAlerts
         error={error}
@@ -532,17 +540,25 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       {alertas.length > 0 ? (
-        <section className="ds-card ds-alert-panel">
-          <header className="ds-alert-panel__header">
-            <AlertTriangle size={20} aria-hidden />
-            <div>
-              <h2 className="ds-section-title">Alertas — economia líquida negativa</h2>
-              <p className="ds-hint">
-                Processos com pelo menos 3 meses consecutivos de líquida negativa no recorte filtrado
-              </p>
-            </div>
-            <span className="ds-alert-panel__count">{alertas.length}</span>
-          </header>
+        <CollapsiblePanel
+          className="ds-card ds-alert-panel"
+          triggerClassName="ds-alert-panel__trigger"
+          bodyClassName="ds-alert-panel__body"
+          defaultOpen
+          header={
+            <>
+              <AlertTriangle size={20} aria-hidden />
+              <div className="ds-alert-panel__titles">
+                <h2 className="ds-section-title">Alertas — economia líquida negativa</h2>
+                <p className="ds-hint">
+                  Processos com pelo menos 3 meses consecutivos de líquida negativa no recorte
+                  filtrado
+                </p>
+              </div>
+              <span className="ds-alert-panel__count">{alertas.length}</span>
+            </>
+          }
+        >
           <ul className="ds-alert-list">
             {alertas.slice(0, 12).map((alerta) => (
               <li key={alerta.processo_id} className="ds-alert-item">
@@ -562,7 +578,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               </li>
             ))}
           </ul>
-        </section>
+        </CollapsiblePanel>
       ) : null}
 
       <section className="ds-kpi-grid">
