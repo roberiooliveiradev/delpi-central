@@ -1,8 +1,8 @@
 .mdc-chat-add-context-backdrop {
   display: grid;
   place-items: center;
-  padding: 1rem;
-  background: color-mix(in srgb, #020617 55%, transparent);
+  background: var(--mdc-overlay-backdrop);
+  backdrop-filter: blur(6px);
 }
 
 .mdc-chat-add-context {
@@ -101,7 +101,7 @@
 .mdc-chat-add-context__error {
   margin: 0;
   font-size: 0.82rem;
-  color: #ef4444;
+  color: var(--mdc-danger);
 }
 
 .mdc-chat-add-context__actions {

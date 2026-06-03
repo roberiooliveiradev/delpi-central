@@ -33,26 +33,44 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
   const entities = usage.entities ?? {};
   const entityEntries = Object.entries(entities).filter(([, value]) => value);
 
+  const hasRichContent =
+    Boolean(usage.topic || usage.task) ||
+    entityEntries.length > 0 ||
+    (usage.preferences?.length ?? 0) > 0 ||
+    (usage.resolvedReferences?.length ?? 0) > 0 ||
+    (usage.semanticHits?.length ?? 0) > 0 ||
+    (usage.userContextItems?.length ?? 0) > 0 ||
+    (usage.episodicCount ?? 0) > 0 ||
+    Boolean(usage.episodicRecall) ||
+    Boolean(usage.writeGated);
+
   return (
     <ModalPortal>
-      <div className="mdc-memory-used-dialog__backdrop" role="presentation" onClick={onClose}>
-        <div
-          className="mdc-memory-used-dialog"
+      <div
+        className="mdc-chat-memory-used-backdrop"
+        role="presentation"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            onClose();
+          }
+        }}
+      >
+        <section
+          className="mdc-chat-memory-used"
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          onClick={(event) => event.stopPropagation()}
         >
-          <header className="mdc-memory-used-dialog__header">
-            <h2 id={titleId} className="mdc-memory-used-dialog__title">
+          <header className="mdc-chat-memory-used__header">
+            <h2 id={titleId} className="mdc-chat-memory-used__title">
               Memória usada nesta conversa
             </h2>
-            <button type="button" className="mdc-memory-used-dialog__close" onClick={onClose}>
+            <button type="button" className="mdc-chat-memory-used__close" onClick={onClose}>
               Fechar
             </button>
           </header>
 
-          <div className="mdc-memory-used-dialog__body">
+          <div className="mdc-chat-memory-used__body">
             {usage.topic ? (
               <p>
                 <strong>Assunto:</strong> {usage.topic}
@@ -135,19 +153,19 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
             ) : null}
 
             {usage.writeGated ? (
-              <p className="mdc-memory-used-dialog__note">
+              <p className="mdc-chat-memory-used__note">
                 Gravação de memória pausada neste turno (conteúdo sensível ou pedido do usuário).
               </p>
             ) : null}
 
-            {!usage.topic &&
-            !usage.task &&
-            entityEntries.length === 0 &&
-            !(usage.preferences?.length ?? 0) ? (
-              <p>Nenhum contexto persistente além da mensagem atual.</p>
+            {!hasRichContent ? (
+              <p className="mdc-chat-memory-used__empty">
+                Nenhum contexto persistente além da mensagem atual. Use «+» na barra de contexto
+                para fixar produto, filial ou texto livre.
+              </p>
             ) : null}
           </div>
-        </div>
+        </section>
       </div>
     </ModalPortal>
   );

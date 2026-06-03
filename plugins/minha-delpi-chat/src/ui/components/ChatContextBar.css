@@ -9,11 +9,12 @@
   padding: 0.35rem var(--mdc-space-4) 0.45rem;
   box-sizing: border-box;
   border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 22%, transparent);
-  background: transparent;
+  background: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
 }
 
 .mdc-chat-composer-footer .mdc-chat-context-bar {
   border-bottom-color: color-mix(in srgb, var(--mdc-card-border) 18%, transparent);
+  background: color-mix(in srgb, var(--mdc-bg) 88%, transparent);
 }
 
 .mdc-chat-context-bar__label {
@@ -91,7 +92,11 @@
   color: color-mix(in srgb, var(--mdc-primary) 70%, var(--mdc-text));
 }
 
-.mdc-chat-context-bar__chip--attachment {
+.mdc-chat-context-bar__chip--attachment,
+.mdc-chat-context-bar__chip--note,
+.mdc-chat-context-bar__chip--table,
+.mdc-chat-context-bar__chip--file,
+.mdc-chat-context-bar__chip--knowledge {
   font-size: 0.72rem;
   color: color-mix(in srgb, var(--mdc-text) 75%, var(--mdc-text-muted));
 }
@@ -151,6 +156,13 @@
   outline-offset: 1px;
 }
 
+.mdc-chat-context-bar__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
 .mdc-chat-context-bar__clear,
 .mdc-chat-context-bar__add,
 .mdc-chat-context-bar__view-memory {
@@ -158,24 +170,26 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 1.85rem;
+  height: 1.85rem;
   padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mdc-control-bg) 55%, transparent);
   color: color-mix(in srgb, var(--mdc-text-muted) 70%, transparent);
   cursor: pointer;
   transition:
     color 0.15s ease,
-    background 0.15s ease;
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .mdc-chat-context-bar__clear:hover,
 .mdc-chat-context-bar__add:hover,
 .mdc-chat-context-bar__view-memory:hover {
-  color: var(--mdc-text-muted);
-  background: color-mix(in srgb, var(--mdc-control-bg) 85%, transparent);
+  color: var(--mdc-text);
+  border-color: color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  background: color-mix(in srgb, var(--mdc-control-bg) 92%, transparent);
 }
 
 .mdc-chat-context-bar__clear:focus-visible,
@@ -187,29 +201,7 @@
 
 .mdc-chat-context-bar__add {
   color: color-mix(in srgb, var(--mdc-primary) 78%, var(--mdc-text-muted));
-}
-
-@media (max-width: 767px) {
-  .mdc-chat-context-bar {
-    padding: 0.3rem var(--mdc-space-3) 0.4rem;
-  }
-
-  .mdc-chat-context-bar__chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    padding-bottom: 0.05rem;
-  }
-
-  .mdc-chat-context-bar__chip-text {
-    max-width: min(11rem, 52vw);
-  }
-
-  .mdc-chat-context-bar__chip-dismiss {
-    opacity: 1;
-  }
+  border-color: color-mix(in srgb, var(--mdc-primary) 18%, transparent);
 }
 
 .mdc-chat-context-bar__heading {
@@ -217,7 +209,7 @@
   flex-direction: column;
   gap: 0.1rem;
   flex-shrink: 0;
-  max-width: 42%;
+  max-width: min(12rem, 38vw);
 }
 
 .mdc-chat-context-bar__summary {
@@ -233,6 +225,62 @@
 .mdc-chat-context-bar__preference {
   flex: 1 1 100%;
   font-size: 0.6875rem;
-  color: color-mix(in srgb, var(--mdc-accent, #3b82f6) 70%, var(--mdc-text-muted));
+  color: color-mix(in srgb, var(--mdc-primary) 55%, var(--mdc-text-muted));
   padding-left: 0.1rem;
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-context-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "heading actions"
+      "preference preference"
+      "chips chips";
+    align-items: center;
+    gap: 0.3rem 0.45rem;
+    padding: 0.35rem max(var(--mdc-space-3), env(safe-area-inset-left, 0px))
+      0.45rem max(var(--mdc-space-3), env(safe-area-inset-right, 0px));
+  }
+
+  .mdc-chat-context-bar__heading {
+    grid-area: heading;
+    max-width: none;
+  }
+
+  .mdc-chat-context-bar__actions {
+    grid-area: actions;
+  }
+
+  .mdc-chat-context-bar__preference {
+    grid-area: preference;
+    flex: none;
+  }
+
+  .mdc-chat-context-bar__chips {
+    grid-area: chips;
+    flex: none;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 0.1rem;
+    mask-image: linear-gradient(90deg, #000 92%, transparent);
+  }
+
+  .mdc-chat-context-bar__chip-text {
+    max-width: min(11rem, 48vw);
+  }
+
+  .mdc-chat-context-bar__chip-dismiss {
+    opacity: 1;
+  }
+
+  .mdc-chat-context-bar__clear,
+  .mdc-chat-context-bar__add,
+  .mdc-chat-context-bar__view-memory {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
 }

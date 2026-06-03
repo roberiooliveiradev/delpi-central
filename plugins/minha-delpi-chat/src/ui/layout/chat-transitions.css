@@ -225,6 +225,8 @@
 .mdc-chat-confirm-dialog-backdrop,
 .mdc-chat-confirm-backdrop,
 .mdc-chat-archived-backdrop,
+.mdc-chat-add-context-backdrop,
+.mdc-chat-memory-used-backdrop,
 .mdc-expand-modal__backdrop,
 .mdc-chat-canvas-backdrop {
   animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
@@ -236,6 +238,8 @@
 .mdc-chat-projects-modal,
 .mdc-chat-confirm,
 .mdc-chat-archived-dialog,
+.mdc-chat-add-context,
+.mdc-chat-memory-used,
 .mdc-expand-modal {
   animation: mdc-motion-fade-scale-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
 }

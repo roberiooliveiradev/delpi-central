@@ -203,41 +203,43 @@ export function ChatContextBar({
         })}
       </div>
 
-      {showClear ? (
-        <button
-          type="button"
-          className="mdc-chat-context-bar__clear"
-          onClick={onClearContext}
-          title="Limpar todo o contexto"
-          aria-label="Limpar todo o contexto"
-        >
-          <X size={14} aria-hidden="true" />
-        </button>
-      ) : null}
+      <div className="mdc-chat-context-bar__actions">
+        {showClear ? (
+          <button
+            type="button"
+            className="mdc-chat-context-bar__clear"
+            onClick={onClearContext}
+            title="Limpar todo o contexto"
+            aria-label="Limpar todo o contexto"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        ) : null}
 
-      {onViewMemory ? (
-        <button
-          type="button"
-          className="mdc-chat-context-bar__view-memory"
-          onClick={onViewMemory}
-          title="Ver memória usada nesta conversa"
-          aria-label="Ver memória usada"
-        >
-          <Eye size={14} aria-hidden="true" />
-        </button>
-      ) : null}
+        {onViewMemory ? (
+          <button
+            type="button"
+            className="mdc-chat-context-bar__view-memory"
+            onClick={onViewMemory}
+            title="Ver memória usada nesta conversa"
+            aria-label="Ver memória usada"
+          >
+            <Eye size={14} aria-hidden="true" />
+          </button>
+        ) : null}
 
-      {showAdd ? (
-        <button
-          type="button"
-          className="mdc-chat-context-bar__add"
-          onClick={onAddContext}
-          title="Adicionar filial, armazém ou produto ao contexto"
-          aria-label="Adicionar ao contexto"
-        >
-          <Plus size={14} aria-hidden="true" />
-        </button>
-      ) : null}
+        {showAdd ? (
+          <button
+            type="button"
+            className="mdc-chat-context-bar__add"
+            onClick={onAddContext}
+            title="Adicionar texto, tabela ou arquivo ao contexto"
+            aria-label="Adicionar ao contexto"
+          >
+            <Plus size={14} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
 
       {chipMenu && onChipAction ? (
         <ChatTableRowMenu

@@ -1858,6 +1858,11 @@ export function ChatPage({
         onCancel={() => setAddContextDialogOpen(false)}
         onConfirm={handleAddContextPayload}
       />
+      <ChatMemoryUsedDialog
+        open={memoryUsedDialogOpen}
+        usage={activeMemoryUsage}
+        onClose={() => setMemoryUsedDialogOpen(false)}
+      />
       {shortcutPromptDialog}
       {isDraggingFile ? (
         <div className="mdc-chat-drop-overlay" aria-hidden="true">
@@ -2398,12 +2403,6 @@ export function ChatPage({
                   onAddContext={() => setAddContextDialogOpen(true)}
                   onViewMemory={handleViewMemoryUsed}
                   onPinChip={handlePinContextChip}
-                />
-
-                <ChatMemoryUsedDialog
-                  open={memoryUsedDialogOpen}
-                  usage={activeMemoryUsage}
-                  onClose={() => setMemoryUsedDialogOpen(false)}
                 />
 
                 <ChatInput

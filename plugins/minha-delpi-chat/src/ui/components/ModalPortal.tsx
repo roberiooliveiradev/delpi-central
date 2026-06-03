@@ -22,8 +22,19 @@ export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
     };
   }, [lockScroll]);
 
+  const theme =
+    typeof document !== "undefined"
+      ? document.documentElement.getAttribute("data-theme")
+      : null;
+
   return createPortal(
-    <div className="mdc-modal-portal minha-delpi-chat">{children}</div>,
+    <div
+      className="mdc-modal-portal minha-delpi-chat"
+      data-theme={theme ?? undefined}
+      role="presentation"
+    >
+      {children}
+    </div>,
     document.body,
   );
 }
