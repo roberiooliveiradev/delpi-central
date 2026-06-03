@@ -4,6 +4,7 @@ import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTyp
 
 import {
   buildAssistantContentSegments,
+  isPresentationHeadingTitle,
   type AssistantContentSegment,
 } from "./assistantContentSegments";
 import { ChatMarkdown } from "./ChatMarkdown";
@@ -113,7 +114,7 @@ export function ChatAssistantContent({
   }
 
   const showTitle =
-    Boolean(title) &&
+    isPresentationHeadingTitle(title) &&
     !segments.some(
       (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
     );

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildAssistantContentSegments,
   dedupeSqlFencesInMarkdown,
+  isPresentationHeadingTitle,
   parseMarkdownAndCodeSegments,
 } from "./assistantContentSegments";
 
@@ -112,5 +113,21 @@ describe("assistantContentSegments", () => {
 
     expect(segments.some((item) => item.kind === "markdown")).toBe(true);
     expect(segments.some((item) => item.kind === "table")).toBe(true);
+  });
+
+  it("não trata conteúdo inteiro de resposta SQL como título de apresentação", () => {
+    const intro =
+      "Segue a consulta em SQL (somente leitura, sem executar no sistema). " +
+      "Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:";
+    const fullAnswer = `${intro}\n\n\`\`\`sql\nSELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''\n\`\`\``;
+
+    expect(isPresentationHeadingTitle(fullAnswer)).toBe(false);
+  });
+
+  it("aceita títulos curtos de uma linha como heading de apresentação", () => {
+    expect(isPresentationHeadingTitle("Estoque por filial")).toBe(true);
+    expect(isPresentationHeadingTitle("")).toBe(false);
+    expect(isPresentationHeadingTitle("Linha 1\nLinha 2")).toBe(false);
+    expect(isPresentationHeadingTitle("Tem ```sql aqui")).toBe(false);
   });
 });

@@ -561,3 +561,23 @@ export function hasAssistantContentSegments(
 ): boolean {
   return buildAssistantContentSegments(content, toolCalls).length > 0;
 }
+
+/**
+ * Um título de apresentação legítimo é um cabeçalho curto de uma linha.
+ * Quando não há título real, getPresentationTitle cai no conteúdo inteiro da
+ * mensagem; renderizá-lo como heading duplicaria o texto (intro + fence inline
+ * crua) acima dos segmentos. Aqui filtramos esse caso.
+ */
+export function isPresentationHeadingTitle(title: string | null | undefined): boolean {
+  const value = String(title || "").trim();
+
+  if (!value) {
+    return false;
+  }
+
+  if (value.includes("```") || /\n/.test(value)) {
+    return false;
+  }
+
+  return value.length <= 120;
+}
