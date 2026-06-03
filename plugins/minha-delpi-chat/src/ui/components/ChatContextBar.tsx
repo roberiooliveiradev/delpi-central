@@ -7,9 +7,11 @@ import {
   FileText,
   LayoutGrid,
   Layout,
+  MessageCircleQuestion,
   MessageSquare,
   Package,
   Plus,
+  Reply,
   SlidersHorizontal,
   Target,
   X,
@@ -60,6 +62,9 @@ const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
   table: LayoutGrid,
   file: FileText,
   knowledge: FileText,
+  question: MessageCircleQuestion,
+  answer: Reply,
+  turn: MessageSquare,
 };
 
 function chipIconForKind(kind: string): LucideIcon {

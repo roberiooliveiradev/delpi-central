@@ -54,17 +54,45 @@ class ChatSessionMemoryPinsUseCase:
         session_id: UUID,
         content: str,
         filename: str | None = None,
+        role: str | None = None,
+        kind: str | None = None,
+        message_id: str | None = None,
+        question: str | None = None,
+        answer: str | None = None,
+        question_message_id: str | None = None,
+        answer_message_id: str | None = None,
     ) -> dict:
         self._ensure_session_access(user_id=user_id, session_id=session_id)
 
-        item = ChatUserContextItemService.ingest(content=content, filename=filename)
-        self.memory_repository.add_context_item(session_id, item)
+        question_text = str(question or "").strip()
+        answer_text = str(answer or "").strip()
+
+        if question_text and answer_text:
+            items = ChatUserContextItemService.ingest_turn(
+                question=question_text,
+                answer=answer_text,
+                question_message_id=question_message_id,
+                answer_message_id=answer_message_id,
+            )
+        else:
+            items = [
+                ChatUserContextItemService.ingest(
+                    content=content,
+                    filename=filename,
+                    role=role,
+                    kind=kind,
+                    message_id=message_id,
+                )
+            ]
 
         overlay = self.memory_repository.load_active_overlay(session_id)
-        overlay = ChatUserContextItemService.apply_extracted_entities_to_overlay(
-            overlay,
-            item,
-        )
+
+        for item in items:
+            self.memory_repository.add_context_item(session_id, item)
+            overlay = ChatUserContextItemService.apply_extracted_entities_to_overlay(
+                overlay,
+                item,
+            )
 
         for key, value in (overlay.get("lastEntities") or {}).items():
             if key in {"productCode", "branch", "warehouse", "period"}:

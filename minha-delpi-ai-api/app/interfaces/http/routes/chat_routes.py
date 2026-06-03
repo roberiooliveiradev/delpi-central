@@ -2566,9 +2566,22 @@ def add_session_memory_context_item(session_id: str):
 
     content = payload.get("content")
     filename = payload.get("filename")
+    role = payload.get("role")
+    kind = payload.get("kind")
+    message_id = payload.get("messageId") or payload.get("message_id")
+    question = payload.get("question")
+    answer = payload.get("answer")
+    question_message_id = payload.get("questionMessageId") or payload.get(
+        "question_message_id"
+    )
+    answer_message_id = payload.get("answerMessageId") or payload.get("answer_message_id")
 
-    if content is None and not filename:
-        return bad_request("content or filename is required")
+    has_turn = bool(str(question or "").strip()) and bool(str(answer or "").strip())
+    has_content = content is not None and str(content).strip()
+    has_file = bool(str(filename or "").strip())
+
+    if not has_turn and not has_content and not has_file:
+        return bad_request("content, filename or question+answer is required")
 
     use_case = make_chat_session_memory_pins_use_case()
 
@@ -2578,6 +2591,17 @@ def add_session_memory_context_item(session_id: str):
             session_id=UUID(str(session_id)),
             content=str(content or ""),
             filename=str(filename).strip() if filename else None,
+            role=str(role).strip().lower() if role else None,
+            kind=str(kind).strip().lower() if kind else None,
+            message_id=str(message_id).strip() if message_id else None,
+            question=str(question) if question is not None else None,
+            answer=str(answer) if answer is not None else None,
+            question_message_id=str(question_message_id).strip()
+            if question_message_id
+            else None,
+            answer_message_id=str(answer_message_id).strip()
+            if answer_message_id
+            else None,
         )
         db.session.commit()
     except ChatSessionNotFoundError:

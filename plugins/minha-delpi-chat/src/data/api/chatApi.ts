@@ -747,9 +747,21 @@ export async function getChatSessionMemoryContext(
   return parseJsonResponse<SessionMemoryContextResponse>(response);
 }
 
+export type ChatSessionContextItemPayload = {
+  content: string;
+  filename?: string;
+  role?: "user" | "assistant";
+  kind?: "question" | "answer";
+  messageId?: string;
+  question?: string;
+  answer?: string;
+  questionMessageId?: string;
+  answerMessageId?: string;
+};
+
 export async function addChatSessionContextItem(
   sessionId: string,
-  payload: { content: string; filename?: string },
+  payload: ChatSessionContextItemPayload,
   options: ChatApiOptions = {},
 ): Promise<SessionMemoryContextResponse> {
   const response = await fetch(

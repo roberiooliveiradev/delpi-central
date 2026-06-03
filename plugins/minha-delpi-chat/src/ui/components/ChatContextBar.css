@@ -101,6 +101,21 @@
   color: color-mix(in srgb, var(--mdc-text) 75%, var(--mdc-text-muted));
 }
 
+.mdc-chat-context-bar__chip--question {
+  color: color-mix(in srgb, var(--mdc-primary) 78%, var(--mdc-text-muted));
+  border-color: color-mix(in srgb, var(--mdc-primary) 22%, var(--mdc-card-border));
+}
+
+.mdc-chat-context-bar__chip--answer {
+  color: color-mix(in srgb, var(--mdc-text) 82%, var(--mdc-text-muted));
+  border-color: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+}
+
+.mdc-chat-context-bar__chip--turn {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--mdc-primary) 65%, var(--mdc-text));
+}
+
 .mdc-chat-context-bar__chip--action {
   cursor: pointer;
   transition:

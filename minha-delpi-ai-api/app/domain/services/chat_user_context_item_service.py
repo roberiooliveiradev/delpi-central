@@ -26,9 +26,20 @@ _WAREHOUSE_RE = re.compile(
 _TABLE_ROW_RE = re.compile(r"^\s*\|.+\|\s*$", re.MULTILINE)
 
 
+_CONVERSATION_KINDS = frozenset({"question", "answer", "turn"})
+
+
 class ChatUserContextItemService:
     @classmethod
-    def ingest(cls, *, content: str, filename: str | None = None) -> dict[str, Any]:
+    def ingest(
+        cls,
+        *,
+        content: str,
+        filename: str | None = None,
+        role: str | None = None,
+        kind: str | None = None,
+        message_id: str | None = None,
+    ) -> dict[str, Any]:
         raw = str(content or "").strip()
 
         if not raw and not str(filename or "").strip():
@@ -37,10 +48,27 @@ class ChatUserContextItemService:
         if not raw and filename:
             raw = f"Arquivo anexado ao contexto: {filename}"
 
-        classified = cls.classify(raw, filename=filename)
-        item_id = str(uuid.uuid4())
+        normalized_role = str(role or "").strip().lower()
+        normalized_kind = str(kind or "").strip().lower()
 
-        return {
+        if normalized_role == "user" and not normalized_kind:
+            normalized_kind = "question"
+        elif normalized_role == "assistant" and not normalized_kind:
+            normalized_kind = "answer"
+
+        if normalized_kind in _CONVERSATION_KINDS:
+            classified = cls._classify_conversation_turn(
+                raw,
+                kind=normalized_kind,
+                role=normalized_role,
+            )
+        else:
+            classified = cls.classify(raw, filename=filename)
+
+        item_id = str(uuid.uuid4())
+        message_token = str(message_id or "").strip()[:64]
+
+        item: dict[str, Any] = {
             "id": item_id,
             "kind": classified["kind"],
             "label": classified["label"][:_MAX_LABEL_CHARS],
@@ -49,6 +77,87 @@ class ChatUserContextItemService:
             "extractedEntities": classified.get("extractedEntities") or {},
             "source": "user",
         }
+
+        if message_token:
+            item["messageId"] = message_token
+
+        if normalized_role in {"user", "assistant"}:
+            item["role"] = normalized_role
+
+        return item
+
+    @classmethod
+    def ingest_turn(
+        cls,
+        *,
+        question: str,
+        answer: str,
+        question_message_id: str | None = None,
+        answer_message_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        question_text = str(question or "").strip()
+        answer_text = str(answer or "").strip()
+
+        if not question_text or not answer_text:
+            raise ValueError("Informe pergunta e resposta para adicionar ao contexto.")
+
+        return [
+            cls.ingest(
+                content=question_text,
+                role="user",
+                kind="question",
+                message_id=question_message_id,
+            ),
+            cls.ingest(
+                content=answer_text,
+                role="assistant",
+                kind="answer",
+                message_id=answer_message_id,
+            ),
+        ]
+
+    @classmethod
+    def _classify_conversation_turn(
+        cls,
+        content: str,
+        *,
+        kind: str,
+        role: str = "",
+    ) -> dict[str, Any]:
+        text = str(content or "").strip()
+        normalized_kind = str(kind or "").strip().lower()
+
+        if normalized_kind == "turn":
+            return {
+                "kind": "turn",
+                "label": cls._conversation_label("Pergunta + resposta", text),
+                "extractedEntities": {},
+            }
+
+        if normalized_kind == "answer" or role == "assistant":
+            return {
+                "kind": "answer",
+                "label": cls._conversation_label("Resposta", text),
+                "extractedEntities": {},
+            }
+
+        return {
+            "kind": "question",
+            "label": cls._conversation_label("Pergunta", text),
+            "extractedEntities": {},
+        }
+
+    @classmethod
+    def _conversation_label(cls, prefix: str, text: str) -> str:
+        snippet = " ".join(text.split())
+
+        if not snippet:
+            return prefix[:_MAX_LABEL_CHARS]
+
+        if len(snippet) <= 42:
+            return f"{prefix}: {snippet}"[:_MAX_LABEL_CHARS]
+
+        return f"{prefix}: {snippet[:39]}…"[:_MAX_LABEL_CHARS]
 
     @classmethod
     def classify(cls, content: str, *, filename: str | None = None) -> dict[str, Any]:

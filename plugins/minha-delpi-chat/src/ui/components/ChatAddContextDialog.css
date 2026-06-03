@@ -34,6 +34,81 @@
   gap: 0.65rem;
 }
 
+.mdc-chat-add-context__conversation {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.mdc-chat-add-context__conversation-label {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-add-context__conversation-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 9rem;
+  overflow-y: auto;
+}
+
+.mdc-chat-add-context__conversation-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: start;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--mdc-control-bg) 88%, transparent);
+  color: var(--mdc-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.mdc-chat-add-context__conversation-item:hover {
+  border-color: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
+  background: color-mix(in srgb, var(--mdc-primary) 5%, var(--mdc-control-bg));
+}
+
+.mdc-chat-add-context__conversation-role {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.12rem 0.35rem;
+  border-radius: 4px;
+}
+
+.mdc-chat-add-context__conversation-role--user {
+  color: color-mix(in srgb, var(--mdc-primary) 80%, var(--mdc-text));
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+}
+
+.mdc-chat-add-context__conversation-role--assistant {
+  color: color-mix(in srgb, var(--mdc-text) 75%, var(--mdc-text-muted));
+  background: color-mix(in srgb, var(--mdc-text-muted) 12%, transparent);
+}
+
+.mdc-chat-add-context__conversation-preview {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--mdc-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .mdc-chat-add-context__field {
   display: grid;
   gap: 0.3rem;

@@ -12,6 +12,8 @@ describe("context chip kinds", () => {
   it("identifica itens de contexto livre", () => {
     expect(isUserContextItemKind("note")).toBe(true);
     expect(isUserContextItemKind("table")).toBe(true);
+    expect(isUserContextItemKind("question")).toBe(true);
+    expect(isUserContextItemKind("answer")).toBe(true);
     expect(isUserContextItemKind("product")).toBe(false);
   });
 });

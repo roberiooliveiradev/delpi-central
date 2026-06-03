@@ -1,11 +1,13 @@
 import {
   ArrowDown,
+  BookmarkPlus,
   Check,
   Copy,
   Download,
   FileText,
   GitBranch,
   Image as ImageIcon,
+  MessagesSquare,
   Pencil,
   RotateCcw,
   ThumbsDown,
@@ -128,6 +130,8 @@ type ChatMessageListProps = {
   ) => Promise<void>;
   branchSwitchingMessageId?: string | null;
   onContinueFromMessage?: (messageId: string) => Promise<void>;
+  onAddMessageToContext?: (message: ChatMessage) => void;
+  onAddMessageTurnToContext?: (answerMessage: ChatMessage) => void;
   lastSentUserText?: string;
   onRecordHelpEvent?: (payload: {
     event: string;
@@ -497,6 +501,8 @@ export function ChatMessageList({
   onSwitchMessageBranch,
   branchSwitchingMessageId = null,
   onContinueFromMessage,
+  onAddMessageToContext,
+  onAddMessageTurnToContext,
   onOpenCanvas,
   lastSentUserText = "",
   onRecordHelpEvent,
@@ -1088,6 +1094,19 @@ export function ChatMessageList({
                     <RotateCcw size={15} aria-hidden="true" />
                   </button>
 
+                  {onAddMessageToContext ? (
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      disabled={Boolean(isStreaming) || !displayContent.trim()}
+                      onClick={() => onAddMessageToContext(message)}
+                      aria-label="Adicionar pergunta ao contexto"
+                      title="Adicionar pergunta ao contexto"
+                    >
+                      <BookmarkPlus size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
+
                   {onContinueFromMessage ? (
                     <button
                       className="mdc-chat-message-action"
@@ -1266,6 +1285,32 @@ export function ChatMessageList({
                       <Copy size={15} aria-hidden="true" />
                     )}
                   </button>
+
+                  {onAddMessageToContext ? (
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      disabled={Boolean(isStreaming) || !displayContent.trim()}
+                      onClick={() => onAddMessageToContext(message)}
+                      aria-label="Adicionar resposta ao contexto"
+                      title="Adicionar resposta ao contexto"
+                    >
+                      <BookmarkPlus size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
+
+                  {onAddMessageTurnToContext ? (
+                    <button
+                      className="mdc-chat-message-action"
+                      type="button"
+                      disabled={Boolean(isStreaming) || !displayContent.trim()}
+                      onClick={() => onAddMessageTurnToContext(message)}
+                      aria-label="Adicionar pergunta e resposta ao contexto"
+                      title="Adicionar pergunta e resposta ao contexto"
+                    >
+                      <MessagesSquare size={15} aria-hidden="true" />
+                    </button>
+                  ) : null}
 
                   {onContinueFromMessage ? (
                     <button

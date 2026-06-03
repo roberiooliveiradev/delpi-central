@@ -23,6 +23,43 @@ def test_classify_long_text_as_note():
     assert result["kind"] == "note"
 
 
+def test_ingest_question_from_user_role():
+    item = ChatUserContextItemService.ingest(
+        content="Qual o estoque do produto 10080001?",
+        role="user",
+        message_id="msg-1",
+    )
+
+    assert item["kind"] == "question"
+    assert item["role"] == "user"
+    assert item["messageId"] == "msg-1"
+    assert "Pergunta" in item["label"]
+
+
+def test_ingest_answer_from_assistant_role():
+    item = ChatUserContextItemService.ingest(
+        content="O estoque disponível é 120 unidades.",
+        role="assistant",
+    )
+
+    assert item["kind"] == "answer"
+    assert item["role"] == "assistant"
+    assert "Resposta" in item["label"]
+
+
+def test_ingest_turn_returns_question_and_answer():
+    items = ChatUserContextItemService.ingest_turn(
+        question="Compare com o anterior",
+        answer="A diferença principal é o lead time.",
+        question_message_id="u1",
+        answer_message_id="a1",
+    )
+
+    assert len(items) == 2
+    assert items[0]["kind"] == "question"
+    assert items[1]["kind"] == "answer"
+
+
 def test_format_prompt_block_includes_user_items():
     block = ChatUserContextItemService.format_prompt_block(
         {

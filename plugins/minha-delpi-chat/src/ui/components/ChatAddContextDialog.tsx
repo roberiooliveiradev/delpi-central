@@ -1,18 +1,19 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { FileText, Upload } from "lucide-react";
 
+import type { ConversationContextPick } from "../chatContextFromMessage";
+import type { ContextItemPayload } from "../chatContextFromMessage";
+
 import { ModalPortal } from "./ModalPortal";
 import "./ChatAddContextDialog.css";
 
-export type UserContextPayload = {
-  content: string;
-  filename?: string;
-};
+export type UserContextPayload = ContextItemPayload;
 
 type ChatAddContextDialogProps = {
   open: boolean;
   onCancel: () => void;
   onConfirm: (payload: UserContextPayload) => void;
+  recentConversation?: ConversationContextPick[];
 };
 
 const MAX_CHARS = 12_000;
@@ -28,7 +29,12 @@ async function readFileAsText(file: File): Promise<string> {
   });
 }
 
-export function ChatAddContextDialog({ open, onCancel, onConfirm }: ChatAddContextDialogProps) {
+export function ChatAddContextDialog({
+  open,
+  onCancel,
+  onConfirm,
+  recentConversation = [],
+}: ChatAddContextDialogProps) {
   const formId = useId();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [content, setContent] = useState("");
@@ -120,12 +126,44 @@ export function ChatAddContextDialog({ open, onCancel, onConfirm }: ChatAddConte
           <header className="mdc-chat-add-context__header">
             <h2 id={`${formId}-title`}>Adicionar ao contexto</h2>
             <p>
-              Cole qualquer informação — texto, tabela, trecho de documento ou arquivo. O sistema
-              classifica e usa nas próximas respostas; você não precisa escolher o tipo.
+              Cole texto, tabela ou arquivo — ou escolha uma pergunta ou resposta da conversa. O
+              sistema classifica e usa nas próximas respostas.
             </p>
           </header>
 
           <form id={formId} className="mdc-chat-add-context__form" onSubmit={handleSubmit}>
+            {recentConversation.length > 0 ? (
+              <div className="mdc-chat-add-context__conversation">
+                <span className="mdc-chat-add-context__conversation-label">Da conversa</span>
+                <ul className="mdc-chat-add-context__conversation-list">
+                  {recentConversation.map((pick) => (
+                    <li key={`${pick.role}:${pick.id}`}>
+                      <button
+                        type="button"
+                        className="mdc-chat-add-context__conversation-item"
+                        onClick={() => {
+                          onConfirm({
+                            content: pick.content,
+                            role: pick.role,
+                            messageId: pick.id,
+                            kind: pick.role === "assistant" ? "answer" : "question",
+                          });
+                        }}
+                      >
+                        <span
+                          className={`mdc-chat-add-context__conversation-role mdc-chat-add-context__conversation-role--${pick.role}`}
+                        >
+                          {pick.role === "assistant" ? "Resposta" : "Pergunta"}
+                        </span>
+                        <span className="mdc-chat-add-context__conversation-preview">
+                          {pick.preview}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             <label className="mdc-chat-add-context__field">
               <span>Conteúdo</span>
               <textarea

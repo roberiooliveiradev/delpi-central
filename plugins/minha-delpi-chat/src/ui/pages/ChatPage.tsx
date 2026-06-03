@@ -40,6 +40,13 @@ import {
   normalizeContextChips,
 } from "../chatActiveContext";
 import {
+  buildContextPayloadFromMessage,
+  buildContextTurnPayload,
+  findPreviousUserMessage,
+  listRecentConversationPicks,
+  type ContextItemPayload,
+} from "../chatContextFromMessage";
+import {
   CHAT_SHORTCUT_PROMPT_COPY,
   extractProductCodeFromContextChips,
   hasUnresolvedShortcutPlaceholders,
@@ -111,6 +118,7 @@ import type {
   AssistantOnboardingPayload,
   AssistantContextualHighlight,
   ChatCanvasOpenPayload,
+  ChatMessage,
 } from "../../data/api/chatTypes";
 import { useChatResponseMode } from "../../state/hooks/useChatResponseMode";
 import { useChatSession } from "../../state/hooks/useChatSession";
@@ -560,7 +568,7 @@ export function ChatPage({
   }, [activeMemoryUsage, activeSession?.id, applySessionMemoryContext, getAccessToken]);
 
   const handleAddContextPayload = useCallback(
-    (payload: { content: string; filename?: string }) => {
+    (payload: ContextItemPayload) => {
       setAddContextDialogOpen(false);
 
       if (!activeSession?.id) {
@@ -578,6 +586,35 @@ export function ChatPage({
         });
     },
     [activeSession?.id, applySessionMemoryContext, getAccessToken],
+  );
+
+  const handleAddMessageToContext = useCallback(
+    (message: ChatMessage) => {
+      const payload = buildContextPayloadFromMessage(message);
+
+      if (payload) {
+        handleAddContextPayload(payload);
+      }
+    },
+    [handleAddContextPayload],
+  );
+
+  const handleAddMessageTurnToContext = useCallback(
+    (answerMessage: ChatMessage) => {
+      const questionMessage = findPreviousUserMessage(messages, answerMessage.id);
+      const payload =
+        questionMessage && buildContextTurnPayload(questionMessage, answerMessage);
+
+      if (payload) {
+        handleAddContextPayload(payload);
+      }
+    },
+    [handleAddContextPayload, messages],
+  );
+
+  const recentConversationPicks = useMemo(
+    () => listRecentConversationPicks(messages),
+    [messages],
   );
 
   const handleClearActiveContext = useCallback(() => {
@@ -1857,6 +1894,7 @@ export function ChatPage({
         open={addContextDialogOpen}
         onCancel={() => setAddContextDialogOpen(false)}
         onConfirm={handleAddContextPayload}
+        recentConversation={recentConversationPicks}
       />
       <ChatMemoryUsedDialog
         open={memoryUsedDialogOpen}
@@ -2366,6 +2404,12 @@ export function ChatPage({
                   void handleReuseMessage(content);
                 }}
                 onDrillDown={handleDrillDown}
+                onAddMessageToContext={
+                  activeSession?.id ? handleAddMessageToContext : undefined
+                }
+                onAddMessageTurnToContext={
+                  activeSession?.id ? handleAddMessageTurnToContext : undefined
+                }
                 onRecordHelpEvent={(payload) => {
                   void recordAssistantHelpEvent(
                     {

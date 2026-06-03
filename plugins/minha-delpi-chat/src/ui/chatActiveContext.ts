@@ -4,6 +4,9 @@ const CHIP_KIND_ORDER: Record<string, number> = {
   product: 0,
   branch: 1,
   warehouse: 2,
+  question: 2.5,
+  answer: 2.6,
+  turn: 2.7,
   topic: 3,
   task: 4,
   period: 5,
@@ -109,7 +112,15 @@ export function contextChipKindClass(kind: string): string {
 }
 
 const PINNABLE_CONTEXT_KINDS = new Set(["branch", "warehouse", "product"]);
-const USER_CONTEXT_ITEM_KINDS = new Set(["note", "table", "file", "knowledge"]);
+const USER_CONTEXT_ITEM_KINDS = new Set([
+  "note",
+  "table",
+  "file",
+  "knowledge",
+  "question",
+  "answer",
+  "turn",
+]);
 
 export function isPinnableContextKind(kind: string): boolean {
   return PINNABLE_CONTEXT_KINDS.has(String(kind || "").trim().toLowerCase());
