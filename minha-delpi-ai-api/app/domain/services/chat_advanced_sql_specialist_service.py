@@ -581,6 +581,40 @@ class ChatAdvancedSqlSpecialistService:
         path = str((metadata or {}).get("path") or "")
         table_match = re.search(r"/system/tables/([A-Za-z0-9]+)", path, flags=re.IGNORECASE)
         table_name = table_match.group(1).upper() if table_match else "tabela"
+
+        if "/relations" in path.lower():
+            from app.domain.services.chat_sql_schema_discovery_service import (
+                ChatSqlSchemaDiscoveryService,
+            )
+
+            payload = data.get("data") if isinstance(data, dict) and "data" in data else data
+            relations = ChatSqlSchemaDiscoveryService._parse_relation_results(
+                payload if isinstance(payload, dict) else {}
+            )
+            relation_lines = [
+                (
+                    f"{item['sourceTable']}.{item['sourceField']} → "
+                    f"{item['targetTable']}.{item['targetField']}"
+                )
+                for item in relations[:10]
+                if isinstance(item, dict)
+            ]
+            example_sql = cls._example_join_sql_for_tables([table_name, "SA1", "SC5"])
+
+            return {
+                "titulo": f"Relações internas {table_name} (não exibir catálogo ao usuário)",
+                "linhas": [
+                    f"Tabela consultada: {table_name} — {len(relation_lines)} relação(ões) no SX9.",
+                    *(
+                        [f"FK: {line}" for line in relation_lines]
+                        if relation_lines
+                        else ["Sem FK retornada — use convenção Protheus SC5.C5_CLIENTE = SA1.A1_COD."]
+                    ),
+                    "Entrega obrigatória: bloco ```sql``` com JOIN de exemplo (SELECT somente leitura).",
+                    *( [f"Modelo: {example_sql}"] if example_sql else [] ),
+                ],
+            }
+
         columns = cls._extract_column_names_from_schema_payload(data)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         prioritized: list[str] = []
@@ -614,6 +648,20 @@ class ChatAdvancedSqlSpecialistService:
                 "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno.",
             ],
         }
+
+    @classmethod
+    def _example_join_sql_for_tables(cls, tables: list[str]) -> str | None:
+        upper = {str(item).upper() for item in tables if item}
+
+        if {"SC5", "SA1"}.issubset(upper):
+            return (
+                "SELECT SC5.C5_NUM, SC5.C5_CLIENTE, SA1.A1_COD, SA1.A1_NOME\n"
+                "FROM SC5010 SC5\n"
+                "INNER JOIN SA1010 SA1 ON SA1.A1_COD = SC5.C5_CLIENTE AND SA1.D_E_L_E_T_ = ''\n"
+                "WHERE SC5.D_E_L_E_T_ = ''"
+            )
+
+        return None
 
     @classmethod
     def _extract_column_names_from_schema_payload(cls, data: object) -> list[str]:
@@ -695,6 +743,16 @@ class ChatAdvancedSqlSpecialistService:
             lines.append(
                 f"Tabelas candidatas da mensagem: {', '.join(schema_discovery.get('tableCandidates') or [])}"
             )
+
+        example_join = cls._example_join_sql_for_tables(
+            [str(item) for item in (schema_discovery.get("tableCandidates") or [])]
+        )
+
+        if example_join and mode == "schema_explore":
+            lines.append(
+                "Inclua no bloco ```sql``` um JOIN de validação com base neste modelo (ajuste sufixo 010):"
+            )
+            lines.append(example_join)
 
         if schema_discovery.get("columnCandidates"):
             lines.append(
