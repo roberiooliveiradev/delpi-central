@@ -73,6 +73,8 @@ delpi-strategic-indicators
 delpi-minha-delpi-chat
 delpi-dashboard-lmps
 delpi-dashboard-delpi
+delpi-auditoria-5s
+delpi-central-agendamento
 ```
 
 ---

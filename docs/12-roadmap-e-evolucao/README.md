@@ -42,3 +42,10 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [auditoria-5s/ROADMAP.md](./auditoria-5s/ROADMAP.md) | Roadmap completo do plugin (planejamento) |
 | [auditoria-5s/CRITERIOS-CATALOGO.md](./auditoria-5s/CRITERIOS-CATALOGO.md) | Catálogo de 48 critérios por senso (v1) |
 | [auditoria-5s/REGRAS-NEGOCIO.md](./auditoria-5s/REGRAS-NEGOCIO.md) | Turnos, áreas, validação e regras de cálculo |
+
+### Central de Agendamento
+
+| Arquivo | Conteúdo |
+|---|---|
+| [central-agendamento/README.md](./central-agendamento/README.md) | Índice do módulo |
+| [central-agendamento/ROADMAP.md](./central-agendamento/ROADMAP.md) | Fases de entrega e checklist de produção |

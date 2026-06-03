@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "central-agendamento",
+  "name": "Central de Agendamento",
+  "description": "Central de agendamento de salas, treinamentos e veículos corporativos",
+  "icon": "calendar-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/central-agendamento",
+  "entry": "/apps/central-agendamento/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "central-agendamento.view.filial-es",
+      "name": "Visualizar Central de Agendamento — Filial ES",
+      "description": "Consultar disponibilidade e reservar recursos na Filial ES",
+      "module": "central-agendamento"
+    },
+    {
+      "code": "central-agendamento.view.filial-sc",
+      "name": "Visualizar Central de Agendamento — Filial SC",
+      "description": "Consultar disponibilidade e reservar recursos na Filial SC",
+      "module": "central-agendamento"
+    },
+    {
+      "code": "central-agendamento.manage.filial-es",
+      "name": "Gerenciar recursos — Filial ES",
+      "description": "Cadastrar e editar recursos agendáveis na Filial ES",
+      "module": "central-agendamento"
+    },
+    {
+      "code": "central-agendamento.manage.filial-sc",
+      "name": "Gerenciar recursos — Filial SC",
+      "description": "Cadastrar e editar recursos agendáveis na Filial SC",
+      "module": "central-agendamento"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/central-agendamento/filial-es",
+      "label": "Central de Agendamento — Filial ES",
+      "permission": "central-agendamento.view.filial-es",
+      "icon": "calendar-icon",
+      "order": 20,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/central-agendamento/filial-sc",
+      "label": "Central de Agendamento — Filial SC",
+      "permission": "central-agendamento.view.filial-sc",
+      "icon": "calendar-icon",
+      "order": 21,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

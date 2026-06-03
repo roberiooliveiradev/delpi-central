@@ -514,6 +514,21 @@ services:
     networks:
       - delpi-network
 
+  central-agendamento:
+    build:
+      context: ../plugins/central-agendamento
+      dockerfile: Dockerfile
+      target: production
+
+    container_name: delpi-central-agendamento
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     build:
       context: ../plugins/dashboard-supplies
