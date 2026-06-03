@@ -34,6 +34,22 @@ export const CHAT_TEXT_HOME_STARTERS: ChatHomeStarter[] = [
     label: "E-mail",
     query: "escreva um e-mail formal para {{emailRecipient}} sobre {{emailSubject}}",
   },
+  {
+    label: "Carta formal",
+    query: "crie uma carta formal solicitando autorização",
+  },
+  {
+    label: "Ata de reunião",
+    query: "transforme estas anotações em ata de reunião:\n\n{{textContent}}",
+  },
+  {
+    label: "ELI5",
+    query: "explique {{searchQuery}} como se eu tivesse 5 anos",
+  },
+  {
+    label: "Documentação",
+    query: "transforme a explicação abaixo em documentação técnica:\n\n{{textContent}}",
+  },
 ];
 
 /** Quebra-gelos padrão na home do agente (sem código fixo). */

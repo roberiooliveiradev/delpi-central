@@ -281,8 +281,8 @@
       "body": "Consultas operacionais exigem:\n1. **Agente** no composer com a action correta (ex.: estoque → `GET /products/{code}/stock`).\n2. **Permissão** da sua conta para essa rota no RBAC.\n\nSe a resposta vier vazia ou com erro de acesso, troque o agente ou peça ao administrador para liberar a action. Pergunte *«o que você pode fazer?»* para ver o que está habilitado nesta sessão."
     },
     "textTasksHelp": {
-      "title": "**Correção e redação de textos**",
-      "body": "Sim — corrijo, resumo, traduzo e deixo textos mais formais **sem** consultar o ERP.\n\n**E-mails corporativos:** assunto + corpo profissional, assinatura segura (`[Seu nome]` se não informado), chips para refinar (mais formal, mais curto, traduzir, lousa). Após consulta operacional, posso montar e-mail **só com os dados retornados** e citar a fonte.\n\n**Exemplos:**\n- «Corrija: segue documento em anexo»\n- «Escreva um e-mail formal para o fornecedor sobre prazo»\n- «Consulte o estoque do 10080001 e escreva um e-mail para compras»\n- «Daqui pra frente sempre faça e-mails curtos»"
+      "title": "**Editor textual (correção, redação e documentos)**",
+      "body": "Corrijo, resumo, traduzo, reescrevo e crio **e-mails, cartas, atas, comunicados, relatórios e documentação** sem consultar o ERP, salvo pedido misto explícito.\n\n**Modos:** só versão final, antes/depois, múltiplas versões (formal, direta, cordial), ELI5 e adaptação por público (diretoria, cliente, produção).\n\n**Anexos:** resumo, correção, pendências, ata, checklist, relatório, comunicado e e-mail com base no arquivo.\n\n**Lousa:** coloque textos longos na lousa; transforme em ata, checklist ou relatório.\n\n**Exemplos:**\n- «Corrija preservando o código 10080022»\n- «Crie uma carta formal solicitando autorização»\n- «Explique RBAC como se eu tivesse 5 anos»\n- «Transforme o anexo em ata de reunião»\n- «Consulte estoque do 10080001 e escreva e-mail para compras»"
     }
   },
   "pathRules": [

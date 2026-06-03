@@ -352,6 +352,18 @@
       "label": "Tradução ruim"
     },
     {
+      "id": "text_incomplete_summary",
+      "label": "Resumo incompleto"
+    },
+    {
+      "id": "text_confusing_explanation",
+      "label": "Explicação confusa"
+    },
+    {
+      "id": "text_missing_context",
+      "label": "Faltou contexto"
+    },
+    {
       "id": "text_correction_artificial",
       "label": "Texto ficou artificial"
     },
@@ -535,6 +547,45 @@
         "label": "Encerrar",
         "action": "dismiss"
       }
+    ],
+    "text_incomplete_summary": [
+      {
+        "id": "expand_summary",
+        "label": "Completar resumo",
+        "action": "send_query",
+        "queryTemplate": "Refaça o resumo incluindo decisões e pendências que faltaram."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "text_confusing_explanation": [
+      {
+        "id": "simplify_explain",
+        "label": "Explicar mais simples",
+        "action": "send_query",
+        "queryTemplate": "Explique de forma mais simples, com um exemplo prático."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
+    ],
+    "text_missing_context": [
+      {
+        "id": "add_context",
+        "label": "Pedir contexto",
+        "action": "send_query",
+        "queryTemplate": "Refaça considerando o contexto da conversa anterior."
+      },
+      {
+        "id": "dismiss",
+        "label": "Encerrar",
+        "action": "dismiss"
+      }
     ]
   },
   "defaultRules": [
@@ -595,13 +646,26 @@
   "attachmentFollowUpChips": [
     "Resumir",
     "Corrigir",
+    "Colocar na lousa",
     "Traduzir",
     "Extrair pendências",
     "Criar checklist",
     "Criar ata",
-    "Colocar na lousa",
+    "Criar relatório",
+    "Criar comunicado",
+    "Criar e-mail do anexo",
+    "Revisar redação",
+    "Explicar conteúdo",
+    "Versão simplificada",
     "Comparar"
   ],
+  "attachmentTextTaskChips": {
+    "correct": ["Revisar redação", "Criar e-mail do anexo"],
+    "summarize": ["Resumo executivo", "Criar comunicado"],
+    "minutes": ["Criar ata", "Extrair pendências"],
+    "structure": ["Criar checklist", "Criar plano de ação"],
+    "documentation": ["Criar documentação", "Versão simplificada"]
+  },
   "attachmentLargeFile": {
     "body": "O arquivo é **extenso**. Posso começar por um resumo geral ou trabalhar por seções — não prometo leitura integral de todas as páginas de uma vez.",
     "chips": [
@@ -703,6 +767,12 @@
     "Extrair pendências": "extraia as pendências do arquivo anexado em tópicos",
     "Criar checklist": "transforme o arquivo anexado em um checklist",
     "Criar ata": "transforme o arquivo anexado em ata de reunião",
+    "Criar relatório": "transforme o arquivo anexado em relatório estruturado",
+    "Criar comunicado": "crie um comunicado interno com base no arquivo anexado",
+    "Criar e-mail do anexo": "crie um e-mail corporativo com base no arquivo anexado, com assunto",
+    "Revisar redação": "revise clareza e tom do texto do arquivo anexado",
+    "Explicar conteúdo": "explique de forma simples o conteúdo do arquivo anexado",
+    "Versão simplificada": "gere uma versão simplificada do arquivo anexado",
     "Colocar na lousa": "resuma o arquivo anexado e coloque o resultado na lousa",
     "Comparar": "compare os arquivos anexados e destaque diferenças de colunas e totais",
     "Resumo geral": "faça um resumo geral do arquivo anexado em tópicos",
@@ -729,6 +799,22 @@
     {
       "label": "E-mail",
       "query": "escreva um e-mail cobrando retorno do fornecedor sobre prazo"
+    },
+    {
+      "label": "Carta formal",
+      "query": "crie uma carta formal solicitando autorização"
+    },
+    {
+      "label": "Ata de reunião",
+      "query": "transforme estas anotações em ata de reunião"
+    },
+    {
+      "label": "ELI5",
+      "query": "explique RBAC como se eu tivesse 5 anos"
+    },
+    {
+      "label": "Documentação",
+      "query": "transforme essa explicação em documentação técnica"
     }
   ],
   "composerPlaceholders": {
@@ -826,6 +912,46 @@
     "Colocar na lousa",
     "Copiar texto"
   ],
+  "textTaskFollowUpChipsBySubtype": {
+    "text_correct": [
+      "Mostrar alterações",
+      "Deixar mais formal",
+      "Deixar mais direto",
+      "Reescrever",
+      "Colocar na lousa"
+    ],
+    "text_email_create": [
+      "Deixar mais curto",
+      "Deixar mais cordial",
+      "Criar assunto alternativo",
+      "Gerar 3 versões",
+      "Colocar na lousa"
+    ],
+    "text_minutes": [
+      "Extrair pendências",
+      "Criar plano de ação",
+      "Resumir para diretoria",
+      "Colocar na lousa"
+    ],
+    "text_explain": [
+      "Explicar simples",
+      "ELI5",
+      "Criar exemplo",
+      "Criar checklist",
+      "Criar documentação"
+    ],
+    "text_eli5": [
+      "Explicar técnico",
+      "Criar exemplo",
+      "Criar glossário",
+      "Colocar na lousa"
+    ],
+    "text_documentation": [
+      "Deixar mais curto",
+      "Criar checklist",
+      "Colocar na lousa"
+    ]
+  },
   "textTaskFollowUpQueries": {
     "Deixar mais formal": "deixe mais formal o texto da resposta anterior",
     "Deixar mais curto": "deixe mais curto o texto da resposta anterior",
@@ -836,7 +962,20 @@
     "Criar comunicado": "transforme o texto anterior em um comunicado interno",
     "Traduzir": "traduza o texto da resposta anterior para inglês",
     "Colocar na lousa": "coloque o texto da resposta anterior na lousa",
-    "Copiar texto": "repita só o texto final da resposta anterior, sem comentários"
+    "Copiar texto": "repita só o texto final da resposta anterior, sem comentários",
+    "Criar assunto alternativo": "sugira três assuntos alternativos para o e-mail anterior",
+    "Gerar 3 versões": "gere três versões do texto anterior: formal, direta e cordial",
+    "Extrair pendências": "extraia pendências do texto anterior em lista",
+    "Criar plano de ação": "transforme o texto anterior em plano de ação com placeholders para responsável e prazo",
+    "Resumir para diretoria": "resuma o texto anterior em formato executivo para diretoria",
+    "Explicar simples": "explique de forma simples o conteúdo da resposta anterior",
+    "ELI5": "explique o conteúdo anterior como se eu tivesse 5 anos",
+    "Criar exemplo": "crie um exemplo prático baseado no texto anterior",
+    "Criar glossário": "crie um glossário dos termos do texto anterior",
+    "Criar documentação": "transforme o texto anterior em documentação técnica estruturada",
+    "Explicar técnico": "reescreva a explicação anterior em tom técnico preservando siglas",
+    "Reescrever": "reescreva o texto da resposta anterior preservando o sentido",
+    "Transformar em e-mail": "transforme o texto anterior em e-mail com assunto"
   },
   "webSearchFollowUpChips": [
     "Abrir fontes",

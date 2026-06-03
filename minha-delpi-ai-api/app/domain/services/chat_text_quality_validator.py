@@ -75,6 +75,27 @@ class ChatTextQualityValidator:
                     }
                 )
 
+        if subtype == "text_action_plan" and re.search(
+            r"\b(joão|maria|pedro|ana|carlos)\b",
+            text,
+            re.IGNORECASE,
+        ):
+            if "[" not in text:
+                checks.append(
+                    {
+                        "code": "invented_owner",
+                        "message": "Plano de ação com possível responsável inventado.",
+                    }
+                )
+
+        if subtype == "text_eli5" and len(text.split()) < 20:
+            checks.append(
+                {
+                    "code": "eli5_too_short",
+                    "message": "ELI5 deveria trazer explicação mais desenvolvida.",
+                }
+            )
+
         if cls._INVENTED_SIGNATURE.search(text) and not ChatTextCorrectionIntentService.extract_context(
             message
         ).get("senderSignature"):

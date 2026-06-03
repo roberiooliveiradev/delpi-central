@@ -429,25 +429,6 @@ class ChatIntentRouterService:
                 reason="document_question_with_files",
             )
 
-        sql_sub = cls._sql_sub_intent(normalized)
-
-        if sql_sub:
-            execute = sql_sub == "sql_execute"
-
-            return cls._with_decision(
-                IntentRouteResult(
-                    intent="sql_task",
-                    sub_intent=sql_sub,
-                    confidence=0.87,
-                    requires_tool=execute,
-                    requires_llm=True,
-                    priority_applied=9,
-                    flags=("sql_task",),
-                ),
-                decision="sql_route",
-                reason=sql_sub,
-            )
-
         if text_task_pure or ChatTextTaskIntentService.is_pure_text_task(
             normalized,
             previous_messages=history,
@@ -468,6 +449,25 @@ class ChatIntentRouterService:
                 ),
                 decision="skip_tools",
                 reason="explicit_text_task",
+            )
+
+        sql_sub = cls._sql_sub_intent(normalized)
+
+        if sql_sub:
+            execute = sql_sub == "sql_execute"
+
+            return cls._with_decision(
+                IntentRouteResult(
+                    intent="sql_task",
+                    sub_intent=sql_sub,
+                    confidence=0.87,
+                    requires_tool=execute,
+                    requires_llm=True,
+                    priority_applied=9,
+                    flags=("sql_task",),
+                ),
+                decision="sql_route",
+                reason=sql_sub,
             )
 
         compound_steps = cls._mixed_compound_steps(normalized)

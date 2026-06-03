@@ -53,6 +53,7 @@ def test_l2_attachment_follow_up_chips():
         metadata,
         had_attachments=case["had_attachments"],
         attachments=[{"original_filename": "planilha.xlsx", "status": "indexed"}],
+        message="resuma o anexo",
     )
 
     labels = [
@@ -62,6 +63,20 @@ def test_l2_attachment_follow_up_chips():
 
     for label in case["expect_labels"]:
         assert label in labels
+
+
+def test_attachment_follow_up_includes_summarize_chips():
+    metadata: dict = {}
+
+    ChatAttachmentFollowUpService.attach_to_assistant_metadata(
+        metadata,
+        had_attachments=True,
+        message="resuma o arquivo anexado",
+    )
+
+    labels = [item["label"] for item in metadata.get("attachmentFollowUpSuggestions") or []]
+
+    assert "Resumo executivo" in labels or "Resumir" in labels
 
 
 def test_l5_canvas_copy_last_response():

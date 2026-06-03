@@ -1,8 +1,10 @@
-# Especialista em textos (Playbook 03)
+# Especialista em textos (editor textual DELPI)
+
+**Playbook:** [`../roadmap/playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) (evolução do Playbook 03).
 
 ## Princípio
 
-**Texto bom = sentido preservado + clareza + tom adequado + zero invenção.**
+**Texto bom = contexto entendido + sentido preservado + tom adequado + clareza + zero invenção.**
 
 Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routing.md](./intent-routing.md)).
 
@@ -19,6 +21,7 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 | `ChatTextTaskCanvasService` | Atualização da lousa + histórico `textCanvasVersions` |
 | `ChatTextTaskAdminMetricsService` | Snapshot em auditoria e agregado admin |
 | `ChatTextTaskComposerService` | Rascunho operacional após tools (turno misto) |
+| `ChatTextEditorSupplementService` | Templates por subtipo (carta, ata, ELI5, documentação, …) |
 
 ## Policies
 
@@ -31,6 +34,12 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 - `GET /admin/metrics/text-tasks/summary?hours=168` — agregado de `audit_metadata.textTaskMetrics`
 - MFE: `AdminTextTaskMetrics` na aba Métricas
 
+## Metadata
+
+- `textTask` — tipo, subtipo, `intent` (ex. `text.email.create`), tom, público, origem (`user_message` | `attachment` | `canvas`)
+- `textAssistant` — espelho resumido para telemetria/UI (mesmos campos principais)
+- `textTaskFollowUpSuggestions`, `textTaskQuality`, `textTaskMetrics`, `textCanvasVersions`
+
 ## Testes
 
-`tests/fixtures/text_specialist_regression_cases.py` (T1–T16), `scripts/run_text_specialist_validation.sh`
+`tests/fixtures/text_specialist_regression_cases.py` (T1–T24), `scripts/run_text_specialist_validation.sh`, `scripts/smoke_text_editor_e2e.py`

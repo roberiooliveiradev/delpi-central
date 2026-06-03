@@ -44,7 +44,7 @@ export function AdminTextTaskMetrics({
     >
       <header className="mdc-admin-drawing-metrics__header">
         <div>
-          <p className="mdc-chat-eyebrow">Playbook 03</p>
+          <p className="mdc-chat-eyebrow">Editor textual</p>
           <h3 id="mdc-admin-text-task-metrics-title">Especialista em textos</h3>
           <p>
             Agregado de snapshots em auditoria (`metadata.textTaskMetrics`) na janela de{" "}
@@ -84,6 +84,16 @@ export function AdminTextTaskMetrics({
               <strong>{formatNumber(summary.canvasVersionedCount)}</strong>
               <p>Atualizações com histórico de versões na lousa.</p>
             </article>
+            <article className="mdc-admin-kpi-card">
+              <h4>Só versão final</h4>
+              <strong>{formatNumber(summary.deliverFinalOnlyCount)}</strong>
+              <p>Pedidos com entrega direta, sem explicação longa.</p>
+            </article>
+            <article className="mdc-admin-kpi-card">
+              <h4>Com anexo</h4>
+              <strong>{formatNumber(summary.attachmentSourceCount)}</strong>
+              <p>Tarefas textuais com origem em arquivo anexado.</p>
+            </article>
           </div>
 
           {subtypeEntries.length > 0 ? (
@@ -96,6 +106,22 @@ export function AdminTextTaskMetrics({
                     <strong>{formatNumber(count)}</strong>
                   </li>
                 ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {summary.byIntent && Object.keys(summary.byIntent).length > 0 ? (
+            <div className="mdc-admin-drawing-metrics__status-list">
+              <h4>Por intenção</h4>
+              <ul>
+                {Object.entries(summary.byIntent)
+                  .sort((left, right) => right[1] - left[1])
+                  .map(([intent, count]) => (
+                    <li key={intent}>
+                      <span>{intent}</span>
+                      <strong>{formatNumber(count)}</strong>
+                    </li>
+                  ))}
               </ul>
             </div>
           ) : null}

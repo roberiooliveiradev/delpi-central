@@ -116,7 +116,9 @@ class ChatTextTaskComposerService:
             "Tarefa textual com anexo: use o conteúdo dos arquivos anexados nesta mensagem "
             "(seção de anexos abaixo) como fonte principal. "
             "Não diga que não tem acesso ao documento quando o trecho estiver no contexto. "
-            "Entregue a versão corrigida ou redigida solicitada."
+            "Pode resumir, corrigir, revisar, traduzir, extrair pendências ou transformar em "
+            "ata, checklist, relatório, comunicado ou e-mail conforme o pedido. "
+            "Entregue a versão solicitada; use placeholders para dados ausentes."
         )
 
     @classmethod

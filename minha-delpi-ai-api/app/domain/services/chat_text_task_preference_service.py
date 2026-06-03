@@ -16,6 +16,9 @@ class ChatTextTaskPreferenceService:
         (r"sempre\s+ger[eo]\s+assunto", "email_subject"),
         (r"sempre\s+(?:me\s+entregue\s+)?em\s+t[oó]picos", "format_topics"),
         (r"sempre\s+resumo\s+executivo", "summary_executive"),
+        (r"sempre\s+tr[eê]s\s+vers[oõ]es", "three_versions"),
+        (r"sempre\s+com\s+assunto", "email_subject"),
+        (r"sempre\s+em\s+portugu[eê]s\s+formal", "tone_formal"),
     )
 
     @classmethod
@@ -67,6 +70,7 @@ class ChatTextTaskPreferenceService:
             "email_subject": "sempre sugerir assunto",
             "format_topics": "formato em tópicos",
             "summary_executive": "resumo executivo",
+            "three_versions": "três versões (formal, direta, cordial)",
         }
 
         for key, label in labels.items():

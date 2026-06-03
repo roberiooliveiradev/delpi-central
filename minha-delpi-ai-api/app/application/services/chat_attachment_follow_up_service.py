@@ -27,6 +27,7 @@ class ChatAttachmentFollowUpService:
         *,
         had_attachments: bool,
         attachments: list[dict] | None = None,
+        message: str | None = None,
     ) -> None:
         if not had_attachments:
             return
@@ -48,7 +49,21 @@ class ChatAttachmentFollowUpService:
                 "Colocar na lousa",
             ]
         )
-        queries = _playbook().get("attachmentFollowUpQueries") or {}
+        queries = dict(_playbook().get("attachmentFollowUpQueries") or {})
+
+        if message:
+            from app.domain.services.chat_text_task_intent_service import (
+                ChatTextTaskIntentService,
+            )
+
+            category = ChatTextTaskIntentService.classify(message)
+
+            extra_labels = (_playbook().get("attachmentTextTaskChips") or {}).get(category)
+
+            if isinstance(extra_labels, list):
+                for label in extra_labels:
+                    if label not in labels:
+                        labels.append(str(label))
 
         if attachments and len(attachments) >= 2 and "Comparar" not in labels:
             labels.append("Comparar")
@@ -60,7 +75,7 @@ class ChatAttachmentFollowUpService:
 
         suggestions: list[dict[str, str]] = []
 
-        for label in labels[:7]:
+        for label in labels[:10]:
             template = str(queries.get(label) or label).strip()
             suggestions.append({"label": str(label), "query": template})
 

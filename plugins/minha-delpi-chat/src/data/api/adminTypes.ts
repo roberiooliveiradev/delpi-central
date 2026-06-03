@@ -375,6 +375,8 @@ export type AdminTextTaskRecentItem = {
   action?: string | null;
   subtype?: string | null;
   type?: string | null;
+  intent?: string | null;
+  audience?: string | null;
   mixed?: boolean | null;
   qualityPassed?: boolean | null;
 };
@@ -386,8 +388,13 @@ export type AdminTextTaskSummary = {
   mixedTurnCount: number;
   qualityFailedCount: number;
   canvasVersionedCount: number;
+  deliverFinalOnlyCount?: number;
+  technicalTermCount?: number;
+  attachmentSourceCount?: number;
   bySubtype: Record<string, number>;
   byType: Record<string, number>;
+  byIntent?: Record<string, number>;
+  byAudience?: Record<string, number>;
   recent: AdminTextTaskRecentItem[];
 };
 

@@ -41,6 +41,22 @@ def test_sql_authoring_is_not_pure_text_task():
     assert ChatTextTaskIntentService.is_pure_text_task(message) is False
 
 
+def test_classify_letter_and_eli5():
+    assert ChatTextTaskIntentService.classify("Crie uma carta formal solicitando autorização") == "letter"
+    assert (
+        ChatTextTaskIntentService.classify("Explique RBAC como se eu tivesse 5 anos")
+        == "eli5"
+    )
+
+
+def test_classify_documentation_and_action_plan():
+    assert (
+        ChatTextTaskIntentService.classify("Transforme essa explicação em documentação técnica")
+        == "documentation"
+    )
+    assert ChatTextTaskIntentService.classify("Extraia um plano de ação com responsáveis") == "action_plan"
+
+
 def test_mixed_operational_and_text():
     message = (
         "Consulte o estoque do produto 10080001 e escreva um e-mail avisando compras"

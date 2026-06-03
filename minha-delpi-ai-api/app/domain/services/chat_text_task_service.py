@@ -13,6 +13,7 @@ class ChatTextTaskService:
 
     _CATEGORY_TO_TYPE: dict[str, str] = {
         "correct": "correction",
+        "review": "review",
         "rewrite": "rewrite",
         "translate": "translation",
         "summarize": "summary",
@@ -28,6 +29,41 @@ class ChatTextTaskService:
         "compare": "comparison",
         "organize": "organize",
         "simplify": "simplify",
+        "letter": "letter",
+        "report": "report",
+        "documentation": "documentation",
+        "explain": "explanation",
+        "eli5": "explanation",
+        "action_plan": "action_plan",
+        "adapt_audience": "adaptation",
+    }
+
+    _SUBTYPE_TO_INTENT: dict[str, str] = {
+        "text_correct": "text.correct",
+        "text_review_quality": "text.review",
+        "text_rewrite": "text.rewrite",
+        "text_formalize": "text.formalize",
+        "text_simplify": "text.simplify",
+        "text_professionalize": "text.rewrite",
+        "text_translate": "text.translate",
+        "text_summarize": "text.summarize",
+        "text_summarize_executive": "text.summarize",
+        "text_email_create": "text.email.create",
+        "text_email_reply": "text.email.reply",
+        "text_letter": "text.letter.create",
+        "text_minutes": "text.minutes.create",
+        "text_announcement": "text.announcement",
+        "text_checklist": "text.checklist.create",
+        "text_report": "text.report.create",
+        "text_documentation": "text.documentation.create",
+        "text_explain": "text.explain",
+        "text_eli5": "text.eli5",
+        "text_action_plan": "text.action_plan.create",
+        "text_adapt_audience": "text.adapt_audience",
+        "text_compare": "text.compare_versions",
+        "text_extract_actions": "text.extract_actions",
+        "text_tone_adjust": "text.change_tone",
+        "text_compose": "text.compose",
     }
 
     @classmethod
@@ -46,11 +82,15 @@ class ChatTextTaskService:
         deliver_final_only = cls._wants_final_only(normalized)
         source = cls._detect_source(normalized)
 
+        audience = cls._detect_audience(normalized)
+
         return {
             "type": cls._CATEGORY_TO_TYPE.get(category, "compose"),
             "subtype": subtype,
             "category": category,
+            "intent": cls._SUBTYPE_TO_INTENT.get(subtype, "text.compose"),
             "tone": tone,
+            "audience": audience,
             "format": cls._detect_format(normalized, subtype),
             "source": source,
             "preserveMeaning": True,
@@ -96,7 +136,7 @@ class ChatTextTaskService:
 
         ctx = cls.classify(message)
         lines = [
-            "Modo especialista em textos (Playbook 03):",
+            "Modo especialista em textos (editor textual DELPI):",
             f"- Tipo: {ctx.get('type')} / subtipo: {ctx.get('subtype')}",
             "- Não consulte API, SQL, RAG ou web neste turno.",
             "- Preserve sentido, códigos, nomes, valores e siglas.",
@@ -108,10 +148,22 @@ class ChatTextTaskService:
         if ctx.get("tone"):
             lines.append(f"- Tom desejado: {ctx['tone']}.")
 
+        if ctx.get("audience"):
+            lines.append(f"- Público-alvo: {ctx['audience']}.")
+
         template = cls._template_hint(ctx.get("subtype"))
 
         if template:
             lines.append(template)
+
+        from app.domain.services.chat_text_editor_supplement_service import (
+            ChatTextEditorSupplementService,
+        )
+
+        editor_block = ChatTextEditorSupplementService.build_block(ctx)
+
+        if editor_block:
+            lines.append(f"- {editor_block}")
 
         from app.domain.services.chat_text_task_preference_service import (
             ChatTextTaskPreferenceService,
@@ -164,10 +216,100 @@ class ChatTextTaskService:
         ctx = cls.classify(message)
         ctx["suggestions"] = cls.default_suggestions(ctx.get("subtype"))
 
-        return {"textTask": ctx}
+        payload: dict[str, Any] = {"textTask": ctx}
+        from app.domain.services.chat_text_editor_supplement_service import (
+            ChatTextEditorSupplementService,
+        )
+
+        payload["textAssistant"] = {
+            "intent": ctx.get("intent"),
+            "source": ctx.get("source"),
+            "audience": ctx.get("audience"),
+            "tone": ctx.get("tone"),
+            "format": ctx.get("format"),
+            "preserveMeaning": ctx.get("preserveMeaning"),
+            "containsTechnicalTerms": ctx.get("containsTechnicalTerms"),
+            "criticalDataPreserved": True,
+            "suggestions": ctx.get("suggestions"),
+        }
+
+        if ChatTextEditorSupplementService.suggest_canvas_for_subtype(
+            ctx.get("subtype"),
+            answer=answer,
+        ):
+            payload["textCanvasSuggested"] = True
+
+        return payload
 
     @classmethod
     def default_suggestions(cls, subtype: str | None) -> list[str]:
+        by_subtype: dict[str, list[str]] = {
+            "text_correct": [
+                "Mostrar alterações",
+                "Deixar mais formal",
+                "Deixar mais direto",
+                "Reescrever",
+                "Colocar na lousa",
+            ],
+            "text_rewrite": [
+                "Mostrar alterações",
+                "Deixar mais formal",
+                "Deixar mais direto",
+                "Reescrever",
+                "Colocar na lousa",
+            ],
+            "text_email_create": [
+                "Deixar mais curto",
+                "Deixar mais cordial",
+                "Criar assunto alternativo",
+                "Gerar 3 versões",
+                "Colocar na lousa",
+            ],
+            "text_email_reply": [
+                "Deixar mais curto",
+                "Deixar mais cordial",
+                "Criar assunto alternativo",
+                "Colocar na lousa",
+            ],
+            "text_minutes": [
+                "Extrair pendências",
+                "Criar plano de ação",
+                "Resumir para diretoria",
+                "Colocar na lousa",
+            ],
+            "text_explain": [
+                "Explicar simples",
+                "ELI5",
+                "Criar exemplo",
+                "Criar checklist",
+                "Criar documentação",
+            ],
+            "text_eli5": [
+                "Explicar técnico",
+                "Criar exemplo",
+                "Criar glossário",
+                "Colocar na lousa",
+            ],
+            "text_documentation": [
+                "Deixar mais curto",
+                "Criar checklist",
+                "Colocar na lousa",
+            ],
+            "text_letter": [
+                "Deixar mais formal",
+                "Deixar mais curto",
+                "Colocar na lousa",
+            ],
+            "text_report": [
+                "Resumo executivo",
+                "Transformar em e-mail",
+                "Colocar na lousa",
+            ],
+        }
+
+        if subtype and subtype in by_subtype:
+            return by_subtype[subtype][:8]
+
         base = [
             "Deixar mais formal",
             "Deixar mais curto",
@@ -176,9 +318,6 @@ class ChatTextTaskService:
             "Colocar na lousa",
             "Copiar texto",
         ]
-
-        if subtype in {"text_correct", "text_rewrite"}:
-            base.insert(3, "Mostrar alterações")
 
         if subtype not in {"text_email_create", "text_email_reply"}:
             base.append("Criar e-mail")
@@ -193,6 +332,9 @@ class ChatTextTaskService:
 
     @staticmethod
     def _resolve_subtype(category: str, normalized: str) -> str:
+        if category == "review":
+            return "text_review_quality"
+
         if category == "correct":
             if "mostre" in normalized and "alter" in normalized:
                 return "text_review_quality"
@@ -235,6 +377,30 @@ class ChatTextTaskService:
         if category == "announcement":
             return "text_announcement"
 
+        if category == "letter":
+            return "text_letter"
+
+        if category == "report":
+            return "text_report"
+
+        if category == "documentation":
+            if "faq" in normalized:
+                return "text_documentation"
+
+            return "text_documentation"
+
+        if category == "explain":
+            return "text_explain"
+
+        if category == "eli5":
+            return "text_eli5"
+
+        if category == "action_plan":
+            return "text_action_plan"
+
+        if category == "adapt_audience":
+            return "text_adapt_audience"
+
         if category == "compare":
             return "text_compare"
 
@@ -254,7 +420,13 @@ class ChatTextTaskService:
             return "text_organize"
 
         if category == "document":
-            return "text_announcement"
+            if "comunicado" in normalized:
+                return "text_announcement"
+
+            if "memorando" in normalized:
+                return "text_announcement"
+
+            return "text_compose"
 
         if category == "extract_actions":
             return "text_extract_actions"
@@ -268,19 +440,33 @@ class ChatTextTaskService:
         if "explique de forma simples" in normalized or "simplif" in normalized:
             return "text_simplify"
 
+        if "antes e depois" in normalized or "o que mudou" in normalized:
+            return "text_compare"
+
+        if "plano de ação" in normalized or "plano de acao" in normalized:
+            return "text_action_plan"
+
         return "text_compose"
 
     @staticmethod
     def _template_hint(subtype: str | None) -> str | None:
         hints = {
             "text_correct": "- Resposta: «Segue a versão corrigida:» + texto.",
+            "text_review_quality": "- Avalie clareza, tom e estrutura; sugira versão melhorada.",
             "text_email_create": "- Inclua Assunto: e corpo; não invente assinatura.",
             "text_email_reply": "- Resposta a e-mail; preserve contexto do original.",
             "text_announcement": "- Use título # Comunicado e tom objetivo.",
+            "text_letter": "- Carta formal: local/data, destinatário, corpo, fechamento; placeholders se faltar dado.",
             "text_minutes": "- Estrutura de ata: data, participantes, decisões, pendências.",
             "text_checklist": "- Lista com - [ ] e verbos de ação.",
+            "text_report": "- Relatório: contexto, achados, conclusão; use «não informado» se faltar dado.",
+            "text_documentation": "- Documentação: objetivo, escopo, passos; preserve termos técnicos.",
+            "text_explain": "- Explicação clara; preserve precisão técnica.",
+            "text_eli5": "- Linguagem simples e analogias; não distorça o conceito.",
+            "text_action_plan": "- Tabela ação/responsável/prazo; não invente responsáveis.",
+            "text_adapt_audience": "- Adapte vocabulário e tom ao público pedido.",
             "text_summarize": "- Resumo fiel; não invente fatos.",
-            "text_compare": "- Tabela comparativa + melhor opção.",
+            "text_compare": "- Seções Antes/Depois/O que mudou ou tabela comparativa.",
         }
 
         return hints.get(subtype or "")
@@ -306,13 +492,46 @@ class ChatTextTaskService:
 
     @staticmethod
     def _detect_format(normalized: str, subtype: str | None) -> str:
-        if subtype in {"text_checklist", "text_minutes", "text_announcement"}:
+        if subtype in {
+            "text_checklist",
+            "text_minutes",
+            "text_announcement",
+            "text_report",
+            "text_documentation",
+            "text_action_plan",
+            "text_letter",
+        }:
             return "markdown"
+
+        if subtype == "text_email_create" or subtype == "text_email_reply":
+            return "email"
 
         if "tabela" in normalized:
             return "table"
 
         return "plain"
+
+    @staticmethod
+    def _detect_audience(normalized: str) -> str | None:
+        if "diretoria" in normalized or "executiv" in normalized:
+            return "executive"
+
+        if "produção" in normalized or "producao" in normalized or "chão de fábrica" in normalized:
+            return "production"
+
+        if "cliente" in normalized:
+            return "customer"
+
+        if "fornecedor" in normalized:
+            return "supplier"
+
+        if "ti" in normalized or "engenharia" in normalized or "qualidade" in normalized:
+            return "technical"
+
+        if "rh" in normalized or "recursos humanos" in normalized:
+            return "hr"
+
+        return None
 
     @staticmethod
     def _detect_source(normalized: str) -> str:
@@ -342,7 +561,13 @@ class ChatTextTaskService:
 
     @staticmethod
     def _has_technical_terms(text: str) -> bool:
-        return bool(re.search(r"\b(BOM|OV|LMP|Protheus|\d{5,})\b", text, re.IGNORECASE))
+        return bool(
+            re.search(
+                r"\b(BOM|OV|LMP|RBAC|API|SQL|ERP|Protheus|\d{5,})\b",
+                text,
+                re.IGNORECASE,
+            )
+        )
 
     @staticmethod
     def _extract_preserved_tokens(text: str) -> list[str]:

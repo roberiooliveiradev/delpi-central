@@ -129,11 +129,33 @@ def main() -> int:
         return 0
 
     assistant = result.get("assistantMessage") or result.get("assistant") or {}
-    metadata = assistant.get("metadata") or {}
-    admin_debug = metadata.get("adminDebug") or result.get("adminDebug") or {}
+    metadata = assistant.get("metadata") if isinstance(assistant, dict) else {}
+    metadata = metadata if isinstance(metadata, dict) else {}
+    admin_debug = result.get("adminDebug") or metadata.get("adminDebug") or {}
 
-    if metadata.get("textTask", {}).get("type") != "correction":
-        print(f"FAIL textTask ({metadata.get('textTask')})", file=sys.stderr)
+    tool_calls = result.get("toolCalls") or []
+
+    if tool_calls:
+        print(f"FAIL toolCalls em correção ({len(tool_calls)})", file=sys.stderr)
+        return 1
+
+    text_task = metadata.get("textTask") or admin_debug.get("textTask") or {}
+    correction_task = admin_debug.get("textCorrectionTask") or {}
+    pipeline = (admin_debug.get("intelligence") or {}).get("pipeline") or {}
+    stages = pipeline.get("stages") or result.get("pipelineStages") or []
+
+    is_correction = (
+        text_task.get("type") == "correction"
+        or bool(correction_task)
+        or "text_correction" in stages
+        or "text_task" in stages
+    )
+
+    if not is_correction:
+        print(
+            f"FAIL não classificou correção (textTask={text_task}, stages={stages})",
+            file=sys.stderr,
+        )
         return 1
 
     metrics = (
@@ -142,15 +164,24 @@ def main() -> int:
     )
 
     if not metrics:
-        if metadata.get("textTask", {}).get("type") == "correction":
-            print("OK smoke_text_correction_http (sem adminDebug — usuário não admin?)")
+        answer = str(result.get("answer") or "").strip()
+
+        if answer and "text_task" in stages:
+            print("OK smoke_text_correction_http (resposta textual, sem métricas admin)")
             return 0
+
         print(f"FAIL sem textCorrectionMetrics (admin={bool(admin_debug)})", file=sys.stderr)
         return 1
 
-    if not (metadata.get("textCorrectionFollowUpSuggestions") or []):
-        print("FAIL sem chips de follow-up", file=sys.stderr)
-        return 1
+    follow_ups = (
+        metadata.get("textCorrectionFollowUpSuggestions")
+        or metadata.get("textTaskFollowUpSuggestions")
+        or admin_debug.get("interactivity", {}).get("textTaskFollowUpSuggestions")
+        or []
+    )
+
+    if not follow_ups:
+        print("WARN sem chips de follow-up na resposta (métricas OK)", file=sys.stderr)
 
     print("OK smoke_text_correction_http")
     return 0

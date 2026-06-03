@@ -24,9 +24,12 @@ class ChatTextTaskAdminMetricsService:
         snapshot = {
             "type": metrics.get("type"),
             "subtype": metrics.get("subtype"),
+            "intent": metrics.get("intent"),
             "tone": metrics.get("tone"),
+            "audience": metrics.get("audience"),
             "deliverFinalOnly": bool(metrics.get("deliverFinalOnly")),
             "source": metrics.get("source"),
+            "containsTechnicalTerms": bool(metrics.get("containsTechnicalTerms")),
         }
 
         if isinstance(mixed, dict):
@@ -67,9 +70,14 @@ class ChatTextTaskAdminMetricsService:
     ) -> dict[str, Any]:
         by_subtype: Counter[str] = Counter()
         by_type: Counter[str] = Counter()
+        by_intent: Counter[str] = Counter()
+        by_audience: Counter[str] = Counter()
         mixed_count = 0
         quality_failed = 0
         canvas_updates = 0
+        deliver_final_only_count = 0
+        technical_term_count = 0
+        attachment_source_count = 0
         recent: list[dict[str, Any]] = []
 
         for entry in entries:
@@ -82,6 +90,21 @@ class ChatTextTaskAdminMetricsService:
             by_subtype[subtype] += 1
             task_type = str(snapshot.get("type") or "unknown")
             by_type[task_type] += 1
+            intent = str(snapshot.get("intent") or "unknown")
+            by_intent[intent] += 1
+            audience = snapshot.get("audience")
+
+            if audience:
+                by_audience[str(audience)] += 1
+
+            if snapshot.get("deliverFinalOnly"):
+                deliver_final_only_count += 1
+
+            if snapshot.get("containsTechnicalTerms"):
+                technical_term_count += 1
+
+            if str(snapshot.get("source") or "") == "attachment":
+                attachment_source_count += 1
 
             if snapshot.get("mixed"):
                 mixed_count += 1
@@ -104,6 +127,8 @@ class ChatTextTaskAdminMetricsService:
                     "action": entry.get("action"),
                     "subtype": snapshot.get("subtype"),
                     "type": snapshot.get("type"),
+                    "intent": snapshot.get("intent"),
+                    "audience": snapshot.get("audience"),
                     "mixed": snapshot.get("mixed"),
                     "qualityPassed": snapshot.get("qualityPassed"),
                 }
@@ -116,7 +141,12 @@ class ChatTextTaskAdminMetricsService:
             "mixedTurnCount": mixed_count,
             "qualityFailedCount": quality_failed,
             "canvasVersionedCount": canvas_updates,
+            "deliverFinalOnlyCount": deliver_final_only_count,
+            "technicalTermCount": technical_term_count,
+            "attachmentSourceCount": attachment_source_count,
             "bySubtype": dict(by_subtype),
             "byType": dict(by_type),
+            "byIntent": dict(by_intent),
+            "byAudience": dict(by_audience),
             "recent": recent,
         }

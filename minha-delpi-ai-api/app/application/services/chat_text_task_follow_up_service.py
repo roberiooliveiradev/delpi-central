@@ -69,9 +69,18 @@ class ChatTextTaskFollowUpService:
     def build_suggestions(cls, message: str | None) -> list[dict[str, str]]:
         ctx = ChatTextTaskService.classify(message)
         queries = _playbook().get("textTaskFollowUpQueries") or {}
-        labels = list(_playbook().get("textTaskFollowUpChips") or ChatTextTaskService.default_suggestions(
-            ctx.get("subtype")
-        ))
+        by_subtype = _playbook().get("textTaskFollowUpChipsBySubtype") or {}
+        subtype = ctx.get("subtype")
+        labels: list[str] = []
+
+        if isinstance(by_subtype, dict) and subtype and isinstance(by_subtype.get(subtype), list):
+            labels = [str(item) for item in by_subtype[subtype] if str(item).strip()]
+
+        if not labels:
+            labels = list(
+                _playbook().get("textTaskFollowUpChips")
+                or ChatTextTaskService.default_suggestions(subtype)
+            )
 
         suggestions: list[dict[str, str]] = []
 

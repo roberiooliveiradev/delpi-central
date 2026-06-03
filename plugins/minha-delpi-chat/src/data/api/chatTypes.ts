@@ -494,8 +494,25 @@ export type ChatMessageMetadata = {
   textTaskMetrics?: {
     type?: string;
     subtype?: string;
+    intent?: string;
     tone?: string;
+    audience?: string;
+    source?: string;
+    deliverFinalOnly?: boolean;
+    containsTechnicalTerms?: boolean;
   };
+  textAssistant?: {
+    intent?: string;
+    source?: string;
+    audience?: string;
+    tone?: string;
+    format?: string;
+    preserveMeaning?: boolean;
+    containsTechnicalTerms?: boolean;
+    criticalDataPreserved?: boolean;
+    suggestions?: string[];
+  };
+  textCanvasSuggested?: boolean;
   textCorrectionPreferences?: {
     active?: Record<string, boolean>;
     labels?: string[];

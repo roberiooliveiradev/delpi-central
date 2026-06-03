@@ -26,6 +26,14 @@ class ChatTextTaskCanvasService:
         if ChatTextCorrectionIntentService.is_canvas_text_correction(message):
             return True
 
+        from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
+
+        if ChatCanvasIntentService.is_canvas_transform_request(message):
+            return True
+
+        if ChatCanvasIntentService.is_canvas_placement_request(message):
+            return True
+
         ctx = ChatTextTaskService.classify(message)
 
         return ctx.get("source") == "canvas"
@@ -53,14 +61,40 @@ class ChatTextTaskCanvasService:
         if not ChatTextCorrectionCanvasService._canvas_enabled(workspace_context):
             return None
 
+        from app.domain.services.chat_canvas_intent_service import ChatCanvasIntentService
+        from app.domain.services.chat_canvas_transform_service import ChatCanvasTransformService
+
         base_markdown, base_title, source_message_id = ChatTextCorrectionCanvasService.load_active_canvas(
             previous_messages
         )
 
+        body = (answer or "").strip()
+
+        if ChatCanvasIntentService.is_canvas_transform_request(message) and base_markdown.strip():
+            kind = ChatCanvasTransformService.detect_kind(message)
+
+            if kind:
+                transformed, title_suffix = ChatCanvasTransformService.transform(base_markdown, kind)
+                title = (base_title or "").strip() or title_suffix
+
+                return ChatCanvasOpenPayload(
+                    title=title,
+                    markdown=transformed or body,
+                    source_message_id=source_message_id,
+                )
+
+        if ChatCanvasIntentService.is_canvas_placement_request(message) and body:
+            ctx = ChatTextTaskService.classify(message)
+            title = (base_title or "").strip() or cls._default_canvas_title(ctx.get("subtype"))
+
+            return ChatCanvasOpenPayload(
+                title=title,
+                markdown=body,
+                source_message_id=source_message_id,
+            )
+
         if not base_markdown.strip():
             return None
-
-        body = (answer or "").strip()
 
         if not body:
             return None
@@ -72,6 +106,20 @@ class ChatTextTaskCanvasService:
             markdown=body,
             source_message_id=source_message_id,
         )
+
+    @staticmethod
+    def _default_canvas_title(subtype: str | None) -> str:
+        titles = {
+            "text_email_create": "E-mail",
+            "text_minutes": "Ata de reunião",
+            "text_report": "Relatório",
+            "text_letter": "Carta",
+            "text_documentation": "Documentação",
+            "text_announcement": "Comunicado",
+            "text_checklist": "Checklist",
+        }
+
+        return titles.get(subtype or "", "Texto na lousa")
 
     @classmethod
     def append_canvas_update_note(

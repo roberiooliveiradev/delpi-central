@@ -121,6 +121,26 @@ class ChatTextCorrectionIntentService:
 
         category = ChatTextTaskIntentService.classify(message)
 
+        if category in {
+            "eli5",
+            "explain",
+            "letter",
+            "documentation",
+            "report",
+            "minutes",
+            "announcement",
+            "action_plan",
+            "adapt_audience",
+            "structure",
+            "summarize",
+            "translate",
+            "compare",
+            "organize",
+            "document",
+            "extract_actions",
+        }:
+            return False
+
         if category == "correct":
             return True
 

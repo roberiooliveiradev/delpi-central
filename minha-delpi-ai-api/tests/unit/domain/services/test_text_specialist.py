@@ -1,4 +1,4 @@
-"""Regressão Playbook 03 — especialista em textos (T1–T16)."""
+"""Regressão especialista em textos / editor textual (T1–T24)."""
 
 from __future__ import annotations
 
@@ -53,6 +53,18 @@ def test_text_specialist_regression(case: dict):
 
         prefs = ChatTextTaskPreferenceService.detect_from_message(case["message"])
         assert prefs.get(case["preference"]) is True
+
+    if case.get("subtype"):
+        assert ctx.get("subtype") == case["subtype"], f"{case['id']}: subtype {ctx.get('subtype')}"
+
+    if case.get("technical"):
+        assert ctx.get("containsTechnicalTerms") is True, case["id"]
+
+    if case.get("source"):
+        assert ctx.get("source") == case["source"], f"{case['id']}: source {ctx.get('source')}"
+
+    if case.get("intent"):
+        assert ctx.get("intent") == case["intent"], f"{case['id']}: intent {ctx.get('intent')}"
 
 
 def test_t1_router_blocks_operational():

@@ -1,5 +1,7 @@
 # Playbook — Especialista em Textos, E-mails, Cartas, Atas e Documentação
 
+**Status (03/06/2026):** Implementado no chat base (Fases 1–7) — `ChatTextEditorSupplementService`, anexos/lousa, métricas `byIntent`/`byAudience`, regressão T1–T24, smoke `scripts/smoke_text_editor_e2e.py`. Ver [`../architecture/text-specialist.md`](../architecture/text-specialist.md).
+
 Projeto: Minha DELPI Chat IA
 Escopo: chat comum, escrita assistida, correção textual, reescrita, documentação, explicação técnica, ELI5, adaptação de tom, contexto e produtividade administrativa.
 

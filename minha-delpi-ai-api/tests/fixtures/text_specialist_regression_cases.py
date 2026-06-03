@@ -1,4 +1,4 @@
-"""Casos T1–T15 — Playbook 03 especialista em textos."""
+"""Casos T1–T20 — especialista em textos / editor textual."""
 
 from __future__ import annotations
 
@@ -35,5 +35,64 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
         "message": "sempre me entregue em tópicos",
         "pure": True,
         "preference": "format_topics",
+    },
+    {
+        "id": "T17",
+        "message": "simplifique este texto técnico da BOM e preserve as siglas",
+        "pure": True,
+        "category": "simplify",
+        "technical": True,
+    },
+    {
+        "id": "T18",
+        "message": "transforme essa explicação em documentação técnica",
+        "pure": True,
+        "category": "documentation",
+        "subtype": "text_documentation",
+    },
+    {
+        "id": "T19",
+        "message": "revise o texto do anexo e extraia pendências",
+        "pure": True,
+        "category": "correct",
+        "attachment_ids": ["att-2"],
+        "route_intents": {"text_task", "attachment_task"},
+    },
+    {
+        "id": "T20",
+        "message": "coloque na lousa o relatório da resposta anterior",
+        "pure": True,
+        "category": "report",
+        "source": "canvas",
+    },
+    {
+        "id": "T21",
+        "message": "crie uma carta formal solicitando autorização",
+        "pure": True,
+        "category": "letter",
+        "subtype": "text_letter",
+        "intent": "text.letter.create",
+    },
+    {
+        "id": "T22",
+        "message": "explique RBAC como se eu tivesse 5 anos",
+        "pure": True,
+        "category": "eli5",
+        "subtype": "text_eli5",
+        "intent": "text.eli5",
+    },
+    {
+        "id": "T23",
+        "message": "transforme o anexo em checklist",
+        "pure": True,
+        "category": "structure",
+        "attachment_ids": ["att-3"],
+    },
+    {
+        "id": "T24",
+        "message": "transforme a lousa em ata de reunião",
+        "pure": True,
+        "category": "minutes",
+        "source": "canvas",
     },
 ]

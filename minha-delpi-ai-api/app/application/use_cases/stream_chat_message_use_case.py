@@ -960,6 +960,7 @@ class StreamChatMessageUseCase:
             assistant_metadata,
             had_attachments=bool(getattr(request, "attachment_ids", None)),
             attachments=attachments,
+            message=message,
         )
 
         from app.application.services.chat_attachment_artifact_telemetry_service import (

@@ -19,6 +19,14 @@ class ChatTextTaskIntentService:
             r"\bgramática\b",
             r"\bgramatica\b",
         ),
+        "review": (
+            r"\bavalie\s+se\b",
+            r"\bestá\s+bom\b",
+            r"\besta\s+bom\b",
+            r"\btexto\s+está\s+bom\b",
+            r"\btexto\s+esta\s+bom\b",
+            r"\brevisão\s+de\s+qualidade\b",
+        ),
         "rewrite": (
             r"\breescrev",
             r"\bmelhor(e|ar)\b",
@@ -54,7 +62,62 @@ class ChatTextTaskIntentService:
         "write": (r"\bescreva\b", r"\bredija\b", r"\bmonte\b", r"\bcrie\b", r"\bgere\b", r"\belabore\b"),
         "tone_adjust": (r"\bmais\s+firme\b", r"\bmenos\s+agressiv", r"\bajuste\s+o\s+tom\b"),
         "extract_actions": (r"\bpendências\b", r"\bpendencias\b", r"\bpróximos\s+passos\b", r"\bproximos\s+passos\b"),
-        "document": (r"\bcomunicado\b", r"\brelatório\b", r"\brelatorio\b", r"\bprocedimento\b"),
+        "letter": (
+            r"\bcarta\b",
+            r"\bcarta\s+formal\b",
+            r"\bcarta\s+comercial\b",
+            r"\bcarta\s+de\s+solicita",
+        ),
+        "report": (
+            r"\brelatório\b",
+            r"\brelatorio\b",
+            r"\btransforme\s+em\s+relat",
+            r"\bgerar\s+relat",
+        ),
+        "documentation": (
+            r"\bdocumentação\b",
+            r"\bdocumentacao\b",
+            r"\bdocumentação\s+técnica\b",
+            r"\bdocumentacao\s+tecnica\b",
+            r"\btransforme.*documentação\b",
+            r"\btransforme.*documentacao\b",
+            r"\bmanual\b",
+            r"\binstrução\s+de\s+trabalho\b",
+            r"\binstrucao\s+de\s+trabalho\b",
+            r"\bfaq\b",
+            r"\bglossário\b",
+            r"\bglossario\b",
+            r"\brelease\s+notes\b",
+            r"\bchangelog\b",
+        ),
+        "explain": (
+            r"\bexplique\b",
+            r"\bexplicação\b",
+            r"\bexplicacao\b",
+            r"\bexplicar\s+melhor\b",
+            r"\bexplicar\s+esse\b",
+        ),
+        "eli5": (
+            r"\beli5\b",
+            r"\bcomo\s+se\s+eu\s+tivesse\s+5\s+anos\b",
+            r"\bcomo\s+se\s+eu\s+tivesse\s+cinco\s+anos\b",
+            r"\bexplain\s+like\b",
+        ),
+        "action_plan": (
+            r"\bplano\s+de\s+ação\b",
+            r"\bplano\s+de\s+acao\b",
+            r"\bextraia\s+um\s+plano\b",
+        ),
+        "adapt_audience": (
+            r"\badapte\s+para\b",
+            r"\badaptar\s+para\b",
+            r"\bversão\s+para\s+diretoria\b",
+            r"\bversao\s+para\s+diretoria\b",
+            r"\bpara\s+produção\b",
+            r"\bpara\s+cliente\b",
+            r"\bpara\s+fornecedor\b",
+        ),
+        "document": (r"\bcomunicado\b", r"\bprocedimento\b", r"\bmemorando\b"),
         "minutes": (r"\bata\b", r"\bata de reuni", r"\banotações em ata\b", r"\bnotas em ata\b"),
         "announcement": (r"\bcomunicado interno\b", r"\bcrise um comunicado\b", r"\bmonte um comunicado\b"),
         "compare": (r"\bcompare\b", r"\bcomparar\b", r"\bqual está melhor\b", r"\bo que mudou\b"),
@@ -95,12 +158,20 @@ class ChatTextTaskIntentService:
 
         priority = (
             "correct",
+            "review",
             "compare",
+            "eli5",
+            "documentation",
+            "explain",
+            "adapt_audience",
+            "letter",
             "minutes",
             "announcement",
             "email",
             "translate",
             "summarize",
+            "action_plan",
+            "report",
             "simplify",
             "structure",
             "organize",
@@ -129,9 +200,7 @@ class ChatTextTaskIntentService:
     ) -> bool:
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
-        if ChatSqlIntentService.is_sql_conversation_turn(message):
-            return False
-
+        normalized = (message or "").strip().lower()
         category = cls.classify(message)
 
         if not category:
@@ -148,10 +217,14 @@ class ChatTextTaskIntentService:
             ):
                 return False
 
-        if cls.is_mixed_text_and_operational(message):
+        if cls._is_linguistic_only_turn(normalized, category):
+            return True
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
             return False
 
-        normalized = (message or "").strip().lower()
+        if cls.is_mixed_text_and_operational(message):
+            return False
 
         if cls._starts_with_text_lead(normalized):
             return True
@@ -193,6 +266,44 @@ class ChatTextTaskIntentService:
         return False
 
     @classmethod
+    def _is_linguistic_only_turn(cls, normalized: str, category: str) -> bool:
+        if any(re.search(pattern, normalized) for pattern in cls._OPERATIONAL_COMMAND_PATTERNS):
+            return False
+
+        if any(connector in normalized for connector in cls._MIXED_CONNECTORS):
+            return False
+
+        if category not in {
+            "correct",
+            "review",
+            "rewrite",
+            "translate",
+            "summarize",
+            "simplify",
+            "email",
+            "letter",
+            "minutes",
+            "announcement",
+            "documentation",
+            "explain",
+            "eli5",
+            "structure",
+            "organize",
+            "compare",
+            "adapt_audience",
+            "action_plan",
+            "report",
+        }:
+            return False
+
+        return bool(
+            re.search(
+                r"\b(texto|portugu|ortografia|gramática|gramatica|e-?mail|carta|ata|comunicado|traduza|resuma|documentação|documentacao|explique|eli5|formal|autoriza)\b",
+                normalized,
+            )
+        )
+
+    @classmethod
     def _starts_with_text_lead(cls, normalized: str) -> bool:
         leads = (
             "corrija",
@@ -207,6 +318,9 @@ class ChatTextTaskIntentService:
             "melhore",
             "deixe",
             "revise",
+            "explique",
+            "adapte",
+            "transforme",
         )
 
         return any(normalized.startswith(lead) for lead in leads)

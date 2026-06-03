@@ -1,10 +1,18 @@
-from app.application.services.chat_text_task_canvas_service import (
-    ChatTextTaskCanvasService,
-)
+"""Lousa + transformações textuais — playbook editor §35."""
+
+from app.application.services.chat_text_task_canvas_service import ChatTextTaskCanvasService
 
 
 def test_should_update_canvas_for_lousa():
     assert ChatTextTaskCanvasService.should_update_canvas("corrija o texto da lousa") is True
+
+
+def test_should_update_canvas_on_transform():
+    assert ChatTextTaskCanvasService.should_update_canvas("transforme a lousa em checklist") is True
+
+
+def test_should_update_canvas_on_placement():
+    assert ChatTextTaskCanvasService.should_update_canvas("coloque na lousa o relatório") is True
 
 
 def test_attach_version_history():

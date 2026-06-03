@@ -26,9 +26,12 @@ class ChatTextTaskMetricsService:
         return {
             "type": ctx.get("type"),
             "subtype": ctx.get("subtype"),
+            "intent": ctx.get("intent"),
             "tone": ctx.get("tone"),
+            "audience": ctx.get("audience"),
             "deliverFinalOnly": bool(ctx.get("deliverFinalOnly")),
             "source": ctx.get("source"),
+            "containsTechnicalTerms": bool(ctx.get("containsTechnicalTerms")),
         }
 
     @classmethod
