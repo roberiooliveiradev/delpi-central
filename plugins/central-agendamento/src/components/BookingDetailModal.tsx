@@ -61,11 +61,11 @@ export function BookingDetailModal({
           </div>
           <div>
             <dt>Início</dt>
-            <dd>{format(event.start, "dd/MM/yyyy HH:mm")}</dd>
+            <dd>{format(event.originalStart, "dd/MM/yyyy HH:mm")}</dd>
           </div>
           <div>
             <dt>Término</dt>
-            <dd>{format(event.end, "dd/MM/yyyy HH:mm")}</dd>
+            <dd>{format(event.originalEnd, "dd/MM/yyyy HH:mm")}</dd>
           </div>
           {event.notes ? (
             <div>
