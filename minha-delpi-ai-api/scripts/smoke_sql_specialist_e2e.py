@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke E2E — Especialista SQL (agente Minha DELPI) via API."""
+"""Smoke E2E — Especialista SQL (chat comum + agente Minha DELPI) via API."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ _USERNAME = os.environ.get("SMOKE_USER", "rober").strip()
 _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _TIMEOUT = int(os.environ.get("SMOKE_TIMEOUT", "240"))
+_MODE = os.environ.get("SMOKE_SQL_MODE", "both").strip().lower()
 
 # (id, message, checks)
 _CHECKS: list[tuple[str, str, dict]] = [
@@ -28,7 +29,10 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_paths_any": ("/system/tables",),
+            "expect_paths_agent_only": True,
             "expect_answer_any": ("```sql", "a1_cod", "select"),
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
             "expect_intent_sub": "sql_generate",
             "forbid_stages": ("text_task",),
         },
@@ -39,6 +43,8 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_answer_any": ("```sql", "cte", "with"),
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
         },
     ),
     (
@@ -47,6 +53,8 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_answer_any": ("```sql", "rank", "row_number", "top"),
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
         },
     ),
     (
@@ -55,6 +63,8 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_paths_any": ("/system/tables",),
+            "expect_paths_agent_only": True,
+            "allow_schema_catalog_answer": True,
         },
     ),
     (
@@ -63,6 +73,9 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_paths_any": ("/system/tables",),
+            "expect_paths_agent_only": True,
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
         },
     ),
     (
@@ -71,6 +84,7 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_answer_any": ("```sql", "select", "join", "risco", "select *"),
+            "require_sql_block": False,
         },
     ),
     (
@@ -87,6 +101,8 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_answer_any": ("```sql", "índice", "indice", "filtro", "select", "performance"),
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
         },
     ),
     (
@@ -103,8 +119,15 @@ _CHECKS: list[tuple[str, str, dict]] = [
         {
             "forbid_paths": ("/products/search",),
             "expect_answer_any": ("```sql", "limit", "postgresql", "postgres"),
+            "require_sql_block": True,
+            "forbid_schema_catalog_only": True,
         },
     ),
+]
+
+_INCREMENTAL_STEPS = [
+    "Monte um SELECT de clientes da SA1 com A1_COD e A1_NOME, sem executar.",
+    "Adicione a coluna cidade na consulta anterior, sem executar.",
 ]
 
 
@@ -170,8 +193,13 @@ def _fetch_token() -> str:
     return str(token)
 
 
-def _agent_id(token: str) -> str:
-    agents = _request("GET", f"{_BASE_URL}{_CHAT_PREFIX}/agents?limit=20", token=token)
+def _agent_id(token: str, *, token_holder: list[str] | None = None) -> str:
+    agents = _request(
+        "GET",
+        f"{_BASE_URL}{_CHAT_PREFIX}/agents?limit=20",
+        token=token,
+        _token_holder=token_holder,
+    )
     items = agents if isinstance(agents, list) else agents.get("items", [])
 
     for agent in items:
@@ -206,7 +234,31 @@ def _admin_debug(response: dict) -> dict:
     return debug if isinstance(debug, dict) else {}
 
 
-def _check_case(case_id: str, response: dict, checks: dict) -> list[str]:
+def _message_body(message: str, agent_id: str | None) -> dict:
+    body: dict = {"message": message}
+
+    if agent_id:
+        body["agentId"] = agent_id
+
+    return body
+
+
+def _session_body(title: str, agent_id: str | None) -> dict:
+    body: dict = {"title": title}
+
+    if agent_id:
+        body["agentId"] = agent_id
+
+    return body
+
+
+def _check_case(
+    case_id: str,
+    response: dict,
+    checks: dict,
+    *,
+    mode: str,
+) -> list[str]:
     errors: list[str] = []
     answer = str(response.get("answer") or "").lower()
     paths = _tool_paths(response)
@@ -217,6 +269,8 @@ def _check_case(case_id: str, response: dict, checks: dict) -> list[str]:
     stages = pipeline.get("stages") or []
     intent_route = debug.get("intentRoute") if isinstance(debug.get("intentRoute"), dict) else {}
     sub_intent = str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")
+    workspace = debug.get("workspace") if isinstance(debug.get("workspace"), dict) else {}
+    skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
 
     for forbidden in checks.get("forbid_paths") or ():
         if forbidden.lower() in paths_joined:
@@ -224,13 +278,34 @@ def _check_case(case_id: str, response: dict, checks: dict) -> list[str]:
 
     expect_paths = checks.get("expect_paths_any")
 
-    if expect_paths and not any(token in paths_joined for token in expect_paths):
-        errors.append(f"esperava path entre {expect_paths}, obteve {paths}")
+    if expect_paths:
+        if checks.get("expect_paths_agent_only") and mode == "common":
+            if paths and not any(token in paths_joined for token in expect_paths):
+                errors.append(f"chat comum não deve depender de API ({paths})")
+        elif not any(token in paths_joined for token in expect_paths):
+            if mode == "agent" or not checks.get("expect_paths_agent_only"):
+                errors.append(f"esperava path entre {expect_paths}, obteve {paths}")
 
     expect_answer = checks.get("expect_answer_any")
 
     if expect_answer and not any(token in answer for token in expect_answer):
         errors.append(f"resposta sem {expect_answer}")
+
+    if checks.get("require_sql_block") and "```sql" not in answer:
+        errors.append("resposta sem bloco ```sql```")
+
+    if checks.get("forbid_schema_catalog_only") and not checks.get("allow_schema_catalog_answer"):
+        catalog_markers = ("colunas da tabela", "total de colunas")
+        looks_like_catalog = any(marker in answer for marker in catalog_markers)
+
+        if looks_like_catalog and "```sql" not in answer:
+            errors.append("resposta exibiu catálogo de colunas sem entregar SQL")
+
+        for call in response.get("toolCalls") or []:
+            meta = call.get("metadata") or {}
+
+            if meta.get("presentation") and checks.get("require_sql_block"):
+                errors.append("toolCall ainda expõe presentation rica de schema (deveria ser interno)")
 
     if checks.get("expect_intent_sub") and sub_intent != checks["expect_intent_sub"]:
         errors.append(f"subIntent={sub_intent!r} esperado {checks['expect_intent_sub']!r}")
@@ -251,52 +326,116 @@ def _check_case(case_id: str, response: dict, checks: dict) -> list[str]:
         if "busca de produtos" in reason and case_id.startswith(("create", "period", "ranking", "schema")):
             errors.append(f"action errada: {reason[:80]}")
 
+    if mode == "common" and not skills.get("sqlAuthoring"):
+        errors.append("chat comum sem skill sqlAuthoring no workspace")
+
+    if mode == "agent" and not workspace.get("actionsEnabled"):
+        errors.append("agente sem actionsEnabled")
+
     return errors
 
 
-def _run_incremental(token: str, agent_id: str, *, token_holder: list[str] | None = None) -> list[str]:
-    errors: list[str] = []
+def _run_suite(
+    *,
+    mode: str,
+    label: str,
+    agent_id: str | None,
+    token_holder: list[str],
+) -> tuple[int, int]:
+    passed = 0
+    failed = 0
+
+    print(f"\n========== {label} (mesma sessão) ==========")
+
     session = _request(
         "POST",
         f"{_BASE_URL}{_CHAT_PREFIX}/sessions",
-        token=token,
-        body={"title": "Smoke SQL incremental", "agentId": agent_id},
+        token=token_holder[0],
+        body=_session_body(f"Smoke SQL E2E — {label}", agent_id),
         _token_holder=token_holder,
     )
     sid = session["id"]
+    print(f"Sessão: {sid}")
 
-    steps = [
-        "Monte um SELECT de clientes da SA1 com A1_COD e A1_NOME, sem executar.",
-        "Adicione a coluna cidade na consulta anterior, sem executar.",
-    ]
+    for case_id, message, checks in _CHECKS:
+        prefix = f"{mode}:{case_id}"
 
-    for index, message in enumerate(steps):
-        active_token = token_holder[0] if token_holder else token
-        response = _request(
-            "POST",
-            f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{sid}/messages",
-            token=active_token,
-            body={"message": message, "agentId": agent_id},
-            _token_holder=token_holder,
-        )
-        answer = str(response.get("answer") or "").lower()
-        paths = _tool_paths(response)
+        try:
+            response = _request(
+                "POST",
+                f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{sid}/messages",
+                token=token_holder[0],
+                body=_message_body(message, agent_id),
+                _token_holder=token_holder,
+            )
+            case_errors = _check_case(case_id, response, checks, mode=mode)
+            paths = _tool_paths(response)[:3]
+            debug = _admin_debug(response)
+            sub = (debug.get("intentRoute") or {}).get("subIntent", "?")
+            has_sql = "```sql" in str(response.get("answer") or "").lower()
 
-        if "/products/search" in " ".join(paths):
-            errors.append(f"incremental passo {index + 1}: /products/search")
+            if case_errors:
+                failed += 1
+                print(f"FAIL [{prefix}] sub={sub} sql={has_sql} paths={paths}")
+                for err in case_errors:
+                    print(f"       - {err}")
+                snippet = re.sub(r"\s+", " ", str(response.get("answer") or ""))[:200]
+                print(f"       answer: {snippet}...")
+            else:
+                passed += 1
+                print(f"OK   [{prefix}] sub={sub} sql={has_sql} paths={paths or ['—']}")
 
-        if index == 1 and "cidade" not in answer and "a1_mun" not in answer and "municip" not in answer:
-            errors.append(f"incremental passo 2: não mencionou cidade ({answer[:120]}...)")
+        except Exception as exc:
+            failed += 1
+            print(f"FAIL [{prefix}] exceção: {exc}", file=sys.stderr)
 
-    return errors
+    print(f"\n--- Incremental ({label}, mesma sessão {sid[:8]}…) ---")
+
+    for index, message in enumerate(_INCREMENTAL_STEPS):
+        prefix = f"{mode}:incremental_{index + 1}"
+
+        try:
+            response = _request(
+                "POST",
+                f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{sid}/messages",
+                token=token_holder[0],
+                body=_message_body(message, agent_id),
+                _token_holder=token_holder,
+            )
+            answer = str(response.get("answer") or "").lower()
+            paths = _tool_paths(response)
+            step_errors: list[str] = []
+
+            if "/products/search" in " ".join(paths):
+                step_errors.append("/products/search")
+
+            if index == 1:
+                if "```sql" not in answer:
+                    step_errors.append("sem bloco ```sql```")
+                if "cidade" not in answer and "a1_mun" not in answer and "municip" not in answer:
+                    step_errors.append(f"sem cidade ({answer[:100]}...)")
+
+            if step_errors:
+                failed += len(step_errors)
+                print(f"FAIL [{prefix}] {', '.join(step_errors)}")
+            else:
+                passed += 1
+                print(f"OK   [{prefix}] sql={'```sql' in answer}")
+
+        except Exception as exc:
+            failed += 1
+            print(f"FAIL [{prefix}] exceção: {exc}", file=sys.stderr)
+
+    return passed, failed
 
 
 def main() -> int:
     started = time.time()
-    failed = 0
-    passed = 0
+    total_passed = 0
+    total_failed = 0
 
     print(f"Base: {_BASE_URL}{_CHAT_PREFIX}")
+    print(f"Modo: {_MODE}")
 
     try:
         token_holder = [_fetch_token()]
@@ -305,76 +444,39 @@ def main() -> int:
         print(f"FALHA login: {exc}", file=sys.stderr)
         return 1
 
-    token = token_holder[0]
+    agent_id: str | None = None
 
-    try:
-        agent_id = _agent_id(token)
-        print(f"Agente: {agent_id}")
-    except Exception as exc:
-        print(f"FALHA agente: {exc}", file=sys.stderr)
-        return 1
-
-    for case_id, message, checks in _CHECKS:
+    if _MODE in {"agent", "both", "all"}:
         try:
-            token = token_holder[0]
-            session = _request(
-                "POST",
-                f"{_BASE_URL}{_CHAT_PREFIX}/sessions",
-                token=token,
-                body={"title": f"Smoke SQL — {case_id}", "agentId": agent_id},
-                _token_holder=token_holder,
+            agent_id = _agent_id(token_holder[0], token_holder=token_holder)
+            print(f"Agente Minha DELPI: {agent_id}")
+            p, f = _run_suite(
+                mode="agent",
+                label="Agente Minha DELPI",
+                agent_id=agent_id,
+                token_holder=token_holder,
             )
-            token = token_holder[0]
-            response = _request(
-                "POST",
-                f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{session['id']}/messages",
-                token=token,
-                body={"message": message, "agentId": agent_id},
-                _token_holder=token_holder,
-            )
-            case_errors = _check_case(case_id, response, checks)
-            paths = _tool_paths(response)[:3]
-            debug = _admin_debug(response)
-            sub = (debug.get("intentRoute") or {}).get("subIntent", "?")
-
-            if case_errors:
-                failed += 1
-                print(f"FAIL [{case_id}] sub={sub} paths={paths}")
-                for err in case_errors:
-                    print(f"       - {err}")
-                snippet = re.sub(r"\s+", " ", str(response.get("answer") or ""))[:160]
-                print(f"       answer: {snippet}...")
-            else:
-                passed += 1
-                print(f"OK   [{case_id}] sub={sub} paths={paths or ['—']}")
-
+            total_passed += p
+            total_failed += f
         except Exception as exc:
-            failed += 1
-            print(f"FAIL [{case_id}] exceção: {exc}", file=sys.stderr)
+            print(f"FALHA suite agente: {exc}", file=sys.stderr)
+            total_failed += 1
 
-    print("\n--- Edição incremental (mesma sessão) ---")
-
-    try:
-        inc_errors = _run_incremental(token_holder[0], agent_id, token_holder=token_holder)
-
-        if inc_errors:
-            failed += len(inc_errors)
-
-            for err in inc_errors:
-                print(f"FAIL [incremental] {err}")
-        else:
-            passed += 1
-            print("OK   [incremental]")
-
-    except Exception as exc:
-        failed += 1
-        print(f"FAIL [incremental] exceção: {exc}", file=sys.stderr)
+    if _MODE in {"common", "both", "all", "chat"}:
+        p, f = _run_suite(
+            mode="common",
+            label="Chat comum (sem agentId)",
+            agent_id=None,
+            token_holder=token_holder,
+        )
+        total_passed += p
+        total_failed += f
 
     elapsed = time.time() - started
-    total = passed + failed
-    print(f"\nResumo: {passed}/{total} OK, {failed} falha(s), {elapsed:.0f}s")
+    total = total_passed + total_failed
+    print(f"\nResumo geral: {total_passed}/{total} OK, {total_failed} falha(s), {elapsed:.0f}s")
 
-    return 1 if failed else 0
+    return 1 if total_failed else 0
 
 
 if __name__ == "__main__":

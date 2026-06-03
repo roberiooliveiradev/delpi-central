@@ -951,8 +951,16 @@ class ChatToolContextService:
             )
 
             if result.name == "execute_external_action":
+                from app.domain.services.chat_advanced_sql_specialist_service import (
+                    ChatAdvancedSqlSpecialistService,
+                )
                 from app.domain.services.external_actions.external_action_sql_capability_service import (
                     ExternalActionSqlCapabilityService,
+                )
+
+                safe_metadata = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+                    raw_message,
+                    safe_metadata,
                 )
 
                 executed_sql = ExternalActionSqlCapabilityService.extract_sql_from_arguments(
@@ -1023,8 +1031,9 @@ class ChatToolContextService:
                     name=result.name,
                     reason=selected_tool.get("reason"),
                     data=result.data,
-                    metadata=result.metadata,
+                    metadata=safe_metadata,
                     arguments=selected_tool.get("arguments"),
+                    message=raw_message,
                 )
             )
 
@@ -1037,10 +1046,17 @@ class ChatToolContextService:
             )
 
             if not ChatAnalysisIntentService.is_comparison_or_insight_request(raw_message):
-                direct_answer = ChatCompositeDirectAnswerService.build(
-                    message,
-                    external_action_results,
-                )
+                composite_results = [
+                    item
+                    for item in external_action_results
+                    if not (item.metadata or {}).get("sqlSchemaPrefetch")
+                ]
+
+                if composite_results:
+                    direct_answer = ChatCompositeDirectAnswerService.build(
+                        message,
+                        composite_results,
+                    )
 
         if isinstance(last_web_search_data, dict):
             from app.domain.services.chat_web_search_erp_cross_reference_service import (
@@ -1813,12 +1829,19 @@ class ChatToolContextService:
         data,
         metadata: dict | None,
         arguments: dict | None = None,
+        *,
+        message: str | None = None,
     ) -> str:
         if name == "execute_external_action":
+            meta = dict(metadata or {})
+
+            if message and not meta.get("currentMessage"):
+                meta["currentMessage"] = message
+
             return self._format_external_action_context(
                 reason=reason,
                 data=data,
-                metadata=metadata or {},
+                metadata=meta,
                 arguments=arguments,
             )
 
@@ -1846,6 +1869,33 @@ class ChatToolContextService:
         action_id = metadata.get("actionId")
         path = metadata.get("path")
         provider = metadata.get("provider")
+
+        if metadata.get("sqlSchemaPrefetch"):
+            from app.domain.services.chat_advanced_sql_specialist_service import (
+                ChatAdvancedSqlSpecialistService,
+            )
+
+            humanized = ChatAdvancedSqlSpecialistService.compact_schema_prefetch_context(
+                message=str((metadata or {}).get("currentMessage") or ""),
+                data=data,
+                metadata=metadata,
+            )
+            payload = {
+                "tool": "execute_external_action",
+                "reason": reason,
+                "provider": provider,
+                "actionId": action_id,
+                "path": path,
+                "statusCode": status_code,
+                "ok": ok,
+                "sqlSchemaPrefetch": True,
+                "humanizedSummary": humanized,
+            }
+
+            return (
+                "[Contexto interno — metadados Protheus para elaborar SQL; não exibir catálogo ao usuário]\n"
+                f"{json.dumps(payload, ensure_ascii=False, indent=2)}"
+            )
 
         humanized = self.external_action_result_presenter.present(
             self._attach_request_sql(data, arguments, metadata),

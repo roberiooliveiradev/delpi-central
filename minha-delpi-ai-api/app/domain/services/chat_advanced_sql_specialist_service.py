@@ -477,8 +477,163 @@ class ChatAdvancedSqlSpecialistService:
             updated.pop("directAnswer", None)
             updated["skipRag"] = False
             updated["sqlRequiresLlm"] = True
+            updated = cls.strip_schema_catalog_presentations(updated)
 
         return updated
+
+    @classmethod
+    def is_schema_prefetch_path(cls, path: str | None) -> bool:
+        lowered = str(path or "").lower()
+
+        return "/system/tables" in lowered and (
+            "/columns" in lowered or "/schema" in lowered or "/relations" in lowered
+        )
+
+    @classmethod
+    def should_treat_schema_as_internal(cls, message: str | None, *, path: str | None) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if not cls.is_schema_prefetch_path(path):
+            return False
+
+        if ChatSqlIntentService.is_authoring_request(message):
+            return True
+
+        mode = cls.classify_mode(message)
+
+        return mode in {"create", "review", "explain", "optimize", "incremental_edit"}
+
+    @classmethod
+    def annotate_schema_prefetch_tool_metadata(
+        cls,
+        message: str | None,
+        metadata: dict | None,
+    ) -> dict:
+        meta = dict(metadata or {})
+
+        if not cls.should_treat_schema_as_internal(message, path=str(meta.get("path") or "")):
+            return meta
+
+        meta["sqlSchemaPrefetch"] = True
+        meta["suppressClientPresentation"] = True
+        meta["preferredFormat"] = "text"
+        meta["currentMessage"] = str(message or "")
+
+        return meta
+
+    @classmethod
+    def strip_schema_catalog_presentations(cls, result: dict) -> dict:
+        updated = dict(result)
+        tool_calls = updated.get("toolCalls")
+
+        if not isinstance(tool_calls, list):
+            return updated
+
+        stripped_calls: list[dict] = []
+
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                stripped_calls.append(tool_call)
+                continue
+
+            item = dict(tool_call)
+            metadata = dict(item.get("metadata") or {})
+
+            if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
+                for key in (
+                    "presentation",
+                    "tablePresentation",
+                    "textPresentation",
+                    "treePresentation",
+                    "chartPresentation",
+                    "presentationDecision",
+                ):
+                    metadata.pop(key, None)
+
+                metadata["suppressClientPresentation"] = True
+
+            item["metadata"] = metadata
+            stripped_calls.append(item)
+
+        updated["toolCalls"] = stripped_calls
+
+        return updated
+
+    @classmethod
+    def compact_schema_prefetch_context(
+        cls,
+        *,
+        message: str | None,
+        data: object,
+        metadata: dict | None,
+    ) -> dict[str, object]:
+        path = str((metadata or {}).get("path") or "")
+        table_match = re.search(r"/system/tables/([A-Za-z0-9]+)", path, flags=re.IGNORECASE)
+        table_name = table_match.group(1).upper() if table_match else "tabela"
+        columns = cls._extract_column_names_from_schema_payload(data)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        prioritized: list[str] = []
+
+        for token in ("a1_cod", "a1_nome", "d_e_l_e_t_", "cod", "nome", "ativo"):
+            for column in columns:
+                if token in column.lower() and column not in prioritized:
+                    prioritized.append(column)
+
+        for column in columns:
+            if column not in prioritized:
+                prioritized.append(column)
+
+            if len(prioritized) >= 12:
+                break
+
+        active_hint = (
+            "Filtro Protheus usual para ativos: D_E_L_E_T_ = '' (ou equivalente na tabela física, ex. SA1010)."
+            if "ativ" in normalized
+            else "Use exclusão lógica D_E_L_E_T_ = '' quando aplicável."
+        )
+
+        return {
+            "titulo": f"Schema interno {table_name} (não exibir catálogo ao usuário)",
+            "linhas": [
+                f"Tabela: {table_name} — {len(columns)} coluna(s) no catálogo.",
+                f"Colunas para o SQL: {', '.join(prioritized) if prioritized else 'validar no SX3'}.",
+                active_hint,
+                "Entrega obrigatória ao usuário: bloco ```sql``` com SELECT (somente leitura), depois explicação curta.",
+                "Use exatamente estes nomes de coluna no SQL (não invente Codigo/Nome/Status genéricos).",
+                "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno.",
+            ],
+        }
+
+    @classmethod
+    def _extract_column_names_from_schema_payload(cls, data: object) -> list[str]:
+        payload = data
+
+        if isinstance(data, dict) and "data" in data:
+            payload = data.get("data")
+
+        if isinstance(payload, dict) and "results" in payload:
+            payload = payload.get("results")
+
+        if not isinstance(payload, list):
+            return []
+
+        names: list[str] = []
+
+        for row in payload:
+            if not isinstance(row, dict):
+                continue
+
+            field = (
+                row.get("X3_CAMPO")
+                or row.get("x3_campo")
+                or row.get("campo")
+                or row.get("CAMPO")
+            )
+
+            if field:
+                names.append(str(field).strip())
+
+        return names
 
     @classmethod
     def build_prompt_supplement(cls, snapshot: dict[str, Any]) -> str:
@@ -586,7 +741,20 @@ class ChatAdvancedSqlSpecialistService:
             if result_analysis.get("isEmpty"):
                 lines.append("Recuperação sugerida: ampliar período, revisar filtros ou validar schema.")
 
-        if visualization:
+        if mode in {"create", "review", "explain", "optimize", "incremental_edit"}:
+            lines.append(
+                "ENTREGA OBRIGATÓRIA: responda com bloco ```sql``` contendo a consulta pedida "
+                "(SELECT somente leitura) antes de qualquer outro conteúdo."
+            )
+            lines.append(
+                "Prefetch GET /system/tables/* é contexto interno — não substitua o SQL por "
+                "tabela/catálogo de colunas, salvo se o usuário pediu explicitamente «quais colunas» ou «schema»."
+            )
+            lines.append(
+                "No Protheus use nomes reais das colunas (ex.: A1_COD, A1_NOME, D_E_L_E_T_ = '' para ativos); "
+                "tabela física costuma ser sufixo 010 (SA1010) se o ambiente exigir."
+            )
+        elif visualization:
             lines.append(
                 f"Visualização sugerida: {visualization.get('suggestedLabel')} "
                 f"({visualization.get('reason')})"

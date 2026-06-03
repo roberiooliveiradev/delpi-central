@@ -39,6 +39,42 @@ def test_requires_llm_for_sql_authoring_modes():
     assert ChatAdvancedSqlSpecialistService.requires_llm_response(rel)
 
 
+def test_schema_prefetch_annotates_metadata():
+    from app.domain.services.chat_advanced_sql_specialist_service import (
+        ChatAdvancedSqlSpecialistService,
+    )
+
+    meta = ChatAdvancedSqlSpecialistService.annotate_schema_prefetch_tool_metadata(
+        "Monte uma consulta para listar clientes ativos da tabela SA1, sem executar.",
+        {"path": "/system/tables/SA1/columns", "ok": True},
+    )
+
+    assert meta.get("sqlSchemaPrefetch") is True
+    assert meta.get("suppressClientPresentation") is True
+
+
+def test_strip_schema_presentation_from_tool_calls():
+    from app.domain.services.chat_advanced_sql_specialist_service import (
+        ChatAdvancedSqlSpecialistService,
+    )
+
+    result = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
+        {
+            "toolCalls": [
+                {
+                    "metadata": {
+                        "sqlSchemaPrefetch": True,
+                        "presentation": {"type": "table", "title": "Colunas"},
+                    }
+                }
+            ]
+        }
+    )
+
+    meta = result["toolCalls"][0]["metadata"]
+    assert "presentation" not in meta
+
+
 def test_incremental_add_city_authoring():
     history = [
         {
