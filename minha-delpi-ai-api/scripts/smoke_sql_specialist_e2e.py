@@ -21,6 +21,7 @@ _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/cha
 _TIMEOUT = int(os.environ.get("SMOKE_TIMEOUT", "240"))
 _MODE = os.environ.get("SMOKE_SQL_MODE", "both").strip().lower()
 _ONLY = [item.strip() for item in os.environ.get("SMOKE_ONLY", "").split(",") if item.strip()]
+_WARMUP = os.environ.get("SMOKE_WARMUP", "").strip().lower() in {"1", "true", "yes"}
 
 # (id, message, checks)
 _CHECKS: list[tuple[str, str, dict]] = [
@@ -361,6 +362,31 @@ def _run_suite(
     checks_list = _CHECKS
     if _ONLY:
         checks_list = [item for item in _CHECKS if item[0] in _ONLY]
+
+    if _WARMUP and _ONLY:
+        if "incremental" in _ONLY:
+            warmup_cases = list(_CHECKS)
+        else:
+            warmup_ids = set(_ONLY)
+            first_target = next((item[0] for item in _CHECKS if item[0] in warmup_ids), None)
+            warmup_cases = []
+
+            if first_target:
+                for case_id, message, _checks in _CHECKS:
+                    if case_id == first_target:
+                        break
+
+                    warmup_cases.append((case_id, message))
+
+        for case_id, message in warmup_cases:
+            print(f"WARM [{mode}:{case_id}] …")
+            _request(
+                "POST",
+                f"{_BASE_URL}{_CHAT_PREFIX}/sessions/{sid}/messages",
+                token=token_holder[0],
+                body=_message_body(message, agent_id),
+                _token_holder=token_holder,
+            )
 
     for case_id, message, checks in checks_list:
         prefix = f"{mode}:{case_id}"

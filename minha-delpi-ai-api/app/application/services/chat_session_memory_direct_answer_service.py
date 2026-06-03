@@ -47,9 +47,21 @@ class ChatSessionMemoryDirectAnswerService:
         if edit_pref:
             return edit_pref
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        sql_turn = (
+            ChatSqlSafetyService.looks_like_sql_payload(message)
+            or ChatSqlIntentService.is_sql_conversation_turn(message)
+            or ChatSqlQueryRefinementService.is_sql_follow_up(message)
+        )
+
         ambiguity = working_memory.get("memoryAmbiguity")
 
-        if isinstance(ambiguity, dict):
+        if isinstance(ambiguity, dict) and not sql_turn:
             return cls._build_ambiguity_answer(ambiguity)
 
         from app.domain.services.chat_conversation_state_service import (

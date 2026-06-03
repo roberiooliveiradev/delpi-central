@@ -551,9 +551,16 @@ class ChatTurnPreparationService:
                     previous_messages=history_source,
                 )
             )
+            from app.domain.services.chat_sql_query_refinement_service import (
+                ChatSqlQueryRefinementService,
+            )
+
             if ChatAnalysisIntentService.is_data_reference_without_tool_data(
                 message,
                 history_source,
+            ) and not ChatSqlQueryRefinementService.is_sql_follow_up(
+                message,
+                previous_messages=history_source,
             ):
                 interpretation_without_data_answer = (
                     "Ainda não há dados nesta conversa para interpretar. "
@@ -764,6 +771,11 @@ class ChatTurnPreparationService:
             or bool(assistant_identity_direct)
         )
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+
         if canvas_action:
             direct_answer = canvas_action.answer
         elif pre_capability_answer:
@@ -776,6 +788,18 @@ class ChatTurnPreparationService:
             direct_answer = web_post_search_direct
         elif web_save_sources_direct:
             direct_answer = web_save_sources_direct
+        elif (
+            isinstance(tool_context, dict)
+            and str(tool_context.get("directAnswer") or "").strip()
+            and (
+                ChatSqlQueryRefinementService.is_sql_follow_up(
+                    message,
+                    previous_messages=history_source,
+                )
+                or ChatSqlIntentService.is_sql_conversation_turn(message)
+            )
+        ):
+            direct_answer = str(tool_context.get("directAnswer") or "").strip()
         elif session_memory_direct:
             direct_answer = session_memory_direct
         elif attachment_welcome_direct:

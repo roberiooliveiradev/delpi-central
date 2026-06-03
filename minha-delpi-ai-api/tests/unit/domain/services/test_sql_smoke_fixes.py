@@ -107,6 +107,20 @@ def test_strip_schema_presentation_from_tool_calls():
     assert "presentation" not in meta
 
 
+def test_review_sql_ignores_stale_memory_ambiguity():
+    from app.application.services.chat_session_memory_direct_answer_service import (
+        ChatSessionMemoryDirectAnswerService,
+    )
+
+    review = "Revisa essa query:\n\nSELECT * FROM SA1010 a JOIN SC5010 p ON p.C5_CLIENTE = a.A1_COD"
+    wm = {"memoryAmbiguity": {"promptHint": "Quando você diz «isso» ou «esse»..."}}
+
+    assert ChatSessionMemoryDirectAnswerService.build(
+        message=review,
+        workspace_context={"workingMemory": wm},
+    ) is None
+
+
 def test_ensure_required_sql_block_for_sc5_sa1():
     snapshot = {
         "mode": "schema_explore",

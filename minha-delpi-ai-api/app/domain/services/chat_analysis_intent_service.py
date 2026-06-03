@@ -176,6 +176,20 @@ class ChatAnalysisIntentService:
         if not normalized:
             return False
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
+        if ChatSqlQueryRefinementService.is_sql_follow_up(
+            message,
+            previous_messages=previous_messages,
+        ):
+            return False
+
         if cls.is_email_from_operational_data_request(message, previous_messages):
             return True
 
