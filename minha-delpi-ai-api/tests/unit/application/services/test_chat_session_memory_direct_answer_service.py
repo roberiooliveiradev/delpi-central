@@ -40,3 +40,24 @@ def test_ambiguity_answer():
     assert answer is not None
     assert "10080001" in answer
     assert "20090002" in answer
+
+
+def test_memory_introspection_m20():
+    answer = ChatSessionMemoryDirectAnswerService.build(
+        message="quais informações você está usando?",
+        workspace_context={
+            "workingMemory": {
+                "lastEntities": {"productCode": "10080001"},
+            },
+            "memoryUx": {
+                "summary": "Produto 10080001",
+                "usage": {
+                    "preferences": ["Respostas curtas"],
+                    "entities": ["Produto 10080001"],
+                },
+            },
+        },
+    )
+
+    assert answer is not None
+    assert "10080001" in answer or "Produto" in answer

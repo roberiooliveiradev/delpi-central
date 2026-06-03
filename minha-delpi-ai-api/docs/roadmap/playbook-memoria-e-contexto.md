@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–7 concluídas** — até contexto avançado (contradição, segurança, esquecimento, grafo, debug). Fases 8–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–8 concluídas** — UX de memória (barra, ver memória, fixar, editar preferência). Fase 9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2126,6 +2126,7 @@ Casos mínimos:
 | M17 | «mesmo padrão do playbook anterior» | `episodicRecall` ou pedido de clarificação |
 | M18 | mensagem com dado sensível | `memoryWriteGated`; não persiste episódio |
 | M19 | mudança de assunto | `forgottenMemoryKeys`; poda códigos/episódios |
+| M20 | «quais informações você está usando?» | resposta direta com memória ativa |
 
 Implementação: `tests/unit/domain/services/test_memory_context.py`, `test_chat_semantic_memory.py`, `test_chat_episodic_memory_service.py`, `test_chat_advanced_context.py`.
 
@@ -2175,6 +2176,8 @@ Métricas:
 **Fase 6 entregue (03/06/2026):** `ChatEpisodicMemoryService` — `episodicMemory` / `episodicRecall` no snapshot, gravação pós-turno, exclusão e direct answer (§20, M17).
 
 **Fase 7 entregue (03/06/2026):** `ChatAdvancedContextService` — contradição, `ChatContextSafetyFilterService`, `ChatLearnedForgettingService`, `memoryGraph`, `memoryContextDebug` (§23/32/33, M10/M18/M19).
+
+**Fase 8 entregue (03/06/2026):** `ChatMemoryUxService` + `ChatContextBar` / `ChatMemoryUsedDialog` (§35–36, M20).
 
 ### Fase 1 — Estado de sessão
 
@@ -2228,13 +2231,14 @@ Métricas:
 - [x] Learned forgetting — `ChatLearnedForgettingService` (M19).
 - [x] Debug de contexto — `memoryContextDebug` no admin.
 
-### Fase 8 — UX de memória
+### Fase 8 — UX de memória ✅
 
-- Barra de contexto.
-- Ver memória usada.
-- Limpar contexto.
-- Editar preferência.
-- Fixar contexto.
+- [x] Barra de contexto — chips assunto/tarefa/anexo + resumo do grafo (`ChatMemoryUxService`).
+- [x] Ver memória usada — modal MFE + `metadata.memoryUx` / `GET .../memory/context`.
+- [x] Limpar contexto — botão × (já existente).
+- [x] Editar preferência — menu do chip + resposta direta.
+- [x] Fixar contexto — pins produto/filial/armazém via menu «Fixar».
+- [x] Regressão M20.
 
 ### Fase 9 — Métricas e feedback
 

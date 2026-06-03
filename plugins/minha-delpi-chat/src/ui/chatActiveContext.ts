@@ -4,13 +4,16 @@ const CHIP_KIND_ORDER: Record<string, number> = {
   product: 0,
   branch: 1,
   warehouse: 2,
-  period: 3,
-  canvas: 4,
-  format: 5,
-  tone: 6,
-  preference: 7,
-  email: 8,
-  textCorrection: 9,
+  topic: 3,
+  task: 4,
+  period: 5,
+  attachment: 6,
+  canvas: 7,
+  format: 8,
+  tone: 9,
+  preference: 10,
+  email: 11,
+  textCorrection: 12,
 };
 
 export function contextChipKey(chip: Pick<ChatContextChip, "kind" | "value">): string {
@@ -117,6 +120,45 @@ export function buildActiveContextSummary(chips: ChatContextChip[]): string | nu
   }
 
   return chips.map((chip) => chip.label).join(" · ");
+}
+
+export type MemoryUsageView = {
+  layers?: string[];
+  topic?: string | null;
+  task?: string | null;
+  entities?: Record<string, string>;
+  preferences?: string[];
+  resolvedReferences?: string[];
+  semanticHits?: Array<{ title?: string; snippet?: string }>;
+  episodicCount?: number;
+  episodicRecall?: string | null;
+  writeGated?: boolean;
+};
+
+export function extractMemoryUsageFromMessages(
+  messages: MessageWithContext[],
+): MemoryUsageView | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+
+    if (message.role !== "assistant") {
+      continue;
+    }
+
+    const raw = message.metadata?.memoryUx;
+
+    if (!raw || typeof raw !== "object") {
+      continue;
+    }
+
+    const usage = (raw as { usage?: MemoryUsageView }).usage;
+
+    if (usage && typeof usage === "object") {
+      return usage;
+    }
+  }
+
+  return null;
 }
 
 export function extractActivePreferenceHint(chips: ChatContextChip[]): string | null {

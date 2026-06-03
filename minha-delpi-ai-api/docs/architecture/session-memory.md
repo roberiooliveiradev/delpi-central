@@ -44,6 +44,8 @@ Histórico + mensagem
 | `ChatLearnedForgettingService` | Poda contexto obsoleto (§33) |
 | `ChatMemoryKnowledgeGraphService` | `memoryGraph` leve no snapshot |
 | `ChatMemoryContextDebugService` | `memoryContextDebug` para admin |
+| `ChatMemoryUxService` | `memoryUx` no metadata, chips UX, resposta «o que está usando» (Fase 8) |
+| `ChatManualContextPinService` | Pins manuais produto/filial/armazém |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |

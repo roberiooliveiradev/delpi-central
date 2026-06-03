@@ -341,11 +341,19 @@ class ChatInteractivitySuggestionService:
             return None
 
         snapshot = metadata.get("contextSnapshot")
-
+        memory_ux = metadata.get("memoryUx")
         summary = None
 
-        if isinstance(snapshot, dict):
-            summary = str(snapshot.get("summary") or "").strip() or None
+        if isinstance(memory_ux, dict):
+            context_bar = memory_ux.get("contextBar")
+
+            if isinstance(context_bar, dict) and context_bar.get("summary"):
+                summary = str(context_bar["summary"]).strip() or None
+
+        if not summary and isinstance(snapshot, dict):
+            from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
+
+            summary = ChatMemoryUxService.build_context_bar_summary(snapshot)
 
         return {
             "items": chips,

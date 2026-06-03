@@ -13,6 +13,10 @@ import { ChatInput, type ChatInputAttachment } from "../components/ChatInput";
 import { ChatInlineError } from "../components/ChatInlineError";
 import { ChatAddContextDialog } from "../components/ChatAddContextDialog";
 import { ChatContextBar, type ChatContextChip } from "../components/ChatContextBar";
+import {
+  ChatMemoryUsedDialog,
+  type MemoryUsageView,
+} from "../components/ChatMemoryUsedDialog";
 import { ChatMessageList } from "../components/ChatMessageList";
 import { ChatContextTopbar } from "../components/ChatContextTopbar";
 import { ChatHelpPanel } from "../components/ChatHelpPanel";
@@ -29,6 +33,7 @@ import {
   collectActiveContextChips,
   contextChipKey,
   extractActivePreferenceHint,
+  extractMemoryUsageFromMessages,
   isPinnableContextKind,
   mergeContextChips,
   normalizeContextChips,
@@ -52,6 +57,7 @@ import { ChatAgentsPage } from "./ChatAgentsPage";
 import { ChatProjectsPage } from "./ChatProjectsPage";
 import {
   addChatSessionMemoryPin,
+  type SessionMemoryContextResponse,
   clearChatSessionMemory,
   createChatArtifact,
   createProjectTextSource,
@@ -307,6 +313,10 @@ export function ChatPage({
   const [dismissedContextChipKeys, setDismissedContextChipKeys] = useState<string[]>([]);
   const [pinnedContextChips, setPinnedContextChips] = useState<ChatContextChip[]>([]);
   const [addContextDialogOpen, setAddContextDialogOpen] = useState(false);
+  const [memoryUsedDialogOpen, setMemoryUsedDialogOpen] = useState(false);
+  const [sessionMemoryUsage, setSessionMemoryUsage] = useState<MemoryUsageView | null>(
+    null,
+  );
 
   const mergedContextChips = useMemo(() => {
     if (contextMemoryCleared) {
@@ -338,6 +348,13 @@ export function ChatPage({
     () => extractActivePreferenceHint(activeContextChips),
     [activeContextChips],
   );
+
+  const memoryUsageFromMessages = useMemo(
+    () => extractMemoryUsageFromMessages(messages),
+    [messages],
+  );
+
+  const activeMemoryUsage = sessionMemoryUsage ?? memoryUsageFromMessages;
 
   const shortcutPrefillContext = useMemo(
     () => ({
@@ -415,11 +432,17 @@ export function ChatPage({
     shortcutSendPromptOptionsRef.current = shortcutSendPromptOptions;
   }, [isShortcutPromptOpen, promptAndSendMessage, resolveShortcutQuery, shortcutSendPromptOptions]);
 
+  const applySessionMemoryContext = useCallback((response: SessionMemoryContextResponse) => {
+    setPinnedContextChips(normalizeContextChips(response.chips));
+    setSessionMemoryUsage(response.usage ?? null);
+  }, []);
+
   useEffect(() => {
     setContextMemoryCleared(false);
     setDismissedContextChipKeys([]);
     setPinnedContextChips([]);
     setAddContextDialogOpen(false);
+    setSessionMemoryUsage(null);
   }, [activeSession?.id]);
 
   useEffect(() => {
@@ -437,7 +460,7 @@ export function ChatPage({
           return;
         }
 
-        setPinnedContextChips(normalizeContextChips(response.chips));
+        applySessionMemoryContext(response);
       })
       .catch(() => {
         /* memória opcional — chips de turno continuam disponíveis */
@@ -446,7 +469,7 @@ export function ChatPage({
     return () => {
       cancelled = true;
     };
-  }, [activeSession?.id, getAccessToken]);
+  }, [activeSession?.id, applySessionMemoryContext, getAccessToken]);
 
   const handleDismissContextChip = useCallback((chip: ChatContextChip) => {
     const key = contextChipKey(chip);
@@ -461,12 +484,61 @@ export function ChatPage({
 
     void removeChatSessionMemoryPin(activeSession.id, chip.kind, { getAccessToken })
       .then((response) => {
-        setPinnedContextChips(normalizeContextChips(response.chips));
+        applySessionMemoryContext(response);
       })
       .catch(() => {
         /* dismiss local já aplicado */
       });
-  }, [activeSession?.id, getAccessToken]);
+  }, [activeSession?.id, getAccessToken, applySessionMemoryContext]);
+
+  const handlePinContextChip = useCallback(
+    (chip: ChatContextChip) => {
+      if (!isPinnableContextKind(chip.kind)) {
+        return;
+      }
+
+      if (!activeSession?.id) {
+        setPinnedContextChips((current) => mergeContextChips([current, [chip]]));
+        setContextMemoryCleared(false);
+        return;
+      }
+
+      void addChatSessionMemoryPin(
+        activeSession.id,
+        { kind: chip.kind, value: chip.value },
+        { getAccessToken },
+      )
+        .then((response) => {
+          applySessionMemoryContext(response);
+          setContextMemoryCleared(false);
+        })
+        .catch(() => {
+          setPinnedContextChips((current) => mergeContextChips([current, [chip]]));
+        });
+    },
+    [activeSession?.id, applySessionMemoryContext, getAccessToken],
+  );
+
+  const handleViewMemoryUsed = useCallback(() => {
+    if (activeSession?.id) {
+      void getChatSessionMemoryContext(activeSession.id, { getAccessToken })
+        .then((response) => {
+          applySessionMemoryContext(response);
+          setMemoryUsedDialogOpen(true);
+        })
+        .catch(() => {
+          if (activeMemoryUsage) {
+            setMemoryUsedDialogOpen(true);
+          }
+        });
+
+      return;
+    }
+
+    if (activeMemoryUsage) {
+      setMemoryUsedDialogOpen(true);
+    }
+  }, [activeMemoryUsage, activeSession?.id, applySessionMemoryContext, getAccessToken]);
 
   const handleAddContextChip = useCallback((chip: ChatContextChip) => {
     setAddContextDialogOpen(false);
@@ -486,7 +558,7 @@ export function ChatPage({
       { getAccessToken },
     )
       .then((response) => {
-        setPinnedContextChips(normalizeContextChips(response.chips));
+        applySessionMemoryContext(response);
         setContextMemoryCleared(false);
         setDismissedContextChipKeys((current) =>
           current.filter((item) => item !== contextChipKey(chip)),
@@ -497,7 +569,7 @@ export function ChatPage({
         setPinnedContextChips((current) => mergeContextChips([current, [chip]]));
         setContextMemoryCleared(false);
       });
-  }, [activeSession?.id, getAccessToken]);
+  }, [activeSession?.id, applySessionMemoryContext, getAccessToken]);
 
   const handleClearActiveContext = useCallback(() => {
     void (async () => {
@@ -517,6 +589,7 @@ export function ChatPage({
       setContextMemoryCleared(true);
       setDismissedContextChipKeys([]);
       setPinnedContextChips([]);
+      setSessionMemoryUsage(null);
     })();
   }, [activeSession?.id, getAccessToken, sendMessage]);
 
@@ -2314,6 +2387,14 @@ export function ChatPage({
                   onDismissChip={handleDismissContextChip}
                   onChipAction={handleDrillDown}
                   onAddContext={() => setAddContextDialogOpen(true)}
+                  onViewMemory={handleViewMemoryUsed}
+                  onPinChip={handlePinContextChip}
+                />
+
+                <ChatMemoryUsedDialog
+                  open={memoryUsedDialogOpen}
+                  usage={activeMemoryUsage}
+                  onClose={() => setMemoryUsedDialogOpen(false)}
                 />
 
                 <ChatInput

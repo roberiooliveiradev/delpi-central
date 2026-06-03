@@ -2,12 +2,16 @@ import { useState } from "react";
 import {
   Building2,
   CalendarRange,
+  ClipboardList,
+  Eye,
+  FileText,
   LayoutGrid,
   Layout,
   MessageSquare,
   Package,
   Plus,
   SlidersHorizontal,
+  Target,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -34,6 +38,8 @@ type ChatContextBarProps = {
   onDismissChip?: (chip: ChatContextChip) => void;
   onChipAction?: (query: string) => void;
   onAddContext?: () => void;
+  onViewMemory?: () => void;
+  onPinChip?: (chip: ChatContextChip) => void;
 };
 
 const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
@@ -47,6 +53,9 @@ const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
   canvas: Layout,
   email: MessageSquare,
   textCorrection: SlidersHorizontal,
+  topic: Target,
+  task: ClipboardList,
+  attachment: FileText,
 };
 
 function chipIconForKind(kind: string): LucideIcon {
@@ -61,13 +70,16 @@ export function ChatContextBar({
   onDismissChip,
   onChipAction,
   onAddContext,
+  onViewMemory,
+  onPinChip,
 }: ChatContextBarProps) {
   const [chipMenu, setChipMenu] = useState<{
+    chip: ChatContextChip;
     anchor: { point: { x: number; y: number } };
     actions: ReturnType<typeof buildContextChipMenuActions>;
   } | null>(null);
 
-  if (!chips.length && !onAddContext) {
+  if (!chips.length && !onAddContext && !onViewMemory) {
     return null;
   }
 
@@ -93,6 +105,7 @@ export function ChatContextBar({
     }
 
     setChipMenu({
+      chip,
       anchor: { point: { x: clientX, y: clientY } },
       actions,
     });
@@ -198,6 +211,18 @@ export function ChatContextBar({
         </button>
       ) : null}
 
+      {onViewMemory ? (
+        <button
+          type="button"
+          className="mdc-chat-context-bar__view-memory"
+          onClick={onViewMemory}
+          title="Ver memória usada nesta conversa"
+          aria-label="Ver memória usada"
+        >
+          <Eye size={14} aria-hidden="true" />
+        </button>
+      ) : null}
+
       {showAdd ? (
         <button
           type="button"
@@ -214,7 +239,17 @@ export function ChatContextBar({
         <ChatTableRowMenu
           actions={chipMenu.actions}
           anchor={chipMenu.anchor}
-          onSelect={onChipAction}
+          onSelect={(query) => {
+            const action = chipMenu.actions.find((item) => item.query === query);
+
+            if (action?.id === "pin" && onPinChip) {
+              onPinChip(chipMenu.chip);
+            } else if (onChipAction) {
+              onChipAction(query);
+            }
+
+            setChipMenu(null);
+          }}
           onClose={() => setChipMenu(null)}
           menuLabel="Ações do contexto"
         />

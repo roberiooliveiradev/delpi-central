@@ -35,6 +35,18 @@ class ChatSessionMemoryDirectAnswerService:
         if episodic_answer:
             return episodic_answer
 
+        from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
+
+        memory_answer = ChatMemoryUxService.build_direct_answer(message, working_memory)
+
+        if memory_answer:
+            return memory_answer
+
+        edit_pref = ChatMemoryUxService.build_edit_preference_direct_answer(message)
+
+        if edit_pref:
+            return edit_pref
+
         ambiguity = working_memory.get("memoryAmbiguity")
 
         if isinstance(ambiguity, dict):

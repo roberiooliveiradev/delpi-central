@@ -84,6 +84,18 @@
   font-size: 0.72rem;
 }
 
+.mdc-chat-context-bar__chip--topic,
+.mdc-chat-context-bar__chip--task {
+  font-weight: 500;
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--mdc-primary) 70%, var(--mdc-text));
+}
+
+.mdc-chat-context-bar__chip--attachment {
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--mdc-text) 75%, var(--mdc-text-muted));
+}
+
 .mdc-chat-context-bar__chip--action {
   cursor: pointer;
   transition:
@@ -140,7 +152,8 @@
 }
 
 .mdc-chat-context-bar__clear,
-.mdc-chat-context-bar__add {
+.mdc-chat-context-bar__add,
+.mdc-chat-context-bar__view-memory {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -159,13 +172,15 @@
 }
 
 .mdc-chat-context-bar__clear:hover,
-.mdc-chat-context-bar__add:hover {
+.mdc-chat-context-bar__add:hover,
+.mdc-chat-context-bar__view-memory:hover {
   color: var(--mdc-text-muted);
   background: color-mix(in srgb, var(--mdc-control-bg) 85%, transparent);
 }
 
 .mdc-chat-context-bar__clear:focus-visible,
-.mdc-chat-context-bar__add:focus-visible {
+.mdc-chat-context-bar__add:focus-visible,
+.mdc-chat-context-bar__view-memory:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--mdc-primary) 30%, transparent);
   outline-offset: 1px;
 }

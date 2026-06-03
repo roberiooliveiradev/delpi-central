@@ -716,8 +716,23 @@ export async function clearChatSessionMemory(
   return parseJsonResponse<{ cleared: number }>(response);
 }
 
+export type SessionMemoryUsageView = {
+  layers?: string[];
+  topic?: string | null;
+  task?: string | null;
+  entities?: Record<string, string>;
+  preferences?: string[];
+  resolvedReferences?: string[];
+  semanticHits?: Array<{ title?: string; snippet?: string }>;
+  episodicCount?: number;
+  episodicRecall?: string | null;
+  writeGated?: boolean;
+};
+
 export type SessionMemoryContextResponse = {
   chips: Array<{ label: string; kind: string; value: string }>;
+  summary?: string | null;
+  usage?: SessionMemoryUsageView | null;
 };
 
 export async function getChatSessionMemoryContext(

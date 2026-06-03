@@ -1,0 +1,68 @@
+.mdc-memory-used-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(15 23 42 / 45%);
+}
+
+.mdc-memory-used-dialog {
+  width: min(520px, 100%);
+  max-height: min(80vh, 640px);
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--mdc-surface, #fff);
+  box-shadow: 0 20px 50px rgb(15 23 42 / 20%);
+}
+
+.mdc-memory-used-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgb(148 163 184 / 25%);
+}
+
+.mdc-memory-used-dialog__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.mdc-memory-used-dialog__close {
+  border: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.mdc-memory-used-dialog__body {
+  padding: 1rem 1.25rem 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.mdc-memory-used-dialog__body section {
+  margin-top: 0.75rem;
+}
+
+.mdc-memory-used-dialog__body h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.mdc-memory-used-dialog__body ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.mdc-memory-used-dialog__note {
+  margin-top: 0.75rem;
+  color: rgb(180 83 9);
+}

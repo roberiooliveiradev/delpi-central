@@ -20,4 +20,5 @@ MEMORY_CONTEXT_REGRESSION_CASES: list[dict] = [
     {"id": "M17", "kind": "episodic_recall"},
     {"id": "M18", "kind": "safety_write_gate"},
     {"id": "M19", "kind": "learned_forgetting"},
+    {"id": "M20", "kind": "memory_ux_introspect"},
 ]

@@ -24,6 +24,7 @@ from app.domain.services.chat_procedural_memory_provider_service import (
 )
 from app.domain.services.chat_episodic_memory_service import ChatEpisodicMemoryService
 from app.domain.services.chat_advanced_context_service import ChatAdvancedContextService
+from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
 from app.domain.services.chat_semantic_memory_retriever_service import (
     ChatSemanticMemoryRetrieverService,
 )
@@ -241,6 +242,16 @@ class ChatConversationMemoryService:
         if isinstance(canvas, dict) and canvas.get("active"):
             title = str(canvas.get("title") or "Lousa").strip()
             chips.append({"label": f"Lousa: {title[:40]}", "kind": "canvas", "value": "active"})
+
+        ux_chips = ChatMemoryUxService.build_context_chips(snapshot)
+        existing = {f"{chip.get('kind')}:{chip.get('value')}" for chip in chips}
+
+        for chip in ux_chips:
+            key = f"{chip.get('kind')}:{chip.get('value')}"
+
+            if key not in existing:
+                chips.append(chip)
+                existing.add(key)
 
         return chips
 

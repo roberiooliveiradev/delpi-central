@@ -8,6 +8,7 @@ from app.domain.ports.chat_session_memory_repository_port import ChatSessionMemo
 from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.chat_conversation_memory_service import ChatConversationMemoryService
 from app.domain.services.chat_manual_context_pin_service import ChatManualContextPinService
+from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
 
 
 class ChatSessionMemoryPinsUseCase:
@@ -78,4 +79,8 @@ class ChatSessionMemoryPinsUseCase:
             if ChatManualContextPinService.is_pinnable_kind(chip.get("kind"))
         ]
 
-        return {"chips": pinnable}
+        return {
+            "chips": pinnable,
+            "summary": ChatMemoryUxService.build_context_bar_summary(snapshot),
+            "usage": ChatMemoryUxService.build_usage_view(snapshot),
+        }

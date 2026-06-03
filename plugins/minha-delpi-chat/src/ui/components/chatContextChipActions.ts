@@ -1,5 +1,6 @@
 import type { ChatContextChip } from "./ChatContextBar";
 import type { TableRowMenuAction } from "./chatDrillDown";
+import { isPinnableContextKind } from "../chatActiveContext";
 
 const PRODUCT_CODE = "{{productCode}}";
 
@@ -159,8 +160,35 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
         { id: "short-canvas", label: "Versão curta", query: "faça uma versão curta da lousa" },
       );
       break;
+    case "preference":
+    case "tone":
+    case "format":
+    case "email":
+    case "textCorrection":
+      actions.push({
+        id: "edit-preference",
+        label: "Editar preferência",
+        query: "quais preferências estão ativas? quero alterar",
+      });
+      break;
+    case "topic":
+    case "task":
+      actions.push({
+        id: "continue-task",
+        label: "Continuar tarefa",
+        query: "continue de onde paramos",
+      });
+      break;
     default:
       break;
+  }
+
+  if (isPinnableContextKind(chip.kind)) {
+    actions.push({
+      id: "pin",
+      label: "Fixar no contexto",
+      query: `fixar ${chip.label} no contexto da sessão`,
+    });
   }
 
   const seen = new Set<string>();

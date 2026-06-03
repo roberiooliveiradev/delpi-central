@@ -13,6 +13,7 @@ from app.application.services.chat_session_memory_metrics_service import (
 from app.domain.services.chat_conversation_memory_service import (
     ChatConversationMemoryService,
 )
+from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
 
 
 class ChatContextMetadataService:
@@ -54,6 +55,8 @@ class ChatContextMetadataService:
 
         if context_chips:
             metadata["contextChips"] = context_chips
+
+        metadata["memoryUx"] = ChatMemoryUxService.build_for_metadata(snapshot)
 
         ChatSessionMemoryMetricsService.attach_to_assistant_metadata(
             metadata,
