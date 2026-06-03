@@ -28,6 +28,19 @@ def test_build_summary_marks_live_source(mock_repo):
 
 
 @patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
+def test_build_summary_roi_consolidated_without_double_discount(mock_repo):
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    mock_repo.return_value.load_raw.return_value = raw
+
+    summary = DashboardLiveService().build_summary()
+
+    liquida = float(summary.get("economia_liquida_total") or 0)
+    investimento = float(summary.get("investimento_total") or 0)
+    if investimento > 0:
+        assert abs(float(summary.get("roi_medio") or 0) - liquida / investimento) < 0.02
+
+
+@patch("tm_app.application.services.dashboard_live_service.DashboardDataRepository")
 def test_query_ranking_processos_uses_first_implementation_date_but_keeps_later_active_rows(mock_repo):
     raw = TransformometroRawData(
         processos=[

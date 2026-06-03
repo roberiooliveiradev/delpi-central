@@ -73,7 +73,8 @@ def _map_summary(summary: dict) -> dict:
             "gross_costs_month": 0.0,
             "gross_investment_month": item.get("investimento_unico_mes", 0),
             "gross_recurring_investment_month": item.get("custo_recorrente_mes", 0),
-            "shared_resource_cost_month": 0.0,
+            "shared_resource_cost_month": item.get("custo_recursos_compartilhados_mes", 0),
+            "investment_total_month": item.get("investimento_total_mes", 0),
             "net_savings_month": item.get("economia_liquida_mes", 0),
         }
         for item in summary.get("evolucao_mensal") or []

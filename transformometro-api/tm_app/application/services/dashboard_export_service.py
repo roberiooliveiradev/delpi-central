@@ -25,7 +25,6 @@ EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
     ("horas_economizadas_mes", "Horas economizadas mês"),
 )
 
-
 class DashboardExportService:
     def _fetch_rows(
         self,
@@ -44,6 +43,37 @@ class DashboardExportService:
             competencia_fim=competencia_fim,
         )
 
+    def _fetch_summary_row(
+        self,
+        *,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> dict[str, Any]:
+        summary = DashboardLiveService().build_summary(
+            filial_id=filial_id,
+            setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
+        liquida = float(summary.get("economia_liquida_total") or 0)
+        investimento = float(summary.get("investimento_total") or 0)
+        roi = (liquida / investimento * 100) if investimento > 0 else 0.0
+
+        return {
+            "codigo_processo": "TOTAIS DO RECORTE",
+            "competencia": f"ROI acumulado {round(roi, 1)}%",
+            "economia_bruta": summary.get("economia_bruta_total"),
+            "economia_liquida_mes": summary.get("economia_liquida_total"),
+            "investimento_unico_mes": summary.get("investimento_unico_total"),
+            "custo_recorrente_mes": summary.get("custo_recorrente_total"),
+            "custo_recursos_compartilhados_mes": summary.get(
+                "custo_recursos_compartilhados_total"
+            ),
+            "investimento_total_mes": summary.get("investimento_total"),
+        }
+
     def build_csv(
         self,
         *,
@@ -60,12 +90,20 @@ class DashboardExportService:
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
         )
+        summary = self._fetch_summary_row(
+            filial_id=filial_id,
+            setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
 
         buffer = io.StringIO()
         writer = csv.writer(buffer, lineterminator="\n")
-        writer.writerow([key for key, _ in EXPORT_COLUMNS])
+        writer.writerow([label for _, label in EXPORT_COLUMNS])
         for row in rows:
             writer.writerow([row.get(key) for key, _ in EXPORT_COLUMNS])
+        writer.writerow([])
+        writer.writerow([summary.get(key, "") for key, _ in EXPORT_COLUMNS])
         return buffer.getvalue()
 
     def build_excel_html(
@@ -85,6 +123,12 @@ class DashboardExportService:
             competencia_inicio=competencia_inicio,
             competencia_fim=competencia_fim,
         )
+        summary = self._fetch_summary_row(
+            filial_id=filial_id,
+            setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
 
         header_cells = "".join(
             f"<th>{html.escape(label)}</th>" for _, label in EXPORT_COLUMNS
@@ -97,6 +141,11 @@ class DashboardExportService:
             )
             body_rows.append(f"<tr>{cells}</tr>")
 
+        summary_cells = "".join(
+            f"<td><strong>{html.escape(str(summary.get(key, '')))}</strong></td>"
+            for key, _ in EXPORT_COLUMNS
+        )
+
         return f"""<!DOCTYPE html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office"
       xmlns:x="urn:schemas-microsoft-com:office:excel">
@@ -106,12 +155,16 @@ class DashboardExportService:
   th, td {{ border: 1px solid #cbd5e1; padding: 6px 8px; }}
   th {{ background: #1e3a5f; color: #fff; font-weight: 600; }}
   tr:nth-child(even) td {{ background: #f8fafc; }}
+  tr.tm-summary td {{ background: #e8f4fc; }}
 </style>
 </head>
 <body>
 <table>
   <thead><tr>{header_cells}</tr></thead>
-  <tbody>{"".join(body_rows)}</tbody>
+  <tbody>
+    {"".join(body_rows)}
+    <tr class="tm-summary">{summary_cells}</tr>
+  </tbody>
 </table>
 </body>
 </html>"""

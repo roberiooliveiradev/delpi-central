@@ -76,6 +76,9 @@ def test_revision_compare_returns_items(mock_data, mock_rev, mock_proc):
     assert result is not None
     assert result["total_revisoes"] == 2
     assert len(result["items"]) == 2
+    melhoria = next(item for item in result["items"] if item["revisao_id"] == "r-melhoria")
+    assert "custo_recursos_compartilhados_mes" in melhoria["totais"]
+    assert "investimento_total_mes" in melhoria["totais"]
 
 
 @patch("tm_app.application.services.revisao_rateio_diagnostic_service.RevisaoRepository")

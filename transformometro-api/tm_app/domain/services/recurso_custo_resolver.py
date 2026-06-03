@@ -61,6 +61,13 @@ def resolve_recurso_valor_mensal(
             eligible.append(row)
 
     if not eligible:
+        for key in ("valor_total_recorrente", "valor_mensal"):
+            try:
+                value = float(resource.get(key) or 0)
+            except (TypeError, ValueError):
+                continue
+            if value > 0:
+                return value
         return 0.0
 
     eligible.sort(

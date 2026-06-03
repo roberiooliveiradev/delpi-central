@@ -12,7 +12,6 @@ from delpi_auth.credential_guard import check_credentials
 from tm_app.config import settings
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail
-from tm_app.domain.services.dashboard_historical_patch import apply_historical_revision_patch
 from tm_app.interface.http.routes.crud_routes import router as crud_router
 from tm_app.interface.http.routes.dashboard_routes import router as dashboard_router
 from tm_app.interface.http.routes.import_routes import router as import_router
@@ -25,9 +24,6 @@ logging.basicConfig(
     level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
-
-apply_historical_revision_patch()
-
 
 def build_allowed_origins() -> list[str]:
     origins: set[str] = set()

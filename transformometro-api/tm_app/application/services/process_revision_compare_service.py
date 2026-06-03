@@ -122,18 +122,25 @@ class ProcessRevisionCompareService:
                 "economia_liquida_mes": 0.0,
                 "investimento_unico_mes": 0.0,
                 "custo_recorrente_mes": 0.0,
+                "custo_recursos_compartilhados_mes": 0.0,
+                "investimento_total_mes": 0.0,
                 "horas_economizadas_mes": 0.0,
             }
+
+        investimento_unico = sum(float(r.get("investimento_unico_mes") or 0) for r in rows)
+        custo_recorrente = sum(float(r.get("custo_recorrente_mes") or 0) for r in rows)
+        custo_recursos = sum(float(r.get("custo_recursos_compartilhados_mes") or 0) for r in rows)
+
         return {
             "economia_bruta": round(sum(float(r.get("economia_bruta") or 0) for r in rows), 2),
             "economia_liquida_mes": round(
                 sum(float(r.get("economia_liquida_mes") or 0) for r in rows), 2
             ),
-            "investimento_unico_mes": round(
-                sum(float(r.get("investimento_unico_mes") or 0) for r in rows), 2
-            ),
-            "custo_recorrente_mes": round(
-                sum(float(r.get("custo_recorrente_mes") or 0) for r in rows), 2
+            "investimento_unico_mes": round(investimento_unico, 2),
+            "custo_recorrente_mes": round(custo_recorrente, 2),
+            "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
+            "investimento_total_mes": round(
+                investimento_unico + custo_recorrente + custo_recursos, 2
             ),
             "horas_economizadas_mes": round(
                 sum(float(r.get("horas_economizadas_mes") or 0) for r in rows), 2

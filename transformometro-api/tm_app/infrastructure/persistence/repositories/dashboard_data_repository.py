@@ -7,7 +7,12 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
 )
 
-
+# Expressões alinhadas ao cálculo em tempo real (DashboardCalculatorService).
+_INVESTIMENTO_TOTAL_SQL = """
+    COALESCE(investimento_unico_mes, 0)
+  + COALESCE(custo_recorrente_mes, 0)
+  + COALESCE(custo_recursos_compartilhados_mes, 0)
+"""
 class DashboardDataRepository(PluginBaseRepository):
     def load_raw(self) -> TransformometroRawData:
         processos = self.fetch_all(
@@ -210,6 +215,9 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 COALESCE(SUM(economia_liquida_mes), 0) AS economia_liquida_total,
                 COALESCE(SUM(investimento_unico_mes), 0) AS investimento_unico_total,
                 COALESCE(SUM(custo_recorrente_mes), 0) AS custo_recorrente_total,
+                COALESCE(SUM(custo_recursos_compartilhados_mes), 0)
+                    AS custo_recursos_compartilhados_total,
+                COALESCE(SUM({_INVESTIMENTO_TOTAL_SQL}), 0) AS investimento_total,
                 COALESCE(SUM(horas_economizadas_mes), 0) AS horas_economizadas_total
             FROM transformometro.dashboard_calculos
             {where_sql}
@@ -250,6 +258,8 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 SUM(economia_bruta) AS economia_bruta,
                 SUM(investimento_unico_mes) AS investimento_unico_mes,
                 SUM(custo_recorrente_mes) AS custo_recorrente_mes,
+                SUM(custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+                SUM({_INVESTIMENTO_TOTAL_SQL}) AS investimento_total_mes,
                 SUM(economia_liquida_mes) AS economia_liquida_mes
             FROM transformometro.dashboard_calculos
             {where_sql}
@@ -297,12 +307,20 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 p.setor_id,
                 SUM(d.economia_liquida_mes) AS economia_liquida_mes,
                 SUM(d.economia_bruta) AS economia_bruta,
-                SUM(d.economia_liquida_mes) / 30.0 AS economia_diaria
+                SUM(d.investimento_unico_mes) AS investimento_unico_mes,
+                SUM(d.custo_recorrente_mes) AS custo_recorrente_mes,
+                SUM(d.custo_recursos_compartilhados_mes) AS custo_recursos_compartilhados_mes,
+                SUM(
+                    COALESCE(d.investimento_unico_mes, 0)
+                  + COALESCE(d.custo_recorrente_mes, 0)
+                  + COALESCE(d.custo_recursos_compartilhados_mes, 0)
+                ) AS investimento_total_mes,
+                SUM(d.economia_bruta) / 30.0 AS economia_diaria
             FROM transformometro.dashboard_calculos d
             JOIN transformometro.processos p ON p.processo_id = d.processo_id
             {where_sql}
             GROUP BY p.processo_id, p.codigo_processo, p.nome_processo, p.filial_id, p.setor_id
-            ORDER BY economia_liquida_mes DESC
+            ORDER BY economia_diaria DESC
             LIMIT %s
             """,
             tuple(params),
@@ -407,6 +425,12 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 d.economia_liquida_mes,
                 d.investimento_unico_mes,
                 d.custo_recorrente_mes,
+                d.custo_recursos_compartilhados_mes,
+                (
+                    COALESCE(d.investimento_unico_mes, 0)
+                  + COALESCE(d.custo_recorrente_mes, 0)
+                  + COALESCE(d.custo_recursos_compartilhados_mes, 0)
+                ) AS investimento_total_mes,
                 d.horas_economizadas_mes
             FROM transformometro.dashboard_calculos d
             JOIN transformometro.processos p ON p.processo_id = d.processo_id

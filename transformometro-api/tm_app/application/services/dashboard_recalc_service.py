@@ -5,18 +5,12 @@ import time
 from typing import Any
 
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
-from tm_app.domain.services.dashboard_historical_patch import apply_historical_revision_patch
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardCalculoRepository,
     DashboardDataRepository,
 )
 
 logger = logging.getLogger(__name__)
-
-# Garante que o recalculo materializado use a mesma regra das rotas live,
-# inclusive quando executado por script dentro do container, sem passar pelo main.py.
-apply_historical_revision_patch()
-
 
 def _filter_rows(
     rows: list[dict[str, Any]],
@@ -44,7 +38,6 @@ def _filter_rows(
 
 class DashboardRecalcService:
     def __init__(self) -> None:
-        apply_historical_revision_patch()
         self._calculator = DashboardCalculatorService()
         self._data_repo = DashboardDataRepository()
         self._dashboard_repo = DashboardCalculoRepository()

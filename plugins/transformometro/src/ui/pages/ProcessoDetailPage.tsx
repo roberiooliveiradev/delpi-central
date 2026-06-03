@@ -236,6 +236,18 @@ export function ProcessoDetailPage({
         render: (row) => formatNumber(row.totais.economia_liquida_mes),
       },
       {
+        key: "investimento",
+        header: "Invest. total",
+        className: "ds-table__col--numeric",
+        render: (row) => formatNumber(row.totais.investimento_total_mes),
+      },
+      {
+        key: "recursos",
+        header: "Recursos comp.",
+        className: "ds-table__col--numeric",
+        render: (row) => formatNumber(row.totais.custo_recursos_compartilhados_mes),
+      },
+      {
         key: "horas",
         header: "Horas/mês",
         className: "ds-table__col--numeric",

@@ -118,13 +118,9 @@ class DashboardCalculatorService:
         total_investment = sum(item["investimento_total_mes"] for item in monthly_breakdown)
         average_roi = self._calculate_average_roi(calculation_rows)
 
-        # Apply date range proration to the accumulated totals only
-        # (evolucao_mensal keeps original monthly values for chart consistency)
-        proration_factor = self._calculate_date_range_proration_factor(
-            start_date=start_date,
-            end_date=end_date,
-            monthly_breakdown=monthly_breakdown,
-        )
+        # Cards principais: competências mensais cheias no recorte (sem fator global de prorrata).
+        # Proporcionalidade por dias aplica-se apenas a recursos com base_competencia proporcional_dias.
+        proration_factor = 1.0
 
         range_summary = self._build_range_summary(
             start_date=start_date,
@@ -135,15 +131,13 @@ class DashboardCalculatorService:
 
         return {
             "solucoes_implementadas": implemented_solutions_count,
-            "economia_liquida_total": self._round_final(total_net_savings * proration_factor),
-            "economia_bruta_total": self._round_final(total_gross_savings * proration_factor),
-            "horas_economizadas_total": self._round_final(total_hours_saved * proration_factor),
-            "investimento_unico_total": self._round_final(total_unique * proration_factor),
-            "custo_recorrente_total": self._round_final(total_recurring * proration_factor),
-            "custo_recursos_compartilhados_total": self._round_final(
-                total_shared_resources * proration_factor
-            ),
-            "investimento_total": self._round_final(total_investment * proration_factor),
+            "economia_liquida_total": self._round_final(total_net_savings),
+            "economia_bruta_total": self._round_final(total_gross_savings),
+            "horas_economizadas_total": self._round_final(total_hours_saved),
+            "investimento_unico_total": self._round_final(total_unique),
+            "custo_recorrente_total": self._round_final(total_recurring),
+            "custo_recursos_compartilhados_total": self._round_final(total_shared_resources),
+            "investimento_total": self._round_final(total_investment),
             "roi_medio": self._round_final(average_roi),
             "evolucao_mensal": monthly_breakdown,  # Keep original monthly values
             "periodo": range_summary,
@@ -317,8 +311,6 @@ class DashboardCalculatorService:
 
             for process_id, process_row in context.processos_by_id.items():
                 revisoes = context.revisoes_by_processo.get(process_id, [])
-                if not self._is_process_active(revisoes):
-                    continue
 
                 baseline_review = self._pick_baseline_review(revisoes)
                 baseline_id = (
@@ -436,7 +428,10 @@ class DashboardCalculatorService:
             competencia_date=competencia_date,
         )
 
-        economia_liquida_mes = savings["economia_bruta"] - custo_recorrente_mes - current_shared_cost
+        investimento_total_mes = (
+            investimento_unico_mes + custo_recorrente_mes + current_shared_cost
+        )
+        economia_liquida_mes = savings["economia_bruta"] - investimento_total_mes
 
         horas_economizadas_mes = 0.0
         if self._is_comparable_review(review):
@@ -467,7 +462,7 @@ class DashboardCalculatorService:
             "economia_bruta": savings["economia_bruta"],
             "investimento_unico_mes": investimento_unico_mes,
             "custo_recorrente_mes": custo_recorrente_mes,
-            "investimento_total_mes": investimento_unico_mes + custo_recorrente_mes + current_shared_cost,
+            "investimento_total_mes": investimento_total_mes,
             "economia_liquida_mes": economia_liquida_mes,
             "custo_recursos_compartilhados_mes": current_shared_cost,
             "horas_economizadas_mes": horas_economizadas_mes,
@@ -525,13 +520,11 @@ class DashboardCalculatorService:
             current_shared_cost=current_shared_cost,
         )
 
-        custo_recorrente_mes = self._calculate_recurring_investment_month(
-            investments=context.investimentos_by_revisao.get(review_id, []),
-            competencia_date=current_month,
-        )
+        days_in_month = calendar.monthrange(current_month.year, current_month.month)[1]
+        if days_in_month <= 0:
+            return None
 
-        economia_liquida_mes = savings["economia_bruta"] - custo_recorrente_mes
-        return economia_liquida_mes / 30.0
+        return savings["economia_bruta"] / days_in_month
 
     def _calculate_review_payback_months(
         self,
@@ -599,71 +592,44 @@ class DashboardCalculatorService:
             competencia_date=current_month,
         )
 
-        economia_liquida_mes = savings["economia_bruta"] - custo_recorrente_mes
-        if economia_liquida_mes <= 0:
+        economia_operacional_mes = (
+            savings["economia_bruta"] - custo_recorrente_mes - current_shared_cost
+        )
+        if economia_operacional_mes <= 0:
             return None
 
-        return total_unique_investment / economia_liquida_mes
+        return total_unique_investment / economia_operacional_mes
 
     def _calculate_average_roi(self, calculation_rows: List[dict]) -> float:
-        """
-        Calculate average ROI based on cumulative economy vs unique investment per review.
-        
-        ROI = (Total Economy - Total Investment) / Total Investment
-        
-        Includes:
-        - Only reviews with COMPARABLE_SCENARIOS (melhoria, automacao, correcao)
-        - Only reviews with investimento_unico_acumulado > 0 (must have investment to calculate ROI)
-        
-        Returns:
-        - Average ROI across all reviewed projects
-        - 0.0 if no investable projects found (data completeness issue)
-        """
-        # Group by review, summing economy and investment
-        grouped: Dict[str, dict] = {}
+        """ROI medio por revisao: liquida acumulada / investimento total acumulado."""
+        grouped: Dict[str, dict[str, float]] = {}
 
         for row in calculation_rows:
-            # Only include comparable scenarios (improvements with measurable ROI)
             if row["cenario_tipo"] not in self.COMPARABLE_SCENARIOS:
                 continue
 
-            revisao_id = row["revisao_id"]
-            grouped.setdefault(
+            revisao_id = str(row.get("revisao_id") or "")
+            if not revisao_id:
+                continue
+
+            bucket = grouped.setdefault(
                 revisao_id,
                 {
                     "economia_liquida_acumulada": 0.0,
-                    "investimento_unico_acumulado": 0.0,
-                    "custo_recorrente_acumulado": 0.0,  # Track recurring costs too
+                    "investimento_total_acumulado": 0.0,
                 },
             )
-            grouped[revisao_id]["economia_liquida_acumulada"] += row["economia_liquida_mes"]
-            grouped[revisao_id]["investimento_unico_acumulado"] += row["investimento_unico_mes"]
-            grouped[revisao_id]["custo_recorrente_acumulado"] += row["custo_recorrente_mes"]
+            bucket["economia_liquida_acumulada"] += float(row.get("economia_liquida_mes") or 0)
+            bucket["investimento_total_acumulado"] += float(row.get("investimento_total_mes") or 0)
 
         rois: List[float] = []
-        valid_reviews = 0
-        zero_investment_reviews = 0
-
-        for revisao_id, values in grouped.items():
-            investment = values["investimento_unico_acumulado"]
-            economia = values["economia_liquida_acumulada"]
-            
-            valid_reviews += 1
-
-            # Skip reviews without investment (can't calculate ROI on free improvements)
+        for values in grouped.values():
+            investment = values["investimento_total_acumulado"]
             if investment <= 0:
-                zero_investment_reviews += 1
                 continue
+            rois.append(values["economia_liquida_acumulada"] / investment)
 
-            # ROI = (Net Savings - Investment) / Investment
-            # Negative ROI means investment hasn't paid back yet
-            roi = (economia - investment) / investment
-            rois.append(roi)
-
-        # Return average ROI, or 0.0 if no valid projects with investment
         if not rois:
-            # Log why: helps diagnose data issues
-            # (would use logger in production)
             return 0.0
 
         return sum(rois) / len(rois)
@@ -783,6 +749,57 @@ class DashboardCalculatorService:
             "economia_bruta": economia_bruta,
         }
 
+    def _resource_link_competence_factor(
+        self,
+        resource: dict,
+        link: dict,
+        competencia_date: date,
+    ) -> float:
+        """Fator de reconhecimento do recurso na competência (mensal cheio ou proporcional)."""
+        base_competencia = (
+            self._empty_to_none(resource.get("base_competencia")) or "mensal_cheio"
+        ).lower()
+        if base_competencia != "proporcional_dias":
+            return 1.0
+
+        month_start = self._month_start(competencia_date)
+        month_end = date(
+            month_start.year,
+            month_start.month,
+            calendar.monthrange(month_start.year, month_start.month)[1],
+        )
+
+        start_candidates = [month_start]
+        for raw_date in (
+            link.get("data_inicio_uso"),
+            resource.get("data_inicio_vigencia"),
+        ):
+            parsed = self._parse_date(raw_date)
+            if parsed:
+                start_candidates.append(parsed)
+
+        end_candidates = [month_end]
+        for raw_date in (
+            link.get("data_fim_uso"),
+            resource.get("data_fim_vigencia"),
+        ):
+            parsed = self._parse_date(raw_date)
+            if parsed:
+                end_candidates.append(parsed)
+
+        effective_start = max(start_candidates)
+        effective_end = min(end_candidates)
+
+        if effective_end < effective_start:
+            return 0.0
+
+        active_days = (effective_end - effective_start).days + 1
+        total_days = (month_end - month_start).days + 1
+        if total_days <= 0:
+            return 0.0
+
+        return max(0.0, min(1.0, active_days / total_days))
+
     def _calculate_shared_resource_cost_for_review(
         self,
         review: Optional[dict],
@@ -810,7 +827,12 @@ class DashboardCalculatorService:
 
             custos = context.custos_by_recurso.get(resource_id or "", [])
             total_value = resolve_recurso_valor_mensal(resource, custos, competencia_date)
-            allocation_criteria = (self._empty_to_none(resource.get("criterio_rateio")) or "igualitario").lower()
+            if total_value <= 0:
+                continue
+
+            allocation_criteria = (
+                self._empty_to_none(resource.get("criterio_rateio")) or "igualitario"
+            ).lower()
 
             eligible_links = self._get_eligible_links_for_resource(
                 resource_id=resource_id or "",
@@ -821,6 +843,14 @@ class DashboardCalculatorService:
             if not eligible_links:
                 continue
 
+            current_factor = self._resource_link_competence_factor(
+                resource,
+                link,
+                competencia_date,
+            )
+            if current_factor <= 0:
+                continue
+
             if allocation_criteria == "por_peso":
                 total_weight = sum(
                     (self._to_float(item.get("peso_rateio")) or 1.0)
@@ -828,7 +858,7 @@ class DashboardCalculatorService:
                 )
                 current_weight = self._to_float(link.get("peso_rateio")) or 1.0
                 if total_weight > 0:
-                    total += total_value * (current_weight / total_weight)
+                    total += total_value * (current_weight / total_weight) * current_factor
                 continue
 
             if allocation_criteria == "por_revisoes_ativas":
@@ -838,10 +868,10 @@ class DashboardCalculatorService:
                     if self._empty_to_none(item.get("revisao_id"))
                 }
                 divisor = max(len(eligible_review_ids), 1)
-                total += total_value / divisor
+                total += (total_value / divisor) * current_factor
                 continue
 
-            total += total_value / max(len(eligible_links), 1)
+            total += (total_value / max(len(eligible_links), 1)) * current_factor
 
         return total
 

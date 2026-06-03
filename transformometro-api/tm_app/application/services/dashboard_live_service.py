@@ -134,7 +134,7 @@ class DashboardLiveService:
         total_investment = float(summary.get("investimento_total") or 0)
         if total_investment <= 0:
             return 0.0
-        return (total_net_savings - total_investment) / total_investment
+        return total_net_savings / total_investment
 
     def query_evolucao(
         self,
@@ -246,11 +246,13 @@ class DashboardLiveService:
             liquida_full = totals["economia_liquida_mes"]
             liquida = liquida_full * proration_factor
             bruta = totals["economia_bruta"] * proration_factor
+            bruta_full = totals["economia_bruta"]
             investimento_unico = totals["investimento_unico_mes"] * proration_factor
             custo_recorrente = totals["custo_recorrente_mes"] * proration_factor
             custo_recursos = totals["custo_recursos_compartilhados_mes"] * proration_factor
             investimento_total = totals["investimento_total_mes"] * proration_factor
             month_count = max(len(totals["competencias"]), 1)
+            days_denominator = 30.0 * month_count
             ranking.append(
                 {
                     "processo_id": pid,
@@ -264,7 +266,7 @@ class DashboardLiveService:
                     "custo_recorrente_mes": round(custo_recorrente, 2),
                     "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
                     "investimento_total_mes": round(investimento_total, 2),
-                    "economia_diaria": round(liquida_full / (30.0 * month_count), 2),
+                    "economia_diaria": round(bruta_full / days_denominator, 2),
                     "competencia": (
                         max(totals["competencias"])
                         if totals["competencias"]
@@ -279,7 +281,7 @@ class DashboardLiveService:
                 }
             )
 
-        ranking.sort(key=lambda item: float(item.get("economia_liquida_mes") or 0), reverse=True)
+        ranking.sort(key=lambda item: float(item.get("economia_diaria") or 0), reverse=True)
         return ranking[:limit]
 
     def _calculate_rows_proration_factor(
