@@ -1545,6 +1545,34 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       }
 
       setError(null);
+
+      // Limpa otimisticamente a resposta antiga: ao reenviar criamos uma nova
+      // branch a partir desta pergunta, então tudo que vem depois dela sai da
+      // visão e a pergunta editada já aparece persistida. Os logs de envio
+      // passam a ser renderizados logo abaixo da pergunta (igual a um envio novo).
+      setPendingUserMessage(null);
+      setMessages((current) => {
+        const targetIndex = current.findIndex((item) => item.id === messageId);
+
+        if (targetIndex < 0) {
+          return current;
+        }
+
+        const trimmed = current.slice(0, targetIndex + 1);
+        const target = trimmed[targetIndex];
+
+        trimmed[targetIndex] = {
+          ...target,
+          content: normalizedContent,
+          metadata: {
+            ...(target.metadata ?? {}),
+            optimistic: false,
+          },
+        };
+
+        return trimmed;
+      });
+
       markSessionPending(activeSession.id);
       clearSessionStreamUi(activeSession.id);
       patchSessionStreamUi(activeSession.id, {
