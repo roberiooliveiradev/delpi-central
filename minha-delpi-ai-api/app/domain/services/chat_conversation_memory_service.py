@@ -23,6 +23,7 @@ from app.domain.services.chat_procedural_memory_provider_service import (
     ChatProceduralMemoryProviderService,
 )
 from app.domain.services.chat_episodic_memory_service import ChatEpisodicMemoryService
+from app.domain.services.chat_advanced_context_service import ChatAdvancedContextService
 from app.domain.services.chat_semantic_memory_retriever_service import (
     ChatSemanticMemoryRetrieverService,
 )
@@ -132,6 +133,12 @@ class ChatConversationMemoryService:
                 "message": "episódio não encontrado",
             }
 
+        snapshot = ChatAdvancedContextService.apply_pre_turn(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+        )
+
         return snapshot
 
     @classmethod
@@ -179,16 +186,27 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             message=message,
         )
-        snapshot = ChatEpisodicMemoryService.apply_post_turn(
+        from app.domain.services.chat_context_safety_filter_service import (
+            ChatContextSafetyFilterService,
+        )
+
+        if ChatContextSafetyFilterService.should_allow_persist(snapshot):
+            snapshot = ChatEpisodicMemoryService.apply_post_turn(
+                snapshot,
+                message=message,
+                answer=answer,
+            )
+
+        snapshot = ChatAdvancedContextService.apply_post_turn(
             snapshot,
             message=message,
-            answer=answer,
         )
         return snapshot
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
+            ChatAdvancedContextService.format_prompt_block(snapshot),
             ChatEpisodicMemoryService.format_prompt_block(snapshot),
             ChatContextCompressionService.format_prompt_block(snapshot),
             ChatProceduralMemoryProviderService.format_prompt_block(snapshot),
@@ -256,6 +274,7 @@ class ChatConversationMemoryService:
             snapshot
         )
         base["episodicMemory"] = ChatEpisodicMemoryService.compact_for_admin_debug(snapshot)
+        base["advancedContext"] = ChatAdvancedContextService.compact_for_admin_debug(snapshot)
 
         return base
 

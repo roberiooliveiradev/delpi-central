@@ -13,6 +13,7 @@ Histórico + mensagem
   → ChatContextCompressionService (histórico ≥ 10 mensagens)
   → ChatSemanticMemoryRetrieverService (intenção documental/playbook)
   → ChatEpisodicMemoryService.apply_pre_turn (recall de episódios)
+  → ChatAdvancedContextService (contradição, esquecimento, grafo, segurança, debug)
   → workspaceContext.workingMemory + bloco no prompt
   → (turno) ChatSemanticMemoryService enriquece query RAG e registra hits
   → (turno) tools / LLM
@@ -37,6 +38,12 @@ Histórico + mensagem
 | `ChatProceduralMemoryProviderService` | Hints de playbook/procedimento por tarefa ativa (§21) |
 | `ChatSemanticMemoryService` | Ponte com `RagContextService` (híbrido + rerank já existentes) |
 | `ChatEpisodicMemoryService` | Episódios no `contextSnapshot`, recall e gravação por tarefa (§20) |
+| `ChatAdvancedContextService` | Orquestra Fase 7: contradição, safety, forgetting, grafo, debug |
+| `ChatMemoryContradictionService` | Substitui preferências contraditórias (§32) |
+| `ChatContextSafetyFilterService` | Gating de escrita e filtro sensível (§23) |
+| `ChatLearnedForgettingService` | Poda contexto obsoleto (§33) |
+| `ChatMemoryKnowledgeGraphService` | `memoryGraph` leve no snapshot |
+| `ChatMemoryContextDebugService` | `memoryContextDebug` para admin |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
@@ -50,12 +57,12 @@ Histórico + mensagem
 cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
 ```
 
-Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (Fases 1–6).
+Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (Fases 1–7).
 
 ```bash
 cd minha-delpi-ai-api && ./scripts/run_memory_context_validation.sh
 ```
 
-Campos úteis no `adminDebug.memory` (Fases 5–6): `semanticMemory` (hits, intent), `episodicMemory` (contagem, recall).
+Campos úteis no `adminDebug.memory`: `semanticMemory`, `episodicMemory`, `advancedContext` (`memoryContextDebug`, grafo, gating).
 
 - `sessionMemoryMetrics`: snapshot por turno (entidades, refs, follow-up, lousa)

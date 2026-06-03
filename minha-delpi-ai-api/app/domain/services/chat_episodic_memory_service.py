@@ -252,6 +252,13 @@ class ChatEpisodicMemoryService:
         answer: str | None,
         force: bool = False,
     ) -> bool:
+        from app.domain.services.chat_context_safety_filter_service import (
+            ChatContextSafetyFilterService,
+        )
+
+        if not ChatContextSafetyFilterService.should_allow_persist(snapshot):
+            return False
+
         if force:
             return True
 

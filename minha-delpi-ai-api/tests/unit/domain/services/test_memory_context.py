@@ -329,6 +329,18 @@ def test_m17_episodic_recall_from_prior_snapshot():
     assert snapshot.get("episodicRecall") or snapshot.get("episodicRecallMissing")
 
 
+def test_m10_memory_contradiction_via_pipeline():
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="Agora quero respostas completas e detalhadas",
+        previous_messages=[
+            {"role": "user", "content": "daqui pra frente respostas curtas"},
+            {"role": "assistant", "content": "Combinado."},
+        ],
+    )
+
+    assert snapshot.get("memoryContradictionResolved") or snapshot.get("supersededMemory")
+
+
 def test_post_turn_preserves_snippet():
     pre = {
         "conversationState": {

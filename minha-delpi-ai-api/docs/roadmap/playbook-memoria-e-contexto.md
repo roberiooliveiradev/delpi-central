@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–6 concluídas** — estado de sessão, entidades, preferências, compressão, memória semântica (RAG enriquecido) e episódica (`contextSnapshot`). Fases 7–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md) · Commits: `da03bf0b` (F5), `bf17fada` (F6).
+**Status (03/06/2026):** Fases **1–7 concluídas** — até contexto avançado (contradição, segurança, esquecimento, grafo, debug). Fases 8–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2124,8 +2124,10 @@ Casos mínimos:
 | M15 | limpar contexto | remove active state |
 | M16 | «como funciona autorização?» | enriquece RAG; `semanticMemoryRequested` |
 | M17 | «mesmo padrão do playbook anterior» | `episodicRecall` ou pedido de clarificação |
+| M18 | mensagem com dado sensível | `memoryWriteGated`; não persiste episódio |
+| M19 | mudança de assunto | `forgottenMemoryKeys`; poda códigos/episódios |
 
-Implementação: `tests/unit/domain/services/test_memory_context.py`, `test_chat_semantic_memory.py`, `test_chat_episodic_memory_service.py`.
+Implementação: `tests/unit/domain/services/test_memory_context.py`, `test_chat_semantic_memory.py`, `test_chat_episodic_memory_service.py`, `test_chat_advanced_context.py`.
 
 ---
 
@@ -2172,6 +2174,8 @@ Métricas:
 
 **Fase 6 entregue (03/06/2026):** `ChatEpisodicMemoryService` — `episodicMemory` / `episodicRecall` no snapshot, gravação pós-turno, exclusão e direct answer (§20, M17).
 
+**Fase 7 entregue (03/06/2026):** `ChatAdvancedContextService` — contradição, `ChatContextSafetyFilterService`, `ChatLearnedForgettingService`, `memoryGraph`, `memoryContextDebug` (§23/32/33, M10/M18/M19).
+
 ### Fase 1 — Estado de sessão
 
 - Criar ConversationStateManager.
@@ -2216,13 +2220,13 @@ Métricas:
 - [x] Permitir exclusão — pedido explícito do usuário.
 - [x] Regressão M17.
 
-### Fase 7 — Contexto avançado
+### Fase 7 — Contexto avançado ✅
 
-- Grafo de conhecimento.
-- Detecção de contradição.
-- Gating de escrita.
-- Learned forgetting.
-- Debug de contexto.
+- [x] Grafo de conhecimento — `memoryGraph` (nós/arestas no snapshot).
+- [x] Detecção de contradição — `ChatMemoryContradictionService` + prioridade de correção (M10).
+- [x] Gating de escrita — `ChatContextSafetyFilterService` (M18).
+- [x] Learned forgetting — `ChatLearnedForgettingService` (M19).
+- [x] Debug de contexto — `memoryContextDebug` no admin.
 
 ### Fase 8 — UX de memória
 

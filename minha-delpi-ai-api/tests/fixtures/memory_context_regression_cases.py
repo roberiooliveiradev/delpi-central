@@ -1,4 +1,4 @@
-"""Casos M1–M17 — playbook memória e contexto (§79)."""
+"""Casos M1–M19 — playbook memória e contexto (§79)."""
 
 from __future__ import annotations
 
@@ -18,4 +18,6 @@ MEMORY_CONTEXT_REGRESSION_CASES: list[dict] = [
     {"id": "M15", "kind": "clear_context"},
     {"id": "M16", "kind": "semantic_rag_enrich"},
     {"id": "M17", "kind": "episodic_recall"},
+    {"id": "M18", "kind": "safety_write_gate"},
+    {"id": "M19", "kind": "learned_forgetting"},
 ]
