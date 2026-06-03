@@ -16,6 +16,9 @@ from app.domain.services.chat_conversation_state_service import (
     ChatConversationStateService,
 )
 from app.domain.services.chat_entity_tracker_service import ChatEntityTrackerService
+from app.domain.services.chat_context_compression_service import (
+    ChatContextCompressionService,
+)
 from app.domain.services.chat_user_preference_manager_service import (
     ChatUserPreferenceManagerService,
 )
@@ -101,6 +104,12 @@ class ChatConversationMemoryService:
             if ambiguity:
                 snapshot["memoryAmbiguity"] = ambiguity
 
+        snapshot = ChatContextCompressionService.apply_to_snapshot(
+            snapshot,
+            previous_messages=previous_messages,
+            message=message,
+        )
+
         return snapshot
 
     @classmethod
@@ -143,11 +152,17 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
         )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
+        snapshot = ChatContextCompressionService.apply_to_snapshot(
+            snapshot,
+            previous_messages=previous_messages,
+            message=message,
+        )
         return snapshot
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
+            ChatContextCompressionService.format_prompt_block(snapshot),
             ChatWorkingMemoryService.format_prompt_block(snapshot),
             ChatUserPreferenceManagerService.format_prompt_block(snapshot),
             ChatEntityTrackerService.format_prompt_block(snapshot),
@@ -202,6 +217,9 @@ class ChatConversationMemoryService:
         base["activeEntities"] = snapshot.get("activeEntities") or {}
         base["referenceHints"] = snapshot.get("referenceHints") or {}
         base["userPreferences"] = ChatUserPreferenceManagerService.compact_for_admin_debug(
+            snapshot
+        )
+        base["conversationSummary"] = ChatContextCompressionService.compact_for_admin_debug(
             snapshot
         )
 
