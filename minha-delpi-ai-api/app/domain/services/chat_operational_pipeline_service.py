@@ -76,6 +76,13 @@ class ChatOperationalPipelineService:
         if attachment_ids:
             return False
 
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            if ChatSqlIntentService.is_authoring_request(message):
+                return False
+
+            if not ChatSqlIntentService.should_auto_execute_sql(message):
+                return False
+
         if ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return False
 

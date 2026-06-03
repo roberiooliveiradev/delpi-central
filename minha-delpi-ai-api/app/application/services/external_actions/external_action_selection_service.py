@@ -101,6 +101,22 @@ class ExternalActionSelectionService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return None
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_authoring_request(message):
+            normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+            if self._looks_like_system_metadata_question(normalized):
+                selected = self._select_system_metadata_action(
+                    message,
+                    allowed_action_ids=allowed_action_ids,
+                )
+
+                if selected:
+                    return selected
+
+            return None
+
         from app.domain.services.chat_web_search_source_follow_up_service import (
             ChatWebSearchSourceFollowUpService,
         )
@@ -1643,9 +1659,13 @@ class ExternalActionSelectionService:
         from app.domain.services.chat_technical_description_intent_service import (
             ChatTechnicalDescriptionIntentService,
         )
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
         from app.domain.services.chat_web_search_intent_service import (
             ChatWebSearchIntentService,
         )
+
+        if ChatSqlIntentService.is_sql_conversation_turn(value):
+            return False
 
         if ChatWebSearchIntentService.matches(value):
             return False

@@ -63,7 +63,10 @@ class ChatToolContextService:
         )
 
         raw_message = str(message or "").strip()
-        self._build_workspace_context = self._resolve_workspace_context(agent_context)
+        workspace = dict(self._resolve_workspace_context(agent_context) or {})
+        workspace["actionsEnabled"] = bool(actions_enabled)
+        workspace["allowedActionIds"] = list(allowed_action_ids or [])
+        self._build_workspace_context = workspace
 
         from app.application.services.chat_capabilities_service import ChatCapabilitiesService
         from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
@@ -520,6 +523,16 @@ class ChatToolContextService:
                     )
                 )
 
+            plan_workspace = dict(self._build_workspace_context or {})
+
+            if drawing_runtime_skills:
+                merged_skills = plan_workspace.get("skills")
+
+                if isinstance(merged_skills, dict):
+                    plan_workspace["skills"] = {**merged_skills, **drawing_runtime_skills}
+                else:
+                    plan_workspace["skills"] = dict(drawing_runtime_skills)
+
             planned_external_actions = ChatExternalActionOrchestrationService.plan_actions(
                 self.external_action_selection_service,
                 message=message,
@@ -528,7 +541,7 @@ class ChatToolContextService:
                 previous_messages=previous_messages,
                 max_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
-                workspace_context={"skills": drawing_runtime_skills},
+                workspace_context=plan_workspace,
                 forced_product_code=drawing_product_code if drawing_action_required else None,
                 forced_intent=(
                     ChatProductQueryIntent.ANALYSER
