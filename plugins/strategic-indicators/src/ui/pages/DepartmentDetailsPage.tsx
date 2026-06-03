@@ -7,6 +7,7 @@ import { StrategicIndicatorsBackLink } from "../components/StrategicIndicatorsBa
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LastUpdateBadge } from "../components/LastUpdateBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
@@ -156,7 +157,10 @@ export function DepartmentDetailsPage({
           loading || refreshing ? (
             <LoadingActivityBadge label="Atualizando" tone="info" />
           ) : (
-            <StatusBadge label="Drill-down real" variant="success" />
+            <>
+              <StatusBadge label="Drill-down real" variant="success" />
+              <LastUpdateBadge getAccessToken={getAccessToken} />
+            </>
           )
         }
         actions={refreshButton}

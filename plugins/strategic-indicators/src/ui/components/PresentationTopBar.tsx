@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Expand, Minimize } from "lucide-react";
 import { LoadingActivityBadge } from "./LoadingActivityBadge";
 import { StatusBadge } from "./StatusBadge";
+import { LastUpdateBadge } from "./LastUpdateBadge";
 import "./PresentationTopBar.css";
 
 type PresentationMode = "meeting" | "tv" | "slide";
@@ -36,6 +37,7 @@ type PresentationTopBarProps = {
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
   actions?: import("react").ReactNode;
+  getAccessToken?: () => string | undefined;
 };
 
 const DEFAULT_MONTHS_OPTIONS: MonthsOption[] = [
@@ -67,6 +69,7 @@ export function PresentationTopBar({
   isFullscreen = false,
   onToggleFullscreen,
   actions,
+  getAccessToken,
 }: PresentationTopBarProps) {
   const showBranchFilter = viewMode === "branch";
 
@@ -310,7 +313,10 @@ export function PresentationTopBar({
           {isRefreshing ? (
             <LoadingActivityBadge label="Atualizando" tone="info" />
           ) : (
-            <StatusBadge label="API real" variant="success" />
+            <>
+              <StatusBadge label="API real" variant="success" />
+              <LastUpdateBadge getAccessToken={getAccessToken} />
+            </>
           )}
 
           {actions ?? null}

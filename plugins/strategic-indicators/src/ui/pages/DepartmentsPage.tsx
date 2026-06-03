@@ -14,6 +14,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { StrategicIndicatorsErrorModal } from "../components/StrategicIndicatorsErrorModal";
 import { InfoState } from "../components/InfoState";
 import { StatusBadge } from "../components/StatusBadge";
+import { LastUpdateBadge } from "../components/LastUpdateBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { RefreshSnapshotButton } from "../components/RefreshSnapshotButton";
@@ -86,7 +87,17 @@ export function DepartmentsPage({ getAccessToken }: DepartmentsPageProps) {
     loading || refreshing ? (
       <LoadingActivityBadge label="Atualizando" tone="info" />
     ) : (
-      <StatusBadge label="API Real" variant="success" />
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <StatusBadge label="API Real" variant="success" />
+        <LastUpdateBadge getAccessToken={getAccessToken} />
+      </span>
     );
 
   const disabledNav = (

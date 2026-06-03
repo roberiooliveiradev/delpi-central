@@ -1252,6 +1252,7 @@ export function PresentationPage({ getAccessToken }: PresentationPageProps) {
           onMonthsChange={handleMonthsChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={handleToggleFullscreen}
+          getAccessToken={getAccessToken}
           actions={
             <RefreshSnapshotButton
               getAccessToken={getAccessToken}

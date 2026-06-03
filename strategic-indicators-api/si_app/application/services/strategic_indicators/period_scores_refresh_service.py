@@ -164,17 +164,12 @@ def refresh_period_scores_materialized(
                 if department_id and not resolved_per_department:
                     continue
 
-                target_periods = periods
-                if department_id:
-                    current = resolve_period(
-                        competence=reference_competence,
-                        start_date=None,
-                        end_date=None,
-                    )
-                    target_periods = [current]
-
+                # Escopo por departamento usa a MESMA janela do global. Antes só
+                # o mês corrente era recomputado, então o realizado das
+                # competências passadas ainda abertas (recebendo lançamentos no
+                # TOTVS) congelava e divergia do global/dashboard.
                 snapshots = snapshot_service.get_series_snapshot_optimized(
-                    periods=target_periods,
+                    periods=periods,
                     department_id=department_id,
                     branch=branch,
                     force_compute=True,

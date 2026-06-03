@@ -7,6 +7,7 @@ import { StrategicIndicatorsPageError } from "../components/StrategicIndicatorsP
 import { PageHeader } from "../components/PageHeader";
 import { SectionBlock } from "../components/SectionBlock";
 import { StatusBadge } from "../components/StatusBadge";
+import { LastUpdateBadge } from "../components/LastUpdateBadge";
 import { LoadingActivityBadge } from "../components/LoadingActivityBadge";
 import { LoadingActivityInline } from "../components/LoadingActivityInline";
 import { StrategicIndicatorsReferenceFilters } from "../components/StrategicIndicatorsReferenceFilters";
@@ -144,7 +145,10 @@ export function TrendsPage({ getAccessToken }: TrendsPageProps) {
           loading || refreshing ? (
             <LoadingActivityBadge label="Atualizando" tone="info" />
           ) : (
-            <StatusBadge label="API Real" variant="success" />
+            <>
+              <StatusBadge label="API Real" variant="success" />
+              <LastUpdateBadge getAccessToken={getAccessToken} />
+            </>
           )
         }
         actions={refreshButton}
