@@ -24,12 +24,14 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 - `./scripts/ci/build-dashboard-quality.sh` — lint + build do plugin Qualidade.
 - `./scripts/ci/build-eficiencia-fabril.sh` — lint + build do plugin Eficiência Fabril.
 - `./scripts/ci/build-auditoria-5s.sh` — lint + build do plugin Auditoria 5S.
+- `./scripts/ci/build-central-agendamento.sh` — lint + build do plugin Central de Agendamento.
 
 **Homologação:**
 
 - `./scripts/homologacao/check-dashboard-quality.sh` — smoke HTTP (assets + API com `TOKEN`).
 - `./scripts/homologacao/check-eficiencia-fabril.sh` — smoke HTTP (`remoteEntry.js` + API `/dashboard`; defina `TOKEN` para validar JWT).
 - `./scripts/homologacao/check-auditoria-5s.sh` — smoke HTTP (`remoteEntry.js` + API critérios 5S).
+- `./scripts/homologacao/check-central-agendamento.sh` — smoke HTTP (`remoteEntry.js` + API recursos ES).
 - `./scripts/homologacao/check-audit-5s-api.sh` — homologação **Fase 2** (curl: área → auditoria → 48 notas → concluir avaliação; requer `TOKEN`).
 - `./scripts/homologacao/check-eficiencia-fabril-fase0.sh` — validação da view TOTVS (container `delpi-api-delpi`).
 
@@ -45,6 +47,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
+| `plugins/central-agendamento` | `central-agendamento` | microfrontend | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/dashboard-delpi` | (ver manifesto) | microfrontend | `/apps/dashboard-delpi` | `delpi-dashboard-delpi` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | Pode ser externo / legado |
 | `plugins/idd_production` | (ver manifesto) | — | — | Avaliar registro na Core API |
@@ -62,6 +65,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 | Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
+| Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
 
 ---
@@ -103,6 +107,7 @@ Implementado em `plugins/*/src/api/httpClient.ts` (e `dashboard-delpi/src/data/a
 | dashboard-lmps | `dashboard-lmps` |
 | dashboard-delpi | `dashboard-delpi` |
 | eficiencia-fabril | `eficiencia-fabril` |
+| central-agendamento | `central-agendamento` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -118,6 +123,7 @@ Declaradas no manifesto e persistidas na Core API:
 | dash-lmps | `dash-lmps.access` |
 | dashboard-quality | `dashboard-quality.view` (+ `api-delpi.quality.access` na API) |
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
+| central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 
@@ -131,6 +137,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Indicadores | [Documentação SI (completa)](../../strategic-indicators-api/docs/README.md) |
 | API operacional | [api-delpi/docs/api/](../../api-delpi/docs/api/README.md) |
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
+| Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
 
 ---
 
