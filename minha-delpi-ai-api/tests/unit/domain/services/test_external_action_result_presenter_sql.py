@@ -143,10 +143,30 @@ def test_present_sql_resultsets_with_production_rows():
         path="/data/sql",
     )
 
-    assert "90264130" in humanized["linhas"][0]
-    assert "PARAFUSO M8" in humanized["linhas"][0]
-    assert "**1200 UN**" in humanized["linhas"][0]
+    assert humanized["linhas"] == ["A consulta retornou **2** registro(s)."]
     assert len(humanized["sqlRows"]) == 2
+
+    table = presenter.build_presentation(
+        {
+            "success": True,
+            "data": {
+                "success": True,
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "total": 2,
+                        "data": humanized["sqlRows"],
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert table is not None
+    assert table["type"] == "table"
+    assert len(table["rows"]) == 2
 
 
 def test_format_sql_direct_answer_uses_product_markdown():

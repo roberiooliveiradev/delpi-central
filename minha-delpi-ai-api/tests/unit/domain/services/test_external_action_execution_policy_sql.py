@@ -79,6 +79,60 @@ def test_present_sql_resultsets_uses_total_not_preview_row_count():
 
     assert "**284**" in humanized["linhas"][0] or "284" in humanized["linhas"][0]
     assert "25 registro" not in humanized["linhas"][0].lower()
+    assert len(humanized["linhas"]) <= 2
+    assert not any(line.strip().startswith("1.") for line in humanized["linhas"])
+
+
+def test_build_text_presentation_sql_keeps_summary_without_row_dump():
+    presenter = ExternalActionResultPresenter()
+    rows = [
+        {"A1_COD": f"{index:06d}", "A1_NOME": f"EMPRESA {index}"}
+        for index in range(20)
+    ]
+
+    text = presenter.build_text_presentation(
+        {
+            "success": True,
+            "data": {
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "columns": ["A1_COD", "A1_NOME"],
+                        "total": 284,
+                        "data": rows,
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    table = presenter.build_presentation(
+        {
+            "success": True,
+            "data": {
+                "total_resultsets": 1,
+                "resultsets": [
+                    {
+                        "index": 1,
+                        "columns": ["A1_COD", "A1_NOME"],
+                        "total": 284,
+                        "data": rows,
+                    }
+                ],
+            },
+        },
+        path="/data/sql",
+    )
+
+    assert text is not None
+    assert table is not None
+    assert table["type"] == "table"
+    assert len(table["rows"]) == 20
+    assert "284" in text["markdown"]
+    assert "EMPRESA 0" not in text["markdown"]
+    assert "1." not in text["markdown"]
 
 
 def test_sql_resultset_coverage_notice_when_api_total_exceeds_rows():

@@ -2184,20 +2184,6 @@ class ExternalActionResultPresenter:
         shown = len(rows)
         total_count = record_total if record_total is not None and record_total >= shown else shown
 
-        if self._looks_like_production_schedule_row(rows[0]):
-            linhas = [
-                self._format_production_schedule_row(row)
-                for row in rows
-                if isinstance(row, dict)
-            ]
-
-            return {
-                "titulo": resolved_title,
-                "linhas": linhas,
-                "dados": {"rows": rows},
-                "sqlRows": rows,
-            }
-
         linhas = [
             ExternalActionResponseContentService.format(
                 "sql",
@@ -2205,17 +2191,6 @@ class ExternalActionResultPresenter:
                 count=total_count,
             )
         ]
-
-        for index, row in enumerate(rows, start=1):
-            if not isinstance(row, dict):
-                continue
-
-            preview = ", ".join(
-                f"`{key}`={value}"
-                for key, value in row.items()
-                if value is not None
-            )
-            linhas.append(f"{index}. {preview}")
 
         if total_count > shown:
             linhas.append(

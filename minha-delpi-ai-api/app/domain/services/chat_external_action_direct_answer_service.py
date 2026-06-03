@@ -193,7 +193,16 @@ class ChatExternalActionDirectAnswerService:
             return f"**{title}**\n\n{message_text}"
 
         if rows and cls._looks_like_production_schedule_row(rows[0]):
-            body = "\n".join(f"- {line}" for line in cls._clean_lines(humanized))
+            from app.domain.services.external_actions.external_action_result_presenter import (
+                ExternalActionResultPresenter,
+            )
+
+            presenter = ExternalActionResultPresenter()
+            body = "\n".join(
+                f"- {presenter._format_production_schedule_row(row)}"
+                for row in rows
+                if isinstance(row, dict)
+            )
             label = schedule.label if schedule else today_label
             summary = ExternalActionResponseContentService.format(
                 "productionSchedule",
