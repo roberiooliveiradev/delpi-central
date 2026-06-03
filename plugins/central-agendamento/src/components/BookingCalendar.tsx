@@ -11,6 +11,13 @@ import { ptBR } from "date-fns/locale";
 
 import type { SchedulingBooking, SchedulingResource } from "../api/schedulingApi";
 import { RESOURCE_TYPE_COLORS, resourceTypeLabel } from "../constants/scheduling";
+import {
+  CALENDAR_DAY_END_HOUR,
+  CALENDAR_DAY_START_HOUR,
+  expandMultiDayEventForTimeGrid,
+  segmentEventClassName,
+  type CalendarEvent,
+} from "../utils/calendarEvents";
 import { CalendarDayHeader, CalendarMonthDateHeader } from "./CalendarHeaders";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
@@ -24,18 +31,7 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-export type CalendarEvent = {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  resourceId: string;
-  resourceName: string;
-  resourceType: SchedulingResource["resource_type"];
-  bookedByName: string;
-  notes: string | null;
-  bookedByUserId: string;
-};
+export type { CalendarEvent };
 
 type Props = {
   bookings: SchedulingBooking[];
@@ -52,11 +48,17 @@ function toEvent(booking: SchedulingBooking, resources: SchedulingResource[]): C
   const resource = resources.find((item) => item.id === booking.resource_id);
   const resourceType = booking.resource_type ?? resource?.resource_type ?? "other";
   const resourceName = booking.resource_name ?? resource?.name ?? "Recurso";
+  const start = new Date(booking.start_at);
+  const end = new Date(booking.end_at);
+
   return {
     id: booking.id,
+    bookingId: booking.id,
     title: booking.title,
-    start: new Date(booking.start_at),
-    end: new Date(booking.end_at),
+    start,
+    end,
+    originalStart: start,
+    originalEnd: end,
     resourceId: booking.resource_id,
     resourceName,
     resourceType,
@@ -67,11 +69,23 @@ function toEvent(booking: SchedulingBooking, resources: SchedulingResource[]): C
 }
 
 function CalendarEventBlock({ event }: EventProps<CalendarEvent>) {
+  const segment = event.multiDaySegment;
+  const showDetails = !segment?.isMiddle;
+
   return (
-    <div className="ca-cal-event">
-      <span className="ca-cal-event__resource">{event.resourceName}</span>
-      <span className="ca-cal-event__title">{event.title}</span>
-      <span className="ca-cal-event__meta">{event.bookedByName}</span>
+    <div className={`ca-cal-event${segment?.isMiddle ? " ca-cal-event--middle-day" : ""}`}>
+      {showDetails ? (
+        <>
+          <span className="ca-cal-event__resource">{event.resourceName}</span>
+          <span className="ca-cal-event__title">{event.title}</span>
+          <span className="ca-cal-event__meta">{event.bookedByName}</span>
+        </>
+      ) : (
+        <>
+          <span className="ca-cal-event__title">{event.title}</span>
+          <span className="ca-cal-event__meta ca-cal-event__meta--continues">Continua</span>
+        </>
+      )}
     </div>
   );
 }
@@ -86,22 +100,27 @@ export function BookingCalendar({
   onSelectEvent,
   onSelectSlot,
 }: Props) {
-  const events = useMemo(
-    () => bookings.map((booking) => toEvent(booking, resources)),
-    [bookings, resources],
-  );
+  const events = useMemo(() => {
+    const base = bookings.map((booking) => toEvent(booking, resources));
+    if (view === "month") return base;
+    return base.flatMap((event) => expandMultiDayEventForTimeGrid(event));
+  }, [bookings, resources, view]);
 
   const eventStyleGetter = (event: CalendarEvent) => {
     const color = RESOURCE_TYPE_COLORS[event.resourceType];
+    const segment = event.multiDaySegment;
+    const isSingleDaySegment = !segment || (segment.isFirst && segment.isLast);
+
     return {
+      className: segmentEventClassName(event),
       style: {
         backgroundColor: color,
         borderColor: color,
         color: "#fff",
-        borderRadius: "6px",
         border: "none",
         fontSize: "11px",
-        padding: "2px 4px",
+        padding: "4px 6px",
+        ...(isSingleDaySegment ? { borderRadius: "6px" } : {}),
       },
     };
   };
@@ -124,9 +143,10 @@ export function BookingCalendar({
         popup
         step={30}
         timeslots={2}
-        min={new Date(1970, 0, 1, 7, 0, 0)}
-        max={new Date(1970, 0, 1, 20, 0, 0)}
-        allDayMaxRows={3}
+        min={new Date(1970, 0, 1, CALENDAR_DAY_START_HOUR, 0, 0)}
+        max={new Date(1970, 0, 1, CALENDAR_DAY_END_HOUR, 0, 0)}
+        showMultiDayTimes
+        allDayMaxRows={0}
         messages={{
           today: "Hoje",
           previous: "Anterior",
@@ -135,7 +155,6 @@ export function BookingCalendar({
           week: "Semana",
           day: "Dia",
           agenda: "Agenda",
-          allDay: "Vários dias",
           noEventsInRange: "Nenhuma reserva neste período.",
         }}
         components={{
@@ -150,7 +169,9 @@ export function BookingCalendar({
         onSelectSlot={onSelectSlot}
         tooltipAccessor={(event) => {
           const item = event as CalendarEvent;
-          return `${item.resourceName}\n${item.title}\n${resourceTypeLabel(item.resourceType)} · ${item.bookedByName}`;
+          const startLabel = format(item.originalStart, "dd/MM/yyyy HH:mm");
+          const endLabel = format(item.originalEnd, "dd/MM/yyyy HH:mm");
+          return `${item.resourceName}\n${item.title}\n${startLabel} — ${endLabel}\n${resourceTypeLabel(item.resourceType)} · ${item.bookedByName}`;
         }}
       />
     </div>

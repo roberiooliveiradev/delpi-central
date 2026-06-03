@@ -113,7 +113,7 @@ export function SchedulingPage({ pathname }: Props) {
     if (!selectedEvent) return;
     setActionLoading(true);
     try {
-      await cancelBooking(selectedEvent.id);
+      await cancelBooking(selectedEvent.bookingId);
       setSuccess("Reserva cancelada.");
       await reload();
     } finally {

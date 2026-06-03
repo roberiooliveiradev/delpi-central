@@ -414,24 +414,45 @@
 }
 
 .ca-calendar-wrap .rbc-time-view .rbc-allday-cell {
-  min-height: 32px;
+  display: none;
 }
 
-.ca-calendar-wrap .rbc-time-header-gutter.rbc-label {
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--ca-muted);
-  vertical-align: middle;
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-start {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  margin-right: -2px;
 }
 
-.ca-calendar-wrap .rbc-allday-events .rbc-event {
-  min-height: 24px;
-  margin-bottom: 2px;
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-middle {
+  border-radius: 0 !important;
+  margin-right: -2px;
 }
 
-.ca-calendar-wrap .rbc-allday-events .rbc-event-content {
-  font-size: 11px;
-  font-weight: 600;
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-end {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+}
+
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-middle,
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-start,
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-end {
+  box-shadow: none;
+}
+
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-middle .ca-cal-event,
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-start .ca-cal-event,
+.ca-calendar-wrap .rbc-day-slot .rbc-event.ca-cal-event--seg-end .ca-cal-event {
+  height: 100%;
+  justify-content: center;
+}
+
+.ca-cal-event--middle-day {
+  text-align: center;
+}
+
+.ca-cal-event__meta--continues {
+  font-style: italic;
+  opacity: 0.85;
 }
 
 .ca-calendar-wrap .rbc-header {
