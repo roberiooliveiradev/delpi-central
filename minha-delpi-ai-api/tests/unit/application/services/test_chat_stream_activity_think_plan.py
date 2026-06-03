@@ -37,3 +37,19 @@ def test_emit_planned_actions_creates_plan_lines():
     assert len(collected) >= 2
     assert collected[0]["phase"] == "plan"
     assert any("10080047" in str(item.get("target") or "") for item in collected)
+
+
+def test_tool_finished_failure_warns_user_in_log():
+    entry = ChatStreamActivityService.tool_finished(
+        index=1,
+        total=1,
+        metadata={"ok": False, "statusCode": 500, "error": "boom"},
+        path="/products/10080047",
+    )
+
+    assert entry["level"] == "error"
+    assert entry["state"] == "failed"
+    assert entry["message"] == "Não consegui concluir essa consulta."
+    assert entry["path"] == "/products/10080047"
+    # detalhe técnico preservado para o painel/admin
+    assert entry.get("detail")

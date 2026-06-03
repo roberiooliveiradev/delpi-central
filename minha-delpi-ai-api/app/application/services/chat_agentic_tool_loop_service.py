@@ -140,16 +140,20 @@ class ChatAgenticToolLoopService:
                         )
                     )
 
-            for tool_name in plan["tools"]:
+            agentic_total = len(plan["tools"])
+
+            for tool_position, tool_name in enumerate(plan["tools"], start=1):
                 if tool_name in executed_names:
                     continue
 
                 executed_names.add(tool_name)
                 tool_arguments = plan.get("arguments", {}).get(tool_name) or {}
                 resolved_tool_name = tool_name
+                resolved_action_id = ""
 
                 if tool_name.startswith("action:"):
                     action_id = tool_name.split(":", 1)[1].strip()
+                    resolved_action_id = action_id
 
                     if action_id in executed_action_ids:
                         continue
@@ -170,30 +174,48 @@ class ChatAgenticToolLoopService:
                         )
                     )
                 except Exception as exc:
+                    failure_metadata = {
+                        "ok": False,
+                        "error": str(exc),
+                        "agenticStep": step + 1,
+                    }
                     safe_tool_calls.append(
                         {
                             "name": resolved_tool_name,
                             "arguments": tool_arguments,
                             "reason": "Loop agentic: execução da ferramenta.",
-                            "metadata": {
-                                "ok": False,
-                                "error": str(exc),
-                                "agenticStep": step + 1,
-                            },
+                            "metadata": failure_metadata,
                         }
+                    )
+                    # Avisa o usuário no log que esta etapa falhou (não fica silencioso).
+                    self._emit_tool_finished(
+                        on_stream_activity,
+                        index=tool_position,
+                        total=agentic_total,
+                        metadata=failure_metadata,
+                        action_id=resolved_action_id or None,
                     )
                     continue
 
+                result_metadata = {
+                    **(result.metadata or {}),
+                    "agenticStep": step + 1,
+                }
                 safe_tool_calls.append(
                     {
                         "name": result.name,
                         "arguments": tool_arguments,
                         "reason": "Loop agentic: ferramenta selecionada pelo planejador.",
-                        "metadata": {
-                            **(result.metadata or {}),
-                            "agenticStep": step + 1,
-                        },
+                        "metadata": result_metadata,
                     }
+                )
+                self._emit_tool_finished(
+                    on_stream_activity,
+                    index=tool_position,
+                    total=agentic_total,
+                    metadata=result_metadata,
+                    action_id=resolved_action_id or None,
+                    data=result.data,
                 )
                 executed_action_ids.update(
                     self._collect_executed_action_ids(safe_tool_calls[-1:])
@@ -245,6 +267,34 @@ class ChatAgenticToolLoopService:
         }
 
         return merged
+
+    @staticmethod
+    def _emit_tool_finished(
+        on_stream_activity,
+        *,
+        index: int,
+        total: int,
+        metadata: dict,
+        action_id: str | None = None,
+        data: object | None = None,
+    ) -> None:
+        """Emite a etapa de conclusão da ferramenta no log (sucesso, vazio ou falha)."""
+        if not on_stream_activity:
+            return
+
+        from app.application.services.chat_stream_activity_service import (
+            ChatStreamActivityService,
+        )
+
+        on_stream_activity(
+            ChatStreamActivityService.tool_finished(
+                index=index,
+                total=total,
+                metadata=metadata if isinstance(metadata, dict) else {},
+                action_id=action_id,
+                data=data,
+            )
+        )
 
     @staticmethod
     def _collect_executed_action_ids(tool_calls: list[dict]) -> set[str]:

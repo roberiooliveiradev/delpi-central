@@ -414,6 +414,30 @@ class StreamChatMessageUseCase:
                         _run_prepare()
             except Exception as exc:
                 prepare_error_box["error"] = exc
+                # Avisa no log que algo falhou no meio do caminho (sempre visível,
+                # mesmo em turno simples), em vez de o stream parar sem explicação.
+                try:
+                    from app.application.services.chat_stream_activity_service import (
+                        ChatStreamActivityService,
+                    )
+
+                    activity_queue.put(
+                        (
+                            "activity",
+                            ChatStreamActivityService.entry(
+                                verb="Falhou",
+                                target="preparação da resposta",
+                                phase="prepare",
+                                level="error",
+                                state="failed",
+                                message="Tive um problema ao preparar a sua resposta.",
+                                detail=str(exc)[:300],
+                                entry_id="prepare-failed",
+                            ),
+                        )
+                    )
+                except Exception:
+                    pass
             finally:
                 activity_queue.put(("done", None))
 
