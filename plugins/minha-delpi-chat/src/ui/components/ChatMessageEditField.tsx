@@ -1,19 +1,22 @@
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
 
 function resolveEditFieldLayout() {
+  // O campo de edição é inline e cresce para BAIXO (a lista rola), então
+  // não usa o limite por espaço acima; a proporção da viewport pode ser
+  // mais generosa, principalmente em telas baixas, para caber a pergunta.
   if (typeof window === "undefined") {
-    return { topInset: 32, maxHeightViewportRatio: 0.32 };
+    return { maxHeightViewportRatio: 0.4 };
   }
 
   if (window.matchMedia("(max-width: 480px)").matches) {
-    return { topInset: 112, maxHeightViewportRatio: 0.42 };
+    return { maxHeightViewportRatio: 0.55 };
   }
 
   if (window.matchMedia("(max-width: 720px)").matches) {
-    return { topInset: 88, maxHeightViewportRatio: 0.38 };
+    return { maxHeightViewportRatio: 0.5 };
   }
 
-  return { topInset: 40, maxHeightViewportRatio: 0.34 };
+  return { maxHeightViewportRatio: 0.4 };
 }
 
 type ChatMessageEditFieldProps = {
@@ -34,7 +37,7 @@ export function ChatMessageEditField({
   const layout = resolveEditFieldLayout();
   const { ref, syncHeight } = useAutoGrowTextarea({
     value,
-    topInset: layout.topInset,
+    disableOffsetCap: true,
     maxHeightViewportRatio: layout.maxHeightViewportRatio,
   });
 

@@ -8,6 +8,12 @@ export type UseAutoGrowTextareaOptions = {
   maxHeightViewportRatio?: number;
   /** Teto opcional de altura em px (além do ratio). */
   maxHeightCapPx?: number;
+  /**
+   * Desativa o limite baseado no espaço ACIMA do campo (`rect.top - topInset`).
+   * Use em campos inline que crescem para BAIXO (ex.: edição na lista), onde
+   * o cap por posição no topo encolhe demais em telas baixas.
+   */
+  disableOffsetCap?: boolean;
   /** Ajusta largura ao conteúdo (até o teto). */
   autoWidth?: boolean;
   /** Largura mínima em px quando autoWidth está ativo. */
@@ -79,6 +85,7 @@ export function useAutoGrowTextarea({
   topInset = 24,
   maxHeightViewportRatio,
   maxHeightCapPx,
+  disableOffsetCap = false,
   autoWidth = false,
   minWidthPx = 0,
   maxWidthCapPx = 736,
@@ -98,14 +105,19 @@ export function useAutoGrowTextarea({
     const contentHeight = measureTextareaContentHeight(element);
     const viewportHeight = getViewportHeight();
     const rect = element.getBoundingClientRect();
-    const growCap = Math.max(minHeightPx, rect.top - topInset);
 
     const ratioCap =
       maxHeightViewportRatio != null
         ? Math.floor(viewportHeight * maxHeightViewportRatio)
         : null;
 
-    const caps = [growCap];
+    const caps: number[] = [];
+
+    // Campos ancorados no rodapé crescem para cima: limita ao espaço acima.
+    // Campos inline (edição) crescem para baixo: ignora esse limite.
+    if (!disableOffsetCap) {
+      caps.push(Math.max(minHeightPx, rect.top - topInset));
+    }
 
     if (ratioCap != null) {
       caps.push(ratioCap);
@@ -115,8 +127,8 @@ export function useAutoGrowTextarea({
       caps.push(maxHeightCapPx);
     }
 
-    const maxHeight = Math.min(...caps);
     const naturalHeight = Math.max(contentHeight, minHeightPx);
+    const maxHeight = caps.length ? Math.min(...caps) : naturalHeight;
     const nextHeight = Math.min(naturalHeight, maxHeight);
 
     element.style.height = `${nextHeight}px`;
@@ -138,6 +150,7 @@ export function useAutoGrowTextarea({
     }
   }, [
     autoWidth,
+    disableOffsetCap,
     topInset,
     maxHeightCapPx,
     maxHeightViewportRatio,

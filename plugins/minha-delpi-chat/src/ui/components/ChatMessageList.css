@@ -695,7 +695,7 @@
 
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
     font-size: 1rem;
-    max-height: min(38dvh, 38svh, calc(100svh - 11rem));
+    max-height: min(50dvh, 50svh, calc(100svh - 9rem));
   }
 
   .mdc-chat-message--assistant {
@@ -765,7 +765,7 @@
   .mdc-chat-message-card--user .mdc-chat-message-edit--inline textarea {
     font-size: 1rem;
     max-width: 100%;
-    max-height: min(40dvh, 40svh, calc(100svh - 9.5rem));
+    max-height: min(55dvh, 55svh, calc(100svh - 8rem));
   }
 
   .mdc-chat-message-user-toolbar {
