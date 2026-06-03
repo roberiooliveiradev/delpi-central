@@ -42,6 +42,64 @@ def _calculate_review_month_result_net_after_investments(
     return row
 
 
+def _calculate_average_roi_from_net_rows(
+    self: DashboardCalculatorService,
+    calculation_rows: List[dict],
+) -> float:
+    """Calcula ROI medio sem descontar investimento duas vezes.
+
+    As linhas calculadas ja trazem ``economia_liquida_mes`` como:
+
+        economia_bruta - investimento_unico - custo_recorrente - recursos
+
+    Portanto o ROI da revisao deve ser a economia liquida acumulada dividida
+    pelo investimento total acumulado, e nao ``(liquida - investimento)``.
+    """
+    grouped: dict[str, dict[str, float]] = {}
+
+    for row in calculation_rows:
+        if row.get("cenario_tipo") not in self.COMPARABLE_SCENARIOS:
+            continue
+
+        revisao_id = str(row.get("revisao_id") or "")
+        if not revisao_id:
+            continue
+
+        bucket = grouped.setdefault(
+            revisao_id,
+            {
+                "economia_liquida_acumulada": 0.0,
+                "investimento_total_acumulado": 0.0,
+            },
+        )
+        bucket["economia_liquida_acumulada"] += float(row.get("economia_liquida_mes") or 0)
+        bucket["investimento_total_acumulado"] += float(row.get("investimento_total_mes") or 0)
+
+    rois: List[float] = []
+    for values in grouped.values():
+        investment = values["investimento_total_acumulado"]
+        if investment <= 0:
+            continue
+        rois.append(values["economia_liquida_acumulada"] / investment)
+
+    if not rois:
+        return 0.0
+
+    return sum(rois) / len(rois)
+
+
+def _calculate_consolidated_roi_from_net(summary: dict) -> float:
+    """ROI consolidado usando liquida ja descontada.
+
+    Mantem a chave publica ``roi_medio`` por compatibilidade com o frontend.
+    """
+    total_net_savings = float(summary.get("economia_liquida_total") or 0)
+    total_investment = float(summary.get("investimento_total") or 0)
+    if total_investment <= 0:
+        return 0.0
+    return total_net_savings / total_investment
+
+
 def _calculate_monthly_series_historical(
     self: DashboardCalculatorService,
     context: CalculationContext,
@@ -144,3 +202,14 @@ def _calculate_monthly_series_historical(
 def apply_historical_revision_patch() -> None:
     DashboardCalculatorService._calculate_review_month_result = _calculate_review_month_result_net_after_investments
     DashboardCalculatorService._calculate_monthly_series = _calculate_monthly_series_historical
+    DashboardCalculatorService._calculate_average_roi = _calculate_average_roi_from_net_rows
+
+    try:
+        from tm_app.application.services.dashboard_live_service import DashboardLiveService
+
+        DashboardLiveService._calculate_consolidated_roi = staticmethod(
+            _calculate_consolidated_roi_from_net
+        )
+    except ImportError:
+        # Evita ciclo de importacao quando o patch for carregado antes da camada application.
+        pass
