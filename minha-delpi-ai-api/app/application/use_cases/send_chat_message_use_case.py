@@ -906,6 +906,15 @@ class SendChatMessageUseCase:
             assistant_metadata=assistant_metadata,
         )
 
+        from app.domain.services.chat_session_memory_admin_metrics_service import (
+            ChatSessionMemoryAdminMetricsService,
+        )
+
+        ChatSessionMemoryAdminMetricsService.enrich_audit_metadata(
+            audit_metadata,
+            assistant_metadata=assistant_metadata,
+        )
+
         from app.domain.services.chat_interactivity_admin_metrics_service import (
             ChatInteractivityAdminMetricsService,
         )

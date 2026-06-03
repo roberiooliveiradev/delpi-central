@@ -408,6 +408,49 @@ class PostgresAuditRepository(AuditRepositoryPort):
             since_iso=since.isoformat(),
         )
 
+    def get_session_memory_summary(self, *, hours: int = 168) -> dict:
+        from app.domain.services.chat_session_memory_admin_metrics_service import (
+            ChatSessionMemoryAdminMetricsService,
+        )
+
+        safe_hours = max(1, min(int(hours), 720))
+        since = datetime.now(timezone.utc) - timedelta(hours=safe_hours)
+
+        models = (
+            AiAuditLogModel.query.filter(
+                AiAuditLogModel.created_at >= since,
+                AiAuditLogModel.action.in_(
+                    ("chat.message.sent", "chat.message.streamed"),
+                ),
+            )
+            .order_by(AiAuditLogModel.created_at.desc())
+            .limit(3000)
+            .all()
+        )
+
+        entries: list[dict] = []
+
+        for model in models:
+            metadata = model.audit_metadata if isinstance(model.audit_metadata, dict) else {}
+            snapshot = metadata.get("sessionMemoryAdminMetrics")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            entries.append(
+                {
+                    "loggedAt": model.created_at.isoformat() if model.created_at else None,
+                    "action": model.action,
+                    "snapshot": snapshot,
+                }
+            )
+
+        return ChatSessionMemoryAdminMetricsService.aggregate_snapshots(
+            entries,
+            hours=safe_hours,
+            since_iso=since.isoformat(),
+        )
+
     def get_interactivity_summary(self, *, hours: int = 168) -> dict:
         from app.domain.services.chat_interactivity_admin_metrics_service import (
             ChatInteractivityAdminMetricsService,

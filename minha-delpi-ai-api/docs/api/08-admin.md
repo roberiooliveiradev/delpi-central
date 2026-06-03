@@ -107,6 +107,14 @@ Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
 
 Resposta: `routesCount`, `ambiguousCount`, `mixedTaskCount`, `webSearchCount`, `textSkipToolsCount`, `byIntent`, `byDecision`, `recent[]`.
 
+### GET `/admin/metrics/session-memory/summary`
+
+Resumo agregado de **memória de sessão e assertividade** (playbook memória Fase 9), a partir de `ai_audit_logs.metadata.sessionMemoryAdminMetrics` e feedback `memory_*`.
+
+Query: `hours` (default `168`, máx. `ADMIN_METRICS_MAX_HOURS`).
+
+Resposta: `memoryTurnsCount`, `followUpTurns`, `contextLossRiskTurns`, `lowAssertivenessTurns`, `assertivenessFlags[]`, `feedback`, `alerts[]`, `recent[]`.
+
 ### GET `/admin/metrics/text-tasks/summary`
 
 Resumo agregado do **especialista em textos** (Playbook 03), a partir de snapshots em `ai_audit_logs.metadata.textTaskMetrics`.

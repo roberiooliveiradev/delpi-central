@@ -15,6 +15,7 @@ import {
   updateAdminQualityIssueStatus,
   getAdminInteractivitySummary,
   getAdminPresentationSummary,
+  getAdminSessionMemorySummary,
   getAdminTextTaskSummary,
   getAdminLlmCostTable,
   getAdminMetricsTimeseries,
@@ -33,6 +34,7 @@ import type {
   AdminQualityIssue,
   AdminInteractivitySummary,
   AdminPresentationSummary,
+  AdminSessionMemorySummary,
   AdminTextTaskSummary,
   AdminLlmCostBreakdownItem,
   AdminLlmCostTableEntry,
@@ -51,6 +53,7 @@ import { AdminQualityUnifiedMetrics } from "./AdminQualityUnifiedMetrics";
 import { AdminQualityOperations } from "./AdminQualityOperations";
 import { AdminInteractivityMetrics } from "./AdminInteractivityMetrics";
 import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
+import { AdminSessionMemoryMetrics } from "./AdminSessionMemoryMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
 
@@ -305,6 +308,10 @@ export function AdminMetricsTab({
     useState<AdminIntentRoutingSummary | null>(null);
   const [isLoadingIntentRoutingSummary, setIsLoadingIntentRoutingSummary] =
     useState(false);
+  const [sessionMemorySummary, setSessionMemorySummary] =
+    useState<AdminSessionMemorySummary | null>(null);
+  const [isLoadingSessionMemorySummary, setIsLoadingSessionMemorySummary] =
+    useState(false);
   const [textTaskSummary, setTextTaskSummary] = useState<AdminTextTaskSummary | null>(
     null,
   );
@@ -416,6 +423,20 @@ export function AdminMetricsTab({
       .then(setIntentRoutingSummary)
       .catch(() => setIntentRoutingSummary(null))
       .finally(() => setIsLoadingIntentRoutingSummary(false));
+  }, [getAccessToken, metricsHours]);
+
+  useEffect(() => {
+    if (!getAccessToken) {
+      setSessionMemorySummary(null);
+      return;
+    }
+
+    setIsLoadingSessionMemorySummary(true);
+
+    void getAdminSessionMemorySummary(metricsHours, { getAccessToken })
+      .then(setSessionMemorySummary)
+      .catch(() => setSessionMemorySummary(null))
+      .finally(() => setIsLoadingSessionMemorySummary(false));
   }, [getAccessToken, metricsHours]);
 
   useEffect(() => {
@@ -780,6 +801,12 @@ export function AdminMetricsTab({
             },
           );
         }}
+      />
+
+      <AdminSessionMemoryMetrics
+        summary={sessionMemorySummary}
+        isLoading={isLoadingSessionMemorySummary}
+        windowHours={windowLabel}
       />
 
       <AdminTextTaskMetrics

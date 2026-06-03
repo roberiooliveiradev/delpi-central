@@ -35,6 +35,9 @@ from app.application.use_cases.get_admin_interactivity_summary_use_case import (
 from app.application.use_cases.get_admin_presentation_summary_use_case import (
     GetAdminPresentationSummaryUseCase,
 )
+from app.application.use_cases.get_admin_session_memory_summary_use_case import (
+    GetAdminSessionMemorySummaryUseCase,
+)
 from app.application.use_cases.get_admin_text_task_summary_use_case import (
     GetAdminTextTaskSummaryUseCase,
 )
@@ -268,6 +271,10 @@ def make_update_admin_quality_issue_status_use_case():
 
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
+
+
+def make_get_admin_session_memory_summary_use_case() -> GetAdminSessionMemorySummaryUseCase:
+    return GetAdminSessionMemorySummaryUseCase(PostgresAuditRepository())
 
 
 def make_get_admin_document_vision_summary_use_case() -> GetAdminDocumentVisionSummaryUseCase:

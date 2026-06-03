@@ -80,6 +80,9 @@ class AuditRepositoryPort(ABC):
     def get_text_task_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 
+    def get_session_memory_summary(self, *, hours: int = 168) -> dict:
+        raise NotImplementedError
+
     def get_interactivity_summary(self, *, hours: int = 168) -> dict:
         raise NotImplementedError
 

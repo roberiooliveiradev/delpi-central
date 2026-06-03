@@ -37,6 +37,7 @@ from app.composition.admin_composer import (
     make_get_admin_document_vision_summary_use_case,
     make_get_admin_sql_advanced_summary_use_case,
     make_get_admin_intent_routing_summary_use_case,
+    make_get_admin_session_memory_summary_use_case,
     make_get_admin_text_task_summary_use_case,
     make_get_admin_metrics_summary_use_case,
     make_get_admin_chat_intelligence_settings_use_case,
@@ -837,6 +838,30 @@ def admin_update_quality_issue_status(issue_id: int):
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_text_task_metrics_summary():
     use_case = make_get_admin_text_task_summary_use_case()
+    hours_raw = request.args.get("hours", 168)
+
+    try:
+        hours = int(hours_raw)
+    except (TypeError, ValueError):
+        return jsonify(
+            {
+                "errors": [
+                    {
+                        "code": "invalid_request",
+                        "message": "hours must be an integer",
+                        "path": "hours",
+                    }
+                ]
+            },
+        ), 400
+
+    return jsonify(use_case.execute(hours=hours)), 200
+
+
+@admin_bp.get("/metrics/session-memory/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_session_memory_metrics_summary():
+    use_case = make_get_admin_session_memory_summary_use_case()
     hours_raw = request.args.get("hours", 168)
 
     try:

@@ -13,6 +13,9 @@ from app.application.services.chat_session_memory_metrics_service import (
 from app.domain.services.chat_conversation_memory_service import (
     ChatConversationMemoryService,
 )
+from app.domain.services.chat_memory_context_loss_alert_service import (
+    ChatMemoryContextLossAlertService,
+)
 from app.domain.services.chat_memory_ux_service import ChatMemoryUxService
 
 
@@ -51,6 +54,11 @@ class ChatContextMetadataService:
 
         metadata["contextSnapshot"] = snapshot
         metadata["contextAssertiveness"] = assertiveness
+        ChatMemoryContextLossAlertService.attach_to_metadata(
+            metadata,
+            assertiveness=assertiveness,
+            snapshot=snapshot,
+        )
         context_chips = ChatConversationMemoryService.build_context_chips(snapshot)
 
         if context_chips:

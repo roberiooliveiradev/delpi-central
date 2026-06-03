@@ -47,6 +47,11 @@ class ChatFeedbackContextService:
             presentation = metadata.get("presentation") if isinstance(metadata.get("presentation"), dict) else {}
 
         memory_used = cls._memory_used(metadata, admin_debug)
+        assertiveness = metadata.get("contextAssertiveness")
+        memory_assertiveness_score = None
+
+        if isinstance(assertiveness, dict) and assertiveness.get("score") is not None:
+            memory_assertiveness_score = assertiveness.get("score")
         suggestions = interactivity.get("suggestionsShown") or interactivity.get("suggestions") or []
 
         shown_labels: list[str] = []
@@ -92,6 +97,7 @@ class ChatFeedbackContextService:
             "usedRag": cls._rag_used(rag),
             "usedWeb": bool(web_research or web_metrics),
             "usedMemory": memory_used,
+            "memoryAssertivenessScore": memory_assertiveness_score,
             "presentationType": cls._presentation_type(presentation, tool_calls),
             "durationMs": duration_ms or cls._duration_ms(admin_debug, metadata),
             "error": str(error_value).strip() if error_value else None,

@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–8 concluídas** — UX de memória (barra, ver memória, fixar, editar preferência). Fase 9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–9 concluídas** — métricas admin, feedback de memória e alertas de perda de contexto. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2179,6 +2179,8 @@ Métricas:
 
 **Fase 8 entregue (03/06/2026):** `ChatMemoryUxService` + `ChatContextBar` / `ChatMemoryUsedDialog` (§35–36, M20).
 
+**Fase 9 entregue (03/06/2026):** `ChatSessionMemoryAdminMetricsService`, `ChatMemoryContextLossAlertService`, `GET /admin/metrics/session-memory/summary`, painel `AdminSessionMemoryMetrics` (§77–78).
+
 ### Fase 1 — Estado de sessão
 
 - Criar ConversationStateManager.
@@ -2240,12 +2242,12 @@ Métricas:
 - [x] Fixar contexto — pins produto/filial/armazém via menu «Fixar».
 - [x] Regressão M20.
 
-### Fase 9 — Métricas e feedback
+### Fase 9 — Métricas e feedback ✅
 
-- Dashboard de memória.
-- Testes de regressão.
-- Feedback específico.
-- Alertas de perda de contexto.
+- [x] Dashboard de memória — `GET /admin/metrics/session-memory/summary` + `AdminSessionMemoryMetrics`.
+- [x] Testes de regressão — agregação admin e alertas por turno.
+- [x] Feedback específico — motivos `memory_*` no thumbs down + `memoryAssertivenessScore` no contexto.
+- [x] Alertas de perda de contexto — `memoryContextAlerts` por turno; alertas agregados no admin.
 
 ---
 

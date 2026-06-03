@@ -101,7 +101,12 @@ class ChatFeedbackAdminMetricsService:
             if presentation:
                 by_presentation[presentation] += 1
 
-            if reason in {"lost_context", "routing_lost_context", "forgot_previous", "routing_repeated_question"}:
+            if reason in {
+                "lost_context",
+                "routing_lost_context",
+                "forgot_previous",
+                "routing_repeated_question",
+            } or reason.startswith("memory_"):
                 lost_context += 1
 
             if len(recent) < 20:

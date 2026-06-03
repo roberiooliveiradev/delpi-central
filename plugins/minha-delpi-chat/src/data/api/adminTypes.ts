@@ -399,6 +399,50 @@ export type AdminTextTaskFeedbackSummary = {
   feedbackRecent: AdminTextTaskFeedbackRecentItem[];
 };
 
+export type AdminSessionMemoryAssertivenessFlagCount = {
+  key: string;
+  count: number;
+};
+
+export type AdminSessionMemoryRecentItem = {
+  loggedAt?: string | null;
+  action?: string | null;
+  assertivenessScore?: number | null;
+  contextLossRisk?: boolean;
+  followUpDetected?: boolean;
+  entityCount?: number;
+  flags?: string[];
+};
+
+export type AdminSessionMemoryFeedbackSummary = {
+  feedbackTotal: number;
+  feedbackPositive: number;
+  feedbackNegative: number;
+  memoryFeedbackCount: number;
+  lostContextFeedbackCount: number;
+  feedbackByReason: Record<string, number>;
+  feedbackRecent: Record<string, unknown>[];
+  alerts?: { code: string; message: string }[];
+};
+
+export type AdminSessionMemorySummary = {
+  windowHours: number;
+  since: string;
+  memoryTurnsCount: number;
+  entityActiveTurns: number;
+  followUpTurns: number;
+  followUpResolvedTurns: number;
+  followUpResolutionRate?: number | null;
+  contextLossRiskTurns: number;
+  lowAssertivenessTurns: number;
+  ambiguityTurns: number;
+  memoryClearedTurns: number;
+  assertivenessFlags: AdminSessionMemoryAssertivenessFlagCount[];
+  recent: AdminSessionMemoryRecentItem[];
+  feedback?: AdminSessionMemoryFeedbackSummary;
+  alerts?: { code: string; message: string }[];
+};
+
 export type AdminTextTaskSummary = {
   windowHours: number;
   since: string;

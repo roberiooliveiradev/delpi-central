@@ -14,7 +14,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [README.md](./README.md) | Concluído | Índice vivo; smokes e serviços |
 | [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md) | Concluído | Este arquivo |
 | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Concluído | Fases 1–5 — `ChatConversationMemoryService` |
-| [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | Fases 1–8 concluídas | UX memória (F8) · Fase 9 métricas backlog |
+| [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | Fases 1–9 concluídas | Playbook memória e contexto completo |
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
 | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
 | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial (UI) | Menu Textos MFE; inteligência textual → editor **Concluído** (`playbook-especialista-editor-textos.md`) |

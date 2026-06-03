@@ -46,6 +46,7 @@ import type {
   AdminQualityIssue,
   AdminInteractivitySummary,
   AdminPresentationSummary,
+  AdminSessionMemorySummary,
   AdminTextTaskSummary,
   AdminDocumentVisionSummary,
   AdminSqlAdvancedSummary,
@@ -1033,6 +1034,21 @@ export async function getAdminTextTaskSummary(
   );
 
   return parseJsonResponse<AdminTextTaskSummary>(response);
+}
+
+export async function getAdminSessionMemorySummary(
+  hours = 168,
+  options: AdminApiOptions = {},
+): Promise<AdminSessionMemorySummary> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/session-memory/summary?hours=${hours}`,
+    {
+      method: "GET",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<AdminSessionMemorySummary>(response);
 }
 
 export async function getAdminDocumentVisionSummary(
