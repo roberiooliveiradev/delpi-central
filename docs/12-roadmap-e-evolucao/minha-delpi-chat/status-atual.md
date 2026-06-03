@@ -68,7 +68,7 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 - Serviço: `postgres-plugins` (`pgvector/pgvector:pg15`)
 - Porta host dev: `5433`
-- Migrations: `flask --app app.main:app db upgrade`
+- Migrations: automáticas no boot do container (`docker-entrypoint.sh` → `flask db upgrade`); manual só fora do Docker ou com `SKIP_DB_MIGRATIONS=true`
 
 Tabelas principais (não exaustivo):
 
@@ -81,11 +81,7 @@ ai_external_action_*, ai_chat_agent_*, ai_admin_guideline*
 
 ## Deploy e migrations
 
-```bash
-cd infra
-docker compose -f docker-compose.dev.yml --env-file .env exec minha-delpi-ai-api \
-  sh -lc "cd /app && flask --app app.main:app db upgrade"
-```
+No Docker (dev/prod), `flask db upgrade` roda no entrypoint ao subir/reiniciar `minha-delpi-ai-api`. Ver logs: `docker compose logs minha-delpi-ai-api | head`.
 
 Local (WSL) com `DATABASE_URL` apontando para `localhost:5433` — ver [09-deploy-migrations-schema.md](../../../minha-delpi-ai-api/docs/api/09-deploy-migrations-schema.md).
 

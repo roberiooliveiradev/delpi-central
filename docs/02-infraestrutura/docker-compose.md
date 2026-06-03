@@ -119,6 +119,7 @@ Em **produção**, apenas o gateway expõe `80`; bancos ficam na rede interna.
 
 ### `minha-delpi-ai-api`
 
+- **Migrations:** `docker-entrypoint.sh` → `flask db upgrade` no boot (como a Core API)
 - **DATABASE_URL:** `postgres-plugins` (mesmo banco dos plugins, com pgvector)
 - **CORE_API_BASE_URL:** `http://core-api:8000`
 - **LLM (dev):** `OLLAMA_BASE_URL=http://ollama:11434`, modelo default `qwen2.5:1.5b`

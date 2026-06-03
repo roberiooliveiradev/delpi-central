@@ -54,7 +54,7 @@ flask --app app.main:app db upgrade
 flask --app app.main:app run --debug
 ```
 
-Alternativa recomendada com Docker: ver [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md).
+Com Docker, migrations rodam no boot do container (`docker-entrypoint.sh`). Ver [docs/api/09-deploy-migrations-schema.md](docs/api/09-deploy-migrations-schema.md).
 
 ## Estrutura do código
 

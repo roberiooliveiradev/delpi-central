@@ -17,6 +17,7 @@ RUN apt-get update \
         tesseract-ocr-eng \
         poppler-utils \
         libgl1 \
+        netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt \
@@ -28,6 +29,12 @@ RUN pip install --no-cache-dir -r requirements.txt \
 COPY minha-delpi-ai-api/ .
 COPY shared/delpi_auth /app/delpi_auth
 
+COPY minha-delpi-ai-api/docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV FLASK_APP=app.main:app
+
 EXPOSE 8000
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["gunicorn", "-w", "2", "-k", "gthread", "--threads", "4", "--timeout", "300", "--graceful-timeout", "60", "--keep-alive", "5", "-b", "0.0.0.0:8000", "app.main:app"]

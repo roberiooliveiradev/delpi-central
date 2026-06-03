@@ -43,6 +43,16 @@ Alembic heads: ['7c8d9e0f1a23']
 STATUS: OK
 ```
 
+## Migrations no boot (Docker)
+
+Em **produção** e **dev**, o container executa `flask db upgrade` antes de subir a app (`minha-delpi-ai-api/docker-entrypoint.sh`), no mesmo padrão da Core API:
+
+1. Aguarda `postgres-plugins` (`PLUGINS_DB_HOST` / `PLUGINS_DB_PORT`, padrão `postgres-plugins:5432`).
+2. `flask --app app.main:app db upgrade`
+3. Inicia Gunicorn (prod) ou `flask run` (dev).
+
+Para pular migrations em emergência: `SKIP_DB_MIGRATIONS=true` no ambiente do serviço.
+
 ## Deploy da `minha-delpi-ai-api`
 
 ```bash
@@ -51,11 +61,12 @@ cd ~/projetos/delpi-central/infra
 docker compose -f docker-compose.yml --env-file .env up -d --build minha-delpi-ai-api
 
 docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
-  sh -lc "cd /app && flask --app app.main:app db upgrade"
-
-docker compose -f docker-compose.yml --env-file .env exec minha-delpi-ai-api \
   sh -lc "cd /app && python -m app.infrastructure.db.schema_audit"
+```
 
+O `db upgrade` roda automaticamente nos logs do container no primeiro start após o build. Se precisar reaplicar sem rebuild:
+
+```bash
 docker compose -f docker-compose.yml --env-file .env restart minha-delpi-ai-api
 ```
 
