@@ -324,8 +324,14 @@ class StreamChatMessageUseCase:
 
             history_source = history_messages if resend_from_message_id else previous_messages
             agent_meta = workspace_context.get("agent")
-            max_tool_calls = (
-                agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+            from app.domain.services.chat_advanced_sql_specialist_service import (
+                ChatAdvancedSqlSpecialistService,
+            )
+
+            agent_max = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+            max_tool_calls = ChatAdvancedSqlSpecialistService.resolve_max_tool_calls(
+                message,
+                agent_max,
             )
 
             context_box["history_source"] = history_source
@@ -681,6 +687,12 @@ class StreamChatMessageUseCase:
         answer = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
             answer,
             snapshot=sql_snapshot,
+        )
+        tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
+        answer = ChatAdvancedSqlSpecialistService.normalize_protheus_sql_answer(
+            answer,
+            message=message,
+            tool_calls=tool_calls,
         )
 
         correction_canvas_payload = (

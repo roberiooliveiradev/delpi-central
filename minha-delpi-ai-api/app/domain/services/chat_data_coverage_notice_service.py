@@ -21,6 +21,13 @@ class ChatDataCoverageNoticeService:
         presentation: dict | None = None,
         table_presentation: dict | None = None,
     ) -> dict | None:
+        lowered_path = str(path or "").lower()
+
+        if "/system/tables" in lowered_path and (
+            "/columns" in lowered_path or "/schema" in lowered_path or "/relations" in lowered_path
+        ):
+            return None
+
         root = cls._unwrap(data)
         messages: list[str] = []
         details: dict = {}

@@ -143,7 +143,15 @@ class SendChatMessageUseCase:
 
         previous_messages = self.chat_repository.list_all_messages_by_session(session_id)
         agent_meta = workspace_context.get("agent")
-        max_tool_calls = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+
+        agent_max = agent_meta.get("maxToolCalls") if isinstance(agent_meta, dict) else None
+        max_tool_calls = ChatAdvancedSqlSpecialistService.resolve_max_tool_calls(
+            message,
+            agent_max,
+        )
         attachment_ids = getattr(request, "attachment_ids", None)
 
         user_message = self.chat_repository.create_message(
@@ -392,6 +400,14 @@ class SendChatMessageUseCase:
             answer,
             snapshot=sql_snapshot,
         )
+        answer = ChatAdvancedSqlSpecialistService.normalize_protheus_sql_answer(
+            answer,
+            message=request.message,
+            tool_calls=ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(
+                tool_calls
+            ),
+        )
+        tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
 
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(

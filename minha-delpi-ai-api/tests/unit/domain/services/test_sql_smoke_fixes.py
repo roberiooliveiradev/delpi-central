@@ -85,6 +85,58 @@ def test_strip_schema_presentation_by_prefetch_path():
     assert "presentation" not in result["toolCalls"][0]["metadata"]
 
 
+def test_strip_schema_prefetch_hides_coverage_and_catalog():
+    result = ChatAdvancedSqlSpecialistService.strip_schema_catalog_presentations(
+        {
+            "toolCalls": [
+                {
+                    "metadata": {
+                        "path": "/system/tables/SA1/columns",
+                        "sqlSchemaPrefetch": True,
+                        "dataCoverageNotice": {"message": "Parcial · 25 de 265"},
+                        "presentation": {"type": "table", "title": "Colunas"},
+                        "humanizedSummary": {"titulo": "Colunas da tabela SA1", "linhas": []},
+                    }
+                }
+            ]
+        }
+    )
+
+    meta = result["toolCalls"][0]["metadata"]
+    assert "dataCoverageNotice" not in meta
+    assert "presentation" not in meta
+    assert meta["humanizedSummary"]["titulo"] == "Schema interno (uso interno)"
+
+
+def test_normalize_protheus_sql_replaces_generic_columns():
+    answer = (
+        "Segue:\n\n```sql\nSELECT CodigoCliente, NomeCliente FROM SA1 WHERE Status = 'Ativo';\n```"
+    )
+    tool_calls = [
+        {
+            "metadata": {
+                "path": "/system/tables/SA1/columns",
+                "sqlSchemaPrefetch": True,
+            }
+        }
+    ]
+    normalized = ChatAdvancedSqlSpecialistService.normalize_protheus_sql_answer(
+        answer,
+        message="Monte uma consulta para listar clientes ativos da tabela SA1, só código e nome, sem executar.",
+        tool_calls=tool_calls,
+    )
+
+    assert "A1_COD" in normalized
+    assert "A1_NOME" in normalized
+    assert "CodigoCliente" not in normalized
+
+
+def test_resolve_max_tool_calls_sql_turn():
+    msg = "Monte uma consulta para listar clientes ativos da tabela SA1, sem executar."
+    assert ChatAdvancedSqlSpecialistService.resolve_max_tool_calls(msg, 5) == 50
+    assert ChatAdvancedSqlSpecialistService.resolve_max_tool_calls("qual o estoque?", 5) == 5
+
+
 def test_strip_schema_presentation_from_tool_calls():
     from app.domain.services.chat_advanced_sql_specialist_service import (
         ChatAdvancedSqlSpecialistService,

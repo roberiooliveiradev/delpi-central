@@ -43,6 +43,11 @@ class ChatFollowUpSuggestionService:
         if not personality.suggest_follow_ups:
             return
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return
+
         suggestions = cls.build(
             message=message,
             answer=answer,
@@ -142,6 +147,16 @@ class ChatFollowUpSuggestionService:
             for call in tool_calls
             if isinstance(call, dict)
         ).lower()
+
+        if any(
+            token in paths
+            for token in ("/system/tables", "/columns", "/schema", "/relations")
+        ) or any(
+            isinstance(call, dict)
+            and (call.get("metadata") or {}).get("sqlSchemaPrefetch")
+            for call in tool_calls
+        ):
+            return "sql"
 
         if any(token in paths for token in ("/stock", "estoque", "supplies/stock")):
             return "stock"

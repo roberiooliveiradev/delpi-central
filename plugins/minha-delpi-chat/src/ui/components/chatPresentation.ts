@@ -328,7 +328,25 @@ export function getDataCoverageNoticeFromToolCalls(
   }
 
   for (const toolCall of toolCalls) {
-    const notice = (toolCall.metadata as Record<string, unknown>)?.dataCoverageNotice;
+    const metadata = (toolCall.metadata as Record<string, unknown>) || {};
+
+    if (
+      metadata.sqlSchemaPrefetch === true ||
+      metadata.suppressClientPresentation === true
+    ) {
+      continue;
+    }
+
+    const path = String(metadata.path || "").toLowerCase();
+
+    if (
+      path.includes("/system/tables") &&
+      (path.includes("/columns") || path.includes("/schema") || path.includes("/relations"))
+    ) {
+      continue;
+    }
+
+    const notice = metadata.dataCoverageNotice;
 
     if (
       notice &&

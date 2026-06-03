@@ -160,7 +160,9 @@ export function ChatStreamingActivityPanel({
 
       {hasLog ? (
         <>
-          <RisingLogFeed lines={compactLines} risingIds={risingIds} />
+          {!showAllSteps ? (
+            <RisingLogFeed lines={compactLines} risingIds={risingIds} />
+          ) : null}
 
           {canExpand ? (
             <button

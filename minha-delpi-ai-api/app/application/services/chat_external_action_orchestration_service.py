@@ -305,10 +305,12 @@ class ChatExternalActionOrchestrationService:
 
     @classmethod
     def _resolve_max_calls(cls, max_calls: int | None) -> int:
-        if max_calls is not None:
-            return max(1, min(int(max_calls), 8))
+        cap = max(1, min(int(getattr(Settings, "CHAT_MULTI_ACTION_MAX_CALLS", 50)), 50))
 
-        return max(1, min(Settings.CHAT_MULTI_ACTION_MAX_CALLS, 8))
+        if max_calls is not None:
+            return max(1, min(int(max_calls), cap))
+
+        return cap
 
     @classmethod
     def _resolve_product_intent(cls, message: str, normalized: str) -> str:

@@ -562,6 +562,14 @@ class ChatAdvancedSqlSpecialistService:
                     metadata.pop(key, None)
 
                 metadata["suppressClientPresentation"] = True
+                metadata.pop("dataCoverageNotice", None)
+                metadata["humanizedSummary"] = {
+                    "titulo": "Schema interno (uso interno)",
+                    "linhas": [
+                        "Metadados Protheus carregados para elaborar SQL.",
+                        "Não exibir catálogo de colunas ao usuário.",
+                    ],
+                }
 
             item["metadata"] = metadata
             stripped_calls.append(item)
@@ -569,6 +577,16 @@ class ChatAdvancedSqlSpecialistService:
         updated["toolCalls"] = stripped_calls
 
         return updated
+
+    @classmethod
+    def sanitize_tool_calls_for_client(cls, tool_calls: list | None) -> list:
+        if not isinstance(tool_calls, list):
+            return []
+
+        return cls.strip_schema_catalog_presentations({"toolCalls": tool_calls}).get(
+            "toolCalls",
+            [],
+        )
 
     @classmethod
     def compact_schema_prefetch_context(
@@ -648,6 +666,143 @@ class ChatAdvancedSqlSpecialistService:
                 "Não responda apenas com tabela de metadados/colunas — isso foi prefetch interno.",
             ],
         }
+
+    @classmethod
+    def normalize_protheus_sql_answer(
+        cls,
+        answer: str | None,
+        *,
+        message: str | None = None,
+        tool_calls: list | None = None,
+    ) -> str:
+        text = str(answer or "").strip()
+
+        if not text or not cls.should_activate(message):
+            return text
+
+        sql_block = ChatSqlPerformanceAdvisorService.extract_sql_block(text)
+
+        if not sql_block:
+            return text
+
+        columns = cls._column_hints_from_prefetch(tool_calls)
+        sql_lower = sql_block.lower()
+        uses_generic = any(
+            token in sql_lower
+            for token in (
+                "codigocliente",
+                "nomecliente",
+                "codigo cliente",
+                "nome cliente",
+                "status = 'ativo'",
+                "status='ativo'",
+            )
+        )
+        uses_protheus = any(col.lower() in sql_lower for col in columns)
+
+        if not uses_generic and uses_protheus:
+            return text
+
+        replacement = cls._authoring_sql_from_message(message, columns)
+
+        if not replacement:
+            return text
+
+        if "```sql" in text.lower():
+            return re.sub(
+                r"```sql\s*[\s\S]*?```",
+                f"```sql\n{replacement}\n```",
+                text,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+
+        return f"```sql\n{replacement}\n```\n\n{text}".strip()
+
+    @classmethod
+    def _column_hints_from_prefetch(cls, tool_calls: list | None) -> list[str]:
+        hints: list[str] = []
+
+        if not isinstance(tool_calls, list):
+            return hints
+
+        for tool_call in tool_calls:
+            if not isinstance(tool_call, dict):
+                continue
+
+            metadata = tool_call.get("metadata") or {}
+
+            if not (
+                metadata.get("sqlSchemaPrefetch")
+                or cls.is_schema_prefetch_path(str(metadata.get("path") or ""))
+            ):
+                continue
+
+            summary = metadata.get("humanizedSummary")
+
+            if isinstance(summary, dict):
+                for line in summary.get("linhas") or []:
+                    match = re.search(
+                        r"Colunas para o SQL:\s*([^.]+)",
+                        str(line),
+                        flags=re.IGNORECASE,
+                    )
+
+                    if match:
+                        for part in str(match.group(1)).split(","):
+                            token = part.strip()
+
+                            if token and token not in hints:
+                                hints.append(token)
+
+            path = str(metadata.get("path") or "").lower()
+
+            if "/tables/sa1" in path:
+                for token in ("A1_COD", "A1_NOME", "D_E_L_E_T_"):
+                    if token not in hints:
+                        hints.append(token)
+
+        return hints
+
+    @classmethod
+    def _authoring_sql_from_message(cls, message: str | None, columns: list[str]) -> str | None:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        table_match = re.search(
+            r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{0,4}\b",
+            normalized,
+            flags=re.IGNORECASE,
+        )
+        table_code = table_match.group(0).upper() if table_match else "SA1"
+        physical = f"{table_code}010" if not re.search(r"\d{3}$", table_code) else table_code
+
+        code_col = next((c for c in columns if "cod" in c.lower()), "A1_COD")
+        name_col = next((c for c in columns if "nome" in c.lower() and "cod" not in c.lower()), "A1_NOME")
+
+        select_cols = [code_col]
+
+        if name_col and name_col not in select_cols:
+            select_cols.append(name_col)
+
+        if "ativ" in normalized and "D_E_L_E_T_" not in select_cols:
+            return (
+                f"SELECT {', '.join(select_cols)}\n"
+                f"FROM {physical}\n"
+                f"WHERE D_E_L_E_T_ = ''"
+            )
+
+        return f"SELECT {', '.join(select_cols)}\nFROM {physical}"
+
+    @classmethod
+    def resolve_max_tool_calls(cls, message: str | None, agent_max: int | None) -> int:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        cap = 50
+        base = max(1, min(int(agent_max or 5), cap))
+
+        if cls.should_activate(message) or ChatSqlIntentService.is_sql_conversation_turn(message):
+            return cap
+
+        return base
 
     @classmethod
     def ensure_required_sql_block(

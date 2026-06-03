@@ -27,6 +27,17 @@ def _content() -> dict[str, Any]:
 
 
 class ChatInteractivitySuggestionService:
+    _SQL_TURN_OPERATIONAL_CHIP_LABELS = frozenset(
+        {
+            "Ver estoque",
+            "Consultar produto",
+            "Ver fornecedores",
+            "Ver estrutura",
+            "Ver vendas",
+            "Onde é usado?",
+        }
+    )
+
     @classmethod
     def attach_to_assistant_metadata(
         cls,
@@ -73,7 +84,7 @@ class ChatInteractivitySuggestionService:
         if sql_advanced:
             metadata["sqlAdvancedFollowUpSuggestions"] = sql_advanced
 
-        raw = cls._collect_raw(metadata)
+        raw = cls._collect_raw(metadata, intent_route=intent_route)
         usage = ChatInteractivityPreferenceService.usage_from_workspace(workspace_context)
         enriched = [
             cls._enrich(
@@ -118,8 +129,19 @@ class ChatInteractivitySuggestionService:
             }
 
     @classmethod
-    def _collect_raw(cls, metadata: dict) -> list[dict[str, Any]]:
+    def _collect_raw(
+        cls,
+        metadata: dict,
+        *,
+        intent_route: dict | None = None,
+    ) -> list[dict[str, Any]]:
         collected: list[dict[str, Any]] = []
+        sub_intent = (
+            str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")
+            if isinstance(intent_route, dict)
+            else ""
+        )
+        sql_turn = sub_intent.startswith("sql_")
 
         for source in _content().get("metadataSources") or []:
             if not isinstance(source, dict):
@@ -139,6 +161,13 @@ class ChatInteractivitySuggestionService:
                 query = str(item.get("query") or "").strip()
 
                 if not label or not query:
+                    continue
+
+                if (
+                    sql_turn
+                    and key == "followUpSuggestions"
+                    and label in cls._SQL_TURN_OPERATIONAL_CHIP_LABELS
+                ):
                     continue
 
                 collected.append(
@@ -288,6 +317,21 @@ class ChatInteractivitySuggestionService:
                 "group"
             ) == "consultar":
                 intent_boost = -15
+
+            sub_intent = (
+                str(intent_route.get("subIntent") or intent_route.get("router", {}).get("subIntent") or "")
+                if isinstance(intent_route, dict)
+                else ""
+            )
+
+            if sub_intent.startswith("sql_"):
+                if item.get("sourceKey") in {
+                    "sqlAdvancedFollowUpSuggestions",
+                    "sqlAuthoringFollowUpSuggestions",
+                }:
+                    intent_boost = -40
+                elif item.get("sourceKey") == "followUpSuggestions":
+                    intent_boost = 25
 
             if item.get("group") == "recuperar" and has_error:
                 intent_boost = -20
