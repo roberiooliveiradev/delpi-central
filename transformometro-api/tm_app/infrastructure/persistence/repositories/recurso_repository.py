@@ -47,8 +47,8 @@ class RecursoRepository(PluginBaseRepository):
                 codigo_recurso, nome_recurso, categoria_recurso, fornecedor,
                 tipo_custo, recorrencia, valor_total_recorrente,
                 data_inicio_vigencia, data_fim_vigencia, centro_custo,
-                criterio_rateio, status_recurso, observacoes
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                criterio_rateio, base_competencia, status_recurso, observacoes
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING *
             """,
             (
@@ -63,6 +63,7 @@ class RecursoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("centro_custo"),
                 data.get("criterio_rateio", "igualitario"),
+                data.get("base_competencia", "mensal_cheio"),
                 data.get("status_recurso", "ativo"),
                 data.get("observacoes"),
             ),
@@ -85,6 +86,7 @@ class RecursoRepository(PluginBaseRepository):
                 data_fim_vigencia = %s,
                 centro_custo = %s,
                 criterio_rateio = %s,
+                base_competencia = %s,
                 status_recurso = %s,
                 observacoes = %s,
                 updated_at = NOW()
@@ -102,6 +104,7 @@ class RecursoRepository(PluginBaseRepository):
                 data.get("data_fim_vigencia"),
                 data.get("centro_custo"),
                 data.get("criterio_rateio", "igualitario"),
+                data.get("base_competencia", "mensal_cheio"),
                 data.get("status_recurso", "ativo"),
                 data.get("observacoes"),
                 recurso_id,
@@ -145,6 +148,7 @@ class VinculoRepository(PluginBaseRepository):
                 r.data_fim_vigencia AS recurso_data_fim_vigencia,
                 r.centro_custo,
                 r.criterio_rateio,
+                r.base_competencia,
                 r.status_recurso,
                 r.observacoes AS recurso_observacoes
             FROM transformometro.revisao_recursos_compartilhados v
@@ -187,6 +191,7 @@ class VinculoRepository(PluginBaseRepository):
                 r.data_fim_vigencia AS recurso_data_fim_vigencia,
                 r.centro_custo,
                 r.criterio_rateio,
+                r.base_competencia,
                 r.status_recurso,
                 r.observacoes AS recurso_observacoes,
                 rv.versao_revisao,
