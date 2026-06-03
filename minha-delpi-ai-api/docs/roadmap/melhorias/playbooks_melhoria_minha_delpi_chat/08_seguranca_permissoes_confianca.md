@@ -1,6 +1,6 @@
 # Playbook 08 — Segurança, permissões e confiança
 
-> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (03/06/2026):** [Concluído (MVP)](../STATUS_ROADMAP_MELHORIAS.md) — SQL safety, trust, confirmação escrita, smokes.
 
 
 ## Objetivo

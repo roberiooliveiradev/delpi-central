@@ -1,6 +1,6 @@
 # Playbook 09 — Dashboards, gráficos e apresentação rica
 
-> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (03/06/2026):** [Concluído](../STATUS_ROADMAP_MELHORIAS.md) — ver [`playbook-09-apresentacao-rica.md`](../../playbook-09-apresentacao-rica.md) Fases 1–6.
 
 
 ## Objetivo

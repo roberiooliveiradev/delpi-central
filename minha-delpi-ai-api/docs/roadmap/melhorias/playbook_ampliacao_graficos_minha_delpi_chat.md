@@ -1,6 +1,6 @@
 # Playbook — Ampliação de gráficos e visualizações no Minha DELPI Chat IA
 
-> **Status (31/05/2026):** [Parcial](./STATUS_ROADMAP_MELHORIAS.md) — **Fases 1–3** + alternância de tipo no MFE (Fase 5 parcial). Fases 4 e restante da 5 em backlog.
+> **Status (03/06/2026):** [Concluído (MVP)](./STATUS_ROADMAP_MELHORIAS.md) — Fases **1–4** + `AgentMiniDashboard`; apresentação rica F1–6 em [`playbook-09-apresentacao-rica.md`](../playbook-09-apresentacao-rica.md). Backlog: refinamentos PNG multi-painel.
 
 Projeto: **Minha DELPI Chat IA**
 

@@ -1,6 +1,6 @@
 # Playbook — Assistente administrativo excelente em textos
 
-> **Status (31/05/2026):** [Parcial — ver STATUS](./STATUS_ROADMAP_MELHORIAS.md).
+> **Status (03/06/2026):** [Concluído](./STATUS_ROADMAP_MELHORIAS.md) — UI F3 no MFE; inteligência F1–7 em [`playbook-especialista-editor-textos.md`](../playbook-especialista-editor-textos.md).
 
 
 Projeto: **Minha DELPI Chat IA**

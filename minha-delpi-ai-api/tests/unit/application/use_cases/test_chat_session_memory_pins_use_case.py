@@ -92,6 +92,42 @@ def test_add_context_item_replaces_duplicate_message_reference():
     assert memory_repo.add_context_item.call_count == 1
 
 
+def test_add_context_item_ingests_question_answer_turn():
+    session_id = uuid4()
+    user_id = uuid4()
+    session = MagicMock()
+    session.user_id = user_id
+
+    session_repo = MagicMock()
+    session_repo.get_session_by_id.return_value = session
+
+    memory_repo = MagicMock()
+    memory_repo.load_active_overlay.return_value = {
+        "lastEntities": {},
+        "behaviorInstructions": {},
+        "userContextItems": [],
+    }
+
+    use_case = ChatSessionMemoryPinsUseCase(session_repo, memory_repo)
+    use_case.add_context_item(
+        user_id=user_id,
+        session_id=session_id,
+        content="",
+        question="Qual o estoque do 10080001?",
+        answer="12 unidades na filial 02.",
+        question_message_id="q-msg",
+        answer_message_id="a-msg",
+    )
+
+    assert memory_repo.add_context_item.call_count == 2
+    kinds = [
+        call.args[1].get("kind")
+        for call in memory_repo.add_context_item.call_args_list
+    ]
+    assert "question" in kinds
+    assert "answer" in kinds
+
+
 def test_remove_pin_checks_access():
     session_id = uuid4()
     user_id = uuid4()
