@@ -114,6 +114,12 @@ def test_stream_emits_user_persisted_before_prepare_activity(monkeypatch):
 
     chat_repository.patch_message_metadata.assert_called_once()
 
+    # A pergunta deve virar a folha ativa imediatamente (antes do assistente),
+    # para aparecer ao reabrir a conversa mesmo se o usuário sair antes do fim.
+    leaf_calls = chat_repository.set_active_leaf_message_id.call_args_list
+    assert leaf_calls, "deve apontar o ramo ativo para a pergunta imediatamente"
+    assert leaf_calls[0].kwargs["message_id"] == user_message.id
+
 
 def test_resend_emits_user_persisted_before_prepare(monkeypatch):
     session = _session()

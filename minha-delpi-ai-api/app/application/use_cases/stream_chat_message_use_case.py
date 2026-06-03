@@ -232,6 +232,16 @@ class StreamChatMessageUseCase:
                 message_id=user_message.id,
             )
 
+            # Aponta o ramo ativo para a pergunta imediatamente, para que ela
+            # apareça ao reabrir a conversa mesmo se o usuário sair antes da
+            # resposta ficar pronta (o placeholder/resposta do assistente
+            # avança a folha depois).
+            self.chat_repository.set_active_leaf_message_id(
+                session_id=session_id,
+                user_id=user_id,
+                message_id=user_message.id,
+            )
+
             yield {
                 "type": "user_persisted",
                 "messageId": str(user_message.id),
