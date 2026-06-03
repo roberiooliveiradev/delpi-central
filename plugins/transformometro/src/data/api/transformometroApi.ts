@@ -90,6 +90,7 @@ export type OptionsData = {
   cenario_tipo: string[];
   recorrencias: string[];
   criterio_rateio: string[];
+  base_competencia_recurso?: string[];
   status_recurso: string[];
   tipo_investimento: string[];
   tipo_custo: string[];
@@ -268,6 +269,7 @@ export type RecursoCompartilhado = {
   recorrencia: string;
   valor_total_recorrente: number;
   criterio_rateio: string;
+  base_competencia?: string;
   status_recurso: string;
   categoria_recurso?: string | null;
   fornecedor?: string | null;
@@ -306,6 +308,7 @@ export type VinculoRecurso = {
   recurso_data_fim_vigencia?: string | null;
   centro_custo?: string | null;
   criterio_rateio?: string;
+  base_competencia?: string;
   status_recurso?: string;
   recurso_observacoes?: string | null;
   ativo: boolean;
@@ -632,56 +635,6 @@ export function fetchDashboardEvolucao(
   );
 }
 
-export type ImportPreviewResult = {
-  validation: {
-    ok: boolean;
-    errors: string[];
-    sheet_counts: Record<string, number>;
-  };
-  sheet_summary?: {
-    solucoes_implementadas?: number;
-    economia_liquida_total?: number;
-    economia_bruta_total?: number;
-    roi_medio?: number | null;
-  } | null;
-  db_counts?: Record<string, number>;
-  db_summary?: ImportPreviewResult["sheet_summary"];
-};
-
-export type ImportApplyResult = {
-  importacao_id: string;
-  status: string;
-  registros_processados: number;
-  registros_importados: number;
-  erros: string[];
-};
-
-export async function previewImport(file: File, getAccessToken?: () => string | undefined) {
-  const body = new FormData();
-  body.append("file", file);
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/import/preview`, {
-    method: "POST",
-    headers: buildAuthHeaders(getAccessToken),
-    body,
-  });
-  const payload = (await response.json()) as ApiEnvelope<ImportPreviewResult>;
-  if (!response.ok || !payload.success) throw new Error(payload.message || "Erro no preview");
-  return payload.data;
-}
-
-export async function applyImport(file: File, getAccessToken?: () => string | undefined) {
-  const body = new FormData();
-  body.append("file", file);
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}/import/apply`, {
-    method: "POST",
-    headers: buildAuthHeaders(getAccessToken),
-    body,
-  });
-  const payload = (await response.json()) as ApiEnvelope<ImportApplyResult>;
-  if (!response.ok || !payload.success) throw new Error(payload.message || "Erro ao importar");
-  return payload.data;
-}
-
 export function fetchDashboardProcessos(
   getAccessToken?: () => string | undefined,
   params?: Record<string, string>
@@ -693,31 +646,14 @@ export function fetchDashboardProcessos(
   );
 }
 
-export function fetchDashboardPorFamilia(
-  getAccessToken?: () => string | undefined,
-  params?: Record<string, string>
-) {
-  const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<{ total: number; items: DashboardFamiliaItem[] }>(
-    `/dashboard/por-familia${qs}`,
-    getAccessToken
-  );
-}
-
-export type DashboardFamiliaItem = {
-  familia_processo: string;
-  processos: number;
-  economia_bruta: number;
-  economia_liquida_mes: number;
-};
-
-export type DashboardAlertItem = {
+export type DashboardAlertaItem = {
   processo_id: string;
-  codigo_processo?: string;
-  nome_processo?: string;
+  codigo_processo: string;
+  nome_processo: string;
   filial_id?: string | null;
   setor_id?: string | null;
   familia_processo?: string | null;
+  agrupador_ferramenta?: string | null;
   months: number;
   competencia_inicio: string;
   competencia_fim: string;
@@ -729,75 +665,26 @@ export function fetchDashboardAlertas(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<{ total: number; items: DashboardAlertItem[] }>(
+  return request<{ total: number; items: DashboardAlertaItem[] }>(
     `/dashboard/alertas${qs}`,
     getAccessToken
   );
 }
 
-export type ProcessoComparativoItem = {
-  revisao_id: string;
-  versao_revisao: string;
-  cenario_tipo: string;
-  revisao_ativa: boolean;
-  data_inicio_vigencia?: string | null;
-  data_fim_vigencia?: string | null;
-  ultima_competencia?: string | null;
-  meses_com_dados: number;
-  totais: {
-    economia_bruta: number;
-    economia_liquida_mes: number;
-    investimento_unico_mes: number;
-    custo_recorrente_mes: number;
-    horas_economizadas_mes: number;
-  };
+export type DashboardFamiliaItem = {
+  familia_processo: string;
+  processos: number;
+  economia_bruta: number;
+  economia_liquida_mes: number;
 };
 
-export type ProcessoComparativo = {
-  processo: Partial<Processo>;
-  total_revisoes: number;
-  items: ProcessoComparativoItem[];
-};
-
-export function fetchProcessoComparativo(
-  processoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<ProcessoComparativo>(`/processos/${processoId}/comparativo`, getAccessToken);
-}
-
-async function downloadBlob(
-  path: string,
-  filename: string,
-  getAccessToken?: () => string | undefined
-) {
-  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
-    headers: buildAuthHeaders(getAccessToken),
-  });
-  if (!response.ok) throw new Error(`Erro HTTP ${response.status} ao baixar arquivo`);
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-export function downloadDashboardCsv(
+export function fetchDashboardPorFamilia(
   getAccessToken?: () => string | undefined,
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return downloadBlob(`/dashboard/export.csv${qs}`, "transformometro-dashboard.csv", getAccessToken);
-}
-
-export function downloadDashboardExcel(
-  getAccessToken?: () => string | undefined,
-  params?: Record<string, string>
-) {
-  const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return downloadBlob(`/dashboard/export.xlsx${qs}`, "transformometro-dashboard.xlsx", getAccessToken);
+  return request<{ total: number; items: DashboardFamiliaItem[] }>(
+    `/dashboard/por-familia${qs}`,
+    getAccessToken
+  );
 }
