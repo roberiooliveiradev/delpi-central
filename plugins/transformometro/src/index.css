@@ -98,10 +98,10 @@
 
 /* Header */
 .dashboard-transformometro .ds-page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--ds-grid-gap);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
   margin-bottom: var(--ds-section-gap);
 }
 
@@ -136,8 +136,9 @@
 .dashboard-transformometro .ds-page-header h1 {
   margin: 0;
   font-size: var(--ds-font-hero);
-  line-height: 1.15;
+  line-height: 1.2;
   color: var(--ds-title);
+  max-width: 100%;
 }
 
 .dashboard-transformometro .ds-page-subtitle {
@@ -148,11 +149,20 @@
 }
 
 .dashboard-transformometro .ds-header-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  flex-shrink: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, max-content));
+  gap: 8px 10px;
+  justify-content: start;
+  width: 100%;
+  max-width: 100%;
+  padding-left: 66px;
+  box-sizing: border-box;
+}
+
+.dashboard-transformometro .ds-header-actions .ds-ghost-btn,
+.dashboard-transformometro .ds-header-actions .ds-primary-btn {
+  justify-content: center;
+  min-width: 0;
 }
 
 /* Buttons */
@@ -1334,10 +1344,6 @@
 
   .dashboard-transformometro .ds-summary-metrics {
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-transformometro .ds-page-header {
-    flex-direction: column;
   }
 
   .dashboard-transformometro .ds-shortcuts-grid {
