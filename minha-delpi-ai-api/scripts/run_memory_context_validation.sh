@@ -19,6 +19,7 @@ echo "== Memória e contexto — testes unitários =="
   tests/unit/domain/services/test_chat_user_preference_manager_service.py \
   tests/unit/domain/services/test_chat_conversation_summarizer_service.py \
   tests/unit/domain/services/test_chat_context_compression_service.py \
+  tests/unit/domain/services/test_chat_semantic_memory.py \
   tests/unit/domain/services/test_chat_session_memory.py \
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   -q

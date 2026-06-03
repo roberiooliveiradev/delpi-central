@@ -11,7 +11,9 @@ Histórico + mensagem
   → ChatConversationMemoryExtractor (action, canvas, anexo, período)
   → ChatReferenceResolutionService.resolve_from_snapshot
   → ChatContextCompressionService (histórico ≥ 10 mensagens)
+  → ChatSemanticMemoryRetrieverService (intenção documental/playbook)
   → workspaceContext.workingMemory + bloco no prompt
+  → (turno) ChatSemanticMemoryService enriquece query RAG e registra hits
   → (turno) tools / LLM
   → ChatConversationMemoryService.build_post_turn
   → contextSnapshot + contextChips + adminDebug.memory
@@ -27,6 +29,11 @@ Histórico + mensagem
 | `ChatUserPreferenceManagerService` | `userPreferences` unificado (behavior, e-mail, texto, correção); revogação e reset por assunto (§13) |
 | `ChatConversationSummarizerService` | Resumo estruturado extrativo (entidades, decisões, pendências) quando histórico ≥ 10 mensagens (§17) |
 | `ChatContextCompressionService` | `compressedContext` no snapshot; bloco compactado no prompt (§18) |
+| `ChatSemanticMemoryIntentService` | Detecta perguntas documentais/playbook para enriquecer RAG (§19) |
+| `ChatSemanticMemoryRetrieverService` | Query enriquecida, hits ranqueados, `semanticMemoryHits` no snapshot |
+| `ChatContextRankingService` | Ranking ponderado de trechos para o prompt (§22) |
+| `ChatProceduralMemoryProviderService` | Hints de playbook/procedimento por tarefa ativa (§21) |
+| `ChatSemanticMemoryService` | Ponte com `RagContextService` (híbrido + rerank já existentes) |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |

@@ -19,6 +19,12 @@ from app.domain.services.chat_entity_tracker_service import ChatEntityTrackerSer
 from app.domain.services.chat_context_compression_service import (
     ChatContextCompressionService,
 )
+from app.domain.services.chat_procedural_memory_provider_service import (
+    ChatProceduralMemoryProviderService,
+)
+from app.domain.services.chat_semantic_memory_retriever_service import (
+    ChatSemanticMemoryRetrieverService,
+)
 from app.domain.services.chat_user_preference_manager_service import (
     ChatUserPreferenceManagerService,
 )
@@ -109,6 +115,10 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             message=message,
         )
+        snapshot = ChatSemanticMemoryRetrieverService.apply_pre_turn(
+            snapshot,
+            message=message,
+        )
 
         return snapshot
 
@@ -163,6 +173,8 @@ class ChatConversationMemoryService:
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
             ChatContextCompressionService.format_prompt_block(snapshot),
+            ChatProceduralMemoryProviderService.format_prompt_block(snapshot),
+            ChatSemanticMemoryRetrieverService.format_prompt_block(snapshot),
             ChatWorkingMemoryService.format_prompt_block(snapshot),
             ChatUserPreferenceManagerService.format_prompt_block(snapshot),
             ChatEntityTrackerService.format_prompt_block(snapshot),
@@ -220,6 +232,9 @@ class ChatConversationMemoryService:
             snapshot
         )
         base["conversationSummary"] = ChatContextCompressionService.compact_for_admin_debug(
+            snapshot
+        )
+        base["semanticMemory"] = ChatSemanticMemoryRetrieverService.compact_for_admin_debug(
             snapshot
         )
 

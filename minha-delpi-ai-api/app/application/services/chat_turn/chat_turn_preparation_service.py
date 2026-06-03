@@ -97,10 +97,20 @@ class ChatTurnPreparationService:
         rag_context_service,
         knowledge_scope_service: ChatKnowledgeScopeService | None = None,
         session_memory_service=None,
+        semantic_memory_service=None,
     ):
         self.rag_context_service = rag_context_service
         self.knowledge_scope_service = knowledge_scope_service or ChatKnowledgeScopeService()
         self.session_memory_service = session_memory_service
+
+        if semantic_memory_service is None:
+            from app.application.services.chat_semantic_memory_service import (
+                ChatSemanticMemoryService,
+            )
+
+            semantic_memory_service = ChatSemanticMemoryService(rag_context_service)
+
+        self.semantic_memory_service = semantic_memory_service
 
     def prepare(
         self,
@@ -472,7 +482,9 @@ class ChatTurnPreparationService:
             if "text_correction" not in pipeline_stages:
                 pipeline_stages.append("text_correction")
 
-        memory_prompt = ChatWorkingMemoryService.format_prompt_block(working_memory_snapshot)
+        memory_prompt = ChatConversationMemoryService.format_prompt_block(
+            working_memory_snapshot
+        )
         base_conversation_context = (
             ChatIntelligencePipelineService.build_conversation_context(history_source)
             if history_source
@@ -966,6 +978,15 @@ class ChatTurnPreparationService:
                 rag_min_score = Settings.RAG_IDENTITY_QUESTION_MIN_SCORE
             elif technical_description_normas:
                 rag_query = ChatTechnicalDescriptionIntentService.build_rag_query(message)
+            elif self.semantic_memory_service.should_use_enriched_query(workspace_context):
+                rag_query = self.semantic_memory_service.resolve_rag_query(
+                    message,
+                    workspace_context=workspace_context,
+                    default_query=rag_query,
+                )
+
+                if "semantic_memory" not in pipeline_stages:
+                    pipeline_stages.append("semantic_memory")
 
             rag = self.rag_context_service.build_context(
                 rag_query,
@@ -988,6 +1009,29 @@ class ChatTurnPreparationService:
 
         if isinstance(web_sources, list) and web_sources:
             sources = [*web_sources, *sources]
+
+        if not skip_rag and self.semantic_memory_service.should_use_enriched_query(
+            workspace_context
+        ):
+            workspace_context = self.semantic_memory_service.attach_rag_to_workspace(
+                workspace_context,
+                message=message,
+                rag_result=rag,
+            )
+
+            from app.domain.services.chat_semantic_memory_retriever_service import (
+                ChatSemanticMemoryRetrieverService,
+            )
+
+            semantic_block = ChatSemanticMemoryRetrieverService.format_prompt_block(
+                workspace_context.get("workingMemory"),
+            )
+
+            if semantic_block:
+                conversation_context = ChatWorkingMemoryService.merge_conversation_context(
+                    conversation_context,
+                    semantic_block,
+                )
 
         rag_context_chars = len(rag.get("context") or "")
         pipeline_timings.mark("rag_done")
