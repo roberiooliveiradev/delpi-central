@@ -15,6 +15,7 @@ from app.domain.services.chat_reference_resolution_service import (
 from app.domain.services.chat_conversation_state_service import (
     ChatConversationStateService,
 )
+from app.domain.services.chat_entity_tracker_service import ChatEntityTrackerService
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
 
@@ -63,6 +64,12 @@ class ChatConversationMemoryService:
             message=message,
             previous_messages=previous_messages,
         )
+        snapshot = ChatEntityTrackerService.apply_to_snapshot(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+            attachments=attachments,
+        )
 
         resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
             message,
@@ -80,10 +87,11 @@ class ChatConversationMemoryService:
         )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
 
-        ambiguity = ChatReferenceResolutionService.detect_ambiguity(message, snapshot)
+        if not snapshot.get("memoryAmbiguity"):
+            ambiguity = ChatReferenceResolutionService.detect_ambiguity(message, snapshot)
 
-        if ambiguity:
-            snapshot["memoryAmbiguity"] = ambiguity
+            if ambiguity:
+                snapshot["memoryAmbiguity"] = ambiguity
 
         return snapshot
 
@@ -128,6 +136,7 @@ class ChatConversationMemoryService:
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
             ChatWorkingMemoryService.format_prompt_block(snapshot),
+            ChatEntityTrackerService.format_prompt_block(snapshot),
             ChatConversationStateService.format_prompt_block(snapshot),
         ]
         merged = "\n\n".join(block.strip() for block in blocks if block and block.strip())
@@ -174,6 +183,8 @@ class ChatConversationMemoryService:
         base["conversationState"] = ChatConversationStateService.compact_for_admin_debug(
             snapshot
         )
+        base["activeEntities"] = snapshot.get("activeEntities") or {}
+        base["referenceHints"] = snapshot.get("referenceHints") or {}
 
         return base
 

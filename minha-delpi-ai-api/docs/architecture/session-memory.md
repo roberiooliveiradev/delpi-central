@@ -22,6 +22,7 @@ Histórico + mensagem
 |---------|--------|
 | `ChatConversationMemoryService` | Orquestra pré/pós-turno, chips, admin debug |
 | `ChatConversationStateService` | `activeTopic`, `activeTask`, siga/próximo, correções, mudança de assunto (playbook memória §9) |
+| `ChatEntityTrackerService` | `activeEntities`, `referenceHints`, `previousProductCodes`, SQL recente (playbook memória §10) |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |

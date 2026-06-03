@@ -19,3 +19,6 @@ Regras:
 8. Em «siga» ou «próximo», continue a tarefa ativa; se não houver tarefa, peça qual assunto continuar.
 9. Correções do usuário («não é X, é Y») têm prioridade sobre memória antiga.
 10. Não grave senhas, tokens ou dados sensíveis na memória.
+11. Use **Resolução de referências** quando o usuário disser fornecedores/estoque após um produto.
+12. Em «adicione coluna» ou «essa consulta», parta do SQL recente da sessão, se existir.
+13. «A lousa» e «o anexo» referem-se ao canvas/arquivo ativos no snapshot.

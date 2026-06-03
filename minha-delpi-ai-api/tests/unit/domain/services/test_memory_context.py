@@ -115,6 +115,22 @@ def test_m3_proximo_with_playbook_task_continues():
     assert "próximo" in block.lower() or "tarefa" in block.lower()
 
 
+def test_m4_isso_resolves_single_table():
+    snapshot = {
+        "lastEntities": {},
+        "lastPresentation": {"type": "table", "messageId": "msg-table"},
+        "canvas": {"active": False},
+    }
+    resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
+        "resuma isso em tópicos",
+        snapshot,
+    )
+
+    assert not snapshot.get("memoryAmbiguity")
+    assert used == ["lastPresentation"]
+    assert resolved[0]["resolvedTo"] == "lastPresentation"
+
+
 def test_m5_isso_ambiguous_when_multiple_artifacts():
     snapshot = {
         "lastPresentation": {"type": "table", "messageId": "msg-1"},
@@ -137,6 +153,71 @@ def test_m6_user_correction_stored():
 
     assert len(corrections) >= 1
     assert "Minha DELPI" in corrections[-1].get("content", "")
+
+
+def test_m1_fornecedores_reference_hint():
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="e os fornecedores?",
+        previous_messages=[_assistant_with_stock("10080022")],
+    )
+
+    hints = snapshot.get("referenceHints") or {}
+
+    assert "fornecedores" in hints
+    assert "10080022" in hints["fornecedores"]
+
+
+def test_m8_resume_sql_task_from_stack():
+    previous = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "contextSnapshot": {
+                    "conversationState": {
+                        "activeTask": None,
+                        "taskStack": [
+                            {
+                                "type": "sql_task",
+                                "label": "SQL",
+                                "status": "paused",
+                                "objective": "consulta vendas",
+                            }
+                        ],
+                    },
+                },
+            },
+        }
+    ]
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="retome a consulta SQL",
+        previous_messages=previous,
+    )
+    task = (snapshot.get("conversationState") or {}).get("activeTask") or {}
+
+    assert task.get("type") == "sql_task"
+    assert task.get("status") == "in_progress"
+
+
+def test_m12_sql_column_edit_resolves_last_sql():
+    previous = [
+        {
+            "role": "assistant",
+            "content": "SELECT id, nome FROM produtos",
+            "metadata": {"sqlAdvanced": {"workspace": {"currentSql": "SELECT id, nome FROM produtos"}}},
+        }
+    ]
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="adicione coluna preco na consulta",
+        previous_messages=previous,
+    )
+
+    assert "lastSqlSnippet" in (snapshot.get("activeEntities") or {})
+    resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
+        "adicione coluna preco",
+        snapshot,
+    )
+
+    assert "lastSqlSnippet" in used
 
 
 def test_m7_topic_change_pauses_task():

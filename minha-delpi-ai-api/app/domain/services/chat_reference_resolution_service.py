@@ -33,6 +33,23 @@ class ChatReferenceResolutionService:
         re.IGNORECASE,
     )
     _THIS_RE = re.compile(r"\b(?:isso|essa\s+resposta)\b", re.IGNORECASE)
+    _THAT_RE = re.compile(r"\b(?:esse|essa|aquele|aquela)\b", re.IGNORECASE)
+    _PREVIOUS_RE = re.compile(
+        r"\b(?:o\s+)?anterior\b|\bresposta\s+anterior\b|\búltima\s+resposta\b",
+        re.IGNORECASE,
+    )
+    _CANVAS_RE = re.compile(r"\b(?:a\s+)?lousa\b|\bno\s+canvas\b", re.IGNORECASE)
+    _ATTACHMENT_RE = re.compile(
+        r"\b(?:esse|este|o)\s+arquivo\b|\b(?:o\s+)?anexo\b|\bdo\s+anexo\b",
+        re.IGNORECASE,
+    )
+    _SQL_EDIT_RE = re.compile(
+        r"\b(?:adicione|inclua|acrescente)\s+(?:uma\s+)?coluna\b|"
+        r"\b(?:essa|esta)\s+consulta\b|\bquery\s+anterior\b|\b(?:na|à)\s+consulta\b",
+        re.IGNORECASE,
+    )
+    _CODE_REF_RE = re.compile(r"\b(?:esse|este)\s+c[oó]digo\b", re.IGNORECASE)
+    _LAST_QUERY_RE = re.compile(r"\búltima\s+consulta\b", re.IGNORECASE)
     _COMPARE_PREVIOUS_RE = re.compile(
         r"\bcompare?\s+com\s+o\s+anterior\b",
         re.IGNORECASE,
@@ -157,6 +174,89 @@ class ChatReferenceResolutionService:
                 used_keys.append("lastAction")
 
         canvas = snapshot.get("canvas") or {}
+        active_entities = snapshot.get("activeEntities") or entities
+        last_sql = str(active_entities.get("lastSqlSnippet") or "").strip()
+        last_useful_id = str(snapshot.get("lastUsefulMessageId") or "").strip()
+
+        if cls._CANVAS_RE.search(normalized) and isinstance(canvas, dict) and canvas.get("active"):
+            resolved.append(
+                cls._entry(
+                    text="lousa",
+                    resolved_to="canvas",
+                    value=str(canvas.get("lastUpdatedFromMessageId") or "canvas"),
+                    source="canvas.active",
+                    confidence=0.9,
+                )
+            )
+            used_keys.append("canvas")
+
+        last_attachment = snapshot.get("lastAttachment")
+
+        if cls._ATTACHMENT_RE.search(normalized) and isinstance(last_attachment, dict):
+            filename = str(last_attachment.get("filename") or "").strip()
+
+            if filename:
+                resolved.append(
+                    cls._entry(
+                        text="arquivo/anexo",
+                        resolved_to="lastAttachment",
+                        value=filename,
+                        source="lastAttachment.filename",
+                        confidence=0.88,
+                    )
+                )
+                used_keys.append("lastAttachment")
+
+        if cls._SQL_EDIT_RE.search(normalized) and last_sql:
+            resolved.append(
+                cls._entry(
+                    text="consulta SQL",
+                    resolved_to="lastSqlSnippet",
+                    value=last_sql[:200],
+                    source="activeEntities.lastSqlSnippet",
+                    confidence=0.9,
+                )
+            )
+            used_keys.append("lastSqlSnippet")
+
+        if cls._CODE_REF_RE.search(normalized) and product_code:
+            resolved.append(
+                cls._entry(
+                    text="esse código",
+                    resolved_to="productCode",
+                    value=product_code,
+                    source="activeEntities.productCode",
+                    confidence=0.92,
+                )
+            )
+
+            if "productCode" not in used_keys:
+                used_keys.append("productCode")
+
+        if cls._PREVIOUS_RE.search(normalized) or cls._LAST_QUERY_RE.search(normalized):
+            if last_useful_id:
+                resolved.append(
+                    cls._entry(
+                        text="resposta anterior",
+                        resolved_to="lastUsefulMessage",
+                        value=last_useful_id,
+                        source="lastUsefulMessageId",
+                        confidence=0.8,
+                    )
+                )
+                used_keys.append("lastUsefulMessage")
+
+            elif isinstance(last_action, dict) and last_action.get("name"):
+                resolved.append(
+                    cls._entry(
+                        text="última consulta",
+                        resolved_to="lastAction",
+                        value=str(last_action.get("name")),
+                        source="lastAction.name",
+                        confidence=0.82,
+                    )
+                )
+                used_keys.append("lastAction")
 
         if cls._THIS_RE.search(normalized):
             candidates: list[dict[str, Any]] = []
@@ -200,15 +300,27 @@ class ChatReferenceResolutionService:
                 resolved.append(candidates[0])
                 used_keys.append(candidates[0]["resolvedTo"])
             elif len(candidates) > 1:
-                snapshot["memoryAmbiguity"] = {
-                    "reason": "this_reference",
-                    "promptHint": (
-                        "Quando você diz «isso», você quer a última resposta, "
-                        "a tabela/gráfico, a lousa ou o arquivo anexado?"
-                    ),
-                }
+                cls._set_this_ambiguity(snapshot)
+
+        elif (
+            cls._THAT_RE.search(normalized)
+            and not cls._PRODUCT_REF_RE.search(normalized)
+            and not resolved
+            and not operational_follow_up
+        ):
+            cls._set_this_ambiguity(snapshot)
 
         return resolved, used_keys
+
+    @classmethod
+    def _set_this_ambiguity(cls, snapshot: dict) -> None:
+        snapshot["memoryAmbiguity"] = {
+            "reason": "this_reference",
+            "promptHint": (
+                "Quando você diz «isso» ou «esse», você quer a última resposta, "
+                "a tabela/gráfico, a lousa ou o arquivo anexado?"
+            ),
+        }
 
     @classmethod
     def detect_ambiguity(cls, message: str, snapshot: dict | None) -> dict[str, Any] | None:
