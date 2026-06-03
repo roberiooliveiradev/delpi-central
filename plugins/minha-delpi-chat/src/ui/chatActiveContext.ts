@@ -109,9 +109,14 @@ export function contextChipKindClass(kind: string): string {
 }
 
 const PINNABLE_CONTEXT_KINDS = new Set(["branch", "warehouse", "product"]);
+const USER_CONTEXT_ITEM_KINDS = new Set(["note", "table", "file", "knowledge"]);
 
 export function isPinnableContextKind(kind: string): boolean {
   return PINNABLE_CONTEXT_KINDS.has(String(kind || "").trim().toLowerCase());
+}
+
+export function isUserContextItemKind(kind: string): boolean {
+  return USER_CONTEXT_ITEM_KINDS.has(String(kind || "").trim().toLowerCase());
 }
 
 export function buildActiveContextSummary(chips: ChatContextChip[]): string | null {
@@ -133,6 +138,7 @@ export type MemoryUsageView = {
   episodicCount?: number;
   episodicRecall?: string | null;
   writeGated?: boolean;
+  userContextItems?: string[];
 };
 
 export function extractMemoryUsageFromMessages(

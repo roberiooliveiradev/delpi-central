@@ -14,6 +14,7 @@ export type MemoryUsageView = {
   episodicCount?: number;
   episodicRecall?: string | null;
   writeGated?: boolean;
+  userContextItems?: string[];
 };
 
 type ChatMemoryUsedDialogProps = {
@@ -107,6 +108,17 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
                       <strong>{hit.title}</strong>
                       {hit.snippet ? ` — ${hit.snippet}` : null}
                     </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {(usage.userContextItems?.length ?? 0) > 0 ? (
+              <section>
+                <h3>Contexto adicionado por você</h3>
+                <ul>
+                  {usage.userContextItems?.map((item) => (
+                    <li key={item}>{item}</li>
                   ))}
                 </ul>
               </section>

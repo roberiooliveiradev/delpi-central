@@ -26,7 +26,11 @@ class ChatWorkingMemoryService:
         message: str,
         previous_messages: list[Any] | None,
     ) -> dict:
+        carryover_entities, previous_product_codes = cls._extract_carryover_from_history(
+            previous_messages
+        )
         last_entities = cls._extract_last_entities(previous_messages)
+        last_entities = {**carryover_entities, **last_entities}
         behavior = cls._merge_behavior_instructions(message, previous_messages)
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
@@ -58,6 +62,7 @@ class ChatWorkingMemoryService:
 
         return {
             "lastEntities": last_entities,
+            "previousProductCodes": previous_product_codes,
             "behaviorInstructions": behavior,
             "emailPreferences": email_preferences,
             "textCorrectionPreferences": text_correction_preferences,
@@ -81,19 +86,37 @@ class ChatWorkingMemoryService:
             previous_messages=previous_messages,
         ))
 
+        previous_product_codes = list(snapshot.get("previousProductCodes") or [])
+
         if snapshot.get("persistedMemoryCleared"):
             entities: dict[str, str] = {}
+            previous_product_codes = []
         else:
             entities = dict(snapshot.get("lastEntities") or {})
+
         for code in cls._extract_codes_from_tool_calls(tool_calls):
-            entities["productCode"] = code
+            cls._record_product_switch(
+                entities,
+                previous_product_codes,
+                code,
+            )
             break
+
+        explicit_code = ChatProductQueryIntentService.extract_product_code(message)
+
+        if explicit_code:
+            cls._record_product_switch(
+                entities,
+                previous_product_codes,
+                explicit_code,
+            )
 
         for branch in cls._extract_branches_from_tool_calls(tool_calls):
             entities["branch"] = branch
             break
 
         snapshot["lastEntities"] = entities
+        snapshot["previousProductCodes"] = previous_product_codes[-8:]
         used = list(snapshot.get("usedMemoryKeys") or [])
 
         if entities.get("productCode") and "productCode" not in used:
@@ -305,6 +328,56 @@ class ChatWorkingMemoryService:
             "usedMemoryKeys": snapshot.get("usedMemoryKeys") or [],
             "clearedThisTurn": bool(snapshot.get("persistedMemoryCleared")),
         }
+
+    @classmethod
+    def _extract_carryover_from_history(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> tuple[dict[str, str], list[str]]:
+        for item in reversed(previous_messages or []):
+            if cls._message_role(item) != "assistant":
+                continue
+
+            metadata = item.get("metadata") if isinstance(item, dict) else None
+
+            if not isinstance(metadata, dict):
+                continue
+
+            snapshot = metadata.get("contextSnapshot")
+
+            if not isinstance(snapshot, dict):
+                continue
+
+            entities = snapshot.get("lastEntities") or {}
+            previous_codes = [
+                str(code).strip()
+                for code in (snapshot.get("previousProductCodes") or [])
+                if str(code).strip()
+            ]
+
+            if isinstance(entities, dict) and entities:
+                return dict(entities), previous_codes
+
+            if previous_codes:
+                return {}, previous_codes
+
+        return {}, []
+
+    @classmethod
+    def _record_product_switch(
+        cls,
+        entities: dict[str, str],
+        previous_product_codes: list[str],
+        new_code: str,
+    ) -> None:
+        token = str(new_code or "").strip()
+        previous = str(entities.get("productCode") or "").strip()
+
+        if previous and previous != token and previous not in previous_product_codes:
+            previous_product_codes.append(previous)
+
+        if token:
+            entities["productCode"] = token
 
     @classmethod
     def _extract_last_entities(cls, previous_messages: list[Any] | None) -> dict[str, str]:

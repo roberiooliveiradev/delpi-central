@@ -56,6 +56,10 @@ const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
   topic: Target,
   task: ClipboardList,
   attachment: FileText,
+  note: FileText,
+  table: LayoutGrid,
+  file: FileText,
+  knowledge: FileText,
 };
 
 function chipIconForKind(kind: string): LucideIcon {

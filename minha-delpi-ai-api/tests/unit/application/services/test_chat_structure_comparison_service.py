@@ -129,6 +129,38 @@ def test_build_comparison_from_tool_previews():
     assert "compra" not in answer.lower()
 
 
+def test_compare_com_anterior_defers_to_session_memory_not_bom_scrape():
+    messages = [
+        {"role": "user", "content": "me fale do produto 10080001"},
+        {
+            "role": "assistant",
+            "content": (
+                "Produto 10080001: TERM. BANDEIRA 6,30X0,80 0,50-1,50MM2 NU S/ISOLACAO"
+            ),
+            "metadata": {},
+        },
+        {"role": "user", "content": "estoque do 10080002"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "metadata": {"path": "/products/10080002/stock"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    answer = ChatStructureComparisonService.build_comparison_answer(
+        "compare com o anterior",
+        messages,
+    )
+
+    assert answer is None
+
+
 def test_build_comparison_from_text_only():
     messages = [
         {"role": "user", "content": "estrutura do 90260077"},

@@ -40,3 +40,12 @@ class ChatSessionMemoryRepositoryPort(ABC):
     @abstractmethod
     def deactivate_entity(self, session_id: UUID, key: str) -> bool:
         raise NotImplementedError
+
+    def list_context_items(self, session_id: UUID) -> list[dict]:
+        raise NotImplementedError
+
+    def add_context_item(self, session_id: UUID, item: dict) -> dict:
+        raise NotImplementedError
+
+    def remove_context_item(self, session_id: UUID, item_id: str) -> bool:
+        raise NotImplementedError

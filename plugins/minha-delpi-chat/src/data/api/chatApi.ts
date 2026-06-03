@@ -747,6 +747,39 @@ export async function getChatSessionMemoryContext(
   return parseJsonResponse<SessionMemoryContextResponse>(response);
 }
 
+export async function addChatSessionContextItem(
+  sessionId: string,
+  payload: { content: string; filename?: string },
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/memory/context-items`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
+export async function removeChatSessionContextItem(
+  sessionId: string,
+  itemId: string,
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/memory/context-items/${encodeURIComponent(itemId)}`,
+    {
+      method: "DELETE",
+      headers: await getAuthHeaders(options),
+    },
+  );
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
 export async function addChatSessionMemoryPin(
   sessionId: string,
   payload: { kind: string; value: string },

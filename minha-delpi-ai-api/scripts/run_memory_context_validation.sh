@@ -25,6 +25,8 @@ echo "== Memória e contexto — testes unitários =="
   tests/unit/domain/services/test_chat_session_memory_admin_metrics_service.py \
   tests/unit/domain/services/test_chat_memory_context_loss_alert_service.py \
   tests/unit/application/use_cases/test_get_admin_session_memory_summary_use_case.py \
+  tests/unit/domain/services/test_working_memory_product_history.py \
+  tests/unit/domain/services/test_chat_user_context_item_service.py \
   tests/unit/domain/services/test_chat_memory_ux_service.py \
   tests/unit/application/services/test_chat_session_memory_direct_answer_service.py \
   tests/unit/application/use_cases/test_chat_session_memory_pins_use_case.py \

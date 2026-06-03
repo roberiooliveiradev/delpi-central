@@ -63,6 +63,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         return {
             "lastEntities": last_entities,
             "behaviorInstructions": behavior,
+            "userContextItems": self.list_context_items(session_id),
         }
 
     def sync_from_snapshot(
@@ -146,6 +147,79 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             expires_at=now + timedelta(days=30),
             now=now,
         )
+
+    def list_context_items(self, session_id: UUID) -> list[dict]:
+        if self._has_clear_marker(session_id):
+            return []
+
+        now = datetime.now(timezone.utc)
+        rows = (
+            AiChatSessionMemoryModel.query.filter(
+                AiChatSessionMemoryModel.session_id == session_id,
+                AiChatSessionMemoryModel.memory_type == "context_item",
+                AiChatSessionMemoryModel.active.is_(True),
+            )
+            .filter(
+                or_(
+                    AiChatSessionMemoryModel.expires_at.is_(None),
+                    AiChatSessionMemoryModel.expires_at > now,
+                )
+            )
+            .order_by(AiChatSessionMemoryModel.created_at.asc())
+            .limit(24)
+            .all()
+        )
+
+        items: list[dict] = []
+
+        for row in rows:
+            payload = row.value_json
+
+            if isinstance(payload, dict) and payload.get("id"):
+                items.append(payload)
+
+        return items[-12:]
+
+    def add_context_item(self, session_id: UUID, item: dict) -> dict:
+        item_id = str(item.get("id") or "").strip()
+
+        if not item_id:
+            raise ValueError("Context item id is required.")
+
+        now = datetime.now(timezone.utc)
+        self._clear_clear_marker(session_id, now=now)
+        self._upsert_row(
+            session_id=session_id,
+            memory_type="context_item",
+            key=item_id[:64],
+            value_json=item,
+            source_message_id=None,
+            expires_at=now + timedelta(days=30),
+            now=now,
+        )
+
+        return item
+
+    def remove_context_item(self, session_id: UUID, item_id: str) -> bool:
+        token = str(item_id or "").strip()
+
+        if not token:
+            return False
+
+        now = datetime.now(timezone.utc)
+        updated = (
+            AiChatSessionMemoryModel.query.filter(
+                AiChatSessionMemoryModel.session_id == session_id,
+                AiChatSessionMemoryModel.memory_type == "context_item",
+                AiChatSessionMemoryModel.key == token[:64],
+                AiChatSessionMemoryModel.active.is_(True),
+            )
+            .update(
+                {"active": False, "updated_at": now},
+                synchronize_session=False,
+            )
+        )
+        return int(updated or 0) > 0
 
     def deactivate_entity(self, session_id: UUID, key: str) -> bool:
         if key not in self._ENTITY_KEYS:
@@ -232,7 +306,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         session_id: UUID,
         memory_type: str,
         key: str,
-        value_json: str,
+        value_json: str | dict,
         source_message_id: UUID | None,
         expires_at: datetime,
         now: datetime,

@@ -199,6 +199,12 @@ class ChatMemoryUxService:
         episodic = snap.get("episodicMemory") or []
         recall = snap.get("episodicRecall")
 
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        user_context = ChatUserContextItemService.items_for_usage_view(snap)
+
         return {
             "layers": (snap.get("memoryContextDebug") or {}).get("layers") or [],
             "topic": state.get("activeTopic"),
@@ -215,6 +221,7 @@ class ChatMemoryUxService:
             "semanticHits": semantic[:4],
             "episodicCount": len(episodic) if isinstance(episodic, list) else 0,
             "episodicRecall": str(recall.get("summary") or "")[:200] if isinstance(recall, dict) else None,
+            "userContextItems": user_context,
             "writeGated": bool(snap.get("memoryWriteGated")),
             "pinnable": ["product", "branch", "warehouse"],
         }

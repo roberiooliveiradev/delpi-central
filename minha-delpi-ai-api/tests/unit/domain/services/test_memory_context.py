@@ -155,6 +155,43 @@ def test_m6_user_correction_stored():
     assert "Minha DELPI" in corrections[-1].get("content", "")
 
 
+def test_compare_previous_sets_ambiguity_when_two_products_in_history():
+    previous = [
+        {"role": "user", "content": "produto 10080001"},
+        {
+            "role": "assistant",
+            "content": "Produto 10080001",
+            "metadata": {
+                "contextSnapshot": {
+                    "lastEntities": {"productCode": "10080001"},
+                    "previousProductCodes": [],
+                }
+            },
+        },
+        {"role": "user", "content": "agora produto 10080002"},
+        {
+            "role": "assistant",
+            "content": "Estoque do produto",
+            "metadata": {
+                "contextSnapshot": {
+                    "lastEntities": {"productCode": "10080002"},
+                    "previousProductCodes": ["10080001"],
+                }
+            },
+        },
+    ]
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="compare com o anterior",
+        previous_messages=previous,
+    )
+
+    ambiguity = snapshot.get("memoryAmbiguity") or {}
+
+    assert ambiguity.get("reason") == "compare_previous"
+    assert "10080001" in (ambiguity.get("candidates") or [])
+    assert "10080002" in (ambiguity.get("candidates") or [])
+
+
 def test_m1_fornecedores_reference_hint():
     snapshot = ChatConversationMemoryService.build_pre_turn(
         message="e os fornecedores?",

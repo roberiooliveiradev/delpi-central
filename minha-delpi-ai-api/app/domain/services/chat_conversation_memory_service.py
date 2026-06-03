@@ -107,6 +107,22 @@ class ChatConversationMemoryService:
         )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
 
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_sql_query_refinement_service import (
+            ChatSqlQueryRefinementService,
+        )
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if (
+            ChatSqlSafetyService.looks_like_sql_payload(message)
+            or ChatSqlIntentService.is_sql_conversation_turn(message)
+            or ChatSqlQueryRefinementService.is_sql_follow_up(
+                message,
+                previous_messages=previous_messages,
+            )
+        ):
+            snapshot.pop("memoryAmbiguity", None)
+
         if not snapshot.get("memoryAmbiguity"):
             ambiguity = ChatReferenceResolutionService.detect_ambiguity(message, snapshot)
 
@@ -202,6 +218,12 @@ class ChatConversationMemoryService:
             snapshot,
             message=message,
         )
+        snapshot = ChatEntityTrackerService.apply_to_snapshot(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+            attachments=attachments,
+        )
         return snapshot
 
     @classmethod
@@ -217,6 +239,11 @@ class ChatConversationMemoryService:
             ChatEntityTrackerService.format_prompt_block(snapshot),
             ChatConversationStateService.format_prompt_block(snapshot),
         ]
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        blocks.insert(1, ChatUserContextItemService.format_prompt_block(snapshot))
         merged = "\n\n".join(block.strip() for block in blocks if block and block.strip())
 
         return merged or ""
@@ -247,6 +274,19 @@ class ChatConversationMemoryService:
         existing = {f"{chip.get('kind')}:{chip.get('value')}" for chip in chips}
 
         for chip in ux_chips:
+            key = f"{chip.get('kind')}:{chip.get('value')}"
+
+            if key not in existing:
+                chips.append(chip)
+                existing.add(key)
+
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        for chip in ChatUserContextItemService.chips_from_items(
+            snapshot.get("userContextItems")
+        ):
             key = f"{chip.get('kind')}:{chip.get('value')}"
 
             if key not in existing:

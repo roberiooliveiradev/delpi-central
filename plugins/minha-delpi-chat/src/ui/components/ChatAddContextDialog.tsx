@@ -1,84 +1,103 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { FileText, Upload } from "lucide-react";
 
-import type { ChatContextChip } from "./ChatContextBar";
 import { ModalPortal } from "./ModalPortal";
 import "./ChatAddContextDialog.css";
 
-export type ManualContextPinKind = "branch" | "warehouse" | "product";
-
-const PIN_KIND_OPTIONS: Array<{ id: ManualContextPinKind; label: string; placeholder: string }> = [
-  { id: "branch", label: "Filial", placeholder: "Ex.: 01 ou 02" },
-  { id: "warehouse", label: "Armazém", placeholder: "Ex.: 01 ou 99" },
-  { id: "product", label: "Produto", placeholder: "Ex.: 10080001" },
-];
+export type UserContextPayload = {
+  content: string;
+  filename?: string;
+};
 
 type ChatAddContextDialogProps = {
   open: boolean;
   onCancel: () => void;
-  onConfirm: (chip: ChatContextChip) => void;
+  onConfirm: (payload: UserContextPayload) => void;
 };
 
-export function buildManualContextChip(kind: ManualContextPinKind, rawValue: string): ChatContextChip | null {
-  const value = rawValue.trim();
+const MAX_CHARS = 12_000;
+const TEXT_EXTENSIONS = /\.(txt|md|csv|tsv|json)$/i;
 
-  if (!value) {
-    return null;
-  }
+async function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-  if (kind === "branch") {
-    return { kind: "branch", value: value.toUpperCase(), label: `Filial ${value.toUpperCase()}` };
-  }
-
-  if (kind === "warehouse") {
-    return {
-      kind: "warehouse",
-      value: value.toUpperCase(),
-      label: `Armazém ${value.toUpperCase()}`,
-    };
-  }
-
-  const productCode = value.replace(/\s+/g, "").toUpperCase();
-
-  if (!/^[A-Z0-9.-]{4,20}$/.test(productCode)) {
-    return null;
-  }
-
-  return { kind: "product", value: productCode, label: `Produto ${productCode}` };
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
+    reader.readAsText(file);
+  });
 }
 
 export function ChatAddContextDialog({ open, onCancel, onConfirm }: ChatAddContextDialogProps) {
   const formId = useId();
-  const [kind, setKind] = useState<ManualContextPinKind>("branch");
-  const [value, setValue] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [content, setContent] = useState("");
+  const [filename, setFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isReadingFile, setIsReadingFile] = useState(false);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setKind("branch");
-    setValue("");
+    setContent("");
+    setFilename(null);
     setError(null);
+    setIsReadingFile(false);
   }, [open]);
 
   if (!open) {
     return null;
   }
 
-  const selectedOption = PIN_KIND_OPTIONS.find((option) => option.id === kind) ?? PIN_KIND_OPTIONS[0];
+  async function ingestFiles(files: FileList | File[]) {
+    const list = Array.from(files);
+
+    if (!list.length) {
+      return;
+    }
+
+    const file = list[0];
+    setIsReadingFile(true);
+    setError(null);
+
+    try {
+      if (TEXT_EXTENSIONS.test(file.name)) {
+        const text = await readFileAsText(file);
+        setContent((current) => (current ? `${current}\n\n${text}` : text).slice(0, MAX_CHARS));
+        setFilename(file.name);
+      } else {
+        setContent((current) => {
+          const merged =
+            (current ? `${current}\n\n` : "") +
+            `Arquivo de contexto: ${file.name} (${file.type || "binário"})`;
+
+          return merged.slice(0, MAX_CHARS);
+        });
+        setFilename(file.name);
+      }
+    } catch {
+      setError("Não foi possível ler o arquivo selecionado.");
+    } finally {
+      setIsReadingFile(false);
+    }
+  }
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const chip = buildManualContextChip(kind, value);
+    const trimmed = content.trim();
 
-    if (!chip) {
-      setError("Informe um valor válido para o contexto.");
+    if (!trimmed && !filename) {
+      setError("Cole texto, uma tabela ou anexe um arquivo.");
       return;
     }
 
-    onConfirm(chip);
+    onConfirm({
+      content: trimmed,
+      filename: filename ?? undefined,
+    });
   }
 
   return (
@@ -100,39 +119,76 @@ export function ChatAddContextDialog({ open, onCancel, onConfirm }: ChatAddConte
         >
           <header className="mdc-chat-add-context__header">
             <h2 id={`${formId}-title`}>Adicionar ao contexto</h2>
-            <p>Fixe filial, armazém ou produto para as próximas perguntas desta conversa.</p>
+            <p>
+              Cole qualquer informação — texto, tabela, trecho de documento ou arquivo. O sistema
+              classifica e usa nas próximas respostas; você não precisa escolher o tipo.
+            </p>
           </header>
 
           <form id={formId} className="mdc-chat-add-context__form" onSubmit={handleSubmit}>
             <label className="mdc-chat-add-context__field">
-              <span>Tipo</span>
-              <select
-                value={kind}
-                onChange={(event) => {
-                  setKind(event.target.value as ManualContextPinKind);
-                  setError(null);
-                }}
-              >
-                {PIN_KIND_OPTIONS.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="mdc-chat-add-context__field">
-              <span>{selectedOption.label}</span>
-              <input
-                value={value}
-                placeholder={selectedOption.placeholder}
+              <span>Conteúdo</span>
+              <textarea
+                value={content}
+                rows={7}
+                maxLength={MAX_CHARS}
+                placeholder={
+                  "Ex.: produto 10080001, filial 01\n" +
+                  "Ou cole uma tabela, regras, e-mail, SQL, resumo de reunião…"
+                }
                 autoFocus
                 onChange={(event) => {
-                  setValue(event.target.value);
+                  setContent(event.target.value);
                   setError(null);
                 }}
               />
             </label>
+
+            {filename ? (
+              <p className="mdc-chat-add-context__file-hint">
+                <FileText size={14} aria-hidden /> {filename}
+              </p>
+            ) : null}
+
+            <div
+              className="mdc-chat-add-context__dropzone"
+              onDragOver={(event) => {
+                event.preventDefault();
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+
+                if (event.dataTransfer.files.length > 0) {
+                  void ingestFiles(event.dataTransfer.files);
+                }
+              }}
+            >
+              <Upload size={18} aria-hidden />
+              <p>Arraste um arquivo ou</p>
+              <button
+                type="button"
+                className="mdc-chat-add-context__link"
+                disabled={isReadingFile}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                selecione do computador
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                hidden
+                accept=".txt,.md,.csv,.tsv,.json,text/plain,text/markdown"
+                onChange={(event) => {
+                  const files = event.target.files;
+
+                  if (files && files.length > 0) {
+                    void ingestFiles(files);
+                  }
+
+                  event.target.value = "";
+                }}
+              />
+            </div>
 
             {error ? <p className="mdc-chat-add-context__error">{error}</p> : null}
 
@@ -140,7 +196,11 @@ export function ChatAddContextDialog({ open, onCancel, onConfirm }: ChatAddConte
               <button type="button" className="mdc-chat-add-context__secondary" onClick={onCancel}>
                 Cancelar
               </button>
-              <button type="submit" className="mdc-chat-add-context__primary">
+              <button
+                type="submit"
+                className="mdc-chat-add-context__primary"
+                disabled={isReadingFile}
+              >
                 Adicionar
               </button>
             </footer>

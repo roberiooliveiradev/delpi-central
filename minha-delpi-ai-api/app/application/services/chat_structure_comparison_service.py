@@ -11,6 +11,9 @@ from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentS
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_reference_resolution_service import (
+    ChatReferenceResolutionService,
+)
 from app.domain.services.chat_product_structure_presentation_service import (
     ChatProductStructurePresentationService,
     ProductStructureModel,
@@ -59,6 +62,9 @@ class ChatStructureComparisonService:
         if not ChatAnalysisIntentService.is_comparison_or_insight_request(message):
             return None
 
+        if cls._is_conversational_previous_compare(message):
+            return None
+
         snapshots, snapshot_order = cls.collect_structure_snapshots(
             previous_messages or [],
             current_tool_calls=current_tool_calls,
@@ -98,6 +104,17 @@ class ChatStructureComparisonService:
             return cls._render_profile_comparison(selected[0], selected[1])
 
         return cls._render_comparison(selected)
+
+    @classmethod
+    def _is_conversational_previous_compare(cls, message: str) -> bool:
+        normalized = (message or "").strip()
+
+        if not ChatReferenceResolutionService._COMPARE_PREVIOUS_RE.search(normalized):
+            return False
+
+        explicit_codes = ChatAnalysisIntentService.extract_all_product_codes(normalized)
+
+        return len(explicit_codes) < 2
 
     @classmethod
     def _insufficient_data_answer(cls, codes: list[str], *, found: int) -> str:

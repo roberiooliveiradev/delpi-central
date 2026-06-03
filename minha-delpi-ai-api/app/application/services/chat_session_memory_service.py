@@ -6,6 +6,7 @@ import re
 from uuid import UUID
 
 from app.domain.ports.chat_session_memory_repository_port import ChatSessionMemoryRepositoryPort
+from app.domain.services.chat_user_context_item_service import ChatUserContextItemService
 
 
 class ChatSessionMemoryService:
@@ -143,7 +144,10 @@ class ChatSessionMemoryService:
 
         result["lastEntities"] = entities
         result["behaviorInstructions"] = behavior
-        return result
+        return ChatUserContextItemService.merge_items_into_snapshot(
+            result,
+            overlay.get("userContextItems"),
+        )
 
     def compact_for_admin_debug(self, snapshot: dict | None) -> dict:
         base = snapshot or {}

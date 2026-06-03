@@ -47,7 +47,8 @@ Histórico + mensagem
 | `ChatMemoryUxService` | `memoryUx` no metadata, chips UX, resposta «o que está usando» (Fase 8) |
 | `ChatSessionMemoryAdminMetricsService` | Agregado admin `sessionMemoryAdminMetrics` (Fase 9) |
 | `ChatMemoryContextLossAlertService` | `memoryContextAlerts` por turno (Fase 9) |
-| `ChatManualContextPinService` | Pins manuais produto/filial/armazém |
+| `ChatManualContextPinService` | Pins manuais produto/filial/armazém (legado) |
+| `ChatUserContextItemService` | Contexto livre (texto/tabela/arquivo) com classificação automática |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |

@@ -6,7 +6,7 @@
 }
 
 .mdc-chat-add-context {
-  width: min(100%, 24rem);
+  width: min(100%, 32rem);
   display: grid;
   gap: 0.85rem;
   padding: 1rem 1.1rem;
@@ -45,20 +45,57 @@
   color: var(--mdc-text-muted);
 }
 
-.mdc-chat-add-context__field input,
-.mdc-chat-add-context__field select {
+.mdc-chat-add-context__field textarea {
+  resize: vertical;
+  min-height: 8rem;
   border: 1px solid var(--mdc-card-border);
   border-radius: 0.65rem;
   padding: 0.55rem 0.7rem;
   background: color-mix(in srgb, var(--mdc-card-bg) 92%, transparent);
   color: var(--mdc-text);
   font-size: 0.92rem;
+  font-family: inherit;
+  line-height: 1.45;
 }
 
-.mdc-chat-add-context__field input:focus,
-.mdc-chat-add-context__field select:focus {
+.mdc-chat-add-context__field textarea:focus {
   outline: 2px solid color-mix(in srgb, var(--mdc-primary) 45%, transparent);
   outline-offset: 1px;
+}
+
+.mdc-chat-add-context__dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: 0.75rem;
+  color: var(--mdc-text-muted);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.mdc-chat-add-context__dropzone p {
+  margin: 0;
+}
+
+.mdc-chat-add-context__link {
+  border: none;
+  background: none;
+  color: var(--mdc-primary);
+  font-size: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.mdc-chat-add-context__file-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-chat-add-context__error {

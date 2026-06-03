@@ -2554,6 +2554,78 @@ def add_session_memory_pin(session_id: str):
     return jsonify(result), 200
 
 
+@chat_bp.post("/sessions/<session_id>/memory/context-items")
+@require_permission(CHAT_ASK_PERMISSION)
+def add_session_memory_context_item(session_id: str):
+    from uuid import UUID
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict):
+        return bad_request("Request body must be a JSON object")
+
+    content = payload.get("content")
+    filename = payload.get("filename")
+
+    if content is None and not filename:
+        return bad_request("content or filename is required")
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.add_context_item(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+            content=str(content or ""),
+            filename=str(filename).strip() if filename else None,
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@chat_bp.delete("/sessions/<session_id>/memory/context-items/<item_id>")
+@require_permission(CHAT_ASK_PERMISSION)
+def remove_session_memory_context_item(session_id: str, item_id: str):
+    from uuid import UUID
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.remove_context_item(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+            item_id=str(item_id),
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @chat_bp.delete("/sessions/<session_id>/memory/pins/<kind>")
 @require_permission(CHAT_ASK_PERMISSION)
 def remove_session_memory_pin(session_id: str, kind: str):
