@@ -20,6 +20,7 @@ _PASSWORD = os.environ.get("SMOKE_PASSWORD", "1234").strip()
 _CHAT_PREFIX = os.environ.get("SMOKE_CHAT_PREFIX", "/apps/minha-delpi-ai/api/chat").strip()
 _TIMEOUT = int(os.environ.get("SMOKE_TIMEOUT", "240"))
 _MODE = os.environ.get("SMOKE_SQL_MODE", "both").strip().lower()
+_ONLY = [item.strip() for item in os.environ.get("SMOKE_ONLY", "").split(",") if item.strip()]
 
 # (id, message, checks)
 _CHECKS: list[tuple[str, str, dict]] = [
@@ -357,7 +358,11 @@ def _run_suite(
     sid = session["id"]
     print(f"Sessão: {sid}")
 
-    for case_id, message, checks in _CHECKS:
+    checks_list = _CHECKS
+    if _ONLY:
+        checks_list = [item for item in _CHECKS if item[0] in _ONLY]
+
+    for case_id, message, checks in checks_list:
         prefix = f"{mode}:{case_id}"
 
         try:
@@ -388,6 +393,9 @@ def _run_suite(
         except Exception as exc:
             failed += 1
             print(f"FAIL [{prefix}] exceção: {exc}", file=sys.stderr)
+
+    if _ONLY and "incremental" not in _ONLY:
+        return passed, failed
 
     print(f"\n--- Incremental ({label}, mesma sessão {sid[:8]}…) ---")
 

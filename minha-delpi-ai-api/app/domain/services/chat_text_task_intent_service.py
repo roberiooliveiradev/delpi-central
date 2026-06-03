@@ -263,11 +263,11 @@ class ChatTextTaskIntentService:
             ):
                 return False
 
-        if cls._is_linguistic_only_turn(normalized, category):
-            return True
-
         if ChatSqlIntentService.is_sql_conversation_turn(message):
             return False
+
+        if cls._is_linguistic_only_turn(normalized, category):
+            return True
 
         if cls.is_mixed_text_and_operational(message):
             return False

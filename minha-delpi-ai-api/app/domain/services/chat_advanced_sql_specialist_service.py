@@ -501,7 +501,14 @@ class ChatAdvancedSqlSpecialistService:
 
         mode = cls.classify_mode(message)
 
-        return mode in {"create", "review", "explain", "optimize", "incremental_edit"}
+        return mode in {
+            "create",
+            "review",
+            "explain",
+            "optimize",
+            "incremental_edit",
+            "schema_explore",
+        }
 
     @classmethod
     def annotate_schema_prefetch_tool_metadata(
@@ -539,7 +546,11 @@ class ChatAdvancedSqlSpecialistService:
             item = dict(tool_call)
             metadata = dict(item.get("metadata") or {})
 
-            if metadata.get("sqlSchemaPrefetch") or metadata.get("suppressClientPresentation"):
+            if (
+                metadata.get("sqlSchemaPrefetch")
+                or metadata.get("suppressClientPresentation")
+                or cls.is_schema_prefetch_path(str(metadata.get("path") or ""))
+            ):
                 for key in (
                     "presentation",
                     "tablePresentation",

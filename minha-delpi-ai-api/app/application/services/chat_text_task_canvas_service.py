@@ -23,6 +23,11 @@ from app.domain.services.chat_text_task_service import ChatTextTaskService
 class ChatTextTaskCanvasService:
     @classmethod
     def should_update_canvas(cls, message: str | None) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
         if ChatTextCorrectionIntentService.is_canvas_text_correction(message):
             return True
 
