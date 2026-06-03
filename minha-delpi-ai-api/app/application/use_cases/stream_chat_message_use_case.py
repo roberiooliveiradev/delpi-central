@@ -302,7 +302,7 @@ class StreamChatMessageUseCase:
                     state="active",
                     message=ContentService.stream().get(
                         "statusPreparingContext",
-                        "Carregando agente, histórico e anexos...",
+                        "Preparando tudo para te responder...",
                     ),
                     entry_id="prepare-session-context",
                 )
@@ -362,10 +362,11 @@ class StreamChatMessageUseCase:
                 ChatStreamActivityService.entry(
                     verb="Pronto",
                     target="contexto da sessão",
+                    # mensagem amigável; detalhe técnico fica no painel expandido
                     phase="prepare",
                     state="done",
                     level="success",
-                    message="Contexto da sessão carregado.",
+                    message="Tudo pronto. Já começo a responder...",
                     entry_id="prepare-session-context",
                 )
             )
@@ -1699,6 +1700,7 @@ class StreamChatMessageUseCase:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="passos adicionais (agentic)",
+                    message="Verificando se preciso de mais alguma informação...",
                     detail="Verificando se ainda faltam ferramentas para responder.",
                 )
             )

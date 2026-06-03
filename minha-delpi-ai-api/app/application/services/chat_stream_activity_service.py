@@ -290,6 +290,7 @@ class ChatStreamActivityService:
                 target=f"{total} passo(s) na API DELPI",
                 verb="Planejando",
                 state="active",
+                message="Organizando as consultas necessárias...",
                 detail="Sequência de consultas definida para esta pergunta.",
             )
         )
@@ -353,15 +354,17 @@ class ChatStreamActivityService:
     ) -> dict[str, Any]:
         label = path or action_id or f"consulta {index}"
 
+        progress = f" ({index}/{total})" if total > 1 else ""
+
         return cls.entry(
             verb="Consultando",
             target=label,
             phase="tools",
             state="active",
-            detail=reason,
+            detail=reason or f"Consultando {label}",
             path=path,
             action_id=action_id,
-            message=f"Consultando {label} ({index}/{total})",
+            message=f"Buscando as informações que você pediu...{progress}",
         )
 
     @classmethod
@@ -394,11 +397,11 @@ class ChatStreamActivityService:
                 phase="tools",
                 level="error",
                 state="failed",
-                detail=detail,
+                detail=detail or f"{label}: falha na consulta",
                 path=resolved_path or None,
                 action_id=resolved_action or None,
                 status_code=code,
-                message=f"{label}: falha na consulta",
+                message="Não consegui concluir essa consulta.",
             )
 
         presenter = ExternalActionResultPresenter()
@@ -418,7 +421,7 @@ class ChatStreamActivityService:
                 path=resolved_path or None,
                 action_id=resolved_action or None,
                 status_code=int(metadata.get("statusCode") or 200),
-                message=f"{label}: sem registros",
+                message="A consulta não trouxe registros.",
             )
 
         return cls.entry(
@@ -430,7 +433,7 @@ class ChatStreamActivityService:
             path=resolved_path or None,
             action_id=resolved_action or None,
             status_code=int(metadata.get("statusCode") or 200),
-            message=f"{label}: OK",
+            message="Dados recebidos. Organizando a resposta...",
         )
 
     @classmethod

@@ -143,6 +143,7 @@ class ChatExternalActionOrchestrationService:
                         total=1,
                         target="estruturas para comparação",
                         verb="Planejando",
+                        message="Reunindo as informações para comparar...",
                         detail="Buscando fichas/estruturas dos produtos citados.",
                     )
                 )

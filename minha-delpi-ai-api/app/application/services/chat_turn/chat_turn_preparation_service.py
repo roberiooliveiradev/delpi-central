@@ -151,7 +151,7 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="pergunta e histórico",
-                    message="Pensando sobre a pergunta e o histórico...",
+                    message="Entendendo o seu pedido...",
                     entry_id="think-question-history",
                     state="active",
                 )
@@ -199,6 +199,7 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="comparação ou insights",
+                        message="Analisando os dados para comparar...",
                         detail="Modo análise: síntese com base em consultas e histórico.",
                     )
                 )
@@ -206,6 +207,7 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="resposta operacional direta",
+                        message="Buscando a resposta mais direta...",
                         detail="Fast path operacional sem RAG completo.",
                     )
                 )
@@ -213,6 +215,7 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="intenção e rota OpenAPI",
+                        message="Vendo a melhor forma de te ajudar...",
                         detail="Identificando se a pergunta exige dados DELPI ou conhecimento documental.",
                         entry_id="think-openapi-route",
                         state="active",
@@ -238,7 +241,7 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="histórico da conversa",
-                        message="Resumindo histórico longo, se necessário...",
+                        message="Revendo o que já conversamos...",
                         entry_id="think-history-summary",
                         state="active",
                     )
@@ -254,7 +257,7 @@ class ChatTurnPreparationService:
                 on_stream_activity(
                     ChatStreamActivityService.think(
                         target="histórico da conversa",
-                        message="Histórico pronto para o turno.",
+                        message="Tudo certo com o nosso histórico.",
                         entry_id="think-history-summary",
                         state="done",
                         level="success",
@@ -269,6 +272,7 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="intenção e rota OpenAPI",
+                    message="Já sei como te ajudar.",
                     detail="Rota operacional e modo de resposta definidos.",
                     entry_id="think-openapi-route",
                     state="done",
@@ -284,7 +288,7 @@ class ChatTurnPreparationService:
             on_stream_activity(
                 ChatStreamActivityService.think(
                     target="pergunta e histórico",
-                    message="Contexto da pergunta analisado.",
+                    message="Entendi o que você precisa.",
                     entry_id="think-question-history",
                     state="done",
                     level="success",
@@ -1008,7 +1012,8 @@ class ChatTurnPreparationService:
                     target="base de conhecimento",
                     phase="rag",
                     state="active",
-                    message="Consultando base de conhecimento autorizada...",
+                    message="Procurando nas informações de apoio...",
+                    detail="Consultando a base de conhecimento autorizada.",
                     entry_id="rag-search",
                 )
             )
@@ -1095,7 +1100,8 @@ class ChatTurnPreparationService:
                         target="base de conhecimento",
                         phase="rag",
                         state="done",
-                        message="Base de conhecimento não necessária neste turno.",
+                        message="Não precisei de documentos extras desta vez.",
+                        detail="Base de conhecimento não necessária neste turno.",
                         entry_id="rag-search",
                     )
                 )
@@ -1108,9 +1114,10 @@ class ChatTurnPreparationService:
                         level="success",
                         state="done",
                         message=(
-                            f"Base de conhecimento: {len(sources)} trecho(s) "
-                            "relevante(s) encontrado(s)."
+                            f"Encontrei {len(sources)} trecho(s) útil(eis) "
+                            "para te responder."
                         ),
+                        detail=f"Base de conhecimento: {len(sources)} trecho(s) relevante(s).",
                         entry_id="rag-search",
                     )
                 )
@@ -1122,7 +1129,8 @@ class ChatTurnPreparationService:
                         phase="rag",
                         level="success",
                         state="done",
-                        message=(
+                        message="Encontrei material de apoio relevante.",
+                        detail=(
                             "Base de conhecimento: contexto aplicado "
                             f"({rag_context_chars} caracteres)."
                         ),
@@ -1137,7 +1145,8 @@ class ChatTurnPreparationService:
                         phase="rag",
                         level="warning",
                         state="done",
-                        message=(
+                        message="Vou responder com o que já sei sobre isso.",
+                        detail=(
                             "Base de conhecimento consultada; "
                             "nenhum trecho adicional aplicável."
                         ),

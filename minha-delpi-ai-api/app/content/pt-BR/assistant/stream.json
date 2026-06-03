@@ -8,7 +8,7 @@
   "statusAssemblingDirectAnswer": "Montando resposta a partir dos dados consultados...",
   "statusFinalizing": "Finalizando e salvando no histórico...",
   "statusWebSearch": "Pesquisando na internet...",
-  "statusPreparingContext": "Carregando agente, histórico e anexos...",
+  "statusPreparingContext": "Preparando tudo para te responder...",
   "statusUnderstandingQuestion": "Entendendo seu pedido...",
   "statusCheckingPermissions": "Conferindo permissões...",
   "statusBuildingTable": "Organizando em tabela...",

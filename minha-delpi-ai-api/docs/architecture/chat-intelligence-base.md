@@ -235,6 +235,8 @@ Playbook de inteligência (seções 16, 30, 31). Complementa a base de memória/
 
 **Starters do chat comum (§25)** — `assistant/onboarding.json` (`starterCards`) abre amplo: capacidades, corrigir texto, escrever e-mail, consultar dados, analisar documento, pesquisar na web (não começa com «Ver estoque»). Os `profilePresets` por perfil (engenharia, compras, comercial, diretoria, administrativo) e os icebreakers de agente seguem operacionais.
 
+**Streaming humanizado (§24)** — as etapas continuam visíveis (o usuário precisa saber que o chat está trabalhando e que a resposta está evoluindo), mas o **headline** (`message`) de cada activity é redigido de forma natural e tranquilizadora — sem jargão («rota OpenAPI», «API DELPI», «RAG», «fast path», caminhos crus). O conteúdo técnico fica no campo `detail` (painel expandido / admin). Exemplos: «Entendendo o seu pedido...», «Vendo a melhor forma de te ajudar...», «Buscando as informações que você pediu...», «Procurando nas informações de apoio...». Pontos de edição: `ChatStreamActivityService` (plan/tools/rag/finish), `ChatTurnPreparationService` (think/rag), `StreamChatMessageUseCase` (prepare/agentic) e `assistant/stream.json`.
+
 **Feedback (§31)** — novos motivos em `personality_playbook.json`: `simple_question_missed`, `unnecessary_tool`, `too_slow`, `technical_diagnostic_shown`, `unclear_not_admitted` e correção de `chip_irrelevant` (referenciado em `feedbackPrimaryReasonIds`, antes ausente do array). Regenerar MFE: `python scripts/generate_chat_feedback_reasons_ts.py --write`.
 
 Testes: `test_chat_user_preference_manager_service.py`, `test_chat_feedback_efficiency_metrics.py`, `test_chat_feedback_content_service.py`.
