@@ -1,26 +1,15 @@
 .mdc-expand-modal__backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: transparent;
   animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
 }
 
+/* Superfície e elevação vêm de .mdc-chat-overlay-panel (mesma do menu de
+   conversas e demais modais). Aqui só layout/dimensão do painel expandido. */
 .mdc-expand-modal {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 1100px;
-  max-height: 90vh;
+  width: min(1100px, 100%);
+  max-height: min(90vh, 100%);
   overflow: hidden;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-md);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-shadow-lg);
   animation: mdc-motion-fade-scale-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
 }
 
