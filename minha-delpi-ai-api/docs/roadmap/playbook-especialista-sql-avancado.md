@@ -1,6 +1,6 @@
 # Playbook — Especialista SQL Avançado do Minha DELPI Chat IA
 
-> **Status de implementação:** Fases 1–7 na camada **chat base** (inteligência). Execução/schema via API ficam no **agente** (actions).
+> **Status de implementação:** Fases 1–7 na camada **chat base** (inteligência), incluindo mapeamento semântico (§15), resolução de relações (§16), regressão SQL1–SQL20 e métricas no feedback. Execução/schema via API ficam no **agente** (actions).
 
 Projeto: Minha DELPI Chat IA
 Escopo: tornar o **chat comum** um especialista SQL de alto nível (elaborar, revisar, explicar, otimizar); o **agente** herda a skill e **executa** via actions (`POST /data/sql`, `/system/tables/*`).

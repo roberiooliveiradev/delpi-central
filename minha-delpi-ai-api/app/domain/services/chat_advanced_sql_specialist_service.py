@@ -305,6 +305,7 @@ class ChatAdvancedSqlSpecialistService:
         schema_discovery = ChatSqlSchemaDiscoveryService.build_schema_snapshot(
             message=message,
             tool_calls=tool_calls,
+            current_sql=sql_text,
         )
         review = (
             ChatSqlReviewService.review(str(sql_text), dialect=str(dialect["dialect"]))
@@ -503,6 +504,23 @@ class ChatAdvancedSqlSpecialistService:
 
         if schema_discovery.get("domainHint"):
             lines.append(f"Domínio semântico detectado: {schema_discovery.get('domainHint')}")
+
+        from app.domain.services.chat_sql_semantic_schema_mapper_service import (
+            ChatSqlSemanticSchemaMapperService,
+        )
+        from app.domain.services.chat_sql_relationship_resolver_service import (
+            ChatSqlRelationshipResolverService,
+        )
+
+        for hint in ChatSqlSemanticSchemaMapperService.format_hints(
+            schema_discovery.get("semanticMapping")
+        ):
+            lines.append(f"Mapeamento: {hint}")
+
+        for hint in ChatSqlRelationshipResolverService.format_hints(
+            schema_discovery.get("relationships")
+        ):
+            lines.append(hint)
 
         if hints:
             lines.append(f"Dicas de planejamento: {', '.join(str(item) for item in hints)}")

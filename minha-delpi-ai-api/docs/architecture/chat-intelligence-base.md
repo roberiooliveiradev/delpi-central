@@ -88,6 +88,9 @@ Mensagem do usuário
 | `ChatSqlQueryRefinementService` | Follow-up multi-turn: add/remove colunas, filtro de filial e exibir SQL anterior |
 | `ChatSqlAuthoringGuidanceService` | Authoring SQL interativo; prefetch `/system/tables/*` **somente com agente/actions**; chips de follow-up |
 | `ChatAdvancedSqlSpecialistService` | Copiloto SQL avançado: modos, dialeto, workspace, supplement; prefetch gated por `actionsEnabled` |
+| `ChatSqlSchemaDiscoveryService` | Tabelas/colunas candidatas, metadados de `/system/tables/*`, snapshot unificado |
+| `ChatSqlSemanticSchemaMapperService` | Termos de negócio → padrões de coluna/tabela (Playbook §15) |
+| `ChatSqlRelationshipResolverService` | FK declarada, inferência Protheus, risco de duplicidade em joins (§16–18) |
 | `ChatSqlDialectResolverService` | Dialeto SQL (default `CHAT_DEFAULT_SQL_DIALECT`, detecção na mensagem) |
 | `ChatSqlPerformanceAdvisorService` | Alertas de performance (SELECT *, DISTINCT, paginação, funções em WHERE) |
 | `ChatSqlReviewService` | Checklist de revisão para SQL colada |
@@ -97,7 +100,7 @@ Mensagem do usuário
 | `ChatSqlOptimizationAdvisorService` | Índices, EXPLAIN (quando aplicável) e refatoração (Playbook §35–38) |
 | `ChatSqlQueryPatternAdvisorService` | Padrões CTE/window/comparação de períodos (Playbook §25–31) |
 | `ChatAdvancedSqlMetricsService` | Métricas `sqlAdvancedMetrics` + `GET /admin/metrics/sql-advanced/summary` |
-| `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação) |
+| `ChatFeedbackContextService` | Snapshot técnico no feedback (intent, tool, RAG/web/memória, apresentação, `sqlMode`/`sqlDialect`) |
 | `ChatResponseMetadataService` | `responseMetadata` por resposta + espelho em `adminDebug.responseQuality` |
 | `ChatFeedbackAdminMetricsService` | Agregação admin (`GET /admin/metrics/feedback/summary`), alertas e audit `chat.feedback.submitted` |
 | `ChatQualityUnifiedMetricsService` | Visão unificada adoção/eficiência/segurança (`GET /admin/metrics/quality/unified`) |

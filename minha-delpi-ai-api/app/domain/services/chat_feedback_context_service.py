@@ -62,6 +62,12 @@ class ChatFeedbackContextService:
                         shown_labels.append(label)
 
         error_value = error_handling.get("error") or error_handling.get("code")
+        sql_advanced = metadata.get("sqlAdvanced") if isinstance(metadata.get("sqlAdvanced"), dict) else {}
+        sql_metrics = (
+            metadata.get("sqlAdvancedMetrics")
+            if isinstance(metadata.get("sqlAdvancedMetrics"), dict)
+            else {}
+        )
 
         return {
             "sessionId": session_id,
@@ -79,6 +85,13 @@ class ChatFeedbackContextService:
             "durationMs": duration_ms or cls._duration_ms(admin_debug, metadata),
             "error": str(error_value).strip() if error_value else None,
             "suggestionsShown": shown_labels[:12],
+            "sqlMode": sql_metrics.get("mode") or sql_advanced.get("mode"),
+            "sqlDialect": sql_metrics.get("dialect")
+            or (sql_advanced.get("dialect") or {}).get("dialect")
+            if isinstance(sql_advanced.get("dialect"), dict)
+            else None,
+            "sqlBlocked": sql_metrics.get("blocked") if "blocked" in sql_metrics else sql_advanced.get("blocked"),
+            "sqlEmptyResult": sql_metrics.get("emptyResult"),
         }
 
     @classmethod

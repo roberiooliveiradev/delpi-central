@@ -65,3 +65,5 @@ def test_build_schema_snapshot_includes_candidates_and_metadata():
     assert snapshot["tableCandidates"] == ["SB1"]
     assert "cliente" in snapshot["domainHint"].lower()
     assert snapshot["metadata"]["tables"]["SB1"]["columns"]
+    assert snapshot["semanticMapping"]["hasMatches"]
+    assert "relationships" in snapshot

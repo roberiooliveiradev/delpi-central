@@ -139,12 +139,32 @@ class ChatSqlSchemaDiscoveryService:
         *,
         message: str | None = None,
         tool_calls: list | None = None,
+        current_sql: str | None = None,
     ) -> dict[str, Any]:
+        from app.domain.services.chat_sql_semantic_schema_mapper_service import (
+            ChatSqlSemanticSchemaMapperService,
+        )
+        from app.domain.services.chat_sql_relationship_resolver_service import (
+            ChatSqlRelationshipResolverService,
+        )
+
+        table_candidates = cls.extract_table_candidates(message)
+        metadata = cls.collect_schema_metadata(tool_calls)
+        semantic_mapping = ChatSqlSemanticSchemaMapperService.map_message(message)
+        relationships = ChatSqlRelationshipResolverService.resolve(
+            message=message,
+            table_candidates=table_candidates,
+            schema_metadata=metadata,
+            current_sql=current_sql,
+        )
+
         return {
-            "tableCandidates": cls.extract_table_candidates(message),
+            "tableCandidates": table_candidates,
             "columnCandidates": cls.extract_column_candidates(message),
             "domainHint": cls.extract_domain_hint(message),
-            "metadata": cls.collect_schema_metadata(tool_calls),
+            "metadata": metadata,
+            "semanticMapping": semantic_mapping,
+            "relationships": relationships,
         }
 
     @classmethod
