@@ -1,5 +1,9 @@
 # shared/delpi_auth/middleware/fastapi_auth.py
+import asyncio
+import hashlib
 import logging
+import os
+import time
 from types import SimpleNamespace
 
 import httpx
@@ -19,7 +23,13 @@ from ..service_token import request_has_valid_internal_service_token
 
 logger = logging.getLogger(__name__)
 
-CORE_API_URL = "http://core-api:8000"
+CORE_API_URL = os.getenv("DELPI_AUTH_CORE_API_URL") or os.getenv("CORE_API_URL") or "http://core-api:8000"
+RBAC_TIMEOUT_SECONDS = float(os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS", "2.5"))
+RBAC_CACHE_TTL_SECONDS = int(os.getenv("DELPI_AUTH_RBAC_CACHE_TTL_SECONDS", "60"))
+RBAC_STALE_TTL_SECONDS = int(os.getenv("DELPI_AUTH_RBAC_STALE_TTL_SECONDS", "900"))
+
+_RBAC_CACHE: dict[str, tuple[float, float, dict]] = {}
+_RBAC_LOCKS: dict[str, asyncio.Lock] = {}
 
 PUBLIC_SUFFIXES = (
     "/docs",
@@ -56,17 +66,83 @@ def is_public_path(path: str) -> bool:
     )
 
 
+def _cache_key(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _rbac_from_claims(claims: dict, token: str, *, rbac_unavailable: bool = False) -> dict:
+    email = claims.get("email")
+    name = claims.get("name") or email or "Usuário"
+    roles = claims.get("roles") or claims.get("realm_access", {}).get("roles", []) or []
+    groups = claims.get("groups") or []
+
+    return {
+        "id": claims.get("sub"),
+        "email": email,
+        "name": name,
+        "roles": roles,
+        "groups": groups,
+        "permissions": [],
+        "is_superadmin": False,
+        "rbac_unavailable": rbac_unavailable,
+        "access_token": token,
+    }
+
+
 async def load_user_rbac(token: str):
-    async with httpx.AsyncClient(timeout=5) as client:
-        resp = await client.get(
-            f"{CORE_API_URL}/me",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    key = _cache_key(token)
+    now = time.monotonic()
 
-    if resp.status_code != 200:
-        raise Exception("RBAC lookup failed")
+    cached = _RBAC_CACHE.get(key)
+    if cached:
+        expires_at, _stale_until, data = cached
+        if now <= expires_at:
+            return data
 
-    return resp.json()
+    lock = _RBAC_LOCKS.setdefault(key, asyncio.Lock())
+    async with lock:
+        now = time.monotonic()
+        cached = _RBAC_CACHE.get(key)
+        if cached:
+            expires_at, _stale_until, data = cached
+            if now <= expires_at:
+                return data
+
+        try:
+            timeout = httpx.Timeout(RBAC_TIMEOUT_SECONDS, connect=RBAC_TIMEOUT_SECONDS)
+            async with httpx.AsyncClient(timeout=timeout) as client:
+                resp = await client.get(
+                    f"{CORE_API_URL}/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                )
+
+            if resp.status_code != 200:
+                raise RuntimeError(f"RBAC lookup failed with status {resp.status_code}")
+
+            data = resp.json()
+            _RBAC_CACHE[key] = (
+                now + RBAC_CACHE_TTL_SECONDS,
+                now + RBAC_STALE_TTL_SECONDS,
+                data,
+            )
+            return data
+
+        except (httpx.TimeoutException, httpx.RequestError, RuntimeError):
+            cached = _RBAC_CACHE.get(key)
+            if cached:
+                _expires_at, stale_until, data = cached
+                if now <= stale_until:
+                    logger.warning(
+                        "rbac_lookup_failed_using_stale_cache core_api_url=%s",
+                        CORE_API_URL,
+                        exc_info=True,
+                    )
+                    return data
+            raise
+        finally:
+            # Evita crescimento indefinido da tabela de locks em processos longos.
+            if key in _RBAC_LOCKS and not _RBAC_LOCKS[key].locked():
+                _RBAC_LOCKS.pop(key, None)
 
 
 async def jwt_middleware(request: Request, call_next):
@@ -120,7 +196,16 @@ async def jwt_middleware(request: Request, call_next):
             reset_request_authorization(auth_context_token)
             return JSONResponse(status_code=401, content={"detail": "Invalid token claims"})
 
-        rbac = await load_user_rbac(token)
+        try:
+            rbac = await load_user_rbac(token)
+        except Exception:
+            logger.warning(
+                "rbac_lookup_unavailable_using_token_claims path=%s core_api_url=%s",
+                path,
+                CORE_API_URL,
+                exc_info=True,
+            )
+            rbac = _rbac_from_claims(claims, token, rbac_unavailable=True)
 
         user = SimpleNamespace(
             id=rbac.get("id") or sub,
