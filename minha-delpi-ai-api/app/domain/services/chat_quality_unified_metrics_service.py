@@ -48,6 +48,8 @@ class ChatQualityUnifiedMetricsService:
                 "tokensUsed": advanced.get("tokensUsed"),
                 "estimatedCost": advanced.get("estimatedCost"),
                 "latencyAvgMs": advanced.get("latencyAvgMs"),
+                "simpleTurnLatencyAvgMs": advanced.get("simpleTurnLatencyAvgMs"),
+                "simpleTurnCount": advanced.get("simpleTurnCount"),
                 "messagesPerSession": cls._messages_per_session(adoption),
             },
             "security": {

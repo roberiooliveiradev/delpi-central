@@ -1,50 +1,44 @@
 {
   "welcome": {
-    "title": "Olá! Posso ajudar com consultas operacionais, textos, documentos.",
+    "title": "Olá! Posso ajudar com textos, e-mails, consultas, documentos e pesquisa.",
     "subtitle": "Escolha uma opção para começar ou escreva do seu jeito."
   },
   "starterCards": [
-    {
-      "id": "product",
-      "label": "Consultar produto",
-      "description": "Visão 360°, estoque e estrutura",
-      "query": "me fale do produto {{productCode}}"
-    },
-    {
-      "id": "stock",
-      "label": "Ver estoque",
-      "description": "Saldo por produto e filial",
-      "query": "qual o estoque do produto {{productCode}}?"
-    },
-    {
-      "id": "text",
-      "label": "Escrever ou corrigir texto",
-      "description": "E-mails, atas e revisão",
-      "query": "corrija o texto abaixo:\n\n{{textContent}}"
-    },
-    {
-      "id": "attachment",
-      "label": "Analisar arquivo",
-      "description": "PDF, planilha ou imagem",
-      "query": "o que você pode fazer com um arquivo anexado?"
-    },
-    {
-      "id": "sales",
-      "label": "Ver vendas",
-      "description": "Histórico e períodos",
-      "query": "mostre vendas do produto {{productCode}}"
-    },
-    {
-      "id": "minutes",
-      "label": "Criar ata ou comunicado",
-      "description": "Textos administrativos",
-      "query": "escreva um comunicado interno sobre {{announcementTopic}}"
-    },
     {
       "id": "capabilities",
       "label": "O que posso fazer?",
       "description": "Recursos e limites do chat",
       "query": "o que você pode fazer?"
+    },
+    {
+      "id": "text",
+      "label": "Corrigir texto",
+      "description": "Revisão e reescrita",
+      "query": "corrija o texto abaixo:\n\n{{textContent}}"
+    },
+    {
+      "id": "email",
+      "label": "Escrever e-mail",
+      "description": "E-mails, atas e comunicados",
+      "query": "escreva um e-mail formal para {{emailRecipient}} sobre {{emailSubject}}"
+    },
+    {
+      "id": "data",
+      "label": "Consultar dados",
+      "description": "Produto, estoque e vendas",
+      "query": "me fale do produto {{productCode}}"
+    },
+    {
+      "id": "attachment",
+      "label": "Analisar documento",
+      "description": "PDF, planilha ou imagem",
+      "query": "o que você pode fazer com um arquivo anexado?"
+    },
+    {
+      "id": "web",
+      "label": "Pesquisar na web",
+      "description": "Fontes externas e recentes",
+      "query": "pesquise na web sobre {{searchQuery}}"
     }
   ],
   "profilePresets": [
@@ -204,7 +198,7 @@
     {
       "id": "starters",
       "title": "Escolha um atalho",
-      "body": "Toque em um card — produto, estoque, textos ou análise de arquivo.",
+      "body": "Toque em um card — corrigir texto, e-mail, consultar dados, analisar documento ou pesquisar na web.",
       "target": "starter-cards"
     },
     {

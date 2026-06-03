@@ -92,6 +92,8 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             "errorDistribution24h": error_distribution,
             "advanced": {
                 "latencyAvgMs": message_metrics["latencyAvgMs"],
+                "simpleTurnLatencyAvgMs": message_metrics["simpleTurnLatencyAvgMs"],
+                "simpleTurnCount": message_metrics["simpleTurnCount"],
                 "tokensUsed": message_metrics["tokensUsed"],
                 "estimatedCost": message_metrics["estimatedCost"],
                 "instrumentedMessages": message_metrics["instrumentedMessages"],
@@ -337,9 +339,15 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
         rows = self._apply_created_at_filters(query, since=since, until=until).all()
 
         latencies = []
+        simple_turn_latencies: list[float] = []
+        simple_turn_count = 0
         total_tokens = 0
         estimated_cost = 0.0
         cost_breakdown: dict[str, dict] = {}
+
+        from app.domain.services.chat_intent_router_metrics_service import (
+            ChatIntentRouterMetricsService,
+        )
 
         for row in rows:
             metadata = row.audit_metadata or {}
@@ -347,6 +355,15 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
 
             if latency > 0:
                 latencies.append(latency)
+
+            # Playbook §30 — tempo médio de perguntas simples
+            if ChatIntentRouterMetricsService.is_simple_turn_snapshot(
+                metadata.get("intentRouting")
+            ):
+                simple_turn_count += 1
+
+                if latency > 0:
+                    simple_turn_latencies.append(latency)
 
             total_tokens += int(
                 self._metric_number_from_metadata(metadata, "total_tokens_estimated")
@@ -383,6 +400,11 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
             )
 
         latency_avg = round(sum(latencies) / len(latencies), 2) if latencies else None
+        simple_turn_latency_avg = (
+            round(sum(simple_turn_latencies) / len(simple_turn_latencies), 2)
+            if simple_turn_latencies
+            else None
+        )
 
         breakdown_items = [
             {
@@ -403,6 +425,8 @@ class PostgresAdminMetricsRepository(AdminMetricsRepositoryPort):
 
         return {
             "latencyAvgMs": latency_avg,
+            "simpleTurnLatencyAvgMs": simple_turn_latency_avg,
+            "simpleTurnCount": simple_turn_count,
             "tokensUsed": total_tokens,
             "estimatedCost": round(estimated_cost, 6) if estimated_cost else None,
             "instrumentedMessages": len(rows),

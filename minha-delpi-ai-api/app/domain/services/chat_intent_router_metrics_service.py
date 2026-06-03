@@ -7,6 +7,21 @@ from typing import Any
 
 
 class ChatIntentRouterMetricsService:
+    _SIMPLE_INTENTS = frozenset({"small_talk", "utility", "identity", "self_help"})
+
+    @classmethod
+    def is_simple_turn_snapshot(cls, snapshot: dict[str, Any] | None) -> bool:
+        """Define turno simples a partir do snapshot/intentRouting (fonte única, §30)."""
+        if not isinstance(snapshot, dict):
+            return False
+
+        intent = str(snapshot.get("intent") or "")
+        sub_intent = str(snapshot.get("subIntent") or "")
+
+        return intent in cls._SIMPLE_INTENTS or (
+            intent == "clarification" and sub_intent == "unclear"
+        )
+
     @classmethod
     def snapshot_from_route(cls, route: dict[str, Any] | None) -> dict[str, Any]:
         route = route if isinstance(route, dict) else {}
@@ -105,8 +120,6 @@ class ChatIntentRouterMetricsService:
         direct_answers = 0
         recent: list[dict[str, Any]] = []
 
-        simple_intents = {"small_talk", "utility", "identity", "self_help"}
-
         for entry in entries:
             snapshot = entry.get("snapshot") if isinstance(entry.get("snapshot"), dict) else entry
 
@@ -134,7 +147,7 @@ class ChatIntentRouterMetricsService:
                 text_skipped_tools += 1
 
             # Playbook §30 — eficiência de turnos simples
-            if intent in simple_intents or (intent == "clarification" and sub_intent == "unclear"):
+            if cls.is_simple_turn_snapshot(snapshot):
                 simple_turns += 1
 
             if decision == "llm_fallback" or (intent == "clarification" and sub_intent == "unclear"):

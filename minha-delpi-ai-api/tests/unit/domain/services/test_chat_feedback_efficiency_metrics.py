@@ -81,6 +81,44 @@ def test_response_quality_mirror_includes_efficiency():
     assert quality["toolSkipped"] is True
 
 
+def test_is_simple_turn_snapshot_helper():
+    assert ChatIntentRouterMetricsService.is_simple_turn_snapshot({"intent": "identity"})
+    assert ChatIntentRouterMetricsService.is_simple_turn_snapshot(
+        {"intent": "clarification", "subIntent": "unclear"}
+    )
+    assert not ChatIntentRouterMetricsService.is_simple_turn_snapshot(
+        {"intent": "operational_query"}
+    )
+    assert not ChatIntentRouterMetricsService.is_simple_turn_snapshot(
+        {"intent": "clarification", "subIntent": "missing_params"}
+    )
+    assert not ChatIntentRouterMetricsService.is_simple_turn_snapshot(None)
+
+
+def test_unified_quality_surfaces_simple_turn_latency():
+    from app.domain.services.chat_quality_unified_metrics_service import (
+        ChatQualityUnifiedMetricsService,
+    )
+
+    view = ChatQualityUnifiedMetricsService.build(
+        feedback={},
+        metrics={
+            "advanced": {
+                "latencyAvgMs": 1200,
+                "simpleTurnLatencyAvgMs": 180,
+                "simpleTurnCount": 7,
+            }
+        },
+        security={},
+        adoption={},
+        hours=24,
+        since_iso="2026-06-03T00:00:00Z",
+    )
+
+    assert view["efficiency"]["simpleTurnLatencyAvgMs"] == 180
+    assert view["efficiency"]["simpleTurnCount"] == 7
+
+
 def test_router_aggregation_counts_simple_and_fallback():
     entries = [
         {"snapshot": {"intent": "identity", "requiresLlm": False, "decision": "direct_answer"}},
