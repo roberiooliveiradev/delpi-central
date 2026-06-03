@@ -51,7 +51,10 @@ import {
   type DashboardProcessoItem,
   type DashboardResumo,
 } from "../../data/api/transformometroApi";
+import type { ChartGranularity } from "../../types/chart";
 import { formatCurrency, formatDecimal, formatPercent } from "../../utils/format";
+import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
+import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 
@@ -77,14 +80,6 @@ type Filters = {
   dataFinal: string;
   filialId: string;
   setorId: string;
-};
-
-type ChartGranularity = "day" | "month" | "year";
-
-type ChartPoint = {
-  name: string;
-  bruta: number;
-  investimento: number;
 };
 
 type TopDailyPoint = {
@@ -118,27 +113,24 @@ function formatPeriod(filters: Filters) {
     .join("/")}`;
 }
 
-function monthName(competencia: string) {
-  const [year, month] = competencia.split("-");
-  const date = new Date(Number(year), Number(month) - 1, 1);
-  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
-}
-
-function aggregateChart(items: DashboardEvolucaoItem[], granularity: ChartGranularity): ChartPoint[] {
-  const grouped = new Map<string, ChartPoint>();
-  items.forEach((item) => {
-    const key =
-      granularity === "year"
-        ? item.competencia.slice(0, 4)
-        : granularity === "month"
-          ? monthName(item.competencia)
-          : item.competencia;
-    const current = grouped.get(key) ?? { name: key, bruta: 0, investimento: 0 };
-    current.bruta += item.economia_bruta ?? 0;
-    current.investimento += item.investimento_total_mes ?? item.custo_recorrente_mes ?? 0;
-    grouped.set(key, current);
-  });
-  return Array.from(grouped.values());
+function chartHint(
+  periodLabel: string,
+  granularity: ChartGranularity,
+  dayProrated: boolean,
+  truncated: boolean
+): string {
+  const parts = [periodLabel];
+  if (granularity === "day" && dayProrated) {
+    parts.push("visão diária: totais mensais repartidos nos dias do filtro");
+  } else if (granularity === "month") {
+    parts.push("competências mensais incluídas no recorte");
+  } else {
+    parts.push("soma anual das competências no recorte");
+  }
+  if (truncated) {
+    parts.push("exibindo primeiros 60 períodos");
+  }
+  return parts.join(" · ");
 }
 
 function ChartGranularityToggle({
@@ -208,7 +200,9 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState<"csv" | "excel" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>("month");
+  const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
+    suggestGranularity(defaultFilters.dataInicial, defaultFilters.dataFinal)
+  );
 
   const params = useMemo(() => buildParams(filters), [filters]);
   const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
@@ -241,6 +235,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    setSavingsGranularity(suggestGranularity(filters.dataInicial, filters.dataFinal));
+  }, [filters.dataInicial, filters.dataFinal]);
 
   async function handleRecalculate() {
     setRefreshing(true);
@@ -279,15 +277,24 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     }
   }
 
-  const savingsChartData = useMemo(
-    () => aggregateChart(evolucao, savingsGranularity),
-    [evolucao, savingsGranularity]
+  const savingsChartSeries = useMemo(
+    () =>
+      buildEvolucaoSavingsSeries(
+        evolucao,
+        filters.dataInicial,
+        filters.dataFinal,
+        savingsGranularity
+      ),
+    [evolucao, filters.dataInicial, filters.dataFinal, savingsGranularity]
   );
+
+  const savingsChartData = savingsChartSeries.points;
 
   const topDailyChart = useMemo<TopDailyPoint[]>(
     () =>
-      processos
+      [...processos]
         .filter((item) => (item.economia_diaria ?? 0) > 0)
+        .sort((a, b) => (b.economia_diaria ?? 0) - (a.economia_diaria ?? 0))
         .slice(0, 10)
         .map((item) => ({
           name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
@@ -431,7 +438,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     );
   }
 
-  const savingsChartHint = `${periodLabel} · economia diária proporcional ao total mensal`;
+  const savingsChartHint = chartHint(
+    periodLabel,
+    savingsGranularity,
+    savingsChartSeries.dayProrated,
+    savingsChartSeries.truncated
+  );
 
   return (
     <TransformometroShell>
@@ -501,12 +513,13 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       </section>
 
       <section className="ds-info-banner">
-        <Database size={18} />
+        <Database size={18} aria-hidden />
         <div>
           <strong>PostgreSQL — Transformômetro</strong>
           <p>
-            KPIs e gráficos são calculados em tempo real a partir do cadastro (revisões,
-            medições, investimentos e recursos), respeitando vigências e competências de cada mês.
+            KPIs e gráficos em tempo real a partir do cadastro (revisões, medições, investimentos
+            e recursos), no recorte das datas dos filtros. Competências mensais cheias entram nos
+            totais; a visão <em>Dia</em> reparte o mês nos dias do período filtrado.
           </p>
         </div>
       </section>
@@ -519,19 +532,36 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       {alertas.length > 0 ? (
-        <section className="ds-card ds-alert-card">
-          <AlertTriangle size={18} />
-          <div>
-            <h2 className="ds-section-title">Alertas — economia líquida negativa (&ge;3 meses)</h2>
-            <ul>
-              {alertas.slice(0, 12).map((alerta) => (
-                <li key={alerta.processo_id}>
-                  <strong>{alerta.codigo_processo}</strong> — {alerta.nome_processo}: {alerta.months} meses (
-                  {alerta.competencia_inicio} → {alerta.competencia_fim}), acumulado {formatCurrency(alerta.economia_liquida_acumulada)}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <section className="ds-card ds-alert-panel">
+          <header className="ds-alert-panel__header">
+            <AlertTriangle size={20} aria-hidden />
+            <div>
+              <h2 className="ds-section-title">Alertas — economia líquida negativa</h2>
+              <p className="ds-hint">
+                Processos com pelo menos 3 meses consecutivos de líquida negativa no recorte filtrado
+              </p>
+            </div>
+            <span className="ds-alert-panel__count">{alertas.length}</span>
+          </header>
+          <ul className="ds-alert-list">
+            {alertas.slice(0, 12).map((alerta) => (
+              <li key={alerta.processo_id} className="ds-alert-item">
+                <div className="ds-alert-item__main">
+                  <span className="ds-alert-item__code">{alerta.codigo_processo}</span>
+                  <span className="ds-alert-item__name">{alerta.nome_processo}</span>
+                </div>
+                <div className="ds-alert-item__meta">
+                  <span className="ds-alert-item__badge">{alerta.months} meses</span>
+                  <span className="ds-alert-item__period">
+                    {alerta.competencia_inicio} → {alerta.competencia_fim}
+                  </span>
+                  <span className="ds-alert-item__value">
+                    {formatCurrency(alerta.economia_liquida_acumulada)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 
@@ -546,7 +576,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <KpiCard
           title="Economia bruta"
           value={formatCurrency(resumo?.economia_bruta_total)}
-          subtitle="No recorte de competências"
+          subtitle={`Recorte · ${periodLabel}`}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
