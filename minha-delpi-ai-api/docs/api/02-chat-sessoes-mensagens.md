@@ -152,6 +152,77 @@ Desativa memória persistida da sessão (produto/filial em foco, preferências d
 
 ---
 
+## GET `/chat/sessions/{sessionId}/memory/context`
+
+Retorna chips de contexto persistido, resumo da barra e visão para o modal «Memória usada».
+
+### Permissão
+
+`minha-delpi.chat.ask`
+
+### Resposta `200`
+
+```json
+{
+  "chips": [{ "label": "Produto 10080001", "kind": "product", "value": "10080001" }],
+  "summary": "Produto 10080001 · Pergunta: Compare…",
+  "usage": { "topic": "estoque", "userContextItems": ["Pergunta: Compare…"] }
+}
+```
+
+---
+
+## POST `/chat/sessions/{sessionId}/memory/context-items`
+
+Adiciona item de contexto manual (classificação automática).
+
+### Body (exemplos)
+
+Texto livre:
+
+```json
+{ "content": "Filial 01, priorizar tabela" }
+```
+
+Pergunta da conversa:
+
+```json
+{
+  "content": "Qual o estoque do 10080001?",
+  "role": "user",
+  "messageId": "uuid-da-mensagem"
+}
+```
+
+Par pergunta + resposta:
+
+```json
+{
+  "question": "Compare com o anterior",
+  "answer": "A diferença é o prazo de entrega.",
+  "questionMessageId": "uuid-user",
+  "answerMessageId": "uuid-assistant"
+}
+```
+
+Re-adicionar a mesma mensagem substitui o item anterior (dedup por `messageId`).
+
+### Resposta `200`
+
+Mesmo formato de `GET .../memory/context`.
+
+---
+
+## DELETE `/chat/sessions/{sessionId}/memory/context-items/{itemId}`
+
+Remove um item (`itemId` = campo `value` do chip, uuid do item).
+
+### Resposta `200`
+
+Mesmo formato de `GET .../memory/context`.
+
+---
+
 ## GET `/chat/sessions/{sessionId}/messages`
 
 Lista mensagens de uma sessão.

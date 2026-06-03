@@ -68,7 +68,8 @@ O Minha DELPI Chat é um microfrontend oficial da plataforma com backend dedicad
 
 - Serviço: `postgres-plugins` (`pgvector/pgvector:pg15`)
 - Porta host dev: `5433`
-- Migrations: automáticas no boot do container (`docker-entrypoint.sh` → `flask db upgrade`); manual só fora do Docker ou com `SKIP_DB_MIGRATIONS=true`
+- Migrations: automáticas no boot (`docker-entrypoint.sh` → `flask db upgrade`)
+- Contexto manual: `POST/DELETE .../memory/context-items` — texto, arquivo, **pergunta/resposta** (ações nas mensagens + diálogo «+»)
 
 Tabelas principais (não exaustivo):
 
