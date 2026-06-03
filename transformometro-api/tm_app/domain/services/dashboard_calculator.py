@@ -314,6 +314,7 @@ class DashboardCalculatorService:
             custo_recorrente_mes = 0.0
             custo_recursos_compartilhados_mes = 0.0
             economia_liquida_mes = 0.0
+            horas_economizadas_mes = 0.0
 
             for process_id, process_row in context.processos_by_id.items():
                 revisoes = context.revisoes_by_processo.get(process_id, [])
@@ -352,6 +353,7 @@ class DashboardCalculatorService:
                     custo_recorrente_mes += row["custo_recorrente_mes"]
                     custo_recursos_compartilhados_mes += row["custo_recursos_compartilhados_mes"]
                     economia_liquida_mes += row["economia_liquida_mes"]
+                    horas_economizadas_mes += float(row.get("horas_economizadas_mes") or 0)
                     calculation_rows.append(row)
 
             monthly_items.append(
@@ -365,6 +367,7 @@ class DashboardCalculatorService:
                     ),
                     "custo_recursos_compartilhados_mes": self._round_final(custo_recursos_compartilhados_mes),
                     "economia_liquida_mes": self._round_final(economia_liquida_mes),
+                    "horas_economizadas_mes": self._round_final(horas_economizadas_mes),
                 }
             )
             cursor = self._next_month(cursor)
@@ -1223,6 +1226,9 @@ class DashboardCalculatorService:
                 item["custo_recursos_compartilhados_mes"] * factor
             ),
             "economia_liquida_mes": self._round_final(item["economia_liquida_mes"] * factor),
+            "horas_economizadas_mes": self._round_final(
+                float(item.get("horas_economizadas_mes") or 0) * factor
+            ),
         }
 
     def _apply_day_range_to_monthly_breakdown(

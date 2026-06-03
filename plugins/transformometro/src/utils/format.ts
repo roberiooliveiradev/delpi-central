@@ -36,3 +36,11 @@ export function formatCurrency(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return currencyFormatter.format(value);
 }
+
+export function formatHours(value: number | null | undefined, fractionDigits = 1): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })} h`;
+}

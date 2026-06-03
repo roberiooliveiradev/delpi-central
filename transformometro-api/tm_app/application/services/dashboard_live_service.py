@@ -208,6 +208,7 @@ class DashboardLiveService:
                 "custo_recorrente_mes": 0.0,
                 "custo_recursos_compartilhados_mes": 0.0,
                 "investimento_total_mes": 0.0,
+                "horas_economizadas_mes": 0.0,
                 "competencias": set(),
             }
         )
@@ -233,6 +234,7 @@ class DashboardLiveService:
                 row.get("custo_recursos_compartilhados_mes") or 0
             ) * factor
             bucket["investimento_total_mes"] += float(row.get("investimento_total_mes") or 0) * factor
+            bucket["horas_economizadas_mes"] += float(row.get("horas_economizadas_mes") or 0) * factor
             bucket["competencias"].add(str(row.get("competencia") or ""))
 
         ranking: list[dict[str, Any]] = []
@@ -264,6 +266,7 @@ class DashboardLiveService:
                     "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
                     "investimento_total_mes": round(investimento_total, 2),
                     "economia_diaria": round(bruta / days_denominator, 2),
+                    "horas_economizadas_mes": round(totals["horas_economizadas_mes"], 2),
                     "competencia": (
                         max(totals["competencias"])
                         if totals["competencias"]

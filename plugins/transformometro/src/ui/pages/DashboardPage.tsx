@@ -32,8 +32,10 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { PageHeader } from "../../components/PageHeader";
+import { SegmentToggle } from "../../components/SegmentToggle";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import {
@@ -52,7 +54,8 @@ import {
   type DashboardResumo,
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
-import { formatCurrency, formatDecimal, formatPercent } from "../../utils/format";
+import { CHART_MEASURE_OPTIONS, type ChartMeasure } from "../../types/chartMeasure";
+import { formatCurrency, formatDecimal, formatHours, formatPercent } from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -68,6 +71,7 @@ const CHART_COLORS = [
 ];
 const ECONOMIA_COLOR = "#4fc3f7";
 const INVESTIMENTO_COLOR = "#ff6b6b";
+const HORAS_COLOR = "#8a18ff";
 const CHART_HEIGHT = 300;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -115,12 +119,15 @@ function formatPeriod(filters: Filters) {
 
 function chartHint(
   periodLabel: string,
+  measure: ChartMeasure,
   granularity: ChartGranularity,
   dayProrated: boolean,
   truncated: boolean
 ): string {
   const parts = [periodLabel];
-  if (granularity === "day" && dayProrated) {
+  if (measure === "hours") {
+    parts.push("horas economizadas no recorte");
+  } else if (granularity === "day" && dayProrated) {
     parts.push("visão diária proporcional aos dias selecionados no filtro");
   } else if (granularity === "month") {
     parts.push("competências mensais incluídas no recorte");
@@ -131,37 +138,6 @@ function chartHint(
     parts.push("exibindo primeiros 60 períodos");
   }
   return parts.join(" · ");
-}
-
-function ChartGranularityToggle({
-  idPrefix,
-  value,
-  onChange,
-}: {
-  idPrefix: string;
-  value: ChartGranularity;
-  onChange: (value: ChartGranularity) => void;
-}) {
-  const options: { value: ChartGranularity; label: string }[] = [
-    { value: "day", label: "Dia" },
-    { value: "month", label: "Mês" },
-    { value: "year", label: "Ano" },
-  ];
-  return (
-    <div className="tm-chart-toggle" role="group" aria-label="Granularidade do gráfico">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          id={`${idPrefix}-${option.value}`}
-          type="button"
-          className={option.value === value ? "is-active" : undefined}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 function ChartCard({
@@ -203,6 +179,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [savingsGranularity, setSavingsGranularity] = useState<ChartGranularity>(() =>
     suggestGranularity(defaultFilters.dataInicial, defaultFilters.dataFinal)
   );
+  const [savingsMeasure, setSavingsMeasure] = useState<ChartMeasure>("currency");
 
   const params = useMemo(() => buildParams(filters), [filters]);
   const periodLabel = useMemo(() => formatPeriod(filters), [filters]);
@@ -299,6 +276,19 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         .map((item) => ({
           name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
           value: item.economia_diaria ?? 0,
+        })),
+    [processos]
+  );
+
+  const topHoursChart = useMemo<TopDailyPoint[]>(
+    () =>
+      [...processos]
+        .filter((item) => (item.horas_economizadas_mes ?? 0) > 0)
+        .sort((a, b) => (b.horas_economizadas_mes ?? 0) - (a.horas_economizadas_mes ?? 0))
+        .slice(0, 10)
+        .map((item) => ({
+          name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
+          value: item.horas_economizadas_mes ?? 0,
         })),
     [processos]
   );
@@ -440,10 +430,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const savingsChartHint = chartHint(
     periodLabel,
+    savingsMeasure,
     savingsGranularity,
     savingsChartSeries.dayProrated,
     savingsChartSeries.truncated
   );
+
+  const savingsChartTitle =
+    savingsMeasure === "hours" ? "Horas economizadas" : "Economia bruta vs Investimento";
 
   return (
     <TransformometroShell>
@@ -603,76 +597,136 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
       </section>
 
-      <section className="ds-charts-grid">
-        <ChartCard
-          title="Economia bruta vs Investimento"
-          hint={savingsChartHint}
-          toolbar={
-            <div className="ds-no-print">
-              <ChartGranularityToggle
-                idPrefix="tm-dashboard-savings"
-                value={savingsGranularity}
-                onChange={setSavingsGranularity}
-              />
-            </div>
-          }
-        >
-          {savingsChartData.length === 0 && !isBusy ? (
-            <p className="ds-state-box">
-              Sem dados no período. Cadastre processos, revisões e medições e ajuste os
-              filtros de data.
-            </p>
-          ) : (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <AreaChart data={savingsChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(v) => formatCurrency(Number(v))} width={72} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Area
-                  type="monotone"
-                  dataKey="bruta"
-                  name="Economia bruta"
-                  stroke={ECONOMIA_COLOR}
-                  fill={ECONOMIA_COLOR}
-                  fillOpacity={0.5}
+      <div className="ds-charts-layout">
+        <section className="ds-charts-grid ds-charts-grid--hero">
+          <ChartCard
+            title={savingsChartTitle}
+            hint={savingsChartHint}
+            toolbar={
+              <div className="ds-chart-card__toolbar-stack ds-no-print">
+                <ChartGranularityToggle
+                  idPrefix="tm-dashboard-savings"
+                  value={savingsGranularity}
+                  onChange={setSavingsGranularity}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="investimento"
-                  name="Investimento"
-                  stroke={INVESTIMENTO_COLOR}
-                  fill={INVESTIMENTO_COLOR}
-                  fillOpacity={0.45}
+                <SegmentToggle
+                  idPrefix="tm-dashboard-measure"
+                  ariaLabel="Unidade do gráfico principal"
+                  options={CHART_MEASURE_OPTIONS}
+                  value={savingsMeasure}
+                  onChange={setSavingsMeasure}
                 />
-              </AreaChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
+              </div>
+            }
+          >
+            {savingsChartData.length === 0 && !isBusy ? (
+              <p className="ds-state-box">
+                Sem dados no período. Cadastre processos, revisões e medições e ajuste os
+                filtros de data.
+              </p>
+            ) : (
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <AreaChart data={savingsChartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis
+                    tickFormatter={(v) =>
+                      savingsMeasure === "hours"
+                        ? formatHours(Number(v))
+                        : formatCurrency(Number(v))
+                    }
+                    width={72}
+                  />
+                  <Tooltip
+                    formatter={(v) =>
+                      savingsMeasure === "hours"
+                        ? formatHours(Number(v))
+                        : formatCurrency(Number(v))
+                    }
+                  />
+                  {savingsMeasure === "hours" ? (
+                    <Area
+                      type="monotone"
+                      dataKey="horas"
+                      name="Horas economizadas"
+                      stroke={HORAS_COLOR}
+                      fill={HORAS_COLOR}
+                      fillOpacity={0.5}
+                    />
+                  ) : (
+                    <>
+                      <Area
+                        type="monotone"
+                        dataKey="bruta"
+                        name="Economia bruta"
+                        stroke={ECONOMIA_COLOR}
+                        fill={ECONOMIA_COLOR}
+                        fillOpacity={0.5}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="investimento"
+                        name="Investimento"
+                        stroke={INVESTIMENTO_COLOR}
+                        fill={INVESTIMENTO_COLOR}
+                        fillOpacity={0.45}
+                      />
+                    </>
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </section>
 
-        <ChartCard
-          title="Top economia diária"
-          hint={topDailyChart.length > 0 ? "10 maiores no recorte" : "Sem ranking no período"}
-        >
-          {topDailyChart.length === 0 && !isBusy ? (
-            <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-              <BarChart data={topDailyChart} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
-                <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
-                  {topDailyChart.map((_, index) => (
-                    <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </ChartCard>
-      </section>
+        <section className="ds-charts-grid ds-charts-grid--rankings">
+          <ChartCard
+            title="Top economia diária"
+            hint={topDailyChart.length > 0 ? "10 maiores no recorte · R$" : "Sem ranking no período"}
+          >
+            {topDailyChart.length === 0 && !isBusy ? (
+              <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={topDailyChart} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                  <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
+                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
+                    {topDailyChart.map((_, index) => (
+                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+
+          <ChartCard
+            title="Top economia de horas"
+            hint={topHoursChart.length > 0 ? "10 maiores no recorte · Horas" : "Sem ranking no período"}
+          >
+            {topHoursChart.length === 0 && !isBusy ? (
+              <p className="ds-state-box">Nenhum processo com horas economizadas no recorte.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                <BarChart data={topHoursChart} layout="vertical" margin={{ left: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                  <XAxis type="number" tickFormatter={(v) => formatHours(Number(v))} />
+                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v) => formatHours(Number(v))} />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
+                    {topHoursChart.map((_, index) => (
+                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+        </section>
+      </div>
 
       {porFamilia.length > 0 ? (
         <DataTableSection

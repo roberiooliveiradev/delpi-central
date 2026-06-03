@@ -856,11 +856,32 @@
   margin-bottom: var(--ds-section-gap);
 }
 
+.dashboard-transformometro .ds-charts-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-grid-gap);
+  margin-bottom: var(--ds-section-gap);
+}
+
 .dashboard-transformometro .ds-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ds-grid-gap);
-  margin-bottom: var(--ds-section-gap);
+}
+
+.dashboard-transformometro .ds-charts-grid--hero {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dashboard-transformometro .ds-charts-grid--rankings {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-transformometro .ds-chart-card__toolbar-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .dashboard-transformometro .ds-chart-card__header {
@@ -1277,7 +1298,8 @@
 
   .dashboard-transformometro .ds-kpi-grid,
   .dashboard-transformometro .ds-summary-grid,
-  .dashboard-transformometro .ds-charts-grid {
+  .dashboard-transformometro .ds-charts-grid,
+  .dashboard-transformometro .ds-charts-grid--rankings {
     grid-template-columns: 1fr;
   }
 

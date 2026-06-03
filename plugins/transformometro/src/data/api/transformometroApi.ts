@@ -561,6 +561,7 @@ export type DashboardEvolucaoItem = {
   investimento_total_mes?: number;
   custo_recursos_compartilhados_mes?: number;
   economia_liquida_mes: number;
+  horas_economizadas_mes?: number;
 };
 
 export type DashboardProcessoItem = {
@@ -568,6 +569,7 @@ export type DashboardProcessoItem = {
   codigo_processo: string;
   nome_processo: string;
   economia_diaria: number | null;
+  horas_economizadas_mes?: number;
   economia_liquida_mes?: number;
   economia_bruta?: number;
   investimento_unico_mes?: number;
