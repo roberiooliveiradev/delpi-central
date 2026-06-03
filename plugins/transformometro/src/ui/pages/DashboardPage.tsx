@@ -470,8 +470,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         }
       />
 
-      <section className="ds-card ds-filters-panel ds-no-print">
-        <div className="ds-filters-row">
+      <section className="ds-filters-row ds-no-print">
           <DateField
             label="Data inicial"
             value={filters.dataInicial}
@@ -509,7 +508,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
               <option value="almoxarifado">Almoxarifado</option>
             </select>
           </label>
-        </div>
       </section>
 
       <StatusAlerts
