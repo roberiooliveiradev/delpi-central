@@ -32,6 +32,7 @@ Documentação do contrato: [../05-plugin-system/manifesto-plugin.md](../05-plug
 - `./scripts/homologacao/check-eficiencia-fabril.sh` — smoke HTTP (`remoteEntry.js` + API `/dashboard`; defina `TOKEN` para validar JWT).
 - `./scripts/homologacao/check-auditoria-5s.sh` — smoke HTTP (`remoteEntry.js` + API critérios 5S).
 - `./scripts/homologacao/check-central-agendamento.sh` — smoke HTTP (`remoteEntry.js` + API recursos ES).
+- `./scripts/homologacao/check-scheduling-api.sh` — homologação **Fase 2** (curl: recurso → reserva → conflito 409 → cancelar; requer `TOKEN` com permissão manage).
 - `./scripts/homologacao/check-audit-5s-api.sh` — homologação **Fase 2** (curl: área → auditoria → 48 notas → concluir avaliação; requer `TOKEN`).
 - `./scripts/homologacao/check-eficiencia-fabril-fase0.sh` — validação da view TOTVS (container `delpi-api-delpi`).
 

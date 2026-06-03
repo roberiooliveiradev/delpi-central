@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 from typing import Any
 
+from psycopg.errors import ExclusionViolation
+
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -270,42 +272,52 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         if self.has_booking_conflict(resource_id, start_at, end_at):
             raise BookingConflictError("Recurso já reservado neste horário.")
 
-        row = self.execute_returning_one(
-            """
-            INSERT INTO scheduling.bookings (
-                resource_id,
-                branch_code,
-                title,
-                notes,
-                start_at,
-                end_at,
-                booked_by_user_id,
-                booked_by_name
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            RETURNING id,
-                      resource_id,
-                      branch_code,
-                      title,
-                      notes,
-                      start_at,
-                      end_at,
-                      booked_by_user_id,
-                      booked_by_name,
-                      status,
-                      created_at,
-                      updated_at
-            """,
-            (
-                resource_id,
-                branch_code,
-                title.strip(),
-                notes,
-                start_at,
-                end_at,
-                booked_by_user_id,
-                booked_by_name,
-            ),
-        )
+        try:
+            row = self.execute_returning_one(
+                """
+                INSERT INTO scheduling.bookings (
+                    resource_id,
+                    branch_code,
+                    title,
+                    notes,
+                    start_at,
+                    end_at,
+                    booked_by_user_id,
+                    booked_by_name
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id,
+                          resource_id,
+                          branch_code,
+                          title,
+                          notes,
+                          start_at,
+                          end_at,
+                          booked_by_user_id,
+                          booked_by_name,
+                          status,
+                          created_at,
+                          updated_at
+                """,
+                (
+                    resource_id,
+                    branch_code,
+                    title.strip(),
+                    notes,
+                    start_at,
+                    end_at,
+                    booked_by_user_id,
+                    booked_by_name,
+                ),
+                auto_commit=False,
+            )
+            self.commit()
+        except ExclusionViolation as exc:
+            self.rollback()
+            raise BookingConflictError("Recurso já reservado neste horário.") from exc
+        except Exception:
+            self.rollback()
+            raise
+
         if not row:
             raise PluginsRepositoryError("Falha ao criar reserva.")
         resource = self.get_resource(resource_id)

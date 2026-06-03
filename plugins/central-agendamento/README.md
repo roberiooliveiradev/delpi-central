@@ -22,8 +22,10 @@ Base: `/apps/api-delpi/scheduling`
 
 ```bash
 docker compose -f infra/docker-compose.dev.yml exec api-delpi \
-  python scripts/run_plugins_migrations.py --plugin scheduling
+  python scripts/run_plugins_migrations.py up --plugin scheduling
 ```
+
+Inclui constraint `V002` que impede reservas confirmadas sobrepostas no mesmo recurso.
 
 ## Registro
 
@@ -34,14 +36,35 @@ export TOKEN="<jwt>"
 
 ## Dev local
 
+Stack mínima (da **raiz** do repositório):
+
+```bash
+docker compose -f infra/docker-compose.dev.yml up --build -d api-delpi central-agendamento
+```
+
+Build isolado do plugin:
+
 ```bash
 cd plugins/central-agendamento && npm run dev
 ```
 
-Build produção / Docker:
+## Produção
+
+O serviço `central-agendamento` está em `infra/docker-compose.yml` (`delpi-central-agendamento`, `target: production`) e listado no `depends_on` do gateway.
+
+Deploy:
+
+1. Subir/rebuild o container `central-agendamento`
+2. Rodar migrations `--plugin scheduling`
+3. Registrar manifesto na Core API (se ainda não registrado)
+4. Atribuir permissões RBAC por filial
+
+## Homologação
 
 ```bash
-docker compose -f infra/docker-compose.dev.yml up --build -d central-agendamento
+bash ./scripts/homologacao/check-central-agendamento.sh          # Fase 1 — smoke
+export TOKEN="<jwt>"
+bash ./scripts/homologacao/check-scheduling-api.sh               # Fase 2 — API E2E
 ```
 
 ## Permissões
@@ -56,3 +79,7 @@ docker compose -f infra/docker-compose.dev.yml up --build -d central-agendamento
 ## UI
 
 Calendário com `react-big-calendar` (semana/dia/mês), sidebar de filtros por tipo/recurso, modais de reserva e painel administrativo para gestores.
+
+## Roadmap
+
+Ver [docs/12-roadmap-e-evolucao/central-agendamento/ROADMAP.md](../../docs/12-roadmap-e-evolucao/central-agendamento/ROADMAP.md).

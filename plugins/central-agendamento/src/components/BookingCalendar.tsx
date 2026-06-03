@@ -11,6 +11,7 @@ import { ptBR } from "date-fns/locale";
 
 import type { SchedulingBooking, SchedulingResource } from "../api/schedulingApi";
 import { RESOURCE_TYPE_COLORS, resourceTypeLabel } from "../constants/scheduling";
+import { CalendarDayHeader, CalendarMonthDateHeader } from "./CalendarHeaders";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const locales = { "pt-BR": ptBR };
@@ -125,6 +126,7 @@ export function BookingCalendar({
         timeslots={2}
         min={new Date(1970, 0, 1, 7, 0, 0)}
         max={new Date(1970, 0, 1, 20, 0, 0)}
+        allDayMaxRows={0}
         messages={{
           today: "Hoje",
           previous: "Anterior",
@@ -136,6 +138,10 @@ export function BookingCalendar({
           noEventsInRange: "Nenhuma reserva neste período.",
         }}
         components={{
+          header: CalendarDayHeader,
+          month: {
+            dateHeader: CalendarMonthDateHeader,
+          },
           event: CalendarEventBlock,
         }}
         eventPropGetter={eventStyleGetter}

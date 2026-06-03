@@ -413,6 +413,105 @@
   border-color: var(--ca-border);
 }
 
+.ca-calendar-wrap .rbc-time-view .rbc-allday-cell {
+  display: none;
+}
+
+.ca-calendar-wrap .rbc-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  padding: 10px 6px;
+  font-size: inherit;
+  font-weight: inherit;
+  white-space: normal;
+  overflow: visible;
+}
+
+.ca-calendar-wrap .rbc-header > span,
+.ca-calendar-wrap .rbc-header > .rbc-button-link {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.ca-calendar-wrap .rbc-header .rbc-button-link {
+  width: 100%;
+}
+
+.ca-calendar-wrap .rbc-header.rbc-today {
+  background: transparent;
+}
+
+.ca-day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ca-day-header__weekday {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ca-muted);
+}
+
+.ca-day-header__number {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ca-title);
+  border-radius: 50%;
+}
+
+.ca-day-header--today .ca-day-header__number {
+  background: var(--ca-accent);
+  color: #fff;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ca-accent) 38%, transparent);
+}
+
+.ca-calendar-wrap .rbc-month-view .rbc-header {
+  min-height: 44px;
+  padding: 10px 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ca-muted);
+  text-transform: uppercase;
+}
+
+.ca-month-date {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ca-title);
+  border-radius: 999px;
+}
+
+.ca-month-date--today {
+  background: var(--ca-accent);
+  color: #fff;
+}
+
+.ca-month-date--off {
+  color: var(--ca-muted);
+  opacity: 0.65;
+}
+
+.ca-month-date-btn {
+  display: inline-flex;
+}
+
 .ca-calendar-wrap .rbc-today {
   background: color-mix(in srgb, var(--ca-accent) 8%, transparent);
 }
