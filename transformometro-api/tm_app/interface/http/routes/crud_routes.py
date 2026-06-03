@@ -8,6 +8,7 @@ from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 
 from tm_app.core.catalogs import (
+    BASE_COMPETENCIA_RECURSO,
     CENARIO_TIPO,
     CATEGORIAS,
     CRITERIO_RATEIO,
@@ -109,6 +110,16 @@ def _validate_processo_body(body: ProcessoCreateBody):
     assert_in(body.filial_id, ("01", "02"), "filial_id")
     assert_in(body.setor_id, SETORES, "setor_id")
     assert_in(body.status_processo, STATUS_PROCESSO, "status_processo")
+
+
+def _validate_recurso_body(body: RecursoBody):
+    assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
+    assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
+    assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
+    assert_in(body.base_competencia, BASE_COMPETENCIA_RECURSO, "base_competencia")
+    assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
+    if body.categoria_recurso:
+        assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
 
 
 # --- Processos ---
@@ -395,12 +406,7 @@ def get_recurso(recurso_id: str):
 @router.post("/recursos-compartilhados")
 def create_recurso(body: RecursoBody, request: Request):
     try:
-        assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
-        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
-        assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
-        assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
-        if body.categoria_recurso:
-            assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
+        _validate_recurso_body(body)
         row = RecursoRepository().create(body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)
@@ -413,12 +419,7 @@ def create_recurso(body: RecursoBody, request: Request):
 @router.put("/recursos-compartilhados/{recurso_id}")
 def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
     try:
-        assert_in(body.tipo_custo, TIPO_CUSTO_RECURSO, "tipo_custo")
-        assert_in(body.recorrencia, RECORRENCIAS, "recorrencia")
-        assert_in(body.criterio_rateio, CRITERIO_RATEIO, "criterio_rateio")
-        assert_in(body.status_recurso, STATUS_RECURSO, "status_recurso")
-        if body.categoria_recurso:
-            assert_in(body.categoria_recurso, CATEGORIAS, "categoria_recurso")
+        _validate_recurso_body(body)
         row = RecursoRepository().update(recurso_id, body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)
