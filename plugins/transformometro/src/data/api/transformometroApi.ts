@@ -52,6 +52,37 @@ async function request<T>(
   return body.data;
 }
 
+async function downloadFile(
+  path: string,
+  filename: string,
+  getAccessToken?: () => string | undefined
+): Promise<void> {
+  const response = await fetch(`${TRANSFORMOMETRO_API_BASE}${path}`, {
+    headers: buildAuthHeaders(getAccessToken),
+  });
+
+  if (!response.ok) {
+    let message = `Erro HTTP ${response.status}`;
+    try {
+      const body = (await response.json()) as { message?: string; detail?: string };
+      message = body.message || body.detail || message;
+    } catch {
+      // resposta pode ser binária/texto
+    }
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export type Processo = {
   processo_id: string;
   codigo_processo: string;
@@ -107,10 +138,7 @@ export function fetchProcessos(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<{ total: number; items: Processo[] }>(
-    `/processos${qs}`,
-    getAccessToken
-  );
+  return request<{ total: number; items: Processo[] }>(`/processos${qs}`, getAccessToken);
 }
 
 export function fetchProcesso(
@@ -145,9 +173,7 @@ export function deleteProcesso(
   processoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/processos/${processoId}`, getAccessToken, {
-    method: "DELETE",
-  });
+  return request<null>(`/processos/${processoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type ProcessoDuplicateResult = {
@@ -166,14 +192,10 @@ export function duplicateProcesso(
   payload?: { nome_processo?: string },
   getAccessToken?: () => string | undefined
 ) {
-  return request<ProcessoDuplicateResult>(
-    `/processos/${processoId}/duplicar`,
-    getAccessToken,
-    {
-      method: "POST",
-      body: JSON.stringify(payload ?? {}),
-    }
-  );
+  return request<ProcessoDuplicateResult>(`/processos/${processoId}/duplicar`, getAccessToken, {
+    method: "POST",
+    body: JSON.stringify(payload ?? {}),
+  });
 }
 
 export function fetchRevisoes(
@@ -216,9 +238,7 @@ export function deleteRevisao(
   revisaoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/revisoes/${revisaoId}`, getAccessToken, {
-    method: "DELETE",
-  });
+  return request<null>(`/revisoes/${revisaoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function activateRevisao(
@@ -332,17 +352,11 @@ export type VinculoRecurso = {
   revisao_data_fim_vigencia?: string | null;
 };
 
-export function fetchMedicao(
-  revisaoId: string,
-  getAccessToken?: () => string | undefined
-) {
+export function fetchMedicao(revisaoId: string, getAccessToken?: () => string | undefined) {
   return request<Medicao | null>(`/revisoes/${revisaoId}/medicoes`, getAccessToken);
 }
 
-export function upsertMedicao(
-  payload: Medicao,
-  getAccessToken?: () => string | undefined
-) {
+export function upsertMedicao(payload: Medicao, getAccessToken?: () => string | undefined) {
   return request<Medicao>("/medicoes", getAccessToken, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -371,10 +385,7 @@ export function createInvestimento(
 
 export function updateInvestimento(
   investimentoId: string,
-  payload: Partial<Investimento> & {
-    tipo_investimento: string;
-    descricao_item: string;
-  },
+  payload: Partial<Investimento> & { tipo_investimento: string; descricao_item: string },
   getAccessToken?: () => string | undefined
 ) {
   return request<Investimento>(`/investimentos/${investimentoId}`, getAccessToken, {
@@ -387,9 +398,7 @@ export function deleteInvestimento(
   investimentoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<null>(`/investimentos/${investimentoId}`, getAccessToken, {
-    method: "DELETE",
-  });
+  return request<null>(`/investimentos/${investimentoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchRecursos(getAccessToken?: () => string | undefined) {
@@ -399,19 +408,12 @@ export function fetchRecursos(getAccessToken?: () => string | undefined) {
   );
 }
 
-export function fetchRecurso(
-  recursoId: string,
-  getAccessToken?: () => string | undefined
-) {
+export function fetchRecurso(recursoId: string, getAccessToken?: () => string | undefined) {
   return request<RecursoCompartilhado>(`/recursos-compartilhados/${recursoId}`, getAccessToken);
 }
 
 export function createRecurso(
-  payload: Partial<RecursoCompartilhado> & {
-    nome_recurso: string;
-    tipo_custo: string;
-    recorrencia: string;
-  },
+  payload: Partial<RecursoCompartilhado> & { nome_recurso: string; tipo_custo: string; recorrencia: string },
   getAccessToken?: () => string | undefined
 ) {
   return request<RecursoCompartilhado>("/recursos-compartilhados", getAccessToken, {
@@ -422,11 +424,7 @@ export function createRecurso(
 
 export function updateRecurso(
   recursoId: string,
-  payload: Partial<RecursoCompartilhado> & {
-    nome_recurso: string;
-    tipo_custo: string;
-    recorrencia: string;
-  },
+  payload: Partial<RecursoCompartilhado> & { nome_recurso: string; tipo_custo: string; recorrencia: string },
   getAccessToken?: () => string | undefined
 ) {
   return request<RecursoCompartilhado>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
@@ -435,13 +433,8 @@ export function updateRecurso(
   });
 }
 
-export function deleteRecurso(
-  recursoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, {
-    method: "DELETE",
-  });
+export function deleteRecurso(recursoId: string, getAccessToken?: () => string | undefined) {
+  return request<null>(`/recursos-compartilhados/${recursoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export function fetchRecursoCustos(
@@ -491,10 +484,7 @@ export function deleteRecursoCusto(
   });
 }
 
-export function fetchVinculos(
-  revisaoId: string,
-  getAccessToken?: () => string | undefined
-) {
+export function fetchVinculos(revisaoId: string, getAccessToken?: () => string | undefined) {
   return request<{ total: number; items: VinculoRecurso[] }>(
     `/revisoes/${revisaoId}/recursos-compartilhados`,
     getAccessToken
@@ -546,13 +536,8 @@ export function updateVinculo(
   });
 }
 
-export function deleteVinculo(
-  vinculoId: string,
-  getAccessToken?: () => string | undefined
-) {
-  return request<null>(`/revisao-recursos-compartilhados/${vinculoId}`, getAccessToken, {
-    method: "DELETE",
-  });
+export function deleteVinculo(vinculoId: string, getAccessToken?: () => string | undefined) {
+  return request<null>(`/revisao-recursos-compartilhados/${vinculoId}`, getAccessToken, { method: "DELETE" });
 }
 
 export type DashboardResumo = {
@@ -609,11 +594,7 @@ export function recalcularDashboard(
   params?: Record<string, string>
 ) {
   const qs = params ? `?${new URLSearchParams(params)}` : "";
-  return request<DashboardRecalcResult>(
-    `/dashboard/recalcular${qs}`,
-    getAccessToken,
-    { method: "POST" }
-  );
+  return request<DashboardRecalcResult>(`/dashboard/recalcular${qs}`, getAccessToken, { method: "POST" });
 }
 
 export function fetchDashboardResumo(
@@ -660,6 +641,8 @@ export type DashboardAlertaItem = {
   economia_liquida_acumulada: number;
 };
 
+export type DashboardAlertItem = DashboardAlertaItem;
+
 export function fetchDashboardAlertas(
   getAccessToken?: () => string | undefined,
   params?: Record<string, string>
@@ -687,4 +670,68 @@ export function fetchDashboardPorFamilia(
     `/dashboard/por-familia${qs}`,
     getAccessToken
   );
+}
+
+export function downloadDashboardCsv(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return downloadFile(`/dashboard/export.csv${qs}`, "dashboard-transformometro.csv", getAccessToken);
+}
+
+export function downloadDashboardExcel(
+  getAccessToken?: () => string | undefined,
+  params?: Record<string, string>
+) {
+  const qs = params ? `?${new URLSearchParams(params)}` : "";
+  return downloadFile(`/dashboard/export.xls${qs}`, "dashboard-transformometro.xls", getAccessToken);
+}
+
+export type ImportPreviewResult = {
+  validation: {
+    ok: boolean;
+    errors: string[];
+    sheet_counts: Record<string, number>;
+  };
+  sheet_summary?: {
+    economia_liquida_total?: number;
+    solucoes_implementadas?: number;
+    [key: string]: number | string | null | undefined;
+  } | null;
+  [key: string]: unknown;
+};
+
+export type ImportApplyResult = {
+  validation?: ImportPreviewResult["validation"];
+  inserted?: Record<string, number>;
+  updated?: Record<string, number>;
+  deleted?: Record<string, number>;
+  recalculo?: DashboardRecalcResult;
+  [key: string]: unknown;
+};
+
+export type RevisionCompareItem = {
+  revisao_id: string;
+  versao_revisao?: string | null;
+  cenario_tipo?: string | null;
+  revisao_ativa?: boolean | null;
+  ultima_competencia?: string | null;
+  meses_com_dados?: number | null;
+  totais: {
+    economia_bruta: number;
+    economia_liquida_mes: number;
+    horas_economizadas_mes: number;
+    investimento_unico_mes?: number;
+    custo_recorrente_mes?: number;
+    custo_recursos_compartilhados_mes?: number;
+    investimento_total_mes?: number;
+  };
+};
+
+export function fetchProcessoComparativo(
+  processoId: string,
+  getAccessToken?: () => string | undefined
+) {
+  return request<RevisionCompareItem[]>(`/processos/${processoId}/comparativo`, getAccessToken);
 }
