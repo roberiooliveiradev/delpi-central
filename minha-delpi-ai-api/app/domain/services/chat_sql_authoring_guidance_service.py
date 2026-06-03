@@ -94,6 +94,35 @@ class ChatSqlAuthoringGuidanceService:
         return bool(cls.extract_domain_hint(message))
 
     @classmethod
+    def extract_table_names(cls, message: str | None) -> list[str]:
+        primary = cls.extract_table_name(message)
+
+        if primary:
+            tables = [primary]
+        else:
+            tables = []
+
+        raw = str(message or "")
+        seen = {item.upper() for item in tables}
+
+        for token in cls._TABLE_CODE_RE.findall(raw):
+            candidate = str(token).upper()
+
+            if not re.fullmatch(r"[A-Z]{2,4}\d{0,4}", candidate):
+                continue
+
+            if not re.search(r"\d", candidate):
+                continue
+
+            if candidate in seen:
+                continue
+
+            seen.add(candidate)
+            tables.append(candidate)
+
+        return tables[:3]
+
+    @classmethod
     def plan_schema_prefetch(
         cls,
         selection_service,
@@ -106,25 +135,21 @@ class ChatSqlAuthoringGuidanceService:
         if not selection_service or not allowed_action_ids:
             return []
 
-        table_name = cls.extract_table_name(message)
         planned: list[dict] = []
+        table_names = cls.extract_table_names(message)
 
-        if table_name:
-            for prompt in (
-                f"schema da tabela {table_name}",
-                f"colunas da tabela {table_name}",
-            ):
-                selected = selection_service.select_action(
-                    prompt,
-                    allowed_action_ids=allowed_action_ids,
-                    conversation_context=conversation_context,
-                    previous_messages=previous_messages,
-                )
+        for table_name in table_names:
+            prompt = f"colunas da tabela {table_name}"
+            selected = selection_service._select_system_metadata_action(
+                prompt,
+                allowed_action_ids=allowed_action_ids,
+            )
 
-                if selected and not cls._contains_same_action(planned, selected):
-                    planned.append(selected)
+            if selected and not cls._contains_same_action(planned, selected):
+                planned.append(selected)
 
-            return planned[:2]
+        if planned:
+            return planned[:3]
 
         domain = cls.extract_domain_hint(message)
 
@@ -132,11 +157,9 @@ class ChatSqlAuthoringGuidanceService:
             return []
 
         search_message = f"qual a tabela de {domain}"
-        selected = selection_service.select_action(
+        selected = selection_service._select_system_metadata_action(
             search_message,
             allowed_action_ids=allowed_action_ids,
-            conversation_context=conversation_context,
-            previous_messages=previous_messages,
         )
 
         if selected:

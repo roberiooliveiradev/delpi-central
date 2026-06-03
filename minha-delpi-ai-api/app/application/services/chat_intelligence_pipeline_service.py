@@ -99,10 +99,12 @@ class ChatIntelligencePipelineService:
                 previous_messages=previous_messages,
             ):
                 operational_optimize = True
-            elif ChatSqlQueryRefinementService.is_sql_follow_up(
-                message,
-                previous_messages=previous_messages,
-            ):
+            elif (
+                refinement := ChatSqlQueryRefinementService.resolve(
+                    message,
+                    previous_messages=previous_messages,
+                )
+            ) and refinement.mode == "execute":
                 operational_optimize = True
 
         return ChatPreToolDecisions(

@@ -78,6 +78,13 @@ _AUTHORING_TERMS = (
     "não execute",
     "sem executar",
     "sem rodar",
+    "revisa ",
+    "revisar ",
+    "revise ",
+    "explique ",
+    "explicar ",
+    "explique essa",
+    "revisa essa",
 )
 
 _SQL_BUILD_CONTEXT = (
@@ -146,6 +153,9 @@ class ChatSqlIntentService:
                 "otimize",
                 "execute",
                 "executar",
+                "relacion",
+                "relacionar",
+                "schema",
             )
         )
 
@@ -167,7 +177,10 @@ class ChatSqlIntentService:
             return None
 
         if cls.is_authoring_request(message):
-            if any(term in normalized for term in ("revise", "revisar", "review", "valida")):
+            if any(
+                term in normalized
+                for term in ("revise", "revisar", "revisa", "review", "valida", "valide")
+            ):
                 return "sql_review"
 
             if any(term in normalized for term in ("explique", "explicar", "explain")):
@@ -209,6 +222,7 @@ class ChatSqlIntentService:
         if not normalized:
             return False
 
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
         from app.domain.services.chat_sql_operational_intent_service import (
             ChatSqlOperationalIntentService,
         )
@@ -217,6 +231,22 @@ class ChatSqlIntentService:
             return not cls.is_authoring_request(message)
 
         if any(term in normalized for term in _AUTHORING_TERMS):
+            return False
+
+        if any(
+            term in normalized
+            for term in ("revise", "revisar", "revisa", "review", "valida", "valide")
+        ) and (
+            ChatSqlSafetyService.looks_like_sql_payload(message)
+            or cls._has_embedded_select(normalized)
+        ):
+            return False
+
+        if any(term in normalized for term in ("explique", "explicar", "explain")) and (
+            ChatSqlSafetyService.looks_like_sql_payload(message)
+            or "query" in normalized
+            or cls._has_embedded_select(normalized)
+        ):
             return False
 
         if cls._has_embedded_select(normalized):

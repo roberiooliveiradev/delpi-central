@@ -882,14 +882,17 @@ class ChatTurnPreparationService:
                 ChatToolContextService,
             )
 
-            presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(
-                direct_answer,
-                tool_calls,
-            )
+            if not (
+                isinstance(tool_context, dict) and tool_context.get("sqlRequiresLlm")
+            ):
+                presentation_answer = ChatToolContextService.prefer_presentation_direct_answer(
+                    direct_answer,
+                    tool_calls,
+                )
 
-            if presentation_answer:
-                direct_answer = presentation_answer
-                skip_rag = True
+                if presentation_answer:
+                    direct_answer = presentation_answer
+                    skip_rag = True
 
         if ChatTextTaskIntentService.is_mixed_text_and_operational(message):
             from app.application.services.chat_text_task_composer_service import (

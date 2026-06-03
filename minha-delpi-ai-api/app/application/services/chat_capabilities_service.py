@@ -145,6 +145,11 @@ class ChatCapabilitiesService:
 
     @classmethod
     def is_capability_inquiry(cls, message: str) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if cls.is_capabilities_question(message):
@@ -367,6 +372,11 @@ class ChatCapabilitiesService:
 
     @classmethod
     def _is_feature_capability_inquiry(cls, message: str) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
         detection = _detection()
         max_length = int(detection.get("maxMessageLength") or 280)
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)

@@ -196,6 +196,14 @@ class ChatSqlQueryRefinementService:
             "result_alias": "DATA_INICIO_OPERACAO",
         },
     }
+    _SA1_AUTHORING_COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
+        "cidade": {
+            "aliases": ("cidade", "municipio", "município", "mun"),
+            "select": "A1_MUN AS CIDADE",
+            "group_by": "A1_MUN",
+            "result_alias": "CIDADE",
+        },
+    }
     _INVENTORY_COLUMN_DEFINITIONS: dict[str, dict[str, Any]] = {
         "filial": {
             "aliases": ("filial", "cod filial", "codigo filial", "branch"),
@@ -252,7 +260,13 @@ class ChatSqlQueryRefinementService:
         *,
         previous_messages: list[Any] | None = None,
     ) -> bool:
-        return cls.resolve(message, previous_messages=previous_messages) is not None
+        if cls.resolve(message, previous_messages=previous_messages) is not None:
+            return True
+
+        return cls._looks_like_incremental_authoring(
+            message,
+            previous_messages=previous_messages,
+        )
 
     @classmethod
     def resolve(
@@ -264,6 +278,39 @@ class ChatSqlQueryRefinementService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
         if not normalized:
+            return None
+
+        from app.domain.services.chat_sql_memory_workspace_service import (
+            ChatSqlMemoryWorkspaceService,
+        )
+
+        stored_sql = ChatSqlMemoryWorkspaceService.resolve_current_sql(
+            message=message,
+            previous_messages=previous_messages,
+        )
+
+        if stored_sql and cls._is_authoring_only(normalized):
+            column_key = cls._extract_column_key(normalized, sql=stored_sql)
+
+            if column_key and cls._looks_like_add_column(normalized):
+                updated = cls.add_column(stored_sql, column_key)
+
+                if updated != stored_sql:
+                    return SqlQueryRefinement(
+                        mode="show_sql",
+                        sql=updated,
+                        title="Consulta SQL (elaboração)",
+                        reason="Refinamento SQL incremental sem execução.",
+                    )
+
+            if cls._looks_like_show_query(normalized):
+                return SqlQueryRefinement(
+                    mode="show_sql",
+                    sql=stored_sql,
+                    title="Consulta SQL (elaboração)",
+                    reason="Exibir SQL da conversa sem executar no banco.",
+                )
+
             return None
 
         recent = cls.collect_recent_sql_execution(previous_messages)
@@ -407,13 +454,24 @@ class ChatSqlQueryRefinementService:
         if re.search(rf"\bAS\s+{re.escape(alias)}\b", sql, flags=re.I):
             return sql
 
-        updated = re.sub(
-            r"(\nFROM\b)",
-            f",\n    {select_expr}\n\\1",
-            sql,
-            count=1,
-            flags=re.I,
-        )
+        if re.search(r"\n\s*FROM\b", sql, flags=re.I):
+            updated = re.sub(
+                r"(\nFROM\b)",
+                f",\n    {select_expr}\n\\1",
+                sql,
+                count=1,
+                flags=re.I,
+            )
+        elif re.search(r"\bFROM\b", sql, flags=re.I):
+            updated = re.sub(
+                r"(\bSELECT\s+(?:DISTINCT\s+)?)(.+?)(\s+FROM\b)",
+                rf"\1\2, {select_expr}\3",
+                sql,
+                count=1,
+                flags=re.I | re.S,
+            )
+        else:
+            return sql
 
         if group_expr and re.search(r"\bGROUP BY\b", updated, flags=re.I):
             updated = re.sub(
@@ -545,7 +603,62 @@ class ChatSqlQueryRefinementService:
         if "SB2010" in str(sql or "").upper():
             return cls._INVENTORY_COLUMN_DEFINITIONS
 
-        return cls._COLUMN_DEFINITIONS
+        definitions = dict(cls._COLUMN_DEFINITIONS)
+
+        if re.search(r"\bSA1\b", str(sql or ""), flags=re.I):
+            definitions.update(cls._SA1_AUTHORING_COLUMN_DEFINITIONS)
+
+        return definitions
+
+    @classmethod
+    def _is_authoring_only(cls, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in (
+                "sem executar",
+                "sem rodar",
+                "nao execute",
+                "não execute",
+                "somente a query",
+                "so a query",
+                "só a query",
+                "apenas a query",
+                "nao rodar",
+                "não rodar",
+            )
+        )
+
+    @classmethod
+    def _looks_like_incremental_authoring(
+        cls,
+        message: str | None,
+        *,
+        previous_messages: list[Any] | None = None,
+    ) -> bool:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        from app.domain.services.chat_sql_memory_workspace_service import (
+            ChatSqlMemoryWorkspaceService,
+        )
+
+        if not ChatSqlMemoryWorkspaceService.resolve_current_sql(
+            message=message,
+            previous_messages=previous_messages,
+        ):
+            return False
+
+        incremental_terms = (
+            *cls._ADD_TERMS,
+            *cls._ALTER_TERMS,
+            "consulta anterior",
+            "query anterior",
+            "sql anterior",
+        )
+
+        return any(term in normalized for term in incremental_terms)
 
     @classmethod
     def _branch_predicate(cls, column: str, branches: list[str]) -> str:

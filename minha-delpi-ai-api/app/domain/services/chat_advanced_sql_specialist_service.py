@@ -409,7 +409,12 @@ class ChatAdvancedSqlSpecialistService:
         if not ChatSqlAuthoringGuidanceService.agent_actions_available(workspace_context):
             return False
 
-        if resolved_mode in {"schema_explore", "create", "incremental_edit", "review"}:
+        if resolved_mode in {"schema_explore", "create", "incremental_edit"}:
+            return True
+
+        if resolved_mode == "review" and ChatSqlPerformanceAdvisorService.extract_sql_block(
+            str(message or "")
+        ):
             return True
 
         return ChatSqlAuthoringGuidanceService.should_prefetch_schema(
@@ -417,6 +422,28 @@ class ChatAdvancedSqlSpecialistService:
             workspace_context=workspace_context,
             previous_messages=previous_messages,
         )
+
+    @classmethod
+    def requires_llm_response(cls, snapshot: dict[str, Any] | None) -> bool:
+        if not snapshot:
+            return False
+
+        mode = str(snapshot.get("mode") or "none")
+
+        if mode in {"create", "review", "explain", "optimize", "incremental_edit"}:
+            return True
+
+        if mode == "schema_explore":
+            normalized = ChatMessageNormalizationService.normalize_for_matching(
+                str(snapshot.get("message") or "")
+            )
+
+            return any(
+                term in normalized
+                for term in ("relacion", "join", "ligar", "associar", "chave", "fk ")
+            )
+
+        return False
 
     @classmethod
     def enrich_tool_context(
@@ -438,12 +465,18 @@ class ChatAdvancedSqlSpecialistService:
             return result
 
         updated = dict(result)
+        snapshot = {**snapshot, "message": message}
         updated["sqlAdvanced"] = snapshot
         supplement = cls.build_prompt_supplement(snapshot)
 
         if supplement:
             existing = str(updated.get("context") or "").strip()
             updated["context"] = f"{existing}\n\n{supplement}".strip() if existing else supplement
+
+        if cls.requires_llm_response(snapshot):
+            updated.pop("directAnswer", None)
+            updated["skipRag"] = False
+            updated["sqlRequiresLlm"] = True
 
         return updated
 
