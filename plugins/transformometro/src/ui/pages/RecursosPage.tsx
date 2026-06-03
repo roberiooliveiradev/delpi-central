@@ -22,7 +22,7 @@ import {
   type OptionsData,
   type RecursoCompartilhado,
 } from "../../data/api/transformometroApi";
-import { labelCriterioRateio } from "../../utils/catalogLabels";
+import { labelBaseCompetencia, labelCriterioRateio } from "../../utils/catalogLabels";
 import { toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { buildRecursoPath } from "../../utils/routeParser";
@@ -168,6 +168,13 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
       render: (r) => formatCurrency(r.valor_total_recorrente),
     },
     { key: "rateio", header: "Rateio", render: (r) => labelCriterioRateio(r.criterio_rateio), sortable: true },
+    {
+      key: "base_competencia",
+      header: "Competência",
+      render: (r) => labelBaseCompetencia(r.base_competencia),
+      sortable: true,
+      sortValue: (r) => r.base_competencia ?? "mensal_cheio",
+    },
     { key: "status", header: "Status", render: (r) => r.status_recurso, sortable: true },
     {
       key: "vigencia",
@@ -284,7 +291,13 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate }: Props) {
         refreshing={refreshing}
         searchPlaceholder="Código, nome, fornecedor…"
         getSearchText={(r) =>
-          [r.codigo_recurso, r.nome_recurso, r.fornecedor, r.categoria_recurso]
+          [
+            r.codigo_recurso,
+            r.nome_recurso,
+            r.fornecedor,
+            r.categoria_recurso,
+            labelBaseCompetencia(r.base_competencia),
+          ]
             .filter(Boolean)
             .join(" ")
         }
