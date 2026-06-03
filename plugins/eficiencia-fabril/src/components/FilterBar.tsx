@@ -1,20 +1,22 @@
 import { Search } from "lucide-react";
 
+import type { EficienciaFabrilShift } from "../constants/shifts";
+import { FACTORY_SHIFTS } from "../constants/shifts";
+
 type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
-  branch: string;
   op: string;
   employee: string;
   workCenter: string;
-  branches: readonly string[];
+  shift: EficienciaFabrilShift | "";
   hasPendingChanges?: boolean;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
-  onBranchChange: (value: string) => void;
   onOpChange: (value: string) => void;
   onEmployeeChange: (value: string) => void;
   onWorkCenterChange: (value: string) => void;
+  onShiftChange: (value: EficienciaFabrilShift | "") => void;
   onApply: () => void;
   loading?: boolean;
 };
@@ -22,18 +24,17 @@ type FilterBarProps = {
 export function FilterBar({
   dateStart,
   dateEnd,
-  branch,
   op,
   employee,
   workCenter,
-  branches,
+  shift,
   hasPendingChanges = false,
   onDateStartChange,
   onDateEndChange,
-  onBranchChange,
   onOpChange,
   onEmployeeChange,
   onWorkCenterChange,
+  onShiftChange,
   onApply,
   loading = false,
 }: FilterBarProps) {
@@ -56,21 +57,6 @@ export function FilterBar({
             value={dateEnd}
             onChange={(event) => onDateEndChange(event.target.value)}
           />
-        </label>
-
-        <label className="ef-field">
-          <span>Filial</span>
-          <select
-            value={branch}
-            onChange={(event) => onBranchChange(event.target.value)}
-          >
-            <option value="">Todas (01 e 02)</option>
-            {branches.map((item) => (
-              <option key={item} value={item}>
-                Filial {item}
-              </option>
-            ))}
-          </select>
         </label>
 
         <label className="ef-field">
@@ -101,6 +87,23 @@ export function FilterBar({
             placeholder="Ex.: CT-01A"
             onChange={(event) => onWorkCenterChange(event.target.value)}
           />
+        </label>
+
+        <label className="ef-field">
+          <span>Turno</span>
+          <select
+            value={shift}
+            onChange={(event) =>
+              onShiftChange(event.target.value as EficienciaFabrilShift | "")
+            }
+          >
+            <option value="">Todos</option>
+            {FACTORY_SHIFTS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label} ({item.start} – {item.end})
+              </option>
+            ))}
+          </select>
         </label>
 
       </div>

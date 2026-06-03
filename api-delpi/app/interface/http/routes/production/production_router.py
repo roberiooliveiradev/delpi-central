@@ -330,6 +330,8 @@ def get_on_time_delivery_pct(
     [
         "api-delpi.access",
         "eficiencia-fabril.view",
+        "eficiencia-fabril.view.filial-sc",
+        "eficiencia-fabril.view.filial-es",
         "dashboard-production.view",
     ]
 )
@@ -380,6 +382,8 @@ def get_eficiencia_fabril_dashboard(
     [
         "api-delpi.access",
         "eficiencia-fabril.view",
+        "eficiencia-fabril.view.filial-sc",
+        "eficiencia-fabril.view.filial-es",
         "dashboard-production.view",
     ]
 )

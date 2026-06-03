@@ -33,7 +33,7 @@ Consolidar apontamentos de produção do Protheus (`SH6010`), calculando eficiê
 | Coluna | Uso |
 |--------|-----|
 | `FILIAL` | Filtro |
-| `OP`, `PRODUTO`, `CENTRO_TRABALHO`, `OPERACAO` | Identificação / filtros |
+| `OP`, `PRODUTO`, `DESCRICAO_PRODUTO`, `CENTRO_TRABALHO`, `OPERACAO` | Identificação / filtros |
 | `COD_OPERADOR`, `LOGIN_OPERADOR`, `NOME_OPERADOR` | Filtro operador |
 | `DATA_PRODUCAO` | Filtro período (tipo `DATE`) |
 | `HORA_INICIO`, `HORA_FINAL`, `TEMPO_ORIGINAL` | Detalhe / ordenação |

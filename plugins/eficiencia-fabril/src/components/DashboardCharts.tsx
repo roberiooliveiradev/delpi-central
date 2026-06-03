@@ -22,6 +22,7 @@ import {
   CHART_FONT_SIZE,
   CHART_HEIGHT,
   getEfficiencyByCtBarColor,
+  getModResultByCtBarColor,
   REFERENCE_LINE_100,
   TOOLTIP_STYLE,
 } from "../constants/chartTheme";
@@ -46,7 +47,13 @@ function ChartEmpty({ message }: { message: string }) {
 
 export function DashboardCharts({ charts }: DashboardChartsProps) {
   const [expandedChart, setExpandedChart] = useState<
-    "efficiency" | "mod" | "operators" | "efficiencyByCt" | "workCenters" | null
+    | "efficiency"
+    | "mod"
+    | "operators"
+    | "efficiencyByCt"
+    | "modByCt"
+    | "workCenters"
+    | null
   >(null);
 
   const efficiencySeries = useMemo(
@@ -96,6 +103,16 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
         apontamentos: row.appointment_count,
       })),
     [charts.efficiency_by_work_center]
+  );
+
+  const modByWorkCenterSeries = useMemo(
+    () =>
+      charts.mod_result_by_work_center.map((row) => ({
+        centro: row.work_center ?? "—",
+        mod: row.mod_result ?? 0,
+        apontamentos: row.appointment_count,
+      })),
+    [charts.mod_result_by_work_center]
   );
 
   const workCenterSeries = useMemo(
@@ -253,6 +270,54 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
       </ResponsiveContainer>
     );
 
+  const renderModByWorkCenterChart = (height: number, showBarLabels = false) =>
+    modByWorkCenterSeries.length === 0 ? (
+      <ChartEmpty message="Sem resultado MOD por centro de trabalho." />
+    ) : (
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          data={modByWorkCenterSeries}
+          margin={{ top: showBarLabels ? 28 : 8, right: 8, left: 8, bottom: 8 }}
+        >
+          <XAxis
+            dataKey="centro"
+            tick={AXIS_TICK}
+            interval={0}
+            angle={-25}
+            textAnchor="end"
+            height={70}
+          />
+          <YAxis tick={AXIS_TICK} tickFormatter={(v) => formatCurrency(Number(v))} />
+          <Tooltip
+            contentStyle={TOOLTIP_STYLE}
+            formatter={(value) => formatCurrency(Number(value))}
+          />
+          <ReferenceLine
+            y={0}
+            stroke={CHART_COLORS.secondary}
+            strokeDasharray="4 4"
+            strokeOpacity={0.4}
+          />
+          <Bar dataKey="mod" name="Resultado MOD" radius={[4, 4, 0, 0]}>
+            {showBarLabels ? (
+              <LabelList
+                dataKey="mod"
+                position="top"
+                formatter={(value) => formatCurrency(Number(value))}
+                style={{ fontSize: CHART_FONT_SIZE, fill: CHART_COLORS.secondary }}
+              />
+            ) : null}
+            {modByWorkCenterSeries.map((entry, index) => (
+              <Cell
+                key={`mod-ct-${entry.centro}-${index}`}
+                fill={getModResultByCtBarColor(entry.mod)}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+
   const renderWorkCentersChart = (height: number) =>
     workCenterSeries.length === 0 ? (
       <ChartEmpty message="Sem horas por centro de trabalho." />
@@ -298,7 +363,9 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
           ? "Top operadores (eficiência)"
           : expandedChart === "efficiencyByCt"
             ? "Eficiência por centro de trabalho"
-            : expandedChart === "workCenters"
+            : expandedChart === "modByCt"
+              ? "Resultado MOD por centro de trabalho"
+              : expandedChart === "workCenters"
               ? "Horas por centro de trabalho"
               : "";
 
@@ -311,7 +378,9 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
           ? "10 maiores eficiências no período"
           : expandedChart === "efficiencyByCt"
             ? "Média da eficiência (%) por CT no período"
-            : expandedChart === "workCenters"
+            : expandedChart === "modByCt"
+              ? "Soma do resultado MOD por CT no período"
+              : expandedChart === "workCenters"
               ? "Tempo real vs previsto (top 12 centros)"
               : undefined;
 
@@ -331,7 +400,9 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
               ? renderOperatorsChart(CHART_EXPANDED_HEIGHT, true)
               : expandedChart === "efficiencyByCt"
                 ? renderEfficiencyByWorkCenterChart(CHART_EXPANDED_HEIGHT, true)
-                : expandedChart === "workCenters"
+                : expandedChart === "modByCt"
+                  ? renderModByWorkCenterChart(CHART_EXPANDED_HEIGHT, true)
+                  : expandedChart === "workCenters"
                   ? renderWorkCentersChart(CHART_EXPANDED_HEIGHT)
                   : null}
       </ChartModal>
@@ -389,7 +460,7 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
         </ChartCard>
       </div>
 
-      <div className="ef-charts-grid__row ef-charts-grid__row--2">
+      <div className="ef-charts-grid__row ef-charts-grid__row--3">
         <ChartCard
           title="Eficiência por CT"
           subtitle="Média da eficiência (%) por centro de trabalho"
@@ -405,6 +476,23 @@ export function DashboardCharts({ charts }: DashboardChartsProps) {
           }
         >
           {renderEfficiencyByWorkCenterChart(CHART_HEIGHT)}
+        </ChartCard>
+
+        <ChartCard
+          title="Resultado MOD por CT"
+          subtitle="Soma do resultado MOD por centro de trabalho"
+          actions={
+            <button
+              type="button"
+              className="ef-chart-action"
+              onClick={() => setExpandedChart("modByCt")}
+              aria-label="Expandir gráfico"
+            >
+              <Maximize2 size={16} aria-hidden />
+            </button>
+          }
+        >
+          {renderModByWorkCenterChart(CHART_HEIGHT)}
         </ChartCard>
 
         <ChartCard

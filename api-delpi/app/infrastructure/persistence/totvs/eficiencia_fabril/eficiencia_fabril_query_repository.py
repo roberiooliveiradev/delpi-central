@@ -25,6 +25,32 @@ from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepositoryPort):
 
+    _ITEMS_SELECT = """
+                    FILIAL,
+                    OP,
+                    PRODUTO,
+                    DESCRICAO_PRODUTO,
+                    CENTRO_TRABALHO,
+                    OPERACAO,
+                    COD_OPERADOR,
+                    LOGIN_OPERADOR,
+                    NOME_OPERADOR,
+                    DATA_PRODUCAO,
+                    HORA_INICIO,
+                    HORA_FINAL,
+                    QTD_APONTADA,
+                    TEMPO_REAL_HORAS,
+                    TEMPO_PREVISTO_HORAS,
+                    EFICIENCIA_PERCENTUAL,
+                    VALOR_MOD_HORA,
+                    TEMPO_GANHO_PERDIDO_HORAS,
+                    RESULTADO_MOD,
+                    LUCRO_MOD,
+                    PREJUIZO_MOD,
+                    STATUS_RESULTADO_MOD,
+                    STATUS_REGISTRO
+    """
+
     def __init__(self, settings: EficienciaFabrilQuerySettings | None = None):
         super().__init__()
         self.settings = settings or EficienciaFabrilQuerySettings()
@@ -157,28 +183,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             item_rows = self.execute_query(
                 f"""
                 SELECT
-                    FILIAL,
-                    OP,
-                    PRODUTO,
-                    CENTRO_TRABALHO,
-                    OPERACAO,
-                    COD_OPERADOR,
-                    LOGIN_OPERADOR,
-                    NOME_OPERADOR,
-                    DATA_PRODUCAO,
-                    HORA_INICIO,
-                    HORA_FINAL,
-                    QTD_APONTADA,
-                    TEMPO_REAL_HORAS,
-                    TEMPO_PREVISTO_HORAS,
-                    EFICIENCIA_PERCENTUAL,
-                    VALOR_MOD_HORA,
-                    TEMPO_GANHO_PERDIDO_HORAS,
-                    RESULTADO_MOD,
-                    LUCRO_MOD,
-                    PREJUIZO_MOD,
-                    STATUS_RESULTADO_MOD,
-                    STATUS_REGISTRO
+                    {self._ITEMS_SELECT}
                 FROM {view}
                 WHERE {items_where}
                 ORDER BY
@@ -226,28 +231,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             rows = self.execute_query(
                 f"""
                 SELECT
-                    FILIAL,
-                    OP,
-                    PRODUTO,
-                    CENTRO_TRABALHO,
-                    OPERACAO,
-                    COD_OPERADOR,
-                    LOGIN_OPERADOR,
-                    NOME_OPERADOR,
-                    DATA_PRODUCAO,
-                    HORA_INICIO,
-                    HORA_FINAL,
-                    QTD_APONTADA,
-                    TEMPO_REAL_HORAS,
-                    TEMPO_PREVISTO_HORAS,
-                    EFICIENCIA_PERCENTUAL,
-                    VALOR_MOD_HORA,
-                    TEMPO_GANHO_PERDIDO_HORAS,
-                    RESULTADO_MOD,
-                    LUCRO_MOD,
-                    PREJUIZO_MOD,
-                    STATUS_RESULTADO_MOD,
-                    STATUS_REGISTRO
+                    {self._ITEMS_SELECT}
                 FROM {view}
                 WHERE {where}
                 ORDER BY
@@ -343,6 +327,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             filial=row.get("FILIAL"),
             op=row.get("OP"),
             produto=row.get("PRODUTO"),
+            descricao_produto=row.get("DESCRICAO_PRODUTO") or None,
             centro_trabalho=row.get("CENTRO_TRABALHO"),
             operacao=row.get("OPERACAO"),
             cod_operador=row.get("COD_OPERADOR"),

@@ -15,6 +15,13 @@ export function getEfficiencyByCtBarColor(pct: number): string {
   return CHART_COLORS.danger;
 }
 
+/** Cores do gráfico de resultado MOD por CT. */
+export function getModResultByCtBarColor(value: number): string {
+  if (value > 0) return CHART_COLORS.success;
+  if (value < 0) return CHART_COLORS.danger;
+  return CHART_COLORS.muted;
+}
+
 export const CHART_HEIGHT = 320;
 /** Altura padrão dos gráficos na visão expandida (modal). */
 export const CHART_EXPANDED_HEIGHT = 700;

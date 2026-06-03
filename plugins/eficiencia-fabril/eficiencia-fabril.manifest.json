@@ -12,20 +12,40 @@
 
   "permissions": [
     {
+      "code": "eficiencia-fabril.view.filial-sc",
+      "name": "Eficiência Fabril — Filial SC",
+      "description": "Visualizar eficiência e resultado MOD da Filial SC (01)",
+      "module": "eficiencia-fabril"
+    },
+    {
+      "code": "eficiencia-fabril.view.filial-es",
+      "name": "Eficiência Fabril — Filial ES",
+      "description": "Visualizar eficiência e resultado MOD da Filial ES (02)",
+      "module": "eficiencia-fabril"
+    },
+    {
       "code": "eficiencia-fabril.view",
       "name": "Acesso ao dashboard Eficiência Fabril",
-      "description": "Permite visualizar eficiência de apontamentos e resultado MOD",
+      "description": "Permite visualizar eficiência de apontamentos e resultado MOD (legado — ambas filiais)",
       "module": "eficiencia-fabril"
     }
   ],
 
   "routes": [
     {
-      "path": "/apps/eficiencia-fabril",
-      "label": "Eficiência Fabril",
-      "permission": "eficiencia-fabril.view",
+      "path": "/apps/eficiencia-fabril/sc",
+      "label": "Eficiência Fabril — SC",
+      "permission": "eficiencia-fabril.view.filial-sc",
       "icon": "factory-icon",
       "order": 17,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/eficiencia-fabril/es",
+      "label": "Eficiência Fabril — ES",
+      "permission": "eficiencia-fabril.view.filial-es",
+      "icon": "factory-icon",
+      "order": 18,
       "showInMenu": true
     }
   ],
