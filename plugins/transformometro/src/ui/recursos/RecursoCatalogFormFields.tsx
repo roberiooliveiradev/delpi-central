@@ -1,6 +1,8 @@
 import type { OptionsData } from "../../data/api/transformometroApi";
-import { labelCriterioRateio } from "../../utils/catalogLabels";
+import { labelBaseCompetencia, labelCriterioRateio } from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
+
+const DEFAULT_BASE_COMPETENCIA_OPTIONS = ["mensal_cheio", "proporcional_dias"];
 
 type Props = {
   form: RecursoCatalogFormState;
@@ -10,6 +12,10 @@ type Props = {
 };
 
 export function RecursoCatalogFormFields({ form, options, onChange, submitLabel }: Props) {
+  const baseCompetenciaOptions = options.base_competencia_recurso?.length
+    ? options.base_competencia_recurso
+    : DEFAULT_BASE_COMPETENCIA_OPTIONS;
+
   return (
     <>
       <div className="ds-filters-row">
@@ -77,6 +83,19 @@ export function RecursoCatalogFormFields({ form, options, onChange, submitLabel 
             {options.criterio_rateio.map((c) => (
               <option key={c} value={c}>
                 {labelCriterioRateio(c)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ds-filter-box">
+          Base de competência *
+          <select
+            value={form.base_competencia}
+            onChange={(e) => onChange({ ...form, base_competencia: e.target.value })}
+          >
+            {baseCompetenciaOptions.map((base) => (
+              <option key={base} value={base}>
+                {labelBaseCompetencia(base)}
               </option>
             ))}
           </select>
