@@ -5,54 +5,63 @@ from __future__ import annotations
 import logging
 from uuid import UUID
 
-from app.application.services.app_authorization_service import AppAuthorizationService
+from app.application.services.rbac_access_delta_service import (
+    AccessGain,
+    RbacAccessDeltaService,
+)
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
 from app.domain.ports.notification_repository import NotificationDTO
-from app.domain.services.permission_resolver import PermissionResolver
 
 logger = logging.getLogger(__name__)
 
 _TEMPLATE_ID = "app_access_granted_v1"
 
-# Eventos atômicos com alvo no usuário — sabemos exatamente o que foi adicionado
 _ACTIONS_USER_TARGETED = frozenset({
     "group_added_to_user",
     "role_added_to_user",
 })
 
-# Eventos de mudança em papel — afetam todos os usuários com o papel
 _ACTIONS_ROLE_CHANGE = frozenset({
     "permission_added_to_role",
+    "role_permissions_replaced",
 })
 
-# Eventos de mudança em grupo — afetam todos os usuários do grupo
 _ACTIONS_GROUP_CHANGE = frozenset({
     "role_added_to_group",
+    "group_roles_replaced",
 })
 
-_ALL_HANDLED_ACTIONS = _ACTIONS_USER_TARGETED | _ACTIONS_ROLE_CHANGE | _ACTIONS_GROUP_CHANGE
+_ACTIONS_USER_REPLACE = frozenset({
+    "roles_replaced",
+    "groups_replaced",
+})
+
+_ALL_HANDLED_ACTIONS = (
+    _ACTIONS_USER_TARGETED
+    | _ACTIONS_ROLE_CHANGE
+    | _ACTIONS_GROUP_CHANGE
+    | _ACTIONS_USER_REPLACE
+)
 
 
 class RbacNotificationEventHandler:
     """
-    Dispara notificação automática quando um usuário ganha acesso a novas
-    aplicações via:
-    - Adição de grupo ou papel ao usuário (atômico)
-    - Adição de permissão a um papel (afeta todos os usuários com o papel)
-    - Adição de papel a um grupo (afeta todos os usuários do grupo)
+    Notificação automática (app_access_granted_v1) quando o usuário ganha:
+    - acesso a novas aplicações, e/ou
+    - novas rotas/funcionalidades (permissões de rota ainda não acessíveis).
 
-    NÃO trata events de "replace" (groups_replaced, roles_replaced,
-    role_permissions_replaced, group_roles_replaced) pois são operações
-    bulk onde não é possível determinar o delta sem o estado anterior.
-
-    Deduplica: se um mesmo usuário for afetado por múltiplos eventos no
-    mesmo ciclo de publish, recebe apenas uma notificação.
+    Compara o estado atual com o anterior, ignorando permissões que o usuário
+    já possuía por outro papel ou grupo.
     """
 
     def __init__(self, uow):
         self.uow = uow
-        self._auth_service = AppAuthorizationService()
+        self._delta_service = RbacAccessDeltaService(
+            uow.permission_queries,
+            uow.cache,
+            uow.app_queries,
+        )
         self._notified_users: set[str] = set()
 
     def handle(self, event: AdminChangedEvent) -> None:
@@ -70,40 +79,72 @@ class RbacNotificationEventHandler:
                 event.payload,
             )
 
-    # ------------------------------------------------------------------
-    # Dispatch por tipo de evento
-    # ------------------------------------------------------------------
-
     def _dispatch(self, event: AdminChangedEvent) -> None:
         if event.action in _ACTIONS_USER_TARGETED:
             if not event.target_user_id:
                 return
-            user_id = UUID(event.target_user_id)
-            change_codes = self._codes_for_user_event(event)
-            self._notify_if_new_apps(user_id, change_codes)
-
-        elif event.action in _ACTIONS_ROLE_CHANGE:
-            role_id = UUID(event.payload["roleId"])
-            user_ids = self._get_user_ids_by_role(role_id)
-            change_codes = self._codes_for_role(role_id)
-            for uid in user_ids:
-                self._notify_if_new_apps(uid, change_codes)
-
-        elif event.action in _ACTIONS_GROUP_CHANGE:
-            group_id = UUID(event.payload["groupId"])
-            user_ids = self._get_user_ids_by_group(group_id)
-            change_codes = self._codes_for_group(group_id)
-            for uid in user_ids:
-                self._notify_if_new_apps(uid, change_codes)
-
-    # ------------------------------------------------------------------
-    # Cálculo de delta e notificação
-    # ------------------------------------------------------------------
-
-    def _notify_if_new_apps(self, user_id: UUID, change_codes: list[str]) -> None:
-        if not change_codes:
+            self._notify_user(
+                UUID(event.target_user_id),
+                self._previous_codes_for_user_event(event),
+            )
             return
 
+        if event.action in _ACTIONS_USER_REPLACE:
+            if not event.target_user_id:
+                return
+            previous = self._previous_codes_for_user_replace_event(event)
+            if previous is None:
+                return
+            self._notify_user(UUID(event.target_user_id), previous)
+            return
+
+        if event.action in _ACTIONS_ROLE_CHANGE:
+            self._dispatch_role_change(event)
+            return
+
+        if event.action in _ACTIONS_GROUP_CHANGE:
+            self._dispatch_group_change(event)
+
+    def _dispatch_role_change(self, event: AdminChangedEvent) -> None:
+        payload = event.payload or {}
+        role_id = UUID(str(payload["roleId"]))
+        added_codes = self._added_permission_codes_for_role_event(event, role_id)
+        if not added_codes:
+            return
+
+        user_ids = self._get_user_ids_by_role(role_id)
+        for uid in user_ids:
+            previous = self._delta_service.previous_codes_after_role_permission_change(
+                uid,
+                False,
+                role_id,
+                added_codes,
+            )
+            self._notify_user(uid, previous)
+
+    def _dispatch_group_change(self, event: AdminChangedEvent) -> None:
+        payload = event.payload or {}
+        group_id = UUID(str(payload["groupId"]))
+
+        if event.action == "role_added_to_group":
+            added_role_ids = {UUID(str(payload["roleId"]))}
+        else:
+            raw = payload.get("addedRoleIds") or []
+            added_role_ids = {UUID(str(item)) for item in raw}
+            if not added_role_ids:
+                return
+
+        user_ids = self._get_user_ids_by_group(group_id)
+        for uid in user_ids:
+            previous = self._delta_service.previous_codes_excluding_group_roles(
+                uid,
+                False,
+                group_id,
+                added_role_ids,
+            )
+            self._notify_user(uid, previous)
+
+    def _notify_user(self, user_id: UUID, previous_codes: list[str]) -> None:
         user_id_str = str(user_id)
         if user_id_str in self._notified_users:
             return
@@ -112,59 +153,91 @@ class RbacNotificationEventHandler:
         if not user or not user.active:
             return
 
-        is_superadmin = bool(user.is_superadmin)
-        if is_superadmin:
+        if bool(user.is_superadmin):
             return
 
-        new_apps = self._compute_new_apps(user_id, change_codes, is_superadmin)
-        if not new_apps:
+        gain = self._delta_service.compute_gain(
+            user_id,
+            False,
+            previous_codes=previous_codes,
+        )
+        if not gain.has_gain:
             return
 
         self._notified_users.add(user_id_str)
-        self._send_notification(user, new_apps)
+        self._send_notification(user, gain)
 
-    def _compute_new_apps(
-        self,
-        user_id: UUID,
-        change_codes: list[str],
-        is_superadmin: bool,
-    ):
-        """
-        Calcula apps REALMENTE novas: acessíveis com permissões completas,
-        mas NÃO acessíveis sem as permissões da mudança.
-        """
-        apps = self.uow.app_queries.list_active_apps_with_routes()
-        if not apps:
-            return []
-
-        resolver = PermissionResolver(self.uow.permission_queries, self.uow.cache)
-        full_codes = set(resolver.resolve(user_id, is_superadmin))
-
-        previous_codes = list(full_codes - set(change_codes))
-
-        current_apps = self._auth_service.filter_apps(apps, list(full_codes), is_superadmin)
-        previous_apps = self._auth_service.filter_apps(apps, previous_codes, is_superadmin)
-
-        previous_app_ids = {app.id for app in previous_apps}
-        return [app for app in current_apps if app.id not in previous_app_ids]
-
-    # ------------------------------------------------------------------
-    # Envio da notificação
-    # ------------------------------------------------------------------
-
-    def _send_notification(self, user, new_apps) -> None:
+    def _send_notification(self, user, gain: AccessGain) -> None:
         template_spec = NOTIFICATION_TEMPLATES[_TEMPLATE_ID]
-        app_names_str = ", ".join(app.name for app in new_apps)
         first_name = (user.name or "").split()[0] if user.name else ""
+        new_app_ids = {app.id for app in gain.new_apps}
+
+        app_names: list[str] = []
+        seen_app_ids: set[str] = set()
+
+        for app in gain.new_apps:
+            if app.id in seen_app_ids:
+                continue
+            seen_app_ids.add(app.id)
+            app_names.append(app.name)
+
+        # Apps só com rotas novas (já tinha o app) entram na lista textual
+        for app, _route in gain.new_routes:
+            if app.id in new_app_ids or app.id in seen_app_ids:
+                continue
+            seen_app_ids.add(app.id)
+            app_names.append(app.name)
+
+        feature_labels: list[str] = []
+        seen_features: set[str] = set()
+        app_name_set = {name.casefold() for name in app_names}
+
+        for app, route in gain.new_routes:
+            # App inteiro novo: não listar rotas (evita duplicar o nome no corpo)
+            if app.id in new_app_ids:
+                continue
+
+            text = self._format_feature_label(app, route)
+            if not text:
+                continue
+            if text.casefold() in app_name_set:
+                continue
+            if text in seen_features:
+                continue
+            seen_features.add(text)
+            feature_labels.append(text)
+
+        system_names = [item.name for item in gain.new_system_permissions]
+        system_names_str = ", ".join(system_names) if system_names else ""
+
+        app_names_str = ", ".join(app_names) if app_names else ""
+        feature_names_str = ", ".join(feature_labels) if feature_labels else ""
 
         title = template_spec.default_title
-        message = template_spec.default_message.replace(
-            "{userName}", first_name
-        ).replace("{appNames}", app_names_str)
+        if system_names_str and not app_names_str and not feature_names_str:
+            title = "Novas permissões de administração"
 
-        if len(new_apps) == 1:
-            action_target = new_apps[0].base_path or "/"
-            action_label = f"Abrir {new_apps[0].name}"
+        message = self._build_access_message(
+            first_name,
+            app_names_str=app_names_str,
+            system_names_str=system_names_str,
+            feature_names_str=feature_names_str,
+        )
+
+        if gain.new_apps:
+            navigable_apps = gain.new_apps
+        else:
+            seen_nav: dict[str, object] = {}
+            for app, _route in gain.new_routes:
+                seen_nav[app.id] = app
+            navigable_apps = list(seen_nav.values())
+
+        if system_names_str and not navigable_apps:
+            action_target = "/admin"
+            action_label = "Abrir administração"
+        elif len(navigable_apps) == 1:
+            action_target = navigable_apps[0].base_path or "/"
+            action_label = f"Abrir {navigable_apps[0].name}"
         else:
             action_target = "/"
             action_label = "Ver aplicativos"
@@ -187,6 +260,8 @@ class RbacNotificationEventHandler:
                     "vars": {
                         "userName": first_name,
                         "appNames": app_names_str,
+                        "featureNames": feature_names_str,
+                        "systemPermissionNames": system_names_str,
                     },
                 },
                 expires_at=None,
@@ -206,44 +281,135 @@ class RbacNotificationEventHandler:
             )
         )
 
-    # ------------------------------------------------------------------
-    # Resolução de permission_codes por tipo de evento
-    # ------------------------------------------------------------------
-
-    def _codes_for_user_event(self, event: AdminChangedEvent) -> list[str]:
+    def _previous_codes_for_user_event(self, event: AdminChangedEvent) -> list[str]:
         payload = event.payload or {}
+        user_id = UUID(event.target_user_id)
 
         if event.action == "group_added_to_user":
-            return self._codes_for_group(UUID(payload["groupId"]))
+            group_id = UUID(str(payload["groupId"]))
+            return self._delta_service.previous_codes_excluding_groups(
+                user_id, False, {group_id}
+            )
 
         if event.action == "role_added_to_user":
-            return self._codes_for_role(UUID(payload["roleId"]))
+            role_id = UUID(str(payload["roleId"]))
+            return self._delta_service.previous_codes_excluding_user_roles(
+                user_id, False, {role_id}
+            )
 
         return []
 
-    def _codes_for_role(self, role_id: UUID) -> list[str]:
+    def _previous_codes_for_user_replace_event(
+        self, event: AdminChangedEvent
+    ) -> list[str] | None:
+        payload = event.payload or {}
+        user_id = UUID(event.target_user_id)
+
+        if event.action == "roles_replaced":
+            raw = payload.get("addedRoleIds") or []
+            if not raw:
+                return None
+            snapshot = payload.get("previousPermissionCodes")
+            if isinstance(snapshot, list):
+                return [str(code) for code in snapshot if code]
+            exclude = {UUID(str(item)) for item in raw}
+            return self._delta_service.previous_codes_excluding_user_roles(
+                user_id, False, exclude
+            )
+
+        if event.action == "groups_replaced":
+            raw = payload.get("addedGroupIds") or []
+            if not raw:
+                return None
+            snapshot = payload.get("previousPermissionCodes")
+            if isinstance(snapshot, list):
+                return [str(code) for code in snapshot if code]
+            exclude = {UUID(str(item)) for item in raw}
+            return self._delta_service.previous_codes_excluding_groups(
+                user_id, False, exclude
+            )
+
+        return None
+
+    def _added_permission_codes_for_role_event(
+        self, event: AdminChangedEvent, role_id: UUID
+    ) -> set[str]:
+        payload = event.payload or {}
+
+        if event.action == "permission_added_to_role":
+            code = (payload.get("permissionCode") or "").strip()
+            return {code} if code else set()
+
+        raw_ids = payload.get("addedPermissionIds") or []
+        if not raw_ids:
+            return set()
+
         perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
-        return [p.code for p in perms]
+        id_to_code = {str(p.id): p.code for p in perms}
 
-    def _codes_for_group(self, group_id: UUID) -> list[str]:
-        role_ids = self.uow.group_roles.list_role_ids(group_id)
         codes: set[str] = set()
-        for role_id in role_ids:
-            perms = self.uow.permission_queries.list_permissions_by_role_id(role_id)
-            codes.update(p.code for p in perms)
-        return list(codes)
-
-    # ------------------------------------------------------------------
-    # Resolução de usuários afetados
-    # ------------------------------------------------------------------
+        for raw in raw_ids:
+            code = id_to_code.get(str(raw))
+            if code:
+                codes.add(code)
+        return codes
 
     def _get_user_ids_by_role(self, role_id: UUID) -> list[UUID]:
-        """Usuários com a role direta + via grupos."""
         direct = set(self.uow.rbac_queries.list_user_ids_by_role(role_id))
         via_group = set(self.uow.rbac_queries.list_user_ids_by_group_role(role_id))
         return [UUID(uid) for uid in (direct | via_group)]
 
     def _get_user_ids_by_group(self, group_id: UUID) -> list[UUID]:
-        """Usuários membros do grupo."""
         ids = self.uow.rbac_queries.list_user_ids_by_group(group_id)
         return [UUID(uid) for uid in ids]
+
+    @staticmethod
+    def _build_access_message(
+        first_name: str,
+        *,
+        app_names_str: str,
+        system_names_str: str,
+        feature_names_str: str,
+    ) -> str:
+        segments: list[str] = []
+        if app_names_str:
+            segments.append(f"acesso a: {app_names_str}")
+        if system_names_str:
+            segments.append(f"permissões de sistema: {system_names_str}")
+
+        if not segments:
+            if feature_names_str:
+                return (
+                    f"Olá, {first_name}! Você recebeu novas funcionalidades: "
+                    f"{feature_names_str}."
+                )
+            return (
+                f"Olá, {first_name}! Você recebeu novos recursos na plataforma."
+            )
+
+        message = f"Olá, {first_name}! Você recebeu {' e '.join(segments)}."
+        if feature_names_str:
+            message = f"{message} Novas funcionalidades: {feature_names_str}."
+        return message
+
+    @staticmethod
+    def _format_feature_label(app, route) -> str | None:
+        label = (route.label or "").strip()
+        path = (route.path or "").strip()
+
+        if not label and not path:
+            return None
+
+        generic = frozenset(
+            {"abrir", "início", "inicio", "home", "ver", "acessar", "open", "start"}
+        )
+        if label and label.casefold() in generic:
+            label = ""
+
+        if label and label.casefold() != (app.name or "").casefold():
+            return f"{app.name}: {label}"
+
+        if path and path != "/":
+            return f"{app.name}: {path}"
+
+        return None

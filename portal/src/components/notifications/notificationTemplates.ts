@@ -58,9 +58,15 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
     recipientAutoVars: ["userName"],
     recipientVars: ["userName"],
     isSystem: true,
-    hint: "Acesse pelo menu lateral ou pela página de aplicativos.",
+    hint: "Acesse pelo menu lateral, administração ou página de aplicativos.",
     fields: [
-      { key: "appNames", label: "Aplicações", placeholder: "App1, App2, App3", required: true },
+      { key: "appNames", label: "Aplicações", placeholder: "App1, App2", required: false },
+      {
+        key: "systemPermissionNames",
+        label: "Permissões de sistema",
+        placeholder: "Gerenciar usuários, Gerenciar RBAC",
+        required: false,
+      },
     ],
   },
 ];

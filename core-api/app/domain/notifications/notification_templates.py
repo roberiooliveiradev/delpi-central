@@ -58,9 +58,10 @@ NOTIFICATION_TEMPLATES: dict[str, NotificationTemplateSpec] = {
         default_type="info",
         default_title="Novo acesso liberado",
         default_message="Olá, {userName}! Você recebeu acesso a: {appNames}.",
-        required_vars=("appNames",),
+        required_vars=(),
+        optional_vars=("appNames", "featureNames", "systemPermissionNames"),
         recipient_vars=("userName",),
-        hint="Acesse pelo menu lateral ou pela página de aplicativos.",
+        hint="Acesse pelo menu lateral, administração ou página de aplicativos.",
     ),
 }
 

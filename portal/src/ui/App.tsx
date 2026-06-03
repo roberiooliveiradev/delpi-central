@@ -143,7 +143,14 @@ function AppShell() {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route
+              path="/unauthorized"
+              element={
+                <AnimatedWrapper>
+                  <Unauthorized />
+                </AnimatedWrapper>
+              }
+            />
 
             <Route
               path="/admin"

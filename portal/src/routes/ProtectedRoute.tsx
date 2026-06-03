@@ -1,7 +1,7 @@
 // src/routes/ProtectedRoute.jsx
 
 import { useContext } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Loader } from "../ui/Loader";
 
@@ -12,6 +12,7 @@ interface Props {
 
 export const ProtectedRoute = ({ permission, children }: Props) => {
   const { user, coreLoaded } = useContext(AuthContext);
+  const location = useLocation();
 
   if (!coreLoaded) {
     return <Loader />;
@@ -32,7 +33,13 @@ export const ProtectedRoute = ({ permission, children }: Props) => {
   const hasPermission = user.permissions.includes(permission);
 
   if (!hasPermission) {
-    return <Navigate to="/unauthorized" replace />;
+    return (
+      <Navigate
+        to="/unauthorized"
+        replace
+        state={{ from: location.pathname, permission }}
+      />
+    );
   }
 
   return <>{children}</>;

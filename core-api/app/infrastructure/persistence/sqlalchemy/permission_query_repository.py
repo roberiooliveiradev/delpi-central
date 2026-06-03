@@ -67,6 +67,101 @@ class SqlAlchemyPermissionQueryRepository(PermissionQueryPort):
 
         return [code for (code,) in rows]
 
+    def list_direct_role_permissions_excluding_roles(
+        self, user_id: UUID, exclude_role_ids: set[UUID]
+    ) -> List[str]:
+        query = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(Role, Role.id == role_permissions.c.role_id)
+            .join(user_roles, Role.id == user_roles.c.role_id)
+            .filter(user_roles.c.user_id == user_id)
+        )
+        if exclude_role_ids:
+            query = query.filter(Role.id.notin_(exclude_role_ids))
+        return [code for (code,) in query.all()]
+
+    def list_group_role_permissions_excluding_groups(
+        self, user_id: UUID, exclude_group_ids: set[UUID]
+    ) -> List[str]:
+        query = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(Role, Role.id == role_permissions.c.role_id)
+            .join(group_roles, Role.id == group_roles.c.role_id)
+            .join(Group, Group.id == group_roles.c.group_id)
+            .join(user_groups, Group.id == user_groups.c.group_id)
+            .filter(user_groups.c.user_id == user_id)
+        )
+        if exclude_group_ids:
+            query = query.filter(Group.id.notin_(exclude_group_ids))
+        return [code for (code,) in query.all()]
+
+    def list_group_role_permissions_excluding_roles(
+        self, user_id: UUID, exclude_role_ids: set[UUID]
+    ) -> List[str]:
+        query = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(Role, Role.id == role_permissions.c.role_id)
+            .join(group_roles, Role.id == group_roles.c.role_id)
+            .join(Group, Group.id == group_roles.c.group_id)
+            .join(user_groups, Group.id == user_groups.c.group_id)
+            .filter(user_groups.c.user_id == user_id)
+        )
+        if exclude_role_ids:
+            query = query.filter(Role.id.notin_(exclude_role_ids))
+        return [code for (code,) in query.all()]
+
+    def list_group_role_permissions_excluding_roles_for_group(
+        self,
+        user_id: UUID,
+        group_id: UUID,
+        exclude_role_ids: set[UUID],
+    ) -> List[str]:
+        query = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(Role, Role.id == role_permissions.c.role_id)
+            .join(group_roles, Role.id == group_roles.c.role_id)
+            .join(Group, Group.id == group_roles.c.group_id)
+            .join(user_groups, Group.id == user_groups.c.group_id)
+            .filter(
+                user_groups.c.user_id == user_id,
+                Group.id == group_id,
+            )
+        )
+        if exclude_role_ids:
+            query = query.filter(Role.id.notin_(exclude_role_ids))
+        return [code for (code,) in query.all()]
+
+    def list_permission_codes_granted_by_role_for_user(
+        self, user_id: UUID, role_id: UUID
+    ) -> List[str]:
+        direct = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(user_roles, user_roles.c.role_id == role_permissions.c.role_id)
+            .filter(
+                user_roles.c.user_id == user_id,
+                role_permissions.c.role_id == role_id,
+            )
+            .all()
+        )
+        via_group = (
+            self.session.query(Permission.code)
+            .join(role_permissions, Permission.id == role_permissions.c.permission_id)
+            .join(group_roles, group_roles.c.role_id == role_permissions.c.role_id)
+            .join(user_groups, user_groups.c.group_id == group_roles.c.group_id)
+            .filter(
+                user_groups.c.user_id == user_id,
+                role_permissions.c.role_id == role_id,
+            )
+            .all()
+        )
+        codes = {code for (code,) in direct} | {code for (code,) in via_group}
+        return sorted(codes)
+
     # ---------------------------------------------------------
     # User overrides
     # ---------------------------------------------------------
@@ -91,6 +186,19 @@ class SqlAlchemyPermissionQueryRepository(PermissionQueryPort):
             self.session.query(Permission)
             .join(role_permissions, Permission.id == role_permissions.c.permission_id)
             .filter(role_permissions.c.role_id == role_id)
+            .all()
+        )
+
+        return rows
+
+    def list_permissions_by_codes(self, codes: List[str]) -> List:
+        normalized = sorted({(code or "").strip() for code in codes if (code or "").strip()})
+        if not normalized:
+            return []
+
+        rows = (
+            self.session.query(Permission)
+            .filter(Permission.code.in_(normalized))
             .all()
         )
 

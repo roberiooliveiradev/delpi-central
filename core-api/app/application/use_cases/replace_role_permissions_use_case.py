@@ -14,6 +14,9 @@ class ReplaceRolePermissionsUseCase:
     def execute(self, role_id: str, permission_ids: list[str]):
 
         rid = UUID(role_id)
+        new_ids = {UUID(pid) for pid in permission_ids if pid}
+        previous_ids = set(self.uow.role_permissions.list_permission_ids(rid))
+        added_permission_ids = [str(pid) for pid in new_ids if pid not in previous_ids]
 
         # 1️⃣ Regra de negócio
         self.uow.role_permissions.replace_permissions_by_ids(
@@ -21,16 +24,16 @@ class ReplaceRolePermissionsUseCase:
             permission_ids
         )
 
-        # 2️⃣ Descobre usuários impactados
-        user_ids = set(self.uow.rbac_queries.list_user_ids_by_role(rid))
-        user_ids |= set(self.uow.rbac_queries.list_user_ids_by_group_role(rid))
+        payload: dict = {"roleId": role_id}
+        if added_permission_ids:
+            payload["addedPermissionIds"] = added_permission_ids
 
         # 4️⃣ Evento global de RBAC
         self.uow.collect_event(
             AdminChangedEvent(
                 entity="rbac",
                 action="role_permissions_replaced",
-                payload={"roleId": role_id},
+                payload=payload,
                 target_user_id=None,
             )
         )
