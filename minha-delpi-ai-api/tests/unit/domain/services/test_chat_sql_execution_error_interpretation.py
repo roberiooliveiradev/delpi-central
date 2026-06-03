@@ -78,6 +78,41 @@ def test_resolve_api_failure_for_sql_path():
     assert "ODBC" not in message
 
 
+def test_interpret_empty_body_sql_not_provided():
+    error = "Empty body — SQL not provided."
+
+    interpretation = ChatSqlExecutionErrorInterpretationService.interpret(error)
+
+    assert interpretation is not None
+    assert interpretation.error_type == "sql_missing_body"
+    assert "sql" in interpretation.summary.lower()
+
+
+def test_classifier_sql_missing_body_not_api_unavailable():
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": False,
+                "statusCode": 400,
+                "path": "/data/sql",
+                "actionId": "api_delpi.data.execute_readonly_sql",
+                "error": "Empty body — SQL not provided.",
+            },
+        }
+    ]
+
+    classification = ChatErrorHandlingClassifier.classify(
+        message="interprete o resultado da ultima consulta sql",
+        answer="Erro na consulta",
+        tool_calls=tool_calls,
+    )
+
+    assert classification is not None
+    assert classification.error_type == "sql_missing_body"
+    assert classification.api_failed is False
+
+
 def test_classifier_sql_invalid_object_when_http_ok_but_success_false():
     tool_calls = [
         {

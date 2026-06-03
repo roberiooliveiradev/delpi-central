@@ -56,6 +56,19 @@ class ChatExternalActionOrchestrationService:
         if ChatWebSearchIntentService.blocks_external_action_selection(message):
             return []
 
+        from app.application.services.chat_conversation_context_service import (
+            ChatConversationContextService,
+        )
+
+        if (
+            ChatAnalysisIntentService.is_data_interpretation_request(
+                message,
+                previous_messages,
+            )
+            and ChatConversationContextService.has_recent_tool_data(previous_messages)
+        ):
+            return []
+
         def _return_planned(planned: list[dict]) -> list[dict]:
             if on_stream_activity and planned:
                 from app.application.services.chat_stream_activity_service import (

@@ -66,6 +66,35 @@ def test_detects_data_interpretation_follow_up():
     )
 
 
+def test_detects_sql_result_interpretation_follow_up():
+    history = [
+        {
+            "role": "assistant",
+            "content": "Consulta SQL",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/data/sql",
+                            "humanizedSummary": {
+                                "titulo": "Consulta SQL",
+                                "linhas": ["A consulta retornou 25 registro(s)."],
+                            },
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "interprete o resultado da última consulta SQL",
+        history,
+    )
+
+
 def test_does_not_flag_data_interpretation_without_tool_history():
     assert not ChatAnalysisIntentService.is_data_interpretation_request(
         "explique os dados acima",

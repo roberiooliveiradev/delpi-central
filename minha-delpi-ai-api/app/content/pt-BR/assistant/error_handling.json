@@ -85,6 +85,23 @@
         "Tentar novamente"
       ]
     },
+    "sql_missing_body": {
+      "severity": "info",
+      "recoverable": true,
+      "title": "Consulta SQL não enviada",
+      "userMessage": "A execução foi chamada sem o texto da consulta. Cole o SQL, use «execute:» com o SELECT ou peça para interpretar o resultado da consulta anterior.",
+      "reasons": [
+        "o corpo da requisição não incluiu sql/query/statement",
+        "pedido de interpretação pode ter sido confundido com nova execução no banco"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Mostrar SQL",
+        "Executar consulta",
+        "Interpretar resultado",
+        "Tentar novamente"
+      ]
+    },
     "sql_syntax_error": {
       "severity": "warning",
       "recoverable": true,

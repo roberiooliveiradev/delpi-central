@@ -919,7 +919,22 @@ _GUIDE_CONVERSATION_HISTORY = [
     },
 ]
 
+_SQL_RESULT_HISTORY = [
+    {
+        "role": "assistant",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "metadata": {"ok": True, "path": "/data/sql"},
+                }
+            ]
+        },
+    }
+]
+
 DATA_INTERPRETATION_CASES = [
+    ("interprete o resultado da última consulta SQL", _SQL_RESULT_HISTORY, True),
     ("explique os dados acima", _GUIDE_CONVERSATION_HISTORY, True),
     ("o que isso quer dizer", _GUIDE_CONVERSATION_HISTORY, True),
     ("resume", _STOCK_CONVERSATION_HISTORY, True),

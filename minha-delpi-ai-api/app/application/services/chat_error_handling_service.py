@@ -332,6 +332,7 @@ class ChatErrorHandlingService:
         if classification.error_type in {
             "sql_invalid_object",
             "sql_syntax_error",
+            "sql_missing_body",
             "sql_execution_error",
         }:
             return True

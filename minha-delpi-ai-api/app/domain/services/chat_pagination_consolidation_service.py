@@ -357,7 +357,7 @@ class ChatPaginationConsolidationService:
             return None
 
         return {
-            "items": items[:500],
+            "items": items,
             "total": cls._as_int(root.get("total")) or len(items),
             "page": 1,
             "page_size": len(items),

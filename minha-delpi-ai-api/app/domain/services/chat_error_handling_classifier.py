@@ -111,6 +111,15 @@ class ChatErrorHandlingClassifier:
                 api_failed=False,
             )
 
+        if tool_summary.get("sql_missing_body"):
+            return cls._stub_classification(
+                "sql_missing_body",
+                action=tool_summary.get("action"),
+                params=tool_summary.get("params") or {},
+                attempted=tool_summary.get("attempted"),
+                api_failed=False,
+            )
+
         if tool_summary.get("sql_invalid_object"):
             return cls._stub_classification(
                 "sql_invalid_object",
@@ -384,6 +393,18 @@ class ChatErrorHandlingClassifier:
         return ""
 
     @classmethod
+    def _looks_like_sql_missing_body(cls, error_text: str, metadata: dict) -> bool:
+        path = str(metadata.get("path") or "").lower()
+        action_id = str(metadata.get("actionId") or metadata.get("action_id") or "").lower()
+
+        if "/data/sql" not in path and "sql" not in action_id:
+            return False
+
+        lowered = str(error_text or "").lower()
+
+        return "empty body" in lowered and "sql not provided" in lowered
+
+    @classmethod
     def _looks_like_sql_invalid_object(cls, error_text: str, metadata: dict) -> bool:
         path = str(metadata.get("path") or "").lower()
         action_id = str(metadata.get("actionId") or metadata.get("action_id") or "").lower()
@@ -463,6 +484,8 @@ class ChatErrorHandlingClassifier:
                     summary["sql_invalid_object"] = True
                 elif cls._looks_like_sql_syntax_error(error_text, metadata):
                     summary["sql_syntax_error"] = True
+                elif cls._looks_like_sql_missing_body(error_text, metadata):
+                    summary["sql_missing_body"] = True
                 elif status_code >= 500 or "unavailable" in error_text:
                     summary["api_unavailable"] = True
 
@@ -497,6 +520,9 @@ class ChatErrorHandlingClassifier:
                 return summary
 
             if summary.get("sql_invalid_object"):
+                return summary
+
+            if summary.get("sql_missing_body"):
                 return summary
 
             summary["api_unavailable"] = summary.get("api_unavailable", True)

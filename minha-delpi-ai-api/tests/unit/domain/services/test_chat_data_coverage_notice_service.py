@@ -96,7 +96,7 @@ def test_no_depth_notice_for_complete_flat_mp_structure():
     assert notice is None
 
 
-def test_table_preview_notice_when_rows_are_truncated():
+def test_no_notice_when_table_shows_all_returned_items():
     notice = ChatDataCoverageNoticeService.build(
         {"items": [{"code": str(i)} for i in range(120)], "total": 120},
         path="/products/search",
@@ -104,12 +104,11 @@ def test_table_preview_notice_when_rows_are_truncated():
             "type": "table",
             "title": "Busca",
             "columns": [{"key": "code", "label": "Código"}],
-            "rows": [{"code": str(i)} for i in range(100)],
+            "rows": [{"code": str(i)} for i in range(120)],
         },
     )
 
-    assert notice is not None
-    assert "100 linha(s) de 120" in notice["message"]
+    assert notice is None
 
 
 def test_no_notice_for_full_structure_response():

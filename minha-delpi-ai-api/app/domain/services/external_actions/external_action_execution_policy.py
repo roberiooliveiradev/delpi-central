@@ -1,6 +1,18 @@
 class ExternalActionExecutionPolicy:
+    """Sanitiza respostas de actions sem cortar listas de dados operacionais."""
+
     MAX_RESPONSE_STRING_LENGTH = 8000
-    MAX_LIST_ITEMS = 25
+
+    _SENSITIVE_KEYS = frozenset(
+        {
+            "access_token",
+            "refresh_token",
+            "token",
+            "client_secret",
+            "password",
+            "authorization",
+        }
+    )
 
     def validate(self, provider: dict, action: dict, arguments: dict) -> None:
         if not provider.get("enabled"):
@@ -57,19 +69,11 @@ class ExternalActionExecutionPolicy:
             return {
                 key: self._sanitize(item)
                 for key, item in value.items()
-                if key.lower()
-                not in {
-                    "access_token",
-                    "refresh_token",
-                    "token",
-                    "client_secret",
-                    "password",
-                    "authorization",
-                }
+                if key.lower() not in self._SENSITIVE_KEYS
             }
 
         if isinstance(value, list):
-            return [self._sanitize(item) for item in value[: self.MAX_LIST_ITEMS]]
+            return [self._sanitize(item) for item in value]
 
         if isinstance(value, str):
             return value[: self.MAX_RESPONSE_STRING_LENGTH]

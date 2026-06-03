@@ -452,6 +452,30 @@ class ChatIntentRouterService:
                 reason="explicit_text_task",
             )
 
+        if history and ChatAnalysisIntentService.is_data_interpretation_request(
+            normalized,
+            history,
+        ):
+            from app.application.services.chat_conversation_context_service import (
+                ChatConversationContextService,
+            )
+
+            if ChatConversationContextService.has_recent_tool_data(history):
+                return cls._with_decision(
+                    IntentRouteResult(
+                        intent="follow_up",
+                        sub_intent="data_interpretation",
+                        is_follow_up=True,
+                        confidence=0.9,
+                        requires_tool=False,
+                        requires_rag=False,
+                        requires_llm=True,
+                        priority_applied=5,
+                    ),
+                    decision="follow_up",
+                    reason="data_interpretation",
+                )
+
         sql_sub = cls._sql_sub_intent(normalized)
 
         if sql_sub:

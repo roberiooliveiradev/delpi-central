@@ -216,7 +216,7 @@ class ExternalActionResultPresenter:
             if isinstance(value, dict):
                 sub_items = [f"{k}: {v}" for k, v in value.items()]
                 label = self._humanize_key(key)
-                linhas.append(f"**{label}:** {', '.join(sub_items[:8])}")
+                linhas.append(f"**{label}:** {', '.join(sub_items)}")
             elif isinstance(value, list) and value:
                 linhas.append(f"**{self._humanize_key(key)}:** {len(value)} item(ns)")
             elif value is not None:
@@ -559,7 +559,7 @@ class ExternalActionResultPresenter:
         total = root.get("total", len(results))
         linhas = [f"**Total de colunas:** {total}"]
 
-        for item in results[:8]:
+        for item in results:
             if not isinstance(item, dict):
                 continue
 
@@ -706,7 +706,7 @@ class ExternalActionResultPresenter:
         table_name = str(path or "").rstrip("/").split("/")[-2]
         rows = []
 
-        for item in results[:100]:
+        for item in results:
             if not isinstance(item, dict):
                 continue
 
@@ -1792,13 +1792,13 @@ class ExternalActionResultPresenter:
             linhas.append(f"… e mais {len(detail_list) - 5} registro(s).")
 
         all_keys = {}
-        for item in detail_list[:100]:
+        for item in detail_list:
             for k in item:
                 if k not in all_keys:
                     all_keys[k] = True
 
         columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
-        rows = detail_list[:100]
+        rows = detail_list
 
         title = f"Dados do produto {code}"
         if "prices" in root:
@@ -1934,7 +1934,7 @@ class ExternalActionResultPresenter:
                         count=len(rows),
                     )
                 ],
-                "dados": {"rows": rows[:100]},
+                "dados": {"rows": rows},
             }
 
         return self._present_sql_dict_rows(rows)
@@ -1946,6 +1946,7 @@ class ExternalActionResultPresenter:
             return None
 
         rows = self._collect_sql_resultset_rows(resultsets)
+        record_total = self._sql_resultset_record_total(resultsets)
         title = self._sql_result_title(root, path)
 
         if not rows:
@@ -1956,9 +1957,13 @@ class ExternalActionResultPresenter:
                 "sqlRows": [],
             }
 
-        presented = self._present_sql_dict_rows(rows, title=title)
+        presented = self._present_sql_dict_rows(
+            rows,
+            title=title,
+            record_total=record_total,
+        )
         presented["dados"] = root
-        presented["sqlRows"] = rows[:100]
+        presented["sqlRows"] = rows
         return presented
 
     def _collect_sql_resultset_rows(self, resultsets: list) -> list[dict]:
@@ -1978,6 +1983,26 @@ class ExternalActionResultPresenter:
                     rows.append(row)
 
         return rows
+
+    @staticmethod
+    def _sql_resultset_record_total(resultsets: list) -> int | None:
+        best: int | None = None
+
+        for resultset in resultsets:
+            if not isinstance(resultset, dict):
+                continue
+
+            try:
+                total = int(resultset.get("total"))
+            except (TypeError, ValueError):
+                continue
+
+            if total < 0:
+                continue
+
+            best = max(best or 0, total)
+
+        return best
 
     def _sql_result_title(self, root: dict, path: str) -> str:
         if self._looks_like_inventory_below_minimum_sql_context(root, path):
@@ -2145,61 +2170,67 @@ class ExternalActionResultPresenter:
             "minimum_stock" in keys or "available_quantity" in keys
         )
 
-    def _present_sql_dict_rows(self, rows: list[dict], *, title: str | None = None) -> dict:
+    def _present_sql_dict_rows(
+        self,
+        rows: list[dict],
+        *,
+        title: str | None = None,
+        record_total: int | None = None,
+    ) -> dict:
         resolved_title = title or ExternalActionResponseContentService.get(
             "sql",
             "defaultTitle",
         )
+        shown = len(rows)
+        total_count = record_total if record_total is not None and record_total >= shown else shown
+
         if self._looks_like_production_schedule_row(rows[0]):
             linhas = [
                 self._format_production_schedule_row(row)
-                for row in rows[:25]
+                for row in rows
                 if isinstance(row, dict)
             ]
-
-            if len(rows) > 25:
-                linhas.append(
-                    ExternalActionResponseContentService.format(
-                        "sql",
-                        "moreProducts",
-                        count=len(rows) - 25,
-                    )
-                )
 
             return {
                 "titulo": resolved_title,
                 "linhas": linhas,
-                "dados": {"rows": rows[:100]},
-                "sqlRows": rows[:100],
+                "dados": {"rows": rows},
+                "sqlRows": rows,
             }
 
         linhas = [
             ExternalActionResponseContentService.format(
                 "sql",
                 "rowsCount",
-                count=len(rows),
+                count=total_count,
             )
         ]
 
-        for index, row in enumerate(rows[:8], start=1):
+        for index, row in enumerate(rows, start=1):
             if not isinstance(row, dict):
                 continue
 
             preview = ", ".join(
                 f"`{key}`={value}"
-                for key, value in list(row.items())[:6]
+                for key, value in row.items()
                 if value is not None
             )
             linhas.append(f"{index}. {preview}")
 
-        if len(rows) > 8:
-            linhas.append(f"… e mais {len(rows) - 8} registro(s).")
+        if total_count > shown:
+            linhas.append(
+                ExternalActionResponseContentService.format(
+                    "sql",
+                    "moreProducts",
+                    count=total_count - shown,
+                )
+            )
 
         return {
             "titulo": resolved_title,
             "linhas": linhas,
-            "dados": {"rows": rows[:100]},
-            "sqlRows": rows[:100],
+            "dados": {"rows": rows, "total": total_count, "shown": shown},
+            "sqlRows": rows,
         }
 
     def _looks_like_production_schedule_row(self, row: dict) -> bool:
@@ -2336,7 +2367,7 @@ class ExternalActionResultPresenter:
 
         linhas = []
 
-        for item in items[:25]:
+        for item in items:
             if not isinstance(item, dict):
                 continue
 
@@ -2374,7 +2405,7 @@ class ExternalActionResultPresenter:
         return {
             "titulo": titulo,
             "linhas": linhas or ["Nenhum produto encontrado."],
-            "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items[:25]]},
+            "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items]},
         }
 
     def _present_sale_orders(self, root: dict, items: list) -> dict:
@@ -2476,7 +2507,7 @@ class ExternalActionResultPresenter:
                 f"de nível BOM ({preview_codes}{suffix})."
             )
 
-        for op_code, op_desc, work_center in main_ops[:8]:
+        for op_code, op_desc, work_center in main_ops:
             center_part = f" no centro **{work_center}**" if work_center else ""
             label = f"Operação **{op_code}**" if op_code else "Operação"
             linhas.append(f"- {label}: {op_desc}{center_part}.")
@@ -2488,7 +2519,7 @@ class ExternalActionResultPresenter:
             "titulo": titulo,
             "linhas": linhas,
             "dados": {
-                "items": items[:100],
+                "items": items,
                 "product_code": product_code,
                 "total": len(items),
             },
@@ -2541,7 +2572,7 @@ class ExternalActionResultPresenter:
             if without_plan:
                 linhas.append(f"**{without_plan}** item(ns) sem plano cadastrado.")
 
-            for item in with_plan[:8]:
+            for item in with_plan:
                 if not isinstance(item, dict):
                     continue
 
@@ -2588,7 +2619,7 @@ class ExternalActionResultPresenter:
                 "titulo": titulo,
                 "linhas": linhas,
                 "dados": {
-                    "items": items[:100],
+                    "items": items,
                     "product_code": product_code,
                     "total": len(items),
                 },
@@ -2626,7 +2657,7 @@ class ExternalActionResultPresenter:
             "titulo": titulo,
             "linhas": linhas,
             "dados": {
-                "items": items[:100],
+                "items": items,
                 "product_code": product_code,
                 "total": len(items),
             },
@@ -2711,7 +2742,7 @@ class ExternalActionResultPresenter:
                 f"Total atual nesta consulta: **{self._format_num(total_current)}** un."
             )
 
-        linhas.extend(detail_lines[:8])
+        linhas.extend(detail_lines)
 
         if len(detail_lines) > 8:
             linhas.append(f"… e mais **{len(detail_lines) - 8}** posição(ões) de estoque.")
@@ -2720,7 +2751,7 @@ class ExternalActionResultPresenter:
             "titulo": titulo,
             "linhas": linhas,
             "dados": {
-                "items": items[:100],
+                "items": items,
                 "product_code": product_code,
                 "total": len(items),
             },
@@ -3154,13 +3185,13 @@ class ExternalActionResultPresenter:
             title = f"Pedidos em aberto do produto {code}"
 
         all_keys = {}
-        for item in detail_list[:100]:
+        for item in detail_list:
             for k in item:
                 if k not in all_keys:
                     all_keys[k] = True
 
         columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
-        rows = detail_list[:100]
+        rows = detail_list
 
         return {
             "type": "table",
@@ -3179,7 +3210,7 @@ class ExternalActionResultPresenter:
         ]
 
         rows = []
-        for item in items[:100]:
+        for item in items:
             if not isinstance(item, dict):
                 continue
             rows.append({
@@ -3206,7 +3237,7 @@ class ExternalActionResultPresenter:
             {"key": "stage", "label": "Etapa"},
         ]
 
-        rows = [item for item in items[:100] if isinstance(item, dict)]
+        rows = [item for item in items if isinstance(item, dict)]
 
         return {
             "type": "table",
@@ -3241,7 +3272,7 @@ class ExternalActionResultPresenter:
         has_extra = any(k in first for k in ("quantity", "level", "lot_quantity"))
 
         if has_extra:
-            flat_items = self._flatten_nested_field(items[:100])
+            flat_items = self._flatten_nested_field(items)
             first_flat = flat_items[0] if flat_items else {}
             all_keys = {}
             for item in flat_items:
@@ -3259,7 +3290,7 @@ class ExternalActionResultPresenter:
             ]
             rows = [
                 {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
-                for i in items[:100]
+                for i in items
                 if isinstance(i, dict)
             ]
 
@@ -3392,7 +3423,7 @@ class ExternalActionResultPresenter:
             columns = []
 
         if not columns:
-            flat_items = self._flatten_nested_field(items[:100])
+            flat_items = self._flatten_nested_field(items)
             first_flat = flat_items[0] if flat_items else first
             columns = [
                 self._enrich_column(key, self._humanize_key(key))
@@ -3409,7 +3440,7 @@ class ExternalActionResultPresenter:
             col_keys = {c["key"] for c in columns}
             rows = [
                 {k: item.get(k) for k in col_keys}
-                for item in items[:100]
+                for item in items
                 if isinstance(item, dict)
             ]
 
@@ -3889,7 +3920,7 @@ class ExternalActionResultPresenter:
             "type": "chart",
             "title": chart_title,
             "chartType": chart_type,
-            "data": rows[:100],
+            "data": rows,
             "config": config,
         }
 

@@ -76,6 +76,20 @@ class ChatSqlExecutionErrorInterpretationService:
 
         lowered = text.lower()
 
+        if "empty body" in lowered and "sql not provided" in lowered:
+            return SqlErrorInterpretation(
+                error_type="sql_missing_body",
+                summary=(
+                    "A API de SQL foi chamada sem o texto da consulta. "
+                    "Envie o SELECT no corpo da requisição ou peça para interpretar "
+                    "o resultado da última consulta, sem executar de novo."
+                ),
+                reasons=[
+                    "faltou o campo sql, query ou statement no JSON enviado à rota /data/sql",
+                    "o assistente pode ter tentado executar em vez de explicar dados já retornados",
+                ],
+            )
+
         if cls._looks_like_invalid_object(lowered):
             object_name = cls._extract_invalid_object_name(text)
             summary = (

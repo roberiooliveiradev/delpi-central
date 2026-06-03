@@ -96,6 +96,25 @@ class ChatAnalysisIntentService:
         "traduzir",
     )
 
+    _SQL_RESULT_INTERPRETATION_TERMS = (
+        "interprete o resultado",
+        "interprete resultado",
+        "interpreta o resultado",
+        "interpreta resultado",
+        "analise o resultado",
+        "analise resultado",
+        "explique o resultado",
+        "explique resultado",
+        "ultima consulta sql",
+        "última consulta sql",
+        "ultima consulta",
+        "última consulta",
+        "resultado da ultima consulta",
+        "resultado da última consulta",
+        "resultado da consulta sql",
+        "resultado da consulta",
+    )
+
     _DATA_REFERENCE_TERMS = (
         "dados acima",
         "resultado acima",
@@ -176,6 +195,10 @@ class ChatAnalysisIntentService:
         if not normalized:
             return False
 
+        if previous_messages and cls._has_recent_successful_tool_data(previous_messages):
+            if cls._is_sql_result_interpretation_request(normalized):
+                return True
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,
@@ -228,6 +251,32 @@ class ChatAnalysisIntentService:
                     "o resultado",
                     "a tabela",
                     "a consulta",
+                )
+            ):
+                return True
+
+        return False
+
+    @classmethod
+    def _is_sql_result_interpretation_request(cls, normalized: str) -> bool:
+        if any(term in normalized for term in cls._SQL_RESULT_INTERPRETATION_TERMS):
+            return True
+
+        if any(
+            term in normalized
+            for term in ("interprete", "interpreta", "analise", "analisa")
+        ):
+            if "resultado" in normalized and (
+                "consulta" in normalized or "sql" in normalized
+            ):
+                return True
+
+            if any(
+                term in normalized
+                for term in (
+                    "ultima consulta",
+                    "última consulta",
+                    "consulta anterior",
                 )
             ):
                 return True

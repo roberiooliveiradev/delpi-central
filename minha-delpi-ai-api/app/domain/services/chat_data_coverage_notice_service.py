@@ -4,9 +4,8 @@ from math import ceil
 
 
 class ChatDataCoverageNoticeService:
-    """Detecta respostas parciais (paginação, profundidade, prévia) para o chat."""
+    """Detecta respostas parciais (paginação API, profundidade, SQL paginado) para o chat."""
 
-    MAX_TABLE_ROWS = 100
     _INTERMEDIATE_PRODUCT_TYPES = frozenset(
         {"PA", "PI", "AI", "SP", "ME", "MC", "GR", "EM", "BN"}
     )
@@ -33,6 +32,12 @@ class ChatDataCoverageNoticeService:
         details: dict = {}
 
         if isinstance(root, dict):
+            sql_notice = cls._sql_resultset_notice(root)
+
+            if sql_notice:
+                messages.append(sql_notice["message"])
+                details["sqlResultset"] = sql_notice
+
             pagination = cls._pagination_notice(root, path=path)
 
             if pagination:
@@ -81,15 +86,6 @@ class ChatDataCoverageNoticeService:
             messages.append(depth_notice["message"])
             details["depth"] = depth_notice
 
-        table_notice = cls._table_preview_notice(
-            table_presentation or presentation,
-            root if isinstance(root, dict) else None,
-        )
-
-        if table_notice:
-            messages.append(table_notice["message"])
-            details["tablePreview"] = table_notice
-
         if not messages:
             return None
 
@@ -118,15 +114,48 @@ class ChatDataCoverageNoticeService:
         return f"{body}\n\n{block}"
 
     @classmethod
+    def _sql_resultset_notice(cls, root: dict) -> dict | None:
+        resultsets = root.get("resultsets")
+
+        if not isinstance(resultsets, list):
+            return None
+
+        for resultset in resultsets:
+            if not isinstance(resultset, dict):
+                continue
+
+            data = resultset.get("data")
+
+            if not isinstance(data, list):
+                continue
+
+            shown = len(data)
+            total = cls._as_int(resultset.get("total"))
+
+            if total is None or total <= shown:
+                continue
+
+            return {
+                "message": (
+                    f"Consulta SQL parcial: {shown} de {total} registro(s) nesta resposta da API. "
+                    "Peça a próxima página, aumente page_size ou refine a consulta para ver todos."
+                ),
+                "shown": shown,
+                "total": total,
+            }
+
+        return None
+
+    @classmethod
     def _resolve_kind(cls, details: dict) -> str:
+        if details.get("sqlResultset"):
+            return "preview"
+
         if details.get("pagination") or details.get("structurePagination") or details.get("stockPagination"):
             return "pagination"
 
         if details.get("depth"):
             return "depth"
-
-        if details.get("tablePreview"):
-            return "preview"
 
         return "partial"
 
@@ -274,54 +303,6 @@ class ChatDataCoverageNoticeService:
                     return True
 
         return False
-
-    @classmethod
-    def _table_preview_notice(
-        cls,
-        presentation: dict | None,
-        root: dict | None,
-    ) -> dict | None:
-        if not isinstance(presentation, dict) or presentation.get("type") != "table":
-            return None
-
-        rows = presentation.get("rows")
-
-        if not isinstance(rows, list) or not rows:
-            return None
-
-        shown = len(rows)
-        total = None
-
-        if isinstance(root, dict):
-            total = cls._as_int(root.get("total"))
-
-            items = root.get("items")
-
-            if isinstance(items, list) and (total is None or total < len(items)):
-                total = len(items)
-
-        if shown < cls.MAX_TABLE_ROWS and (total is None or total <= shown):
-            return None
-
-        if total is not None and total > shown:
-            return {
-                "message": (
-                    f"A tabela exibe {shown} linha(s) de {total} registro(s) retornados "
-                    f"(prévia limitada a {cls.MAX_TABLE_ROWS})."
-                ),
-                "shown": shown,
-                "total": total,
-            }
-
-        if shown >= cls.MAX_TABLE_ROWS:
-            return {
-                "message": (
-                    f"A tabela exibe no máximo {cls.MAX_TABLE_ROWS} linhas nesta visualização."
-                ),
-                "shown": shown,
-            }
-
-        return None
 
     @classmethod
     def _context_label(cls, path: str, context: str) -> str:
