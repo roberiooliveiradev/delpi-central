@@ -85,6 +85,15 @@ class ChatFeedbackContextService:
             else {}
         )
 
+        efficiency = cls._efficiency_flags(
+            intent_routing=intent_routing,
+            router_metrics=router_metrics,
+            metadata=metadata,
+            admin_debug=admin_debug,
+            tool_calls=tool_calls,
+            rag=rag,
+        )
+
         return {
             "sessionId": session_id,
             "intent": intent_routing.get("intent") or router_metrics.get("intent"),
@@ -124,6 +133,66 @@ class ChatFeedbackContextService:
                 or text_assistant.get("type")
                 or text_metrics.get("type")
             ),
+            # Eficiência / qualidade de resposta (Playbook §30)
+            "directAnswer": efficiency["directAnswer"],
+            "fallback": efficiency["fallback"],
+            "toolSkipped": efficiency["toolSkipped"],
+            "ragSkipped": efficiency["ragSkipped"],
+            "llmSkipped": efficiency["llmSkipped"],
+            "simpleTurn": efficiency["simpleTurn"],
+        }
+
+    @classmethod
+    def _efficiency_flags(
+        cls,
+        *,
+        intent_routing: dict[str, Any],
+        router_metrics: dict[str, Any],
+        metadata: dict[str, Any],
+        admin_debug: dict[str, Any],
+        tool_calls: list[Any],
+        rag: dict[str, Any],
+    ) -> dict[str, bool]:
+        """Deriva métricas do §30 (resposta direta, fallback, tools/RAG/LLM evitados)."""
+        intent = str(intent_routing.get("intent") or router_metrics.get("intent") or "")
+        sub_intent = str(intent_routing.get("subIntent") or router_metrics.get("subIntent") or "")
+        decision = str(intent_routing.get("decision") or router_metrics.get("decision") or "")
+        flags = intent_routing.get("flags") if isinstance(intent_routing.get("flags"), list) else []
+        requires_llm = intent_routing.get("requiresLlm")
+
+        pipeline = admin_debug.get("pipeline") if isinstance(admin_debug.get("pipeline"), dict) else {}
+        used_tool = bool(tool_calls)
+
+        # Resposta direta: o turno foi resolvido sem LLM principal.
+        direct_answer = requires_llm is False
+        llm_skipped = requires_llm is False
+
+        # Tools evitadas: respondemos direto, sem chamar ferramentas/actions.
+        tool_skipped = direct_answer and not used_tool
+
+        if "skipRag" in pipeline:
+            rag_skipped = bool(pipeline.get("skipRag"))
+        else:
+            rag_skipped = not cls._rag_used(rag)
+
+        fallback = (
+            decision == "llm_fallback"
+            or "low_confidence_fallback" in flags
+            or (intent == "clarification" and sub_intent == "unclear")
+        )
+
+        simple_turn = (not used_tool) and (
+            intent in {"small_talk", "utility", "identity", "self_help"}
+            or (intent == "clarification" and sub_intent == "unclear")
+        )
+
+        return {
+            "directAnswer": bool(direct_answer),
+            "fallback": bool(fallback),
+            "toolSkipped": bool(tool_skipped),
+            "ragSkipped": bool(rag_skipped),
+            "llmSkipped": bool(llm_skipped),
+            "simpleTurn": bool(simple_turn),
         }
 
     @classmethod

@@ -138,6 +138,11 @@ class ChatSessionMemoryDirectAnswerService:
             parts.append("priorizar respostas em tabela quando couber")
         elif instructions.get("responseFormat") == "topics":
             parts.append("responder em tópicos")
+        elif instructions.get("responseFormat") == "text":
+            parts.append("responder em texto puro, sem tabelas")
+
+        if instructions.get("toolsPolicy") == "on_request":
+            parts.append("não usar ferramentas ou consultas sem você pedir")
 
         if instructions.get("finalVersionOnly") == "true":
             parts.append("entregar só a versão final em correções, sem explicação longa")

@@ -21,6 +21,7 @@ class ChatIntentRouterMetricsService:
             "requiresWeb": bool(route.get("requiresWeb")),
             "requiresRag": bool(route.get("requiresRag")),
             "requiresCanvas": bool(route.get("requiresCanvas")),
+            "requiresLlm": route.get("requiresLlm"),
             "ambiguous": bool(route.get("ambiguous")),
             "decision": router.get("decision") or route.get("decision"),
             "reason": router.get("reason") or route.get("reason"),
@@ -99,7 +100,12 @@ class ChatIntentRouterMetricsService:
         mixed = 0
         web = 0
         text_skipped_tools = 0
+        simple_turns = 0
+        fallbacks = 0
+        direct_answers = 0
         recent: list[dict[str, Any]] = []
+
+        simple_intents = {"small_talk", "utility", "identity", "self_help"}
 
         for entry in entries:
             snapshot = entry.get("snapshot") if isinstance(entry.get("snapshot"), dict) else entry
@@ -110,6 +116,7 @@ class ChatIntentRouterMetricsService:
             intent = str(snapshot.get("intent") or "unknown")
             by_intent[intent] += 1
             decision = str(snapshot.get("decision") or "").strip()
+            sub_intent = str(snapshot.get("subIntent") or "").strip()
 
             if decision:
                 by_decision[decision] += 1
@@ -125,6 +132,16 @@ class ChatIntentRouterMetricsService:
 
             if decision == "skip_tools":
                 text_skipped_tools += 1
+
+            # Playbook §30 — eficiência de turnos simples
+            if intent in simple_intents or (intent == "clarification" and sub_intent == "unclear"):
+                simple_turns += 1
+
+            if decision == "llm_fallback" or (intent == "clarification" and sub_intent == "unclear"):
+                fallbacks += 1
+
+            if snapshot.get("requiresLlm") is False:
+                direct_answers += 1
 
         for entry in entries[:12]:
             snapshot = entry.get("snapshot")
@@ -151,6 +168,9 @@ class ChatIntentRouterMetricsService:
             "mixedTaskCount": mixed,
             "webSearchCount": web,
             "textSkipToolsCount": text_skipped_tools,
+            "simpleTurnCount": simple_turns,
+            "fallbackCount": fallbacks,
+            "directAnswerCount": direct_answers,
             "byIntent": dict(by_intent),
             "byDecision": dict(by_decision),
             "recent": recent,

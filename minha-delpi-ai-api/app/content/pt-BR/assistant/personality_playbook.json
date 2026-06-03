@@ -422,6 +422,30 @@
     {
       "id": "memory_stale_context",
       "label": "Manteve contexto que queria limpar"
+    },
+    {
+      "id": "simple_question_missed",
+      "label": "Não entendeu uma pergunta simples"
+    },
+    {
+      "id": "unnecessary_tool",
+      "label": "Usou ferramenta sem necessidade"
+    },
+    {
+      "id": "too_slow",
+      "label": "Demorou demais para responder"
+    },
+    {
+      "id": "technical_diagnostic_shown",
+      "label": "Mostrou diagnóstico técnico"
+    },
+    {
+      "id": "unclear_not_admitted",
+      "label": "Não disse que não entendeu"
+    },
+    {
+      "id": "chip_irrelevant",
+      "label": "Botões não ajudaram"
     }
   ],
   "feedbackThanks": {

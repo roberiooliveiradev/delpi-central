@@ -46,5 +46,12 @@ class ChatResponseMetadataService:
                         "toolPath": snapshot.get("toolPath"),
                         "presentation": snapshot.get("presentationType"),
                         "durationMs": snapshot.get("durationMs"),
+                        # Playbook §30 — eficiência da resposta
+                        "directAnswer": snapshot.get("directAnswer"),
+                        "fallback": snapshot.get("fallback"),
+                        "toolSkipped": snapshot.get("toolSkipped"),
+                        "ragSkipped": snapshot.get("ragSkipped"),
+                        "llmSkipped": snapshot.get("llmSkipped"),
+                        "simpleTurn": snapshot.get("simpleTurn"),
                     }
                 )

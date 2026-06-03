@@ -1,3 +1,6 @@
+from app.domain.services.chat_behavior_instruction_service import (
+    ChatBehaviorInstructionService,
+)
 from app.domain.services.chat_conversation_memory_service import (
     ChatConversationMemoryService,
 )
@@ -87,6 +90,69 @@ def test_revoke_preferences():
 
     assert snapshot.get("preferencesRevoked") is True
     assert snapshot.get("userPreferences") == {}
+
+
+def test_revoke_preferences_volte_ao_normal():
+    snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
+        {
+            "behaviorInstructions": {"tone": "formal"},
+            "userPreferences": {"behavior": {"tone": "formal"}},
+        },
+        message="volte ao normal",
+    )
+
+    assert snapshot.get("preferencesRevoked") is True
+    assert snapshot.get("userPreferences") == {}
+
+
+def test_revoke_ack_direct_answer():
+    ack = ChatUserPreferenceManagerService.build_ack_direct_answer("volte ao normal")
+
+    assert ack is not None
+    assert "padrão" in ack
+
+    ack2 = ChatUserPreferenceManagerService.build_ack_direct_answer(
+        "esqueça essa preferência"
+    )
+
+    assert ack2 is not None
+
+
+def test_text_only_preference_detected_and_labeled():
+    detected = ChatBehaviorInstructionService.detect("sempre em txt")
+
+    assert detected.get("responseFormat") == "text"
+    assert detected.get("scope") == "session"
+
+    snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
+        {"behaviorInstructions": detected},
+        message="sempre em txt",
+    )
+    labels = snapshot.get("preferencesAppliedLabels") or []
+
+    assert "Respostas em texto puro" in labels
+
+
+def test_tools_on_request_preference_is_persistent():
+    detected = ChatBehaviorInstructionService.detect("não use ferramentas sem eu pedir")
+
+    assert detected.get("toolsPolicy") == "on_request"
+    assert detected.get("scope") == "session"
+
+    snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
+        {"behaviorInstructions": detected},
+        message="não use ferramentas sem eu pedir",
+    )
+    labels = snapshot.get("preferencesAppliedLabels") or []
+
+    assert "Não usar ferramentas sem pedir" in labels
+
+    ack = ChatUserPreferenceManagerService.build_ack_direct_answer(
+        "não use ferramentas sem eu pedir"
+    )
+
+    assert ack is not None
+    assert "ferramentas" in ack
 
 
 def test_unified_prompt_block():

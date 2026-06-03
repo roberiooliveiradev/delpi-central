@@ -53,6 +53,23 @@ class ChatBehaviorInstructionService:
         r"\bem\s+t[oó]picos\b",
         r"\bresponda\s+em\s+t[oó]picos\b",
     )
+    _TEXT_FORMAT_PATTERNS = (
+        r"\bsempre\s+em\s+txt\b",
+        r"\bsempre\s+em\s+texto\b",
+        r"\bresponda\s+em\s+texto\b",
+        r"\bresponda\s+em\s+txt\b",
+        r"\bsempre\s+s[oó]\s+texto\b",
+        r"\bsempre\s+s[oó]\s+em\s+texto\b",
+    )
+    # «não use ferramentas sem eu pedir» — preferência inerentemente persistente.
+    _TOOLS_ON_REQUEST_PATTERNS = (
+        r"\bn[aã]o\s+use\s+ferramentas?\s+sem\s+eu\s+pedir\b",
+        r"\bn[aã]o\s+use\s+ferramentas?\s+sem\s+pedir\b",
+        r"\bn[aã]o\s+chame\s+ferramentas?\s+sem\s+eu\s+pedir\b",
+        r"\bn[aã]o\s+consulte\s+sem\s+eu\s+pedir\b",
+        r"\bn[aã]o\s+use\s+ferramentas?\s+sem\s+autoriza",
+        r"\bs[oó]\s+use\s+ferramentas?\s+(?:quando|se)\s+eu\s+pedir\b",
+    )
 
     @classmethod
     def detect(cls, message: str | None) -> dict[str, str]:
@@ -84,6 +101,13 @@ class ChatBehaviorInstructionService:
 
         if any(re.search(pattern, normalized) for pattern in cls._TOPICS_PATTERNS):
             instructions["responseFormat"] = "topics"
+
+        if any(re.search(pattern, normalized) for pattern in cls._TEXT_FORMAT_PATTERNS):
+            instructions["responseFormat"] = "text"
+
+        if any(re.search(pattern, normalized) for pattern in cls._TOOLS_ON_REQUEST_PATTERNS):
+            instructions["toolsPolicy"] = "on_request"
+            persistent = True
 
         if persistent and instructions:
             instructions["scope"] = "session"

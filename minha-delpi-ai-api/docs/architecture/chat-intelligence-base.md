@@ -219,6 +219,24 @@ O gate **não altera a resposta** — apenas classifica e controla a visibilidad
 
 Conteúdo: `assistant/unclear_requests.json`. Testes: `test_chat_simple_turn_gate_service.py`, `test_chat_unclear_request_service.py`, casos `SIMPLE_TURN_GATE_CASES` / `UNCLEAR_REQUEST_CASES` em `chat_intelligence_regression_cases.py`.
 
+### Preferências de sessão e métricas de eficiência (jun/2026)
+
+Playbook de inteligência (seções 16, 30, 31). Complementa a base de memória/preferências já existente.
+
+**Preferências (§16)** — `ChatBehaviorInstructionService` + `ChatUserPreferenceManagerService`:
+
+| Preferência | Detecção | Efeito |
+|-------------|----------|--------|
+| «sempre em txt» / «responda em texto» | `responseFormat: text` (escopo sessão) | Label «Respostas em texto puro» no bloco de preferências + ack |
+| «não use ferramentas sem eu pedir» | `toolsPolicy: on_request` (inerentemente persistente) | Label «Não usar ferramentas sem pedir» injetado no prompt; o agente operacional respeita a política |
+| «volte ao normal» / «esqueça essa preferência» | `_REVOKE_RE` (apply_to_snapshot + ack) | Limpa todas as preferências de sessão e confirma o retorno ao padrão |
+
+**Métricas de eficiência (§30)** — `ChatFeedbackContextService._efficiency_flags` deriva por resposta os campos `directAnswer`, `fallback`, `toolSkipped`, `ragSkipped`, `llmSkipped`, `simpleTurn`, expostos em `responseMetadata` e espelhados em `adminDebug.responseQuality`. Agregação em janela: `ChatIntentRouterMetricsService.aggregate_snapshots` soma `simpleTurnCount`, `fallbackCount`, `directAnswerCount` (depende de `requiresLlm` no snapshot do roteador).
+
+**Feedback (§31)** — novos motivos em `personality_playbook.json`: `simple_question_missed`, `unnecessary_tool`, `too_slow`, `technical_diagnostic_shown`, `unclear_not_admitted` e correção de `chip_irrelevant` (referenciado em `feedbackPrimaryReasonIds`, antes ausente do array). Regenerar MFE: `python scripts/generate_chat_feedback_reasons_ts.py --write`.
+
+Testes: `test_chat_user_preference_manager_service.py`, `test_chat_feedback_efficiency_metrics.py`, `test_chat_feedback_content_service.py`.
+
 ### Perguntas utilitárias — hora, data, ano (maio/2026)
 
 Perguntas curtas como «que horas são?», «que dia é hoje?», «qual o ano?» → `ChatUtilityDirectAnswerService` com padrões em `utility_answers.json`:

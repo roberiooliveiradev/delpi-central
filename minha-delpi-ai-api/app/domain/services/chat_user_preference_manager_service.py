@@ -9,13 +9,17 @@ from typing import Any
 class ChatUserPreferenceManagerService:
     _REVOKE_RE = re.compile(
         r"\b(?:n[aã]o\s+use\s+mais\b.*\bprefer|remov(?:a|e)\b.*\bprefer|"
-        r"limpe?\s+as\s+prefer|esque[cç]a\s+as\s+prefer)\w*\b",
+        r"limpe?\s+as\s+prefer|esque[cç]a\s+(?:as|essa|a)\s+prefer|"
+        r"volte?\s+ao\s+normal|volte?\s+ao\s+padr[aã]o|"
+        r"comportamento\s+padr[aã]o)\w*\b",
         re.IGNORECASE,
     )
 
     _LABELS: dict[str, str] = {
         "responseFormat:table": "Respostas em tabela",
         "responseFormat:topics": "Respostas em tópicos",
+        "responseFormat:text": "Respostas em texto puro",
+        "toolsPolicy:on_request": "Não usar ferramentas sem pedir",
         "tone:formal": "Tom formal",
         "tone:direct": "Tom direto",
         "tone:simple": "Linguagem simples",
@@ -84,6 +88,12 @@ class ChatUserPreferenceManagerService:
 
     @classmethod
     def build_ack_direct_answer(cls, message: str | None) -> str | None:
+        if cls._should_revoke((message or "").strip().lower()):
+            return (
+                "Combinado. Voltei ao comportamento padrão e esqueci as preferências "
+                "que você tinha definido nesta conversa."
+            )
+
         from app.domain.services.chat_behavior_instruction_service import (
             ChatBehaviorInstructionService,
         )
@@ -286,6 +296,12 @@ class ChatUserPreferenceManagerService:
             if behavior.get("responseFormat") == "topics":
                 labels.append(cls._LABELS["responseFormat:topics"])
 
+            if behavior.get("responseFormat") == "text":
+                labels.append(cls._LABELS["responseFormat:text"])
+
+            if behavior.get("toolsPolicy") == "on_request":
+                labels.append(cls._LABELS["toolsPolicy:on_request"])
+
             tone = behavior.get("tone")
 
             if tone == "formal":
@@ -360,6 +376,12 @@ class ChatUserPreferenceManagerService:
 
         if instructions.get("responseFormat") == "topics":
             parts.append("responder em tópicos")
+
+        if instructions.get("responseFormat") == "text":
+            parts.append("responder em texto puro, sem tabelas")
+
+        if instructions.get("toolsPolicy") == "on_request":
+            parts.append("não usar ferramentas/consultas sem você pedir")
 
         if instructions.get("finalVersionOnly") == "true":
             parts.append("entregar só a versão final quando for correção")

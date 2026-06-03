@@ -91,6 +91,9 @@ export const CHAT_FEEDBACK_REASONS: ChatFeedbackReason[] = [
   { id: "text_wrong_format", label: "Não seguiu formato" },
   { id: "text_unclear", label: "Faltou clareza" },
   { id: "text_bad_translation", label: "Tradução ruim" },
+  { id: "text_incomplete_summary", label: "Resumo incompleto" },
+  { id: "text_confusing_explanation", label: "Explicação confusa" },
+  { id: "text_missing_context", label: "Faltou contexto" },
   { id: "text_correction_artificial", label: "Texto ficou artificial" },
   { id: "text_correction_too_formal", label: "Formal demais" },
   { id: "text_correction_too_informal", label: "Informal demais" },
@@ -106,6 +109,12 @@ export const CHAT_FEEDBACK_REASONS: ChatFeedbackReason[] = [
   { id: "memory_wrong_attachment", label: "Confundiu arquivo" },
   { id: "memory_repeated_question", label: "Perguntou algo que já informei" },
   { id: "memory_stale_context", label: "Manteve contexto que queria limpar" },
+  { id: "simple_question_missed", label: "Não entendeu uma pergunta simples" },
+  { id: "unnecessary_tool", label: "Usou ferramenta sem necessidade" },
+  { id: "too_slow", label: "Demorou demais para responder" },
+  { id: "technical_diagnostic_shown", label: "Mostrou diagnóstico técnico" },
+  { id: "unclear_not_admitted", label: "Não disse que não entendeu" },
+  { id: "chip_irrelevant", label: "Botões não ajudaram" },
 ];
 
 export const CHAT_FEEDBACK_PRIMARY_REASON_IDS: string[] = [
