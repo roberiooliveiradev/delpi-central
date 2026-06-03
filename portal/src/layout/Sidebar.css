@@ -498,6 +498,16 @@
     bottom: 0;
     width: 100%;
     margin-top: 8px;
+    /* Chrome mobile: backdrop-filter + scroll geram “manchas” de composição */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface);
+  }
+
+  .sidebar-expand-btn {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--surface);
   }
 }
 

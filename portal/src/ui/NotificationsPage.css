@@ -6,10 +6,7 @@
   margin: 0 auto;
   padding: 26px 28px 40px;
   box-sizing: border-box;
-  /* Evita que .content (flex) estique a página e distorça as abas */
-  align-self: flex-start;
   align-content: start;
-  min-height: 0;
 }
 
 .notifications-page__header {
