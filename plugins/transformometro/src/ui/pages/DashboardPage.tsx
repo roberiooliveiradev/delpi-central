@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  BarChart3,
-  CalendarDays,
   Clock,
   Coins,
   Database,
@@ -54,6 +52,7 @@ import {
   type DashboardResumo,
 } from "../../data/api/transformometroApi";
 import { formatCurrency, formatDecimal, formatPercent } from "../../utils/format";
+import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 
 const CHART_COLORS = [
@@ -69,7 +68,8 @@ const INVESTIMENTO_COLOR = "#ff6b6b";
 const CHART_HEIGHT = 300;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
-  onNavigate?: (path: string) => void;
+  pathname?: string;
+  onNavigate: (path: string) => void;
 };
 
 type Filters = {
@@ -197,7 +197,7 @@ function ChartCard({
   );
 }
 
-export function DashboardPage({ getAccessToken, onNavigate }: Props) {
+export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [resumo, setResumo] = useState<DashboardResumo | null>(null);
   const [evolucao, setEvolucao] = useState<DashboardEvolucaoItem[]>([]);
@@ -327,7 +327,7 @@ export function DashboardPage({ getAccessToken, onNavigate }: Props) {
           <button
             type="button"
             className="ds-link-btn"
-            onClick={() => onNavigate?.(buildProcessoPath(row.processo_id))}
+            onClick={() => onNavigate(buildProcessoPath(row.processo_id))}
           >
             {row.codigo_processo}
           </button>
@@ -342,7 +342,7 @@ export function DashboardPage({ getAccessToken, onNavigate }: Props) {
           <button
             type="button"
             className="ds-link-btn"
-            onClick={() => onNavigate?.(buildProcessoPath(row.processo_id))}
+            onClick={() => onNavigate(buildProcessoPath(row.processo_id))}
           >
             {row.nome_processo}
           </button>
@@ -384,13 +384,15 @@ export function DashboardPage({ getAccessToken, onNavigate }: Props) {
       {
         key: "liquida",
         header: "Líquida no recorte",
-        render: (row) => formatCurrency(row.economia_liquida_mes),
+        render: (row) => {
+          const moneyClass =
+            (row.economia_liquida_mes ?? 0) < 0
+              ? "tm-table__money--negative"
+              : "tm-table__money--positive";
+          return <span className={moneyClass}>{formatCurrency(row.economia_liquida_mes)}</span>;
+        },
         sortable: true,
         sortValue: (row) => row.economia_liquida_mes ?? 0,
-        className: (row) =>
-          (row.economia_liquida_mes ?? 0) < 0
-            ? "tm-table__money--negative"
-            : "tm-table__money--positive",
       },
       {
         key: "bruta",
@@ -417,7 +419,7 @@ export function DashboardPage({ getAccessToken, onNavigate }: Props) {
         <PageHeader
           title="Dashboard Transformômetro"
           subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
-          currentPath="/"
+          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
           onNavigate={onNavigate}
         />
         <LoadingActivityCard
@@ -436,7 +438,7 @@ export function DashboardPage({ getAccessToken, onNavigate }: Props) {
       <PageHeader
         title="Dashboard Transformômetro"
         subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
-        currentPath="/"
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
         onNavigate={onNavigate}
         actions={
           <>
