@@ -24,6 +24,17 @@ class ChatSessionMemoryDirectAnswerService:
     ) -> str | None:
         working_memory = (workspace_context or {}).get("workingMemory") or {}
 
+        from app.domain.services.chat_episodic_memory_service import (
+            ChatEpisodicMemoryService,
+        )
+
+        episodic_answer = ChatEpisodicMemoryService.build_recall_direct_answer(
+            working_memory
+        )
+
+        if episodic_answer:
+            return episodic_answer
+
         ambiguity = working_memory.get("memoryAmbiguity")
 
         if isinstance(ambiguity, dict):

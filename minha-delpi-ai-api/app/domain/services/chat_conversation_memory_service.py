@@ -22,6 +22,7 @@ from app.domain.services.chat_context_compression_service import (
 from app.domain.services.chat_procedural_memory_provider_service import (
     ChatProceduralMemoryProviderService,
 )
+from app.domain.services.chat_episodic_memory_service import ChatEpisodicMemoryService
 from app.domain.services.chat_semantic_memory_retriever_service import (
     ChatSemanticMemoryRetrieverService,
 )
@@ -119,6 +120,17 @@ class ChatConversationMemoryService:
             snapshot,
             message=message,
         )
+        snapshot = ChatEpisodicMemoryService.apply_pre_turn(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+        )
+
+        if snapshot.get("episodicRecallMissing") and not snapshot.get("memoryAmbiguity"):
+            snapshot["memoryAmbiguity"] = {
+                "kind": "episodic_recall",
+                "message": "episódio não encontrado",
+            }
 
         return snapshot
 
@@ -167,11 +179,17 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             message=message,
         )
+        snapshot = ChatEpisodicMemoryService.apply_post_turn(
+            snapshot,
+            message=message,
+            answer=answer,
+        )
         return snapshot
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
+            ChatEpisodicMemoryService.format_prompt_block(snapshot),
             ChatContextCompressionService.format_prompt_block(snapshot),
             ChatProceduralMemoryProviderService.format_prompt_block(snapshot),
             ChatSemanticMemoryRetrieverService.format_prompt_block(snapshot),
@@ -237,6 +255,7 @@ class ChatConversationMemoryService:
         base["semanticMemory"] = ChatSemanticMemoryRetrieverService.compact_for_admin_debug(
             snapshot
         )
+        base["episodicMemory"] = ChatEpisodicMemoryService.compact_for_admin_debug(snapshot)
 
         return base
 

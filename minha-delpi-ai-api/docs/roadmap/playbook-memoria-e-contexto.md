@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–5 concluídas** — até memória semântica (RAG enriquecido, ranking, procedural hints; reutiliza busca híbrida/rerank de `SearchKnowledgeUseCase`). Fases 6–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–6 concluídas** — inclui memória episódica em `contextSnapshot` (recall, gravação, exclusão). Fases 7–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2165,6 +2165,8 @@ Métricas:
 **Fase 4 entregue (03/06/2026):** `ChatConversationSummarizerService` + `ChatContextCompressionService` (§17–18, histórico longo).
 
 **Fase 5 entregue (03/06/2026):** memória semântica — `ChatSemanticMemoryRetrieverService`, ranking, procedural hints, integração RAG no turno.
+
+**Fase 6 entregue (03/06/2026):** `ChatEpisodicMemoryService` — episódios, retomada, exclusão (§20).
 
 ### Fase 1 — Estado de sessão
 

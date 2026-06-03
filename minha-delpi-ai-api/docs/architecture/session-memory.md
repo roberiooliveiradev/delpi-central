@@ -34,6 +34,7 @@ Histórico + mensagem
 | `ChatContextRankingService` | Ranking ponderado de trechos para o prompt (§22) |
 | `ChatProceduralMemoryProviderService` | Hints de playbook/procedimento por tarefa ativa (§21) |
 | `ChatSemanticMemoryService` | Ponte com `RagContextService` (híbrido + rerank já existentes) |
+| `ChatEpisodicMemoryService` | Episódios no `contextSnapshot`, recall e gravação por tarefa (§20) |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
