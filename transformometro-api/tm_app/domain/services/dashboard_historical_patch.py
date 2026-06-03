@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import calendar
 from datetime import date
 from typing import List, Optional
 
@@ -7,6 +8,7 @@ from tm_app.domain.services.dashboard_calculator import (
     CalculationContext,
     DashboardCalculatorService,
 )
+from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
 
 _ORIGINAL_MONTH_RESULT = DashboardCalculatorService._calculate_review_month_result
 
@@ -40,6 +42,139 @@ def _calculate_review_month_result_net_after_investments(
     row["investimento_total_mes"] = investimento_total_mes
     row["economia_liquida_mes"] = float(row.get("economia_bruta") or 0) - investimento_total_mes
     return row
+
+
+def _resource_link_competence_factor(
+    self: DashboardCalculatorService,
+    resource: dict,
+    link: dict,
+    competencia_date: date,
+) -> float:
+    """Retorna o fator de reconhecimento do recurso na competência.
+
+    mensal_cheio: sempre 1.0 quando o recurso/vínculo é elegível no mês.
+    proporcional_dias: dias efetivos de uso no mês / total de dias do mês.
+    """
+    base_competencia = (
+        self._empty_to_none(resource.get("base_competencia")) or "mensal_cheio"
+    ).lower()
+    if base_competencia != "proporcional_dias":
+        return 1.0
+
+    month_start = self._month_start(competencia_date)
+    month_end = date(
+        month_start.year,
+        month_start.month,
+        calendar.monthrange(month_start.year, month_start.month)[1],
+    )
+
+    start_candidates = [month_start]
+    for raw_date in (
+        link.get("data_inicio_uso"),
+        resource.get("data_inicio_vigencia"),
+    ):
+        parsed = self._parse_date(raw_date)
+        if parsed:
+            start_candidates.append(parsed)
+
+    end_candidates = [month_end]
+    for raw_date in (
+        link.get("data_fim_uso"),
+        resource.get("data_fim_vigencia"),
+    ):
+        parsed = self._parse_date(raw_date)
+        if parsed:
+            end_candidates.append(parsed)
+
+    effective_start = max(start_candidates)
+    effective_end = min(end_candidates)
+
+    if effective_end < effective_start:
+        return 0.0
+
+    active_days = (effective_end - effective_start).days + 1
+    total_days = (month_end - month_start).days + 1
+    if total_days <= 0:
+        return 0.0
+
+    return max(0.0, min(1.0, active_days / total_days))
+
+
+def _calculate_shared_resource_cost_for_review_with_base_competencia(
+    self: DashboardCalculatorService,
+    review: Optional[dict],
+    context: CalculationContext,
+    competencia_date: date,
+) -> float:
+    if not review:
+        return 0.0
+
+    review_id = self._empty_to_none(review.get("revisao_id"))
+    if not review_id:
+        return 0.0
+
+    total = 0.0
+    current_links = context.vinculos_by_revisao.get(review_id, [])
+
+    for link in current_links:
+        if not self._is_link_eligible(link, competencia_date):
+            continue
+
+        resource_id = self._empty_to_none(link.get("recurso_compartilhado_id"))
+        resource = context.recursos_by_id.get(resource_id or "")
+        if not resource or not self._is_resource_eligible(resource, competencia_date):
+            continue
+
+        custos = context.custos_by_recurso.get(resource_id or "", [])
+        total_value = resolve_recurso_valor_mensal(resource, custos, competencia_date)
+        if total_value <= 0:
+            continue
+
+        allocation_criteria = (
+            self._empty_to_none(resource.get("criterio_rateio")) or "igualitario"
+        ).lower()
+
+        eligible_links = self._get_eligible_links_for_resource(
+            resource_id=resource_id or "",
+            vinculos_by_revisao=context.vinculos_by_revisao,
+            competencia_date=competencia_date,
+        )
+
+        if not eligible_links:
+            continue
+
+        current_factor = _resource_link_competence_factor(
+            self,
+            resource,
+            link,
+            competencia_date,
+        )
+        if current_factor <= 0:
+            continue
+
+        if allocation_criteria == "por_peso":
+            total_weight = sum(
+                (self._to_float(item.get("peso_rateio")) or 1.0)
+                for item in eligible_links
+            )
+            current_weight = self._to_float(link.get("peso_rateio")) or 1.0
+            if total_weight > 0:
+                total += total_value * (current_weight / total_weight) * current_factor
+            continue
+
+        if allocation_criteria == "por_revisoes_ativas":
+            eligible_review_ids = {
+                self._empty_to_none(item.get("revisao_id"))
+                for item in eligible_links
+                if self._empty_to_none(item.get("revisao_id"))
+            }
+            divisor = max(len(eligible_review_ids), 1)
+            total += (total_value / divisor) * current_factor
+            continue
+
+        total += (total_value / max(len(eligible_links), 1)) * current_factor
+
+    return total
 
 
 def _calculate_average_roi_from_net_rows(
@@ -201,6 +336,7 @@ def _calculate_monthly_series_historical(
 
 def apply_historical_revision_patch() -> None:
     DashboardCalculatorService._calculate_review_month_result = _calculate_review_month_result_net_after_investments
+    DashboardCalculatorService._calculate_shared_resource_cost_for_review = _calculate_shared_resource_cost_for_review_with_base_competencia
     DashboardCalculatorService._calculate_monthly_series = _calculate_monthly_series_historical
     DashboardCalculatorService._calculate_average_roi = _calculate_average_roi_from_net_rows
 
