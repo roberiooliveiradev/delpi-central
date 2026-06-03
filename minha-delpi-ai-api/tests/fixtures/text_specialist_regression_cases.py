@@ -1,4 +1,4 @@
-"""Casos T1–T28 — especialista em textos / editor textual (playbook §46)."""
+"""Casos T1–T32 — especialista em textos / editor textual (playbook §46)."""
 
 from __future__ import annotations
 
@@ -123,5 +123,36 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
         "message": "melhore esse texto",
         "pure": True,
         "category": "rewrite",
+    },
+    {
+        "id": "T29",
+        "message": "de agora em diante corrija sem explicar",
+        "pure": True,
+        "preference": "deliver_final_only",
+    },
+    {
+        "id": "T30",
+        "message": "extraia as decisões da reunião do anexo",
+        "pure": True,
+        "category": "extract_decisions",
+        "subtype": "text_extract_decisions",
+        "intent": "text.extract_decisions",
+        "attachment_ids": ["att-4"],
+    },
+    {
+        "id": "T31",
+        "message": "crie um glossário dos termos técnicos abaixo",
+        "pure": True,
+        "category": "documentation",
+        "subtype": "text_glossary",
+        "intent": "text.documentation.create",
+    },
+    {
+        "id": "T32",
+        "message": "deixe mais cordial o texto da resposta anterior",
+        "pure": True,
+        "category": "tone_adjust",
+        "subtype": "text_tone_adjust",
+        "intent": "text.change_tone",
     },
 ]

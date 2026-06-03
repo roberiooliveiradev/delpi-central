@@ -78,7 +78,28 @@ class ChatTextTaskIntentService:
         ),
         "message": (r"\bwhatsapp\b", r"\bteams\b", r"\bmensagem\s+curta\b"),
         "write": (r"\bescreva\b", r"\bredija\b", r"\bmonte\b", r"\bcrie\b", r"\bgere\b", r"\belabore\b"),
-        "tone_adjust": (r"\bmais\s+firme\b", r"\bmenos\s+agressiv", r"\bajuste\s+o\s+tom\b"),
+        "tone_adjust": (
+            r"\bdeixe\s+mais\s+formal\b",
+            r"\bdeixe\s+menos\s+formal\b",
+            r"\bdeixe\s+mais\s+cordial\b",
+            r"\bdeixe\s+mais\s+firme\b",
+            r"\bdeixe\s+mais\s+direto\b",
+            r"\bdeixe\s+mais\s+humano\b",
+            r"\bdeixe\s+mais\s+t[eé]cnic",
+            r"\bdeixe\s+mais\s+simples\b",
+            r"\bdeixe\s+mais\s+executiv",
+            r"\bdeixe\s+mais\s+comercial\b",
+            r"\bdeixe\s+mais\s+educad",
+            r"\bdeixe\s+mais\s+curto\b",
+            r"\bdeixe\s+mais\s+detalhad",
+            r"\bmenos\s+agressiv",
+            r"\bajuste\s+o\s+tom\b",
+        ),
+        "extract_decisions": (
+            r"\bdecis[oõ]es\b",
+            r"\bextraia\s+decis",
+            r"\blistar\s+decis",
+        ),
         "extract_actions": (r"\bpendências\b", r"\bpendencias\b", r"\bpróximos\s+passos\b", r"\bproximos\s+passos\b"),
         "letter": (
             r"\bcarta\b",
@@ -201,6 +222,7 @@ class ChatTextTaskIntentService:
             "message",
             "write",
             "tone_adjust",
+            "extract_decisions",
             "extract_actions",
         )
 
@@ -223,6 +245,9 @@ class ChatTextTaskIntentService:
 
         normalized = (message or "").strip().lower()
         category = cls.classify(message)
+
+        if cls._is_session_preference_declaration(message):
+            return True
 
         if not category:
             return False
@@ -320,6 +345,7 @@ class ChatTextTaskIntentService:
             "document",
             "tone_adjust",
             "extract_actions",
+            "extract_decisions",
             "message",
             "write",
         }:
@@ -327,9 +353,28 @@ class ChatTextTaskIntentService:
 
         return bool(
             re.search(
-                r"\b(texto|portugu|ortografia|gramática|gramatica|e-?mail|carta|ata|comunicado|traduza|resuma|documentação|documentacao|explique|eli5|formal|autoriza)\b",
+                r"\b(texto|portugu|ortografia|gramática|gramatica|e-?mail|carta|ata|comunicado|traduza|resuma|documentação|documentacao|explique|eli5|formal|autoriza|corrij|reescrev|glossário|glossario|faq|memorando|pendências|pendencias|decis)\b",
                 normalized,
             )
+        )
+
+    @classmethod
+    def _is_session_preference_declaration(cls, message: str | None) -> bool:
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
+
+        normalized = (message or "").strip().lower()
+
+        if not normalized:
+            return False
+
+        if not ChatTextTaskPreferenceService.detect_from_message(message):
+            return False
+
+        return any(
+            re.search(pattern, normalized)
+            for pattern in ChatTextTaskPreferenceService._PERSISTENT_MARKERS
         )
 
     @classmethod

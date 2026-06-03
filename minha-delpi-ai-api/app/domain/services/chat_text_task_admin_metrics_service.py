@@ -7,6 +7,36 @@ from typing import Any
 
 
 class ChatTextTaskAdminMetricsService:
+    TEXT_FEEDBACK_REASON_IDS: frozenset[str] = frozenset(
+        {
+            "text_meaning_changed",
+            "text_artificial",
+            "text_wrong_tone",
+            "text_too_formal",
+            "text_too_informal",
+            "text_too_long",
+            "text_too_short",
+            "text_code_not_preserved",
+            "text_name_not_preserved",
+            "text_invented_info",
+            "text_wrong_format",
+            "text_unclear",
+            "text_bad_translation",
+            "text_incomplete_summary",
+            "text_confusing_explanation",
+            "text_missing_context",
+            "text_correction_changed_meaning",
+            "text_correction_artificial",
+            "text_correction_style_lost",
+            "text_correction_altered_code",
+            "email_wrong_tone",
+            "email_artificial",
+            "email_invented_signature",
+            "email_invented_info",
+            "email_weak_subject",
+        }
+    )
+
     @classmethod
     def snapshot_from_metadata(cls, metadata: dict[str, Any] | None) -> dict[str, Any] | None:
         if not isinstance(metadata, dict):
@@ -202,7 +232,99 @@ class ChatTextTaskAdminMetricsService:
         if token.startswith("text.rewrite") or token.startswith("text.formalize"):
             return "rewrites"
 
-        if "checklist" in token or "table" in token:
+        if "checklist" in token or "table" in token or "extract" in token:
             return "structured"
 
         return "other"
+
+    @classmethod
+    def aggregate_feedback_rows(
+        cls,
+        rows: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        positive = 0
+        negative = 0
+        by_reason: Counter[str] = Counter()
+        by_subtype: Counter[str] = Counter()
+        recent: list[dict[str, Any]] = []
+
+        for row in rows:
+            if not cls._is_text_feedback_row(row):
+                continue
+
+            rating = int(row.get("rating") or 0)
+
+            if rating == 1:
+                positive += 1
+            elif rating == -1:
+                negative += 1
+
+            reason = str(row.get("reason") or "").strip()
+
+            if reason and reason in cls.TEXT_FEEDBACK_REASON_IDS:
+                by_reason[reason] += 1
+
+            context = (
+                row.get("contextMetadata")
+                if isinstance(row.get("contextMetadata"), dict)
+                else {}
+            )
+            subtype = str(context.get("textTaskSubtype") or "").strip()
+
+            if subtype:
+                by_subtype[subtype] += 1
+
+            if len(recent) < 12:
+                recent.append(
+                    {
+                        "messageId": row.get("messageId"),
+                        "rating": rating,
+                        "reason": reason or None,
+                        "textTaskSubtype": subtype or None,
+                        "textTaskIntent": context.get("textTaskIntent"),
+                        "createdAt": row.get("createdAt"),
+                    }
+                )
+
+        total = positive + negative
+
+        return {
+            "feedbackTotal": total,
+            "feedbackPositive": positive,
+            "feedbackNegative": negative,
+            "feedbackByReason": dict(by_reason),
+            "feedbackBySubtype": dict(by_subtype),
+            "feedbackRecent": recent,
+        }
+
+    @classmethod
+    def _is_text_feedback_row(cls, row: dict[str, Any]) -> bool:
+        context = (
+            row.get("contextMetadata")
+            if isinstance(row.get("contextMetadata"), dict)
+            else {}
+        )
+        intent = str(context.get("intent") or "").strip().lower()
+        subtype = str(context.get("textTaskSubtype") or "").strip()
+        reason = str(row.get("reason") or "").strip()
+
+        if subtype or intent in {"text_task", "email_task"}:
+            return True
+
+        if reason in cls.TEXT_FEEDBACK_REASON_IDS:
+            return True
+
+        if reason.startswith("text_") or reason.startswith("text_correction_"):
+            return True
+
+        return False
+
+    @classmethod
+    def merge_usage_and_feedback(
+        cls,
+        usage: dict[str, Any],
+        feedback: dict[str, Any],
+    ) -> dict[str, Any]:
+        merged = dict(usage)
+        merged["feedback"] = feedback
+        return merged

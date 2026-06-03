@@ -68,6 +68,17 @@ class ChatFeedbackContextService:
             if isinstance(metadata.get("sqlAdvancedMetrics"), dict)
             else {}
         )
+        text_task = metadata.get("textTask") if isinstance(metadata.get("textTask"), dict) else {}
+        text_assistant = (
+            metadata.get("textAssistant")
+            if isinstance(metadata.get("textAssistant"), dict)
+            else {}
+        )
+        text_metrics = (
+            metadata.get("textTaskMetrics")
+            if isinstance(metadata.get("textTaskMetrics"), dict)
+            else {}
+        )
 
         return {
             "sessionId": session_id,
@@ -92,6 +103,21 @@ class ChatFeedbackContextService:
             else None,
             "sqlBlocked": sql_metrics.get("blocked") if "blocked" in sql_metrics else sql_advanced.get("blocked"),
             "sqlEmptyResult": sql_metrics.get("emptyResult"),
+            "textTaskSubtype": (
+                text_task.get("subtype")
+                or text_assistant.get("subtype")
+                or text_metrics.get("subtype")
+            ),
+            "textTaskIntent": (
+                text_task.get("intent")
+                or text_assistant.get("intent")
+                or text_metrics.get("intent")
+            ),
+            "textTaskType": (
+                text_task.get("type")
+                or text_assistant.get("type")
+                or text_metrics.get("type")
+            ),
         }
 
     @classmethod

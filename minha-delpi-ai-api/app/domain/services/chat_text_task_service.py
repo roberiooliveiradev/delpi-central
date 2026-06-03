@@ -23,6 +23,7 @@ class ChatTextTaskService:
         "write": "compose",
         "tone_adjust": "tone",
         "extract_actions": "extract_actions",
+        "extract_decisions": "extract_decisions",
         "document": "document",
         "minutes": "minutes",
         "announcement": "announcement",
@@ -65,6 +66,11 @@ class ChatTextTaskService:
         "text_adapt_audience": "text.adapt_audience",
         "text_compare": "text.compare_versions",
         "text_extract_actions": "text.extract_actions",
+        "text_extract_decisions": "text.extract_decisions",
+        "text_faq": "text.documentation.create",
+        "text_glossary": "text.documentation.create",
+        "text_release_notes": "text.documentation.create",
+        "text_procedure": "text.documentation.create",
         "text_tone_adjust": "text.change_tone",
         "text_table": "text.table.create",
         "text_memorandum": "text.memorandum.create",
@@ -82,20 +88,38 @@ class ChatTextTaskService:
         )
 
     @classmethod
-    def classify(cls, message: str | None) -> dict[str, Any]:
+    def classify(
+        cls,
+        message: str | None,
+        *,
+        workspace_context: dict | None = None,
+    ) -> dict[str, Any]:
         category = ChatTextTaskIntentService.classify(message) or "compose"
         normalized = (message or "").strip().lower()
         subtype = cls._resolve_subtype(category, normalized)
         tone = cls._detect_tone(normalized)
-        deliver_final_only = cls._wants_final_only(normalized)
+        from app.domain.services.chat_text_task_preference_service import (
+            ChatTextTaskPreferenceService,
+        )
+
+        session_prefs = ChatTextTaskPreferenceService.get_active_prefs(workspace_context)
+        deliver_final_only = cls._wants_final_only(normalized) or bool(
+            session_prefs.get("deliver_final_only")
+        )
         source = cls._detect_source(normalized)
         audience = cls._detect_audience(normalized)
 
-        if cls._wants_three_versions(normalized):
+        if cls._wants_three_versions(normalized) or session_prefs.get("three_versions"):
             subtype = "text_three_versions"
 
-        if cls._wants_before_after(normalized):
+        if cls._wants_before_after(normalized) or session_prefs.get("show_diff"):
             subtype = "text_before_after"
+
+        if session_prefs.get("tone_formal") and not tone:
+            tone = "formal"
+
+        if session_prefs.get("email_direct") and category == "email":
+            tone = tone or "direct"
 
         return {
             "type": cls._CATEGORY_TO_TYPE.get(category, "compose"),
@@ -245,7 +269,7 @@ class ChatTextTaskService:
             if not (workspace_context or {}).get("textTaskMode"):
                 return None
 
-        ctx = cls.classify(message)
+        ctx = cls.classify(message, workspace_context=workspace_context)
         ctx["suggestions"] = cls.default_suggestions(ctx.get("subtype"))
 
         payload: dict[str, Any] = {"textTask": ctx}
@@ -365,6 +389,12 @@ class ChatTextTaskService:
     @staticmethod
     def _resolve_subtype(category: str, normalized: str) -> str:
         if category == "review":
+            if "decis" in normalized and "pend" not in normalized:
+                return "text_extract_decisions"
+
+            if "pend" in normalized:
+                return "text_extract_actions"
+
             return "text_review_quality"
 
         if category == "correct":
@@ -392,7 +422,10 @@ class ChatTextTaskService:
             if "executivo" in normalized:
                 return "text_summarize_executive"
 
-            if "pend" in normalized or "decis" in normalized:
+            if "decis" in normalized and "pend" not in normalized:
+                return "text_extract_decisions"
+
+            if "pend" in normalized:
                 return "text_extract_actions"
 
             return "text_summarize"
@@ -416,8 +449,17 @@ class ChatTextTaskService:
             return "text_report"
 
         if category == "documentation":
+            if "glossário" in normalized or "glossario" in normalized:
+                return "text_glossary"
+
             if "faq" in normalized:
-                return "text_documentation"
+                return "text_faq"
+
+            if "release notes" in normalized or "changelog" in normalized:
+                return "text_release_notes"
+
+            if "procedimento" in normalized or "instrução de trabalho" in normalized:
+                return "text_procedure"
 
             return "text_documentation"
 
@@ -475,6 +517,9 @@ class ChatTextTaskService:
 
             return "text_compose"
 
+        if category == "extract_decisions":
+            return "text_extract_decisions"
+
         if category == "extract_actions":
             return "text_extract_actions"
 
@@ -511,7 +556,14 @@ class ChatTextTaskService:
             "text_explain": "- Explicação clara; preserve precisão técnica.",
             "text_eli5": "- Linguagem simples e analogias; não distorça o conceito.",
             "text_action_plan": "- Tabela ação/responsável/prazo; não invente responsáveis.",
+            "text_extract_actions": "- Liste pendências e próximos passos; não invente responsáveis.",
+            "text_extract_decisions": "- Separe decisões tomadas de pendências e observações.",
+            "text_faq": "- Formato FAQ: pergunta/resposta objetiva.",
+            "text_glossary": "- Glossário: termo + definição simples.",
+            "text_release_notes": "- Release notes: versão, novidades, correções, breaking changes.",
+            "text_procedure": "- Procedimento: objetivo, pré-requisitos, passos numerados.",
             "text_adapt_audience": "- Adapte vocabulário e tom ao público pedido.",
+            "text_tone_adjust": "- Ajuste apenas o tom pedido; preserve sentido e dados.",
             "text_summarize": "- Resumo fiel; não invente fatos.",
             "text_compare": "- Seções Antes/Depois/O que mudou ou tabela comparativa.",
             "text_table": "- Entregue tabela markdown com cabeçalhos.",

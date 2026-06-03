@@ -214,6 +214,33 @@ class ChatWorkingMemoryService:
                         )
                     )
 
+        text_raw = behavior.get("textTaskWriting")
+
+        if text_raw:
+            import json
+
+            try:
+                text_prefs = json.loads(text_raw) if isinstance(text_raw, str) else text_raw
+            except json.JSONDecodeError:
+                text_prefs = {}
+
+            if isinstance(text_prefs, dict) and text_prefs:
+                from app.domain.services.chat_text_task_preference_service import (
+                    ChatTextTaskPreferenceService,
+                )
+
+                text_block = ChatTextTaskPreferenceService.format_prompt_block(
+                    {"workingMemory": {"preferences": {"textTask": text_prefs}}}
+                )
+
+                if text_block:
+                    lines.append(
+                        text_block.replace(
+                            "Preferências textuais da sessão:",
+                            "- Texto:",
+                        )
+                    )
+
         tone = behavior.get("tone")
 
         if tone == "direct":

@@ -110,6 +110,38 @@ export function AdminTextTaskMetrics({
             </div>
           ) : null}
 
+          {summary.feedback && summary.feedback.feedbackTotal > 0 ? (
+            <div className="mdc-admin-drawing-metrics__status-list">
+              <h4>Feedback textual (§47)</h4>
+              <ul>
+                <li>
+                  <span>Total avaliações</span>
+                  <strong>{formatNumber(summary.feedback.feedbackTotal)}</strong>
+                </li>
+                <li>
+                  <span>Negativos</span>
+                  <strong>{formatNumber(summary.feedback.feedbackNegative)}</strong>
+                </li>
+                <li>
+                  <span>Positivos</span>
+                  <strong>{formatNumber(summary.feedback.feedbackPositive)}</strong>
+                </li>
+              </ul>
+              {Object.keys(summary.feedback.feedbackByReason).length > 0 ? (
+                <ul>
+                  {Object.entries(summary.feedback.feedbackByReason)
+                    .sort((left, right) => right[1] - left[1])
+                    .map(([reason, count]) => (
+                      <li key={reason}>
+                        <span>{reason}</span>
+                        <strong>{formatNumber(count)}</strong>
+                      </li>
+                    ))}
+                </ul>
+              ) : null}
+            </div>
+          ) : null}
+
           {summary.byFamily && Object.keys(summary.byFamily).length > 0 ? (
             <div className="mdc-admin-drawing-metrics__status-list">
               <h4>Por família (playbook §47)</h4>

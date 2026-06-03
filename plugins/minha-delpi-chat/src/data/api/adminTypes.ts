@@ -381,6 +381,24 @@ export type AdminTextTaskRecentItem = {
   qualityPassed?: boolean | null;
 };
 
+export type AdminTextTaskFeedbackRecentItem = {
+  messageId?: string | null;
+  rating?: number | null;
+  reason?: string | null;
+  textTaskSubtype?: string | null;
+  textTaskIntent?: string | null;
+  createdAt?: string | null;
+};
+
+export type AdminTextTaskFeedbackSummary = {
+  feedbackTotal: number;
+  feedbackPositive: number;
+  feedbackNegative: number;
+  feedbackByReason: Record<string, number>;
+  feedbackBySubtype: Record<string, number>;
+  feedbackRecent: AdminTextTaskFeedbackRecentItem[];
+};
+
 export type AdminTextTaskSummary = {
   windowHours: number;
   since: string;
@@ -396,6 +414,7 @@ export type AdminTextTaskSummary = {
   byIntent?: Record<string, number>;
   byAudience?: Record<string, number>;
   byFamily?: Record<string, number>;
+  feedback?: AdminTextTaskFeedbackSummary;
   recent: AdminTextTaskRecentItem[];
 };
 

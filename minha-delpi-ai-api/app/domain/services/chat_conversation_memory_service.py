@@ -187,6 +187,12 @@ class ChatConversationMemoryService:
             if active:
                 applied.append(f"textCorrection:{key}")
 
+        text_prefs = snapshot.get("textTaskPreferences") or {}
+
+        for key, active in text_prefs.items():
+            if active:
+                applied.append(f"textTask:{key}")
+
         return applied
 
     @classmethod

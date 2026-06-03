@@ -16,7 +16,7 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 | `ChatTextTaskService` | Subtipos, supplement de prompt, `textTask` metadata |
 | `ChatTextQualityValidator` | Validação pós-resposta → `textTaskQuality` |
 | `ChatTextTaskFollowUpService` | Chips `textTaskFollowUpSuggestions` |
-| `ChatTextTaskPreferenceService` | Preferências de sessão (memória de trabalho) |
+| `ChatTextTaskPreferenceService` | Preferências de sessão (merge persistente, «de agora em diante») |
 | `ChatTextTaskMixedTurnService` | Turno misto: dados consultados + rascunho de e-mail |
 | `ChatTextTaskCanvasService` | Atualização da lousa + histórico `textCanvasVersions` |
 | `ChatTextTaskAdminMetricsService` | Snapshot em auditoria e agregado admin |
@@ -32,7 +32,7 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 
 ## Admin
 
-- `GET /admin/metrics/text-tasks/summary?hours=168` — agregado de `audit_metadata.textTaskMetrics`
+- `GET /admin/metrics/text-tasks/summary?hours=168` — uso (`textTaskMetrics`) + feedback textual agregado
 - MFE: `AdminTextTaskMetrics` na aba Métricas
 
 ## Metadata
@@ -43,4 +43,4 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 
 ## Testes
 
-`tests/fixtures/text_specialist_regression_cases.py` (T1–T28), `test_text_assistant.py`, `scripts/run_text_specialist_validation.sh`, `scripts/smoke_text_editor_e2e.py`, `scripts/smoke_text_editor_http.py`
+`tests/fixtures/text_specialist_regression_cases.py` (T1–T32), `test_chat_text_task_preference_service.py`, `scripts/run_text_specialist_validation.sh`, `scripts/smoke_text_editor_e2e.py`, `scripts/smoke_text_editor_http.py`

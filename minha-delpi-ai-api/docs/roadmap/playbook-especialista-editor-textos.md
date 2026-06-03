@@ -1,6 +1,6 @@
 # Playbook — Especialista em Textos, E-mails, Cartas, Atas e Documentação
 
-**Status (03/06/2026):** Implementado no chat base (Fases 1–7) — contexto (`ChatTextContextResolverService`), tabela/memorando/conversa, checklist §41, métricas `byFamily`, regressão T1–T28, smokes HTTP. Ver [`../architecture/text-specialist.md`](../architecture/text-specialist.md).
+**Status (03/06/2026):** Implementado no chat base (Fases 1–7) — preferências persistentes §20, `text.extract_decisions`, subtipos FAQ/glossário/release notes, feedback admin §47, regressão T1–T32. Backlog: `TextArtifactService`, E2E LLM estável. Ver [`../architecture/text-specialist.md`](../architecture/text-specialist.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: chat comum, escrita assistida, correção textual, reescrita, documentação, explicação técnica, ELI5, adaptação de tom, contexto e produtividade administrativa.
