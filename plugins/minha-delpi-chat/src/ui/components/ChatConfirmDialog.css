@@ -1,21 +1,6 @@
-.mdc-chat-confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  display: grid;
-  place-items: center;
-  background: var(--mdc-overlay-backdrop);
-  backdrop-filter: blur(5px);
-  padding: var(--mdc-space-4);
-}
-
 .mdc-chat-confirm {
   width: min(100%, 28rem);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
   color: var(--mdc-text);
-  box-shadow: var(--mdc-shadow-lg);
   overflow: hidden;
 }
 

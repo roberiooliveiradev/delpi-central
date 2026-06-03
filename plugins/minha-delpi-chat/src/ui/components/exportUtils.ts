@@ -1,4 +1,5 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
+import { chatAlert } from "../utils/chatNativeDialogs";
 import { exportChartElementToPng } from "./chartPngExport";
 import { treePresentationToTable } from "./treePresentationUtils";
 
@@ -34,7 +35,7 @@ export function exportToXlsx(presentation: TablePresentation) {
     })
     .catch((error) => {
       console.error("[exportToXlsx]", error);
-      window.alert("Não foi possível exportar XLSX. Tente novamente.");
+      chatAlert("Não foi possível exportar XLSX. Tente novamente.");
     });
 }
 
@@ -63,7 +64,7 @@ export function exportToPdf(presentation: TablePresentation) {
     })
     .catch((error) => {
       console.error("[exportToPdf]", error);
-      window.alert("Não foi possível exportar PDF. Tente novamente.");
+      chatAlert("Não foi possível exportar PDF. Tente novamente.");
     });
 }
 

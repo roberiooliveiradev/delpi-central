@@ -24,6 +24,9 @@ import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectHome } from "../components/ChatProjectHome";
 import { ChatSidebar, type ChatSidebarView } from "../components/ChatSidebar";
 import { useConfirmDialog } from "../components/useConfirmDialog";
+import { usePromptDialog } from "../components/usePromptDialog";
+import { useAlertDialog } from "../components/useAlertDialog";
+import { setChatAlertHandler } from "../utils/chatNativeDialogs";
 import {
   useChatShortcutPrompt,
   type ShortcutPromptOptions,
@@ -144,6 +147,21 @@ export function ChatPage({
   onOpenAdmin,
 }: ChatPageProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { prompt, dialog: promptDialog } = usePromptDialog();
+  const { alert: showAlert, dialog: alertDialog } = useAlertDialog();
+
+  useEffect(() => {
+    setChatAlertHandler((message, title) => {
+      void showAlert({ message, title });
+    });
+
+    return () => {
+      setChatAlertHandler((message, title) => {
+        const prefix = title ? `${title}\n\n` : "";
+        window.alert(`${prefix}${message}`);
+      });
+    };
+  }, [showAlert]);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(() =>
     getInitialSelectedProjectId(initialRoute),
   );
@@ -1431,7 +1449,10 @@ export function ChatPage({
     const validFiles = files.filter((file) => file.size > 0);
 
     if (validFiles.length < files.length) {
-      window.alert("Arquivos vazios não podem ser anexados.");
+      void showAlert({
+        title: "Anexo inválido",
+        message: "Arquivos vazios não podem ser anexados.",
+      });
     }
 
     const nextAttachments: ChatInputAttachment[] = validFiles.map((file) => ({
@@ -1920,6 +1941,8 @@ export function ChatPage({
       onDropCapture={handleChatDrop}
     >
       {confirmDialog}
+      {promptDialog}
+      {alertDialog}
       <ChatAddContextDialog
         open={addContextDialogOpen}
         onCancel={() => setAddContextDialogOpen(false)}
@@ -2144,10 +2167,13 @@ export function ChatPage({
                 return;
               }
 
-              const nextName = window.prompt(
-                "Novo nome do projeto",
-                selectedProject.name,
-              )?.trim();
+              const nextName = await prompt({
+                title: "Renomear projeto",
+                label: "Nome do projeto",
+                defaultValue: selectedProject.name,
+                placeholder: "Ex.: Qualidade, Engenharia…",
+                confirmLabel: "Salvar",
+              });
 
               if (nextName && nextName !== selectedProject.name) {
                 await editProject(selectedProject.id, { name: nextName });

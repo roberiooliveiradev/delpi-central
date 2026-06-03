@@ -1,4 +1,5 @@
 import { readMdcCssVar } from "../theme/mdcCssVars";
+import { chatAlert } from "../utils/chatNativeDialogs";
 
 function sanitizeFilename(name: string): string {
   return name
@@ -128,7 +129,7 @@ export function exportChartElementToPng(
   const target = resolveChartExportTarget(root);
 
   if (!target) {
-    window.alert("Não encontrei o gráfico para exportar como PNG.");
+    chatAlert("Não encontrei o gráfico para exportar como PNG.");
     return;
   }
 
@@ -165,7 +166,9 @@ export function exportChartElementToPng(
 
   img.onerror = () => {
     URL.revokeObjectURL(objectUrl);
-    window.alert("Não foi possível gerar o PNG do gráfico. Tente expandir e exportar novamente.");
+    chatAlert(
+      "Não foi possível gerar o PNG do gráfico. Tente expandir e exportar novamente.",
+    );
   };
 
   img.src = objectUrl;

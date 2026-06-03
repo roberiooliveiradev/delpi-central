@@ -1,0 +1,108 @@
+.mdc-chat-prompt {
+  width: min(100%, 28rem);
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+}
+
+.mdc-chat-prompt__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  padding: var(--mdc-space-4) var(--mdc-space-5);
+  border-bottom: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+}
+
+.mdc-chat-prompt__header h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.mdc-chat-prompt__header p {
+  margin: var(--mdc-space-2) 0 0;
+  color: var(--mdc-text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.mdc-chat-prompt__close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: transparent;
+  color: var(--mdc-text-muted);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.mdc-chat-prompt__close:hover {
+  color: var(--mdc-text);
+  border-color: color-mix(in srgb, var(--mdc-primary) 25%, var(--mdc-card-border));
+}
+
+.mdc-chat-prompt__form {
+  display: grid;
+  gap: var(--mdc-space-4);
+  padding: var(--mdc-space-4) var(--mdc-space-5) var(--mdc-space-5);
+}
+
+.mdc-chat-prompt__field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.mdc-chat-prompt__field span {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-prompt__field input {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--mdc-primary) 35%, var(--mdc-card-border));
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  background: color-mix(in srgb, var(--mdc-control-bg) 92%, transparent);
+  color: var(--mdc-text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.mdc-chat-prompt__field input:focus {
+  outline: 2px solid color-mix(in srgb, var(--mdc-primary) 40%, transparent);
+  outline-offset: 1px;
+}
+
+.mdc-chat-prompt__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.mdc-chat-prompt__secondary,
+.mdc-chat-prompt__primary {
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.mdc-chat-prompt__secondary {
+  border: 1px solid var(--mdc-card-border);
+  background: transparent;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-chat-prompt__primary {
+  border: none;
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary, #fff);
+}

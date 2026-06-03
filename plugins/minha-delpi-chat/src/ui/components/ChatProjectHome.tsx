@@ -31,6 +31,7 @@ import type {
 } from "../../data/api/chatTypes";
 import { ChatAnimatedPanel } from "./ChatAnimatedPanel";
 import { useConfirmDialog } from "./useConfirmDialog";
+import { usePromptDialog } from "./usePromptDialog";
 import { ChatUserSearchField } from "./ChatUserSearchField";
 import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navigation/chatRoutes";
 import { handleChatNavClick } from "../../navigation/chatNavigation";
@@ -144,6 +145,7 @@ export function ChatProjectHome({
   isSessionProcessing,
 }: ChatProjectHomeProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { prompt, dialog: promptDialog } = usePromptDialog();
   const [activeTab, setActiveTab] = useState<ProjectTab>("chats");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [openSessionMenuId, setOpenSessionMenuId] = useState<string | null>(null);
@@ -361,7 +363,12 @@ export function ChatProjectHome({
   }
 
   async function renameProject() {
-    const nextName = window.prompt("Novo nome do projeto", project.name)?.trim();
+    const nextName = await prompt({
+      title: "Renomear projeto",
+      label: "Nome do projeto",
+      defaultValue: project.name,
+      confirmLabel: "Salvar",
+    });
 
     if (!nextName || nextName === project.name) {
       return;
@@ -393,10 +400,12 @@ export function ChatProjectHome({
   }
 
   async function renameSession(session: ChatSession) {
-    const nextTitle = window.prompt(
-      "Novo título da conversa",
-      session.title || "Conversa sem título",
-    )?.trim();
+    const nextTitle = await prompt({
+      title: "Renomear conversa",
+      label: "Título da conversa",
+      defaultValue: session.title || "Conversa sem título",
+      confirmLabel: "Salvar",
+    });
 
     if (!nextTitle || nextTitle === session.title) {
       return;
@@ -431,6 +440,7 @@ export function ChatProjectHome({
       aria-label={`Projeto ${project.name}`}
     >
       {confirmDialog}
+      {promptDialog}
       <header className="mdc-chat-project-home__hero">
         <div className="mdc-chat-project-home__hero-title">
           <span
@@ -810,7 +820,7 @@ export function ChatProjectHome({
       {settingsOpen ? (
         <ModalPortal>
         <div
-          className="mdc-chat-project-settings-backdrop"
+          className="mdc-modal-scrim--centered mdc-chat-project-settings-backdrop"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
@@ -819,7 +829,7 @@ export function ChatProjectHome({
           }}
         >
           <section
-            className="mdc-chat-project-settings"
+            className="mdc-modal-panel mdc-chat-project-settings"
             role="dialog"
             aria-modal="true"
             aria-label="Configurações do projeto"

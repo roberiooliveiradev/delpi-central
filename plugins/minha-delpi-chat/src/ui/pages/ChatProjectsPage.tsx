@@ -14,6 +14,7 @@ import type { ChatAgent, ChatProject, ChatSession } from "../../data/api/chatTyp
 import { ChatAnimatedPanel } from "../components/ChatAnimatedPanel";
 import { ChatProjectCreateModal } from "../components/ChatProjectCreateModal";
 import { useConfirmDialog } from "../components/useConfirmDialog";
+import { usePromptDialog } from "../components/usePromptDialog";
 import "./ChatProjectsPage.css";
 
 type ChatProjectsPageProps = {
@@ -69,6 +70,7 @@ export function ChatProjectsPage({
   onConfigureProject,
 }: ChatProjectsPageProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { prompt, dialog: promptDialog } = usePromptDialog();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -104,6 +106,7 @@ export function ChatProjectsPage({
       className="mdc-chat-page-panel--fill"
     >
     {confirmDialog}
+    {promptDialog}
     <section
       className="mdc-chat-ws-directory mdc-chat-projects-page"
       aria-label="Projetos"
@@ -247,14 +250,18 @@ export function ChatProjectsPage({
                             type="button"
                             className="mdc-chat-ws-toolbar-btn"
                             onClick={() => {
-                              const nextName = window.prompt(
-                                "Novo nome do projeto",
-                                project.name,
-                              )?.trim();
+                              void (async () => {
+                                const nextName = await prompt({
+                                  title: "Renomear projeto",
+                                  label: "Nome do projeto",
+                                  defaultValue: project.name,
+                                  confirmLabel: "Salvar",
+                                });
 
-                              if (nextName && nextName !== project.name) {
-                                void onRenameProject?.(project.id, nextName);
-                              }
+                                if (nextName && nextName !== project.name) {
+                                  await onRenameProject?.(project.id, nextName);
+                                }
+                              })();
                             }}
                           >
                             <Pencil size={16} aria-hidden="true" />

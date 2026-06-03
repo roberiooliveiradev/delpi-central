@@ -6,8 +6,6 @@
   z-index: 120;
   display: grid;
   place-items: center;
-  background: var(--mdc-overlay-backdrop);
-  backdrop-filter: blur(6px);
   padding: var(--mdc-space-4);
 }
 
@@ -17,11 +15,7 @@
   width: min(100%, 34rem);
   max-height: min(92dvh, 100%);
   overflow-y: auto;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 55%, transparent);
-  border-radius: 1.25rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
   color: var(--mdc-text);
-  box-shadow: var(--mdc-shadow-lg);
   padding: 1.35rem;
 }
 

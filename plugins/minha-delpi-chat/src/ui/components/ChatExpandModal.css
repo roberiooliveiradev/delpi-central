@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background: var(--mdc-overlay-backdrop);
+  background: transparent;
   animation: mdc-motion-fade-in var(--mdc-motion-duration-fast) ease both;
 }
 

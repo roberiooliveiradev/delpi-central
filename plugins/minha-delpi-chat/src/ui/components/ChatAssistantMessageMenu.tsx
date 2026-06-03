@@ -62,7 +62,8 @@ export function ChatAssistantMessageMenu({
             query: action.query,
           }))}
           anchor={menu.anchor}
-          scrim="none"
+          scrim="light"
+          variant="actions"
           menuLabel="Ações da resposta"
           onSelect={(query) => {
             const action = menu.actions.find((item) => item.query === query);

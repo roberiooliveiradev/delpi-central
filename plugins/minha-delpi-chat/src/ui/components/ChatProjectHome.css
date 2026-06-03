@@ -609,8 +609,7 @@
   z-index: 140;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--mdc-text) 42%, transparent);
-  backdrop-filter: blur(5px);
+  background: transparent;
   padding: var(--mdc-space-4);
 }
 

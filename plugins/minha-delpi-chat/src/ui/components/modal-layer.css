@@ -54,6 +54,39 @@
   padding: var(--mdc-space-4);
 }
 
+.mdc-modal-portal .mdc-chat-project-create-backdrop,
+.mdc-modal-portal .mdc-chat-projects-modal-backdrop,
+.mdc-modal-portal .mdc-chat-agents-modal-backdrop,
+.mdc-modal-portal .mdc-chat-archived-backdrop,
+.mdc-modal-portal .mdc-chat-confirm-backdrop,
+.mdc-modal-portal .mdc-chat-canvas-backdrop,
+.mdc-modal-portal .mdc-chat-project-settings-backdrop,
+.mdc-modal-portal .mdc-chat-shortcut-prompt-backdrop,
+.mdc-modal-portal .mdc-chat-add-context-backdrop,
+.mdc-modal-portal .mdc-chat-memory-used-backdrop,
+.mdc-modal-portal .mdc-expand-modal__backdrop,
+.mdc-modal-scrim--centered {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.mdc-modal-portal .mdc-chat-project-create-modal,
+.mdc-modal-portal .mdc-chat-confirm,
+.mdc-modal-portal .mdc-chat-archived-dialog,
+.mdc-modal-portal .mdc-chat-add-context,
+.mdc-modal-portal .mdc-chat-memory-used,
+.mdc-modal-portal .mdc-chat-projects-modal,
+.mdc-modal-portal .mdc-chat-agents-modal,
+.mdc-modal-portal .mdc-chat-project-settings,
+.mdc-modal-portal .mdc-chat-shortcut-prompt {
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
+  box-shadow:
+    var(--mdc-shadow-lg),
+    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+}
+
 .mdc-modal-portal .mdc-chat-project-create-modal,
 .mdc-modal-portal .mdc-chat-confirm,
 .mdc-modal-portal .mdc-chat-archived-dialog {

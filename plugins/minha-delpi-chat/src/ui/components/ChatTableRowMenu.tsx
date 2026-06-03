@@ -24,6 +24,7 @@ export function ChatTableRowMenu({
   onClose,
   menuLabel = "Ações da linha",
   scrim = "light",
+  variant = "default",
 }: {
   actions: TableRowMenuAction[];
   anchor: TableRowMenuAnchor;
@@ -32,6 +33,8 @@ export function ChatTableRowMenu({
   menuLabel?: string;
   /** `light` = scrim só no painel do chat; `none` = sem scrim. */
   scrim?: "light" | "none";
+  /** `actions` = menu «Mais ações» da resposta do assistente. */
+  variant?: "default" | "actions";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
@@ -131,13 +134,23 @@ export function ChatTableRowMenu({
 
       <div
         ref={panelRef}
-        className="mdc-table-row-menu"
+        className={[
+          "mdc-table-row-menu",
+          variant === "actions" ? "mdc-table-row-menu--actions" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         style={{ left: position.left, top: position.top }}
         role="menu"
         aria-label={menuLabel}
         tabIndex={-1}
         onMouseDown={(event) => event.stopPropagation()}
       >
+        {variant === "actions" ? (
+          <p className="mdc-table-row-menu__head" aria-hidden="true">
+            Mais ações
+          </p>
+        ) : null}
         {actions.map((action) => (
           <button
             key={action.id}

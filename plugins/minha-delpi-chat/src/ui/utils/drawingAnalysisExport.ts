@@ -1,4 +1,5 @@
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
+import { chatAlert } from "./chatNativeDialogs";
 
 export type DrawingAnalysisExportPayload = NonNullable<
   ChatMessageMetadata["drawingAnalysisExport"]
@@ -121,7 +122,7 @@ export async function downloadDrawingAnalysisXlsx(
       "desenho";
     XLSX.writeFile(workbook, `nao-conformidades-${code}.xlsx`);
   } catch {
-    window.alert("Não foi possível exportar XLSX. Tente o CSV ou Markdown.");
+    chatAlert("Não foi possível exportar XLSX. Tente o CSV ou Markdown.");
   }
 }
 
@@ -233,7 +234,7 @@ export async function downloadDrawingAnalysisPdf(
     doc.save(filename);
   } catch (error) {
     console.error("[downloadDrawingAnalysisPdf]", error);
-    window.alert("Não foi possível exportar PDF. Tente Markdown ou CSV.");
+    chatAlert("Não foi possível exportar PDF. Tente Markdown ou CSV.");
   }
 }
 

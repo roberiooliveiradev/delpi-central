@@ -1,6 +1,7 @@
 import { AlertTriangle, X } from "lucide-react";
 
 import { ModalPortal } from "./ModalPortal";
+import "./chat-modal-surface.css";
 import "./ChatConfirmDialog.css";
 
 type ChatConfirmDialogProps = {
@@ -31,7 +32,7 @@ export function ChatConfirmDialog({
   return (
     <ModalPortal>
     <div
-      className="mdc-chat-confirm-backdrop"
+      className="mdc-modal-scrim--centered mdc-chat-confirm-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -40,7 +41,7 @@ export function ChatConfirmDialog({
       }}
     >
       <section
-        className="mdc-chat-confirm"
+        className="mdc-modal-panel mdc-chat-confirm"
         role="dialog"
         aria-modal="true"
         aria-labelledby="mdc-chat-confirm-title"

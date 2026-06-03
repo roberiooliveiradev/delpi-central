@@ -1,0 +1,30 @@
+/* Superfície de modais — alinhada ao menu «Mais opções» da conversa (sem overlay cinza). */
+
+.mdc-modal-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+}
+
+.mdc-modal-scrim--centered {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  padding: var(--mdc-space-4);
+}
+
+.mdc-modal-panel {
+  position: relative;
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
+  color: var(--mdc-text);
+  box-shadow:
+    var(--mdc-shadow-lg),
+    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 8%, transparent);
+}

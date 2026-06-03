@@ -102,6 +102,15 @@ class ChatErrorHandlingClassifier:
                 api_failed=True,
             )
 
+        if tool_summary.get("sql_syntax_error"):
+            return cls._stub_classification(
+                "sql_syntax_error",
+                action=tool_summary.get("action"),
+                params=tool_summary.get("params") or {},
+                attempted=tool_summary.get("attempted"),
+                api_failed=False,
+            )
+
         if tool_summary.get("api_unavailable"):
             return cls._stub_classification(
                 "api_unavailable",
@@ -307,6 +316,28 @@ class ChatErrorHandlingClassifier:
         )
 
     @classmethod
+    def _looks_like_sql_syntax_error(cls, error_text: str, metadata: dict) -> bool:
+        path = str(metadata.get("path") or "").lower()
+        action_id = str(metadata.get("actionId") or metadata.get("action_id") or "").lower()
+
+        if "/data/sql" not in path and "sql" not in action_id:
+            return False
+
+        lowered = str(error_text or "").lower()
+
+        return any(
+            token in lowered
+            for token in (
+                "incorrect syntax",
+                "syntax near",
+                "syntax error",
+                "42000",
+                "sintaxe incorreta",
+                "erro de sintaxe",
+            )
+        )
+
+    @classmethod
     def _summarize_tool_calls(cls, tool_calls: list | None) -> dict[str, Any]:
         summary: dict[str, Any] = {
             "had_failure": False,
@@ -367,7 +398,9 @@ class ChatErrorHandlingClassifier:
                 if status_code in (401, 403):
                     summary["permission_denied"] = True
 
-                if status_code >= 500 or "unavailable" in error_text:
+                if cls._looks_like_sql_syntax_error(error_text, metadata):
+                    summary["sql_syntax_error"] = True
+                elif status_code >= 500 or "unavailable" in error_text:
                     summary["api_unavailable"] = True
 
                 if "timeout" in error_text or status_code == 408:
@@ -395,6 +428,9 @@ class ChatErrorHandlingClassifier:
                 return summary
 
             if summary.get("timeout"):
+                return summary
+
+            if summary.get("sql_syntax_error"):
                 return summary
 
             summary["api_unavailable"] = summary.get("api_unavailable", True)

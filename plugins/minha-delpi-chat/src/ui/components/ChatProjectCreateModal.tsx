@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ChatProject } from "../../data/api/chatTypes";
 
 import { ModalPortal } from "./ModalPortal";
+import "./chat-modal-surface.css";
 import "./ChatProjectCreateModal.css";
 
 type ChatProjectCreateModalProps = {
@@ -64,7 +65,7 @@ export function ChatProjectCreateModal({
   return (
     <ModalPortal>
       <div
-        className="mdc-chat-project-create-backdrop"
+        className="mdc-modal-scrim--centered mdc-chat-project-create-backdrop"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -73,7 +74,7 @@ export function ChatProjectCreateModal({
         }}
       >
         <section
-          className="mdc-chat-project-create-modal"
+          className="mdc-modal-panel mdc-chat-project-create-modal"
           role="dialog"
           aria-modal="true"
           aria-label="Criar projeto"

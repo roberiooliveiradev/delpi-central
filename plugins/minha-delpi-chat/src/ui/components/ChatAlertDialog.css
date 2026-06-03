@@ -1,0 +1,36 @@
+.mdc-chat-alert-dialog {
+  width: min(100%, 24rem);
+  display: grid;
+  gap: var(--mdc-space-3);
+  padding: var(--mdc-space-5);
+}
+
+.mdc-chat-alert-dialog h2 {
+  margin: 0;
+  color: var(--mdc-title);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mdc-chat-alert-dialog p {
+  margin: 0;
+  color: var(--mdc-text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.mdc-chat-alert-dialog footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mdc-chat-alert-dialog footer button {
+  border: none;
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.9rem;
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary, #fff);
+  font-size: 0.86rem;
+  font-weight: 650;
+  cursor: pointer;
+}

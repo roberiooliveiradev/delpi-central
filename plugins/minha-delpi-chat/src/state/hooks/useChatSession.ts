@@ -32,6 +32,7 @@ import {
   sessionAwaitingAssistantResponse,
   shouldAppendPendingUserMessage,
 } from "../chatMessageDelivery";
+import { isIncompleteChatStreamError } from "../chatStreamConnection";
 import {
   applyStreamHandoffToMessages,
   handoffFromPlaybackPayload,
@@ -355,10 +356,6 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
 
         if (userDismissed) {
           data = sanitizeMessagesAfterStreamDismiss(data);
-
-          if (!sessionAwaitingAssistantResponse(data)) {
-            userDismissedBackgroundStreamRef.current.delete(sessionId);
-          }
         } else if (!userDismissedBackgroundStreamRef.current.has(sessionId)) {
           const serverStillAwaiting = sessionAwaitingAssistantResponse(data);
 
@@ -446,7 +443,11 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       activeSessionIdRef.current = session.id;
       setActiveSession(session);
 
-      if (sessionStillProcessing && !restoreStreamUiForSession(session.id)) {
+      if (
+        sessionStillProcessing &&
+        !userDismissedBackgroundStreamRef.current.has(session.id) &&
+        !restoreStreamUiForSession(session.id)
+      ) {
         if (!isSessionStreaming(session.id)) {
           setStreamingStatus("Finalizando resposta em segundo plano...");
         }
@@ -812,14 +813,23 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     [unmarkSessionPending],
   );
 
+  const dismissBackgroundStream = useCallback(
+    (sessionId: string) => {
+      userDismissedBackgroundStreamRef.current.add(sessionId);
+      unmarkSessionPending(sessionId);
+      cancelSessionStreaming(sessionId);
+      clearSessionStreamUi(sessionId);
+    },
+    [cancelSessionStreaming, unmarkSessionPending],
+  );
+
   const cancelStreaming = useCallback(() => {
     const sessionId = activeSessionIdRef.current;
 
     if (sessionId) {
-      userDismissedBackgroundStreamRef.current.add(sessionId);
       markSessionCancelling(sessionId);
-      cancelSessionStreaming(sessionId);
-      clearSessionStreamUi(sessionId);
+      dismissBackgroundStream(sessionId);
+      resetStreamingUi();
 
       setMessages((current) =>
         sanitizeMessagesAfterStreamDismiss(
@@ -830,6 +840,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       void loadMessages(sessionId, { userDismissedBackground: true }).finally(() => {
         unmarkSessionCancelling(sessionId);
       });
+    } else {
+      resetStreamingUi();
     }
 
     setPendingUserMessage(null);
@@ -841,11 +853,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     } else {
       setDraft("");
     }
-
-    resetStreamingUi();
   }, [
-    cancelSessionStreaming,
-    clearSessionStreamUi,
+    dismissBackgroundStream,
     lastSentUserText,
     loadMessages,
     markSessionCancelling,
@@ -1182,16 +1191,25 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          dismissBackgroundStream(sessionId);
           setPendingUserMessage(null);
           resetStreamingUi();
+          setMessages((current) =>
+            sanitizeMessagesAfterStreamDismiss(
+              current.filter((message) => !message.metadata?.optimistic),
+            ),
+          );
+          void loadMessages(sessionId, { userDismissedBackground: true });
           setError(streamError);
         },
       };
     },
     [
+      dismissBackgroundStream,
       finalizeAssistantTurn,
       finishSending,
       isStreamForActiveSession,
+      loadMessages,
       loadSessions,
       options.onOpenCanvas,
       resetStreamingUi,
@@ -1260,6 +1278,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     setStreamingStatus(initialStatus);
 
     if (sessionForMessage) {
+      userDismissedBackgroundStreamRef.current.delete(sessionForMessage.id);
       clearSessionStreamUi(sessionForMessage.id);
       patchSessionStreamUi(sessionForMessage.id, {
         activityLog: [],
@@ -1413,9 +1432,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         }
 
         if (sessionForMessage) {
-          userDismissedBackgroundStreamRef.current.add(sessionForMessage.id);
           markSessionCancelling(sessionForMessage.id);
-          clearSessionStreamUi(sessionForMessage.id);
+          dismissBackgroundStream(sessionForMessage.id);
+          resetStreamingUi();
 
           setMessages((current) =>
             sanitizeMessagesAfterStreamDismiss(
@@ -1428,6 +1447,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
               unmarkSessionCancelling(sessionForMessage.id);
             },
           );
+        } else {
+          resetStreamingUi();
         }
 
         setPendingUserMessage(null);
@@ -1438,7 +1459,22 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           setDraft(textToRestore);
         }
 
+        return;
+      }
+
+      if (sessionForMessage && isIncompleteChatStreamError(err)) {
+        dismissBackgroundStream(sessionForMessage.id);
         resetStreamingUi();
+        setMessages((current) =>
+          sanitizeMessagesAfterStreamDismiss(
+            current.filter((message) => !message.metadata?.optimistic),
+          ),
+        );
+        void loadMessages(sessionForMessage.id, { userDismissedBackground: true });
+        setPendingUserMessage(null);
+        setError(
+          "A conexão com o servidor foi interrompida. Você pode cancelar ou enviar a pergunta novamente.",
+        );
         return;
       }
 
@@ -1452,6 +1488,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, [
     activeSession,
     draft,
+    dismissBackgroundStream,
     finishSending,
     isActiveSessionBusy,
     lastSentUserText,
@@ -1637,14 +1674,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         current === "Finalizando resposta em segundo plano..." ? null : current,
       );
       unmarkSessionPending(sessionId);
-
-      const interval = window.setInterval(() => {
-        void loadMessages(sessionId, { userDismissedBackground: true });
-      }, 2500);
-
-      return () => {
-        window.clearInterval(interval);
-      };
+      return;
     }
 
     const awaitingBackground =

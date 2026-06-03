@@ -47,8 +47,8 @@
   --mdc-input-bg: var(--mdc-control-bg);
   --mdc-shadow-lg: 0 24px 64px color-mix(in srgb, var(--mdc-text) 18%, transparent);
   --mdc-card-shadow-soft: 0 2px 8px color-mix(in srgb, var(--mdc-text) 6%, transparent);
-  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-text) 48%, transparent);
-  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, var(--mdc-text) 18%);
+  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 72%, transparent);
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
   --mdc-accent: var(--mdc-primary);
   --mdc-warning: var(--warning, #d97706);
 
@@ -171,6 +171,9 @@
   --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
   --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
   --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+
+  --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
 }
 
 /* =========================================
@@ -207,6 +210,9 @@
     --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 16%, transparent);
     --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
     --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
+
+    --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
+    --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
   }
 }
 

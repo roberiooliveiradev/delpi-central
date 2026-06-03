@@ -78,6 +78,32 @@ def test_allowed_action_ids_include_sql_for_generic_provider():
     )
 
 
+def test_normalize_extracted_sql_preserves_protheus_empty_string_literal():
+    sql = (
+        "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
+    )
+
+    normalized = ExternalActionSqlCapabilityService.normalize_extracted_sql(sql)
+
+    assert normalized == sql
+
+
+def test_normalize_extracted_sql_unwraps_double_quoted_statement():
+    wrapped = '"select a1_cod from sa1010 where d_e_l_e_t_ = \'\'"'
+
+    normalized = ExternalActionSqlCapabilityService.normalize_extracted_sql(wrapped)
+
+    assert normalized == "select a1_cod from sa1010 where d_e_l_e_t_ = ''"
+
+
+def test_build_sql_request_body_keeps_trailing_empty_literal():
+    body = ExternalActionSqlCapabilityService.build_sql_request_body(
+        "select a1_cod from sa1010 where d_e_l_e_t_ = ''"
+    )
+
+    assert body["sql"].endswith("= ''")
+
+
 def test_attach_request_sql_to_nested_payload():
     data = {
         "success": True,

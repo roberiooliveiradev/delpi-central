@@ -1918,13 +1918,19 @@ class ExternalActionSelectionService:
         if quoted:
             return quoted.group(1).strip()
 
+        from app.domain.services.external_actions.external_action_sql_capability_service import (
+            ExternalActionSqlCapabilityService,
+        )
+
         marker = re.search(r"sql\s*:\s*(.+)$", raw, flags=re.I | re.S)
         if marker:
-            return marker.group(1).strip().strip('"').strip("'")
+            return ExternalActionSqlCapabilityService.normalize_extracted_sql(marker.group(1))
 
         select_match = re.search(r"(select\s+.+)$", raw, flags=re.I | re.S)
         if select_match:
-            return select_match.group(1).strip().strip('"').strip("'")
+            return ExternalActionSqlCapabilityService.normalize_extracted_sql(
+                select_match.group(1)
+            )
 
         return None
 

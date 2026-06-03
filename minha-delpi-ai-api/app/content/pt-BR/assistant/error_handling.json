@@ -85,6 +85,24 @@
         "Tentar novamente"
       ]
     },
+    "sql_syntax_error": {
+      "severity": "warning",
+      "recoverable": true,
+      "title": "Erro de sintaxe na consulta SQL",
+      "userMessage": "A consulta enviada ao banco tem erro de sintaxe. Revise o SQL (aspas, literais e cláusulas) antes de executar de novo.",
+      "reasons": [
+        "literal incompleto após operador (ex.: = sem valor ou `= ''` removido por engano)",
+        "vírgula, parêntese ou palavra-chave faltando",
+        "dialeto SQL Server / Protheus diferente do esperado"
+      ],
+      "alternativesIntro": "Você pode:",
+      "chips": [
+        "Mostrar SQL",
+        "Corrigir consulta",
+        "Tentar novamente",
+        "Ver schema"
+      ]
+    },
     "permission_denied": {
       "severity": "permission",
       "recoverable": true,

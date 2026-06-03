@@ -163,8 +163,31 @@ class ExternalActionSqlCapabilityService:
         return False
 
     @classmethod
+    def normalize_extracted_sql(cls, text: str | None) -> str | None:
+        """Remove só aspas que envolvem a consulta inteira — preserva literais como `= ''`."""
+        raw = str(text or "").strip()
+
+        if not raw:
+            return None
+
+        if len(raw) >= 2 and raw[0] == raw[-1] == '"':
+            inner = raw[1:-1].strip()
+
+            if inner:
+                return inner
+
+        if len(raw) >= 2 and raw[0] == raw[-1] == "'" and raw.count("'") == 2:
+            inner = raw[1:-1].strip()
+
+            if inner:
+                return inner
+
+        return raw
+
+    @classmethod
     def build_sql_request_body(cls, sql: str) -> dict[str, str]:
-        query = str(sql or "").strip()
+        query = cls.normalize_extracted_sql(sql) or ""
+
         return {
             "query": query,
             "sql": query,

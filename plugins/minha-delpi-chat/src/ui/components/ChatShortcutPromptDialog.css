@@ -2,7 +2,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: color-mix(in srgb, #020617 55%, transparent);
+  background: transparent;
 }
 
 .mdc-chat-shortcut-prompt {

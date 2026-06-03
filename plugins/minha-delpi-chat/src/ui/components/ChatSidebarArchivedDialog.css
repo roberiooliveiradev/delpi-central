@@ -4,8 +4,7 @@
   z-index: 120;
   display: grid;
   place-items: center;
-  background: var(--mdc-overlay-backdrop);
-  backdrop-filter: blur(4px);
+  background: transparent;
   padding: var(--mdc-space-4);
 }
 

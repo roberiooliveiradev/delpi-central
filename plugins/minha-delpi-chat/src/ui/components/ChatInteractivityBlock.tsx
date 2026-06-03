@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useConfirmDialog } from "./useConfirmDialog";
+
 import type { ChatMessageMetadata } from "../../data/api/chatTypes";
 import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./chartExplain";
 import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
@@ -62,6 +64,7 @@ export function ChatInteractivityBlock({
   onRecordClick,
   variant = "default",
 }: ChatInteractivityBlockProps) {
+  const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const [menu, setMenu] = useState<{
     anchor: { rect: MenuAnchorRect };
     actions: TableRowMenuAction[];
@@ -74,7 +77,7 @@ export function ChatInteractivityBlock({
     return null;
   }
 
-  function handleSelect(suggestion: ChatFollowUpSuggestion) {
+  async function handleSelect(suggestion: ChatFollowUpSuggestion) {
     if (suggestion.disabledReason) {
       return;
     }
@@ -86,10 +89,14 @@ export function ChatInteractivityBlock({
     }
 
     if (suggestion.requiresConfirmation) {
-      const ok = window.confirm(
-        suggestion.confirmationMessage ??
+      const ok = await confirm({
+        title: "Confirmar ação",
+        description:
+          suggestion.confirmationMessage ??
           "Confirma que deseja executar esta ação?",
-      );
+        confirmLabel: "Continuar",
+        cancelLabel: "Cancelar",
+      });
 
       if (!ok) {
         return;
@@ -152,7 +159,7 @@ export function ChatInteractivityBlock({
                 .join(" ")}
               disabled={disabled}
               title={suggestion.disabledReason ?? suggestion.tooltip ?? suggestion.label}
-              onClick={() => handleSelect(suggestion)}
+              onClick={() => void handleSelect(suggestion)}
             >
               {suggestion.label}
             </button>
@@ -194,7 +201,7 @@ export function ChatInteractivityBlock({
             const match = overflow.find((item) => item.query === query);
 
             if (match) {
-              handleSelect(match);
+              void handleSelect(match);
             } else {
               onUseSuggestion(query);
             }
@@ -205,6 +212,7 @@ export function ChatInteractivityBlock({
           menuLabel="Mais opções de interatividade"
         />
       ) : null}
+      {confirmDialog}
     </div>
   );
 }

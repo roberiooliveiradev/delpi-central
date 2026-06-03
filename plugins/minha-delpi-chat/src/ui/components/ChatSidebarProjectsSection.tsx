@@ -10,6 +10,7 @@ import { buildChatProjectHref, buildChatSessionHrefForSession } from "../../navi
 import { ChatConversationListItem } from "./ChatConversationListItem";
 import { ChatProjectCard } from "./ChatProjectCard";
 import { useConfirmDialog } from "./useConfirmDialog";
+import { usePromptDialog } from "./usePromptDialog";
 
 const PROJECT_SESSION_LIMIT = 5;
 const PROJECT_LIST_LIMIT = 5;
@@ -44,6 +45,7 @@ export function ChatSidebarProjectsSection({
   isSessionProcessing,
 }: ChatSidebarProjectsSectionProps) {
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
+  const { prompt, dialog: promptDialog } = usePromptDialog();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showAllProjects, setShowAllProjects] = useState(false);
   const [showAllByProject, setShowAllByProject] = useState<Record<string, boolean>>({});
@@ -108,6 +110,7 @@ export function ChatSidebarProjectsSection({
   return (
     <>
       {confirmDialog}
+      {promptDialog}
       <div className="mdc-chat-sidebar__section-title mdc-chat-sidebar__section-title--button">
         <div className="mdc-chat-sidebar__section-heading">
           <button
@@ -175,14 +178,18 @@ export function ChatSidebarProjectsSection({
                           )
                         }
                         onRename={() => {
-                          const nextName = window.prompt(
-                            "Novo nome do projeto",
-                            project.name,
-                          )?.trim();
+                          void (async () => {
+                            const nextName = await prompt({
+                              title: "Renomear projeto",
+                              label: "Nome do projeto",
+                              defaultValue: project.name,
+                              confirmLabel: "Salvar",
+                            });
 
-                          if (nextName && nextName !== project.name) {
-                            void onRenameProject?.(project.id, nextName);
-                          }
+                            if (nextName && nextName !== project.name) {
+                              await onRenameProject?.(project.id, nextName);
+                            }
+                          })();
                         }}
                         onOpenSettings={() => onSelectProject?.(project.id)}
                         onDelete={() => {
