@@ -711,11 +711,13 @@ export type ImportApplyResult = {
   [key: string]: unknown;
 };
 
-export type RevisionCompareItem = {
+export type ProcessoComparativoItem = {
   revisao_id: string;
   versao_revisao?: string | null;
   cenario_tipo?: string | null;
   revisao_ativa?: boolean | null;
+  data_inicio_vigencia?: string | null;
+  data_fim_vigencia?: string | null;
   ultima_competencia?: string | null;
   meses_com_dados?: number | null;
   totais: {
@@ -729,9 +731,21 @@ export type RevisionCompareItem = {
   };
 };
 
+export type ProcessoComparativoResponse = {
+  processo?: {
+    processo_id: string;
+    codigo_processo?: string | null;
+    nome_processo?: string | null;
+    familia_processo?: string | null;
+    agrupador_ferramenta?: string | null;
+  };
+  total_revisoes: number;
+  items: ProcessoComparativoItem[];
+};
+
 export function fetchProcessoComparativo(
   processoId: string,
   getAccessToken?: () => string | undefined
 ) {
-  return request<RevisionCompareItem[]>(`/processos/${processoId}/comparativo`, getAccessToken);
+  return request<ProcessoComparativoResponse>(`/processos/${processoId}/comparativo`, getAccessToken);
 }
