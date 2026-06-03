@@ -31,6 +31,16 @@ def test_consulte_estoque_e_escreva_email_is_mixed():
     assert ChatTextTaskIntentService.is_pure_text_task(message) is False
 
 
+def test_sql_authoring_is_not_pure_text_task():
+    message = (
+        "Monte uma consulta para listar clientes ativos da tabela SA1, "
+        "só código e nome, sem executar."
+    )
+
+    assert ChatTextTaskIntentService.classify(message) == "write"
+    assert ChatTextTaskIntentService.is_pure_text_task(message) is False
+
+
 def test_mixed_operational_and_text():
     message = (
         "Consulte o estoque do produto 10080001 e escreva um e-mail avisando compras"

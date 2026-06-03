@@ -70,6 +70,16 @@ INTENT_ROUTER_REGRESSION_CASES: list[dict[str, Any]] = [
         "expected_sub_intent": "sql_generate",
     },
     {
+        "id": "R8b",
+        "message": (
+            "Monte uma consulta para listar clientes ativos da tabela SA1, "
+            "só código e nome, sem executar."
+        ),
+        "expected_intent": "sql_task",
+        "expected_sub_intent": "sql_generate",
+        "text_task_pure": False,
+    },
+    {
         "id": "R9",
         "message": "Quem é você?",
         "expected_intent": "identity",

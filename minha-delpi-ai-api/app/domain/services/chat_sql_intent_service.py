@@ -92,6 +92,101 @@ class ChatSqlIntentService:
     """Diferencia elaborar/mostrar SQL de executar via action."""
 
     @classmethod
+    def _has_sql_context(cls, normalized: str) -> bool:
+        return any(
+            term in normalized
+            for term in (
+                "sql",
+                "consulta",
+                "query",
+                "select",
+                "tabela",
+                "coluna",
+                "join",
+                "schema",
+                " from ",
+                "cte",
+                " window ",
+                "/data/sql",
+            )
+        ) or bool(
+            re.search(
+                r"\b(?:sa|sb|sc|sd|se|sf|sg|sh|si|sj|sk|sl|sm|sn|so|sp)[a-z]?\d{0,4}\b",
+                normalized,
+            )
+        )
+
+    @classmethod
+    def is_sql_conversation_turn(cls, message: str | None) -> bool:
+        """Turno de especialista SQL — não deve cair em text_task puro."""
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        if ChatSqlSafetyService.looks_like_sql_payload(message):
+            return True
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized or not cls._has_sql_context(normalized):
+            return False
+
+        if cls.is_authoring_request(message) or cls.should_auto_execute_sql(message):
+            return True
+
+        return any(
+            term in normalized
+            for term in (
+                "monte",
+                "monta",
+                "crie",
+                "gere",
+                "elabore",
+                "revise",
+                "revisa",
+                "explique",
+                "otimize",
+                "execute",
+                "executar",
+            )
+        )
+
+    @classmethod
+    def router_sub_intent(cls, message: str | None) -> str | None:
+        """Sub-intent SQL para o roteador (evita falso positivo em «sem executar»)."""
+        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return None
+
+        if not (
+            ChatSqlSafetyService.looks_like_sql_payload(message)
+            or cls._has_sql_context(normalized)
+            or bool(re.search(r"\bsql\b", normalized))
+        ):
+            return None
+
+        if cls.is_authoring_request(message):
+            if any(term in normalized for term in ("revise", "revisar", "review", "valida")):
+                return "sql_review"
+
+            if any(term in normalized for term in ("explique", "explicar", "explain")):
+                return "sql_explain"
+
+            return "sql_generate"
+
+        if cls.should_auto_execute_sql(message):
+            return "sql_execute"
+
+        if any(term in normalized for term in ("revise", "revisar", "review")):
+            return "sql_review"
+
+        if any(term in normalized for term in ("explique", "explicar", "explain")):
+            return "sql_explain"
+
+        return "sql_generate"
+
+    @classmethod
     def is_authoring_request(cls, message: str | None) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 

@@ -127,6 +127,11 @@ class ChatTextTaskIntentService:
         *,
         previous_messages: list | None = None,
     ) -> bool:
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
         category = cls.classify(message)
 
         if not category:

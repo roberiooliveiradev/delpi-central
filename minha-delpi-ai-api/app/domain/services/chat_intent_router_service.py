@@ -1116,40 +1116,9 @@ class ChatIntentRouterService:
 
     @staticmethod
     def _sql_sub_intent(message: str) -> str | None:
-        from app.domain.services.chat_sql_safety_service import ChatSqlSafetyService
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
 
-        lowered = message.lower()
-
-        sql_request = any(
-            term in lowered
-            for term in (
-                "monte sql",
-                "monte uma sql",
-                "revise essa query",
-                "revise sql",
-                "explique esse sql",
-                "execute essa sql",
-                "gerar sql",
-                "criar sql",
-                "monte uma query",
-            )
-        ) or bool(re.search(r"\bsql\b", lowered))
-
-        if not sql_request and not ChatSqlSafetyService.looks_like_sql_payload(message):
-            return None
-
-        lowered = message.lower()
-
-        if any(term in lowered for term in ("execute", "executar", "rodar sql", "run sql")):
-            return "sql_execute"
-
-        if any(term in lowered for term in ("revise", "revisar", "review")):
-            return "sql_review"
-
-        if any(term in lowered for term in ("explique", "explicar", "explain")):
-            return "sql_explain"
-
-        return "sql_generate"
+        return ChatSqlIntentService.router_sub_intent(message)
 
     @staticmethod
     def _looks_presentation(message: str) -> bool:
