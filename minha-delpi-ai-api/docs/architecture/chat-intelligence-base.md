@@ -239,6 +239,11 @@ Playbook de inteligência (seções 16, 30, 31). Complementa a base de memória/
 
 **Feedback (§31)** — novos motivos em `personality_playbook.json`: `simple_question_missed`, `unnecessary_tool`, `too_slow`, `technical_diagnostic_shown`, `unclear_not_admitted` e correção de `chip_irrelevant` (referenciado em `feedbackPrimaryReasonIds`, antes ausente do array). Regenerar MFE: `python scripts/generate_chat_feedback_reasons_ts.py --write`.
 
+**Contorno de erros no streaming (§26/§27)** — além de **avisar** a falha no log, o chat tenta **contornar**:
+- **Loop agentic (`ChatAgenticToolLoopService`)** — quando uma ferramenta falha (exceção **ou** metadata `ok=False` / HTTP não-2xx, via `_looks_like_failure`), a falha é resumida (`_summarize_failure`) e acumulada em `failures`. O planejador (`_plan_tools`) recebe a lista de falhas e é instruído a **não repetir** a consulta que falhou e tentar uma **abordagem alternativa** (outra action, outros parâmetros, busca por descrição, ampliar filtros). Payload de erro **não** vira «resultado autorizado» para o LLM. Se nenhum passo produz contexto mas houve falhas, as `toolCalls` falhas são propagadas para a camada §27 (`ChatErrorHandlingService`) enriquecer a resposta com motivos + chips de recuperação, em vez de o erro passar despercebido.
+- **Chips de recuperação (`error_handling.json` → `chipQueries`)** — rótulos que antes caíam no fallback (enviavam o próprio texto como query) agora têm query útil: «Buscar por descrição», «Mostrar SQL», «Executar consulta», «Interpretar resultado», «Corrigir consulta», «Ver schema», «Ver schema completo».
+- Camadas pré-existentes mantidas: recuperação automática de coluna SQL inválida (`ChatSqlRecoveryService`), reexecução sob demanda (`fetch_error_recovery_from_history`) e `errorAutoRecovery` (`ChatErrorAutoRecoveryService`).
+
 Testes: `test_chat_user_preference_manager_service.py`, `test_chat_feedback_efficiency_metrics.py`, `test_chat_feedback_content_service.py`.
 
 ### Perguntas utilitárias — hora, data, ano (maio/2026)

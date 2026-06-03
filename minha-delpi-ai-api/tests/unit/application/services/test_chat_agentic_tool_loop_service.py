@@ -260,3 +260,77 @@ def test_planner_receives_slim_openapi_schemas(monkeypatch):
     assert "Actions OpenAPI (descrição + parâmetros + exemplos):" in user_content
     assert '"actionId": "stock-action"' in user_content
     assert '"exampleArguments"' in user_content
+
+
+def test_looks_like_failure_detection():
+    assert ChatAgenticToolLoopService._looks_like_failure({"ok": False}) is True
+    assert ChatAgenticToolLoopService._looks_like_failure({"statusCode": 404}) is True
+    assert ChatAgenticToolLoopService._looks_like_failure({"statusCode": 500}) is True
+    assert ChatAgenticToolLoopService._looks_like_failure({"ok": True}) is False
+    assert ChatAgenticToolLoopService._looks_like_failure({"statusCode": 200}) is False
+    assert ChatAgenticToolLoopService._looks_like_failure({}) is False
+
+
+def test_summarize_failure_includes_label_status_and_reason():
+    summary = ChatAgenticToolLoopService._summarize_failure(
+        {"statusCode": 404, "error": "produto não encontrado"},
+        "stock-action",
+    )
+    assert "stock-action" in summary
+    assert "404" in summary
+    assert "produto não encontrado" in summary
+
+
+def test_failed_step_feeds_planner_with_alternative_instruction(monkeypatch):
+    """Após uma falha, o próximo planejamento deve receber as falhas e a
+    instrução para tentar uma abordagem alternativa (contorno)."""
+    captured: list[list[dict]] = []
+
+    class PlannerLlm:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, messages):
+            captured.append(messages)
+            self.calls += 1
+            if self.calls == 1:
+                return '{"tools":["action:stock-action"],"arguments":{},"done":false}'
+            return '{"tools":[],"arguments":{},"done":true}'
+
+    class FailingExecuteTool:
+        def execute(self, request):
+            raise RuntimeError("upstream timeout")
+
+    service = ChatAgenticToolLoopService(
+        llm_gateway=PlannerLlm(),
+        execute_tool_use_case=FailingExecuteTool(),
+        external_action_repository=FakeRepository([{"actionId": "stock-action"}]),
+    )
+    monkeypatch.setattr(
+        service,
+        "_resolve_settings",
+        lambda: {"enabled": True, "max_steps": 2},
+    )
+
+    result = service.extend_tool_context(
+        user_id="00000000-0000-0000-0000-000000000001",
+        access_token="token",
+        message="estoque do produto 10080022",
+        tool_context={"context": "", "toolCalls": []},
+        allowed_tool_names=None,
+        allowed_action_ids=["stock-action"],
+    )
+
+    assert len(captured) >= 2
+    second_user_content = captured[1][1]["content"]
+    assert "já falharam" in second_user_content.lower()
+    assert "upstream timeout" in second_user_content
+    second_system_content = captured[1][0]["content"]
+    assert "ALTERNATIVA" in second_system_content
+
+    failed_calls = [
+        call
+        for call in (result.get("toolCalls") or [])
+        if call.get("metadata", {}).get("ok") is False
+    ]
+    assert failed_calls, "falha deve ser propagada ao tool_context para §27 enriquecer"

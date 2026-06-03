@@ -74,6 +74,9 @@ class ChatAgenticToolLoopService:
         ]
 
         context_blocks: list[str] = []
+        # Falhas acumuladas alimentam o replanejamento: o planejador tenta uma
+        # alternativa (outra rota/abordagem) em vez de repetir o que já falhou.
+        failures: list[str] = []
         safe_tool_calls = list(tool_context.get("toolCalls") or [])
         executed_names = {
             str(item.get("name") or "").strip()
@@ -104,6 +107,7 @@ class ChatAgenticToolLoopService:
                 catalog_keys,
                 catalog_schemas,
                 step=step,
+                failures=failures,
             )
 
             if not plan.get("tools"):
@@ -195,6 +199,13 @@ class ChatAgenticToolLoopService:
                         metadata=failure_metadata,
                         action_id=resolved_action_id or None,
                     )
+                    # Registra para o próximo passo tentar contornar com outra abordagem.
+                    failures.append(
+                        self._summarize_failure(
+                            failure_metadata,
+                            resolved_action_id or resolved_tool_name,
+                        )
+                    )
                     continue
 
                 result_metadata = {
@@ -221,6 +232,18 @@ class ChatAgenticToolLoopService:
                     self._collect_executed_action_ids(safe_tool_calls[-1:])
                 )
 
+                # Falha que NÃO levantou exceção (ex.: HTTP 4xx/5xx): registra para
+                # o planejador contornar no próximo passo e não usa o payload de erro
+                # como "resultado autorizado" para o LLM.
+                if self._looks_like_failure(result_metadata):
+                    failures.append(
+                        self._summarize_failure(
+                            result_metadata,
+                            resolved_action_id or result.name,
+                        )
+                    )
+                    continue
+
                 context_blocks.append(
                     json.dumps(
                         {
@@ -237,18 +260,22 @@ class ChatAgenticToolLoopService:
                 break
 
         if not context_blocks:
+            base = {**tool_context}
+            # Mesmo sem contexto novo, propaga as chamadas que falharam para a
+            # camada de tratamento de erros (§27) enriquecer a resposta com
+            # motivos + chips de recuperação, em vez do erro passar despercebido.
+            if failures:
+                base["toolCalls"] = safe_tool_calls
+
             if catalog_action_ids:
-                return {
-                    **tool_context,
-                    "agentic": {
-                        "stepsRun": max_steps,
-                        "toolsAdded": 0,
-                        "catalogSize": len(catalog_action_ids),
-                        "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,
-                    },
+                base["agentic"] = {
+                    "stepsRun": max_steps,
+                    "toolsAdded": 0,
+                    "catalogSize": len(catalog_action_ids),
+                    "catalogMaxActions": Settings.CHAT_AGENTIC_CATALOG_MAX_ACTIONS,
                 }
 
-            return tool_context
+            return base
 
         existing_context = str(tool_context.get("context") or "").strip()
         parts = [existing_context, *context_blocks] if existing_context else context_blocks
@@ -267,6 +294,38 @@ class ChatAgenticToolLoopService:
         }
 
         return merged
+
+    @staticmethod
+    def _looks_like_failure(metadata: dict) -> bool:
+        """Falha explícita (ok=False) ou status HTTP fora da faixa 2xx."""
+        if not isinstance(metadata, dict):
+            return False
+
+        if "ok" in metadata and not metadata.get("ok"):
+            return True
+
+        status = metadata.get("statusCode")
+
+        if status is not None:
+            try:
+                return not (200 <= int(status) < 300)
+            except (TypeError, ValueError):
+                return False
+
+        return False
+
+    @staticmethod
+    def _summarize_failure(metadata: dict, label: str) -> str:
+        meta = metadata if isinstance(metadata, dict) else {}
+        status = meta.get("statusCode")
+        reason = str(meta.get("error") or meta.get("message") or "").strip()
+        clean_label = str(label or "consulta").strip() or "consulta"
+        suffix = f" (HTTP {status})" if status not in (None, "") else ""
+
+        if reason:
+            return f"{clean_label}{suffix}: {reason[:160]}"
+
+        return f"{clean_label}{suffix}: falha na consulta"
 
     @staticmethod
     def _emit_tool_finished(
@@ -371,6 +430,7 @@ class ChatAgenticToolLoopService:
         catalog_schemas: list[dict],
         *,
         step: int,
+        failures: list[str] | None = None,
     ) -> dict:
         from app.domain.services.chat_agentic_action_schema_service import (
             ChatAgenticActionSchemaService,
@@ -385,18 +445,34 @@ class ChatAgenticToolLoopService:
             if item.startswith("tool:")
         ]
 
+        system_content = (
+            "Planeje ferramentas para responder à pergunta. "
+            'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
+            "Use no máximo UMA action por passo, somente se necessário. "
+            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:. "
+            "Quando escolher action:*, preencha arguments conforme exampleArguments do catálogo."
+        )
+
+        failure_block = ""
+
+        if failures:
+            recent = failures[-5:]
+            system_content += (
+                " Algumas consultas anteriores falharam. NÃO repita a mesma consulta "
+                "que falhou: tente uma ABORDAGEM ALTERNATIVA (outra action, outros "
+                "parâmetros, busca por descrição em vez de código, ou ampliar filtros). "
+                'Se não houver alternativa viável, responda {"tools":[],"done":true}.'
+            )
+            failure_block = "\nConsultas que já falharam (evite repetir):\n" + "\n".join(
+                f"- {item}" for item in recent
+            )
+
         try:
             raw = self.llm_gateway.generate(
                 [
                     {
                         "role": "system",
-                        "content": (
-                            "Planeje ferramentas para responder à pergunta. "
-                            'Responda só JSON: {"tools":["nome"],"arguments":{},"done":true|false}. '
-                            "Use no máximo UMA action por passo, somente se necessário. "
-                            "Use nomes do catálogo: tool:* sem prefixo tool:, ou action:* com prefixo action:. "
-                            "Quando escolher action:*, preencha arguments conforme exampleArguments do catálogo."
-                        ),
+                        "content": system_content,
                     },
                     {
                         "role": "user",
@@ -404,6 +480,7 @@ class ChatAgenticToolLoopService:
                             f"Passo {step + 1}\nPergunta: {message[:1200]}\n"
                             f"Tools internas:\n" + "\n".join(tool_lines or ["(nenhuma)"]) + "\n"
                             f"Actions OpenAPI (descrição + parâmetros + exemplos):\n{planner_catalog}"
+                            f"{failure_block}"
                         ),
                     },
                 ]

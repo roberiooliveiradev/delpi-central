@@ -373,6 +373,13 @@
     }
   },
   "chipQueries": {
+    "Buscar por descrição": "busque o produto pela descrição em vez do código",
+    "Mostrar SQL": "mostre o SQL da consulta anterior",
+    "Executar consulta": "execute a consulta SQL anterior",
+    "Interpretar resultado": "interprete o resultado da consulta anterior",
+    "Corrigir consulta": "corrija o SQL da consulta anterior e execute de novo",
+    "Ver schema": "mostre o schema das tabelas usadas na consulta",
+    "Ver schema completo": "mostre o schema completo das tabelas usadas na consulta",
     "Filtrar por filial": "filtre a lista de produtos abaixo do mínimo por filial",
     "Verificar cadastro de mínimo": "como verifico o estoque mínimo cadastrado no Protheus?",
     "Ampliar período": "amplie o período da consulta",
