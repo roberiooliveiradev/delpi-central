@@ -101,6 +101,7 @@ export function AppointmentsTable({
               <th>Qtd. apontada</th>
               <th>Filial</th>
               <th>OP</th>
+              <th>Descrição produto</th>
               <th>CT</th>
               <th>Operador</th>
               <th>Eficiência</th>
@@ -111,7 +112,7 @@ export function AppointmentsTable({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={11} className="ef-table__empty">
+                <td colSpan={12} className="ef-table__empty">
                   Nenhum apontamento para os filtros selecionados.
                 </td>
               </tr>
@@ -131,6 +132,7 @@ export function AppointmentsTable({
                   <td>{formatNumber(item.qtd_apontada, 3)}</td>
                   <td>{item.filial ?? "—"}</td>
                   <td>{item.op ?? "—"}</td>
+                  <td>{item.descricao_produto?.trim() || item.produto || "—"}</td>
                   <td>{item.centro_trabalho ?? "—"}</td>
                   <td>{item.nome_operador ?? item.login_operador ?? "—"}</td>
                   <td>{formatPercent(item.eficiencia_percentual)}</td>

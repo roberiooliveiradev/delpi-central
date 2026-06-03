@@ -1,3 +1,5 @@
+import type { EficienciaFabrilShift } from "../constants/shifts";
+
 export type EficienciaFabrilFilterParams = {
   date_start: string;
   date_end: string;
@@ -5,6 +7,7 @@ export type EficienciaFabrilFilterParams = {
   op?: string;
   employee?: string;
   work_center?: string;
+  shift?: EficienciaFabrilShift;
   status_ok_only?: boolean;
   page?: number;
   page_size?: number;
@@ -57,11 +60,18 @@ export type EfficiencyByWorkCenter = {
   appointment_count: number;
 };
 
+export type ModResultByWorkCenter = {
+  work_center: string | null;
+  mod_result: number | null;
+  appointment_count: number;
+};
+
 export type EficienciaFabrilCharts = {
   efficiency_by_day: EfficiencyByDay[];
   mod_result_by_day: ModResultByDay[];
   efficiency_by_operator: EfficiencyByOperator[];
   efficiency_by_work_center: EfficiencyByWorkCenter[];
+  mod_result_by_work_center: ModResultByWorkCenter[];
   hours_by_work_center: HoursByWorkCenter[];
 };
 
@@ -69,6 +79,7 @@ export type EficienciaFabrilItem = {
   filial: string | null;
   op: string | null;
   produto: string | null;
+  descricao_produto: string | null;
   centro_trabalho: string | null;
   operacao: string | null;
   cod_operador: string | null;

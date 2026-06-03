@@ -8,6 +8,7 @@ Documentação completa: [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../d
 
 ## Funcionalidades (resumo)
 
+- Duas entradas no menu: **SC** (filial 01) e **ES** (filial 02)
 - KPIs: eficiência (média simples), apontamentos na tabela, a avaliar (Verificar), resultado MOD, horas ganhas/perdidas
 - Gráficos: eficiência por dia, MOD por dia, top operadores, eficiência por CT (cores por faixa), horas por CT
 - Tabela paginada + exportação Excel (dados em memória)
@@ -23,7 +24,12 @@ GET /apps/api-delpi/production/eficiencia-fabril/appointments
 GET /apps/api-delpi/production/eficiencia-fabril/dashboard
 ```
 
-Parâmetros principais: `date_start`, `date_end`, `branch`, `op`, `employee`, `work_center`.
+Parâmetros principais: `date_start`, `date_end`, `branch` (fixo pela rota SC/ES), `op`, `employee`, `work_center`.
+
+Rotas no Portal:
+
+- `/apps/eficiencia-fabril/sc` — Filial SC (TOTVS `01`)
+- `/apps/eficiencia-fabril/es` — Filial ES (TOTVS `02`)
 
 ---
 

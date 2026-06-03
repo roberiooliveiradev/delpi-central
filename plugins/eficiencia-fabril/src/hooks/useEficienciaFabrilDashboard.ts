@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { fetchAllEficienciaFabrilItems } from "../api/fetchAllEficienciaFabrilItems";
 import { VERIFY_EFFICIENCY_THRESHOLD_PCT } from "../constants/businessRules";
+import { matchesShiftFilter } from "../constants/shifts";
 import type {
   EficienciaFabrilDashboardData,
   EficienciaFabrilFilterParams,
@@ -13,6 +14,7 @@ const FALLBACK_PAGE_SIZE = 50;
 type LoadedRange = {
   dateStart: string;
   dateEnd: string;
+  branch: string;
 };
 
 function hasDateRange(item: EficienciaFabrilItem): item is EficienciaFabrilItem & {
@@ -49,7 +51,8 @@ function applyScopeFilters(
           includesInsensitive(item.login_operador, params.employee) ||
           includesInsensitive(item.cod_operador, params.employee)
         : true
-    );
+    )
+    .filter((item) => matchesShiftFilter(item.hora_inicio, params.shift));
 }
 
 function computeDashboardFromItems(
@@ -113,6 +116,7 @@ function computeDashboardFromItems(
       appointment_count: number;
       sumEfficiency: number;
       countEfficiency: number;
+      mod_result: number;
     }
   >();
 
@@ -164,6 +168,7 @@ function computeDashboardFromItems(
       appointment_count: 0,
       sumEfficiency: 0,
       countEfficiency: 0,
+      mod_result: 0,
     };
     if (eff !== null && eff !== undefined) {
       wcCurrent.sumEfficiency += eff;
@@ -172,6 +177,7 @@ function computeDashboardFromItems(
     wcCurrent.real += item.tempo_real_horas ?? 0;
     wcCurrent.planned += item.tempo_previsto_horas ?? 0;
     wcCurrent.appointment_count += 1;
+    wcCurrent.mod_result += net;
     workCenterMap.set(wcKey, wcCurrent);
   }
 
@@ -215,6 +221,16 @@ function computeDashboardFromItems(
       String(a.work_center ?? "").localeCompare(String(b.work_center ?? ""), "pt-BR")
     );
 
+  const mod_result_by_work_center = [...workCenterMap.values()]
+    .map((row) => ({
+      work_center: row.work_center,
+      mod_result: row.mod_result,
+      appointment_count: row.appointment_count,
+    }))
+    .sort((a, b) =>
+      String(a.work_center ?? "").localeCompare(String(b.work_center ?? ""), "pt-BR")
+    );
+
   const hours_by_work_center = [...workCenterMap.values()].map((row) => ({
     work_center: row.work_center,
     real_hours: row.real,
@@ -243,6 +259,7 @@ function computeDashboardFromItems(
       mod_result_by_day,
       efficiency_by_operator,
       efficiency_by_work_center,
+      mod_result_by_work_center,
       hours_by_work_center,
     },
     items: pageItems,
@@ -266,9 +283,10 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
     if (!loadedRange) return false;
     return (
       loadedRange.dateStart <= params.date_start &&
-      loadedRange.dateEnd >= params.date_end
+      loadedRange.dateEnd >= params.date_end &&
+      loadedRange.branch === (params.branch ?? "")
     );
-  }, [loadedRange, params.date_end, params.date_start]);
+  }, [loadedRange, params.branch, params.date_end, params.date_start]);
 
   useEffect(() => {
     if (isRangeLoaded && reloadKey === 0) return;
@@ -284,13 +302,18 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
           {
             date_start: params.date_start,
             date_end: params.date_end,
+            branch: params.branch,
             status_ok_only: false,
           },
           controller.signal
         );
         if (controller.signal.aborted) return;
         setAllItems(items);
-        setLoadedRange({ dateStart: params.date_start, dateEnd: params.date_end });
+        setLoadedRange({
+          dateStart: params.date_start,
+          dateEnd: params.date_end,
+          branch: params.branch ?? "",
+        });
       } catch (err) {
         if (controller.signal.aborted) return;
         const message =
@@ -308,7 +331,7 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
     void run();
 
     return () => controller.abort();
-  }, [isRangeLoaded, reloadKey, params.date_end, params.date_start]);
+  }, [isRangeLoaded, reloadKey, params.branch, params.date_end, params.date_start]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);

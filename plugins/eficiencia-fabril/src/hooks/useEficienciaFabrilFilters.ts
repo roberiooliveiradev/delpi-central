@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 
 import type { EficienciaFabrilFilterParams } from "../types/eficienciaFabril";
+import type { EficienciaFabrilShift } from "../constants/shifts";
 import {
   getFirstDayOfMonthInputValue,
   getTodayInputValue,
 } from "../utils/dates";
 
-const BRANCHES = ["01", "02"] as const;
 const PAGE_SIZE = 50;
 
 export type EficienciaFabrilFilterState = {
@@ -16,17 +16,19 @@ export type EficienciaFabrilFilterState = {
   op: string;
   employee: string;
   workCenter: string;
+  shift: EficienciaFabrilShift | "";
   statusOkOnly: boolean;
 };
 
-function createInitialFilters(): EficienciaFabrilFilterState {
+function createInitialFilters(fixedBranch: string): EficienciaFabrilFilterState {
   return {
     dateStart: getFirstDayOfMonthInputValue(),
     dateEnd: getTodayInputValue(),
-    branch: "",
+    branch: fixedBranch,
     op: "",
     employee: "",
     workCenter: "",
+    shift: "",
     statusOkOnly: true,
   };
 }
@@ -38,19 +40,20 @@ function toApiFilters(
   return {
     date_start: filters.dateStart,
     date_end: filters.dateEnd,
-    branch: filters.branch || undefined,
+    branch: filters.branch,
     op: filters.op.trim() || undefined,
     employee: filters.employee.trim() || undefined,
     work_center: filters.workCenter.trim() || undefined,
+    shift: filters.shift || undefined,
     status_ok_only: filters.statusOkOnly,
     page,
     page_size: PAGE_SIZE,
   };
 }
 
-export function useEficienciaFabrilFilters() {
-  const [draft, setDraft] = useState(createInitialFilters);
-  const [committed, setCommitted] = useState(createInitialFilters);
+export function useEficienciaFabrilFilters(fixedBranch: string) {
+  const [draft, setDraft] = useState(() => createInitialFilters(fixedBranch));
+  const [committed, setCommitted] = useState(() => createInitialFilters(fixedBranch));
   const [page, setPage] = useState(1);
 
   const apiParams = useMemo(
@@ -64,36 +67,35 @@ export function useEficienciaFabrilFilters() {
   );
 
   const applyFilters = useCallback(() => {
-    setCommitted({ ...draft });
+    setCommitted({ ...draft, branch: fixedBranch });
     setPage(1);
-  }, [draft]);
+  }, [draft, fixedBranch]);
 
   const resetPage = useCallback(() => setPage(1), []);
 
   const patchDraft = useCallback(
     (patch: Partial<EficienciaFabrilFilterState>) => {
-      setDraft((current) => ({ ...current, ...patch }));
+      setDraft((current) => ({ ...current, ...patch, branch: fixedBranch }));
     },
-    []
+    [fixedBranch]
   );
 
   return {
-    branches: BRANCHES,
     dateStart: draft.dateStart,
     dateEnd: draft.dateEnd,
-    branch: draft.branch,
     op: draft.op,
     employee: draft.employee,
     workCenter: draft.workCenter,
+    shift: draft.shift,
     statusOkOnly: draft.statusOkOnly,
     hasPendingChanges,
     page,
     setDateStart: (value: string) => patchDraft({ dateStart: value }),
     setDateEnd: (value: string) => patchDraft({ dateEnd: value }),
-    setBranch: (value: string) => patchDraft({ branch: value }),
     setOp: (value: string) => patchDraft({ op: value }),
     setEmployee: (value: string) => patchDraft({ employee: value }),
     setWorkCenter: (value: string) => patchDraft({ workCenter: value }),
+    setShift: (value: EficienciaFabrilShift | "") => patchDraft({ shift: value }),
     setStatusOkOnly: (value: boolean) => patchDraft({ statusOkOnly: value }),
     setPage,
     resetPage,

@@ -22,4 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua eficiencia-fabril.view ao perfil de líderes de produção no RBAC."
+echo "[OK] Atribua eficiencia-fabril.view.filial-sc|es (ou eficiencia-fabril.view legado) aos perfis de líderes."

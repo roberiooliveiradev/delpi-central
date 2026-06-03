@@ -3,9 +3,10 @@ import { DashboardEficienciaFabrilPage } from "./pages/DashboardEficienciaFabril
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
+  pathname?: string;
 };
 
-export default function App({ getAccessToken }: AppProps) {
+export default function App({ getAccessToken, pathname }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
-  return <DashboardEficienciaFabrilPage />;
+  return <DashboardEficienciaFabrilPage pathname={pathname} />;
 }

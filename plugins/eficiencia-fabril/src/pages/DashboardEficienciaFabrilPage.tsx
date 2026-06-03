@@ -15,31 +15,74 @@ import { FilterBar } from "../components/FilterBar";
 import { KpiCard } from "../components/KpiCard";
 import { useEficienciaFabrilDashboard } from "../hooks/useEficienciaFabrilDashboard";
 import { useEficienciaFabrilFilters } from "../hooks/useEficienciaFabrilFilters";
+import {
+  BRANCH_ROUTE_LABELS,
+  branchRouteFromPathname,
+  totvsBranchFromRoute,
+} from "../constants/branches";
 import { formatPeriodLabel } from "../utils/dates";
 import { EFFICIENCY_KPI_WARNING_PCT } from "../constants/businessRules";
 import { formatCurrency, formatHoursKpi, formatPercent } from "../utils/format";
 
-export function DashboardEficienciaFabrilPage() {
+type DashboardEficienciaFabrilPageProps = {
+  pathname?: string;
+};
+
+export function DashboardEficienciaFabrilPage({ pathname }: DashboardEficienciaFabrilPageProps) {
+  const branchRoute = branchRouteFromPathname(pathname);
+  const totvsBranch = branchRoute ? totvsBranchFromRoute(branchRoute) : null;
+
+  if (!branchRoute || !totvsBranch) {
+    return (
+      <div className="dashboard-eficiencia-fabril dashboard-page">
+        <div className="ef-alert ef-alert--error" role="alert">
+          <AlertTriangle size={18} aria-hidden />
+          <span>
+            Filial inválida. Use uma rota como /apps/eficiencia-fabril/sc ou
+            /apps/eficiencia-fabril/es.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <DashboardEficienciaFabrilContent
+      key={totvsBranch}
+      branchRoute={branchRoute}
+      totvsBranch={totvsBranch}
+    />
+  );
+}
+
+type DashboardContentProps = {
+  branchRoute: "SC" | "ES";
+  totvsBranch: string;
+};
+
+function DashboardEficienciaFabrilContent({
+  branchRoute,
+  totvsBranch,
+}: DashboardContentProps) {
   const {
-    branches,
     dateStart,
     dateEnd,
-    branch,
     op,
     employee,
     workCenter,
+    shift,
     hasPendingChanges,
     page,
     setDateStart,
     setDateEnd,
-    setBranch,
     setOp,
     setEmployee,
     setWorkCenter,
+    setShift,
     setPage,
     applyFilters,
     apiParams,
-  } = useEficienciaFabrilFilters();
+  } = useEficienciaFabrilFilters(totvsBranch);
 
   const [exportError, setExportError] = useState<string | null>(null);
   const handleExportError = useCallback((message: string) => {
@@ -60,8 +103,10 @@ export function DashboardEficienciaFabrilPage() {
         <div className="ef-page-header__title">
           <Factory size={28} aria-hidden />
           <div>
-            <h1>Eficiência Fabril</h1>
-            <p>{formatPeriodLabel(dateStart, dateEnd)}</p>
+            <h1>Eficiência Fabril — {branchRoute}</h1>
+            <p>
+              {BRANCH_ROUTE_LABELS[branchRoute]} · {formatPeriodLabel(dateStart, dateEnd)}
+            </p>
           </div>
         </div>
         <button
@@ -78,18 +123,17 @@ export function DashboardEficienciaFabrilPage() {
       <FilterBar
         dateStart={dateStart}
         dateEnd={dateEnd}
-        branch={branch}
         op={op}
         employee={employee}
         workCenter={workCenter}
-        branches={branches}
+        shift={shift}
         hasPendingChanges={hasPendingChanges}
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
-        onBranchChange={setBranch}
         onOpChange={setOp}
         onEmployeeChange={setEmployee}
         onWorkCenterChange={setWorkCenter}
+        onShiftChange={setShift}
         onApply={() => {
           setExportError(null);
           applyFilters();
