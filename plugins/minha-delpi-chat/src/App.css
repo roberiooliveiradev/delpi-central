@@ -1,5 +1,6 @@
 /* Shell visual do MFE — layout estrutural em chat-layout.css */
 @import "./ui/layout/chat-design-system.css";
+@import "./ui/components/modal-layer.css";
 
 .minha-delpi-chat {
   width: 100%;

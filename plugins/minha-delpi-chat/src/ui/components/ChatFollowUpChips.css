@@ -62,3 +62,29 @@
 .minha-delpi-chat .mdc-chat-follow-up__chip--more {
   border-style: dashed;
 }
+
+@media (max-width: 767px) {
+  .mdc-chat-follow-up__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.15rem;
+    margin-inline: calc(-1 * var(--mdc-space-2));
+    padding-inline: var(--mdc-space-2);
+    scroll-snap-type: x proximity;
+  }
+
+  .mdc-chat-follow-up__chips::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .minha-delpi-chat .mdc-chat-follow-up__chip {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    max-width: min(16rem, 78vw);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

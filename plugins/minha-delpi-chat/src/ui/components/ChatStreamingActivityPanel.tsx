@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 import {
   activityPhaseKey,
-  compactActivityLogForDisplay,
   formatActivityLogLine,
+  fullActivityLogForDisplay,
   resolveStreamingHeadline,
 } from "../../state/utils/streamingActivityLog";
 
@@ -101,13 +101,12 @@ export function ChatStreamingActivityPanel({
   isActive = false,
   isAnswering = false,
 }: ChatStreamingActivityPanelProps) {
-  const compactLines = useMemo(() => compactActivityLogForDisplay(entries), [entries]);
+  const [showAllSteps, setShowAllSteps] = useState(false);
+  const fullLines = useMemo(() => fullActivityLogForDisplay(entries), [entries]);
   const headline = resolveStreamingHeadline(status, entries);
   const dotsLabel = isAnswering
     ? status?.trim() || "Gerando resposta..."
     : headline;
-
-  const [showAllSteps, setShowAllSteps] = useState(false);
   const expandedRef = useRef<HTMLDivElement | null>(null);
   const knownIdsRef = useRef<Set<string>>(new Set());
   const [risingIds, setRisingIds] = useState<Set<string>>(() => new Set());
@@ -115,13 +114,15 @@ export function ChatStreamingActivityPanel({
   useEffect(() => {
     const nextRising = new Set<string>();
 
-    for (const entry of compactLines) {
+    const previewLines = fullLines.slice(-RISING_LOG_VISIBLE_LINES);
+
+    for (const entry of previewLines) {
       if (!knownIdsRef.current.has(entry.id)) {
         nextRising.add(entry.id);
       }
     }
 
-    knownIdsRef.current = new Set(compactLines.map((entry) => entry.id));
+    knownIdsRef.current = new Set(previewLines.map((entry) => entry.id));
     setRisingIds(nextRising);
 
     if (nextRising.size === 0) {
@@ -131,7 +132,7 @@ export function ChatStreamingActivityPanel({
     const timer = window.setTimeout(() => setRisingIds(new Set()), 480);
 
     return () => window.clearTimeout(timer);
-  }, [compactLines]);
+  }, [fullLines]);
 
   useEffect(() => {
     if (!showAllSteps || !expandedRef.current) {
@@ -139,10 +140,10 @@ export function ChatStreamingActivityPanel({
     }
 
     expandedRef.current.scrollTop = expandedRef.current.scrollHeight;
-  }, [compactLines, showAllSteps]);
+  }, [fullLines, showAllSteps]);
 
-  const hasLog = compactLines.length > 0;
-  const canExpand = compactLines.length > RISING_LOG_VISIBLE_LINES;
+  const hasLog = fullLines.length > 0;
+  const canExpand = fullLines.length > RISING_LOG_VISIBLE_LINES;
 
   return (
     <div
@@ -160,10 +161,6 @@ export function ChatStreamingActivityPanel({
 
       {hasLog ? (
         <>
-          {!showAllSteps ? (
-            <RisingLogFeed lines={compactLines} risingIds={risingIds} />
-          ) : null}
-
           {canExpand ? (
             <button
               type="button"
@@ -173,14 +170,14 @@ export function ChatStreamingActivityPanel({
             >
               {showAllSteps
                 ? "Ocultar etapas"
-                : `Ver todas as etapas (${compactLines.length})`}
+                : `Ver todas as etapas (${fullLines.length})`}
             </button>
           ) : null}
 
           {showAllSteps && canExpand ? (
             <div ref={expandedRef} className="mdc-chat-stream-activity__log">
               <ul className="mdc-chat-stream-activity__log-lines">
-                {compactLines.map((entry) => (
+                {fullLines.map((entry) => (
                   <ActivityLogLine
                     key={`${activityPhaseKey(entry)}-${entry.id}`}
                     entry={entry}
@@ -189,7 +186,9 @@ export function ChatStreamingActivityPanel({
                 ))}
               </ul>
             </div>
-          ) : null}
+          ) : (
+            <RisingLogFeed lines={fullLines.slice(-RISING_LOG_VISIBLE_LINES)} risingIds={risingIds} />
+          )}
         </>
       ) : isActive ? (
         <p className="mdc-chat-stream-activity__placeholder">{headline}</p>

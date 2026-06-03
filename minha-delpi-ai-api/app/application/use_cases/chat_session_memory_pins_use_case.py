@@ -86,13 +86,29 @@ class ChatSessionMemoryPinsUseCase:
             ]
 
         overlay = self.memory_repository.load_active_overlay(session_id)
+        existing_items = overlay.get("userContextItems") or []
+
+        for duplicate_id in ChatUserContextItemService.find_duplicate_item_ids(
+            existing_items,
+            items,
+        ):
+            self.memory_repository.remove_context_item(session_id, duplicate_id)
+            existing_items = [
+                item
+                for item in existing_items
+                if isinstance(item, dict)
+                and str(item.get("id") or "").strip() != duplicate_id
+            ]
 
         for item in items:
             self.memory_repository.add_context_item(session_id, item)
+            existing_items.append(item)
             overlay = ChatUserContextItemService.apply_extracted_entities_to_overlay(
                 overlay,
                 item,
             )
+
+        overlay["userContextItems"] = existing_items[-12:]
 
         for key, value in (overlay.get("lastEntities") or {}).items():
             if key in {"productCode", "branch", "warehouse", "period"}:

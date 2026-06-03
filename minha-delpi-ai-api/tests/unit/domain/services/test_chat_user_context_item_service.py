@@ -60,6 +60,41 @@ def test_ingest_turn_returns_question_and_answer():
     assert items[1]["kind"] == "answer"
 
 
+def test_dedup_key_stable_for_same_message():
+    item = ChatUserContextItemService.ingest(
+        content="Monte uma consulta SA1",
+        role="user",
+        message_id="msg-sa1",
+    )
+
+    assert ChatUserContextItemService.dedup_key_for_item(item) == "msg:msg-sa1:question"
+    chip = ChatUserContextItemService.chip_from_item(item)
+
+    assert chip["value"] == item["id"]
+    assert chip["kind"] == "question"
+
+
+def test_find_duplicate_item_ids_for_repeated_question():
+    existing = [
+        ChatUserContextItemService.ingest(
+            content="Pergunta antiga",
+            role="user",
+            message_id="msg-1",
+        )
+    ]
+    incoming = [
+        ChatUserContextItemService.ingest(
+            content="Pergunta nova",
+            role="user",
+            message_id="msg-1",
+        )
+    ]
+
+    remove_ids = ChatUserContextItemService.find_duplicate_item_ids(existing, incoming)
+
+    assert remove_ids == [existing[0]["id"]]
+
+
 def test_format_prompt_block_includes_user_items():
     block = ChatUserContextItemService.format_prompt_block(
         {

@@ -136,6 +136,9 @@ class ExternalActionSelectionService:
             previous_messages=previous_messages,
         )
 
+        if sql_refinement and sql_refinement.mode == "show_sql":
+            return None
+
         if sql_refinement and sql_refinement.mode == "execute":
             selected = self._select_sql_or_data_action(
                 message,

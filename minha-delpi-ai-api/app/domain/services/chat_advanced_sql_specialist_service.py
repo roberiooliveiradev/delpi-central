@@ -668,6 +668,42 @@ class ChatAdvancedSqlSpecialistService:
         }
 
     @classmethod
+    def format_sql_authoring_answer(cls, answer: str | None) -> str:
+        text = str(answer or "").strip()
+
+        if not text or "```sql" not in text.lower():
+            return text
+
+        blocks = re.findall(r"```sql\s*[\s\S]*?```", text, flags=re.IGNORECASE)
+
+        if len(blocks) > 1:
+            first_block = blocks[0]
+            remainder = re.sub(
+                r"```sql\s*[\s\S]*?```",
+                "",
+                text,
+                flags=re.IGNORECASE,
+            ).strip()
+            text = f"{first_block}\n\n{remainder}".strip() if remainder else first_block
+
+        before_fence = re.split(r"```sql", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+
+        if len(before_fence) < 16:
+            intro = (
+                "Segue a consulta em SQL (somente leitura, sem executar no sistema). "
+                "Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:"
+            )
+            text = re.sub(
+                r"(```sql)",
+                f"{intro}\n\n\\1",
+                text,
+                count=1,
+                flags=re.IGNORECASE,
+            )
+
+        return text.strip()
+
+    @classmethod
     def normalize_protheus_sql_answer(
         cls,
         answer: str | None,
@@ -678,7 +714,7 @@ class ChatAdvancedSqlSpecialistService:
         text = str(answer or "").strip()
 
         if not text or not cls.should_activate(message):
-            return text
+            return cls.format_sql_authoring_answer(text)
 
         sql_block = ChatSqlPerformanceAdvisorService.extract_sql_block(text)
 
@@ -709,15 +745,17 @@ class ChatAdvancedSqlSpecialistService:
             return text
 
         if "```sql" in text.lower():
-            return re.sub(
+            text = re.sub(
                 r"```sql\s*[\s\S]*?```",
                 f"```sql\n{replacement}\n```",
                 text,
                 count=1,
                 flags=re.IGNORECASE,
             )
+        else:
+            text = f"```sql\n{replacement}\n```\n\n{text}".strip()
 
-        return f"```sql\n{replacement}\n```\n\n{text}".strip()
+        return cls.format_sql_authoring_answer(text)
 
     @classmethod
     def _column_hints_from_prefetch(cls, tool_calls: list | None) -> list[str]:

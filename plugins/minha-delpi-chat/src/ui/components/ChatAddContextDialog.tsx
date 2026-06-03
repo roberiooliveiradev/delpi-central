@@ -41,6 +41,7 @@ export function ChatAddContextDialog({
   const [filename, setFilename] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
+  const [pendingPickId, setPendingPickId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -51,6 +52,7 @@ export function ChatAddContextDialog({
     setFilename(null);
     setError(null);
     setIsReadingFile(false);
+    setPendingPickId(null);
   }, [open]);
 
   if (!open) {
@@ -141,7 +143,13 @@ export function ChatAddContextDialog({
                       <button
                         type="button"
                         className="mdc-chat-add-context__conversation-item"
+                        disabled={pendingPickId !== null}
                         onClick={() => {
+                          if (pendingPickId) {
+                            return;
+                          }
+
+                          setPendingPickId(pick.id);
                           onConfirm({
                             content: pick.content,
                             role: pick.role,

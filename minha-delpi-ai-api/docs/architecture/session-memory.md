@@ -48,7 +48,7 @@ Histórico + mensagem
 | `ChatSessionMemoryAdminMetricsService` | Agregado admin `sessionMemoryAdminMetrics` (Fase 9) |
 | `ChatMemoryContextLossAlertService` | `memoryContextAlerts` por turno (Fase 9) |
 | `ChatManualContextPinService` | Pins manuais produto/filial/armazém (legado) |
-| `ChatUserContextItemService` | Contexto livre (texto/tabela/arquivo) com classificação automática |
+| `ChatUserContextItemService` | Contexto livre + **pergunta/resposta** da conversa (`context_item`, dedup por `messageId`) |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
@@ -62,7 +62,16 @@ Histórico + mensagem
 cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
 ```
 
-Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (Fases 1–7).
+## API de contexto manual
+
+| Método | Rota | Uso |
+|--------|------|-----|
+| GET | `/chat/sessions/{id}/memory/context` | Chips, resumo, `usage` (modal memória) |
+| POST | `/chat/sessions/{id}/memory/context-items` | Texto/arquivo ou `role`/`messageId`; par `question`+`answer` |
+| DELETE | `/chat/sessions/{id}/memory/context-items/{itemId}` | Remove item (`itemId` = uuid do chip) |
+| POST | `/chat/sessions/{id}/memory/clear` | Limpa overlay persistido |
+
+Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (Fases 1–9 + extensões jun/2026).
 
 ```bash
 cd minha-delpi-ai-api && ./scripts/run_memory_context_validation.sh

@@ -776,7 +776,7 @@ function getTableMarkdownBody(toolCalls?: ChatToolCall[]): string {
   return tablePresentationToMarkdown(table, { includeTitle: false });
 }
 
-function stripLeadingMarkdownTitle(markdown: string, title: string): string {
+export function stripLeadingMarkdownTitle(markdown: string, title: string): string {
   const normalizedTitle = title.trim();
 
   if (!normalizedTitle) {

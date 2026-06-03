@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 
+import { resolveModalPortalContainer } from "./modalPortalTarget";
 import "./modal-layer.css";
 
 type ModalPortalProps = {
@@ -9,18 +10,23 @@ type ModalPortalProps = {
 };
 
 export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
+  const container = resolveModalPortalContainer();
+
   useEffect(() => {
     if (!lockScroll) {
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollTarget =
+      container === document.body ? document.body : container;
+
+    const previousOverflow = scrollTarget.style.overflow;
+    scrollTarget.style.overflow = "hidden";
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      scrollTarget.style.overflow = previousOverflow;
     };
-  }, [lockScroll]);
+  }, [container, lockScroll]);
 
   const theme =
     typeof document !== "undefined"
@@ -35,6 +41,6 @@ export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
     >
       {children}
     </div>,
-    document.body,
+    container,
   );
 }

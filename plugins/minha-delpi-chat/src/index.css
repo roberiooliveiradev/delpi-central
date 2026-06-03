@@ -48,6 +48,7 @@
   --mdc-shadow-lg: 0 24px 64px color-mix(in srgb, var(--mdc-text) 18%, transparent);
   --mdc-card-shadow-soft: 0 2px 8px color-mix(in srgb, var(--mdc-text) 6%, transparent);
   --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-text) 48%, transparent);
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, var(--mdc-text) 18%);
   --mdc-accent: var(--mdc-primary);
   --mdc-warning: var(--warning, #d97706);
 

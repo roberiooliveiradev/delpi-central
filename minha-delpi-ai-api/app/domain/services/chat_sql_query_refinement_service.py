@@ -289,108 +289,85 @@ class ChatSqlQueryRefinementService:
             previous_messages=previous_messages,
         )
 
-        if stored_sql and cls._is_authoring_only(normalized):
-            column_key = cls._extract_column_key(normalized, sql=stored_sql)
-
-            if column_key and cls._looks_like_add_column(normalized):
-                updated = cls.add_column(stored_sql, column_key)
-
-                if updated != stored_sql:
-                    return SqlQueryRefinement(
-                        mode="show_sql",
-                        sql=updated,
-                        title="Consulta SQL (elaboração)",
-                        reason="Refinamento SQL incremental sem execução.",
-                    )
-
-            if cls._looks_like_show_query(normalized):
-                return SqlQueryRefinement(
-                    mode="show_sql",
-                    sql=stored_sql,
-                    title="Consulta SQL (elaboração)",
-                    reason="Exibir SQL da conversa sem executar no banco.",
-                )
-
-            return None
-
         recent = cls.collect_recent_sql_execution(previous_messages)
+        active_sql = stored_sql or (recent.sql if recent else None)
 
-        if not recent:
+        if not active_sql:
             return None
 
-        if cls._looks_like_show_query(normalized):
-            return SqlQueryRefinement(
-                mode="show_sql",
-                sql=recent.sql,
-                title=recent.title,
-                reason="A mensagem solicita exibir a consulta SQL da pesquisa anterior.",
-            )
+        title = recent.title if recent else "Consulta SQL (elaboração)"
+        mode = cls._resolve_refinement_mode(
+            normalized,
+            has_recent_execution=bool(recent),
+        )
 
         if cls._looks_like_remove_branch_filter(normalized):
-            updated = cls.remove_branch_filter(recent.sql)
+            updated = cls.remove_branch_filter(active_sql)
 
-            if updated != recent.sql:
+            if updated != active_sql:
                 return SqlQueryRefinement(
-                    mode="execute",
+                    mode=mode,
                     sql=updated,
-                    title=recent.title,
+                    title=title,
                     reason="Refinamento SQL: filtro de filial removido da consulta anterior.",
                 )
 
         top_limit = cls._extract_top_limit(normalized)
 
         if top_limit is not None and cls._looks_like_limit_adjustment(normalized):
-            updated = cls.apply_top_limit(recent.sql, top_limit)
+            updated = cls.apply_top_limit(active_sql, top_limit)
 
-            if updated != recent.sql:
+            if updated != active_sql:
                 return SqlQueryRefinement(
-                    mode="execute",
+                    mode=mode,
                     sql=updated,
-                    title=recent.title,
+                    title=title,
                     reason="Refinamento SQL: limite TOP ajustado na consulta anterior.",
                 )
 
-        column_key = cls._extract_column_key(normalized, sql=recent.sql)
+        column_key = cls._extract_column_key(normalized, sql=active_sql)
 
         if column_key and cls._looks_like_add_column(normalized):
-            updated = cls.add_column(recent.sql, column_key)
+            updated = cls.add_column(active_sql, column_key)
 
-            if updated == recent.sql:
-                return None
-
-            return SqlQueryRefinement(
-                mode="execute",
-                sql=updated,
-                title=recent.title,
-                reason="Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
-            )
+            if updated != active_sql:
+                return SqlQueryRefinement(
+                    mode=mode,
+                    sql=updated,
+                    title=title,
+                    reason="Refinamento SQL: inclusão de coluna solicitada na consulta anterior.",
+                )
 
         if column_key and cls._looks_like_remove_column(normalized):
-            updated = cls.remove_column(recent.sql, column_key)
+            updated = cls.remove_column(active_sql, column_key)
 
-            if updated == recent.sql:
-                return None
-
-            return SqlQueryRefinement(
-                mode="execute",
-                sql=updated,
-                title=recent.title,
-                reason="Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
-            )
+            if updated != active_sql:
+                return SqlQueryRefinement(
+                    mode=mode,
+                    sql=updated,
+                    title=title,
+                    reason="Refinamento SQL: remoção de coluna solicitada na consulta anterior.",
+                )
 
         branches = cls._extract_branch_codes(normalized)
 
         if branches and cls._looks_like_filter_adjustment(normalized, branches=branches):
-            updated = cls.apply_branch_filter(recent.sql, branches)
+            updated = cls.apply_branch_filter(active_sql, branches)
 
-            if updated == recent.sql:
-                return None
+            if updated != active_sql:
+                return SqlQueryRefinement(
+                    mode=mode,
+                    sql=updated,
+                    title=title,
+                    reason="Refinamento SQL: filtro de filial aplicado na consulta anterior.",
+                )
 
+        if cls._looks_like_show_query(normalized):
             return SqlQueryRefinement(
-                mode="execute",
-                sql=updated,
-                title=recent.title,
-                reason="Refinamento SQL: filtro de filial aplicado na consulta anterior.",
+                mode=mode,
+                sql=active_sql,
+                title=title,
+                reason="A mensagem solicita exibir a consulta SQL da conversa.",
             )
 
         return None
@@ -576,12 +553,18 @@ class ChatSqlQueryRefinementService:
     def apply_top_limit(cls, sql: str, limit: int) -> str:
         bounded = max(1, min(int(limit), 500))
 
-        if not re.search(r"\bSELECT\s+TOP\s+\d+\b", sql, flags=re.I):
-            return sql
+        if re.search(r"\bSELECT\s+TOP\s+\d+\b", sql, flags=re.I):
+            return re.sub(
+                r"(\bSELECT\s+TOP\s+)\d+",
+                rf"\g<1>{bounded}",
+                sql,
+                count=1,
+                flags=re.I,
+            )
 
         return re.sub(
-            r"(\bSELECT\s+TOP\s+)\d+",
-            rf"\g<1>{bounded}",
+            r"(\bSELECT\s+)(?:DISTINCT\s+)?",
+            rf"\1TOP {bounded} ",
             sql,
             count=1,
             flags=re.I,
@@ -609,6 +592,18 @@ class ChatSqlQueryRefinementService:
             definitions.update(cls._SA1_AUTHORING_COLUMN_DEFINITIONS)
 
         return definitions
+
+    @classmethod
+    def _resolve_refinement_mode(
+        cls,
+        normalized: str,
+        *,
+        has_recent_execution: bool,
+    ) -> SqlRefinementMode:
+        if cls._is_authoring_only(normalized) or not has_recent_execution:
+            return "show_sql"
+
+        return "execute"
 
     @classmethod
     def _is_authoring_only(cls, normalized: str) -> bool:
@@ -653,10 +648,16 @@ class ChatSqlQueryRefinementService:
         incremental_terms = (
             *cls._ADD_TERMS,
             *cls._ALTER_TERMS,
+            *cls._FILTER_TERMS,
             "consulta anterior",
             "query anterior",
             "sql anterior",
+            "primeiros",
+            "primeiras",
         )
+
+        if cls._extract_top_limit(normalized) is not None:
+            return True
 
         return any(term in normalized for term in incremental_terms)
 
@@ -739,6 +740,7 @@ class ChatSqlQueryRefinementService:
             or any(term in normalized for term in cls._ALTER_TERMS + cls._FILTER_TERMS)
             or re.search(r"\b\d{1,3}\s+produtos?\b", normalized)
             or re.search(r"\b\d{1,3}\s+registros?\b", normalized)
+            or re.search(r"\b\d{1,3}\s+primeir[oa]s?\b", normalized)
         )
 
     @classmethod
@@ -772,6 +774,11 @@ class ChatSqlQueryRefinementService:
             return min(int(match.group(1)), 500)
 
         match = re.search(r"\b(\d{1,3})\s+registros?\b", normalized)
+
+        if match:
+            return min(int(match.group(1)), 500)
+
+        match = re.search(r"\b(\d{1,3})\s+primeir[oa]s?\b", normalized)
 
         if match:
             return min(int(match.group(1)), 500)

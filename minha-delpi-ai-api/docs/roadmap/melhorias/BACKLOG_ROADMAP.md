@@ -1,6 +1,8 @@
-# Backlog ativo — roadmap melhorias (31/05/2026)
+# Backlog ativo — roadmap melhorias (03/06/2026)
 
 Itens **ainda não fechados** após sincronização com o código. Concluídos estão em [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md).
+
+**Memória e contexto:** playbook [`playbook-memoria-e-contexto.md`](../playbook-memoria-e-contexto.md) **fechado** (Fases 1–9 + contexto livre/Q&A jun/2026). Não abrir novas fases aqui sem novo playbook.
 
 ## Prioridade alta (produto + chat base)
 
@@ -28,6 +30,8 @@ Itens **ainda não fechados** após sincronização com o código. Concluídos e
 
 ## Recém-concluído (referência)
 
+- Playbook memória Fases 1–9 + contexto livre + Q&A no contexto (`fd551470`, `c351312f`, changelog `2026-06-contexto-manual-e-roadmap.md`)
+- Migrations automáticas `minha-delpi-ai-api` no boot (`ceb8366c`)
 - Metadados Protheus `/system` + smoke E2E (`db38c4ed`, `f311dd43`, `c2ec8179`)
 - Interatividade Fase 4 — menus tabela/árvore/gráfico + **chip de contexto** (MFE)
 - Interatividade Fase 5 — fluxos guiados (`ChatGuidedFlowService`)

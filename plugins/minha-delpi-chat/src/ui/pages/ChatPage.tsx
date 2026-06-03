@@ -42,6 +42,7 @@ import {
 import {
   buildContextPayloadFromMessage,
   buildContextTurnPayload,
+  contextPayloadDedupKey,
   findPreviousUserMessage,
   listRecentConversationPicks,
   type ContextItemPayload,
@@ -328,6 +329,7 @@ export function ChatPage({
   const [sessionMemoryUsage, setSessionMemoryUsage] = useState<MemoryUsageView | null>(
     null,
   );
+  const contextAddInFlightRef = useRef<Set<string>>(new Set());
 
   const mergedContextChips = useMemo(() => {
     if (contextMemoryCleared) {
@@ -575,6 +577,24 @@ export function ChatPage({
         return;
       }
 
+      const dedupKey = contextPayloadDedupKey(payload);
+
+      if (dedupKey) {
+        if (contextAddInFlightRef.current.has(dedupKey)) {
+          return;
+        }
+
+        const alreadyPinned = pinnedContextChips.some(
+          (chip) => contextChipKey(chip) === dedupKey,
+        );
+
+        if (alreadyPinned) {
+          return;
+        }
+
+        contextAddInFlightRef.current.add(dedupKey);
+      }
+
       void addChatSessionContextItem(activeSession.id, payload, { getAccessToken })
         .then((response) => {
           applySessionMemoryContext(response);
@@ -583,9 +603,19 @@ export function ChatPage({
         })
         .catch(() => {
           /* erro silencioso — usuário pode tentar de novo */
+        })
+        .finally(() => {
+          if (dedupKey) {
+            contextAddInFlightRef.current.delete(dedupKey);
+          }
         });
     },
-    [activeSession?.id, applySessionMemoryContext, getAccessToken],
+    [
+      activeSession?.id,
+      applySessionMemoryContext,
+      getAccessToken,
+      pinnedContextChips,
+    ],
   );
 
   const handleAddMessageToContext = useCallback(
@@ -2496,6 +2526,7 @@ export function ChatPage({
           onStartTour={hasOnboardingTourSteps ? startOnboardingTour : undefined}
         />
       </section>
+      <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
     </main>
   );
 }

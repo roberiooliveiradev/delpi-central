@@ -19,7 +19,14 @@ export function activityPhaseKey(entry: ChatStreamActivityEntry): string {
   return String(entry.phase || entry.group || "atividade").trim() || "atividade";
 }
 
-/** Uma linha por fase — a mais recente substitui a anterior (efeito de log). */
+/** Todas as etapas em ordem cronológica (painel expandido / diagnóstico). */
+export function fullActivityLogForDisplay(
+  entries: ChatStreamActivityEntry[],
+): ChatStreamActivityEntry[] {
+  return [...entries].sort((left, right) => (left.at ?? 0) - (right.at ?? 0));
+}
+
+/** Uma linha por fase — a mais recente substitui a anterior (prévia compacta). */
 export function compactActivityLogForDisplay(
   entries: ChatStreamActivityEntry[],
 ): ChatStreamActivityEntry[] {

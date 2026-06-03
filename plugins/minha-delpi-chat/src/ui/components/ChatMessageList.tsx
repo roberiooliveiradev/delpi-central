@@ -43,7 +43,7 @@ import {
   ChatHelpSelfHelpFeedback,
   type HelpSelfHelpFeedbackPayload,
 } from "./ChatHelpSelfHelpFeedback";
-import { ChatMarkdown } from "./ChatMarkdown";
+import { ChatAssistantContent } from "./ChatAssistantContent";
 import {
   downloadDrawingAnalysisCsv,
   downloadDrawingAnalysisMarkdown,
@@ -58,13 +58,11 @@ import {
   messageHasChartPresentation,
   messageHasDashboardPresentation,
 } from "./chartExplain";
-import { ChatRichPresentation } from "./ChatRichPresentation";
 import {
   buildAssistantCopyText,
   buildEmailCopyText,
   getPresentationPairFromToolCalls,
   isShortPresentationCaption,
-  shouldShowRichPresentation,
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
@@ -196,35 +194,6 @@ function getMessageToolCalls(message: ChatMessage): ChatToolCall[] {
   }
 
   return [];
-}
-
-function renderPresentation(
-  toolCalls: ChatToolCall[],
-  textContent: string | null | undefined,
-  onDrillDown?: (query: string) => void,
-  onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void,
-  chartExplain?: {
-    requestChart: boolean;
-    requestDashboard: boolean;
-    onHandled: () => void;
-  },
-) {
-  if (!toolCalls || !toolCalls.length) {
-    return null;
-  }
-
-  return (
-    <ChatRichPresentation
-      toolCalls={toolCalls}
-      textContent={textContent}
-      onDrillDown={onDrillDown}
-      onOpenCanvas={onOpenCanvas}
-      requestChartExplanation={chartExplain?.requestChart}
-      onChartExplanationHandled={chartExplain?.onHandled}
-      requestDashboardExplanation={chartExplain?.requestDashboard}
-      onDashboardExplanationHandled={chartExplain?.onHandled}
-    />
-  );
 }
 
 type MessageAttachment = {
@@ -488,7 +457,7 @@ export function ChatMessageList({
   streamingAdminDebug,
   streamingStatus,
   streamingActivityLog = [],
-  streamingShowPresentation = true,
+  streamingShowPresentation: _streamingShowPresentation = true,
   streamingCanvasOpen = null,
   isStreaming,
   isPlaybackActive = false,
@@ -542,12 +511,8 @@ export function ChatMessageList({
   const userScrollIntentRef = useRef(false);
   const pendingScrollToResponseRef = useRef(false);
 
-  const [inlineExplainMessageId, setInlineExplainMessageId] = useState<string | null>(
-    null,
-  );
-  const [inlineExplainKind, setInlineExplainKind] = useState<"chart" | "dashboard" | null>(
-    null,
-  );
+  const [, setInlineExplainMessageId] = useState<string | null>(null);
+  const [, setInlineExplainKind] = useState<"chart" | "dashboard" | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -624,9 +589,6 @@ export function ChatMessageList({
   );
   const isGeneratingAnswer = isActiveStream && Boolean(streamingAnswer);
   const streamingPresentation = getPresentationPairFromToolCalls(streamingToolCalls);
-  const showStreamingPresentation =
-    streamingShowPresentation &&
-    shouldShowRichPresentation(streamingAnswer, streamingToolCalls);
   const suppressStreamingMarkdown = shouldSuppressMarkdownForPresentation(
     streamingAnswer,
     streamingPresentation,
@@ -648,8 +610,6 @@ export function ChatMessageList({
   const streamingCaptionComplete =
     !showStreamingCaptionReveal ||
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
-  const effectiveShowStreamingPresentation =
-    showStreamingPresentation && streamingCaptionComplete;
   const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled:
@@ -999,7 +959,6 @@ export function ChatMessageList({
     const messageTime = formatMessageTime(message.created_at);
     const isPending = Boolean(message.metadata?.optimistic);
     const messageToolCalls = getMessageToolCalls(message);
-    const messagePresentation = getPresentationPairFromToolCalls(messageToolCalls);
     const displayContent = isUser
       ? resolveUserMessageContent(
           message,
@@ -1007,11 +966,6 @@ export function ChatMessageList({
           message.id === latestUserMessageId,
         )
       : String(message.content ?? "").trim();
-    const suppressMessageMarkdown = shouldSuppressMarkdownForPresentation(
-      displayContent || message.content,
-      messagePresentation,
-      messageToolCalls,
-    );
     const messageCanvasOpen = getCanvasOpenFromMetadata(message.metadata);
 
     return (
@@ -1342,23 +1296,14 @@ export function ChatMessageList({
                   attachments={getMessageAttachments(message)}
                   onDownloadAttachment={onDownloadAttachment}
                 />
-                {shouldShowRichPresentation(displayContent, messageToolCalls)
-                  ? renderPresentation(messageToolCalls, displayContent, onDrillDown, onOpenCanvas, {
-                      requestChart:
-                        inlineExplainMessageId === message.id &&
-                        inlineExplainKind === "chart",
-                      requestDashboard:
-                        inlineExplainMessageId === message.id &&
-                        inlineExplainKind === "dashboard",
-                      onHandled: () => {
-                        setInlineExplainMessageId(null);
-                        setInlineExplainKind(null);
-                      },
-                    })
-                  : null}
-                {suppressMessageMarkdown || !displayContent ? null : (
-                  <ChatMarkdown content={displayContent} />
-                )}
+                {displayContent || messageToolCalls.length ? (
+                  <ChatAssistantContent
+                    content={displayContent}
+                    toolCalls={messageToolCalls}
+                    onDrillDown={onDrillDown}
+                    onOpenCanvas={onOpenCanvas}
+                  />
+                ) : null}
                 {messageCanvasOpen ? (
                   <ChatInlineCanvas
                     payload={messageCanvasOpen}
@@ -1954,7 +1899,7 @@ export function ChatMessageList({
               <div
                 className={[
                   "mdc-chat-message-streaming-body",
-                  effectiveShowStreamingPresentation
+                  streamingToolCalls.length > 0
                     ? "mdc-chat-message-streaming-body--has-presentation"
                     : "",
                 ]
@@ -1985,7 +1930,12 @@ export function ChatMessageList({
                           .filter(Boolean)
                           .join(" ")}
                       >
-                        <ChatMarkdown content={revealedStreamingAnswer} />
+                        <ChatAssistantContent
+                          content={revealedStreamingAnswer}
+                          toolCalls={streamingToolCalls}
+                          onDrillDown={onDrillDown}
+                          onOpenCanvas={onOpenCanvas}
+                        />
                       </div>
                     ) : null}
                   </div>
@@ -2004,9 +1954,17 @@ export function ChatMessageList({
                     </h3>
                   </div>
                 ) : null}
-                {effectiveShowStreamingPresentation ? (
+                {streamingAnswer &&
+                suppressStreamingMarkdown &&
+                !showStreamingCaptionReveal &&
+                streamingCaptionComplete ? (
                   <div className="mdc-chat-stream-presentation is-visible">
-                    {renderPresentation(streamingToolCalls, streamingAnswer, onDrillDown, onOpenCanvas)}
+                    <ChatAssistantContent
+                      content={streamingAnswer}
+                      toolCalls={streamingToolCalls}
+                      onDrillDown={onDrillDown}
+                      onOpenCanvas={onOpenCanvas}
+                    />
                   </div>
                 ) : null}
                 {streamingCanvasOpen ? (
@@ -2016,8 +1974,7 @@ export function ChatMessageList({
                   />
                 ) : null}
               </div>
-              {showStreamingPresentation &&
-              shouldShowActionResults(streamingAnswer, streamingToolCalls) ? (
+              {shouldShowActionResults(streamingAnswer, streamingToolCalls) ? (
                 <div className="mdc-chat-stream-extras is-visible">
                   <ChatActionResults toolCalls={streamingToolCalls} />
                 </div>

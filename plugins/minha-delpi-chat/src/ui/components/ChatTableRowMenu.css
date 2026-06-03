@@ -1,16 +1,21 @@
 .mdc-table-row-menu__scrim {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 1190;
-  background: var(--mdc-overlay-backdrop, color-mix(in srgb, var(--mdc-text, #111) 32%, transparent));
+  z-index: 10;
+  background: var(--mdc-overlay-backdrop);
   backdrop-filter: blur(1px);
 }
 
+.mdc-table-row-menu__scrim--light {
+  background: var(--mdc-overlay-backdrop-contained);
+  backdrop-filter: none;
+}
+
 .mdc-table-row-menu {
-  position: fixed;
-  z-index: 1200;
+  position: absolute;
+  z-index: 20;
   min-width: 11rem;
-  max-width: 16rem;
+  max-width: min(16rem, calc(100% - 1rem));
   padding: 0.35rem 0;
   border-radius: var(--mdc-radius-sm, 10px);
   border: 1px solid var(--mdc-card-border);
@@ -44,4 +49,16 @@
 
 .mdc-table-row-menu__item:focus-visible {
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+}
+
+@media (max-width: 767px) {
+  .mdc-table-row-menu {
+    min-width: 10rem;
+    max-width: min(18rem, calc(100vw - 1.5rem));
+  }
+
+  .mdc-table-row-menu__item {
+    padding: 0.65rem 1rem;
+    font-size: 0.88rem;
+  }
 }

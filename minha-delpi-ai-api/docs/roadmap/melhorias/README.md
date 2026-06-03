@@ -9,7 +9,8 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | Playbook / tema | Documento | Status |
 |-----------------|-----------|--------|
 | Memória de sessão e preferências (01) | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Fases **1–5** (`ChatConversationMemoryService`) |
-| Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + **Fase 4** (`ai_chat_session_memory`, `POST .../memory/clear`) |
+| Contexto, memória e assertividade | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Fases **1–5** + memória persistida |
+| Memória avançada (playbook grande) | [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | Fases **1–9** + contexto livre e Q&A (**concluído**) |
 | Chips «Próximos passos» | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Fases **1–5** + menus contextuais (tabela, árvore, gráfico, chip) |
 | Anexos (Playbook 07) | [playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md](./playbooks_melhoria_minha_delpi_chat/07_anexos_e_arquivos.md) | Indexação PDF/XLSX, welcome ao anexar, chips «Com o anexo» |
 | Segurança e confiança (08) | [playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md](./playbooks_melhoria_minha_delpi_chat/08_seguranca_permissoes_confianca.md) | SQL seguro, trust badges, falha de API, confirmação de escrita + painel MFE; mensagem amigável em `ToolPermissionDeniedError` |
@@ -28,6 +29,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 **Changelogs:**
 
 - [Fase 5 contexto/assertividade](../../changelog/2026-05-contexto-memoria-assertividade.md)
+- [Contexto manual + Q&A + fechamento roadmap](../../changelog/2026-06-contexto-manual-e-roadmap.md)
 - [Pacote playbooks maio/2026](../../changelog/2026-05-melhorias-playbooks.md)
 
 **Arquitetura vigente:** [`../../architecture/chat-intelligence-base.md`](../../architecture/chat-intelligence-base.md).
@@ -45,6 +47,7 @@ Documentação de evolução além das **ondas 1–11** (ver [roadmap principal]
 | `ChatConversationMemoryService` | Playbook 01 — orquestração memória |
 | `ChatConversationMemoryExtractor` | Playbook 01 — action, canvas, anexo |
 | `ChatSessionMemoryService` | Fase 4 — memória persistida entre reloads |
+| `ChatUserContextItemService` | Contexto livre + pergunta/resposta (`context-items`) |
 | `ChatSqlSafetyService` | Playbook 08 — bloqueio SQL destrutivo |
 | `ChatTrustSignalsService` | Playbook 08 — sinais de confiança no metadata |
 | `ChatSecurityMessagingService` | Playbook 08 — mensagens quando API falha |

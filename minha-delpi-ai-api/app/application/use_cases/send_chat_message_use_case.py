@@ -407,6 +407,7 @@ class SendChatMessageUseCase:
                 tool_calls
             ),
         )
+        answer = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(answer)
         tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
 
         correction_canvas_payload = (

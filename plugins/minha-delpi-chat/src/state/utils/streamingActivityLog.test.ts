@@ -4,6 +4,7 @@ import type { ChatStreamActivityEntry } from "../../data/api/chatTypes";
 
 import {
   compactActivityLogForDisplay,
+  fullActivityLogForDisplay,
   resolveActivityStatusMessage,
   resolveCurrentActivityLine,
   resolveStreamingHeadline,
@@ -28,6 +29,17 @@ describe("streamingActivityLog", () => {
 
     expect(next).toHaveLength(1);
     expect(next[0]?.state).toBe("done");
+  });
+
+  it("lista todas as etapas em ordem no painel expandido", () => {
+    const full = fullActivityLogForDisplay([
+      { id: "tool-1", phase: "tools", message: "Prefetch SA1", state: "done", at: 1 },
+      { id: "tool-2", phase: "tools", message: "RAG", state: "done", at: 2 },
+      { id: "think-1", phase: "think", message: "Pensando", state: "active", at: 3 },
+    ]);
+
+    expect(full).toHaveLength(3);
+    expect(full.map((item) => item.id)).toEqual(["tool-1", "tool-2", "think-1"]);
   });
 
   it("mantém só a etapa mais recente por fase", () => {

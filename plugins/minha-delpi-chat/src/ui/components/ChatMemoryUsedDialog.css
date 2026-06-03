@@ -1,8 +1,8 @@
 .mdc-chat-memory-used-backdrop {
   display: grid;
   place-items: center;
-  background: var(--mdc-overlay-backdrop);
-  backdrop-filter: blur(6px);
+  background: var(--mdc-overlay-backdrop-contained);
+  backdrop-filter: blur(4px);
 }
 
 .mdc-chat-memory-used {
@@ -106,4 +106,14 @@
   background: color-mix(in srgb, var(--mdc-warning, #d97706) 12%, transparent);
   color: color-mix(in srgb, var(--mdc-warning, #d97706) 85%, var(--mdc-text));
   font-size: 0.8125rem;
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-memory-used__header {
+    padding: var(--mdc-space-3) var(--mdc-space-4);
+  }
+
+  .mdc-chat-memory-used__body {
+    padding: var(--mdc-space-3) var(--mdc-space-4) var(--mdc-space-4);
+  }
 }

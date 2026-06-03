@@ -24,6 +24,7 @@ import {
   buildContextChipQuery,
 } from "./chatContextChipActions";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
+import { menuAnchorRectFromElement } from "./menuPositionUtils";
 import "./ChatContextBar.css";
 
 export type ChatContextChip = {
@@ -84,7 +85,7 @@ export function ChatContextBar({
 }: ChatContextBarProps) {
   const [chipMenu, setChipMenu] = useState<{
     chip: ChatContextChip;
-    anchor: { point: { x: number; y: number } };
+    anchor: { rect: ReturnType<typeof menuAnchorRectFromElement> };
     actions: ReturnType<typeof buildContextChipMenuActions>;
   } | null>(null);
 
@@ -96,7 +97,7 @@ export function ChatContextBar({
   const showClear = Boolean(onClearContext) && chips.length > 0;
   const showAdd = Boolean(onAddContext);
 
-  function openChipMenu(chip: ChatContextChip, clientX: number, clientY: number) {
+  function openChipMenu(chip: ChatContextChip, element: HTMLElement) {
     if (!onChipAction) {
       return;
     }
@@ -115,7 +116,7 @@ export function ChatContextBar({
 
     setChipMenu({
       chip,
-      anchor: { point: { x: clientX, y: clientY } },
+      anchor: { rect: menuAnchorRectFromElement(element) },
       actions,
     });
   }
@@ -164,10 +165,10 @@ export function ChatContextBar({
                     .filter(Boolean)
                     .join(" ")}
                   title={`${chip.label} — clique para ações`}
-                  onClick={(event) => openChipMenu(chip, event.clientX, event.clientY)}
+                  onClick={(event) => openChipMenu(chip, event.currentTarget)}
                   onContextMenu={(event) => {
                     event.preventDefault();
-                    openChipMenu(chip, event.clientX, event.clientY);
+                    openChipMenu(chip, event.currentTarget);
                   }}
                 >
                   {chipBody}

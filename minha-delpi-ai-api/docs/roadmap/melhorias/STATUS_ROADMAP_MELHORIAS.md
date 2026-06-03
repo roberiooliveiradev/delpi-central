@@ -1,4 +1,4 @@
-# Status — roadmap `docs/roadmap/melhorias` (03/06/2026)
+# Status — roadmap `docs/roadmap/melhorias` (03/06/2026, revisão fechamento)
 
 Índice de **fechamento documental** dos 40 arquivos desta pasta.  
 **Concluído** = implementado no código ou arquivado como referência estável. **Parcial** = entregas iniciais + backlog explícito. **Aguardando** = depende de aprovação de produto.
@@ -14,7 +14,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [README.md](./README.md) | Concluído | Índice vivo; smokes e serviços |
 | [STATUS_ROADMAP_MELHORIAS.md](./STATUS_ROADMAP_MELHORIAS.md) | Concluído | Este arquivo |
 | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Concluído | Fases 1–5 — `ChatConversationMemoryService` |
-| [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | Fases 1–9 concluídas | Playbook memória e contexto completo |
+| [playbook-memoria-e-contexto.md](../playbook-memoria-e-contexto.md) | **Concluído** | Fases 1–9 + contexto livre, Q&A, UX modais (jun/2026) |
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
 | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
 | [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial (UI) | Menu Textos MFE; inteligência textual → editor **Concluído** (`playbook-especialista-editor-textos.md`) |
@@ -105,4 +105,6 @@ Nenhum arquivo desta pasta exige reimplementação completa do escopo original d
 2. **Status** neste índice e no README.
 3. **Backlog** explícito nos playbooks 10–11 e fases 2+ de pesquisa web / gráficos.
 
-Última revisão em lote: **31/05/2026** (vendas produto, admin mockups 01–10, `resolvedFromMemory`).
+Última revisão em lote: **03/06/2026** — playbook memória/contexto fechado (Fases 1–9 + Q&A); ver [`../../changelog/2026-06-contexto-manual-e-roadmap.md`](../../changelog/2026-06-contexto-manual-e-roadmap.md).
+
+**Fora do escopo desta pasta (backlog ativo):** Admin mockup 11, onboarding 10, Onda 12/13 visão, refinamentos gráficos — [`BACKLOG_ROADMAP.md`](./BACKLOG_ROADMAP.md).

@@ -112,6 +112,44 @@ export function findPreviousUserMessage(
   return null;
 }
 
+function hashContextFingerprint(text: string): string {
+  let hash = 0;
+
+  for (let index = 0; index < text.length; index += 1) {
+    hash = (hash * 31 + text.charCodeAt(index)) | 0;
+  }
+
+  return String(hash);
+}
+
+/** Chave estável para evitar duplicar o mesmo contexto (UI + alinhado ao backend). */
+export function contextPayloadDedupKey(payload: ContextItemPayload): string | null {
+  const messageId = String(payload.messageId || "").trim();
+  const kind = String(payload.kind || "").trim().toLowerCase();
+
+  if (messageId && (kind === "question" || kind === "answer")) {
+    return `msg:${messageId}:${kind}`;
+  }
+
+  const questionMessageId = String(payload.questionMessageId || "").trim();
+  const answerMessageId = String(payload.answerMessageId || "").trim();
+
+  if (questionMessageId && answerMessageId) {
+    return `turn:${questionMessageId}:${answerMessageId}`;
+  }
+
+  const content = String(payload.content || payload.question || payload.answer || "")
+    .trim()
+    .slice(0, 500);
+  const filename = String(payload.filename || "").trim();
+
+  if (!content && !filename) {
+    return null;
+  }
+
+  return `content:${hashContextFingerprint(`${kind || "note"}:${filename}:${content}`)}`;
+}
+
 export function listRecentConversationPicks(
   messages: ChatMessage[],
   maxItems = 8,

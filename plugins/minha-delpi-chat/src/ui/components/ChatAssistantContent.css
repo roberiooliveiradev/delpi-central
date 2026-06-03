@@ -1,0 +1,20 @@
+.mdc-assistant-content__segments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-assistant-content__segments > .mdc-chat-markdown,
+.mdc-assistant-content__segments > .mdc-rich-table,
+.mdc-assistant-content__segments > .mdc-rich-chart,
+.mdc-assistant-content__segments > .mdc-rich-tree,
+.mdc-assistant-content__segments > .mdc-rich-kpi,
+.mdc-assistant-content__segments > .mdc-rich-dashboard {
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  .mdc-assistant-content__segments {
+    gap: var(--mdc-space-2);
+  }
+}

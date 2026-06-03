@@ -1,12 +1,15 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { TableRowMenuAction } from "./chatDrillDown";
+import { resolveModalPortalContainer } from "./modalPortalTarget";
 import {
   estimateMenuHeight,
   type MenuAnchorRect,
   resolveMenuPosition,
   resolveMenuPositionFromPoint,
+  resolveMenuPositionFromPointInContainer,
+  resolveMenuPositionInContainer,
 } from "./menuPositionUtils";
 import "./ChatTableRowMenu.css";
 
@@ -20,14 +23,44 @@ export function ChatTableRowMenu({
   onSelect,
   onClose,
   menuLabel = "Ações da linha",
+  scrim = "light",
 }: {
   actions: TableRowMenuAction[];
   anchor: TableRowMenuAnchor;
   onSelect: (query: string) => void;
   onClose: () => void;
   menuLabel?: string;
+  /** `light` = scrim só no painel do chat; `none` = sem scrim. */
+  scrim?: "light" | "none";
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const container = resolveModalPortalContainer();
+    const containerRect = container.getBoundingClientRect();
+    const usesAppContainer =
+      container !== document.body && container.id === "mdc-modal-root";
+
+    const nextPosition =
+      "rect" in anchor
+        ? usesAppContainer
+          ? resolveMenuPositionInContainer({
+              rect: anchor.rect,
+              containerRect,
+              itemCount: actions.length,
+            })
+          : resolveMenuPosition({ rect: anchor.rect, itemCount: actions.length })
+        : usesAppContainer
+          ? resolveMenuPositionFromPointInContainer(
+              anchor.point,
+              containerRect,
+              actions.length,
+            )
+          : resolveMenuPositionFromPoint(anchor.point, actions.length);
+
+    setPosition(nextPosition);
+  }, [actions.length, anchor]);
 
   useEffect(() => {
     if (!actions.length) {
@@ -76,23 +109,25 @@ export function ChatTableRowMenu({
     panelRef.current?.focus({ preventScroll: true });
   }, [actions]);
 
-  if (!actions.length || typeof document === "undefined") {
+  if (!actions.length || typeof document === "undefined" || !position) {
     return null;
   }
 
-  const position =
-    "rect" in anchor
-      ? resolveMenuPosition({ rect: anchor.rect, itemCount: actions.length })
-      : resolveMenuPositionFromPoint(anchor.point, actions.length);
-
   const menu = (
     <>
-      <div
-        className="mdc-table-row-menu__scrim"
-        role="presentation"
-        aria-hidden="true"
-        onMouseDown={onClose}
-      />
+      {scrim !== "none" ? (
+        <div
+          className={[
+            "mdc-table-row-menu__scrim",
+            scrim === "light" ? "mdc-table-row-menu__scrim--light" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          role="presentation"
+          aria-hidden="true"
+          onMouseDown={onClose}
+        />
+      ) : null}
 
       <div
         ref={panelRef}
@@ -121,7 +156,7 @@ export function ChatTableRowMenu({
     </>
   );
 
-  return createPortal(menu, document.body);
+  return createPortal(menu, resolveModalPortalContainer());
 }
 
 export { estimateMenuHeight };

@@ -5,6 +5,7 @@ import { isExplainChartSuggestion, isExplainDashboardSuggestion } from "./chartE
 import { type ChatFollowUpSuggestion } from "./ChatFollowUpChips";
 import type { TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu } from "./ChatTableRowMenu";
+import { menuAnchorRectFromElement, type MenuAnchorRect } from "./menuPositionUtils";
 
 import "./ChatInteractivityBlock.css";
 import "./ChatFollowUpChips.css";
@@ -62,7 +63,7 @@ export function ChatInteractivityBlock({
   variant = "default",
 }: ChatInteractivityBlockProps) {
   const [menu, setMenu] = useState<{
-    anchor: { point: { x: number; y: number } };
+    anchor: { rect: MenuAnchorRect };
     actions: TableRowMenuAction[];
   } | null>(null);
 
@@ -165,7 +166,9 @@ export function ChatInteractivityBlock({
             onClick={(event) => {
               event.stopPropagation();
               setMenu({
-                anchor: { point: { x: event.clientX, y: event.clientY } },
+                anchor: {
+                  rect: menuAnchorRectFromElement(event.currentTarget),
+                },
                 actions: overflow.map(
                   (item): TableRowMenuAction => ({
                     id: item.id ?? item.query,

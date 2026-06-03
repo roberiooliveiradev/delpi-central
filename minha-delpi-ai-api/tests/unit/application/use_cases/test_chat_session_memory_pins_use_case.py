@@ -55,6 +55,43 @@ def test_add_pin_rejects_invalid_value():
         )
 
 
+def test_add_context_item_replaces_duplicate_message_reference():
+    session_id = uuid4()
+    user_id = uuid4()
+    session = MagicMock()
+    session.user_id = user_id
+
+    session_repo = MagicMock()
+    session_repo.get_session_by_id.return_value = session
+
+    old_item = {
+        "id": "old-item",
+        "kind": "question",
+        "label": "Pergunta: SA1",
+        "content": "texto antigo",
+        "messageId": "msg-1",
+    }
+
+    memory_repo = MagicMock()
+    memory_repo.load_active_overlay.return_value = {
+        "lastEntities": {},
+        "behaviorInstructions": {},
+        "userContextItems": [old_item],
+    }
+
+    use_case = ChatSessionMemoryPinsUseCase(session_repo, memory_repo)
+    use_case.add_context_item(
+        user_id=user_id,
+        session_id=session_id,
+        content="texto novo",
+        role="user",
+        message_id="msg-1",
+    )
+
+    memory_repo.remove_context_item.assert_called_once_with(session_id, "old-item")
+    assert memory_repo.add_context_item.call_count == 1
+
+
 def test_remove_pin_checks_access():
     session_id = uuid4()
     user_id = uuid4()

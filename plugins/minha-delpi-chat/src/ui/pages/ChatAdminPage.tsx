@@ -295,6 +295,7 @@ export function ChatAdminPage({
           ) : null}
         </ChatAnimatedPanel>
       </section>
+      <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
     </main>
   );
 }

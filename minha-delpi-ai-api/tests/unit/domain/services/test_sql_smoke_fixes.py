@@ -108,6 +108,14 @@ def test_strip_schema_prefetch_hides_coverage_and_catalog():
     assert meta["humanizedSummary"]["titulo"] == "Schema interno (uso interno)"
 
 
+def test_format_sql_authoring_answer_adds_intro_and_dedupes():
+    raw = "```sql\nSELECT A1_COD FROM SA1\n```\n\n```sql\nSELECT A1_COD FROM SA1\n```"
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+
+    assert "Segue a consulta em SQL" in formatted
+    assert formatted.lower().count("```sql") == 1
+
+
 def test_normalize_protheus_sql_replaces_generic_columns():
     answer = (
         "Segue:\n\n```sql\nSELECT CodigoCliente, NomeCliente FROM SA1 WHERE Status = 'Ativo';\n```"
@@ -199,3 +207,34 @@ def test_incremental_add_city_authoring():
     assert refinement is not None
     assert refinement.mode == "show_sql"
     assert "A1_MUN" in refinement.sql or "CIDADE" in refinement.sql
+
+
+def test_incremental_top10_after_authoring_without_execute():
+    history = [
+        {
+            "role": "user",
+            "content": (
+                "Monte uma consulta para listar clientes ativos da tabela SA1, "
+                "só código e nome, sem executar."
+            ),
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "```sql\nSELECT A1_COD, A1_NOME\nFROM SA1010\n"
+                "WHERE D_E_L_E_T_ = ''\n```"
+            ),
+        },
+    ]
+    msg = "filtro os 10 primeiros"
+    refinement = ChatSqlQueryRefinementService.resolve(msg, previous_messages=history)
+    assert refinement is not None
+    assert refinement.mode == "show_sql"
+    assert "TOP 10" in refinement.sql.upper()
+    assert ChatSqlQueryRefinementService.is_sql_follow_up(msg, previous_messages=history)
+
+
+def test_apply_top_limit_inserts_when_missing():
+    sql = "SELECT A1_COD, A1_NOME FROM SA1010 WHERE D_E_L_E_T_ = ''"
+    updated = ChatSqlQueryRefinementService.apply_top_limit(sql, 10)
+    assert "TOP 10" in updated.upper()

@@ -694,6 +694,7 @@ class StreamChatMessageUseCase:
             message=message,
             tool_calls=tool_calls,
         )
+        answer = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(answer)
 
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(

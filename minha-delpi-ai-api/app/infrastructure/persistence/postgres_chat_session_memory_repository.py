@@ -219,7 +219,44 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 synchronize_session=False,
             )
         )
-        return int(updated or 0) > 0
+
+        if int(updated or 0) > 0:
+            return True
+
+        rows = (
+            AiChatSessionMemoryModel.query.filter(
+                AiChatSessionMemoryModel.session_id == session_id,
+                AiChatSessionMemoryModel.memory_type == "context_item",
+                AiChatSessionMemoryModel.active.is_(True),
+            )
+            .filter(
+                or_(
+                    AiChatSessionMemoryModel.expires_at.is_(None),
+                    AiChatSessionMemoryModel.expires_at > now,
+                )
+            )
+            .all()
+        )
+
+        for row in rows:
+            payload = row.value_json
+
+            if not isinstance(payload, dict):
+                continue
+
+            payload_id = str(payload.get("id") or "").strip()
+            message_id = str(payload.get("messageId") or "").strip()
+            kind = str(payload.get("kind") or "").strip().lower()
+            stable = f"msg:{message_id}:{kind}" if message_id and kind else ""
+
+            if payload_id != token and stable != token:
+                continue
+
+            row.active = False
+            row.updated_at = now
+            return True
+
+        return False
 
     def deactivate_entity(self, session_id: UUID, key: str) -> bool:
         if key not in self._ENTITY_KEYS:

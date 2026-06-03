@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
 import uuid
 from typing import Any
@@ -237,16 +238,82 @@ class ChatUserContextItemService:
         }
 
     @classmethod
-    def chip_from_item(cls, item: dict[str, Any]) -> dict[str, str]:
+    def dedup_key_for_item(cls, item: dict[str, Any]) -> str | None:
+        kind = str(item.get("kind") or "").strip().lower()
+        message_id = str(item.get("messageId") or "").strip()
+
+        if message_id and kind in _CONVERSATION_KINDS:
+            return f"msg:{message_id}:{kind}"
+
+        content = str(item.get("content") or "").strip()
+        filename = str(item.get("filename") or "").strip()
+
+        if not content and not filename:
+            return None
+
+        fingerprint = f"{kind}:{filename}:{content[:500]}"
+        digest = hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()[:24]
+
+        return f"content:{digest}"
+
+    @classmethod
+    def chip_value_for_item(cls, item: dict[str, Any]) -> str:
+        stable = cls.dedup_key_for_item(item)
+
+        if stable:
+            return stable
+
         item_id = str(item.get("id") or "").strip()
+        label = str(item.get("label") or "Contexto").strip()
+
+        return item_id or label[:120]
+
+    @classmethod
+    def chip_from_item(cls, item: dict[str, Any]) -> dict[str, str]:
         kind = str(item.get("kind") or "note").strip().lower()
         label = str(item.get("label") or "Contexto").strip()
+        item_id = str(item.get("id") or "").strip()
 
         return {
             "label": label[:_MAX_LABEL_CHARS],
             "kind": kind,
             "value": item_id or label[:120],
         }
+
+    @classmethod
+    def find_duplicate_item_ids(
+        cls,
+        existing_items: list[dict[str, Any]] | None,
+        incoming_items: list[dict[str, Any]],
+    ) -> list[str]:
+        incoming_keys = {
+            key
+            for item in incoming_items
+            if isinstance(item, dict)
+            for key in [cls.dedup_key_for_item(item)]
+            if key
+        }
+
+        if not incoming_keys:
+            return []
+
+        remove_ids: list[str] = []
+
+        for item in existing_items or []:
+            if not isinstance(item, dict):
+                continue
+
+            key = cls.dedup_key_for_item(item)
+
+            if not key or key not in incoming_keys:
+                continue
+
+            item_id = str(item.get("id") or "").strip()
+
+            if item_id:
+                remove_ids.append(item_id)
+
+        return remove_ids
 
     @classmethod
     def chips_from_items(cls, items: list[dict[str, Any]] | None) -> list[dict[str, str]]:

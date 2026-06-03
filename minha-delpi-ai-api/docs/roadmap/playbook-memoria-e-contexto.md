@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–9 concluídas** — métricas admin, feedback de memória e alertas de perda de contexto. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–9 concluídas** + extensões **contexto manual** (texto/arquivo, pergunta/resposta, UX modais). Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md) · Changelog: [`../changelog/2026-06-contexto-manual-e-roadmap.md`](../changelog/2026-06-contexto-manual-e-roadmap.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2181,6 +2181,13 @@ Métricas:
 
 **Fase 9 entregue (03/06/2026):** `ChatSessionMemoryAdminMetricsService`, `ChatMemoryContextLossAlertService`, `GET /admin/metrics/session-memory/summary`, painel `AdminSessionMemoryMetrics` (§77–78).
 
+**Extensões pós-Fase 9 (jun/2026):**
+
+- Contexto livre — `ChatUserContextItemService`, `POST/DELETE .../memory/context-items`, `ChatAddContextDialog`.
+- Perguntas e respostas — tipos `question`/`answer`, par no body, ações no MFE, dedup por `messageId`.
+- UX — barra de contexto responsiva; modais em portal com tema claro/escuro.
+- Deploy — `docker-entrypoint.sh` com `flask db upgrade` automático.
+
 ### Fase 1 — Estado de sessão
 
 - Criar ConversationStateManager.
@@ -2240,6 +2247,7 @@ Métricas:
 - [x] Limpar contexto — botão × (já existente).
 - [x] Editar preferência — menu do chip + resposta direta.
 - [x] Fixar contexto — pins produto/filial/armazém via menu «Fixar».
+- [x] Adicionar contexto — texto/tabela/arquivo + pergunta/resposta da conversa (MFE + API).
 - [x] Regressão M20.
 
 ### Fase 9 — Métricas e feedback ✅
