@@ -2,6 +2,18 @@
 
 Implementação incremental dos playbooks além da Fase 5 de contexto/assertividade (`c432e742`).
 
+## Editor textual — fechamento (03/06/2026)
+
+| Entrega | Detalhe |
+|---------|---------|
+| Playbook | [`playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) marcado **Concluído** (Fases 1–7, §49) |
+| Preferências §20 | `ChatTextTaskPreferenceService` persistente («de agora em diante», merge por turno) |
+| Intenções | `text.extract_decisions`, subtipos FAQ/glossário/release notes/procedimento, tom §19 |
+| Admin §47 | Feedback textual agregado em `text-tasks/summary` + `AdminTextTaskMetrics` |
+| Regressão | T1–T32 em `text_specialist_regression_cases.py` |
+| Commits | `19382958`, `61b29733`, `171d73cd` |
+| Pós-MVP | `TextArtifactService`; E2E LLM homologação no docker |
+
 ## Contexto (`playbook_contexto_assertividade`)
 
 | Entrega | Detalhe |

@@ -1,6 +1,20 @@
 # Especialista em textos (editor textual DELPI)
 
-**Playbook:** [`../roadmap/playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) (evolução do Playbook 03).
+**Playbook:** [`../roadmap/playbook-especialista-editor-textos.md`](../roadmap/playbook-especialista-editor-textos.md) — **Concluído (03/06/2026)**, Fases 1–7.
+
+## Status de entrega
+
+| Fase (§49) | Escopo | Estado |
+|------------|--------|--------|
+| 1 | Núcleo textual, roteamento `text_task`, templates | Concluído |
+| 2 | E-mails, cartas, comunicados, chips | Concluído |
+| 3 | Atas, relatórios, documentação, lousa | Concluído |
+| 4 | Explicação, ELI5, adaptação de público | Concluído |
+| 5 | Contexto, preferências de sessão | Concluído |
+| 6 | Anexos e lousa | Concluído |
+| 7 | Qualidade, feedback admin, regressão T1–T32 | Concluído |
+
+**Pós-MVP:** `TextArtifactService` (§37); smoke HTTP/E2E LLM estável no ambiente docker com gateway.
 
 ## Princípio
 

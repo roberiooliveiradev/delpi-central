@@ -1,4 +1,4 @@
-# Status — roadmap `docs/roadmap/melhorias` (31/05/2026)
+# Status — roadmap `docs/roadmap/melhorias` (03/06/2026)
 
 Índice de **fechamento documental** dos 40 arquivos desta pasta.  
 **Concluído** = implementado no código ou arquivado como referência estável. **Parcial** = entregas iniciais + backlog explícito. **Aguardando** = depende de aprovação de produto.
@@ -16,7 +16,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 | [playbook_memoria_sessao_preferencias_minha_delpi_chat.md](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) | Concluído | Fases 1–5 — `ChatConversationMemoryService` |
 | [playbook_contexto_assertividade_minha_delpi_chat.md](./playbook_contexto_assertividade_minha_delpi_chat.md) | Concluído | Fases 1–5 (memória, assertividade, avaliação) |
 | [playbook_interatividade_botoes_minha_delpi_chat.md](./playbook_interatividade_botoes_minha_delpi_chat.md) | Concluído | Fases 1–5 + menus contextuais (tabela, árvore, gráfico, chip) |
-| [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial | Fases 1–2 + menu Textos; 3–5 backlog |
+| [playbook_assistente_administrativo_textos_minha_delpi_chat.md](./playbook_assistente_administrativo_textos_minha_delpi_chat.md) | Parcial (UI) | Menu Textos MFE; inteligência textual → editor **Concluído** (`playbook-especialista-editor-textos.md`) |
 | [playbook_correcao_texto_minha_delpi_chat.md](./playbook_correcao_texto_minha_delpi_chat.md) | Concluído | Fases 1–6 + lousa bidirecional; agregado §23 backlog |
 | [playbook_escrita_emails_minha_delpi_chat.md](./playbook_escrita_emails_minha_delpi_chat.md) | Concluído | Fases 1–5 + preferências de sessão |
 | [playbook_chat_interativo_descontraido_minha_delpi.md](./playbook_chat_interativo_descontraido_minha_delpi.md) | Parcial | `personality_playbook.json`, starters |
@@ -47,7 +47,7 @@ Arquitetura transversal: [`../../architecture/chat-intelligence-base.md`](../../
 |----------|--------|---------------------------|
 | [01 — Roteamento](./playbooks_melhoria_minha_delpi_chat/01_roteamento_inteligente_de_intencoes.md) | Parcial | Ver Playbook 02 (evolução) |
 | [02 — Roteamento intenção](./playbook_roteamento_intencao_minha_delpi_chat.md) | Implementado | R1–R15, desambiguação produto, admin `/metrics/intent-routing/summary`, chips MFE |
-| [03 — Especialista textos](./playbook_especialista_textos_minha_delpi_chat.md) | Implementado (F1–7) | T1–T32, [`playbook-especialista-editor-textos.md`](../playbook-especialista-editor-textos.md), feedback admin §47, preferências §20 |
+| [03 — Especialista textos](./playbook_especialista_textos_minha_delpi_chat.md) | **Concluído** (F1–7) | Spec: [`playbook-especialista-editor-textos.md`](../playbook-especialista-editor-textos.md) · T1–T32 · commit `171d73cd` · pós-MVP: TextArtifact, E2E LLM |
 | [02 — Operacional](./playbooks_melhoria_minha_delpi_chat/02_respostas_operacionais_delpi.md) | Parcial | Actions, presenter, vendas/estoque, smokes operacionais |
 | [03 — Agentes](./playbooks_melhoria_minha_delpi_chat/03_agentes_especialistas.md) | Parcial | Agentes, providers, especialização |
 | [04 — RAG](./playbooks_melhoria_minha_delpi_chat/04_rag_e_conhecimento_interno.md) | Parcial | RAG, skill company-knowledge |

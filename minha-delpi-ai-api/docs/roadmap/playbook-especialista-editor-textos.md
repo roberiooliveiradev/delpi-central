@@ -1,6 +1,6 @@
 # Playbook — Especialista em Textos, E-mails, Cartas, Atas e Documentação
 
-**Status (03/06/2026):** Implementado no chat base (Fases 1–7) — preferências persistentes §20, `text.extract_decisions`, subtipos FAQ/glossário/release notes, feedback admin §47, regressão T1–T32. Backlog: `TextArtifactService`, E2E LLM estável. Ver [`../architecture/text-specialist.md`](../architecture/text-specialist.md).
+**Status: Concluído (03/06/2026)** — Fases 1–7 (§49) entregues no chat base. Consolidação em facade (`ChatTextTaskService` + serviços satélite), não subserviços isolados do §37. Regressão T1–T32, admin uso + feedback §47, preferências §20. **Pós-MVP (opcional):** `TextArtifactService`, homologação E2E LLM no docker. Referência técnica: [`../architecture/text-specialist.md`](../architecture/text-specialist.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: chat comum, escrita assistida, correção textual, reescrita, documentação, explicação técnica, ELI5, adaptação de tom, contexto e produtividade administrativa.
@@ -1621,6 +1621,8 @@ Adicionar motivos:
 ---
 
 ## 49. Roadmap de implementação
+
+**Fechamento (03/06/2026):** todas as fases abaixo estão cobertas no código; itens que citam `*WritingService` foram implementados via `ChatTextTaskService`, `ChatTextEditorSupplementService` e policies (`text-specialist.md`).
 
 ### Fase 1 — Núcleo textual
 

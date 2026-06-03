@@ -1,8 +1,8 @@
 # Playbook 03 — Especialista em Textos
 
-**Status (31/05/2026):** Implementado (Fases 1–6)  
-**Código:** `ChatTextTaskService`, `ChatTextQualityValidator`, `text-specialist.md`  
-**Validação:** `scripts/run_text_specialist_validation.sh`
+**Status (03/06/2026):** **Concluído** (Fases 1–7) — especificação consolidada em [`playbook-especialista-editor-textos.md`](../playbook-especialista-editor-textos.md).  
+**Código:** `ChatTextTaskService`, `ChatTextContextResolverService`, `ChatTextTaskPreferenceService`, `ChatTextQualityValidator`, `text-specialist.md`  
+**Validação:** `scripts/run_text_specialist_validation.sh` · regressão T1–T32 · admin `GET /admin/metrics/text-tasks/summary`
 
 ## Núcleo
 
