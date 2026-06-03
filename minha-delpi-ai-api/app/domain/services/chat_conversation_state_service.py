@@ -83,6 +83,7 @@ class ChatConversationStateService:
             state = cls._pause_current_task(state)
             state["activeTopic"] = cls._infer_topic_from_message(normalized)
             state["activeTask"] = cls._detect_task(normalized)
+            result["preferencesTopicChanged"] = True
 
         elif cls._RESUME_RE.search(normalized):
             resumed = cls._try_resume_task(state, normalized)

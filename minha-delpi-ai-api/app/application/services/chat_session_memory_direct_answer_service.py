@@ -49,14 +49,14 @@ class ChatSessionMemoryDirectAnswerService:
         if ChatFollowUpIntentService.is_operational_follow_up(message):
             return None
 
-        from app.domain.services.chat_text_task_preference_service import (
-            ChatTextTaskPreferenceService,
+        from app.domain.services.chat_user_preference_manager_service import (
+            ChatUserPreferenceManagerService,
         )
 
-        text_ack = ChatTextTaskPreferenceService.build_ack_direct_answer(message)
+        pref_ack = ChatUserPreferenceManagerService.build_ack_direct_answer(message)
 
-        if text_ack:
-            return text_ack
+        if pref_ack:
+            return pref_ack
 
         detected = ChatBehaviorInstructionService.detect(message)
 

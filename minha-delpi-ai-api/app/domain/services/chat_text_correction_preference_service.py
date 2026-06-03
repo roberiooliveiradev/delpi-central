@@ -30,7 +30,11 @@ class ChatTextCorrectionPreferenceService:
             r"\b(só|somente|apenas)\s+(a\s+)?versão\s+final\b",
             r"\bentregue\s+só\b",
             r"\bsem\s+explica[cç][aã]o\b",
+            r"\bsem\s+explicar\b",
+            r"\bnao\s+explique\b",
+            r"\bnão\s+explique\b",
             r"\bapenas\s+a\s+vers[aã]o\s+corrigida\b",
+            r"\bcorrij[ao]?\s+sem\s+explicar\b",
         ),
         "showBeforeAfter": (
             r"\bsempre\b.*\bantes\s+e\s+depois\b",

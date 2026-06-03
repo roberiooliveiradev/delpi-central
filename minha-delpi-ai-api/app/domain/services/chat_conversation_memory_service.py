@@ -16,6 +16,9 @@ from app.domain.services.chat_conversation_state_service import (
     ChatConversationStateService,
 )
 from app.domain.services.chat_entity_tracker_service import ChatEntityTrackerService
+from app.domain.services.chat_user_preference_manager_service import (
+    ChatUserPreferenceManagerService,
+)
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
 
@@ -69,6 +72,11 @@ class ChatConversationMemoryService:
             message=message,
             previous_messages=previous_messages,
             attachments=attachments,
+        )
+        snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
         )
 
         resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
@@ -129,6 +137,11 @@ class ChatConversationMemoryService:
             message=message,
             answer=answer,
         )
+        snapshot = ChatUserPreferenceManagerService.apply_to_snapshot(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+        )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
         return snapshot
 
@@ -136,6 +149,7 @@ class ChatConversationMemoryService:
     def format_prompt_block(cls, snapshot: dict | None) -> str:
         blocks = [
             ChatWorkingMemoryService.format_prompt_block(snapshot),
+            ChatUserPreferenceManagerService.format_prompt_block(snapshot),
             ChatEntityTrackerService.format_prompt_block(snapshot),
             ChatConversationStateService.format_prompt_block(snapshot),
         ]
@@ -156,6 +170,8 @@ class ChatConversationMemoryService:
         if period and not any(chip.get("kind") == "period" for chip in chips):
             label = cls._period_label(period)
             chips.append({"label": label, "kind": "period", "value": period})
+
+        chips.extend(ChatUserPreferenceManagerService.build_context_chips(snapshot))
 
         canvas = snapshot.get("canvas") or {}
 
@@ -185,6 +201,9 @@ class ChatConversationMemoryService:
         )
         base["activeEntities"] = snapshot.get("activeEntities") or {}
         base["referenceHints"] = snapshot.get("referenceHints") or {}
+        base["userPreferences"] = ChatUserPreferenceManagerService.compact_for_admin_debug(
+            snapshot
+        )
 
         return base
 
@@ -226,6 +245,9 @@ class ChatConversationMemoryService:
         for key, active in text_prefs.items():
             if active:
                 applied.append(f"textTask:{key}")
+
+        for label in snapshot.get("preferencesAppliedLabels") or []:
+            applied.append(f"pref:{label[:32]}")
 
         return applied
 

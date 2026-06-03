@@ -10,6 +10,8 @@ MEMORY_CONTEXT_REGRESSION_CASES: list[dict] = [
     {"id": "M6", "kind": "user_correction"},
     {"id": "M7", "kind": "topic_change"},
     {"id": "M8", "kind": "resume_task"},
+    {"id": "M2", "kind": "preference_persist"},
+    {"id": "M9", "kind": "preference_topic_reset"},
     {"id": "M10", "kind": "correction_priority"},
     {"id": "M12", "kind": "sql_edit"},
     {"id": "M14", "kind": "sensitive_skip_write"},

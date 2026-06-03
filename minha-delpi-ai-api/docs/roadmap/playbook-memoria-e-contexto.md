@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–2 concluídas** — estado de sessão (`ChatConversationStateService`) + entidades/referências (`ChatEntityTrackerService`, resolver ampliado: lousa, anexo, SQL, «isso»/tabela). Fases 3–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–3 concluídas** — estado de sessão, entidades/referências, preferências unificadas (`ChatUserPreferenceManagerService`: detectar, aplicar, revogar, reset em mudança de assunto). Fases 4–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2159,6 +2159,8 @@ Métricas:
 **Fase 1 entregue (03/06/2026):** `ChatConversationStateService` + integração em `ChatConversationMemoryService` (equivalente a ConversationStateManager do §9).
 
 **Fase 2 entregue (03/06/2026):** `ChatEntityTrackerService` + `ChatReferenceResolutionService` ampliado (§10–11, casos M4/M8/M12).
+
+**Fase 3 entregue (03/06/2026):** `ChatUserPreferenceManagerService` (§13, M2/M9, revogação de preferências).
 
 ### Fase 1 — Estado de sessão
 

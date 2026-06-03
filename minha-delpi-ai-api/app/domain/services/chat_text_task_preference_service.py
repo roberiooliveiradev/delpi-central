@@ -34,8 +34,10 @@ class ChatTextTaskPreferenceService:
             r"\bso\s+vers[aã]o\s+final\b",
             r"\bs[oó]\s+corrij[ao]?\s+sem\s+explicar\b",
             r"\bde\s+agora\s+em\s+diante\b.*\bsem\s+explicar\b",
+            r"\bdaqui\s+pra\s+frente\b.*\bsem\s+explicar\b",
             r"\bde\s+agora\s+em\s+diante\b.*\bvers[aã]o\s+final\b",
             r"\bapenas\s+a\s+vers[aã]o\s+corrigida\b",
+            r"\bcorrij[ao]?\s+sem\s+explicar\b",
         ),
         "show_diff": (
             r"\bsempre\s+mostre\s+antes\s+e\s+depois\b",

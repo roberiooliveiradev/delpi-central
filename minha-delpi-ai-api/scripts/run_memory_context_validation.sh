@@ -16,6 +16,7 @@ echo "== Memória e contexto — testes unitários =="
 "$PY" -m pytest \
   tests/unit/domain/services/test_memory_context.py \
   tests/unit/domain/services/test_chat_entity_tracker_service.py \
+  tests/unit/domain/services/test_chat_user_preference_manager_service.py \
   tests/unit/domain/services/test_chat_session_memory.py \
   tests/unit/domain/services/test_chat_reference_resolution_service.py \
   -q
