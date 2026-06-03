@@ -414,7 +414,24 @@
 }
 
 .ca-calendar-wrap .rbc-time-view .rbc-allday-cell {
-  display: none;
+  min-height: 32px;
+}
+
+.ca-calendar-wrap .rbc-time-header-gutter.rbc-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--ca-muted);
+  vertical-align: middle;
+}
+
+.ca-calendar-wrap .rbc-allday-events .rbc-event {
+  min-height: 24px;
+  margin-bottom: 2px;
+}
+
+.ca-calendar-wrap .rbc-allday-events .rbc-event-content {
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .ca-calendar-wrap .rbc-header {
