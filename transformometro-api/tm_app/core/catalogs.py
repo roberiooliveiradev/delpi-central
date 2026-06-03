@@ -17,6 +17,7 @@ TIPO_CUSTO_RECURSO = ("fixo", "variavel", "assinatura", "licenca")
 CATEGORIAS = ("software", "treinamento", "consultoria", "equipamento", "horas_internas", "terceiros")
 RECORRENCIAS = ("unico", "mensal", "anual")
 CRITERIO_RATEIO = ("igualitario", "por_revisoes_ativas", "por_peso")
+BASE_COMPETENCIA_RECURSO = ("mensal_cheio", "proporcional_dias")
 STATUS_RECURSO = ("ativo", "inativo")
 STATUS_APROVACAO_REVISAO = ("rascunho", "em_analise", "aprovada", "rejeitada")
 
@@ -37,6 +38,7 @@ def options_payload() -> dict:
         "categorias": list(CATEGORIAS),
         "recorrencias": list(RECORRENCIAS),
         "criterio_rateio": list(CRITERIO_RATEIO),
+        "base_competencia_recurso": list(BASE_COMPETENCIA_RECURSO),
         "status_recurso": list(STATUS_RECURSO),
         "status_aprovacao_revisao": list(STATUS_APROVACAO_REVISAO),
     }
