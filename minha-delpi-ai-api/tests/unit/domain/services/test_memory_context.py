@@ -291,6 +291,44 @@ def test_m15_clear_context_wipes_conversation_state():
     assert state.get("activeTopic") is None
 
 
+def test_m16_semantic_memory_requested_for_documentation():
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="Como funciona a autorização RBAC?",
+        previous_messages=[],
+    )
+
+    assert snapshot.get("semanticMemoryRequested") is True
+    assert snapshot.get("semanticMemoryQuery")
+    assert snapshot.get("proceduralMemoryHints") or snapshot.get("semanticMemoryIntent")
+
+
+def test_m17_episodic_recall_from_prior_snapshot():
+    previous = [
+        {
+            "role": "assistant",
+            "content": "ok",
+            "metadata": {
+                "contextSnapshot": {
+                    "episodicMemory": [
+                        {
+                            "episodeId": "e1",
+                            "taskType": "playbook_creation",
+                            "topic": "playbook memória",
+                            "summary": "Rascunho do playbook.",
+                        },
+                    ],
+                },
+            },
+        },
+    ]
+    snapshot = ChatConversationMemoryService.build_pre_turn(
+        message="Use o mesmo padrão do playbook anterior",
+        previous_messages=previous,
+    )
+
+    assert snapshot.get("episodicRecall") or snapshot.get("episodicRecallMissing")
+
+
 def test_post_turn_preserves_snippet():
     pre = {
         "conversationState": {

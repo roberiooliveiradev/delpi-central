@@ -149,7 +149,10 @@ Mensagem do usuário
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
 | `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
-| `ChatSessionMemoryService` | Fase 4: overlay em `ai_chat_session_memory` (reload da sessão) |
+| `ChatConversationMemoryService` | Orquestrador playbook memória (Fases 1–6): ver [`session-memory.md`](./session-memory.md) |
+| `ChatSemanticMemoryService` | Fase 5: enriquece query RAG; registra `semanticMemoryHits` |
+| `ChatEpisodicMemoryService` | Fase 6: episódios no `contextSnapshot` (recall / gravação / exclusão) |
+| `ChatSessionMemoryService` | Overlay em `ai_chat_session_memory` (reload da sessão) |
 | `ChatProjectSettingsService` | Flags em `metadata` do projeto (`shareConversationContext`) |
 | `ChatProjectConversationContextService` | Com share ativo: resumo de até 5 conversas irmãs + overlay de memória; estágio `project_shared_context` |
 | `ChatBehaviorInstructionService` | Instruções de comportamento da sessão injetadas no contexto operacional |
@@ -160,12 +163,13 @@ Use cases (`SendChatMessageUseCase`, `StreamChatMessageUseCase`, `AdminAgentSimu
 
 Documentação dedicada: [`email-writing.md`](./email-writing.md) (escrita de e-mails corporativos).
 
-### Memória e assertividade (Fases 4–5)
+### Memória e assertividade
 
-1. **Pré-turno** — `ChatTurnPreparationService` monta `workspaceContext.workingMemory` a partir do histórico e do overlay persistido (`ChatSessionMemoryService`).
-2. **Pós-turno** — `ChatContextMetadataService` atualiza snapshot e calcula assertividade; `contextSnapshot` é sincronizado em `ai_chat_session_memory`.
-3. **Admin** — `ChatAdminDebugService.resolve_client_admin_debug` mescla memória/assertividade após o attach (resposta HTTP/SSE).
-4. **Regressão** — `CONTEXT_ASSERTIVENESS_CASES` em `tests/fixtures/chat_intelligence_regression_cases.py`; smokes `scripts/smoke_context_assertiveness_multiturn.py` e `scripts/smoke_follow_up_chips.py` (ver [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md)).
+1. **Pré-turno** — `ChatConversationMemoryService.build_pre_turn` + overlay `ChatSessionMemoryService`; memória semântica/episódica (Fases 5–6) no mesmo snapshot.
+2. **Turno** — `ChatSemanticMemoryService` enriquece RAG quando `semanticMemoryRequested`; blocos no prompt via `format_prompt_block`.
+3. **Pós-turno** — `ChatContextMetadataService` + episódios (`ChatEpisodicMemoryService`); sync em `ai_chat_session_memory`.
+4. **Admin** — `adminDebug.memory` inclui `semanticMemory` e `episodicMemory`.
+5. **Regressão** — `MEMORY_CONTEXT_REGRESSION_CASES` (M1–M17): `scripts/run_memory_context_validation.sh`; assertividade: `CONTEXT_ASSERTIVENESS_CASES` e smokes em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
 
 A preparação compartilhada do turno (tools, RAG, flags `skipRag` / `fastPath`) está em **`ChatTurnPreparationService`** (`app/application/services/chat_turn/chat_turn_preparation_service.py`), usada por send e stream.
 

@@ -12,10 +12,12 @@ Histórico + mensagem
   → ChatReferenceResolutionService.resolve_from_snapshot
   → ChatContextCompressionService (histórico ≥ 10 mensagens)
   → ChatSemanticMemoryRetrieverService (intenção documental/playbook)
+  → ChatEpisodicMemoryService.apply_pre_turn (recall de episódios)
   → workspaceContext.workingMemory + bloco no prompt
   → (turno) ChatSemanticMemoryService enriquece query RAG e registra hits
   → (turno) tools / LLM
   → ChatConversationMemoryService.build_post_turn
+  → ChatEpisodicMemoryService.apply_post_turn (grava episódio quando couber)
   → contextSnapshot + contextChips + adminDebug.memory
 ```
 
@@ -48,10 +50,12 @@ Histórico + mensagem
 cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
 ```
 
-Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (expandido, Fase 1+).
+Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (Fases 1–6).
 
 ```bash
 cd minha-delpi-ai-api && ./scripts/run_memory_context_validation.sh
 ```
+
+Campos úteis no `adminDebug.memory` (Fases 5–6): `semanticMemory` (hits, intent), `episodicMemory` (contagem, recall).
 
 - `sessionMemoryMetrics`: snapshot por turno (entidades, refs, follow-up, lousa)

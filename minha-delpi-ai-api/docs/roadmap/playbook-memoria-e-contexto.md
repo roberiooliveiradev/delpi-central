@@ -1,6 +1,6 @@
 # Playbook — Memória e Contexto do Minha DELPI Chat IA
 
-**Status (03/06/2026):** Fases **1–6 concluídas** — inclui memória episódica em `contextSnapshot` (recall, gravação, exclusão). Fases 7–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md).
+**Status (03/06/2026):** Fases **1–6 concluídas** — estado de sessão, entidades, preferências, compressão, memória semântica (RAG enriquecido) e episódica (`contextSnapshot`). Fases 7–9 em backlog. Validação: `scripts/run_memory_context_validation.sh` · Arquitetura: [`../architecture/session-memory.md`](../architecture/session-memory.md) · Commits: `da03bf0b` (F5), `bf17fada` (F6).
 
 Projeto: Minha DELPI Chat IA
 Escopo: memória de conversa, contexto de sessão, continuidade entre perguntas, preferências do usuário, recuperação de referências, RAG conversacional, memória de longo prazo, arquitetura neural e governança de contexto.
@@ -2122,6 +2122,10 @@ Casos mínimos:
 | M13 | lousa ativa e “corrija” | corrige lousa |
 | M14 | dado sensível | não grava memória |
 | M15 | limpar contexto | remove active state |
+| M16 | «como funciona autorização?» | enriquece RAG; `semanticMemoryRequested` |
+| M17 | «mesmo padrão do playbook anterior» | `episodicRecall` ou pedido de clarificação |
+
+Implementação: `tests/unit/domain/services/test_memory_context.py`, `test_chat_semantic_memory.py`, `test_chat_episodic_memory_service.py`.
 
 ---
 
@@ -2164,9 +2168,9 @@ Métricas:
 
 **Fase 4 entregue (03/06/2026):** `ChatConversationSummarizerService` + `ChatContextCompressionService` (§17–18, histórico longo).
 
-**Fase 5 entregue (03/06/2026):** memória semântica — `ChatSemanticMemoryRetrieverService`, ranking, procedural hints, integração RAG no turno.
+**Fase 5 entregue (03/06/2026):** `ChatSemanticMemoryIntentService`, `ChatSemanticMemoryRetrieverService`, `ChatContextRankingService`, `ChatProceduralMemoryProviderService`, `ChatSemanticMemoryService` — reutiliza embeddings/busca híbrida/rerank de `SearchKnowledgeUseCase`; estágio `semantic_memory` no turno (§19–22, M16).
 
-**Fase 6 entregue (03/06/2026):** `ChatEpisodicMemoryService` — episódios, retomada, exclusão (§20).
+**Fase 6 entregue (03/06/2026):** `ChatEpisodicMemoryService` — `episodicMemory` / `episodicRecall` no snapshot, gravação pós-turno, exclusão e direct answer (§20, M17).
 
 ### Fase 1 — Estado de sessão
 
@@ -2197,20 +2201,20 @@ Métricas:
 - Resumir conversas longas.
 - Manter decisões e pendências.
 
-### Fase 5 — Memória semântica
+### Fase 5 — Memória semântica ✅
 
-- Criar embeddings.
-- Criar busca vetorial.
-- Criar busca híbrida.
-- Criar reranker.
-- Integrar com documentação e playbooks.
+- [x] Embeddings e busca vetorial — `SearchKnowledgeUseCase` + `EmbeddingGatewayPort` (existentes).
+- [x] Busca híbrida e rerank — `CHAT_RAG_HYBRID_*` / `CHAT_RAG_RERANK_*`.
+- [x] Integração no chat base — query enriquecida, `semanticMemoryHits`, hints procedimentais.
+- [x] Regressão M16.
 
-### Fase 6 — Memória episódica
+### Fase 6 — Memória episódica ✅
 
-- Salvar episódios relevantes.
-- Recuperar tarefas anteriores.
-- Retomar conversas.
-- Permitir exclusão.
+- [x] Salvar episódios relevantes — `episodicMemory` no `contextSnapshot` (até 8).
+- [x] Recuperar tarefas anteriores — `episodicRecall` + ranking por tópico/tarefa.
+- [x] Retomar conversas — bloco no prompt + `ChatSessionMemoryDirectAnswerService` se ausente.
+- [x] Permitir exclusão — pedido explícito do usuário.
+- [x] Regressão M17.
 
 ### Fase 7 — Contexto avançado
 
