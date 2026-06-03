@@ -110,6 +110,22 @@ export function AdminTextTaskMetrics({
             </div>
           ) : null}
 
+          {summary.byFamily && Object.keys(summary.byFamily).length > 0 ? (
+            <div className="mdc-admin-drawing-metrics__status-list">
+              <h4>Por família (playbook §47)</h4>
+              <ul>
+                {Object.entries(summary.byFamily)
+                  .sort((left, right) => right[1] - left[1])
+                  .map(([family, count]) => (
+                    <li key={family}>
+                      <span>{family}</span>
+                      <strong>{formatNumber(count)}</strong>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
+
           {summary.byIntent && Object.keys(summary.byIntent).length > 0 ? (
             <div className="mdc-admin-drawing-metrics__status-list">
               <h4>Por intenção</h4>

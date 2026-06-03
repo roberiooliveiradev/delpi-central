@@ -46,6 +46,31 @@ class ChatTextEditorSupplementService:
         "text_checklist": (
             "Checklist: itens `- [ ]` com verbo no infinitivo; agrupe por tema se necessário."
         ),
+        "text_table": (
+            "Tabela markdown com cabeçalhos claros; use | coluna | quando houver "
+            "comparação, prazos, responsáveis ou status."
+        ),
+        "text_memorandum": (
+            "Memorando: Para/De/Assunto, corpo objetivo, encaminhamento e prazo se informado."
+        ),
+        "text_conversation_doc": (
+            "Transforme o histórico da conversa em documento estruturado; preserve fatos citados."
+        ),
+        "text_three_versions": (
+            "Entregue três versões nomeadas: Formal, Direta e Cordial; mesmo sentido em todas."
+        ),
+        "text_before_after": (
+            "Use seções ## Antes, ## Depois e ## O que mudou com explicação objetiva."
+        ),
+        "text_translate": (
+            "Tradução natural; preserve termos técnicos e siglas quando indicado."
+        ),
+        "text_compare": (
+            "Compare versões em tabela por critério; indique melhor opção e justificativa breve."
+        ),
+        "text_review_quality": (
+            "Revisão: avalie clareza, tom e estrutura; sugira versão melhorada e pontos de atenção."
+        ),
     }
 
     @classmethod

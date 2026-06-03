@@ -1,4 +1,4 @@
-"""Casos T1–T20 — especialista em textos / editor textual."""
+"""Casos T1–T28 — especialista em textos / editor textual (playbook §46)."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
         "id": "T19",
         "message": "revise o texto do anexo e extraia pendências",
         "pure": True,
-        "category": "correct",
+        "category": "review",
         "attachment_ids": ["att-2"],
         "route_intents": {"text_task", "attachment_task"},
     },
@@ -94,5 +94,34 @@ TEXT_SPECIALIST_REGRESSION_CASES: list[dict] = [
         "pure": True,
         "category": "minutes",
         "source": "canvas",
+    },
+    {
+        "id": "T25",
+        "message": "transforme em tabela: item A responsável João prazo 10/06",
+        "pure": True,
+        "category": "to_table",
+        "subtype": "text_table",
+        "intent": "text.table.create",
+    },
+    {
+        "id": "T26",
+        "message": "crie um memorando interno sobre o novo processo",
+        "pure": True,
+        "category": "memorandum",
+        "subtype": "text_memorandum",
+        "intent": "text.memorandum.create",
+    },
+    {
+        "id": "T27",
+        "message": "transforme essa conversa em ata de reunião",
+        "pure": True,
+        "category": "conversation_transform",
+        "subtype": "text_minutes",
+    },
+    {
+        "id": "T28",
+        "message": "melhore esse texto",
+        "pure": True,
+        "category": "rewrite",
     },
 ]

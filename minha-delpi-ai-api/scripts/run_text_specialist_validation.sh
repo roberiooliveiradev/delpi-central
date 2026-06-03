@@ -21,6 +21,8 @@ ${PYTEST_BIN} \
   tests/unit/application/services/test_chat_text_task_mixed_turn_service.py \
   tests/unit/application/services/test_chat_text_task_canvas_service.py \
   tests/unit/domain/services/test_chat_text_editor_supplement.py \
+  tests/unit/domain/services/test_chat_text_context_resolver.py \
+  tests/unit/domain/services/test_text_assistant.py \
   tests/unit/application/use_cases/test_get_admin_text_task_summary_use_case.py \
   tests/unit/test_text_correction_skill.py \
   -q --tb=short

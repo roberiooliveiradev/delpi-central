@@ -395,6 +395,7 @@ export type AdminTextTaskSummary = {
   byType: Record<string, number>;
   byIntent?: Record<string, number>;
   byAudience?: Record<string, number>;
+  byFamily?: Record<string, number>;
   recent: AdminTextTaskRecentItem[];
 };
 

@@ -22,6 +22,7 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 | `ChatTextTaskAdminMetricsService` | Snapshot em auditoria e agregado admin |
 | `ChatTextTaskComposerService` | Rascunho operacional após tools (turno misto) |
 | `ChatTextEditorSupplementService` | Templates por subtipo (carta, ata, ELI5, documentação, …) |
+| `ChatTextContextResolverService` | Texto fonte inline, anexo, lousa e resposta anterior |
 
 ## Policies
 
@@ -42,4 +43,4 @@ Tarefa textual pura não aciona API, SQL, RAG ou web (ver também [intent-routin
 
 ## Testes
 
-`tests/fixtures/text_specialist_regression_cases.py` (T1–T24), `scripts/run_text_specialist_validation.sh`, `scripts/smoke_text_editor_e2e.py`
+`tests/fixtures/text_specialist_regression_cases.py` (T1–T28), `test_text_assistant.py`, `scripts/run_text_specialist_validation.sh`, `scripts/smoke_text_editor_e2e.py`, `scripts/smoke_text_editor_http.py`

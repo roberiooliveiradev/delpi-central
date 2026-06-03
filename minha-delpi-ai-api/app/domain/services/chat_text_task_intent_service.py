@@ -26,6 +26,24 @@ class ChatTextTaskIntentService:
             r"\btexto\s+está\s+bom\b",
             r"\btexto\s+esta\s+bom\b",
             r"\brevisão\s+de\s+qualidade\b",
+            r"\brevise\s+o\s+texto\b",
+            r"\brevise\s+este\s+texto\b",
+        ),
+        "to_table": (
+            r"\bem\s+tabela\b",
+            r"\bcoloque\s+em\s+tabela\b",
+            r"\btransforme\s+em\s+tabela\b",
+            r"\bformato\s+tabela\b",
+            r"\btabela\s+markdown\b",
+        ),
+        "memorandum": (r"\bmemorando\b",),
+        "conversation_transform": (
+            r"\btransforme\s+(?:essa|esta)\s+conversa\b",
+            r"\btransformar\s+(?:essa|esta)\s+conversa\b",
+            r"\bconversa\s+em\s+ata\b",
+            r"\bconversa\s+em\s+relat",
+            r"\bconversa\s+em\s+comunicado\b",
+            r"\bhistórico\s+em\s+ata\b",
         ),
         "rewrite": (
             r"\breescrev",
@@ -157,13 +175,16 @@ class ChatTextTaskIntentService:
             return None
 
         priority = (
-            "correct",
             "review",
+            "correct",
             "compare",
+            "conversation_transform",
+            "to_table",
             "eli5",
             "documentation",
             "explain",
             "adapt_audience",
+            "memorandum",
             "letter",
             "minutes",
             "announcement",
@@ -282,6 +303,7 @@ class ChatTextTaskIntentService:
             "simplify",
             "email",
             "letter",
+            "memorandum",
             "minutes",
             "announcement",
             "documentation",
@@ -293,6 +315,13 @@ class ChatTextTaskIntentService:
             "adapt_audience",
             "action_plan",
             "report",
+            "to_table",
+            "conversation_transform",
+            "document",
+            "tone_adjust",
+            "extract_actions",
+            "message",
+            "write",
         }:
             return False
 

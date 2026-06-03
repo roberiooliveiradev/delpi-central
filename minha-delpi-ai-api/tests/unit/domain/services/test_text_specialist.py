@@ -1,4 +1,4 @@
-"""Regressão especialista em textos / editor textual (T1–T24)."""
+"""Regressão especialista em textos / editor textual (T1–T28)."""
 
 from __future__ import annotations
 

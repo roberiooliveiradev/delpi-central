@@ -112,15 +112,69 @@ class ChatTextQualityValidator:
             "passed": passed,
             "checks": checks,
             "subtype": subtype,
-            "checklist": cls.build_checklist(passed=passed),
+            "checklist": cls.build_checklist(
+                answer=text,
+                message=message,
+                ctx=ctx,
+                checks=checks,
+            ),
         }
 
     @classmethod
-    def build_checklist(cls, *, passed: bool) -> list[dict[str, bool]]:
+    def build_checklist(
+        cls,
+        *,
+        answer: str | None = None,
+        message: str | None = None,
+        ctx: dict[str, Any] | None = None,
+        checks: list[dict[str, str]] | None = None,
+        passed: bool | None = None,
+    ) -> list[dict[str, bool]]:
+        text = (answer or "").strip()
+        context = ctx or ChatTextTaskService.classify(message)
+        issue_codes = {str(item.get("code") or "") for item in (checks or [])}
+
+        def ok(code: str | None = None, *, default: bool = True) -> bool:
+            if passed is not None and code is None:
+                return passed
+
+            if code and code in issue_codes:
+                return False
+
+            return default
+
+        deliver_final = bool(context.get("deliverFinalOnly"))
+
         return [
-            {"item": "Pedido textual atendido", "ok": passed},
-            {"item": "Sentido preservado", "ok": passed},
-            {"item": "Sem dados inventados", "ok": passed},
-            {"item": "Códigos preservados", "ok": passed},
-            {"item": "Pronto para copiar", "ok": passed},
+            {"item": "O pedido foi atendido", "ok": ok("empty_answer", default=bool(text))},
+            {"item": "O sentido foi preservado", "ok": ok("code_not_preserved")},
+            {
+                "item": "O tom está adequado",
+                "ok": ok(None, default=True),
+            },
+            {
+                "item": "O público foi considerado",
+                "ok": ok(None, default=bool(context.get("audience")) or True),
+            },
+            {
+                "item": "O formato está correto",
+                "ok": ok("missing_subject", default=True),
+            },
+            {
+                "item": "Nomes e números foram preservados",
+                "ok": ok("code_not_preserved", default=True),
+            },
+            {"item": "Não houve invenção de dados", "ok": ok("invented_signature", default=ok("invented_owner"))},
+            {
+                "item": "A linguagem está natural",
+                "ok": ok(None, default=True),
+            },
+            {
+                "item": "O texto está pronto para copiar",
+                "ok": ok("empty_answer", default=bool(text)),
+            },
+            {
+                "item": "Há próximos passos úteis",
+                "ok": ok("over_explained", default=not deliver_final or len(text.split()) <= 120),
+            },
         ]

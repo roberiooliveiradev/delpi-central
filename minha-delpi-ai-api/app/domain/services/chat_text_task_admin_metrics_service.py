@@ -72,6 +72,7 @@ class ChatTextTaskAdminMetricsService:
         by_type: Counter[str] = Counter()
         by_intent: Counter[str] = Counter()
         by_audience: Counter[str] = Counter()
+        by_family: Counter[str] = Counter()
         mixed_count = 0
         quality_failed = 0
         canvas_updates = 0
@@ -92,10 +93,22 @@ class ChatTextTaskAdminMetricsService:
             by_type[task_type] += 1
             intent = str(snapshot.get("intent") or "unknown")
             by_intent[intent] += 1
+            by_family[cls._family_from_intent(intent)] += 1
             audience = snapshot.get("audience")
 
             if audience:
                 by_audience[str(audience)] += 1
+
+            tone = str(snapshot.get("tone") or "")
+
+            if tone == "formal":
+                by_family["tone_formal"] += 1
+
+            if snapshot.get("deliverFinalOnly"):
+                by_family["deliver_final_only"] += 1
+
+            if int(snapshot.get("canvasVersionCount") or 0) > 0:
+                by_family["canvas_used"] += 1
 
             if snapshot.get("deliverFinalOnly"):
                 deliver_final_only_count += 1
@@ -148,5 +161,48 @@ class ChatTextTaskAdminMetricsService:
             "byType": dict(by_type),
             "byIntent": dict(by_intent),
             "byAudience": dict(by_audience),
+            "byFamily": dict(by_family),
             "recent": recent,
         }
+
+    @staticmethod
+    def _family_from_intent(intent: str) -> str:
+        token = (intent or "").strip().lower()
+
+        if token.startswith("text.email"):
+            return "emails"
+
+        if token.startswith("text.letter"):
+            return "letters"
+
+        if "minutes" in token or token == "text.conversation.transform":
+            return "minutes"
+
+        if "announcement" in token or "memorandum" in token:
+            return "announcements"
+
+        if "report" in token:
+            return "reports"
+
+        if "documentation" in token:
+            return "documentation"
+
+        if token.startswith("text.translate"):
+            return "translations"
+
+        if token.startswith("text.summarize"):
+            return "summaries"
+
+        if token == "text.eli5":
+            return "eli5"
+
+        if token.startswith("text.correct") or token.startswith("text.review"):
+            return "corrections"
+
+        if token.startswith("text.rewrite") or token.startswith("text.formalize"):
+            return "rewrites"
+
+        if "checklist" in token or "table" in token:
+            return "structured"
+
+        return "other"

@@ -125,6 +125,7 @@ class ChatTextCorrectionIntentService:
             "eli5",
             "explain",
             "letter",
+            "memorandum",
             "documentation",
             "report",
             "minutes",
@@ -138,6 +139,9 @@ class ChatTextCorrectionIntentService:
             "organize",
             "document",
             "extract_actions",
+            "review",
+            "to_table",
+            "conversation_transform",
         }:
             return False
 

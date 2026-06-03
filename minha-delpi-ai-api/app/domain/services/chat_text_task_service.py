@@ -36,6 +36,9 @@ class ChatTextTaskService:
         "eli5": "explanation",
         "action_plan": "action_plan",
         "adapt_audience": "adaptation",
+        "to_table": "structure",
+        "memorandum": "document",
+        "conversation_transform": "structure",
     }
 
     _SUBTYPE_TO_INTENT: dict[str, str] = {
@@ -63,6 +66,11 @@ class ChatTextTaskService:
         "text_compare": "text.compare_versions",
         "text_extract_actions": "text.extract_actions",
         "text_tone_adjust": "text.change_tone",
+        "text_table": "text.table.create",
+        "text_memorandum": "text.memorandum.create",
+        "text_conversation_doc": "text.conversation.transform",
+        "text_three_versions": "text.compare_versions",
+        "text_before_after": "text.compare_versions",
         "text_compose": "text.compose",
     }
 
@@ -81,8 +89,13 @@ class ChatTextTaskService:
         tone = cls._detect_tone(normalized)
         deliver_final_only = cls._wants_final_only(normalized)
         source = cls._detect_source(normalized)
-
         audience = cls._detect_audience(normalized)
+
+        if cls._wants_three_versions(normalized):
+            subtype = "text_three_versions"
+
+        if cls._wants_before_after(normalized):
+            subtype = "text_before_after"
 
         return {
             "type": cls._CATEGORY_TO_TYPE.get(category, "compose"),
@@ -164,6 +177,25 @@ class ChatTextTaskService:
 
         if editor_block:
             lines.append(f"- {editor_block}")
+
+        from app.domain.services.chat_text_context_resolver_service import (
+            ChatTextContextResolverService,
+        )
+
+        text_context = ChatTextContextResolverService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
+        context_block = ChatTextContextResolverService.format_prompt_block(text_context)
+
+        if context_block:
+            lines.append(context_block)
+
+        if cls._is_ambiguous_rewrite(message):
+            lines.append(
+                "- Pedido genérico: entregue versão inicial útil e ofereça refinamentos "
+                "(formal, curto, direto) sem travar com perguntas."
+            )
 
         from app.domain.services.chat_text_task_preference_service import (
             ChatTextTaskPreferenceService,
@@ -401,6 +433,24 @@ class ChatTextTaskService:
         if category == "adapt_audience":
             return "text_adapt_audience"
 
+        if category == "to_table":
+            return "text_table"
+
+        if category == "memorandum":
+            return "text_memorandum"
+
+        if category == "conversation_transform":
+            if "ata" in normalized or "reuni" in normalized:
+                return "text_minutes"
+
+            if "relat" in normalized:
+                return "text_report"
+
+            if "comunicado" in normalized:
+                return "text_announcement"
+
+            return "text_conversation_doc"
+
         if category == "compare":
             return "text_compare"
 
@@ -421,9 +471,6 @@ class ChatTextTaskService:
 
         if category == "document":
             if "comunicado" in normalized:
-                return "text_announcement"
-
-            if "memorando" in normalized:
                 return "text_announcement"
 
             return "text_compose"
@@ -467,6 +514,11 @@ class ChatTextTaskService:
             "text_adapt_audience": "- Adapte vocabulário e tom ao público pedido.",
             "text_summarize": "- Resumo fiel; não invente fatos.",
             "text_compare": "- Seções Antes/Depois/O que mudou ou tabela comparativa.",
+            "text_table": "- Entregue tabela markdown com cabeçalhos.",
+            "text_memorandum": "- Memorando corporativo com Para/De/Assunto.",
+            "text_conversation_doc": "- Documento a partir do histórico da conversa.",
+            "text_three_versions": "- Três versões: Formal, Direta, Cordial.",
+            "text_before_after": "- Antes / Depois / O que mudou.",
         }
 
         return hints.get(subtype or "")
@@ -558,6 +610,42 @@ class ChatTextTaskService:
                 "apenas corrija",
             )
         )
+
+    @staticmethod
+    def _wants_three_versions(normalized: str) -> bool:
+        return any(
+            phrase in normalized
+            for phrase in (
+                "3 versoes",
+                "3 versões",
+                "tres versoes",
+                "três versões",
+                "gerar 3",
+                "gere 3",
+            )
+        )
+
+    @staticmethod
+    def _wants_before_after(normalized: str) -> bool:
+        return any(
+            phrase in normalized
+            for phrase in (
+                "antes e depois",
+                "antes/depois",
+                "o que mudou",
+                "mostre alteracoes",
+                "mostre alterações",
+            )
+        )
+
+    @staticmethod
+    def _is_ambiguous_rewrite(message: str | None) -> bool:
+        normalized = (message or "").strip().lower()
+
+        if len(normalized) > 80:
+            return False
+
+        return normalized.startswith("melhore") and ":" not in normalized
 
     @staticmethod
     def _has_technical_terms(text: str) -> bool:
