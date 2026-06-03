@@ -126,7 +126,7 @@ export function BookingCalendar({
         timeslots={2}
         min={new Date(1970, 0, 1, 7, 0, 0)}
         max={new Date(1970, 0, 1, 20, 0, 0)}
-        allDayMaxRows={0}
+        allDayMaxRows={3}
         messages={{
           today: "Hoje",
           previous: "Anterior",
@@ -135,6 +135,7 @@ export function BookingCalendar({
           week: "Semana",
           day: "Dia",
           agenda: "Agenda",
+          allDay: "Vários dias",
           noEventsInRange: "Nenhuma reserva neste período.",
         }}
         components={{
