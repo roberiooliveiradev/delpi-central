@@ -37,24 +37,30 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
         self,
         request: GetStrategicIndicatorsDepartmentDetailsRealRequest,
     ) -> dict:
+        # Mesma base materializada que árvore / tree/snapshot (escopo global).
+        # Evita divergência entre period_scores scope_department_id="" vs "supplies".
         snapshot = self._snapshot_service.get_current_and_previous_snapshot(
             competence=request.competence,
             start_date=request.start_date,
             end_date=request.end_date,
-            department_id=request.department_id,
+            department_id=None,
             branch=request.branch,
         )
 
-        if not snapshot.current.calculated_departments:
+        current_department = self._find_department(
+            snapshot.current.calculated_departments,
+            request.department_id,
+        )
+        if current_department is None:
             raise DepartmentNotFoundError(
                 f"Departamento '{request.department_id}' não encontrado."
             )
 
-        current_department = snapshot.current.calculated_departments[0]
-        previous_department = (
-            snapshot.previous.calculated_departments[0]
-            if snapshot.previous.calculated_departments
-            else None
+        previous_department = self._find_department(
+            snapshot.previous.calculated_departments
+            if snapshot.previous is not None
+            else [],
+            request.department_id,
         )
 
         previous_indicators_by_id = {
@@ -112,6 +118,13 @@ class GetStrategicIndicatorsDepartmentDetailsRealUseCase:
             "errors": snapshot.current.measurement_errors,
             "partial_success": len(snapshot.current.measurement_errors) > 0,
         }
+
+    @staticmethod
+    def _find_department(departments, department_id: str):
+        for item in departments:
+            if item.department_id == department_id:
+                return item
+        return None
 
     def _map_indicator(
         self,

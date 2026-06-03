@@ -296,6 +296,84 @@ class StrategicIndicatorsSnapshotService:
         branch: str | None = None,
         force_compute: bool = False,
     ) -> StrategicIndicatorsComparativeSnapshot:
+        # Regra única para TODOS os departamentos: a leitura para exibição usa
+        # SEMPRE a base materializada global (scope_department_id="") e o
+        # ``department_id`` apenas filtra o retorno. Sem isso, cada tela poderia
+        # ler uma linha de ``period_scores`` por departamento que envelhece em
+        # ritmo diferente do global, gerando divergência (ex.: CPV de
+        # Suprimentos divergindo entre página de departamento e dashboard/árvore).
+        comparative = self._compute_comparative_snapshot(
+            competence=competence,
+            start_date=start_date,
+            end_date=end_date,
+            department_id=None,
+            branch=branch,
+            force_compute=force_compute,
+        )
+        if department_id:
+            comparative = self._filter_comparative_to_department(
+                comparative, department_id
+            )
+        return comparative
+
+    @classmethod
+    def _filter_comparative_to_department(
+        cls,
+        comparative: StrategicIndicatorsComparativeSnapshot,
+        department_id: str,
+    ) -> StrategicIndicatorsComparativeSnapshot:
+        return StrategicIndicatorsComparativeSnapshot(
+            catalog=comparative.catalog,
+            current=cls._filter_period_to_department(
+                comparative.current, department_id
+            ),
+            previous=cls._filter_period_to_department(
+                comparative.previous, department_id
+            ),
+        )
+
+    @staticmethod
+    def _filter_period_to_department(
+        period: StrategicIndicatorsPeriodSnapshot | None,
+        department_id: str,
+    ) -> StrategicIndicatorsPeriodSnapshot | None:
+        if period is None:
+            return None
+        # IGD/classificação permanecem globais (são da empresa); o filtro só
+        # restringe departamentos/indicadores/erros ao escopo solicitado.
+        return StrategicIndicatorsPeriodSnapshot(
+            period=period.period,
+            measurements=period.measurements,
+            measurement_errors=[
+                error
+                for error in period.measurement_errors
+                if error.get("department_id") in ("", department_id)
+            ],
+            calculated_indicators=[
+                indicator
+                for indicator in period.calculated_indicators
+                if indicator.department_id == department_id
+            ],
+            calculated_departments=[
+                dept
+                for dept in period.calculated_departments
+                if dept.department_id == department_id
+            ],
+            igd=period.igd,
+            igd_exact=period.igd_exact,
+            classification=period.classification,
+        )
+
+    def _compute_comparative_snapshot(
+        self,
+        *,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        department_id: str | None = None,
+        branch: str | None = None,
+        force_compute: bool = False,
+    ) -> StrategicIndicatorsComparativeSnapshot:
         started = time.perf_counter()
         current_period = resolve_period(
             competence=competence,

@@ -54,8 +54,8 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_PERIOD_SCORES_ENABLED` | `true` | Grava/lê `period_scores` nas rotas |
 | `SI_PERIOD_SCORES_REFRESH_ENABLED` | `true` | Job periódico de materialização |
 | `SI_PERIOD_SCORES_REFRESH_INTERVAL_SECONDS` | `300` | Intervalo do job (segundos) |
-| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `6` | Meses materializados (consolidado) |
-| `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `true` | Mês atual por departamento |
+| `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `3` | Meses materializados (consolidado) |
+| `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` dev) | Migrations no boot |
 | `TOTVS_POOL_ENABLED` | `true` | Pool pyodbc |
 | `TOTVS_POOL_MAX_SIZE` | `8` | Conexões máx. no pool |

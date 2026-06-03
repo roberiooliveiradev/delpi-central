@@ -32,7 +32,12 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         request: GetStrategicIndicatorsTrendsRealRequest,
     ) -> dict:
         snapshots = self.load_period_snapshots(request)
-        return self.build_response_from_snapshots(snapshots)
+        response = self.build_response_from_snapshots(snapshots)
+        if request.department_id:
+            response = self._filter_response_to_department(
+                response, request.department_id
+            )
+        return response
 
     def load_period_snapshots(
         self,
@@ -42,12 +47,37 @@ class GetStrategicIndicatorsTrendsRealUseCase:
         reference = self._parse_competence(request.competence)
         periods = self._build_periods(reference, months)
 
+        # Regra única: a série também lê a base global e filtra o departamento
+        # solicitado, alinhando com a árvore/dashboard e evitando divergência
+        # com as linhas materializadas por departamento (que envelhecem
+        # separadamente do global).
         return self._snapshot_service.get_series_snapshot_optimized(
             periods=periods,
-            department_id=request.department_id,
+            department_id=None,
             branch=request.branch,
             prefer_materialized_only=True,
         )
+
+    @staticmethod
+    def _filter_response_to_department(response: dict, department_id: str) -> dict:
+        filtered = dict(response)
+        filtered["departments"] = [
+            dept
+            for dept in response.get("departments", [])
+            if dept.get("id") == department_id
+        ]
+        series_by_department = response.get("indicator_series_by_department_id", {})
+        filtered["indicator_series_by_department_id"] = {
+            key: value
+            for key, value in series_by_department.items()
+            if key == department_id
+        }
+        filtered["errors"] = [
+            error
+            for error in response.get("errors", [])
+            if error.get("department_id") in ("", department_id)
+        ]
+        return filtered
 
     def build_response_from_snapshots(
         self,

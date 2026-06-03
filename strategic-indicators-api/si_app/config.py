@@ -64,9 +64,14 @@ class Settings:
     SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS: int = int(
         _get_env("SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS", default="3") or "3"
     )
+    # Desligado por padrão: a leitura para exibição agora usa SEMPRE a base
+    # global (scope_department_id="") e filtra o departamento em memória, então
+    # materializar uma linha por departamento virou trabalho desnecessário (e
+    # pesado). Mantido como flag para diagnósticos pontuais.
     SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT: bool = (
         str(
-            _get_env("SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT", default="true") or "true"
+            _get_env("SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT", default="false")
+            or "false"
         ).lower()
         in {"1", "true", "yes", "on"}
     )
