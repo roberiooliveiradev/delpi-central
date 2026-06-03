@@ -364,6 +364,10 @@
   transform: rotate(180deg);
 }
 
+.dashboard-transformometro .ds-info-banner__trigger {
+  align-items: center;
+}
+
 .dashboard-transformometro .ds-info-banner {
   margin-bottom: var(--ds-section-gap);
   padding: 14px 18px;
@@ -373,15 +377,21 @@
   color: var(--ds-text);
 }
 
-.dashboard-transformometro .ds-info-banner__trigger svg:first-of-type {
+.dashboard-transformometro .ds-info-banner__lead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-transformometro .ds-info-banner__lead svg {
   flex-shrink: 0;
-  margin-top: 2px;
   color: var(--ds-accent);
 }
 
 .dashboard-transformometro .ds-info-banner__title {
   display: block;
-  flex: 1;
   font-size: var(--ds-font-md, 1rem);
   font-weight: 700;
   color: var(--ds-title);
@@ -390,7 +400,8 @@
 
 .dashboard-transformometro .ds-info-banner__body {
   padding-left: 32px;
-  margin-top: 12px;
+  margin-top: 16px;
+  padding-top: 4px;
 }
 
 .dashboard-transformometro .ds-info-banner__description {

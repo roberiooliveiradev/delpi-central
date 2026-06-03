@@ -517,12 +517,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         className="ds-info-banner"
         triggerClassName="ds-info-banner__trigger"
         bodyClassName="ds-info-banner__body"
-        defaultOpen
         header={
-          <>
+          <div className="ds-info-banner__lead">
             <Database size={18} aria-hidden />
             <strong className="ds-info-banner__title">PostgreSQL — Transformômetro</strong>
-          </>
+          </div>
         }
       >
         <p className="ds-info-banner__description">
@@ -544,7 +543,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           className="ds-card ds-alert-panel"
           triggerClassName="ds-alert-panel__trigger"
           bodyClassName="ds-alert-panel__body"
-          defaultOpen
           header={
             <>
               <AlertTriangle size={20} aria-hidden />

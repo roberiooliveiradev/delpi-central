@@ -14,7 +14,7 @@ export function CollapsiblePanel({
   className,
   triggerClassName,
   bodyClassName,
-  defaultOpen = true,
+  defaultOpen = false,
   header,
   children,
 }: CollapsiblePanelProps) {
