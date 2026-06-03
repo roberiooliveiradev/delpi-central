@@ -45,9 +45,9 @@ Ordem de precedência no Nginx: locations mais específicas antes do fallback `/
 | `^~ /socket.io/` | `core-api:8000/socket.io/` | Prefixo mantido no upstream |
 | `^~ /core-api/` | `core-api:8000/` | `/core-api/foo` → `/foo` |
 | `/auth/` | `keycloak:8080` | Keycloak com path `/auth` |
-| `^~ /apps/api-delpi/socket.io/` | `api-delpi:8000/socket.io/` | Socket API DELPI |
+| `^~ /apps/api-delpi/socket.io/` | `api-delpi:8000/socket.io/` (via `$upstream_api_delpi`) | Socket API DELPI |
 | `^~ /apps/minha-delpi-ai/api/` | `delpi-minha-delpi-ai-api:8000/` | AI API |
-| `^~ /apps/api-delpi/` | `api-delpi:8000/` | API operacional |
+| `^~ /apps/api-delpi/` | `api-delpi:8000/` (via `$upstream_api_delpi`) | API operacional |
 | `~ ^/apps/([^/]+)/assets/remoteEntry\.js$` | `delpi-$1` → `/assets/remoteEntry.js` | **Sem cache** |
 | `~ ^/apps/([^/]+)/assets/(.*)$` | `delpi-$1` → `/assets/$2` | Cache 1 ano |
 | `/` | `portal:80` | Shell React (SPA) |
@@ -122,6 +122,8 @@ Portal conecta em `io("/", { path: "/socket.io" })` — mesma origem do gateway.
 
 Path dedicado: `/apps/api-delpi/socket.io/` → `api-delpi:8000/socket.io/`.
 
+HTTP e Socket usam `set $upstream_api_delpi` + `proxy_pass http://$upstream_api_delpi` para o `resolver 127.0.0.11` re-resolver o container após `docker compose up --force-recreate api-delpi`. Com hostname fixo em `proxy_pass`, o Nginx guarda o IP na subida do gateway e devolve **502** até reiniciar `delpi-gateway`.
+
 ---
 
 ## 7. Cache de microfrontends
@@ -173,6 +175,7 @@ delpi-dashboard-delpi (se assets servidos por /apps/dashboard-delpi)
 
 | Sintoma | Causa provável |
 |---|---|
+| 502 em `/apps/api-delpi/*` após recreate da API | Gateway com IP antigo do container; rebuild/restart do `delpi-gateway` ou confirme upstream dinâmico (`$upstream_api_delpi`) |
 | 502 em `/core-api` | `core-api` down ou fora da rede |
 | 404 em `/apps/X/assets/remoteEntry.js` | Container `delpi-X` inexistente ou id do manifesto ≠ segmento URL |
 | Login Keycloak errado | `KC_HOSTNAME` / `VITE_KC_URL` divergentes da URL pública |
