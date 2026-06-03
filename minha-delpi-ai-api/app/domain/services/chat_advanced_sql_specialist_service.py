@@ -650,6 +650,38 @@ class ChatAdvancedSqlSpecialistService:
         }
 
     @classmethod
+    def ensure_required_sql_block(
+        cls,
+        answer: str | None,
+        *,
+        snapshot: dict[str, Any] | None,
+    ) -> str:
+        text = str(answer or "").strip()
+
+        if not text or "```sql" in text.lower():
+            return text
+
+        if not cls.requires_llm_response(snapshot):
+            return text
+
+        discovery = (
+            snapshot.get("schemaDiscovery")
+            if isinstance(snapshot, dict) and isinstance(snapshot.get("schemaDiscovery"), dict)
+            else {}
+        )
+        example = cls._example_join_sql_for_tables(
+            [str(item) for item in (discovery.get("tableCandidates") or [])]
+        )
+
+        if not example:
+            return text
+
+        return (
+            "Segue um exemplo de JOIN para validar a relação no schema:\n\n"
+            f"```sql\n{example}\n```\n\n{text}"
+        ).strip()
+
+    @classmethod
     def _example_join_sql_for_tables(cls, tables: list[str]) -> str | None:
         upper = {str(item).upper() for item in tables if item}
 

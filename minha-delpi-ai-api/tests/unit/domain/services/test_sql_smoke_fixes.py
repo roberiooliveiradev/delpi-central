@@ -107,6 +107,20 @@ def test_strip_schema_presentation_from_tool_calls():
     assert "presentation" not in meta
 
 
+def test_ensure_required_sql_block_for_sc5_sa1():
+    snapshot = {
+        "mode": "schema_explore",
+        "message": "como relacionar sc5 com sa1",
+        "schemaDiscovery": {"tableCandidates": ["SC5", "SA1"]},
+    }
+    answer = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
+        "Precisamos validar a relação.",
+        snapshot=snapshot,
+    )
+    assert "```sql" in answer.lower()
+    assert "c5_cliente" in answer.lower()
+
+
 def test_incremental_add_city_authoring():
     history = [
         {

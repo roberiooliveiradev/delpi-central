@@ -669,6 +669,20 @@ class StreamChatMessageUseCase:
             workspace_context=workspace_context,
         )
 
+        from app.domain.services.chat_advanced_sql_specialist_service import (
+            ChatAdvancedSqlSpecialistService,
+        )
+
+        sql_snapshot = (
+            tool_context.get("sqlAdvanced")
+            if isinstance(tool_context, dict) and isinstance(tool_context.get("sqlAdvanced"), dict)
+            else None
+        )
+        answer = ChatAdvancedSqlSpecialistService.ensure_required_sql_block(
+            answer,
+            snapshot=sql_snapshot,
+        )
+
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
                 message=message,
