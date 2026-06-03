@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   Clock,
   Coins,
-  Database,
   Download,
   FileDown,
   Lightbulb,
@@ -512,24 +511,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           </label>
         </div>
       </section>
-
-      <CollapsiblePanel
-        className="ds-info-banner"
-        triggerClassName="ds-info-banner__trigger"
-        bodyClassName="ds-info-banner__body"
-        header={
-          <div className="ds-info-banner__lead">
-            <Database size={18} aria-hidden />
-            <strong className="ds-info-banner__title">PostgreSQL — Transformômetro</strong>
-          </div>
-        }
-      >
-        <p className="ds-info-banner__description">
-          KPIs e gráficos em tempo real a partir do cadastro (revisões, medições, investimentos e
-          recursos), no recorte das datas dos filtros. Competências mensais cheias entram nos totais;
-          a visão <em>Dia</em> reparte o mês nos dias do período filtrado.
-        </p>
-      </CollapsiblePanel>
 
       <StatusAlerts
         error={error}
