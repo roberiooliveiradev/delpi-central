@@ -1552,11 +1552,18 @@ class ExternalActionSelectionService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         table_name = self._extract_protheus_table_name(message)
         wants_columns = "coluna" in normalized
+        wants_relations = any(
+            term in normalized
+            for term in ("relacion", "relacionar", "join", "ligar", "associar")
+        )
         wants_table_search = self._wants_system_table_search(normalized)
 
         def score(action: dict) -> int:
             path = str(action.get("path") or "").lower()
             value = 0
+
+            if wants_relations and table_name and "/tables/" in path and "/relations" in path:
+                value += 130
 
             if wants_columns and table_name and "/tables/" in path and "/columns" in path:
                 value += 120

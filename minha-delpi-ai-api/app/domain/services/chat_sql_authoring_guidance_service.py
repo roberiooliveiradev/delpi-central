@@ -137,9 +137,22 @@ class ChatSqlAuthoringGuidanceService:
 
         planned: list[dict] = []
         table_names = cls.extract_table_names(message)
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        wants_relations = any(
+            term in normalized
+            for term in ("relacion", "relacionar", "join", "ligar", "associar", "chave estrangeira", "fk ")
+        )
 
         for table_name in table_names:
-            prompt = f"colunas da tabela {table_name}"
+            prompt = (
+                f"relacionamentos da tabela {table_name}"
+                if wants_relations
+                else f"colunas da tabela {table_name}"
+            )
             selected = selection_service._select_system_metadata_action(
                 prompt,
                 allowed_action_ids=allowed_action_ids,

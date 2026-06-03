@@ -752,7 +752,9 @@ class ChatAdvancedSqlSpecialistService:
             if result_analysis.get("isEmpty"):
                 lines.append("Recuperação sugerida: ampliar período, revisar filtros ou validar schema.")
 
-        if mode in {"create", "review", "explain", "optimize", "incremental_edit"}:
+        if mode in {"create", "review", "explain", "optimize", "incremental_edit"} or (
+            mode == "schema_explore" and cls.requires_llm_response(snapshot)
+        ):
             lines.append(
                 "ENTREGA OBRIGATÓRIA: responda com bloco ```sql``` contendo a consulta pedida "
                 "(SELECT somente leitura) antes de qualquer outro conteúdo."
