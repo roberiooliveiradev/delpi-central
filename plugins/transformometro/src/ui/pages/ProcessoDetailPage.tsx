@@ -25,7 +25,7 @@ import {
   updateProcesso,
   type OptionsData,
   type Processo,
-  type RevisionCompareItem,
+  type ProcessoComparativoItem,
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
@@ -36,6 +36,8 @@ import {
   type ProcessoFormState,
 } from "../processos/processoForm";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
+
+const formatNumber = (value?: number | null) => Number(value ?? 0).toLocaleString("pt-BR");
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -65,7 +67,7 @@ export function ProcessoDetailPage({
   const [editingProcesso, setEditingProcesso] = useState(false);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
   const [savingProcesso, setSavingProcesso] = useState(false);
-  const [comparativo, setComparativo] = useState<RevisionCompareItem[]>([]);
+  const [comparativo, setComparativo] = useState<ProcessoComparativoItem[]>([]);
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
@@ -155,11 +157,7 @@ export function ProcessoDetailPage({
   async function handleDeleteProcesso() {
     if (!processo) return;
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
-    if (
-      !window.confirm(
-        `Excluir o processo ${label}? Você será redirecionado à lista.`
-      )
-    ) {
+    if (!window.confirm(`Excluir o processo ${label}? Você será redirecionado à lista.`)) {
       return;
     }
     setError(null);
@@ -173,15 +171,11 @@ export function ProcessoDetailPage({
 
   async function handleDeleteRevisao(revisao: Revisao) {
     const label = `v${revisao.versao_revisao} (${revisao.cenario_tipo})`;
-    if (!window.confirm(`Excluir a revisão ${label}?`)) {
-      return;
-    }
+    if (!window.confirm(`Excluir a revisão ${label}?`)) return;
     setError(null);
     try {
       await deleteRevisao(revisao.revisao_id, getAccessToken);
-      if (revisaoId === revisao.revisao_id) {
-        onRevisaoChange(null);
-      }
+      if (revisaoId === revisao.revisao_id) onRevisaoChange(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir revisão");
@@ -213,7 +207,7 @@ export function ProcessoDetailPage({
 
   const selectedRevisao = revisoes.find((r) => r.revisao_id === revisaoId);
 
-  const comparativoColumns = useMemo<DataTableColumn<RevisionCompareItem>[]>(
+  const comparativoColumns = useMemo<DataTableColumn<ProcessoComparativoItem>[]>(
     () => [
       { key: "versao", header: "Versão", render: (row) => row.versao_revisao ?? "—" },
       { key: "cenario", header: "Cenário", render: (row) => row.cenario_tipo ?? "—" },
@@ -233,19 +227,19 @@ export function ProcessoDetailPage({
         key: "bruta",
         header: "Economia bruta",
         className: "ds-table__col--numeric",
-        render: (row) => row.totais.economia_bruta.toLocaleString("pt-BR"),
+        render: (row) => formatNumber(row.totais.economia_bruta),
       },
       {
         key: "liquida",
         header: "Economia líquida",
         className: "ds-table__col--numeric",
-        render: (row) => row.totais.economia_liquida_mes.toLocaleString("pt-BR"),
+        render: (row) => formatNumber(row.totais.economia_liquida_mes),
       },
       {
         key: "horas",
         header: "Horas/mês",
         className: "ds-table__col--numeric",
-        render: (row) => row.totais.horas_economizadas_mes.toLocaleString("pt-BR"),
+        render: (row) => formatNumber(row.totais.horas_economizadas_mes),
       },
     ],
     []
@@ -270,11 +264,7 @@ export function ProcessoDetailPage({
         key: "ativa",
         header: "Ativa",
         render: (r) =>
-          r.revisao_ativa ? (
-            <span className="ds-badge ds-badge--success">ativa</span>
-          ) : (
-            "—"
-          ),
+          r.revisao_ativa ? <span className="ds-badge ds-badge--success">ativa</span> : "—",
       },
       {
         key: "acoes",
@@ -285,18 +275,10 @@ export function ProcessoDetailPage({
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => onRevisaoChange(r.revisao_id)}
-            >
+            <button type="button" className="ds-ghost-btn" onClick={() => onRevisaoChange(r.revisao_id)}>
               Abrir
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              onClick={() => void handleDeleteRevisao(r)}
-            >
+            <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRevisao(r)}>
               Excluir
             </button>
           </div>
@@ -307,10 +289,7 @@ export function ProcessoDetailPage({
   );
 
   const processFetchProgress = useTrackedSingleFetchProgress(loading && !processo);
-  const processLoadingProgress = useLoadingProgress(
-    loading && !processo,
-    processFetchProgress
-  );
+  const processLoadingProgress = useLoadingProgress(loading && !processo, processFetchProgress);
 
   if (loading && !processo) {
     return (
@@ -368,38 +347,19 @@ export function ProcessoDetailPage({
               <ArrowLeft size={16} />
               Lista
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={editingProcesso}
-              onClick={startEditProcesso}
-            >
+            <button type="button" className="ds-ghost-btn" disabled={editingProcesso} onClick={startEditProcesso}>
               <Pencil size={16} />
               Editar processo
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={refreshing}
-              onClick={() => void handleDuplicateProcesso()}
-            >
+            <button type="button" className="ds-ghost-btn" disabled={refreshing} onClick={() => void handleDuplicateProcesso()}>
               <Copy size={16} />
               Duplicar
             </button>
-            <button
-              type="button"
-              className="ds-ghost-btn"
-              disabled={refreshing}
-              onClick={() => void handleDeleteProcesso()}
-            >
+            <button type="button" className="ds-ghost-btn" disabled={refreshing} onClick={() => void handleDeleteProcesso()}>
               <Trash2 size={16} />
               Excluir
             </button>
-            <button
-              type="button"
-              className="ds-primary-btn"
-              onClick={() => setShowRevisaoForm((v) => !v)}
-            >
+            <button type="button" className="ds-primary-btn" onClick={() => setShowRevisaoForm((v) => !v)}>
               <Plus size={16} />
               {showRevisaoForm ? "Cancelar" : "Nova revisão"}
             </button>
@@ -407,12 +367,7 @@ export function ProcessoDetailPage({
         }
       />
 
-      <StatusAlerts
-        error={error}
-        loading={false}
-        hasData
-        onRetry={() => void load()}
-      />
+      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
 
       {editingProcesso && options && processoForm ? (
         <section className="ds-card ds-cadastro-form">
@@ -428,12 +383,7 @@ export function ProcessoDetailPage({
               <button type="submit" className="ds-primary-btn" disabled={savingProcesso}>
                 {savingProcesso ? "Salvando…" : "Salvar alterações"}
               </button>
-              <button
-                type="button"
-                className="ds-ghost-btn"
-                disabled={savingProcesso}
-                onClick={cancelEditProcesso}
-              >
+              <button type="button" className="ds-ghost-btn" disabled={savingProcesso} onClick={cancelEditProcesso}>
                 Cancelar
               </button>
             </div>
@@ -453,9 +403,7 @@ export function ProcessoDetailPage({
             </div>
             <div>
               <dt>Filial / setor</dt>
-              <dd>
-                {processo.filial_id} · {processo.setor_id}
-              </dd>
+              <dd>{processo.filial_id} · {processo.setor_id}</dd>
             </div>
             {processo.familia_processo ? (
               <div>
@@ -511,9 +459,7 @@ export function ProcessoDetailPage({
                   onChange={(e) => setRevForm({ ...revForm, cenario_tipo: e.target.value })}
                 >
                   {options.cenario_tipo.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
               </div>
@@ -524,9 +470,7 @@ export function ProcessoDetailPage({
                   type="date"
                   required
                   value={revForm.data_inicio_vigencia}
-                  onChange={(e) =>
-                    setRevForm({ ...revForm, data_inicio_vigencia: e.target.value })
-                  }
+                  onChange={(e) => setRevForm({ ...revForm, data_inicio_vigencia: e.target.value })}
                 />
               </div>
               <div className="ds-filter-box">
@@ -535,9 +479,7 @@ export function ProcessoDetailPage({
                   id="tm-rev-implantacao"
                   type="date"
                   value={revForm.data_implantacao}
-                  onChange={(e) =>
-                    setRevForm({ ...revForm, data_implantacao: e.target.value })
-                  }
+                  onChange={(e) => setRevForm({ ...revForm, data_implantacao: e.target.value })}
                 />
               </div>
               <div className="ds-filter-box">
@@ -546,9 +488,7 @@ export function ProcessoDetailPage({
                   id="tm-rev-fim"
                   type="date"
                   value={revForm.data_fim_vigencia}
-                  onChange={(e) =>
-                    setRevForm({ ...revForm, data_fim_vigencia: e.target.value })
-                  }
+                  onChange={(e) => setRevForm({ ...revForm, data_fim_vigencia: e.target.value })}
                 />
               </div>
               <div className="ds-filter-box ds-filter-box--checkbox">
@@ -557,18 +497,14 @@ export function ProcessoDetailPage({
                     id="tm-rev-ativa"
                     type="checkbox"
                     checked={revForm.revisao_ativa}
-                    onChange={(e) =>
-                      setRevForm({ ...revForm, revisao_ativa: e.target.checked })
-                    }
+                    onChange={(e) => setRevForm({ ...revForm, revisao_ativa: e.target.checked })}
                   />
                   Marcar como revisão ativa
                 </label>
               </div>
             </div>
             <div className="ds-cadastro-form__actions">
-              <button type="submit" className="ds-primary-btn">
-                Salvar revisão
-              </button>
+              <button type="submit" className="ds-primary-btn">Salvar revisão</button>
             </div>
           </form>
         </section>
@@ -594,12 +530,8 @@ export function ProcessoDetailPage({
         hideSearch
         pageSize={10}
         emptyMessage="Nenhuma revisão. Cadastre baseline e melhoria para mensurar economia."
-        onRowClick={(r) =>
-          onRevisaoChange(revisaoId === r.revisao_id ? null : r.revisao_id)
-        }
-        getRowClassName={(r) =>
-          revisaoId === r.revisao_id ? "ds-table__row--selected" : undefined
-        }
+        onRowClick={(r) => onRevisaoChange(revisaoId === r.revisao_id ? null : r.revisao_id)}
+        getRowClassName={(r) => revisaoId === r.revisao_id ? "ds-table__row--selected" : undefined}
         footer={
           <p className="ds-hint">
             Clique em uma revisão para cadastrar medição, investimentos e recursos compartilhados.
