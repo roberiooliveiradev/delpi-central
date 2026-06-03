@@ -9,6 +9,9 @@ from app.domain.services.chat_behavior_instruction_service import (
     ChatBehaviorInstructionService,
 )
 from app.domain.services.chat_follow_up_intent_service import ChatFollowUpIntentService
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
@@ -31,6 +34,11 @@ class ChatWorkingMemoryService:
         )
         last_entities = cls._extract_last_entities(previous_messages)
         last_entities = {**carryover_entities, **last_entities}
+        cls._annotate_product_code_source(
+            last_entities,
+            message=message,
+            previous_messages=previous_messages,
+        )
         behavior = cls._merge_behavior_instructions(message, previous_messages)
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
@@ -115,6 +123,13 @@ class ChatWorkingMemoryService:
             entities["branch"] = branch
             break
 
+        cls._annotate_product_code_source(
+            entities,
+            message=message,
+            previous_messages=previous_messages,
+            tool_calls=tool_calls,
+        )
+
         snapshot["lastEntities"] = entities
         snapshot["previousProductCodes"] = previous_product_codes[-8:]
         used = list(snapshot.get("usedMemoryKeys") or [])
@@ -157,7 +172,9 @@ class ChatWorkingMemoryService:
         lines: list[str] = []
         entities = snapshot.get("lastEntities") or {}
 
-        if entities.get("productCode"):
+        if entities.get("productCode") and str(
+            entities.get("productCodeSource") or ""
+        ).strip() in ("tool", "explicit"):
             lines.append(f"- Produto em foco: {entities['productCode']}.")
 
         if entities.get("branch"):
@@ -427,8 +444,9 @@ class ChatWorkingMemoryService:
         behavior = snapshot.get("behaviorInstructions") or {}
 
         product_code = str(entities.get("productCode") or "").strip()
+        product_source = str(entities.get("productCodeSource") or "").strip()
 
-        if product_code:
+        if product_code and product_source in ("tool", "explicit"):
             chips.append(
                 {
                     "label": f"Produto {product_code}",
@@ -550,6 +568,118 @@ class ChatWorkingMemoryService:
                 branches.append(str(branch))
 
         return branches
+
+    _PRODUCT_CONTEXT_TOKENS = (
+        "produto",
+        "sku",
+        "ficha do",
+        "cadastro do",
+        "estoque",
+        "fornecedor",
+        "fornece",
+        "estrutura do",
+        "roteiro",
+        "inspecao",
+        "inspeção",
+        "onde e usado",
+        "onde é usado",
+        "componentes",
+        "where used",
+        "bom do",
+    )
+
+    @classmethod
+    def _message_has_product_context(cls, *texts: Any) -> bool:
+        for text in texts:
+            normalized = ChatMessageNormalizationService.normalize_for_matching(text)
+
+            if normalized and any(
+                token in normalized for token in cls._PRODUCT_CONTEXT_TOKENS
+            ):
+                return True
+
+        return False
+
+    @classmethod
+    def _recent_product_tool_code(cls, previous_messages: list[Any] | None) -> str | None:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        for item in reversed((previous_messages or [])[-16:]):
+            metadata = item.get("metadata") if isinstance(item, dict) else None
+
+            if not isinstance(metadata, dict):
+                continue
+
+            for tool_call in reversed(metadata.get("toolCalls") or []):
+                if not isinstance(tool_call, dict):
+                    continue
+
+                if str(tool_call.get("name") or "") != "execute_external_action":
+                    continue
+
+                tool_meta = tool_call.get("metadata")
+
+                if not isinstance(tool_meta, dict) or not tool_meta.get("ok"):
+                    continue
+
+                code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
+                    str(tool_meta.get("path") or ""),
+                )
+
+                if code:
+                    return code
+
+        return None
+
+    @classmethod
+    def _annotate_product_code_source(
+        cls,
+        entities: dict[str, str],
+        *,
+        message: str,
+        previous_messages: list[Any] | None = None,
+        tool_calls: list | None = None,
+    ) -> None:
+        """Define a proveniência do productCode para gate de chips/prompt.
+
+        Só códigos com origem forte (tool de produto executada ou menção
+        explícita a produto) viram chip. Códigos "soltos" que surgiram de
+        outra consulta (ex.: cliente em SQL) ficam como inferidos e não geram
+        chip nem "produto em foco" — são apenas dados, não classificação.
+        """
+        code = str(entities.get("productCode") or "").strip()
+
+        if not code:
+            entities.pop("productCodeSource", None)
+            return
+
+        tool_codes: set[str] = set(cls._extract_codes_from_tool_calls(tool_calls))
+        recent_tool = cls._recent_product_tool_code(previous_messages)
+
+        if recent_tool:
+            tool_codes.add(recent_tool)
+
+        if code in tool_codes:
+            entities["productCodeSource"] = "tool"
+            return
+
+        if cls._message_has_product_context(message):
+            entities["productCodeSource"] = "explicit"
+            return
+
+        for item in reversed((previous_messages or [])[-6:]):
+            if cls._message_role(item) != "user":
+                continue
+
+            content = cls._message_content(item)
+
+            if code in content and cls._message_has_product_context(content):
+                entities["productCodeSource"] = "explicit"
+                return
+
+        entities["productCodeSource"] = "inferred"
 
     @staticmethod
     def _message_content(message: Any) -> str:

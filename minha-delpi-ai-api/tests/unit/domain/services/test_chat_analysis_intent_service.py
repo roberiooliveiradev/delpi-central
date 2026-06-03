@@ -95,6 +95,29 @@ def test_detects_sql_result_interpretation_follow_up():
     )
 
 
+def test_detects_generic_row_drilldown_as_interpretation():
+    history = [
+        {
+            "role": "assistant",
+            "content": "Consulta SQL",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/data/sql"},
+                    }
+                ]
+            },
+        }
+    ]
+
+    assert ChatAnalysisIntentService.is_data_interpretation_request(
+        "detalhe este registro do último resultado — A1 cod: 000224, "
+        "A1 nome: ACRILMASTER INDUSTRIA DE ACRILICOS LTDA",
+        history,
+    )
+
+
 def test_does_not_flag_data_interpretation_without_tool_history():
     assert not ChatAnalysisIntentService.is_data_interpretation_request(
         "explique os dados acima",

@@ -84,13 +84,44 @@ export function buildDrillDownQuery(
     return `Detalhe do item ${code}${desc ? ` (${desc})` : ""}`;
   }
 
+  // Sem coluna de produto reconhecida: não assumir produto.
+  // Detalhar = interpretar o registro do último resultado; o backend usa o
+  // histórico (ex.: a consulta que originou a tabela) para dar o significado.
+  const pairs = buildRowPairs(row, columns);
+
+  if (pairs.length > 0) {
+    return `detalhe este registro do último resultado — ${pairs.join("; ")}`;
+  }
+
   if (desc) {
-    return `Mais informações sobre ${desc}`;
+    return `detalhe este registro do último resultado — ${desc}`;
   }
 
   const firstVal = String(row[columns[0]?.key] ?? "").trim();
 
-  return firstVal ? `Detalhe de ${firstVal}` : null;
+  return firstVal
+    ? `detalhe este registro do último resultado — ${firstVal}`
+    : null;
+}
+
+function buildRowPairs(
+  row: Record<string, unknown>,
+  columns: DrillDownColumn[],
+): string[] {
+  return columns
+    .map((column) => {
+      const raw = row[column.key];
+      const value = raw === null || raw === undefined ? "" : String(raw).trim();
+      const label = String(column.label ?? column.key ?? "").trim();
+
+      if (!value || !label) {
+        return null;
+      }
+
+      return `${label}: ${value}`;
+    })
+    .filter((pair): pair is string => Boolean(pair))
+    .slice(0, 8);
 }
 
 export function buildTableRowMenuActions(

@@ -51,6 +51,21 @@ describe("buildDrillDownQuery", () => {
 
     expect(query).toBe("Detalhe do item 90260077 (Parafuso)");
   });
+
+  it("não assume produto em colunas genéricas: interpreta o último resultado", () => {
+    const query = buildDrillDownQuery(
+      { A1_COD: "000224", A1_NOME: "ACRILMASTER INDUSTRIA DE ACRILICOS LTDA" },
+      [
+        { key: "A1_COD", label: "A1 cod" },
+        { key: "A1_NOME", label: "A1 nome" },
+      ],
+    );
+
+    expect(query).toBe(
+      "detalhe este registro do último resultado — A1 cod: 000224; " +
+        "A1 nome: ACRILMASTER INDUSTRIA DE ACRILICOS LTDA",
+    );
+  });
 });
 
 describe("buildTableRowMenuActions", () => {
