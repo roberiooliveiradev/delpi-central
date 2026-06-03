@@ -121,7 +121,7 @@ function chartHint(
 ): string {
   const parts = [periodLabel];
   if (granularity === "day" && dayProrated) {
-    parts.push("visão diária: totais mensais repartidos nos dias do filtro");
+    parts.push("visão diária proporcional aos dias selecionados no filtro");
   } else if (granularity === "month") {
     parts.push("competências mensais incluídas no recorte");
   } else {

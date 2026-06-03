@@ -351,7 +351,7 @@ def test_proportional_base_competencia_reduces_shared_cost():
     assert row["custo_recursos_compartilhados_mes"] > 0.0
 
 
-def test_summary_cards_ignore_global_proration_on_partial_dates():
+def test_summary_cards_prorate_partial_day_range():
     raw = _load_fixture("golden_baseline_melhoria.json")
     calc = DashboardCalculatorService()
 
@@ -368,4 +368,15 @@ def test_summary_cards_ignore_global_proration_on_partial_dates():
         end_date="2025-02-20",
     )
 
-    assert full["economia_liquida_total"] == partial["economia_liquida_total"]
+    assert partial["economia_liquida_total"] < full["economia_liquida_total"]
+    assert partial["economia_bruta_total"] < full["economia_bruta_total"]
+
+
+def test_competencia_day_fraction_single_month():
+    calc = DashboardCalculatorService()
+    factor = calc.competencia_day_fraction_in_range(
+        "2026-06",
+        "2026-06-01",
+        "2026-06-03",
+    )
+    assert abs(factor - (3 / 30)) < 1e-6

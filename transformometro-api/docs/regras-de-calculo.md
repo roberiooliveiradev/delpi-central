@@ -50,9 +50,13 @@ Onde `economia_operacional_mensal = economia_bruta - custo_recorrente_mes - cust
 
 ## Filtros de data no dashboard
 
-Os cards de resumo (`/dashboard/resumo`) somam **competências mensais inteiras** incluídas no recorte `competencia_inicio` … `competencia_fim`. Não há fator global de prorrata nos totais dos cards.
+Com filtro em formato **YYYY-MM-DD** (data inicial e final com dia), os cards de resumo, a evolução mensal retornada pela API e o ranking por família aplicam a fração de cada competência incluída no recorte: `dias_no_filtro / dias_do_mês` por competência.
 
-A proporcionalidade por dias dentro do mês aplica-se apenas a recursos com `base_competencia = proporcional_dias` (e às horas economizadas conforme vigência da revisão).
+Exemplo: `2026-06-01` … `2026-06-03` considera 3/30 do total de junho em cada indicador monetário e nas horas do card.
+
+Com filtro só por competência mensal (`YYYY-MM`) ou sem dia explícito, permanecem os totais mensais cheios de cada competência no intervalo.
+
+A proporcionalidade por vigência de recurso (`base_competencia = proporcional_dias`) é independente e continua no cálculo linha a linha do cadastro.
 
 ## Exportação CSV/Excel
 

@@ -190,12 +190,6 @@ class DashboardLiveService:
         if not target_rows:
             return []
 
-        proration_factor = self._calculate_rows_proration_factor(
-            target_rows,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
-        )
-
         raw = self.load_filtered_raw(filial_id=filial_id, setor_id=setor_id)
         processos_by_id = {
             str(p.get("processo_id")): p for p in raw.processos if p.get("processo_id")
@@ -225,15 +219,20 @@ class DashboardLiveService:
             implementation_review = implementation_review_by_process.get(pid)
             if not implementation_review:
                 continue
+            factor = self._calculator.competencia_day_fraction_in_range(
+                str(row.get("competencia") or ""),
+                competencia_inicio,
+                competencia_fim,
+            )
             bucket = by_processo[pid]
-            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0)
-            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0)
-            bucket["investimento_unico_mes"] += float(row.get("investimento_unico_mes") or 0)
-            bucket["custo_recorrente_mes"] += float(row.get("custo_recorrente_mes") or 0)
+            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0) * factor
+            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0) * factor
+            bucket["investimento_unico_mes"] += float(row.get("investimento_unico_mes") or 0) * factor
+            bucket["custo_recorrente_mes"] += float(row.get("custo_recorrente_mes") or 0) * factor
             bucket["custo_recursos_compartilhados_mes"] += float(
                 row.get("custo_recursos_compartilhados_mes") or 0
-            )
-            bucket["investimento_total_mes"] += float(row.get("investimento_total_mes") or 0)
+            ) * factor
+            bucket["investimento_total_mes"] += float(row.get("investimento_total_mes") or 0) * factor
             bucket["competencias"].add(str(row.get("competencia") or ""))
 
         ranking: list[dict[str, Any]] = []
@@ -243,14 +242,12 @@ class DashboardLiveService:
             implementation_date = self._calculator._review_implementation_date(
                 implementation_review
             )
-            liquida_full = totals["economia_liquida_mes"]
-            liquida = liquida_full * proration_factor
-            bruta = totals["economia_bruta"] * proration_factor
-            bruta_full = totals["economia_bruta"]
-            investimento_unico = totals["investimento_unico_mes"] * proration_factor
-            custo_recorrente = totals["custo_recorrente_mes"] * proration_factor
-            custo_recursos = totals["custo_recursos_compartilhados_mes"] * proration_factor
-            investimento_total = totals["investimento_total_mes"] * proration_factor
+            liquida = totals["economia_liquida_mes"]
+            bruta = totals["economia_bruta"]
+            investimento_unico = totals["investimento_unico_mes"]
+            custo_recorrente = totals["custo_recorrente_mes"]
+            custo_recursos = totals["custo_recursos_compartilhados_mes"]
+            investimento_total = totals["investimento_total_mes"]
             month_count = max(len(totals["competencias"]), 1)
             days_denominator = 30.0 * month_count
             ranking.append(
@@ -266,7 +263,7 @@ class DashboardLiveService:
                     "custo_recorrente_mes": round(custo_recorrente, 2),
                     "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
                     "investimento_total_mes": round(investimento_total, 2),
-                    "economia_diaria": round(bruta_full / days_denominator, 2),
+                    "economia_diaria": round(bruta / days_denominator, 2),
                     "competencia": (
                         max(totals["competencias"])
                         if totals["competencias"]
@@ -360,8 +357,13 @@ class DashboardLiveService:
                 continue
             bucket = by_familia[familia]
             bucket["processos"].add(pid)
-            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0)
-            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0)
+            factor = self._calculator.competencia_day_fraction_in_range(
+                str(row.get("competencia") or ""),
+                competencia_inicio,
+                competencia_fim,
+            )
+            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0) * factor
+            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0) * factor
 
         items = [
             {

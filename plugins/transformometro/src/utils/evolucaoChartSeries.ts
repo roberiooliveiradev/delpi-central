@@ -13,7 +13,7 @@ export type SavingsChartPoint = {
 export type EvolucaoChartSeriesResult = {
   points: SavingsChartPoint[];
   truncated: boolean;
-  /** Total mensal distribuído igualmente por dia do mês (materialização é por competência). */
+  /** Valores do período distribuídos igualmente entre os dias do filtro em cada competência. */
   dayProrated: boolean;
 };
 
@@ -36,9 +36,18 @@ function addDailyFromCompetencia(
   const year = Number(match[1]);
   const month = Number(match[2]);
   const dim = daysInMonth(year, month);
-  const perDayBruta = bruta / dim;
-  const perDayLiquida = liquida / dim;
-  const perDayInvestimento = investimento / dim;
+  let daysInFilter = 0;
+  for (let day = 1; day <= dim; day += 1) {
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    if (iso >= dateStart && iso <= dateEnd) {
+      daysInFilter += 1;
+    }
+  }
+  if (daysInFilter <= 0) return;
+
+  const perDayBruta = bruta / daysInFilter;
+  const perDayLiquida = liquida / daysInFilter;
+  const perDayInvestimento = investimento / daysInFilter;
 
   for (let day = 1; day <= dim; day += 1) {
     const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
