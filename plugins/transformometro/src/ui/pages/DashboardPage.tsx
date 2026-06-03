@@ -33,6 +33,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
+import { ChartSeriesViewport } from "../../components/ChartSeriesViewport";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { PageHeader } from "../../components/PageHeader";
 import { SegmentToggle } from "../../components/SegmentToggle";
@@ -55,8 +56,14 @@ import {
 } from "../../data/api/transformometroApi";
 import type { ChartGranularity } from "../../types/chart";
 import { CHART_MEASURE_OPTIONS, type ChartMeasure } from "../../types/chartMeasure";
-import { formatCurrency, formatDecimal, formatHours, formatPercent } from "../../utils/format";
+import {
+  formatCurrency,
+  formatDecimal,
+  formatHours,
+  formatRoiRatio,
+} from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
+import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -122,7 +129,7 @@ function chartHint(
   measure: ChartMeasure,
   granularity: ChartGranularity,
   dayProrated: boolean,
-  truncated: boolean
+  needsNavigation: boolean
 ): string {
   const parts = [periodLabel];
   if (measure === "hours") {
@@ -134,8 +141,8 @@ function chartHint(
   } else {
     parts.push("soma anual das competências no recorte");
   }
-  if (truncated) {
-    parts.push("exibindo primeiros 60 períodos");
+  if (needsNavigation) {
+    parts.push("navegue com os botões ou a rolagem do mouse no gráfico");
   }
   return parts.join(" · ");
 }
@@ -265,7 +272,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [evolucao, filters.dataInicial, filters.dataFinal, savingsGranularity]
   );
 
-  const savingsChartData = savingsChartSeries.points;
+  const savingsChartWindowKey = `${filters.dataInicial}|${filters.dataFinal}|${savingsGranularity}|${savingsMeasure}`;
+  const savingsChartWindow = useChartSeriesWindow(
+    savingsChartSeries.points,
+    savingsChartWindowKey
+  );
+  const savingsChartData = savingsChartWindow.visible;
 
   const topDailyChart = useMemo<TopDailyPoint[]>(
     () =>
@@ -433,7 +445,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     savingsMeasure,
     savingsGranularity,
     savingsChartSeries.dayProrated,
-    savingsChartSeries.truncated
+    savingsChartWindow.navigable
   );
 
   const savingsChartTitle =
@@ -556,7 +568,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <KpiCard
           title="Economia líquida"
           value={formatCurrency(resumo?.economia_liquida_total)}
-          subtitle={`Consolidado · ${periodLabel}`}
+          subtitle={`Recorte · ${periodLabel}`}
           icon={<Coins size={22} />}
           loading={isBusy && !resumo}
         />
@@ -583,8 +595,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         />
         <KpiCard
           title="ROI acumulado"
-          value={formatPercent(resumo?.roi_medio, 1)}
-          subtitle="Economia líquida / investimento total"
+          value={formatRoiRatio(resumo?.roi_medio, 1)}
+          subtitle={`Economia líquida / investimento · ${periodLabel}`}
           icon={<Percent size={22} />}
           loading={isBusy && !resumo}
         />
@@ -625,56 +637,71 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 filtros de data.
               </p>
             ) : (
-              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                <AreaChart data={savingsChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis
-                    tickFormatter={(v) =>
-                      savingsMeasure === "hours"
-                        ? formatHours(Number(v))
-                        : formatCurrency(Number(v))
-                    }
-                    width={72}
-                  />
-                  <Tooltip
-                    formatter={(v) =>
-                      savingsMeasure === "hours"
-                        ? formatHours(Number(v))
-                        : formatCurrency(Number(v))
-                    }
-                  />
-                  {savingsMeasure === "hours" ? (
-                    <Area
-                      type="monotone"
-                      dataKey="horas"
-                      name="Horas economizadas"
-                      stroke={HORAS_COLOR}
-                      fill={HORAS_COLOR}
-                      fillOpacity={0.5}
+              <ChartSeriesViewport
+                navigable={savingsChartWindow.navigable}
+                rangeLabel={savingsChartWindow.rangeLabel}
+                page={savingsChartWindow.page}
+                pageCount={savingsChartWindow.pageCount}
+                total={savingsChartWindow.total}
+                windowSize={savingsChartWindow.windowSize}
+                offset={savingsChartWindow.offset}
+                onStart={savingsChartWindow.goStart}
+                onPrevPage={savingsChartWindow.goPrevPage}
+                onNextPage={savingsChartWindow.goNextPage}
+                onEnd={savingsChartWindow.goEnd}
+                onShift={savingsChartWindow.shiftBy}
+              >
+                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                  <AreaChart data={savingsChartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                    <YAxis
+                      tickFormatter={(v) =>
+                        savingsMeasure === "hours"
+                          ? formatHours(Number(v))
+                          : formatCurrency(Number(v))
+                      }
+                      width={72}
                     />
-                  ) : (
-                    <>
+                    <Tooltip
+                      formatter={(v) =>
+                        savingsMeasure === "hours"
+                          ? formatHours(Number(v))
+                          : formatCurrency(Number(v))
+                      }
+                    />
+                    {savingsMeasure === "hours" ? (
                       <Area
                         type="monotone"
-                        dataKey="bruta"
-                        name="Economia bruta"
-                        stroke={ECONOMIA_COLOR}
-                        fill={ECONOMIA_COLOR}
+                        dataKey="horas"
+                        name="Horas economizadas"
+                        stroke={HORAS_COLOR}
+                        fill={HORAS_COLOR}
                         fillOpacity={0.5}
                       />
-                      <Area
-                        type="monotone"
-                        dataKey="investimento"
-                        name="Investimento"
-                        stroke={INVESTIMENTO_COLOR}
-                        fill={INVESTIMENTO_COLOR}
-                        fillOpacity={0.45}
-                      />
-                    </>
-                  )}
-                </AreaChart>
-              </ResponsiveContainer>
+                    ) : (
+                      <>
+                        <Area
+                          type="monotone"
+                          dataKey="bruta"
+                          name="Economia bruta"
+                          stroke={ECONOMIA_COLOR}
+                          fill={ECONOMIA_COLOR}
+                          fillOpacity={0.5}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="investimento"
+                          name="Investimento"
+                          stroke={INVESTIMENTO_COLOR}
+                          fill={INVESTIMENTO_COLOR}
+                          fillOpacity={0.45}
+                        />
+                      </>
+                    )}
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartSeriesViewport>
             )}
           </ChartCard>
         </section>

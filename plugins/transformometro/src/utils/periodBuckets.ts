@@ -186,12 +186,8 @@ export function buildPeriodBuckets(
     }
   }
 
-  if (buckets.length <= MAX_PERIOD_BUCKETS) {
-    return { buckets, truncated: false };
-  }
-
   return {
-    buckets: buckets.slice(0, MAX_PERIOD_BUCKETS),
-    truncated: true,
+    buckets,
+    truncated: buckets.length > MAX_PERIOD_BUCKETS,
   };
 }

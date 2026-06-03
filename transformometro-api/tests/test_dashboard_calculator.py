@@ -351,6 +351,22 @@ def test_proportional_base_competencia_reduces_shared_cost():
     assert row["custo_recursos_compartilhados_mes"] > 0.0
 
 
+def test_roi_consolidated_matches_liquida_over_investment():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    calc = DashboardCalculatorService()
+    summary = calc.build_summary(
+        raw,
+        filial_id=None,
+        start_date="2025-06-01",
+        end_date="2025-06-03",
+    )
+    liquida = float(summary["economia_liquida_total"] or 0)
+    investimento = float(summary["investimento_total"] or 0)
+    if investimento > 0:
+        expected = liquida / investimento
+        assert abs(float(summary["roi_medio"] or 0) - expected) < 0.02
+
+
 def test_summary_cards_prorate_partial_day_range():
     raw = _load_fixture("golden_baseline_melhoria.json")
     calc = DashboardCalculatorService()

@@ -220,21 +220,21 @@ class DashboardLiveService:
             implementation_review = implementation_review_by_process.get(pid)
             if not implementation_review:
                 continue
-            factor = self._calculator.competencia_day_fraction_in_range(
-                str(row.get("competencia") or ""),
-                competencia_inicio,
-                competencia_fim,
+            prorated = self._calculator._prorate_row_metrics_for_period(
+                row,
+                start_date=competencia_inicio,
+                end_date=competencia_fim,
             )
+            if prorated is None:
+                continue
             bucket = by_processo[pid]
-            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0) * factor
-            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0) * factor
-            bucket["investimento_unico_mes"] += float(row.get("investimento_unico_mes") or 0) * factor
-            bucket["custo_recorrente_mes"] += float(row.get("custo_recorrente_mes") or 0) * factor
-            bucket["custo_recursos_compartilhados_mes"] += float(
-                row.get("custo_recursos_compartilhados_mes") or 0
-            ) * factor
-            bucket["investimento_total_mes"] += float(row.get("investimento_total_mes") or 0) * factor
-            bucket["horas_economizadas_mes"] += float(row.get("horas_economizadas_mes") or 0) * factor
+            bucket["economia_liquida_mes"] += prorated["economia_liquida_mes"]
+            bucket["economia_bruta"] += prorated["economia_bruta"]
+            bucket["investimento_unico_mes"] += prorated["investimento_unico_mes"]
+            bucket["custo_recorrente_mes"] += prorated["custo_recorrente_mes"]
+            bucket["custo_recursos_compartilhados_mes"] += prorated["custo_recursos_compartilhados_mes"]
+            bucket["investimento_total_mes"] += prorated["investimento_total_mes"]
+            bucket["horas_economizadas_mes"] += prorated["horas_economizadas_mes"]
             bucket["competencias"].add(str(row.get("competencia") or ""))
 
         ranking: list[dict[str, Any]] = []
@@ -360,13 +360,15 @@ class DashboardLiveService:
                 continue
             bucket = by_familia[familia]
             bucket["processos"].add(pid)
-            factor = self._calculator.competencia_day_fraction_in_range(
-                str(row.get("competencia") or ""),
-                competencia_inicio,
-                competencia_fim,
+            prorated = self._calculator._prorate_row_metrics_for_period(
+                row,
+                start_date=competencia_inicio,
+                end_date=competencia_fim,
             )
-            bucket["economia_bruta"] += float(row.get("economia_bruta") or 0) * factor
-            bucket["economia_liquida_mes"] += float(row.get("economia_liquida_mes") or 0) * factor
+            if prorated is None:
+                continue
+            bucket["economia_bruta"] += prorated["economia_bruta"]
+            bucket["economia_liquida_mes"] += prorated["economia_liquida_mes"]
 
         items = [
             {

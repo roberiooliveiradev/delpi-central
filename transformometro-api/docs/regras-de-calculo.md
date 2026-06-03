@@ -50,9 +50,14 @@ Onde `economia_operacional_mensal = economia_bruta - custo_recorrente_mes - cust
 
 ## Filtros de data no dashboard
 
-Com filtro em formato **YYYY-MM-DD** (data inicial e final com dia), os cards de resumo, a evolução mensal retornada pela API e o ranking por família aplicam a fração de cada competência incluída no recorte: `dias_no_filtro / dias_do_mês` por competência.
+Com filtro em formato **YYYY-MM-DD** (data inicial e final com dia), os cards de resumo, a evolução mensal retornada pela API e o ranking por família recalculam **linha a linha**:
 
-Exemplo: `2026-06-01` … `2026-06-03` considera 3/30 do total de junho em cada indicador monetário e nas horas do card.
+- **Economia bruta**, custos recorrentes, recursos compartilhados e horas: `dias_no_filtro / dias_do_mês` na competência.
+- **Investimento único**: valor integral da competência quando o mês intersecta o filtro (não divide o capex pelos dias).
+
+O **ROI acumulado** do card é sempre `economia_liquida_total / investimento_total` do recorte (não média simples por revisão).
+
+Exemplo: `2026-06-01` … `2026-06-03` aplica 3/30 da economia operacional, mas mantém o investimento único cheio de junho se houver sobreposição — o ROI passa a refletir o recorte parcial.
 
 Com filtro só por competência mensal (`YYYY-MM`) ou sem dia explícito, permanecem os totais mensais cheios de cada competência no intervalo.
 

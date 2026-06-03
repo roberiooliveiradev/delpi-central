@@ -98,34 +98,44 @@ class DashboardCalculatorService:
             end_date=end_date,
         )
 
+        monthly_for_totals = self._monthly_breakdown_for_period(
+            monthly_breakdown,
+            calculation_rows,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        period_totals = self._aggregate_period_from_rows(
+            calculation_rows,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        total_net_savings = period_totals["economia_liquida_mes"]
+        total_gross_savings = period_totals["economia_bruta"]
+        total_recurring = period_totals["custo_recorrente_mes"]
+        total_unique = period_totals["investimento_unico_mes"]
+        total_shared_resources = period_totals["custo_recursos_compartilhados_mes"]
+        total_investment = period_totals["investimento_total_mes"]
+        total_hours_saved = period_totals["horas_economizadas_mes"]
+
         implemented_solutions_count = len(
             {
                 row["revisao_id"]
                 for row in calculation_rows
                 if row["cenario_tipo"] in self.COMPARABLE_SCENARIOS
+                and self.competencia_day_fraction_in_range(
+                    str(row.get("competencia") or ""),
+                    start_date,
+                    end_date,
+                )
+                > 0
+                and float(row.get("economia_bruta") or 0) > 0
             }
         )
 
-        average_roi = self._calculate_average_roi(calculation_rows)
-
-        monthly_for_totals = self._apply_day_range_to_monthly_breakdown(
-            monthly_breakdown,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        total_net_savings = sum(item["economia_liquida_mes"] for item in monthly_for_totals)
-        total_gross_savings = sum(item["economia_bruta"] for item in monthly_for_totals)
-        total_recurring = sum(item["custo_recorrente_mes"] for item in monthly_for_totals)
-        total_unique = sum(item["investimento_unico_mes"] for item in monthly_for_totals)
-        total_shared_resources = sum(
-            item["custo_recursos_compartilhados_mes"] for item in monthly_for_totals
-        )
-        total_investment = sum(item["investimento_total_mes"] for item in monthly_for_totals)
-        total_hours_saved = self._sum_hours_for_day_range(
-            calculation_rows,
-            start_date=start_date,
-            end_date=end_date,
+        consolidated_roi = (
+            total_net_savings / total_investment if total_investment > 0 else 0.0
         )
 
         range_summary = self._build_range_summary(
@@ -144,7 +154,7 @@ class DashboardCalculatorService:
             "custo_recorrente_total": self._round_final(total_recurring),
             "custo_recursos_compartilhados_total": self._round_final(total_shared_resources),
             "investimento_total": self._round_final(total_investment),
-            "roi_medio": self._round_final(average_roi),
+            "roi_medio": self._round_final(consolidated_roi),
             "evolucao_mensal": monthly_for_totals,
             "periodo": range_summary,
             "_debug": {
@@ -1213,27 +1223,78 @@ class DashboardCalculatorService:
         days_in_range = (overlap_end - overlap_start).days + 1
         return days_in_range / days_in_month
 
-    def _scale_monthly_item(self, item: dict, factor: float) -> dict:
-        if factor >= 1.0:
-            return dict(item)
+    def _prorate_row_metrics_for_period(
+        self,
+        row: dict,
+        *,
+        start_date: Optional[str],
+        end_date: Optional[str],
+    ) -> Optional[dict[str, float]]:
+        """Prorrata economia/custos recorrentes por dias; investimento único integral na competência."""
+        day_fraction = self.competencia_day_fraction_in_range(
+            str(row.get("competencia") or ""),
+            start_date,
+            end_date,
+        )
+        if day_fraction <= 0:
+            return None
+
+        economia_bruta = float(row.get("economia_bruta") or 0) * day_fraction
+        custo_recorrente_mes = float(row.get("custo_recorrente_mes") or 0) * day_fraction
+        custo_recursos_compartilhados_mes = (
+            float(row.get("custo_recursos_compartilhados_mes") or 0) * day_fraction
+        )
+        investimento_unico_mes = float(row.get("investimento_unico_mes") or 0)
+        investimento_total_mes = (
+            investimento_unico_mes + custo_recorrente_mes + custo_recursos_compartilhados_mes
+        )
+        economia_liquida_mes = economia_bruta - investimento_total_mes
+        horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * day_fraction
+
         return {
-            "competencia": item["competencia"],
-            "economia_bruta": self._round_final(item["economia_bruta"] * factor),
-            "investimento_unico_mes": self._round_final(item["investimento_unico_mes"] * factor),
-            "custo_recorrente_mes": self._round_final(item["custo_recorrente_mes"] * factor),
-            "investimento_total_mes": self._round_final(item["investimento_total_mes"] * factor),
-            "custo_recursos_compartilhados_mes": self._round_final(
-                item["custo_recursos_compartilhados_mes"] * factor
-            ),
-            "economia_liquida_mes": self._round_final(item["economia_liquida_mes"] * factor),
-            "horas_economizadas_mes": self._round_final(
-                float(item.get("horas_economizadas_mes") or 0) * factor
-            ),
+            "economia_bruta": economia_bruta,
+            "economia_liquida_mes": economia_liquida_mes,
+            "investimento_unico_mes": investimento_unico_mes,
+            "custo_recorrente_mes": custo_recorrente_mes,
+            "custo_recursos_compartilhados_mes": custo_recursos_compartilhados_mes,
+            "investimento_total_mes": investimento_total_mes,
+            "horas_economizadas_mes": horas_economizadas_mes,
         }
 
-    def _apply_day_range_to_monthly_breakdown(
+    def _aggregate_period_from_rows(
+        self,
+        calculation_rows: List[dict],
+        *,
+        start_date: Optional[str],
+        end_date: Optional[str],
+    ) -> dict[str, float]:
+        totals = {
+            "economia_bruta": 0.0,
+            "economia_liquida_mes": 0.0,
+            "investimento_unico_mes": 0.0,
+            "custo_recorrente_mes": 0.0,
+            "custo_recursos_compartilhados_mes": 0.0,
+            "investimento_total_mes": 0.0,
+            "horas_economizadas_mes": 0.0,
+        }
+
+        for row in calculation_rows:
+            prorated = self._prorate_row_metrics_for_period(
+                row,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            if prorated is None:
+                continue
+            for key in totals:
+                totals[key] += prorated[key]
+
+        return {key: self._round_final(value) for key, value in totals.items()}
+
+    def _monthly_breakdown_for_period(
         self,
         monthly_breakdown: List[dict],
+        calculation_rows: List[dict],
         *,
         start_date: Optional[str],
         end_date: Optional[str],
@@ -1241,34 +1302,48 @@ class DashboardCalculatorService:
         if not self._uses_day_level_date_filter(start_date, end_date):
             return monthly_breakdown
 
-        scaled: List[dict] = []
-        for item in monthly_breakdown:
-            factor = self.competencia_day_fraction_in_range(
-                str(item.get("competencia") or ""),
-                start_date,
-                end_date,
-            )
-            if factor <= 0:
-                continue
-            scaled.append(self._scale_monthly_item(item, factor))
-        return scaled
-
-    def _sum_hours_for_day_range(
-        self,
-        calculation_rows: List[dict],
-        *,
-        start_date: Optional[str],
-        end_date: Optional[str],
-    ) -> float:
-        total = 0.0
+        by_competencia: Dict[str, dict[str, float]] = {}
         for row in calculation_rows:
-            factor = self.competencia_day_fraction_in_range(
-                str(row.get("competencia") or ""),
-                start_date,
-                end_date,
+            prorated = self._prorate_row_metrics_for_period(
+                row,
+                start_date=start_date,
+                end_date=end_date,
             )
-            total += float(row.get("horas_economizadas_mes") or 0) * factor
-        return total
+            if prorated is None:
+                continue
+
+            competencia = str(row.get("competencia") or "")
+            bucket = by_competencia.setdefault(
+                competencia,
+                {
+                    "competencia": competencia,
+                    "economia_bruta": 0.0,
+                    "economia_liquida_mes": 0.0,
+                    "investimento_unico_mes": 0.0,
+                    "custo_recorrente_mes": 0.0,
+                    "custo_recursos_compartilhados_mes": 0.0,
+                    "investimento_total_mes": 0.0,
+                    "horas_economizadas_mes": 0.0,
+                },
+            )
+            for key, value in prorated.items():
+                bucket[key] += value
+
+        return [
+            {
+                "competencia": competencia,
+                "economia_bruta": self._round_final(values["economia_bruta"]),
+                "investimento_unico_mes": self._round_final(values["investimento_unico_mes"]),
+                "custo_recorrente_mes": self._round_final(values["custo_recorrente_mes"]),
+                "investimento_total_mes": self._round_final(values["investimento_total_mes"]),
+                "custo_recursos_compartilhados_mes": self._round_final(
+                    values["custo_recursos_compartilhados_mes"]
+                ),
+                "economia_liquida_mes": self._round_final(values["economia_liquida_mes"]),
+                "horas_economizadas_mes": self._round_final(values["horas_economizadas_mes"]),
+            }
+            for competencia, values in sorted(by_competencia.items())
+        ]
 
     def _calculate_date_range_proration_factor(
         self,

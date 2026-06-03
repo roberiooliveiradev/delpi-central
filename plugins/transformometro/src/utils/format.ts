@@ -5,6 +5,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 2,
 });
 
+/** `value` é múltiplo (ex.: 2,88 = 288% de retorno sobre investimento). */
 export function formatPercent(
   value: number | null | undefined,
   fractionDigits = 2
@@ -14,6 +15,14 @@ export function formatPercent(
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   })}%`;
+}
+
+/** Alias explícito para ROI consolidado retornado pela API (razão líquida/investimento). */
+export function formatRoiRatio(
+  value: number | null | undefined,
+  fractionDigits = 1
+): string {
+  return formatPercent(value, fractionDigits);
 }
 
 export function formatDecimal(
