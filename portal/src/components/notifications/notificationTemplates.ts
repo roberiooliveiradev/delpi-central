@@ -58,9 +58,25 @@ export const NOTIFICATION_TEMPLATE_DEFINITIONS: NotificationTemplateDefinition[]
     recipientAutoVars: ["userName"],
     recipientVars: ["userName"],
     isSystem: true,
-    hint: "Acesse pelo menu lateral, administração ou página de aplicativos.",
+    hint: "Acesse pelo menu lateral ou pela página de aplicativos.",
     fields: [
       { key: "appNames", label: "Aplicações", placeholder: "App1, App2", required: false },
+      { key: "featureNames", label: "Funcionalidades", placeholder: "App: Relatórios", required: false },
+    ],
+  },
+  {
+    id: "system_access_granted_v1",
+    label: "Permissões de administração concedidas",
+    category: "system",
+    defaultType: "info",
+    defaultTitle: "Novas permissões de administração",
+    defaultMessage:
+      "Olá, {userName}! Você recebeu permissões de sistema: {systemPermissionNames}.",
+    recipientAutoVars: ["userName"],
+    recipientVars: ["userName"],
+    isSystem: true,
+    hint: "Acesse a administração pelo menu lateral quando precisar.",
+    fields: [
       {
         key: "systemPermissionNames",
         label: "Permissões de sistema",

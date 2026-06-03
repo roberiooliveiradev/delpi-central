@@ -59,9 +59,24 @@ NOTIFICATION_TEMPLATES: dict[str, NotificationTemplateSpec] = {
         default_title="Novo acesso liberado",
         default_message="Olá, {userName}! Você recebeu acesso a: {appNames}.",
         required_vars=(),
-        optional_vars=("appNames", "featureNames", "systemPermissionNames"),
+        optional_vars=("appNames", "featureNames"),
         recipient_vars=("userName",),
-        hint="Acesse pelo menu lateral, administração ou página de aplicativos.",
+        hint="Acesse pelo menu lateral ou pela página de aplicativos.",
+    ),
+    "system_access_granted_v1": NotificationTemplateSpec(
+        id="system_access_granted_v1",
+        label="Permissões de administração concedidas",
+        category="system",
+        default_type="info",
+        default_title="Novas permissões de administração",
+        default_message=(
+            "Olá, {userName}! Você recebeu permissões de sistema: "
+            "{systemPermissionNames}."
+        ),
+        required_vars=(),
+        optional_vars=("systemPermissionNames",),
+        recipient_vars=("userName",),
+        hint="Acesse a administração pelo menu lateral quando precisar.",
     ),
 }
 

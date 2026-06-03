@@ -55,29 +55,12 @@ export function NotificationTemplateView({
               return !appKeys.has(base) && !appKeys.has(feature.toLowerCase());
             });
 
-            const systemPermissions = [
-              ...new Set(
-                (vars.systemPermissionNames ?? "")
-                  .split(",")
-                  .map((item) => item.trim())
-                  .filter(Boolean),
-              ),
-            ];
-
             return (
               <>
                 {apps.length > 1 ? (
                   <ul className="notification-template-view__details">
                     {apps.map((app) => (
                       <li key={app}>{app}</li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                {systemPermissions.length > 0 ? (
-                  <ul className="notification-template-view__details notification-template-view__details--system">
-                    {systemPermissions.map((perm) => (
-                      <li key={perm}>{perm}</li>
                     ))}
                   </ul>
                 ) : null}
@@ -90,6 +73,31 @@ export function NotificationTemplateView({
                   </ul>
                 ) : null}
               </>
+            );
+          })()
+        : null}
+
+      {definition.id === "system_access_granted_v1"
+        ? (() => {
+            const systemPermissions = [
+              ...new Set(
+                (vars.systemPermissionNames ?? "")
+                  .split(",")
+                  .map((item) => item.trim())
+                  .filter(Boolean),
+              ),
+            ];
+
+            if (systemPermissions.length === 0) {
+              return null;
+            }
+
+            return (
+              <ul className="notification-template-view__details notification-template-view__details--system">
+                {systemPermissions.map((perm) => (
+                  <li key={perm}>{perm}</li>
+                ))}
+              </ul>
             );
           })()
         : null}

@@ -17,6 +17,7 @@ import {
 
 import type { NotificationCategory, NotificationItem } from "../../data/coreApi";
 import { AuthContext } from "../../state/AuthContext";
+import { openAppLauncher, shouldOpenAppLauncher } from "../../utils/appLauncher";
 import { executeNotificationAction } from "../../utils/notificationNavigation";
 import {
   buildPortalEmbeddedPath,
@@ -140,6 +141,13 @@ export function NotificationCard({
 
   function handleAction() {
     if (!notification.action) {
+      void onMarkRead(notification.id);
+      return;
+    }
+
+    if (shouldOpenAppLauncher(notification.action, notification.metadata)) {
+      openAppLauncher();
+      onNavigate?.();
       void onMarkRead(notification.id);
       return;
     }

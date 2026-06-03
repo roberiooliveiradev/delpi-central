@@ -11,11 +11,13 @@ from app.application.services.rbac_access_delta_service import (
 )
 from app.domain.events.admin_events import AdminChangedEvent
 from app.domain.notifications.notification_templates import NOTIFICATION_TEMPLATES
+from app.domain.notifications.portal_routes import PORTAL_APP_LAUNCHER_ROUTE
 from app.domain.ports.notification_repository import NotificationDTO
 
 logger = logging.getLogger(__name__)
 
-_TEMPLATE_ID = "app_access_granted_v1"
+_APP_ACCESS_TEMPLATE_ID = "app_access_granted_v1"
+_SYSTEM_ACCESS_TEMPLATE_ID = "system_access_granted_v1"
 
 _ACTIONS_USER_TARGETED = frozenset({
     "group_added_to_user",
@@ -47,9 +49,10 @@ _ALL_HANDLED_ACTIONS = (
 
 class RbacNotificationEventHandler:
     """
-    Notificação automática (app_access_granted_v1) quando o usuário ganha:
-    - acesso a novas aplicações, e/ou
-    - novas rotas/funcionalidades (permissões de rota ainda não acessíveis).
+    Notificações automáticas quando o usuário ganha acesso RBAC:
+    - app_access_granted_v1: novas apps e/ou rotas/funcionalidades;
+    - system_access_granted_v1: permissões do módulo system (administração).
+    Cada tipo é enviado em notificação separada quando ambos ocorrem juntos.
 
     Compara o estado atual com o anterior, ignorando permissões que o usuário
     já possuía por outro papel ou grupo.
@@ -165,13 +168,38 @@ class RbacNotificationEventHandler:
             return
 
         self._notified_users.add(user_id_str)
-        self._send_notification(user, gain)
+        self._send_notifications(user, gain)
 
-    def _send_notification(self, user, gain: AccessGain) -> None:
-        template_spec = NOTIFICATION_TEMPLATES[_TEMPLATE_ID]
+    def _send_notifications(self, user, gain: AccessGain) -> None:
         first_name = (user.name or "").split()[0] if user.name else ""
-        new_app_ids = {app.id for app in gain.new_apps}
+        app_names, feature_labels, navigable_apps = self._collect_app_context(gain)
+        system_names = [item.name for item in gain.new_system_permissions]
 
+        has_app_gain = bool(
+            app_names or feature_labels or gain.new_apps or gain.new_routes
+        )
+        has_system_gain = bool(system_names)
+
+        if has_app_gain:
+            self._send_app_access_notification(
+                user,
+                first_name=first_name,
+                app_names=app_names,
+                feature_labels=feature_labels,
+                navigable_apps=navigable_apps,
+            )
+
+        if has_system_gain:
+            self._send_system_access_notification(
+                user,
+                first_name=first_name,
+                system_names=system_names,
+            )
+
+    def _collect_app_context(
+        self, gain: AccessGain
+    ) -> tuple[list[str], list[str], list]:
+        new_app_ids = {app.id for app in gain.new_apps}
         app_names: list[str] = []
         seen_app_ids: set[str] = set()
 
@@ -181,7 +209,6 @@ class RbacNotificationEventHandler:
             seen_app_ids.add(app.id)
             app_names.append(app.name)
 
-        # Apps só com rotas novas (já tinha o app) entram na lista textual
         for app, _route in gain.new_routes:
             if app.id in new_app_ids or app.id in seen_app_ids:
                 continue
@@ -193,7 +220,6 @@ class RbacNotificationEventHandler:
         app_name_set = {name.casefold() for name in app_names}
 
         for app, route in gain.new_routes:
-            # App inteiro novo: não listar rotas (evita duplicar o nome no corpo)
             if app.id in new_app_ids:
                 continue
 
@@ -207,23 +233,6 @@ class RbacNotificationEventHandler:
             seen_features.add(text)
             feature_labels.append(text)
 
-        system_names = [item.name for item in gain.new_system_permissions]
-        system_names_str = ", ".join(system_names) if system_names else ""
-
-        app_names_str = ", ".join(app_names) if app_names else ""
-        feature_names_str = ", ".join(feature_labels) if feature_labels else ""
-
-        title = template_spec.default_title
-        if system_names_str and not app_names_str and not feature_names_str:
-            title = "Novas permissões de administração"
-
-        message = self._build_access_message(
-            first_name,
-            app_names_str=app_names_str,
-            system_names_str=system_names_str,
-            feature_names_str=feature_names_str,
-        )
-
         if gain.new_apps:
             navigable_apps = gain.new_apps
         else:
@@ -232,16 +241,93 @@ class RbacNotificationEventHandler:
                 seen_nav[app.id] = app
             navigable_apps = list(seen_nav.values())
 
-        if system_names_str and not navigable_apps:
-            action_target = "/admin"
-            action_label = "Abrir administração"
+        return app_names, feature_labels, navigable_apps
+
+    def _send_app_access_notification(
+        self,
+        user,
+        *,
+        first_name: str,
+        app_names: list[str],
+        feature_labels: list[str],
+        navigable_apps: list,
+    ) -> None:
+        template_spec = NOTIFICATION_TEMPLATES[_APP_ACCESS_TEMPLATE_ID]
+        app_names_str = ", ".join(app_names) if app_names else ""
+        feature_names_str = ", ".join(feature_labels) if feature_labels else ""
+
+        message = self._build_app_access_message(
+            first_name,
+            app_names_str=app_names_str,
+            feature_names_str=feature_names_str,
+        )
+
+        if len(app_names) > 1 or len(navigable_apps) > 1:
+            action_target = PORTAL_APP_LAUNCHER_ROUTE
+            action_label = "Ver aplicativos"
         elif len(navigable_apps) == 1:
             action_target = navigable_apps[0].base_path or "/"
             action_label = f"Abrir {navigable_apps[0].name}"
         else:
-            action_target = "/"
+            action_target = PORTAL_APP_LAUNCHER_ROUTE
             action_label = "Ver aplicativos"
 
+        self._persist_notification(
+            user,
+            template_spec=template_spec,
+            template_id=_APP_ACCESS_TEMPLATE_ID,
+            title=template_spec.default_title,
+            message=message,
+            action_label=action_label,
+            action_target=action_target,
+            vars={
+                "userName": first_name,
+                "appNames": app_names_str,
+                "featureNames": feature_names_str,
+            },
+        )
+
+    def _send_system_access_notification(
+        self,
+        user,
+        *,
+        first_name: str,
+        system_names: list[str],
+    ) -> None:
+        template_spec = NOTIFICATION_TEMPLATES[_SYSTEM_ACCESS_TEMPLATE_ID]
+        system_names_str = ", ".join(system_names)
+
+        message = template_spec.default_message.format(
+            userName=first_name,
+            systemPermissionNames=system_names_str,
+        )
+
+        self._persist_notification(
+            user,
+            template_spec=template_spec,
+            template_id=_SYSTEM_ACCESS_TEMPLATE_ID,
+            title=template_spec.default_title,
+            message=message,
+            action_label="Abrir administração",
+            action_target="/admin",
+            vars={
+                "userName": first_name,
+                "systemPermissionNames": system_names_str,
+            },
+        )
+
+    def _persist_notification(
+        self,
+        user,
+        *,
+        template_spec,
+        template_id: str,
+        title: str,
+        message: str,
+        action_label: str,
+        action_target: str,
+        vars: dict[str, str],
+    ) -> None:
         notification_id = self.uow.notifications.create(
             NotificationDTO(
                 user_id=str(user.id),
@@ -256,13 +342,8 @@ class RbacNotificationEventHandler:
                 action_target=action_target,
                 icon="key-round",
                 metadata={
-                    "templateId": _TEMPLATE_ID,
-                    "vars": {
-                        "userName": first_name,
-                        "appNames": app_names_str,
-                        "featureNames": feature_names_str,
-                        "systemPermissionNames": system_names_str,
-                    },
+                    "templateId": template_id,
+                    "vars": vars,
                 },
                 expires_at=None,
                 read=False,
@@ -364,33 +445,25 @@ class RbacNotificationEventHandler:
         return [UUID(uid) for uid in ids]
 
     @staticmethod
-    def _build_access_message(
+    def _build_app_access_message(
         first_name: str,
         *,
         app_names_str: str,
-        system_names_str: str,
         feature_names_str: str,
     ) -> str:
-        segments: list[str] = []
         if app_names_str:
-            segments.append(f"acesso a: {app_names_str}")
-        if system_names_str:
-            segments.append(f"permissões de sistema: {system_names_str}")
-
-        if not segments:
+            message = f"Olá, {first_name}! Você recebeu acesso a: {app_names_str}."
             if feature_names_str:
-                return (
-                    f"Olá, {first_name}! Você recebeu novas funcionalidades: "
-                    f"{feature_names_str}."
-                )
+                message = f"{message} Novas funcionalidades: {feature_names_str}."
+            return message
+
+        if feature_names_str:
             return (
-                f"Olá, {first_name}! Você recebeu novos recursos na plataforma."
+                f"Olá, {first_name}! Você recebeu novas funcionalidades: "
+                f"{feature_names_str}."
             )
 
-        message = f"Olá, {first_name}! Você recebeu {' e '.join(segments)}."
-        if feature_names_str:
-            message = f"{message} Novas funcionalidades: {feature_names_str}."
-        return message
+        return f"Olá, {first_name}! Você recebeu novos aplicativos na plataforma."
 
     @staticmethod
     def _format_feature_label(app, route) -> str | None:

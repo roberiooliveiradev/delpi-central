@@ -1,6 +1,7 @@
 // src/utils/notificationNavigation.ts
 
 import type { NotificationAction } from "../data/coreApi";
+import { openAppLauncher, shouldOpenAppLauncher } from "./appLauncher";
 import {
   dispatchEmbeddedNotificationNavigate,
   isEmbeddedDeepLinkNotification,
@@ -19,6 +20,11 @@ export function executeNotificationAction(
   options?: ExecuteNotificationActionOptions
 ) {
   if (!action?.target) {
+    return;
+  }
+
+  if (shouldOpenAppLauncher(action, metadata)) {
+    openAppLauncher();
     return;
   }
 

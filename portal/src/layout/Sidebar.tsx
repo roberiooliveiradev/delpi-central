@@ -31,6 +31,7 @@ import {
 import { AppLauncherCard } from "../components/AppLauncherCard";
 import { NotificationCard } from "../components/notifications/NotificationCard";
 import { useNotificationActions } from "../components/notifications/useNotificationActions";
+import { DELPI_OPEN_APP_LAUNCHER_EVENT } from "../utils/appLauncher";
 import { isLaunchableApp } from "../utils/launchableApps";
 
 type GroupedRoutes = Record<
@@ -82,6 +83,12 @@ export const Sidebar = () => {
   useEffect(() => {
     localStorage.setItem("sidebar-collapsed", String(collapsed));
   }, [collapsed]);
+
+  useEffect(() => {
+    const openLauncher = () => setLauncherOpen(true);
+    window.addEventListener(DELPI_OPEN_APP_LAUNCHER_EVENT, openLauncher);
+    return () => window.removeEventListener(DELPI_OPEN_APP_LAUNCHER_EVENT, openLauncher);
+  }, []);
 
   const openSidebarFromEdge = useCallback(() => {
     setCollapsed(false);

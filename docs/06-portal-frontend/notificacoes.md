@@ -113,15 +113,21 @@ Tutorial: [conectar-aplicacao-iframe.md](../10-guias-operacionais/conectar-aplic
 
 ## 8. Notificação automática de acesso
 
-Quando o admin concede acesso a apps (via grupo ou papel), o usuário recebe uma notificação automática (`app_access_granted_v1`) com:
+Quando o admin concede acesso via RBAC, o usuário pode receber **até duas** notificações automáticas (nunca misturadas no mesmo card):
+
+**Apps** (`app_access_granted_v1`, categoria `access`):
 
 - **Título:** "Novo acesso liberado"
-- **Mensagem:** "Olá, {nome}! Você recebeu acesso a: App1, App2."
-- **CTA:** Se uma única app → "Abrir {App}" (navega direto ao `basePath`); se várias → "Ver aplicativos" (home)
-- **Ícone:** `key-round`
-- **Categoria:** `access`
+- **Mensagem:** apps e, se houver, funcionalidades/rotas novas
+- **CTA:** uma app → "Abrir {App}"; várias → "Ver aplicativos" (catálogo `/__apps`)
 
-O template renderiza a lista de apps como itens (`<li>`) no `NotificationTemplateView`.
+**Administração** (`system_access_granted_v1`, categoria `system`):
+
+- **Título:** "Novas permissões de administração"
+- **Mensagem:** lista de permissões do módulo `system`
+- **CTA:** "Abrir administração" → `/admin`
+
+O `NotificationTemplateView` renderiza listas separadas por template.
 
 ---
 
