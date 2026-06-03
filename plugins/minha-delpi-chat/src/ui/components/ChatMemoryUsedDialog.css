@@ -8,13 +8,7 @@
   width: min(100%, 32rem);
   display: flex;
   flex-direction: column;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 18%, var(--mdc-card-border));
-  border-radius: var(--mdc-radius-lg, 1rem);
-  background: var(--mdc-card-bg);
   color: var(--mdc-text);
-  box-shadow:
-    var(--mdc-shadow-lg),
-    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 }
 
 .mdc-chat-memory-used__header {

@@ -820,7 +820,7 @@ export function ChatProjectHome({
       {settingsOpen ? (
         <ModalPortal>
         <div
-          className="mdc-modal-scrim--centered mdc-chat-project-settings-backdrop"
+          className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-project-settings-backdrop"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
@@ -829,7 +829,7 @@ export function ChatProjectHome({
           }}
         >
           <section
-            className="mdc-modal-panel mdc-chat-project-settings"
+            className="mdc-chat-overlay-panel mdc-chat-project-settings"
             role="dialog"
             aria-modal="true"
             aria-label="Configurações do projeto"

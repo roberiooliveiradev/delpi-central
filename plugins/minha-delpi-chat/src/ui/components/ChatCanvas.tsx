@@ -61,7 +61,7 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
   return (
     <ModalPortal>
     <div
-      className="mdc-chat-canvas-backdrop"
+      className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-canvas-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -72,8 +72,8 @@ export function ChatCanvas({ document, onChange, onSave, onClose }: ChatCanvasPr
       <aside
         className={
           expanded
-            ? "mdc-chat-canvas mdc-chat-canvas--expanded"
-            : "mdc-chat-canvas"
+            ? "mdc-chat-overlay-panel mdc-chat-canvas mdc-chat-canvas--expanded"
+            : "mdc-chat-overlay-panel mdc-chat-canvas"
         }
         aria-label="Lousa do Chat DELPI"
         role="dialog"

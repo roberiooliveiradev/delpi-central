@@ -1,7 +1,11 @@
 import { type ReactNode, useEffect } from "react";
 import { createPortal } from "react-dom";
 
-import { resolveModalPortalContainer } from "./modalPortalTarget";
+import {
+  isOverlayPortalContained,
+  resolveOverlayPortalContainer,
+} from "./modalPortalTarget";
+import "./chat-overlay-layer.css";
 import "./modal-layer.css";
 
 type ModalPortalProps = {
@@ -10,23 +14,22 @@ type ModalPortalProps = {
 };
 
 export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
-  const container = resolveModalPortalContainer();
+  const container = resolveOverlayPortalContainer();
+  const contained = isOverlayPortalContained(container);
 
   useEffect(() => {
     if (!lockScroll) {
       return;
     }
 
-    const scrollTarget =
-      container === document.body ? document.body : container;
-
+    const scrollTarget = contained ? container : document.body;
     const previousOverflow = scrollTarget.style.overflow;
     scrollTarget.style.overflow = "hidden";
 
     return () => {
       scrollTarget.style.overflow = previousOverflow;
     };
-  }, [container, lockScroll]);
+  }, [container, contained, lockScroll]);
 
   const theme =
     typeof document !== "undefined"
@@ -35,7 +38,13 @@ export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
 
   return createPortal(
     <div
-      className="mdc-modal-portal minha-delpi-chat"
+      className={[
+        "mdc-chat-overlay-portal",
+        "minha-delpi-chat",
+        contained ? "mdc-chat-overlay-portal--contained" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-theme={theme ?? undefined}
       role="presentation"
     >

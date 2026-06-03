@@ -24,7 +24,7 @@ export function ChatAlertDialog({
   return (
     <ModalPortal>
       <div
-        className="mdc-modal-scrim--centered"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -33,7 +33,7 @@ export function ChatAlertDialog({
         }}
       >
         <section
-          className="mdc-modal-panel mdc-chat-alert-dialog"
+          className="mdc-chat-overlay-panel mdc-chat-alert-dialog"
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="mdc-chat-alert-title"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from difflib import SequenceMatcher
 from functools import lru_cache
 from typing import Any, Literal
 
@@ -667,6 +668,154 @@ class ChatAdvancedSqlSpecialistService:
             ],
         }
 
+    SQL_AUTHORING_INTRO = (
+        "Segue a consulta em SQL (somente leitura, sem executar no sistema). "
+        "Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:"
+    )
+
+    _SQL_AUTHORING_INTRO_RE = re.compile(
+        r"Segue a consulta em SQL\s*\(somente leitura[\s\S]*?conforme o ambiente:\s*",
+        flags=re.IGNORECASE,
+    )
+    _SQL_BLOCK_RE = re.compile(r"```sql\s*[\s\S]*?```", flags=re.IGNORECASE)
+
+    @classmethod
+    def _normalize_prose_chunk(cls, value: str) -> str:
+        cleaned = re.sub(r"```[\w]*", "", value, flags=re.IGNORECASE)
+        cleaned = re.sub(r"`+", "", cleaned)
+
+        return re.sub(r"\s+", " ", cleaned).strip().lower()
+
+    @classmethod
+    def _prose_chunks_similar(cls, left: str, right: str) -> bool:
+        left_key = cls._normalize_prose_chunk(left)
+        right_key = cls._normalize_prose_chunk(right)
+
+        if not left_key or not right_key:
+            return False
+
+        if len(left_key) < 24 or len(right_key) < 24:
+            return left_key == right_key
+
+        if left_key in right_key or right_key in left_key:
+            return True
+
+        return (
+            SequenceMatcher(None, left_key[:500], right_key[:500]).ratio() >= 0.82
+        )
+
+    @classmethod
+    def _strip_redundant_sql_tail_prose(cls, text: str) -> str:
+        blocks = list(cls._SQL_BLOCK_RE.finditer(text))
+
+        if not blocks:
+            return text
+
+        primary = blocks[0]
+        before = text[: primary.start()].strip()
+        tail = cls._SQL_BLOCK_RE.sub("", text[primary.end() :]).strip()
+
+        if not tail:
+            return text[: primary.end()].strip()
+
+        if before and cls._prose_chunks_similar(before, tail):
+            return text[: primary.end()].strip()
+
+        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", tail) if part.strip()]
+        kept: list[str] = []
+
+        for paragraph in paragraphs:
+            if before and cls._prose_chunks_similar(before, paragraph):
+                continue
+
+            if kept and cls._prose_chunks_similar(kept[-1], paragraph):
+                continue
+
+            kept.append(paragraph)
+
+        if not kept:
+            return text[: primary.end()].strip()
+
+        return f"{text[: primary.end()].strip()}\n\n" + "\n\n".join(kept)
+
+    @classmethod
+    def _dedupe_sql_authoring_prose(cls, text: str) -> str:
+        matches = list(cls._SQL_AUTHORING_INTRO_RE.finditer(text))
+
+        if len(matches) <= 1:
+            return text.strip()
+
+        first = matches[0]
+
+        def _replace(match: re.Match[str]) -> str:
+            if match.start() == first.start():
+                return match.group(0)
+
+            return ""
+
+        cleaned = cls._SQL_AUTHORING_INTRO_RE.sub(_replace, text)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+
+        return cleaned.strip()
+
+    @classmethod
+    def _extract_sql_from_fence(cls, fence: str) -> str:
+        inner = re.sub(r"^```sql\s*", "", fence, flags=re.IGNORECASE)
+        inner = re.sub(r"\s*```\s*$", "", inner)
+
+        return inner.strip()
+
+    @classmethod
+    def _collect_unique_authoring_prose(cls, text: str) -> list[str]:
+        scratch = cls._SQL_BLOCK_RE.sub("\n", text)
+        scratch = cls._SQL_AUTHORING_INTRO_RE.sub("\n", scratch)
+        paragraphs = [part.strip() for part in re.split(r"\n\s*\n", scratch) if part.strip()]
+        kept: list[str] = []
+
+        for paragraph in paragraphs:
+            if cls._prose_chunks_similar(cls.SQL_AUTHORING_INTRO, paragraph):
+                continue
+
+            if kept and cls._prose_chunks_similar(kept[-1], paragraph):
+                continue
+
+            kept.append(paragraph)
+
+        return kept
+
+    @classmethod
+    def _canonicalize_sql_authoring_layout(cls, text: str) -> str:
+        blocks = re.findall(r"```sql\s*[\s\S]*?```", text, flags=re.IGNORECASE)
+
+        if not blocks:
+            return text.strip()
+
+        sql_body = cls._extract_sql_from_fence(blocks[0])
+
+        if not sql_body:
+            return text.strip()
+
+        before_first = re.split(r"```sql", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
+        custom_before = cls._SQL_AUTHORING_INTRO_RE.sub("", before_first).strip()
+        paragraphs = cls._collect_unique_authoring_prose(text)
+
+        parts: list[str] = []
+
+        if custom_before and len(custom_before) >= 16:
+            parts.append(custom_before)
+        else:
+            parts.append(cls.SQL_AUTHORING_INTRO)
+
+        parts.append(f"```sql\n{sql_body}\n```")
+
+        for paragraph in paragraphs:
+            if parts and cls._prose_chunks_similar(parts[0], paragraph):
+                continue
+
+            parts.append(paragraph)
+
+        return "\n\n".join(parts).strip()
+
     @classmethod
     def format_sql_authoring_answer(cls, answer: str | None) -> str:
         text = str(answer or "").strip()
@@ -674,34 +823,9 @@ class ChatAdvancedSqlSpecialistService:
         if not text or "```sql" not in text.lower():
             return text
 
-        blocks = re.findall(r"```sql\s*[\s\S]*?```", text, flags=re.IGNORECASE)
+        text = cls._canonicalize_sql_authoring_layout(text)
 
-        if len(blocks) > 1:
-            first_block = blocks[0]
-            remainder = re.sub(
-                r"```sql\s*[\s\S]*?```",
-                "",
-                text,
-                flags=re.IGNORECASE,
-            ).strip()
-            text = f"{first_block}\n\n{remainder}".strip() if remainder else first_block
-
-        before_fence = re.split(r"```sql", text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
-
-        if len(before_fence) < 16:
-            intro = (
-                "Segue a consulta em SQL (somente leitura, sem executar no sistema). "
-                "Ajuste sufixo de tabela (ex.: SA1010) conforme o ambiente:"
-            )
-            text = re.sub(
-                r"(```sql)",
-                f"{intro}\n\n\\1",
-                text,
-                count=1,
-                flags=re.IGNORECASE,
-            )
-
-        return text.strip()
+        return cls._strip_redundant_sql_tail_prose(cls._dedupe_sql_authoring_prose(text))
 
     @classmethod
     def normalize_protheus_sql_answer(

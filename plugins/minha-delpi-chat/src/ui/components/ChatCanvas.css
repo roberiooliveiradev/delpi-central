@@ -1,10 +1,6 @@
 .mdc-chat-canvas-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
   display: grid;
   place-items: center;
-  background: transparent;
   padding: clamp(1rem, 3vw, 2rem);
 }
 
@@ -13,11 +9,7 @@
   flex-direction: column;
   width: min(72rem, 100%);
   height: min(48rem, 92vh);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: color-mix(in srgb, var(--mdc-card-bg) 96%, black);
   overflow: hidden;
-  box-shadow: var(--mdc-shadow-lg);
 }
 
 .mdc-chat-canvas--expanded {

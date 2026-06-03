@@ -604,13 +604,8 @@
 }
 
 .mdc-chat-project-settings-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 140;
   display: grid;
   place-items: center;
-  background: transparent;
-  padding: var(--mdc-space-4);
 }
 
 .mdc-chat-project-settings {
@@ -619,11 +614,7 @@
   width: min(100%, 42rem);
   max-height: min(92dvh, 100%);
   overflow-y: auto;
-  border: 1px solid var(--mdc-card-border);
-  border-radius: 1.25rem;
-  background: var(--mdc-card-bg);
   color: var(--mdc-text);
-  box-shadow: var(--mdc-card-shadow);
   padding: 1.25rem;
 }
 

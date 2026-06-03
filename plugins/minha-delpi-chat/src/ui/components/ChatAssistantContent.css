@@ -1,3 +1,7 @@
+.mdc-assistant-content {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+}
+
 .mdc-assistant-content__segments {
   display: flex;
   flex-direction: column;

@@ -47,7 +47,7 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
   return (
     <ModalPortal>
       <div
-        className="mdc-chat-memory-used-backdrop"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-memory-used-backdrop"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -56,7 +56,7 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
         }}
       >
         <section
-          className="mdc-chat-memory-used"
+          className="mdc-chat-overlay-panel mdc-chat-memory-used"
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}

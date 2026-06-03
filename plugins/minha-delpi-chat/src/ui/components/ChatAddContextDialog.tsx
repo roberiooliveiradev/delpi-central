@@ -5,6 +5,7 @@ import type { ConversationContextPick } from "../chatContextFromMessage";
 import type { ContextItemPayload } from "../chatContextFromMessage";
 
 import { ModalPortal } from "./ModalPortal";
+import "./chat-overlay-layer.css";
 import "./ChatAddContextDialog.css";
 
 export type UserContextPayload = ContextItemPayload;
@@ -111,7 +112,7 @@ export function ChatAddContextDialog({
   return (
     <ModalPortal>
       <div
-        className="mdc-chat-add-context-backdrop"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-add-context-backdrop"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -120,7 +121,7 @@ export function ChatAddContextDialog({
         }}
       >
         <section
-          className="mdc-chat-add-context"
+          className="mdc-chat-overlay-panel mdc-chat-add-context"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${formId}-title`}

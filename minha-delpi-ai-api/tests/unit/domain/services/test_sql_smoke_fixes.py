@@ -116,6 +116,47 @@ def test_format_sql_authoring_answer_adds_intro_and_dedupes():
     assert formatted.lower().count("```sql") == 1
 
 
+def test_format_sql_authoring_answer_strips_redundant_tail_prose():
+    before = (
+        "Com base nas informações fornecidas, a tabela SA1 no Protheus usa sufixo de filial. "
+        "Campos típicos: A1_COD e A1_NOME."
+    )
+    raw = (
+        f"{before}\n\n```sql\nSELECT A1_COD, A1_NOME FROM SA1010\n```\n\n{before}"
+    )
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+
+    assert formatted.count("Com base nas informações fornecidas") == 1
+
+
+def test_format_sql_authoring_answer_strips_duplicate_intro():
+    intro = ChatAdvancedSqlSpecialistService.SQL_AUTHORING_INTRO
+    raw = (
+        f"{intro}\n\n```sql\nSELECT A1_COD, A1_NOME FROM SA1010\n```\n\n{intro}"
+    )
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+
+    assert formatted.lower().count("segue a consulta em sql") == 1
+
+
+def test_format_sql_authoring_answer_collapses_duplicate_sql_blocks_with_prose():
+    intro = ChatAdvancedSqlSpecialistService.SQL_AUTHORING_INTRO
+    explanation = (
+        'Esta consulta SQL selecionará apenas o código e o nome dos clientes '
+        'que estão no status de "Ativo" na tabela SA1.'
+    )
+    sql = "SELECT A1_COD, A1_NOME\nFROM SA1010\nWHERE D_E_L_E_T_ = ''"
+    raw = (
+        f"{intro}\n\n```sql\n{sql}\n```\n\n{explanation}\n\n"
+        f"{intro}\n\n```sql\n{sql}\n```\n\n{explanation}"
+    )
+    formatted = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(raw)
+
+    assert formatted.lower().count("```sql") == 1
+    assert formatted.lower().count("segue a consulta em sql") == 1
+    assert formatted.count(explanation) == 1
+
+
 def test_normalize_protheus_sql_replaces_generic_columns():
     answer = (
         "Segue:\n\n```sql\nSELECT CodigoCliente, NomeCliente FROM SA1 WHERE Status = 'Ativo';\n```"

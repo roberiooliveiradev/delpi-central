@@ -174,7 +174,19 @@ class ChatOnboardingMilestoneService:
 
             call_meta = call.get("metadata")
 
-            if isinstance(call_meta, dict) and call_meta.get("ok") is True:
-                return True
+            if not isinstance(call_meta, dict) or call_meta.get("ok") is not True:
+                continue
+
+            if call_meta.get("sqlSchemaPrefetch") or call_meta.get("suppressClientPresentation"):
+                continue
+
+            path = str(call_meta.get("path") or "").lower()
+
+            if "/system/tables" in path and (
+                "/columns" in path or "/schema" in path or "/relations" in path
+            ):
+                continue
+
+            return True
 
         return False

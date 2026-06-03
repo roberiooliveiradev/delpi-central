@@ -1,5 +1,5 @@
 .mdc-chat-markdown {
-  color: var(--mdc-text);
+  color: var(--mdc-chat-prose, var(--mdc-text));
   line-height: 1.65;
   overflow-wrap: break-word;
   word-break: normal;
@@ -13,6 +13,12 @@
   margin-bottom: 0;
 }
 
+.mdc-chat-markdown p,
+.mdc-chat-markdown li,
+.mdc-chat-markdown blockquote {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+}
+
 .mdc-chat-markdown p {
   margin: 0.65rem 0;
   white-space: normal;
@@ -21,9 +27,10 @@
 .mdc-chat-markdown h1,
 .mdc-chat-markdown h2,
 .mdc-chat-markdown h3 {
-  color: var(--mdc-primary);
+  color: var(--mdc-chat-prose, var(--mdc-text));
   line-height: 1.25;
   margin: 1rem 0 0.55rem;
+  font-weight: 650;
 }
 
 .mdc-chat-markdown h1 {
@@ -49,24 +56,40 @@
   padding-left: 0.15rem;
 }
 
-.mdc-chat-markdown strong {
-  color: var(--mdc-title);
+.mdc-chat-markdown strong,
+.mdc-chat-markdown b {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+  font-weight: 700;
+}
+
+.mdc-chat-markdown em,
+.mdc-chat-markdown i {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+  font-style: italic;
+}
+
+.mdc-chat-markdown a:not(.mdc-chat-citation-badge) {
+  color: var(--mdc-primary);
 }
 
 .mdc-chat-markdown-inline-code {
   border: 1px solid var(--mdc-card-border);
   border-radius: 0.35rem;
-  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-bg));
-  color: var(--mdc-title);
+  background: color-mix(in srgb, var(--mdc-chat-prose, var(--mdc-text)) 6%, var(--mdc-bg));
+  color: var(--mdc-chat-prose, var(--mdc-text));
   padding: 0.1rem 0.3rem;
   font-size: 0.9em;
 }
 
 .mdc-chat-code-block {
   margin: 0.85rem 0;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 90%, transparent);
+  border: 1px solid var(--mdc-code-border, var(--mdc-card-border));
   border-radius: 1rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+  background: linear-gradient(
+    180deg,
+    var(--mdc-code-surface) 0%,
+    var(--mdc-code-surface-end) 100%
+  );
   overflow: hidden;
 }
 
@@ -118,7 +141,7 @@
   overflow: auto;
   padding: 0.95rem 1.05rem 1.1rem;
   background: transparent;
-  color: var(--mdc-text);
+  color: var(--mdc-code-text, var(--mdc-text));
   line-height: 1.55;
   font-size: 0.86rem;
 }
@@ -145,8 +168,8 @@
 }
 
 .mdc-chat-markdown th {
-  color: var(--mdc-primary);
-  background: color-mix(in srgb, var(--mdc-primary) 8%, var(--mdc-card-bg));
+  color: var(--mdc-chat-prose, var(--mdc-text));
+  background: color-mix(in srgb, var(--mdc-chat-prose, var(--mdc-text)) 6%, var(--mdc-card-bg));
 }
 
 .mdc-chat-citation-badge {

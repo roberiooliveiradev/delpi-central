@@ -40,6 +40,25 @@ def test_milestone_not_repeated_from_history():
     assert celebrations == []
 
 
+def test_schema_prefetch_does_not_trigger_operational_milestone():
+    celebrations = ChatOnboardingMilestoneService.detect_new_milestones(
+        previous_messages=[],
+        pipeline_stages=["ingress", "post_tool", "intent:operational_query"],
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {
+                    "ok": True,
+                    "path": "/system/tables/SA1/columns",
+                    "sqlSchemaPrefetch": True,
+                },
+            }
+        ],
+    )
+
+    assert celebrations == []
+
+
 def test_first_canvas_milestone():
     celebrations = ChatOnboardingMilestoneService.detect_new_milestones(
         previous_messages=[],

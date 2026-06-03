@@ -10,26 +10,14 @@
 }
 
 .mdc-table-row-menu {
-  position: absolute;
-  z-index: 20;
   min-width: 11rem;
-  max-width: min(16rem, calc(100% - 1rem));
-  padding: 0.35rem 0;
-  border-radius: var(--mdc-radius-sm, 10px);
-  border: 1px solid var(--mdc-card-border);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-card-shadow, 0 8px 24px color-mix(in srgb, #000 18%, transparent));
+  max-width: min(16rem, calc(100vw - 1rem));
+  padding: 0.35rem;
 }
 
 .mdc-table-row-menu--actions {
   min-width: 12.5rem;
   padding: 0.4rem;
-  border-radius: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 24%, var(--mdc-card-border));
-  background: color-mix(in srgb, var(--mdc-card-bg) 98%, var(--mdc-bg));
-  box-shadow:
-    0 16px 40px color-mix(in srgb, #000 42%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--mdc-primary) 10%, transparent);
 }
 
 .mdc-table-row-menu--actions .mdc-table-row-menu__head {

@@ -8,10 +8,6 @@
   display: grid;
   gap: 0.85rem;
   padding: 1rem 1.1rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
-  border-radius: 1rem;
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-shadow-lg, 0 18px 48px color-mix(in srgb, #000 28%, transparent));
 }
 
 .mdc-chat-add-context__header h2 {

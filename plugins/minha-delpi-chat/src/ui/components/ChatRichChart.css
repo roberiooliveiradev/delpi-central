@@ -123,6 +123,10 @@
   color: var(--mdc-title);
 }
 
+.mdc-assistant-content .mdc-rich-presentation__heading {
+  color: var(--mdc-chat-prose, var(--mdc-text));
+}
+
 .mdc-rich-presentation__text {
   margin-top: 0.15rem;
 }

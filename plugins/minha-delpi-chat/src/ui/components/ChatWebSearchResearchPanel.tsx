@@ -91,9 +91,12 @@ export function ChatWebSearchResearchPanel({
 
   return (
     <ModalPortal>
-      <div className="mdc-chat-web-research-backdrop" onClick={onClose}>
+      <div
+        className="mdc-chat-overlay-scrim mdc-chat-web-research-backdrop"
+        onClick={onClose}
+      >
         <aside
-          className="mdc-chat-web-research-panel"
+          className="mdc-chat-overlay-panel mdc-chat-web-research-panel"
           role="dialog"
           aria-modal="true"
           aria-labelledby="mdc-chat-web-research-title"

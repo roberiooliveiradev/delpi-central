@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import { Check, Code2, Copy } from "lucide-react";
 import remarkGfm from "remark-gfm";
 
+import { prepareMarkdownContent } from "./chatMarkdown";
+
 import "./ChatMarkdown.css";
 
 type ChatMarkdownProps = {
@@ -55,6 +57,15 @@ function ChatCodeBlock({ language, code }: ChatCodeBlockProps) {
 }
 
 const markdownComponents: Components = {
+  p({ children }) {
+    return <p>{children}</p>;
+  },
+  strong({ children }) {
+    return <strong>{children}</strong>;
+  },
+  em({ children }) {
+    return <em>{children}</em>;
+  },
   pre({ children }) {
     return <>{children}</>;
   },
@@ -100,6 +111,12 @@ const markdownComponents: Components = {
 };
 
 export function ChatMarkdown({ content, compact }: ChatMarkdownProps) {
+  const normalized = prepareMarkdownContent(content);
+
+  if (!normalized.trim()) {
+    return null;
+  }
+
   return (
     <div
       className={
@@ -107,7 +124,7 @@ export function ChatMarkdown({ content, compact }: ChatMarkdownProps) {
       }
     >
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-        {content}
+        {normalized}
       </ReactMarkdown>
     </div>
   );

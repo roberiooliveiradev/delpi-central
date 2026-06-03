@@ -32,7 +32,7 @@ export function ChatConfirmDialog({
   return (
     <ModalPortal>
     <div
-      className="mdc-modal-scrim--centered mdc-chat-confirm-backdrop"
+      className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-confirm-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -41,7 +41,7 @@ export function ChatConfirmDialog({
       }}
     >
       <section
-        className="mdc-modal-panel mdc-chat-confirm"
+        className="mdc-chat-overlay-panel mdc-chat-confirm"
         role="dialog"
         aria-modal="true"
         aria-labelledby="mdc-chat-confirm-title"

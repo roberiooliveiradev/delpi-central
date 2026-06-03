@@ -66,6 +66,7 @@ import {
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
 } from "./chatPresentation";
+import { hasMarkdownSyntax } from "./chatMarkdown";
 import { ChatSources } from "./ChatSources";
 import { ChatTrustBadges, type ChatTrustSignal } from "./ChatTrustBadges";
 import {
@@ -611,11 +612,20 @@ export function ChatMessageList({
     !showStreamingCaptionReveal ||
     revealedStreamingCaption.length >= String(streamingAnswer || "").length;
   const showStreamingActivityPanel = Boolean(isStreaming || isPlaybackActive);
+  const streamingAnswerHasMarkdown = hasMarkdownSyntax(streamingAnswer);
+  const deferStreamingMarkdown =
+    streamingAnswerHasMarkdown && isGeneratingAnswer;
   const revealedStreamingAnswer = useStreamingTextReveal(streamingAnswer, {
     enabled:
-      isGeneratingAnswer && !suppressStreamingMarkdown && !isPlaybackActive,
+      isGeneratingAnswer &&
+      !suppressStreamingMarkdown &&
+      !isPlaybackActive &&
+      !streamingAnswerHasMarkdown,
     charsPerFrame: 3,
   });
+  const streamingMarkdownContent = deferStreamingMarkdown
+    ? ""
+    : revealedStreamingAnswer;
 
   useEffect(() => {
     if (conversationKey !== previousConversationKeyRef.current) {
@@ -1473,13 +1483,15 @@ export function ChatMessageList({
                     ariaLabel="Escolha o que consultar sobre o produto"
                   />
                 ) : null}
-                <ChatMilestoneCelebration
-                  celebrations={
-                    (message.metadata?.milestoneCelebrations as
-                      | { id: string; label?: string; message: string }[]
-                      | undefined) ?? []
-                  }
-                />
+                {message.metadata?.interactivity?.consolidated ? null : (
+                  <ChatMilestoneCelebration
+                    celebrations={
+                      (message.metadata?.milestoneCelebrations as
+                        | { id: string; label?: string; message: string }[]
+                        | undefined) ?? []
+                    }
+                  />
+                )}
                 {!message.metadata?.interactivity?.consolidated ? (
                   <ChatFollowUpChips
                     suggestions={
@@ -1921,7 +1933,8 @@ export function ChatMessageList({
                     ) : null}
                     {streamingAnswer &&
                     !suppressStreamingMarkdown &&
-                    !showStreamingCaptionReveal ? (
+                    !showStreamingCaptionReveal &&
+                    streamingMarkdownContent ? (
                       <div
                         className={[
                           "mdc-chat-stream-answer",
@@ -1931,7 +1944,7 @@ export function ChatMessageList({
                           .join(" ")}
                       >
                         <ChatAssistantContent
-                          content={revealedStreamingAnswer}
+                          content={streamingMarkdownContent}
                           toolCalls={streamingToolCalls}
                           onDrillDown={onDrillDown}
                           onOpenCanvas={onOpenCanvas}

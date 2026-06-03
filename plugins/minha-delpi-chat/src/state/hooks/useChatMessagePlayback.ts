@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { ChatSource, ChatToolCall } from "../../data/api/chatTypes";
+import { hasMarkdownSyntax } from "../../ui/components/chatMarkdown";
 import {
   isShortPresentationCaption,
   shouldShowRichPresentation,
@@ -45,7 +46,10 @@ export function useChatMessagePlayback(
       payload.toolCalls,
     );
 
-    if (payload.skipReveal) {
+    const skipIncrementalReveal =
+      payload.skipReveal || hasMarkdownSyntax(payload.answer);
+
+    if (skipIncrementalReveal) {
       setDisplayedAnswer(payload.answer);
       setShowPresentation(hasRichPresentation);
       setIsPlaying(false);

@@ -27,8 +27,12 @@
 
   --mdc-title: var(--secundary, #003866);
   --mdc-title-soft: color-mix(in srgb, var(--secundary, #003866) 84%, white);
-  --mdc-text: var(--text, #111111);
+  --mdc-text: #111111;
   --mdc-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+
+  /* Corpo das respostas do assistente — preto no claro (não herda --text do portal). */
+  --mdc-chat-prose: #111111;
+  --mdc-chat-prose-muted: rgba(17, 17, 17, 0.72);
 
   --mdc-primary: var(--primary, #089bdb);
   --mdc-on-primary: var(--on-primary, #ffffff);
@@ -83,9 +87,10 @@
   --mdc-chart-series-9: color-mix(in srgb, var(--mdc-danger) 55%, var(--mdc-secondary));
   --mdc-chart-series-10: color-mix(in srgb, var(--mdc-primary) 40%, var(--mdc-text-muted));
 
-  --mdc-code-surface: color-mix(in srgb, var(--mdc-secondary) 88%, var(--mdc-bg));
-  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-secondary) 96%, black);
-  --mdc-code-text: color-mix(in srgb, var(--mdc-primary) 45%, var(--mdc-on-primary));
+  --mdc-code-surface: color-mix(in srgb, var(--mdc-bg-muted) 38%, var(--mdc-card-bg));
+  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-bg-muted) 22%, var(--mdc-card-bg));
+  --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
+  --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 92%, var(--mdc-primary) 8%);
 
   --mdc-focus-ring: var(
     --focus-ring,
@@ -101,6 +106,10 @@
   --mdc-badge-bg: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
   --mdc-badge-text: var(--secundary, #003866);
   --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 22%, transparent);
+
+  --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  --mdc-follow-up-chip-text: var(--mdc-primary);
+  --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 28%, var(--mdc-card-border));
 
   --mdc-radius-sm: 10px;
   --mdc-radius-md: 14px;
@@ -154,8 +163,11 @@
 
   --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
   --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
-  --mdc-text: var(--text, rgba(255, 255, 255, 0.88));
+  --mdc-text: rgba(255, 255, 255, 0.88);
   --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+  --mdc-chat-prose: rgba(255, 255, 255, 0.88);
+  --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
 
   --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
   --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
@@ -172,8 +184,17 @@
   --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
   --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
 
+  --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+  --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
+  --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+
   --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
   --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+
+  --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+  --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
+  --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
+  --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
 }
 
 /* =========================================
@@ -193,8 +214,11 @@
 
     --mdc-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
     --mdc-title-soft: color-mix(in srgb, var(--primary, #089bdb) 52%, white);
-    --mdc-text: var(--text, rgba(255, 255, 255, 0.88));
+    --mdc-text: rgba(255, 255, 255, 0.88);
     --mdc-text-muted: var(--text-muted, rgba(255, 255, 255, 0.74));
+
+    --mdc-chat-prose: rgba(255, 255, 255, 0.88);
+    --mdc-chat-prose-muted: rgba(255, 255, 255, 0.72);
 
     --mdc-control-bg: var(--control-bg, var(--surface-2, #1b2030));
     --mdc-control-text: var(--control-text, rgba(255, 255, 255, 0.88));
@@ -211,8 +235,17 @@
     --mdc-badge-text: color-mix(in srgb, var(--primary, #089bdb) 70%, white);
     --mdc-badge-border: color-mix(in srgb, var(--primary, #089bdb) 32%, transparent);
 
+    --mdc-follow-up-chip-bg: color-mix(in srgb, var(--mdc-primary) 16%, transparent);
+    --mdc-follow-up-chip-text: color-mix(in srgb, var(--mdc-primary) 72%, white);
+    --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
+
     --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
     --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+
+    --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
+    --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
+    --mdc-code-text: var(--mdc-chat-prose, var(--mdc-text));
+    --mdc-code-border: color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
   }
 }
 

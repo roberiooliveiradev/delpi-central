@@ -153,9 +153,12 @@ export function ChatHelpPanel({
 
   return (
     <ModalPortal>
-      <div className="mdc-chat-help-backdrop" onClick={onClose}>
+      <div
+        className="mdc-chat-overlay-scrim mdc-chat-help-backdrop"
+        onClick={onClose}
+      >
         <aside
-          className="mdc-chat-help-panel"
+          className="mdc-chat-overlay-panel mdc-chat-help-panel"
           role="dialog"
           aria-modal="true"
           aria-labelledby="mdc-chat-help-title"

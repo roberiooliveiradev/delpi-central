@@ -2,7 +2,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import type { TableRowMenuAction } from "./chatDrillDown";
-import { resolveModalPortalContainer } from "./modalPortalTarget";
+import {
+  isOverlayPortalContained,
+  resolveOverlayPortalContainer,
+} from "./modalPortalTarget";
 import {
   estimateMenuHeight,
   type MenuAnchorRect,
@@ -11,6 +14,7 @@ import {
   resolveMenuPositionFromPointInContainer,
   resolveMenuPositionInContainer,
 } from "./menuPositionUtils";
+import "./chat-overlay-layer.css";
 import "./ChatTableRowMenu.css";
 
 export type TableRowMenuAnchor =
@@ -40,21 +44,20 @@ export function ChatTableRowMenu({
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
 
   useLayoutEffect(() => {
-    const container = resolveModalPortalContainer();
+    const container = resolveOverlayPortalContainer();
     const containerRect = container.getBoundingClientRect();
-    const usesAppContainer =
-      container !== document.body && container.id === "mdc-modal-root";
+    const contained = isOverlayPortalContained(container);
 
     const nextPosition =
       "rect" in anchor
-        ? usesAppContainer
+        ? contained
           ? resolveMenuPositionInContainer({
               rect: anchor.rect,
               containerRect,
               itemCount: actions.length,
             })
           : resolveMenuPosition({ rect: anchor.rect, itemCount: actions.length })
-        : usesAppContainer
+        : contained
           ? resolveMenuPositionFromPointInContainer(
               anchor.point,
               containerRect,
@@ -120,12 +123,7 @@ export function ChatTableRowMenu({
     <>
       {scrim !== "none" ? (
         <div
-          className={[
-            "mdc-table-row-menu__scrim",
-            scrim === "light" ? "mdc-table-row-menu__scrim--light" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          className="mdc-chat-overlay-scrim mdc-table-row-menu__scrim"
           role="presentation"
           aria-hidden="true"
           onMouseDown={onClose}
@@ -135,6 +133,8 @@ export function ChatTableRowMenu({
       <div
         ref={panelRef}
         className={[
+          "mdc-chat-overlay-panel",
+          "mdc-chat-overlay-panel--anchored",
           "mdc-table-row-menu",
           variant === "actions" ? "mdc-table-row-menu--actions" : "",
         ]
@@ -169,7 +169,7 @@ export function ChatTableRowMenu({
     </>
   );
 
-  return createPortal(menu, resolveModalPortalContainer());
+  return createPortal(menu, resolveOverlayPortalContainer());
 }
 
 export { estimateMenuHeight };

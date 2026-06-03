@@ -78,7 +78,7 @@ export function ChatShortcutPromptDialog({
   return (
     <ModalPortal>
       <div
-        className="mdc-chat-shortcut-prompt-backdrop"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-shortcut-prompt-backdrop"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -87,7 +87,7 @@ export function ChatShortcutPromptDialog({
         }}
       >
         <section
-          className="mdc-chat-shortcut-prompt"
+          className="mdc-chat-overlay-panel mdc-chat-shortcut-prompt"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`${formId}-title`}

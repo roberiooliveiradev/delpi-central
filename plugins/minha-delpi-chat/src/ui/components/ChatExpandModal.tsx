@@ -50,7 +50,7 @@ export function ChatExpandModal({
   return (
     <ModalPortal>
       <div
-        className="mdc-expand-modal__backdrop"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-expand-modal__backdrop"
         role="dialog"
         aria-modal="true"
         aria-label={title}
@@ -60,7 +60,7 @@ export function ChatExpandModal({
           if (e.target === e.currentTarget) onClose();
         }}
       >
-        <div className="mdc-expand-modal">
+        <div className="mdc-chat-overlay-panel mdc-expand-modal">
           <div className="mdc-expand-modal__header">
             <span className="mdc-expand-modal__title">{title}</span>
             <div className="mdc-expand-modal__toolbar">

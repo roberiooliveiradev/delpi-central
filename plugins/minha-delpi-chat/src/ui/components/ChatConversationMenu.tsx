@@ -9,6 +9,15 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import {
+  menuAnchorRectFromElement,
+  resolveMenuPositionInContainer,
+} from "./menuPositionUtils";
+import {
+  isOverlayPortalContained,
+  resolveOverlayPortalContainer,
+} from "./modalPortalTarget";
+import "./chat-overlay-layer.css";
 import "./ChatConversationMenu.css";
 
 type ChatConversationMenuProps = {
@@ -56,7 +65,21 @@ export function ChatConversationMenu({
       return;
     }
 
-    const rect = trigger.getBoundingClientRect();
+    const container = resolveOverlayPortalContainer();
+    const rect = menuAnchorRectFromElement(trigger);
+
+    if (isOverlayPortalContained(container)) {
+      const containerRect = container.getBoundingClientRect();
+      const next = resolveMenuPositionInContainer({
+        rect,
+        containerRect,
+        itemCount: 5,
+        menuWidth: MENU_WIDTH,
+      });
+
+      setPosition(next);
+      return;
+    }
 
     const preferredLeft = rect.right + MENU_MARGIN;
     const fallbackLeft = rect.left - MENU_WIDTH - MENU_MARGIN;
@@ -104,13 +127,13 @@ export function ChatConversationMenu({
   const menu = open ? (
     <>
       <div
-        className="mdc-chat-conversation-menu__scrim"
+        className="mdc-chat-overlay-scrim mdc-chat-conversation-menu__scrim"
         role="presentation"
         onMouseDown={() => onOpenChange(false)}
       />
 
       <div
-        className="mdc-chat-conversation-menu__panel"
+        className="mdc-chat-overlay-panel mdc-chat-overlay-panel--anchored mdc-chat-conversation-menu__panel"
         role="menu"
         style={{
           top: position.top,
@@ -220,7 +243,9 @@ export function ChatConversationMenu({
         <MoreHorizontal size={17} aria-hidden="true" />
       </button>
 
-      {canUsePortal && menu ? createPortal(menu, document.body) : null}
+      {canUsePortal && menu
+        ? createPortal(menu, resolveOverlayPortalContainer())
+        : null}
     </div>
   );
 }

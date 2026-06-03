@@ -26,7 +26,7 @@ export function ChatSidebarArchivedDialog({
   return (
     <ModalPortal>
     <div
-      className="mdc-chat-archived-backdrop"
+      className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered mdc-chat-archived-backdrop"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
@@ -35,7 +35,7 @@ export function ChatSidebarArchivedDialog({
       }}
     >
       <section
-        className="mdc-chat-archived-dialog"
+        className="mdc-chat-overlay-panel mdc-chat-archived-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="mdc-chat-archived-title"

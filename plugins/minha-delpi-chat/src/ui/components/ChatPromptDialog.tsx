@@ -78,7 +78,7 @@ export function ChatPromptDialog({
   return (
     <ModalPortal>
       <div
-        className="mdc-modal-scrim--centered"
+        className="mdc-chat-overlay-scrim mdc-chat-overlay-scrim--centered"
         role="presentation"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
@@ -87,7 +87,7 @@ export function ChatPromptDialog({
         }}
       >
         <section
-          className="mdc-modal-panel mdc-chat-prompt"
+          className="mdc-chat-overlay-panel mdc-chat-prompt"
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}

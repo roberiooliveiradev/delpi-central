@@ -1,9 +1,9 @@
 export const MDC_MODAL_ROOT_ID = "mdc-modal-root";
 
-/** Área de overlay/menus limitada ao MFE (não cobre sidebar do portal). */
-export function resolveModalPortalContainer(): HTMLElement {
+/** Portal de overlay limitado ao MFE (não cobre a sidebar do host). */
+export function resolveOverlayPortalContainer(): HTMLElement {
   if (typeof document === "undefined") {
-    throw new Error("resolveModalPortalContainer requires a DOM");
+    throw new Error("resolveOverlayPortalContainer requires a DOM");
   }
 
   const root = document.getElementById(MDC_MODAL_ROOT_ID);
@@ -19,4 +19,13 @@ export function resolveModalPortalContainer(): HTMLElement {
   }
 
   return document.body;
+}
+
+export function isOverlayPortalContained(container: HTMLElement): boolean {
+  return container !== document.body;
+}
+
+/** @deprecated Use resolveOverlayPortalContainer */
+export function resolveModalPortalContainer(): HTMLElement {
+  return resolveOverlayPortalContainer();
 }

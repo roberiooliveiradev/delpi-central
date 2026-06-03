@@ -22,23 +22,9 @@
   background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
 }
 
-.mdc-chat-conversation-menu__scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 9990;
-  background: transparent;
-  pointer-events: auto;
-}
-
 .mdc-chat-conversation-menu__panel {
-  position: fixed;
-  z-index: 9991;
   display: grid;
   width: 14rem;
-  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
-  border-radius: 0.9rem;
-  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
-  box-shadow: var(--mdc-shadow-lg);
   padding: 0.35rem;
 }
 

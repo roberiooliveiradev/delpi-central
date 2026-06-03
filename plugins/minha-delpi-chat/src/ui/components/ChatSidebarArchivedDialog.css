@@ -1,11 +1,6 @@
 .mdc-chat-archived-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
   display: grid;
   place-items: center;
-  background: transparent;
-  padding: var(--mdc-space-4);
 }
 
 .mdc-chat-archived-dialog {
@@ -13,10 +8,6 @@
   max-height: 82vh;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  border: 1px solid var(--mdc-card-border);
-  border-radius: var(--mdc-radius-xl);
-  background: var(--mdc-card-bg);
-  box-shadow: var(--mdc-shadow-lg);
   overflow: hidden;
 }
 

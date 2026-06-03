@@ -41,6 +41,13 @@
   min-width: 0;
 }
 
+.mdc-chat-page-panel.mdc-chat-view-host {
+  position: relative;
+  isolation: isolate;
+  min-height: 0;
+  height: 100%;
+}
+
 .mdc-chat-shell > .mdc-chat-sidebar-backdrop {
   grid-column: 1 / -1;
   grid-row: 1;

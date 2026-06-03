@@ -1,20 +1,15 @@
 .mdc-chat-help-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
   display: flex;
   justify-content: flex-end;
-  background: color-mix(in srgb, var(--mdc-text) 28%, transparent);
 }
 
 .mdc-chat-help-panel {
   display: flex;
   flex-direction: column;
   width: min(28rem, 100vw);
-  max-height: 100vh;
-  background: var(--mdc-bg);
+  max-height: 100dvh;
+  border-radius: 0.9rem 0 0 0.9rem;
   border-left: 1px solid var(--mdc-card-border);
-  box-shadow: -12px 0 40px color-mix(in srgb, var(--mdc-text) 12%, transparent);
 }
 
 .mdc-chat-help-panel__header {

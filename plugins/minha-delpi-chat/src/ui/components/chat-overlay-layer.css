@@ -1,0 +1,100 @@
+/* Camada única de overlay — mesma do menu «Mais opções» da conversa. */
+
+:root {
+  --mdc-overlay-z-scrim: 9990;
+  --mdc-overlay-z-panel: 9991;
+}
+
+.mdc-chat-overlay-portal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mdc-overlay-z-scrim);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.mdc-chat-overlay-portal--contained {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.mdc-chat-overlay-portal > * {
+  pointer-events: auto;
+}
+
+.mdc-chat-overlay-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mdc-overlay-z-scrim);
+  background: transparent;
+  pointer-events: auto;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim,
+.mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim--centered,
+.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.mdc-chat-overlay-scrim--centered {
+  display: grid;
+  place-items: center;
+  padding: var(--mdc-space-4);
+  box-sizing: border-box;
+}
+
+.mdc-chat-overlay-panel {
+  position: relative;
+  z-index: var(--mdc-overlay-z-panel);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
+  color: var(--mdc-text);
+  box-shadow: var(--mdc-shadow-lg);
+  box-sizing: border-box;
+}
+
+.mdc-chat-overlay-panel--anchored {
+  position: fixed;
+  z-index: var(--mdc-overlay-z-panel);
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-overlay-panel--anchored {
+  position: absolute;
+  z-index: 2;
+}
+
+/* Aliases legados (migração gradual) */
+.mdc-modal-scrim--centered {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mdc-overlay-z-scrim);
+  display: grid;
+  place-items: center;
+  background: transparent;
+  padding: var(--mdc-space-4);
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered {
+  position: absolute;
+  z-index: 1;
+}
+
+.mdc-modal-panel {
+  position: relative;
+  z-index: var(--mdc-overlay-z-panel);
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 80%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
+  color: var(--mdc-text);
+  box-shadow: var(--mdc-shadow-lg);
+  box-sizing: border-box;
+}

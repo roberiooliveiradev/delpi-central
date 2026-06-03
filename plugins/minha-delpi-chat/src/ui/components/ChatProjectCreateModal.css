@@ -1,12 +1,8 @@
 @import "../layout/chat-workspace-shared.css";
 
 .mdc-chat-project-create-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
   display: grid;
   place-items: center;
-  padding: var(--mdc-space-4);
 }
 
 .mdc-chat-project-create-modal {
