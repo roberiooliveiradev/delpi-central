@@ -12,6 +12,9 @@ from app.domain.services.chat_conversation_memory_extractor import (
 from app.domain.services.chat_reference_resolution_service import (
     ChatReferenceResolutionService,
 )
+from app.domain.services.chat_conversation_state_service import (
+    ChatConversationStateService,
+)
 from app.domain.services.chat_working_memory_service import ChatWorkingMemoryService
 
 
@@ -55,6 +58,11 @@ class ChatConversationMemoryService:
             current_agent_id=agent_id,
             previous_agent_id=previous_agent_id,
         )
+        snapshot = ChatConversationStateService.apply_pre_turn(
+            snapshot,
+            message=message,
+            previous_messages=previous_messages,
+        )
 
         resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
             message,
@@ -90,6 +98,7 @@ class ChatConversationMemoryService:
         attachments: list | None = None,
         agent_id: str | None = None,
         project_id: str | None = None,
+        answer: str | None = None,
     ) -> dict:
         snapshot = ChatWorkingMemoryService.build_post_turn_snapshot(
             message=message,
@@ -107,12 +116,23 @@ class ChatConversationMemoryService:
             project_id=project_id,
         )
 
+        snapshot = ChatConversationStateService.apply_post_turn(
+            snapshot,
+            message=message,
+            answer=answer,
+        )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
         return snapshot
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
-        return ChatWorkingMemoryService.format_prompt_block(snapshot)
+        blocks = [
+            ChatWorkingMemoryService.format_prompt_block(snapshot),
+            ChatConversationStateService.format_prompt_block(snapshot),
+        ]
+        merged = "\n\n".join(block.strip() for block in blocks if block and block.strip())
+
+        return merged or ""
 
     @classmethod
     def build_context_chips(cls, snapshot: dict | None) -> list[dict[str, str]]:
@@ -151,6 +171,9 @@ class ChatConversationMemoryService:
         base["lastAttachment"] = snapshot.get("lastAttachment")
         base["memoryAmbiguity"] = snapshot.get("memoryAmbiguity")
         base["agentContextReset"] = bool(snapshot.get("agentContextReset"))
+        base["conversationState"] = ChatConversationStateService.compact_for_admin_debug(
+            snapshot
+        )
 
         return base
 

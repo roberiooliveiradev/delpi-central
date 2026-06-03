@@ -38,6 +38,7 @@ class ChatContextMetadataService:
             pre_snapshot=pre_snapshot if isinstance(pre_snapshot, dict) else None,
             agent_id=str(workspace.get("agentId") or "") or None,
             project_id=str((workspace.get("project") or {}).get("id") or "") or None,
+            answer=answer,
         )
 
         assertiveness = ChatContextAssertivenessService.evaluate_turn(

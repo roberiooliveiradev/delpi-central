@@ -156,17 +156,57 @@ class ChatReferenceResolutionService:
                 )
                 used_keys.append("lastAction")
 
-        if cls._THIS_RE.search(normalized) and last_presentation.get("messageId"):
-            resolved.append(
-                cls._entry(
-                    text="isso",
-                    resolved_to="lastUsefulMessage",
-                    value=str(last_presentation.get("messageId")),
-                    source="lastPresentation.messageId",
-                    confidence=0.7,
+        canvas = snapshot.get("canvas") or {}
+
+        if cls._THIS_RE.search(normalized):
+            candidates: list[dict[str, Any]] = []
+
+            if last_presentation.get("messageId"):
+                candidates.append(
+                    cls._entry(
+                        text="isso",
+                        resolved_to="lastPresentation",
+                        value=str(last_presentation.get("messageId")),
+                        source="lastPresentation.messageId",
+                        confidence=0.75,
+                    )
                 )
-            )
-            used_keys.append("lastUsefulMessage")
+
+            if isinstance(canvas, dict) and canvas.get("active"):
+                candidates.append(
+                    cls._entry(
+                        text="isso",
+                        resolved_to="canvas",
+                        value=str(canvas.get("lastUpdatedFromMessageId") or "canvas"),
+                        source="canvas.active",
+                        confidence=0.7,
+                    )
+                )
+
+            last_attachment = snapshot.get("lastAttachment")
+
+            if isinstance(last_attachment, dict) and last_attachment.get("filename"):
+                candidates.append(
+                    cls._entry(
+                        text="isso",
+                        resolved_to="lastAttachment",
+                        value=str(last_attachment.get("filename")),
+                        source="lastAttachment.filename",
+                        confidence=0.65,
+                    )
+                )
+
+            if len(candidates) == 1:
+                resolved.append(candidates[0])
+                used_keys.append(candidates[0]["resolvedTo"])
+            elif len(candidates) > 1:
+                snapshot["memoryAmbiguity"] = {
+                    "reason": "this_reference",
+                    "promptHint": (
+                        "Quando você diz «isso», você quer a última resposta, "
+                        "a tabela/gráfico, a lousa ou o arquivo anexado?"
+                    ),
+                }
 
         return resolved, used_keys
 

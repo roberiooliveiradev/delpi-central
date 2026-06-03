@@ -29,6 +29,17 @@ class ChatSessionMemoryDirectAnswerService:
         if isinstance(ambiguity, dict):
             return cls._build_ambiguity_answer(ambiguity)
 
+        from app.domain.services.chat_conversation_state_service import (
+            ChatConversationStateService,
+        )
+
+        continuation_answer = ChatConversationStateService.build_continuation_direct_answer(
+            working_memory
+        )
+
+        if continuation_answer:
+            return continuation_answer
+
         if ChatTextTaskIntentService.is_pure_text_task(message):
             return None
 

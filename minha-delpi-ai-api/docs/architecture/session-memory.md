@@ -21,6 +21,7 @@ Histórico + mensagem
 | Serviço | Papel |
 |---------|--------|
 | `ChatConversationMemoryService` | Orquestra pré/pós-turno, chips, admin debug |
+| `ChatConversationStateService` | `activeTopic`, `activeTask`, siga/próximo, correções, mudança de assunto (playbook memória §9) |
 | `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
@@ -34,6 +35,10 @@ Histórico + mensagem
 cd minha-delpi-ai-api && ./scripts/run_session_memory_validation.sh
 ```
 
-Playbook: `docs/roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md`.
+Playbooks: [`playbook_memoria_sessao_preferencias`](../roadmap/melhorias/playbook_memoria_sessao_preferencias_minha_delpi_chat.md) (01, concluído) · [`playbook-memoria-e-contexto`](../roadmap/playbook-memoria-e-contexto.md) (expandido, Fase 1+).
+
+```bash
+cd minha-delpi-ai-api && ./scripts/run_memory_context_validation.sh
+```
 
 - `sessionMemoryMetrics`: snapshot por turno (entidades, refs, follow-up, lousa)
