@@ -21,6 +21,11 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 
 Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificações), não neste plugin.
 
+## Roadmap de UI
+
+- Navegação (6 seções): `minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md`
+- Componentes e layout (primitivos, métricas, tabelas): `12_admin_ui_refatoracao_componentes.md` (mesma pasta)
+
 ## Regras
 
 1. Não colocar CSS de aba dentro de `ChatAdminPage.css`.
