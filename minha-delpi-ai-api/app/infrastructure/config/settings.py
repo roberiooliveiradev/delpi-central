@@ -359,9 +359,10 @@ class Settings:
         os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS", "2")
     )
 
-    # Aprendizagem contínua (playbook). Desligado por padrão: human-in-the-loop.
+    # Aprendizagem contínua (playbook). Ligado por padrão no Docker; use false na env
+    # para desligar. Promoção continua exigindo revisão admin (auto-approve off).
     CHAT_LEARNING_ENABLED = (
-        os.getenv("CHAT_LEARNING_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_LEARNING_ENABLED", "true").lower() == "true"
     )
     # Aplicar termos de vocabulário aprovados durante a normalização de mensagens.
     CHAT_LEARNING_APPLY_VOCABULARY = (
@@ -387,10 +388,9 @@ class Settings:
         os.getenv("CHAT_LEARNING_VOCABULARY_MAX_RULES", "500")
     )
 
-    # Memória persistente do usuário/projeto (playbook §30, Fase 3). Desligada por
-    # padrão: cross-sessão exige rollout controlado.
+    # Memória persistente do usuário/projeto (playbook §30, Fase 3).
     CHAT_USER_MEMORY_ENABLED = (
-        os.getenv("CHAT_USER_MEMORY_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_USER_MEMORY_ENABLED", "true").lower() == "true"
     )
     # Capturar preferências/perfil duráveis declarados no turno.
     CHAT_USER_MEMORY_CAPTURE = (
@@ -416,20 +416,20 @@ class Settings:
     )
     # Pesquisar significado público na web para enriquecer candidatos (custo/latência).
     CHAT_LEARNING_GLOSSARY_WEB_MEANING = (
-        os.getenv("CHAT_LEARNING_GLOSSARY_WEB_MEANING", "false").lower() == "true"
+        os.getenv("CHAT_LEARNING_GLOSSARY_WEB_MEANING", "true").lower() == "true"
     )
     # Teto de definições de glossário carregadas/injetadas por turno.
     CHAT_LEARNING_GLOSSARY_MAX_TERMS = int(
         os.getenv("CHAT_LEARNING_GLOSSARY_MAX_TERMS", "300")
     )
     # RAG adaptativo (playbook Fase 5): indexar termos de glossário aprovados como
-    # conhecimento recuperável (embedding). Desligado por padrão: gera custo/embed.
+    # conhecimento recuperável (embedding). Gera custo/embed ao promover termos.
     CHAT_LEARNING_GLOSSARY_RAG_INDEX = (
-        os.getenv("CHAT_LEARNING_GLOSSARY_RAG_INDEX", "false").lower() == "true"
+        os.getenv("CHAT_LEARNING_GLOSSARY_RAG_INDEX", "true").lower() == "true"
     )
     # Avaliação automática (playbook Fase 6): casos de regressão e gate de promoção.
     CHAT_LEARNING_EVALUATION_ENABLED = (
-        os.getenv("CHAT_LEARNING_EVALUATION_ENABLED", "false").lower() == "true"
+        os.getenv("CHAT_LEARNING_EVALUATION_ENABLED", "true").lower() == "true"
     )
     CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION = (
         os.getenv("CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION", "true").lower() == "true"

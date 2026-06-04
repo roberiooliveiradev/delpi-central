@@ -64,23 +64,23 @@ Próximos turnos (send/stream)
 
 | Flag | Default | Efeito |
 |---|---|---|
-| `CHAT_LEARNING_ENABLED` | `false` | Liga a camada (captura + aplicação). |
+| `CHAT_LEARNING_ENABLED` | `true` | Liga a camada (captura + aplicação). `false` na env desliga. |
 | `CHAT_LEARNING_APPLY_VOCABULARY` | `true` | Aplica termos aprovados na normalização (se a camada estiver ligada). |
 | `CHAT_LEARNING_CAPTURE_FROM_FEEDBACK` | `true` | Captura candidatos a partir de feedback negativo. |
 | `CHAT_LEARNING_CAPTURE_FROM_TURN` | `true` | Captura definição explícita dita durante o turno. |
 | `CHAT_LEARNING_AUTO_APPROVE_ENABLED` | `false` | Auto-aprovar candidatos de altíssima confiança. |
 | `CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE` | `0.95` | Limiar de auto-aprovação. |
 | `CHAT_LEARNING_VOCABULARY_MAX_RULES` | `500` | Teto de regras aprendidas aplicadas. |
-| `CHAT_USER_MEMORY_ENABLED` | `false` | Liga a memória persistente do usuário (captura + injeção). |
+| `CHAT_USER_MEMORY_ENABLED` | `true` | Liga a memória persistente do usuário (captura + injeção). |
 | `CHAT_USER_MEMORY_CAPTURE` | `true` | Captura preferências/perfil duráveis ditos no turno. |
 | `CHAT_USER_MEMORY_APPLY` | `true` | Injeta a memória persistente no contexto do turno. |
 | `CHAT_USER_MEMORY_MAX_ITEMS` | `20` | Teto de itens de memória injetados por turno. |
 | `CHAT_LEARNING_GLOSSARY_RETRIEVAL` | `true` | Injeta definições do glossário citadas na pergunta. |
 | `CHAT_LEARNING_GLOSSARY_CAPTURE` | `true` | Captura termo desconhecido perguntado ("o que é X?") como candidato. |
-| `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `false` | Pesquisa significado público na web para enriquecer o candidato. |
+| `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `true` | Pesquisa significado público na web para enriquecer o candidato. |
 | `CHAT_LEARNING_GLOSSARY_MAX_TERMS` | `300` | Teto de definições carregadas/injetadas por turno. |
-| `CHAT_LEARNING_GLOSSARY_RAG_INDEX` | `false` | Indexa termos aprovados como conhecimento RAG recuperável por embedding (Fase 5). |
-| `CHAT_LEARNING_EVALUATION_ENABLED` | `false` | Liga casos de regressão e execução automática (Fase 6). |
+| `CHAT_LEARNING_GLOSSARY_RAG_INDEX` | `true` | Indexa termos aprovados como conhecimento RAG recuperável por embedding (Fase 5). |
+| `CHAT_LEARNING_EVALUATION_ENABLED` | `true` | Liga casos de regressão e execução automática (Fase 6). |
 | `CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION` | `true` | Bloqueia promoção se casos ativos falharem com a regra simulada. |
 | `CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK` | `true` | Cria caso de regressão a partir de feedback negativo. |
 
@@ -183,7 +183,7 @@ sync_term(term)  (apenas type=term_definition)
 - **Coexistência com a Fase 4:** a injeção lexical (`ChatGlossaryRetrievalService`)
   e o chunk semântico são complementares; pode haver leve sobreposição no prompt
   quando o termo exato aparece e também é recuperado por similaridade.
-- **Flag:** `CHAT_LEARNING_GLOSSARY_RAG_INDEX` (default `false`; requer também
+- **Flag:** `CHAT_LEARNING_GLOSSARY_RAG_INDEX` (default `true`; requer também
   `CHAT_LEARNING_ENABLED`). Embedding via `LocalEmbeddingGateway`.
 
 Repositório: novo `KnowledgeRepositoryPort.find_document_by_source_ref(source_ref,
