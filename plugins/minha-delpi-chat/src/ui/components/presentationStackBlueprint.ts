@@ -14,8 +14,7 @@ import {
   type StackTableRole,
 } from "./presentationStackPlan";
 import {
-  STACK_SECTION_BY_ID,
-  stackSectionForRole,
+  buildStackSectionChrome,
   type StackSectionChrome,
   type StackSectionId,
 } from "./presentationStackSections";
@@ -47,6 +46,15 @@ function pushStackSection(
   appendUnique(segments, { kind: "stackSection", section });
 }
 
+function resolveStackSection(
+  plan: StackPresentationPlan,
+  sectionId: StackSectionId,
+): StackSectionChrome {
+  const intro = plan.sectionIntros?.[sectionId];
+
+  return buildStackSectionChrome(sectionId, intro);
+}
+
 function maybePushStackSection(
   plan: StackPresentationPlan,
   segments: AssistantContentSegment[],
@@ -63,7 +71,7 @@ function maybePushStackSection(
     return;
   }
 
-  pushStackSection(segments, STACK_SECTION_BY_ID[sectionId], appendUnique);
+  pushStackSection(segments, resolveStackSection(plan, sectionId), appendUnique);
 }
 
 function pushMarkdownSegments(
@@ -96,13 +104,17 @@ function appendTablesForRoles(
     }
 
     if (sectionPerRole) {
-      const chrome = stackSectionForRole(role);
+      const roleToSection: Partial<Record<StackTableRole, StackSectionId>> = {
+        guide: "guide",
+        inspection: "inspection",
+      };
+      const sectionId = roleToSection[role];
 
-      if (chrome && planUsesHumanizedSections(plan)) {
+      if (sectionId && planUsesHumanizedSections(plan)) {
         const visibility = plan.sectionVisibility;
 
-        if (!visibility || visibility[chrome.id] === true) {
-          pushStackSection(segments, chrome, appendUnique);
+        if (!visibility || visibility[sectionId] === true) {
+          pushStackSection(segments, resolveStackSection(plan, sectionId), appendUnique);
         }
       }
     }

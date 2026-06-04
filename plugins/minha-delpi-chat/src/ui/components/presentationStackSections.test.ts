@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildCanonicalStackSegments } from "./presentationStackBlueprint";
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { isStackSectionVisible, STACK_SECTION_BY_ID } from "./presentationStackSections";
+import { buildStackSectionChrome, isStackSectionVisible } from "./presentationStackSections";
 import { filterSegmentsByVisualKind } from "./assistantContentVisualFormats";
 
 function parseMarkdown(prose: string): AssistantContentSegment[] {
@@ -77,6 +77,14 @@ describe("presentationStackSections", () => {
               structure: true,
               attention: true,
             },
+            sectionIntros: {
+              scope: "Análise integrada do produto 90260149.",
+              profile: "90260149 · ficha cadastral.",
+              highlights: "Estrutura com 6 itens.",
+              guide: "1 registro no roteiro.",
+              structure: "1 nó na árvore.",
+              attention: "Bloqueio «2».",
+            },
             narrativeOrder: [
               "lead",
               "profileTables",
@@ -131,12 +139,14 @@ describe("presentationStackSections", () => {
   });
 
   it("filtra seções por aba da toolbar", () => {
-    expect(isStackSectionVisible(STACK_SECTION_BY_ID.profile, "table")).toBe(true);
-    expect(isStackSectionVisible(STACK_SECTION_BY_ID.profile, "text")).toBe(false);
+    const profileSection = buildStackSectionChrome("profile", "ficha");
+
+    expect(isStackSectionVisible(profileSection, "table")).toBe(true);
+    expect(isStackSectionVisible(profileSection, "text")).toBe(false);
 
     const segments: AssistantContentSegment[] = [
-      { kind: "stackSection", section: STACK_SECTION_BY_ID.scope },
-      { kind: "stackSection", section: STACK_SECTION_BY_ID.profile },
+      { kind: "stackSection", section: buildStackSectionChrome("scope", "escopo") },
+      { kind: "stackSection", section: profileSection },
       { kind: "markdown", markdown: "texto" },
     ];
 

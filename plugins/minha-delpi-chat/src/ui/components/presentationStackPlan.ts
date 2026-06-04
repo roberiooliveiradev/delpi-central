@@ -31,6 +31,8 @@ export type StackPresentationPlan = {
   presentationProfile?: "product_analyser" | "generic_stack";
   humanizedSections?: boolean;
   sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
+  /** Análise curta por seção (API — conteúdo real, não texto de mockup). */
+  sectionIntros?: Partial<Record<StackSectionId, string>>;
 };
 
 const DEFAULT_TABLE_ROLE_ORDER: StackTableRole[] = [
@@ -88,6 +90,39 @@ function normalizeNarrativeOrder(value: unknown): StackNarrativeSlot[] {
   return slots.length ? slots : DEFAULT_NARRATIVE_ORDER;
 }
 
+function normalizeSectionIntros(
+  value: unknown,
+): Partial<Record<StackSectionId, string>> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const allowed = new Set<StackSectionId>([
+    "scope",
+    "profile",
+    "highlights",
+    "guide",
+    "inspection",
+    "structure",
+    "attention",
+  ]);
+  const intros: Partial<Record<StackSectionId, string>> = {};
+
+  for (const [key, text] of Object.entries(value as Record<string, unknown>)) {
+    if (!allowed.has(key as StackSectionId)) {
+      continue;
+    }
+
+    const trimmed = String(text || "").trim();
+
+    if (trimmed) {
+      intros[key as StackSectionId] = trimmed;
+    }
+  }
+
+  return Object.keys(intros).length ? intros : undefined;
+}
+
 function normalizeSectionVisibility(
   value: unknown,
 ): Partial<Record<StackSectionId, boolean>> | undefined {
@@ -133,6 +168,7 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
         : undefined,
     humanizedSections: raw.humanizedSections === true,
     sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
+    sectionIntros: normalizeSectionIntros(raw.sectionIntros),
   };
 }
 

@@ -1,5 +1,4 @@
 import type { ContentFormatKind } from "./assistantContentLayout";
-import type { StackTableRole } from "./presentationStackPlan";
 
 export type StackSectionId =
   | "scope"
@@ -17,68 +16,36 @@ export type StackSectionChrome = {
   showIn: Array<ContentFormatKind | "complete">;
 };
 
-export const STACK_SECTION_BY_ID: Record<StackSectionId, StackSectionChrome> = {
-  scope: {
-    id: "scope",
-    title: "1. Escopo da consulta",
-    description:
-      "O que foi pedido e qual produto está em análise — leitura de abertura antes dos dados.",
-    showIn: ["complete", "text"],
-  },
-  profile: {
-    id: "profile",
-    title: "2. Ficha cadastral",
-    description:
-      "Primeiro bloco de dados: quem é o produto antes de roteiro, inspeção e BOM. Fonte: cadastro na API.",
-    showIn: ["complete", "table"],
-  },
-  highlights: {
-    id: "highlights",
-    title: "3. Síntese executiva (Destaques)",
-    description:
-      "Resumo em bullets após a ficha: leitura rápida do que importa nas demais seções.",
-    showIn: ["complete", "text"],
-  },
-  guide: {
-    id: "guide",
-    title: "4. Roteiro de produção",
-    description:
-      "Como o item é fabricado (operações por PA e PIs). Fonte: roteiro na API.",
-    showIn: ["complete", "table"],
-  },
-  inspection: {
-    id: "inspection",
-    title: "5. Plano de inspeção",
-    description:
-      "O que a API retorna para inspeção na hierarquia — referências quando QP não vêm preenchidos.",
-    showIn: ["complete", "table"],
-  },
-  structure: {
-    id: "structure",
-    title: "6. Estrutura (BOM)",
-    description:
-      "Composição hierárquica PA → PI → MP. Substitui lista em texto e tabela plana de componentes.",
-    showIn: ["complete", "tree"],
-  },
-  attention: {
-    id: "attention",
-    title: "7. Alertas e divergências",
-    description:
-      "Riscos e inconsistências depois que o cadastro, roteiro, inspeção e BOM já foram apresentados.",
-    showIn: ["complete", "text"],
-  },
+const SECTION_TITLES: Record<StackSectionId, string> = {
+  scope: "1. Escopo da consulta",
+  profile: "2. Ficha cadastral",
+  highlights: "3. Síntese executiva (Destaques)",
+  guide: "4. Roteiro de produção",
+  inspection: "5. Plano de inspeção",
+  structure: "6. Estrutura (BOM)",
+  attention: "7. Alertas e divergências",
 };
 
-export function stackSectionForRole(role: StackTableRole): StackSectionChrome | null {
-  if (role === "guide") {
-    return STACK_SECTION_BY_ID.guide;
-  }
+const SECTION_SHOW_IN: Record<StackSectionId, StackSectionChrome["showIn"]> = {
+  scope: ["complete", "text"],
+  profile: ["complete", "table"],
+  highlights: ["complete", "text"],
+  guide: ["complete", "table"],
+  inspection: ["complete", "table"],
+  structure: ["complete", "tree"],
+  attention: ["complete", "text"],
+};
 
-  if (role === "inspection") {
-    return STACK_SECTION_BY_ID.inspection;
-  }
-
-  return null;
+export function buildStackSectionChrome(
+  id: StackSectionId,
+  intro?: string | null,
+): StackSectionChrome {
+  return {
+    id,
+    title: SECTION_TITLES[id],
+    description: String(intro || "").trim(),
+    showIn: SECTION_SHOW_IN[id],
+  };
 }
 
 export function isStackSectionVisible(

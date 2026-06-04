@@ -18,7 +18,9 @@ export function AssistantStackSection({ section }: AssistantStackSectionProps) {
         {section.title}
         <span className="mdc-stack-section__rule" aria-hidden="true" />
       </h4>
-      <p className="mdc-stack-section__description">{section.description}</p>
+      {section.description.trim() ? (
+        <p className="mdc-stack-section__description">{section.description}</p>
+      ) : null}
     </section>
   );
 }
