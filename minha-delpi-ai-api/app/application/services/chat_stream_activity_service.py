@@ -16,30 +16,22 @@ from app.domain.services.external_actions.external_action_result_presenter impor
     ExternalActionResultPresenter,
 )
 
-_PHASE_GROUPS = {
-    "prepare": "Preparando",
-    "think": "Pensar",
-    "plan": "Planejar novos passos",
-    "tools": "Consultando",
-    "web_search": "Pesquisa web",
-    "rag": "Conhecimento",
-    "response": "Respondendo",
-    "drawing_analysis": "Análise de desenho",
-    "document_vision": "Visão de documentos",
-}
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 
-_DRAWING_ANALYSIS_STAGE_MESSAGES: tuple[tuple[str, str], ...] = (
-    ("read_pdf", "Lendo documento (PDF ou imagem)…"),
-    ("identify_code", "Identificando código…"),
-    ("query_api", "Consultando API DELPI…"),
-    ("validate_header", "Validando cabeçalho…"),
-    ("validate_bom", "Conferindo BOM…"),
-    ("validate_dims", "Conferindo cotas…"),
-    ("validate_route", "Validando roteiro…"),
-    ("validate_inspection", "Validando inspeções…"),
-    ("apply_rules", "Aplicando normas…"),
-    ("build_report", "Gerando relatório…"),
-)
+
+def _phase_group(phase: str) -> str:
+    groups = ChatAssistantContentService.get_mapping("stream", "activity", "phaseGroups")
+
+    return groups.get(
+        str(phase or "").strip(),
+        ChatAssistantContentService.get("stream", "activity", "defaultPhaseGroup", default="Atividade"),
+    )
+
+
+def _drawing_stage_message(step_key: str) -> str | None:
+    stages = ChatAssistantContentService.get_mapping("stream", "activity", "drawingStages")
+
+    return stages.get(str(step_key or "").strip())
 
 
 class ChatStreamActivityService:
@@ -59,7 +51,7 @@ class ChatStreamActivityService:
         message: str | None = None,
         entry_id: str | None = None,
     ) -> dict[str, Any]:
-        group = _PHASE_GROUPS.get(str(phase or "").strip(), "Atividade")
+        group = _phase_group(phase)
         summary = message or f"{verb} {target}".strip()
 
         payload: dict[str, Any] = {
@@ -187,13 +179,17 @@ class ChatStreamActivityService:
             on_stream_activity(
                 cls.drawing_analysis_step(
                     step_key="build_report",
-                    message="Gerando relatório…",
+                    message=_drawing_stage_message("build_report") or "Gerando relatório…",
                     state="done",
                 )
             )
             return
 
-        for step_key, message in _DRAWING_ANALYSIS_STAGE_MESSAGES:
+        for step_key, message in ChatAssistantContentService.get_mapping(
+            "stream",
+            "activity",
+            "drawingStages",
+        ).items():
             if step_key == "read_pdf" and not has_pdf:
                 continue
 

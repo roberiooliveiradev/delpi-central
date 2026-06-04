@@ -1,0 +1,14 @@
+{
+  "fallbackSummary": "Não foi possível executar a consulta SQL neste ambiente. Revise tabelas e colunas Protheus e tente novamente.",
+  "invalidObjectSummary": "O banco não reconheceu a tabela ou view usada na consulta.",
+  "invalidObjectSummaryNamed": "O banco não reconheceu o objeto `{object_name}` (tabela ou view) na consulta.",
+  "invalidObjectReasonCaseSensitive": "identificadores em minúsculas em banco com collation case-sensitive",
+  "errorTypeToHandling": {
+    "sql_missing_body": "sql_missing_body",
+    "sql_syntax_error": "sql_syntax_error",
+    "sql_invalid_object": "sql_invalid_object",
+    "timeout": "timeout",
+    "permission_denied": "permission_denied",
+    "sql_execution_error": "api_unavailable"
+  }
+}

@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from math import ceil
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
+_BUNDLE = "data_coverage"
+
 
 class ChatDataCoverageNoticeService:
     """Detecta respostas parciais (paginação API, profundidade, SQL paginado) para o chat."""
@@ -106,7 +110,8 @@ class ChatDataCoverageNoticeService:
         if not message:
             return body
 
-        block = f"> **Cobertura dos dados:** {message}"
+        prefix = ChatAssistantContentService.get(_BUNDLE, "markdownPrefix")
+        block = f"{prefix} {message}"
 
         if not body:
             return block
@@ -136,9 +141,11 @@ class ChatDataCoverageNoticeService:
                 continue
 
             return {
-                "message": (
-                    f"Consulta SQL parcial: {shown} de {total} registro(s) nesta resposta da API. "
-                    "Peça a próxima página, aumente page_size ou refine a consulta para ver todos."
+                "message": ChatAssistantContentService.format(
+                    _BUNDLE,
+                    "sqlPartial",
+                    shown=shown,
+                    total=total,
                 ),
                 "shown": shown,
                 "total": total,
@@ -185,11 +192,14 @@ class ChatDataCoverageNoticeService:
             label = cls._context_label(path, context)
 
             return {
-                "message": (
-                    f"{label} parcial: página {page}"
-                    f"{f' de {total_pages}' if total_pages else ''} "
-                    f"({shown} de {total} registro(s) nesta resposta). "
-                    "Peça a próxima página ou aumente page_size para ver mais."
+                "message": ChatAssistantContentService.format(
+                    _BUNDLE,
+                    "paginationPaged",
+                    label=label,
+                    page=page,
+                    total_pages=f" de {total_pages}" if total_pages else "",
+                    shown=shown,
+                    total=total,
                 ),
                 "page": page,
                 "pageSize": page_size,
@@ -202,9 +212,12 @@ class ChatDataCoverageNoticeService:
             label = cls._context_label(path, context)
 
             return {
-                "message": (
-                    f"{label} parcial: {shown} de {total} registro(s) nesta resposta. "
-                    "Pode haver mais dados além do que está sendo exibido."
+                "message": ChatAssistantContentService.format(
+                    _BUNDLE,
+                    "paginationPartial",
+                    label=label,
+                    shown=shown,
+                    total=total,
                 ),
                 "total": total,
                 "shown": shown,
@@ -232,27 +245,17 @@ class ChatDataCoverageNoticeService:
         lowered = str(path or "").lower()
 
         if "/structure" in lowered:
-            return {
-                "message": (
-                    f"A estrutura foi consultada com profundidade limitada "
-                    f"(max_depth={max_depth}). Níveis mais profundos podem estar ocultos."
-                ),
-                "maxDepth": max_depth,
-            }
-
-        if "/parents" in lowered:
-            return {
-                "message": (
-                    f"A consulta de produtos pai foi limitada a {max_depth} nível(is) "
-                    f"(max_depth={max_depth}). Hierarquias acima disso podem estar incompletas."
-                ),
-                "maxDepth": max_depth,
-            }
+            key = "depthStructure"
+        elif "/parents" in lowered:
+            key = "depthParents"
+        else:
+            key = "depthGeneric"
 
         return {
-            "message": (
-                f"A consulta foi limitada a {max_depth} nível(is) de profundidade "
-                f"(max_depth={max_depth})."
+            "message": ChatAssistantContentService.format(
+                _BUNDLE,
+                key,
+                max_depth=max_depth,
             ),
             "maxDepth": max_depth,
         }
@@ -307,23 +310,24 @@ class ChatDataCoverageNoticeService:
     @classmethod
     def _context_label(cls, path: str, context: str) -> str:
         lowered = str(path or "").lower()
+        labels = ChatAssistantContentService.get_mapping(_BUNDLE, "contextLabels")
 
         if context == "structure" or "/structure" in lowered:
-            return "Estrutura"
+            return labels.get("structure", "Estrutura")
 
         if context == "stock" or "/stock" in lowered:
-            return "Estoque"
+            return labels.get("stock", "Estoque")
 
         if "/parents" in lowered:
-            return "Produtos pai"
+            return labels.get("parents", "Produtos pai")
 
         if "/search" in lowered:
-            return "Busca"
+            return labels.get("search", "Busca")
 
         if "/lmp" in lowered or "/production" in lowered:
-            return "Listagem"
+            return labels.get("listing", "Listagem")
 
-        return "Resultado"
+        return labels.get("items", "Resultado")
 
     @classmethod
     def _as_int(cls, value) -> int | None:

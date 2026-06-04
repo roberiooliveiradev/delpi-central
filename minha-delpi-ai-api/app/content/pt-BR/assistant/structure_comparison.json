@@ -1,0 +1,6 @@
+{
+  "insufficientData": "Para comparar com precisão, preciso da **ficha completa** ou da **estrutura (BOM)** de **{codes}** nesta conversa. Encontrei dados utilizáveis de {found} produto(s) no histórico. Consulte cada código (ex.: «ficha completa do 10080047») e peça a comparação novamente.",
+  "sectionTitle": "## Comparação entre produtos",
+  "sharedMpInsight": "- Produto **{code}** (BOM {level}): {components}.",
+  "noPurchaseHistory": "Não há histórico recente de compra registrado para o produto."
+}

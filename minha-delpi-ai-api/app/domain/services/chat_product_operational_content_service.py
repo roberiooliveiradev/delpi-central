@@ -1,86 +1,35 @@
-"""Textos operacionais de produto — escopos, apresentação, plural e web search."""
+"""Textos operacionais de produto — escopos, apresentação, plural."""
 
 from __future__ import annotations
 
-from functools import lru_cache
-from typing import Any
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+    invalidate_assistant_content_cache,
+)
 
-from app.infrastructure.content.content_service import ContentService
+_BUNDLE = "product_operational_content"
 
 
 def invalidate_product_operational_content_cache() -> None:
-    _content.cache_clear()
-
-
-@lru_cache(maxsize=1)
-def _content() -> dict[str, Any]:
-    return ContentService.load_json("assistant/product_operational_content")
+    invalidate_assistant_content_cache(_BUNDLE)
 
 
 class ChatProductOperationalContentService:
     @classmethod
     def get(cls, *path: str, default: str = "") -> str:
-        node: Any = _content()
-
-        for key in path:
-            if not isinstance(node, dict):
-                return default
-
-            node = node.get(key)
-
-        if node is None:
-            return default
-
-        if isinstance(node, str):
-            return node
-
-        return default
+        return ChatAssistantContentService.get(_BUNDLE, *path, default=default)
 
     @classmethod
     def format(cls, *path: str, default: str = "", **values) -> str:
-        template = cls.get(*path, default=default)
-
-        if not template:
-            return default
-
-        try:
-            return template.format(**values)
-        except KeyError:
-            return template
+        return ChatAssistantContentService.format(_BUNDLE, *path, default=default, **values)
 
     @classmethod
     def list(cls, *path: str) -> list[str]:
-        node: Any = _content()
-
-        for key in path:
-            if not isinstance(node, dict):
-                return []
-
-            node = node.get(key)
-
-        if not isinstance(node, list):
-            return []
-
-        return [str(item) for item in node if str(item).strip()]
+        return ChatAssistantContentService.list(_BUNDLE, *path)
 
     @classmethod
     def get_mapping(cls, *path: str) -> dict[str, str]:
-        node: Any = _content()
-
-        for key in path:
-            if not isinstance(node, dict):
-                return {}
-
-            node = node.get(key)
-
-        if not isinstance(node, dict):
-            return {}
-
-        return {
-            str(item_key): str(item_value)
-            for item_key, item_value in node.items()
-            if str(item_key).strip() and item_value is not None
-        }
+        return ChatAssistantContentService.get_mapping(_BUNDLE, *path)
 
     @classmethod
     def scope_label_for_scope_key(cls, scope_key: str, *, default: str | None = None) -> str:
@@ -128,12 +77,12 @@ class ChatProductOperationalContentService:
 
     @classmethod
     def linked_scope_stems(cls, scope: str) -> tuple[str, ...]:
-        node: Any = _content().get("pluralPhrasing", {}).get("linkedScopeStems", {})
-
-        if not isinstance(node, dict):
-            return ()
-
-        stems = node.get(scope)
+        stems_node = ChatAssistantContentService.get_node(
+            _BUNDLE,
+            "pluralPhrasing",
+            "linkedScopeStems",
+        )
+        stems = stems_node.get(scope) if isinstance(stems_node, dict) else None
 
         if not isinstance(stems, list):
             return ()
@@ -142,12 +91,7 @@ class ChatProductOperationalContentService:
 
     @classmethod
     def scope_term_groups(cls, scope: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
-        node: Any = _content().get("pluralPhrasing", {}).get("scopeTerms", {})
-
-        if not isinstance(node, dict):
-            return (), ()
-
-        entry = node.get(scope)
+        entry = ChatAssistantContentService.get_node(_BUNDLE, "pluralPhrasing", "scopeTerms", scope)
 
         if not isinstance(entry, dict):
             return (), ()

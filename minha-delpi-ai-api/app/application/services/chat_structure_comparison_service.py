@@ -118,12 +118,17 @@ class ChatStructureComparisonService:
 
     @classmethod
     def _insufficient_data_answer(cls, codes: list[str], *, found: int) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
         missing = ", ".join(codes[:4])
-        return (
-            f"Para comparar com precisão, preciso da **ficha completa** ou da **estrutura (BOM)** "
-            f"de **{missing}** nesta conversa. Encontrei dados utilizáveis de {found} produto(s) "
-            "no histórico. Consulte cada código (ex.: «ficha completa do 10080047») e peça a "
-            "comparação novamente."
+
+        return ChatAssistantContentService.format(
+            "structure_comparison",
+            "insufficientData",
+            codes=missing,
+            found=found,
         )
 
     @classmethod

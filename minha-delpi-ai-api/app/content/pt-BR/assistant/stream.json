@@ -36,5 +36,36 @@
   "playbackStatus": "Exibindo resposta...",
   "cancelledStatus": "Resposta cancelada.",
   "errorGenericStatus": "Não foi possível concluir a resposta agora. Tente novamente em instantes ou refine o pedido.",
-  "cancelledStatusFriendly": "Resposta cancelada. Quando quiser, é só enviar de novo."
+  "cancelledStatusFriendly": "Resposta cancelada. Quando quiser, é só enviar de novo.",
+  "activity": {
+    "defaultPhaseGroup": "Atividade",
+    "phaseGroups": {
+      "prepare": "Preparando",
+      "think": "Pensar",
+      "plan": "Planejar novos passos",
+      "tools": "Consultando",
+      "web_search": "Pesquisa web",
+      "rag": "Conhecimento",
+      "response": "Respondendo",
+      "drawing_analysis": "Análise de desenho",
+      "document_vision": "Visão de documentos"
+    },
+    "drawingStages": {
+      "read_pdf": "Lendo documento (PDF ou imagem)…",
+      "identify_code": "Identificando código…",
+      "query_api": "Consultando API DELPI…",
+      "validate_header": "Validando cabeçalho…",
+      "validate_bom": "Conferindo BOM…",
+      "validate_dims": "Conferindo cotas…",
+      "validate_route": "Validando roteiro…",
+      "validate_inspection": "Validando inspeções…",
+      "apply_rules": "Aplicando normas…",
+      "build_report": "Gerando relatório…"
+    },
+    "verbs": {
+      "thinking": "Pensando",
+      "planning": "Planejando",
+      "consulting": "Consultando"
+    }
+  }
 }

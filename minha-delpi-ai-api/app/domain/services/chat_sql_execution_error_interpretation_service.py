@@ -6,6 +6,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+
 
 @dataclass(frozen=True)
 class SqlErrorInterpretation:
@@ -15,10 +17,34 @@ class SqlErrorInterpretation:
 
 
 class ChatSqlExecutionErrorInterpretationService:
+    _BUNDLE = "sql_execution_errors"
     _INVALID_OBJECT_RE = re.compile(
         r"invalid object name\s+'([^']+)'",
         re.IGNORECASE,
     )
+
+    @classmethod
+    def _handling_type(cls, internal_type: str) -> str:
+        mapping = ChatAssistantContentService.get_mapping(cls._BUNDLE, "errorTypeToHandling")
+
+        return mapping.get(internal_type, internal_type)
+
+    @classmethod
+    def _summary_for_type(cls, internal_type: str, **fmt) -> str:
+        handling = cls._handling_type(internal_type)
+        message = ChatAssistantContentService.get_error_type(handling, "userMessage")
+
+        if message:
+            return message
+
+        return ChatAssistantContentService.get(cls._BUNDLE, "fallbackSummary")
+
+    @classmethod
+    def _reasons_for_type(cls, internal_type: str) -> list[str]:
+        handling = cls._handling_type(internal_type)
+        reasons = ChatAssistantContentService.get_error_reasons(handling)
+
+        return reasons or []
 
     @classmethod
     def is_sql_execution_path(cls, path: str) -> bool:
@@ -79,36 +105,31 @@ class ChatSqlExecutionErrorInterpretationService:
         if "empty body" in lowered and "sql not provided" in lowered:
             return SqlErrorInterpretation(
                 error_type="sql_missing_body",
-                summary=(
-                    "A API de SQL foi chamada sem o texto da consulta. "
-                    "Envie o SELECT no corpo da requisição ou peça para interpretar "
-                    "o resultado da última consulta, sem executar de novo."
-                ),
-                reasons=[
-                    "faltou o campo sql, query ou statement no JSON enviado à rota /data/sql",
-                    "o assistente pode ter tentado executar em vez de explicar dados já retornados",
-                ],
+                summary=cls._summary_for_type("sql_missing_body"),
+                reasons=cls._reasons_for_type("sql_missing_body"),
             )
 
         if cls._looks_like_invalid_object(lowered):
             object_name = cls._extract_invalid_object_name(text)
             summary = (
-                "O banco não reconheceu a tabela ou view usada na consulta."
-                if not object_name
-                else (
-                    f"O banco não reconheceu o objeto `{object_name}` "
-                    "(tabela ou view) na consulta."
+                ChatAssistantContentService.format(
+                    cls._BUNDLE,
+                    "invalidObjectSummaryNamed",
+                    object_name=object_name,
                 )
+                if object_name
+                else ChatAssistantContentService.get(cls._BUNDLE, "invalidObjectSummary")
             )
-            reasons = [
-                "nome físico diferente do ambiente (sufixo Protheus, ex.: SA1010)",
-                "objeto ainda não existe nesta base de dados",
-            ]
+            reasons = list(cls._reasons_for_type("sql_invalid_object"))
 
             if object_name and object_name != object_name.upper():
-                reasons.append(
-                    "identificadores em minúsculas em banco com collation case-sensitive"
+                extra = ChatAssistantContentService.get(
+                    cls._BUNDLE,
+                    "invalidObjectReasonCaseSensitive",
                 )
+
+                if extra and extra not in reasons:
+                    reasons.append(extra)
 
             return SqlErrorInterpretation(
                 error_type="sql_invalid_object",
@@ -119,15 +140,8 @@ class ChatSqlExecutionErrorInterpretationService:
         if cls._looks_like_syntax_error(lowered):
             return SqlErrorInterpretation(
                 error_type="sql_syntax_error",
-                summary=(
-                    "A consulta enviada ao banco tem erro de sintaxe. "
-                    "Revise literais, aspas e cláusulas antes de executar de novo."
-                ),
-                reasons=[
-                    "literal incompleto após operador (ex.: = sem valor)",
-                    "vírgula, parêntese ou palavra-chave faltando",
-                    "dialeto SQL Server / Protheus diferente do esperado",
-                ],
+                summary=cls._summary_for_type("sql_syntax_error"),
+                reasons=cls._reasons_for_type("sql_syntax_error"),
             )
 
         if any(
@@ -143,13 +157,8 @@ class ChatSqlExecutionErrorInterpretationService:
         ):
             return SqlErrorInterpretation(
                 error_type="timeout",
-                summary=(
-                    "A consulta não foi concluída a tempo ou houve falha de conexão com o banco."
-                ),
-                reasons=[
-                    "carga elevada ou consulta muito pesada",
-                    "instabilidade momentânea na conexão com o SQL Server",
-                ],
+                summary=cls._summary_for_type("timeout"),
+                reasons=cls._reasons_for_type("timeout"),
             )
 
         if any(
@@ -158,11 +167,8 @@ class ChatSqlExecutionErrorInterpretationService:
         ):
             return SqlErrorInterpretation(
                 error_type="permission_denied",
-                summary="A consulta foi recusada por falta de permissão no banco ou na API.",
-                reasons=[
-                    "usuário sem permissão para o objeto consultado",
-                    "action ou perfil sem acesso a esta operação",
-                ],
+                summary=cls._summary_for_type("permission_denied"),
+                reasons=cls._reasons_for_type("permission_denied"),
             )
 
         if any(
@@ -171,14 +177,8 @@ class ChatSqlExecutionErrorInterpretationService:
         ):
             return SqlErrorInterpretation(
                 error_type="sql_execution_error",
-                summary=(
-                    "O banco retornou um erro ao executar a consulta. "
-                    "Revise tabelas, colunas e filtros antes de tentar de novo."
-                ),
-                reasons=[
-                    "restrição ou regra do banco não atendida pela consulta",
-                    "tipo de dado ou função incompatível com o SQL enviado",
-                ],
+                summary=cls._summary_for_type("sql_execution_error"),
+                reasons=cls._reasons_for_type("sql_execution_error"),
             )
 
         return None
@@ -203,10 +203,7 @@ class ChatSqlExecutionErrorInterpretationService:
         text = str(error_text or "").strip()
 
         if not text or cls._looks_like_raw_driver_dump(text):
-            return (
-                "Não foi possível executar a consulta SQL neste ambiente. "
-                "Revise tabelas e colunas Protheus e tente novamente."
-            )
+            return ChatAssistantContentService.get(cls._BUNDLE, "fallbackSummary")
 
         return None
 

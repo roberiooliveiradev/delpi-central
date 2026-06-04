@@ -745,55 +745,45 @@ class ExternalActionResultPresenter:
         }
 
     def _infer_items_title(self, items: list, path: str) -> str | None:
-        lowered = str(path or "").lower()
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
 
-        if lowered:
-            if "eficiencia-fabril" in lowered or "eficiencia_fabril" in lowered:
-                return "Eficiência fabril"
-            if "/structure" in lowered:
-                return "Estrutura do produto"
-            if "/parents" in lowered:
-                return "Produtos pai (onde é usado)"
-            if "/stock" in lowered:
-                return "Estoque do produto"
-            if "/suppliers" in lowered:
-                return "Fornecedores do produto"
-            if "/customers" in lowered:
-                return "Clientes do produto"
-            if "/guide" in lowered:
-                return "Roteiro do produto"
-            if "/inspection" in lowered:
-                return "Inspeção do produto"
-            if "/internal-movements" in lowered:
-                return "Movimentações internas"
-            if "/inbound-invoice" in lowered:
-                return "Notas fiscais de entrada"
-            if "/outbound-invoice" in lowered:
-                return "Notas fiscais de saída"
-            if "/purchases" in lowered:
-                return "Compras do produto"
-            if "/sales" in lowered:
-                return "Vendas do produto"
-            if "/lmp" in lowered:
-                return "Lista de LMPs"
-            if "/oee" in lowered:
-                return "OEE — eficiência dos equipamentos"
-            if "/otd" in lowered:
-                return "OTD — entrega no prazo"
-            if "/sale-order" in lowered or "/orders" in lowered:
-                return "Ordens de venda"
-            return None
+        bundle = "presenter_content"
+        title = ChatAssistantContentService.title_for_path(
+            bundle,
+            path,
+            path_key="titlesByPathFragment",
+        )
+
+        if title:
+            return title
 
         if items and isinstance(items[0], dict):
-            if "level" in items[0] or "quantity" in items[0]:
-                if "code" in items[0]:
-                    return "Estrutura do produto"
-            if "branch" in items[0] or "warehouse" in items[0]:
-                return "Estoque do produto"
-            if "eficiencia_percentual" in items[0] and (
-                "tempo_real_horas" in items[0] or "centro_trabalho" in items[0]
+            first = items[0]
+
+            if ("level" in first or "quantity" in first) and "code" in first:
+                return ChatAssistantContentService.get(
+                    bundle,
+                    "titlesByItemShape",
+                    "structure",
+                )
+
+            if "branch" in first or "warehouse" in first:
+                return ChatAssistantContentService.get(
+                    bundle,
+                    "titlesByItemShape",
+                    "stock",
+                )
+
+            if "eficiencia_percentual" in first and (
+                "tempo_real_horas" in first or "centro_trabalho" in first
             ):
-                return "Eficiência fabril"
+                return ChatAssistantContentService.get(
+                    bundle,
+                    "titlesByItemShape",
+                    "efficiency",
+                )
 
         return None
 

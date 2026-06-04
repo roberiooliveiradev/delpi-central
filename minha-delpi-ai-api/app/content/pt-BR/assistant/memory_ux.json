@@ -1,0 +1,14 @@
+{
+  "introHeading": "Nesta conversa estou usando:",
+  "topicLine": "- Assunto: {topic}.",
+  "taskLine": "- Tarefa: {task}.",
+  "contextLine": "- Contexto: {label}.",
+  "preferenceLine": "- Preferência: {pref}.",
+  "referenceLine": "- Referência resolvida: {ref}.",
+  "documentationLine": "- Documentação/playbooks: {titles}.",
+  "episodicLine": "- Episódio recuperado: {episode}.",
+  "emptySession": "Ainda não há contexto persistente nesta sessão além da mensagem atual. Você pode fixar produto, filial ou armazém com o botão + na barra de contexto.",
+  "writeGatedNote": "- Observação: dados sensíveis detectados; não estou gravando novas memórias neste turno.",
+  "preferencesPrefix": "Preferências: ",
+  "activePreference": "Preferência ativa: {label}"
+}

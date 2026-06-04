@@ -232,42 +232,85 @@ class ChatMemoryUxService:
             return None
 
         usage = cls.build_usage_view(snapshot)
-        lines: list[str] = ["Nesta conversa estou usando:"]
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        lines: list[str] = [
+            ChatAssistantContentService.get("memory_ux", "introHeading")
+        ]
 
         if usage.get("topic"):
-            lines.append(f"- Assunto: {usage['topic']}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "topicLine",
+                    topic=usage["topic"],
+                )
+            )
 
         if usage.get("task"):
-            lines.append(f"- Tarefa: {usage['task']}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "taskLine",
+                    task=usage["task"],
+                )
+            )
 
         for label in usage.get("userContextItems") or []:
-            lines.append(f"- Contexto: {label}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "contextLine",
+                    label=label,
+                )
+            )
 
         for pref in usage.get("preferences") or []:
-            lines.append(f"- Preferência: {pref}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "preferenceLine",
+                    pref=pref,
+                )
+            )
 
         for ref in usage.get("resolvedReferences") or []:
-            lines.append(f"- Referência resolvida: {ref}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "referenceLine",
+                    ref=ref,
+                )
+            )
 
         if usage.get("semanticHits"):
             titles = ", ".join(
                 str(item.get("title") or "") for item in usage["semanticHits"][:3]
             )
-            lines.append(f"- Documentação/playbooks: {titles}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "documentationLine",
+                    titles=titles,
+                )
+            )
 
         if usage.get("episodicRecall"):
-            lines.append(f"- Episódio recuperado: {usage['episodicRecall']}.")
+            lines.append(
+                ChatAssistantContentService.format(
+                    "memory_ux",
+                    "episodicLine",
+                    episode=usage["episodicRecall"],
+                )
+            )
 
         if len(lines) == 1:
-            return (
-                "Ainda não há contexto persistente nesta sessão além da mensagem atual. "
-                "Você pode fixar produto, filial ou armazém com o botão + na barra de contexto."
-            )
+            return ChatAssistantContentService.get("memory_ux", "emptySession")
 
         if usage.get("writeGated"):
-            lines.append(
-                "- Observação: dados sensíveis detectados; não estou gravando novas memórias neste turno."
-            )
+            lines.append(ChatAssistantContentService.get("memory_ux", "writeGatedNote"))
 
         return "\n".join(lines)
 

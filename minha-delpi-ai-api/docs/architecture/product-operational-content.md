@@ -90,9 +90,9 @@ Títulos e **framing** por rota no MFE — **fonte única** API + plugin.
 
 O MFE importa o mesmo arquivo via `plugins/minha-delpi-chat/src/content/operationalPresentationContent.ts` (`routeTitle`, `routeFraming`, `ProductRouteKey`).
 
-### `webSearch`
+### Web search
 
-Intro, sem resultados, cabeçalhos de fontes e rodapés em `ChatWebSearchDirectAnswerService`.
+Textos de pesquisa web foram movidos para [`assistant/web_search.json`](./assistant-content-catalog.md) (`ChatWebSearchDirectAnswerService`).
 
 ### `multiScope` / `composite`
 

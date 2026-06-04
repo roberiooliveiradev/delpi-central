@@ -1,0 +1,17 @@
+{
+  "markdownPrefix": "> **Cobertura dos dados:**",
+  "sqlPartial": "Consulta SQL parcial: {shown} de {total} registro(s) nesta resposta da API. Peça a próxima página, aumente page_size ou refine a consulta para ver todos.",
+  "paginationPaged": "{label} parcial: página {page}{total_pages} ({shown} de {total} registro(s) nesta resposta). Peça a próxima página ou aumente page_size para ver mais.",
+  "paginationPartial": "{label} parcial: {shown} de {total} registro(s) nesta resposta. Pode haver mais dados além do que está sendo exibido.",
+  "depthStructure": "A estrutura foi consultada com profundidade limitada (max_depth={max_depth}). Níveis mais profundos podem estar ocultos.",
+  "depthParents": "A consulta de produtos pai foi limitada a {max_depth} nível(is) (max_depth={max_depth}). Hierarquias acima disso podem estar incompletas.",
+  "depthGeneric": "A consulta foi limitada a {max_depth} nível(is) de profundidade (max_depth={max_depth}).",
+  "contextLabels": {
+    "items": "Resultado",
+    "structure": "Estrutura",
+    "stock": "Estoque",
+    "parents": "Produtos pai",
+    "search": "Busca",
+    "listing": "Listagem"
+  }
+}

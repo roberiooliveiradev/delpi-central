@@ -67,18 +67,18 @@ class ChatWebSearchDirectAnswerService:
         else:
             primary = ranked_useful[0]
 
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
         )
 
         query = str(payload.get("query") or message or "").strip()
-        default_query = ChatProductOperationalContentService.get(
-            "webSearch",
+        default_query = ChatAssistantContentService.get(
+            "web_search",
             "defaultQuery",
             default="sua pergunta",
         )
-        default_title = ChatProductOperationalContentService.get(
-            "webSearch",
+        default_title = ChatAssistantContentService.get(
+            "web_search",
             "defaultTitle",
             default="Resultado da busca",
         )
@@ -87,8 +87,8 @@ class ChatWebSearchDirectAnswerService:
         url = str(primary.get("url") or "").strip()
 
         lines = [
-            ChatProductOperationalContentService.format(
-                "webSearch",
+            ChatAssistantContentService.format(
+                "web_search",
                 "intro",
                 query=query or default_query,
             ),
@@ -104,8 +104,8 @@ class ChatWebSearchDirectAnswerService:
             lines.extend(
                 [
                     "",
-                    ChatProductOperationalContentService.get(
-                        "webSearch",
+                    ChatAssistantContentService.get(
+                        "web_search",
                         "otherSourcesHeader",
                     ),
                     *extra_sources,
@@ -116,7 +116,7 @@ class ChatWebSearchDirectAnswerService:
             lines.extend(
                 [
                     "",
-                    f"{ChatProductOperationalContentService.get('webSearch', 'primarySourceHeader')} {url}",
+                    f"{ChatAssistantContentService.get('web_search', 'primarySourceHeader')} {url}",
                 ]
             )
 
@@ -124,8 +124,8 @@ class ChatWebSearchDirectAnswerService:
             lines.extend(
                 [
                     "",
-                    ChatProductOperationalContentService.get(
-                        "webSearch",
+                    ChatAssistantContentService.get(
+                        "web_search",
                         "localizedFooter",
                     ),
                 ]
@@ -137,8 +137,8 @@ class ChatWebSearchDirectAnswerService:
                 lines.extend(
                     [
                         "",
-                        ChatProductOperationalContentService.format(
-                            "webSearch",
+                        ChatAssistantContentService.format(
+                            "web_search",
                             "retriedQueryFooter",
                             query=retried,
                         ),
@@ -229,19 +229,19 @@ class ChatWebSearchDirectAnswerService:
 
     @classmethod
     def _format_no_results(cls, payload: dict, *, message: str) -> str:
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
         )
 
         query = str(payload.get("query") or message or "").strip()
-        default_query = ChatProductOperationalContentService.get(
-            "webSearch",
+        default_query = ChatAssistantContentService.get(
+            "web_search",
             "defaultQuery",
             default="sua pergunta",
         )
 
-        return ChatProductOperationalContentService.format(
-            "webSearch",
+        return ChatAssistantContentService.format(
+            "web_search",
             "noResults",
             query=query or default_query,
         )

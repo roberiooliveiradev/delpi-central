@@ -198,15 +198,5 @@
       "structure": "Composição do produto em árvore (PA → PI → MP). Expanda os nós para ver componentes e quantidades.",
       "attention": "Pontos que merecem validação comercial, de compras ou engenharia antes de usar este cadastro em decisão."
     }
-  },
-  "webSearch": {
-    "defaultQuery": "sua pergunta",
-    "defaultTitle": "Resultado da busca",
-    "intro": "Consultei a **internet pública** sobre *{query}*.",
-    "otherSourcesHeader": "**Outras fontes encontradas:**",
-    "primarySourceHeader": "**Fonte principal:**",
-    "localizedFooter": "*(Resumo em português via Wikipedia.)*",
-    "retriedQueryFooter": "*(Busca complementada em inglês: «{query}».)*",
-    "noResults": "Realizei uma busca na **internet pública** sobre *{query}*, mas não encontrei resultados úteis para montar um resumo.\n\nSugestões: reformule a pergunta, use termos mais específicos ou informe o tema em inglês se for um assunto técnico internacional."
   }
 }

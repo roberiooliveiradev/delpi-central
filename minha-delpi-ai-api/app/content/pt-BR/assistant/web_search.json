@@ -1,0 +1,41 @@
+{
+  "defaultQuery": "sua pergunta",
+  "defaultTitle": "Resultado da busca",
+  "intro": "Consultei a **internet pública** sobre *{query}*.",
+  "otherSourcesHeader": "**Outras fontes encontradas:**",
+  "primarySourceHeader": "**Fonte principal:**",
+  "localizedFooter": "*(Resumo em português via Wikipedia.)*",
+  "retriedQueryFooter": "*(Busca complementada em inglês: «{query}».)*",
+  "noResults": "Realizei uma busca na **internet pública** sobre *{query}*, mas não encontrei resultados úteis para montar um resumo.\n\nSugestões: reformule a pergunta, use termos mais específicos ou informe o tema em inglês se for um assunto técnico internacional.",
+  "listSourcesMarkers": [
+    "liste os links",
+    "lista os links",
+    "listar os links",
+    "liste as fontes",
+    "lista as fontes",
+    "listar as fontes",
+    "links das fontes",
+    "links da pesquisa",
+    "mostre os links",
+    "mostra os links",
+    "quais foram as fontes",
+    "quais sao as fontes",
+    "quais são as fontes"
+  ],
+  "webContextTerms": [
+    "pesquisa web",
+    "busca na web",
+    "pesquisa na web",
+    "fontes da pesquisa",
+    "fontes da busca",
+    "internet",
+    "resultados da pesquisa"
+  ],
+  "summarizeMarkers": [
+    "resuma em topicos",
+    "resuma em tópicos",
+    "resumir pesquisa",
+    "resumo da pesquisa",
+    "resumo dos resultados"
+  ]
+}

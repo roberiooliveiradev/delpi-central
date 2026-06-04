@@ -81,7 +81,8 @@ Mensagem do usuário
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
 | `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
-| `ChatProductOperationalContentService` | Loader de `product_operational_content.json` — escopos, listas de termos, textos de presenter/apresentação/web search |
+| `ChatAssistantContentService` | Loader genérico de `app/content/pt-BR/assistant/*.json` — ver [catálogo de conteúdo](./assistant-content-catalog.md) |
+| `ChatProductOperationalContentService` | Wrapper de `product_operational_content.json` — escopos, plural, presenter estoque, presentation |
 | `ChatProductPluralPhrasingService` | Frases no plural («estoque dos produtos X, Y», «onde são usados»): consome termos do JSON; rótulos de intro multi-código |
 | `ChatCompositeDirectAnswerService` | Resposta direta composta: intro humanizada multi-rota (`multiProductRouteIntro`), `multiProductCodesIntro`, `###` por consulta, erros em lista |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
