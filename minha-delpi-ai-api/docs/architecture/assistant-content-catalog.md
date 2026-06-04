@@ -31,6 +31,7 @@ Wrappers especializados (mantêm API estável):
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
+| `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado | `ChatErrorHandlingClassifier`, SQL interpretation |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
@@ -67,13 +68,14 @@ Wrappers especializados (mantêm API estável):
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
 - KPI por fragmento de path → `presenter_content.kpiPathMatchers` + `kpiTitles`
 - Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`
+- Intenção de consulta de produto (estoque, vendas, pais, resumo, etc.) → `product_query_intent.json` (regex de código e pais permanecem no serviço)
+- Resumos de texto de parents/estrutura → `presenter_content.routeNarratives`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. Termos de intenção ainda inline em `chat_product_query_intent_service.py` (parents regex mantém lógica; termos literais podem ir para JSON)
-2. Narrativas dinâmicas restantes no presenter (resumos de parents, estrutura, SQL) — avaliar bundle `presenter_narratives.json`
+1. Narrativas dinâmicas restantes no presenter (SQL, paginação genérica) — extensão de `presenter_content.routeNarratives`
 
 ## Como adicionar conteúdo
 

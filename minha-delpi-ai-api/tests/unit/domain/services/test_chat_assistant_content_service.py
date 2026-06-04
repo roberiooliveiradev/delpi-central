@@ -9,6 +9,13 @@ def test_loads_stream_activity_phase_groups():
     assert label == "Consultando"
 
 
+def test_product_query_intent_stock_terms_loaded():
+    terms = ChatAssistantContentService.list("product_query_intent", "stock", "terms")
+
+    assert "estoque" in terms
+    assert "saldo" in terms
+
+
 def test_analyser_insights_attention_keys_exist():
     message = ChatAssistantContentService.get(
         "analyser_insights",

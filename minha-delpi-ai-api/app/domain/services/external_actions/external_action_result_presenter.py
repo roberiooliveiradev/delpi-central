@@ -3385,26 +3385,47 @@ class ExternalActionResultPresenter:
             )
         )
 
+        description = (
+            str(root_node.get("description") or "").strip()
+            or self._route_narrative("parents", "noDescription")
+        )
         summary_parts = [
-            f"Produto consultado: **{code}** — {root_node.get('description') or 'sem descrição'}.",
+            self._route_narrative(
+                "parents",
+                "productLine",
+                code=code,
+                description=description,
+            ),
         ]
 
         if total is not None:
             summary_parts.append(
-                f"Foram encontrados **{total}** produto(s) pai na API."
+                self._route_narrative(
+                    "parents",
+                    "totalFound",
+                    total=str(total),
+                )
             )
 
             if shown and int(total) > shown:
                 summary_parts.append(
-                    f"Esta resposta traz **{shown}** vínculo(s) nesta página/consulta."
+                    self._route_narrative(
+                        "parents",
+                        "pagePartial",
+                        shown=str(shown),
+                    )
                 )
         elif shown:
-            summary_parts.append(f"Esta resposta traz **{shown}** vínculo(s) de produto pai.")
+            summary_parts.append(
+                self._route_narrative(
+                    "parents",
+                    "shownLinks",
+                    shown=str(shown),
+                )
+            )
 
         if items:
-            summary_parts.append(
-                "Os vínculos aparecem na **árvore** e na **tabela** desta resposta."
-            )
+            summary_parts.append(self._route_narrative("parents", "treeAndTable"))
         else:
             summary_parts.append(self._analyser_markdown("parentsEmpty"))
 
@@ -3422,25 +3443,38 @@ class ExternalActionResultPresenter:
         total = root.get("total")
         items = root.get("items") if isinstance(root.get("items"), list) else []
 
-        title = f"Estrutura do produto {code}" if code else "Estrutura do produto"
+        title = (
+            self._route_narrative("structure", "titleWithCode", code=code)
+            if code
+            else self._route_narrative("structure", "titleGeneric")
+        )
+        description = (
+            str(root_node.get("description") or "").strip()
+            or self._route_narrative("parents", "noDescription")
+        )
 
         summary_parts = [
-            f"Produto **{code}**: {root_node.get('description') or 'sem descrição'}.",
+            self._route_narrative(
+                "structure",
+                "productLine",
+                code=code,
+                description=description,
+            ),
         ]
 
-        if total is not None:
+        component_total = total if total is not None else (len(items) if items else None)
+
+        if component_total is not None:
             summary_parts.append(
-                f"A composição possui **{total}** componente(s) de nível 1."
-            )
-        elif items:
-            summary_parts.append(
-                f"A composição possui **{len(items)}** componente(s) de nível 1."
+                self._route_narrative(
+                    "structure",
+                    "totalComponents",
+                    total=str(component_total),
+                )
             )
 
         if items or total:
-            summary_parts.append(
-                "A composição está na **árvore** (hierarquia) e, quando disponível, na **tabela** plana."
-            )
+            summary_parts.append(self._route_narrative("structure", "treeAndTable"))
 
         markdown = "\n\n".join([f"### {title}", "", *summary_parts])
 
@@ -4360,23 +4394,26 @@ class ExternalActionResultPresenter:
             return str(value)
 
     def _analyser_markdown(self, key: str, **values: str) -> str:
+        return self._presenter_text("analyserMarkdown", key, **values)
+
+    def _route_narrative(self, route: str, key: str, **values: str) -> str:
+        return self._presenter_text("routeNarratives", route, key, **values)
+
+    def _presenter_text(self, section: str, key: str, *extra_path: str, **values: str) -> str:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
         )
 
+        path = (section, key, *extra_path)
+
         if values:
             return ChatAssistantContentService.format(
                 "presenter_content",
-                "analyserMarkdown",
-                key,
+                *path,
                 **values,
             )
 
-        return ChatAssistantContentService.get(
-            "presenter_content",
-            "analyserMarkdown",
-            key,
-        )
+        return ChatAssistantContentService.get("presenter_content", *path)
 
     def _kpi_title(self, path: str) -> str:
         from app.domain.services.chat_assistant_content_service import (

@@ -1,8 +1,13 @@
 import re
 
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+
+_INTENT_CONTENT_BUNDLE = "product_query_intent"
 
 
 class ChatProductQueryIntent:
@@ -18,6 +23,21 @@ class ChatProductQueryIntent:
 
 
 class ChatProductQueryIntentService:
+    @classmethod
+    def _terms(cls, *path: str) -> tuple[str, ...]:
+        return tuple(
+            ChatAssistantContentService.list(_INTENT_CONTENT_BUNDLE, *path)
+        )
+
+    @classmethod
+    def _header(cls, key: str, *, default: str = "") -> str:
+        return ChatAssistantContentService.get(
+            _INTENT_CONTENT_BUNDLE,
+            "directAnswerHeaders",
+            key,
+            default=default,
+        )
+
     _ZERO_RECORDS_RE = re.compile(r":\s*0 registro\(s\)\.?$", re.IGNORECASE)
     _PRODUCT_CODE_RE = re.compile(
         r"\b(?:\d[\d.\-/]{2,}\d|\d{4,})\b",
@@ -97,26 +117,10 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_mixed_documental_operational(cls, normalized: str) -> bool:
-        documental_terms = (
-            "explique",
-            "explica ",
-            "documentação",
-            "documentacao",
-            "política",
-            "politica",
-            "procedimento",
-            "como funciona",
-            "manual ",
-        )
-        operational_terms = (
-            "estoque",
-            "produto",
-            "saldo",
-            "lmp",
-        )
-
-        return any(term in normalized for term in documental_terms) and any(
-            term in normalized for term in operational_terms
+        return any(
+            term in normalized for term in cls._terms("mixedDocumental", "documental")
+        ) and any(
+            term in normalized for term in cls._terms("mixedDocumental", "operational")
         )
 
     @classmethod
@@ -128,35 +132,11 @@ class ChatProductQueryIntentService:
         )
 
         terms = [
-            "filtre",
-            "filtro",
-            "filtrar",
-            "filtra ",
-            "mostre só",
-            "mostre so",
-            "só a filial",
-            "so a filial",
-            "apenas filial",
-            "somente filial",
+            *cls._terms("referencesPreviousProduct", "filterTerms"),
             *ChatProductOperationalContentService.list(
                 "referencesPreviousProduct",
                 "terms",
             ),
-            "código acima",
-            "codigo acima",
-            "desse item",
-            "deste item",
-            "esse item",
-            "mesmo código",
-            "mesmo codigo",
-            "mesma referência",
-            "mesma referencia",
-            "dele",
-            "dela",
-            "sobre o produto",
-            "sobre o item",
-            "sobre esse",
-            "sobre este",
         ]
 
         return any(term in normalized for term in terms) or cls._looks_like_product_followup(
@@ -165,35 +145,12 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_product_followup(cls, normalized: str) -> bool:
-        followup_terms = [
-            "o que mais",
-            "que mais",
-            "mais informações",
-            "mais informacoes",
-            "outras informações",
-            "outras informacoes",
-            "algo mais",
-            "mais sobre",
-            "mais dados",
-            "mais detalhes",
-            "o que mais pode",
-            "o que mais tem",
-            "o que mais sabe",
-            "o que mais consegue",
-        ]
-        product_terms = [
-            "produto",
-            "produtos",
-            "item",
-            "itens",
-            "material",
-            "materiais",
-            "código",
-            "codigo",
-        ]
-
-        has_followup = any(term in normalized for term in followup_terms)
-        has_product_ref = any(term in normalized for term in product_terms)
+        has_followup = any(
+            term in normalized for term in cls._terms("followUp", "followup")
+        )
+        has_product_ref = any(
+            term in normalized for term in cls._terms("followUp", "productRef")
+        )
 
         return has_followup and has_product_ref
 
@@ -309,51 +266,17 @@ class ChatProductQueryIntentService:
         if not normalized:
             return False
 
-        scope_markers = (
-            "ranking dos",
-            "ranking de",
-            "top 10",
-            "top 5",
-            " os 10 ",
-            " os 5 ",
-            "liste os",
-            "lista de produtos",
-            "produtos com estoque",
-            "estoque abaixo",
-            "abaixo do minimo",
-            "abaixo do mínimo",
-            "vendas por mes",
-            "vendas por mês",
-            "por mes em",
-            "por mês em",
-            "participacao do faturamento",
-            "participação do faturamento",
-            "por cliente em rosca",
-            "faturamento do mes",
-            "faturamento do mês",
-            "compare vendas por",
-            "evolucao de vendas",
-            "evolução de vendas",
-        )
-
-        if any(marker in normalized for marker in scope_markers):
+        if any(
+            marker in normalized
+            for marker in cls._terms("scopeReset", "markers")
+        ):
             return True
 
         if cls.references_previous_product(message):
             return False
 
         if re.search(r"\b20\d{2}\b", normalized) and any(
-            term in normalized
-            for term in (
-                "vendas",
-                "faturamento",
-                "mes",
-                "mês",
-                "ano",
-                "periodo",
-                "período",
-                "trimestre",
-            )
+            term in normalized for term in cls._terms("scopeReset", "temporal")
         ):
             return True
 
@@ -426,18 +349,7 @@ class ChatProductQueryIntentService:
     def _looks_like_lmp_context(cls, text: str | None) -> bool:
         normalized = str(text or "").lower()
 
-        return any(
-            term in normalized
-            for term in (
-                "lmp",
-                "lmps",
-                "lista de materiais de projeto",
-                "ordem de venda",
-                " amostra",
-                " ov ",
-                " ov#",
-            )
-        )
+        return any(term in normalized for term in cls._terms("lmpContext"))
 
     @classmethod
     def extract_last_product_code(cls, text: str | None) -> str | None:
@@ -806,14 +718,14 @@ class ChatProductQueryIntentService:
             return None
 
         title = str(humanized.get("titulo") or "").strip()
-        header = title or "Consulta do produto"
+        header = title or cls._header("default", default="Consulta do produto")
         body = "\n\n".join(lines[:3])
 
         if intent == ChatProductQueryIntent.STOCK or "/stock" in path:
-            header = title or "Estoque do produto"
+            header = title or cls._header("stock", default="Estoque do produto")
 
         if intent == ChatProductQueryIntent.PARENTS or "/parents" in path:
-            header = title or "Onde o item é usado"
+            header = title or cls._header("parents", default="Onde o item é usado")
 
         return f"**{header}**\n\n{body}"
 
@@ -826,20 +738,7 @@ class ChatProductQueryIntentService:
 
             if any(
                 token in lowered
-                for token in (
-                    "filial",
-                    "armazém",
-                    "armazem",
-                    "quantidade",
-                    "disponível",
-                    "disponivel",
-                    "empenhada",
-                    "reservada",
-                    "registro(s)",
-                    "local:",
-                    "localização",
-                    "localizacao",
-                )
+                for token in cls._terms("stock", "lineTokens")
             ):
                 stock_lines.append(line)
 
@@ -848,17 +747,7 @@ class ChatProductQueryIntentService:
     @classmethod
     def _looks_like_stock_scope_reset_question(cls, normalized: str) -> bool:
         return any(
-            term in normalized
-            for term in (
-                "completo de novo",
-                "estoque completo",
-                "todas as filiais",
-                "todas filiais",
-                "mostre completo",
-                "mostra completo",
-                "sem filtro",
-                "sem filial",
-            )
+            term in normalized for term in cls._terms("stock", "scopeReset")
         )
 
     @classmethod
@@ -867,16 +756,7 @@ class ChatProductQueryIntentService:
             return False
 
         if any(
-            term in normalized
-            for term in (
-                "faturamento",
-                "billing",
-                "faturado",
-                "carteira",
-                "pedidos em aberto",
-                "pedido em aberto",
-                "open-orders",
-            )
+            term in normalized for term in cls._terms("sales", "excludeBilling")
         ):
             return False
 
@@ -885,23 +765,7 @@ class ChatProductQueryIntentService:
         )
 
         if any(
-            term in normalized
-            for term in (
-                "resumo de vendas",
-                "resumo de venda",
-                "vendas do produto",
-                "venda do produto",
-                "vendas dos produtos",
-                "vendas dos itens",
-                "vendas do item",
-                "venda do item",
-                "historico de venda",
-                "histórico de venda",
-                "mostre vendas",
-                "mostra vendas",
-                "traga vendas",
-                "traz vendas",
-            )
+            term in normalized for term in cls._terms("sales", "explicitPhrases")
         ):
             return True
 
@@ -916,19 +780,14 @@ class ChatProductQueryIntentService:
         )
 
         return has_product_ref and any(
-            term in normalized for term in ("vendas", " venda ", " venda do", "venda do")
+            term in normalized for term in cls._terms("sales", "productSaleTerms")
         )
 
     @classmethod
     def _looks_like_stock_question(cls, normalized: str) -> bool:
         if any(
             term in normalized
-            for term in (
-                "valor total",
-                "valor de estoque",
-                "valor do estoque",
-                "giro de estoque",
-            )
+            for term in cls._terms("stock", "excludeAggregateWithoutCode")
         ) and not cls.extract_product_code(normalized):
             return False
 
@@ -942,41 +801,12 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        terms = [
-            "estoque",
-            "stock",
-            "saldo",
-            "disponível",
-            "disponivel",
-            "quantidade dispon",
-            "posição de estoque",
-            "posicao de estoque",
-            "tem em estoque",
-            "qtd dispon",
-            "posição",
-            "posicao",
-        ]
-
-        return any(term in normalized for term in terms)
+        return any(term in normalized for term in cls._terms("stock", "terms"))
 
     @classmethod
     def _looks_like_full_analyser_question(cls, normalized: str) -> bool:
         if any(
-            term in normalized
-            for term in (
-                "ficha completa",
-                "analise completa",
-                "análise completa",
-                "analise integrada",
-                "análise integrada",
-                "visao integrada",
-                "visão integrada",
-                "analisador completo",
-                "analisador do produto",
-                "informacoes completas",
-                "informações completas",
-                "tudo sobre o produto",
-            )
+            term in normalized for term in cls._terms("analyser", "fullQuestion")
         ):
             return True
 
@@ -991,35 +821,12 @@ class ChatProductQueryIntentService:
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:
         if any(
-            term in normalized
-            for term in (
-                "resumo de venda",
-                "resumo de vendas",
-                "resumo de kaizen",
-                "resumo de kaizens",
-                "resumo do kaizen",
-                "kaizens do mes",
-                "kaizens do mês",
-            )
+            term in normalized for term in cls._terms("analyser", "summaryExclude")
         ):
             return False
 
         if any(
-            term in normalized
-            for term in (
-                "resumo do produto",
-                "resumo dos produtos",
-                "resumo dos itens",
-                "resumo sintetico",
-                "resumo sintético",
-                "resumos dos produtos",
-                "visao resumida do produto",
-                "visão resumida do produto",
-                "visao resumida do item",
-                "visão resumida do item",
-                "visao resumida dos produtos",
-                "visão resumida dos produtos",
-            )
+            term in normalized for term in cls._terms("analyser", "summaryExplicit")
         ):
             return True
 
@@ -1028,16 +835,7 @@ class ChatProductQueryIntentService:
 
         if any(
             term in normalized
-            for term in (
-                "ficha completa",
-                "analisador",
-                "analyzer",
-                "analise completa",
-                "análise completa",
-                "informacoes completas",
-                "informações completas",
-                "tudo sobre o produto",
-            )
+            for term in cls._terms("analyser", "summaryExcludeWhenResumo")
         ):
             return False
 
@@ -1066,43 +864,7 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        terms = [
-            "descrição",
-            "descricao",
-            "description",
-            "nome do produto",
-            "nomes dos produtos",
-            "nomes dos itens",
-            "como se chamam",
-            "como se chama",
-            "qual a descrição",
-            "qual a descricao",
-            "quais as descrições",
-            "quais as descricoes",
-            "qual produto",
-            "quais produtos",
-            "referência",
-            "referencia",
-            "ref ",
-            " ref.",
-            "sku",
-            "código do item",
-            "codigo do item",
-            "códigos dos itens",
-            "codigos dos itens",
-            "o que é o produto",
-            "o que e o produto",
-            "o que são os produtos",
-            "o que sao os produtos",
-            "detalhes do produto",
-            "detalhes dos produtos",
-            "detalhe do produto",
-            "dados cadastrais",
-            "informações completas",
-            "informacoes completas",
-        ]
-
-        return any(term in normalized for term in terms)
+        return any(term in normalized for term in cls._terms("description", "terms"))
 
     @classmethod
     def refine_operational_intent_from_full(
@@ -1178,52 +940,7 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        terms = (
-            "onde sao usados",
-            "onde são usados",
-            "onde estao usados",
-            "onde estão usados",
-            "onde sao utilizados",
-            "onde são utilizados",
-            "onde é usado",
-            "onde e usado",
-            "onde é utilizado",
-            "onde e utilizado",
-            "produto pai",
-            "produtos pai",
-            "itens pai",
-            "item pai",
-            "parent",
-            "parents",
-            "where used",
-            "utilizado em",
-            "usado em",
-            "aplicação do produto",
-            "aplicacao do produto",
-            "onde usa ",
-            "onde utiliza",
-            "é usado em",
-            "e usado em",
-            "em quais produtos é usado",
-            "em quais produtos e usado",
-            "em quais itens é usado",
-            "em quais itens e usado",
-            "quem usa o",
-            "quem utiliza o",
-            "faz parte de",
-            "componente de qual",
-            "pai do",
-            "pais do",
-            "pais desse",
-            "pais deste",
-            "os pais",
-            "e os pais",
-            "quais produtos usam",
-            "quais itens usam",
-            "produtos que usam",
-            "itens que usam",
-        )
-        return any(term in normalized for term in terms)
+        return any(term in normalized for term in cls._terms("parents", "terms"))
 
     @classmethod
     def _looks_like_structure_question(cls, normalized: str) -> bool:
@@ -1240,39 +957,6 @@ class ChatProductQueryIntentService:
     def _looks_like_product_sub_intent(cls, normalized: str) -> bool:
         """Reconhece perguntas sobre aspectos específicos de um produto que
         implicam necessidade de código (ex: 'qual o roteiro?', 'fornecedores?')."""
-        terms = [
-            "roteiro",
-            "guide",
-            "fornecedor",
-            "fornecedore",
-            "supplier",
-            "preço",
-            "preco",
-            "pricing",
-            "quanto custa",
-            "custo do",
-            "compra",
-            "purchase",
-            "venda",
-            "faturamento",
-            "carteira",
-            "movimentaç",
-            "movimentac",
-            "inspeção",
-            "inspecao",
-            "nota de entrada",
-            "nota de saída",
-            "nota de saida",
-            "notas de entrada",
-            "notas de saída",
-            "notas de saida",
-            "fiscal",
-            "nfe",
-            "cliente",
-            "customer",
-            "pai",
-            "parent",
-            "where used",
-        ]
-
-        return any(term in normalized for term in terms)
+        return any(
+            term in normalized for term in cls._terms("productSubIntent", "terms")
+        )

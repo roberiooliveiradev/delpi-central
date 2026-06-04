@@ -95,5 +95,22 @@
     "sharedComponents": "Componente(s) reutilizado(s) em mais de uma linha: {sample}.",
     "standardCost": "Custo padrão vigente: R$ {cost}."
   },
+  "routeNarratives": {
+    "parents": {
+      "productLine": "Produto consultado: **{code}** — {description}.",
+      "noDescription": "sem descrição",
+      "totalFound": "Foram encontrados **{total}** produto(s) pai na API.",
+      "pagePartial": "Esta resposta traz **{shown}** vínculo(s) nesta página/consulta.",
+      "shownLinks": "Esta resposta traz **{shown}** vínculo(s) de produto pai.",
+      "treeAndTable": "Os vínculos aparecem na **árvore** e na **tabela** desta resposta."
+    },
+    "structure": {
+      "titleWithCode": "Estrutura do produto {code}",
+      "titleGeneric": "Estrutura do produto",
+      "productLine": "Produto **{code}**: {description}.",
+      "totalComponents": "A composição possui **{total}** componente(s) de nível 1.",
+      "treeAndTable": "A composição está na **árvore** (hierarquia) e, quando disponível, na **tabela** plana."
+    }
+  },
   "defaultItemTitle": "Resultado operacional"
 }
