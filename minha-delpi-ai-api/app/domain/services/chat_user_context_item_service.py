@@ -550,6 +550,27 @@ class ChatUserContextItemService:
         return None
 
     @classmethod
+    def resolve_all_product_codes_from_items(
+        cls,
+        items: list[dict[str, Any]] | None,
+    ) -> list[str]:
+        """Todos os códigos de produto nos itens de contexto, em ordem (sem duplicar)."""
+        seen: set[str] = set()
+        ordered: list[str] = []
+
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+
+            code = cls._product_code_from_item(item)
+
+            if code and code not in seen:
+                seen.add(code)
+                ordered.append(code)
+
+        return ordered
+
+    @classmethod
     def resolve_product_code_from_items(
         cls,
         items: list[dict[str, Any]] | None,
@@ -574,6 +595,30 @@ class ChatUserContextItemService:
                 return code
 
         return None
+
+    @classmethod
+    def resolve_all_product_codes_from_context_prompt(
+        cls,
+        conversation_context: str | None,
+    ) -> list[str]:
+        """Todos os códigos no bloco «Contexto adicionado pelo usuário» do prompt."""
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+
+        raw = str(conversation_context or "")
+        marker_index = raw.find(_USER_CONTEXT_PROMPT_MARKER)
+
+        if marker_index < 0:
+            return []
+
+        section = raw[marker_index:]
+        end_match = _USER_CONTEXT_SECTION_END_RE.search(section)
+
+        if end_match:
+            section = section[: end_match.start()]
+
+        return ChatAnalysisIntentService.extract_all_product_codes(section)
 
     @classmethod
     def resolve_product_code_from_context_prompt(

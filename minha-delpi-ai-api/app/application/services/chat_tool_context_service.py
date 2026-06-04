@@ -47,6 +47,7 @@ class ChatToolContextService:
         max_external_action_calls: int | None = None,
         on_stream_activity=None,
         agent_context: dict | None = None,
+        working_memory: dict | None = None,
         attachment_context: str | None = None,
         attachment_ids: list[str] | None = None,
         session_id: str | None = None,
@@ -66,6 +67,15 @@ class ChatToolContextService:
         workspace = dict(self._resolve_workspace_context(agent_context) or {})
         workspace["actionsEnabled"] = bool(actions_enabled)
         workspace["allowedActionIds"] = list(allowed_action_ids or [])
+
+        memory = working_memory
+
+        if not isinstance(memory, dict) and isinstance(agent_context, dict):
+            memory = agent_context.get("workingMemory")
+
+        if isinstance(memory, dict):
+            workspace["workingMemory"] = memory
+
         self._build_workspace_context = workspace
 
         from app.application.services.chat_capabilities_service import ChatCapabilitiesService
@@ -720,11 +730,21 @@ class ChatToolContextService:
                 )
             )
 
+        session_response_format = self._session_response_format(
+            getattr(self, "_build_workspace_context", None),
+        )
+
         for selected_tool in selected_tools:
             tool_name = str(selected_tool.get("name") or "")
-            arguments = selected_tool.get("arguments") or {}
+            arguments = dict(selected_tool.get("arguments") or {})
             action_id = str(arguments.get("actionId") or arguments.get("action_id") or "")
             path_hint = str(arguments.get("path") or "")
+
+            if tool_name == "execute_external_action" and session_response_format:
+                parameters = dict(arguments.get("parameters") or {})
+                parameters["sessionResponseFormat"] = session_response_format
+                parameters.setdefault("userMessage", raw_message)
+                arguments["parameters"] = parameters
 
             if tool_name == "execute_external_action":
                 external_index += 1
@@ -1568,6 +1588,17 @@ class ChatToolContextService:
         "completa em árvore",
     )
 
+    @classmethod
+    def _session_response_format(cls, workspace_context: dict | None) -> str | None:
+        working = (workspace_context or {}).get("workingMemory") or {}
+        behavior = working.get("behaviorInstructions") or {}
+        token = str(behavior.get("responseFormat") or "").strip().lower()
+
+        if token in {"table", "text", "tree", "chart", "topics", "canvas"}:
+            return token
+
+        return None
+
     def _resolve_consolidation_format(
         self,
         message: str,
@@ -1577,6 +1608,13 @@ class ChatToolContextService:
 
         if requested_format:
             return requested_format
+
+        session_format = self._session_response_format(
+            getattr(self, "_build_workspace_context", None),
+        )
+
+        if session_format and session_format != "topics":
+            return session_format
 
         from app.domain.services.chat_pagination_consolidation_service import (
             ChatPaginationConsolidationService,

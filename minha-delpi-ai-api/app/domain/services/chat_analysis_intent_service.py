@@ -526,26 +526,101 @@ class ChatAnalysisIntentService:
         return ordered
 
     @classmethod
+    def _message_uses_active_context_products(cls, message: str) -> bool:
+        """Pergunta operacional sem código explícito — pode usar todos os produtos do contexto."""
+        from app.domain.services.chat_message_normalization_service import (
+            ChatMessageNormalizationService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+        from app.domain.services.chat_route_context_service import (
+            ChatRouteContextService,
+        )
+
+        if ChatProductQueryIntentService.extract_product_code(message):
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        if ChatProductQueryIntentService.references_previous_product(message):
+            return True
+
+        if ChatRouteContextService.is_product_route_segment(
+            ChatRouteContextService.segment_from_message(message)
+        ):
+            return True
+
+        return (
+            ChatProductQueryIntentService._looks_like_stock_question(normalized)
+            or ChatProductQueryIntentService._looks_like_structure_question(normalized)
+            or ChatProductQueryIntentService._looks_like_sales_question(normalized)
+            or ChatProductQueryIntentService._looks_like_product_summary_question(normalized)
+            or ChatProductQueryIntentService._looks_like_description_question(normalized)
+            or any(
+                term in normalized
+                for term in (
+                    "preco",
+                    "preço",
+                    "pricing",
+                    "fornecedor",
+                    "fornece",
+                    "roteiro",
+                    "inspecao",
+                    "inspeção",
+                    "compra",
+                )
+            )
+        )
+
+    @classmethod
     def extract_product_codes_for_action_planning(
         cls,
         message: str,
         conversation_context: str | None = None,
         *,
         previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
     ) -> list[str]:
         """Códigos para planejar consultas paralelas à API.
 
         Se a mensagem atual já traz código(s), não puxa códigos extras do histórico
         (evita N× estoque quando o usuário pergunta só de um produto).
+        Com vários produtos em ``userContextItems``, consulta todos (ex.: «estoque»).
         """
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
+        )
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
         )
 
         codes_in_message = cls.extract_all_product_codes(message)
 
         if codes_in_message:
             return codes_in_message
+
+        context_codes: list[str] = []
+
+        if isinstance(memory_snapshot, dict):
+            context_codes = ChatUserContextItemService.resolve_all_product_codes_from_items(
+                memory_snapshot.get("userContextItems"),
+            )
+
+        if (
+            not context_codes
+            and conversation_context
+            and cls._message_uses_active_context_products(message)
+        ):
+            context_codes = ChatUserContextItemService.resolve_all_product_codes_from_context_prompt(
+                conversation_context,
+            )
+
+        if context_codes and cls._message_uses_active_context_products(message):
+            return context_codes
 
         from app.domain.services.chat_route_context_service import (
             ChatRouteContextService,
@@ -561,6 +636,7 @@ class ChatAnalysisIntentService:
                 message,
                 conversation_context,
                 previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
             )
 
             return [code] if code else []

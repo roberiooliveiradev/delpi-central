@@ -264,6 +264,7 @@ class ChatExternalActionOrchestrationService:
             message,
             conversation_context,
             previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
         )
         intent = ChatProductQueryIntentService.resolve_product_intent(
             message,

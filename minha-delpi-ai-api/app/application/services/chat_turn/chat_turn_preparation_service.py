@@ -734,6 +734,7 @@ class ChatTurnPreparationService:
                 previous_messages=history_source,
                 max_external_action_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
+                working_memory=workspace_context.get("workingMemory"),
             )
             tool_context = maybe_extend_tool_context(
                 request=request,

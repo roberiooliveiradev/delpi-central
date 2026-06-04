@@ -35,12 +35,47 @@ class FakeSelectionService:
         allowed_action_ids=None,
         conversation_context=None,
         previous_messages=None,
+        **kwargs,
     ):
         return {
             "name": "execute_external_action",
             "arguments": {"actionId": "product-stock"},
             "reason": "única",
         }
+
+
+def test_plan_actions_estoque_uses_all_context_products_from_working_memory(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="estoque",
+        allowed_action_ids=["product-stock"],
+        workspace_context={
+            "workingMemory": {
+                "userContextItems": [
+                    {
+                        "id": "a",
+                        "content": "90260140",
+                        "extractedEntities": {"productCode": "90260140"},
+                    },
+                    {
+                        "id": "b",
+                        "content": "produto 10080014",
+                        "extractedEntities": {"productCode": "10080014"},
+                    },
+                ],
+            },
+        },
+        max_calls=5,
+    )
+
+    assert len(planned) == 2
+    assert {call[0] for call in service.product_calls} == {"90260140", "10080014"}
 
 
 def test_plan_actions_for_multiple_product_codes():

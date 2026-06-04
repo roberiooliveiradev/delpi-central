@@ -61,6 +61,18 @@ class ChatBehaviorInstructionService:
         r"\bsempre\s+s[oó]\s+texto\b",
         r"\bsempre\s+s[oó]\s+em\s+texto\b",
     )
+    _TREE_FORMAT_PATTERNS = (
+        r"\bsempre\s+em\s+[áa]rvore\b",
+        r"\bresponda\s+em\s+[áa]rvore\b",
+        r"\bformato\s+[áa]rvore\b",
+        r"\bprefer[io]\s+[áa]rvore\b",
+    )
+    _CHART_FORMAT_PATTERNS = (
+        r"\bsempre\s+em\s+gr[aá]fico\b",
+        r"\bresponda\s+em\s+gr[aá]fico\b",
+        r"\bformato\s+gr[aá]fico\b",
+        r"\bprefer[io]\s+gr[aá]fico\b",
+    )
     # «não use ferramentas sem eu pedir» — preferência inerentemente persistente.
     _TOOLS_ON_REQUEST_PATTERNS = (
         r"\bn[aã]o\s+use\s+ferramentas?\s+sem\s+eu\s+pedir\b",
@@ -104,6 +116,12 @@ class ChatBehaviorInstructionService:
 
         if any(re.search(pattern, normalized) for pattern in cls._TEXT_FORMAT_PATTERNS):
             instructions["responseFormat"] = "text"
+
+        if any(re.search(pattern, normalized) for pattern in cls._TREE_FORMAT_PATTERNS):
+            instructions["responseFormat"] = "tree"
+
+        if any(re.search(pattern, normalized) for pattern in cls._CHART_FORMAT_PATTERNS):
+            instructions["responseFormat"] = "chart"
 
         if any(re.search(pattern, normalized) for pattern in cls._TOOLS_ON_REQUEST_PATTERNS):
             instructions["toolsPolicy"] = "on_request"

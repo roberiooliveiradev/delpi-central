@@ -85,6 +85,7 @@ class ChatOperationalParameterService:
         *,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
     ) -> bool:
         from app.domain.services.chat_analysis_intent_service import (
             ChatAnalysisIntentService,
@@ -100,6 +101,7 @@ class ChatOperationalParameterService:
             message,
             conversation_context,
             previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
         ) is not None
 
     @classmethod
@@ -234,13 +236,6 @@ class ChatOperationalParameterService:
             if code:
                 return None
 
-        # «estoque do produto» sem código explícito não herda exemplo do assistente.
-        if not ChatProductQueryIntentService.references_previous_product(message):
-            if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
-                return None
-
-            return intent
-
         product_code = ChatProductQueryIntentService.resolve_product_code(
             message,
             conversation_context,
@@ -250,6 +245,38 @@ class ChatOperationalParameterService:
 
         if product_code:
             return None
+
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        context_codes: list[str] = []
+
+        if isinstance(memory_snapshot, dict):
+            context_codes = ChatUserContextItemService.resolve_all_product_codes_from_items(
+                memory_snapshot.get("userContextItems"),
+            )
+
+        if not context_codes and conversation_context:
+            context_codes = ChatUserContextItemService.resolve_all_product_codes_from_context_prompt(
+                conversation_context,
+            )
+
+        if (
+            context_codes
+            and ChatAnalysisIntentService._message_uses_active_context_products(message)
+        ):
+            return None
+
+        # «estoque do produto» sem código explícito não herda exemplo do assistente.
+        if not ChatProductQueryIntentService.references_previous_product(message):
+            if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+                return None
+
+            return intent
 
         return intent
 

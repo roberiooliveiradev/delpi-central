@@ -15,10 +15,13 @@ import { useEffect, useRef, useState } from "react";
 
 import type {
   ChatAgent,
+  ChatPresentationFormatId,
   ChatProject,
   ChatResponseModeId,
   ChatResponseModeOption,
 } from "../../data/api/chatTypes";
+import type { ChatPresentationFormatOption } from "../../state/hooks/useChatPresentationFormat";
+import { ChatPresentationFormatSelector } from "./ChatPresentationFormatSelector";
 import { ChatResponseModeSelector } from "./ChatResponseModeSelector";
 import {
   composerAttachmentStatusLabel,
@@ -68,6 +71,10 @@ type ChatInputProps = {
   responseMode?: ChatResponseModeId;
   onResponseModeChange?: (mode: ChatResponseModeId) => void;
   showResponseModeSelector?: boolean;
+  presentationFormatOptions?: ChatPresentationFormatOption[];
+  presentationFormat?: ChatPresentationFormatId;
+  onPresentationFormatChange?: (format: ChatPresentationFormatId) => void;
+  showPresentationFormatSelector?: boolean;
 };
 
 function formatFileSize(size: number): string {
@@ -109,6 +116,10 @@ export function ChatInput({
   responseMode = "normal",
   onResponseModeChange,
   showResponseModeSelector = false,
+  presentationFormatOptions = [],
+  presentationFormat = "auto",
+  onPresentationFormatChange,
+  showPresentationFormatSelector = true,
 }: ChatInputProps) {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
@@ -126,6 +137,10 @@ export function ChatInput({
   const plusMenuRef = useRef<HTMLDivElement | null>(null);
   const showResponseMode =
     showResponseModeSelector && responseModes.length > 0 && Boolean(onResponseModeChange);
+  const showPresentationFormat =
+    showPresentationFormatSelector &&
+    presentationFormatOptions.length > 0 &&
+    Boolean(onPresentationFormatChange);
   const { ref: textareaRef, syncHeight } = useAutoGrowTextarea({
     value,
     topInset: variant === "dock" ? 112 : 88,
@@ -487,6 +502,15 @@ export function ChatInput({
           <div className="mdc-chat-input__composer-toolbar">
             <div className="mdc-chat-input__composer-toolbar-start">
               {plusControl}
+
+              {showPresentationFormat ? (
+                <ChatPresentationFormatSelector
+                  options={presentationFormatOptions}
+                  value={presentationFormat}
+                  disabled={disabled || isSending}
+                  onChange={onPresentationFormatChange}
+                />
+              ) : null}
 
               {showResponseMode ? (
                 <ChatResponseModeSelector

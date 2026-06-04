@@ -822,6 +822,23 @@ export async function removeChatSessionMemoryPin(
   return parseJsonResponse<SessionMemoryContextResponse>(response);
 }
 
+export async function setChatSessionResponseFormat(
+  sessionId: string,
+  responseFormat: string,
+  options: ChatApiOptions = {},
+): Promise<SessionMemoryContextResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/chat/sessions/${sessionId}/memory/response-format`,
+    {
+      method: "PUT",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify({ responseFormat }),
+    },
+  );
+
+  return parseJsonResponse<SessionMemoryContextResponse>(response);
+}
+
 
 export async function listChatArtifacts(
   sessionId: string,

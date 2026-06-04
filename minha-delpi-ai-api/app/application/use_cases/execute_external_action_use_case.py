@@ -268,13 +268,24 @@ class ExecuteExternalActionUseCase:
         else:
             primary_presentation = None
 
+        price_like = "/prices" in path_lower or "/pricing" in path_lower
+        structure_like = "/structure" in path_lower
+
+        session_format = str(request_parameters.get("sessionResponseFormat") or "").strip().lower()
+
         preferred_format = None
 
-        if dashboard_presentation:
+        if session_format in {"table", "text", "tree", "chart", "topics", "canvas"}:
+            preferred_format = "text" if session_format == "canvas" else session_format
+        elif dashboard_presentation:
             preferred_format = "dashboard"
+        elif structure_like and tree_presentation:
+            preferred_format = "tree"
+        elif price_like and text_presentation:
+            preferred_format = "text"
         elif tree_presentation:
             preferred_format = "tree"
-        elif chart_presentation and stock_like:
+        elif chart_presentation and stock_like and not text_presentation:
             preferred_format = "chart"
         elif table_presentation:
             preferred_format = "table"
@@ -323,11 +334,13 @@ class ExecuteExternalActionUseCase:
 
         user_message = str(request_parameters.get("userMessage") or "").strip() or None
 
+        behavior_format = session_format or None
+
         ChatPresentationDecisionService.enrich_metadata(
             metadata,
             intent=str(action.get("intent") or action.get("name") or "").strip() or None,
             user_message=user_message,
-            user_preference=preferred_format,
+            user_preference=behavior_format or preferred_format,
             axis_user_message=user_message,
         )
 

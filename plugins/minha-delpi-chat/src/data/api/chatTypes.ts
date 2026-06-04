@@ -662,6 +662,8 @@ export type ChatAttachment = {
   updated_at: string;
 };
 
+export type ChatPresentationFormatId = "auto" | "text" | "table" | "tree" | "chart";
+
 export type ChatResponseModeId = "fast" | "normal" | "thinker";
 
 export type ChatResponseModeOption = {

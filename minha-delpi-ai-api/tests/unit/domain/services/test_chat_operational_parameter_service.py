@@ -116,6 +116,27 @@ def test_should_skip_tools_after_missing_code_prompt_with_example():
     )
 
 
+def test_bare_stock_with_context_items_does_not_short_circuit():
+    memory = {
+        "userContextItems": [
+            {"kind": "context", "content": "90260140"},
+            {"kind": "context", "content": "produto 10080014"},
+        ],
+    }
+
+    assert (
+        ChatOperationalParameterService.resolve_missing_product_code_answer(
+            "estoque",
+            memory_snapshot=memory,
+        )
+        is None
+    )
+    assert not ChatOperationalParameterService.should_skip_tools(
+        "estoque",
+        memory_snapshot=memory,
+    )
+
+
 def test_should_not_skip_tools_when_previous_messages_have_real_products():
     history = [
         {"role": "user", "content": "resumo dos produtos 10080047 e 10080055"},

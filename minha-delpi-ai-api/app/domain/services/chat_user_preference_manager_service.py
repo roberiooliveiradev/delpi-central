@@ -19,6 +19,8 @@ class ChatUserPreferenceManagerService:
         "responseFormat:table": "Respostas em tabela",
         "responseFormat:topics": "Respostas em tópicos",
         "responseFormat:text": "Respostas em texto puro",
+        "responseFormat:tree": "Respostas em árvore",
+        "responseFormat:chart": "Respostas em gráfico",
         "toolsPolicy:on_request": "Não usar ferramentas sem pedir",
         "tone:formal": "Tom formal",
         "tone:direct": "Tom direto",
@@ -299,6 +301,12 @@ class ChatUserPreferenceManagerService:
             if behavior.get("responseFormat") == "text":
                 labels.append(cls._LABELS["responseFormat:text"])
 
+            if behavior.get("responseFormat") == "tree":
+                labels.append(cls._LABELS["responseFormat:tree"])
+
+            if behavior.get("responseFormat") == "chart":
+                labels.append(cls._LABELS["responseFormat:chart"])
+
             if behavior.get("toolsPolicy") == "on_request":
                 labels.append(cls._LABELS["toolsPolicy:on_request"])
 
@@ -379,6 +387,12 @@ class ChatUserPreferenceManagerService:
 
         if instructions.get("responseFormat") == "text":
             parts.append("responder em texto puro, sem tabelas")
+
+        if instructions.get("responseFormat") == "tree":
+            parts.append("priorizar árvore quando houver hierarquia")
+
+        if instructions.get("responseFormat") == "chart":
+            parts.append("priorizar gráficos quando os dados permitirem")
 
         if instructions.get("toolsPolicy") == "on_request":
             parts.append("não usar ferramentas/consultas sem você pedir")

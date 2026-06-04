@@ -125,6 +125,7 @@ import type {
   ChatCanvasOpenPayload,
   ChatMessage,
 } from "../../data/api/chatTypes";
+import { useChatPresentationFormat } from "../../state/hooks/useChatPresentationFormat";
 import { useChatResponseMode } from "../../state/hooks/useChatResponseMode";
 import { useChatSession } from "../../state/hooks/useChatSession";
 import { useChatWorkspace } from "../../state/hooks/useChatWorkspace";
@@ -340,6 +341,16 @@ export function ChatPage({
     },
   });
 
+  const {
+    options: presentationFormatOptions,
+    presentationFormat,
+    setPresentationFormat,
+    syncFromSessionChips,
+  } = useChatPresentationFormat({
+    sessionId: activeSession?.id ?? null,
+    getAccessToken,
+  });
+
   const [contextMemoryCleared, setContextMemoryCleared] = useState(false);
   const [dismissedContextChipKeys, setDismissedContextChipKeys] = useState<string[]>([]);
   const [pinnedContextChips, setPinnedContextChips] = useState<ChatContextChip[]>([]);
@@ -464,10 +475,14 @@ export function ChatPage({
     shortcutSendPromptOptionsRef.current = shortcutSendPromptOptions;
   }, [isShortcutPromptOpen, promptAndSendMessage, resolveShortcutQuery, shortcutSendPromptOptions]);
 
-  const applySessionMemoryContext = useCallback((response: SessionMemoryContextResponse) => {
-    setPinnedContextChips(normalizeContextChips(response.chips));
-    setSessionMemoryUsage(response.usage ?? null);
-  }, []);
+  const applySessionMemoryContext = useCallback(
+    (response: SessionMemoryContextResponse) => {
+      setPinnedContextChips(normalizeContextChips(response.chips));
+      setSessionMemoryUsage(response.usage ?? null);
+      syncFromSessionChips(normalizeContextChips(response.chips));
+    },
+    [syncFromSessionChips],
+  );
 
   useEffect(() => {
     setContextMemoryCleared(false);
@@ -1915,6 +1930,13 @@ export function ChatPage({
     onResponseModeChange: setResponseMode,
   };
 
+  const composerPresentationFormatProps = {
+    showPresentationFormatSelector: true,
+    presentationFormatOptions,
+    presentationFormat,
+    onPresentationFormatChange: setPresentationFormat,
+  };
+
   const shellClassName = [
     "mdc-chat-shell",
     isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
@@ -2367,7 +2389,10 @@ export function ChatPage({
                       variant="center"
                       placeholder={getComposerPlaceholder()}
                       {...composerAttachmentProps}
-                      {...composerResponseModeProps}
+                      {...composerPresentationFormatProps}
+                      {...composerPresentationFormatProps}
+                    {...composerPresentationFormatProps}
+                  {...composerResponseModeProps}
                       {...composerContextProps}
                       onChange={setDraft}
                       onSubmit={handleSubmitMessage}
@@ -2439,7 +2464,9 @@ export function ChatPage({
                     variant="center"
                     placeholder={getComposerPlaceholder()}
                     {...composerAttachmentProps}
-                    {...composerResponseModeProps}
+                    {...composerPresentationFormatProps}
+                    {...composerPresentationFormatProps}
+                  {...composerResponseModeProps}
                     {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
                     plusMenuOpen={tourPlusMenuOpen ?? undefined}
                     onPlusMenuOpenChange={setTourPlusMenuOpen}
@@ -2526,6 +2553,7 @@ export function ChatPage({
                   variant="dock"
                   placeholder={getComposerPlaceholder()}
                   {...composerAttachmentProps}
+                  {...composerPresentationFormatProps}
                   {...composerResponseModeProps}
                   {...composerContextProps}
                   onChange={setDraft}

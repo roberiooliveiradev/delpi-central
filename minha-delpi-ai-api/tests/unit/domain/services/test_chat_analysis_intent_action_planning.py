@@ -29,6 +29,28 @@ def test_action_planning_followup_resolves_single_code_from_context():
     assert codes == ["10080047"]
 
 
+def test_action_planning_estoque_without_code_uses_memory_context_items():
+    codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
+        "estoque",
+        memory_snapshot={
+            "userContextItems": [
+                {
+                    "id": "1",
+                    "content": "90260140",
+                    "extractedEntities": {"productCode": "90260140"},
+                },
+                {
+                    "id": "2",
+                    "content": "produto 10080014",
+                    "extractedEntities": {"productCode": "10080014"},
+                },
+            ],
+        },
+    )
+
+    assert codes == ["90260140", "10080014"]
+
+
 def test_action_planning_ignores_date_tokens_in_ov_list_question():
     codes = ChatAnalysisIntentService.extract_product_codes_for_action_planning(
         "listar ov de 01/04/2026 a 30/04/2026"

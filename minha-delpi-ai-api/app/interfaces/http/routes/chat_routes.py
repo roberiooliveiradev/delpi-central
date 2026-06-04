@@ -2650,6 +2650,42 @@ def remove_session_memory_context_item(session_id: str, item_id: str):
     return jsonify(result), 200
 
 
+@chat_bp.put("/sessions/<session_id>/memory/response-format")
+@require_permission(CHAT_ASK_PERMISSION)
+def set_session_response_format(session_id: str):
+    from uuid import UUID
+
+    payload = request.get_json(silent=True) or {}
+    response_format = payload.get("responseFormat") or payload.get("response_format")
+
+    if not response_format:
+        return bad_request("responseFormat is required")
+
+    use_case = make_chat_session_memory_pins_use_case()
+
+    try:
+        result = use_case.set_response_format(
+            user_id=UUID(str(g.current_user.sub)),
+            session_id=UUID(str(session_id)),
+            response_format=str(response_format),
+        )
+        db.session.commit()
+    except ChatSessionNotFoundError:
+        db.session.rollback()
+        return _not_found_response()
+    except ChatSessionAccessDeniedError:
+        db.session.rollback()
+        return jsonify({"error": "forbidden"}), 403
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @chat_bp.delete("/sessions/<session_id>/memory/pins/<kind>")
 @require_permission(CHAT_ASK_PERMISSION)
 def remove_session_memory_pin(session_id: str, kind: str):

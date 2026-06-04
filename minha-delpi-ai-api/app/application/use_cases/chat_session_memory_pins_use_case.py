@@ -145,6 +145,36 @@ class ChatSessionMemoryPinsUseCase:
 
         return self._build_response(session_id)
 
+    _RESPONSE_FORMAT_VALUES = frozenset({"table", "text", "tree", "chart", "topics", "canvas", "auto"})
+
+    def set_response_format(
+        self,
+        *,
+        user_id: UUID,
+        session_id: UUID,
+        response_format: str,
+    ) -> dict:
+        self._ensure_session_access(user_id=user_id, session_id=session_id)
+
+        token = str(response_format or "").strip().lower()
+
+        if token not in self._RESPONSE_FORMAT_VALUES:
+            raise ValueError("Formato de resposta inválido.")
+
+        overlay = self.memory_repository.load_active_overlay(session_id)
+        behavior = dict(overlay.get("behaviorInstructions") or {})
+
+        if token == "auto":
+            behavior.pop("responseFormat", None)
+        else:
+            behavior["responseFormat"] = token
+            behavior["scope"] = "session"
+
+        overlay["behaviorInstructions"] = behavior
+        self.memory_repository.sync_from_snapshot(session_id, overlay)
+
+        return self._build_response(session_id)
+
     def remove_pin(self, *, user_id: UUID, session_id: UUID, kind: str) -> dict:
         self._ensure_session_access(user_id=user_id, session_id=session_id)
 

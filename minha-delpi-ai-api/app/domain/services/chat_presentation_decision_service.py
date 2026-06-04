@@ -94,6 +94,7 @@ class ChatPresentationDecisionService:
     ) -> dict[str, Any]:
         message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
         preferred = cls._normalize_user_preference(user_preference, message)
+        intent_token = str(intent or "").strip().lower()
 
         if preferred:
             return cls._decision_for_preference(
@@ -103,6 +104,22 @@ class ChatPresentationDecisionService:
                 available_formats=available_formats,
                 intent=intent,
             )
+
+        intent_decision = cls._decision_for_operational_intent(
+            intent_token=intent_token,
+            message=message,
+            rows=rows,
+            available_formats=available_formats,
+            intent=intent,
+            tree_presentation=tree_presentation,
+            primary_presentation=primary_presentation,
+            text_presentation=text_presentation,
+            table_presentation=table_presentation,
+            chart_presentation=chart_presentation,
+        )
+
+        if intent_decision:
+            return intent_decision
 
         if cls._looks_like_checklist(message):
             return cls._build(
@@ -618,6 +635,116 @@ class ChatPresentationDecisionService:
                 notices.append(notice)
 
         return notices[0] if notices else None
+
+    @classmethod
+    def _decision_for_operational_intent(
+        cls,
+        *,
+        intent_token: str,
+        message: str,
+        rows: list[dict[str, Any]] | None,
+        available_formats: list[str] | None,
+        intent: str | None,
+        tree_presentation: dict[str, Any] | None,
+        primary_presentation: dict[str, Any] | None,
+        text_presentation: dict[str, Any] | None,
+        table_presentation: dict[str, Any] | None,
+        chart_presentation: dict[str, Any] | None,
+    ) -> dict[str, Any] | None:
+        has_tree = bool(
+            tree_presentation
+            or (
+                isinstance(primary_presentation, dict)
+                and primary_presentation.get("type") == "tree"
+            )
+        )
+
+        if has_tree and (
+            "structure" in intent_token
+            or "structure_lookup" in intent_token
+            or any(term in message for term in ("estrutura", "bom", "componente"))
+        ):
+            return cls._build(
+                selected="tree",
+                fallback="table",
+                reason="estrutura hierárquica — árvore como visão principal",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["tree", "table", "text"],
+                ),
+                rows=rows,
+                intent=intent,
+            )
+
+        table_rows = rows or cls._rows_from_presentation(
+            table_presentation
+            or (
+                primary_presentation
+                if isinstance(primary_presentation, dict)
+                and primary_presentation.get("type") == "table"
+                else None
+            )
+        )
+        row_count = len(table_rows or [])
+
+        if (
+            text_presentation
+            and row_count <= 12
+            and (
+                "price" in intent_token
+                or "pricing" in intent_token
+                or "preco" in message
+                or "preço" in message
+            )
+        ):
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason="preços — narrativa com insights antes da tabela detalhada",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
+        if (
+            text_presentation
+            and row_count <= 6
+            and (
+                "stock" in intent_token
+                or "estoque" in message
+                or "saldo" in message
+            )
+            and not chart_presentation
+        ):
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason="poucas posições de estoque — resumo em texto com destaques",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
+        if chart_presentation and row_count <= 3 and "stock" in intent_token:
+            return cls._build(
+                selected="table",
+                fallback="text",
+                reason="estoque com poucos registros — tabela auditável em vez de gráfico",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["table", "text", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
+        return None
 
     @classmethod
     def _decision_for_preference(

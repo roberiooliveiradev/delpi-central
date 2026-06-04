@@ -506,8 +506,18 @@ class ChatWorkingMemoryService:
             )
         )
 
-        if behavior.get("responseFormat") == "table":
+        response_format = behavior.get("responseFormat")
+
+        if response_format == "table":
             chips.append({"label": "Tabela", "kind": "format", "value": "table"})
+        elif response_format == "text":
+            chips.append({"label": "Texto", "kind": "format", "value": "text"})
+        elif response_format == "tree":
+            chips.append({"label": "Árvore", "kind": "format", "value": "tree"})
+        elif response_format == "chart":
+            chips.append({"label": "Gráfico", "kind": "format", "value": "chart"})
+        elif response_format == "topics":
+            chips.append({"label": "Tópicos", "kind": "format", "value": "topics"})
 
         tone = behavior.get("tone")
 

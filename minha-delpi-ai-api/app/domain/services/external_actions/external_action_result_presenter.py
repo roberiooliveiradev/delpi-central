@@ -43,6 +43,16 @@ class ExternalActionResultPresenter:
         "physical_location": "Localização física",
     }
 
+    PRICE_ALIASES = {
+        "table_code": "Cód. tabela",
+        "table_description": "Tabela",
+        "sale_price": "Preço venda",
+        "max_price": "Preço máx.",
+        "discount_value": "Desconto",
+        "discount_percent": "% desconto",
+        "lot_quantity": "Qtd. lote",
+    }
+
     def present(self, data, *, path: str = "") -> dict:
         error = self._detect_api_error(data, path=path)
         if error:
@@ -1774,6 +1784,39 @@ class ExternalActionResultPresenter:
                 return value
         return None
 
+    def _format_detail_preview_line(self, item: dict) -> str:
+        parts: list[str] = []
+
+        for key, value in list(item.items())[:8]:
+            if value is None:
+                continue
+
+            label = self.PRICE_ALIASES.get(key) or self.STOCK_ALIASES.get(key) or self._humanize_key(key)
+
+            if key in {
+                "sale_price",
+                "max_price",
+                "discount_value",
+                "last_price",
+                "last_purchase_price",
+                "standard_cost",
+            }:
+                parts.append(f"{label}: {self._format_currency(value)}")
+            elif key == "discount_percent":
+                parts.append(f"{label}: {self._format_num(value)}%")
+            elif key in {
+                "current_quantity",
+                "available_quantity",
+                "committed_quantity",
+                "reserved_quantity",
+                "lot_quantity",
+            }:
+                parts.append(f"{label}: {self._format_num(value)}")
+            else:
+                parts.append(f"{label}: {value}")
+
+        return ", ".join(parts) if parts else "—"
+
     def _present_product_with_details(
         self, product_summary: dict, detail_list: list, root: dict
     ) -> dict:
@@ -1783,9 +1826,7 @@ class ExternalActionResultPresenter:
         linhas = [f"Produto {code}: {desc}."]
 
         for item in detail_list[:5]:
-            preview = ", ".join(
-                f"{k}={v}" for k, v in list(item.items())[:6] if v is not None
-            )
+            preview = self._format_detail_preview_line(item)
             linhas.append(f"- {preview}")
 
         if len(detail_list) > 5:
