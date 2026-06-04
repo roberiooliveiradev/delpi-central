@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "sync:product-operational-content": "cp ../../minha-delpi-ai-api/app/content/pt-BR/assistant/product_operational_content.json src/content/product_operational_content.json",
     "build": "tsc -b tsconfig.app.json tsconfig.node.json && vite build",
     "typecheck": "tsc -b",
     "lint": "eslint .",

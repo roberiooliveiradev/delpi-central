@@ -1,4 +1,4 @@
-import productOperationalContent from "../../../../minha-delpi-ai-api/app/content/pt-BR/assistant/product_operational_content.json";
+import productOperationalContent from "./product_operational_content.json";
 
 export type ProductRouteKey =
   | "profile"
