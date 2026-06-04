@@ -511,6 +511,18 @@ class ChatPresentationDecisionService:
 
         cls._apply_route_visual_policy(metadata, decision)
 
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
+        views = decision.get("availableViews")
+
+        if isinstance(views, list):
+            decision["availableViews"] = ChatPresentationStructureDedupService.prune_available_views(
+                views,
+                metadata,
+            )
+
         metadata["presentationDecision"] = decision
 
         legacy = cls._legacy_preferred_format(decision.get("selected"))

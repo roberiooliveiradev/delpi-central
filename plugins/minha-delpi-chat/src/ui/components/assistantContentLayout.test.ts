@@ -4,6 +4,7 @@ import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
   orderVisualSegments,
   resolveAssistantContentLayout,
+  resolveStackLayoutOrderFromToolCalls,
   shouldShowAllVisualSegments,
 } from "./assistantContentLayout";
 import type { AssistantContentSegment } from "./assistantContentTypes";
@@ -18,7 +19,8 @@ describe("assistantContentLayout", () => {
           path: "/products/90260114/analyser",
           presentationDecision: {
             layoutMode: "stack",
-            visualOrder: ["table", "tree", "chart"],
+            selected: "tree",
+            visualOrder: ["text", "table", "tree", "chart"],
             availableViews: ["text", "table", "tree", "chart"],
           },
           presentation: {
@@ -55,14 +57,28 @@ describe("assistantContentLayout", () => {
     ]);
 
     expect(resolveAssistantContentLayout("", toolCalls)).toBe("stack");
+    expect(resolveStackLayoutOrderFromToolCalls(toolCalls)).toEqual([
+      "text",
+      "table",
+      "tree",
+      "chart",
+    ]);
 
     const segments = buildAssistantContentSegments("", toolCalls);
     const kinds = segments.map((segment) => segment.kind);
+    const firstTableIndex = kinds.indexOf("table");
+    const firstTreeIndex = kinds.indexOf("tree");
+    const lastMarkdownBeforeTables = kinds
+      .slice(0, firstTableIndex)
+      .lastIndexOf("markdown");
 
     expect(kinds).toContain("markdown");
     expect(kinds).toContain("table");
     expect(kinds).toContain("tree");
     expect(kinds).toContain("chart");
+    expect(firstTableIndex).toBeGreaterThanOrEqual(0);
+    expect(firstTreeIndex).toBeGreaterThan(firstTableIndex);
+    expect(lastMarkdownBeforeTables).toBeLessThanOrEqual(firstTableIndex);
     expect(shouldShowAllVisualSegments(toolCalls)).toBe(true);
   });
 

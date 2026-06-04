@@ -1,11 +1,12 @@
-import type { AssistantVisualKind } from "./assistantContentLayout";
+import type { ContentFormatKind } from "./assistantContentLayout";
 import type { VisualFormatOption } from "./assistantContentVisualFormats";
 import { recordPresentationTelemetry } from "./presentationTelemetry";
 
 type AssistantContentFormatToolbarProps = {
   options: VisualFormatOption[];
-  activeKind: AssistantVisualKind;
-  onChange: (kind: AssistantVisualKind) => void;
+  activeKind: ContentFormatKind | null;
+  showCompleteOption?: boolean;
+  onChange: (kind: ContentFormatKind | null) => void;
 };
 
 function FormatToggle({
@@ -31,6 +32,7 @@ function FormatToggle({
 export function AssistantContentFormatToolbar({
   options,
   activeKind,
+  showCompleteOption = false,
   onChange,
 }: AssistantContentFormatToolbarProps) {
   if (options.length < 2) {
@@ -44,6 +46,23 @@ export function AssistantContentFormatToolbar({
         role="group"
         aria-label="Formato da visualização"
       >
+        {showCompleteOption ? (
+          <FormatToggle
+            active={activeKind === null}
+            label="Completo"
+            onClick={() => {
+              if (activeKind === null) {
+                return;
+              }
+
+              recordPresentationTelemetry("presentation_view_switch", {
+                from: activeKind,
+                to: "complete",
+              });
+              onChange(null);
+            }}
+          />
+        ) : null}
         {options.map((option) => (
           <FormatToggle
             key={option.kind}

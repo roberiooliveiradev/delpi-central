@@ -17,6 +17,11 @@ export type AssistantVisualKind =
   | "kpi"
   | "dashboard";
 
+export type StackLayoutSlot = "text" | AssistantVisualKind;
+
+/** Formato selecionável na toolbar (narrativa + visuais nativos). */
+export type ContentFormatKind = StackLayoutSlot;
+
 const DEFAULT_VISUAL_ORDER: AssistantVisualKind[] = [
   "table",
   "tree",
@@ -92,21 +97,49 @@ function mapDecisionViewToVisualKind(view: string): AssistantVisualKind | null {
   return null;
 }
 
-export function resolveVisualOrderFromToolCalls(
+function mapDecisionViewToStackSlot(view: string): StackLayoutSlot | null {
+  const token = view.trim().toLowerCase();
+
+  if (token === "text") {
+    return "text";
+  }
+
+  return mapDecisionViewToVisualKind(view);
+}
+
+export function resolveStackLayoutOrderFromToolCalls(
   toolCalls?: ChatToolCall[],
-): AssistantVisualKind[] {
+): StackLayoutSlot[] {
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const rawOrder = decision?.visualOrder;
 
   if (!Array.isArray(rawOrder) || !rawOrder.length) {
-    return [...DEFAULT_VISUAL_ORDER];
+    return ["text", ...DEFAULT_VISUAL_ORDER];
   }
 
   const mapped = rawOrder
-    .map((view) => mapDecisionViewToVisualKind(String(view)))
-    .filter((kind): kind is AssistantVisualKind => Boolean(kind));
+    .map((view) => mapDecisionViewToStackSlot(String(view)))
+    .filter((slot): slot is StackLayoutSlot => Boolean(slot));
 
-  return mapped.length ? [...new Set(mapped)] : [...DEFAULT_VISUAL_ORDER];
+  if (!mapped.length) {
+    return ["text", ...DEFAULT_VISUAL_ORDER];
+  }
+
+  const unique = [...new Set(mapped)];
+
+  if (!unique.includes("text")) {
+    unique.unshift("text");
+  }
+
+  return unique;
+}
+
+export function resolveVisualOrderFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): AssistantVisualKind[] {
+  return resolveStackLayoutOrderFromToolCalls(toolCalls).filter(
+    (slot): slot is AssistantVisualKind => slot !== "text",
+  );
 }
 
 export function orderVisualSegments(
@@ -169,18 +202,6 @@ export function resolveAssistantContentLayout(
 
   if (hasMarkers) {
     return "markers";
-  }
-
-  const path = String(
-    toolCalls.find((call) => call.metadata?.path)?.metadata?.path ?? "",
-  ).toLowerCase();
-
-  if (
-    path.includes("/analyser") ||
-    path.includes("/structure") ||
-    path.includes("/parents")
-  ) {
-    return commentary ? "stack" : "stack";
   }
 
   if (decision?.availableViews && decision.availableViews.length >= 2) {

@@ -1741,23 +1741,30 @@ class ExternalActionResultPresenter:
 
         return sections
 
-    def _build_product_analyser_body_lines(self, root: dict, product: dict) -> list[str]:
+    def _build_product_analyser_body_lines(
+        self,
+        root: dict,
+        product: dict,
+        *,
+        compact_for_rich_ui: bool = False,
+    ) -> list[str]:
         from app.domain.services.chat_product_analyser_divergence_service import (
             ChatProductAnalyserDivergenceService,
         )
 
         lines: list[str] = []
-        opening = ChatProductAnalyserDivergenceService.build_opening_narrative(
-            root,
-            product,
-        )
 
-        if opening:
-            lines.extend(["", opening, ""])
+        if not compact_for_rich_ui:
+            opening = ChatProductAnalyserDivergenceService.build_opening_narrative(
+                root,
+                product,
+            )
 
-        lines.extend(self._build_product_analyser_profile_lines(product))
+            if opening:
+                lines.extend(["", opening, ""])
 
-        lines.extend(self._build_product_analyser_collection_sections(root))
+            lines.extend(self._build_product_analyser_profile_lines(product))
+            lines.extend(self._build_product_analyser_collection_sections(root))
 
         insights = self._build_product_analyser_insights(root, product)
 
@@ -1779,8 +1786,10 @@ class ExternalActionResultPresenter:
 
         structure = root.get("structure")
 
-        if isinstance(structure, dict) and (
-            structure.get("items") or structure.get("total")
+        if (
+            not compact_for_rich_ui
+            and isinstance(structure, dict)
+            and (structure.get("items") or structure.get("total"))
         ):
             lines.extend(
                 [
@@ -3162,8 +3171,21 @@ class ExternalActionResultPresenter:
     ) -> dict | None:
         code = str(product.get("code") or "").strip()
         title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
 
-        body_parts = self._build_product_analyser_body_lines(root, product)
+        auxiliary_tables = self.build_analyser_auxiliary_table_presentations(root)
+        compact_for_rich_ui = ChatRichPresentationTextService.should_compact_narrative(
+            table_presentations=auxiliary_tables,
+            tree_presentation=self.build_tree_presentation(root, path=path),
+        )
+
+        body_parts = self._build_product_analyser_body_lines(
+            root,
+            product,
+            compact_for_rich_ui=compact_for_rich_ui,
+        )
         markdown_parts = [f"### {title}", "", *body_parts]
 
         return {

@@ -6,18 +6,22 @@ export type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   orderVisualSegments,
   resolveAssistantContentLayout,
-  resolveVisualOrderFromToolCalls,
+  resolveStackLayoutOrderFromToolCalls,
 } from "./assistantContentLayout";
 import {
   getPresentationPairFromToolCalls,
   getTextMarkdownFromToolCalls,
-  resolveCommentaryTextBody,
+  resolveStackCommentaryBody,
   stripLeadingMarkdownTitle,
   getPresentationTitle,
 } from "./chatPresentation";
-
-const PRESENTATION_MARKER_RE =
-  /\[\[(tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::(\d+))?]]/gi;
+import { buildInterleavedStackSegments } from "./assistantContentInterleave";
+import {
+  dedupeTablePresentations,
+  dedupeTableSegments,
+  isSameTablePresentation,
+} from "./presentationTableDedup";
+import { shouldSkipTableSegment } from "./presentationStructureDedup";
 
 const SQL_FENCE_RE = /```sql\s*([\s\S]*?)```/gi;
 
@@ -255,6 +259,10 @@ function sameAssistantSegment(
     return right.kind === "code" && left.language === right.language && left.code === right.code;
   }
 
+  if (left.kind === "table" && right.kind === "table") {
+    return isSameTablePresentation(left.presentation, right.presentation);
+  }
+
   return right.kind !== "markdown" && right.kind !== "code" && left.presentation === right.presentation;
 }
 
@@ -271,6 +279,15 @@ function appendVisualSegment(
 
 function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegment[] {
   const segments: AssistantContentSegment[] = [];
+  const tableCandidates: Extract<ChatPresentation, { type: "table" }>[] = [];
+
+  const queueTable = (presentation: Extract<ChatPresentation, { type: "table" }>) => {
+    if (shouldSkipTableSegment(presentation, toolCalls)) {
+      return;
+    }
+
+    tableCandidates.push(presentation);
+  };
 
   for (const toolCall of toolCalls) {
     if (toolCall.name && toolCall.name !== "execute_external_action") {
@@ -288,7 +305,7 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       const typed = presentation as ChatPresentation;
 
       if (typed.type === "table") {
-        appendVisualSegment(segments, { kind: "table", presentation: typed });
+        queueTable(typed);
       } else if (typed.type === "chart") {
         appendVisualSegment(segments, { kind: "chart", presentation: typed });
       } else if (typed.type === "tree") {
@@ -309,53 +326,24 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
           typeof candidate === "object" &&
           (candidate as ChatPresentation).type === "table"
         ) {
-          appendVisualSegment(segments, {
-            kind: "table",
-            presentation: candidate as Extract<ChatPresentation, { type: "table" }>,
-          });
+          queueTable(candidate as Extract<ChatPresentation, { type: "table" }>);
         }
       }
     } else {
-      const tablePresentation = metadata.tablePresentation;
+      for (const key of [
+        "tablePresentation",
+        "profileTablePresentation",
+        "inspectionTablePresentation",
+      ]) {
+        const slot = metadata[key];
 
-      if (
-        tablePresentation &&
-        typeof tablePresentation === "object" &&
-        (tablePresentation as ChatPresentation).type === "table"
-      ) {
-        appendVisualSegment(segments, {
-          kind: "table",
-          presentation: tablePresentation as Extract<ChatPresentation, { type: "table" }>,
-        });
-      }
-
-      const profileTablePresentation = metadata.profileTablePresentation;
-
-      if (
-        profileTablePresentation &&
-        typeof profileTablePresentation === "object" &&
-        (profileTablePresentation as ChatPresentation).type === "table"
-      ) {
-        appendVisualSegment(segments, {
-          kind: "table",
-          presentation: profileTablePresentation as Extract<ChatPresentation, { type: "table" }>,
-        });
-      }
-
-      const inspectionTablePresentation = metadata.inspectionTablePresentation;
-
-      if (
-        inspectionTablePresentation &&
-        typeof inspectionTablePresentation === "object" &&
-        (inspectionTablePresentation as ChatPresentation).type === "table"
-      ) {
-        appendVisualSegment(segments, {
-          kind: "table",
-          presentation: inspectionTablePresentation as Extract<
-            ChatPresentation,
-            { type: "table" }
-          >,
-        });
+        if (
+          slot &&
+          typeof slot === "object" &&
+          (slot as ChatPresentation).type === "table"
+        ) {
+          queueTable(slot as Extract<ChatPresentation, { type: "table" }>);
+        }
       }
     }
 
@@ -386,7 +374,11 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
     }
   }
 
-  return segments;
+  for (const table of dedupeTablePresentations(tableCandidates)) {
+    appendVisualSegment(segments, { kind: "table", presentation: table });
+  }
+
+  return dedupeTableSegments(segments);
 }
 
 export function dedupeSqlFencesInMarkdown(content: string): string {
@@ -437,69 +429,16 @@ export function parseMarkdownAndCodeSegments(content: string): AssistantContentS
   return segments;
 }
 
-function resolveMarkerPresentation(
-  marker: string,
-  index: number | undefined,
-  visuals: AssistantContentSegment[],
-): AssistantContentSegment | null {
-  const kind =
-    marker === "tabela" || marker === "table"
-      ? "table"
-      : marker === "grafico" || marker === "chart"
-        ? "chart"
-        : marker === "arvore" || marker === "tree"
-          ? "tree"
-          : marker === "kpi"
-            ? "kpi"
-            : "dashboard";
-
-  const pool = visuals.filter((item) => item.kind === kind);
-
-  if (!pool.length) {
-    return null;
-  }
-
-  const position = index ?? 1;
-
-  return pool[Math.max(0, Math.min(pool.length, position) - 1)] ?? null;
-}
-
 function splitMarkdownWithPresentationMarkers(
   markdown: string,
   visuals: AssistantContentSegment[],
 ): AssistantContentSegment[] {
-  const segments: AssistantContentSegment[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  const pattern = new RegExp(PRESENTATION_MARKER_RE);
-
-  while ((match = pattern.exec(markdown)) !== null) {
-    const index = match.index ?? 0;
-    const prose = markdown.slice(lastIndex, index).trim();
-
-    if (prose) {
-      segments.push(...parseMarkdownAndCodeSegments(prose));
-    }
-
-    const marker = String(match[1] || "").toLowerCase();
-    const markerIndex = match[2] ? Number.parseInt(match[2], 10) : undefined;
-    const visual = resolveMarkerPresentation(marker, markerIndex, visuals);
-
-    if (visual) {
-      segments.push(visual);
-    }
-
-    lastIndex = index + match[0].length;
-  }
-
-  const tail = markdown.slice(lastIndex).trim();
-
-  if (tail) {
-    segments.push(...parseMarkdownAndCodeSegments(tail));
-  }
-
-  return segments;
+  return buildInterleavedStackSegments(
+    markdown,
+    visuals,
+    parseMarkdownAndCodeSegments,
+    appendVisualSegment,
+  );
 }
 
 function resolvePrimaryMarkdown(
@@ -520,25 +459,19 @@ function resolvePrimaryMarkdown(
 function buildStackedSegments(
   content: string,
   toolCalls: ChatToolCall[],
-  pair: ReturnType<typeof getPresentationPairFromToolCalls>,
   visuals: AssistantContentSegment[],
 ): AssistantContentSegment[] {
-  const commentary = resolveCommentaryTextBody(content, toolCalls, pair);
-  const visualOrder = resolveVisualOrderFromToolCalls(toolCalls);
+  const commentary = resolveStackCommentaryBody(content, toolCalls);
+  const layoutOrder = resolveStackLayoutOrderFromToolCalls(toolCalls);
+  const visualOrder = layoutOrder.filter((slot) => slot !== "text");
   const orderedVisuals = orderVisualSegments(visuals, visualOrder);
-  const segments: AssistantContentSegment[] = [];
 
-  if (commentary.trim()) {
-    segments.push(...splitMarkdownWithPresentationMarkers(commentary, orderedVisuals));
-  }
-
-  for (const visual of orderedVisuals) {
-    if (!segments.some((item) => item === visual)) {
-      segments.push(visual);
-    }
-  }
-
-  return segments;
+  return buildInterleavedStackSegments(
+    commentary,
+    orderedVisuals,
+    parseMarkdownAndCodeSegments,
+    appendVisualSegment,
+  );
 }
 
 export function buildAssistantContentSegments(
@@ -551,7 +484,7 @@ export function buildAssistantContentSegments(
   const rawMarkdown = resolvePrimaryMarkdown(content, toolCalls);
 
   if (layoutMode === "stack") {
-    return buildStackedSegments(content, toolCalls, pair, visuals);
+    return buildStackedSegments(content, toolCalls, visuals);
   }
 
   if (/\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(rawMarkdown)) {
@@ -619,7 +552,7 @@ export function buildAssistantContentSegments(
   }
 
   if (textSegments.length && visuals.length) {
-    return buildStackedSegments(content, toolCalls, pair, visuals);
+    return buildStackedSegments(content, toolCalls, visuals);
   }
 
   const combined = [...textSegments];

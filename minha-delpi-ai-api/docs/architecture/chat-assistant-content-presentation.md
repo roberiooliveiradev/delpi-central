@@ -77,6 +77,8 @@ MFE: buildAssistantContentSegments(content, toolCalls)
 | `selected` | Formato sugerido (texto, tabela, árvore, tipos de chart) |
 | `availableViews` | Todos os formatos que o MFE pode oferecer na barra de troca |
 
+**Deduplicação estrutura × tabela:** quando há árvore da mesma hierarquia (BOM, parents, analyser), tabelas planas equivalentes (`Componentes da estrutura`, lista de pais) são removidas do metadata (`ChatPresentationStructureDedupService`). O formato **Tabela** no analyser mantém roteiro, inspeção e ficha — não a lista plana de componentes. Com `preferredFormat: table` na rota de estrutura, a árvore é suprimida e permanece só a tabela plana.
+
 Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 ---
@@ -85,7 +87,7 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 | Modo | Quando | Comportamento |
 |------|--------|----------------|
-| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa + **todos** os visuais empilhados (tabela(s), árvore, gráfico); **sem** alternar um tipo por vez |
+| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa **intercalada por seção** (destaques → tabelas nativas → pontos → árvore/gráfico); marcadores `[[table:n]]` / `[[arvore]]` no `textPresentation` quando compactado |
 | **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
 | **text-only** | Sem visual rico | Só markdown/código |
 
@@ -99,7 +101,7 @@ Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções:
 
 - Em **stack** (analyser e combinações): exibe narrativa + cada componente nativo com dados (várias tabelas, árvore, gráfico).
 - Toolbar de troca (**Tabela** / **Árvore** / **Gráfico**) só em layout **não-stack** (um visual por vez).
-- Ordem vertical: `presentationDecision.visualOrder` (analyser: texto → tabelas → árvore → gráfico).
+- Leitura vertical intercalada: destaques → roteiro/ficha (tabelas) → pontos de atenção → árvore (ver `ChatRichPresentationTextService.embed_visual_markers_in_markdown` e `assistantContentInterleave.ts`).
 
 Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.
 

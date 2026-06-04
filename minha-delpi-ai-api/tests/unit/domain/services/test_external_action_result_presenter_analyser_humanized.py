@@ -169,6 +169,9 @@ def test_analyser_text_presentation_aligns_with_body():
     assert "Qp6=[" not in text["markdown"]
     assert "| Produto | BOM | Op. |" not in text["markdown"]
     assert "| Op. | Ensaio |" not in text["markdown"]
+    assert "A estrutura de nível 1 inclui:" not in text["markdown"]
+    assert "Produto **90260140**:" not in text["markdown"]
+    assert "**Destaques**" in text["markdown"]
 
     tables = presenter.build_analyser_auxiliary_table_presentations(root)
 

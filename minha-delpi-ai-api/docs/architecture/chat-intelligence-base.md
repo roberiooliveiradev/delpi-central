@@ -566,7 +566,7 @@ Quando `toolCalls[].metadata` traz visuais (`presentation`, `tablePresentation`,
 
 | Camada | Regra |
 |--------|--------|
-| **API** | `enrich_metadata` define `presentationDecision.layoutMode` (`stack` se ≥ 2 views) e `visualOrder`. Analyser: cadastro em `tablePresentation`, BOM em árvore, divergências em texto (`ChatProductAnalyserDivergenceService`). `prefer_presentation_direct_answer` não encurta overview com LLM. |
+| **API** | `enrich_metadata` define `presentationDecision.layoutMode` (`stack` se ≥ 2 views) e `visualOrder`. Qualquer rota com visuais complementares: `ChatRichPresentationTextService` compacta `textPresentation` (sem repetir tabela/árvore/cadastro no markdown) e `should_prefer_authorized_answer_over_llm` + `resolve_authorized_persisted_answer` usam o texto autorizado da tool em `message.content` (chat comum, agentes, admin). Analyser: cadastro/roteiro em `tablePresentations`, BOM em árvore, insights em texto (`ChatProductAnalyserDivergenceService`). |
 | **Plugin** | **`ChatAssistantContent`** (único renderizador; `ChatRichPresentation` removido): narrativa fixa + barra **Tabela/Árvore/Gráfico** entre formatos disponíveis; `assistantContentRegistry` para novos tipos. |
 | **Markdown** | `shouldSuppressMarkdownForPresentation` e `stripRedundantProfileTableFromMarkdown` evitam duplicar ficha tabular no texto. |
 

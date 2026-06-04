@@ -210,6 +210,7 @@ class ExecuteExternalActionUseCase:
         )
 
         table_presentation = None
+        kpi_presentation = None
 
         if isinstance(presentation, dict) and presentation.get("type") == "markdown":
             if not text_presentation:
@@ -217,6 +218,8 @@ class ExecuteExternalActionUseCase:
             presentation = None
         elif isinstance(presentation, dict) and presentation.get("type") == "table":
             table_presentation = presentation
+        elif isinstance(presentation, dict) and presentation.get("type") == "kpi":
+            kpi_presentation = presentation
         elif presentation:
             table_presentation = presentation
 
@@ -224,6 +227,9 @@ class ExecuteExternalActionUseCase:
 
         if dashboard_presentation:
             available_formats.append("dashboard")
+
+        if kpi_presentation:
+            available_formats.append("kpi")
 
         if text_presentation:
             available_formats.append("text")
@@ -262,6 +268,8 @@ class ExecuteExternalActionUseCase:
             primary_presentation = dashboard_presentation
         elif tree_presentation:
             primary_presentation = tree_presentation
+        elif kpi_presentation:
+            primary_presentation = kpi_presentation
         elif chart_presentation:
             primary_presentation = chart_presentation
         elif table_presentation:
@@ -302,6 +310,7 @@ class ExecuteExternalActionUseCase:
                 ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
                 and tree_presentation
                 and not table_presentation
+                and session_format == "table"
             ):
                 structure_table = self.presenter._build_analyser_structure_components_table(
                     root_payload,
@@ -375,6 +384,12 @@ class ExecuteExternalActionUseCase:
 
         metadata["path"] = resolved_path
 
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
+
+        ChatPresentationStructureDedupService.dedupe_metadata(metadata)
+
         ChatPresentationDecisionService.enrich_metadata(
             metadata,
             intent=str(action.get("intent") or action.get("name") or "").strip() or None,
@@ -382,6 +397,12 @@ class ExecuteExternalActionUseCase:
             user_preference=behavior_format or preferred_format,
             axis_user_message=user_message,
         )
+
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
+        ChatRichPresentationTextService.compact_metadata_text(metadata)
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
 

@@ -512,6 +512,24 @@ class SendChatMessageUseCase:
         answer = ChatAdvancedSqlSpecialistService.format_sql_authoring_answer(answer)
         tool_calls = ChatAdvancedSqlSpecialistService.sanitize_tool_calls_for_client(tool_calls)
 
+        from app.application.services.chat_tool_context_service import (
+            ChatToolContextService,
+        )
+
+        answer = ChatToolContextService.resolve_authorized_persisted_answer(
+            answer,
+            tool_calls,
+            message=request.message,
+            skip_replacement=bool(
+                prepared.email_writing_mode
+                or prepared.text_correction_mode
+                or (
+                    isinstance(tool_context, dict)
+                    and tool_context.get("sqlRequiresLlm")
+                )
+            ),
+        )
+
         correction_canvas_payload = (
             ChatTextCorrectionTurnService.resolve_canvas_open_after_correction(
                 message=request.message,

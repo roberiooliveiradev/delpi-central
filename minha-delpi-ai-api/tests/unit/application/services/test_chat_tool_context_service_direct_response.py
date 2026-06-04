@@ -455,6 +455,101 @@ def test_prefer_presentation_direct_answer_replaces_long_markdown():
     assert compact == "Faturamento comercial"
 
 
+def test_build_authorized_answer_prefers_text_presentation_markdown():
+    markdown = "### Informações completas do produto 90260149\n\nCHICOTE EPR SINGELO 235MM."
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260149/analyser",
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": markdown,
+                },
+                "presentation": {
+                    "type": "tree",
+                    "title": "Estrutura do produto 90260149",
+                    "root": {"id": "90260149", "label": "90260149", "children": []},
+                },
+            },
+        }
+    ]
+
+    assert ChatToolContextService.build_authorized_answer_from_tool_calls(tool_calls) == markdown
+    assert ChatToolContextService.should_persist_authorized_tool_answer(
+        tool_calls,
+        message="me fale do produto 90260149",
+    )
+
+
+def test_resolve_authorized_persisted_answer_replaces_llm_hallucination():
+    authorized = "### Informações completas do produto 90260149\n\nCHICOTE EPR SINGELO 235MM."
+    hallucinated = "Produtos Químicos e Solução Química Especializada."
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "path": "/products/90260149/analyser",
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": authorized,
+                },
+                "presentation": {
+                    "type": "tree",
+                    "title": "Estrutura do produto 90260149",
+                    "root": {"id": "90260149", "label": "90260149", "children": []},
+                },
+            },
+        }
+    ]
+
+    persisted = ChatToolContextService.resolve_authorized_persisted_answer(
+        hallucinated,
+        tool_calls,
+        message="me fale do produto 90260149",
+    )
+
+    assert persisted == authorized
+    assert "Químicos" not in persisted
+
+
+def test_resolve_authorized_persisted_answer_keeps_pagination_suffix():
+    authorized = "### Pais do produto 10080055\n\nResumo."
+    continuation = (
+        "Consolidei **2** de **6** registro(s) (páginas 1). "
+        "**Deseja que eu continue buscando?** Responda *sim, continue*."
+    )
+    tool_calls = [
+        {
+            "name": "execute_external_action",
+            "metadata": {
+                "ok": True,
+                "textPresentation": {
+                    "type": "markdown",
+                    "markdown": authorized,
+                },
+                "presentation": {
+                    "type": "table",
+                    "title": "Pais do produto 10080055",
+                    "columns": [{"key": "code", "label": "Código"}],
+                    "rows": [{"code": "10080001"}],
+                },
+            },
+        }
+    ]
+
+    persisted = ChatToolContextService.resolve_authorized_persisted_answer(
+        f"{authorized}\n\n{continuation}",
+        tool_calls,
+        message="onde é usado o produto 10080055",
+    )
+
+    assert continuation in persisted
+    assert persisted.startswith(authorized)
+
+
 def test_prefer_presentation_direct_answer_keeps_pagination_prompt():
     tool_calls = [
         {

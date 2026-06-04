@@ -1464,6 +1464,121 @@ class ChatToolContextService:
         return "\n".join(f"- {title}" for title in titles)
 
     @classmethod
+    def _authorized_body_from_metadata(cls, metadata: dict) -> str | None:
+        text_presentation = metadata.get("textPresentation")
+
+        if isinstance(text_presentation, dict):
+            markdown = str(text_presentation.get("markdown") or "").strip()
+
+            if markdown:
+                return markdown
+
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(humanized, dict):
+            linhas = [
+                str(line).strip()
+                for line in (humanized.get("linhas") or [])
+                if str(line or "").strip()
+            ]
+
+            if not linhas:
+                return None
+
+            titulo = str(humanized.get("titulo") or "").strip()
+            body = "\n".join(linhas)
+
+            if titulo:
+                return f"### {titulo}\n\n{body}"
+
+            return body
+
+        return None
+
+    @classmethod
+    def build_authorized_answer_from_tool_calls(
+        cls,
+        safe_tool_calls: list[dict],
+    ) -> str | None:
+        """Markdown autorizado (textPresentation / humanizedSummary) para persistir no chat."""
+
+        bodies: list[str] = []
+
+        for tool_call in cls._successful_external_action_tool_calls(safe_tool_calls):
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            body = cls._authorized_body_from_metadata(metadata)
+
+            if body and body not in bodies:
+                bodies.append(body)
+
+        if not bodies:
+            return None
+
+        return "\n\n".join(bodies).strip()
+
+    @classmethod
+    def should_persist_authorized_tool_answer(
+        cls,
+        safe_tool_calls: list[dict],
+        *,
+        message: str | None = None,
+    ) -> bool:
+        del message
+
+        if not cls.build_authorized_answer_from_tool_calls(safe_tool_calls):
+            return False
+
+        from app.domain.services.chat_rich_presentation_text_service import (
+            ChatRichPresentationTextService,
+        )
+
+        for tool_call in cls._successful_external_action_tool_calls(safe_tool_calls):
+            metadata = tool_call.get("metadata")
+
+            if not isinstance(metadata, dict):
+                continue
+
+            if ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+                [tool_call],
+            ):
+                return True
+
+        return cls._has_rich_presentation(safe_tool_calls)
+
+    @classmethod
+    def resolve_authorized_persisted_answer(
+        cls,
+        answer: str | None,
+        safe_tool_calls: list[dict],
+        *,
+        message: str | None = None,
+        skip_replacement: bool = False,
+    ) -> str:
+        """Substitui texto livre do LLM pelo markdown autorizado da ferramenta quando aplicável."""
+
+        if skip_replacement:
+            return str(answer or "").strip()
+
+        if not cls.should_persist_authorized_tool_answer(safe_tool_calls, message=message):
+            return str(answer or "").strip()
+
+        authorized = cls.build_authorized_answer_from_tool_calls(safe_tool_calls)
+
+        if not authorized:
+            return str(answer or "").strip()
+
+        continuation = cls._extract_pagination_continuation_suffix(answer)
+
+        if continuation and continuation not in authorized:
+            return f"{authorized}\n\n{continuation}".strip()
+
+        return authorized
+
+    @classmethod
     def _has_rich_presentation(cls, safe_tool_calls: list[dict]) -> bool:
         for tool_call in safe_tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":
@@ -1539,7 +1654,11 @@ class ChatToolContextService:
 
     @classmethod
     def _suppress_redundant_structure_presentations(cls, safe_tool_calls: list[dict]) -> None:
-        """Evita card de tabela duplicado quando o markdown da resposta direta já traz as tabelas."""
+        """Árvore e tabela plana da mesma hierarquia não coexistem no mesmo turno."""
+
+        from app.domain.services.chat_presentation_structure_dedup_service import (
+            ChatPresentationStructureDedupService,
+        )
 
         for tool_call in safe_tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":
@@ -1550,23 +1669,7 @@ class ChatToolContextService:
             if not isinstance(metadata, dict):
                 continue
 
-            path = str(metadata.get("path") or "").lower()
-
-            if "/structure" not in path and "/analyser" not in path:
-                continue
-
-            available_formats = metadata.get("availableFormats") or []
-
-            if "tree" in available_formats:
-                continue
-
-            presentation = metadata.get("presentation")
-
-            if isinstance(presentation, dict) and presentation.get("type") == "table":
-                metadata["presentation"] = None
-
-            if metadata.get("tablePresentation"):
-                metadata["tablePresentation"] = None
+            ChatPresentationStructureDedupService.dedupe_metadata(metadata)
 
     _FORMAT_TABLE_HINTS = (
         "em tabela", "em uma tabela", "numa tabela", "na tabela",

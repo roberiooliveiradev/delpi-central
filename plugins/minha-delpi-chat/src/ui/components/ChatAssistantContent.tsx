@@ -4,10 +4,7 @@ import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTyp
 
 import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import { AssistantContentChrome } from "./AssistantContentChrome";
-import {
-  shouldShowAllVisualSegments,
-  type AssistantVisualKind,
-} from "./assistantContentLayout";
+import type { ContentFormatKind } from "./assistantContentLayout";
 import {
   buildAssistantContentSegments,
   isPresentationHeadingTitle,
@@ -16,7 +13,8 @@ import { renderAssistantContentSegment } from "./assistantContentRegistry";
 import {
   filterSegmentsByVisualKind,
   resolveAvailableVisualFormatOptions,
-  resolveDefaultVisualKind,
+  resolveInitialToolbarKind,
+  shouldShowCompleteStackView,
 } from "./assistantContentVisualFormats";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import {
@@ -56,30 +54,25 @@ export function ChatAssistantContent({
     () => resolveAvailableVisualFormatOptions(segments, toolCalls),
     [segments, toolCalls],
   );
-  const defaultVisualKind = useMemo(
-    () => resolveDefaultVisualKind(toolCalls, visualFormatOptions),
+  const initialVisualKind = useMemo(
+    () => resolveInitialToolbarKind(toolCalls, visualFormatOptions),
     [toolCalls, visualFormatOptions],
   );
-  const [activeVisualKind, setActiveVisualKind] = useState<AssistantVisualKind | null>(
-    defaultVisualKind,
+  const [activeVisualKind, setActiveVisualKind] = useState<ContentFormatKind | null>(
+    initialVisualKind,
   );
 
   useEffect(() => {
-    setActiveVisualKind(defaultVisualKind);
-  }, [defaultVisualKind, toolCalls, segments]);
-
-  const combineAllVisuals = useMemo(
-    () => shouldShowAllVisualSegments(toolCalls),
-    [toolCalls],
-  );
+    setActiveVisualKind(initialVisualKind);
+  }, [initialVisualKind, toolCalls, segments]);
 
   const visibleSegments = useMemo(() => {
-    if (combineAllVisuals || visualFormatOptions.length < 2) {
+    if (visualFormatOptions.length < 2) {
       return segments;
     }
 
     return filterSegmentsByVisualKind(segments, activeVisualKind);
-  }, [activeVisualKind, combineAllVisuals, segments, visualFormatOptions.length]);
+  }, [activeVisualKind, segments, visualFormatOptions.length]);
 
   const title = useMemo(() => getPresentationTitle(content, toolCalls), [content, toolCalls]);
   const dataCoverageNotice = useMemo(
@@ -136,8 +129,8 @@ export function ChatAssistantContent({
       (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
     );
 
-  const showFormatToolbar =
-    !combineAllVisuals && visualFormatOptions.length >= 2 && activeVisualKind !== null;
+  const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
+  const showFormatToolbar = visualFormatOptions.length >= 2;
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
@@ -161,6 +154,7 @@ export function ChatAssistantContent({
         <AssistantContentFormatToolbar
           options={visualFormatOptions}
           activeKind={activeVisualKind}
+          showCompleteOption={showCompleteStackView}
           onChange={setActiveVisualKind}
         />
       ) : null}

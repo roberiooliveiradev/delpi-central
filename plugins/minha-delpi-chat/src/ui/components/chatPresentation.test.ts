@@ -521,6 +521,12 @@ describe("tree presentation", () => {
         path: "/products/90260148/analyser",
         availableFormats: ["text", "tree", "table"],
         preferredFormat: "tree",
+        presentationDecision: {
+          layoutMode: "stack",
+          availableViews: ["text", "table", "tree"],
+          visualOrder: ["text", "table", "tree"],
+          selected: "tree",
+        },
         presentation: {
           type: "tree",
           title: "Estrutura do produto 90260148",
@@ -560,6 +566,12 @@ describe("tree presentation", () => {
       metadata: {
         availableFormats: ["text", "tree", "table"],
         preferredFormat: "tree",
+        presentationDecision: {
+          layoutMode: "stack",
+          availableViews: ["text", "tree", "table"],
+          visualOrder: ["text", "tree", "table"],
+          selected: "tree",
+        },
         presentation: {
           type: "tree",
           title: "Estrutura do produto 90260148",
@@ -580,8 +592,11 @@ describe("tree presentation", () => {
         tablePresentation: {
           type: "table",
           title: "Componentes da estrutura 90260148",
-          columns: [{ key: "component_code", label: "Componente" }],
-          rows: [{ component_code: "10030015" }],
+          columns: [
+            { key: "parent_code", label: "PI pai" },
+            { key: "component_code", label: "Componente" },
+          ],
+          rows: [{ parent_code: "A", component_code: "10030015" }],
         },
       },
     },

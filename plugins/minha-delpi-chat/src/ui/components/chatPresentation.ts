@@ -8,6 +8,7 @@ import type {
 } from "../../data/api/chatTypes";
 
 import { resolveAssistantContentLayout } from "./assistantContentLayout";
+import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 
 export type PresentationPair = {
   primary: ChatPresentation | null;
@@ -1029,6 +1030,172 @@ export function stripRedundantHierarchyListFromMarkdown(markdown: string): strin
   return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function countComplementaryVisuals(metadata: Record<string, unknown>): {
+  tables: number;
+  trees: number;
+  charts: number;
+} {
+  let tables = 0;
+  const bundled = metadata.tablePresentations;
+
+  if (Array.isArray(bundled)) {
+    tables += bundled.filter(
+      (item) => (item as { type?: string } | undefined)?.type === "table",
+    ).length;
+  }
+
+  for (const key of [
+    "tablePresentation",
+    "profileTablePresentation",
+    "inspectionTablePresentation",
+  ]) {
+    if ((metadata[key] as { type?: string } | undefined)?.type === "table") {
+      tables += 1;
+    }
+  }
+
+  if ((metadata.presentation as { type?: string } | undefined)?.type === "table") {
+    tables += 1;
+  }
+
+  const trees =
+    Number((metadata.treePresentation as { type?: string } | undefined)?.type === "tree") +
+    Number((metadata.presentation as { type?: string } | undefined)?.type === "tree");
+  const charts =
+    Number((metadata.chartPresentation as { type?: string } | undefined)?.type === "chart") +
+    Number((metadata.presentation as { type?: string } | undefined)?.type === "chart");
+
+  return { tables, trees, charts };
+}
+
+function stripMarkdownGfmTablesFromCommentary(markdown: string): string {
+  const lines = markdown.split("\n");
+  const result: string[] = [];
+  let skipping = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!skipping && trimmed.startsWith("|") && trimmed.includes("|")) {
+      skipping = true;
+      continue;
+    }
+
+    if (skipping) {
+      if (trimmed.startsWith("|") || trimmed === "") {
+        continue;
+      }
+
+      skipping = false;
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/** Apresentação rica empilhada (qualquer rota com texto + visuais nativos). */
+export function hasRichStackPresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+
+    if (!metadata.ok) {
+      continue;
+    }
+
+    const decision = metadata.presentationDecision as
+      | { layoutMode?: string; availableViews?: string[] }
+      | undefined;
+
+    if (decision?.layoutMode === "stack") {
+      return true;
+    }
+
+    const { tables, trees, charts } = countComplementaryVisuals(metadata);
+    const kinds = Number(tables > 0) + Number(trees > 0) + Number(charts > 0);
+
+    if (kinds >= 2 || tables >= 2) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/** Remove narrativa duplicada quando componentes nativos já exibem os dados. */
+export function stripRichUiRedundantProseFromMarkdown(
+  markdown: string,
+  toolCalls?: ChatToolCall[],
+): string {
+  let body = String(markdown || "").trim();
+
+  if (!body || !hasRichStackPresentation(toolCalls)) {
+    return body;
+  }
+
+  body = body
+    .replace(
+      /O produto \*\*[^*]+\*\*[^.\n]*\.\s*A estrutura de nível \d+ inclui:[\s\S]*?(?:Fontes cruzadas nesta consulta:[^\n]+\n?)?/gi,
+      "",
+    )
+    .replace(/Fontes cruzadas nesta consulta:[^\n]+\n?/gi, "")
+    .replace(
+      /A \*\*(?:estrutura|composição|hierarquia|dados)\*\*[^\n]*(?:árvore|tabela|gráfico|visualizações)[^\n]*\n?/gi,
+      "",
+    )
+    .replace(/Use a \*\*(?:árvore|tabela)\*\*[^\n]+\n?/gi, "");
+
+  const pair = getPresentationPairFromToolCalls(toolCalls);
+
+  if (getTablePresentationFromPair(pair) || hasGuideTablePresentation(toolCalls)) {
+    body = stripMarkdownGfmTablesFromCommentary(body);
+    body = stripRedundantProfileTableFromMarkdown(body);
+    body = stripRedundantGuideTableFromMarkdown(body);
+  }
+
+  if (getTreePresentationFromPair(pair)) {
+    body = stripRedundantStructureFromMarkdown(body);
+    body = stripRedundantHierarchyListFromMarkdown(body);
+  }
+
+  if (hasInspectionTablePresentation(toolCalls)) {
+    body = stripRedundantInspectionFromMarkdown(body);
+    body = stripRedundantInspectionDumpFromMarkdown(body);
+  }
+
+  const lines = body.split("\n");
+  const filtered: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (/^Produto \*\*[^*]+\*\*:/i.test(trimmed)) {
+      continue;
+    }
+
+    if (
+      /^(Tipo |Status ativo:|Indicador de bloqueio:|Referência de cliente:|Último preço|Última revisão:|Inspeção:|Armazém padrão:)/i.test(
+        trimmed,
+      )
+    ) {
+      continue;
+    }
+
+    filtered.push(line);
+  }
+
+  return filtered.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 export function stripCoverageNoticeFromMarkdown(markdown: string): string {
   const trimmed = String(markdown || "").trim();
 
@@ -1352,6 +1519,36 @@ export function shouldStackPresentationBlocks(
   return resolveAssistantContentLayout("", toolCalls ?? [], pair) === "stack";
 }
 
+/** Narrativa para intercalar seções (preserva **Destaques** / **Pontos de atenção**). */
+export function resolveStackCommentaryBody(
+  messageContent: string | null | undefined,
+  toolCalls?: ChatToolCall[],
+): string {
+  const fromMetadata = getTextMarkdownFromToolCalls(toolCalls);
+  const presentationTitle =
+    getTextPresentationTitleFromToolCalls(toolCalls) ||
+    getPresentationTitle(messageContent, toolCalls);
+
+  let body = fromMetadata;
+
+  if (!body) {
+    body = stripLeadingMarkdownTitle(
+      String(messageContent || "").trim(),
+      presentationTitle,
+    );
+  } else {
+    body = stripLeadingMarkdownTitle(body, presentationTitle);
+  }
+
+  body = stripCoverageNoticeFromMarkdown(body);
+
+  if (hasRichStackPresentation(toolCalls)) {
+    body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
+  }
+
+  return body.trim();
+}
+
 export function resolveCommentaryTextBody(
   messageContent: string | null | undefined,
   toolCalls?: ChatToolCall[],
@@ -1387,6 +1584,10 @@ export function resolveCommentaryTextBody(
 
   if (hasInspectionTablePresentation(toolCalls)) {
     body = stripRedundantInspectionFromMarkdown(body);
+  }
+
+  if (hasRichStackPresentation(toolCalls)) {
+    body = stripRichUiRedundantProseFromMarkdown(body, toolCalls);
   }
 
   body = stripCoverageNoticeFromMarkdown(body);
@@ -1569,6 +1770,21 @@ export function shouldSuppressMarkdownForPresentation(
   toolCalls?: ChatToolCall[],
 ): boolean {
   const trimmed = String(content || "").trim();
+
+  const tree = getTreePresentationFromPair(pair);
+  const table = getTablePresentationFromPair(pair);
+
+  if (tree && table?.title && isHierarchyDuplicateTable(table)) {
+    const tableTitle = String(table.title).trim();
+
+    if (
+      trimmed === tableTitle ||
+      trimmed === `### ${tableTitle}` ||
+      trimmed.includes(tableTitle)
+    ) {
+      return true;
+    }
+  }
 
   if (hasMultiFormatPresentation(toolCalls)) {
     if (!trimmed) {

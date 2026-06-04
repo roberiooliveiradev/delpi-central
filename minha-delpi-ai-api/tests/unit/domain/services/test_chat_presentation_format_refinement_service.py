@@ -100,3 +100,95 @@ def test_intent_router_skips_presentation_task_for_format_refinement():
     result = ChatIntentRouterService.classify("mostre os dados acima em tabela")
 
     assert result.intent != "presentation_task"
+
+
+def test_looks_like_format_refinement_tree_and_chart():
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
+        "mostre em árvore",
+    )
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
+        "coloque em gráfico",
+    )
+    assert (
+        ChatPresentationFormatRefinementService.detect_requested_format(
+            "exiba em gráfico"
+        )
+        == "chart"
+    )
+    assert (
+        ChatPresentationFormatRefinementService.detect_requested_format(
+            "mostre em árvore"
+        )
+        == "tree"
+    )
+
+
+_ANALYSER_HISTORY = [
+    {"role": "user", "content": "me fale do produto 90260149"},
+    {
+        "role": "assistant",
+        "content": "Produto consultado",
+        "metadata": {
+            "toolCalls": [
+                {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "analyser-action",
+                        "parameters": {"code": "90260149"},
+                    },
+                    "metadata": {
+                        "ok": True,
+                        "path": "/products/90260149/analyser",
+                        "actionId": "analyser-action",
+                        "preferredFormat": "tree",
+                        "presentation": {
+                            "type": "tree",
+                            "title": "Estrutura",
+                            "root": {"id": "90260149", "label": "90260149", "children": []},
+                        },
+                        "tablePresentations": [
+                            {
+                                "type": "table",
+                                "title": "Roteiro",
+                                "columns": [{"key": "op", "label": "Op."}],
+                                "rows": [{"op": "01"}],
+                            }
+                        ],
+                        "textPresentation": {
+                            "type": "markdown",
+                            "markdown": "**Destaques**\n\n- Item.",
+                        },
+                    },
+                }
+            ]
+        },
+    },
+]
+
+
+def test_collect_last_operation_after_analyser_skips_system_tables():
+    history = _ANALYSER_HISTORY + [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/system/tables/SA1",
+                            "actionId": "tables-action",
+                        },
+                    }
+                ]
+            },
+        }
+    ]
+
+    op = ChatPresentationFormatRefinementService.collect_last_successful_operation(
+        history,
+    )
+
+    assert op is not None
+    assert op["actionId"] == "analyser-action"
+    assert "/analyser" in op["path"]

@@ -980,16 +980,39 @@ class ChatTurnPreparationService:
                     direct_answer = presentation_answer
                     skip_rag = True
 
-            from app.domain.services.chat_product_overview_intent_service import (
-                ChatProductOverviewIntentService,
+            from app.domain.services.chat_rich_presentation_text_service import (
+                ChatRichPresentationTextService,
             )
 
-            if ChatProductOverviewIntentService.should_force_llm_synthesis(
-                message,
-                tool_calls,
+            authorized_tool_answer = (
+                ChatToolContextService.build_authorized_answer_from_tool_calls(
+                    tool_calls
+                )
+            )
+
+            if (
+                authorized_tool_answer
+                and ChatRichPresentationTextService.should_prefer_authorized_answer_over_llm(
+                    tool_calls
+                )
             ):
-                direct_answer = None
-                skip_rag = False
+                direct_answer = authorized_tool_answer
+                skip_rag = True
+            else:
+                from app.domain.services.chat_product_overview_intent_service import (
+                    ChatProductOverviewIntentService,
+                )
+
+                if ChatProductOverviewIntentService.should_force_llm_synthesis(
+                    message,
+                    tool_calls,
+                ):
+                    if authorized_tool_answer:
+                        direct_answer = authorized_tool_answer
+                        skip_rag = True
+                    else:
+                        direct_answer = None
+                        skip_rag = False
 
         if ChatTextTaskIntentService.is_mixed_text_and_operational(message):
             from app.application.services.chat_text_task_composer_service import (
