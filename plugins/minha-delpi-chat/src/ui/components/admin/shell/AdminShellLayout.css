@@ -1,0 +1,53 @@
+.mdc-admin-layout {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.mdc-admin-layout__nav-toggle-wrap {
+  display: none;
+  padding: 0 clamp(0.9rem, 2vw, 1.4rem);
+}
+
+.mdc-admin-layout__nav-toggle {
+  width: 100%;
+  justify-content: center;
+}
+
+.mdc-admin-layout__body {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+}
+
+.mdc-admin-layout__content {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-shell.mdc-chat-ws-directory__main {
+  padding-top: var(--mdc-space-3);
+}
+
+@media (max-width: 1023px) {
+  .mdc-admin-layout__nav-toggle-wrap {
+    display: block;
+  }
+
+  .mdc-admin-layout__body {
+    flex-direction: column;
+  }
+
+  .mdc-admin-layout__sidebar {
+    display: none;
+  }
+
+  .mdc-admin-layout__body--nav-open .mdc-admin-layout__sidebar {
+    display: flex;
+  }
+}

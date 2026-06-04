@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { AdminAuditTab } from "../components/admin/audit/AdminAuditTab";
 import { AdminAgentsTab } from "../components/admin/agents/AdminAgentsTab";
@@ -11,8 +11,8 @@ import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab
 import { AdminOverviewTab } from "../components/admin/overview/AdminOverviewTab";
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
 import { AdminShellStatusStrip } from "../components/admin/shell/AdminShellStatusStrip";
+import { AdminShellLayout } from "../components/admin/shell/AdminShellLayout";
 import { AdminShellTopbar } from "../components/admin/shell/AdminShellTopbar";
-import { AdminSubTabNav } from "../components/admin/shell/AdminSubTabNav";
 import type { AdminLegacyTab, AdminNavState } from "../../navigation/adminNavigation";
 import { AdminSkillsTab } from "../components/admin/skills/AdminSkillsTab";
 import { AdminSimulateTab } from "../components/admin/simulate/AdminSimulateTab";
@@ -22,8 +22,6 @@ import type { AdminRbacSummary } from "../../data/api/adminTypes";
 import { testAdminRag } from "../../data/api/adminApi";
 import {
   buildAdminHref,
-  defaultSubTabForSection,
-  getAdminSectionItem,
   legacyTabToNav,
   normalizeAdminNav,
   warnLegacyAdminTab,
@@ -78,8 +76,6 @@ export function ChatAdminPage({
   const [adminRbac, setAdminRbac] = useState<AdminRbacSummary | null>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
-  const sectionMeta = useMemo(() => getAdminSectionItem(nav.section), [nav.section]);
-
   useEffect(() => {
     setNav(resolveInitialNav(initialNav, initialTab, initialAgentId));
   }, [initialNav, initialTab, initialAgentId]);
@@ -103,27 +99,6 @@ export function ChatAdminPage({
     navigateChatHref(buildAdminHref(normalized));
   }, []);
 
-  const handleSectionChange = useCallback(
-    (section: AdminNavState["section"]) => {
-      navigateTo({
-        section,
-        subTab: defaultSubTabForSection(section),
-      });
-    },
-    [navigateTo],
-  );
-
-  const handleSubTabChange = useCallback(
-    (subTab: NonNullable<AdminNavState["subTab"]>) => {
-      if (nav.section === "overview") {
-        return;
-      }
-
-      navigateTo({ section: nav.section, subTab });
-    },
-    [nav.section, navigateTo],
-  );
-
   const handleRefresh = useCallback(() => {
     void admin.loadAdminData().then(() => {
       setLastUpdatedAt(new Date());
@@ -134,7 +109,7 @@ export function ChatAdminPage({
     navigateTo({ section: "governance", subTab: "audit" });
   }, [navigateTo]);
 
-  const panelKey = `${nav.section}:${nav.subTab ?? "root"}`;
+  const panelKey = `${nav.section}:${nav.subTab ?? "root"}:${nav.page ?? ""}`;
 
   return (
     <main className="minha-delpi-chat mdc-admin-root mdc-chat-ws-directory">
@@ -143,32 +118,25 @@ export function ChatAdminPage({
         isLoading={admin.isLoading}
         onRefresh={handleRefresh}
         onBack={onBack}
-        onSectionChange={handleSectionChange}
       />
 
-      <section className="mdc-admin-shell mdc-chat-ws-directory__main">
-        <p className="mdc-chat-ws-directory__lead">{sectionMeta.description}</p>
+      <AdminShellLayout nav={nav} onNavigate={navigateTo}>
+        <section className="mdc-admin-shell mdc-chat-ws-directory__main">
+          <AdminShellStatusStrip
+            error={admin.error}
+            successMessage={admin.successMessage}
+            lastUpdatedAt={lastUpdatedAt}
+            isLoading={admin.isLoading}
+            onRefresh={handleRefresh}
+          />
 
-        <AdminShellStatusStrip
-          error={admin.error}
-          successMessage={admin.successMessage}
-          lastUpdatedAt={lastUpdatedAt}
-          isLoading={admin.isLoading}
-          onRefresh={handleRefresh}
-        />
+          <AdminShellAlerts error={admin.error} successMessage={admin.successMessage} />
 
-        <AdminSubTabNav nav={nav} onSubTabChange={handleSubTabChange} />
-
-        <AdminShellAlerts
-          error={admin.error}
-          successMessage={admin.successMessage}
-        />
-
-        <ChatAnimatedPanel
-          panelKey={panelKey}
-          variant="tab"
-          className="mdc-admin-shell__panel"
-        >
+          <ChatAnimatedPanel
+            panelKey={panelKey}
+            variant="tab"
+            className="mdc-admin-shell__panel"
+          >
           {nav.section === "overview" ? (
             <AdminOverviewTab
               metricsSummary={admin.metricsSummary}
@@ -240,7 +208,7 @@ export function ChatAdminPage({
           ) : null}
 
           {nav.section === "knowledge" && nav.subTab === "learning" ? (
-            <AdminLearningTab getAccessToken={getAccessToken} />
+            <AdminLearningTab getAccessToken={getAccessToken} page={nav.page} />
           ) : null}
 
           {nav.section === "agents" && nav.subTab === "specialization" ? (
@@ -298,8 +266,10 @@ export function ChatAdminPage({
           {nav.section === "governance" && nav.subTab === "audit" ? (
             <AdminAuditTab rbac={adminRbac} getAccessToken={getAccessToken} />
           ) : null}
-        </ChatAnimatedPanel>
-      </section>
+          </ChatAnimatedPanel>
+        </section>
+      </AdminShellLayout>
+
       <div id="mdc-modal-root" className="mdc-modal-root" aria-hidden="true" />
     </main>
   );

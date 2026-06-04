@@ -36,6 +36,12 @@ Estilos escopados em `.mdc-admin-root` (ver `ChatAdminPage.tsx`).
 
 Todas as seções do admin usam `AdminTabHeader` no topo da sub-aba (Painel, Conhecimento, Agentes, Qualidade, Plataforma, Governança).
 
+## Shell (navegação)
+
+- `AdminShellTopbar` — uma única barra: voltar, título com breadcrumb, atualizar.
+- `AdminSidebar` — árvore de seções/sub-abas + busca em navegação e conteúdo (`adminNavTree.ts`, `adminNavSearchIndex.ts`).
+- `AdminShellLayout` — sidebar fixa à esquerda (desktop); menu recolhível no mobile.
+
 ## Roadmap de UI
 
 - Navegação (6 seções): [11_admin_ux_reorganizacao_abas.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md)

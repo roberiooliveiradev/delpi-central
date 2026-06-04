@@ -33,16 +33,33 @@ import { LearningSummaryStrip } from "./LearningSummaryStrip";
 
 import "./AdminLearningTab.css";
 
-type AdminLearningTabProps = {
-  getAccessToken?: () => string | undefined | Promise<string | undefined>;
-};
-
-type LearningView =
+export type AdminLearningView =
   | "candidates"
   | "vocabulary"
   | "memory"
   | "evaluation"
   | "finetuning";
+
+const LEARNING_VIEWS: AdminLearningView[] = [
+  "candidates",
+  "vocabulary",
+  "memory",
+  "evaluation",
+  "finetuning",
+];
+
+function resolveLearningView(page?: string): AdminLearningView {
+  if (page && LEARNING_VIEWS.includes(page as AdminLearningView)) {
+    return page as AdminLearningView;
+  }
+
+  return "candidates";
+}
+
+type AdminLearningTabProps = {
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
+  page?: string;
+};
 
 const FT_SAMPLE_STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "captured", label: "Capturadas" },
@@ -104,8 +121,8 @@ function formatConfidence(value: number | null): string {
   return `${Math.round(value * 100)}%`;
 }
 
-export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
-  const [view, setView] = useState<LearningView>("candidates");
+export function AdminLearningTab({ getAccessToken, page }: AdminLearningTabProps) {
+  const view = resolveLearningView(page);
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [candidates, setCandidates] = useState<AdminLearningCandidate[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -524,44 +541,6 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
         summary={<LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />}
         actions={
           <>
-            <div className="mdc-admin-learning__views">
-              <button
-                type="button"
-                className={view === "candidates" ? "is-active" : undefined}
-                onClick={() => setView("candidates")}
-              >
-                Candidatos
-              </button>
-              <button
-                type="button"
-                className={view === "vocabulary" ? "is-active" : undefined}
-                onClick={() => setView("vocabulary")}
-              >
-                Vocabulário
-              </button>
-              <button
-                type="button"
-                className={view === "memory" ? "is-active" : undefined}
-                onClick={() => setView("memory")}
-              >
-                Memória
-              </button>
-              <button
-                type="button"
-                className={view === "evaluation" ? "is-active" : undefined}
-                onClick={() => setView("evaluation")}
-              >
-                Regressão
-              </button>
-              <button
-                type="button"
-                className={view === "finetuning" ? "is-active" : undefined}
-                onClick={() => setView("finetuning")}
-              >
-                Ajuste fino
-              </button>
-            </div>
-
             <button
               type="button"
               className="mdc-chat-ws-outline-btn"

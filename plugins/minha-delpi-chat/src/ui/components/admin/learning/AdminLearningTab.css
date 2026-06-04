@@ -12,30 +12,6 @@
   gap: 12px;
 }
 
-.mdc-admin-learning__views {
-  display: inline-flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 10px;
-  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.12));
-}
-
-.mdc-admin-learning__views button {
-  border: none;
-  background: transparent;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  color: inherit;
-}
-
-.mdc-admin-learning__views button.is-active {
-  background: var(--mdc-admin-surface, #fff);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
 .mdc-admin-learning__kpis-wrap {
   display: flex;
   flex-direction: column;
@@ -51,7 +27,7 @@
 .mdc-admin-learning__typo-hints {
   padding: 10px 14px;
   border-radius: 10px;
-  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.08));
+  background: var(--mdc-admin-surface-muted);
   font-size: 12px;
 }
 
@@ -70,24 +46,25 @@
   gap: 2px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.12));
+  background: var(--mdc-admin-surface-muted);
 }
 
 .mdc-admin-learning__kpi-label {
   font-size: 12px;
   font-weight: 600;
-  opacity: 0.7;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-learning__kpi-value {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
+  color: var(--mdc-text);
 }
 
 .mdc-admin-learning__kpi-hint {
   font-size: 11px;
-  opacity: 0.6;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-learning__memory-toolbar {
@@ -111,7 +88,7 @@
   gap: 12px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.08));
+  background: var(--mdc-admin-surface-muted);
 }
 
 .mdc-admin-learning__memory-body {
@@ -120,12 +97,12 @@
 }
 
 .mdc-admin-learning__error {
-  color: #b4232a;
+  color: var(--mdc-admin-danger);
   font-size: 13px;
 }
 
 .mdc-admin-learning__success {
-  color: #1f7a45;
+  color: var(--mdc-admin-success);
   font-size: 13px;
 }
 
@@ -140,21 +117,22 @@
 
 .mdc-admin-learning__item {
   text-align: left;
-  border: 1px solid var(--mdc-admin-border, rgba(120, 120, 140, 0.2));
+  border: 1px solid var(--mdc-admin-border);
   border-radius: 10px;
   background: transparent;
   padding: 10px 12px;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
+  color: var(--mdc-text);
 }
 
 .mdc-admin-learning__item:hover {
-  border-color: var(--mdc-admin-accent, #4263eb);
+  border-color: var(--mdc-admin-accent);
 }
 
 .mdc-admin-learning__item.is-selected {
-  border-color: var(--mdc-admin-accent, #4263eb);
-  background: var(--mdc-admin-accent-soft, rgba(66, 99, 235, 0.08));
+  border-color: var(--mdc-admin-accent);
+  background: var(--mdc-admin-accent-soft);
 }
 
 .mdc-admin-learning__item-head {
@@ -169,17 +147,18 @@
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(120, 120, 140, 0.16);
+  background: var(--mdc-admin-badge-muted);
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-learning__badge.is-medium {
-  background: rgba(214, 158, 46, 0.2);
-  color: #946200;
+  background: color-mix(in srgb, var(--mdc-warning, #d69e2e) 22%, transparent);
+  color: var(--mdc-admin-warning-fg);
 }
 
 .mdc-admin-learning__badge.is-high {
-  background: rgba(180, 35, 42, 0.18);
-  color: #b4232a;
+  background: color-mix(in srgb, var(--mdc-admin-danger) 20%, transparent);
+  color: var(--mdc-admin-danger);
 }
 
 .mdc-admin-learning__detail {
@@ -192,7 +171,7 @@
   display: block;
   font-size: 12px;
   font-weight: 600;
-  opacity: 0.7;
+  color: var(--mdc-text-muted);
   margin-bottom: 4px;
 }
 
@@ -207,7 +186,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  opacity: 0.6;
+  color: var(--mdc-text-muted);
 }
 
 .mdc-admin-learning__actions {
@@ -218,9 +197,9 @@
 }
 
 .mdc-admin-learning__danger {
-  border: 1px solid rgba(180, 35, 42, 0.4);
+  border: 1px solid color-mix(in srgb, var(--mdc-admin-danger) 45%, transparent);
   background: transparent;
-  color: #b4232a;
+  color: var(--mdc-admin-danger);
   border-radius: 8px;
   padding: 8px 14px;
   font-weight: 600;
@@ -235,10 +214,11 @@
 .mdc-admin-learning__subtitle {
   margin: 0 0 10px;
   font-size: 14px;
+  color: var(--mdc-title);
 }
 
 .mdc-admin-learning__term {
-  border: 1px solid var(--mdc-admin-border, rgba(120, 120, 140, 0.2));
+  border: 1px solid var(--mdc-admin-border);
   border-radius: 10px;
   padding: 10px 12px;
   display: flex;
@@ -248,5 +228,5 @@
 
 .mdc-admin-learning__arrow {
   font-size: 12px;
-  opacity: 0.75;
+  color: var(--mdc-text-muted);
 }

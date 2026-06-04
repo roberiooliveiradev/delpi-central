@@ -15,8 +15,8 @@
   text-align: left;
   padding: 0.85rem 1rem;
   border-radius: var(--mdc-radius-md, 8px);
-  border: 1px solid color-mix(in srgb, var(--mdc-border, #d8dee8) 85%, transparent);
-  background: var(--mdc-surface, #fff);
+  border: 1px solid var(--mdc-admin-border, var(--mdc-card-border));
+  background: var(--mdc-admin-surface, var(--mdc-card-bg));
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 

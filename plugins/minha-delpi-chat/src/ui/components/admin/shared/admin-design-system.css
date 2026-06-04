@@ -3,6 +3,53 @@
  * Importar após admin-shared.css em ChatAdminPage.css.
  */
 
+/* ——— Tokens (claro/escuro via variáveis do chat) ——— */
+.mdc-admin-root {
+  --mdc-admin-surface: var(--mdc-card-bg);
+  --mdc-admin-surface-muted: color-mix(in srgb, var(--mdc-card-bg) 72%, var(--mdc-bg));
+  --mdc-admin-surface-elevated: color-mix(in srgb, var(--mdc-card-bg) 94%, var(--mdc-bg));
+  --mdc-admin-border: var(--mdc-card-border);
+  --mdc-admin-accent: var(--mdc-primary);
+  --mdc-admin-accent-soft: color-mix(in srgb, var(--mdc-primary) 12%, transparent);
+  --mdc-admin-danger: var(--mdc-danger, #b4232a);
+  --mdc-admin-success: var(--mdc-success, #1f7a45);
+  --mdc-admin-warning-fg: color-mix(in srgb, var(--mdc-warning, #d69e2e) 85%, var(--mdc-text));
+  --mdc-admin-badge-muted: color-mix(in srgb, var(--mdc-text-muted) 18%, transparent);
+}
+
+/* Controle segmentado (sub-abas internas) */
+.mdc-admin-root .mdc-admin-segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  border-radius: var(--mdc-radius-md);
+  border: 1px solid var(--mdc-admin-border);
+  background: var(--mdc-admin-surface-muted);
+}
+
+.mdc-admin-root .mdc-admin-segmented button {
+  border: 0;
+  background: transparent;
+  padding: 0.38rem 0.85rem;
+  border-radius: calc(var(--mdc-radius-md) - 2px);
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-root .mdc-admin-segmented button:hover {
+  color: var(--mdc-text);
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+}
+
+.mdc-admin-root .mdc-admin-segmented button.is-active {
+  background: var(--mdc-admin-surface-elevated);
+  color: var(--mdc-primary);
+  box-shadow: var(--mdc-elevation-1, 0 1px 3px color-mix(in srgb, var(--mdc-bg) 40%, transparent));
+}
+
 /* ——— Faixa de status (evita bloco cinza claro no tema escuro) ——— */
 .mdc-admin-root .mdc-admin-status-strip {
   display: grid;
@@ -88,13 +135,6 @@
 .mdc-admin-root .mdc-admin-section-nav__mobile-menu button:hover {
   background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
   color: var(--mdc-title);
-}
-
-/* ——— Topbar: seções ocupam linha inteira ——— */
-.mdc-admin-root .mdc-admin-topbar .mdc-admin-section-nav,
-.mdc-admin-root .mdc-admin-topbar .mdc-admin-section-nav__mobile {
-  grid-column: 1 / -1;
-  width: 100%;
 }
 
 .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__title small {
@@ -220,7 +260,6 @@
 @media (max-width: 1023px) {
   .mdc-admin-root .mdc-admin-topbar.mdc-chat-ws-topbar {
     grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto auto;
   }
 
   .mdc-admin-root .mdc-admin-topbar .mdc-chat-ws-topbar__actions {

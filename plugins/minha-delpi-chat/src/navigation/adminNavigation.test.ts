@@ -38,13 +38,32 @@ describe("adminNavigation", () => {
     });
   });
 
-  it("monta e parseia a sub-aba de aprendizagem", () => {
+  it("monta e parseia a sub-aba de aprendizagem com página padrão", () => {
     expect(buildAdminHref({ section: "knowledge", subTab: "learning" })).toBe(
-      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem",
+      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/candidatos",
     );
     expect(parseAdminPathSegments(["conhecimento", "aprendizagem"])).toEqual({
       section: "knowledge",
       subTab: "learning",
+      page: "candidates",
+    });
+  });
+
+  it("monta e parseia página interna de aprendizagem", () => {
+    expect(
+      buildAdminHref({
+        section: "knowledge",
+        subTab: "learning",
+        page: "vocabulary",
+      }),
+    ).toBe("/apps/minha-delpi-chat/admin/conhecimento/aprendizagem/vocabulario");
+
+    expect(
+      parseAdminPathSegments(["conhecimento", "aprendizagem", "memoria"]),
+    ).toEqual({
+      section: "knowledge",
+      subTab: "learning",
+      page: "memory",
     });
   });
 

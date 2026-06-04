@@ -2,8 +2,8 @@
 @import "../layout/chat-workspace-shared.css";
 @import "../components/admin/shared/admin-shared.css";
 @import "../components/admin/overview/AdminOverviewTab.css";
-@import "../components/admin/shell/AdminSectionNav.css";
-@import "../components/admin/shell/AdminSubTabNav.css";
+@import "../components/admin/shell/AdminSidebar.css";
+@import "../components/admin/shell/AdminShellLayout.css";
 @import "../components/admin/shell/AdminShellStatusStrip.css";
 @import "../components/admin/shared/admin-workspace-theme.css";
 @import "../components/admin/shared/admin-design-system.css";

@@ -1,4 +1,11 @@
 import type { LucideIcon } from "lucide-react";
+
+import {
+  defaultPageForSubTab,
+  hasNestedPages,
+  nestedPageFromSlug,
+  nestedPageSlug,
+} from "./adminNavPages";
 import {
   BarChart3,
   BookOpen,
@@ -55,6 +62,8 @@ export type AdminSubTab =
 export type AdminNavState = {
   section: AdminSection;
   subTab?: AdminSubTab;
+  /** Página interna da sub-aba (ex.: candidatos em aprendizagem). */
+  page?: string;
 };
 
 export type AdminSectionItem = {
@@ -185,8 +194,15 @@ export function normalizeAdminNav(
   }
 
   const subTab = partial?.subTab ?? defaultSubTabForSection(section);
+  const page =
+    partial?.page ??
+    (subTab && hasNestedPages(subTab) ? defaultPageForSubTab(subTab) : undefined);
 
-  return { section, subTab };
+  if (!page) {
+    return { section, subTab };
+  }
+
+  return { section, subTab, page };
 }
 
 export function legacyTabToNav(tab: AdminLegacyTab): AdminNavState {
@@ -260,7 +276,11 @@ export function parseAdminPathSegments(segments: string[]): AdminNavState | null
     return { section: "overview" };
   }
 
-  return normalizeAdminNav({ section, subTab });
+  const third = segments[2];
+  const page =
+    third && hasNestedPages(subTab) ? nestedPageFromSlug(subTab, third) : undefined;
+
+  return normalizeAdminNav({ section, subTab, page });
 }
 
 export function buildAdminHref(nav: AdminNavState): string {
@@ -273,6 +293,12 @@ export function buildAdminHref(nav: AdminNavState): string {
   const sectionSlug = SECTION_SLUG[normalized.section];
   const subTab = normalized.subTab ?? defaultSubTabForSection(normalized.section);
   const subSlug = subTab ? SUB_SLUG[subTab] : "";
+  const pageSlug =
+    subTab && normalized.page ? nestedPageSlug(subTab, normalized.page) : undefined;
+
+  if (pageSlug) {
+    return `${CHAT_BASE_PATH}/admin/${sectionSlug}/${subSlug}/${pageSlug}`;
+  }
 
   return `${CHAT_BASE_PATH}/admin/${sectionSlug}/${subSlug}`;
 }

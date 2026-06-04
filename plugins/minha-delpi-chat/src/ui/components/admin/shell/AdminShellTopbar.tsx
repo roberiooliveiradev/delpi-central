@@ -1,11 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 
-import {
-  getAdminSectionItem,
-  type AdminNavState,
-  type AdminSection,
-} from "../../../../navigation/adminNavigation";
-import { AdminSectionNav } from "./AdminSectionNav";
+import { getAdminNavBreadcrumb } from "../../../../navigation/adminNavTree";
+import type { AdminNavState } from "../../../../navigation/adminNavigation";
 import { ADMIN_SHELL_REVISION } from "./adminShellRevision";
 
 import "./AdminShellTopbar.css";
@@ -15,17 +11,10 @@ type AdminShellTopbarProps = {
   isLoading: boolean;
   onRefresh: () => void;
   onBack: () => void;
-  onSectionChange: (section: AdminSection) => void;
 };
 
-export function AdminShellTopbar({
-  nav,
-  isLoading,
-  onRefresh,
-  onBack,
-  onSectionChange,
-}: AdminShellTopbarProps) {
-  const sectionMeta = getAdminSectionItem(nav.section);
+export function AdminShellTopbar({ nav, isLoading, onRefresh, onBack }: AdminShellTopbarProps) {
+  const breadcrumb = getAdminNavBreadcrumb(nav);
 
   return (
     <header className="mdc-chat-ws-topbar mdc-admin-topbar" aria-label="Administração do chat">
@@ -39,7 +28,7 @@ export function AdminShellTopbar({
       <div className="mdc-chat-ws-topbar__title">
         <span>Administração</span>
         <small>
-          {sectionMeta.label} — Minha DELPI Chat ·{" "}
+          {breadcrumb} — Minha DELPI Chat ·{" "}
           <span className="mdc-admin-shell-revision" title="Versão do painel admin">
             {ADMIN_SHELL_REVISION}
           </span>
@@ -53,11 +42,9 @@ export function AdminShellTopbar({
           onClick={onRefresh}
           disabled={isLoading}
         >
-          Atualizar
+          {isLoading ? "Atualizando..." : "Atualizar"}
         </button>
       </div>
-
-      <AdminSectionNav nav={nav} onNavigate={onSectionChange} />
     </header>
   );
 }
