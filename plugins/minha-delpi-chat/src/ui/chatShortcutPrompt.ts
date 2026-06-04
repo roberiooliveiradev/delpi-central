@@ -262,17 +262,24 @@ export function buildShortcutPrefill(
 }
 
 export function extractProductCodeFromContextChips(
-  chips: Array<{ kind?: string; value?: string }>,
+  chips: Array<{ kind?: string; value?: string; label?: string }>,
 ): string | null {
   for (const chip of chips) {
-    if (chip.kind !== "product") {
+    const kind = String(chip.kind ?? "").trim().toLowerCase();
+    const labelCode = String(chip.label ?? "").replace(/\./g, "").trim();
+    const valueCode = String(chip.value ?? "").replace(/\./g, "").trim();
+    const code = /^\d{5,12}$/.test(labelCode)
+      ? labelCode
+      : /^\d{5,12}$/.test(valueCode)
+        ? valueCode
+        : "";
+
+    if (!code) {
       continue;
     }
 
-    const normalized = String(chip.value ?? "").replace(/\./g, "").trim();
-
-    if (/^\d{4,12}$/.test(normalized)) {
-      return normalized;
+    if (kind === "product" || kind === "context") {
+      return code;
     }
   }
 

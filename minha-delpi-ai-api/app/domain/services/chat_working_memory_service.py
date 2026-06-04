@@ -1,4 +1,9 @@
-"""Memória de trabalho estruturada da sessão (entidades, instruções, referências)."""
+"""Memória de trabalho da sessão — contexto, instruções e referências.
+
+Foco operacional (código, filial, etc.) é exposto só como itens de contexto
+(`userContextItems`, kind «context»). `lastEntities` permanece uso interno
+para resolução de referências e follow-up, sem chips/prompt de «entidade».
+"""
 
 from __future__ import annotations
 
@@ -68,17 +73,21 @@ class ChatWorkingMemoryService:
         resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
         follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
-        return {
-            "lastEntities": last_entities,
-            "previousProductCodes": previous_product_codes,
-            "behaviorInstructions": behavior,
-            "emailPreferences": email_preferences,
-            "textCorrectionPreferences": text_correction_preferences,
-            "resolvedReferences": resolved,
-            "usedMemoryKeys": used_keys,
-            "followUpDetected": follow_up,
-            "followUpType": ChatFollowUpIntentService.follow_up_type(message) if follow_up else None,
-        }
+        return cls._sync_focus_to_context_items(
+            {
+                "lastEntities": last_entities,
+                "previousProductCodes": previous_product_codes,
+                "behaviorInstructions": behavior,
+                "emailPreferences": email_preferences,
+                "textCorrectionPreferences": text_correction_preferences,
+                "resolvedReferences": resolved,
+                "usedMemoryKeys": used_keys,
+                "followUpDetected": follow_up,
+                "followUpType": ChatFollowUpIntentService.follow_up_type(message)
+                if follow_up
+                else None,
+            }
+        )
 
     @classmethod
     def build_post_turn_snapshot(
@@ -162,7 +171,7 @@ class ChatWorkingMemoryService:
         ChatTextCorrectionPreferenceService.apply_to_snapshot(snapshot, message=message)
         ChatTextTaskPreferenceService.apply_to_snapshot(snapshot, message=message)
 
-        return snapshot
+        return cls._sync_focus_to_context_items(snapshot)
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
@@ -170,18 +179,6 @@ class ChatWorkingMemoryService:
             return ""
 
         lines: list[str] = []
-        entities = snapshot.get("lastEntities") or {}
-
-        if entities.get("productCode") and str(
-            entities.get("productCodeSource") or ""
-        ).strip() in ("tool", "explicit"):
-            lines.append(f"- Em foco nesta conversa: {entities['productCode']}.")
-
-        if entities.get("branch"):
-            lines.append(f"- Em foco nesta conversa: {entities['branch']}.")
-
-        if entities.get("period"):
-            lines.append(f"- Período em foco: {entities['period']}.")
 
         last_action = snapshot.get("lastAction")
 
@@ -328,16 +325,16 @@ class ChatWorkingMemoryService:
         if not snapshot:
             return {"loaded": False}
 
-        entities = snapshot.get("lastEntities") or {}
         behavior = snapshot.get("behaviorInstructions") or {}
+        context_items = cls._merged_user_context_items(snapshot)
 
         return {
             "loaded": True,
-            "activeEntities": {
-                key: value
-                for key, value in entities.items()
-                if value not in (None, "", [])
-            },
+            "activeContextItems": [
+                str(item.get("label") or "").strip()
+                for item in context_items
+                if isinstance(item, dict) and item.get("label")
+            ],
             "activeBehaviorInstructions": behavior,
             "emailPreferences": snapshot.get("emailPreferences") or {},
             "resolvedReferences": snapshot.get("resolvedReferences") or [],
@@ -435,47 +432,54 @@ class ChatWorkingMemoryService:
         return merged
 
     @classmethod
+    def _merged_user_context_items(cls, snapshot: dict | None) -> list[dict[str, Any]]:
+        """Une itens persistidos com foco operacional derivado de lastEntities."""
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        snap = snapshot or {}
+        items = [
+            item
+            for item in (snap.get("userContextItems") or [])
+            if isinstance(item, dict) and item.get("id")
+        ]
+        auto = ChatUserContextItemService.auto_items_from_entities(
+            snap.get("lastEntities") or {},
+            items,
+        )
+
+        if auto:
+            items = (items + auto)[-12:]
+
+        return items
+
+    @classmethod
+    def _sync_focus_to_context_items(cls, snapshot: dict) -> dict:
+        """Persiste foco operacional apenas em userContextItems."""
+        result = dict(snapshot)
+        merged = cls._merged_user_context_items(result)
+
+        if merged:
+            result["userContextItems"] = merged
+
+        return result
+
+    @classmethod
     def build_context_chips(cls, snapshot: dict | None) -> list[dict[str, str]]:
         if not snapshot:
             return []
 
-        chips: list[dict[str, str]] = []
-        entities = snapshot.get("lastEntities") or {}
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        chips: list[dict[str, str]] = list(
+            ChatUserContextItemService.chips_from_items(
+                cls._merged_user_context_items(snapshot),
+            )
+        )
         behavior = snapshot.get("behaviorInstructions") or {}
-
-        product_code = str(entities.get("productCode") or "").strip()
-        product_source = str(entities.get("productCodeSource") or "").strip()
-
-        if product_code and product_source in ("tool", "explicit"):
-            chips.append(
-                {
-                    "label": product_code,
-                    "kind": "product",
-                    "value": product_code,
-                }
-            )
-
-        branch = str(entities.get("branch") or "").strip()
-
-        if branch:
-            chips.append(
-                {
-                    "label": branch,
-                    "kind": "branch",
-                    "value": branch,
-                }
-            )
-
-        warehouse = str(entities.get("warehouse") or "").strip()
-
-        if warehouse:
-            chips.append(
-                {
-                    "label": warehouse,
-                    "kind": "warehouse",
-                    "value": warehouse,
-                }
-            )
 
         from app.domain.services.chat_email_preference_service import (
             ChatEmailPreferenceService,
@@ -642,12 +646,11 @@ class ChatWorkingMemoryService:
         previous_messages: list[Any] | None = None,
         tool_calls: list | None = None,
     ) -> None:
-        """Define a proveniência do productCode para gate de chips/prompt.
+        """Define a proveniência do productCode para itens de contexto (auto).
 
         Só códigos com origem forte (tool de produto executada ou menção
-        explícita a produto) viram chip. Códigos "soltos" que surgiram de
-        outra consulta (ex.: cliente em SQL) ficam como inferidos e não geram
-        chip nem "produto em foco" — são apenas dados, não classificação.
+        explícita a produto) viram item de contexto. Códigos inferidos de
+        outra consulta (ex.: cliente em SQL) não entram no contexto ativo.
         """
         code = str(entities.get("productCode") or "").strip()
 

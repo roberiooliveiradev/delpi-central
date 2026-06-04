@@ -27,7 +27,7 @@ def test_build_pre_turn_snapshot_resolves_product_on_follow_up():
     assert snapshot["resolvedReferences"][0]["value"] == "10080001"
 
 
-def test_format_prompt_block_includes_active_product():
+def test_format_prompt_block_behavior_without_entity_focus_lines():
     snapshot = {
         "lastEntities": {"productCode": "10080001", "productCodeSource": "tool"},
         "behaviorInstructions": {"responseFormat": "table"},
@@ -38,7 +38,7 @@ def test_format_prompt_block_includes_active_product():
 
     block = ChatWorkingMemoryService.format_prompt_block(snapshot)
 
-    assert "10080001" in block
+    assert "10080001" not in block
     assert "tabela" in block
 
 
@@ -55,9 +55,9 @@ def test_build_context_chips_from_snapshot():
     )
 
     kinds = {chip["kind"] for chip in chips}
+    context_chips = [chip for chip in chips if chip["kind"] == "context"]
 
-    assert "product" in kinds
-    assert "branch" in kinds
+    assert len(context_chips) >= 2
     assert "format" in kinds
     assert "tone" in kinds
 
@@ -73,10 +73,10 @@ def test_build_context_chips_suppresses_ambiguous_product_code():
         }
     )
 
-    kinds = {chip["kind"] for chip in chips}
+    values = {chip["value"] for chip in chips}
 
-    assert "product" not in kinds
-    assert "branch" in kinds
+    assert "000224" not in values
+    assert "02" in values
 
 
 def test_ambiguous_drilldown_code_does_not_create_product_chip():
@@ -107,9 +107,49 @@ def test_ambiguous_drilldown_code_does_not_create_product_chip():
     assert entities.get("productCode") == "000224"
     assert entities.get("productCodeSource") == "inferred"
 
-    kinds = {chip["kind"] for chip in ChatWorkingMemoryService.build_context_chips(snapshot)}
+    chip_values = {
+        chip["value"]
+        for chip in ChatWorkingMemoryService.build_context_chips(snapshot)
+    }
 
-    assert "product" not in kinds
+    assert "000224" not in chip_values
+
+
+def test_post_turn_syncs_product_focus_to_context_items():
+    history = [
+        {"role": "user", "content": "me fale do produto 10080001"},
+        {
+            "role": "assistant",
+            "content": "Produto 10080001.",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {"ok": True, "path": "/products/10080001"},
+                    }
+                ]
+            },
+        },
+    ]
+
+    snapshot = ChatWorkingMemoryService.build_post_turn_snapshot(
+        message="qual o estoque do produto 10080001?",
+        previous_messages=history,
+        tool_calls=[
+            {
+                "name": "execute_external_action",
+                "metadata": {"ok": True, "path": "/products/10080001/stock"},
+            }
+        ],
+    )
+
+    labels = [
+        str(item.get("label") or "")
+        for item in (snapshot.get("userContextItems") or [])
+        if isinstance(item, dict)
+    ]
+
+    assert "10080001" in labels
 
 
 def test_real_product_tool_keeps_product_chip():
@@ -142,7 +182,7 @@ def test_real_product_tool_keeps_product_chip():
 
     kinds = {chip["kind"] for chip in ChatWorkingMemoryService.build_context_chips(snapshot)}
 
-    assert "product" in kinds
+    assert "context" in kinds
 
 
 def test_build_context_chips_includes_warehouse():
@@ -150,7 +190,8 @@ def test_build_context_chips_includes_warehouse():
         {"lastEntities": {"warehouse": "01", "branch": "02"}}
     )
 
-    by_kind = {chip["kind"]: chip for chip in chips}
+    by_value = {chip["value"]: chip for chip in chips}
 
-    assert by_kind["warehouse"]["label"] == "01"
-    assert by_kind["branch"]["value"] == "02"
+    assert by_value["01"]["kind"] == "context"
+    assert by_value["01"]["label"] == "01"
+    assert by_value["02"]["kind"] == "context"

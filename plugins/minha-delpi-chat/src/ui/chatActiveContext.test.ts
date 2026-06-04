@@ -11,12 +11,12 @@ describe("chatActiveContext", () => {
     const merged = mergeContextChips([
       [
         { label: "Tom direto", kind: "tone", value: "direct" },
-        { label: "Produto 10080001", kind: "product", value: "10080001" },
+        { label: "10080001", kind: "context", value: "10080001" },
       ],
-      [{ label: "Filial 02", kind: "branch", value: "02" }],
+      [{ label: "02", kind: "context", value: "02" }],
     ]);
 
-    expect(merged.map((chip) => chip.kind)).toEqual(["product", "branch", "tone"]);
+    expect(merged.map((chip) => chip.kind)).toEqual(["context", "context", "tone"]);
   });
 
   it("agrega chips de várias mensagens do assistente", () => {
@@ -37,8 +37,8 @@ describe("chatActiveContext", () => {
     ]);
 
     expect(chips).toHaveLength(2);
-    expect(contextChipKey(chips[0])).toBe("product:10080022");
-    expect(contextChipKey(chips[1])).toBe("branch:02");
+    const keys = chips.map((chip) => contextChipKey(chip)).sort();
+    expect(keys).toEqual(["branch:02", "product:10080022"]);
   });
 });
 

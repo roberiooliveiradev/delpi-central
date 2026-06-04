@@ -71,7 +71,7 @@ class ChatManualContextPinService:
 
         return {
             "label": label,
-            "kind": chip_kind,
+            "kind": ChatUserContextItemService.chip_kind_for_display(chip_kind),
             "value": chip_value,
         }
 
@@ -80,18 +80,10 @@ class ChatManualContextPinService:
         if not overlay:
             return []
 
-        entities = overlay.get("lastEntities") or {}
-        chips: list[dict[str, str]] = []
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
 
-        for entity_key, raw in entities.items():
-            kind = cls.kind_for_entity_key(str(entity_key))
-
-            if not kind:
-                continue
-
-            chip = cls.build_chip(kind=kind, value=str(raw or ""))
-
-            if chip:
-                chips.append(chip)
-
-        return chips
+        return ChatUserContextItemService.chips_from_items(
+            overlay.get("userContextItems"),
+        )

@@ -42,11 +42,9 @@ class ChatMemoryUxService:
                 "preferenceHint": cls.build_preference_hint(snapshot, chips=chips),
             },
             "usage": cls.build_usage_view(snapshot),
-            "pinnedKinds": [
-                kind
-                for kind in ("product", "branch", "warehouse")
-                if any(chip.get("kind") == kind for chip in chips)
-            ],
+            "pinnedKinds": (
+                ["context"] if any(chip.get("kind") == "context" for chip in chips) else []
+            ),
         }
 
     @classmethod

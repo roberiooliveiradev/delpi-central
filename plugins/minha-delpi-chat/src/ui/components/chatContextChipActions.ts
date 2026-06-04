@@ -1,6 +1,9 @@
 import type { ChatContextChip } from "./ChatContextBar";
 import type { TableRowMenuAction } from "./chatDrillDown";
-import { isPinnableContextKind } from "../chatActiveContext";
+import {
+  inferContextChipOperationalRole,
+  isPinnableContextKind,
+} from "../chatActiveContext";
 
 const PRODUCT_CODE = "{{productCode}}";
 
@@ -11,9 +14,21 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
     return null;
   }
 
+  const role = inferContextChipOperationalRole(chip);
+
+  if (role === "product") {
+    return `qual o estoque do produto ${PRODUCT_CODE}?`;
+  }
+
+  if (role === "branch") {
+    return `filtre pela filial ${value}`;
+  }
+
+  if (role === "warehouse") {
+    return `filtre pelo armazém ${value}`;
+  }
+
   switch (chip.kind) {
-    case "product":
-      return `qual o estoque do produto ${PRODUCT_CODE}?`;
     case "period":
       if (value === "last_30_days") {
         return "use os últimos 30 dias";
@@ -24,10 +39,6 @@ export function buildContextChipQuery(chip: ChatContextChip): string | null {
       return `use o mesmo período (${value})`;
     case "canvas":
       return "corrija o texto da lousa";
-    case "branch":
-      return `filtre pela filial ${value}`;
-    case "warehouse":
-      return `filtre pelo armazém ${value}`;
     case "format":
       if (value === "table") {
         return "mostre em tabela";
@@ -78,60 +89,60 @@ export function buildContextChipMenuActions(chip: ChatContextChip): TableRowMenu
     });
   }
 
+  const role = inferContextChipOperationalRole(chip);
+
+  if (role === "product") {
+    actions.push(
+      {
+        id: "stock",
+        label: "Ver estoque",
+        query: `qual o estoque do produto ${PRODUCT_CODE}?`,
+      },
+      {
+        id: "suppliers",
+        label: "Ver fornecedores",
+        query: `liste os fornecedores do produto ${PRODUCT_CODE}`,
+      },
+      {
+        id: "structure",
+        label: "Ver estrutura",
+        query: `mostre a estrutura do produto ${PRODUCT_CODE}`,
+      },
+      {
+        id: "summary",
+        label: "Resumo do produto",
+        query: `resumo do produto ${PRODUCT_CODE}`,
+      },
+    );
+  } else if (role === "branch") {
+    actions.push(
+      {
+        id: "filter-branch",
+        label: "Filtrar nesta filial",
+        query: `filtre pela filial ${value}`,
+      },
+      {
+        id: "stock-branch",
+        label: "Estoque da filial",
+        query: `qual o estoque total da filial ${value}?`,
+      },
+    );
+  } else if (role === "warehouse") {
+    actions.push(
+      {
+        id: "filter-warehouse",
+        label: "Filtrar neste armazém",
+        query: `filtre pelo armazém ${value}`,
+      },
+      {
+        id: "stock-warehouse",
+        label: "Estoque do armazém",
+        query: `qual o estoque do armazém ${value}?`,
+      },
+    );
+  }
+
   switch (chip.kind) {
-    case "product": {
-      actions.push(
-        {
-          id: "stock",
-          label: "Ver estoque",
-          query: `qual o estoque do produto ${PRODUCT_CODE}?`,
-        },
-        {
-          id: "suppliers",
-          label: "Ver fornecedores",
-          query: `liste os fornecedores do produto ${PRODUCT_CODE}`,
-        },
-        {
-          id: "structure",
-          label: "Ver estrutura",
-          query: `mostre a estrutura do produto ${PRODUCT_CODE}`,
-        },
-        {
-          id: "summary",
-          label: "Resumo do produto",
-          query: `resumo do produto ${PRODUCT_CODE}`,
-        },
-      );
-      break;
-    }
-    case "branch":
-      actions.push(
-        {
-          id: "filter-branch",
-          label: "Filtrar nesta filial",
-          query: `filtre pela filial ${value}`,
-        },
-        {
-          id: "stock-branch",
-          label: "Estoque da filial",
-          query: `qual o estoque total da filial ${value}?`,
-        },
-      );
-      break;
-    case "warehouse":
-      actions.push(
-        {
-          id: "filter-warehouse",
-          label: "Filtrar neste armazém",
-          query: `filtre pelo armazém ${value}`,
-        },
-        {
-          id: "stock-warehouse",
-          label: "Estoque do armazém",
-          query: `qual o estoque do armazém ${value}?`,
-        },
-      );
-      break;
     case "format":
       if (value === "table") {
         actions.push({

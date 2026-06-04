@@ -59,7 +59,7 @@ class ChatEntityTrackerService:
         if not isinstance(hints, dict) or not hints:
             return None
 
-        lines = ["Resolução de referências (entidades ativas):"]
+        lines = ["Resolução de referências (contexto ativo):"]
 
         for phrase, resolution in hints.items():
             lines.append(f"- «{phrase}» → {resolution}")

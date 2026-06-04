@@ -7,7 +7,7 @@ from app.application.use_cases.chat_session_memory_pins_use_case import ChatSess
 from app.domain.exceptions.chat_exceptions import ChatSessionAccessDeniedError
 
 
-def test_add_pin_persists_entity():
+def test_add_pin_persists_as_context_item():
     session_id = uuid4()
     user_id = uuid4()
     session = MagicMock()
@@ -30,8 +30,10 @@ def test_add_pin_persists_entity():
         value="01",
     )
 
-    memory_repo.upsert_entity.assert_called_once_with(session_id, "warehouse", "01")
-    assert len(result["chips"]) == 2
+    memory_repo.add_context_item.assert_called_once()
+    saved_item = memory_repo.add_context_item.call_args[0][1]
+    assert saved_item.get("kind") == "context"
+    assert saved_item.get("extractedEntities", {}).get("warehouse") == "01"
 
 
 def test_add_pin_rejects_invalid_value():

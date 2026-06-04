@@ -68,14 +68,12 @@
   max-width: min(14rem, 62vw);
 }
 
-.mdc-chat-context-bar__chip--product {
-  color: color-mix(in srgb, var(--mdc-primary) 82%, var(--mdc-text-muted));
-  border-color: color-mix(in srgb, var(--mdc-primary) 18%, var(--mdc-card-border));
-}
-
+.mdc-chat-context-bar__chip--context,
+.mdc-chat-context-bar__chip--product,
 .mdc-chat-context-bar__chip--branch,
 .mdc-chat-context-bar__chip--warehouse {
   color: color-mix(in srgb, var(--mdc-text) 78%, var(--mdc-text-muted));
+  border-color: color-mix(in srgb, var(--mdc-card-border) 65%, transparent);
 }
 
 .mdc-chat-context-bar__chip--format,

@@ -28,6 +28,8 @@ _TABLE_ROW_RE = re.compile(r"^\s*\|.+\|\s*$", re.MULTILINE)
 
 
 _CONVERSATION_KINDS = frozenset({"question", "answer", "turn"})
+_CONTEXT_CHIP_KIND = "context"
+_ENTITY_ITEM_KINDS = frozenset({"product", "branch", "warehouse"})
 
 
 class ChatUserContextItemService:
@@ -168,7 +170,7 @@ class ChatUserContextItemService:
         if not token:
             return "Contexto"
 
-        if str(kind or "").strip().lower() in ("product", "branch", "warehouse"):
+        if str(kind or "").strip().lower() in _ENTITY_ITEM_KINDS:
             return token[:_MAX_LABEL_CHARS]
 
         return token[:_MAX_LABEL_CHARS]
@@ -218,21 +220,21 @@ class ChatUserContextItemService:
 
         if product_code and len(text) <= 80 and not branch_match and not warehouse_match:
             return {
-                "kind": "product",
+                "kind": _CONTEXT_CHIP_KIND,
                 "label": cls.neutral_entity_label("product", product_code),
                 "extractedEntities": extracted,
             }
 
         if branch_match and len(text) <= 60:
             return {
-                "kind": "branch",
+                "kind": _CONTEXT_CHIP_KIND,
                 "label": cls.neutral_entity_label("branch", extracted["branch"]),
                 "extractedEntities": extracted,
             }
 
         if warehouse_match and len(text) <= 60:
             return {
-                "kind": "warehouse",
+                "kind": _CONTEXT_CHIP_KIND,
                 "label": cls.neutral_entity_label("warehouse", extracted["warehouse"]),
                 "extractedEntities": extracted,
             }
@@ -282,37 +284,50 @@ class ChatUserContextItemService:
         return item_id or label[:120]
 
     @classmethod
-    def _entity_value_for_chip(cls, item: dict[str, Any], kind: str) -> str | None:
-        """Valor estável para chips de entidade (alinha com lastEntities / pins)."""
+    def _entity_value_for_chip(cls, item: dict[str, Any]) -> str | None:
+        """Valor estável para chips com extractedEntities (produto/filial/armazém)."""
         extracted = item.get("extractedEntities") or {}
 
-        if kind == "branch":
-            return str(extracted.get("branch") or "").strip() or None
+        for key in ("productCode", "branch", "warehouse"):
+            token = str(extracted.get(key) or "").strip()
 
-        if kind == "product":
-            return str(extracted.get("productCode") or "").strip() or None
-
-        if kind == "warehouse":
-            return str(extracted.get("warehouse") or "").strip() or None
+            if token:
+                return token
 
         return None
 
     @classmethod
+    def chip_kind_for_display(cls, item_kind: str) -> str:
+        """Chips na UI usam kind genérico «context», sem product/branch/warehouse."""
+        normalized = str(item_kind or "").strip().lower()
+
+        if normalized in _ENTITY_ITEM_KINDS or normalized == _CONTEXT_CHIP_KIND:
+            return _CONTEXT_CHIP_KIND
+
+        return normalized or "note"
+
+    @classmethod
     def chip_from_item(cls, item: dict[str, Any]) -> dict[str, str]:
-        kind = str(item.get("kind") or "note").strip().lower()
+        item_kind = str(item.get("kind") or "note").strip().lower()
         label = str(item.get("label") or "Contexto").strip()
-        entity_value = cls._entity_value_for_chip(item, kind)
+        entity_value = cls._entity_value_for_chip(item)
 
         if entity_value:
             value = entity_value
         else:
             value = cls.chip_value_for_item(item)
 
-        return {
+        chip: dict[str, str] = {
             "label": label[:_MAX_LABEL_CHARS],
-            "kind": kind,
+            "kind": cls.chip_kind_for_display(item_kind),
             "value": value,
         }
+        item_id = str(item.get("id") or "").strip()
+
+        if item_id:
+            chip["itemId"] = item_id
+
+        return chip
 
     @classmethod
     def find_duplicate_item_ids(
@@ -371,35 +386,51 @@ class ChatUserContextItemService:
             return result
 
         result["userContextItems"] = normalized[-12:]
-        entities = dict(result.get("lastEntities") or {})
+        result["lastEntities"] = cls._resolve_entities_from_items(
+            normalized,
+            result.get("lastEntities"),
+        )
+        return result
 
-        for item in normalized:
+    @classmethod
+    def _resolve_entities_from_items(
+        cls,
+        items: list[dict[str, Any]] | None,
+        existing: dict | None = None,
+    ) -> dict[str, str]:
+        """Deriva lastEntities só para resolução interna (follow-up), não para UI."""
+        entities = dict(existing or {})
+
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+
             for key, value in (item.get("extractedEntities") or {}).items():
                 token = str(value or "").strip()
 
-                if token:
-                    entities[key] = token
+                if not token:
+                    continue
 
-        result["lastEntities"] = entities
-        return result
+                entity_key = ChatManualContextPinService.entity_key_for_kind(key) or key
+
+                if entity_key in {"productCode", "branch", "warehouse", "period"}:
+                    entities[entity_key] = token
+
+        return entities
 
     @classmethod
     def apply_extracted_entities_to_overlay(cls, overlay: dict, item: dict[str, Any]) -> dict:
         result = dict(overlay)
-        entities = dict(result.get("lastEntities") or {})
+        items = list(result.get("userContextItems") or [])
 
-        for key, value in (item.get("extractedEntities") or {}).items():
-            token = str(value or "").strip()
+        if isinstance(item, dict) and item.get("id"):
+            items.append(item)
 
-            if not token:
-                continue
-
-            entity_key = ChatManualContextPinService.entity_key_for_kind(key) or key
-
-            if entity_key in {"productCode", "branch", "warehouse", "period"}:
-                entities[entity_key] = token
-
-        result["lastEntities"] = entities
+        result["userContextItems"] = items[-12:]
+        result["lastEntities"] = cls._resolve_entities_from_items(
+            items,
+            result.get("lastEntities"),
+        )
         return result
 
     @classmethod
@@ -521,16 +552,28 @@ class ChatUserContextItemService:
         source = str(data.get("productCodeSource") or "").strip()
 
         if code and source in ("tool", "explicit"):
-            add("product", "productCode", code, code, f"Em foco nesta conversa: {code}")
+            add(
+                _CONTEXT_CHIP_KIND,
+                "productCode",
+                code,
+                code,
+                f"Em foco nesta conversa: {code}",
+            )
 
         branch = str(data.get("branch") or "").strip()
         if branch:
-            add("branch", "branch", branch, branch, f"Em foco nesta conversa: {branch}")
+            add(
+                _CONTEXT_CHIP_KIND,
+                "branch",
+                branch,
+                branch,
+                f"Em foco nesta conversa: {branch}",
+            )
 
         warehouse = str(data.get("warehouse") or "").strip()
         if warehouse:
             add(
-                "warehouse",
+                _CONTEXT_CHIP_KIND,
                 "warehouse",
                 warehouse,
                 warehouse,

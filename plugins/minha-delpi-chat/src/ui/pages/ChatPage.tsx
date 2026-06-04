@@ -37,6 +37,7 @@ import {
   contextChipKey,
   extractActivePreferenceHint,
   extractMemoryUsageFromMessages,
+  inferContextChipOperationalRole,
   isPinnableContextKind,
   isUserContextItemKind,
   mergeContextChips,
@@ -514,7 +515,8 @@ export function ChatPage({
     }
 
     if (isUserContextItemKind(chip.kind)) {
-      void removeChatSessionContextItem(activeSession.id, chip.value, { getAccessToken })
+      const itemId = chip.itemId?.trim() || chip.value;
+      void removeChatSessionContextItem(activeSession.id, itemId, { getAccessToken })
         .then((response) => {
           applySessionMemoryContext(response);
         })
@@ -550,9 +552,21 @@ export function ChatPage({
         return;
       }
 
+      const role =
+        chip.kind === "context"
+          ? inferContextChipOperationalRole(chip)
+          : chip.kind;
+
+      if (chip.kind === "context" && !role) {
+        return;
+      }
+
       void addChatSessionMemoryPin(
         activeSession.id,
-        { kind: chip.kind, value: chip.value },
+        {
+          kind: role === "product" || role === "branch" || role === "warehouse" ? role : chip.kind,
+          value: chip.label || chip.value,
+        },
         { getAccessToken },
       )
         .then((response) => {

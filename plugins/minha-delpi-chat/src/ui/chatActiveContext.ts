@@ -1,9 +1,20 @@
 import type { ChatContextChip } from "./components/ChatContextBar";
 
+/** Kind genérico na barra — sem product/branch/warehouse na UI. */
+export const CONTEXT_CHIP_KIND = "context";
+
+const OPERATIONAL_CHIP_KINDS = new Set([
+  CONTEXT_CHIP_KIND,
+  "product",
+  "branch",
+  "warehouse",
+]);
+
 const CHIP_KIND_ORDER: Record<string, number> = {
+  context: 0,
   product: 0,
-  branch: 1,
-  warehouse: 2,
+  branch: 0,
+  warehouse: 0,
   question: 2.5,
   answer: 2.6,
   turn: 2.7,
@@ -36,7 +47,8 @@ function isContextChip(value: unknown): value is ChatContextChip {
     typeof chip.value === "string" &&
     chip.value.trim().length > 0 &&
     typeof chip.label === "string" &&
-    chip.label.trim().length > 0
+    chip.label.trim().length > 0 &&
+    (chip.itemId === undefined || typeof chip.itemId === "string")
   );
 }
 
@@ -49,6 +61,7 @@ export function normalizeContextChips(raw: unknown): ChatContextChip[] {
     kind: chip.kind.trim(),
     value: chip.value.trim(),
     label: chip.label.trim(),
+    ...(chip.itemId?.trim() ? { itemId: chip.itemId.trim() } : {}),
   }));
 }
 
@@ -106,13 +119,67 @@ export function collectActiveContextChips(
 }
 
 export function contextChipKindClass(kind: string): string {
-  const safe = kind.replace(/[^a-z0-9_-]/gi, "");
+  const safe = kind.replace(/[^a-z0-9_-]/gi, "").toLowerCase();
+
+  if (OPERATIONAL_CHIP_KINDS.has(safe)) {
+    return "mdc-chat-context-bar__chip--context";
+  }
 
   return safe ? `mdc-chat-context-bar__chip--${safe}` : "mdc-chat-context-bar__chip--generic";
 }
 
-const PINNABLE_CONTEXT_KINDS = new Set(["branch", "warehouse", "product"]);
+export type ContextChipOperationalRole = "product" | "branch" | "warehouse";
+
+/** Inferência interna para ações do chip (UI neutra, sem ícone de entidade). */
+export function inferContextChipOperationalRole(
+  chip: Pick<ChatContextChip, "kind" | "value">,
+): ContextChipOperationalRole | null {
+  const kind = String(chip.kind ?? "").trim().toLowerCase();
+  const value = String(chip.value ?? "").replace(/\./g, "").trim();
+
+  if (!value) {
+    return null;
+  }
+
+  if (kind === "product") {
+    return "product";
+  }
+
+  if (kind === "branch") {
+    return "branch";
+  }
+
+  if (kind === "warehouse") {
+    return "warehouse";
+  }
+
+  if (kind !== CONTEXT_CHIP_KIND) {
+    return null;
+  }
+
+  if (/^\d{5,12}$/.test(value)) {
+    return "product";
+  }
+
+  if (/^\d{1,4}$/.test(value)) {
+    return "branch";
+  }
+
+  if (/^[A-Za-z0-9]{1,6}$/i.test(value)) {
+    return "warehouse";
+  }
+
+  return null;
+}
+
+const PINNABLE_CONTEXT_KINDS = new Set([
+  CONTEXT_CHIP_KIND,
+  "branch",
+  "warehouse",
+  "product",
+]);
 const USER_CONTEXT_ITEM_KINDS = new Set([
+  "context",
   "note",
   "table",
   "file",

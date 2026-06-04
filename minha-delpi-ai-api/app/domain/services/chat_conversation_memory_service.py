@@ -224,28 +224,7 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             attachments=attachments,
         )
-        snapshot = cls._capture_focus_as_context(snapshot)
-        return snapshot
-
-    @classmethod
-    def _capture_focus_as_context(cls, snapshot: dict) -> dict:
-        """Grava produto/filial detectados como itens de contexto (não entidade)."""
-        from app.domain.services.chat_user_context_item_service import (
-            ChatUserContextItemService,
-        )
-
-        auto_items = ChatUserContextItemService.auto_items_from_entities(
-            snapshot.get("lastEntities"),
-            snapshot.get("userContextItems"),
-        )
-
-        if not auto_items:
-            return snapshot
-
-        items = list(snapshot.get("userContextItems") or [])
-        items.extend(auto_items)
-        snapshot["userContextItems"] = items[-12:]
-        return snapshot
+        return ChatWorkingMemoryService._sync_focus_to_context_items(snapshot)
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
@@ -295,19 +274,6 @@ class ChatConversationMemoryService:
         existing = {f"{chip.get('kind')}:{chip.get('value')}" for chip in chips}
 
         for chip in ux_chips:
-            key = f"{chip.get('kind')}:{chip.get('value')}"
-
-            if key not in existing:
-                chips.append(chip)
-                existing.add(key)
-
-        from app.domain.services.chat_user_context_item_service import (
-            ChatUserContextItemService,
-        )
-
-        for chip in ChatUserContextItemService.chips_from_items(
-            snapshot.get("userContextItems")
-        ):
             key = f"{chip.get('kind')}:{chip.get('value')}"
 
             if key not in existing:

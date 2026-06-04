@@ -1,15 +1,14 @@
 import { useState } from "react";
 import {
-  Building2,
   CalendarRange,
   ClipboardList,
   Eye,
   FileText,
+  Layers,
   LayoutGrid,
   Layout,
   MessageCircleQuestion,
   MessageSquare,
-  Package,
   Plus,
   Reply,
   SlidersHorizontal,
@@ -31,6 +30,8 @@ export type ChatContextChip = {
   label: string;
   kind: string;
   value: string;
+  /** ID do item em userContextItems (remover da sessão). */
+  itemId?: string;
 };
 
 type ChatContextBarProps = {
@@ -46,9 +47,7 @@ type ChatContextBarProps = {
 };
 
 const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
-  product: Package,
-  branch: Building2,
-  warehouse: Building2,
+  context: Layers,
   format: LayoutGrid,
   tone: MessageSquare,
   preference: SlidersHorizontal,
@@ -69,7 +68,18 @@ const CHIP_KIND_ICONS: Record<string, LucideIcon> = {
 };
 
 function chipIconForKind(kind: string): LucideIcon {
-  return CHIP_KIND_ICONS[kind] ?? SlidersHorizontal;
+  const normalized = kind.trim().toLowerCase();
+
+  if (
+    normalized === "context" ||
+    normalized === "product" ||
+    normalized === "branch" ||
+    normalized === "warehouse"
+  ) {
+    return Layers;
+  }
+
+  return CHIP_KIND_ICONS[normalized] ?? FileText;
 }
 
 export function ChatContextBar({

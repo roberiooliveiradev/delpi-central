@@ -8,10 +8,11 @@ def test_auto_items_capture_product_as_neutral_context():
 
     by_kind = {item["kind"]: item for item in items}
 
-    assert by_kind["product"]["label"] == "90260114"
-    assert by_kind["product"]["source"] == "auto"
-    assert by_kind["product"]["extractedEntities"]["productCode"] == "90260114"
-    assert by_kind["branch"]["label"] == "02"
+    assert len(items) == 2
+    assert all(item["kind"] == "context" for item in items)
+    assert items[0]["label"] == "90260114"
+    assert items[0]["extractedEntities"]["productCode"] == "90260114"
+    assert items[1]["label"] == "02"
 
 
 def test_auto_items_skip_inferred_product_code():
@@ -37,7 +38,7 @@ def test_auto_items_dedupe_against_existing():
 def test_classify_product_short_text():
     result = ChatUserContextItemService.classify("10080001")
 
-    assert result["kind"] == "product"
+    assert result["kind"] == "context"
     assert result["label"] == "10080001"
     assert result["extractedEntities"]["productCode"] == "10080001"
 
@@ -45,7 +46,7 @@ def test_classify_product_short_text():
 def test_classify_branch_short_text_neutral_label():
     result = ChatUserContextItemService.classify("filial 01")
 
-    assert result["kind"] == "branch"
+    assert result["kind"] == "context"
     assert result["label"] == "01"
 
 
@@ -139,13 +140,15 @@ def test_find_duplicate_item_ids_for_repeated_question():
 def test_chip_from_item_branch_uses_entity_value_not_item_id():
     item = ChatUserContextItemService.ingest(content="filial 01")
 
-    assert item["kind"] == "branch"
+    assert item["kind"] == "context"
     assert item["extractedEntities"]["branch"] == "01"
 
     chip = ChatUserContextItemService.chip_from_item(item)
 
+    assert chip["kind"] == "context"
     assert chip["value"] == "01"
     assert chip["label"] == "01"
+    assert chip.get("itemId") == item["id"]
 
 
 def test_build_context_chips_no_duplicate_branch_entity_and_user_item():
@@ -160,10 +163,10 @@ def test_build_context_chips_no_duplicate_branch_entity_and_user_item():
     }
 
     chips = ChatConversationMemoryService.build_context_chips(snapshot)
-    branch_chips = [chip for chip in chips if chip.get("kind") == "branch"]
+    branch_value_chips = [chip for chip in chips if chip.get("value") == "02"]
 
-    assert len(branch_chips) == 1
-    assert branch_chips[0]["value"] == "02"
+    assert len(branch_value_chips) == 1
+    assert branch_value_chips[0]["kind"] == "context"
 
 
 def test_format_prompt_block_includes_user_items():

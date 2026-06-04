@@ -34,15 +34,30 @@ class ChatSessionMemoryPinsUseCase:
             raise ValueError("Tipo ou valor de contexto inválido.")
 
         chip_kind, chip_value = normalized
-        entity_key = ChatManualContextPinService.entity_key_for_kind(chip_kind)
+        content = (
+            chip_value
+            if chip_kind == "product"
+            else f"filial {chip_value}"
+            if chip_kind == "branch"
+            else f"armazém {chip_value}"
+        )
+        item = ChatUserContextItemService.ingest(content=content)
+        overlay = self.memory_repository.load_active_overlay(session_id)
+        existing_items = list(overlay.get("userContextItems") or [])
 
-        if not entity_key:
-            raise ValueError("Tipo de contexto não suportado.")
+        for duplicate_id in ChatUserContextItemService.find_duplicate_item_ids(
+            existing_items,
+            [item],
+        ):
+            self.memory_repository.remove_context_item(session_id, duplicate_id)
 
-        self.memory_repository.upsert_entity(
-            session_id,
-            entity_key,
-            chip_value,
+        self.memory_repository.add_context_item(session_id, item)
+        existing_items = [i for i in existing_items if i.get("id") != item.get("id")]
+        existing_items.append(item)
+        overlay["userContextItems"] = existing_items[-12:]
+        overlay = ChatUserContextItemService.apply_extracted_entities_to_overlay(
+            overlay,
+            item,
         )
 
         return self._build_response(session_id)
@@ -109,10 +124,10 @@ class ChatSessionMemoryPinsUseCase:
             )
 
         overlay["userContextItems"] = existing_items[-12:]
-
-        for key, value in (overlay.get("lastEntities") or {}).items():
-            if key in {"productCode", "branch", "warehouse", "period"}:
-                self.memory_repository.upsert_entity(session_id, key, str(value))
+        overlay = ChatUserContextItemService.apply_extracted_entities_to_overlay(
+            overlay,
+            items[-1] if items else {},
+        )
 
         return self._build_response(session_id)
 
