@@ -94,6 +94,36 @@ def test_plan_actions_for_multiple_product_codes():
     assert service.product_calls[0][1] == ChatProductQueryIntent.STRUCTURE
 
 
+def test_plan_actions_stock_for_multiple_product_codes_plural_phrase():
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="estoque dos produtos 10080022, 10080012?",
+        allowed_action_ids=["product-stock"],
+        max_calls=5,
+    )
+
+    assert len(planned) == 2
+    assert service.product_calls[0] == ("10080022", ChatProductQueryIntent.STOCK)
+    assert service.product_calls[1] == ("10080012", ChatProductQueryIntent.STOCK)
+
+
+def test_plan_actions_parents_for_multiple_product_codes():
+    service = FakeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="onde são usados os produtos 10080022, 10080012?",
+        allowed_action_ids=["product-parents"],
+        max_calls=5,
+    )
+
+    assert len(planned) == 2
+    assert service.product_calls[0] == ("10080022", ChatProductQueryIntent.PARENTS)
+    assert service.product_calls[1] == ("10080012", ChatProductQueryIntent.PARENTS)
+
+
 def test_plan_actions_comparison_fetches_missing_structure(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",

@@ -278,7 +278,10 @@ class ChatExternalActionOrchestrationService:
         explicit_route_segment = ChatRouteContextService.segment_from_message(message)
 
         if intent == ChatProductQueryIntent.FULL:
-            intent = cls._resolve_product_intent(message, normalized)
+            intent = ChatProductQueryIntentService.refine_operational_intent_from_full(
+                message,
+                normalized=normalized,
+            )
 
         recent_batch = ChatRouteContextService.collect_recent_product_route_batch(
             previous_messages,
@@ -382,22 +385,7 @@ class ChatExternalActionOrchestrationService:
         if intent != ChatProductQueryIntent.FULL:
             return intent
 
-        if ChatProductQueryIntentService._looks_like_structure_question(normalized):
-            return ChatProductQueryIntent.STRUCTURE
-
-        if ChatProductQueryIntentService._looks_like_sales_question(normalized):
-            return ChatProductQueryIntent.SALES
-
-        if ChatProductQueryIntentService._looks_like_stock_question(normalized):
-            return ChatProductQueryIntent.STOCK
-
-        if ChatProductQueryIntentService._looks_like_parents_question(normalized):
-            return ChatProductQueryIntent.PARENTS
-
-        if ChatProductQueryIntentService._looks_like_description_question(normalized):
-            return ChatProductQueryIntent.DESCRIPTION
-
-        if ChatProductQueryIntentService._looks_like_full_analyser_question(normalized):
-            return ChatProductQueryIntent.ANALYSER
-
-        return intent
+        return ChatProductQueryIntentService.refine_operational_intent_from_full(
+            message,
+            normalized=normalized,
+        )

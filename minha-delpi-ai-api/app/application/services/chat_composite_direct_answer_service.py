@@ -110,12 +110,20 @@ class ChatCompositeDirectAnswerService:
 
         if len(executions) > 1:
             if not issues:
-                parts.append(
-                    ExternalActionResponseContentService.get(
-                        "composite",
-                        "allSuccessful",
-                    )
+                intro = (
+                    cls._build_multi_product_codes_intro(message, executions)
+                    or cls._build_multi_route_intro(message, executions)
                 )
+
+                if intro:
+                    parts.append(intro)
+                else:
+                    parts.append(
+                        ExternalActionResponseContentService.get(
+                            "composite",
+                            "allSuccessful",
+                        )
+                    )
             else:
                 parts.append(
                     ExternalActionResponseContentService.format(
@@ -243,8 +251,158 @@ class ChatCompositeDirectAnswerService:
         )
 
     @classmethod
+    def _build_multi_product_codes_intro(
+        cls,
+        message: str,
+        executions: list[ExternalActionExecutionResult],
+    ) -> str | None:
+        from app.domain.services.chat_analysis_intent_service import (
+            ChatAnalysisIntentService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
+        codes: list[str] = []
+        scope_labels: list[str] = []
+
+        for execution in executions:
+            metadata = execution.metadata or {}
+
+            if not cls._is_success(metadata):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if not path.startswith("/products/"):
+                continue
+
+            code = ChatProductQueryIntentService.extract_product_code(path)
+
+            if code and code not in codes:
+                codes.append(code)
+
+            for label in ChatProductPluralPhrasingService.scope_labels_from_api_path(path):
+                if label not in scope_labels:
+                    scope_labels.append(label)
+
+        scope_label = ChatProductPluralPhrasingService.join_scope_labels_pt(scope_labels)
+
+        message_codes = ChatAnalysisIntentService.extract_all_product_codes(message)
+
+        for code in message_codes:
+            if code not in codes:
+                codes.append(code)
+
+        if len(codes) < 2 or not scope_label:
+            return None
+
+        return ExternalActionResponseContentService.format(
+            "composite",
+            "multiProductCodesIntro",
+            codes=cls._join_pt_list(codes),
+            scope=scope_label,
+        )
+
+    @classmethod
+    def _build_multi_route_intro(
+        cls,
+        message: str,
+        executions: list[ExternalActionExecutionResult],
+    ) -> str | None:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
+        scope_labels: list[str] = []
+        product_code: str | None = None
+
+        for execution in executions:
+            metadata = execution.metadata or {}
+
+            if not cls._is_success(metadata):
+                continue
+
+            path = str(metadata.get("path") or "").lower()
+
+            if not path.startswith("/products/"):
+                continue
+
+            if product_code is None:
+                product_code = ChatProductQueryIntentService.extract_product_code(
+                    message
+                ) or ChatProductQueryIntentService.extract_product_code(path)
+
+            if "/stock" in path and "estoque" not in scope_labels:
+                scope_labels.append("estoque")
+
+            if "/parents" in path and "onde o item é usado" not in scope_labels:
+                scope_labels.append("onde o item é usado")
+
+            if "/structure" in path and "estrutura (BOM)" not in scope_labels:
+                scope_labels.append("estrutura (BOM)")
+
+            if "/guide" in path and "roteiro" not in scope_labels:
+                scope_labels.append("roteiro")
+
+            if "/inspection" in path and "inspeção" not in scope_labels:
+                scope_labels.append("inspeção")
+
+        if len(scope_labels) < 2:
+            return None
+
+        code = product_code or "informado"
+        scopes = cls._join_pt_list(scope_labels)
+
+        return ExternalActionResponseContentService.format(
+            "composite",
+            "multiProductRouteIntro",
+            code=code,
+            scopes=scopes,
+        )
+
+    @staticmethod
+    def _join_pt_list(items: list[str]) -> str:
+        if not items:
+            return ""
+
+        if len(items) == 1:
+            return items[0]
+
+        if len(items) == 2:
+            return f"{items[0]} e {items[1]}"
+
+        return ", ".join(items[:-1]) + f" e {items[-1]}"
+
+    @classmethod
     def _action_label(cls, path: str, action_id: str, index: int) -> str:
         if path:
+            from app.application.services.chat_action_label_service import (
+                ChatActionLabelService,
+            )
+            from app.domain.services.chat_product_query_intent_service import (
+                ChatProductQueryIntentService,
+            )
+
+            label = ChatActionLabelService.humanize(
+                path=path,
+                method="GET",
+                summary="",
+                action_id=action_id,
+            )
+
+            code = ChatProductQueryIntentService.extract_product_code(path)
+
+            if code and label and label != path and code not in label:
+                label = f"{label} — {code}"
+
+            if label and label != path:
+                return label
+
             return path
 
         if action_id:

@@ -87,13 +87,32 @@ class ChatProductMultiScopePlanningService:
         ):
             add("profile")
 
-        if "roteiro" in normalized:
+        if any(term in normalized for term in ("roteiro", "roteiros")):
             add("guide")
 
-        if any(term in normalized for term in ("inspeção", "inspecao", "inspeções", "inspecoes")):
+        if any(
+            term in normalized
+            for term in (
+                "inspeção",
+                "inspecao",
+                "inspeções",
+                "inspecoes",
+            )
+        ):
             add("inspection")
 
-        if any(term in normalized for term in ("estrutura", "bom", "composição", "composicao")):
+        if any(
+            term in normalized
+            for term in (
+                "estrutura",
+                "estruturas",
+                "bom",
+                "composição",
+                "composicao",
+                "composições",
+                "composicoes",
+            )
+        ):
             add("structure")
 
         if any(

@@ -136,11 +136,20 @@ class ChatProductQueryIntentService:
             "somente filial",
             "desse produto",
             "deste produto",
+            "desses produtos",
+            "destes produtos",
             "esse produto",
             "este produto",
+            "esses produtos",
+            "estes produtos",
             "mesmo produto",
+            "mesmos produtos",
+            "mesmo item",
+            "mesmos itens",
             "produto acima",
+            "produtos acima",
             "produto anterior",
+            "produtos anteriores",
             "código acima",
             "codigo acima",
             "desse item",
@@ -182,8 +191,11 @@ class ChatProductQueryIntentService:
         ]
         product_terms = [
             "produto",
+            "produtos",
             "item",
+            "itens",
             "material",
+            "materiais",
             "código",
             "codigo",
         ]
@@ -713,7 +725,27 @@ class ChatProductQueryIntentService:
         humanized: dict,
         *,
         intent: str,
+        path: str | None = None,
     ) -> str | None:
+        normalized_path = str(path or "").lower()
+
+        if intent in {
+            ChatProductQueryIntent.MULTI_SCOPE,
+            ChatProductQueryIntent.STOCK,
+            ChatProductQueryIntent.PARENTS,
+        } or (
+            intent == ChatProductQueryIntent.FULL
+            and cls._is_product_operational_path(normalized_path)
+        ):
+            brief = cls._format_product_scope_brief(
+                humanized,
+                intent=intent,
+                path=normalized_path,
+            )
+
+            if brief:
+                return brief
+
         if intent == ChatProductQueryIntent.STRUCTURE:
             from app.domain.services.chat_product_structure_presentation_service import (
                 ChatProductStructurePresentationService,
@@ -746,29 +778,52 @@ class ChatProductQueryIntentService:
             parts.append(lines[0])
             return "\n\n".join(parts)
 
-        if intent == ChatProductQueryIntent.STOCK:
-            stock_lines = cls._filter_stock_lines(lines)
-            filtered = [
-                line
-                for line in (stock_lines or lines)
-                if not cls._ZERO_RECORDS_RE.search(line)
-            ]
-
-            if not filtered:
-                return None
-
-            header = title or "Posição de estoque"
-            body = "\n".join(f"- {line}" for line in filtered[:12])
-
-            if len(filtered) > 12:
-                body += f"\n- … e mais {len(filtered) - 12} registro(s)."
-
-            return f"**{header}**\n\n{body}"
-
         filtered = [line for line in lines if not cls._ZERO_RECORDS_RE.search(line)]
         parts = [title] if title else []
         parts.extend(filtered or lines)
         return "\n\n".join(parts)
+
+    @classmethod
+    def _is_product_operational_path(cls, path: str) -> bool:
+        return any(
+            segment in path
+            for segment in (
+                "/stock",
+                "/parents",
+                "/guide",
+                "/inspection",
+                "/structure",
+            )
+        )
+
+    @classmethod
+    def _format_product_scope_brief(
+        cls,
+        humanized: dict,
+        *,
+        intent: str,
+        path: str,
+    ) -> str | None:
+        lines = [
+            str(line).strip()
+            for line in (humanized.get("linhas") or [])
+            if str(line).strip() and not cls._ZERO_RECORDS_RE.search(str(line).strip())
+        ]
+
+        if not lines:
+            return None
+
+        title = str(humanized.get("titulo") or "").strip()
+        header = title or "Consulta do produto"
+        body = "\n\n".join(lines[:3])
+
+        if intent == ChatProductQueryIntent.STOCK or "/stock" in path:
+            header = title or "Estoque do produto"
+
+        if intent == ChatProductQueryIntent.PARENTS or "/parents" in path:
+            header = title or "Onde o item é usado"
+
+        return f"**{header}**\n\n{body}"
 
     @classmethod
     def _filter_stock_lines(cls, lines: list[str]) -> list[str]:
@@ -833,6 +888,10 @@ class ChatProductQueryIntentService:
         ):
             return False
 
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
         if any(
             term in normalized
             for term in (
@@ -840,6 +899,8 @@ class ChatProductQueryIntentService:
                 "resumo de venda",
                 "vendas do produto",
                 "venda do produto",
+                "vendas dos produtos",
+                "vendas dos itens",
                 "vendas do item",
                 "venda do item",
                 "historico de venda",
@@ -852,9 +913,15 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        has_product_ref = any(
-            term in normalized
-            for term in ("produto", "item", "material", "codigo", "código")
+        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
+            normalized,
+            scope_terms=("venda", "vendas"),
+            linked_stems=("venda", "vendas"),
+        ):
+            return True
+
+        has_product_ref = ChatProductPluralPhrasingService.has_product_entity_reference(
+            normalized
         )
 
         return has_product_ref and any(
@@ -873,6 +940,18 @@ class ChatProductQueryIntentService:
             )
         ) and not cls.extract_product_code(normalized):
             return False
+
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
+        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
+            normalized,
+            scope_terms=("estoque", "stock", "saldo"),
+            scope_plural_terms=("estoques", "saldos"),
+            linked_stems=("estoque", "stock", "saldo"),
+        ):
+            return True
 
         terms = [
             "estoque",
@@ -940,12 +1019,17 @@ class ChatProductQueryIntentService:
             term in normalized
             for term in (
                 "resumo do produto",
+                "resumo dos produtos",
+                "resumo dos itens",
                 "resumo sintetico",
                 "resumo sintético",
+                "resumos dos produtos",
                 "visao resumida do produto",
                 "visão resumida do produto",
                 "visao resumida do item",
                 "visão resumida do item",
+                "visao resumida dos produtos",
+                "visão resumida dos produtos",
             )
         ):
             return True
@@ -968,16 +1052,11 @@ class ChatProductQueryIntentService:
         ):
             return False
 
-        return any(
-            term in normalized
-            for term in (
-                "produto",
-                "item",
-                "material",
-                "codigo",
-                "código",
-            )
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
         )
+
+        return ChatProductPluralPhrasingService.has_product_entity_reference(normalized)
 
     @classmethod
     def _looks_like_description_question(cls, normalized: str) -> bool:
@@ -988,15 +1067,33 @@ class ChatProductQueryIntentService:
         if ChatTechnicalDescriptionIntentService.requires_normas_knowledge(normalized):
             return False
 
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
+        if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
+            normalized,
+            scope_terms=("descricao", "descrição", "description"),
+            scope_plural_terms=("descricoes", "descrições"),
+            linked_stems=("descricao", "descrição", "description"),
+        ):
+            return True
+
         terms = [
             "descrição",
             "descricao",
             "description",
             "nome do produto",
+            "nomes dos produtos",
+            "nomes dos itens",
+            "como se chamam",
             "como se chama",
             "qual a descrição",
             "qual a descricao",
+            "quais as descrições",
+            "quais as descricoes",
             "qual produto",
+            "quais produtos",
             "referência",
             "referencia",
             "ref ",
@@ -1004,9 +1101,14 @@ class ChatProductQueryIntentService:
             "sku",
             "código do item",
             "codigo do item",
+            "códigos dos itens",
+            "codigos dos itens",
             "o que é o produto",
             "o que e o produto",
+            "o que são os produtos",
+            "o que sao os produtos",
             "detalhes do produto",
+            "detalhes dos produtos",
             "detalhe do produto",
             "dados cadastrais",
             "informações completas",
@@ -1016,14 +1118,86 @@ class ChatProductQueryIntentService:
         return any(term in normalized for term in terms)
 
     @classmethod
+    def refine_operational_intent_from_full(
+        cls,
+        message: str,
+        *,
+        normalized: str | None = None,
+    ) -> str:
+        """Refina intent FULL para escopo operacional explícito na mensagem."""
+        normalized_text = normalized or ChatMessageNormalizationService.normalize_for_matching(
+            message
+        )
+
+        if cls._looks_like_structure_question(normalized_text):
+            return ChatProductQueryIntent.STRUCTURE
+
+        if cls._looks_like_sales_question(normalized_text):
+            return ChatProductQueryIntent.SALES
+
+        if cls._looks_like_stock_question(normalized_text):
+            return ChatProductQueryIntent.STOCK
+
+        if cls._looks_like_parents_question(normalized_text):
+            return ChatProductQueryIntent.PARENTS
+
+        if cls._looks_like_description_question(normalized_text):
+            return ChatProductQueryIntent.DESCRIPTION
+
+        if cls._looks_like_full_analyser_question(normalized_text):
+            return ChatProductQueryIntent.ANALYSER
+
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
+
+        if len(scopes) == 1:
+            scope_to_intent = {
+                "structure": ChatProductQueryIntent.STRUCTURE,
+                "stock": ChatProductQueryIntent.STOCK,
+                "parents": ChatProductQueryIntent.PARENTS,
+                "sales": ChatProductQueryIntent.SALES,
+                "profile": ChatProductQueryIntent.DESCRIPTION,
+            }
+            mapped = scope_to_intent.get(scopes[0])
+
+            if mapped:
+                return mapped
+
+        return ChatProductQueryIntent.FULL
+
+    @classmethod
     def _looks_like_parents_question(cls, normalized: str) -> bool:
         if re.search(
-            r"\bonde\b(?:\s+(?:o|esse|este|a|as)\s+(?:produto|item))?\s+.*?\b(?:e\s+)?usad[oa]\b",
+            r"\bonde\b(?:\s+(?:o|os|a|as|esse|este)\s+(?:produto|produtos|item|itens))?\s+.*?\b(?:e\s+)?usad[oa]s?\b",
+            normalized,
+        ):
+            return True
+
+        if re.search(r"\bonde\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b", normalized):
+            return True
+
+        if re.search(
+            r"\bem\s+quais\s+produtos\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b",
+            normalized,
+        ):
+            return True
+
+        if re.search(
+            r"\bem\s+quais\s+itens\s+(?:sao|e|estao|estão)\s+usad[oa]s?\b",
             normalized,
         ):
             return True
 
         terms = (
+            "onde sao usados",
+            "onde são usados",
+            "onde estao usados",
+            "onde estão usados",
+            "onde sao utilizados",
+            "onde são utilizados",
             "onde é usado",
             "onde e usado",
             "onde é utilizado",
@@ -1066,18 +1240,31 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_structure_question(cls, normalized: str) -> bool:
-        terms = [
-            "estrutura",
-            "bom",
-            "bill of material",
-            "composição",
-            "composicao",
-            "componentes",
-            "árvore do produto",
-            "arvore do produto",
-        ]
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
 
-        return any(term in normalized for term in terms)
+        return ChatProductPluralPhrasingService.matches_scope_linked_to_products(
+            normalized,
+            scope_terms=(
+                "estrutura",
+                "bom",
+                "bill of material",
+                "composição",
+                "composicao",
+                "componentes",
+                "árvore do produto",
+                "arvore do produto",
+            ),
+            scope_plural_terms=(
+                "estruturas",
+                "composições",
+                "composicoes",
+                "árvores",
+                "arvores",
+            ),
+            linked_stems=("estrutura", "bom", "composicao", "composição", "arvore", "árvore"),
+        )
 
     @classmethod
     def _looks_like_product_sub_intent(cls, normalized: str) -> bool:

@@ -55,6 +55,15 @@ def test_detect_parents_intent_when_product_code_is_between_onde_and_usado():
     )
 
 
+def test_detect_parents_intent_for_plural_multi_product_phrase():
+    assert (
+        ChatProductQueryIntentService.detect(
+            "onde são usados os produtos 10080022, 10080012?"
+        )
+        == ChatProductQueryIntent.PARENTS
+    )
+
+
 def test_detect_summary_not_kaizen_or_sales():
     assert (
         ChatProductQueryIntentService.detect("resumo de vendas do mês")
@@ -307,21 +316,23 @@ def test_extract_product_code_ignores_group_number():
     assert ChatProductQueryIntentService.extract_product_code("produto 10081387") == "10081387"
 
 
-def test_format_direct_answer_stock_uses_bullets():
+def test_format_direct_answer_stock_uses_brief_summary():
     answer = ChatProductQueryIntentService.format_direct_answer(
         {
             "titulo": "Estoque 10080047",
             "linhas": [
-                "Filial 01 — quantidade disponível: 120 PC",
+                "Consultei o estoque do produto **10080047**: **2** posição(ões).",
                 "Roteiro: 0 registro(s).",
             ],
         },
         intent=ChatProductQueryIntent.STOCK,
+        path="/products/10080047/stock",
     )
 
     assert answer is not None
     assert "**Estoque 10080047**" in answer
-    assert "- Filial 01" in answer
+    assert "Consultei o estoque" in answer
+    assert "- Filial 01" not in answer
     assert "Roteiro" not in answer
 
 

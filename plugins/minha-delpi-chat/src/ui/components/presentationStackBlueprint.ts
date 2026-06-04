@@ -18,6 +18,7 @@ import {
   type StackSectionChrome,
   type StackSectionId,
 } from "./presentationStackSections";
+import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
 const PRESENTATION_MARKER_RE =
@@ -382,6 +383,16 @@ export function buildCanonicalStackSegments(
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   const trimmedCommentary = String(commentary || "").trim();
+  const multiRoute = buildMultiRouteStackSegments(
+    trimmedCommentary,
+    toolCalls,
+    appendUnique,
+  );
+
+  if (multiRoute?.length) {
+    return multiRoute;
+  }
+
   const plan = getStackPresentationPlanFromToolCalls(toolCalls);
 
   return buildPlanOrderedStackSegments(

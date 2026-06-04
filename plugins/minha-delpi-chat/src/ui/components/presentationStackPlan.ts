@@ -1,6 +1,10 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
 
 import type { StackSectionId } from "./presentationStackSections";
+import {
+  isMultiRouteProductPresentation,
+  resolveMultiRouteStackPlan,
+} from "./presentationMultiRoute";
 
 export type StackTableRole =
   | "profile"
@@ -183,6 +187,10 @@ export function getStackPresentationPlanFromToolCalls(
 ): StackPresentationPlan {
   if (!Array.isArray(toolCalls)) {
     return DEFAULT_PLAN;
+  }
+
+  if (isMultiRouteProductPresentation(toolCalls)) {
+    return resolveMultiRouteStackPlan(toolCalls);
   }
 
   for (const toolCall of toolCalls) {

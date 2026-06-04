@@ -2,7 +2,7 @@
 
 Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
 
-Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md).
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md), [changelog multi-rota](../changelog/2026-06-apresentacao-multi-rota-produto.md).
 
 ---
 
@@ -11,7 +11,7 @@ Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook
 | Camada | Responsabilidade |
 |--------|------------------|
 | **API (chat base)** | Montar `presentation` + visuais secundários, `textPresentation`, `presentationDecision` (o que combinar e em que ordem) |
-| **MFE** | `ChatAssistantContent` monta segmentos, exibe narrativa + **um** visual ativo com barra de troca entre formatos disponíveis |
+| **MFE** | `ChatAssistantContent` monta segmentos; **uma rota** ou analyser: narrativa + barra global de formato; **várias rotas** do mesmo produto: seções numeradas com toolbar **por bloco** (ver [Consulta multi-rota](#consulta-multi-rota-mesmo-produto-jun2026)) |
 
 Agentes **não** reimplementam layout; herdam metadata das tools.
 
@@ -35,9 +35,10 @@ execute_external_action
   → toolCalls[].metadata no turno do chat
 
 MFE: buildAssistantContentSegments(content, toolCalls)
-  → resolveAssistantContentLayout (stack | markers | text-only)
+  → (se 2+ rotas /products/… OK, exceto só analyser) buildMultiRouteStackSegments
+  → senão resolveAssistantContentLayout (stack | markers | text-only)
   → presentationStackBlueprint: lead → ficha → destaques → tabelas operacionais → árvore/gráfico → pontos
-  → ChatAssistantContent filtra visual ativo + AssistantContentFormatToolbar
+  → ChatAssistantContent: toolbar global OU AssistantContentRouteSection (toolbar por seção)
   → assistantContentRegistry → ChatRichTable | ChatRichTree | ChatRichChart | …
 ```
 
@@ -137,15 +138,89 @@ Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`.
 
 ## Barra de troca de formato
 
-Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções:
+Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções (e **não** é apresentação multi-rota — ver abaixo):
 
 - Em **stack** (analyser e combinações): exibe narrativa + cada componente nativo com dados (várias tabelas, árvore, gráfico).
-- Toolbar de troca (**Tabela** / **Árvore** / **Gráfico**) só em layout **não-stack** (um visual por vez).
+- Toolbar de troca (**Completo** / **Texto** / **Tabela** / **Árvore** / **Gráfico**) no topo de `ChatAssistantContent` — filtro global sobre todos os segmentos.
 - Leitura vertical intercalada: destaques → roteiro/ficha (tabelas) → pontos de atenção → árvore (ver `ChatRichPresentationTextService.embed_visual_markers_in_markdown` e `assistantContentInterleave.ts`).
 
 Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.
 
+| Estado visual | CSS / a11y |
+|---------------|------------|
+| Opção ativa | `mdc-assistant-content__format-toggle-btn--active` + `mdc-rich-chart__toggle-btn--active` |
+| Inativa | Opacidade reduzida na barra da seção |
+| Acessibilidade | `aria-pressed` no botão selecionado |
+
 Telemetria: `presentation_view_switch` (mesmo evento do antigo toggle).
+
+---
+
+## Consulta multi-rota do mesmo produto (jun/2026)
+
+Perguntas como «**estoque e onde é usado** do produto 10070011» disparam **várias** `execute_external_action` (`/stock`, `/parents`, …). O MFE **não** deve tratar isso como um único stack do analyser nem fundir visuais entre rotas.
+
+Changelog resumido: [`../changelog/2026-06-apresentacao-multi-rota-produto.md`](../changelog/2026-06-apresentacao-multi-rota-produto.md).
+
+### API
+
+| Serviço | Papel |
+|---------|--------|
+| `ChatProductMultiScopePlanningService` | Extrai escopos da mensagem; `plan_product_scope_fetches` — analyser único só em «completa/integrada» ou 3+ escopos do analyser |
+| `ChatCompositeDirectAnswerService` | Markdown único: intro `multiProductRouteIntro` + `### {rótulo}` por rota com corpo **breve** |
+| `ChatProductQueryIntentService.format_direct_answer` | `path` opcional; resumo por escopo (`_format_product_scope_brief`) — sem listagem linha a linha no corpo composto |
+| `ExternalActionResultPresenter._present_product_stock` | `linhas` = narrativa; `linhas_detalhe` = posições por filial/armazém |
+| `ExternalActionResultPresenter.build_text_presentation` | Modo Texto: resumo + seção **Detalhamento por filial e armazém** |
+
+Intro exemplo (i18n `composite.multiProductRouteIntro`):
+
+> Para o produto **10070011**, organizei a resposta em seções: **estoque e onde o item é usado**. Em cada bloco use os controles…
+
+### MFE — estrutura de segmentos
+
+```text
+[lead] markdown da intro (antes do primeiro ###)
+─── seção 1 ───
+stackSection  "1. Estoque"
+toolbar       Completo | Texto | Tabela | Gráfico   ← só opções desta rota
+sectionFraming / prose breve do composite
+table, chart  ← só metadata da tool /stock
+─── seção 2 ───
+stackSection  "2. Onde o item é usado"
+toolbar       …
+tree          ← só metadata da tool /parents
+```
+
+| Função | Arquivo |
+|--------|---------|
+| Detecta 2+ rotas | `isMultiRouteProductPresentation` |
+| Monta segmentos | `buildMultiRouteStackSegments` |
+| Agrupa para render | `groupSegmentsByRouteSections` |
+| Render + filtro local | `AssistantContentRouteSection.tsx` |
+| Detalhe no modo Texto | `resolveRouteTextDetailMarkdown` |
+
+Regras importantes:
+
+| Regra | Detalhe |
+|-------|---------|
+| Sem toolbar global | `shouldUsePerSectionFormatToolbar` → `resolveAvailableVisualFormatOptions` vazio |
+| Sem título `h3` duplicado | `showTitle` desligado quando `perSectionToolbar` |
+| Cabeçalho da seção fixo | `stackSection` + toolbar **fora** de `filterSegmentsByVisualKind` |
+| Aviso **Parcial** / cobertura | `dataCoverageNotice` da **tool call da rota** em `AssistantContentRouteCoverage` (não no topo global) |
+| Paginação na seção | Botões Anterior/Próxima só no bloco com `pagination` em `metadata` |
+| Estoque padrão | `resolveInitialToolbarKindForRoute('stock')` → **Tabela** |
+| Texto na seção estoque | Prose breve + `linhas_detalhe` / `textPresentation` injetados só com `activeKind === 'text'` |
+| Plano stack | `resolveMultiRouteStackPlan`: `humanizedSections: false` (mockup 1–7 só no analyser) |
+
+Framing por rota (`ROUTE_FRAMING` em `presentationMultiRoute.ts`) — uma frase interpretiva por bloco, sem repetir tabela/árvore.
+
+### O que não confundir
+
+| Cenário | Layout |
+|---------|--------|
+| `informações completas` / `análise integrada` | 1× `/analyser` → seções humanizadas 1–7, toolbar global em Completo |
+| `estoque + onde é usado` | Multi-rota → seções `route-stock`, `route-parents`, toolbar **por seção** |
+| `estoque` só | 1 rota → toolbar global (se ≥ 2 formatos), padrão Tabela |
 
 ---
 
@@ -184,10 +259,12 @@ Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
 
 | Arquivo | Papel |
 |---------|--------|
-| `ChatAssistantContent.tsx` | Orquestra chrome, toolbar, segmentos |
+| `ChatAssistantContent.tsx` | Orquestra chrome, toolbar global ou delega seções multi-rota |
+| `AssistantContentRouteSection.tsx` | Toolbar + filtro **por** bloco de rota |
+| `presentationMultiRoute.ts` | Stack multi-rota, framing, agrupamento, detalhe texto |
 | `assistantContentSegments.ts` | `buildAssistantContentSegments`, coleta visuais |
 | `assistantContentLayout.ts` | `layoutMode`, ordenação |
-| `assistantContentVisualFormats.ts` | Opções de troca e filtro |
+| `assistantContentVisualFormats.ts` | Opções de troca, `shouldUsePerSectionFormatToolbar`, filtro |
 | `assistantContentRegistry.tsx` | Mapa kind → componente React |
 | `AssistantContentChrome.tsx` | Insight, recomendações, paginação |
 | `chatPresentation.ts` | Helpers, strip de markdown redundante |
@@ -198,11 +275,16 @@ Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
 
 | Arquivo | Papel |
 |---------|--------|
+| `ChatProductMultiScopePlanningService` | Várias rotas `/products/{code}/…` na mesma pergunta |
+| `ChatCompositeDirectAnswerService` | Markdown composto + `multiProductRouteIntro` |
+| `ChatProductQueryIntentService` | `format_direct_answer(..., path=)` — resumo breve por escopo |
+| `ChatExternalActionOrchestrationService` | Orquestra planejamento multi-escopo antes de `select_action` |
 | `ExecuteExternalActionUseCase` | Metadata multi-visual; `preferredFormat` texto em analyser |
-| `ExternalActionResultPresenter` | Tabelas, árvores, charts, corpo analyser |
+| `ExternalActionResultPresenter` | Tabelas, árvores, charts; estoque `linhas` + `linhas_detalhe` |
 | `ChatPresentationDecisionService` | `layoutMode`, `visualOrder`, `availableViews` |
 | `ChatProductAnalyserDivergenceService` | Pontos de atenção confiáveis |
 | `ChatProductOverviewIntentService` | Overview → analyser + LLM |
+| `app/content/pt-BR/assistant/external_action_responses.json` | `composite.multiProductRouteIntro` |
 
 ---
 
@@ -211,7 +293,7 @@ Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
 | Pacote | Arquivos |
 |--------|----------|
 | API | `test_rich_presentation.py`, `test_external_action_result_presenter_analyser*.py`, `test_chat_product_analyser_divergence_service.py` |
-| MFE | `assistantContentLayout.test.ts`, `assistantContentVisualFormats.test.ts`, `assistantContentSegments.test.ts`, `chatPresentation.test.ts` |
+| MFE | `presentationMultiRoute.test.ts`, `assistantContentLayout.test.ts`, `assistantContentVisualFormats.test.ts`, `assistantContentSegments.test.ts`, `chatPresentation.test.ts` |
 
 Build MFE: `npm run build` em `plugins/minha-delpi-chat`.
 

@@ -3055,39 +3055,58 @@ class ExternalActionResultPresenter:
             )
 
         linhas: list[str] = []
+        branch_count = len(branches)
+        warehouse_count = len(warehouses)
 
         if product_code:
-            linhas.append(
-                f"Posição de estoque do produto **{product_code}** "
-                f"em **{len(items)}** registro(s)."
+            summary = (
+                f"Consultei o estoque do produto **{product_code}**: "
+                f"**{len(items)}** posição(ões)"
             )
+
+            if branch_count:
+                summary += (
+                    f" em **{branch_count}** filial(is)"
+                    f" ({', '.join(sorted(branches))})"
+                )
+
+            if warehouse_count:
+                summary += (
+                    f" e **{warehouse_count}** armazém(ns)"
+                    f" ({', '.join(sorted(warehouses))})"
+                )
+
+            summary += "."
+
+            if has_available:
+                summary += (
+                    f" No total, há **{self._format_num(total_available)}** unidade(s) "
+                    "disponível(is) nesta consulta."
+                )
+            elif has_current:
+                summary += (
+                    f" Saldo atual somado: **{self._format_num(total_current)}** unidade(s)."
+                )
+            else:
+                summary += " Não há quantidade disponível registrada nas posições retornadas."
+
+            linhas.append(summary)
         else:
-            linhas.append(f"Posição de estoque com **{len(items)}** registro(s).")
-
-        if branches:
-            linhas.append(f"Filial(is): {', '.join(sorted(branches))}.")
-
-        if warehouses:
-            linhas.append(f"Armazém(ns): {', '.join(sorted(warehouses))}.")
-
-        if has_available:
             linhas.append(
-                f"Total disponível nesta consulta: **{self._format_num(total_available)}** un."
+                f"Encontrei **{len(items)}** posição(ões) de estoque"
+                + (f" em **{branch_count}** filial(is)." if branch_count else ".")
             )
-
-        if has_current and (not has_available or abs(total_current - total_available) > 0.0001):
-            linhas.append(
-                f"Total atual nesta consulta: **{self._format_num(total_current)}** un."
-            )
-
-        linhas.extend(detail_lines)
 
         if len(detail_lines) > 8:
-            linhas.append(f"… e mais **{len(detail_lines) - 8}** posição(ões) de estoque.")
+            linhas.append(
+                f"No modo **Texto** você vê as **{len(detail_lines)}** linhas com filial, "
+                "armazém e quantidades."
+            )
 
         return {
             "titulo": titulo,
             "linhas": linhas,
+            "linhas_detalhe": detail_lines,
             "dados": {
                 "items": items,
                 "product_code": product_code,
@@ -3358,10 +3377,11 @@ class ExternalActionResultPresenter:
             return None
 
         lines = humanized.get("linhas") or []
+        detail_lines = humanized.get("linhas_detalhe") or []
         title = str(humanized.get("titulo") or "").strip()
-        body_parts = [str(line).strip() for line in lines if str(line).strip()]
+        summary_parts = [str(line).strip() for line in lines if str(line).strip()]
 
-        if not body_parts and not title:
+        if not summary_parts and not title and not detail_lines:
             return None
 
         markdown_parts: list[str] = []
@@ -3369,7 +3389,21 @@ class ExternalActionResultPresenter:
         if title:
             markdown_parts.append(f"### {title}")
 
-        markdown_parts.extend(body_parts)
+        if "/stock" in lowered and detail_lines:
+            markdown_parts.extend(summary_parts)
+            markdown_parts.append("**Detalhamento por filial e armazém**")
+            markdown_parts.extend(
+                f"- {line}" if not str(line).strip().startswith("-") else str(line).strip()
+                for line in detail_lines
+            )
+        else:
+            markdown_parts.extend(summary_parts)
+            for line in detail_lines:
+                cleaned = str(line).strip()
+
+                if cleaned:
+                    markdown_parts.append(cleaned)
+
         markdown = "\n\n".join(markdown_parts).strip()
 
         if not markdown:

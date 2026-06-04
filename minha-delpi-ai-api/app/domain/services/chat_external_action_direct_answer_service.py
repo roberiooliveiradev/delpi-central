@@ -104,6 +104,7 @@ class ChatExternalActionDirectAnswerService:
             return ChatProductQueryIntentService.format_direct_answer(
                 humanized,
                 intent=intent,
+                path=path,
             )
 
         if kind == ChatExternalActionKind.LMP_LIST:

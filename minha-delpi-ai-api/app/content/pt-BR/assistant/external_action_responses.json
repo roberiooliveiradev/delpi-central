@@ -41,6 +41,8 @@
   "composite": {
     "multiExecutionSummary": "Boa! Realizei **{count}** consulta(s) nos dados autorizados para montar a resposta.",
     "allSuccessful": "Boa! Consegui concluir todas as consultas.",
+    "multiProductRouteIntro": "Para o produto **{code}**, organizei a resposta em seções: **{scopes}**. Em cada bloco use os controles para alternar visão completa, texto, tabela ou gráfico — o detalhe linha a linha fica no modo **Texto**.",
+    "multiProductCodesIntro": "Consultei **{scope}** para os produtos **{codes}**. Abaixo, um bloco por código com o resultado autorizado da API.",
     "someEmptyFriendly": "Consegui consultar, mas algumas fontes não retornaram dados.",
     "nextStepSuggestions": "Próximos passos que podem ajudar:",
     "attentionHeader": "**Atenção — pontos para revisar**",

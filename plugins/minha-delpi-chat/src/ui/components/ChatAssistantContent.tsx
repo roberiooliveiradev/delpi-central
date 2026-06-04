@@ -15,7 +15,13 @@ import {
   resolveAvailableVisualFormatOptions,
   resolveInitialToolbarKind,
   shouldShowCompleteStackView,
+  shouldUsePerSectionFormatToolbar,
 } from "./assistantContentVisualFormats";
+import { AssistantContentRouteSection } from "./AssistantContentRouteSection";
+import {
+  collectProductRouteBlocks,
+  groupSegmentsByRouteSections,
+} from "./presentationMultiRoute";
 import { getTextMarkdownFromToolCalls } from "./chatPresentation";
 import {
   getStackPresentationPlanFromToolCalls,
@@ -71,18 +77,46 @@ export function ChatAssistantContent({
     setActiveVisualKind(initialVisualKind);
   }, [initialVisualKind, toolCalls, segments]);
 
+  const perSectionToolbar = useMemo(
+    () => shouldUsePerSectionFormatToolbar(toolCalls),
+    [toolCalls],
+  );
+  const routePresentation = useMemo(
+    () => (perSectionToolbar ? groupSegmentsByRouteSections(segments) : null),
+    [perSectionToolbar, segments],
+  );
+  const routeToolCallBySectionId = useMemo(() => {
+    const map = new Map<string, (typeof toolCalls)[number]>();
+
+    for (const block of collectProductRouteBlocks(toolCalls)) {
+      const code = block.path.match(/\/products\/([^/]+)/i)?.[1]?.trim();
+      const sectionId = code
+        ? `route-${block.routeKey}-${code}`
+        : `route-${block.routeKey}`;
+
+      map.set(sectionId, block.toolCall);
+    }
+
+    return map;
+  }, [toolCalls]);
+
   const visibleSegments = useMemo(() => {
+    if (perSectionToolbar) {
+      return segments;
+    }
+
     if (visualFormatOptions.length < 2) {
       return segments;
     }
 
     return filterSegmentsByVisualKind(segments, activeVisualKind);
-  }, [activeVisualKind, segments, visualFormatOptions.length]);
+  }, [activeVisualKind, perSectionToolbar, segments, visualFormatOptions.length]);
 
   const title = useMemo(() => getPresentationTitle(content, toolCalls), [content, toolCalls]);
   const dataCoverageNotice = useMemo(
-    () => getDataCoverageNoticeFromToolCalls(toolCalls),
-    [toolCalls],
+    () =>
+      perSectionToolbar ? null : getDataCoverageNoticeFromToolCalls(toolCalls),
+    [perSectionToolbar, toolCalls],
   );
   const presentationInsight = useMemo(
     () => getPresentationInsightFromToolCalls(toolCalls),
@@ -93,12 +127,12 @@ export function ChatAssistantContent({
     [toolCalls],
   );
   const paginationState = useMemo(
-    () => getPaginationStateFromToolCalls(toolCalls),
-    [toolCalls],
+    () => (perSectionToolbar ? null : getPaginationStateFromToolCalls(toolCalls)),
+    [perSectionToolbar, toolCalls],
   );
   const depthState = useMemo(
-    () => getDepthStateFromToolCalls(toolCalls),
-    [toolCalls],
+    () => (perSectionToolbar ? null : getDepthStateFromToolCalls(toolCalls)),
+    [perSectionToolbar, toolCalls],
   );
   const chartExplanation = useMemo(
     () => getChartExplanationFromToolCalls(toolCalls),
@@ -129,6 +163,7 @@ export function ChatAssistantContent({
   }
 
   const showTitle =
+    !perSectionToolbar &&
     isPresentationHeadingTitle(title) &&
     !visibleSegments.some(
       (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
@@ -139,7 +174,14 @@ export function ChatAssistantContent({
     [toolCalls],
   );
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
-  const showFormatToolbar = visualFormatOptions.length >= 2;
+  const showFormatToolbar = !perSectionToolbar && visualFormatOptions.length >= 2;
+  const segmentRenderContext = {
+    onDrillDown,
+    onOpenCanvas,
+    chartExplanation,
+    showChartExplanation: chartExplanationOpen,
+    onChartExplanationChange: setChartExplanationOpen,
+  };
   const narrativeMarkdown = useMemo(
     () => getTextMarkdownFromToolCalls(toolCalls),
     [toolCalls],
@@ -185,14 +227,25 @@ export function ChatAssistantContent({
       ) : null}
 
       <div className="mdc-assistant-content__segments">
-        {visibleSegments.map((segment, index) =>
-          renderAssistantContentSegment(segment, index, {
-            onDrillDown,
-            onOpenCanvas,
-            chartExplanation,
-            showChartExplanation: chartExplanationOpen,
-            onChartExplanationChange: setChartExplanationOpen,
-          }),
+        {routePresentation ? (
+          <>
+            {routePresentation.lead.map((segment, index) =>
+              renderAssistantContentSegment(segment, index, segmentRenderContext),
+            )}
+            {routePresentation.sections.map((group) => (
+              <AssistantContentRouteSection
+                key={group.section.id}
+                group={group}
+                toolCall={routeToolCallBySectionId.get(group.section.id)}
+                renderContext={segmentRenderContext}
+                onDrillDown={onDrillDown}
+              />
+            ))}
+          </>
+        ) : (
+          visibleSegments.map((segment, index) =>
+            renderAssistantContentSegment(segment, index, segmentRenderContext),
+          )
         )}
       </div>
     </div>

@@ -10,7 +10,8 @@ export type StackSectionId =
   | "attention";
 
 export type StackSectionChrome = {
-  id: StackSectionId;
+  /** Seções humanizadas (`scope`, `profile`, …) ou por rota (`route-stock`, …). */
+  id: StackSectionId | string;
   title: string;
   showIn: Array<ContentFormatKind | "complete">;
 };

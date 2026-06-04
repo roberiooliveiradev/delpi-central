@@ -15,6 +15,12 @@ import {
   mapPresentationDecisionToViewFormat,
   type ViewFormat,
 } from "./chatPresentation";
+import {
+  isMultiRouteProductPresentation,
+  isStockFocusedPresentation,
+  ROUTE_VISUAL_ORDER,
+  type ProductRouteKey,
+} from "./presentationMultiRoute";
 
 export type VisualFormatOption = {
   kind: ContentFormatKind;
@@ -114,10 +120,85 @@ export function collectPresentVisualKinds(
   return kinds;
 }
 
+export function resolveRouteSectionFormatOptions(
+  sectionSegments: AssistantContentSegment[],
+  routeKey: ProductRouteKey,
+): VisualFormatOption[] {
+  const orderedKinds: ContentFormatKind[] = [];
+
+  if (hasTextFormatContent(sectionSegments)) {
+    orderedKinds.push("text");
+  }
+
+  for (const visualKind of ROUTE_VISUAL_ORDER[routeKey]) {
+    if (hasFormatContent(sectionSegments, visualKind) && !orderedKinds.includes(visualKind)) {
+      orderedKinds.push(visualKind);
+    }
+  }
+
+  for (const kind of collectPresentVisualKinds(sectionSegments)) {
+    if (!orderedKinds.includes(kind)) {
+      orderedKinds.push(kind);
+    }
+  }
+
+  return orderedKinds.map((kind) => ({
+    kind,
+    label: FORMAT_LABELS[kind],
+  }));
+}
+
+export function resolveInitialToolbarKindForRoute(
+  routeKey: ProductRouteKey,
+  options: VisualFormatOption[],
+): ContentFormatKind | null {
+  if (options.length < 2) {
+    return options[0]?.kind ?? null;
+  }
+
+  const available = options.map((item) => item.kind);
+
+  if (routeKey === "stock") {
+    if (available.includes("table")) {
+      return "table";
+    }
+
+    if (available.includes("chart")) {
+      return "chart";
+    }
+  }
+
+  if (routeKey === "structure" || routeKey === "parents") {
+    if (available.includes("tree")) {
+      return "tree";
+    }
+
+    if (available.includes("table")) {
+      return "table";
+    }
+  }
+
+  if (routeKey === "guide" || routeKey === "inspection" || routeKey === "profile") {
+    if (available.includes("table")) {
+      return "table";
+    }
+  }
+
+  return null;
+}
+
+export function shouldUsePerSectionFormatToolbar(toolCalls: ChatToolCall[]): boolean {
+  return isMultiRouteProductPresentation(toolCalls);
+}
+
 export function resolveAvailableVisualFormatOptions(
   segments: AssistantContentSegment[],
   toolCalls: ChatToolCall[] = [],
 ): VisualFormatOption[] {
+  if (shouldUsePerSectionFormatToolbar(toolCalls)) {
+    return [];
+  }
+
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const order = resolveStackLayoutOrderFromToolCalls(toolCalls);
   const candidates = new Set<ContentFormatKind>();
@@ -304,6 +385,24 @@ export function resolveInitialToolbarKind(
 ): ContentFormatKind | null {
   if (options.length < 2) {
     return resolveDefaultVisualKind(toolCalls, options);
+  }
+
+  if (isMultiRouteProductPresentation(toolCalls)) {
+    return null;
+  }
+
+  if (isStockFocusedPresentation(toolCalls)) {
+    const decision = getPresentationDecisionFromToolCalls(toolCalls);
+    const selected = mapPresentationDecisionToViewFormat(decision?.selected);
+    const available = options.map((item) => item.kind);
+
+    if (selected === "chart" && available.includes("chart")) {
+      return "chart";
+    }
+
+    if (available.includes("table")) {
+      return "table";
+    }
   }
 
   if (shouldShowCompleteStackView(toolCalls)) {

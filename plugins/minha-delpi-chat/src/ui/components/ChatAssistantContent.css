@@ -6,6 +6,38 @@
   margin-bottom: var(--mdc-space-2);
 }
 
+.mdc-assistant-content__route-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mdc-space-3);
+}
+
+.mdc-assistant-content__route-section .mdc-assistant-content__format-toolbar {
+  margin-bottom: 0;
+}
+
+.mdc-assistant-content__route-coverage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mdc-space-2);
+}
+
+.mdc-assistant-content__route-coverage .mdc-rich-presentation__coverage-notice {
+  margin: 0;
+}
+
+.mdc-assistant-content__format-toolbar .mdc-assistant-content__format-toggle-btn--active {
+  background: var(--mdc-primary);
+  color: var(--mdc-on-primary);
+  border-color: var(--mdc-primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mdc-primary) 45%, transparent);
+  font-weight: 600;
+}
+
+.mdc-assistant-content__format-toolbar .mdc-assistant-content__format-toggle-btn:not(.mdc-assistant-content__format-toggle-btn--active) {
+  opacity: 0.82;
+}
+
 .mdc-assistant-content__segments {
   display: flex;
   flex-direction: column;

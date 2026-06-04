@@ -554,12 +554,18 @@ class ChatAnalysisIntentService:
         ):
             return True
 
+        from app.domain.services.chat_product_plural_phrasing_service import (
+            ChatProductPluralPhrasingService,
+        )
+
         return (
             ChatProductQueryIntentService._looks_like_stock_question(normalized)
             or ChatProductQueryIntentService._looks_like_structure_question(normalized)
             or ChatProductQueryIntentService._looks_like_sales_question(normalized)
             or ChatProductQueryIntentService._looks_like_product_summary_question(normalized)
             or ChatProductQueryIntentService._looks_like_description_question(normalized)
+            or ChatProductQueryIntentService._looks_like_parents_question(normalized)
+            or ChatProductPluralPhrasingService.mentions_plural_products(normalized)
             or any(
                 term in normalized
                 for term in (
@@ -568,10 +574,15 @@ class ChatAnalysisIntentService:
                     "pricing",
                     "fornecedor",
                     "fornece",
+                    "fornecedores",
                     "roteiro",
+                    "roteiros",
                     "inspecao",
                     "inspeção",
+                    "inspecoes",
+                    "inspeções",
                     "compra",
+                    "compras",
                 )
             )
         )

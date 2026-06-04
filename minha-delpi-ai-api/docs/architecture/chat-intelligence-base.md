@@ -81,7 +81,8 @@ Mensagem do usuário
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
 | `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
-| `ChatCompositeDirectAnswerService` | Monta resposta direta única com sucesso/erro por consulta |
+| `ChatProductPluralPhrasingService` | Frases no plural («estoque dos produtos X, Y», «onde são usados», «vendas dos itens»): termos com limite de palavra + padrão `{escopo} dos produtos`; rótulos de intro multi-código |
+| `ChatCompositeDirectAnswerService` | Resposta direta composta: intro humanizada multi-rota (`multiProductRouteIntro`), `multiProductCodesIntro`, `###` por consulta, erros em lista |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
 | `ChatSqlOperationalIntentService` | Perguntas SQL analíticas sem rota REST (produção, estoque agregado, vendas/ranking) |
 | `ChatSqlProductionQueryService` | Template SC2010 + execução `/data/sql` ou resposta direta com SQL |
@@ -144,7 +145,7 @@ Mensagem do usuário
 | `ChatHelpAdoptionService` | Log estruturado de adoção do painel `?` e autoajuda (`help-events`: painel, `self_help_*`) |
 | `ChatHelpSelfHelpTelemetryService` | Metadata `helpSelfHelp` + log `self_help_requested` em respostas diretas de ajuda |
 | `ChatGuidedFlowService` | Fluxos guiados e cards interativos (`guidedFlow`, `guidedFlowCards`) — interatividade Fase 5 |
-| `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; `chartPresentation` com tipos ampliados |
+| `ExternalActionResultPresenter` | `humanizedSummary` explícito para listas vazias; estoque com `linhas` (resumo) + `linhas_detalhe` (modo Texto); `chartPresentation` com tipos ampliados |
 | `ChatChartTypeSelectionService` | Escolhe `chartType` (bar, line, horizontal_bar, donut, grouped_bar, …) a partir dos dados e da pergunta |
 | `ChatSimpleTurnGateService` | Gate de turno simples (identidade, saudação, agradecimento, hora/data, capacidades, «não entendi») — decide, **antes** de qualquer atividade técnica, que o turno não deve exibir etapas no streaming |
 | `ChatUnclearRequestService` | Fallback honesto: pedidos vagos sem referente («faz isso», «arruma», «isso») recebem pedido de esclarecimento — sem inventar intenção nem chamar ferramentas |
@@ -568,7 +569,7 @@ Quando `toolCalls[].metadata` traz visuais (`presentation`, `tablePresentation`,
 | Camada | Regra |
 |--------|--------|
 | **API** | `enrich_metadata` define `presentationDecision.layoutMode` (`stack` se ≥ 2 views) e `visualOrder`. Qualquer rota com visuais complementares: `ChatRichPresentationTextService` compacta `textPresentation` (sem repetir tabela/árvore/cadastro no markdown) e `should_prefer_authorized_answer_over_llm` + `resolve_authorized_persisted_answer` usam o texto autorizado da tool em `message.content` (chat comum, agentes, admin). Analyser: cadastro/roteiro em `tablePresentations`, BOM em árvore, insights em texto (`ChatProductAnalyserDivergenceService`). |
-| **Plugin** | **`ChatAssistantContent`** (único renderizador; `ChatRichPresentation` removido): narrativa fixa + barra **Tabela/Árvore/Gráfico** entre formatos disponíveis; `assistantContentRegistry` para novos tipos. |
+| **Plugin** | **`ChatAssistantContent`** (único renderizador; `ChatRichPresentation` removido): analyser/1 rota — barra global de formato; **2+ rotas** do mesmo produto — seções numeradas com toolbar e filtro **por bloco** (`presentationMultiRoute.ts`, `AssistantContentRouteSection.tsx`). Ver [apresentação multi-rota](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026). |
 | **Markdown** | `shouldSuppressMarkdownForPresentation` e `stripRedundantProfileTableFromMarkdown` evitam duplicar ficha tabular no texto. |
 
 Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
@@ -730,11 +731,13 @@ Mensagens antigas não ganham diagnóstico retroativo.
 - [ ] Sem duplicar lógica entre stream e send.
 - [ ] Simulação admin recebe `previous_messages` quando depender de histórico.
 - [ ] Rotas de mensagem passam `admin_debug=_can_use_admin_debug()` para **expor** diagnóstico (persistência é automática).
+- [ ] Consultas com 2+ escopos de produto: planejamento em `ChatProductMultiScopePlanningService`; MFE multi-rota em `presentationMultiRoute.ts` (não duplicar lógica só no prompt do agente).
 
 ---
 
 ## Referências
 
+- Apresentação multi-rota produto (jun/2026): [`../changelog/2026-06-apresentacao-multi-rota-produto.md`](../changelog/2026-06-apresentacao-multi-rota-produto.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026)
 - Auditoria api-delpi (maio/2026): [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md)
 - Roadmap onda 1 (pipeline): [`../roadmap/inteligencia-chat-onda-1.md`](../roadmap/inteligencia-chat-onda-1.md)
 - Agentes (HTTP): [`../api/03-agentes.md`](../api/03-agentes.md)

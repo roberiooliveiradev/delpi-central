@@ -21,7 +21,8 @@ function FormatToggle({
   return (
     <button
       type="button"
-      className={`mdc-rich-chart__toggle-btn ${active ? "mdc-rich-chart__toggle-btn--active" : ""}`}
+      className={`mdc-rich-chart__toggle-btn mdc-assistant-content__format-toggle-btn ${active ? "mdc-rich-chart__toggle-btn--active mdc-assistant-content__format-toggle-btn--active" : ""}`}
+      aria-pressed={active}
       onClick={onClick}
     >
       {label}

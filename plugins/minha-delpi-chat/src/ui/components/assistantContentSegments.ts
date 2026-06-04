@@ -16,6 +16,7 @@ import {
   getPresentationTitle,
 } from "./chatPresentation";
 import { buildInterleavedStackSegments } from "./assistantContentInterleave";
+import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import {
   dedupeTablePresentations,
   dedupeTableSegments,
@@ -484,6 +485,16 @@ function buildStackedSegments(
   const layoutOrder = resolveStackLayoutOrderFromToolCalls(toolCalls);
   const visualOrder = layoutOrder.filter((slot) => slot !== "text");
   const orderedVisuals = orderVisualSegments(visuals, visualOrder);
+
+  const multiRoute = buildMultiRouteStackSegments(
+    commentary,
+    toolCalls,
+    appendVisualSegment,
+  );
+
+  if (multiRoute?.length) {
+    return multiRoute;
+  }
 
   return buildInterleavedStackSegments(
     commentary,

@@ -323,6 +323,45 @@ function getTreePresentationFromToolCalls(
   return null;
 }
 
+export function getDataCoverageNoticeFromToolCall(
+  toolCall?: ChatToolCall,
+): ChatDataCoverageNotice | null {
+  if (!toolCall) {
+    return null;
+  }
+
+  const metadata = (toolCall.metadata as Record<string, unknown>) || {};
+
+  if (
+    metadata.sqlSchemaPrefetch === true ||
+    metadata.suppressClientPresentation === true
+  ) {
+    return null;
+  }
+
+  const path = String(metadata.path || "").toLowerCase();
+
+  if (
+    path.includes("/system/tables") &&
+    (path.includes("/columns") || path.includes("/schema") || path.includes("/relations"))
+  ) {
+    return null;
+  }
+
+  const notice = metadata.dataCoverageNotice;
+
+  if (
+    notice &&
+    typeof notice === "object" &&
+    typeof (notice as ChatDataCoverageNotice).message === "string" &&
+    (notice as ChatDataCoverageNotice).message.trim()
+  ) {
+    return notice as ChatDataCoverageNotice;
+  }
+
+  return null;
+}
+
 export function getDataCoverageNoticeFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): ChatDataCoverageNotice | null {
@@ -331,33 +370,10 @@ export function getDataCoverageNoticeFromToolCalls(
   }
 
   for (const toolCall of toolCalls) {
-    const metadata = (toolCall.metadata as Record<string, unknown>) || {};
+    const notice = getDataCoverageNoticeFromToolCall(toolCall);
 
-    if (
-      metadata.sqlSchemaPrefetch === true ||
-      metadata.suppressClientPresentation === true
-    ) {
-      continue;
-    }
-
-    const path = String(metadata.path || "").toLowerCase();
-
-    if (
-      path.includes("/system/tables") &&
-      (path.includes("/columns") || path.includes("/schema") || path.includes("/relations"))
-    ) {
-      continue;
-    }
-
-    const notice = metadata.dataCoverageNotice;
-
-    if (
-      notice &&
-      typeof notice === "object" &&
-      typeof (notice as ChatDataCoverageNotice).message === "string" &&
-      (notice as ChatDataCoverageNotice).message.trim()
-    ) {
-      return notice as ChatDataCoverageNotice;
+    if (notice) {
+      return notice;
     }
   }
 
@@ -1221,11 +1237,9 @@ function readPaginationDetail(details: Record<string, unknown>): Record<string, 
   return null;
 }
 
-export function getPaginationStateFromToolCalls(
-  toolCalls?: ChatToolCall[],
+function paginationStateFromNotice(
+  notice: ChatDataCoverageNotice | null,
 ): ChatPaginationState | null {
-  const notice = getDataCoverageNoticeFromToolCalls(toolCalls);
-
   if (!notice) {
     return null;
   }
@@ -1262,11 +1276,7 @@ export function getPaginationStateFromToolCalls(
   };
 }
 
-export function getDepthStateFromToolCalls(
-  toolCalls?: ChatToolCall[],
-): ChatDepthState | null {
-  const notice = getDataCoverageNoticeFromToolCalls(toolCalls);
-
+function depthStateFromNotice(notice: ChatDataCoverageNotice | null): ChatDepthState | null {
   if (!notice) {
     return null;
   }
@@ -1289,6 +1299,28 @@ export function getDepthStateFromToolCalls(
     maxDepth,
     canIncrease: maxDepth < 99,
   };
+}
+
+export function getPaginationStateFromToolCall(
+  toolCall?: ChatToolCall,
+): ChatPaginationState | null {
+  return paginationStateFromNotice(getDataCoverageNoticeFromToolCall(toolCall));
+}
+
+export function getDepthStateFromToolCall(toolCall?: ChatToolCall): ChatDepthState | null {
+  return depthStateFromNotice(getDataCoverageNoticeFromToolCall(toolCall));
+}
+
+export function getPaginationStateFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatPaginationState | null {
+  return paginationStateFromNotice(getDataCoverageNoticeFromToolCalls(toolCalls));
+}
+
+export function getDepthStateFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatDepthState | null {
+  return depthStateFromNotice(getDataCoverageNoticeFromToolCalls(toolCalls));
 }
 
 export function isStructureLikeToolCalls(toolCalls?: ChatToolCall[]): boolean {
