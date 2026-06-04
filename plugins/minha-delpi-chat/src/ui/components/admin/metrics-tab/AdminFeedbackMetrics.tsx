@@ -1,4 +1,12 @@
 import type { AdminFeedbackSummary } from "../../../../data/api/adminTypes";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricNumber,
+  formatMetricPercent,
+  rankedFromRows,
+} from "./adminMetricsFormatters";
 
 type AdminFeedbackMetricsProps = {
   summary: AdminFeedbackSummary | null;
@@ -6,76 +14,35 @@ type AdminFeedbackMetricsProps = {
   windowHours: number;
 };
 
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatPercent(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return `${Math.round(value * 100)}%`;
-}
-
 export function AdminFeedbackMetrics({
   summary,
   isLoading = false,
   windowHours,
 }: AdminFeedbackMetricsProps) {
   return (
-    <section
-      className="mdc-admin-drawing-metrics"
-      aria-labelledby="mdc-admin-feedback-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-feedback-metrics-title"
+      domain="Qualidade"
+      title="Feedback do usuário"
+      description={`Thumbs up/down com contexto técnico (ai_chat_message_feedback) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas de feedback..."
+      isEmpty={!isLoading && !summary}
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Playbook 10</p>
-          <h3 id="mdc-admin-feedback-metrics-title">Feedback do usuário</h3>
-          <p>
-            Thumbs up/down com contexto técnico (`ai_chat_message_feedback`) na janela de{" "}
-            {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas de feedback...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo de feedback.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>CSAT</h4>
-              <strong>{formatPercent(summary.csat)}</strong>
-              <p>Feedback positivo ÷ total.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Positivos</h4>
-              <strong>{formatNumber(summary.positiveCount)}</strong>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Negativos</h4>
-              <strong>{formatNumber(summary.negativeCount)}</strong>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Perda de contexto</h4>
-              <strong>{formatNumber(summary.lostContextCount)}</strong>
-            </article>
-          </div>
+          <AdminKpiGrid>
+            <AdminKpiCard title="CSAT" value={formatMetricPercent(summary.csat)} hint="Feedback positivo ÷ total." />
+            <AdminKpiCard title="Positivos" value={formatMetricNumber(summary.positiveCount)} />
+            <AdminKpiCard title="Negativos" value={formatMetricNumber(summary.negativeCount)} />
+            <AdminKpiCard title="Perda de contexto" value={formatMetricNumber(summary.lostContextCount)} />
+          </AdminKpiGrid>
 
           {summary.alerts?.length ? (
             <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
-              <h4>Alertas de qualidade</h4>
+              <h3>Alertas de qualidade</h3>
               <ul>
                 {summary.alerts.map((alert) => (
                   <li key={alert.code}>{alert.message}</li>
@@ -84,40 +51,28 @@ export function AdminFeedbackMetrics({
             </article>
           ) : null}
 
-          <div className="mdc-admin-metrics-tab__split">
+          <div className="mdc-admin-metric-section__grid-3">
             <article className="mdc-admin-kpi-card">
-              <h4>Top motivos negativos</h4>
-              <ul>
-                {(summary.feedbackByReason ?? []).slice(0, 8).map((row) => (
-                  <li key={row.key}>
-                    {row.key}: {formatNumber(row.count)}
-                  </li>
-                ))}
-              </ul>
+              <AdminRankedList
+                title="Top motivos negativos"
+                items={rankedFromRows(summary.feedbackByReason, 8)}
+              />
             </article>
             <article className="mdc-admin-kpi-card">
-              <h4>Por intenção</h4>
-              <ul>
-                {(summary.feedbackByIntent ?? []).slice(0, 8).map((row) => (
-                  <li key={row.key}>
-                    {row.key}: {formatNumber(row.count)}
-                  </li>
-                ))}
-              </ul>
+              <AdminRankedList
+                title="Por intenção"
+                items={rankedFromRows(summary.feedbackByIntent, 8)}
+              />
             </article>
             <article className="mdc-admin-kpi-card">
-              <h4>Por agente</h4>
-              <ul>
-                {(summary.feedbackByAgent ?? []).slice(0, 8).map((row) => (
-                  <li key={row.key}>
-                    {row.key}: {formatNumber(row.count)}
-                  </li>
-                ))}
-              </ul>
+              <AdminRankedList
+                title="Por agente"
+                items={rankedFromRows(summary.feedbackByAgent, 8)}
+              />
             </article>
           </div>
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

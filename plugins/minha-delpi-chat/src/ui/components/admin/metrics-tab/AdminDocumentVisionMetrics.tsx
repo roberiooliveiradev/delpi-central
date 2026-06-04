@@ -1,4 +1,14 @@
 import type { AdminDocumentVisionSummary } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricLoggedAt,
+  formatMetricNumber,
+  formatMetricPercent,
+  rankedFromRecord,
+} from "./adminMetricsFormatters";
 
 type AdminDocumentVisionMetricsProps = {
   summary: AdminDocumentVisionSummary | null;
@@ -6,156 +16,78 @@ type AdminDocumentVisionMetricsProps = {
   windowHours: number;
 };
 
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatPercent(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR", {
-    style: "percent",
-    maximumFractionDigits: 1,
-  }).format(value);
-}
-
-function formatLoggedAt(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("pt-BR");
-}
-
 export function AdminDocumentVisionMetrics({
   summary,
   isLoading = false,
   windowHours,
 }: AdminDocumentVisionMetricsProps) {
-  const engineEntries = summary
-    ? Object.entries(summary.byEngine).sort((left, right) => right[1] - left[1])
-    : [];
-  const stageEntries = summary?.byStage
-    ? Object.entries(summary.byStage).sort((left, right) => right[1] - left[1])
-    : [];
-
   return (
-    <section
-      className="mdc-admin-drawing-metrics mdc-admin-document-vision-metrics"
-      aria-labelledby="mdc-admin-document-vision-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-document-vision-metrics-title"
+      domain="Qualidade"
+      title="Visão de documentos"
+      description={`Snapshots em auditoria (metadata.documentVision) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas de visão/OCR..."
+      isEmpty={!isLoading && !summary}
+      className="mdc-admin-document-vision-metrics"
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Onda 13</p>
-          <h3 id="mdc-admin-document-vision-metrics-title">Visão de Documentos DELPI</h3>
-          <p>
-            Agregado de snapshots em auditoria (`metadata.documentVision`) na janela de{" "}
-            {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas de visão/OCR...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo de visão de documentos.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Execuções OCR</h4>
-              <strong>{formatNumber(summary.runsCount)}</strong>
-              <p>Turnos com snapshot documentVision na janela.</p>
-            </article>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Execuções OCR"
+              value={formatMetricNumber(summary.runsCount)}
+              hint="Turnos com snapshot documentVision na janela."
+            />
+            <AdminKpiCard
+              title="Taxa legível"
+              value={formatMetricPercent(summary.legibilityRate)}
+              hint={`${formatMetricNumber(summary.legibleCount)} execução(ões) legíveis.`}
+            />
+            <AdminKpiCard
+              title="Duração média"
+              value={
+                summary.avgDurationMs != null
+                  ? `${formatMetricNumber(summary.avgDurationMs)} ms`
+                  : "—"
+              }
+              hint="Tempo médio do pipeline de visão quando instrumentado."
+            />
+          </AdminKpiGrid>
 
-            <article className="mdc-admin-kpi-card">
-              <h4>Taxa legível</h4>
-              <strong>{formatPercent(summary.legibilityRate)}</strong>
-              <p>{formatNumber(summary.legibleCount)} execução(ões) marcadas como legíveis.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Duração média</h4>
-              <strong>
-                {summary.avgDurationMs != null ? `${formatNumber(summary.avgDurationMs)}ms` : "—"}
-              </strong>
-              <p>Tempo médio do pipeline de visão quando instrumentado.</p>
-            </article>
+          <div className="mdc-admin-metric-section__grid-2">
+            <AdminRankedList title="Por motor" items={rankedFromRecord(summary.byEngine)} />
+            <AdminRankedList title="Por estágio" items={rankedFromRecord(summary.byStage)} />
           </div>
 
-          {engineEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por motor</h4>
-              <ul>
-                {engineEntries.map(([engine, count]) => (
-                  <li key={engine}>
-                    <span>{engine}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {stageEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por estágio</h4>
-              <ul>
-                {stageEntries.map(([stage, count]) => (
-                  <li key={stage}>
-                    <span>{stage}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
           {summary.recent.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__recent">
-              <h4>Recentes</h4>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Quando</th>
-                    <th>Motor</th>
-                    <th>Contexto</th>
-                    <th>Legível</th>
-                    <th>ms</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.recent.map((item, index) => (
-                    <tr key={`${item.loggedAt ?? index}-${item.engine ?? "engine"}`}>
-                      <td>{formatLoggedAt(item.loggedAt)}</td>
-                      <td>{item.engine ?? "—"}</td>
-                      <td>{item.context ?? "—"}</td>
-                      <td>{item.legible === true ? "Sim" : item.legible === false ? "Não" : "—"}</td>
-                      <td>{formatNumber(item.durationMs)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              title="Recentes"
+              rows={summary.recent}
+              rowKey={(item, index) => `${item.loggedAt ?? index}-${item.engine ?? "engine"}`}
+              columns={[
+                { id: "when", header: "Quando", render: (item) => formatMetricLoggedAt(item.loggedAt) },
+                { id: "engine", header: "Motor", render: (item) => item.engine ?? "—" },
+                { id: "context", header: "Contexto", render: (item) => item.context ?? "—" },
+                {
+                  id: "legible",
+                  header: "Legível",
+                  render: (item) =>
+                    item.legible === true ? "Sim" : item.legible === false ? "Não" : "—",
+                },
+                {
+                  id: "ms",
+                  header: "ms",
+                  render: (item) => formatMetricNumber(item.durationMs),
+                },
+              ]}
+            />
           ) : null}
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

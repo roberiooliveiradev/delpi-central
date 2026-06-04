@@ -1,6 +1,6 @@
 # Playbook 12 — Admin UI: refatoração de componentes e layout
 
-> **Status (jun/2026):** proposta — implementação pendente.  
+> **Status (jun/2026):** em andamento — **Fases 1–2 concluídas** no MFE (primitivos `admin/shared/`, migração dos blocos `Admin*Metrics` para `AdminMetricSection` + KPI/ranking/tabela; eyebrows internos removidos da UI). Pendente: Fase 3 (agentes/gráficos), Fase 4 (`AdminTabHeader` nas abas), baseline visual (Fase 0).  
 > **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (navegação 6 seções **já aplicada** no MFE). Este playbook trata **como** cada tela renderiza dados: grid, KPIs, tabelas, gráficos e estados vazios.
 
 ## Objetivo
@@ -307,4 +307,4 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
-**Próximo passo sugerido:** executar Fase 0 (baseline) e Fase 1 (primitivos); em seguida abrir PR só com `AdminIntentRoutingMetrics` + `AdminInteractivityMetrics` como prova de conceito.
+**Próximo passo sugerido:** Fase 3 — `AdminAgentsTab` + `AgentMiniDashboard` (KPI cards admin, filtros legíveis); Fase 4 — adotar `AdminTabHeader` em Conhecimento, Aprendizagem e cabeçalhos de sub-abas; Fase 0 opcional — screenshots de baseline antes/depois.

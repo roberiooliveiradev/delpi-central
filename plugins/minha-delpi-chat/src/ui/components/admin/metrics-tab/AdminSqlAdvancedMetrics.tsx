@@ -1,32 +1,19 @@
 import type { AdminSqlAdvancedSummary } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricLoggedAt,
+  formatMetricNumber,
+  rankedFromRecord,
+} from "./adminMetricsFormatters";
 
 type AdminSqlAdvancedMetricsProps = {
   summary: AdminSqlAdvancedSummary | null;
   isLoading?: boolean;
   windowHours: number;
 };
-
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatLoggedAt(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("pt-BR");
-}
 
 function formatModeLabel(mode?: string | null): string {
   const labels: Record<string, string> = {
@@ -53,149 +40,80 @@ export function AdminSqlAdvancedMetrics({
   isLoading = false,
   windowHours,
 }: AdminSqlAdvancedMetricsProps) {
-  const modeEntries = summary
-    ? Object.entries(summary.byMode).sort((left, right) => right[1] - left[1])
-    : [];
-  const dialectEntries = summary
-    ? Object.entries(summary.byDialect).sort((left, right) => right[1] - left[1])
-    : [];
-  const chartEntries = summary?.byChartType
-    ? Object.entries(summary.byChartType).sort((left, right) => right[1] - left[1])
-    : [];
+  const modeItems = rankedFromRecord(summary?.byMode).map((item) => ({
+    ...item,
+    label: formatModeLabel(item.label),
+  }));
 
   return (
-    <section
-      className="mdc-admin-drawing-metrics mdc-admin-sql-advanced-metrics"
-      aria-labelledby="mdc-admin-sql-advanced-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-sql-advanced-metrics-title"
+      domain="Qualidade"
+      title="SQL avançado"
+      description={`Snapshots em auditoria (metadata.sqlAdvancedMetrics) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas SQL..."
+      isEmpty={!isLoading && !summary}
+      className="mdc-admin-sql-advanced-metrics"
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Especialista SQL</p>
-          <h3 id="mdc-admin-sql-advanced-metrics-title">SQL Avançado</h3>
-          <p>
-            Agregado de snapshots em auditoria (`metadata.sqlAdvancedMetrics`) na janela de{" "}
-            {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? <p className="mdc-chat-muted">Carregando métricas SQL...</p> : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo do especialista SQL.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Turnos SQL</h4>
-              <strong>{formatNumber(summary.runsCount)}</strong>
-              <p>Conversas com skill SQL avançada ativa.</p>
-            </article>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Turnos SQL"
+              value={formatMetricNumber(summary.runsCount)}
+              hint="Conversas com skill SQL avançada ativa."
+            />
+            <AdminKpiCard
+              title="Bloqueios"
+              value={formatMetricNumber(summary.blockedCount)}
+              hint="Comandos destrutivos detectados e recusados."
+            />
+            <AdminKpiCard
+              title="Resultados vazios"
+              value={formatMetricNumber(summary.emptyResultCount)}
+              hint="Execuções sem linhas retornadas."
+            />
+            <AdminKpiCard
+              title="Edição incremental"
+              value={formatMetricNumber(summary.incrementalEditCount)}
+              hint="Turnos com query ativa pronta para refinamento."
+            />
+            <AdminKpiCard
+              title="CTEs / Window"
+              value={`${formatMetricNumber(summary.cteUsageCount)} / ${formatMetricNumber(summary.windowFunctionUsageCount)}`}
+              hint="Uso detectado em SQL gerado ou analisado."
+            />
+            <AdminKpiCard
+              title="Prefetch schema"
+              value={formatMetricNumber(summary.schemaPrefetchCount)}
+              hint="Turnos que recomendaram explorar /system/tables/*."
+            />
+          </AdminKpiGrid>
 
-            <article className="mdc-admin-kpi-card">
-              <h4>Bloqueios</h4>
-              <strong>{formatNumber(summary.blockedCount)}</strong>
-              <p>Comandos destrutivos detectados e recusados.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Resultados vazios</h4>
-              <strong>{formatNumber(summary.emptyResultCount)}</strong>
-              <p>Execuções sem linhas retornadas.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Edição incremental</h4>
-              <strong>{formatNumber(summary.incrementalEditCount)}</strong>
-              <p>Turnos com query ativa pronta para refinamento.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>CTEs / Window</h4>
-              <strong>
-                {formatNumber(summary.cteUsageCount)} / {formatNumber(summary.windowFunctionUsageCount)}
-              </strong>
-              <p>Uso detectado em SQL gerado ou analisado.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Prefetch schema</h4>
-              <strong>{formatNumber(summary.schemaPrefetchCount)}</strong>
-              <p>Turnos que recomendaram explorar `/system/tables/*`.</p>
-            </article>
+          <div className="mdc-admin-metric-section__grid-3">
+            <AdminRankedList title="Por modo" items={modeItems} />
+            <AdminRankedList title="Por dialeto" items={rankedFromRecord(summary.byDialect)} />
+            <AdminRankedList title="Visualização sugerida" items={rankedFromRecord(summary.byChartType)} />
           </div>
 
-          {modeEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por modo</h4>
-              <ul>
-                {modeEntries.map(([mode, count]) => (
-                  <li key={mode}>
-                    <span>{formatModeLabel(mode)}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {dialectEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por dialeto</h4>
-              <ul>
-                {dialectEntries.map(([dialect, count]) => (
-                  <li key={dialect}>
-                    <span>{dialect}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {chartEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Visualização sugerida</h4>
-              <ul>
-                {chartEntries.map(([chartType, count]) => (
-                  <li key={chartType}>
-                    <span>{chartType}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
           {summary.recent.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__recent">
-              <h4>Recentes</h4>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Quando</th>
-                    <th>Modo</th>
-                    <th>Dialeto</th>
-                    <th>Bloqueado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.recent.map((item, index) => (
-                    <tr key={`${item.loggedAt ?? index}-${item.mode ?? "mode"}`}>
-                      <td>{formatLoggedAt(item.loggedAt)}</td>
-                      <td>{formatModeLabel(item.mode)}</td>
-                      <td>{item.dialect ?? "—"}</td>
-                      <td>{item.blocked ? "Sim" : "Não"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              title="Recentes"
+              rows={summary.recent}
+              rowKey={(item, index) => `${item.loggedAt ?? index}-${item.mode ?? "mode"}`}
+              columns={[
+                { id: "when", header: "Quando", render: (item) => formatMetricLoggedAt(item.loggedAt) },
+                { id: "mode", header: "Modo", render: (item) => formatModeLabel(item.mode) },
+                { id: "dialect", header: "Dialeto", render: (item) => item.dialect ?? "—" },
+                { id: "blocked", header: "Bloqueado", render: (item) => (item.blocked ? "Sim" : "Não") },
+              ]}
+            />
           ) : null}
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

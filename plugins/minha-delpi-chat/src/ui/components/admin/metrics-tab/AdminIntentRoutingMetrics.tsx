@@ -3,34 +3,16 @@ import { AdminDataTable } from "../shared/AdminDataTable";
 import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
 import { AdminMetricSection } from "../shared/AdminMetricSection";
 import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricLoggedAt,
+  formatMetricNumber,
+} from "./adminMetricsFormatters";
 
 type AdminIntentRoutingMetricsProps = {
   summary: AdminIntentRoutingSummary | null;
   isLoading?: boolean;
   windowHours: number;
 };
-
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatLoggedAt(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("pt-BR");
-}
 
 export function AdminIntentRoutingMetrics({
   summary,
@@ -42,7 +24,7 @@ export function AdminIntentRoutingMetrics({
         .sort((left, right) => right[1] - left[1])
         .map(([intent, count]) => ({
           label: intent,
-          value: formatNumber(count),
+          value: formatMetricNumber(count),
           key: intent,
         }))
     : [];
@@ -65,22 +47,22 @@ export function AdminIntentRoutingMetrics({
           <AdminKpiGrid>
             <AdminKpiCard
               title="Rotas"
-              value={formatNumber(summary.routesCount)}
+              value={formatMetricNumber(summary.routesCount)}
               hint="Turnos com snapshot de intentRouting na janela."
             />
             <AdminKpiCard
               title="Ambíguos"
-              value={formatNumber(summary.ambiguousCount)}
+              value={formatMetricNumber(summary.ambiguousCount)}
               hint="Pedidos com escopo operacional incerto (desambiguação)."
             />
             <AdminKpiCard
               title="Tarefas mistas"
-              value={formatNumber(summary.mixedTaskCount)}
+              value={formatMetricNumber(summary.mixedTaskCount)}
               hint="Pedidos compostos (operacional + texto/web/etc.)."
             />
             <AdminKpiCard
               title="Web"
-              value={formatNumber(summary.webSearchCount)}
+              value={formatMetricNumber(summary.webSearchCount)}
               hint="Rotas com pesquisa web explícita."
             />
           </AdminKpiGrid>
@@ -99,7 +81,7 @@ export function AdminIntentRoutingMetrics({
                 {
                   id: "when",
                   header: "Quando",
-                  render: (item) => formatLoggedAt(item.loggedAt),
+                  render: (item) => formatMetricLoggedAt(item.loggedAt),
                 },
                 {
                   id: "intent",

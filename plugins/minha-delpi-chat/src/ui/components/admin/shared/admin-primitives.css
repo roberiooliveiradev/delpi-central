@@ -160,3 +160,58 @@
 .mdc-admin-root .mdc-admin-drawing-metrics__grid {
   width: 100%;
 }
+
+.mdc-admin-root .mdc-admin-metrics-tab__split,
+.mdc-admin-root .mdc-admin-metric-section__grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--mdc-space-3);
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-admin-drawing-metrics__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: var(--mdc-radius-md);
+}
+
+.mdc-admin-root .mdc-admin-drawing-metrics__table {
+  width: 100%;
+  min-width: 20rem;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.mdc-admin-root .mdc-admin-drawing-metrics__table th,
+.mdc-admin-root .mdc-admin-drawing-metrics__table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mdc-card-border);
+}
+
+.mdc-admin-root .mdc-admin-drawing-metrics__table th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-card-bg) 85%, var(--mdc-bg));
+}
+
+.mdc-admin-root .mdc-admin-kpi-card ul:not(.mdc-admin-distribution-list):not(.mdc-admin-ranked-list ul) {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-admin-root .mdc-admin-kpi-card ul:not(.mdc-admin-distribution-list) li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mdc-space-2);
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  font-size: 0.84rem;
+}

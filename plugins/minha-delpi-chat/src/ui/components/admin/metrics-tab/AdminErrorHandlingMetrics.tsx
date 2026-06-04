@@ -1,26 +1,14 @@
 import type { AdminErrorHandlingSummary } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { formatMetricNumber, formatMetricPercent } from "./adminMetricsFormatters";
 
 type AdminErrorHandlingMetricsProps = {
   summary: AdminErrorHandlingSummary | null;
   isLoading?: boolean;
   windowHours: number;
 };
-
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatPercent(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return `${Math.round(value * 100)}%`;
-}
 
 export function AdminErrorHandlingMetrics({
   summary,
@@ -30,91 +18,71 @@ export function AdminErrorHandlingMetrics({
   const byType = summary?.byType ?? [];
 
   return (
-    <section
-      className="mdc-admin-drawing-metrics"
-      aria-labelledby="mdc-admin-error-handling-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-error-handling-metrics-title"
+      domain="Qualidade"
+      title="Erros e resultados vazios"
+      description={`Eventos classificados (errorHandlingMetrics) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas de erro..."
+      isEmpty={!isLoading && !summary}
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Playbook 06</p>
-          <h3 id="mdc-admin-error-handling-metrics-title">Erros e resultados vazios</h3>
-          <p>
-            Eventos classificados (`errorHandlingMetrics`) nas mensagens enviadas/stream na janela
-            de {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas de erro...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo de erros.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Eventos</h4>
-              <strong>{formatNumber(summary.totalEvents)}</strong>
-              <p>Respostas com classificação de erro/vazio.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Recuperáveis</h4>
-              <strong>{formatNumber(summary.recoverableCount)}</strong>
-              <p>Com chips ou fluxo de recuperação.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Falha de API</h4>
-              <strong>{formatNumber(summary.apiFailedCount)}</strong>
-              <p>Sem afirmar inexistência de dados.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Planos auto-recuperação</h4>
-              <strong>{formatNumber(summary.autoRecoveryPlans)}</strong>
-              <p>Respostas com plano para reexecutar consulta.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Cliques recuperar</h4>
-              <strong>{formatNumber(summary.recoveryClicksCount)}</strong>
-              <p>Chips do grupo «recuperar» acionados.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Tentativas automáticas</h4>
-              <strong>{formatNumber(summary.recoveryAttemptsCount)}</strong>
-              <p>
-                Sucesso: {formatNumber(summary.recoverySuccessCount)} (
-                {formatPercent(summary.recoverySuccessRate)})
-              </p>
-            </article>
-          </div>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Eventos"
+              value={formatMetricNumber(summary.totalEvents)}
+              hint="Respostas com classificação de erro/vazio."
+            />
+            <AdminKpiCard
+              title="Recuperáveis"
+              value={formatMetricNumber(summary.recoverableCount)}
+              hint="Com chips ou fluxo de recuperação."
+            />
+            <AdminKpiCard
+              title="Falha de API"
+              value={formatMetricNumber(summary.apiFailedCount)}
+              hint="Sem afirmar inexistência de dados."
+            />
+            <AdminKpiCard
+              title="Planos auto-recuperação"
+              value={formatMetricNumber(summary.autoRecoveryPlans)}
+              hint="Respostas com plano para reexecutar consulta."
+            />
+            <AdminKpiCard
+              title="Cliques recuperar"
+              value={formatMetricNumber(summary.recoveryClicksCount)}
+              hint="Chips do grupo «recuperar» acionados."
+            />
+            <AdminKpiCard
+              title="Tentativas automáticas"
+              value={formatMetricNumber(summary.recoveryAttemptsCount)}
+              hint={`Sucesso: ${formatMetricNumber(summary.recoverySuccessCount)} (${formatMetricPercent(summary.recoverySuccessRate)})`}
+            />
+          </AdminKpiGrid>
 
           {byType.length ? (
-            <div className="mdc-admin-drawing-metrics__table-wrap">
-              <table className="mdc-admin-drawing-metrics__table">
-                <thead>
-                  <tr>
-                    <th>Tipo</th>
-                    <th>Ocorrências</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {byType.map((row) => (
-                    <tr key={row.type}>
-                      <td>{row.type}</td>
-                      <td>{formatNumber(row.count)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              title="Por tipo de evento"
+              rows={byType}
+              rowKey={(row) => row.type}
+              columns={[
+                { id: "type", header: "Tipo", render: (row) => row.type },
+                {
+                  id: "count",
+                  header: "Ocorrências",
+                  render: (row) => formatMetricNumber(row.count),
+                },
+              ]}
+            />
           ) : (
             <p className="mdc-chat-muted">Nenhum evento de erro na janela selecionada.</p>
           )}
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

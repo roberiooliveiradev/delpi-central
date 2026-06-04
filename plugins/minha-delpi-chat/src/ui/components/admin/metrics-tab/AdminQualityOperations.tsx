@@ -21,7 +21,7 @@ export function AdminQualityOperations({
     <section className="mdc-admin-drawing-metrics" aria-labelledby="mdc-admin-quality-ops-title">
       <header className="mdc-admin-drawing-metrics__header">
         <div>
-          <p className="mdc-chat-eyebrow">Playbook 10</p>
+          <p className="mdc-chat-eyebrow">Qualidade</p>
           <h3 id="mdc-admin-quality-ops-title">Relatório semanal e issues</h3>
           <p>Geração automática de relatório de qualidade e issues a partir de feedback recorrente.</p>
         </div>

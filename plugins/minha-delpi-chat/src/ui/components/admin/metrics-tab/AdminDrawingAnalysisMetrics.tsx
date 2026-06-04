@@ -1,4 +1,13 @@
 import type { AdminDrawingAnalysisSummary } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricLoggedAt,
+  formatMetricNumber,
+  rankedFromRecord,
+} from "./adminMetricsFormatters";
 
 type AdminDrawingAnalysisMetricsProps = {
   summary: AdminDrawingAnalysisSummary | null;
@@ -6,37 +15,15 @@ type AdminDrawingAnalysisMetricsProps = {
   windowHours: number;
 };
 
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
+const STATUS_LABELS: Record<string, string> = {
+  approved: "Aprovado",
+  rejected: "Reprovado",
+  warning: "Alerta",
+  unknown: "Indefinido",
+};
 
 function formatStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    approved: "Aprovado",
-    rejected: "Reprovado",
-    warning: "Alerta",
-    unknown: "Indefinido",
-  };
-
-  return labels[status] ?? status;
-}
-
-function formatLoggedAt(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("pt-BR");
+  return STATUS_LABELS[status] ?? status;
 }
 
 export function AdminDrawingAnalysisMetrics({
@@ -44,122 +31,97 @@ export function AdminDrawingAnalysisMetrics({
   isLoading = false,
   windowHours,
 }: AdminDrawingAnalysisMetricsProps) {
-  const statusEntries = summary
-    ? Object.entries(summary.byStatus).sort((left, right) => right[1] - left[1])
-    : [];
+  const statusItems = rankedFromRecord(summary?.byStatus).map((item) => ({
+    ...item,
+    label: formatStatusLabel(item.label),
+  }));
 
   return (
-    <section className="mdc-admin-drawing-metrics" aria-labelledby="mdc-admin-drawing-metrics-title">
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Onda 12</p>
-          <h3 id="mdc-admin-drawing-metrics-title">Análise de Desenhos DELPI</h3>
-          <p>
-            Agregado de snapshots em auditoria (`metadata.drawingAnalysis`) na janela de{" "}
-            {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas de desenho...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo de análises de desenho.</p>
-      ) : null}
-
+    <AdminMetricSection
+      id="mdc-admin-drawing-metrics-title"
+      domain="Qualidade"
+      title="Análise de Desenhos DELPI"
+      description={`Agregado de snapshots em auditoria (metadata.drawingAnalysis) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas de desenho..."
+      isEmpty={!isLoading && !summary}
+    >
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Análises</h4>
-              <strong>{formatNumber(summary.analysesCount)}</strong>
-              <p>Turnos com snapshot de drawingAnalysis na janela.</p>
-            </article>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Análises"
+              value={formatMetricNumber(summary.analysesCount)}
+              hint="Turnos com snapshot de drawingAnalysis na janela."
+            />
+            <AdminKpiCard
+              title="Produtos distintos"
+              value={formatMetricNumber(summary.uniqueProductCodes)}
+              hint="Códigos únicos detectados nos snapshots."
+            />
+            <AdminKpiCard
+              title="Erros críticos"
+              value={formatMetricNumber(summary.totalCriticalErrors)}
+              hint="Soma de criticalErrors nos snapshots."
+            />
+            <AdminKpiCard
+              title="Relatório exportado"
+              value={formatMetricNumber(summary.reportExportedCount)}
+              hint="Turnos com flag reportExported."
+            />
+            <AdminKpiCard
+              title="Analyser OK"
+              value={formatMetricNumber(summary.analyserOkCount)}
+              hint="Chamadas ao analyser concluídas com sucesso."
+            />
+            <AdminKpiCard
+              title="Com PDF"
+              value={formatMetricNumber(summary.withPdfCount)}
+              hint="Turnos com anexo PDF na conversa."
+            />
+          </AdminKpiGrid>
 
+          <div className="mdc-admin-metric-section__grid-2">
             <article className="mdc-admin-kpi-card">
-              <h4>Produtos distintos</h4>
-              <strong>{formatNumber(summary.uniqueProductCodes)}</strong>
-              <p>Códigos únicos detectados nos snapshots.</p>
+              <AdminRankedList title="Por status" items={statusItems} />
             </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Erros críticos</h4>
-              <strong>{formatNumber(summary.totalCriticalErrors)}</strong>
-              <p>Soma de `criticalErrors` nos snapshots.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Relatório exportado</h4>
-              <strong>{formatNumber(summary.reportExportedCount)}</strong>
-              <p>Turnos com flag `reportExported`.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Analyser OK</h4>
-              <strong>{formatNumber(summary.analyserOkCount)}</strong>
-              <p>Chamadas ao analyser concluídas com sucesso.</p>
-            </article>
-
-            <article className="mdc-admin-kpi-card">
-              <h4>Com PDF</h4>
-              <strong>{formatNumber(summary.withPdfCount)}</strong>
-              <p>Turnos com anexo PDF na conversa.</p>
-            </article>
-          </div>
-
-          <div className="mdc-admin-metrics-tab__columns">
-            <article className="mdc-admin-kpi-card">
-              <h4>Por status</h4>
-              {statusEntries.length === 0 ? (
-                <p>Nenhuma análise registrada na janela.</p>
-              ) : (
-                <ul className="mdc-admin-distribution-list">
-                  {statusEntries.map(([status, count]) => (
-                    <li key={status}>
-                      <span>{formatStatusLabel(status)}</span>
-                      <strong>{formatNumber(count)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </article>
-
-            <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
-              <h4>Últimas análises</h4>
-              {summary.recent.length === 0 ? (
-                <p>Sem eventos recentes com snapshot.</p>
-              ) : (
-                <div className="mdc-admin-metrics-tab__table-wrap">
-                  <table className="mdc-admin-metrics-tab__table">
-                    <thead>
-                      <tr>
-                        <th>Quando</th>
-                        <th>Produto</th>
-                        <th>Status</th>
-                        <th>Críticos</th>
-                        <th>Exportado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.recent.map((item, index) => (
-                        <tr key={`${item.loggedAt ?? "row"}-${index}`}>
-                          <td>{formatLoggedAt(item.loggedAt)}</td>
-                          <td>{item.productCode ?? "—"}</td>
-                          <td>{formatStatusLabel(String(item.overallStatus ?? "unknown"))}</td>
-                          <td>{formatNumber(item.criticalErrors)}</td>
-                          <td>{item.reportExported ? "Sim" : "Não"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </article>
+            <AdminDataTable
+              title="Últimas análises"
+              rows={summary.recent}
+              rowKey={(row, index) => `${row.loggedAt ?? "row"}-${index}`}
+              columns={[
+                {
+                  id: "loggedAt",
+                  header: "Quando",
+                  render: (row) => formatMetricLoggedAt(row.loggedAt),
+                },
+                {
+                  id: "product",
+                  header: "Produto",
+                  render: (row) => row.productCode ?? "—",
+                },
+                {
+                  id: "status",
+                  header: "Status",
+                  render: (row) => formatStatusLabel(String(row.overallStatus ?? "unknown")),
+                },
+                {
+                  id: "critical",
+                  header: "Críticos",
+                  render: (row) => formatMetricNumber(row.criticalErrors),
+                },
+                {
+                  id: "exported",
+                  header: "Exportado",
+                  render: (row) => (row.reportExported ? "Sim" : "Não"),
+                },
+              ]}
+            />
           </div>
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

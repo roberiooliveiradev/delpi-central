@@ -1,4 +1,13 @@
 import type { AdminTextTaskSummary } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
+import {
+  formatMetricLoggedAt,
+  formatMetricNumber,
+  rankedFromRecord,
+} from "./adminMetricsFormatters";
 
 type AdminTextTaskMetricsProps = {
   summary: AdminTextTaskSummary | null;
@@ -6,201 +15,99 @@ type AdminTextTaskMetricsProps = {
   windowHours: number;
 };
 
-function formatNumber(value?: number | null): string {
-  if (typeof value !== "number") {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
-function formatLoggedAt(value?: string | null): string {
-  if (!value) {
-    return "—";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleString("pt-BR");
-}
-
 export function AdminTextTaskMetrics({
   summary,
   isLoading = false,
   windowHours,
 }: AdminTextTaskMetricsProps) {
-  const subtypeEntries = summary
-    ? Object.entries(summary.bySubtype).sort((left, right) => right[1] - left[1])
+  const feedbackItems = summary?.feedback
+    ? [
+        { label: "Total avaliações", value: formatMetricNumber(summary.feedback.feedbackTotal), key: "total" },
+        {
+          label: "Negativos",
+          value: formatMetricNumber(summary.feedback.feedbackNegative),
+          key: "negative",
+        },
+        {
+          label: "Positivos",
+          value: formatMetricNumber(summary.feedback.feedbackPositive),
+          key: "positive",
+        },
+        ...rankedFromRecord(summary.feedback.feedbackByReason),
+      ]
     : [];
 
   return (
-    <section
-      className="mdc-admin-drawing-metrics"
-      aria-labelledby="mdc-admin-text-task-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-text-task-metrics-title"
+      domain="Qualidade"
+      title="Especialista em textos"
+      description={`Snapshots em auditoria (metadata.textTaskMetrics) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas textuais..."
+      isEmpty={!isLoading && !summary}
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Editor textual</p>
-          <h3 id="mdc-admin-text-task-metrics-title">Especialista em textos</h3>
-          <p>
-            Agregado de snapshots em auditoria (`metadata.textTaskMetrics`) na janela de{" "}
-            {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas textuais...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo textual.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Tarefas textuais</h4>
-              <strong>{formatNumber(summary.textTasksCount)}</strong>
-              <p>Turnos com snapshot textual na janela.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Mistas</h4>
-              <strong>{formatNumber(summary.mixedTurnCount)}</strong>
-              <p>Consulta operacional + redação no mesmo fluxo.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Qualidade</h4>
-              <strong>{formatNumber(summary.qualityFailedCount)}</strong>
-              <p>Respostas com falha no validador textual.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Lousa versionada</h4>
-              <strong>{formatNumber(summary.canvasVersionedCount)}</strong>
-              <p>Atualizações com histórico de versões na lousa.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Só versão final</h4>
-              <strong>{formatNumber(summary.deliverFinalOnlyCount)}</strong>
-              <p>Pedidos com entrega direta, sem explicação longa.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Com anexo</h4>
-              <strong>{formatNumber(summary.attachmentSourceCount)}</strong>
-              <p>Tarefas textuais com origem em arquivo anexado.</p>
-            </article>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Tarefas textuais"
+              value={formatMetricNumber(summary.textTasksCount)}
+              hint="Turnos com snapshot textual na janela."
+            />
+            <AdminKpiCard
+              title="Mistas"
+              value={formatMetricNumber(summary.mixedTurnCount)}
+              hint="Consulta operacional + redação no mesmo fluxo."
+            />
+            <AdminKpiCard
+              title="Qualidade"
+              value={formatMetricNumber(summary.qualityFailedCount)}
+              hint="Respostas com falha no validador textual."
+            />
+            <AdminKpiCard
+              title="Lousa versionada"
+              value={formatMetricNumber(summary.canvasVersionedCount)}
+              hint="Atualizações com histórico de versões na lousa."
+            />
+            <AdminKpiCard
+              title="Só versão final"
+              value={formatMetricNumber(summary.deliverFinalOnlyCount)}
+              hint="Pedidos com entrega direta, sem explicação longa."
+            />
+            <AdminKpiCard
+              title="Com anexo"
+              value={formatMetricNumber(summary.attachmentSourceCount)}
+              hint="Tarefas textuais com origem em arquivo anexado."
+            />
+          </AdminKpiGrid>
+
+          <div className="mdc-admin-metric-section__grid-3">
+            <AdminRankedList title="Por subtipo" items={rankedFromRecord(summary.bySubtype)} />
+            {feedbackItems.length > 0 ? (
+              <AdminRankedList title="Feedback textual" items={feedbackItems} />
+            ) : null}
+            <AdminRankedList title="Por família" items={rankedFromRecord(summary.byFamily)} />
+            <AdminRankedList title="Por intenção" items={rankedFromRecord(summary.byIntent)} />
           </div>
 
-          {subtypeEntries.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por subtipo</h4>
-              <ul>
-                {subtypeEntries.map(([subtype, count]) => (
-                  <li key={subtype}>
-                    <span>{subtype}</span>
-                    <strong>{formatNumber(count)}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {summary.feedback && summary.feedback.feedbackTotal > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Feedback textual (§47)</h4>
-              <ul>
-                <li>
-                  <span>Total avaliações</span>
-                  <strong>{formatNumber(summary.feedback.feedbackTotal)}</strong>
-                </li>
-                <li>
-                  <span>Negativos</span>
-                  <strong>{formatNumber(summary.feedback.feedbackNegative)}</strong>
-                </li>
-                <li>
-                  <span>Positivos</span>
-                  <strong>{formatNumber(summary.feedback.feedbackPositive)}</strong>
-                </li>
-              </ul>
-              {Object.keys(summary.feedback.feedbackByReason).length > 0 ? (
-                <ul>
-                  {Object.entries(summary.feedback.feedbackByReason)
-                    .sort((left, right) => right[1] - left[1])
-                    .map(([reason, count]) => (
-                      <li key={reason}>
-                        <span>{reason}</span>
-                        <strong>{formatNumber(count)}</strong>
-                      </li>
-                    ))}
-                </ul>
-              ) : null}
-            </div>
-          ) : null}
-
-          {summary.byFamily && Object.keys(summary.byFamily).length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por família (playbook §47)</h4>
-              <ul>
-                {Object.entries(summary.byFamily)
-                  .sort((left, right) => right[1] - left[1])
-                  .map(([family, count]) => (
-                    <li key={family}>
-                      <span>{family}</span>
-                      <strong>{formatNumber(count)}</strong>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {summary.byIntent && Object.keys(summary.byIntent).length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__status-list">
-              <h4>Por intenção</h4>
-              <ul>
-                {Object.entries(summary.byIntent)
-                  .sort((left, right) => right[1] - left[1])
-                  .map(([intent, count]) => (
-                    <li key={intent}>
-                      <span>{intent}</span>
-                      <strong>{formatNumber(count)}</strong>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ) : null}
-
           {summary.recent.length > 0 ? (
-            <div className="mdc-admin-drawing-metrics__recent">
-              <h4>Recentes</h4>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Quando</th>
-                    <th>Subtipo</th>
-                    <th>Tipo</th>
-                    <th>Misto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.recent.map((item, index) => (
-                    <tr key={`${item.loggedAt}-${index}`}>
-                      <td>{formatLoggedAt(item.loggedAt)}</td>
-                      <td>{item.subtype ?? "—"}</td>
-                      <td>{item.type ?? "—"}</td>
-                      <td>{item.mixed ? "sim" : "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <AdminDataTable
+              title="Recentes"
+              rows={summary.recent}
+              rowKey={(item, index) => `${item.loggedAt ?? "row"}-${index}`}
+              columns={[
+                { id: "when", header: "Quando", render: (item) => formatMetricLoggedAt(item.loggedAt) },
+                { id: "subtype", header: "Subtipo", render: (item) => item.subtype ?? "—" },
+                { id: "type", header: "Tipo", render: (item) => item.type ?? "—" },
+                { id: "mixed", header: "Misto", render: (item) => (item.mixed ? "sim" : "—") },
+              ]}
+            />
           ) : null}
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }
