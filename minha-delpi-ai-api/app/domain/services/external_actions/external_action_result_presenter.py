@@ -1680,6 +1680,19 @@ class ExternalActionResultPresenter:
         insights = self._build_product_analyser_insights(root, product)
 
         if compact_for_rich_ui:
+            code = str(product.get("code") or "").strip()
+            description = str(product.get("description") or "").strip()
+
+            if code and description:
+                lines.append(
+                    self._presenter_text(
+                        "analyserCompact",
+                        "productSummary",
+                        code=code,
+                        description=description,
+                    )
+                )
+
             from app.domain.services.chat_presentation_section_availability_service import (
                 ChatPresentationSectionAvailabilityService,
             )
@@ -1982,9 +1995,11 @@ class ExternalActionResultPresenter:
                     }
                 )
 
+        code = str(product.get("code") or "").strip()
+
         return {
             "type": "table",
-            "title": f"Produto {product.get('code', '')}",
+            "title": self._presenter_root_format("productProfileTableTitle", code=code),
             "columns": columns,
             "rows": rows,
         }
@@ -2064,17 +2079,7 @@ class ExternalActionResultPresenter:
         columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
         rows = detail_list
 
-        title = f"Dados do produto {code}"
-        if "prices" in root:
-            title = f"Preços do produto {code}"
-        elif "stock" in root:
-            title = f"Estoque do produto {code}"
-        elif "purchases" in root:
-            title = f"Compras do produto {code}"
-        elif "sales" in root or "billing" in root:
-            title = f"Vendas do produto {code}"
-        elif "open_orders" in root:
-            title = f"Pedidos em aberto do produto {code}"
+        title = self._product_detail_title(code, root)
 
         return {
             "titulo": title,
@@ -3778,27 +3783,18 @@ class ExternalActionResultPresenter:
                     }
                 )
 
+        code = str(product.get("code") or "").strip()
+
         return {
             "type": "table",
-            "title": f"Produto {product.get('code', '')}",
+            "title": self._presenter_root_format("productProfileTableTitle", code=code),
             "columns": columns,
             "rows": rows,
         }
 
     def _build_product_detail_table(self, product: dict, detail_list: list, root: dict) -> dict:
         code = product.get("code", "")
-
-        title = f"Dados do produto {code}"
-        if "prices" in root:
-            title = f"Preços do produto {code}"
-        elif "stock" in root:
-            title = f"Estoque do produto {code}"
-        elif "purchases" in root:
-            title = f"Compras do produto {code}"
-        elif "sales" in root or "billing" in root:
-            title = f"Vendas do produto {code}"
-        elif "open_orders" in root:
-            title = f"Pedidos em aberto do produto {code}"
+        title = self._product_detail_title(code, root)
 
         all_keys = {}
         for item in detail_list:
@@ -3897,7 +3893,10 @@ class ExternalActionResultPresenter:
                 if isinstance(i, dict)
             ]
 
-        table_title = title or f"Busca de produtos ({root.get('total', len(rows))} resultado(s))"
+        table_title = title or self._presenter_root_format(
+            "productSearchTableTitle",
+            total=str(root.get("total", len(rows))),
+        )
 
         return {
             "type": "table",
@@ -4070,6 +4069,33 @@ class ExternalActionResultPresenter:
         return self._column_labels.markdown_column_pairs(
             table_id,
             schema_labels=self._active_schema_labels,
+        )
+
+    def _product_detail_scope(self, root: dict) -> str:
+        if "prices" in root:
+            return "prices"
+
+        if "stock" in root:
+            return "stock"
+
+        if "purchases" in root:
+            return "purchases"
+
+        if "sales" in root or "billing" in root:
+            return "sales"
+
+        if "open_orders" in root:
+            return "open_orders"
+
+        return "default"
+
+    def _product_detail_title(self, code: object, root: dict) -> str:
+        scope = self._product_detail_scope(root)
+
+        return self._presenter_text(
+            "productDetailTitles",
+            scope,
+            code=str(code or "").strip(),
         )
 
     def _billing_title(self, path: str) -> str:
@@ -4261,7 +4287,8 @@ class ExternalActionResultPresenter:
                 (
                     {
                         "type": "kpi",
-                        "title": self._kpi_title(route) or "Resumo",
+                        "title": self._kpi_title(route)
+                        or self._presenter_text("charts", "dashboardKpiFallbackTitle"),
                         "cards": cards,
                     }
                     if (cards := self._build_generic_kpi_cards(summary, route))
@@ -4302,28 +4329,47 @@ class ExternalActionResultPresenter:
 
             if components:
                 for component in components:
+                    fallback = self._presenter_text("charts", "componentTypeFallback")
                     comp_type = (
-                        str(component.get("type") or "Outros").strip().upper()
-                        or "OUTROS"
+                        str(component.get("type") or fallback).strip().upper()
+                        or fallback.upper()
                     )
                     counts[comp_type] = counts.get(comp_type, 0) + 1
                 continue
 
-            comp_type = str(item.get("type") or "Outros").strip().upper() or "OUTROS"
+            fallback = self._presenter_text("charts", "componentTypeFallback")
+            comp_type = (
+                str(item.get("type") or fallback).strip().upper()
+                or fallback.upper()
+            )
             counts[comp_type] = counts.get(comp_type, 0) + 1
 
         if len(counts) < 2:
             return None
 
-        labels = [f"{key} ({value})" for key, value in sorted(counts.items(), key=lambda pair: -pair[1])]
-        values = [value for _, value in sorted(counts.items(), key=lambda pair: -pair[1])]
+        sorted_counts = sorted(counts.items(), key=lambda pair: -pair[1])
+        labels = [
+            self._presenter_text(
+                "charts",
+                "typeLabelWithCount",
+                type=key,
+                count=str(value),
+            )
+            for key, value in sorted_counts
+        ]
+        values = [value for _, value in sorted_counts]
 
         return {
             "type": "chart",
             "chartType": "donut",
-            "title": "Composição por tipo de componente",
+            "title": self._presenter_text("charts", "structureTypeCompositionTitle"),
             "labels": labels,
-            "datasets": [{"label": "Itens", "data": values}],
+            "datasets": [
+                {
+                    "label": self._presenter_text("charts", "defaultDatasetLabel"),
+                    "data": values,
+                }
+            ],
         }
 
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
@@ -4424,25 +4470,36 @@ class ExternalActionResultPresenter:
         for item in items[:20]:
             if not isinstance(item, dict):
                 continue
-            label = f"Fil.{item.get('branch', '?')}/{item.get('warehouse', '?')}"
+            label = self._presenter_text(
+                "charts",
+                "stockLocationLabel",
+                branch=str(item.get("branch") or "?"),
+                warehouse=str(item.get("warehouse") or "?"),
+            )
             chart_data.append({
                 "name": label,
-                "Qtd. atual": item.get("current_quantity") or 0,
-                "Disponível": item.get("available_quantity") or 0,
-                "Empenhada": item.get("committed_quantity") or 0,
+                self._humanize_key("current_quantity"): item.get("current_quantity") or 0,
+                self._humanize_key("available_quantity"): item.get("available_quantity") or 0,
+                self._humanize_key("committed_quantity"): item.get("committed_quantity") or 0,
             })
 
         if not chart_data:
             return None
 
+        quantity_series = [
+            self._humanize_key("current_quantity"),
+            self._humanize_key("available_quantity"),
+            self._humanize_key("committed_quantity"),
+        ]
+
         return {
             "type": "chart",
-            "title": "Estoque por filial/armazém",
+            "title": self._presenter_text("charts", "stockByLocationTitle"),
             "chartType": "horizontal_bar",
             "data": chart_data,
             "config": {
                 "xAxis": "name",
-                "yAxis": ["Qtd. atual", "Disponível", "Empenhada"],
+                "yAxis": quantity_series,
                 "colors": ["#0ea5e9", "#10b981", "#f59e0b"],
                 "legend": True,
             },
@@ -4560,22 +4617,50 @@ class ExternalActionResultPresenter:
         return None
 
     def _build_generic_kpi_cards(self, root: dict, path: str) -> list | None:
-        colors = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        cfg = ChatAssistantContentService.get_node("presenter_content", "genericKpi") or {}
+        palette = cfg.get("palette") or [
+            "#0ea5e9",
+            "#10b981",
+            "#f59e0b",
+            "#ef4444",
+            "#8b5cf6",
+            "#ec4899",
+        ]
+        max_cards = int(cfg.get("maxCards") or 6)
+        min_cards = int(cfg.get("minCards") or 2)
+        percent_keys = [
+            str(token).lower()
+            for token in (cfg.get("percentUnitKeys") or ["pct", "percent", "rate"])
+            if str(token).strip()
+        ]
         cards = []
         idx = 0
+
         for key, val in root.items():
             if not isinstance(val, (int, float)):
                 continue
+
+            lowered_key = str(key).lower()
             cards.append({
                 "label": self._humanize_key(key),
                 "value": val,
-                "unit": "%" if "pct" in key or "percent" in key or "rate" in key else "",
-                "color": colors[idx % len(colors)],
+                "unit": (
+                    "%"
+                    if any(token in lowered_key for token in percent_keys)
+                    else ""
+                ),
+                "color": str(palette[idx % len(palette)]),
             })
             idx += 1
-            if idx >= 6:
+
+            if idx >= max_cards:
                 break
-        return cards if len(cards) >= 2 else None
+
+        return cards if len(cards) >= min_cards else None
 
     def _format_num(self, value) -> str:
         try:
@@ -4610,6 +4695,17 @@ class ExternalActionResultPresenter:
             )
 
         return ChatAssistantContentService.get("presenter_content", *path)
+
+    def _presenter_root_format(self, key: str, **values: str) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return ChatAssistantContentService.format(
+            "presenter_content",
+            key,
+            **values,
+        )
 
     def _kpi_title(self, path: str) -> str:
         from app.domain.services.chat_assistant_content_service import (

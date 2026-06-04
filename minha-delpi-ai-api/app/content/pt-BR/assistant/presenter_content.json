@@ -285,5 +285,33 @@
     "dimensionalSubtitle": "*Ensaios dimensionais*",
     "textualSubtitle": "*Ensaios textuais / referências*",
     "shallowSubtitle": "*Componentes referenciados (sem plano expandido)*"
+  },
+  "analyserCompact": {
+    "productSummary": "Produto **{code}**: {description}."
+  },
+  "productDetailTitles": {
+    "default": "Dados do produto {code}",
+    "prices": "Preços do produto {code}",
+    "stock": "Estoque do produto {code}",
+    "purchases": "Compras do produto {code}",
+    "sales": "Vendas do produto {code}",
+    "open_orders": "Pedidos em aberto do produto {code}"
+  },
+  "productProfileTableTitle": "Produto {code}",
+  "productSearchTableTitle": "Busca de produtos ({total} resultado(s))",
+  "genericKpi": {
+    "maxCards": 6,
+    "minCards": 2,
+    "percentUnitKeys": ["pct", "percent", "rate"],
+    "palette": ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
+  },
+  "charts": {
+    "dashboardKpiFallbackTitle": "Resumo",
+    "structureTypeCompositionTitle": "Composição por tipo de componente",
+    "defaultDatasetLabel": "Itens",
+    "typeLabelWithCount": "{type} ({count})",
+    "stockByLocationTitle": "Estoque por filial/armazém",
+    "stockLocationLabel": "Fil.{branch}/{warehouse}",
+    "componentTypeFallback": "Outros"
   }
 }
