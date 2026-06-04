@@ -29,7 +29,6 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 
 | Rota | Função |
 |------|--------|
-| `/apps/transformometro` | Início (status API + atalhos) |
 | `/apps/transformometro/dashboard` | KPIs, alertas, export CSV/Excel, recalcular |
 | `/apps/transformometro/processos` | Lista de processos (ação **Duplicar** na lista) |
 | `/apps/transformometro/processos/{id}` | Detalhe do processo |

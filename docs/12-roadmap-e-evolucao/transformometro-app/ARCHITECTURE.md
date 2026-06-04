@@ -219,8 +219,7 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 
 | Rota UI | Função |
 |---------|--------|
-| `/apps/transformometro` | Redireciona para o dashboard (não aparece no menu do portal) |
-| `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular |
+| `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular (`/apps/transformometro` abre o mesmo conteúdo) |
 | `/apps/transformometro/processos` | Lista |
 | `/apps/transformometro/processos/{id}` | Detalhe + revisões |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Mesma tela com revisão na URL |

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Download, FileUp, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowDownUp, Download, FileJson, RefreshCw, Upload } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { PageHeader } from "../../components/PageHeader";
@@ -12,6 +12,7 @@ import {
   type JsonImportMode,
   type JsonImportPreview,
 } from "../../data/api/transformometroApi";
+import "./DataTransferPage.css";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -119,6 +120,11 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     }
   }, [bundle, mode, getAccessToken]);
 
+  const selectMode = (next: JsonImportMode) => {
+    setMode(next);
+    setPreview(null);
+  };
+
   return (
     <TransformometroShell>
       <PageHeader
@@ -126,137 +132,195 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
         subtitle="Backup completo do cadastro (processos, revisões, medições, investimentos e recursos)."
         currentPath={pathname}
         onNavigate={onNavigate}
-        actions={
-          <button
-            type="button"
-            className="ds-primary-btn"
-            disabled={busy !== null}
-            onClick={() => void onExport()}
-          >
-            <Download size={16} aria-hidden />
-            {busy === "export" ? "Exportando…" : "Exportar JSON"}
-          </button>
-        }
       />
 
-      {error ? (
-        <div className="ds-state ds-state--error" role="alert">
-          <p>{error}</p>
-        </div>
-      ) : null}
-      {success ? (
-        <div className="ds-state ds-state--success" role="status">
-          <p>{success}</p>
-        </div>
-      ) : null}
-
-      <section className="ds-card ds-stack" style={{ gap: "1.25rem", marginTop: "1rem" }}>
-        <div>
-          <h2 className="ds-section-title">Importar</h2>
-          <p className="ds-page-subtitle" style={{ marginTop: "0.35rem" }}>
-            Envie um arquivo exportado neste app. Escolha se deseja substituir todo o cadastro ou
-            mesclar registros pelo ID (atualiza existentes e inclui novos, sem apagar o que não
-            estiver no arquivo).
-          </p>
-        </div>
-
-        <fieldset className="ds-stack" style={{ gap: "0.5rem", border: "none", padding: 0 }}>
-          <legend className="ds-label">Modo de importação</legend>
-          <label className="ds-inline-check">
-            <input
-              type="radio"
-              name="import-mode"
-              checked={mode === "merge"}
-              onChange={() => {
-                setMode("merge");
-                setPreview(null);
-              }}
-            />
-            Mesclar por ID — atualizar/inserir conforme o JSON, manter o restante
-          </label>
-          <label className="ds-inline-check">
-            <input
-              type="radio"
-              name="import-mode"
-              checked={mode === "replace"}
-              onChange={() => {
-                setMode("replace");
-                setPreview(null);
-              }}
-            />
-            Substituir tudo — apaga o cadastro atual e importa somente o JSON
-          </label>
-        </fieldset>
-
-        <div className="ds-inline-actions" style={{ flexWrap: "wrap", gap: "0.75rem" }}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="ds-visually-hidden"
-            onChange={(e) => void onFileChange(e)}
-          />
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <FileUp size={16} aria-hidden />
-            Escolher arquivo
-          </button>
-          {fileName ? <span className="ds-hint">{fileName}</span> : null}
-          <button
-            type="button"
-            className="ds-ghost-btn"
-            disabled={!bundle || busy !== null}
-            onClick={() => void onPreview()}
-          >
-            <RefreshCw size={16} aria-hidden />
-            {busy === "preview" ? "Analisando…" : "Pré-visualizar"}
-          </button>
-          <button
-            type="button"
-            className="ds-primary-btn"
-            disabled={!bundle || busy !== null}
-            onClick={() => void onApply()}
-          >
-            {busy === "apply" ? "Importando…" : "Aplicar importação"}
-          </button>
-        </div>
-
-        {preview?.valid && preview.entities ? (
-          <div className="ds-table-wrap">
-            <table className="ds-table">
-              <thead>
-                <tr>
-                  <th>Entidade</th>
-                  <th>No arquivo</th>
-                  <th>Inserir</th>
-                  <th>Atualizar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(preview.entities).map(([key, stats]) => (
-                  <tr key={key}>
-                    <td>{ENTITY_LABELS[key] ?? key}</td>
-                    <td>{stats.total}</td>
-                    <td>{stats.insert}</td>
-                    <td>{stats.update}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {preview.current_counts ? (
-              <p className="ds-muted" style={{ marginTop: "0.75rem" }}>
-                Cadastro atual no banco:{" "}
-                {Object.entries(preview.current_counts)
-                  .map(([k, n]) => `${ENTITY_LABELS[k] ?? k}: ${n}`)
-                  .join(" · ")}
-              </p>
-            ) : null}
+      <div className="tm-data-transfer">
+        {error ? (
+          <div className="ds-state ds-state--error" role="alert">
+            <p>{error}</p>
           </div>
         ) : null}
-      </section>
+        {success ? (
+          <div className="ds-state ds-state--success" role="status">
+            <p>{success}</p>
+          </div>
+        ) : null}
+
+        <div className="tm-data-transfer__grid">
+          <section className="ds-card tm-data-transfer__panel tm-data-transfer__panel--export">
+            <div className="tm-data-transfer__panel-head">
+              <span className="tm-data-transfer__panel-icon" aria-hidden>
+                <Download size={22} strokeWidth={1.75} />
+              </span>
+              <div className="tm-data-transfer__panel-text">
+                <h2 className="ds-section-title">Exportar</h2>
+                <p className="ds-hint">
+                  Gera um arquivo <code>.json</code> com todo o cadastro atual para backup ou
+                  transferência entre ambientes.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="ds-primary-btn"
+              disabled={busy !== null}
+              onClick={() => void onExport()}
+            >
+              <Download size={16} aria-hidden />
+              {busy === "export" ? "Exportando…" : "Baixar backup JSON"}
+            </button>
+          </section>
+
+          <section className="ds-card tm-data-transfer__panel tm-data-transfer__panel--import">
+            <div className="tm-data-transfer__panel-head">
+              <span className="tm-data-transfer__panel-icon" aria-hidden>
+                <Upload size={22} strokeWidth={1.75} />
+              </span>
+              <div className="tm-data-transfer__panel-text">
+                <h2 className="ds-section-title">Importar</h2>
+                <p className="ds-hint">
+                  Envie um backup exportado neste app. Pré-visualize o impacto antes de aplicar.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <p className="tm-data-transfer__field-label">Modo de importação</p>
+              <div className="tm-data-transfer__modes" role="radiogroup" aria-label="Modo de importação">
+                <label
+                  className={`tm-data-transfer__mode${
+                    mode === "merge" ? " tm-data-transfer__mode--active" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="import-mode"
+                    checked={mode === "merge"}
+                    onChange={() => selectMode("merge")}
+                  />
+                  <span className="tm-data-transfer__mode-title">
+                    <ArrowDownUp size={14} style={{ verticalAlign: -2, marginRight: 6 }} aria-hidden />
+                    Mesclar por ID
+                  </span>
+                  <span className="tm-data-transfer__mode-desc">
+                    Atualiza registros existentes e inclui novos. O que não estiver no arquivo
+                    permanece no banco.
+                  </span>
+                </label>
+                <label
+                  className={`tm-data-transfer__mode tm-data-transfer__mode--danger${
+                    mode === "replace" ? " tm-data-transfer__mode--active" : ""
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="import-mode"
+                    checked={mode === "replace"}
+                    onChange={() => selectMode("replace")}
+                  />
+                  <span className="tm-data-transfer__mode-title">
+                    <AlertTriangle size={14} style={{ verticalAlign: -2, marginRight: 6 }} aria-hidden />
+                    Substituir tudo
+                  </span>
+                  <span className="tm-data-transfer__mode-desc">
+                    Apaga o cadastro atual e importa somente o conteúdo do JSON.
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div
+              className={`tm-data-transfer__file-block${
+                fileName ? " tm-data-transfer__file-block--has-file" : ""
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/json,.json"
+                hidden
+                onChange={(e) => void onFileChange(e)}
+              />
+              <div className="tm-data-transfer__file-row">
+                <FileJson size={20} aria-hidden style={{ color: "var(--ds-accent)", flexShrink: 0 }} />
+                <span
+                  className={`tm-data-transfer__file-name${
+                    fileName ? " tm-data-transfer__file-name--selected" : ""
+                  }`}
+                  title={fileName ?? undefined}
+                >
+                  {fileName ?? "Nenhum arquivo selecionado"}
+                </span>
+                <button
+                  type="button"
+                  className="ds-ghost-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Escolher arquivo
+                </button>
+              </div>
+            </div>
+
+            <div className="tm-data-transfer__toolbar">
+              <button
+                type="button"
+                className="ds-ghost-btn"
+                disabled={!bundle || busy !== null}
+                onClick={() => void onPreview()}
+              >
+                <RefreshCw size={16} aria-hidden />
+                {busy === "preview" ? "Analisando…" : "Pré-visualizar"}
+              </button>
+              <button
+                type="button"
+                className="ds-primary-btn"
+                disabled={!bundle || busy !== null}
+                onClick={() => void onApply()}
+              >
+                {busy === "apply" ? "Importando…" : "Aplicar importação"}
+              </button>
+            </div>
+
+            {preview?.valid && preview.entities ? (
+              <div className="tm-data-transfer__preview">
+                <h3 className="ds-section-title tm-data-transfer__preview-title">
+                  Resumo da pré-visualização
+                </h3>
+                <div className="ds-table-wrap">
+                  <table className="ds-table">
+                    <thead>
+                      <tr>
+                        <th>Entidade</th>
+                        <th>No arquivo</th>
+                        <th>Inserir</th>
+                        <th>Atualizar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(preview.entities).map(([key, stats]) => (
+                        <tr key={key}>
+                          <td>{ENTITY_LABELS[key] ?? key}</td>
+                          <td>{stats.total}</td>
+                          <td>{stats.insert}</td>
+                          <td>{stats.update}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {preview.current_counts ? (
+                  <p className="tm-data-transfer__counts">
+                    Cadastro atual no banco:{" "}
+                    {Object.entries(preview.current_counts)
+                      .map(([k, n]) => `${ENTITY_LABELS[k] ?? k}: ${n}`)
+                      .join(" · ")}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </section>
+        </div>
+      </div>
     </TransformometroShell>
   );
 }

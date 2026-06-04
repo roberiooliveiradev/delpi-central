@@ -422,7 +422,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <PageHeader
           title="Dashboard Transformômetro"
           subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
-          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
+          currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
           onNavigate={onNavigate}
         />
         <LoadingActivityCard
@@ -450,7 +450,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       <PageHeader
         title="Dashboard Transformômetro"
         subtitle="Economia bruta e líquida por competência — cadastro no PostgreSQL"
-        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.home}
+        currentPath={pathname ?? TRANSFORMOMETRO_ROUTES.dashboard}
         onNavigate={onNavigate}
         actions={
           <>

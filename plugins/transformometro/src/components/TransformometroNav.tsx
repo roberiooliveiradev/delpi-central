@@ -17,6 +17,13 @@ function isActive(path: string, currentPath?: string): boolean {
   if (!currentPath) {
     return path === TRANSFORMOMETRO_ROUTES.dashboard;
   }
+  if (path === TRANSFORMOMETRO_ROUTES.dashboard) {
+    return (
+      currentPath === path ||
+      currentPath === TRANSFORMOMETRO_ROUTES.home ||
+      currentPath === "/apps/transformometro"
+    );
+  }
   if (path === TRANSFORMOMETRO_ROUTES.processos) {
     return (
       currentPath === path ||

@@ -6,7 +6,7 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 
 | Path | Página |
 |------|--------|
-| `/apps/transformometro` | Início |
+| `/apps/transformometro/dashboard` | Dashboard |
 | `/apps/transformometro/dashboard` | Dashboard (KPIs, alertas, CSV/Excel, recalcular) |
 | `/apps/transformometro/processos` | Processos e cadastro de revisões (abas) |
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
