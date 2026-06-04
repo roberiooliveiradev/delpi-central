@@ -5,6 +5,13 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
+from tm_app.core.business_days import (
+    business_day_fraction_in_competencia_range,
+    business_days_in_month,
+    business_month_calendar_factor,
+    business_days_overlap_in_competencia,
+    count_business_days,
+)
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
 
@@ -447,11 +454,6 @@ class DashboardCalculatorService:
             competencia_date=competencia_date,
         )
 
-        investimento_total_mes = (
-            investimento_unico_mes + custo_recorrente_mes + current_shared_cost
-        )
-        economia_liquida_mes = savings["economia_bruta"] - investimento_total_mes
-
         horas_economizadas_mes = 0.0
         if self._is_comparable_review(review):
             horas_economizadas_mes = self._calculate_hours_saved_month(
@@ -460,6 +462,27 @@ class DashboardCalculatorService:
                 review=review,
                 competencia_date=competencia_date,
             )
+
+        if self._is_comparable_review(review):
+            bd_factor = business_month_calendar_factor(
+                competencia_date.year, competencia_date.month
+            )
+            if bd_factor != 1.0:
+                for key in (
+                    "economia_tempo",
+                    "economia_retrabalho",
+                    "economia_erros",
+                    "economia_outros",
+                    "economia_recursos_compartilhados",
+                    "economia_bruta",
+                ):
+                    savings[key] = float(savings.get(key) or 0) * bd_factor
+                horas_economizadas_mes *= bd_factor
+
+        investimento_total_mes = (
+            investimento_unico_mes + custo_recorrente_mes + current_shared_cost
+        )
+        economia_liquida_mes = savings["economia_bruta"] - investimento_total_mes
 
         competencia = competencia_date.strftime("%Y-%m")
         processo_id = self._empty_to_none(process_row.get("processo_id")) or ""
@@ -539,11 +562,11 @@ class DashboardCalculatorService:
             current_shared_cost=current_shared_cost,
         )
 
-        days_in_month = calendar.monthrange(current_month.year, current_month.month)[1]
-        if days_in_month <= 0:
+        business_days = business_days_in_month(current_month.year, current_month.month)
+        if business_days <= 0:
             return None
 
-        return savings["economia_bruta"] / days_in_month
+        return savings["economia_bruta"] / business_days
 
     def _calculate_review_payback_months(
         self,
@@ -812,8 +835,8 @@ class DashboardCalculatorService:
         if effective_end < effective_start:
             return 0.0
 
-        active_days = (effective_end - effective_start).days + 1
-        total_days = (month_end - month_start).days + 1
+        active_days = count_business_days(effective_start, effective_end)
+        total_days = count_business_days(month_start, month_end)
         if total_days <= 0:
             return 0.0
 
@@ -1199,29 +1222,13 @@ class DashboardCalculatorService:
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> float:
-        """Fração do mês (0–1) incluída no recorte YYYY-MM-DD … YYYY-MM-DD."""
-        if not self._uses_day_level_date_filter(start_date, end_date):
-            return 1.0
-
-        start_obj = self._parse_date(start_date)
-        end_obj = self._parse_date(end_date)
-        if not start_obj or not end_obj:
-            return 1.0
-
-        try:
-            month_start = datetime.strptime(str(competencia).strip()[:7], "%Y-%m").date()
-        except (ValueError, TypeError):
-            return 1.0
-
-        days_in_month = calendar.monthrange(month_start.year, month_start.month)[1]
-        month_end = month_start.replace(day=days_in_month)
-        overlap_start = max(start_obj, month_start)
-        overlap_end = min(end_obj, month_end)
-        if overlap_start > overlap_end:
-            return 0.0
-
-        days_in_range = (overlap_end - overlap_start).days + 1
-        return days_in_range / days_in_month
+        """Fração dos dias úteis do mês (0–1) incluída no recorte YYYY-MM-DD … YYYY-MM-DD."""
+        return business_day_fraction_in_competencia_range(
+            competencia,
+            start_date,
+            end_date,
+            uses_day_level_filter=self._uses_day_level_date_filter(start_date, end_date),
+        )
 
     def _prorate_row_metrics_for_period(
         self,
@@ -1389,39 +1396,52 @@ class DashboardCalculatorService:
         except (ValueError, TypeError):
             return 1.0
 
-        # Calculate days in first month
-        first_month_days = calendar.monthrange(first_month_date.year, first_month_date.month)[1]
-        
-        # Calculate days in last month
-        last_month_days = calendar.monthrange(last_month_date.year, last_month_date.month)[1]
+        first_month_business_days = business_days_in_month(
+            first_month_date.year, first_month_date.month
+        )
+        last_month_business_days = business_days_in_month(
+            last_month_date.year, last_month_date.month
+        )
 
-        # Determine effective first and last days
         first_day_in_month = start_date_obj.day
         last_day_in_month = end_date_obj.day
+        first_calendar_days = calendar.monthrange(
+            first_month_date.year, first_month_date.month
+        )[1]
+        last_calendar_days = calendar.monthrange(
+            last_month_date.year, last_month_date.month
+        )[1]
 
-        # If start is not on day 1, prorate the first month
+        first_overlap = business_days_overlap_in_competencia(
+            first_competencia, start_date_obj, end_date_obj
+        )
         if first_day_in_month > 1:
-            first_days_in_range = first_month_days - first_day_in_month + 1
-            proration_from_first = first_days_in_range / first_month_days
+            proration_from_first = (
+                first_overlap / first_month_business_days
+                if first_month_business_days > 0
+                else 1.0
+            )
         else:
             proration_from_first = 1.0
 
-        # If end is not on last day of month, prorate the last month
-        if last_day_in_month < last_month_days:
-            proration_from_last = last_day_in_month / last_month_days
+        if last_day_in_month < last_calendar_days:
+            last_overlap = business_days_overlap_in_competencia(
+                last_competencia, start_date_obj, end_date_obj
+            )
+            proration_from_last = (
+                last_overlap / last_month_business_days
+                if last_month_business_days > 0
+                else 1.0
+            )
         else:
             proration_from_last = 1.0
 
-        # Count total months in breakdown
         total_months = len(monthly_breakdown)
 
-        # If only 1 month, apply both prorations (it's the same month)
         if total_months == 1 and first_competencia == last_competencia:
-            # Both are in the same month
-            effective_days = 0
-            for day in range(first_day_in_month, last_day_in_month + 1):
-                effective_days += 1
-            return effective_days / first_month_days
+            if first_month_business_days <= 0:
+                return 1.0
+            return first_overlap / first_month_business_days
 
         # If 2+ months, average the partial proration
         # (first month partial, middle months full, last month partial)
@@ -1496,9 +1516,11 @@ class DashboardCalculatorService:
         if effective_end < effective_start:
             return 0.0
 
-        active_days = (effective_end - effective_start).days + 1
-        total_days = (last_day - first_day).days + 1
+        active_days = count_business_days(effective_start, effective_end)
+        total_days = count_business_days(first_day, last_day)
 
+        if total_days <= 0:
+            return 0.0
         return active_days / total_days
 
     def _is_link_eligible(self, link: dict, competencia_date: date) -> bool:

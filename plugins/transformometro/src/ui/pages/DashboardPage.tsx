@@ -55,7 +55,7 @@ import {
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
 import { currentMonthFilterRange } from "../../utils/dashboardFilters";
-import { economiaLiquidaDiaria } from "../../utils/economiaDiaria";
+import { horasEconomizadasDiaria } from "../../utils/economiaDiaria";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -125,7 +125,7 @@ function chartHint(
   if (measure === "hours") {
     parts.push("horas economizadas no recorte");
   } else if (granularity === "day" && dayProrated) {
-    parts.push("visão diária proporcional aos dias selecionados no filtro");
+    parts.push("visão diária proporcional aos dias do filtro");
   } else if (granularity === "month") {
     parts.push("competências mensais incluídas no recorte");
   } else {
@@ -282,12 +282,12 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     [processos]
   );
 
-  const topEconomiaDiariaLiquidaChart = useMemo<TopDailyPoint[]>(
+  const topHorasDiariaChart = useMemo<TopDailyPoint[]>(
     () =>
       [...processos]
         .map((item) => ({
           item,
-          value: economiaLiquidaDiaria(item),
+          value: horasEconomizadasDiaria(item),
         }))
         .filter((entry) => entry.value > 0)
         .sort((a, b) => b.value - a.value)
@@ -702,9 +702,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
         <section className="ds-charts-grid ds-charts-grid--rankings">
           <ChartCard
-            title="Top economia diária"
+            title="Top economia bruta diária"
             hint={
-              topDailyChart.length > 0 ? "10 maiores no recorte · R$ (bruta)" : "Sem ranking no período"
+              topDailyChart.length > 0
+                ? "10 maiores no recorte · R$ (bruta diária)"
+                : "Sem ranking no período"
             }
           >
             {topDailyChart.length === 0 && !isBusy ? (
@@ -719,20 +721,20 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           </ChartCard>
 
           <ChartCard
-            title="Top economia diária líquida"
+            title="Top economia diária de horas"
             hint={
-              topEconomiaDiariaLiquidaChart.length > 0
-                ? "10 maiores no recorte · R$ (líquida)"
+              topHorasDiariaChart.length > 0
+                ? "10 maiores no recorte · Horas (diária)"
                 : "Sem ranking no período"
             }
           >
-            {topEconomiaDiariaLiquidaChart.length === 0 && !isBusy ? (
-              <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
+            {topHorasDiariaChart.length === 0 && !isBusy ? (
+              <p className="ds-state-box">Nenhum processo com horas economizadas diárias no recorte.</p>
             ) : (
               <RankingBarChart
-                data={topEconomiaDiariaLiquidaChart}
+                data={topHorasDiariaChart}
                 colors={CHART_COLORS}
-                formatValue={formatCurrency}
+                formatValue={formatHours}
               />
             )}
           </ChartCard>

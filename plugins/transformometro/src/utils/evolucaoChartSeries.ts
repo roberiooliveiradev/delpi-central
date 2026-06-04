@@ -1,5 +1,6 @@
 import type { DashboardEvolucaoItem } from "../data/api/transformometroApi";
 import type { ChartGranularity } from "../types/chart";
+import { countDaysInFilterForMonth, isCountedDay, parseIsoDate } from "./businessDays";
 import { buildPeriodBuckets } from "./periodBuckets";
 
 export type SavingsChartPoint = {
@@ -14,7 +15,7 @@ export type SavingsChartPoint = {
 export type EvolucaoChartSeriesResult = {
   points: SavingsChartPoint[];
   truncated: boolean;
-  /** Valores do período distribuídos igualmente entre os dias do filtro em cada competência. */
+  /** Valores do período distribuídos entre os dias do filtro em cada competência. */
   dayProrated: boolean;
 };
 
@@ -42,13 +43,7 @@ function addDailyFromCompetencia(
   const year = Number(match[1]);
   const month = Number(match[2]);
   const dim = daysInMonth(year, month);
-  let daysInFilter = 0;
-  for (let day = 1; day <= dim; day += 1) {
-    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (iso >= dateStart && iso <= dateEnd) {
-      daysInFilter += 1;
-    }
-  }
+  const daysInFilter = countDaysInFilterForMonth(year, month, dateStart, dateEnd);
   if (daysInFilter <= 0) return;
 
   const perDayBruta = values.bruta / daysInFilter;
@@ -59,6 +54,7 @@ function addDailyFromCompetencia(
   for (let day = 1; day <= dim; day += 1) {
     const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     if (iso < dateStart || iso > dateEnd) continue;
+    if (!isCountedDay(parseIsoDate(iso))) continue;
 
     const current = totals.get(iso) ?? { bruta: 0, liquida: 0, investimento: 0, horas: 0 };
     current.bruta += perDayBruta;

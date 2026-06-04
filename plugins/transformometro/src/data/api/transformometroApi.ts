@@ -569,6 +569,7 @@ export type DashboardProcessoItem = {
   codigo_processo: string;
   nome_processo: string;
   economia_diaria: number | null;
+  horas_diaria?: number | null;
   horas_economizadas_mes?: number;
   economia_liquida_mes?: number;
   economia_bruta?: number;

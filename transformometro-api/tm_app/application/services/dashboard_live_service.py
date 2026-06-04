@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+from tm_app.core.business_days import total_business_days_for_competencias
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
@@ -250,8 +251,19 @@ class DashboardLiveService:
             custo_recorrente = totals["custo_recorrente_mes"]
             custo_recursos = totals["custo_recursos_compartilhados_mes"]
             investimento_total = totals["investimento_total_mes"]
-            month_count = max(len(totals["competencias"]), 1)
-            days_denominator = 30.0 * month_count
+            uses_day_filter = bool(
+                competencia_inicio
+                and competencia_fim
+                and len(str(competencia_inicio)) >= 10
+                and len(str(competencia_fim)) >= 10
+            )
+            days_denominator = total_business_days_for_competencias(
+                totals["competencias"],
+                start_date=competencia_inicio,
+                end_date=competencia_fim,
+                uses_day_level_filter=uses_day_filter,
+            )
+            days_denominator = max(days_denominator, 1.0)
             ranking.append(
                 {
                     "processo_id": pid,
@@ -266,6 +278,9 @@ class DashboardLiveService:
                     "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
                     "investimento_total_mes": round(investimento_total, 2),
                     "economia_diaria": round(bruta / days_denominator, 2),
+                    "horas_diaria": round(
+                        totals["horas_economizadas_mes"] / days_denominator, 2
+                    ),
                     "horas_economizadas_mes": round(totals["horas_economizadas_mes"], 2),
                     "competencia": (
                         max(totals["competencias"])

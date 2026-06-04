@@ -25,11 +25,24 @@ ROI acumulado = economia_liquida_total / investimento_total
 
 A chave da API permanece `roi_medio` por compatibilidade com o frontend. Não descontar investimento duas vezes: a economia líquida já inclui todos os custos.
 
+## Dias do mês (corridos)
+
+Os cálculos que prorrateiam por tempo usam **todos os dias do mês civil** (28–31 conforme o mês), não mês fixo de 30 dias:
+
+- Filtro `YYYY-MM-DD` no dashboard: `dias_no_recorte / dias_do_mês` por competência.
+- Vigência de revisão e recursos `proporcional_dias`: fração de dias corridos ativos no mês.
+- Gráfico diário (front): distribui valores entre os dias corridos incluídos no filtro.
+
+Modo **apenas dias úteis** (seg–sex + feriados nacionais) existe no código (`USE_ONLY_BUSINESS_DAYS`) mas está **desativado**.
+
 ## Economia diária (ranking “Top economia diária”)
 
 ```text
-economia_diaria = economia_bruta_acumulada_no_recorte / (30 × número_de_competências)
+economia_diaria = economia_bruta_acumulada_no_recorte / dias_totais_do_recorte
+horas_diaria = horas_acumuladas_no_recorte / dias_totais_do_recorte
 ```
+
+O denominador soma os dias de cada competência no recorte (ou só os dias intersectados quando o filtro tem dia explícito).
 
 O ranking ordena por `economia_diaria` (capacidade de economia bruta), não por líquida.
 
@@ -57,7 +70,7 @@ Com filtro em formato **YYYY-MM-DD** (data inicial e final com dia), os cards de
 
 O **ROI acumulado** do card é sempre `economia_liquida_total / investimento_total` do recorte (não média simples por revisão).
 
-Exemplo: `2026-06-01` … `2026-06-03` aplica 3/30 da economia operacional, mas mantém o investimento único cheio de junho se houver sobreposição — o ROI passa a refletir o recorte parcial.
+Exemplo: `2026-06-01` … `2026-06-03` aplica 3/30 da economia operacional em junho/2026, mas mantém o investimento único cheio de junho se houver sobreposição — o ROI passa a refletir o recorte parcial.
 
 Com filtro só por competência mensal (`YYYY-MM`) ou sem dia explícito, permanecem os totais mensais cheios de cada competência no intervalo.
 
