@@ -131,6 +131,14 @@ export function ChatAssistantContent({
 
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
   const showFormatToolbar = visualFormatOptions.length >= 2;
+  const suppressPresentationChrome =
+    showCompleteStackView &&
+    segments.some(
+      (segment) =>
+        segment.kind === "table" ||
+        segment.kind === "tree" ||
+        segment.kind === "stackSection",
+    );
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">
@@ -140,13 +148,15 @@ export function ChatAssistantContent({
         </div>
       ) : null}
 
-      <AssistantContentChrome
-        insight={presentationInsight}
-        recommendations={presentationRecommendations}
-        pagination={paginationState}
-        depth={depthState}
-        onNavigate={onDrillDown}
-      />
+      {!suppressPresentationChrome ? (
+        <AssistantContentChrome
+          insight={presentationInsight}
+          recommendations={presentationRecommendations}
+          pagination={paginationState}
+          depth={depthState}
+          onNavigate={onDrillDown}
+        />
+      ) : null}
 
       {showTitle ? <h3 className="mdc-rich-presentation__heading">{title}</h3> : null}
 

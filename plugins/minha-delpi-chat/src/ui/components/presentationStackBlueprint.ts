@@ -12,6 +12,11 @@ import {
   type StackPresentationPlan,
   type StackTableRole,
 } from "./presentationStackPlan";
+import {
+  STACK_SECTION_BY_ID,
+  stackSectionForRole,
+  type StackSectionChrome,
+} from "./presentationStackSections";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
 const PRESENTATION_MARKER_RE =
@@ -32,6 +37,14 @@ export function commentaryHasStructuredSections(sections: CommentarySections): b
   return sections.hasSectionBreaks;
 }
 
+function pushStackSection(
+  segments: AssistantContentSegment[],
+  section: StackSectionChrome,
+  appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+): void {
+  appendUnique(segments, { kind: "stackSection", section });
+}
+
 function pushMarkdownSegments(
   segments: AssistantContentSegment[],
   prose: string,
@@ -48,10 +61,18 @@ function appendTablesForRoles(
   tables: AssistantContentSegment[],
   roles: StackTableRole[],
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+  options?: { sectionPerRole?: boolean },
 ): void {
   const buckets = bucketTableSegmentsByRole(tables, inferTableRoleFromTitle);
+  const sectionPerRole = options?.sectionPerRole === true;
 
   for (const role of roles) {
+    const chrome = sectionPerRole ? stackSectionForRole(role) : null;
+
+    if (chrome) {
+      pushStackSection(segments, chrome, appendUnique);
+    }
+
     for (const segment of buckets[role]) {
       appendUnique(segments, segment);
     }
@@ -89,6 +110,8 @@ function appendTailVisuals(
     }
 
     if (token === "tree") {
+      pushStackSection(segments, STACK_SECTION_BY_ID.structure, appendUnique);
+
       for (const segment of byKind.get("tree") ?? []) {
         appendUnique(segments, segment);
       }
@@ -144,6 +167,8 @@ export function buildPlanOrderedStackSegments(
   const appendSlot = (slot: string) => {
     switch (slot) {
       case "lead":
+        pushStackSection(segments, STACK_SECTION_BY_ID.scope, appendUnique);
+
         if (sections.lead) {
           pushMarkdownSegments(segments, sections.lead, parseMarkdown, appendUnique);
         } else if (!sections.hasSectionBreaks && commentary.trim()) {
@@ -153,18 +178,22 @@ export function buildPlanOrderedStackSegments(
         break;
 
       case "profileTables":
+        pushStackSection(segments, STACK_SECTION_BY_ID.profile, appendUnique);
         appendTablesForRoles(segments, tables, profileRoles, appendUnique);
         break;
 
       case "highlights":
         if (sections.destaques) {
+          pushStackSection(segments, STACK_SECTION_BY_ID.highlights, appendUnique);
           pushMarkdownSegments(segments, sections.destaques, parseMarkdown, appendUnique);
         }
 
         break;
 
       case "operationalTables":
-        appendTablesForRoles(segments, tables, operationalRoles, appendUnique);
+        appendTablesForRoles(segments, tables, operationalRoles, appendUnique, {
+          sectionPerRole: true,
+        });
         break;
 
       case "tailVisuals":
@@ -173,6 +202,7 @@ export function buildPlanOrderedStackSegments(
 
       case "attention":
         if (sections.pontos) {
+          pushStackSection(segments, STACK_SECTION_BY_ID.attention, appendUnique);
           pushMarkdownSegments(segments, sections.pontos, parseMarkdown, appendUnique);
         }
 
@@ -198,6 +228,7 @@ export function buildPlanOrderedStackSegments(
     (segment) =>
       segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
   )) {
+    pushStackSection(segments, STACK_SECTION_BY_ID.attention, appendUnique);
     pushMarkdownSegments(segments, sections.pontos, parseMarkdown, appendUnique);
   }
 

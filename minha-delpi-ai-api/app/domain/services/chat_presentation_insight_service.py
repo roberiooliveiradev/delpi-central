@@ -19,6 +19,11 @@ class ChatPresentationInsightService:
         safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
         shape = data_shape or {}
 
+        if token == "tree":
+            return (
+                "A árvore mostra a hierarquia de composição ou relacionamento entre itens."
+            )
+
         if not safe_rows:
             return "Não há dados suficientes para gerar esta visualização."
 
@@ -41,9 +46,6 @@ class ChatPresentationInsightService:
                 f"A tabela lista os principais registros encontrados "
                 f"({count} linha{'s' if count != 1 else ''})."
             )
-
-        if token == "tree":
-            return "A árvore mostra a hierarquia de composição ou relacionamento entre itens."
 
         if token in {"grouped_bar", "combo_chart", "stacked_bar"}:
             return "O gráfico compara séries lado a lado para facilitar a leitura de metas e valores."

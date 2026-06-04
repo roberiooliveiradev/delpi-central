@@ -70,7 +70,27 @@ Gerado por `ChatPresentationStackOrderService` a partir do `path` e do markdown 
 5. `tailVisuals` — árvore (e gráfico, se houver)  
 6. `attention` — **Pontos de atenção** (sempre no final)
 
+O MFE injeta **seções humanizadas** (`stackSection`) antes de cada bloco: título `━━━ N. … ━━━` e texto explicativo (`presentationStackSections.ts`). Em layout **stack Completo**, o insight/recomendação genérico do Playbook 09 fica oculto — a narrativa já está nas seções.
+
 Outras rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, …). O MFE infere o papel de cada tabela pelo título quando o plano não veio no metadata.
+
+### Mockup de referência — `GET /products/{code}/analyser` (Completo)
+
+Pergunta: «me fale do produto 90260149». Ordem: **ficha no início**, **alertas no final**.
+
+| # | Seção | Conteúdo |
+|---|--------|----------|
+| 1 | Escopo da consulta | Título + linha «Análise integrada do cadastro, roteiro…» |
+| 2 | Ficha cadastral | Tabela CAMPO/VALOR (única ficha; não repetir em texto) |
+| 3 | Síntese executiva (Destaques) | Bullets após a ficha |
+| 4 | Roteiro de produção | Tabela nativa |
+| 5 | Plano de inspeção | Tabela nativa (quando a API enviar `inspection`) |
+| 6 | Estrutura (BOM) | Árvore (sem tabela plana de componentes junto) |
+| 7 | Alertas e divergências | Lista numerada no final |
+
+**Barra de formatos:** Completo = sequência acima; Texto = 1+3+7; Tabela = 2+4+5; Árvore = 6.
+
+**Não exibir:** insight «sem dados suficientes» no topo; ficha repetida em parágrafo; alertas antes da ficha; frase redundante «A árvore mostra a hierarquia…» no corpo quando já há árvore.
 
 ### `presentationDecision` (campos de layout)
 

@@ -1,6 +1,9 @@
 import type { ChatPresentation } from "../../data/api/chatTypes";
 
+import type { StackSectionChrome } from "./presentationStackSections";
+
 export type AssistantContentSegment =
+  | { kind: "stackSection"; section: StackSectionChrome }
   | { kind: "markdown"; markdown: string }
   | { kind: "code"; language: string; code: string }
   | { kind: "table"; presentation: Extract<ChatPresentation, { type: "table" }> }

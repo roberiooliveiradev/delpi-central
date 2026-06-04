@@ -101,7 +101,7 @@ describe("assistantContentVisualFormats", () => {
     const filteredTree = filterSegmentsByVisualKind(segments, "tree");
     const kinds = filteredTree.map((segment) => segment.kind);
 
-    expect(kinds).toEqual(["tree"]);
+    expect(kinds).toEqual(["stackSection", "tree"]);
     expect(
       segments.some(
         (segment) =>

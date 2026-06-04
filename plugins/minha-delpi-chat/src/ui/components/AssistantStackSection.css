@@ -1,0 +1,29 @@
+.mdc-stack-section {
+  margin: 0;
+  padding: 0;
+}
+
+.mdc-stack-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--mdc-space-2);
+  margin: 0 0 var(--mdc-space-1);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--mdc-chat-muted, var(--mdc-text-muted, #9ca3af));
+}
+
+.mdc-stack-section__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--mdc-border-subtle, rgba(255, 255, 255, 0.12));
+}
+
+.mdc-stack-section__description {
+  margin: 0 0 var(--mdc-space-1);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--mdc-chat-prose-muted, var(--mdc-text-muted, #a8b0bd));
+}

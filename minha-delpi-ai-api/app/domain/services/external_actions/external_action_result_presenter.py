@@ -3209,7 +3209,11 @@ class ExternalActionResultPresenter:
             product,
             compact_for_rich_ui=compact_for_rich_ui,
         )
-        markdown_parts = [f"### {title}", "", *body_parts]
+        scope_line = (
+            "Análise integrada do cadastro, roteiro de produção, plano de inspeção "
+            "e estrutura (BOM) do item abaixo."
+        )
+        markdown_parts = [f"### {title}", "", scope_line, "", *body_parts]
 
         return {
             "type": "markdown",

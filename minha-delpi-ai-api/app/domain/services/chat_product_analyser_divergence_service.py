@@ -211,14 +211,14 @@ class ChatProductAnalyserDivergenceService:
 
         if blocked and blocked not in {"N", "0", ""}:
             points.append(
-                f"Cadastro com indicador de bloqueio «{blocked}» — valide liberacão comercial/produção."
+                f"Bloqueio «{blocked}» — valide liberação comercial/produção."
             )
 
         if product.get("last_purchase_price") in (0, 0.0, None) and not str(
             product.get("last_purchase_date") or ""
         ).strip():
             points.append(
-                "Sem histórico recente de compra no cadastro — pode ser item fabricado ou sem movimentação."
+                "Sem compras recentes — item fabricado ou sem movimentação de compra."
             )
 
         drawing = str(product.get("drawing_code") or "").strip()

@@ -7,6 +7,7 @@ import {
   segmentVisualKind,
 } from "./assistantContentLayout";
 import type { AssistantContentSegment } from "./assistantContentTypes";
+import { isStackSectionVisible } from "./presentationStackSections";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
 import {
   getPresentationDecisionFromToolCalls,
@@ -275,6 +276,10 @@ export function filterSegmentsByVisualKind(
   }
 
   return segments.filter((segment) => {
+    if (segment.kind === "stackSection") {
+      return isStackSectionVisible(segment.section, activeKind);
+    }
+
     if (segment.kind === "markdown" || segment.kind === "code") {
       return activeKind === "text";
     }

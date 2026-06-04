@@ -12,6 +12,7 @@
   gap: var(--mdc-space-3);
 }
 
+.mdc-assistant-content__segments > .mdc-stack-section,
 .mdc-assistant-content__segments > .mdc-chat-markdown,
 .mdc-assistant-content__segments > .mdc-rich-table,
 .mdc-assistant-content__segments > .mdc-rich-chart,

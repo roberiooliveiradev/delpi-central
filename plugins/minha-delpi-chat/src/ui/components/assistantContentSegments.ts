@@ -263,7 +263,26 @@ function sameAssistantSegment(
     return isSameTablePresentation(left.presentation, right.presentation);
   }
 
-  return right.kind !== "markdown" && right.kind !== "code" && left.presentation === right.presentation;
+  if (left.kind === "stackSection" && right.kind === "stackSection") {
+    return left.section.id === right.section.id;
+  }
+
+  if (
+    left.kind === "chart" ||
+    left.kind === "tree" ||
+    left.kind === "kpi" ||
+    left.kind === "dashboard"
+  ) {
+    return (
+      (right.kind === "chart" ||
+        right.kind === "tree" ||
+        right.kind === "kpi" ||
+        right.kind === "dashboard") &&
+      left.presentation === right.presentation
+    );
+  }
+
+  return false;
 }
 
 function appendVisualSegment(

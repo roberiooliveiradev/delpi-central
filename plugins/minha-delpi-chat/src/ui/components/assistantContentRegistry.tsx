@@ -8,6 +8,7 @@ import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTable } from "./ChatRichTable";
 import { ChatRichTree } from "./ChatRichTree";
+import { AssistantStackSection } from "./AssistantStackSection";
 import { ChatMarkdown } from "./ChatMarkdown";
 
 export type AssistantSegmentRenderContext = {
@@ -25,6 +26,13 @@ export type AssistantSegmentRenderer = (
 ) => ReactNode;
 
 const BASE_RENDERERS: Record<AssistantContentSegment["kind"], AssistantSegmentRenderer> = {
+  stackSection: (segment, index) => {
+    if (segment.kind !== "stackSection") {
+      return null;
+    }
+
+    return <AssistantStackSection key={`stack-section-${index}`} section={segment.section} />;
+  },
   markdown: (segment, index) => {
     if (segment.kind !== "markdown") {
       return null;
