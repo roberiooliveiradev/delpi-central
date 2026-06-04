@@ -28,6 +28,38 @@ def test_build_context_chips_topic_and_task():
     assert "task" in kinds
 
 
+def test_usage_view_folds_entities_into_unified_context():
+    usage = ChatMemoryUxService.build_usage_view(
+        {
+            "lastEntities": {"productCode": "90260114", "branch": "02"},
+            "userContextItems": [
+                {"id": "1", "label": "Política de devolução", "kind": "note"},
+            ],
+        },
+    )
+
+    context = usage.get("userContextItems") or []
+
+    assert "Produto 90260114" in context
+    assert "Filial 02" in context
+    assert "Política de devolução" in context
+
+
+def test_usage_view_context_dedupes_entity_and_manual_item():
+    usage = ChatMemoryUxService.build_usage_view(
+        {
+            "lastEntities": {"branch": "02"},
+            "userContextItems": [
+                {"id": "1", "label": "Filial 02", "kind": "branch"},
+            ],
+        },
+    )
+
+    context = usage.get("userContextItems") or []
+
+    assert context.count("Filial 02") == 1
+
+
 def test_memory_introspection_direct_answer():
     answer = ChatMemoryUxService.build_direct_answer(
         "Quais informações você está usando?",

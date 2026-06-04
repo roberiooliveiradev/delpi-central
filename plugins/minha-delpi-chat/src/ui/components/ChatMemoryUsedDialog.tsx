@@ -30,12 +30,8 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
     return null;
   }
 
-  const entities = usage.entities ?? {};
-  const entityEntries = Object.entries(entities).filter(([, value]) => value);
-
   const hasRichContent =
     Boolean(usage.topic || usage.task) ||
-    entityEntries.length > 0 ||
     (usage.preferences?.length ?? 0) > 0 ||
     (usage.resolvedReferences?.length ?? 0) > 0 ||
     (usage.semanticHits?.length ?? 0) > 0 ||
@@ -82,19 +78,6 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
               </p>
             ) : null}
 
-            {entityEntries.length > 0 ? (
-              <section>
-                <h3>Entidades</h3>
-                <ul>
-                  {entityEntries.map(([key, value]) => (
-                    <li key={key}>
-                      {key}: {value}
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
             {(usage.preferences?.length ?? 0) > 0 ? (
               <section>
                 <h3>Preferências</h3>
@@ -133,7 +116,7 @@ export function ChatMemoryUsedDialog({ open, usage, onClose }: ChatMemoryUsedDia
 
             {(usage.userContextItems?.length ?? 0) > 0 ? (
               <section>
-                <h3>Contexto adicionado por você</h3>
+                <h3>Contexto desta conversa</h3>
                 <ul>
                   {usage.userContextItems?.map((item) => (
                     <li key={item}>{item}</li>

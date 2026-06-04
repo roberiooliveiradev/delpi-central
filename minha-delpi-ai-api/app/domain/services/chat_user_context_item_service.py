@@ -431,6 +431,58 @@ class ChatUserContextItemService:
         return [str(item.get("label") or "Contexto").strip() for item in items if isinstance(item, dict)]
 
     @classmethod
+    def entity_context_labels(cls, entities: dict | None) -> list[str]:
+        """Rótulos amigáveis para o que o chat capturou na conversa.
+
+        Produto/filial/armazém/período detectados na pergunta deixam de ser
+        tratados como "entidade" à parte e passam a aparecer como contexto
+        comum, para o usuário e para o LLM inferirem o foco da conversa.
+        """
+        data = entities or {}
+        labels: list[str] = []
+
+        code = str(data.get("productCode") or "").strip()
+        if code:
+            labels.append(f"Produto {code}")
+
+        branch = str(data.get("branch") or "").strip()
+        if branch:
+            labels.append(f"Filial {branch}")
+
+        warehouse = str(data.get("warehouse") or "").strip()
+        if warehouse:
+            labels.append(f"Armazém {warehouse}")
+
+        period = str(data.get("period") or "").strip()
+        if period:
+            labels.append(f"Período {period}")
+
+        return labels
+
+    @classmethod
+    def merge_context_labels(cls, *groups: list[str] | None) -> list[str]:
+        """Une listas de rótulos de contexto removendo duplicatas (case-insensitive)."""
+        merged: list[str] = []
+        seen: set[str] = set()
+
+        for group in groups:
+            for label in group or []:
+                token = str(label or "").strip()
+
+                if not token:
+                    continue
+
+                key = token.casefold()
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+                merged.append(token)
+
+        return merged
+
+    @classmethod
     def _looks_like_table(cls, text: str) -> bool:
         rows = _TABLE_ROW_RE.findall(text)
 

@@ -203,7 +203,12 @@ class ChatMemoryUxService:
             ChatUserContextItemService,
         )
 
-        user_context = ChatUserContextItemService.items_for_usage_view(snap)
+        # Tudo que o chat capturou (produto/filial/etc.) é apresentado como
+        # contexto unificado — sem uma seção separada de "entidades".
+        user_context = ChatUserContextItemService.merge_context_labels(
+            ChatUserContextItemService.entity_context_labels(entities),
+            ChatUserContextItemService.items_for_usage_view(snap),
+        )
 
         return {
             "layers": (snap.get("memoryContextDebug") or {}).get("layers") or [],
@@ -240,11 +245,8 @@ class ChatMemoryUxService:
         if usage.get("task"):
             lines.append(f"- Tarefa: {usage['task']}.")
 
-        entities = usage.get("entities") or {}
-
-        for key, value in entities.items():
-            if value:
-                lines.append(f"- {key}: {value}.")
+        for label in usage.get("userContextItems") or []:
+            lines.append(f"- Contexto: {label}.")
 
         for pref in usage.get("preferences") or []:
             lines.append(f"- Preferência: {pref}.")
