@@ -1,22 +1,20 @@
 import type { ChatPresentation, ChatToolCall } from "../../data/api/chatTypes";
+import type { AssistantContentSegment } from "./assistantContentTypes";
 
+export type { AssistantContentSegment } from "./assistantContentTypes";
+
+import {
+  orderVisualSegments,
+  resolveAssistantContentLayout,
+  resolveVisualOrderFromToolCalls,
+} from "./assistantContentLayout";
 import {
   getPresentationPairFromToolCalls,
   getTextMarkdownFromToolCalls,
   resolveCommentaryTextBody,
-  resolvePresentationLayoutMode,
   stripLeadingMarkdownTitle,
   getPresentationTitle,
 } from "./chatPresentation";
-
-export type AssistantContentSegment =
-  | { kind: "markdown"; markdown: string }
-  | { kind: "code"; language: string; code: string }
-  | { kind: "table"; presentation: Extract<ChatPresentation, { type: "table" }> }
-  | { kind: "chart"; presentation: Extract<ChatPresentation, { type: "chart" }> }
-  | { kind: "tree"; presentation: Extract<ChatPresentation, { type: "tree" }> }
-  | { kind: "kpi"; presentation: Extract<ChatPresentation, { type: "kpi" }> }
-  | { kind: "dashboard"; presentation: Extract<ChatPresentation, { type: "dashboard" }> };
 
 const PRESENTATION_MARKER_RE =
   /\[\[(tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::(\d+))?]]/gi;
@@ -241,6 +239,36 @@ function isSuppressedToolCall(toolCall: ChatToolCall): boolean {
   );
 }
 
+function sameAssistantSegment(
+  left: AssistantContentSegment,
+  right: AssistantContentSegment,
+): boolean {
+  if (left.kind !== right.kind) {
+    return false;
+  }
+
+  if (left.kind === "markdown") {
+    return right.kind === "markdown" && left.markdown === right.markdown;
+  }
+
+  if (left.kind === "code") {
+    return right.kind === "code" && left.language === right.language && left.code === right.code;
+  }
+
+  return right.kind !== "markdown" && right.kind !== "code" && left.presentation === right.presentation;
+}
+
+function appendVisualSegment(
+  segments: AssistantContentSegment[],
+  segment: AssistantContentSegment,
+): void {
+  const exists = segments.some((item) => sameAssistantSegment(item, segment));
+
+  if (!exists) {
+    segments.push(segment);
+  }
+}
+
 function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegment[] {
   const segments: AssistantContentSegment[] = [];
 
@@ -260,27 +288,15 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       const typed = presentation as ChatPresentation;
 
       if (typed.type === "table") {
-        segments.push({ kind: "table", presentation: typed });
-        continue;
-      }
-
-      if (typed.type === "chart") {
-        segments.push({ kind: "chart", presentation: typed });
-        continue;
-      }
-
-      if (typed.type === "tree") {
-        segments.push({ kind: "tree", presentation: typed });
-        continue;
-      }
-
-      if (typed.type === "kpi") {
-        segments.push({ kind: "kpi", presentation: typed });
-        continue;
-      }
-
-      if (typed.type === "dashboard") {
-        segments.push({ kind: "dashboard", presentation: typed });
+        appendVisualSegment(segments, { kind: "table", presentation: typed });
+      } else if (typed.type === "chart") {
+        appendVisualSegment(segments, { kind: "chart", presentation: typed });
+      } else if (typed.type === "tree") {
+        appendVisualSegment(segments, { kind: "tree", presentation: typed });
+      } else if (typed.type === "kpi") {
+        appendVisualSegment(segments, { kind: "kpi", presentation: typed });
+      } else if (typed.type === "dashboard") {
+        appendVisualSegment(segments, { kind: "dashboard", presentation: typed });
       }
     }
 
@@ -291,7 +307,7 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       typeof tablePresentation === "object" &&
       (tablePresentation as ChatPresentation).type === "table"
     ) {
-      segments.push({
+      appendVisualSegment(segments, {
         kind: "table",
         presentation: tablePresentation as Extract<ChatPresentation, { type: "table" }>,
       });
@@ -304,7 +320,7 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       typeof chartPresentation === "object" &&
       (chartPresentation as ChatPresentation).type === "chart"
     ) {
-      segments.push({
+      appendVisualSegment(segments, {
         kind: "chart",
         presentation: chartPresentation as Extract<ChatPresentation, { type: "chart" }>,
       });
@@ -317,7 +333,7 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       typeof treePresentation === "object" &&
       (treePresentation as ChatPresentation).type === "tree"
     ) {
-      segments.push({
+      appendVisualSegment(segments, {
         kind: "tree",
         presentation: treePresentation as Extract<ChatPresentation, { type: "tree" }>,
       });
@@ -455,30 +471,41 @@ function resolvePrimaryMarkdown(
   return stripLeadingMarkdownTitle(raw, presentationTitle);
 }
 
+function buildStackedSegments(
+  content: string,
+  toolCalls: ChatToolCall[],
+  pair: ReturnType<typeof getPresentationPairFromToolCalls>,
+  visuals: AssistantContentSegment[],
+): AssistantContentSegment[] {
+  const commentary = resolveCommentaryTextBody(content, toolCalls, pair);
+  const visualOrder = resolveVisualOrderFromToolCalls(toolCalls);
+  const orderedVisuals = orderVisualSegments(visuals, visualOrder);
+  const segments: AssistantContentSegment[] = [];
+
+  if (commentary.trim()) {
+    segments.push(...splitMarkdownWithPresentationMarkers(commentary, orderedVisuals));
+  }
+
+  for (const visual of orderedVisuals) {
+    if (!segments.some((item) => item === visual)) {
+      segments.push(visual);
+    }
+  }
+
+  return segments;
+}
+
 export function buildAssistantContentSegments(
   content: string,
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   const pair = getPresentationPairFromToolCalls(toolCalls);
-  const layoutMode = resolvePresentationLayoutMode(toolCalls, pair);
+  const layoutMode = resolveAssistantContentLayout(content, toolCalls, pair);
   const visuals = collectVisualSegments(toolCalls);
   const rawMarkdown = resolvePrimaryMarkdown(content, toolCalls);
 
-  if (layoutMode === "commentary-visual") {
-    const commentary = resolveCommentaryTextBody(content, toolCalls, pair);
-    const segments: AssistantContentSegment[] = [];
-
-    if (commentary.trim()) {
-      segments.push(...splitMarkdownWithPresentationMarkers(commentary, visuals));
-    }
-
-    for (const visual of visuals) {
-      if (!segments.some((item) => item === visual)) {
-        segments.push(visual);
-      }
-    }
-
-    return segments;
+  if (layoutMode === "stack") {
+    return buildStackedSegments(content, toolCalls, pair, visuals);
   }
 
   if (/\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(rawMarkdown)) {
@@ -543,6 +570,10 @@ export function buildAssistantContentSegments(
     }
 
     return filtered.length ? filtered : textSegments;
+  }
+
+  if (textSegments.length && visuals.length) {
+    return buildStackedSegments(content, toolCalls, pair, visuals);
   }
 
   const combined = [...textSegments];

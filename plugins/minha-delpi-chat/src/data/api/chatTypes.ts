@@ -224,6 +224,8 @@ export type ChatPresentationDecision = {
   selected?: string | null;
   fallback?: string | null;
   reason?: string | null;
+  layoutMode?: "stack" | "single" | null;
+  visualOrder?: string[] | null;
   insight?: string | null;
   chartExplanation?: string | null;
   dashboardExplanation?: string | null;

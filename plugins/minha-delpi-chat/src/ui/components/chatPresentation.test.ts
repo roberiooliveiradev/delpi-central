@@ -548,7 +548,7 @@ describe("tree presentation", () => {
           type: "markdown",
           title: "Informações completas do produto 90260148",
           markdown:
-            "### Informações completas do produto 90260148\n\n| Campo | Valor |\n| --- | --- |\n| Código | 90260148 |\n| Descrição | CHICOTE |\n\nA **estrutura** (BOM) está na visualização em **árvore** ou **tabela** abaixo.\n\n**Insights**\n\n- Custo padrão vigente: R$ 272,80.",
+            "### Informações completas do produto 90260148\n\nProduto **90260148** — CHICOTE.\n\nA **estrutura** (BOM) está nas visualizações em **árvore**, **tabela** e, quando disponível, **gráfico** abaixo.\n\n**Destaques**\n\n- Custo padrão vigente: R$ 272,80.",
         },
       },
     },
@@ -598,7 +598,7 @@ describe("tree presentation", () => {
     const commentary = resolveCommentaryTextBody("", analyserToolCalls, pair);
 
     expect(commentary).toContain("90260148");
-    expect(commentary).toContain("Insights");
+    expect(commentary).toContain("Destaques");
     expect(commentary).not.toContain("50220013 | PI");
     expect(commentary.toLowerCase()).toContain("estrutura");
   });

@@ -513,8 +513,10 @@ export function ChatMessageList({
   const userScrollIntentRef = useRef(false);
   const pendingScrollToResponseRef = useRef(false);
 
-  const [, setInlineExplainMessageId] = useState<string | null>(null);
-  const [, setInlineExplainKind] = useState<"chart" | "dashboard" | null>(null);
+  const [inlineExplainMessageId, setInlineExplainMessageId] = useState<string | null>(null);
+  const [inlineExplainKind, setInlineExplainKind] = useState<"chart" | "dashboard" | null>(
+    null,
+  );
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -1315,6 +1317,14 @@ export function ChatMessageList({
                     toolCalls={messageToolCalls}
                     onDrillDown={onDrillDown}
                     onOpenCanvas={onOpenCanvas}
+                    requestChartExplanation={
+                      inlineExplainMessageId === message.id &&
+                      inlineExplainKind === "chart"
+                    }
+                    onChartExplanationHandled={() => {
+                      setInlineExplainMessageId(null);
+                      setInlineExplainKind(null);
+                    }}
                   />
                 ) : null}
                 {messageCanvasOpen ? (

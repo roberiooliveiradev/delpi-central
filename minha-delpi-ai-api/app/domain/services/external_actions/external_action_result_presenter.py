@@ -1535,12 +1535,7 @@ class ExternalActionResultPresenter:
         if opening:
             lines.extend(["", opening, ""])
 
-        profile_table = self._build_product_analyser_profile_markdown(product)
-
-        if profile_table:
-            lines.extend(profile_table)
-        else:
-            lines.extend(self._build_product_analyser_profile_lines(product))
+        lines.extend(self._build_product_analyser_profile_lines(product))
 
         lines.extend(self._build_product_analyser_collection_sections(root))
 
@@ -3141,13 +3136,6 @@ class ExternalActionResultPresenter:
                 return self._build_product_detail_table(product, detail_list, root)
 
             if "/analyser" in str(path or "").lower():
-                structure_table = self._build_analyser_structure_components_table(
-                    root.get("structure"),
-                )
-
-                if structure_table:
-                    return structure_table
-
                 return self._build_product_analyser_profile_table(product, root)
 
             return self._build_product_table(product, root)

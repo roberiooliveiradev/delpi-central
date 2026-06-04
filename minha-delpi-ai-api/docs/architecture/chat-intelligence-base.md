@@ -565,7 +565,7 @@ Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`, `treePresent
 | Camada | Regra |
 |--------|--------|
 | **API** | `ChatToolContextService._compact_direct_answer_for_rich_presentation` encurta ou anula `directAnswer` tabular; mantém só título ou texto curto não tabular. Estrutura `/structure` com markdown completo continua usando `_suppress_redundant_structure_presentations` (só card, sem tabela duplicada). |
-| **Plugin** | `shouldSuppressMarkdownForPresentation` oculta `ChatMarkdown` se o corpo repete tabela/gráfico; `ChatRichPresentation` é a fonte visual (toggle gráfico/tabela). |
+| **Plugin** | `ChatAssistantContent` empilha texto + visuais conforme `presentationDecision.layoutMode` (`stack`); `shouldSuppressMarkdownForPresentation` evita duplicar tabela/gráfico no markdown. |
 
 Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
 

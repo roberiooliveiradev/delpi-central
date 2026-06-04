@@ -93,14 +93,14 @@ def test_present_product_analyser_expands_structure_and_insights():
 
     body = "\n".join(humanized["linhas"])
 
-    assert "| Campo | Valor |" in body
-    assert "Insights" in body
+    assert "| Campo | Valor |" not in body
+    assert "Destaques" in body or "Insights" in body
     assert "árvore" in body.lower() or "tabela" in body.lower()
     assert humanized["apresentacao"]["type"] == "tree"
     assert humanized["apresentacao"]["root"]["children"][0]["label"] == "50220013"
 
 
-def test_build_presentation_uses_structure_components_table_for_analyser():
+def test_build_presentation_uses_profile_table_for_analyser():
     presenter = ExternalActionResultPresenter()
 
     table = presenter.build_presentation(
@@ -110,8 +110,8 @@ def test_build_presentation_uses_structure_components_table_for_analyser():
 
     assert table is not None
     assert table["type"] == "table"
-    assert table["title"].startswith("Componentes da estrutura")
-    assert len(table["rows"]) == 4
+    assert table["title"].startswith("Produto ")
+    assert any(row.get("campo") == "Código" for row in table["rows"])
 
 
 def test_build_tree_presentation_for_analyser():
@@ -214,6 +214,6 @@ def test_build_text_presentation_includes_structure_markdown():
 
     assert text is not None
     assert "50220013" not in text["markdown"]
-    assert "Insights" in text["markdown"]
+    assert "Destaques" in text["markdown"] or "Pontos de atenção" in text["markdown"]
     assert "estrutura" in text["markdown"].lower()
     assert "Estrutura: 2 registro(s)" not in text["markdown"]

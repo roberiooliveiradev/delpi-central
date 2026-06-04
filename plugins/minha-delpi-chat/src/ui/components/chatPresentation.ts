@@ -7,6 +7,8 @@ import type {
   ChatToolCall,
 } from "../../data/api/chatTypes";
 
+import { resolveAssistantContentLayout } from "./assistantContentLayout";
+
 export type PresentationPair = {
   primary: ChatPresentation | null;
   table: ChatPresentation | null;
@@ -857,6 +859,38 @@ export function stripRedundantInspectionDumpFromMarkdown(markdown: string): stri
   return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/** Remove tabela Campo/Valor duplicada quando `tablePresentation` já exibe o cadastro. */
+export function stripRedundantProfileTableFromMarkdown(markdown: string): string {
+  const lines = markdown.split("\n");
+  const result: string[] = [];
+  let skipping = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (
+      !skipping &&
+      /^\|\s*(Campo|campo)\s*\|/i.test(trimmed) &&
+      /\bValor\b/i.test(trimmed)
+    ) {
+      skipping = true;
+      continue;
+    }
+
+    if (skipping) {
+      if (trimmed.startsWith("|")) {
+        continue;
+      }
+
+      skipping = false;
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 export function stripRedundantStructureFromMarkdown(markdown: string): string {
   const lines = markdown.split("\n");
   const result: string[] = [];
@@ -1141,46 +1175,22 @@ export function getPathFromToolCalls(toolCalls?: ChatToolCall[]): string {
 
 export type PresentationLayoutMode = "toggle" | "commentary-visual";
 
+/** Legado: o chat usa `resolveAssistantContentLayout` (assistantContentLayout.ts). */
 export function resolvePresentationLayoutMode(
   toolCalls?: ChatToolCall[],
   pair?: PresentationPair,
 ): PresentationLayoutMode {
-  if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
-    return "toggle";
-  }
-
-  const resolvedPair = pair ?? getPresentationPairFromToolCalls(toolCalls);
-  const path = getPathFromToolCalls(toolCalls).toLowerCase();
-  const hasTree = Boolean(getTreePresentationFromPair(resolvedPair));
-  const hasTable = Boolean(getTablePresentationFromPair(resolvedPair));
-  const hasVisual = hasTree || hasTable || resolvedPair.primary?.type === "chart";
-  const commentary = resolveCommentaryTextBody("", toolCalls, resolvedPair);
-
-  if (!hasVisual || !hasDisplayableRichText(commentary)) {
-    return "toggle";
-  }
-
-  if (hasTree && hasDisplayableRichText(commentary)) {
-    return "commentary-visual";
-  }
-
-  if (
-    path.includes("/analyser") ||
-    path.includes("/parents") ||
-    path.includes("/structure")
-  ) {
-    return "commentary-visual";
-  }
-
-  return "toggle";
+  return resolveAssistantContentLayout("", toolCalls ?? [], pair) === "stack"
+    ? "commentary-visual"
+    : "toggle";
 }
 
-/** @deprecated Prefer resolvePresentationLayoutMode */
+/** Empilha texto + visuais quando a API indica combinação (layoutMode stack). */
 export function shouldStackPresentationBlocks(
   toolCalls?: ChatToolCall[],
   pair?: PresentationPair,
 ): boolean {
-  return resolvePresentationLayoutMode(toolCalls, pair) === "commentary-visual";
+  return resolveAssistantContentLayout("", toolCalls ?? [], pair) === "stack";
 }
 
 export function resolveCommentaryTextBody(
@@ -1206,6 +1216,7 @@ export function resolveCommentaryTextBody(
   }
 
   if (getTreePresentationFromPair(resolvedPair) || getTablePresentationFromPair(resolvedPair)) {
+    body = stripRedundantProfileTableFromMarkdown(body);
     body = stripRedundantStructureFromMarkdown(body);
     body = stripRedundantHierarchyListFromMarkdown(body);
     body = stripRedundantInspectionDumpFromMarkdown(body);

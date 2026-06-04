@@ -513,12 +513,16 @@ class ChatPresentationDecisionService:
         data_shape: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         shape = data_shape or ChatPresentationDataShapeAnalyzer.analyze(rows=rows)
+        unique_views = list(dict.fromkeys(str(view).strip() for view in available_views if str(view).strip()))
+        layout_mode = "stack" if len(unique_views) >= 2 else "single"
 
         return {
             "selected": selected,
             "fallback": fallback,
             "reason": reason,
             "availableViews": available_views,
+            "layoutMode": layout_mode,
+            "visualOrder": cls._visual_order_for_stack(unique_views),
             "dataShape": {
                 "rows": shape.get("rows", 0),
                 "columns": shape.get("columns", 0),
@@ -908,6 +912,30 @@ class ChatPresentationDecisionService:
         rows = presentation.get("rows") or []
 
         return [row for row in rows if isinstance(row, dict)]
+
+    _STACK_VISUAL_PRIORITY = (
+        "text",
+        "table",
+        "tree",
+        "chart",
+        "line_chart",
+        "bar_chart",
+        "horizontal_bar",
+        "donut",
+        "kpi",
+        "dashboard",
+    )
+
+    @classmethod
+    def _visual_order_for_stack(cls, available_views: list[str]) -> list[str]:
+        normalized = {cls._view_from_legacy_format(str(view)) for view in available_views}
+        ordered = [view for view in cls._STACK_VISUAL_PRIORITY if view in normalized]
+
+        for view in sorted(normalized):
+            if view not in ordered:
+                ordered.append(view)
+
+        return ordered
 
     @classmethod
     def _merge_views(

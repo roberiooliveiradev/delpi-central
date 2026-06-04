@@ -88,6 +88,22 @@ def test_enrich_metadata_adds_insight_and_syncs_chart_type():
     assert metadata["presentation"]["chartType"] in {"line", "multi_line"}
 
 
+def test_decision_stack_layout_when_multiple_views():
+    decision = ChatPresentationDecisionService._build(
+        selected="text",
+        fallback="table",
+        reason="visão combinada",
+        available_views=["text", "table", "tree", "chart"],
+        rows=[{"campo": "Código", "valor": "1"}],
+        intent="product",
+    )
+
+    assert decision["layoutMode"] == "stack"
+    assert decision["visualOrder"][0] == "text"
+    assert "table" in decision["visualOrder"]
+    assert "tree" in decision["visualOrder"]
+
+
 def test_enrich_metadata_attaches_presentation_decision():
     metadata = {
         "presentation": {

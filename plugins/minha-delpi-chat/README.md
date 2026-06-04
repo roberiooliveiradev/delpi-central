@@ -56,7 +56,7 @@ src/
 - Sessões com pin, arquivo e renomear
 - Mensagens com streaming, fontes, tool calls e anexos
 - Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
-- Tabelas/gráficos/KPI via `ChatRichPresentation` sem duplicar o mesmo conteúdo em markdown
+- Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`**: narrativa fixa + barra de troca (Tabela/Árvore/Gráfico/…) entre formatos disponíveis em `presentationDecision.availableViews`; novos tipos: `registerAssistantSegmentRenderer` em `assistantContentRegistry.tsx`
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
