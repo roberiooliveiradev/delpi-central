@@ -145,14 +145,16 @@ class ExternalActionResultPresenter:
             if kpi:
                 linhas = self._kpi_cards_to_linhas(kpi)
 
+                kpi_title = kpi.get("title") or self._kpi_title(path)
+
                 return {
-                    "titulo": kpi.get("title", "Indicador"),
+                    "titulo": kpi_title,
                     "linhas": linhas
                     or [
                         self._presenter_text(
                             "generic",
                             "kpiSeeData",
-                            title=kpi.get("title", "Indicador"),
+                            title=kpi_title,
                         )
                     ],
                     "dados": root,
@@ -368,7 +370,7 @@ class ExternalActionResultPresenter:
             if not isinstance(card, dict):
                 continue
 
-            label = str(card.get("label") or "Indicador").strip()
+            label = str(card.get("label") or self._kpi_title("")).strip()
             unit = str(card.get("unit") or "").strip()
             value = card.get("value")
 
@@ -725,6 +727,28 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
+    def _path_fragment_title(self, fragment: str) -> str | None:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        key = str(fragment or "").strip()
+        if not key:
+            return None
+
+        if not key.startswith("/"):
+            key = f"/{key}"
+
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "titlesByPathFragment",
+            key,
+        ) or ChatAssistantContentService.get(
+            "presenter_content",
+            "titlesByPathFragment",
+            key.lstrip("/"),
+        )
+
     def _infer_items_title(self, items: list, path: str) -> str | None:
         from app.domain.services.chat_assistant_content_service import (
             ChatAssistantContentService,
@@ -827,7 +851,10 @@ class ExternalActionResultPresenter:
                     ChatSqlExecutionErrorInterpretationService,
                 )
 
-                raw_msg = str(data.get("message") or "Erro desconhecido na API.")
+                raw_msg = str(
+                    data.get("message")
+                    or self._presenter_text("apiErrors", "unknown")
+                )
                 friendly = ChatSqlExecutionErrorInterpretationService.user_facing_message(
                     raw_msg,
                     path=path,
@@ -3543,30 +3570,66 @@ class ExternalActionResultPresenter:
 
             if "warehouse" in item and "available_quantity" in item:
                 if not title:
-                    titulo = "Estoque do produto"
+                    titulo = ChatProductOperationalContentService.get(
+                        "presenter",
+                        "stock",
+                        "titleDefault",
+                    )
                 detail_lines.append(
-                    "Filial {branch}, armazém {warehouse}: atual {current}, disponível {available}, empenhada {committed}. Local: {location}.".format(
+                    ChatProductOperationalContentService.format(
+                        "presenter",
+                        "stock",
+                        "detailLine",
                         branch=item.get("branch"),
                         warehouse=item.get("warehouse"),
                         current=item.get("current_quantity"),
                         available=item.get("available_quantity"),
                         committed=item.get("committed_quantity"),
-                        location=item.get("physical_location") or "não informado",
+                        location=item.get("physical_location")
+                        or ChatProductOperationalContentService.get(
+                            "presenter",
+                            "stock",
+                            "locationFallback",
+                        ),
                     )
                 )
             elif "supplier_name" in item or "supplier_code" in item:
                 name = item.get("supplier_name") or item.get("supplier_code") or "?"
                 lead = item.get("registered_lead_time_days") or item.get("real_avg_lead_time_days")
                 price = item.get("last_price")
-                parts = [f"**{name}**"]
+                parts = [
+                    self._presenter_text(
+                        "itemsListPreview",
+                        "entityNameBold",
+                        name=str(name),
+                    )
+                ]
                 if lead is not None:
-                    parts.append(f"Lead time: {lead}d")
+                    parts.append(
+                        self._presenter_text(
+                            "itemsListPreview",
+                            "supplierLeadTime",
+                            days=str(lead),
+                        )
+                    )
                 if price is not None:
-                    parts.append(f"Últ. preço: R$ {price:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                    parts.append(
+                        self._presenter_text(
+                            "itemsListPreview",
+                            "supplierLastPrice",
+                            price=self._format_currency(price),
+                        )
+                    )
                 detail_lines.append(" | ".join(parts))
             elif "customer_name" in item or "customer_code" in item:
                 name = item.get("customer_name") or item.get("customer_code") or "?"
-                detail_lines.append(f"**{name}**")
+                detail_lines.append(
+                    self._presenter_text(
+                        "itemsListPreview",
+                        "entityNameBold",
+                        name=str(name),
+                    )
+                )
             else:
                 label_keys = ["name", "description", "supplier_name", "customer_name", "code", "number"]
                 label = next((str(item[k]) for k in label_keys if item.get(k)), None)
@@ -3898,7 +3961,9 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "markdown",
-            "title": title or self._fallback_title(path) or "Resultado",
+            "title": title
+            or self._fallback_title(path)
+            or self._presenter_text("generic", "textPresentationFallback"),
             "markdown": markdown,
         }
 
@@ -3930,10 +3995,15 @@ class ExternalActionResultPresenter:
             self._active_schema_labels = None
 
     def _build_presentation(self, data, *, path: str = "") -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
         root = self._unwrap_data(data)
 
         if isinstance(root, list) and root and isinstance(root[0], dict):
-            return self._build_items_table(root, title="Consulta SQL")
+            sql_title = ExternalActionResponseContentService.get("sql", "defaultTitle")
+            return self._build_items_table(root, title=sql_title)
 
         if not isinstance(root, dict):
             return None
@@ -3997,20 +4067,34 @@ class ExternalActionResultPresenter:
 
         stock = root.get("stock")
         if isinstance(stock, dict) and isinstance(stock.get("items"), list):
+            stock_title = self._path_fragment_title("/stock") or ChatProductOperationalContentService.get(
+                "presenter",
+                "stock",
+                "titleDefault",
+            )
             return self._build_items_table(
                 stock.get("items") or [],
-                title="Estoque do produto",
+                title=stock_title,
             )
 
         parents = root.get("parents")
         if isinstance(parents, list) and parents:
-            return self._build_items_table(parents, title="Produtos pai (onde é usado)")
+            parents_title = (
+                self._path_fragment_title("/parents")
+                or ChatProductOperationalContentService.get(
+                    "presenter",
+                    "parents",
+                    "titleGeneric",
+                )
+            )
+            return self._build_items_table(parents, title=parents_title)
 
         structure = root.get("structure")
         if isinstance(structure, dict) and isinstance(structure.get("items"), list):
+            structure_title = self._path_fragment_title("/structure")
             return self._build_items_table(
                 structure["items"],
-                title="Estrutura do produto",
+                title=structure_title or self._path_fragment_title("structure"),
             )
 
         stock_value_table = self._build_stock_value_branch_table(root, path)
@@ -4281,12 +4365,15 @@ class ExternalActionResultPresenter:
     def _build_items_table(
         self,
         items: list,
-        title: str = "Dados retornados",
+        title: str | None = None,
         *,
         path: str = "",
     ) -> dict | None:
         if not items:
             return None
+
+        if not title:
+            title = self._presenter_text("generic", "itemsTableDefaultTitle")
 
         first = next((item for item in items if isinstance(item, dict)), None)
 
@@ -5333,7 +5420,10 @@ class ExternalActionResultPresenter:
             config["gaugeValueKey"] = chart_numeric_slice[0]
             config["gaugeTargetKey"] = chart_numeric_slice[1] if len(chart_numeric_slice) > 1 else None
 
-        chart_title = self._infer_items_title(rows, path) or "Visualização dos dados"
+        chart_title = self._infer_items_title(rows, path) or self._presenter_text(
+            "charts",
+            "defaultVisualizationTitle",
+        )
 
         presentation = {
             "type": "chart",
@@ -5397,7 +5487,7 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "chart",
-            "title": "Mapa de calor",
+            "title": self._presenter_text("charts", "heatmapTitle"),
             "chartType": "heatmap",
             "data": capped_rows,
             "config": {

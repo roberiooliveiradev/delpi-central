@@ -1,0 +1,56 @@
+---
+description: Textos de UI do assistente em JSON; proibir literais soltos em Python/TS
+alwaysApply: true
+---
+
+# Conteúdo do assistente — catálogo JSON
+
+## Princípio
+
+Textos exibidos ao usuário (títulos, mensagens, rótulos de tabela, narrativas, erros amigáveis, chips) ficam em **`minha-delpi-ai-api/app/content/pt-BR/assistant/*.json`**, carregados por serviço — **não** como strings literais em Python, use cases ou presenter.
+
+**Regex, heurísticas e formatação numérica/data** permanecem no código.
+
+## Onde colocar
+
+| Tipo | Arquivo / serviço |
+|------|-------------------|
+| Genérico do assistente | Novo ou existente em `assistant/*.json` + `ChatAssistantContentService` |
+| SQL, actions, cronograma | `external_action_responses.json` → `ExternalActionResponseContentService` |
+| Produto operacional / estoque / MFE | `product_operational_content.json` → `ChatProductOperationalContentService` |
+| Presenter (rotas, KPI, tabelas) | `presenter_content.json` + `column_labels.json` → presenter + `ExternalActionColumnLabelService` |
+| Erros recuperáveis | `error_handling.json` (ponte SQL em `sql_execution_errors.json`) |
+
+Catálogo completo: `minha-delpi-ai-api/docs/architecture/assistant-content-catalog.md`.
+
+## API no código
+
+```python
+# ❌ Evitar
+return {"titulo": "Estoque do produto", "linhas": ["Nenhum registro encontrado."]}
+
+# ✅ Preferir
+ChatAssistantContentService.get("presenter_content", "titlesByPathFragment", "/stock")
+ChatAssistantContentService.format("presenter_content", "generic", "emptyItemsQuery")
+```
+
+Presenter: helpers `_presenter_text`, `_presenter_root_format`, `_route_presentation`; colunas via `label_for` / `fixed_table_columns`.
+
+## O que NÃO fazer
+
+- Copiar a mesma frase em dois serviços (ex.: presenter + use case) sem JSON compartilhado.
+- Título de tabela, KPI, erro API ou linha de lista **só** no `system_prompt` do agente.
+- Duplicar template já em `product_operational_content` (ex.: `detailLine` de estoque).
+- Importar JSON da API no build Docker do MFE (`../../../../minha-delpi-ai-api/...`); usar cópia local + `sync:product-operational-content`.
+
+## O que fazer (nova feature)
+
+1. Escolher bundle no catálogo (ou criar seção no JSON certo).
+2. `get` / `format` / `title_for_path` no serviço de domínio ou application — não no use case, salvo orquestração.
+3. Teste unitário mínimo: chave existe ou texto vem do bundle (`test_presenter_content_helpers.py` como modelo).
+4. Atualizar `assistant-content-catalog.md` (e `presenter-content-migration-audit.md` se for presenter).
+5. MFE: se o texto for compartilhado, espelhar em `plugins/minha-delpi-chat/src/content/` e documentar sync no README do plugin.
+
+## Revisão antes de merge
+
+Se o diff em `app/domain/` ou `app/application/` adiciona string em português com pontuação/frase completa → mover para JSON ou justificar (log técnico, chave Protheus, marcador de regex).

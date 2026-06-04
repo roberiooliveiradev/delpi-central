@@ -106,6 +106,34 @@ def test_format_inspection_characteristic_line():
     assert "seq." in line
 
 
+def test_present_items_stock_detail_uses_product_operational_content():
+    presenter = ExternalActionResultPresenter()
+
+    result = presenter._present_items(
+        [
+            {
+                "branch": "01",
+                "warehouse": "01",
+                "current_quantity": 10,
+                "available_quantity": 8,
+                "committed_quantity": 2,
+                "physical_location": "A-1",
+            }
+        ],
+    )
+
+    assert result["titulo"] == "Estoque do produto"
+    assert "Filial 01" in result["linhas"][0]
+    assert "A-1" in result["linhas"][0]
+
+
+def test_path_fragment_title_reads_presenter_content():
+    presenter = ExternalActionResultPresenter()
+
+    assert presenter._path_fragment_title("/stock") == "Estoque do produto"
+    assert presenter._path_fragment_title("structure") == "Estrutura do produto"
+
+
 def test_present_dict_fallback_uses_content():
     presenter = ExternalActionResultPresenter()
 

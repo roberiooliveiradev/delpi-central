@@ -2,6 +2,8 @@
 
 Todos os textos exibidos ao usuário ou usados em respostas diretas devem ficar em `app/content/pt-BR/assistant/*.json`, carregados via `ContentService` ou `ChatAssistantContentService`.
 
+**Regra do repositório (Cursor):** `.cursor/rules/assistant-content-json.mdc` — novas implementações devem seguir este padrão; não introduzir textos soltos em Python/TS.
+
 ## Loader genérico
 
 `ChatAssistantContentService` (`app/domain/services/chat_assistant_content_service.py`):
@@ -80,13 +82,12 @@ Wrappers especializados (mantêm API estável):
 - Narrativas de visão geral, perfil analyser, insights, roteiro (markdown), SX2 e títulos de apresentação → `presenter_content.productOverview`, `analyserProfile`, `analyserInsights`, `guideItemNarrative`, `systemTablesNarrative`
 - Linhas de lista por rota (roteiro preview, LMP, OV, estrutura, busca) → `presenter_content.routePresentations.*`; cronograma SQL → `external_action_responses.productionSchedule`
 - Dict fallback, preview de coleção e inspeção plana (características + limites de teste) → `presenter_content.generic`, `routePresentations.inspection`
+- Varredura final do presenter (estoque/fornecedor em `_present_items`, títulos stock/parents/structure, SQL/chart/KPI/erro API) → `presenter_content` + `product_operational_content`; ver [presenter-content-migration-audit.md](./presenter-content-migration-audit.md)
 
-## Pendente (próximas PRs)
+## Pendente (baixa prioridade)
 
-Prioridade sugerida para novos JSON ou seções:
-
-1. Apresentações especializadas restantes (suppliers/customers inline, KPI genérico expandido, parents text)
-2. Colunas dinâmicas em listagens genéricas continuam via `label_for` + `_COLUMN_TYPE_MAP`
+1. Colunas dinâmicas em listagens genéricas continuam via `label_for` + `_COLUMN_TYPE_MAP`
+2. Títulos/strings em serviços adjacentes (refinamento SQL, rotas HTTP) — fora do `ExternalActionResultPresenter`
 
 ## Como adicionar conteúdo
 

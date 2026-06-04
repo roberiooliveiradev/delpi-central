@@ -109,7 +109,14 @@
     "dictNestedLine": "**{label}:** {items}",
     "dictScalarLine": "**{label}:** {value}",
     "collectionPreviewLine": "- {preview}",
-    "collectionPreviewPair": "{label}={value}"
+    "collectionPreviewPair": "{label}={value}",
+    "textPresentationFallback": "Resultado",
+    "itemsTableDefaultTitle": "Dados retornados"
+  },
+  "itemsListPreview": {
+    "supplierLeadTime": "Lead time: {days}d",
+    "supplierLastPrice": "Últ. preço: R$ {price}",
+    "entityNameBold": "**{name}**"
   },
   "operationalEmpty": {
     "suppliers": "Nenhum fornecedor cadastrado para o produto **{code}**.",
@@ -130,6 +137,7 @@
     "default": "Nenhum registro encontrado para esta consulta."
   },
   "apiErrors": {
+    "unknown": "Erro desconhecido na API.",
     "notFound": "O recurso solicitado não foi encontrado. O código informado pode não existir ou não ter dados cadastrados.",
     "unauthorized": "Sem autorização para acessar este recurso.",
     "forbidden": "Acesso negado ao recurso solicitado.",
@@ -340,6 +348,8 @@
     "palette": ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"]
   },
   "charts": {
+    "defaultVisualizationTitle": "Visualização dos dados",
+    "heatmapTitle": "Mapa de calor",
     "dashboardKpiFallbackTitle": "Resumo",
     "structureTypeCompositionTitle": "Composição por tipo de componente",
     "defaultDatasetLabel": "Itens",
