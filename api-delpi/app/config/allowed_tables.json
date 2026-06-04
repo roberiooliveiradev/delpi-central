@@ -4,6 +4,8 @@
     "SG1010",
     "SG2010",
     "SH1010",
+    "SHB010",
+    "NNR010",
 
     "QP6010",
     "QP7010",
@@ -55,7 +57,9 @@
     "SB1010": "Cadastro de Produtos — usado para descrição, unidade, tipo, grupo e dados cadastrais dos produtos.",
     "SG1010": "Estrutura de Produtos / BOM — usada para consultar componentes, produto pai e composição do produto.",
     "SG2010": "Roteiro de Operações — usada para operações, recursos, centros de trabalho e identificação da operação final.",
-    "SH1010": "Cadastro de Recursos — usada para consultar dados de recursos produtivos/máquinas.",
+    "SH1010": "Cadastro de Recursos — usada para consultar dados de recursos produtivos/máquinas e vínculo com centro de trabalho.",
+    "SHB010": "Centro de Trabalho — necessária para identificar oficialmente os CTs por filial, como CT de inspeção, nome do centro, centro de custo e local/armazém vinculado. ",
+    "NNR010": "Locais de Estoque / Armazéns — necessária para identificar locais como expedição, inspeção, qualidade, acabado e vínculo com centro de trabalho quando existir.",
 
     "QP6010": "Inspeções / Plano de Controle — usada em validações de inspeção e qualidade do produto.",
     "QP7010": "Características de Inspeção — usada para critérios, características e requisitos de inspeção.",
@@ -69,13 +73,13 @@
     "SF2010": "Cabeçalho de Nota Fiscal de Saída — usada apenas quando necessário cruzar documentos fiscais de saída autorizados.",
     "SF4010": "TES / Tipos de Entrada e Saída — usada para validar se a operação movimenta estoque, atualiza custo e define comportamento fiscal/estoque.",
 
-    "SH8010": "Apontamentos / Produção — usada em cenários de produção, apontamento e histórico produtivo.",
-    "SH6010": "Movimentação da Produção — tabela principal para apontamentos de produção e cálculo de produção realizada.",
+    "SH8010": "Operações Alocadas — usada para rastrear OP, operação, recurso, centro de trabalho, datas, status e passagem por CT como inspeção.",
+    "SH6010": "Movimentação da Produção — tabela principal para apontamentos de produção, quantidade produzida, perda, início/fim e data de apontamento.",
 
     "SH4010": "Calendário / Turnos / Recursos Produtivos — usada em análises de capacidade, agenda ou programação produtiva.",
 
     "SD4010": "Empenhos / Requisições da OP — usada para componentes empenhados, consumo previsto e saldo de empenho.",
-    "SD3010": "Movimentações Internas — usada para consumo, movimentação de estoque, apontamentos e validações de produção.",
+    "SD3010": "Movimentações Internas — usada para consumo, movimentação de estoque, apontamentos, entrada de produção, transferência para expedição e validações produtivas.",
     "SB2010": "Saldos em Estoque — usada para consulta de estoque atual por filial, local e produto.",
     "SBZ010": "Indicadores de Produtos por Filial — usada para estoque de segurança (BZ_ESTSEG) e parâmetros por filial.",
     "SB9010": "Saldos Iniciais / Fechamento de Estoque — usada para consultar saldo e valor de estoque em datas de fechamento, como inventário mensal e MATR460.",
