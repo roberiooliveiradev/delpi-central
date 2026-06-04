@@ -1,6 +1,6 @@
 # Regras de cálculo — Transformômetro
 
-Documento oficial alinhado ao [playbook de correções](playbook_correcoes.md). O cache `transformometro.dashboard_calculos` deve refletir as mesmas regras do cálculo em tempo real (`DashboardCalculatorService` / `DashboardLiveService`).
+Documento oficial alinhado ao [playbook de correções](playbook_correcoes.md). A implementação canônica está em **`tm_app/domain/calc_rules.py`**; `DashboardCalculatorService` e `DashboardLiveService` apenas delegam. O cache `transformometro.dashboard_calculos` deve refletir as mesmas regras do cálculo em tempo real.
 
 ## Economia líquida (mensal)
 
@@ -37,6 +37,8 @@ Modo **apenas dias úteis** (seg–sex + feriados nacionais) existe no código (
 
 ## Horas economizadas (mensal por revisão)
 
+Implementação: `calc_rules.hours_saved_in_competencia_month` / `total_minutes_saved_month`.
+
 ```text
 minutos_baseline = volume_baseline × tempo_medio_execucao_min_baseline
 minutos_melhoria = volume_melhoria × tempo_medio_execucao_min_melhoria
@@ -45,7 +47,20 @@ horas_economizadas_mes = max(0, minutos_baseline − minutos_melhoria) × fraç�
 
 Cada revisão usa **seu próprio** `volume_mensal` (mesma lógica da `economia_tempo` em R$). Com volumes iguais, equivale a `(Δtempo × volume) / 60`.
 
+**Fração de vigência** (`calc_rules.review_vigencia_fraction_in_month`): só reduz quando a revisão **começa ou termina** naquele mês. Revisão ativa sem data fim usa o **mês civil inteiro** — não `hoje`.
+
+## Recorte do dashboard (prorrata)
+
+Implementação: `calc_rules.prorate_dashboard_row_for_period` + `aggregate_period_from_rows`.
+
+```text
+métrica_no_recorte = métrica_mensal × (dias_do_filtro_no_mês / dias_do_mês)
+investimento_unico_mes = integral na competência (sem prorrata por dia)
+```
+
 ## Economia diária (ranking “Top economia diária”)
+
+Implementação: `calc_rules.daily_averages_from_period_totals`.
 
 ```text
 economia_diaria = economia_bruta_acumulada_no_recorte / dias_totais_do_recorte

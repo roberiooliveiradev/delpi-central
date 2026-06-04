@@ -6,12 +6,12 @@ from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
 from tm_app.core.business_days import (
-    business_day_fraction_in_competencia_range,
     business_days_in_month,
     business_month_calendar_factor,
     business_days_overlap_in_competencia,
     count_business_days,
 )
+from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
 
@@ -28,7 +28,7 @@ class CalculationContext:
 
 
 class DashboardCalculatorService:
-    COMPARABLE_SCENARIOS = {"melhoria", "automacao", "correcao"}
+    COMPARABLE_SCENARIOS = set(calc_rules.COMPARABLE_SCENARIOS)
 
     def build_process_list(self, raw: TransformometroRawData) -> List[dict]:
         context = self._build_context(raw)
@@ -683,23 +683,12 @@ class DashboardCalculatorService:
         review: dict,
         competencia_date: date,
     ) -> float:
-        """Horas economizadas = max(0, tempo_total_baseline − tempo_total_melhoria) no mês.
-
-        Cada revisão usa seu próprio volume_mensal (alinhado à economia_tempo em R$).
-        """
-        baseline_time = self._to_float(baseline_measurement.get("tempo_medio_execucao_min")) or 0.0
-        current_time = self._to_float(current_measurement.get("tempo_medio_execucao_min")) or 0.0
-        baseline_volume = self._to_float(baseline_measurement.get("volume_mensal")) or 0.0
-        current_volume = self._to_float(current_measurement.get("volume_mensal")) or 0.0
-
-        baseline_minutes_total = baseline_time * baseline_volume
-        current_minutes_total = current_time * current_volume
-        minutes_saved_full_month = baseline_minutes_total - current_minutes_total
-        if minutes_saved_full_month <= 0:
-            return 0.0
-
-        fraction = self._active_fraction_in_month(review, competencia_date)
-        return (minutes_saved_full_month * fraction) / 60.0
+        return calc_rules.hours_saved_in_competencia_month(
+            baseline_measurement,
+            current_measurement,
+            review,
+            competencia_date,
+        )
 
     def _calculate_measurement_cost_breakdown(
         self,
@@ -1176,16 +1165,7 @@ class DashboardCalculatorService:
         return True
 
     def _review_calculation_start_date(self, review: dict) -> Optional[date]:
-        start_date = self._parse_date(review.get("data_inicio_vigencia"))
-        implementation_date = self._parse_date(review.get("data_implantacao"))
-
-        if not self._is_comparable_review(review):
-            return start_date or implementation_date
-
-        if start_date and implementation_date:
-            return max(start_date, implementation_date)
-
-        return implementation_date or start_date
+        return calc_rules.review_calculation_start_date(review)
 
     def _determine_timeline_start(
         self,
@@ -1216,12 +1196,7 @@ class DashboardCalculatorService:
     def _uses_day_level_date_filter(
         self, start_date: Optional[str], end_date: Optional[str]
     ) -> bool:
-        return bool(
-            start_date
-            and end_date
-            and len(start_date) >= 10
-            and len(end_date) >= 10
-        )
+        return calc_rules.uses_day_level_date_filter(start_date, end_date)
 
     def competencia_day_fraction_in_range(
         self,
@@ -1229,12 +1204,8 @@ class DashboardCalculatorService:
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> float:
-        """Fração dos dias úteis do mês (0–1) incluída no recorte YYYY-MM-DD … YYYY-MM-DD."""
-        return business_day_fraction_in_competencia_range(
-            competencia,
-            start_date,
-            end_date,
-            uses_day_level_filter=self._uses_day_level_date_filter(start_date, end_date),
+        return calc_rules.competencia_day_fraction_in_range(
+            competencia, start_date, end_date
         )
 
     def _prorate_row_metrics_for_period(
@@ -1244,36 +1215,11 @@ class DashboardCalculatorService:
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> Optional[dict[str, float]]:
-        """Prorrata economia/custos recorrentes por dias; investimento único integral na competência."""
-        day_fraction = self.competencia_day_fraction_in_range(
-            str(row.get("competencia") or ""),
-            start_date,
-            end_date,
+        return calc_rules.prorate_dashboard_row_for_period(
+            row,
+            start_date=start_date,
+            end_date=end_date,
         )
-        if day_fraction <= 0:
-            return None
-
-        economia_bruta = float(row.get("economia_bruta") or 0) * day_fraction
-        custo_recorrente_mes = float(row.get("custo_recorrente_mes") or 0) * day_fraction
-        custo_recursos_compartilhados_mes = (
-            float(row.get("custo_recursos_compartilhados_mes") or 0) * day_fraction
-        )
-        investimento_unico_mes = float(row.get("investimento_unico_mes") or 0)
-        investimento_total_mes = (
-            investimento_unico_mes + custo_recorrente_mes + custo_recursos_compartilhados_mes
-        )
-        economia_liquida_mes = economia_bruta - investimento_total_mes
-        horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * day_fraction
-
-        return {
-            "economia_bruta": economia_bruta,
-            "economia_liquida_mes": economia_liquida_mes,
-            "investimento_unico_mes": investimento_unico_mes,
-            "custo_recorrente_mes": custo_recorrente_mes,
-            "custo_recursos_compartilhados_mes": custo_recursos_compartilhados_mes,
-            "investimento_total_mes": investimento_total_mes,
-            "horas_economizadas_mes": horas_economizadas_mes,
-        }
 
     def _aggregate_period_from_rows(
         self,
@@ -1282,27 +1228,11 @@ class DashboardCalculatorService:
         start_date: Optional[str],
         end_date: Optional[str],
     ) -> dict[str, float]:
-        totals = {
-            "economia_bruta": 0.0,
-            "economia_liquida_mes": 0.0,
-            "investimento_unico_mes": 0.0,
-            "custo_recorrente_mes": 0.0,
-            "custo_recursos_compartilhados_mes": 0.0,
-            "investimento_total_mes": 0.0,
-            "horas_economizadas_mes": 0.0,
-        }
-
-        for row in calculation_rows:
-            prorated = self._prorate_row_metrics_for_period(
-                row,
-                start_date=start_date,
-                end_date=end_date,
-            )
-            if prorated is None:
-                continue
-            for key in totals:
-                totals[key] += prorated[key]
-
+        totals = calc_rules.aggregate_period_from_rows(
+            calculation_rows,
+            start_date=start_date,
+            end_date=end_date,
+        )
         return {key: self._round_final(value) for key, value in totals.items()}
 
     def _monthly_breakdown_for_period(
@@ -1506,29 +1436,7 @@ class DashboardCalculatorService:
         return sorted(reviews, key=sort_key)
 
     def _active_fraction_in_month(self, review: dict, month_date: date) -> float:
-        start_date = self._review_calculation_start_date(review)
-        end_date = self._parse_date(review.get("data_fim_vigencia")) or date.today()
-
-        if start_date is None:
-            return 0.0
-
-        year = month_date.year
-        month = month_date.month
-        first_day = date(year, month, 1)
-        last_day = date(year, month, calendar.monthrange(year, month)[1])
-
-        effective_start = max(first_day, start_date)
-        effective_end = min(last_day, end_date)
-
-        if effective_end < effective_start:
-            return 0.0
-
-        active_days = count_business_days(effective_start, effective_end)
-        total_days = count_business_days(first_day, last_day)
-
-        if total_days <= 0:
-            return 0.0
-        return active_days / total_days
+        return calc_rules.review_vigencia_fraction_in_month(review, month_date)
 
     def _is_link_eligible(self, link: dict, competencia_date: date) -> bool:
         if self._is_deleted(link):

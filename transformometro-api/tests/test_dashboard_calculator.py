@@ -473,3 +473,105 @@ def test_hours_saved_compares_total_minutes_per_revision_volume():
     )
     # (1000*10 - 500*5) / 60 = 125 h — não (10-5)*500/60 ≈ 41,67 h
     assert row["horas_economizadas_mes"] == 125.0
+
+
+def test_active_fraction_open_review_uses_full_competencia_month():
+    """Revisão sem data_fim não deve truncar o mês corrente em date.today()."""
+    from datetime import date
+
+    from tm_app.domain import calc_rules
+
+    review = {
+        "cenario_tipo": "melhoria",
+        "data_inicio_vigencia": "2025-11-05",
+        "data_implantacao": "2025-11-05",
+        "data_fim_vigencia": None,
+    }
+    assert calc_rules.review_vigencia_fraction_in_month(review, date(2026, 6, 1)) == 1.0
+
+
+def test_hours_saved_period_filter_not_double_prorated_with_open_review():
+    """Cenário PROC-0020: horas no recorte 4 dias ≠ (MTD vigência) × (filtro dias)."""
+    from datetime import date
+
+    raw = TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-X",
+                "nome_processo": "Teste",
+                "filial_id": "01",
+                "setor_id": "producao",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-baseline",
+                "processo_id": "p1",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "data_fim_vigencia": "2025-11-05",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "processo_id": "p1",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-11-05",
+                "data_implantacao": "2025-11-05",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            {
+                "revisao_id": "r-baseline",
+                "volume_mensal": 336,
+                "tempo_medio_execucao_min": 20,
+                "percentual_retrabalho": 0,
+                "custo_hora_mao_obra": 20.89,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 0,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "volume_mensal": 336,
+                "tempo_medio_execucao_min": 0.5,
+                "percentual_retrabalho": 0,
+                "custo_hora_mao_obra": 20.89,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 0,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+        ],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+    calc = DashboardCalculatorService()
+    row = next(
+        r
+        for r in calc.build_dashboard_rows(raw)
+        if r["revisao_id"] == "r-melhoria" and r["competencia"] == "2026-06"
+    )
+    assert row["horas_economizadas_mes"] == 109.2
+
+    summary = calc.build_summary(raw, None, "2026-06-01", "2026-06-04")
+    assert summary["horas_economizadas_total"] == 14.56
+
+    prorated = calc._prorate_row_metrics_for_period(
+        row, start_date="2026-06-01", end_date="2026-06-04"
+    )
+    assert prorated["horas_economizadas_mes"] == 14.56
+    assert round(prorated["horas_economizadas_mes"] / 4, 2) == 3.64

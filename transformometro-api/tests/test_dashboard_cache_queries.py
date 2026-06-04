@@ -16,5 +16,8 @@ def test_ranking_query_orders_by_economia_diaria_from_bruta():
     import inspect
 
     source = inspect.getsource(DashboardCalculoRepository.query_ranking_processos)
-    assert "SUM(d.economia_bruta) / 30.0 AS economia_diaria" in source
+    assert "SUM(d.economia_bruta)" in source
+    assert "AS economia_diaria" in source
+    assert "horas_diaria" in source
+    assert "/ 30.0" not in source
     assert "ORDER BY economia_diaria DESC" in source

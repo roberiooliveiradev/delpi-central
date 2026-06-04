@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
-from tm_app.core.business_days import total_business_days_for_competencias
+from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
@@ -201,17 +201,8 @@ class DashboardLiveService:
             for pid, revisoes in context.revisoes_by_processo.items()
         }
 
-        by_processo: dict[str, dict[str, Any]] = defaultdict(
-            lambda: {
-                "economia_liquida_mes": 0.0,
-                "economia_bruta": 0.0,
-                "investimento_unico_mes": 0.0,
-                "custo_recorrente_mes": 0.0,
-                "custo_recursos_compartilhados_mes": 0.0,
-                "investimento_total_mes": 0.0,
-                "horas_economizadas_mes": 0.0,
-                "competencias": set(),
-            }
+        by_processo: dict[str, calc_rules.ProcessPeriodBucket] = defaultdict(
+            calc_rules.ProcessPeriodBucket
         )
 
         for row in target_rows:
@@ -221,49 +212,32 @@ class DashboardLiveService:
             implementation_review = implementation_review_by_process.get(pid)
             if not implementation_review:
                 continue
-            prorated = self._calculator._prorate_row_metrics_for_period(
+            prorated = calc_rules.prorate_dashboard_row_for_period(
                 row,
                 start_date=competencia_inicio,
                 end_date=competencia_fim,
             )
             if prorated is None:
                 continue
-            bucket = by_processo[pid]
-            bucket["economia_liquida_mes"] += prorated["economia_liquida_mes"]
-            bucket["economia_bruta"] += prorated["economia_bruta"]
-            bucket["investimento_unico_mes"] += prorated["investimento_unico_mes"]
-            bucket["custo_recorrente_mes"] += prorated["custo_recorrente_mes"]
-            bucket["custo_recursos_compartilhados_mes"] += prorated["custo_recursos_compartilhados_mes"]
-            bucket["investimento_total_mes"] += prorated["investimento_total_mes"]
-            bucket["horas_economizadas_mes"] += prorated["horas_economizadas_mes"]
-            bucket["competencias"].add(str(row.get("competencia") or ""))
+            by_processo[pid].merge_prorated(
+                prorated,
+                str(row.get("competencia") or ""),
+            )
 
         ranking: list[dict[str, Any]] = []
-        for pid, totals in by_processo.items():
+        for pid, bucket in by_processo.items():
             proc = processos_by_id.get(pid, {})
             implementation_review = implementation_review_by_process.get(pid)
             implementation_date = self._calculator._review_implementation_date(
                 implementation_review
             )
-            liquida = totals["economia_liquida_mes"]
-            bruta = totals["economia_bruta"]
-            investimento_unico = totals["investimento_unico_mes"]
-            custo_recorrente = totals["custo_recorrente_mes"]
-            custo_recursos = totals["custo_recursos_compartilhados_mes"]
-            investimento_total = totals["investimento_total_mes"]
-            uses_day_filter = bool(
-                competencia_inicio
-                and competencia_fim
-                and len(str(competencia_inicio)) >= 10
-                and len(str(competencia_fim)) >= 10
-            )
-            days_denominator = total_business_days_for_competencias(
-                totals["competencias"],
+            totals = bucket.as_totals_dict()
+            daily = calc_rules.daily_averages_from_period_totals(
+                totals,
+                bucket.competencias,
                 start_date=competencia_inicio,
                 end_date=competencia_fim,
-                uses_day_level_filter=uses_day_filter,
             )
-            days_denominator = max(days_denominator, 1.0)
             ranking.append(
                 {
                     "processo_id": pid,
@@ -271,20 +245,20 @@ class DashboardLiveService:
                     "nome_processo": proc.get("nome_processo"),
                     "filial_id": proc.get("filial_id"),
                     "setor_id": proc.get("setor_id"),
-                    "economia_liquida_mes": round(liquida, 2),
-                    "economia_bruta": round(bruta, 2),
-                    "investimento_unico_mes": round(investimento_unico, 2),
-                    "custo_recorrente_mes": round(custo_recorrente, 2),
-                    "custo_recursos_compartilhados_mes": round(custo_recursos, 2),
-                    "investimento_total_mes": round(investimento_total, 2),
-                    "economia_diaria": round(bruta / days_denominator, 2),
-                    "horas_diaria": round(
-                        totals["horas_economizadas_mes"] / days_denominator, 2
+                    "economia_liquida_mes": round(totals["economia_liquida_mes"], 2),
+                    "economia_bruta": round(totals["economia_bruta"], 2),
+                    "investimento_unico_mes": round(totals["investimento_unico_mes"], 2),
+                    "custo_recorrente_mes": round(totals["custo_recorrente_mes"], 2),
+                    "custo_recursos_compartilhados_mes": round(
+                        totals["custo_recursos_compartilhados_mes"], 2
                     ),
+                    "investimento_total_mes": round(totals["investimento_total_mes"], 2),
+                    "economia_diaria": daily["economia_diaria"],
+                    "horas_diaria": daily["horas_diaria"],
                     "horas_economizadas_mes": round(totals["horas_economizadas_mes"], 2),
                     "competencia": (
-                        max(totals["competencias"])
-                        if totals["competencias"]
+                        max(bucket.competencias)
+                        if bucket.competencias
                         else competencia
                     ),
                     "data_implantacao": implementation_date.isoformat()
@@ -375,7 +349,7 @@ class DashboardLiveService:
                 continue
             bucket = by_familia[familia]
             bucket["processos"].add(pid)
-            prorated = self._calculator._prorate_row_metrics_for_period(
+            prorated = calc_rules.prorate_dashboard_row_for_period(
                 row,
                 start_date=competencia_inicio,
                 end_date=competencia_fim,

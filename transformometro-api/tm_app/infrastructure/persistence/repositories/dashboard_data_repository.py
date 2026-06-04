@@ -277,6 +277,7 @@ class DashboardCalculoRepository(PluginBaseRepository):
         competencia: str | None = None,
         limit: int = 50,
     ) -> list[dict[str, Any]]:
+        """Ranking legado sobre cache SQL. Preferir ``DashboardLiveService`` (calc_rules)."""
         clauses: list[str] = []
         params: list[Any] = []
 
@@ -315,7 +316,24 @@ class DashboardCalculoRepository(PluginBaseRepository):
                   + COALESCE(d.custo_recorrente_mes, 0)
                   + COALESCE(d.custo_recursos_compartilhados_mes, 0)
                 ) AS investimento_total_mes,
-                SUM(d.economia_bruta) / 30.0 AS economia_diaria
+                SUM(d.economia_bruta) / NULLIF(
+                    EXTRACT(
+                        DAY FROM (
+                            (MAX(d.competencia) || '-01')::date
+                            + INTERVAL '1 month' - INTERVAL '1 day'
+                        )
+                    ),
+                    0
+                ) AS economia_diaria,
+                SUM(d.horas_economizadas_mes) / NULLIF(
+                    EXTRACT(
+                        DAY FROM (
+                            (MAX(d.competencia) || '-01')::date
+                            + INTERVAL '1 month' - INTERVAL '1 day'
+                        )
+                    ),
+                    0
+                ) AS horas_diaria
             FROM transformometro.dashboard_calculos d
             JOIN transformometro.processos p ON p.processo_id = d.processo_id
             {where_sql}
