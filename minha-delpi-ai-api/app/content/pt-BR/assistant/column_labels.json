@@ -199,7 +199,72 @@
     "planned_hours": "Horas previstas",
     "net_result": "Resultado líquido",
     "profit": "Lucro",
-    "loss": "Prejuízo"
+    "loss": "Prejuízo",
+    "active": "Ativo",
+    "blocked": "Bloqueio",
+    "groupCode": "Grupo",
+    "defaultWarehouse": "Armazém padrão",
+    "lastPurchasePrice": "Último preço de compra",
+    "standardCost": "Custo padrão",
+    "lastRevisionDate": "Última revisão",
+    "customerReference": "Referência cliente",
+    "customer_reference": "Referência cliente",
+    "drawing_code": "Código desenho",
+    "ncm": "NCM",
+    "ncm_ipi_position": "NCM",
+    "parent_code": "PI pai",
+    "parent_description": "Descrição PI",
+    "component_code": "Componente"
+  },
+  "presenter": {
+    "kvTableColumns": {
+      "field": "Campo",
+      "value": "Valor"
+    },
+    "collectionTotalValue": "{total} registro(s)",
+    "productProfileKeys": {
+      "standard": [
+        "code",
+        "description",
+        "type",
+        "unit",
+        "group_code",
+        "active",
+        "default_warehouse",
+        "last_purchase_price",
+        "standard_cost",
+        "last_revision_date",
+        "ncm_ipi_position"
+      ],
+      "extended": [
+        "code",
+        "description",
+        "type",
+        "unit",
+        "group_code",
+        "active",
+        "blocked",
+        "default_warehouse",
+        "customer_reference",
+        "drawing_code",
+        "barcode",
+        "last_purchase_price",
+        "standard_cost",
+        "last_revision_date",
+        "ncm_ipi_position"
+      ]
+    },
+    "fixedTableColumns": {
+      "analyserStructureComponents": [
+        {"key": "parent_code", "label": "PI pai"},
+        {"key": "parent_description", "label": "Descrição PI"},
+        {"key": "component_code", "label": "Componente"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "type", "label": "Tipo"},
+        {"key": "unit", "label": "Unid."},
+        {"key": "quantity", "label": "Qtde", "dataType": "quantity"}
+      ]
+    }
   },
   "profilePriority": [
     "stock",

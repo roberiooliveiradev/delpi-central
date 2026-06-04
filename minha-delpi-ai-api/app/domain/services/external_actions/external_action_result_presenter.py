@@ -19,40 +19,6 @@ class ExternalActionResultPresenter:
         self._column_labels = column_label_service or ExternalActionColumnLabelService()
         self._active_schema_labels: dict[str, str] | None = None
 
-    PRODUCT_ALIASES = {
-        "code": "Código",
-        "description": "Descrição",
-        "type": "Tipo",
-        "unit": "Unidade",
-        "groupCode": "Grupo",
-        "active": "Ativo",
-        "defaultWarehouse": "Armazém padrão",
-        "lastPurchasePrice": "Último preço de compra",
-        "standardCost": "Custo padrão",
-        "lastRevisionDate": "Última revisão",
-        "ncm": "NCM",
-    }
-
-    STOCK_ALIASES = {
-        "branch": "Filial",
-        "warehouse": "Armazém",
-        "current_quantity": "Quantidade atual",
-        "available_quantity": "Quantidade disponível",
-        "committed_quantity": "Quantidade empenhada",
-        "reserved_quantity": "Quantidade reservada",
-        "physical_location": "Localização física",
-    }
-
-    PRICE_ALIASES = {
-        "table_code": "Cód. tabela",
-        "table_description": "Tabela",
-        "sale_price": "Preço venda",
-        "max_price": "Preço máx.",
-        "discount_value": "Desconto",
-        "discount_percent": "% desconto",
-        "lot_quantity": "Qtd. lote",
-    }
-
     def present(self, data, *, path: str = "") -> dict:
         error = self._detect_api_error(data, path=path)
         if error:
@@ -1101,7 +1067,7 @@ class ExternalActionResultPresenter:
         return {
             "titulo": f"Visão do produto {product_summary['code']}",
             "linhas": [line for line in linhas if "None" not in line],
-            "campos": self._alias_dict(product_summary, self.PRODUCT_ALIASES),
+            "campos": self._alias_dict(product_summary),
             "dados": {
                 "product": product_summary,
                 "guideTotal": self._total(root.get("guide")),
@@ -1123,10 +1089,7 @@ class ExternalActionResultPresenter:
         return {
             "titulo": title,
             "linhas": linhas,
-            "campos": self._alias_dict(
-                self._product_analyser_summary(product),
-                self.PRODUCT_ALIASES,
-            ),
+            "campos": self._alias_dict(self._product_analyser_summary(product)),
             "dados": {
                 "product": self._product_analyser_summary(product),
                 "guideTotal": self._total(root.get("guide")),
@@ -2082,46 +2045,20 @@ class ExternalActionResultPresenter:
         return {
             "type": "table",
             "title": title,
-            "columns": [
-                {"key": "parent_code", "label": "PI pai"},
-                {"key": "parent_description", "label": "Descrição PI"},
-                {"key": "component_code", "label": "Componente"},
-                {"key": "description", "label": "Descrição"},
-                {"key": "type", "label": "Tipo"},
-                {"key": "unit", "label": "Unid."},
-                {"key": "quantity", "label": "Qtde", "dataType": "quantity"},
-            ],
+            "columns": self._column_labels.fixed_table_columns(
+                "analyserStructureComponents",
+                schema_labels=self._active_schema_labels,
+            ),
             "rows": rows,
         }
 
     def _build_product_analyser_profile_table(self, product: dict, root: dict) -> dict:
-        columns = [
-            {"key": "campo", "label": "Campo"},
-            {"key": "valor", "label": "Valor"},
-        ]
-        field_map = [
-            ("code", "Código"),
-            ("description", "Descrição"),
-            ("type", "Tipo"),
-            ("unit", "Unidade"),
-            ("group_code", "Grupo"),
-            ("active", "Ativo"),
-            ("blocked", "Bloqueio"),
-            ("default_warehouse", "Armazém padrão"),
-            ("customer_reference", "Referência cliente"),
-            ("drawing_code", "Código desenho"),
-            ("barcode", "Código barras"),
-            ("last_purchase_price", "Último preço compra"),
-            ("standard_cost", "Custo padrão"),
-            ("last_revision_date", "Última revisão"),
-            ("ncm_ipi_position", "NCM"),
-        ]
-
-        rows = [
-            {"campo": label, "valor": product.get(key)}
-            for key, label in field_map
-            if product.get(key) not in (None, "")
-        ]
+        columns = self._column_labels.kv_table_column_defs()
+        rows = self._column_labels.build_kv_profile_rows(
+            product,
+            extended=True,
+            schema_labels=self._active_schema_labels,
+        )
 
         for key in ("guide", "inspection", "structure"):
             value = root.get(key)
@@ -2130,7 +2067,7 @@ class ExternalActionResultPresenter:
                 rows.append(
                     {
                         "campo": self._label_collection(key),
-                        "valor": f"{value['total']} registro(s)",
+                        "valor": self._column_labels.format_collection_total(value["total"]),
                     }
                 )
 
@@ -2160,7 +2097,7 @@ class ExternalActionResultPresenter:
             if value is None:
                 continue
 
-            label = self.PRICE_ALIASES.get(key) or self.STOCK_ALIASES.get(key) or self._humanize_key(key)
+            label = self._humanize_key(key)
 
             if key in {
                 "sale_price",
@@ -3444,9 +3381,9 @@ class ExternalActionResultPresenter:
             },
         }
 
-    def _alias_dict(self, payload: dict, aliases: dict) -> dict:
+    def _alias_dict(self, payload: dict) -> dict:
         return {
-            aliases.get(key, key): value
+            self._humanize_key(key): value
             for key, value in payload.items()
             if value is not None
         }
@@ -3912,35 +3849,23 @@ class ExternalActionResultPresenter:
         return None
 
     def _build_product_table(self, product: dict, root: dict) -> dict:
-        columns = [
-            {"key": "campo", "label": "Campo"},
-            {"key": "valor", "label": "Valor"},
-        ]
-
-        field_map = [
-            ("code", "Código"),
-            ("description", "Descrição"),
-            ("type", "Tipo"),
-            ("unit", "Unidade"),
-            ("group_code", "Grupo"),
-            ("active", "Ativo"),
-            ("default_warehouse", "Armazém padrão"),
-            ("last_purchase_price", "Último preço compra"),
-            ("standard_cost", "Custo padrão"),
-            ("last_revision_date", "Última revisão"),
-            ("ncm_ipi_position", "NCM"),
-        ]
-
-        rows = [
-            {"campo": label, "valor": product.get(key)}
-            for key, label in field_map
-            if product.get(key) is not None
-        ]
+        columns = self._column_labels.kv_table_column_defs()
+        rows = self._column_labels.build_kv_profile_rows(
+            product,
+            skip_empty=False,
+            schema_labels=self._active_schema_labels,
+        )
+        rows = [row for row in rows if row.get("valor") is not None]
 
         for key in ("guide", "inspection", "structure", "customers", "suppliers"):
             value = root.get(key)
             if isinstance(value, dict) and value.get("total") is not None:
-                rows.append({"campo": self._label_collection(key), "valor": f"{value['total']} registro(s)"})
+                rows.append(
+                    {
+                        "campo": self._label_collection(key),
+                        "valor": self._column_labels.format_collection_total(value["total"]),
+                    }
+                )
 
         return {
             "type": "table",

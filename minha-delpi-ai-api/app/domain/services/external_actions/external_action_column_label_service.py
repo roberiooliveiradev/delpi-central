@@ -46,6 +46,93 @@ class ExternalActionColumnLabelService:
 
         return normalized_key.replace("_", " ").strip().capitalize()
 
+    def kv_table_column_defs(self) -> list[dict[str, str]]:
+        cfg = (_column_labels_content().get("presenter") or {}).get("kvTableColumns") or {}
+
+        return [
+            {"key": "campo", "label": str(cfg.get("field") or "Campo")},
+            {"key": "valor", "label": str(cfg.get("value") or "Valor")},
+        ]
+
+    def product_profile_field_keys(self, *, extended: bool = False) -> list[str]:
+        presenter = _column_labels_content().get("presenter") or {}
+        keys_cfg = presenter.get("productProfileKeys") or {}
+        variant = "extended" if extended else "standard"
+        raw = keys_cfg.get(variant) or keys_cfg.get("standard") or []
+
+        return [str(key).strip() for key in raw if str(key).strip()]
+
+    def build_kv_profile_rows(
+        self,
+        product: dict,
+        *,
+        extended: bool = False,
+        skip_empty: bool = True,
+        schema_labels: dict[str, str] | None = None,
+    ) -> list[dict[str, object]]:
+        if not isinstance(product, dict):
+            return []
+
+        rows: list[dict[str, object]] = []
+
+        for key in self.product_profile_field_keys(extended=extended):
+            value = product.get(key)
+
+            if skip_empty and value in (None, ""):
+                continue
+
+            rows.append(
+                {
+                    "campo": self.label_for(key, schema_labels=schema_labels),
+                    "valor": value,
+                }
+            )
+
+        return rows
+
+    def format_collection_total(self, total: object) -> str:
+        presenter = _column_labels_content().get("presenter") or {}
+        template = str(presenter.get("collectionTotalValue") or "{total} registro(s)")
+
+        return template.replace("{total}", str(total))
+
+    def fixed_table_columns(
+        self,
+        table_id: str,
+        *,
+        schema_labels: dict[str, str] | None = None,
+    ) -> list[dict[str, str]]:
+        presenter = _column_labels_content().get("presenter") or {}
+        tables = presenter.get("fixedTableColumns") or {}
+        raw = tables.get(table_id) or []
+        columns: list[dict[str, str]] = []
+
+        for column in raw:
+            if not isinstance(column, dict):
+                continue
+
+            key = str(column.get("key") or "").strip()
+
+            if not key:
+                continue
+
+            configured_label = column.get("label")
+            label = (
+                str(configured_label).strip()
+                if isinstance(configured_label, str) and configured_label.strip()
+                else self.label_for(key, schema_labels=schema_labels)
+            )
+            entry: dict[str, str] = {"key": key, "label": label}
+
+            data_type = column.get("dataType")
+
+            if isinstance(data_type, str) and data_type.strip():
+                entry["dataType"] = data_type.strip()
+
+            columns.append(entry)
+
+        return columns
+
     def resolve_schema_labels(self, response_schema: dict | None) -> dict[str, str]:
         if not isinstance(response_schema, dict):
             return {}

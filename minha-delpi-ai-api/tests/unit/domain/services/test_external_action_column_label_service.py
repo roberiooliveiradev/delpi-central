@@ -115,3 +115,51 @@ def test_preferred_columns_for_guide_profile():
 
     assert ("route_code", "Cód. roteiro") in columns
     assert ("operation_code", "Cód. operação") in columns
+
+
+def test_label_for_camel_case_product_summary_keys():
+    service = ExternalActionColumnLabelService()
+
+    assert service.label_for("groupCode") == "Grupo"
+    assert service.label_for("lastPurchasePrice") == "Último preço de compra"
+    assert service.label_for("customerReference") == "Referência cliente"
+
+
+def test_presenter_kv_table_and_profile_rows():
+    service = ExternalActionColumnLabelService()
+
+    columns = service.kv_table_column_defs()
+
+    assert columns == [
+        {"key": "campo", "label": "Campo"},
+        {"key": "valor", "label": "Valor"},
+    ]
+
+    rows = service.build_kv_profile_rows(
+        {
+            "code": "90260123",
+            "description": "PARAFUSO",
+            "blocked": "",
+            "active": True,
+        },
+        extended=True,
+    )
+
+    assert rows[0] == {"campo": "Código", "valor": "90260123"}
+    assert rows[1] == {"campo": "Descrição", "valor": "PARAFUSO"}
+    assert all(row["campo"] != "Bloqueio" for row in rows)
+
+
+def test_format_collection_total_and_structure_columns():
+    service = ExternalActionColumnLabelService()
+
+    assert service.format_collection_total(12) == "12 registro(s)"
+
+    columns = service.fixed_table_columns("analyserStructureComponents")
+
+    assert columns[0] == {"key": "parent_code", "label": "PI pai"}
+    assert columns[-1] == {
+        "key": "quantity",
+        "label": "Qtde",
+        "dataType": "quantity",
+    }

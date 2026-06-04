@@ -51,7 +51,7 @@ Wrappers especializados (mantêm API estável):
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |
 | `onboarding.json` | Onboarding | `ChatOnboardingService` |
 | `capabilities.json` | Capacidades | `ChatCapabilitiesService` |
-| `column_labels.json` | Colunas de tabelas | `ExternalActionColumnLabelService` |
+| `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom e feedback | `ChatPersonalityContentService` |
 
 ## Migração (jun/2026) — já centralizado
@@ -74,12 +74,13 @@ Wrappers especializados (mantêm API estável):
 - Visão geral do produto → `product_overview_intent.json`
 - Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
 - Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
+- Field labels do presenter (aliases de produto/preço/estoque, perfil KV, componentes da estrutura) → `column_labels.fields` + `column_labels.presenter`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. Labels de coluna fixas no presenter (`FIELD_LABELS`) e faturamento/PMR especializados
+1. Demais colunas fixas inline no presenter (roteiro SX2, KPI agregados, faturamento/PMR) e faturamento/PMR especializados
 2. Seções markdown expandidas do analyser (inspeção dimensional em `_build_product_analyser_inspection_markdown`)
 
 ## Como adicionar conteúdo
