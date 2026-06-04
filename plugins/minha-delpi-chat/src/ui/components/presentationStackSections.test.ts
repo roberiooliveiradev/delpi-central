@@ -64,8 +64,19 @@ describe("presentationStackSections", () => {
           path: "/products/90260149/analyser",
           presentationDecision: { layoutMode: "stack" },
           stackPresentationPlan: {
+            presentationProfile: "product_analyser",
+            humanizedSections: true,
             profileFirst: true,
             attentionLast: true,
+            sectionVisibility: {
+              scope: true,
+              profile: true,
+              highlights: true,
+              guide: true,
+              inspection: false,
+              structure: true,
+              attention: true,
+            },
             narrativeOrder: [
               "lead",
               "profileTables",
@@ -100,6 +111,7 @@ describe("presentationStackSections", () => {
     expect(sectionTitles[2]).toContain("Destaques");
     expect(sectionTitles[3]).toContain("Roteiro");
     expect(sectionTitles.some((title) => title.includes("Estrutura"))).toBe(true);
+    expect(sectionTitles.some((title) => title.includes("Inspeção"))).toBe(false);
     expect(sectionTitles.at(-1)).toContain("Alertas");
 
     const profileIndex = segments.findIndex(

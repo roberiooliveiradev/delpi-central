@@ -16,6 +16,10 @@ import {
   resolveInitialToolbarKind,
   shouldShowCompleteStackView,
 } from "./assistantContentVisualFormats";
+import {
+  getStackPresentationPlanFromToolCalls,
+  planUsesHumanizedSections,
+} from "./presentationStackPlan";
 import { getChartExplanationFromToolCalls } from "./chartExplain";
 import {
   getDataCoverageNoticeFromToolCalls,
@@ -129,10 +133,15 @@ export function ChatAssistantContent({
       (segment) => segment.kind === "markdown" && segment.markdown.trim() === title,
     );
 
+  const stackPlan = useMemo(
+    () => getStackPresentationPlanFromToolCalls(toolCalls),
+    [toolCalls],
+  );
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
   const showFormatToolbar = visualFormatOptions.length >= 2;
   const suppressPresentationChrome =
     showCompleteStackView &&
+    planUsesHumanizedSections(stackPlan) &&
     segments.some(
       (segment) =>
         segment.kind === "table" ||

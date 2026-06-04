@@ -9,6 +9,7 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import {
   getStackPresentationPlanFromToolCalls,
   inferTableRoleFromTitle,
+  planUsesHumanizedSections,
   type StackPresentationPlan,
   type StackTableRole,
 } from "./presentationStackPlan";
@@ -16,6 +17,7 @@ import {
   STACK_SECTION_BY_ID,
   stackSectionForRole,
   type StackSectionChrome,
+  type StackSectionId,
 } from "./presentationStackSections";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
@@ -45,10 +47,29 @@ function pushStackSection(
   appendUnique(segments, { kind: "stackSection", section });
 }
 
+function maybePushStackSection(
+  plan: StackPresentationPlan,
+  segments: AssistantContentSegment[],
+  sectionId: StackSectionId,
+  appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+): void {
+  if (!planUsesHumanizedSections(plan)) {
+    return;
+  }
+
+  const visibility = plan.sectionVisibility;
+
+  if (visibility && visibility[sectionId] !== true) {
+    return;
+  }
+
+  pushStackSection(segments, STACK_SECTION_BY_ID[sectionId], appendUnique);
+}
+
 function pushMarkdownSegments(
   segments: AssistantContentSegment[],
   prose: string,
-  parseMarkdown: (value: string) => AssistantContentSegment[],
+  parseMarkdown: (prose: string) => AssistantContentSegment[],
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
 ): void {
   for (const segment of parseMarkdown(prose)) {
@@ -60,6 +81,7 @@ function appendTablesForRoles(
   segments: AssistantContentSegment[],
   tables: AssistantContentSegment[],
   roles: StackTableRole[],
+  plan: StackPresentationPlan,
   appendUnique: (target: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   options?: { sectionPerRole?: boolean },
 ): void {
@@ -67,13 +89,25 @@ function appendTablesForRoles(
   const sectionPerRole = options?.sectionPerRole === true;
 
   for (const role of roles) {
-    const chrome = sectionPerRole ? stackSectionForRole(role) : null;
+    const roleTables = buckets[role];
 
-    if (chrome) {
-      pushStackSection(segments, chrome, appendUnique);
+    if (!roleTables.length) {
+      continue;
     }
 
-    for (const segment of buckets[role]) {
+    if (sectionPerRole) {
+      const chrome = stackSectionForRole(role);
+
+      if (chrome && planUsesHumanizedSections(plan)) {
+        const visibility = plan.sectionVisibility;
+
+        if (!visibility || visibility[chrome.id] === true) {
+          pushStackSection(segments, chrome, appendUnique);
+        }
+      }
+    }
+
+    for (const segment of roleTables) {
       appendUnique(segments, segment);
     }
   }
@@ -110,10 +144,14 @@ function appendTailVisuals(
     }
 
     if (token === "tree") {
-      pushStackSection(segments, STACK_SECTION_BY_ID.structure, appendUnique);
+      const trees = byKind.get("tree") ?? [];
 
-      for (const segment of byKind.get("tree") ?? []) {
-        appendUnique(segments, segment);
+      if (trees.length) {
+        maybePushStackSection(plan, segments, "structure", appendUnique);
+
+        for (const segment of trees) {
+          appendUnique(segments, segment);
+        }
       }
 
       continue;
@@ -149,6 +187,15 @@ function operationalTableRoles(plan: StackPresentationPlan): StackTableRole[] {
   return plan.tableRoleOrder.filter((role) => role !== "profile");
 }
 
+function profileTablesForPlan(
+  tables: AssistantContentSegment[],
+  profileRoles: StackTableRole[],
+): AssistantContentSegment[] {
+  const buckets = bucketTableSegmentsByRole(tables, inferTableRoleFromTitle);
+
+  return profileRoles.flatMap((role) => buckets[role]);
+}
+
 export function buildPlanOrderedStackSegments(
   commentary: string,
   orderedVisuals: AssistantContentSegment[],
@@ -163,35 +210,56 @@ export function buildPlanOrderedStackSegments(
   const tables = orderedVisuals.filter((segment) => segment.kind === "table");
   const profileRoles: StackTableRole[] = plan.profileFirst ? ["profile"] : [];
   const operationalRoles = operationalTableRoles(plan);
+  const narrativeSlots = new Set(plan.narrativeOrder);
 
   const appendSlot = (slot: string) => {
+    if (!narrativeSlots.has(slot as (typeof plan.narrativeOrder)[number])) {
+      return;
+    }
+
     switch (slot) {
-      case "lead":
-        pushStackSection(segments, STACK_SECTION_BY_ID.scope, appendUnique);
+      case "lead": {
+        const hasLead =
+          Boolean(sections.lead?.trim()) ||
+          (!sections.hasSectionBreaks && commentary.trim());
+
+        if (!hasLead) {
+          break;
+        }
+
+        maybePushStackSection(plan, segments, "scope", appendUnique);
 
         if (sections.lead) {
           pushMarkdownSegments(segments, sections.lead, parseMarkdown, appendUnique);
-        } else if (!sections.hasSectionBreaks && commentary.trim()) {
+        } else {
           pushMarkdownSegments(segments, commentary, parseMarkdown, appendUnique);
         }
 
         break;
+      }
 
-      case "profileTables":
-        pushStackSection(segments, STACK_SECTION_BY_ID.profile, appendUnique);
-        appendTablesForRoles(segments, tables, profileRoles, appendUnique);
+      case "profileTables": {
+        const profileTables = profileTablesForPlan(tables, profileRoles);
+
+        if (!profileTables.length) {
+          break;
+        }
+
+        maybePushStackSection(plan, segments, "profile", appendUnique);
+        appendTablesForRoles(segments, tables, profileRoles, plan, appendUnique);
         break;
+      }
 
       case "highlights":
-        if (sections.destaques) {
-          pushStackSection(segments, STACK_SECTION_BY_ID.highlights, appendUnique);
+        if (sections.destaques?.trim()) {
+          maybePushStackSection(plan, segments, "highlights", appendUnique);
           pushMarkdownSegments(segments, sections.destaques, parseMarkdown, appendUnique);
         }
 
         break;
 
       case "operationalTables":
-        appendTablesForRoles(segments, tables, operationalRoles, appendUnique, {
+        appendTablesForRoles(segments, tables, operationalRoles, plan, appendUnique, {
           sectionPerRole: true,
         });
         break;
@@ -201,8 +269,8 @@ export function buildPlanOrderedStackSegments(
         break;
 
       case "attention":
-        if (sections.pontos) {
-          pushStackSection(segments, STACK_SECTION_BY_ID.attention, appendUnique);
+        if (sections.pontos?.trim()) {
+          maybePushStackSection(plan, segments, "attention", appendUnique);
           pushMarkdownSegments(segments, sections.pontos, parseMarkdown, appendUnique);
         }
 
@@ -213,22 +281,19 @@ export function buildPlanOrderedStackSegments(
     }
   };
 
-  if (sections.hasSectionBreaks) {
-    for (const slot of plan.narrativeOrder) {
-      appendSlot(slot);
-    }
-  } else {
-    appendSlot("lead");
-    appendSlot("profileTables");
-    appendSlot("operationalTables");
-    appendSlot("tailVisuals");
+  for (const slot of plan.narrativeOrder) {
+    appendSlot(slot);
   }
 
-  if (plan.attentionLast && sections.pontos && !segments.some(
-    (segment) =>
-      segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
-  )) {
-    pushStackSection(segments, STACK_SECTION_BY_ID.attention, appendUnique);
+  if (
+    plan.attentionLast &&
+    sections.pontos?.trim() &&
+    !segments.some(
+      (segment) =>
+        segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
+    )
+  ) {
+    maybePushStackSection(plan, segments, "attention", appendUnique);
     pushMarkdownSegments(segments, sections.pontos, parseMarkdown, appendUnique);
   }
 
@@ -244,32 +309,6 @@ export function buildCanonicalStackSegments(
 ): AssistantContentSegment[] {
   const trimmedCommentary = String(commentary || "").trim();
   const plan = getStackPresentationPlanFromToolCalls(toolCalls);
-  const sections = partitionCommentarySections(trimmedCommentary);
-  const hasEmbeddedMarkers = PRESENTATION_MARKER_RE.test(trimmedCommentary);
-
-  if (
-    commentaryHasStructuredSections(sections) ||
-    plan.profileFirst ||
-    plan.attentionLast
-  ) {
-    return buildPlanOrderedStackSegments(
-      trimmedCommentary,
-      orderedVisuals,
-      parseMarkdown,
-      appendUnique,
-      plan,
-    );
-  }
-
-  if (hasEmbeddedMarkers) {
-    return buildPlanOrderedStackSegments(
-      stripPresentationMarkersFromMarkdown(trimmedCommentary),
-      orderedVisuals,
-      parseMarkdown,
-      appendUnique,
-      plan,
-    );
-  }
 
   return buildPlanOrderedStackSegments(
     trimmedCommentary,

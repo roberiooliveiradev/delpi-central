@@ -1767,6 +1767,15 @@ class ExternalActionResultPresenter:
 
         insights = self._build_product_analyser_insights(root, product)
 
+        if compact_for_rich_ui:
+            from app.domain.services.chat_presentation_section_availability_service import (
+                ChatPresentationSectionAvailabilityService,
+            )
+
+            insights = ChatPresentationSectionAvailabilityService.filter_analyser_highlights(
+                insights,
+            )
+
         if insights:
             lines.extend(["", "**Destaques**", ""])
             lines.extend(f"- {line}" for line in insights)

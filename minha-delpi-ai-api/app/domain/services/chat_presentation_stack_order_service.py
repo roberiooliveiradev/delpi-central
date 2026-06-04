@@ -7,6 +7,9 @@ from typing import Any
 from app.domain.services.chat_presentation_route_policy_service import (
     ChatPresentationRoutePolicyService,
 )
+from app.domain.services.chat_presentation_section_availability_service import (
+    ChatPresentationSectionAvailabilityService,
+)
 
 
 class ChatPresentationStackOrderService:
@@ -61,7 +64,7 @@ class ChatPresentationStackOrderService:
 
         tail_visuals = cls._resolve_tail_visual_order(metadata)
 
-        return {
+        plan = {
             "profileFirst": profile_first,
             "highlightsAfterProfile": highlights_after_profile,
             "attentionLast": has_attention,
@@ -73,6 +76,8 @@ class ChatPresentationStackOrderService:
                 attention_last=has_attention,
             ),
         }
+
+        return ChatPresentationSectionAvailabilityService.enrich_stack_plan(metadata, plan)
 
     @classmethod
     def enrich_metadata(cls, metadata: dict[str, Any]) -> None:

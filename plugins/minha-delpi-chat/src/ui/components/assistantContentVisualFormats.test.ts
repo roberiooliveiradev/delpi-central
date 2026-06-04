@@ -89,6 +89,30 @@ describe("assistantContentVisualFormats", () => {
               rows: [{ campo: "Código", valor: "90260149" }],
             },
           ],
+          path: "/products/90260149/analyser",
+          stackPresentationPlan: {
+            presentationProfile: "product_analyser",
+            humanizedSections: true,
+            sectionVisibility: {
+              scope: true,
+              profile: true,
+              highlights: true,
+              guide: true,
+              inspection: false,
+              structure: true,
+              attention: true,
+            },
+            narrativeOrder: [
+              "lead",
+              "profileTables",
+              "highlights",
+              "operationalTables",
+              "tailVisuals",
+              "attention",
+            ],
+            tableRoleOrder: ["profile", "guide", "inspection"],
+            tailVisualOrder: ["tree"],
+          },
           textPresentation: {
             type: "markdown",
             markdown:

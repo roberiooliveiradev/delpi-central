@@ -1,5 +1,7 @@
 import type { ChatToolCall } from "../../data/api/chatTypes";
 
+import type { StackSectionId } from "./presentationStackSections";
+
 export type StackTableRole =
   | "profile"
   | "guide"
@@ -25,6 +27,10 @@ export type StackPresentationPlan = {
   tableRoleOrder: StackTableRole[];
   tailVisualOrder: string[];
   narrativeOrder: StackNarrativeSlot[];
+  /** Inteligência da API: mockup humanizado só no analyser. */
+  presentationProfile?: "product_analyser" | "generic_stack";
+  humanizedSections?: boolean;
+  sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
 };
 
 const DEFAULT_TABLE_ROLE_ORDER: StackTableRole[] = [
@@ -82,7 +88,36 @@ function normalizeNarrativeOrder(value: unknown): StackNarrativeSlot[] {
   return slots.length ? slots : DEFAULT_NARRATIVE_ORDER;
 }
 
+function normalizeSectionVisibility(
+  value: unknown,
+): Partial<Record<StackSectionId, boolean>> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const allowed = new Set<StackSectionId>([
+    "scope",
+    "profile",
+    "highlights",
+    "guide",
+    "inspection",
+    "structure",
+    "attention",
+  ]);
+  const visibility: Partial<Record<StackSectionId, boolean>> = {};
+
+  for (const [key, flag] of Object.entries(value as Record<string, unknown>)) {
+    if (allowed.has(key as StackSectionId)) {
+      visibility[key as StackSectionId] = flag === true;
+    }
+  }
+
+  return Object.keys(visibility).length ? visibility : undefined;
+}
+
 function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
+  const profile = String(raw.presentationProfile || "").trim();
+
   return {
     profileFirst: raw.profileFirst !== false,
     highlightsAfterProfile: raw.highlightsAfterProfile !== false,
@@ -92,7 +127,17 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
       ? raw.tailVisualOrder.map((item) => String(item))
       : DEFAULT_PLAN.tailVisualOrder,
     narrativeOrder: normalizeNarrativeOrder(raw.narrativeOrder),
+    presentationProfile:
+      profile === "product_analyser" || profile === "generic_stack"
+        ? profile
+        : undefined,
+    humanizedSections: raw.humanizedSections === true,
+    sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
   };
+}
+
+export function planUsesHumanizedSections(plan: StackPresentationPlan): boolean {
+  return plan.humanizedSections === true && plan.presentationProfile === "product_analyser";
 }
 
 export function getStackPresentationPlanFromToolCalls(
@@ -118,15 +163,6 @@ export function getStackPresentationPlanFromToolCalls(
     }
 
     const path = String(metadata.path ?? "").toLowerCase();
-
-    if (path.includes("/analyser")) {
-      return {
-        ...DEFAULT_PLAN,
-        tableRoleOrder: ["profile", "guide", "inspection", "other"],
-        attentionLast: true,
-        highlightsAfterProfile: true,
-      };
-    }
 
     if (path.includes("/stock")) {
       return {

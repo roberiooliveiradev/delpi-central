@@ -20,7 +20,8 @@ def test_analyser_plan_profile_first_and_attention_last():
     assert plan["profileFirst"] is True
     assert plan["attentionLast"] is True
     assert plan["tableRoleOrder"][0] == "profile"
-    assert plan["narrativeOrder"][-1] == "attention"
+    assert plan["humanizedSections"] is True
+    assert plan["presentationProfile"] == "product_analyser"
 
 
 def test_enrich_metadata_attaches_plan():

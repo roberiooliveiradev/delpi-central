@@ -70,7 +70,9 @@ Gerado por `ChatPresentationStackOrderService` a partir do `path` e do markdown 
 5. `tailVisuals` — árvore (e gráfico, se houver)  
 6. `attention` — **Pontos de atenção** (sempre no final)
 
-O MFE injeta **seções humanizadas** (`stackSection`) antes de cada bloco: título `━━━ N. … ━━━` e texto explicativo (`presentationStackSections.ts`). Em layout **stack Completo**, o insight/recomendação genérico do Playbook 09 fica oculto — a narrativa já está nas seções.
+**Inteligência (API):** `ChatPresentationSectionAvailabilityService` calcula `humanizedSections`, `presentationProfile` e `sectionVisibility` no `stackPresentationPlan` — só rota **`/analyser`**. Seção sem dado (ex.: inspeção vazia) não entra no plano nem na narrativa; destaques de “ainda não cadastrado” são filtrados no presenter.
+
+O MFE só injeta `stackSection` quando `humanizedSections === true` e `sectionVisibility[id] === true` (`presentationStackSections.ts`). Em **Completo** do analyser, insight/recomendação genérico fica oculto.
 
 Outras rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, …). O MFE infere o papel de cada tabela pelo título quando o plano não veio no metadata.
 
