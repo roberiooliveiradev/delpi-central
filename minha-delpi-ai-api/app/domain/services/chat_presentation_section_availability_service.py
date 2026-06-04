@@ -10,7 +10,8 @@ from app.domain.services.chat_presentation_route_policy_service import (
 )
 
 _ABSENCE_INSIGHT_RE = re.compile(
-    r"(ainda não cadastrad|não (?:há|ha|foi) retornad|sem operações|sem historico|sem histórico|não retornou)",
+    r"(ainda não cadastrad|não (?:há|ha|foi) retornad|sem operações|sem historico|sem histórico|"
+    r"não retornou|não há histórico|sem histórico recente|sem compras recentes)",
     re.IGNORECASE,
 )
 

@@ -109,6 +109,56 @@ def test_embed_visual_markers_for_analyser_sections():
     assert "[[arvore]]" not in embedded
 
 
+def test_compact_metadata_stack_skips_embedded_markers():
+    markdown = (
+        "### Estoque do produto\n\n"
+        "Posição de estoque do produto **90260149**.\n\n"
+        "[[table:1]]\n\n[[chart]]"
+    )
+    metadata = _metadata_with_stack(markdown=markdown)
+
+    ChatRichPresentationTextService.compact_metadata_text(metadata)
+
+    compact = metadata["textPresentation"]["markdown"]
+
+    assert "[[table:" not in compact
+    assert "[[chart]]" not in compact
+
+
+def test_compact_metadata_humanized_analyser_without_markers():
+    markdown = (
+        "### Informações completas do produto 90260149\n\n"
+        "**Destaques**\n\n- Estrutura com 6 itens."
+    )
+    metadata = {
+        "path": "/products/90260149/analyser",
+        "textPresentation": {"type": "markdown", "markdown": markdown},
+        "tablePresentations": [
+            {
+                "type": "table",
+                "title": "Produto 90260149",
+                "columns": [{"key": "campo", "label": "Campo"}],
+                "rows": [{"campo": "Código", "valor": "90260149"}],
+            },
+        ],
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estrutura",
+            "nodes": [{"id": "1", "label": "90260149"}],
+        },
+        "stackPresentationPlan": {
+            "humanizedSections": True,
+            "presentationProfile": "product_analyser",
+        },
+        "presentationDecision": {"layoutMode": "stack"},
+    }
+
+    ChatRichPresentationTextService.compact_metadata_text(metadata)
+
+    assert "[[table:" not in metadata["textPresentation"]["markdown"]
+    assert "[[arvore]]" not in metadata["textPresentation"]["markdown"]
+
+
 def test_should_compact_narrative_for_table_plus_tree():
     assert ChatRichPresentationTextService.should_compact_narrative(
         table_presentations=[{"type": "table", "title": "Cadastro", "columns": [], "rows": []}],

@@ -393,6 +393,12 @@ class ExecuteExternalActionUseCase:
 
         ChatPresentationStructureDedupService.dedupe_metadata(metadata)
 
+        from app.domain.services.chat_presentation_stack_order_service import (
+            ChatPresentationStackOrderService,
+        )
+
+        ChatPresentationStackOrderService.enrich_metadata(metadata)
+
         ChatPresentationDecisionService.enrich_metadata(
             metadata,
             intent=str(action.get("intent") or action.get("name") or "").strip() or None,
@@ -406,12 +412,6 @@ class ExecuteExternalActionUseCase:
         )
 
         ChatRichPresentationTextService.compact_metadata_text(metadata)
-
-        from app.domain.services.chat_presentation_stack_order_service import (
-            ChatPresentationStackOrderService,
-        )
-
-        ChatPresentationStackOrderService.enrich_metadata(metadata)
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
 

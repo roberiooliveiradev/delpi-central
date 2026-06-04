@@ -191,8 +191,38 @@ class ChatRichPresentationTextService:
         body = cls._strip_visual_footer_hints(body)
         body = cls._strip_product_profile_prose(body)
         body = cls._strip_opening_structure_inventory(body)
+        body = cls._strip_embedded_visual_markers(body)
 
         return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _strip_embedded_visual_markers(cls, markdown: str) -> str:
+        body = cls._PRESENTATION_MARKER_RE.sub("", markdown)
+        body = re.sub(
+            r"\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard):\d+]]",
+            "",
+            body,
+            flags=re.IGNORECASE,
+        )
+
+        return re.sub(r"\n{3,}", "\n\n", body).strip()
+
+    @classmethod
+    def _uses_humanized_stack_sections(cls, metadata: dict[str, Any]) -> bool:
+        plan = metadata.get("stackPresentationPlan")
+
+        if isinstance(plan, dict) and plan.get("humanizedSections") is True:
+            return True
+
+        decision = metadata.get("presentationDecision")
+
+        if isinstance(decision, dict):
+            nested = decision.get("stackPresentationPlan")
+
+            if isinstance(nested, dict) and nested.get("humanizedSections") is True:
+                return True
+
+        return False
 
     @classmethod
     def compact_metadata_text(cls, metadata: dict[str, Any]) -> None:
@@ -211,11 +241,17 @@ class ChatRichPresentationTextService:
 
         compact = cls.compact_text_markdown(markdown, metadata)
 
-        if compact:
-            text_presentation["markdown"] = cls.embed_visual_markers_in_markdown(
-                compact,
-                metadata,
-            )
+        if not compact:
+            return
+
+        if cls._uses_humanized_stack_sections(metadata) or cls.is_stack_layout(metadata):
+            text_presentation["markdown"] = compact
+            return
+
+        text_presentation["markdown"] = cls.embed_visual_markers_in_markdown(
+            compact,
+            metadata,
+        )
 
     @classmethod
     def should_prefer_authorized_answer_over_llm(cls, tool_calls: list[dict] | None) -> bool:

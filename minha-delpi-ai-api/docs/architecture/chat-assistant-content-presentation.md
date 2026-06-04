@@ -127,7 +127,7 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 | Modo | Quando | Comportamento |
 |------|--------|----------------|
-| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa **intercalada por seção** (destaques → tabelas nativas → pontos → árvore/gráfico); marcadores `[[table:n]]` / `[[arvore]]` no `textPresentation` quando compactado |
+| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa intercalada; **analyser** usa `stackPresentationPlan` + seções humanizadas; demais rotas empilham sem cabeçalhos 1–7. Em stack, `textPresentation` compacto **sem** marcadores `[[table]]`/`[[arvore]]` |
 | **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
 | **text-only** | Sem visual rico | Só markdown/código |
 

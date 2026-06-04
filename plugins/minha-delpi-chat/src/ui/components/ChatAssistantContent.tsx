@@ -16,6 +16,7 @@ import {
   resolveInitialToolbarKind,
   shouldShowCompleteStackView,
 } from "./assistantContentVisualFormats";
+import { getTextMarkdownFromToolCalls } from "./chatPresentation";
 import {
   getStackPresentationPlanFromToolCalls,
   planUsesHumanizedSections,
@@ -139,15 +140,20 @@ export function ChatAssistantContent({
   );
   const showCompleteStackView = shouldShowCompleteStackView(toolCalls);
   const showFormatToolbar = visualFormatOptions.length >= 2;
+  const narrativeMarkdown = useMemo(
+    () => getTextMarkdownFromToolCalls(toolCalls),
+    [toolCalls],
+  );
   const suppressPresentationChrome =
     showCompleteStackView &&
-    planUsesHumanizedSections(stackPlan) &&
-    segments.some(
-      (segment) =>
-        segment.kind === "table" ||
-        segment.kind === "tree" ||
-        segment.kind === "stackSection",
-    );
+    Boolean(narrativeMarkdown.trim()) &&
+    (planUsesHumanizedSections(stackPlan) ||
+      segments.some(
+        (segment) =>
+          segment.kind === "table" ||
+          segment.kind === "tree" ||
+          segment.kind === "stackSection",
+      ));
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">

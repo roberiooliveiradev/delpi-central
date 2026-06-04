@@ -66,6 +66,7 @@ def test_filter_analyser_highlights_drops_absence_bullets():
         "Estrutura com 6 itens.",
         "Plano de inspeção ainda não cadastrado.",
         "Roteiro de produção ainda não cadastrado.",
+        "Não há histórico recente de compra registrado para o produto.",
     ]
 
     filtered = ChatPresentationSectionAvailabilityService.filter_analyser_highlights(insights)

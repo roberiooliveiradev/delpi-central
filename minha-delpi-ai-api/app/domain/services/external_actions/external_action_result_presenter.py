@@ -3255,9 +3255,14 @@ class ExternalActionResultPresenter:
         elif shown:
             summary_parts.append(f"Esta resposta traz **{shown}** vínculo(s) de produto pai.")
 
-        summary_parts.append(
-            "Use a **árvore** ou a **tabela** abaixo para explorar onde o item é usado."
-        )
+        if items:
+            summary_parts.append(
+                "Os vínculos aparecem na **árvore** e na **tabela** desta resposta."
+            )
+        else:
+            summary_parts.append(
+                "Não há produtos pai retornados para este código nesta consulta."
+            )
 
         markdown = "\n\n".join([f"### {title}", "", *summary_parts])
 
@@ -3288,9 +3293,10 @@ class ExternalActionResultPresenter:
                 f"A composição possui **{len(items)}** componente(s) de nível 1."
             )
 
-        summary_parts.append(
-            "Use a **árvore** para ver a hierarquia completa ou a **tabela** para a lista plana."
-        )
+        if items or total:
+            summary_parts.append(
+                "A composição está na **árvore** (hierarquia) e, quando disponível, na **tabela** plana."
+            )
 
         markdown = "\n\n".join([f"### {title}", "", *summary_parts])
 

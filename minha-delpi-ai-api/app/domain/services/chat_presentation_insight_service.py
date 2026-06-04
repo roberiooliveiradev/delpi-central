@@ -19,12 +19,20 @@ class ChatPresentationInsightService:
         safe_rows = [row for row in (rows or []) if isinstance(row, dict)]
         shape = data_shape or {}
 
+        tree_nodes = shape.get("treeNodes")
+
         if token == "tree":
+            if tree_nodes is False or tree_nodes == 0:
+                return ""
+
             return (
                 "A árvore mostra a hierarquia de composição ou relacionamento entre itens."
             )
 
         if not safe_rows:
+            if shape.get("hasNarrative"):
+                return ""
+
             return "Não há dados suficientes para gerar esta visualização."
 
         if token in {"line_chart", "area_chart"}:

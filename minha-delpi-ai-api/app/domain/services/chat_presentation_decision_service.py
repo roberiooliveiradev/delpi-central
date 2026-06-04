@@ -77,6 +77,28 @@ _USER_FORMAT_ALIASES = {
 
 class ChatPresentationDecisionService:
     @classmethod
+    def _tree_node_count(cls, tree_presentation: dict[str, Any] | None) -> int | bool:
+        if not isinstance(tree_presentation, dict):
+            return False
+
+        nodes = tree_presentation.get("nodes")
+
+        if isinstance(nodes, list):
+            return len(nodes)
+
+        root = tree_presentation.get("root")
+
+        if isinstance(root, dict) and root:
+            children = root.get("children")
+
+            if isinstance(children, list) and children:
+                return len(children) + 1
+
+            return 1
+
+        return False
+
+    @classmethod
     def _effective_tree_presentation(
         cls,
         *,
@@ -433,13 +455,27 @@ class ChatPresentationDecisionService:
             metadata.get("presentation")
         )
         shape = decision.get("dataShape") if isinstance(decision.get("dataShape"), dict) else {}
+        narrative_markdown = ""
+
+        if isinstance(metadata.get("textPresentation"), dict):
+            narrative_markdown = str(metadata["textPresentation"].get("markdown") or "").strip()
+
+        insight_shape = {
+            **shape,
+            "labelKey": shape.get("labelKey"),
+            "treeNodes": cls._tree_node_count(tree_presentation),
+            "hasNarrative": bool(narrative_markdown),
+        }
 
         decision["insight"] = ChatPresentationInsightService.build(
             selected=str(decision.get("selected") or ""),
             rows=table_rows,
-            data_shape={**shape, "labelKey": shape.get("labelKey")},
+            data_shape=insight_shape,
             reason=str(decision.get("reason") or ""),
         )
+
+        if str(decision.get("layoutMode") or "") == "stack" and narrative_markdown:
+            decision["insight"] = ""
 
         policy_notice = cls._apply_chart_policy_to_metadata(
             metadata,
