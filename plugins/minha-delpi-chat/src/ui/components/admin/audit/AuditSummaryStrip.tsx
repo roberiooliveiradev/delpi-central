@@ -1,8 +1,7 @@
 import type { AdminAuditLog } from "../../../../data/api/adminTypes";
-
+import { AdminKpiCard } from "../shared/AdminKpiCard";
+import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { computeAuditSummary } from "./auditSummary";
-
-import "../knowledge/KnowledgeSummaryStrip.css";
 
 type AuditSummaryStripProps = {
   logs: AdminAuditLog[];
@@ -20,34 +19,27 @@ export function AuditSummaryStrip({
   const view = computeAuditSummary(logs, total, timelineDayCount);
 
   return (
-    <div
-      className="mdc-admin-knowledge-summary"
-      role="region"
-      aria-label="Resumo da auditoria"
-      aria-busy={isLoading}
-    >
-      <div className="mdc-admin-knowledge-summary__grid mdc-admin-kpi-grid">
-        <article className="mdc-admin-kpi-card">
-          <h3>Total (filtro)</h3>
-          <strong>{view.total}</strong>
-          <p>Eventos que correspondem aos filtros.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Nesta página</h3>
-          <strong>{view.pageEvents}</strong>
-          <p>Linhas exibidas na tabela atual.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Ações distintas</h3>
-          <strong>{view.uniqueActions}</strong>
-          <p>Na página carregada.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Usuários</h3>
-          <strong>{view.uniqueUsers}</strong>
-          <p>Na página · {view.timelineDays} dia(s) na timeline.</p>
-        </article>
-      </div>
-    </div>
+    <AdminSummaryStrip ariaLabel="Resumo da auditoria" isLoading={isLoading}>
+      <AdminKpiCard
+        title="Total (filtro)"
+        value={view.total}
+        hint="Eventos que correspondem aos filtros."
+      />
+      <AdminKpiCard
+        title="Nesta página"
+        value={view.pageEvents}
+        hint="Linhas exibidas na tabela atual."
+      />
+      <AdminKpiCard
+        title="Ações distintas"
+        value={view.uniqueActions}
+        hint="Na página carregada."
+      />
+      <AdminKpiCard
+        title="Usuários"
+        value={view.uniqueUsers}
+        hint={`Na página · ${view.timelineDays} dia(s) na timeline.`}
+      />
+    </AdminSummaryStrip>
   );
 }

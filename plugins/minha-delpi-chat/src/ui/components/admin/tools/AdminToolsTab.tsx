@@ -29,6 +29,7 @@ import type {
   ChatCapabilities,
 } from "../../../../data/api/chatTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { ChatIntelligenceSettingsPanel } from "../metrics-tab/ChatIntelligenceSettingsPanel";
 import { ToolsSummaryStrip } from "./ToolsSummaryStrip";
 import { computeToolsSummary } from "./toolsSummary";
@@ -196,15 +197,11 @@ export function AdminToolsTab({
   if (view === "intelligence") {
     return (
       <section className="mdc-admin-tools-tab mdc-admin-tools-tab--intelligence">
-        <header className="mdc-admin-tab-header">
-          <div className="mdc-admin-page-header">
-            <p className="mdc-chat-eyebrow">Plataforma</p>
-            <h2>Inteligência do chat</h2>
-            <p>
-              Políticas globais do pipeline (roteamento, RAG, tools). Métricas ficam em Qualidade.
-            </p>
-          </div>
-        </header>
+        <AdminTabHeader
+          eyebrow="Plataforma"
+          title="Inteligência do chat"
+          description="Políticas globais do pipeline (roteamento, RAG, tools). Métricas ficam em Qualidade."
+        />
         <ChatIntelligenceSettingsPanel getAccessToken={getAccessToken} />
       </section>
     );
@@ -212,31 +209,30 @@ export function AdminToolsTab({
 
   return (
     <section className="mdc-admin-tools-tab">
-      <header className="mdc-admin-tools-tab__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Plataforma</p>
-          <h2>Ferramentas e integrações</h2>
-          <p>Providers LLM, saúde operacional e catálogo de actions por agente.</p>
-        </div>
-
-        <ToolsSummaryStrip summary={toolsSummary} />
-
-        <button
-          type="button"
-          className="mdc-chat-ws-outline-btn"
-          disabled={isLoading || !canUseTools}
-          title={
-            canUseTools
-              ? "Atualizar ferramentas"
-              : "Você não tem permissão para visualizar/usar ferramentas."
-          }
-          onClick={() => {
-            void loadTools();
-          }}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
+      <AdminTabHeader
+        className="mdc-admin-tools-tab__toolbar"
+        eyebrow="Plataforma"
+        title="Ferramentas e integrações"
+        description="Providers LLM, saúde operacional e catálogo de actions por agente."
+        summary={<ToolsSummaryStrip summary={toolsSummary} />}
+        actions={
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn"
+            disabled={isLoading || !canUseTools}
+            title={
+              canUseTools
+                ? "Atualizar ferramentas"
+                : "Você não tem permissão para visualizar/usar ferramentas."
+            }
+            onClick={() => {
+              void loadTools();
+            }}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar"}
+          </button>
+        }
+      />
 
       {error ? (
         <div className="mdc-admin-tools-tab__error" role="alert">

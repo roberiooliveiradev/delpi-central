@@ -1,45 +1,51 @@
-import type { AdminAuditLog } from "../../../../data/api/adminTypes";
+import type { ReactNode } from "react";
 
-import "./AuditTablePanel.css";
+import type { AdminAuditLog } from "../../../../data/api/adminTypes";
+import { AdminDataTable } from "../shared/AdminDataTable";
 
 type AuditTablePanelProps = {
   logs: AdminAuditLog[];
   onSelectLog?: (log: AdminAuditLog) => void;
+  footer?: ReactNode;
 };
 
-export function AuditTablePanel({ logs, onSelectLog }: AuditTablePanelProps) {
-  if (logs.length === 0) {
-    return <p className="mdc-chat-muted">Nenhum evento encontrado para os filtros atuais.</p>;
-  }
-
+export function AuditTablePanel({ logs, onSelectLog, footer }: AuditTablePanelProps) {
   return (
-    <div className="mdc-audit-table-wrap">
-      <table className="mdc-audit-table">
-        <thead>
-          <tr>
-            <th>Ação</th>
-            <th>Contexto</th>
-            <th>Trace</th>
-            <th>Usuário</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.map((log) => (
-            <tr
-              key={log.id}
-              className={onSelectLog ? "mdc-audit-table__row--clickable" : undefined}
-              onClick={() => onSelectLog?.(log)}
-            >
-              <td>{log.action}</td>
-              <td>{log.context || "-"}</td>
-              <td>{log.traceId ? `${log.traceId.slice(0, 10)}…` : "-"}</td>
-              <td>{log.userId || "-"}</td>
-              <td>{new Date(log.createdAt).toLocaleString("pt-BR")}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <AdminDataTable
+      title="Eventos"
+      rows={logs}
+      rowKey={(log) => String(log.id)}
+      emptyMessage="Nenhum evento encontrado para os filtros atuais."
+      caption="Registros de auditoria administrativa"
+      onRowClick={onSelectLog ? (log) => onSelectLog(log) : undefined}
+      footer={footer}
+      columns={[
+        {
+          id: "action",
+          header: "Ação",
+          render: (log) => log.action,
+        },
+        {
+          id: "context",
+          header: "Contexto",
+          render: (log) => log.context || "—",
+        },
+        {
+          id: "trace",
+          header: "Trace",
+          render: (log) => (log.traceId ? `${log.traceId.slice(0, 10)}…` : "—"),
+        },
+        {
+          id: "user",
+          header: "Usuário",
+          render: (log) => log.userId || "—",
+        },
+        {
+          id: "date",
+          header: "Data",
+          render: (log) => new Date(log.createdAt).toLocaleString("pt-BR"),
+        },
+      ]}
+    />
   );
 }

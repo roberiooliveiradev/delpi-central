@@ -1,75 +1,86 @@
 import type { AdminLearningSummary } from "../../../../data/api/adminTypes";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { formatMetricNumber, formatMetricPercent } from "../metrics-tab/adminMetricsFormatters";
 
 type LearningSummaryStripProps = {
   summary: AdminLearningSummary | null;
   isLoading: boolean;
 };
 
-function formatPercent(value: number | null): string {
-  if (value === null || Number.isNaN(value)) {
-    return "—";
-  }
-  return `${Math.round(value * 100)}%`;
-}
-
 export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStripProps) {
   if (!summary) {
     return (
-      <div className="mdc-admin-learning__kpis">
+      <div className="mdc-admin-summary-strip" role="region" aria-label="Resumo de aprendizagem">
         <p className="mdc-chat-muted">{isLoading ? "Carregando métricas..." : "Sem métricas."}</p>
       </div>
     );
   }
 
-  const cards: Array<{ label: string; value: string; hint?: string }> = [
+  const cards: Array<{ key: string; title: string; value: string; hint?: string }> = [
     {
-      label: "Pendentes",
-      value: String(summary.funnel.pending),
+      key: "pending",
+      title: "Pendentes",
+      value: formatMetricNumber(summary.funnel.pending),
       hint: `${summary.highlights.pendingHighConfidence} alta confiança`,
     },
     {
-      label: "Criados (janela)",
-      value: String(summary.funnel.recentCreated),
+      key: "created",
+      title: "Criados (janela)",
+      value: formatMetricNumber(summary.funnel.recentCreated),
       hint: `${summary.funnel.created} no total`,
     },
     {
-      label: "Promovidos",
-      value: String(summary.funnel.promoted),
+      key: "promoted",
+      title: "Promovidos",
+      value: formatMetricNumber(summary.funnel.promoted),
       hint: `${summary.funnel.approved} aprovados`,
     },
     {
-      label: "Taxa de aprovação",
-      value: formatPercent(summary.funnel.approvalRate),
+      key: "approval",
+      title: "Taxa de aprovação",
+      value: formatMetricPercent(summary.funnel.approvalRate),
       hint: `${summary.funnel.rejected} rejeitados`,
     },
     {
-      label: "Termos ativos",
-      value: String(summary.highlights.learnedTermsActive),
+      key: "terms",
+      title: "Termos ativos",
+      value: formatMetricNumber(summary.highlights.learnedTermsActive),
       hint: `${summary.vocabulary.total} no vocabulário`,
     },
     {
-      label: "Definições / Typos",
-      value: `${summary.highlights.termDefinitions} / ${summary.highlights.normalizationRules}`,
+      key: "defs",
+      title: "Definições / Typos",
+      value: `${formatMetricNumber(summary.highlights.termDefinitions)} / ${formatMetricNumber(summary.highlights.normalizationRules)}`,
       hint: "candidatos por tipo",
     },
     {
-      label: "Memória ativa",
-      value: String(summary.highlights.memoryItemsActive ?? summary.memory?.active ?? 0),
+      key: "memory",
+      title: "Memória ativa",
+      value: formatMetricNumber(
+        summary.highlights.memoryItemsActive ?? summary.memory?.active ?? 0,
+      ),
       hint: `${summary.memory?.forgotten ?? 0} esquecidas`,
     },
     {
-      label: "Testes falhando",
-      value: String(summary.highlights.evaluationCasesFailing ?? summary.evaluation?.failing ?? 0),
+      key: "eval",
+      title: "Testes falhando",
+      value: formatMetricNumber(
+        summary.highlights.evaluationCasesFailing ?? summary.evaluation?.failing ?? 0,
+      ),
       hint: `${summary.highlights.evaluationCasesActive ?? summary.evaluation?.active ?? 0} casos ativos`,
     },
     {
-      label: "FT amostras",
-      value: String(summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0),
+      key: "ft",
+      title: "FT amostras",
+      value: formatMetricNumber(
+        summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0,
+      ),
       hint: `${summary.fineTuning?.samplesCaptured ?? 0} capturadas`,
     },
     {
-      label: "RAG indexado",
-      value: String(
+      key: "rag",
+      title: "RAG indexado",
+      value: formatMetricNumber(
         (summary.highlights.ragGlossaryIndexed ?? summary.ragIndex?.glossaryDocuments ?? 0) +
           (summary.highlights.ragUserMemoryIndexed ?? summary.ragIndex?.userMemoryDocuments ?? 0),
       ),
@@ -80,18 +91,12 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
   const topTypos = summary.dashboard?.topTypoRules ?? [];
 
   return (
-    <div className="mdc-admin-learning__kpis-wrap">
-      <div className="mdc-admin-learning__kpis">
+    <div className="mdc-admin-learning__kpis-wrap" role="region" aria-label="Resumo de aprendizagem">
+      <AdminKpiGrid>
         {cards.map((card) => (
-          <article key={card.label} className="mdc-admin-learning__kpi">
-            <span className="mdc-admin-learning__kpi-label">{card.label}</span>
-            <strong className="mdc-admin-learning__kpi-value">{card.value}</strong>
-            {card.hint ? (
-              <small className="mdc-admin-learning__kpi-hint">{card.hint}</small>
-            ) : null}
-          </article>
+          <AdminKpiCard key={card.key} title={card.title} value={card.value} hint={card.hint} />
         ))}
-      </div>
+      </AdminKpiGrid>
       {topTypos.length > 0 ? (
         <aside className="mdc-admin-learning__typo-hints">
           <span className="mdc-admin-learning__kpi-label">Typos mais usados</span>

@@ -1,44 +1,31 @@
 import type { ToolsSummary } from "./toolsSummary";
-
-import "../knowledge/KnowledgeSummaryStrip.css";
+import { AdminKpiCard } from "../shared/AdminKpiCard";
+import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
+import { formatMetricNumber } from "../metrics-tab/adminMetricsFormatters";
 
 type ToolsSummaryStripProps = {
   summary: ToolsSummary;
 };
 
-function formatCount(value: number): string {
-  return new Intl.NumberFormat("pt-BR").format(value);
-}
-
 export function ToolsSummaryStrip({ summary }: ToolsSummaryStripProps) {
   return (
-    <div
-      className="mdc-admin-knowledge-summary"
-      role="region"
-      aria-label="Resumo de ferramentas e integrações"
-    >
-      <div className="mdc-admin-knowledge-summary__grid mdc-admin-kpi-grid">
-        <article className="mdc-admin-kpi-card">
-          <h3>LLM</h3>
-          <strong>{summary.llmConfigured ? "Configurado" : "—"}</strong>
-          <p>{summary.llmLabel}</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Saúde</h3>
-          <strong>{summary.healthLabel}</strong>
-          <p>Checks operacionais do catálogo.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Actions globais</h3>
-          <strong>{formatCount(summary.globalActions)}</strong>
-          <p>Rotas OpenAPI administradas.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Actions no chat</h3>
-          <strong>{formatCount(summary.chatActions)}</strong>
-          <p>Itens expostos ao catálogo do usuário.</p>
-        </article>
-      </div>
-    </div>
+    <AdminSummaryStrip ariaLabel="Resumo de ferramentas e integrações">
+      <AdminKpiCard
+        title="LLM"
+        value={summary.llmConfigured ? "Configurado" : "—"}
+        hint={summary.llmLabel}
+      />
+      <AdminKpiCard title="Saúde" value={summary.healthLabel} hint="Checks operacionais do catálogo." />
+      <AdminKpiCard
+        title="Actions globais"
+        value={formatMetricNumber(summary.globalActions)}
+        hint="Rotas OpenAPI administradas."
+      />
+      <AdminKpiCard
+        title="Actions no chat"
+        value={formatMetricNumber(summary.chatActions)}
+        hint="Itens expostos ao catálogo do usuário."
+      />
+    </AdminSummaryStrip>
   );
 }

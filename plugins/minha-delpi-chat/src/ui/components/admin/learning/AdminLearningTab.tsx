@@ -28,6 +28,7 @@ import type {
   AdminVocabularyTerm,
 } from "../../../../data/api/adminTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { LearningSummaryStrip } from "./LearningSummaryStrip";
 
 import "./AdminLearningTab.css";
@@ -515,78 +516,76 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
 
   return (
     <section className="mdc-admin-learning">
-      <header className="mdc-admin-learning__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Conhecimento</p>
-          <h2>Aprendizagem contínua</h2>
-          <p>
-            Revise candidatos de conhecimento aprendidos com o uso (typos, definições) e
-            promova-os ao vocabulário aprovado, que passa a refinar a normalização do chat.
-          </p>
-        </div>
+      <AdminTabHeader
+        className="mdc-admin-learning__toolbar"
+        eyebrow="Conhecimento"
+        title="Aprendizagem contínua"
+        description="Revise candidatos aprendidos com o uso (typos, definições) e promova-os ao vocabulário aprovado, que refina a normalização do chat."
+        summary={<LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />}
+        actions={
+          <>
+            <div className="mdc-admin-learning__views">
+              <button
+                type="button"
+                className={view === "candidates" ? "is-active" : undefined}
+                onClick={() => setView("candidates")}
+              >
+                Candidatos
+              </button>
+              <button
+                type="button"
+                className={view === "vocabulary" ? "is-active" : undefined}
+                onClick={() => setView("vocabulary")}
+              >
+                Vocabulário
+              </button>
+              <button
+                type="button"
+                className={view === "memory" ? "is-active" : undefined}
+                onClick={() => setView("memory")}
+              >
+                Memória
+              </button>
+              <button
+                type="button"
+                className={view === "evaluation" ? "is-active" : undefined}
+                onClick={() => setView("evaluation")}
+              >
+                Regressão
+              </button>
+              <button
+                type="button"
+                className={view === "finetuning" ? "is-active" : undefined}
+                onClick={() => setView("finetuning")}
+              >
+                Fine-tuning
+              </button>
+            </div>
 
-        <div className="mdc-admin-learning__views">
-          <button
-            type="button"
-            className={view === "candidates" ? "is-active" : undefined}
-            onClick={() => setView("candidates")}
-          >
-            Candidatos
-          </button>
-          <button
-            type="button"
-            className={view === "vocabulary" ? "is-active" : undefined}
-            onClick={() => setView("vocabulary")}
-          >
-            Vocabulário
-          </button>
-          <button
-            type="button"
-            className={view === "memory" ? "is-active" : undefined}
-            onClick={() => setView("memory")}
-          >
-            Memória
-          </button>
-          <button
-            type="button"
-            className={view === "evaluation" ? "is-active" : undefined}
-            onClick={() => setView("evaluation")}
-          >
-            Regressão
-          </button>
-          <button
-            type="button"
-            className={view === "finetuning" ? "is-active" : undefined}
-            onClick={() => setView("finetuning")}
-          >
-            Fine-tuning
-          </button>
-        </div>
-
-        <button
-          type="button"
-          className="mdc-chat-ws-outline-btn"
-          disabled={isLoading}
-          onClick={() => {
-            if (view === "candidates") {
-              void loadCandidates();
-            } else if (view === "vocabulary") {
-              void loadTerms();
-            } else if (view === "memory") {
-              void loadMemoryItems();
-            } else if (view === "evaluation") {
-              void loadEvalCases();
-            } else {
-              void loadFineTuning();
-            }
-            void loadSummary();
-          }}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
-
-      <LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={isLoading}
+              onClick={() => {
+                if (view === "candidates") {
+                  void loadCandidates();
+                } else if (view === "vocabulary") {
+                  void loadTerms();
+                } else if (view === "memory") {
+                  void loadMemoryItems();
+                } else if (view === "evaluation") {
+                  void loadEvalCases();
+                } else {
+                  void loadFineTuning();
+                }
+                void loadSummary();
+              }}
+            >
+              {isLoading ? "Atualizando..." : "Atualizar"}
+            </button>
+          </>
+        }
+      />
 
       {error ? <p className="mdc-admin-learning__error">{error}</p> : null}
       {successMessage ? (

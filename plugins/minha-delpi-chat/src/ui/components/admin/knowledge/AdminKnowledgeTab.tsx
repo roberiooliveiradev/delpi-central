@@ -1,3 +1,4 @@
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { KnowledgeDocumentsPanel } from "./KnowledgeDocumentsPanel";
 import { KnowledgeIngestionPanel } from "./KnowledgeIngestionPanel";
 import { KnowledgeSummaryStrip } from "./KnowledgeSummaryStrip";
@@ -72,11 +73,18 @@ export function AdminKnowledgeTab({
 
   return (
     <section className="mdc-admin-knowledge">
-      <KnowledgeSummaryStrip
-        summary={documentSummary}
-        activeFilter={documentStatus}
-        isLoading={isLoading}
-        onFilterChange={onDocumentStatusFilterChange}
+      <AdminTabHeader
+        eyebrow="Conhecimento"
+        title="Base de conhecimento"
+        description="Documentos globais do chat, ingestão e curadoria. Anexos de conversa não entram nesta base."
+        summary={
+          <KnowledgeSummaryStrip
+            summary={documentSummary}
+            activeFilter={documentStatus}
+            isLoading={isLoading}
+            onFilterChange={onDocumentStatusFilterChange}
+          />
+        }
       />
 
       <div className="mdc-admin-knowledge__body mdc-admin-split">

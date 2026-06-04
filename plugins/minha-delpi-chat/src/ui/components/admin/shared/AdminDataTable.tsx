@@ -8,12 +8,14 @@ export type AdminDataTableColumn<T> = {
 };
 
 type AdminDataTableProps<T> = {
-  title: string;
+  title?: string;
   columns: AdminDataTableColumn<T>[];
   rows: T[];
   rowKey: (row: T, index: number) => string;
   emptyMessage?: string;
   caption?: string;
+  onRowClick?: (row: T, index: number) => void;
+  footer?: ReactNode;
 };
 
 export function AdminDataTable<T>({
@@ -23,10 +25,12 @@ export function AdminDataTable<T>({
   rowKey,
   emptyMessage = "Sem registros na janela.",
   caption,
+  onRowClick,
+  footer,
 }: AdminDataTableProps<T>) {
   return (
     <div className="mdc-admin-data-table">
-      <h4>{title}</h4>
+      {title ? <h4>{title}</h4> : null}
       {!rows.length ? (
         <p className="mdc-chat-muted">{emptyMessage}</p>
       ) : (
@@ -44,7 +48,11 @@ export function AdminDataTable<T>({
             </thead>
             <tbody>
               {rows.map((row, index) => (
-                <tr key={rowKey(row, index)}>
+                <tr
+                  key={rowKey(row, index)}
+                  className={onRowClick ? "mdc-admin-data-table__row--clickable" : undefined}
+                  onClick={onRowClick ? () => onRowClick(row, index) : undefined}
+                >
                   {columns.map((column) => (
                     <td key={column.id} className={column.className}>
                       {column.render(row, index)}
@@ -56,6 +64,7 @@ export function AdminDataTable<T>({
           </table>
         </div>
       )}
+      {footer}
     </div>
   );
 }

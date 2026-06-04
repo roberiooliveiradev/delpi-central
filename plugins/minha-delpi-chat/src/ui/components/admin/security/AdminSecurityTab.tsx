@@ -14,6 +14,7 @@ import type {
   AdminSecuritySummary,
 } from "../../../../data/api/adminTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SecuritySummaryStrip } from "./SecuritySummaryStrip";
 
 import "./AdminSecurityTab.css";
@@ -84,33 +85,30 @@ export function AdminSecurityTab({
 
   return (
     <section className="mdc-admin-security">
-      <header className="mdc-admin-security__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Segurança</p>
-          <h2>Segurança operacional</h2>
-          <p>
-            Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas.
-          </p>
-        </div>
-
-        <SecuritySummaryStrip summary={summary} isLoading={isLoading} />
-
-        <div className="mdc-admin-security__toolbar-actions">
-          {onOpenAudit ? (
-            <button type="button" className="mdc-chat-ws-outline-btn" onClick={onOpenAudit}>
-              Ver auditoria
+      <AdminTabHeader
+        className="mdc-admin-security__toolbar"
+        eyebrow="Governança"
+        title="Segurança operacional"
+        description="Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas."
+        summary={<SecuritySummaryStrip summary={summary} isLoading={isLoading} />}
+        actions={
+          <div className="mdc-admin-security__toolbar-actions">
+            {onOpenAudit ? (
+              <button type="button" className="mdc-chat-ws-outline-btn" onClick={onOpenAudit}>
+                Ver auditoria
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={isLoading}
+              onClick={() => void loadData()}
+            >
+              {isLoading ? "Atualizando..." : "Atualizar"}
             </button>
-          ) : null}
-          <button
-            type="button"
-            className="mdc-chat-ws-outline-btn"
-            disabled={isLoading}
-            onClick={() => void loadData()}
-          >
-            {isLoading ? "Atualizando..." : "Atualizar"}
-          </button>
-        </div>
-      </header>
+          </div>
+        }
+      />
 
       {error ? <p className="mdc-admin-security__error">{error}</p> : null}
 

@@ -15,6 +15,7 @@ import type {
   AdminRbacSummary,
 } from "../../../../data/api/adminTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AuditFiltersPanel } from "./AuditFiltersPanel";
 import { AuditPagination } from "./AuditPagination";
 import { AuditSummaryStrip } from "./AuditSummaryStrip";
@@ -218,34 +219,55 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
   const logs = response?.items ?? [];
 
+  const auditTableFooter = response ? (
+    <div className="mdc-admin-data-table__footer">
+      <AuditPagination
+        page={page}
+        pageCount={pageCount}
+        onPrevious={() => {
+          if (!response.pagination.hasPrevious) {
+            return;
+          }
+
+          void loadLogs(filters, Math.max(0, response.pagination.offset - PAGE_SIZE));
+        }}
+        onNext={() => {
+          if (!response.pagination.hasNext) {
+            return;
+          }
+
+          void loadLogs(filters, response.pagination.offset + PAGE_SIZE);
+        }}
+      />
+    </div>
+  ) : null;
+
   return (
     <section className="mdc-admin-audit-tab">
-      <header className="mdc-admin-audit-tab__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Auditoria</p>
-          <h2>Eventos administrativos</h2>
-          <p>
-            Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade
-            operacional.
-          </p>
-        </div>
-
-        <AuditSummaryStrip
-          logs={logs}
-          total={response?.pagination.total}
-          timelineDayCount={timelineDays.length}
-          isLoading={isLoading}
-        />
-
-        <button
-          type="button"
-          className="mdc-chat-ws-outline-btn"
-          disabled={isLoading}
-          onClick={() => void loadLogs(filters, response?.pagination.offset ?? 0)}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
+      <AdminTabHeader
+        className="mdc-admin-audit-tab__toolbar"
+        eyebrow="Governança"
+        title="Eventos administrativos"
+        description="Consulte, filtre e exporte ações registradas pelo Minha DELPI Chat para rastreabilidade operacional."
+        summary={
+          <AuditSummaryStrip
+            logs={logs}
+            total={response?.pagination.total}
+            timelineDayCount={timelineDays.length}
+            isLoading={isLoading}
+          />
+        }
+        actions={
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn"
+            disabled={isLoading}
+            onClick={() => void loadLogs(filters, response?.pagination.offset ?? 0)}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar"}
+          </button>
+        }
+      />
 
       {error ? <p className="mdc-admin-audit-error">{error}</p> : null}
 
@@ -272,28 +294,11 @@ export function AdminAuditTab({ rbac, getAccessToken }: AdminAuditTabProps) {
 
       {isLoading ? <p className="mdc-chat-muted">Carregando eventos...</p> : null}
 
-      <AuditTablePanel logs={logs} onSelectLog={handleSelectLog} />
-
-      {response ? (
-        <AuditPagination
-          page={page}
-          pageCount={pageCount}
-          onPrevious={() => {
-            if (!response.pagination.hasPrevious) {
-              return;
-            }
-
-            void loadLogs(filters, Math.max(0, response.pagination.offset - PAGE_SIZE));
-          }}
-          onNext={() => {
-            if (!response.pagination.hasNext) {
-              return;
-            }
-
-            void loadLogs(filters, response.pagination.offset + PAGE_SIZE);
-          }}
-        />
-      ) : null}
+      <AuditTablePanel
+        logs={logs}
+        onSelectLog={handleSelectLog}
+        footer={auditTableFooter}
+      />
 
       {selectedLog ? (
         <article className="mdc-admin-panel mdc-admin-audit-detail">

@@ -152,6 +152,59 @@
   background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
 }
 
+.mdc-admin-root .mdc-admin-data-table__row--clickable {
+  cursor: pointer;
+}
+
+.mdc-admin-root .mdc-admin-data-table__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-2);
+  margin-top: var(--mdc-space-2);
+  padding-top: var(--mdc-space-2);
+  border-top: 1px solid var(--mdc-card-border);
+  font-size: 0.85rem;
+  color: var(--mdc-text-muted);
+}
+
+.mdc-admin-root .mdc-admin-summary-strip {
+  width: 100%;
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-admin-kpi-card.is-clickable {
+  padding: 0;
+}
+
+.mdc-admin-root .mdc-admin-kpi-card__hit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  width: 100%;
+  height: 100%;
+  padding: 1rem 1.1rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.mdc-admin-root .mdc-admin-kpi-card__hit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.mdc-admin-root .mdc-admin-kpi-card__hit h3,
+.mdc-admin-root .mdc-admin-kpi-card__hit strong,
+.mdc-admin-root .mdc-admin-kpi-card__hit p {
+  margin: 0;
+}
+
 /* Legado: manter drawing-metrics alinhado ao metric-section */
 .mdc-admin-root .mdc-admin-drawing-metrics {
   width: 100%;

@@ -1,6 +1,6 @@
 # Playbook 12 — Admin UI: refatoração de componentes e layout
 
-> **Status (jun/2026):** em andamento — **Fases 0, 1–2 e 3 concluídas** no MFE/docs; pendente Fase 4 (`AdminTabHeader` nas demais abas) e polish Fase 5.  
+> **Status (jun/2026):** em andamento — **Fases 0–4 concluídas** no MFE; pendente Fase 5 (polish, i18n, remoção CSS legado).  
 > **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (navegação 6 seções **já aplicada** no MFE). Este playbook trata **como** cada tela renderiza dados: grid, KPIs, tabelas, gráficos e estados vazios.
 
 ## Objetivo
@@ -232,9 +232,9 @@ Migrar nesta ordem:
 
 ### Fase 4 — Conhecimento, Plataforma, Governança (3–5 dias)
 
-- [ ] Unificar toolbars (`AdminTabHeader`) em Knowledge, Tools, Security, Audit.
-- [ ] `LearningSummaryStrip` / strips similares → `AdminKpiGrid`.
-- [ ] Auditoria: tabela e paginação no mesmo `AdminDataTable`.
+- [x] `AdminTabHeader` em Conhecimento (documentos, aprendizagem), Plataforma (tools/intelligence), Governança (segurança, auditoria).
+- [x] `AdminSummaryStrip` + `AdminKpiCard` nos strips (tools, security, audit, knowledge); `LearningSummaryStrip` → `AdminKpiGrid`.
+- [x] Auditoria: `AuditTablePanel` via `AdminDataTable` + paginação no `footer`.
 
 ### Fase 5 — Polish, i18n e QA (1–2 dias)
 
@@ -308,4 +308,4 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
-**Próximo passo sugerido:** Fase 4 — `AdminTabHeader` em Conhecimento, Aprendizagem, Plataforma e Governança; Fase 5 — remover CSS legado `drawing-metrics__*` e capturar PNG de baseline no staging.
+**Próximo passo sugerido:** Fase 5 — passagem de copy PT, remover CSS legado `drawing-metrics__*`, capturar PNG de baseline no staging e QA manual das 6 seções.

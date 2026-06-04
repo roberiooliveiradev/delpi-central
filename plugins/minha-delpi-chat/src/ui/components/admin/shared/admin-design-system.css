@@ -107,18 +107,24 @@
 }
 
 /* ——— Cabeçalhos com faixa de KPIs (Segurança, Ferramentas, Avaliações…) ——— */
-.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) {
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary),
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-summary-strip),
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-learning__kpis-wrap) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: var(--mdc-space-3);
 }
 
-.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-page-header {
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-page-header,
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-summary-strip) .mdc-admin-page-header,
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-learning__kpis-wrap) .mdc-admin-page-header {
   grid-column: 1 / -1;
 }
 
-.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-knowledge-summary {
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary) .mdc-admin-knowledge-summary,
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-summary-strip) .mdc-admin-summary-strip,
+.mdc-admin-root .mdc-admin-tab-header:has(.mdc-admin-learning__kpis-wrap) .mdc-admin-learning__kpis-wrap {
   grid-column: 1 / -1;
   width: 100%;
   margin: 0;
@@ -127,6 +133,7 @@
 .mdc-admin-root
   .mdc-admin-tab-header:has(.mdc-admin-knowledge-summary)
   :is(
+    .mdc-admin-tab-header__actions,
     .mdc-admin-security__toolbar-actions,
     .mdc-admin-tools-tab__toolbar-actions,
     .mdc-admin-evaluations__toolbar-actions,
