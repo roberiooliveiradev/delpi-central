@@ -32,6 +32,7 @@ Wrappers especializados (mantêm API estável):
 | `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
 | `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `product_query_intent.json` | Marcadores de intenção operacional de produto | `ChatProductQueryIntentService` |
+| `product_overview_intent.json` | «Me fale do produto» e visão geral | `ChatProductOverviewIntentService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado | `ChatErrorHandlingClassifier`, SQL interpretation |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
@@ -70,12 +71,14 @@ Wrappers especializados (mantêm API estável):
 - Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`
 - Intenção de consulta de produto (estoque, vendas, pais, resumo, etc.) → `product_query_intent.json` (regex de código e pais permanecem no serviço)
 - Resumos de texto de parents/estrutura → `presenter_content.routeNarratives`
+- Visão geral do produto → `product_overview_intent.json`
+- Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. Narrativas dinâmicas restantes no presenter (SQL, paginação genérica) — extensão de `presenter_content.routeNarratives`
+1. Frases dinâmicas restantes no presenter (roteiro/inspeção agregados, títulos de tabela LMP/OV)
 
 ## Como adicionar conteúdo
 

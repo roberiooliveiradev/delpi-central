@@ -137,10 +137,14 @@ class ExternalActionResultPresenter:
 
         if isinstance(items, list):
             if not items:
-                title = self._infer_items_title([], path) or "Consulta"
+                title = self._infer_items_title([], path) or self._presenter_text(
+                    "generic", "defaultQueryTitle"
+                )
                 return {
                     "titulo": title,
-                    "linhas": [f"Nenhum registro encontrado para esta consulta."],
+                    "linhas": [
+                        self._presenter_text("generic", "emptyItemsQuery")
+                    ],
                     "dados": root,
                 }
 
@@ -177,8 +181,13 @@ class ExternalActionResultPresenter:
 
                 return {
                     "titulo": kpi.get("title", "Indicador"),
-                    "linhas": linhas or [
-                        f"{kpi.get('title', 'Indicador')}: veja os dados abaixo."
+                    "linhas": linhas
+                    or [
+                        self._presenter_text(
+                            "generic",
+                            "kpiSeeData",
+                            title=kpi.get("title", "Indicador"),
+                        )
                     ],
                     "dados": root,
                     "apresentacao": kpi,
@@ -190,37 +199,40 @@ class ExternalActionResultPresenter:
                 return fallback
 
         return {
-            "titulo": self._fallback_title(path) or "Resultado da API",
-            "linhas": ["A API retornou dados autorizados para a consulta."],
+            "titulo": self._fallback_title(path)
+            or self._presenter_text("generic", "apiResultTitle"),
+            "linhas": [self._presenter_text("generic", "apiAuthorized")],
             "dados": root,
         }
 
     def _fallback_title(self, path: str) -> str | None:
         if not path:
             return None
+
         lowered = path.lower()
-        if "dashboard" in lowered:
-            if "lmp" in lowered:
-                return "Dashboard de LMPs"
-            return "Dashboard"
-        if "/commercial/" in lowered:
-            return "Indicador Comercial"
-        if "/financial/" in lowered or "/finacial/" in lowered:
-            return "Indicador Financeiro"
-        if "/production/" in lowered:
-            return "Indicador de Produção"
-        if "/hr/" in lowered:
-            return "Indicador de RH"
-        if "/quality/" in lowered:
-            return "Indicador de Qualidade"
-        return None
+        triggers = (
+            "dashboard",
+            "/commercial/",
+            "/financial/",
+            "/finacial/",
+            "/production/",
+            "/hr/",
+            "/quality/",
+        )
+
+        if not any(fragment in lowered for fragment in triggers):
+            return None
+
+        return self._kpi_title(path)
 
     def _present_dict_fallback(self, root: dict, path: str) -> dict | None:
         if not root:
             return None
 
         linhas = []
-        title = self._fallback_title(path) or "Resultado da consulta"
+        title = self._fallback_title(path) or self._presenter_text(
+            "generic", "queryResultTitle"
+        )
 
         for key, value in root.items():
             if isinstance(value, dict):
@@ -228,7 +240,14 @@ class ExternalActionResultPresenter:
                 label = self._humanize_key(key)
                 linhas.append(f"**{label}:** {', '.join(sub_items)}")
             elif isinstance(value, list) and value:
-                linhas.append(f"**{self._humanize_key(key)}:** {len(value)} item(ns)")
+                linhas.append(
+                    self._presenter_text(
+                        "generic",
+                        "dictListItems",
+                        label=self._humanize_key(key),
+                        count=str(len(value)),
+                    )
+                )
             elif value is not None:
                 linhas.append(f"**{self._humanize_key(key)}:** {value}")
 
@@ -258,56 +277,38 @@ class ExternalActionResultPresenter:
 
         lowered_path = str(path or "").lower()
         product_code = self._extract_product_code_from_path(path)
-        code_hint = f" **{product_code}**" if product_code else ""
+
+        route_key = None
 
         if "/suppliers" in lowered_path:
-            linha = (
-                f"Nenhum fornecedor cadastrado para o produto{code_hint}."
-                if product_code
-                else "Nenhum fornecedor cadastrado para este produto."
-            )
+            route_key = "suppliers"
         elif "/customers" in lowered_path:
-            linha = (
-                f"Nenhum cliente vinculado ao produto{code_hint}."
-                if product_code
-                else "Nenhum cliente vinculado a este produto."
-            )
+            route_key = "customers"
         elif "/stock" in lowered_path:
-            linha = (
-                f"Nenhuma posição de estoque encontrada para o produto{code_hint}."
-                if product_code
-                else "Nenhuma posição de estoque encontrada para este produto."
-            )
+            route_key = "stock"
         elif "/structure" in lowered_path:
-            linha = (
-                f"Nenhum componente na estrutura do produto{code_hint}."
-                if product_code
-                else "Nenhum componente na estrutura deste produto."
-            )
+            route_key = "structure"
         elif "/parents" in lowered_path:
-            linha = (
-                f"O produto{code_hint} não aparece como componente em outros produtos."
-                if product_code
-                else "Este produto não aparece como componente em outros produtos."
-            )
+            route_key = "parents"
         elif "/guide" in lowered_path:
-            linha = (
-                f"Nenhuma operação de roteiro cadastrada para o produto{code_hint}."
-                if product_code
-                else "Nenhuma operação de roteiro cadastrada para este produto."
-            )
+            route_key = "guide"
         elif "/inspection" in lowered_path:
-            linha = (
-                f"Nenhum dado de inspeção para o produto{code_hint}."
-                if product_code
-                else "Nenhum dado de inspeção para este produto."
-            )
+            route_key = "inspection"
         elif "/sales" in lowered_path or "/purchases" in lowered_path:
-            linha = f"Nenhum registro encontrado para esta consulta do produto{code_hint}.".strip()
-        else:
-            linha = "Nenhum registro encontrado para esta consulta."
+            route_key = "salesPurchases"
 
-        titulo = self._infer_items_title([], path) or "Consulta"
+        if route_key and product_code:
+            linha = self._presenter_text(
+                "operationalEmpty", route_key, code=product_code
+            )
+        elif route_key:
+            linha = self._presenter_text("operationalEmpty", f"{route_key}Generic")
+        else:
+            linha = self._presenter_text("operationalEmpty", "default")
+
+        titulo = self._infer_items_title([], path) or self._presenter_text(
+            "generic", "defaultQueryTitle"
+        )
 
         return {
             "titulo": titulo,
@@ -852,31 +853,32 @@ class ExternalActionResultPresenter:
                 msg = friendly or raw_msg
 
                 if ChatSqlExecutionErrorInterpretationService.is_raw_driver_dump(raw_msg):
-                    msg = friendly or (
-                        "Não foi possível executar a consulta SQL neste ambiente."
-                    )
+                    msg = friendly or self._analyser_markdown("sqlEnvironmentFailed")
 
                 return {
-                    "titulo": "Erro na consulta",
+                    "titulo": self._presenter_text("generic", "queryErrorTitle"),
                     "linhas": [msg],
                     "dados": None,
                 }
             return None
 
-        error_messages = {
-            "not found": "O recurso solicitado não foi encontrado. "
-                         "O código informado pode não existir ou não ter dados cadastrados.",
-            "unauthorized": "Sem autorização para acessar este recurso.",
-            "forbidden": "Acesso negado ao recurso solicitado.",
-        }
-
         if isinstance(detail, str):
-            msg = error_messages.get(detail.lower(), f"A API retornou um erro: {detail}")
+            error_key_map = {
+                "not found": "notFound",
+                "unauthorized": "unauthorized",
+                "forbidden": "forbidden",
+            }
+            mapped = error_key_map.get(detail.lower())
+            msg = (
+                self._presenter_text("apiErrors", mapped)
+                if mapped
+                else self._presenter_text("apiErrors", "withDetail", detail=detail)
+            )
         else:
-            msg = f"A API retornou erro (status {status})."
+            msg = self._presenter_text("apiErrors", "withStatus", status=str(status))
 
         return {
-            "titulo": "Erro na consulta",
+            "titulo": self._presenter_text("generic", "queryErrorTitle"),
             "linhas": [msg],
             "dados": None,
         }
@@ -1444,7 +1446,8 @@ class ExternalActionResultPresenter:
                     "lower": "",
                     "upper": "",
                     "unit": "",
-                    "detail": parent_code or "Sem detalhe nesta consulta",
+                    "detail": parent_code
+                    or self._presenter_text("generic", "emptyDetail"),
                 }
             )
 
@@ -1693,7 +1696,7 @@ class ExternalActionResultPresenter:
                         "product_code": product_code,
                         "parent_code": parent_code or "—",
                         "level": level,
-                        "plan": "Sem detalhe nesta consulta",
+                        "plan": self._presenter_text("generic", "emptyPlan"),
                     }
                 )
 
@@ -1713,10 +1716,22 @@ class ExternalActionResultPresenter:
                 )
 
             if len(shallow) > 20:
-                sections.append(f"… e mais **{len(shallow) - 20}** componente(s).")
+                sections.append(
+                    self._presenter_text(
+                        "pagination",
+                        "moreComponents",
+                        count=str(len(shallow) - 20),
+                    )
+                )
 
         if len(detailed) > 6:
-            sections.append(f"… e mais **{len(detailed) - 6}** produto(s) com plano detalhado.")
+            sections.append(
+                self._presenter_text(
+                    "pagination",
+                    "moreDetailedProducts",
+                    count=str(len(detailed) - 6),
+                )
+            )
 
         return sections
 
@@ -1732,7 +1747,9 @@ class ExternalActionResultPresenter:
                 if not self._build_product_analyser_guide_table(root):
                     sections.extend(self._build_product_analyser_guide_markdown(guide_items))
             else:
-                sections.append("Roteiro: 0 registro(s).")
+                sections.append(
+                    self._presenter_text("analyserCollections", "guideEmpty")
+                )
 
         inspection = root.get("inspection")
 
@@ -1745,7 +1762,9 @@ class ExternalActionResultPresenter:
                         self._build_product_analyser_inspection_markdown(inspection_items)
                     )
             else:
-                sections.append("Inspeção: 0 registro(s).")
+                sections.append(
+                    self._presenter_text("analyserCollections", "inspectionEmpty")
+                )
 
         return sections
 
@@ -1811,8 +1830,9 @@ class ExternalActionResultPresenter:
             lines.extend(
                 [
                     "",
-                    "A **estrutura** (BOM) está nas visualizações em **árvore**, **tabela** "
-                    "e, quando disponível, **gráfico** abaixo.",
+                    self._presenter_text(
+                        "analyserCollections", "structureVisualizationHint"
+                    ),
                 ]
             )
 
@@ -1843,7 +1863,13 @@ class ExternalActionResultPresenter:
             lines.append(f"- {preview}")
 
         if len(items) > 12:
-            lines.append(f"… e mais {len(items) - 12} registro(s).")
+            lines.append(
+                self._presenter_text(
+                    "pagination",
+                    "moreRecords",
+                    count=str(len(items) - 12),
+                )
+            )
 
         return lines
 
@@ -2163,7 +2189,13 @@ class ExternalActionResultPresenter:
             linhas.append(f"- {preview}")
 
         if len(detail_list) > 5:
-            linhas.append(f"… e mais {len(detail_list) - 5} registro(s).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination",
+                    "moreDetailRecords",
+                    count=str(len(detail_list) - 5),
+                )
+            )
 
         all_keys = {}
         for item in detail_list:
@@ -2231,11 +2263,19 @@ class ExternalActionResultPresenter:
                 linhas.append(line.rstrip(": "))
 
         if total is not None:
-            linhas.append(f"Total: {total} registro(s) (página {root.get('page', 1)}).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination",
+                    "lmpPageTotal",
+                    total=str(total),
+                    page=str(root.get("page", 1)),
+                )
+            )
 
         return {
-            "titulo": "Lista de LMPs",
-            "linhas": linhas or ["Nenhuma LMP na página atual."],
+            "titulo": self._presenter_text("pagination", "lmpTitle"),
+            "linhas": linhas
+            or [self._presenter_text("pagination", "lmpEmptyPage")],
             "dados": {"total": total, "items": items[:12]},
         }
 

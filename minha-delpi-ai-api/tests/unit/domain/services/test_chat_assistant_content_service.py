@@ -9,6 +9,25 @@ def test_loads_stream_activity_phase_groups():
     assert label == "Consultando"
 
 
+def test_product_overview_intent_terms_loaded():
+    terms = ChatAssistantContentService.list(
+        "product_overview_intent", "overviewTerms"
+    )
+
+    assert "me fale do produto" in terms
+
+
+def test_presenter_operational_empty_messages():
+    message = ChatAssistantContentService.format(
+        "presenter_content",
+        "operationalEmpty",
+        "stock",
+        code="10080022",
+    )
+
+    assert "10080022" in message
+
+
 def test_product_query_intent_stock_terms_loaded():
     terms = ChatAssistantContentService.list("product_query_intent", "stock", "terms")
 

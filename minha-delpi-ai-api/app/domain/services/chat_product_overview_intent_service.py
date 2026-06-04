@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -9,57 +12,13 @@ from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
 
+_OVERVIEW_BUNDLE = "product_overview_intent"
+
 
 class ChatProductOverviewIntentService:
-    _OVERVIEW_TERMS = (
-        "me fale do produto",
-        "me fale sobre o produto",
-        "me fale sobre produto",
-        "me fale do item",
-        "me fale sobre o item",
-        "me conte sobre o produto",
-        "me conte do produto",
-        "fale do produto",
-        "fale sobre o produto",
-        "fale sobre o item",
-        "conte sobre o produto",
-        "conte sobre o item",
-        "o que voce sabe do produto",
-        "o que você sabe do produto",
-        "o que voce sabe sobre o produto",
-        "o que você sabe sobre o produto",
-        "quero saber do produto",
-        "quero saber sobre o produto",
-        "informacoes do produto",
-        "informações do produto",
-        "informacoes sobre o produto",
-        "informações sobre o produto",
-        "dados do produto",
-        "cadastro do produto",
-        "visao geral do produto",
-        "visão geral do produto",
-        "tudo sobre o produto",
-    )
-
-    _NARROW_TERMS = (
-        "estoque",
-        "estrutura",
-        "bom",
-        "preço",
-        "preco",
-        "fornecedor",
-        "roteiro",
-        "inspeção",
-        "inspecao",
-        "venda",
-        "compra",
-        "nota fiscal",
-        "resumo de venda",
-        "resumo de kaizen",
-        "ficha completa",
-        "analisador",
-        "analyzer",
-    )
+    @classmethod
+    def _terms(cls, *path: str) -> tuple[str, ...]:
+        return tuple(ChatAssistantContentService.list(_OVERVIEW_BUNDLE, *path))
 
     @classmethod
     def is_product_overview_message(cls, message: str | None) -> bool:
@@ -71,7 +30,7 @@ class ChatProductOverviewIntentService:
         if not ChatProductQueryIntentService.extract_product_code(message or ""):
             return False
 
-        if any(term in normalized for term in cls._NARROW_TERMS):
+        if any(term in normalized for term in cls._terms("narrowTerms")):
             return False
 
         if ChatProductQueryIntentService._looks_like_stock_question(normalized):
@@ -86,14 +45,14 @@ class ChatProductOverviewIntentService:
         if ChatProductQueryIntentService._looks_like_full_analyser_question(normalized):
             return False
 
-        if any(term in normalized for term in cls._OVERVIEW_TERMS):
+        if any(term in normalized for term in cls._terms("overviewTerms")):
             return True
 
-        if "resumo do produto" in normalized or "resumo sintetico" in normalized:
+        if any(marker in normalized for marker in cls._terms("resumoOverviewMarkers")):
             return True
 
-        if re_match := cls._me_fale_with_product(normalized):
-            return re_match
+        if cls._me_fale_with_product(normalized):
+            return True
 
         return False
 
@@ -104,10 +63,7 @@ class ChatProductOverviewIntentService:
         if not re.search(r"\bme fale\b", normalized):
             return False
 
-        return any(
-            token in normalized
-            for token in ("produto", "item", "material", "codigo", "código", "sku")
-        )
+        return any(token in normalized for token in cls._terms("meFaleProductTokens"))
 
     @classmethod
     def should_force_llm_synthesis(

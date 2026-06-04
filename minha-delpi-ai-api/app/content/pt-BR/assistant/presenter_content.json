@@ -95,6 +95,57 @@
     "sharedComponents": "Componente(s) reutilizado(s) em mais de uma linha: {sample}.",
     "standardCost": "Custo padrão vigente: R$ {cost}."
   },
+  "generic": {
+    "defaultQueryTitle": "Consulta",
+    "emptyItemsQuery": "Nenhum registro encontrado para esta consulta.",
+    "apiAuthorized": "A API retornou dados autorizados para a consulta.",
+    "queryResultTitle": "Resultado da consulta",
+    "apiResultTitle": "Resultado da API",
+    "queryErrorTitle": "Erro na consulta",
+    "kpiSeeData": "{title}: veja os dados abaixo.",
+    "emptyDetail": "Sem detalhe nesta consulta",
+    "dictListItems": "**{label}:** {count} item(ns)"
+  },
+  "operationalEmpty": {
+    "suppliers": "Nenhum fornecedor cadastrado para o produto **{code}**.",
+    "suppliersGeneric": "Nenhum fornecedor cadastrado para este produto.",
+    "customers": "Nenhum cliente vinculado ao produto **{code}**.",
+    "customersGeneric": "Nenhum cliente vinculado a este produto.",
+    "stock": "Nenhuma posição de estoque encontrada para o produto **{code}**.",
+    "stockGeneric": "Nenhuma posição de estoque encontrada para este produto.",
+    "structure": "Nenhum componente na estrutura do produto **{code}**.",
+    "structureGeneric": "Nenhum componente na estrutura deste produto.",
+    "parents": "O produto **{code}** não aparece como componente em outros produtos.",
+    "parentsGeneric": "Este produto não aparece como componente em outros produtos.",
+    "guide": "Nenhuma operação de roteiro cadastrada para o produto **{code}**.",
+    "guideGeneric": "Nenhuma operação de roteiro cadastrada para este produto.",
+    "inspection": "Nenhum dado de inspeção para o produto **{code}**.",
+    "inspectionGeneric": "Nenhum dado de inspeção para este produto.",
+    "salesPurchases": "Nenhum registro encontrado para esta consulta do produto **{code}**.",
+    "default": "Nenhum registro encontrado para esta consulta."
+  },
+  "apiErrors": {
+    "notFound": "O recurso solicitado não foi encontrado. O código informado pode não existir ou não ter dados cadastrados.",
+    "unauthorized": "Sem autorização para acessar este recurso.",
+    "forbidden": "Acesso negado ao recurso solicitado.",
+    "withDetail": "A API retornou um erro: {detail}",
+    "withStatus": "A API retornou erro (status {status})."
+  },
+  "pagination": {
+    "moreRecords": "… e mais {count} registro(s).",
+    "moreComponents": "… e mais **{count}** componente(s).",
+    "moreDetailedProducts": "… e mais **{count}** produto(s) com plano detalhado.",
+    "lmpTitle": "Lista de LMPs",
+    "lmpPageTotal": "Total: {total} registro(s) (página {page}).",
+    "lmpEmptyPage": "Nenhuma LMP na página atual.",
+    "itemsPageTotal": "Total: {total} registro(s) (página {page}).",
+    "moreDetailRecords": "… e mais {count} registro(s)."
+  },
+  "analyserCollections": {
+    "guideEmpty": "Roteiro: 0 registro(s).",
+    "inspectionEmpty": "Inspeção: 0 registro(s).",
+    "structureVisualizationHint": "A **estrutura** (BOM) está nas visualizações em **árvore**, **tabela** e, quando disponível, **gráfico** abaixo."
+  },
   "routeNarratives": {
     "parents": {
       "productLine": "Produto consultado: **{code}** — {description}.",
