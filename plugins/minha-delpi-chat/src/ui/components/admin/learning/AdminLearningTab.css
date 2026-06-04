@@ -68,6 +68,35 @@
   opacity: 0.6;
 }
 
+.mdc-admin-learning__memory-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mdc-admin-learning__memory-toolbar p {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.mdc-admin-learning__memory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.08));
+}
+
+.mdc-admin-learning__memory-body {
+  flex: 1;
+  min-width: 0;
+}
+
 .mdc-admin-learning__error {
   color: #b4232a;
   font-size: 13px;

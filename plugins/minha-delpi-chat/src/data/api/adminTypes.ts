@@ -1181,6 +1181,26 @@ export type UpsertVocabularyTermPayload = {
   active?: boolean;
 };
 
+export type AdminMemoryItem = {
+  id: number;
+  userId: string | null;
+  projectId: string | null;
+  sessionId: string | null;
+  scope: string;
+  type: string;
+  content: string;
+  confidence: number | null;
+  evidenceCount: number;
+  source: string;
+  status: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type ReviewMemoryItemPayload = {
+  action: "forget" | "restore";
+};
+
 export type AdminLearningSummary = {
   windowHours: number;
   candidates: {
@@ -1195,6 +1215,13 @@ export type AdminLearningSummary = {
     total: number;
     approved: number;
     activeApproved: number;
+    byType: Record<string, number>;
+  };
+  memory?: {
+    total: number;
+    active: number;
+    forgotten: number;
+    byStatus: Record<string, number>;
     byType: Record<string, number>;
   };
   funnel: {
@@ -1212,5 +1239,6 @@ export type AdminLearningSummary = {
     normalizationRules: number;
     pendingHighConfidence: number;
     learnedTermsActive: number;
+    memoryItemsActive?: number;
   };
 };

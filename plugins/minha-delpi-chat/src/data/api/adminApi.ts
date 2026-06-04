@@ -60,7 +60,9 @@ import type {
   AdminLearningCandidate,
   AdminVocabularyTerm,
   AdminLearningSummary,
+  AdminMemoryItem,
   ReviewLearningCandidatePayload,
+  ReviewMemoryItemPayload,
   UpsertVocabularyTermPayload,
 } from "./adminTypes";
 
@@ -1418,6 +1420,52 @@ export async function upsertAdminVocabularyTerm(
   });
 
   return parseJsonResponse<AdminVocabularyTerm>(response);
+}
+
+export type ListAdminMemoryItemsParams = {
+  userId?: string;
+  scope?: string;
+  type?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function listAdminMemoryItems(
+  params: ListAdminMemoryItemsParams = {},
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminMemoryItem>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit ?? 50));
+  query.set("offset", String(params.offset ?? 0));
+  if (params.userId?.trim()) query.set("userId", params.userId.trim());
+  if (params.scope?.trim()) query.set("scope", params.scope.trim());
+  if (params.type?.trim()) query.set("type", params.type.trim());
+  if (params.status?.trim()) query.set("status", params.status.trim());
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/memory?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminMemoryItem>>(response);
+}
+
+export async function reviewAdminMemoryItem(
+  itemId: number,
+  payload: ReviewMemoryItemPayload,
+  options: AdminApiOptions = {},
+): Promise<AdminMemoryItem> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/memory/${itemId}/review`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<AdminMemoryItem>(response);
 }
 
 export async function getAdminLearningSummary(

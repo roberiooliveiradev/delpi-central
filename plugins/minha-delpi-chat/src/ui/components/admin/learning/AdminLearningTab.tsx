@@ -3,13 +3,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminLearningSummary,
   listAdminLearningCandidates,
+  listAdminMemoryItems,
   listAdminVocabularyTerms,
   reviewAdminLearningCandidate,
+  reviewAdminMemoryItem,
   upsertAdminVocabularyTerm,
 } from "../../../../data/api/adminApi";
 import type {
   AdminLearningCandidate,
   AdminLearningSummary,
+  AdminMemoryItem,
   AdminVocabularyTerm,
 } from "../../../../data/api/adminTypes";
 
@@ -21,7 +24,19 @@ type AdminLearningTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
-type LearningView = "candidates" | "vocabulary";
+type LearningView = "candidates" | "vocabulary" | "memory";
+
+const MEMORY_STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "active", label: "Ativas" },
+  { value: "forgotten", label: "Esquecidas" },
+  { value: "", label: "Todas" },
+];
+
+const MEMORY_TYPE_LABELS: Record<string, string> = {
+  preference: "Preferência",
+  profile: "Perfil",
+  correction: "Correção",
+};
 
 const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "pending", label: "Pendentes" },
@@ -59,6 +74,8 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
   const [candidates, setCandidates] = useState<AdminLearningCandidate[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [terms, setTerms] = useState<AdminVocabularyTerm[]>([]);
+  const [memoryItems, setMemoryItems] = useState<AdminMemoryItem[]>([]);
+  const [memoryStatusFilter, setMemoryStatusFilter] = useState<string>("active");
   const [summary, setSummary] = useState<AdminLearningSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
@@ -114,6 +131,23 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
     }
   }, [getAccessToken]);
 
+  const loadMemoryItems = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await listAdminMemoryItems(
+        { status: memoryStatusFilter || undefined, limit: 100 },
+        { getAccessToken },
+      );
+      setMemoryItems(response.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar memórias.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAccessToken, memoryStatusFilter]);
+
   const loadSummary = useCallback(async () => {
     setIsSummaryLoading(true);
 
@@ -131,10 +165,12 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
   useEffect(() => {
     if (view === "candidates") {
       void loadCandidates();
-    } else {
+    } else if (view === "vocabulary") {
       void loadTerms();
+    } else {
+      void loadMemoryItems();
     }
-  }, [view, loadCandidates, loadTerms]);
+  }, [view, loadCandidates, loadTerms, loadMemoryItems]);
 
   useEffect(() => {
     void loadSummary();
@@ -182,6 +218,25 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       void loadSummary();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao revisar candidato.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleMemoryReview(item: AdminMemoryItem, action: "forget" | "restore") {
+    setIsBusy(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await reviewAdminMemoryItem(item.id, { action }, { getAccessToken });
+      setSuccessMessage(
+        action === "forget" ? "Memória esquecida." : "Memória restaurada.",
+      );
+      await loadMemoryItems();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao atualizar memória.");
     } finally {
       setIsBusy(false);
     }
@@ -249,6 +304,13 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
           >
             Vocabulário
           </button>
+          <button
+            type="button"
+            className={view === "memory" ? "is-active" : undefined}
+            onClick={() => setView("memory")}
+          >
+            Memória
+          </button>
         </div>
 
         <button
@@ -256,7 +318,13 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
           className="mdc-chat-ws-outline-btn"
           disabled={isLoading}
           onClick={() => {
-            void (view === "candidates" ? loadCandidates() : loadTerms());
+            if (view === "candidates") {
+              void loadCandidates();
+            } else if (view === "vocabulary") {
+              void loadTerms();
+            } else {
+              void loadMemoryItems();
+            }
             void loadSummary();
           }}
         >
@@ -418,7 +486,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
             )}
           </article>
         </div>
-      ) : (
+      ) : view === "vocabulary" ? (
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
             <h3 className="mdc-admin-learning__subtitle">Novo termo</h3>
@@ -490,6 +558,77 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
               ))}
             </div>
           </article>
+        </div>
+      ) : (
+        <div className="mdc-admin-learning__layout">
+          <div className="mdc-admin-panel">
+            <div className="mdc-admin-learning__memory-toolbar">
+              <label className="mdc-admin-field">
+                <span>Status</span>
+                <select
+                  value={memoryStatusFilter}
+                  onChange={(event) => setMemoryStatusFilter(event.target.value)}
+                >
+                  {MEMORY_STATUS_OPTIONS.map((option) => (
+                    <option key={option.value || "all"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="mdc-chat-muted">
+                Preferências e perfil duráveis aprendidos por usuário/projeto. Esquecer
+                desativa o item imediatamente.
+              </p>
+            </div>
+
+            <div className="mdc-admin-entity-list">
+              {memoryItems.length === 0 ? (
+                <p className="mdc-chat-muted">Nenhuma memória neste filtro.</p>
+              ) : null}
+
+              {memoryItems.map((item) => (
+                <div key={item.id} className="mdc-admin-learning__memory-item">
+                  <div className="mdc-admin-learning__memory-body">
+                    <div className="mdc-admin-learning__item-head">
+                      <strong>{item.content}</strong>
+                      <span
+                        className={`mdc-admin-learning__badge is-${
+                          item.status === "active" ? "low" : "medium"
+                        }`}
+                      >
+                        {item.status === "active" ? "Ativa" : "Esquecida"}
+                      </span>
+                    </div>
+                    <small className="mdc-admin-entity-row__detail">
+                      {MEMORY_TYPE_LABELS[item.type] ?? item.type} · {item.scope} ·{" "}
+                      {item.evidenceCount}× · {item.source}
+                    </small>
+                  </div>
+
+                  {item.status === "active" ? (
+                    <button
+                      type="button"
+                      className="mdc-admin-learning__danger"
+                      disabled={isBusy}
+                      onClick={() => void handleMemoryReview(item, "forget")}
+                    >
+                      Esquecer
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-outline-btn"
+                      disabled={isBusy}
+                      onClick={() => void handleMemoryReview(item, "restore")}
+                    >
+                      Restaurar
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </section>

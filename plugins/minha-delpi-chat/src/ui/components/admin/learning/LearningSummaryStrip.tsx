@@ -52,6 +52,11 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: `${summary.highlights.termDefinitions} / ${summary.highlights.normalizationRules}`,
       hint: "candidatos por tipo",
     },
+    {
+      label: "Memória ativa",
+      value: String(summary.highlights.memoryItemsActive ?? summary.memory?.active ?? 0),
+      hint: `${summary.memory?.forgotten ?? 0} esquecidas`,
+    },
   ];
 
   return (
