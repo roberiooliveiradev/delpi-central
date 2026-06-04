@@ -214,7 +214,22 @@
     "ncm_ipi_position": "NCM",
     "parent_code": "PI pai",
     "parent_description": "Descrição PI",
-    "component_code": "Componente"
+    "component_code": "Componente",
+    "total_stock_value": "Valor total",
+    "total_stock_quantity": "Quantidade",
+    "total_locations": "Localizações",
+    "listing_kind": "Tipo",
+    "sale_description": "Descrição",
+    "test": "Ensaio",
+    "lab": "Labor.",
+    "nominal": "Nominal",
+    "lower": "Lim. inf.",
+    "upper": "Lim. sup.",
+    "detail": "Detalhe",
+    "section": "Seção",
+    "stage": "Etapa",
+    "text": "Texto / referência",
+    "plan": "Plano"
   },
   "presenter": {
     "kvTableColumns": {
@@ -263,6 +278,78 @@
         {"key": "type", "label": "Tipo"},
         {"key": "unit", "label": "Unid."},
         {"key": "quantity", "label": "Qtde", "dataType": "quantity"}
+      ],
+      "analyserGuide": [
+        {"key": "product_code", "label": "Produto"},
+        {"key": "bom_level", "label": "BOM", "dataType": "number"},
+        {"key": "operation_code", "label": "Op."},
+        {"key": "operation_description", "label": "Operação"},
+        {"key": "work_center", "label": "Centro"}
+      ],
+      "analyserInspection": [
+        {"key": "product_code", "label": "Produto"},
+        {"key": "level", "label": "Nível"},
+        {"key": "section", "label": "Seção"},
+        {"key": "operation", "label": "Op."},
+        {"key": "test", "label": "Ensaio"},
+        {"key": "lab", "label": "Labor."},
+        {"key": "nominal", "label": "Nominal"},
+        {"key": "lower", "label": "Lim. inf."},
+        {"key": "upper", "label": "Lim. sup."},
+        {"key": "unit", "label": "Unid."},
+        {"key": "detail", "label": "Detalhe"}
+      ],
+      "analyserInspectionDimensionalMarkdown": [
+        {"key": "operation", "label": "Op."},
+        {"key": "test", "label": "Ensaio"},
+        {"key": "lab", "label": "Labor."},
+        {"key": "nominal", "label": "Nominal"},
+        {"key": "lower", "label": "Lim. inf."},
+        {"key": "upper", "label": "Lim. sup."},
+        {"key": "unit", "label": "Unid."}
+      ],
+      "analyserInspectionTextualMarkdown": [
+        {"key": "operation", "label": "Op."},
+        {"key": "test", "label": "Ensaio"},
+        {"key": "text", "label": "Texto / referência"}
+      ],
+      "analyserInspectionShallowMarkdown": [
+        {"key": "product_code", "label": "Componente"},
+        {"key": "parent_code", "label": "Produto pai"},
+        {"key": "level", "label": "Nível"},
+        {"key": "plan", "label": "Plano"}
+      ],
+      "stockValueByBranch": [
+        {"key": "branch", "label": "Filial"},
+        {"key": "total_stock_value", "label": "Valor total", "dataType": "currency"},
+        {"key": "total_stock_quantity", "label": "Quantidade", "dataType": "quantity"},
+        {"key": "total_products", "label": "Produtos"}
+      ],
+      "systemSx2Columns": [
+        {"key": "campo", "label": "Campo"},
+        {"key": "descricao", "label": "Descrição"},
+        {"key": "tipo", "label": "Tipo"},
+        {"key": "tamanho", "label": "Tamanho"}
+      ],
+      "lmpList": [
+        {"key": "sale_number", "label": "OV"},
+        {"key": "branch", "label": "Filial"},
+        {"key": "listing_kind", "label": "Tipo"},
+        {"key": "status", "label": "Status"},
+        {"key": "sale_description", "label": "Descrição"}
+      ],
+      "saleOrders": [
+        {"key": "order_number", "label": "OV"},
+        {"key": "branch", "label": "Filial"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "date", "label": "Data", "dataType": "date"},
+        {"key": "stage", "label": "Etapa"}
+      ],
+      "productSearchBasic": [
+        {"key": "code", "label": "Código"},
+        {"key": "description", "label": "Descrição"},
+        {"key": "type", "label": "Tipo"},
+        {"key": "unit", "label": "Unidade"}
       ]
     }
   },

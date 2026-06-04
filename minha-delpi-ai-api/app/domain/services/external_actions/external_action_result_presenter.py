@@ -369,31 +369,7 @@ class ExternalActionResultPresenter:
             return None
 
         title = self._kpi_title(path)
-        linhas = [
-            f"**Valor total em estoque:** R$ {self._format_currency(summary.get('total_stock_value'))}",
-            f"**Quantidade total:** {self._format_num(summary.get('total_stock_quantity'))}",
-            f"**Produtos distintos:** {summary.get('total_products')}",
-            f"**Registros:** {summary.get('total_records')}",
-            f"**Localizações:** {summary.get('total_locations')}",
-        ]
-
-        by_branch = root.get("by_branch")
-
-        if isinstance(by_branch, list):
-            for item in by_branch:
-                if not isinstance(item, dict):
-                    continue
-
-                branch = str(item.get("branch") or "").strip()
-
-                if not branch:
-                    continue
-
-                linhas.append(
-                    "Filial "
-                    f"{branch}: R$ {self._format_currency(item.get('total_stock_value'))} "
-                    f"({self._format_num(item.get('total_stock_quantity'))} un.)"
-                )
+        linhas = self._stock_value_summary_lines(summary, root.get("by_branch"))
 
         kpi = self._build_stock_value_kpi(root, path)
 
@@ -413,31 +389,40 @@ class ExternalActionResultPresenter:
         if "value" not in root and "documents" not in root:
             return None
 
-        product_code = self._extract_product_code_from_path(path)
-        title = (
-            f"Faturamento do produto {product_code}"
-            if product_code
-            else "Faturamento do produto"
-        )
+        title = self._billing_title(path)
         linhas: list[str] = []
 
         if root.get("value") is not None:
             linhas.append(
-                f"**Valor faturado:** R$ {self._format_currency(root.get('value'))}"
+                self._presenter_text(
+                    "productBilling",
+                    "billedValue",
+                    value=self._format_currency(root.get("value")),
+                )
             )
 
         if root.get("documents") is not None:
-            linhas.append(f"**Documentos:** {root.get('documents')}")
+            linhas.append(
+                self._presenter_text(
+                    "productBilling",
+                    "documents",
+                    count=str(root.get("documents")),
+                )
+            )
 
         first_date = self._format_protheus_date(root.get("first_billing_date"))
 
         if first_date:
-            linhas.append(f"**Primeira emissão:** {first_date}")
+            linhas.append(
+                self._presenter_text("productBilling", "firstIssue", date=first_date)
+            )
 
         last_date = self._format_protheus_date(root.get("last_billing_date"))
 
         if last_date:
-            linhas.append(f"**Última emissão:** {last_date}")
+            linhas.append(
+                self._presenter_text("productBilling", "lastIssue", date=last_date)
+            )
 
         return {
             "titulo": title,
@@ -453,14 +438,25 @@ class ExternalActionResultPresenter:
             return None
 
         title = self._kpi_title(path)
-        branch = str(root.get("branch") or "consolidado").strip()
-        linhas = [f"**Filial:** {branch}"]
+        branch = str(
+            root.get("branch")
+            or self._presenter_text("financialPmr", "branchFallback")
+        ).strip()
+        linhas = [
+            self._presenter_text("financialPmr", "branchLine", branch=branch)
+        ]
         pmr_days = root.get("pmr_days")
 
         if pmr_days is None:
             linhas.append(self._analyser_markdown("pmrUnavailable"))
         else:
-            linhas.append(f"**PMR:** {self._format_num(pmr_days)} dias")
+            linhas.append(
+                self._presenter_text(
+                    "financialPmr",
+                    "pmrLine",
+                    days=self._format_num(pmr_days),
+                )
+            )
 
         return {
             "titulo": title,
@@ -571,32 +567,10 @@ class ExternalActionResultPresenter:
         if not isinstance(summary, dict):
             return None
 
-        cards = [
-            {
-                "label": "Valor total",
-                "value": summary.get("total_stock_value"),
-                "unit": "R$",
-                "color": "#0ea5e9",
-            },
-            {
-                "label": "Quantidade total",
-                "value": summary.get("total_stock_quantity"),
-                "unit": "",
-                "color": "#10b981",
-            },
-            {
-                "label": "Produtos",
-                "value": summary.get("total_products"),
-                "unit": "",
-                "color": "#f59e0b",
-            },
-            {
-                "label": "Localizações",
-                "value": summary.get("total_locations"),
-                "unit": "",
-                "color": "#ef4444",
-            },
-        ]
+        cards = self._kpi_cards_from_presenter_section("stockValue", summary)
+
+        if not cards:
+            return None
 
         return {
             "type": "kpi",
@@ -624,21 +598,8 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "table",
-            "title": "Valor de estoque por filial",
-            "columns": [
-                {"key": "branch", "label": "Filial"},
-                {
-                    "key": "total_stock_value",
-                    "label": "Valor total",
-                    "dataType": "currency",
-                },
-                {
-                    "key": "total_stock_quantity",
-                    "label": "Quantidade",
-                    "dataType": "quantity",
-                },
-                {"key": "total_products", "label": "Produtos"},
-            ],
+            "title": self._presenter_text("stockValue", "branchTableTitle"),
+            "columns": self._fixed_columns("stockValueByBranch"),
             "rows": rows,
         }
 
@@ -649,34 +610,11 @@ class ExternalActionResultPresenter:
         if root.get("value") is None and root.get("documents") is None:
             return None
 
-        product_code = self._extract_product_code_from_path(path)
-        title = (
-            f"Faturamento do produto {product_code}"
-            if product_code
-            else "Faturamento do produto"
-        )
-
         return {
             "type": "table",
-            "title": title,
-            "columns": [
-                {"key": "campo", "label": "Campo"},
-                {"key": "valor", "label": "Valor"},
-            ],
-            "rows": [
-                {"campo": "Valor faturado", "valor": root.get("value"), "valorType": "currency"},
-                {"campo": "Documentos", "valor": root.get("documents"), "valorType": "quantity"},
-                {
-                    "campo": "Primeira emissão",
-                    "valor": self._format_protheus_date(root.get("first_billing_date")),
-                    "valorType": "date",
-                },
-                {
-                    "campo": "Última emissão",
-                    "valor": self._format_protheus_date(root.get("last_billing_date")),
-                    "valorType": "date",
-                },
-            ],
+            "title": self._billing_title(path),
+            "columns": self._column_labels.kv_table_column_defs(),
+            "rows": self._billing_table_rows(root),
         }
 
     def _build_system_columns_table(self, root: dict, path: str) -> dict | None:
@@ -709,13 +647,12 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "table",
-            "title": f"Colunas da tabela {table_name.upper()}",
-            "columns": [
-                {"key": "campo", "label": "Campo"},
-                {"key": "descricao", "label": "Descrição"},
-                {"key": "tipo", "label": "Tipo"},
-                {"key": "tamanho", "label": "Tamanho"},
-            ],
+            "title": self._route_presentation(
+                "systemTables",
+                "columnsTitle",
+                table=table_name.upper(),
+            ),
+            "columns": self._fixed_columns("systemSx2Columns"),
             "rows": rows,
         }
 
@@ -1321,22 +1258,11 @@ class ExternalActionResultPresenter:
 
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         product_code = str(product.get("code") or rows[0].get("product_code") or "").strip()
-        title = (
-            f"Roteiro de produção — {product_code}"
-            if product_code
-            else "Roteiro de produção"
-        )
 
         return {
             "type": "table",
-            "title": title,
-            "columns": [
-                {"key": "product_code", "label": "Produto"},
-                {"key": "bom_level", "label": "BOM", "dataType": "number"},
-                {"key": "operation_code", "label": "Op."},
-                {"key": "operation_description", "label": "Operação"},
-                {"key": "work_center", "label": "Centro"},
-            ],
+            "title": self._analyser_table_title("guide", product_code),
+            "columns": self._fixed_columns("analyserGuide"),
             "rows": rows,
         }
 
@@ -1440,28 +1366,11 @@ class ExternalActionResultPresenter:
 
         product = root.get("product") if isinstance(root.get("product"), dict) else {}
         product_code = str(product.get("code") or "").strip()
-        title = (
-            f"Plano de inspeção — {product_code}"
-            if product_code
-            else "Plano de inspeção"
-        )
 
         return {
             "type": "table",
-            "title": title,
-            "columns": [
-                {"key": "product_code", "label": "Produto"},
-                {"key": "level", "label": "Nível"},
-                {"key": "section", "label": "Seção"},
-                {"key": "operation", "label": "Op."},
-                {"key": "test", "label": "Ensaio"},
-                {"key": "lab", "label": "Labor."},
-                {"key": "nominal", "label": "Nominal"},
-                {"key": "lower", "label": "Lim. inf."},
-                {"key": "upper", "label": "Lim. sup."},
-                {"key": "unit", "label": "Unid."},
-                {"key": "detail", "label": "Detalhe"},
-            ],
+            "title": self._analyser_table_title("inspection", product_code),
+            "columns": self._fixed_columns("analyserInspection"),
             "rows": rows,
         }
 
@@ -1478,27 +1387,16 @@ class ExternalActionResultPresenter:
 
         product_code = self._extract_product_code_from_path(path)
         title = (
-            f"Plano de inspeção — {product_code}"
+            self._analyser_table_title("inspection", product_code)
             if product_code
-            else self._infer_items_title(items, path) or "Plano de inspeção"
+            else self._infer_items_title(items, path)
+            or self._presenter_text("analyserTableTitles", "inspectionGeneric")
         )
 
         return {
             "type": "table",
             "title": title,
-            "columns": [
-                {"key": "product_code", "label": "Produto"},
-                {"key": "level", "label": "Nível"},
-                {"key": "section", "label": "Seção"},
-                {"key": "operation", "label": "Op."},
-                {"key": "test", "label": "Ensaio"},
-                {"key": "lab", "label": "Labor."},
-                {"key": "nominal", "label": "Nominal"},
-                {"key": "lower", "label": "Lim. inf."},
-                {"key": "upper", "label": "Lim. sup."},
-                {"key": "unit", "label": "Unid."},
-                {"key": "detail", "label": "Detalhe"},
-            ],
+            "columns": self._fixed_columns("analyserInspection"),
             "rows": rows,
         }
 
@@ -1555,7 +1453,11 @@ class ExternalActionResultPresenter:
             if isinstance(item, dict) and not self._has_protheus_inspection_blocks(item)
         ]
 
-        sections: list[str] = ["", "**Plano de inspeção**", ""]
+        sections: list[str] = [
+            "",
+            self._presenter_text("analyserInspectionMarkdown", "header"),
+            "",
+        ]
 
         for item in detailed[:6]:
             product_code = str(
@@ -1571,7 +1473,14 @@ class ExternalActionResultPresenter:
                 header_desc = str(qp6[0].get("QP6_DESCPO") or "").strip()
 
             sections.append("")
-            sections.append(f"**Produto {product_code}** (nível {level})")
+            sections.append(
+                self._presenter_text(
+                    "analyserInspectionMarkdown",
+                    "productLine",
+                    code=product_code,
+                    level=str(level),
+                )
+            )
 
             if header_desc:
                 sections.append(f"*{header_desc}*")
@@ -1599,18 +1508,17 @@ class ExternalActionResultPresenter:
 
                 if dim_rows:
                     sections.append("")
-                    sections.append("*Ensaios dimensionais*")
+                    sections.append(
+                        self._presenter_text(
+                            "analyserInspectionMarkdown",
+                            "dimensionalSubtitle",
+                        )
+                    )
                     sections.extend(
                         self._markdown_table(
-                            [
-                                ("operation", "Op."),
-                                ("test", "Ensaio"),
-                                ("lab", "Labor."),
-                                ("nominal", "Nominal"),
-                                ("lower", "Lim. inf."),
-                                ("upper", "Lim. sup."),
-                                ("unit", "Unid."),
-                            ],
+                            self._markdown_column_pairs(
+                                "analyserInspectionDimensionalMarkdown"
+                            ),
                             dim_rows,
                         )
                     )
@@ -1634,14 +1542,17 @@ class ExternalActionResultPresenter:
 
                 if text_rows:
                     sections.append("")
-                    sections.append("*Ensaios textuais / referências*")
+                    sections.append(
+                        self._presenter_text(
+                            "analyserInspectionMarkdown",
+                            "textualSubtitle",
+                        )
+                    )
                     sections.extend(
                         self._markdown_table(
-                            [
-                                ("operation", "Op."),
-                                ("test", "Ensaio"),
-                                ("text", "Texto / referência"),
-                            ],
+                            self._markdown_column_pairs(
+                                "analyserInspectionTextualMarkdown"
+                            ),
                             text_rows,
                         )
                     )
@@ -1675,15 +1586,15 @@ class ExternalActionResultPresenter:
 
             if shallow_rows:
                 sections.append("")
-                sections.append("*Componentes referenciados (sem plano expandido)*")
+                sections.append(
+                    self._presenter_text(
+                        "analyserInspectionMarkdown",
+                        "shallowSubtitle",
+                    )
+                )
                 sections.extend(
                     self._markdown_table(
-                        [
-                            ("product_code", "Componente"),
-                            ("parent_code", "Produto pai"),
-                            ("level", "Nível"),
-                            ("plan", "Plano"),
-                        ],
+                        self._markdown_column_pairs("analyserInspectionShallowMarkdown"),
                         shallow_rows,
                     )
                 )
@@ -3906,14 +3817,6 @@ class ExternalActionResultPresenter:
         }
 
     def _build_lmp_table(self, items: list, root: dict) -> dict:
-        columns = [
-            {"key": "sale_number", "label": "OV"},
-            {"key": "branch", "label": "Filial"},
-            {"key": "listing_kind", "label": "Tipo"},
-            {"key": "status", "label": "Status"},
-            {"key": "sale_description", "label": "Descrição"},
-        ]
-
         rows = []
         for item in items:
             if not isinstance(item, dict):
@@ -3933,19 +3836,11 @@ class ExternalActionResultPresenter:
                 "lmps",
                 total=str(root.get("total", len(rows))),
             ),
-            "columns": columns,
+            "columns": self._fixed_columns("lmpList"),
             "rows": rows,
         }
 
     def _build_sale_orders_table(self, items: list, root: dict) -> dict:
-        columns = [
-            {"key": "order_number", "label": "OV"},
-            {"key": "branch", "label": "Filial"},
-            {"key": "description", "label": "Descrição"},
-            {"key": "date", "label": "Data", "dataType": "date"},
-            {"key": "stage", "label": "Etapa"},
-        ]
-
         rows = [item for item in items if isinstance(item, dict)]
 
         return {
@@ -3955,7 +3850,7 @@ class ExternalActionResultPresenter:
                 "saleOrders",
                 total=str(root.get("total", len(rows))),
             ),
-            "columns": columns,
+            "columns": self._fixed_columns("saleOrders"),
             "rows": rows,
         }
 
@@ -3995,12 +3890,7 @@ class ExternalActionResultPresenter:
             columns = [self._enrich_column(k, self._humanize_key(k)) for k in all_keys]
             rows = flat_items
         else:
-            columns = [
-                {"key": "code", "label": "Código"},
-                {"key": "description", "label": "Descrição"},
-                {"key": "type", "label": "Tipo"},
-                {"key": "unit", "label": "Unidade"},
-            ]
+            columns = self._fixed_columns("productSearchBasic")
             rows = [
                 {"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")}
                 for i in items
@@ -4169,6 +4059,183 @@ class ExternalActionResultPresenter:
             key,
             schema_labels=self._active_schema_labels,
         )
+
+    def _fixed_columns(self, table_id: str) -> list[dict]:
+        return self._column_labels.fixed_table_columns(
+            table_id,
+            schema_labels=self._active_schema_labels,
+        )
+
+    def _markdown_column_pairs(self, table_id: str) -> list[tuple[str, str]]:
+        return self._column_labels.markdown_column_pairs(
+            table_id,
+            schema_labels=self._active_schema_labels,
+        )
+
+    def _billing_title(self, path: str) -> str:
+        product_code = self._extract_product_code_from_path(path)
+
+        if product_code:
+            return self._presenter_text(
+                "productBilling",
+                "titleWithCode",
+                code=product_code,
+            )
+
+        return self._presenter_text("productBilling", "titleGeneric")
+
+    def _analyser_table_title(self, kind: str, product_code: str) -> str:
+        if product_code:
+            return self._presenter_text(
+                "analyserTableTitles",
+                f"{kind}WithCode",
+                code=product_code,
+            )
+
+        return self._presenter_text("analyserTableTitles", f"{kind}Generic")
+
+    def _billing_table_rows(self, root: dict) -> list[dict]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        rows_cfg = ChatAssistantContentService.get_node(
+            "presenter_content",
+            "productBilling",
+            "tableRows",
+        )
+
+        if not isinstance(rows_cfg, list):
+            return []
+
+        rows: list[dict] = []
+
+        for item in rows_cfg:
+            if not isinstance(item, dict):
+                continue
+
+            root_key = str(item.get("rootKey") or "").strip()
+            campo = str(item.get("campo") or "").strip()
+
+            if not root_key or not campo:
+                continue
+
+            valor = root.get(root_key)
+            valor_type = item.get("valorType")
+
+            if valor_type == "date":
+                valor = self._format_protheus_date(valor)
+
+            row: dict = {"campo": campo, "valor": valor}
+
+            if isinstance(valor_type, str) and valor_type.strip():
+                row["valorType"] = valor_type.strip()
+
+            rows.append(row)
+
+        return rows
+
+    def _stock_value_summary_lines(
+        self,
+        summary: dict,
+        by_branch: object,
+    ) -> list[str]:
+        linhas = [
+            self._presenter_text(
+                "stockValue",
+                "summaryLines",
+                "totalValue",
+                value=self._format_currency(summary.get("total_stock_value")),
+            ),
+            self._presenter_text(
+                "stockValue",
+                "summaryLines",
+                "totalQuantity",
+                qty=self._format_num(summary.get("total_stock_quantity")),
+            ),
+            self._presenter_text(
+                "stockValue",
+                "summaryLines",
+                "distinctProducts",
+                count=str(summary.get("total_products")),
+            ),
+            self._presenter_text(
+                "stockValue",
+                "summaryLines",
+                "records",
+                count=str(summary.get("total_records")),
+            ),
+            self._presenter_text(
+                "stockValue",
+                "summaryLines",
+                "locations",
+                count=str(summary.get("total_locations")),
+            ),
+        ]
+
+        if isinstance(by_branch, list):
+            for item in by_branch:
+                if not isinstance(item, dict):
+                    continue
+
+                branch = str(item.get("branch") or "").strip()
+
+                if not branch:
+                    continue
+
+                linhas.append(
+                    self._presenter_text(
+                        "stockValue",
+                        "summaryLines",
+                        "branchItem",
+                        branch=branch,
+                        value=self._format_currency(item.get("total_stock_value")),
+                        qty=self._format_num(item.get("total_stock_quantity")),
+                    )
+                )
+
+        return linhas
+
+    def _kpi_cards_from_presenter_section(
+        self,
+        section: str,
+        data: dict,
+    ) -> list[dict]:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        cards_cfg = ChatAssistantContentService.get_node(
+            "presenter_content",
+            section,
+            "kpiCards",
+        )
+
+        if not isinstance(cards_cfg, list):
+            return []
+
+        cards: list[dict] = []
+
+        for item in cards_cfg:
+            if not isinstance(item, dict):
+                continue
+
+            field = str(item.get("field") or "").strip()
+            label = str(item.get("label") or "").strip()
+
+            if not field or not label:
+                continue
+
+            cards.append(
+                {
+                    "label": label,
+                    "value": data.get(field),
+                    "unit": str(item.get("unit") or ""),
+                    "color": str(item.get("color") or "#0ea5e9"),
+                }
+            )
+
+        return cards
 
     _NO_CHART_PATHS = (
         "/suppliers", "/customers", "/structure", "/parents",
@@ -4451,7 +4518,7 @@ class ExternalActionResultPresenter:
                     pass
 
             cards.append({
-                "label": "Atual",
+                "label": self._presenter_text("kpiCards", "current"),
                 "value": value,
                 "unit": unit,
                 "trend": trend,
@@ -4461,7 +4528,7 @@ class ExternalActionResultPresenter:
 
             if target is not None:
                 cards.append({
-                    "label": "Meta",
+                    "label": self._presenter_text("kpiCards", "target"),
                     "value": target,
                     "unit": unit,
                     "color": "#10b981",
@@ -4469,7 +4536,7 @@ class ExternalActionResultPresenter:
 
             if previous is not None:
                 cards.append({
-                    "label": "Anterior",
+                    "label": self._presenter_text("kpiCards", "previous"),
                     "value": previous,
                     "unit": unit,
                     "color": "#94a3b8",

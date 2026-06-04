@@ -163,3 +163,13 @@ def test_format_collection_total_and_structure_columns():
         "label": "Qtde",
         "dataType": "quantity",
     }
+
+
+def test_fixed_table_columns_for_billing_and_analyser():
+    service = ExternalActionColumnLabelService()
+
+    assert service.fixed_table_columns("lmpList")[0]["key"] == "sale_number"
+    assert service.markdown_column_pairs("analyserInspectionDimensionalMarkdown")[2] == (
+        "lab",
+        "Labor.",
+    )

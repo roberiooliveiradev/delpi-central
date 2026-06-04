@@ -133,6 +133,20 @@ class ExternalActionColumnLabelService:
 
         return columns
 
+    def markdown_column_pairs(
+        self,
+        table_id: str,
+        *,
+        schema_labels: dict[str, str] | None = None,
+    ) -> list[tuple[str, str]]:
+        return [
+            (column["key"], column["label"])
+            for column in self.fixed_table_columns(
+                table_id,
+                schema_labels=schema_labels,
+            )
+        ]
+
     def resolve_schema_labels(self, response_schema: dict | None) -> dict[str, str]:
         if not isinstance(response_schema, dict):
             return {}

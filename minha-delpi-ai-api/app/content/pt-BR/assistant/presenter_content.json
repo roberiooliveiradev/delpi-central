@@ -231,5 +231,59 @@
       "treeAndTable": "A composição está na **árvore** (hierarquia) e, quando disponível, na **tabela** plana."
     }
   },
-  "defaultItemTitle": "Resultado operacional"
+  "defaultItemTitle": "Resultado operacional",
+  "productBilling": {
+    "titleWithCode": "Faturamento do produto {code}",
+    "titleGeneric": "Faturamento do produto",
+    "billedValue": "**Valor faturado:** R$ {value}",
+    "documents": "**Documentos:** {count}",
+    "firstIssue": "**Primeira emissão:** {date}",
+    "lastIssue": "**Última emissão:** {date}",
+    "tableRows": [
+      {"campo": "Valor faturado", "rootKey": "value", "valorType": "currency"},
+      {"campo": "Documentos", "rootKey": "documents", "valorType": "quantity"},
+      {"campo": "Primeira emissão", "rootKey": "first_billing_date", "valorType": "date"},
+      {"campo": "Última emissão", "rootKey": "last_billing_date", "valorType": "date"}
+    ]
+  },
+  "financialPmr": {
+    "branchFallback": "consolidado",
+    "branchLine": "**Filial:** {branch}",
+    "pmrLine": "**PMR:** {days} dias"
+  },
+  "stockValue": {
+    "branchTableTitle": "Valor de estoque por filial",
+    "summaryLines": {
+      "totalValue": "**Valor total em estoque:** R$ {value}",
+      "totalQuantity": "**Quantidade total:** {qty}",
+      "distinctProducts": "**Produtos distintos:** {count}",
+      "records": "**Registros:** {count}",
+      "locations": "**Localizações:** {count}",
+      "branchItem": "Filial {branch}: R$ {value} ({qty} un.)"
+    },
+    "kpiCards": [
+      {"label": "Valor total", "field": "total_stock_value", "unit": "R$", "color": "#0ea5e9"},
+      {"label": "Quantidade total", "field": "total_stock_quantity", "unit": "", "color": "#10b981"},
+      {"label": "Produtos", "field": "total_products", "unit": "", "color": "#f59e0b"},
+      {"label": "Localizações", "field": "total_locations", "unit": "", "color": "#ef4444"}
+    ]
+  },
+  "kpiCards": {
+    "current": "Atual",
+    "target": "Meta",
+    "previous": "Anterior"
+  },
+  "analyserTableTitles": {
+    "guideWithCode": "Roteiro de produção — {code}",
+    "guideGeneric": "Roteiro de produção",
+    "inspectionWithCode": "Plano de inspeção — {code}",
+    "inspectionGeneric": "Plano de inspeção"
+  },
+  "analyserInspectionMarkdown": {
+    "header": "**Plano de inspeção**",
+    "productLine": "**Produto {code}** (nível {level})",
+    "dimensionalSubtitle": "*Ensaios dimensionais*",
+    "textualSubtitle": "*Ensaios textuais / referências*",
+    "shallowSubtitle": "*Componentes referenciados (sem plano expandido)*"
+  }
 }

@@ -75,13 +75,14 @@ Wrappers especializados (mantêm API estável):
 - Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
 - Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
 - Field labels do presenter (aliases de produto/preço/estoque, perfil KV, componentes da estrutura) → `column_labels.fields` + `column_labels.presenter`
+- Faturamento, PMR, valor de estoque (KPI + tabela filial), tabelas fixas (roteiro/inspeção analyser, LMP, OV, SX2, busca) e markdown de inspeção → `presenter_content` + `column_labels.presenter.fixedTableColumns`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. Demais colunas fixas inline no presenter (roteiro SX2, KPI agregados, faturamento/PMR) e faturamento/PMR especializados
-2. Seções markdown expandidas do analyser (inspeção dimensional em `_build_product_analyser_inspection_markdown`)
+1. KPI genérico (`_build_generic_kpi_cards`) e títulos de detalhe de produto ainda inline
+2. Gráficos (`datasets.label`) e demais rotas com colunas dinâmicas apenas via `label_for`
 
 ## Como adicionar conteúdo
 
