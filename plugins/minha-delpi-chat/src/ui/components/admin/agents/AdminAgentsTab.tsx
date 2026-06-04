@@ -24,6 +24,7 @@ import {
   filterAgentsByCatalog,
   type AgentCatalogFilter,
 } from "./agentsSummary";
+import { agentPrimaryLabel, agentSecondaryLabel } from "./agentDisplay";
 
 import "./AdminAgentsTab.css";
 
@@ -313,8 +314,8 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
                   className={selectedAgentId === agent.id ? "is-selected" : undefined}
                   onClick={() => setSelectedAgentId(agent.id)}
                 >
-                  <strong>{agent.name}</strong>
-                  <span>{agent.id}</span>
+                  <strong>{agentPrimaryLabel(agent)}</strong>
+                  <span className="mdc-admin-agents__agent-id">{agentSecondaryLabel(agent)}</span>
                   <small>{agent.hasSpecialization ? "Especializado" : "Sem especialização"}</small>
                 </button>
               </li>
@@ -329,8 +330,8 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
           ) : (
             <>
               <div className="mdc-admin-agents__agent-title">
-                <strong>{selectedAgent.name}</strong>
-                <span>{selectedAgent.id}</span>
+                <strong>{agentPrimaryLabel(selectedAgent)}</strong>
+                <span className="mdc-admin-agents__agent-id">{agentSecondaryLabel(selectedAgent)}</span>
               </div>
 
               <div className="mdc-admin-agents__stats">

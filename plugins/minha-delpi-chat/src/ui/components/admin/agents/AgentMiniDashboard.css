@@ -62,9 +62,18 @@
   font-size: 1.15rem;
 }
 
+.mdc-admin-root .mdc-agent-mini-dashboard--compact .mdc-rich-chart__ux-toolbar select,
+.mdc-admin-root .mdc-agent-mini-dashboard--compact .mdc-rich-chart__toolbar-row select {
+  min-height: 2.25rem;
+  min-width: 5.5rem;
+  font-size: 0.8rem;
+}
+
 .mdc-agent-mini-dashboard--compact .mdc-rich-chart__ux-toolbar,
 .mdc-agent-mini-dashboard--compact .mdc-rich-chart__toolbar-row--types {
-  display: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .mdc-agent-mini-dashboard--compact .mdc-rich-chart__header {

@@ -1,4 +1,7 @@
 import type { AdminInteractivitySummary } from "../../../../data/api/adminTypes";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
+import { AdminRankedList } from "../shared/AdminRankedList";
 
 type AdminInteractivityMetricsProps = {
   summary: AdminInteractivitySummary | null;
@@ -27,97 +30,84 @@ export function AdminInteractivityMetrics({
   isLoading = false,
   windowHours,
 }: AdminInteractivityMetricsProps) {
-  const topShown = summary?.topShown ?? [];
-  const topClicked = summary?.topClicked ?? [];
+  const topShown =
+    summary?.topShown?.map((item) => ({
+      label: item.label,
+      value: formatNumber(item.count),
+      key: item.label,
+    })) ?? [];
+
+  const topClicked =
+    summary?.topClicked?.map((item) => ({
+      label: item.label,
+      value: formatNumber(item.count),
+      key: item.label,
+    })) ?? [];
+
+  const showRankings = topShown.length > 0 || topClicked.length > 0;
 
   return (
-    <section
-      className="mdc-admin-drawing-metrics"
-      aria-labelledby="mdc-admin-interactivity-metrics-title"
+    <AdminMetricSection
+      id="mdc-admin-interactivity-metrics-title"
+      domain="Qualidade"
+      title="Interatividade (chips)"
+      description={`Impressões em auditoria (interactivityMetrics) e cliques (chat.interactivity.clicked) na janela de ${
+        summary?.windowHours ?? windowHours
+      }h.`}
+      isLoading={isLoading}
+      loadingMessage="Carregando métricas de interatividade..."
+      isEmpty={!isLoading && !summary}
+      emptyMessage="Não foi possível carregar o resumo de interatividade."
     >
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Playbook 07</p>
-          <h3 id="mdc-admin-interactivity-metrics-title">Interatividade (chips)</h3>
-          <p>
-            Impressões em auditoria (`interactivityMetrics`) e cliques (`chat.interactivity.clicked`)
-            na janela de {summary?.windowHours ?? windowHours}h.
-          </p>
-        </div>
-      </header>
-
-      {isLoading ? (
-        <p className="mdc-chat-muted">Carregando métricas de interatividade...</p>
-      ) : null}
-
-      {!isLoading && !summary ? (
-        <p className="mdc-chat-muted">Não foi possível carregar o resumo de interatividade.</p>
-      ) : null}
-
       {summary ? (
         <>
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Respostas com chips</h4>
-              <strong>{formatNumber(summary.responsesWithChips)}</strong>
-              <p>Turnos com bloco consolidado de sugestões.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Chips exibidos</h4>
-              <strong>{formatNumber(summary.suggestionsShownTotal)}</strong>
-              <p>Total de sugestões mostradas (primários + overflow).</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Cliques</h4>
-              <strong>{formatNumber(summary.clicksCount)}</strong>
-              <p>Chips acionados pelo usuário.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>CTR geral</h4>
-              <strong>{formatPercent(summary.clickThroughRate)}</strong>
-              <p>Cliques ÷ impressões de chip.</p>
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>«Mais opções»</h4>
-              <strong>{formatNumber(summary.moreOptionsResponses)}</strong>
-              <p>Respostas que exibiram overflow agrupado.</p>
-            </article>
-          </div>
+          <AdminKpiGrid>
+            <AdminKpiCard
+              title="Respostas com chips"
+              value={formatNumber(summary.responsesWithChips)}
+              hint="Turnos com bloco consolidado de sugestões."
+            />
+            <AdminKpiCard
+              title="Chips exibidos"
+              value={formatNumber(summary.suggestionsShownTotal)}
+              hint="Total de sugestões mostradas (primários + overflow)."
+            />
+            <AdminKpiCard
+              title="Cliques"
+              value={formatNumber(summary.clicksCount)}
+              hint="Chips acionados pelo usuário."
+            />
+            <AdminKpiCard
+              title="CTR geral"
+              value={formatPercent(summary.clickThroughRate)}
+              hint="Cliques ÷ impressões de chip."
+            />
+            <AdminKpiCard
+              title="«Mais opções»"
+              value={formatNumber(summary.moreOptionsResponses)}
+              hint="Respostas que exibiram overflow agrupado."
+            />
+          </AdminKpiGrid>
 
-          <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">
-            <article className="mdc-admin-kpi-card">
-              <h4>Mais exibidos</h4>
-              {!topShown.length ? (
-                <p className="mdc-chat-muted">Sem dados na janela.</p>
+          {showRankings ? (
+            <div className="mdc-admin-metric-section__grid-2">
+              <article className="mdc-admin-kpi-card">
+                <AdminRankedList title="Mais exibidos" items={topShown} />
+              </article>
+              {topClicked.length > 0 ? (
+                <article className="mdc-admin-kpi-card">
+                  <AdminRankedList title="Mais clicados" items={topClicked} />
+                </article>
               ) : (
-                <ul className="mdc-admin-distribution-list">
-                  {topShown.map((item) => (
-                    <li key={item.label}>
-                      <span>{item.label}</span>
-                      <strong>{formatNumber(item.count)}</strong>
-                    </li>
-                  ))}
-                </ul>
+                <article className="mdc-admin-kpi-card">
+                  <h3>Mais clicados</h3>
+                  <p className="mdc-chat-muted">Sem cliques na janela.</p>
+                </article>
               )}
-            </article>
-            <article className="mdc-admin-kpi-card">
-              <h4>Mais clicados</h4>
-              {!topClicked.length ? (
-                <p className="mdc-chat-muted">Sem cliques na janela.</p>
-              ) : (
-                <ul className="mdc-admin-distribution-list">
-                  {topClicked.map((item) => (
-                    <li key={item.label}>
-                      <span>{item.label}</span>
-                      <strong>{formatNumber(item.count)}</strong>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </article>
-          </div>
+            </div>
+          ) : null}
         </>
       ) : null}
-    </section>
+    </AdminMetricSection>
   );
 }

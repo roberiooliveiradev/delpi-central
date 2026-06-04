@@ -1,0 +1,162 @@
+/**
+ * Primitivos do admin (Playbook 12) — seções de métrica, rankings e tabelas.
+ */
+
+.mdc-admin-root .mdc-admin-metric-section {
+  display: grid;
+  gap: var(--mdc-space-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--mdc-space-3);
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-lg, 12px);
+  background: var(--mdc-card-bg);
+}
+
+.mdc-admin-root .mdc-admin-metric-section__header h3 {
+  margin: 0.15rem 0 0.35rem;
+  color: var(--mdc-title);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.mdc-admin-root .mdc-admin-metric-section__header p {
+  margin: 0;
+  max-width: 52rem;
+  font-size: 0.82rem;
+  color: var(--mdc-text-muted);
+  line-height: 1.45;
+}
+
+.mdc-admin-root .mdc-admin-metric-section__body {
+  display: grid;
+  gap: var(--mdc-space-3);
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-admin-metric-section__grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--mdc-space-3);
+  width: 100%;
+}
+
+/* Rankings (substitui drawing-metrics__status-list) */
+.mdc-admin-root .mdc-admin-ranked-list,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list {
+  display: grid;
+  gap: var(--mdc-space-2);
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-admin-ranked-list h4,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-root .mdc-admin-ranked-list ul,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list ul {
+  display: grid;
+  gap: var(--mdc-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdc-admin-root .mdc-admin-ranked-list li,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mdc-space-3);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-md);
+  background: color-mix(in srgb, var(--mdc-card-bg) 92%, var(--mdc-bg));
+}
+
+.mdc-admin-root .mdc-admin-ranked-list li span,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list li span {
+  min-width: 0;
+  font-size: 0.84rem;
+  color: var(--mdc-text);
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-root .mdc-admin-ranked-list li strong,
+.mdc-admin-root .mdc-admin-drawing-metrics__status-list li strong {
+  flex-shrink: 0;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--mdc-primary);
+}
+
+/* Tabelas (substitui drawing-metrics__recent) */
+.mdc-admin-root .mdc-admin-data-table,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent {
+  display: grid;
+  gap: var(--mdc-space-2);
+  min-width: 0;
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-admin-data-table h4,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent h4 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--mdc-title);
+}
+
+.mdc-admin-root .mdc-admin-data-table__wrap,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid color-mix(in srgb, var(--mdc-card-border) 70%, transparent);
+  border-radius: var(--mdc-radius-md);
+}
+
+.mdc-admin-root .mdc-admin-data-table table,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent table {
+  width: 100%;
+  min-width: 32rem;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.mdc-admin-root .mdc-admin-data-table th,
+.mdc-admin-root .mdc-admin-data-table td,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent th,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--mdc-card-border);
+  vertical-align: top;
+}
+
+.mdc-admin-root .mdc-admin-data-table th,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent th {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-card-bg) 85%, var(--mdc-bg));
+}
+
+.mdc-admin-root .mdc-admin-data-table tbody tr:hover,
+.mdc-admin-root .mdc-admin-drawing-metrics__recent tbody tr:hover {
+  background: color-mix(in srgb, var(--mdc-primary) 6%, transparent);
+}
+
+/* Legado: manter drawing-metrics alinhado ao metric-section */
+.mdc-admin-root .mdc-admin-drawing-metrics {
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-admin-drawing-metrics__grid {
+  width: 100%;
+}

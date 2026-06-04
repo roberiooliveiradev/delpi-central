@@ -77,6 +77,18 @@
   color: inherit;
 }
 
+.mdc-admin-agents__agent-id {
+  font-size: 0.72rem;
+  color: var(--mdc-text-muted);
+  font-family: ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.mdc-admin-agents__agent-title .mdc-admin-agents__agent-id {
+  display: block;
+  margin-top: 0.15rem;
+}
+
 .mdc-admin-agents__list button.is-selected {
   background: color-mix(in srgb, var(--mdc-primary) 6%, var(--mdc-card-bg));
   box-shadow:
