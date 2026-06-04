@@ -70,7 +70,7 @@ def test_dedup_key_stable_for_same_message():
     assert ChatUserContextItemService.dedup_key_for_item(item) == "msg:msg-sa1:question"
     chip = ChatUserContextItemService.chip_from_item(item)
 
-    assert chip["value"] == item["id"]
+    assert chip["value"] == "msg:msg-sa1:question"
     assert chip["kind"] == "question"
 
 
@@ -93,6 +93,36 @@ def test_find_duplicate_item_ids_for_repeated_question():
     remove_ids = ChatUserContextItemService.find_duplicate_item_ids(existing, incoming)
 
     assert remove_ids == [existing[0]["id"]]
+
+
+def test_chip_from_item_branch_uses_entity_value_not_item_id():
+    item = ChatUserContextItemService.ingest(content="filial 01")
+
+    assert item["kind"] == "branch"
+    assert item["extractedEntities"]["branch"] == "01"
+
+    chip = ChatUserContextItemService.chip_from_item(item)
+
+    assert chip["value"] == "01"
+    assert chip["label"] == "Filial 01"
+
+
+def test_build_context_chips_no_duplicate_branch_entity_and_user_item():
+    from app.domain.services.chat_conversation_memory_service import (
+        ChatConversationMemoryService,
+    )
+
+    item = ChatUserContextItemService.ingest(content="filial 02")
+    snapshot = {
+        "lastEntities": {"productCode": "90260146", "branch": "02"},
+        "userContextItems": [item],
+    }
+
+    chips = ChatConversationMemoryService.build_context_chips(snapshot)
+    branch_chips = [chip for chip in chips if chip.get("kind") == "branch"]
+
+    assert len(branch_chips) == 1
+    assert branch_chips[0]["value"] == "02"
 
 
 def test_format_prompt_block_includes_user_items():

@@ -269,15 +269,36 @@ class ChatUserContextItemService:
         return item_id or label[:120]
 
     @classmethod
+    def _entity_value_for_chip(cls, item: dict[str, Any], kind: str) -> str | None:
+        """Valor estável para chips de entidade (alinha com lastEntities / pins)."""
+        extracted = item.get("extractedEntities") or {}
+
+        if kind == "branch":
+            return str(extracted.get("branch") or "").strip() or None
+
+        if kind == "product":
+            return str(extracted.get("productCode") or "").strip() or None
+
+        if kind == "warehouse":
+            return str(extracted.get("warehouse") or "").strip() or None
+
+        return None
+
+    @classmethod
     def chip_from_item(cls, item: dict[str, Any]) -> dict[str, str]:
         kind = str(item.get("kind") or "note").strip().lower()
         label = str(item.get("label") or "Contexto").strip()
-        item_id = str(item.get("id") or "").strip()
+        entity_value = cls._entity_value_for_chip(item, kind)
+
+        if entity_value:
+            value = entity_value
+        else:
+            value = cls.chip_value_for_item(item)
 
         return {
             "label": label[:_MAX_LABEL_CHARS],
             "kind": kind,
-            "value": item_id or label[:120],
+            "value": value,
         }
 
     @classmethod

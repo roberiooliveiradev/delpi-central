@@ -293,7 +293,24 @@ class ChatConversationMemoryService:
                 chips.append(chip)
                 existing.add(key)
 
-        return chips
+        return cls._dedupe_context_chips(chips)
+
+    @classmethod
+    def _dedupe_context_chips(cls, chips: list[dict[str, str]]) -> list[dict[str, str]]:
+        """Remove chips repetidos (mesmo kind+value), preservando a primeira ocorrência."""
+        seen: set[str] = set()
+        unique: list[dict[str, str]] = []
+
+        for chip in chips:
+            key = f"{chip.get('kind')}:{chip.get('value')}"
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+            unique.append(chip)
+
+        return unique
 
     @classmethod
     def compact_for_admin_debug(cls, snapshot: dict | None) -> dict:
