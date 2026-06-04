@@ -202,9 +202,23 @@ class ExternalActionResultPresenter:
 
         for key, value in root.items():
             if isinstance(value, dict):
-                sub_items = [f"{k}: {v}" for k, v in value.items()]
-                label = self._humanize_key(key)
-                linhas.append(f"**{label}:** {', '.join(sub_items)}")
+                sub_items = [
+                    self._presenter_text(
+                        "generic",
+                        "dictNestedValue",
+                        key=str(nested_key),
+                        value=str(nested_value),
+                    )
+                    for nested_key, nested_value in value.items()
+                ]
+                linhas.append(
+                    self._presenter_text(
+                        "generic",
+                        "dictNestedLine",
+                        label=self._humanize_key(key),
+                        items=", ".join(sub_items),
+                    )
+                )
             elif isinstance(value, list) and value:
                 linhas.append(
                     self._presenter_text(
@@ -215,7 +229,14 @@ class ExternalActionResultPresenter:
                     )
                 )
             elif value is not None:
-                linhas.append(f"**{self._humanize_key(key)}:** {value}")
+                linhas.append(
+                    self._presenter_text(
+                        "generic",
+                        "dictScalarLine",
+                        label=self._humanize_key(key),
+                        value=str(value),
+                    )
+                )
 
         if linhas:
             return {
@@ -1898,11 +1919,22 @@ class ExternalActionResultPresenter:
                 continue
 
             preview = ", ".join(
-                f"{self._humanize_key(key)}={value}"
+                self._presenter_text(
+                    "generic",
+                    "collectionPreviewPair",
+                    label=self._humanize_key(key),
+                    value=str(value),
+                )
                 for key, value in list(item.items())[:6]
                 if value not in (None, "", [], {})
             )
-            lines.append(f"- {preview}")
+            lines.append(
+                self._presenter_text(
+                    "generic",
+                    "collectionPreviewLine",
+                    preview=preview,
+                )
+            )
 
         if len(items) > 12:
             lines.append(
@@ -3236,26 +3268,23 @@ class ExternalActionResultPresenter:
                         if not isinstance(test, dict):
                             continue
 
-                        label = test.get("test_code") or test.get("sequence") or "Teste"
-                        unit = test.get("unit") or ""
-                        nominal = test.get("nominal_value")
-                        lower = test.get("lower_spec_limit")
-                        upper = test.get("upper_spec_limit")
-                        spec_parts = []
+                        specs = self._format_measurable_test_specs(test)
 
-                        if nominal is not None:
-                            spec_parts.append(f"nominal {nominal}{unit}")
-
-                        if lower is not None or upper is not None:
-                            spec_parts.append(f"limites {lower or '—'} a {upper or '—'}{unit}")
-
-                        if spec_parts:
+                        if specs:
+                            label = (
+                                test.get("test_code")
+                                or test.get("sequence")
+                                or self._route_presentation(
+                                    "inspection",
+                                    "testLabelFallback",
+                                )
+                            )
                             linhas.append(
                                 self._route_presentation(
                                     "inspection",
                                     "testLimits",
                                     label=str(label),
-                                    specs=", ".join(spec_parts),
+                                    specs=specs,
                                 )
                             )
 
@@ -3288,24 +3317,10 @@ class ExternalActionResultPresenter:
             if not isinstance(item, dict):
                 continue
 
-            characteristic = (
-                item.get("characteristic")
-                or item.get("specification")
-                or item.get("step_description")
-                or item.get("description")
-                or "?"
-            )
-            inspection_type = item.get("inspection_type") or item.get("method") or ""
-            sequence = item.get("sequence") or item.get("step") or ""
-            parts = [f"**{characteristic}**"]
+            line = self._format_inspection_characteristic_line(item)
 
-            if inspection_type:
-                parts.append(f"tipo {inspection_type}")
-
-            if sequence not in (None, ""):
-                parts.append(f"seq. {sequence}")
-
-            linhas.append(f"- {' — '.join(str(part) for part in parts)}")
+            if line:
+                linhas.append(line)
 
         if len(items) > 10:
             linhas.append(
@@ -3333,7 +3348,19 @@ class ExternalActionResultPresenter:
         path: str = "",
         title: str | None = None,
     ) -> dict:
-        titulo = title or self._infer_items_title(items, path) or "Estoque do produto"
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        titulo = (
+            title
+            or self._infer_items_title(items, path)
+            or ChatAssistantContentService.get(
+                "presenter_content",
+                "titlesByPathFragment",
+                "/stock",
+            )
+        )
         product_code = self._extract_product_code_from_path(path)
         branches: set[str] = set()
         warehouses: set[str] = set()
@@ -4369,6 +4396,97 @@ class ExternalActionResultPresenter:
         return (
             self._route_presentation("structureItems", "componentBulletPrefix")
             + line
+        )
+
+    def _format_measurable_test_specs(self, test: dict) -> str | None:
+        if not isinstance(test, dict):
+            return None
+
+        unit = str(test.get("unit") or "")
+        spec_parts: list[str] = []
+        nominal = test.get("nominal_value")
+        lower = test.get("lower_spec_limit")
+        upper = test.get("upper_spec_limit")
+        missing = self._route_presentation("inspection", "missingLimit")
+
+        if nominal is not None:
+            spec_parts.append(
+                self._route_presentation(
+                    "inspection",
+                    "specNominal",
+                    nominal=str(nominal),
+                    unit=unit,
+                )
+            )
+
+        if lower is not None or upper is not None:
+            spec_parts.append(
+                self._route_presentation(
+                    "inspection",
+                    "specLimits",
+                    lower=str(lower if lower is not None else missing),
+                    upper=str(upper if upper is not None else missing),
+                    unit=unit,
+                )
+            )
+
+        return ", ".join(spec_parts) if spec_parts else None
+
+    def _format_inspection_characteristic_line(self, item: dict) -> str | None:
+        if not isinstance(item, dict):
+            return None
+
+        characteristic = str(
+            item.get("characteristic")
+            or item.get("specification")
+            or item.get("step_description")
+            or item.get("description")
+            or "?"
+        ).strip()
+        inspection_type = str(item.get("inspection_type") or item.get("method") or "").strip()
+        sequence = item.get("sequence")
+        step = item.get("step")
+        separator = self._route_presentation(
+            "inspection",
+            "characteristicPartsSeparator",
+        )
+        parts = [
+            self._route_presentation(
+                "inspection",
+                "characteristicBold",
+                characteristic=characteristic,
+            )
+        ]
+
+        if inspection_type:
+            parts.append(
+                self._route_presentation(
+                    "inspection",
+                    "typeSuffix",
+                    inspection_type=inspection_type,
+                )
+            )
+
+        if sequence not in (None, ""):
+            parts.append(
+                self._route_presentation(
+                    "inspection",
+                    "sequenceSuffix",
+                    sequence=str(sequence),
+                )
+            )
+        elif step not in (None, ""):
+            parts.append(
+                self._route_presentation(
+                    "inspection",
+                    "sequenceSuffix",
+                    sequence=str(step),
+                )
+            )
+
+        return (
+            self._route_presentation("inspection", "characteristicBulletPrefix")
+            + separator.join(parts)
         )
 
     def _format_product_search_line(

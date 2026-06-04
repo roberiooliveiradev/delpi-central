@@ -88,3 +88,31 @@ def test_format_structure_component_line():
     assert "CABO" in line
     assert "MP" in line
     assert "2,5" in line or "2.5" in line
+
+
+def test_format_inspection_characteristic_line():
+    presenter = ExternalActionResultPresenter()
+
+    line = presenter._format_inspection_characteristic_line(
+        {
+            "inspection_type": "Dimensional",
+            "sequence": 1,
+            "characteristic": "Comprimento",
+        }
+    )
+
+    assert "Comprimento" in line
+    assert "Dimensional" in line
+    assert "seq." in line
+
+
+def test_present_dict_fallback_uses_content():
+    presenter = ExternalActionResultPresenter()
+
+    result = presenter._present_dict_fallback(
+        {"total": 3, "items": [{"code": "1"}]},
+        "/custom/endpoint",
+    )
+
+    assert result is not None
+    assert any("total" in line.lower() or "Total" in line for line in result["linhas"])

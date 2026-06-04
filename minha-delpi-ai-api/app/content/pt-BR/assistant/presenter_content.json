@@ -104,7 +104,12 @@
     "queryErrorTitle": "Erro na consulta",
     "kpiSeeData": "{title}: veja os dados abaixo.",
     "emptyDetail": "Sem detalhe nesta consulta",
-    "dictListItems": "**{label}:** {count} item(ns)"
+    "dictListItems": "**{label}:** {count} item(ns)",
+    "dictNestedValue": "{key}: {value}",
+    "dictNestedLine": "**{label}:** {items}",
+    "dictScalarLine": "**{label}:** {value}",
+    "collectionPreviewLine": "- {preview}",
+    "collectionPreviewPair": "{label}={value}"
   },
   "operationalEmpty": {
     "suppliers": "Nenhum fornecedor cadastrado para o produto **{code}**.",
@@ -173,7 +178,16 @@
       "withoutPlanCount": "**{count}** item(ns) sem plano cadastrado.",
       "itemLine": "- **{code}**: {summary} ({measurable} teste(s) dimensional(is), {textual} textual(is)).",
       "characteristicsPlan": "Plano de inspeção com **{count}** característica(s).",
-      "testLimits": "  - {label}: {specs}."
+      "testLimits": "  - {label}: {specs}.",
+      "characteristicBold": "**{characteristic}**",
+      "typeSuffix": "tipo {inspection_type}",
+      "sequenceSuffix": "seq. {sequence}",
+      "characteristicPartsSeparator": " — ",
+      "characteristicBulletPrefix": "- ",
+      "testLabelFallback": "Teste",
+      "specNominal": "nominal {nominal}{unit}",
+      "specLimits": "limites {lower} a {upper}{unit}",
+      "missingLimit": "—"
     },
     "saleOrders": {
       "title": "Ordens de Venda",
