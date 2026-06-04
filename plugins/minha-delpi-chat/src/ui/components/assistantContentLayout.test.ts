@@ -5,12 +5,13 @@ import {
   orderVisualSegments,
   resolveAssistantContentLayout,
 } from "./assistantContentLayout";
-import { filterSegmentsByVisualKind } from "./assistantContentVisualFormats";
 import type { AssistantContentSegment } from "./assistantContentTypes";
+import { filterSegmentsByVisualKind } from "./assistantContentVisualFormats";
+import { fixtureToolCalls } from "./testFixtures";
 
 describe("assistantContentLayout", () => {
   it("empilha visuais quando layoutMode é stack na API", () => {
-    const toolCalls = [
+    const toolCalls = fixtureToolCalls([
       {
         name: "execute_external_action",
         metadata: {
@@ -20,7 +21,11 @@ describe("assistantContentLayout", () => {
             visualOrder: ["table", "tree", "chart"],
             availableViews: ["text", "table", "tree", "chart"],
           },
-          presentation: { type: "tree", title: "Estrutura", root: { label: "PA", children: [] } },
+          presentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "90260114", label: "PA", children: [] },
+          },
           tablePresentation: {
             type: "table",
             title: "Produto",
@@ -31,8 +36,7 @@ describe("assistantContentLayout", () => {
             type: "chart",
             chartType: "donut",
             title: "Composição",
-            labels: ["PI (2)"],
-            datasets: [{ label: "Itens", data: [2] }],
+            data: [{ tipo: "PI", qtd: 2 }],
           },
           textPresentation: {
             type: "markdown",
@@ -40,7 +44,7 @@ describe("assistantContentLayout", () => {
           },
         },
       },
-    ];
+    ]);
 
     expect(resolveAssistantContentLayout("", toolCalls)).toBe("stack");
 
@@ -62,7 +66,14 @@ describe("assistantContentLayout", () => {
     const visuals: AssistantContentSegment[] = [
       { kind: "chart", presentation: { type: "chart", chartType: "bar", title: "C", data: [] } },
       { kind: "table", presentation: { type: "table", title: "T", columns: [], rows: [] } },
-      { kind: "tree", presentation: { type: "tree", title: "A", root: { label: "r", children: [] } } },
+      {
+        kind: "tree",
+        presentation: {
+          type: "tree",
+          title: "A",
+          root: { id: "r", label: "r", children: [] },
+        },
+      },
     ];
 
     const ordered = orderVisualSegments(visuals, ["table", "tree", "chart"]);

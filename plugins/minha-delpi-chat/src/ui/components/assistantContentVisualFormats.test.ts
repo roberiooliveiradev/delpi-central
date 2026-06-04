@@ -6,9 +6,10 @@ import {
   resolveAvailableVisualFormatOptions,
   resolveDefaultVisualKind,
 } from "./assistantContentVisualFormats";
+import { fixtureToolCalls } from "./testFixtures";
 
 describe("assistantContentVisualFormats", () => {
-  const toolCalls = [
+  const toolCalls = fixtureToolCalls([
     {
       name: "execute_external_action",
       metadata: {
@@ -22,7 +23,7 @@ describe("assistantContentVisualFormats", () => {
         presentation: {
           type: "tree",
           title: "Estrutura",
-          root: { label: "PA", children: [] },
+          root: { id: "PA", label: "PA", children: [] },
         },
         tablePresentation: {
           type: "table",
@@ -34,8 +35,7 @@ describe("assistantContentVisualFormats", () => {
           type: "chart",
           chartType: "donut",
           title: "Composição",
-          labels: ["PI"],
-          datasets: [{ label: "Itens", data: [1] }],
+          data: [{ tipo: "PI", qtd: 1 }],
         },
         textPresentation: {
           type: "markdown",
@@ -43,7 +43,7 @@ describe("assistantContentVisualFormats", () => {
         },
       },
     },
-  ];
+  ]);
 
   it("lista opções de troca para cada visual disponível", () => {
     const segments = buildAssistantContentSegments("", toolCalls);
@@ -65,19 +65,19 @@ describe("assistantContentVisualFormats", () => {
   });
 
   it("usa formato selecionado pela API como padrão", () => {
-    const withTree = [
+    const withTree = fixtureToolCalls([
       {
         ...toolCalls[0],
         metadata: {
           ...toolCalls[0].metadata,
           presentationDecision: {
-            ...toolCalls[0].metadata.presentationDecision,
+            ...(toolCalls[0].metadata?.presentationDecision ?? {}),
             selected: "tree",
           },
           preferredFormat: "tree",
         },
       },
-    ];
+    ]);
     const segments = buildAssistantContentSegments("", withTree);
     const options = resolveAvailableVisualFormatOptions(segments, withTree);
 
