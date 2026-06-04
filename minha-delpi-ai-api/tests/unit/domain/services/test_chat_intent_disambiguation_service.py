@@ -35,6 +35,8 @@ def test_try_build_not_ambiguous_for_full_analyser_phrases():
     queries = [
         "informações completas do produto 90260149",
         "análise integrada do cadastro, roteiro e estrutura do 90260149",
+        "estrutura e roteiro do produto 90260149",
+        "roteiro e inspeção do produto 90260149",
     ]
 
     for query in queries:

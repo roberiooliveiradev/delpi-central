@@ -9,6 +9,7 @@ class ChatProductQueryIntent:
     DESCRIPTION = "description"
     SUMMARY = "summary"
     ANALYSER = "analyser"
+    MULTI_SCOPE = "multi_scope"
     STOCK = "stock"
     SALES = "sales"
     STRUCTURE = "structure"
@@ -51,6 +52,21 @@ class ChatProductQueryIntentService:
 
         if cls._looks_like_parents_question(normalized):
             return ChatProductQueryIntent.PARENTS
+
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        requested_scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(message)
+
+        if len(requested_scopes) >= 2:
+            if ChatProductMultiScopePlanningService.should_use_single_analyser(
+                requested_scopes,
+                message,
+            ):
+                return ChatProductQueryIntent.ANALYSER
+
+            return ChatProductQueryIntent.MULTI_SCOPE
 
         if cls._looks_like_full_analyser_question(normalized):
             return ChatProductQueryIntent.ANALYSER
@@ -896,29 +912,13 @@ class ChatProductQueryIntentService:
         ):
             return True
 
-        return cls._mentions_multiple_product_scopes(normalized)
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
 
-    @classmethod
-    def _mentions_multiple_product_scopes(cls, normalized: str) -> bool:
-        """Cadastro + roteiro + estrutura (ou 2 escopos) → analyser, não rota estreita."""
-        scopes = 0
+        scopes = ChatProductMultiScopePlanningService.extract_requested_scopes(normalized)
 
-        if any(
-            term in normalized
-            for term in ("cadastro", "ficha", "dados cadastrais", "informacoes do produto", "informações do produto")
-        ):
-            scopes += 1
-
-        if "roteiro" in normalized:
-            scopes += 1
-
-        if any(term in normalized for term in ("estrutura", "bom", "composição", "composicao")):
-            scopes += 1
-
-        if any(term in normalized for term in ("inspeção", "inspecao", "plano de inspecao", "plano de inspeção")):
-            scopes += 1
-
-        return scopes >= 2
+        return ChatProductMultiScopePlanningService.should_use_single_analyser(scopes, normalized)
 
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:

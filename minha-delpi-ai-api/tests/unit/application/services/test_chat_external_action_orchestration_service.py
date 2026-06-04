@@ -180,6 +180,61 @@ def test_plan_actions_followup_uses_single_code_from_context():
     assert not service.product_calls
 
 
+def test_plan_actions_multi_scope_structure_and_guide(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+
+    class ScopeSelectionService(FakeSelectionService):
+        def select_action_for_product(
+            self,
+            message,
+            *,
+            product_code,
+            allowed_action_ids=None,
+            intent=None,
+            route_segment=None,
+            previous_messages=None,
+        ):
+            if intent == ChatProductQueryIntent.STRUCTURE:
+                return {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "structure",
+                        "parameters": {"code": product_code},
+                    },
+                }
+
+            if route_segment == "guide":
+                return {
+                    "name": "execute_external_action",
+                    "arguments": {
+                        "actionId": "guide",
+                        "parameters": {"code": product_code},
+                    },
+                }
+
+            return None
+
+        def select_action(self, *args, **kwargs):
+            raise AssertionError("select_action não deve ser chamado")
+
+    service = ScopeSelectionService()
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        service,
+        message="estrutura e roteiro do produto 90260149",
+        allowed_action_ids=["structure", "guide"],
+        max_calls=5,
+    )
+
+    assert len(planned) == 2
+    action_ids = {item["arguments"]["actionId"] for item in planned}
+
+    assert action_ids == {"structure", "guide"}
+
+
 def test_plan_actions_pagination_follow_up_uses_select_action():
     from app.application.services.external_actions.external_action_selection_service import (
         ExternalActionSelectionService,

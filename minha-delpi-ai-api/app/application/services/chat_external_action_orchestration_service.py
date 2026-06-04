@@ -328,6 +328,33 @@ class ChatExternalActionOrchestrationService:
             if planned:
                 return _return_planned(planned)
 
+        from app.domain.services.chat_product_multi_scope_planning_service import (
+            ChatProductMultiScopePlanningService,
+        )
+
+        product_code = ChatProductQueryIntentService.resolve_product_code(
+            message,
+            conversation_context,
+            previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
+        )
+
+        if product_code:
+            scope_planned = ChatProductMultiScopePlanningService.plan_product_scope_fetches(
+                selection_service,
+                message=message,
+                product_code=product_code,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                max_calls=limit,
+            )
+
+            if len(scope_planned) >= 2:
+                return _return_planned(scope_planned)
+
+            if len(scope_planned) == 1:
+                return _return_planned(scope_planned)
+
         selected = selection_service.select_action(
             message,
             allowed_action_ids=allowed_action_ids,

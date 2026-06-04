@@ -21,6 +21,14 @@ INTENT_CASES = [
         "análise integrada do cadastro, roteiro e estrutura do 90260149",
         ChatProductQueryIntent.ANALYSER,
     ),
+    (
+        "estrutura e roteiro do produto 90260149",
+        ChatProductQueryIntent.MULTI_SCOPE,
+    ),
+    (
+        "roteiro e inspeção do produto 90260149",
+        ChatProductQueryIntent.MULTI_SCOPE,
+    ),
     ("qual o valor total de estoque da empresa", ChatProductQueryIntent.FULL),
     ("explique o procedimento de estoque e política interna", ChatProductQueryIntent.FULL),
 ]

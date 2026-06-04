@@ -80,6 +80,7 @@ Mensagem do usuário
 | `ExternalActionColumnLabelService` | Rótulos PT-BR de colunas (`column_labels.json` + OpenAPI `title`) no presenter |
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
+| `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
 | `ChatCompositeDirectAnswerService` | Monta resposta direta única com sucesso/erro por consulta |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
 | `ChatSqlOperationalIntentService` | Perguntas SQL analíticas sem rota REST (produção, estoque agregado, vendas/ranking) |
