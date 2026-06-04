@@ -7,16 +7,17 @@
 .mdc-expand-modal {
   display: flex;
   flex-direction: column;
-  width: min(1100px, 100%);
-  max-height: min(90vh, 100%);
+  min-height: 0;
   overflow: hidden;
   animation: mdc-motion-fade-scale-in var(--mdc-motion-duration) var(--mdc-motion-ease-out) both;
 }
 
 .mdc-expand-modal__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem 0.75rem;
   padding: 0.8rem 1.2rem;
   border-bottom: 1px solid var(--mdc-card-border);
 }
@@ -29,8 +30,11 @@
 
 .mdc-expand-modal__toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.4rem;
+  max-width: 100%;
 }
 
 .mdc-expand-modal__tool-btn:hover {

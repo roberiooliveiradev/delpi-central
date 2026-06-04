@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import { ModalPortal } from "./ModalPortal";
+import "./chat-modal-surface.css";
 import "./ChatMemoryUsedDialog.css";
 
 export type MemoryUsageView = {

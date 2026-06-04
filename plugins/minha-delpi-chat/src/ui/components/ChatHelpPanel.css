@@ -6,8 +6,8 @@
 .mdc-chat-help-panel {
   display: flex;
   flex-direction: column;
-  width: min(28rem, 100vw);
-  max-height: 100dvh;
+  min-height: 0;
+  height: 100%;
   border-radius: 0.9rem 0 0 0.9rem;
   border-left: 1px solid var(--mdc-card-border);
 }
@@ -247,4 +247,27 @@
 
 .mdc-chat-help-panel__status--error {
   color: #b42318;
+}
+
+@media (max-width: 767px) {
+  .mdc-chat-help-panel {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-left: 0;
+    border-radius: 1rem 1rem 0 0;
+  }
+
+  .mdc-chat-help-panel__header {
+    padding: 0.85rem 0.9rem 0.65rem;
+  }
+
+  .mdc-chat-help-panel__search,
+  .mdc-chat-help-panel__tour {
+    padding-inline: 0.9rem;
+  }
+
+  .mdc-chat-help-panel__body {
+    padding-inline: 0.9rem;
+  }
 }

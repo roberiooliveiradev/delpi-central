@@ -1,1 +1,3 @@
+/* Superfície única de modais (scrim transparente + painel elevado). */
 @import "./chat-overlay-layer.css";
+@import "./modal-layer.css";

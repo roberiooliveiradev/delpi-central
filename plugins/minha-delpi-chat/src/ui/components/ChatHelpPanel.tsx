@@ -11,6 +11,7 @@ import {
 } from "../chatShortcutPrompt";
 import { ModalPortal } from "./ModalPortal";
 
+import "./chat-modal-surface.css";
 import "./ChatHelpPanel.css";
 
 type ChatHelpPanelProps = {

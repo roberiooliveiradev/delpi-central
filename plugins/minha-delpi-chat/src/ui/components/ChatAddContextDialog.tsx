@@ -5,7 +5,7 @@ import type { ConversationContextPick } from "../chatContextFromMessage";
 import type { ContextItemPayload } from "../chatContextFromMessage";
 
 import { ModalPortal } from "./ModalPortal";
-import "./chat-overlay-layer.css";
+import "./chat-modal-surface.css";
 import "./ChatAddContextDialog.css";
 
 export type UserContextPayload = ContextItemPayload;

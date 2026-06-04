@@ -7,6 +7,8 @@ import { ChatRichDashboard } from "./ChatRichDashboard";
 import { ChatRichKpi } from "./ChatRichKpi";
 import { ChatRichTree } from "./ChatRichTree";
 import { ModalPortal } from "./ModalPortal";
+import "./chat-modal-surface.css";
+import "./ChatExpandModal.css";
 import type { ChatCanvasOpenPayload } from "../../data/api/chatTypes";
 import type { ChartViewState } from "./chartViewState";
 import { exportChartElementToPng } from "./chartPngExport";

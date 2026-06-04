@@ -226,9 +226,17 @@
     max-height: none;
   }
 
-  .mdc-chat-expand-modal {
-    width: calc(100vw - 1rem);
-    max-height: calc(100dvh - 1rem);
+  .mdc-expand-modal {
+    width: 100%;
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
+  }
+
+  .mdc-expand-modal__header {
+    padding-inline: 0.85rem;
+  }
+
+  .mdc-expand-modal__toolbar {
+    width: 100%;
   }
 
   .mdc-chat-rich-table-wrap {

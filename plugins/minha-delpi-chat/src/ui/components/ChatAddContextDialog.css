@@ -4,10 +4,10 @@
 }
 
 .mdc-chat-add-context {
-  width: min(100%, 32rem);
   display: grid;
   gap: 0.85rem;
   padding: 1rem 1.1rem;
+  min-height: 0;
 }
 
 .mdc-chat-add-context__header h2 {
@@ -26,6 +26,8 @@
 .mdc-chat-add-context__form {
   display: grid;
   gap: 0.65rem;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .mdc-chat-add-context__conversation {
@@ -219,6 +221,6 @@
     position: sticky;
     bottom: 0;
     padding-top: 0.35rem;
-    background: var(--mdc-card-bg);
+    background: color-mix(in srgb, var(--mdc-card-bg) 94%, black);
   }
 }

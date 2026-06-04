@@ -31,15 +31,20 @@
   inset: 0;
   z-index: var(--mdc-overlay-z-scrim);
   background: transparent;
+  backdrop-filter: none;
   pointer-events: auto;
 }
 
+/* Portal no MFE (#mdc-modal-root): scrim absoluto — não cobre sidebar nem viewport inteira. */
 .mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim,
 .mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim--centered,
-.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered {
+.mdc-chat-overlay-portal--contained .mdc-modal-scrim--centered,
+.mdc-chat-overlay-portal--contained [class*="-backdrop"] {
   position: absolute;
   inset: 0;
   z-index: 1;
+  background: transparent;
+  backdrop-filter: none;
 }
 
 .mdc-chat-overlay-scrim--centered {
@@ -47,6 +52,10 @@
   place-items: center;
   padding: var(--mdc-space-4);
   box-sizing: border-box;
+}
+
+.mdc-chat-overlay-portal--contained .mdc-chat-overlay-scrim--centered {
+  padding: var(--mdc-space-3);
 }
 
 .mdc-chat-overlay-panel {

@@ -1,13 +1,12 @@
 .mdc-chat-memory-used-backdrop {
   display: grid;
   place-items: center;
-  background: transparent;
 }
 
 .mdc-chat-memory-used {
-  width: min(100%, 32rem);
   display: flex;
   flex-direction: column;
+  min-height: 0;
   color: var(--mdc-text);
 }
 
