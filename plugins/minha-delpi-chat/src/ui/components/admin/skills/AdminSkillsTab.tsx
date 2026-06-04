@@ -10,6 +10,7 @@ import {
 import type { AdminChatSkill, AdminRbacSummary } from "../../../../data/api/adminTypes";
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
 import { useConfirmDialog } from "../../useConfirmDialog";
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SkillsSummaryStrip } from "./SkillsSummaryStrip";
 import {
   computeSkillsSummary,
@@ -224,45 +225,44 @@ export function AdminSkillsTab({ getAccessToken, rbac }: AdminSkillsTabProps) {
   return (
     <section className="mdc-admin-skills" aria-label="Catálogo de habilidades">
       {confirmDialog}
-      <header className="mdc-admin-page-header">
-        <h2>Comportamentos</h2>
-        <p>
-          Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais habilidades
-          estão ativas; a execução de APIs continua nas <strong>Actions</strong>.
-        </p>
-      </header>
-
-      <div className="mdc-admin-skills__toolbar">
-        <SkillsSummaryStrip
-          summary={summary}
-          activeFilter={statusFilter}
-          isLoading={isLoading}
-          onFilterChange={setStatusFilter}
-        />
-
-        <div className="mdc-admin-skills__toolbar-actions">
-          <button
-            type="button"
-            className="mdc-admin-btn"
-            onClick={() => void loadSkills()}
-            disabled={isLoading}
-            aria-label="Atualizar catálogo"
-          >
-            <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
-            <span>Atualizar</span>
-          </button>
-          {canManage ? (
+      <AdminTabHeader
+        className="mdc-admin-skills__toolbar"
+        eyebrow="Conhecimento"
+        title="Comportamentos"
+        description="Cadastre comportamentos de prompt reutilizáveis. Cada agente escolhe quais habilidades estão ativas; a execução de APIs continua nas ações."
+        summary={
+          <SkillsSummaryStrip
+            summary={summary}
+            activeFilter={statusFilter}
+            isLoading={isLoading}
+            onFilterChange={setStatusFilter}
+          />
+        }
+        actions={
+          <div className="mdc-admin-skills__toolbar-actions">
             <button
               type="button"
-              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-              onClick={startCreate}
+              className="mdc-admin-btn"
+              onClick={() => void loadSkills()}
+              disabled={isLoading}
+              aria-label="Atualizar catálogo"
             >
-              <Plus size={15} aria-hidden="true" />
-              <span>Nova habilidade</span>
+              <RefreshCw size={15} aria-hidden="true" className={isLoading ? "is-spinning" : ""} />
+              <span>Atualizar</span>
             </button>
-          ) : null}
-        </div>
-      </div>
+            {canManage ? (
+              <button
+                type="button"
+                className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+                onClick={startCreate}
+              >
+                <Plus size={15} aria-hidden="true" />
+                <span>Nova habilidade</span>
+              </button>
+            ) : null}
+          </div>
+        }
+      />
 
       <div className="mdc-admin-skills__layout mdc-admin-split">
         <aside className="mdc-admin-split__aside mdc-admin-panel mdc-admin-skills__list-panel">

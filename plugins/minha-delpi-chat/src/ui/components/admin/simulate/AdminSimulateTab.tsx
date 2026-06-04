@@ -6,6 +6,7 @@ import type { ChatAgent } from "../../../../data/api/chatTypes";
 import { simulateAdminAgent } from "../../../../data/api/adminApi";
 import type { AdminAgentSimulateResponse } from "../../../../data/api/adminTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { SimulateSummaryStrip } from "./SimulateSummaryStrip";
 import { computeSimulateSummary } from "./simulateSummary";
 
@@ -88,28 +89,25 @@ export function AdminSimulateTab({ getAccessToken }: AdminSimulateTabProps) {
 
   return (
     <section className="mdc-admin-simulate">
-      <header className="mdc-admin-simulate__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Simulação</p>
-          <h2>Simulação completa do agente</h2>
-          <p>
-            Valide prompt final, diretrizes, RAG e tools previstas antes de publicar alterações.
-          </p>
-        </div>
-
-        <SimulateSummaryStrip summary={summary} />
-
-        <div className="mdc-admin-simulate__toolbar-actions">
-          <button
-            type="button"
-            className="mdc-chat-ws-outline-btn"
-            disabled={!result && !error && !question.trim()}
-            onClick={handleClear}
-          >
-            Limpar
-          </button>
-        </div>
-      </header>
+      <AdminTabHeader
+        className="mdc-admin-simulate__toolbar"
+        eyebrow="Agentes"
+        title="Simulação completa do agente"
+        description="Valide prompt final, diretrizes, RAG e ferramentas previstas antes de publicar alterações."
+        summary={<SimulateSummaryStrip summary={summary} />}
+        actions={
+          <div className="mdc-admin-simulate__toolbar-actions">
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={!result && !error && !question.trim()}
+              onClick={handleClear}
+            >
+              Limpar
+            </button>
+          </div>
+        }
+      />
 
       <div className="mdc-admin-simulate__layout mdc-admin-split">
         <div className="mdc-admin-split__aside">

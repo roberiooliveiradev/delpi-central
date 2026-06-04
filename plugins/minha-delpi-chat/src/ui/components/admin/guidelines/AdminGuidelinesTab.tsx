@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { GuidelineEditorPanel } from "./GuidelineEditorPanel";
 import { GuidelineListPanel } from "./GuidelineListPanel";
 import { GuidelinesSummaryStrip } from "./GuidelinesSummaryStrip";
@@ -49,27 +50,34 @@ export function AdminGuidelinesTab({
 
   return (
     <section className="mdc-admin-guidelines">
-      <div className="mdc-admin-guidelines__toolbar">
-        <GuidelinesSummaryStrip
-          summary={summary}
-          activeFilter={statusFilter}
-          onFilterChange={setStatusFilter}
-        />
-
-        <button
-          type="button"
-          className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-          disabled={!canCreateGuidelines}
-          title={
-            canCreateGuidelines
-              ? "Criar nova diretriz"
-              : "Sem permissão para criar diretrizes"
-          }
-          onClick={() => setEditingGuideline(null)}
-        >
-          Nova diretriz
-        </button>
-      </div>
+      <AdminTabHeader
+        className="mdc-admin-guidelines__toolbar"
+        eyebrow="Conhecimento"
+        title="Diretrizes globais"
+        description="Comportamento padrão do chat: versões, publicação e teste antes de vincular aos agentes."
+        summary={
+          <GuidelinesSummaryStrip
+            summary={summary}
+            activeFilter={statusFilter}
+            onFilterChange={setStatusFilter}
+          />
+        }
+        actions={
+          <button
+            type="button"
+            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+            disabled={!canCreateGuidelines}
+            title={
+              canCreateGuidelines
+                ? "Criar nova diretriz"
+                : "Sem permissão para criar diretrizes"
+            }
+            onClick={() => setEditingGuideline(null)}
+          >
+            Nova diretriz
+          </button>
+        }
+      />
 
       <GuidelineListPanel
         guidelines={visibleGuidelines}

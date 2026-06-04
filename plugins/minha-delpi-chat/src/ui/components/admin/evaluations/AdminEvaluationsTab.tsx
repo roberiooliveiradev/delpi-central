@@ -13,6 +13,7 @@ import type {
 } from "../../../../data/api/adminTypes";
 
 import { AdminFormCheckbox } from "../shared/AdminFormCheckbox";
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { EvaluationsSummaryStrip } from "./EvaluationsSummaryStrip";
 
 import "./AdminEvaluationsTab.css";
@@ -120,27 +121,23 @@ export function AdminEvaluationsTab({ getAccessToken }: AdminEvaluationsTabProps
 
   return (
     <section className="mdc-admin-evaluations">
-      <header className="mdc-admin-evaluations__toolbar mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Qualidade</p>
-          <h2>Avaliação de respostas</h2>
-          <p>
-            Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para
-            conhecimento e diretrizes.
-          </p>
-        </div>
-
-        <EvaluationsSummaryStrip summary={summary} isLoading={isLoading} />
-
-        <button
-          type="button"
-          className="mdc-chat-ws-outline-btn"
-          disabled={isLoading}
-          onClick={() => void loadCandidates()}
-        >
-          {isLoading ? "Atualizando..." : "Atualizar"}
-        </button>
-      </header>
+      <AdminTabHeader
+        className="mdc-admin-evaluations__toolbar"
+        eyebrow="Qualidade"
+        title="Avaliação de respostas"
+        description="Avalie respostas do assistente, registre feedback e receba sugestões de melhoria para conhecimento e diretrizes."
+        summary={<EvaluationsSummaryStrip summary={summary} isLoading={isLoading} />}
+        actions={
+          <button
+            type="button"
+            className="mdc-chat-ws-outline-btn"
+            disabled={isLoading}
+            onClick={() => void loadCandidates()}
+          >
+            {isLoading ? "Atualizando..." : "Atualizar"}
+          </button>
+        }
+      />
 
       {error ? <p className="mdc-admin-evaluations__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-evaluations__success">{successMessage}</p> : null}

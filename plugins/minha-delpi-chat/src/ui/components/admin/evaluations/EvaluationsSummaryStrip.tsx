@@ -1,8 +1,7 @@
 import type { AdminResponseEvaluationSummary } from "../../../../data/api/adminTypes";
-
+import { AdminKpiCard } from "../shared/AdminKpiCard";
+import { AdminSummaryStrip } from "../shared/AdminSummaryStrip";
 import { buildEvaluationsSummaryView } from "./evaluationsSummary";
-
-import "../knowledge/KnowledgeSummaryStrip.css";
 
 type EvaluationsSummaryStripProps = {
   summary: AdminResponseEvaluationSummary | null | undefined;
@@ -16,34 +15,11 @@ export function EvaluationsSummaryStrip({
   const view = buildEvaluationsSummaryView(summary);
 
   return (
-    <div
-      className="mdc-admin-knowledge-summary"
-      role="region"
-      aria-label="Resumo de avaliações de respostas"
-      aria-busy={isLoading}
-    >
-      <div className="mdc-admin-knowledge-summary__grid mdc-admin-kpi-grid">
-        <article className="mdc-admin-kpi-card">
-          <h3>Total</h3>
-          <strong>{view.total}</strong>
-          <p>Avaliações registradas.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Média</h3>
-          <strong>{view.averageScore}</strong>
-          <p>Nota média (1–5).</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Úteis</h3>
-          <strong>{view.helpfulRate}</strong>
-          <p>Respostas com nota 4 ou 5.</p>
-        </article>
-        <article className="mdc-admin-kpi-card">
-          <h3>Hoje</h3>
-          <strong>{view.recent24h}</strong>
-          <p>Avaliações nas últimas 24h.</p>
-        </article>
-      </div>
-    </div>
+    <AdminSummaryStrip ariaLabel="Resumo de avaliações de respostas" isLoading={isLoading}>
+      <AdminKpiCard title="Total" value={view.total} hint="Avaliações registradas." />
+      <AdminKpiCard title="Média" value={view.averageScore} hint="Nota média (1–5)." />
+      <AdminKpiCard title="Úteis" value={view.helpfulRate} hint="Respostas com nota 4 ou 5." />
+      <AdminKpiCard title="Hoje" value={view.recent24h} hint="Avaliações nas últimas 24h." />
+    </AdminSummaryStrip>
   );
 }

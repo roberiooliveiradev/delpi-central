@@ -11,14 +11,11 @@
 
 **Conclusão:** uso em componentes React **eliminado**. Seletores CSS `__status-list` e `__recent` **removidos** de `admin-primitives.css` na Fase 5.
 
-## Classes `mdc-admin-drawing-metrics` restantes
+## Classes `mdc-admin-drawing-metrics`
 
-| Arquivo | Uso | Notas |
-|---------|-----|--------|
-| `AdminMetricsTab.css` | Layout de blocos legados na aba métricas | Pode migrar para `AdminMetricSection` em refactor futuro |
-| `AdminDrawingAnalysisMetrics.tsx` | `id` do título apenas | Componente já usa `AdminMetricSection` |
+Removidas de `AdminMetricsTab.css` (jun/2026). Nenhum componente React usa mais a classe `mdc-admin-drawing-metrics`.
 
-`AdminKpiGrid` não usa mais alias `mdc-admin-drawing-metrics__grid`.
+Único resquício: `id="mdc-admin-drawing-metrics-title"` em `AdminDrawingAnalysisMetrics.tsx` (apenas identificador de acessibilidade).
 
 ## Outras classes `mdc-admin-drawing-metrics*`
 

@@ -19,6 +19,7 @@ import {
   type AdminNavState,
 } from "../../../../navigation/adminNavigation";
 import { navigateChatHref } from "../../../../navigation/chatNavigation";
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AdminRbacPanel } from "../rbac/AdminRbacPanel";
 
 import "./AdminOverviewTab.css";
@@ -169,13 +170,11 @@ export function AdminOverviewTab({
 
   return (
     <section className="mdc-admin-overview-tab">
-      <header className="mdc-admin-tab-header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Painel</p>
-          <h2>Como está o chat?</h2>
-          <p>Resumo operacional das últimas 24 horas. Clique nos cards para ir à seção.</p>
-        </div>
-      </header>
+      <AdminTabHeader
+        eyebrow="Painel"
+        title="Como está o chat?"
+        description="Resumo operacional das últimas 24 horas. Clique nos cards para ir à seção."
+      />
 
       {loading ? <p className="mdc-chat-muted">Atualizando indicadores...</p> : null}
 

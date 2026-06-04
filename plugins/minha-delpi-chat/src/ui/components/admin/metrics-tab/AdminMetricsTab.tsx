@@ -56,6 +56,7 @@ import { AdminPresentationMetrics } from "./AdminPresentationMetrics";
 import { AdminSessionMemoryMetrics } from "./AdminSessionMemoryMetrics";
 import { AdminTextTaskMetrics } from "./AdminTextTaskMetrics";
 import type { AdminNavState } from "../../../../navigation/adminNavigation";
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 
 import "./AdminMetricsTab.css";
 
@@ -592,48 +593,45 @@ export function AdminMetricsTab({
 
   return (
     <section className="mdc-admin-metrics-tab">
-      <header className="mdc-admin-tab-header mdc-admin-metrics-tab__header">
-        <div className="mdc-admin-page-header">
-          <p className="mdc-chat-eyebrow">Métricas</p>
-          <h2>Observabilidade do Minha DELPI Chat</h2>
-          <p>
-            Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por
-            agente e usuário.
-          </p>
-        </div>
+      <AdminTabHeader
+        className="mdc-admin-metrics-tab__header"
+        eyebrow="Qualidade"
+        title="Observabilidade do Minha DELPI Chat"
+        description="Acompanhe uso, erros, ferramentas, custos LLM, assertividade RAG e distribuição por agente e usuário."
+        actions={
+          <div className="mdc-admin-metrics-tab__header-actions">
+            {onMetricsHoursChange ? (
+              <label className="mdc-admin-field mdc-admin-metrics-tab__window">
+                <span>Janela</span>
+                <select
+                  value={metricsHours}
+                  onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+                >
+                  <option value={24}>24 horas</option>
+                  <option value={168}>7 dias</option>
+                  <option value={720}>30 dias</option>
+                </select>
+              </label>
+            ) : null}
 
-        <div className="mdc-admin-metrics-tab__header-actions">
-          {onMetricsHoursChange ? (
-            <label className="mdc-admin-field mdc-admin-metrics-tab__window">
-              <span>Janela</span>
-              <select
-                value={metricsHours}
-                onChange={(event) => onMetricsHoursChange(Number(event.target.value))}
+            {onRefresh ? (
+              <button
+                type="button"
+                className="mdc-chat-ws-outline-btn"
+                disabled={isRefreshing}
+                onClick={onRefresh}
               >
-                <option value={24}>24 horas</option>
-                <option value={168}>7 dias</option>
-                <option value={720}>30 dias</option>
-              </select>
-            </label>
-          ) : null}
-
-          {onRefresh ? (
-            <button
-              type="button"
-              className="mdc-chat-ws-outline-btn"
-              disabled={isRefreshing}
-              onClick={onRefresh}
-            >
-              {isRefreshing ? "Atualizando..." : "Atualizar"}
-            </button>
-          ) : null}
-        </div>
-      </header>
+                {isRefreshing ? "Atualizando..." : "Atualizar"}
+              </button>
+            ) : null}
+          </div>
+        }
+      />
 
       {onNavigate ? (
         <aside className="mdc-admin-metrics-tab__intel-callout" role="note">
           <p>
-            Toggles de RAG, router de tools e loop agentic foram movidos para{" "}
+            Toggles de RAG, roteador de ferramentas e loop agêntico foram movidos para{" "}
             <strong>Plataforma → Inteligência</strong> (configuram o pipeline, não são métricas).
           </p>
           <button
@@ -677,7 +675,7 @@ export function AdminMetricsTab({
         </article>
 
         <article className="mdc-admin-kpi-card">
-          <h3>Uso de tools</h3>
+          <h3>Uso de ferramentas</h3>
           <strong>{formatPercent(metricsSummary.toolUsageRate24h)}</strong>
           <p>
             {formatNumber(metricsSummary.recentToolCalls24h)} chamada(s) de ferramenta nas últimas

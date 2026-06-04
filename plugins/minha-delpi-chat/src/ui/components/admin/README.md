@@ -34,6 +34,8 @@ Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificaçõe
 
 Estilos escopados em `.mdc-admin-root` (ver `ChatAdminPage.tsx`).
 
+Todas as seções do admin usam `AdminTabHeader` no topo da sub-aba (Painel, Conhecimento, Agentes, Qualidade, Plataforma, Governança).
+
 ## Roadmap de UI
 
 - Navegação (6 seções): [11_admin_ux_reorganizacao_abas.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md)

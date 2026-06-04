@@ -310,4 +310,4 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
-**Próximo passo sugerido (opcional):** capturar PNG em `baseline/screenshots/` no staging; migrar estilos restantes de `AdminMetricsTab.css` (`mdc-admin-drawing-metrics`) para primitivos.
+**Próximo passo sugerido (opcional):** capturar PNG em `baseline/screenshots/` no staging e executar `baseline/QA_MANUAL.md` no browser.
