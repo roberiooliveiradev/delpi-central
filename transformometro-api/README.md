@@ -49,7 +49,7 @@ make test
 
 ## Cadastro de dados
 
-Processos, revisões, medições e recursos são mantidos pelo CRUD e pelas telas do plugin. Backup/restauração: `GET /transformometro/data/export`, `POST /transformometro/data/import/preview` e `POST /transformometro/data/import/apply` (modos `merge` e `replace`).
+Processos, revisões, medições e recursos são mantidos pelo CRUD e pelas telas do plugin. Backup/restauração: `GET /transformometro/data/export`, `POST /transformometro/data/import/preview` e `POST /transformometro/data/import/apply` (modos `merge` e `replace`). O export inclui processos/recursos referenciados por FK mesmo se estiverem marcados como deletados. **Substituir tudo** apaga o cadastro e recria somente o que está no JSON.
 
 ## Integração engenharia / SI
 

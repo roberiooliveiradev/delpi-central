@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from tm_app.application.services.json_backup_service import JsonBackupService, SCHEMA_VERSION
+from tm_app.infrastructure.persistence.json_backup_repository import JsonBackupRepository
 
 
 def _sample_bundle() -> dict:
@@ -74,6 +75,54 @@ def test_validate_bundle_accepts_consistent_fk():
         }
     ]
     assert JsonBackupService().validate_bundle(bundle) == []
+
+
+def test_validate_bundle_dedupes_repeated_fk_errors():
+    bundle = _sample_bundle()
+    bundle["recursos_compartilhados"] = []
+    bundle["revisoes"].append(
+        {
+            "revisao_id": "55555555-5555-5555-5555-555555555555",
+            "processo_id": "99999999-9999-9999-9999-999999999999",
+            "versao_revisao": "v2",
+            "cenario_tipo": "melhoria",
+            "data_inicio_vigencia": "2025-02-01",
+            "deletado": False,
+        }
+    )
+    errors = JsonBackupService().validate_bundle(bundle)
+    fk_errors = [e for e in errors if "processo_id" in e]
+    assert len(fk_errors) == 1
+
+
+def test_ensure_bundle_includes_referenced_deleted_processo():
+    pid = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    rid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    repo = MagicMock()
+    repo.fetch_rows_by_ids.return_value = [
+        {
+            "processo_id": pid,
+            "codigo_processo": "PROC-DEL",
+            "nome_processo": "Só referenciado",
+            "filial_id": "01",
+            "setor_id": "eng",
+            "status_processo": "ativo",
+            "deletado": True,
+        }
+    ]
+    data = {
+        "processos": [],
+        "revisoes": [{"revisao_id": rid, "processo_id": pid, "versao_revisao": "v1"}],
+        "medicoes": [],
+        "investimentos": [],
+        "recursos_compartilhados": [],
+        "recurso_custos": [],
+        "revisao_recursos_compartilhados": [],
+    }
+    enriched = JsonBackupRepository.ensure_bundle_parent_rows(repo, data)
+    assert len(enriched["processos"]) == 1
+    assert enriched["processos"][0]["processo_id"] == pid
+    repo.fetch_rows_by_ids.assert_called_once()
 
 
 def test_preview_merge_counts_insert_and_update():

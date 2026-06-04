@@ -192,6 +192,78 @@ class JsonBackupRepository(PluginBaseRepository):
     def load_export_bundle(self) -> TransformometroRawData:
         return DashboardDataRepository(self._connection).load_raw()
 
+    def fetch_rows_by_ids(self, spec: EntitySpec, ids: set[str]) -> list[dict[str, Any]]:
+        if not ids:
+            return []
+        return self.fetch_all(
+            f"SELECT * FROM {spec.table} WHERE {spec.pk}::text = ANY(%s)",
+            (list(ids),),
+        )
+
+    def ensure_bundle_parent_rows(
+        self, data: dict[str, list[dict[str, Any]]]
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Inclui pais referenciados por FK mesmo se deletados (export só traz deletado=false)."""
+        processos = list(data.get("processos") or [])
+        processo_ids = {
+            str(row.get("processo_id"))
+            for row in processos
+            if isinstance(row, dict) and row.get("processo_id")
+        }
+        needed_processos: set[str] = set()
+        for row in data.get("revisoes") or []:
+            if isinstance(row, dict) and row.get("processo_id"):
+                needed_processos.add(str(row["processo_id"]))
+        missing_processos = needed_processos - processo_ids
+        if missing_processos:
+            processos.extend(self.fetch_rows_by_ids(
+                next(s for s in ENTITY_SPECS if s.bundle_key == "processos"),
+                missing_processos,
+            ))
+
+        recursos = list(data.get("recursos_compartilhados") or [])
+        recurso_ids = {
+            str(row.get("recurso_compartilhado_id"))
+            for row in recursos
+            if isinstance(row, dict) and row.get("recurso_compartilhado_id")
+        }
+        needed_recursos: set[str] = set()
+        for key in ("revisao_recursos_compartilhados", "recurso_custos"):
+            for row in data.get(key) or []:
+                if isinstance(row, dict) and row.get("recurso_compartilhado_id"):
+                    needed_recursos.add(str(row["recurso_compartilhado_id"]))
+        missing_recursos = needed_recursos - recurso_ids
+        if missing_recursos:
+            recursos.extend(self.fetch_rows_by_ids(
+                next(s for s in ENTITY_SPECS if s.bundle_key == "recursos_compartilhados"),
+                missing_recursos,
+            ))
+
+        revisoes = list(data.get("revisoes") or [])
+        revisao_ids = {
+            str(row.get("revisao_id"))
+            for row in revisoes
+            if isinstance(row, dict) and row.get("revisao_id")
+        }
+        needed_revisoes: set[str] = set()
+        for key in ("medicoes", "investimentos", "revisao_recursos_compartilhados"):
+            for row in data.get(key) or []:
+                if isinstance(row, dict) and row.get("revisao_id"):
+                    needed_revisoes.add(str(row["revisao_id"]))
+        missing_revisoes = needed_revisoes - revisao_ids
+        if missing_revisoes:
+            revisoes.extend(self.fetch_rows_by_ids(
+                next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes"),
+                missing_revisoes,
+            ))
+
+        return {
+            **data,
+            "processos": processos,
+            "recursos_compartilhados": recursos,
+            "revisoes": revisoes,
+        }
+
     def fetch_existing_ids(self, spec: EntitySpec) -> set[str]:
         rows = self.fetch_all(
             f"SELECT {spec.pk}::text AS id FROM {spec.table} WHERE deletado = FALSE"

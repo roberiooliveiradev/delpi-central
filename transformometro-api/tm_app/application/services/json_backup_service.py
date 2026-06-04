@@ -18,6 +18,10 @@ ExportMode = Literal["replace", "merge"]
 SCHEMA_VERSION = "1.0"
 
 
+def _norm_id(value: Any) -> str:
+    return str(value).strip().lower()
+
+
 def _as_dict(raw: TransformometroRawData) -> dict[str, list[dict[str, Any]]]:
     return {
         "processos": raw.processos,
@@ -36,7 +40,7 @@ class JsonBackupService:
 
     def export_bundle(self) -> dict[str, Any]:
         raw = self._repo.load_export_bundle()
-        data = _as_dict(raw)
+        data = self._repo.ensure_bundle_parent_rows(_as_dict(raw))
         return {
             "schema_version": SCHEMA_VERSION,
             "exported_at": datetime.now(timezone.utc).isoformat(),
@@ -71,17 +75,17 @@ class JsonBackupService:
                 if not pk:
                     errors.append(f"{key}[{index}]: {spec.pk} obrigatório.")
                     continue
-                pk_str = str(pk)
+                pk_str = _norm_id(pk)
                 if pk_str in seen:
                     errors.append(f"{key}: {spec.pk} duplicado ({pk_str}).")
                 seen.add(pk_str)
 
         if errors:
-            return errors
+            return _dedupe_errors(errors)
 
         id_sets = {
             spec.bundle_key: {
-                str(row[spec.pk])
+                _norm_id(row[spec.pk])
                 for row in payload.get(spec.bundle_key, [])
                 if isinstance(row, dict) and row.get(spec.pk)
             }
@@ -99,12 +103,13 @@ class JsonBackupService:
                             f"{spec.bundle_key}: {fk_col} ausente em {row.get(spec.pk)}."
                         )
                         continue
-                    if str(fk_val) not in id_sets.get(parent_key, set()):
+                    if _norm_id(fk_val) not in id_sets.get(parent_key, set()):
                         errors.append(
-                            f"{spec.bundle_key}: {fk_col}={fk_val} não encontrado em {parent_key}."
+                            f"{spec.bundle_key}: {fk_col}={fk_val} não está em {parent_key} "
+                            f"no JSON (reexporte o backup ou inclua o registro pai)."
                         )
 
-        return errors
+        return _dedupe_errors(errors)
 
     def preview(self, payload: dict[str, Any], mode: ExportMode) -> dict[str, Any]:
         errors = self.validate_bundle(payload)
@@ -200,3 +205,14 @@ class JsonBackupService:
                 f"{out.get('processo_id')}|{out.get('versao_revisao')}"
             )
         return out
+
+
+def _dedupe_errors(errors: list[str]) -> list[str]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for message in errors:
+        if message in seen:
+            continue
+        seen.add(message)
+        unique.append(message)
+    return unique
