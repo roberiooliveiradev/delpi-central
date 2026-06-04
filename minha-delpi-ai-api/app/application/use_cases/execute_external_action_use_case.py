@@ -239,6 +239,7 @@ class ExecuteExternalActionUseCase:
         elif (
             table_presentation
             and not tree_presentation
+            and not chart_presentation
             and not any(
                 token in str(resolved_path or "").lower()
                 for token in ("/structure", "/parents", "/analyser")
@@ -282,6 +283,12 @@ class ExecuteExternalActionUseCase:
         elif structure_like and tree_presentation:
             preferred_format = "tree"
         elif price_like and text_presentation:
+            preferred_format = "text"
+        elif (
+            "/analyser" in path_lower
+            and text_presentation
+            and not session_format
+        ):
             preferred_format = "text"
         elif tree_presentation:
             preferred_format = "tree"

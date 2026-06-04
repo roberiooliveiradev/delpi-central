@@ -66,7 +66,7 @@ class ChatProductQueryIntentService:
         )
 
         if ChatProductOverviewIntentService.is_product_overview_message(message):
-            return ChatProductQueryIntent.SUMMARY
+            return ChatProductQueryIntent.ANALYSER
 
         if cls._looks_like_product_summary_question(normalized):
             return ChatProductQueryIntent.SUMMARY

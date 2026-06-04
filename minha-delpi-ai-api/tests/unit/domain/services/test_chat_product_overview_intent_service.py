@@ -17,10 +17,10 @@ def test_estoque_is_not_overview():
     assert not ChatProductOverviewIntentService.is_product_overview_message("estoque")
 
 
-def test_detect_maps_overview_to_summary_intent():
+def test_detect_maps_overview_to_analyser_intent():
     assert (
         ChatProductQueryIntentService.detect("me fale do produto 90260114")
-        == ChatProductQueryIntent.SUMMARY
+        == ChatProductQueryIntent.ANALYSER
     )
 
 

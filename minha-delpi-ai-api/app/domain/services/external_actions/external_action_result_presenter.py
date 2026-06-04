@@ -1522,7 +1522,19 @@ class ExternalActionResultPresenter:
         return sections
 
     def _build_product_analyser_body_lines(self, root: dict, product: dict) -> list[str]:
+        from app.domain.services.chat_product_analyser_divergence_service import (
+            ChatProductAnalyserDivergenceService,
+        )
+
         lines: list[str] = []
+        opening = ChatProductAnalyserDivergenceService.build_opening_narrative(
+            root,
+            product,
+        )
+
+        if opening:
+            lines.extend(["", opening, ""])
+
         profile_table = self._build_product_analyser_profile_markdown(product)
 
         if profile_table:
@@ -1535,8 +1547,20 @@ class ExternalActionResultPresenter:
         insights = self._build_product_analyser_insights(root, product)
 
         if insights:
-            lines.extend(["", "**Insights**", ""])
+            lines.extend(["", "**Destaques**", ""])
             lines.extend(f"- {line}" for line in insights)
+
+        attention = ChatProductAnalyserDivergenceService.build_attention_points(
+            root,
+            product,
+        )
+
+        if attention:
+            lines.extend(["", "**Pontos de atenção encontrados na API:**", ""])
+            lines.extend(
+                f"{index}. {point}"
+                for index, point in enumerate(attention, start=1)
+            )
 
         structure = root.get("structure")
 
@@ -1546,7 +1570,8 @@ class ExternalActionResultPresenter:
             lines.extend(
                 [
                     "",
-                    "A **estrutura** (BOM) está na visualização em **árvore** ou **tabela** abaixo.",
+                    "A **estrutura** (BOM) está nas visualizações em **árvore**, **tabela** "
+                    "e, quando disponível, **gráfico** abaixo.",
                 ]
             )
 
@@ -3583,6 +3608,50 @@ class ExternalActionResultPresenter:
             ),
         )
 
+    def _build_analyser_structure_type_chart(self, root: dict) -> dict | None:
+        structure = root.get("structure")
+
+        if not isinstance(structure, dict):
+            return None
+
+        counts: dict[str, int] = {}
+
+        for item in structure.get("items") or []:
+            if not isinstance(item, dict):
+                continue
+
+            components = [
+                component
+                for component in (item.get("components") or [])
+                if isinstance(component, dict)
+            ]
+
+            if components:
+                for component in components:
+                    comp_type = (
+                        str(component.get("type") or "Outros").strip().upper()
+                        or "OUTROS"
+                    )
+                    counts[comp_type] = counts.get(comp_type, 0) + 1
+                continue
+
+            comp_type = str(item.get("type") or "Outros").strip().upper() or "OUTROS"
+            counts[comp_type] = counts.get(comp_type, 0) + 1
+
+        if len(counts) < 2:
+            return None
+
+        labels = [f"{key} ({value})" for key, value in sorted(counts.items(), key=lambda pair: -pair[1])]
+        values = [value for _, value in sorted(counts.items(), key=lambda pair: -pair[1])]
+
+        return {
+            "type": "chart",
+            "chartType": "donut",
+            "title": "Composição por tipo de componente",
+            "labels": labels,
+            "datasets": [{"label": "Itens", "data": values}],
+        }
+
     def build_chart_presentation(self, data, *, path: str = "", force: bool = False) -> dict | None:
         """Gera presentation tipo chart APENAS quando dados são naturalmente visuais."""
         if not force:
@@ -3591,6 +3660,13 @@ class ExternalActionResultPresenter:
                 return None
 
         root = self._unwrap_data(data)
+
+        if isinstance(root, dict) and "/analyser" in str(path or "").lower():
+            normalized = self._normalize_analyser_root(root)
+            analyser_chart = self._build_analyser_structure_type_chart(normalized)
+
+            if analyser_chart:
+                return analyser_chart
 
         if not isinstance(root, dict):
             if isinstance(root, list) and root and isinstance(root[0], dict):

@@ -759,7 +759,20 @@ class ChatPresentationDecisionService:
                 reason="visão do produto — narrativa com insights antes da ficha tabular",
                 available_views=cls._merge_views(
                     available_formats,
-                    ["text", "table"],
+                    ["text", "table", "tree", "chart"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
+        if text_presentation and "/analyser" in intent_token:
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason="consulta completa do produto — texto, tabela, árvore e gráfico",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table", "tree", "chart"],
                 ),
                 rows=table_rows,
                 intent=intent,

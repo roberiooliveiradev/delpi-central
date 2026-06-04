@@ -127,6 +127,8 @@ def test_analyser_guide_and_inspection_use_tables_not_raw_dict():
     assert "Componentes referenciados" in body
     assert "**Estrutura do produto 90260140**" not in body
     assert "árvore" in body.lower() or "tabela" in body.lower()
+    assert "**Pontos de atenção encontrados na API:**" in body
+    assert "10120001" in body
 
 
 def test_analyser_text_presentation_aligns_with_body():
