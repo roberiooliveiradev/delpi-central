@@ -404,6 +404,10 @@ class Settings:
     CHAT_USER_MEMORY_MAX_ITEMS = int(
         os.getenv("CHAT_USER_MEMORY_MAX_ITEMS", "20")
     )
+    # Indexa memórias ativas no RAG por embedding (recuperação semântica).
+    CHAT_USER_MEMORY_RAG_INDEX = (
+        os.getenv("CHAT_USER_MEMORY_RAG_INDEX", "true").lower() == "true"
+    )
 
     # Glossário vivo (playbook §9–§13, Fase 4). Gated por CHAT_LEARNING_ENABLED.
     # Recupera definições aprovadas e injeta no contexto quando o termo aparece.
@@ -443,6 +447,10 @@ class Settings:
     )
     CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK = (
         os.getenv("CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK", "true").lower() == "true"
+    )
+    # Webhook opcional para disparar treino offline (Ollama/MLX) após export validado.
+    CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL = (
+        os.getenv("CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL", "").strip()
     )
 
     @classmethod

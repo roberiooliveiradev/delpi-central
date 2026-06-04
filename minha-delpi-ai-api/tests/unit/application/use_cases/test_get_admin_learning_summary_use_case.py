@@ -28,6 +28,9 @@ class _FakeVocabRepo:
             "byType": {"typo": 3},
         }
 
+    def list_top_typo_rules(self, *, limit: int = 8):
+        return [{"term": "vc", "normalizedTerm": "voce", "evidenceCount": 3}]
+
 
 class _FakeMemoryRepo:
     def summary(self):

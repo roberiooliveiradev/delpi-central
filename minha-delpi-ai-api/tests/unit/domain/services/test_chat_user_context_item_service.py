@@ -43,11 +43,12 @@ def test_classify_product_short_text():
     assert result["extractedEntities"]["productCode"] == "10080001"
 
 
-def test_classify_branch_short_text_neutral_label():
+def test_classify_branch_short_text_preserves_user_phrase():
     result = ChatUserContextItemService.classify("filial 01")
 
     assert result["kind"] == "context"
-    assert result["label"] == "01"
+    assert result["label"] == "filial 01"
+    assert result["extractedEntities"]["branch"] == "01"
 
 
 def test_classify_table_markdown():
@@ -147,7 +148,7 @@ def test_chip_from_item_branch_uses_entity_value_not_item_id():
 
     assert chip["kind"] == "context"
     assert chip["value"] == "01"
-    assert chip["label"] == "01"
+    assert chip["label"] == "filial 01"
     assert chip.get("itemId") == item["id"]
 
 

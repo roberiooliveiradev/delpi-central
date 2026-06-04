@@ -1306,11 +1306,24 @@ export type AdminLearningSummary = {
     evaluationCasesActive?: number;
     fineTuningSamplesApproved?: number;
     fineTuningDatasetsApproved?: number;
+    ragGlossaryIndexed?: number;
+    ragUserMemoryIndexed?: number;
   };
   fineTuning?: {
     samplesTotal: number;
     samplesApproved: number;
     samplesCaptured: number;
     datasetsApproved: number;
+  };
+  ragIndex?: {
+    glossaryDocuments: number;
+    userMemoryDocuments: number;
+  };
+  dashboard?: {
+    topTypoRules: Array<{
+      term: string;
+      normalizedTerm: string;
+      evidenceCount: number;
+    }>;
   };
 };

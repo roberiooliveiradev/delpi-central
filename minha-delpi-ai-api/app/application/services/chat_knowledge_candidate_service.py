@@ -222,6 +222,15 @@ class ChatKnowledgeCandidateService:
             promoted_term_id=term_row["id"],
         )
 
+        from app.domain.services.chat_learning_event_service import ChatLearningEventService
+
+        ChatLearningEventService.emit(
+            "chat.learning_candidate.promoted",
+            candidateId=candidate_id,
+            termId=term_row.get("id"),
+            candidateType=candidate.get("candidateType"),
+        )
+
         return {"candidate": updated, "term": term_row}
 
     def list_candidates(self, **kwargs) -> dict:

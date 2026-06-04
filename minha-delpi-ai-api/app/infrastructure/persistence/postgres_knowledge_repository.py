@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 
 from app.domain.entities.knowledge_chunk import KnowledgeChunk
 from app.domain.entities.knowledge_document import KnowledgeDocument
@@ -528,6 +528,18 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return [self._to_document_entity(model) for model in models]
 
+    def count_active_documents_by_source_type(self) -> dict[str, int]:
+        rows = (
+            db.session.query(
+                AiKnowledgeDocumentModel.source_type,
+                func.count(),
+            )
+            .filter(AiKnowledgeDocumentModel.active.is_(True))
+            .group_by(AiKnowledgeDocumentModel.source_type)
+            .all()
+        )
+        return {str(source_type): int(count) for source_type, count in rows}
+
     def deactivate_document(self, document_id: UUID) -> KnowledgeDocument | None:
         model = AiKnowledgeDocumentModel.query.filter(
             AiKnowledgeDocumentModel.id == document_id
@@ -621,6 +633,12 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         user_id = filters.get("user_id")
         if user_id:
+            allowed_clauses.append(
+                db.and_(
+                    metadata["scope"].astext == "user_memory",
+                    metadata["userId"].astext == str(user_id),
+                )
+            )
             query = query.filter(
                 db.or_(
                     metadata["userId"].astext.is_(None),

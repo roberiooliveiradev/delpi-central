@@ -8,6 +8,10 @@ def should_hide_source_from_client(source: dict | None) -> bool:
     if source_type == "glossary":
         return False
 
+    # Memória persistente do usuário não é fonte citável ao cliente.
+    if source_type == "user_memory":
+        return True
+
     scope = str(source.get("scope") or "").strip().lower()
 
     if scope in {"global", "agent_source"}:

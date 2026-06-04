@@ -28,12 +28,14 @@ def test_build_context_chips_topic_and_task():
     assert "task" in kinds
 
 
-def test_usage_view_folds_entities_into_unified_context():
+def test_usage_view_lists_only_user_context_item_labels():
     usage = ChatMemoryUxService.build_usage_view(
         {
             "lastEntities": {"productCode": "90260114", "branch": "02"},
             "userContextItems": [
                 {"id": "1", "label": "Política de devolução", "kind": "note"},
+                {"id": "2", "label": "filial 02", "kind": "context"},
+                {"id": "3", "label": "90260114", "kind": "context"},
             ],
         },
     )
@@ -41,8 +43,9 @@ def test_usage_view_folds_entities_into_unified_context():
     context = usage.get("userContextItems") or []
 
     assert "90260114" in context
-    assert "02" in context
+    assert "filial 02" in context
     assert "Política de devolução" in context
+    assert "Filial 02" not in context
 
 
 def test_usage_view_context_dedupes_entity_and_manual_item():
@@ -65,6 +68,9 @@ def test_memory_introspection_direct_answer():
         "Quais informações você está usando?",
         {
             "lastEntities": {"productCode": "10080001"},
+            "userContextItems": [
+                {"id": "p1", "label": "10080001", "kind": "context"},
+            ],
             "conversationState": {"activeTopic": "estoque"},
             "preferencesAppliedLabels": ["Respostas curtas"],
         },

@@ -36,10 +36,32 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
+.mdc-admin-learning__kpis-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .mdc-admin-learning__kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
+}
+
+.mdc-admin-learning__typo-hints {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.08));
+  font-size: 12px;
+}
+
+.mdc-admin-learning__typo-hints ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.mdc-admin-learning__typo-hints li {
+  margin: 2px 0;
 }
 
 .mdc-admin-learning__kpi {

@@ -38,7 +38,7 @@ def test_chips_from_overlay():
                 {
                     "id": "b1",
                     "kind": "context",
-                    "label": "02",
+                    "label": "filial 02",
                     "content": "filial 02",
                     "extractedEntities": {"branch": "02"},
                 },

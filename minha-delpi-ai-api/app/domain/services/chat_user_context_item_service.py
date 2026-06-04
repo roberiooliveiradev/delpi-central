@@ -26,6 +26,12 @@ _WAREHOUSE_RE = re.compile(
 )
 _TABLE_ROW_RE = re.compile(r"^\s*\|.+\|\s*$", re.MULTILINE)
 
+_USER_CONTEXT_PROMPT_MARKER = "Contexto adicionado pelo usuário"
+_USER_CONTEXT_SECTION_END_RE = re.compile(
+    r"^(?:Memória ativa|Preferências|Resolução de referências|Assunto:|Contexto comprimido)",
+    re.IGNORECASE | re.MULTILINE,
+)
+
 
 _CONVERSATION_KINDS = frozenset({"question", "answer", "turn"})
 _CONTEXT_CHIP_KIND = "context"
@@ -164,16 +170,28 @@ class ChatUserContextItemService:
 
     @classmethod
     def neutral_entity_label(cls, kind: str, value: str) -> str:
-        """Rótulo neutro para código/filial/armazém (sem prefixo Produto/Filial)."""
+        """Rótulo neutro quando só há o valor (ex.: captura automática sem frase do usuário)."""
         token = str(value or "").strip()
 
         if not token:
             return "Contexto"
 
-        if str(kind or "").strip().lower() in _ENTITY_ITEM_KINDS:
-            return token[:_MAX_LABEL_CHARS]
-
         return token[:_MAX_LABEL_CHARS]
+
+    @classmethod
+    def _label_for_context_capture(cls, content: str) -> str:
+        """Preserva o que o usuário digitou em itens curtos (ex.: «filial 02», «10080055»)."""
+        text = " ".join(str(content or "").split()).strip()
+
+        if not text:
+            return "Contexto"
+
+        if len(text) <= _MAX_LABEL_CHARS:
+            return text
+
+        snippet = cls._label_from_content(text)
+
+        return snippet or text[:_MAX_LABEL_CHARS]
 
     @classmethod
     def classify(cls, content: str, *, filename: str | None = None) -> dict[str, Any]:
@@ -221,21 +239,21 @@ class ChatUserContextItemService:
         if product_code and len(text) <= 80 and not branch_match and not warehouse_match:
             return {
                 "kind": _CONTEXT_CHIP_KIND,
-                "label": cls.neutral_entity_label("product", product_code),
+                "label": cls._label_for_context_capture(text),
                 "extractedEntities": extracted,
             }
 
         if branch_match and len(text) <= 60:
             return {
                 "kind": _CONTEXT_CHIP_KIND,
-                "label": cls.neutral_entity_label("branch", extracted["branch"]),
+                "label": cls._label_for_context_capture(text),
                 "extractedEntities": extracted,
             }
 
         if warehouse_match and len(text) <= 60:
             return {
                 "kind": _CONTEXT_CHIP_KIND,
-                "label": cls.neutral_entity_label("warehouse", extracted["warehouse"]),
+                "label": cls._label_for_context_capture(text),
                 "extractedEntities": extracted,
             }
 
@@ -432,6 +450,73 @@ class ChatUserContextItemService:
             result.get("lastEntities"),
         )
         return result
+
+    @classmethod
+    def _product_code_from_item(cls, item: dict[str, Any]) -> str | None:
+        extracted = item.get("extractedEntities") or {}
+        token = str(extracted.get("productCode") or "").strip()
+
+        if token and ChatProductQueryIntentService.is_plausible_product_code(token):
+            return token
+
+        for field in ("content", "label"):
+            text = str(item.get(field) or "").strip()
+
+            if not text:
+                continue
+
+            code = ChatProductQueryIntentService.extract_product_code(text)
+
+            if code:
+                return code
+
+        return None
+
+    @classmethod
+    def resolve_product_code_from_items(
+        cls,
+        items: list[dict[str, Any]] | None,
+    ) -> str | None:
+        """Último código em foco nos itens de contexto (prioriza source=user)."""
+        normalized = [item for item in (items or []) if isinstance(item, dict)]
+
+        if not normalized:
+            return None
+
+        for item in reversed(normalized):
+            if str(item.get("source") or "").strip().lower() == "user":
+                code = cls._product_code_from_item(item)
+
+                if code:
+                    return code
+
+        for item in reversed(normalized):
+            code = cls._product_code_from_item(item)
+
+            if code:
+                return code
+
+        return None
+
+    @classmethod
+    def resolve_product_code_from_context_prompt(
+        cls,
+        conversation_context: str | None,
+    ) -> str | None:
+        """Extrai o código do bloco de contexto do usuário no prompt (antes do histórico)."""
+        raw = str(conversation_context or "")
+        marker_index = raw.find(_USER_CONTEXT_PROMPT_MARKER)
+
+        if marker_index < 0:
+            return None
+
+        section = raw[marker_index:]
+        end_match = _USER_CONTEXT_SECTION_END_RE.search(section)
+
+        if end_match:
+            section = section[: end_match.start()]
+
+        return ChatProductQueryIntentService.extract_last_product_code(section)
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str | None:

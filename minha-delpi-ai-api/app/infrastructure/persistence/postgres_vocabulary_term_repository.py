@@ -198,6 +198,22 @@ class PostgresVocabularyTermRepository:
 
         return self._to_dict(row) if row else None
 
+    def list_top_typo_rules(self, *, limit: int = 8) -> list[dict]:
+        rows = (
+            AiVocabularyTermModel.query.filter(
+                AiVocabularyTermModel.approved.is_(True),
+                AiVocabularyTermModel.active.is_(True),
+                AiVocabularyTermModel.type.in_(_NORMALIZATION_TYPES),
+            )
+            .order_by(
+                AiVocabularyTermModel.evidence_count.desc(),
+                AiVocabularyTermModel.updated_at.desc(),
+            )
+            .limit(max(1, min(int(limit), 20)))
+            .all()
+        )
+        return [self._to_dict(row) for row in rows]
+
     def summary(self) -> dict:
         model = AiVocabularyTermModel
 

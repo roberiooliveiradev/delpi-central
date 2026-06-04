@@ -57,6 +57,20 @@ def test_hide_legacy_unscoped_corporate_source():
     )
 
 
+def test_hide_user_memory_source():
+    assert (
+        should_hide_source_from_client(
+            {
+                "scope": "user_memory",
+                "sourceType": "user_memory",
+                "title": "Preferência",
+                "userId": "u1",
+            }
+        )
+        is True
+    )
+
+
 def test_show_glossary_source_even_when_global():
     assert (
         should_hide_source_from_client(

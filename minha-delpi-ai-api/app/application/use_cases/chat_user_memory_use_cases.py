@@ -72,4 +72,21 @@ class ReviewUserMemoryItemUseCase:
         if result is None:
             raise ValueError("memory item not found")
 
+        try:
+            from app.application.services.chat_memory_knowledge_index_service import (
+                ChatMemoryKnowledgeIndexService,
+            )
+            from app.domain.services.chat_learning_event_service import (
+                ChatLearningEventService,
+            )
+
+            ChatMemoryKnowledgeIndexService().sync_item(result)
+            ChatLearningEventService.emit(
+                "chat.memory.forgotten" if normalized == "forget" else "chat.memory.restored",
+                memoryItemId=item_id,
+                status=result.get("status"),
+            )
+        except Exception:
+            pass
+
         return result

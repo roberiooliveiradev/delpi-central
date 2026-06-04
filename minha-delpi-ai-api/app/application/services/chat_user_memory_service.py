@@ -75,12 +75,14 @@ class ChatUserMemoryService:
                 )
 
                 if existing is not None:
-                    return self.repository.bump_evidence(
+                    updated = self.repository.bump_evidence(
                         existing["id"],
                         confidence=detected["confidence"],
                     )
+                    self._sync_rag_index(updated)
+                    return updated
 
-                return self.repository.create(
+                created = self.repository.create(
                     type=detected["type"],
                     content=detected["content"],
                     content_norm=detected["contentNorm"],
@@ -92,8 +94,34 @@ class ChatUserMemoryService:
                     source=detected["source"],
                     created_by=user_uuid,
                 )
+                self._sync_rag_index(created)
+                from app.domain.services.chat_learning_event_service import (
+                    ChatLearningEventService,
+                )
+
+                ChatLearningEventService.emit(
+                    "chat.memory.created",
+                    memoryItemId=created.get("id"),
+                    userId=user_id,
+                    type=detected["type"],
+                )
+                return created
         except Exception:
             return None
+
+    @staticmethod
+    def _sync_rag_index(item: dict | None) -> None:
+        if not item:
+            return
+
+        try:
+            from app.application.services.chat_memory_knowledge_index_service import (
+                ChatMemoryKnowledgeIndexService,
+            )
+
+            ChatMemoryKnowledgeIndexService().sync_item(item)
+        except Exception:
+            return
 
     def format_prompt_block_for(
         self,

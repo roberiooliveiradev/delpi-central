@@ -201,12 +201,9 @@ class ChatMemoryUxService:
             ChatUserContextItemService,
         )
 
-        # Tudo que o chat capturou (produto/filial/etc.) é apresentado como
-        # contexto unificado — sem uma seção separada de "entidades".
-        user_context = ChatUserContextItemService.merge_context_labels(
-            ChatUserContextItemService.entity_context_labels(entities),
-            ChatUserContextItemService.items_for_usage_view(snap),
-        )
+        # Painel e barra usam só rótulos dos itens de contexto (o que o usuário
+        # digitou ou o chat gravou), sem duplicar códigos soltos de lastEntities.
+        user_context = ChatUserContextItemService.items_for_usage_view(snap)
 
         return {
             "layers": (snap.get("memoryContextDebug") or {}).get("layers") or [],

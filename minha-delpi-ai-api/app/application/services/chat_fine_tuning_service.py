@@ -282,7 +282,38 @@ class ChatFineTuningService:
             completed_at=now,
         )
 
+        webhook_result = self._notify_train_webhook(
+            run=updated,
+            export_stats=export["stats"],
+        )
+        if webhook_result:
+            metrics["webhook"] = webhook_result
+
         return {"run": updated, "metrics": metrics}
+
+    @staticmethod
+    def _notify_train_webhook(*, run: dict, export_stats: dict) -> dict | None:
+        url = Settings.CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL
+
+        if not url:
+            return None
+
+        try:
+            import requests
+
+            response = requests.post(
+                url,
+                json={
+                    "runId": run.get("id"),
+                    "datasetId": run.get("datasetId"),
+                    "targetModel": run.get("targetModel"),
+                    "exportStats": export_stats,
+                },
+                timeout=15,
+            )
+            return {"statusCode": response.status_code, "ok": response.ok}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)[:200]}
 
     def deploy_run(self, run_id: int) -> dict:
         run = self._repo().get_run(run_id)

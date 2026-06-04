@@ -75,6 +75,7 @@ Próximos turnos (send/stream)
 | `CHAT_USER_MEMORY_CAPTURE` | `true` | Captura preferências/perfil duráveis ditos no turno. |
 | `CHAT_USER_MEMORY_APPLY` | `true` | Injeta a memória persistente no contexto do turno. |
 | `CHAT_USER_MEMORY_MAX_ITEMS` | `20` | Teto de itens de memória injetados por turno. |
+| `CHAT_USER_MEMORY_RAG_INDEX` | `true` | Indexa memórias ativas no RAG por embedding. |
 | `CHAT_LEARNING_GLOSSARY_RETRIEVAL` | `true` | Injeta definições do glossário citadas na pergunta. |
 | `CHAT_LEARNING_GLOSSARY_CAPTURE` | `true` | Captura termo desconhecido perguntado ("o que é X?") como candidato. |
 | `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `true` | Pesquisa significado público na web para enriquecer o candidato. |
@@ -99,6 +100,7 @@ Próximos turnos (send/stream)
 - `POST /admin/learning/evaluation-cases/{id}/review` — body `{ "action": "enable|disable" }`.
 - `GET /admin/learning/memory?userId=&scope=&type=&status=&limit=&offset=` — lista memórias persistentes.
 - `POST /admin/learning/memory/{id}/review` — body `{ "action": "forget|restore" }` (esquecer/restaurar).
+- `POST /admin/learning/memory/reindex?limit=2000` — backfill do índice RAG de memórias ativas.
 - `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques + memória).
 
 ## Memória persistente do usuário (Fase 3)
@@ -115,8 +117,10 @@ Complementa a memória de **sessão** (`ai_chat_session_memory`) com memória
   "Memória persistente do usuário" é mesclado ao `conversation_context` do turno.
 - **Governança/esquecer**: status `active → forgotten` (e `restore`), via admin
   (`/admin/learning/memory`), atendendo ao requisito de permitir apagar memória.
-- `embedding` (JSONB) fica reservado para recuperação semântica futura (Fase 5);
-  a recuperação atual é por `user_id`/`project_id` + recência/evidência.
+- Recuperação lexical: `user_id`/`project_id` + recência/evidência (`list_active_for_context`).
+- Recuperação semântica (RAG): `ChatMemoryKnowledgeIndexService` indexa itens `active` com
+  `source_type=user_memory`, `scope=user_memory` e `userId` no metadata; flag
+  `CHAT_USER_MEMORY_RAG_INDEX` (default `true`). Backfill: `POST /admin/learning/memory/reindex`.
 
 ## KPIs (playbook §36)
 
@@ -222,7 +226,8 @@ GET .../datasets/{id}/export → JSONL {messages, intent?, category?}
 Tabelas: `ai_fine_tuning_samples`, `ai_fine_tuning_datasets`, `ai_fine_tuning_runs`.
 `ChatFineTuningAnonymizationService` redige PII/segredos antes de persistir.
 `execute_run_training` valida o export e marca o job como `completed` (orquestração;
-treino real em Ollama/MLX fica externo).
+treino real em Ollama/MLX fica externo). Opcional: `CHAT_LEARNING_FINE_TUNING_TRAIN_WEBHOOK_URL`
+dispara POST com `runId`, `datasetId`, `exportStats` após validação.
 
 | Flag | Default |
 |------|---------|
@@ -232,8 +237,13 @@ treino real em Ollama/MLX fica externo).
 Endpoints: `/admin/learning/fine-tuning/samples`, `/datasets`, `/datasets/{id}/export`,
 `/datasets/{id}/runs`, `/runs/{id}/{export|train|deploy|rollback}`.
 
-## Não coberto nesta fase (próximas)
+## Dashboard e telemetria (playbook §36–§38)
 
-- Recuperação semântica de `memory_items` por embedding (indexação no RAG) — a Fase 5
-  cobre o glossário; a memória persistente segue por user/projeto + recência.
-- Integração automática com runner Ollama/MLX (treino GPU) dentro do cluster.
+- `GetAdminLearningSummaryUseCase` enriquece KPIs com `ragIndex` (documentos ativos por
+  `source_type`), `dashboard.topTypoRules` (typos aprovados mais usados) e destaques RAG.
+- `ChatLearningEventService` emite logs estruturados `learning_event` (promoção, memória
+  criada/esquecida) para integração event-driven futura.
+
+## Fora do escopo da API
+
+- Runner Ollama/MLX embutido no cluster (treino GPU permanece externo; use webhook opcional).

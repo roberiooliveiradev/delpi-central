@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
+from app.domain.services.chat_learning_dashboard_service import (
+    ChatLearningDashboardService,
+)
 from app.domain.services.chat_learning_metrics_service import (
     ChatLearningMetricsService,
 )
@@ -73,4 +76,20 @@ class GetAdminLearningSummaryUseCase:
             fine_tuning=fine_tuning,
         )
         summary["windowHours"] = window
+
+        try:
+            from app.infrastructure.persistence.postgres_knowledge_repository import (
+                PostgresKnowledgeRepository,
+            )
+
+            rag_counts = PostgresKnowledgeRepository().count_active_documents_by_source_type()
+            top_typos = self.vocabulary_repository.list_top_typo_rules(limit=8)
+            summary = ChatLearningDashboardService.enrich(
+                summary=summary,
+                rag_index_counts=rag_counts,
+                top_typo_rules=top_typos,
+            )
+        except Exception:
+            pass
+
         return summary

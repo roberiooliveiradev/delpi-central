@@ -309,6 +309,14 @@ def make_reindex_glossary_knowledge_use_case():
     return ReindexGlossaryKnowledgeUseCase()
 
 
+def make_reindex_user_memory_knowledge_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ReindexUserMemoryKnowledgeUseCase,
+    )
+
+    return ReindexUserMemoryKnowledgeUseCase()
+
+
 def make_get_admin_learning_summary_use_case():
     from app.application.use_cases.get_admin_learning_summary_use_case import (
         GetAdminLearningSummaryUseCase,

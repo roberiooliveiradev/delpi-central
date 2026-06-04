@@ -131,6 +131,32 @@ class ListVocabularyTermsUseCase:
         }
 
 
+class ReindexUserMemoryKnowledgeUseCase:
+    """Backfill do índice RAG de memórias persistentes ativas."""
+
+    def __init__(self, memory_repository=None):
+        if memory_repository is None:
+            from app.infrastructure.persistence.postgres_memory_item_repository import (
+                PostgresMemoryItemRepository,
+            )
+
+            memory_repository = PostgresMemoryItemRepository()
+
+        self.memory_repository = memory_repository
+
+    def execute(self, *, limit: int = 2000) -> dict:
+        from app.application.services.chat_memory_knowledge_index_service import (
+            ChatMemoryKnowledgeIndexService,
+        )
+
+        items = self.memory_repository.list_active_for_reindex(
+            limit=max(1, min(int(limit), 5000)),
+        )
+        result = ChatMemoryKnowledgeIndexService().reindex_all(items)
+        result["total"] = len(items)
+        return result
+
+
 class ReindexGlossaryKnowledgeUseCase:
     """Backfill do índice RAG do glossário (playbook Fase 5).
 

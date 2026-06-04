@@ -67,19 +67,44 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: String(summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0),
       hint: `${summary.fineTuning?.samplesCaptured ?? 0} capturadas`,
     },
+    {
+      label: "RAG indexado",
+      value: String(
+        (summary.highlights.ragGlossaryIndexed ?? summary.ragIndex?.glossaryDocuments ?? 0) +
+          (summary.highlights.ragUserMemoryIndexed ?? summary.ragIndex?.userMemoryDocuments ?? 0),
+      ),
+      hint: `glossário ${summary.ragIndex?.glossaryDocuments ?? 0} · memória ${summary.ragIndex?.userMemoryDocuments ?? 0}`,
+    },
   ];
 
+  const topTypos = summary.dashboard?.topTypoRules ?? [];
+
   return (
-    <div className="mdc-admin-learning__kpis">
-      {cards.map((card) => (
-        <article key={card.label} className="mdc-admin-learning__kpi">
-          <span className="mdc-admin-learning__kpi-label">{card.label}</span>
-          <strong className="mdc-admin-learning__kpi-value">{card.value}</strong>
-          {card.hint ? (
-            <small className="mdc-admin-learning__kpi-hint">{card.hint}</small>
-          ) : null}
-        </article>
-      ))}
+    <div className="mdc-admin-learning__kpis-wrap">
+      <div className="mdc-admin-learning__kpis">
+        {cards.map((card) => (
+          <article key={card.label} className="mdc-admin-learning__kpi">
+            <span className="mdc-admin-learning__kpi-label">{card.label}</span>
+            <strong className="mdc-admin-learning__kpi-value">{card.value}</strong>
+            {card.hint ? (
+              <small className="mdc-admin-learning__kpi-hint">{card.hint}</small>
+            ) : null}
+          </article>
+        ))}
+      </div>
+      {topTypos.length > 0 ? (
+        <aside className="mdc-admin-learning__typo-hints">
+          <span className="mdc-admin-learning__kpi-label">Typos mais usados</span>
+          <ul>
+            {topTypos.map((rule) => (
+              <li key={`${rule.term}-${rule.normalizedTerm}`}>
+                <code>{rule.term}</code> → <code>{rule.normalizedTerm}</code>
+                {rule.evidenceCount > 0 ? ` (${rule.evidenceCount}×)` : ""}
+              </li>
+            ))}
+          </ul>
+        </aside>
+      ) : null}
     </div>
   );
 }

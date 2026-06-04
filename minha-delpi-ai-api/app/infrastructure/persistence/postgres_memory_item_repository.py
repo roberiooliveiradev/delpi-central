@@ -192,6 +192,15 @@ class PostgresMemoryItemRepository:
         db.session.flush()
         return self._to_dict(row)
 
+    def list_active_for_reindex(self, *, limit: int = 2000) -> list[dict]:
+        rows = (
+            AiMemoryItemModel.query.filter(AiMemoryItemModel.status == "active")
+            .order_by(AiMemoryItemModel.updated_at.desc())
+            .limit(max(1, min(int(limit), 5000)))
+            .all()
+        )
+        return [self._to_dict(row) for row in rows]
+
     def summary(self) -> dict:
         model = AiMemoryItemModel
 
