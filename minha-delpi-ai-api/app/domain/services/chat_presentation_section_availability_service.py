@@ -173,12 +173,40 @@ class ChatPresentationSectionAvailabilityService:
         return bool(markdown.strip())
 
     @classmethod
+    def _highlights_header(cls) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "analyserMarkdown",
+            "highlightsHeader",
+            default="**Destaques**",
+        )
+
+    @classmethod
+    def _attention_header_prefix(cls) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "analyserMarkdown",
+            "attentionHeaderPrefix",
+            default="**Pontos de atenção",
+        )
+
+    @classmethod
     def _has_highlights(cls, markdown: str) -> bool:
-        if "**Destaques**" not in markdown:
+        marker = cls._highlights_header()
+
+        if marker not in markdown:
             return False
 
-        block = markdown.split("**Destaques**", 1)[-1]
-        stop_tokens = ("**Pontos de atenção", "###", "**Plano", "**Roteiro")
+        block = markdown.split(marker, 1)[-1]
+        stop_tokens = (cls._attention_header_prefix(), "###", "**Plano", "**Roteiro")
 
         for token in stop_tokens:
             if token in block:
@@ -200,10 +228,12 @@ class ChatPresentationSectionAvailabilityService:
 
     @classmethod
     def _has_attention(cls, markdown: str) -> bool:
-        if "**Pontos de atenção" not in markdown:
+        marker = cls._attention_header_prefix()
+
+        if marker not in markdown:
             return False
 
-        block = markdown.split("**Pontos de atenção", 1)[-1]
+        block = markdown.split(marker, 1)[-1]
         numbered = re.findall(r"^\s*\d+\.\s+\S", block, flags=re.MULTILINE)
 
         return bool(numbered)

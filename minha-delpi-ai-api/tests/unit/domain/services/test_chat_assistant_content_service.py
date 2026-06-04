@@ -9,6 +9,27 @@ def test_loads_stream_activity_phase_groups():
     assert label == "Consultando"
 
 
+def test_analyser_insights_attention_keys_exist():
+    message = ChatAssistantContentService.get(
+        "analyser_insights",
+        "attention",
+        "guideMissing",
+    )
+
+    assert "roteiro" in message.lower()
+
+
+def test_presenter_kpi_title_from_path_matchers():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+
+    assert "PMR" in presenter._kpi_title("/financial/pmr")
+    assert "CPV" in presenter._kpi_title("/production/cpv")
+
+
 def test_sql_error_maps_to_error_handling_message():
     summary = ChatAssistantContentService.get_error_type(
         "sql_syntax_error",

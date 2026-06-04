@@ -29,7 +29,8 @@ Wrappers especializados (mantêm API estável):
 |---------|---------|-------------------|
 | `external_action_responses.json` | SQL, produção, composite, temporal, segurança em actions | `ExternalActionResponseContentService`, composite, presenter (parcial) |
 | `product_operational_content.json` | Produto: escopos, plural, presenter estoque, presentation MFE | `ChatProductOperationalContentService`, plural, multi-scope |
-| `presenter_content.json` | Títulos de rotas/KPI, markdown analyser | `ExternalActionResultPresenter._infer_items_title` |
+| `presenter_content.json` | Títulos de rotas/KPI, markdown analyser, matchers KPI | `ExternalActionResultPresenter` |
+| `analyser_insights.json` | Narrativa de abertura e pontos de atenção do `/analyser` | `ChatProductAnalyserDivergenceService` |
 | `error_handling.json` | Erros recuperáveis, chips, SQL tipado | `ChatErrorHandlingClassifier`, SQL interpretation |
 | `sql_execution_errors.json` | Ponte tipos SQL → `error_handling.types` | `ChatSqlExecutionErrorInterpretationService` |
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
@@ -64,14 +65,15 @@ Wrappers especializados (mantêm API estável):
 - Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
 - Interpretação de dados (marcadores genéricos) → `data_interpretation.json`
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
+- KPI por fragmento de path → `presenter_content.kpiPathMatchers` + `kpiTitles`
+- Analyser (destaques, atenção, PMR, pais, compras) → `presenter_content.analyserMarkdown` + `analyser_insights.json`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. `analyser_insights.json` — `chat_product_analyser_divergence_service.py`, seções `**Destaques**` no presenter
-2. `presenter_content.json` — KPI titles (`_kpi_title`), narrativas analyser restantes
-3. Termos de intenção ainda inline em `chat_product_query_intent_service.py` (parents regex mantém lógica; termos literais podem ir para JSON)
+1. Termos de intenção ainda inline em `chat_product_query_intent_service.py` (parents regex mantém lógica; termos literais podem ir para JSON)
+2. Narrativas dinâmicas restantes no presenter (resumos de parents, estrutura, SQL) — avaliar bundle `presenter_narratives.json`
 
 ## Como adicionar conteúdo
 

@@ -1,0 +1,34 @@
+{
+  "attention": {
+    "guideMissing": "Roteiro não retornado: não há operações registradas na rota analisada.",
+    "guideNoOperations": "Roteiro retornou itens, mas nenhum traz operações preenchidas — confirme no ERP se o roteiro está incompleto ou se a API filtrou o detalhe.",
+    "inspectionEmptyQp": "Inspeções com blocos QP6/QP7/QP8 vazios nos itens: {sample}{suffix}.",
+    "inspectionMissingQp": "Registros de inspeção sem blocos QP6/QP7/QP8 estruturados: {sample}.",
+    "crossOnlyInspection": "Componente **{code}** aparece na inspeção, mas não consta na estrutura retornada — vale conferir desenho, cadastro técnico ou divergência entre bases.",
+    "crossOnlyInspectionMore": "Há mais {count} código(s) só na inspeção (não listados acima).",
+    "crossOnlyStructure": "Na estrutura há componente(s) sem espelho explícito na inspeção retornada: {sample}.",
+    "cadastralBlocked": "Bloqueio «{blocked}» — valide liberação comercial/produção.",
+    "cadastralNoPurchase": "Sem compras recentes — item fabricado ou sem movimentação de compra.",
+    "cadastralRefMismatch": "Referências distintas no cadastro: desenho **{drawing}** × ref. cliente **{customer_ref}**."
+  },
+  "opening": {
+    "productLine": "O produto **{code}**",
+    "descriptionSuffix": " — {description}",
+    "metaSeparator": " , ",
+    "metaType": "tipo **{type}**",
+    "metaGroup": "grupo **{group_code}**",
+    "metaWrapper": "({meta})",
+    "structureIntro": "A estrutura de nível 1 inclui: {composition}{ellipsis}",
+    "structureEllipsis": "…",
+    "availabilityWithGuide": "roteiro ({total} registro(s))",
+    "availabilityNoGuide": "roteiro sem operações retornadas",
+    "availabilityWithInspection": "inspeção ({total} registro(s))",
+    "availabilityNoInspection": "inspeção não cadastrada",
+    "availabilityWithStructure": "estrutura ({total} item(ns) nível 1)",
+    "availabilityEmptyStructure": "estrutura vazia na API",
+    "sourcesFooter": "Fontes cruzadas nesta consulta: {availability}."
+  },
+  "suffix": {
+    "andMoreCodes": " e mais {count}"
+  }
+}

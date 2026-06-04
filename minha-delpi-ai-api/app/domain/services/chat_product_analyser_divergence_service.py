@@ -4,8 +4,23 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
+
+_BUNDLE = "analyser_insights"
+
 
 class ChatProductAnalyserDivergenceService:
+    @classmethod
+    def _txt(cls, *path: str, default: str = "", **values: str) -> str:
+        if values:
+            return ChatAssistantContentService.format(
+                _BUNDLE, *path, default=default, **values
+            )
+
+        return ChatAssistantContentService.get(_BUNDLE, *path, default=default)
+
     @classmethod
     def build_attention_points(cls, root: dict | None, product: dict | None) -> list[str]:
         if not isinstance(root, dict):
@@ -41,32 +56,44 @@ class ChatProductAnalyserDivergenceService:
         if not code:
             return None
 
-        parts = [
-            f"O produto **{code}**",
-        ]
+        line = cls._txt("opening", "productLine", code=code)
 
         if description:
-            parts[0] += f" — {description}"
+            line += cls._txt("opening", "descriptionSuffix", description=description)
 
+        parts = [line]
         meta_bits: list[str] = []
 
         if product_type:
-            meta_bits.append(f"tipo **{product_type}**")
+            meta_bits.append(cls._txt("opening", "metaType", type=product_type))
 
         if group_code:
-            meta_bits.append(f"grupo **{group_code}**")
+            meta_bits.append(cls._txt("opening", "metaGroup", group_code=group_code))
 
         if meta_bits:
-            parts.append(f"({' , '.join(meta_bits)})")
+            parts.append(
+                cls._txt(
+                    "opening",
+                    "metaWrapper",
+                    meta=cls._txt("opening", "metaSeparator").join(meta_bits),
+                )
+            )
 
         composition = cls._structure_component_labels(root)
 
         if composition:
+            ellipsis = (
+                cls._txt("opening", "structureEllipsis")
+                if len(composition) > 8
+                else ""
+            )
             parts.append(
-                "A estrutura de nível 1 inclui: "
-                + ", ".join(composition[:8])
-                + ("…" if len(composition) > 8 else "")
-                + "."
+                cls._txt(
+                    "opening",
+                    "structureIntro",
+                    composition=", ".join(composition[:8]),
+                    ellipsis=ellipsis,
+                )
             )
 
         guide_total = cls._collection_total(root.get("guide"))
@@ -76,22 +103,44 @@ class ChatProductAnalyserDivergenceService:
         availability: list[str] = []
 
         if guide_total and int(guide_total) > 0:
-            availability.append(f"roteiro ({guide_total} registro(s))")
+            availability.append(
+                cls._txt(
+                    "opening",
+                    "availabilityWithGuide",
+                    total=str(guide_total),
+                )
+            )
         else:
-            availability.append("roteiro sem operações retornadas")
+            availability.append(cls._txt("opening", "availabilityNoGuide"))
 
         if inspection_total and int(inspection_total) > 0:
-            availability.append(f"inspeção ({inspection_total} registro(s))")
+            availability.append(
+                cls._txt(
+                    "opening",
+                    "availabilityWithInspection",
+                    total=str(inspection_total),
+                )
+            )
         else:
-            availability.append("inspeção não cadastrada")
+            availability.append(cls._txt("opening", "availabilityNoInspection"))
 
         if structure_total and int(structure_total) > 0:
-            availability.append(f"estrutura ({structure_total} item(ns) nível 1)")
+            availability.append(
+                cls._txt(
+                    "opening",
+                    "availabilityWithStructure",
+                    total=str(structure_total),
+                )
+            )
         else:
-            availability.append("estrutura vazia na API")
+            availability.append(cls._txt("opening", "availabilityEmptyStructure"))
 
         parts.append(
-            "Fontes cruzadas nesta consulta: " + "; ".join(availability) + "."
+            cls._txt(
+                "opening",
+                "sourcesFooter",
+                availability="; ".join(availability),
+            )
         )
 
         return " ".join(parts)
@@ -107,9 +156,7 @@ class ChatProductAnalyserDivergenceService:
         total = cls._collection_total(guide)
 
         if total == 0 or not items:
-            return [
-                "Roteiro não retornado: não há operações registradas na rota analisada."
-            ]
+            return [cls._txt("attention", "guideMissing")]
 
         without_operations = [
             str(item.get("product_code") or item.get("product") or "?").strip()
@@ -118,10 +165,7 @@ class ChatProductAnalyserDivergenceService:
         ]
 
         if without_operations and len(without_operations) == len(items):
-            return [
-                "Roteiro retornou itens, mas nenhum traz operações preenchidas — "
-                "confirme no ERP se o roteiro está incompleto ou se a API filtrou o detalhe."
-            ]
+            return [cls._txt("attention", "guideNoOperations")]
 
         return []
 
@@ -159,17 +203,24 @@ class ChatProductAnalyserDivergenceService:
 
         if empty_qp:
             sample = ", ".join(empty_qp[:5])
-            suffix = f" e mais {len(empty_qp) - 5}" if len(empty_qp) > 5 else ""
+            suffix = (
+                cls._txt("suffix", "andMoreCodes", count=str(len(empty_qp) - 5))
+                if len(empty_qp) > 5
+                else ""
+            )
             points.append(
-                "Inspeções com blocos QP6/QP7/QP8 vazios nos itens: "
-                f"{sample}{suffix}."
+                cls._txt(
+                    "attention",
+                    "inspectionEmptyQp",
+                    sample=sample,
+                    suffix=suffix,
+                )
             )
 
         if missing_blocks:
             sample = ", ".join(missing_blocks[:5])
             points.append(
-                "Registros de inspeção sem blocos QP6/QP7/QP8 estruturados: "
-                f"{sample}."
+                cls._txt("attention", "inspectionMissingQp", sample=sample)
             )
 
         return points
@@ -185,21 +236,22 @@ class ChatProductAnalyserDivergenceService:
 
         for code in only_inspection[:6]:
             points.append(
-                f"Componente **{code}** aparece na inspeção, mas não consta na estrutura "
-                "retornada — vale conferir desenho, cadastro técnico ou divergência entre bases."
+                cls._txt("attention", "crossOnlyInspection", code=code)
             )
 
         if len(only_inspection) > 6:
             points.append(
-                f"Há mais {len(only_inspection) - 6} código(s) só na inspeção "
-                "(não listados acima)."
+                cls._txt(
+                    "attention",
+                    "crossOnlyInspectionMore",
+                    count=str(len(only_inspection) - 6),
+                )
             )
 
         if only_structure and inspection_codes:
             sample = ", ".join(only_structure[:4])
             points.append(
-                "Na estrutura há componente(s) sem espelho explícito na inspeção retornada: "
-                f"{sample}."
+                cls._txt("attention", "crossOnlyStructure", sample=sample)
             )
 
         return points
@@ -211,23 +263,25 @@ class ChatProductAnalyserDivergenceService:
 
         if blocked and blocked not in {"N", "0", ""}:
             points.append(
-                f"Bloqueio «{blocked}» — valide liberação comercial/produção."
+                cls._txt("attention", "cadastralBlocked", blocked=blocked)
             )
 
         if product.get("last_purchase_price") in (0, 0.0, None) and not str(
             product.get("last_purchase_date") or ""
         ).strip():
-            points.append(
-                "Sem compras recentes — item fabricado ou sem movimentação de compra."
-            )
+            points.append(cls._txt("attention", "cadastralNoPurchase"))
 
         drawing = str(product.get("drawing_code") or "").strip()
         customer_ref = str(product.get("customer_reference") or "").strip()
 
         if drawing and customer_ref and drawing != customer_ref:
             points.append(
-                f"Referências distintas no cadastro: desenho **{drawing}** "
-                f"× ref. cliente **{customer_ref}**."
+                cls._txt(
+                    "attention",
+                    "cadastralRefMismatch",
+                    drawing=drawing,
+                    customer_ref=customer_ref,
+                )
             )
 
         return points

@@ -491,9 +491,7 @@ class ExternalActionResultPresenter:
         pmr_days = root.get("pmr_days")
 
         if pmr_days is None:
-            linhas.append(
-                "Não há PMR calculado para esta filial no período disponível."
-            )
+            linhas.append(self._analyser_markdown("pmrUnavailable"))
         else:
             linhas.append(f"**PMR:** {self._format_num(pmr_days)} dias")
 
@@ -993,9 +991,7 @@ class ExternalActionResultPresenter:
         standard_cost = product.get("standard_cost")
 
         if purchase_price in (0, 0.0, None) and not purchase_date:
-            lines.append(
-                "Não há histórico recente de compra — vale confirmar se o item é fabricado internamente ou ainda não foi comprado."
-            )
+            lines.append(self._analyser_markdown("noRecentPurchase"))
         else:
             price_text = self._format_currency(purchase_price)
             date_text = self._format_revision_date(purchase_date) if purchase_date else ""
@@ -1790,7 +1786,7 @@ class ExternalActionResultPresenter:
             )
 
         if insights:
-            lines.extend(["", "**Destaques**", ""])
+            lines.extend(["", self._analyser_markdown("highlightsHeader"), ""])
             lines.extend(f"- {line}" for line in insights)
 
         attention = ChatProductAnalyserDivergenceService.build_attention_points(
@@ -1799,7 +1795,7 @@ class ExternalActionResultPresenter:
         )
 
         if attention:
-            lines.extend(["", "**Pontos de atenção encontrados na API:**", ""])
+            lines.extend(["", self._analyser_markdown("attentionHeader"), ""])
             lines.extend(
                 f"{index}. {point}"
                 for index, point in enumerate(attention, start=1)
@@ -1946,24 +1942,26 @@ class ExternalActionResultPresenter:
 
         if shared_components:
             insights.append(
-                "Componente(s) reutilizado(s) em mais de uma linha: "
-                + ", ".join(shared_components)
-                + "."
+                self._analyser_markdown(
+                    "sharedComponents",
+                    sample=", ".join(shared_components),
+                )
             )
 
         last_purchase_price = product.get("last_purchase_price")
         last_purchase_date = str(product.get("last_purchase_date") or "").strip()
 
         if last_purchase_price in (0, 0.0, None) and not last_purchase_date:
-            insights.append(
-                "Não há histórico recente de compra registrado para o produto."
-            )
+            insights.append(self._analyser_markdown("noRecentPurchaseProduct"))
 
         standard_cost = product.get("standard_cost")
 
         if standard_cost not in (None, ""):
             insights.append(
-                f"Custo padrão vigente: R$ {self._format_currency(standard_cost)}."
+                self._analyser_markdown(
+                    "standardCost",
+                    cost=self._format_currency(standard_cost),
+                )
             )
 
         if self._collection_is_empty(root.get("guide")):
@@ -3408,9 +3406,7 @@ class ExternalActionResultPresenter:
                 "Os vínculos aparecem na **árvore** e na **tabela** desta resposta."
             )
         else:
-            summary_parts.append(
-                "Não há produtos pai retornados para este código nesta consulta."
-            )
+            summary_parts.append(self._analyser_markdown("parentsEmpty"))
 
         markdown = "\n\n".join([f"### {title}", "", *summary_parts])
 
@@ -4363,56 +4359,60 @@ class ExternalActionResultPresenter:
         except (ValueError, TypeError):
             return str(value)
 
+    def _analyser_markdown(self, key: str, **values: str) -> str:
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        if values:
+            return ChatAssistantContentService.format(
+                "presenter_content",
+                "analyserMarkdown",
+                key,
+                **values,
+            )
+
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "analyserMarkdown",
+            key,
+        )
+
     def _kpi_title(self, path: str) -> str:
-        if "cpv" in path:
-            return "CPV — Custo de Produção Vendido"
-        if "otd" in path:
-            return "OTD — On Time Delivery"
-        if "inventory-turnover" in path:
-            return "Giro de Estoque (IDD)"
-        if "stock-value" in path:
-            return "Valor Total de Estoque"
-        if "closing-rate" in path:
-            return "Taxa de Conversão de Vendas"
-        if "ebitda" in path:
-            return "EBITDA"
-        if "pmr" in path:
-            return "PMR — Prazo Médio de Recebimento"
-        if "fixed_cost" in path:
-            return "Custo Fixo"
-        if "new-clients" in path:
-            return "Novos Clientes"
-        if "new-business" in path:
-            return "Novos Negócios"
-        if "snapshot" in path:
-            return "Indicadores de RH"
-        if "pdi" in path:
-            return "PDIs Ativos"
-        if "completion" in path:
-            return "Avaliações de Desempenho"
-        if "depreciation" in path:
-            return "Depreciação"
-        if "labor_cost" in path or "direct_labor" in path:
-            return "Custo de Mão de Obra"
-        if "production_cost" in path:
-            return "Custo de Produção"
-        if "effectiveness" in path or "oee" in path:
-            return "OEE — Eficiência de Equipamentos"
-        if "delivery" in path:
-            return "OTD — Entrega no Prazo"
-        if "lmp" in path:
-            return "Dashboard de LMPs"
-        if "/commercial/" in path:
-            return "Indicador Comercial"
-        if "/financial/" in path or "/finacial/" in path:
-            return "Indicador Financeiro"
-        if "/production/" in path:
-            return "Indicador de Produção"
-        if "/hr/" in path:
-            return "Indicador de RH"
-        if "/quality/" in path:
-            return "Indicador de Qualidade"
-        return "Indicador"
+        from app.domain.services.chat_assistant_content_service import (
+            ChatAssistantContentService,
+        )
+
+        lowered = str(path or "").lower()
+        matchers = ChatAssistantContentService.get_node(
+            "presenter_content",
+            "kpiPathMatchers",
+        )
+
+        if isinstance(matchers, list):
+            for entry in matchers:
+                if not isinstance(entry, dict):
+                    continue
+
+                fragment = str(entry.get("fragment") or "").strip()
+                title_key = str(entry.get("titleKey") or "").strip()
+
+                if fragment and fragment in lowered and title_key:
+                    title = ChatAssistantContentService.get(
+                        "presenter_content",
+                        "kpiTitles",
+                        title_key,
+                    )
+
+                    if title:
+                        return title
+
+        return ChatAssistantContentService.get(
+            "presenter_content",
+            "kpiTitles",
+            "default",
+            default="Indicador",
+        )
 
     _CHART_WORTHY_NUMERIC_KEYS = {
         "quantity", "value", "total", "amount", "price", "cost",

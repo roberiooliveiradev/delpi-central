@@ -25,6 +25,36 @@
     "stock": "Estoque do produto",
     "efficiency": "Eficiência fabril"
   },
+  "kpiPathMatchers": [
+    { "fragment": "inventory-turnover", "titleKey": "idd" },
+    { "fragment": "stock-value", "titleKey": "stock_value" },
+    { "fragment": "closing-rate", "titleKey": "conversion" },
+    { "fragment": "new-clients", "titleKey": "new_customers" },
+    { "fragment": "new-business", "titleKey": "new_business" },
+    { "fragment": "production_cost", "titleKey": "production_cost" },
+    { "fragment": "fixed_cost", "titleKey": "fixed_cost" },
+    { "fragment": "labor_cost", "titleKey": "labor" },
+    { "fragment": "direct_labor", "titleKey": "labor" },
+    { "fragment": "effectiveness", "titleKey": "oee" },
+    { "fragment": "depreciation", "titleKey": "depreciation" },
+    { "fragment": "snapshot", "titleKey": "hr" },
+    { "fragment": "completion", "titleKey": "performance" },
+    { "fragment": "dashboard", "titleKey": "dashboard" },
+    { "fragment": "cpv", "titleKey": "cpv" },
+    { "fragment": "pmr", "titleKey": "pmr" },
+    { "fragment": "ebitda", "titleKey": "ebitda" },
+    { "fragment": "delivery", "titleKey": "otd_equipment" },
+    { "fragment": "lmp", "titleKey": "lmp_dashboard" },
+    { "fragment": "pdi", "titleKey": "pdi" },
+    { "fragment": "oee", "titleKey": "oee" },
+    { "fragment": "otd", "titleKey": "otd" },
+    { "fragment": "/commercial/", "titleKey": "commercial" },
+    { "fragment": "/finacial/", "titleKey": "financial" },
+    { "fragment": "/financial/", "titleKey": "financial" },
+    { "fragment": "/production/", "titleKey": "production" },
+    { "fragment": "/quality/", "titleKey": "quality" },
+    { "fragment": "/hr/", "titleKey": "rh" }
+  ],
   "kpiTitles": {
     "cpv": "CPV — Custo de Produção Vendido",
     "otd": "OTD — On Time Delivery",
@@ -56,11 +86,14 @@
   "analyserMarkdown": {
     "highlightsHeader": "**Destaques**",
     "attentionHeader": "**Pontos de atenção encontrados na API:**",
+    "attentionHeaderPrefix": "**Pontos de atenção",
     "parentsEmpty": "Não há produtos pai retornados para este código nesta consulta.",
     "noRecentPurchase": "Não há histórico recente de compra — vale confirmar se o item é fabricado internamente ou ainda não foi comprado.",
     "noRecentPurchaseProduct": "Não há histórico recente de compra registrado para o produto.",
     "pmrUnavailable": "Não há PMR calculado para esta filial no período disponível.",
-    "sqlEnvironmentFailed": "Não foi possível executar a consulta SQL neste ambiente."
+    "sqlEnvironmentFailed": "Não foi possível executar a consulta SQL neste ambiente.",
+    "sharedComponents": "Componente(s) reutilizado(s) em mais de uma linha: {sample}.",
+    "standardCost": "Custo padrão vigente: R$ {cost}."
   },
   "defaultItemTitle": "Resultado operacional"
 }
