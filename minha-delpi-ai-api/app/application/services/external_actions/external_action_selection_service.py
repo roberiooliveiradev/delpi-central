@@ -2508,18 +2508,8 @@ class ExternalActionSelectionService:
             and "ficha" not in normalized
             and "kaizen" not in normalized
         )
-        wants_full_analyser = any(
-            term in normalized
-            for term in (
-                "ficha completa",
-                "analisador",
-                "analyzer",
-                "analise completa",
-                "análise completa",
-                "informacoes completas",
-                "informações completas",
-                "tudo sobre o produto",
-            )
+        wants_full_analyser = ChatProductQueryIntentService._looks_like_full_analyser_question(
+            normalized
         )
         wants_structure = any(
             term in normalized

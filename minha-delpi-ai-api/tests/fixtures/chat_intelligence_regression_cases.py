@@ -17,6 +17,10 @@ INTENT_CASES = [
     ("busque o estoque desse produto", ChatProductQueryIntent.STOCK),
     ("saldo disponível do item", ChatProductQueryIntent.STOCK),
     ("informações completas do produto 10080055", ChatProductQueryIntent.ANALYSER),
+    (
+        "análise integrada do cadastro, roteiro e estrutura do 90260149",
+        ChatProductQueryIntent.ANALYSER,
+    ),
     ("qual o valor total de estoque da empresa", ChatProductQueryIntent.FULL),
     ("explique o procedimento de estoque e política interna", ChatProductQueryIntent.FULL),
 ]

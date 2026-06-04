@@ -52,6 +52,9 @@ class ChatProductQueryIntentService:
         if cls._looks_like_parents_question(normalized):
             return ChatProductQueryIntent.PARENTS
 
+        if cls._looks_like_full_analyser_question(normalized):
+            return ChatProductQueryIntent.ANALYSER
+
         if cls._looks_like_structure_question(normalized):
             return ChatProductQueryIntent.STRUCTURE
 
@@ -61,17 +64,14 @@ class ChatProductQueryIntentService:
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
 
+        if cls._looks_like_product_summary_question(normalized):
+            return ChatProductQueryIntent.SUMMARY
+
         from app.domain.services.chat_product_overview_intent_service import (
             ChatProductOverviewIntentService,
         )
 
         if ChatProductOverviewIntentService.is_product_overview_message(message):
-            return ChatProductQueryIntent.ANALYSER
-
-        if cls._looks_like_product_summary_question(normalized):
-            return ChatProductQueryIntent.SUMMARY
-
-        if cls._looks_like_full_analyser_question(normalized):
             return ChatProductQueryIntent.ANALYSER
 
         if cls._looks_like_description_question(normalized):
@@ -877,19 +877,48 @@ class ChatProductQueryIntentService:
 
     @classmethod
     def _looks_like_full_analyser_question(cls, normalized: str) -> bool:
-        return any(
+        if any(
             term in normalized
             for term in (
                 "ficha completa",
                 "analise completa",
                 "análise completa",
+                "analise integrada",
+                "análise integrada",
+                "visao integrada",
+                "visão integrada",
                 "analisador completo",
                 "analisador do produto",
                 "informacoes completas",
                 "informações completas",
                 "tudo sobre o produto",
             )
-        )
+        ):
+            return True
+
+        return cls._mentions_multiple_product_scopes(normalized)
+
+    @classmethod
+    def _mentions_multiple_product_scopes(cls, normalized: str) -> bool:
+        """Cadastro + roteiro + estrutura (ou 2 escopos) → analyser, não rota estreita."""
+        scopes = 0
+
+        if any(
+            term in normalized
+            for term in ("cadastro", "ficha", "dados cadastrais", "informacoes do produto", "informações do produto")
+        ):
+            scopes += 1
+
+        if "roteiro" in normalized:
+            scopes += 1
+
+        if any(term in normalized for term in ("estrutura", "bom", "composição", "composicao")):
+            scopes += 1
+
+        if any(term in normalized for term in ("inspeção", "inspecao", "plano de inspecao", "plano de inspeção")):
+            scopes += 1
+
+        return scopes >= 2
 
     @classmethod
     def _looks_like_product_summary_question(cls, normalized: str) -> bool:

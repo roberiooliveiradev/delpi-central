@@ -1198,12 +1198,21 @@ class ChatIntentRouterService:
                 "fale sobre",
                 "informacoes sobre",
                 "informações sobre",
+                "informacoes completas",
+                "informações completas",
+                "analise integrada",
+                "análise integrada",
+                "ficha completa",
+                "analisador",
                 "dados do produto",
                 "cadastro",
                 "ficha",
                 "resumo do produto",
             )
         ):
+            return False, ()
+
+        if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
             return False, ()
 
         if (
@@ -1320,6 +1329,10 @@ class ChatIntentRouterService:
 
     @staticmethod
     def _operational_sub_intent(message: str) -> str | None:
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
+        )
+
         lowered = message.lower()
 
         if "estoque" in lowered:
@@ -1348,6 +1361,9 @@ class ChatIntentRouterService:
 
         if "preço" in lowered or "preco" in lowered:
             return "price_lookup"
+
+        if ChatProductQueryIntentService._looks_like_full_analyser_question(lowered):
+            return "product_lookup"
 
         if any(term in lowered for term in ("estrutura", "bom")):
             return "structure_lookup"
