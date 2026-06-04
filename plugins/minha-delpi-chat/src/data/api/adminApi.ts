@@ -56,6 +56,11 @@ import type {
   AdminRagTestRequest,
   AdminRagTestResponse,
   AdminToolHealthResponse,
+  AdminPaginatedResponse,
+  AdminLearningCandidate,
+  AdminVocabularyTerm,
+  ReviewLearningCandidatePayload,
+  UpsertVocabularyTermPayload,
 } from "./adminTypes";
 
 const API_BASE_URL = "/apps/minha-delpi-ai/api";
@@ -1328,4 +1333,88 @@ export async function deactivateAdminChatSkill(
   if (!response.ok) {
     throw new Error(`Falha ao desativar skill (${response.status})`);
   }
+}
+
+export type ListAdminLearningCandidatesParams = {
+  status?: string;
+  type?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function listAdminLearningCandidates(
+  params: ListAdminLearningCandidatesParams = {},
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminLearningCandidate>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit ?? 50));
+  query.set("offset", String(params.offset ?? 0));
+  if (params.status?.trim()) query.set("status", params.status.trim());
+  if (params.type?.trim()) query.set("type", params.type.trim());
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/candidates?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminLearningCandidate>>(response);
+}
+
+export async function reviewAdminLearningCandidate(
+  candidateId: number,
+  payload: ReviewLearningCandidatePayload,
+  options: AdminApiOptions = {},
+): Promise<{ candidate: AdminLearningCandidate; term?: AdminVocabularyTerm }> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/candidates/${candidateId}/review`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<{ candidate: AdminLearningCandidate; term?: AdminVocabularyTerm }>(
+    response,
+  );
+}
+
+export type ListAdminVocabularyTermsParams = {
+  scope?: string;
+  approved?: boolean;
+  type?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function listAdminVocabularyTerms(
+  params: ListAdminVocabularyTermsParams = {},
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminVocabularyTerm>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit ?? 50));
+  query.set("offset", String(params.offset ?? 0));
+  if (params.scope?.trim()) query.set("scope", params.scope.trim());
+  if (params.type?.trim()) query.set("type", params.type.trim());
+  if (typeof params.approved === "boolean") query.set("approved", String(params.approved));
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/vocabulary?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminVocabularyTerm>>(response);
+}
+
+export async function upsertAdminVocabularyTerm(
+  payload: UpsertVocabularyTermPayload,
+  options: AdminApiOptions = {},
+): Promise<AdminVocabularyTerm> {
+  const response = await fetch(`${API_BASE_URL}/admin/learning/vocabulary`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminVocabularyTerm>(response);
 }

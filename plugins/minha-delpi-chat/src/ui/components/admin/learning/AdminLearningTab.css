@@ -1,0 +1,169 @@
+.mdc-admin-learning {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mdc-admin-learning__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mdc-admin-learning__views {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.12));
+}
+
+.mdc-admin-learning__views button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: inherit;
+}
+
+.mdc-admin-learning__views button.is-active {
+  background: var(--mdc-admin-surface, #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.mdc-admin-learning__error {
+  color: #b4232a;
+  font-size: 13px;
+}
+
+.mdc-admin-learning__success {
+  color: #1f7a45;
+  font-size: 13px;
+}
+
+.mdc-admin-learning__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.mdc-admin-learning__item {
+  text-align: left;
+  border: 1px solid var(--mdc-admin-border, rgba(120, 120, 140, 0.2));
+  border-radius: 10px;
+  background: transparent;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mdc-admin-learning__item:hover {
+  border-color: var(--mdc-admin-accent, #4263eb);
+}
+
+.mdc-admin-learning__item.is-selected {
+  border-color: var(--mdc-admin-accent, #4263eb);
+  background: var(--mdc-admin-accent-soft, rgba(66, 99, 235, 0.08));
+}
+
+.mdc-admin-learning__item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mdc-admin-learning__badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(120, 120, 140, 0.16);
+}
+
+.mdc-admin-learning__badge.is-medium {
+  background: rgba(214, 158, 46, 0.2);
+  color: #946200;
+}
+
+.mdc-admin-learning__badge.is-high {
+  background: rgba(180, 35, 42, 0.18);
+  color: #b4232a;
+}
+
+.mdc-admin-learning__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mdc-admin-learning__field-readonly span {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.mdc-admin-learning__meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.mdc-admin-learning__meta-grid span {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.mdc-admin-learning__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mdc-admin-learning__danger {
+  border: 1px solid rgba(180, 35, 42, 0.4);
+  background: transparent;
+  color: #b4232a;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mdc-admin-learning__danger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mdc-admin-learning__subtitle {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.mdc-admin-learning__term {
+  border: 1px solid var(--mdc-admin-border, rgba(120, 120, 140, 0.2));
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mdc-admin-learning__arrow {
+  font-size: 12px;
+  opacity: 0.75;
+}

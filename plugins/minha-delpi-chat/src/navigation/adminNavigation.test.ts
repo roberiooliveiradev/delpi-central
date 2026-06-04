@@ -38,6 +38,16 @@ describe("adminNavigation", () => {
     });
   });
 
+  it("monta e parseia a sub-aba de aprendizagem", () => {
+    expect(buildAdminHref({ section: "knowledge", subTab: "learning" })).toBe(
+      "/apps/minha-delpi-chat/admin/conhecimento/aprendizagem",
+    );
+    expect(parseAdminPathSegments(["conhecimento", "aprendizagem"])).toEqual({
+      section: "knowledge",
+      subTab: "learning",
+    });
+  });
+
   it("trata /admin/agentes sem sub-aba como painel", () => {
     expect(parseAdminPathSegments(["agentes"])).toEqual({
       section: "overview",

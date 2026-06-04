@@ -1111,3 +1111,72 @@ export type AdminRbacSummary = {
     requiredPermission: string;
   }>;
 };
+
+export type AdminPaginatedResponse<T> = {
+  items: T[];
+  pagination: {
+    limit: number;
+    offset: number;
+    total: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+};
+
+export type AdminLearningCandidate = {
+  id: number;
+  candidateType: string;
+  inputText: string;
+  term: string | null;
+  proposedRule: string | null;
+  proposedMeaning: string | null;
+  confidence: number | null;
+  evidenceCount: number;
+  riskLevel: string;
+  scope: string;
+  projectId: string | null;
+  status: string;
+  source: string;
+  createdBy: string | null;
+  reviewerId: string | null;
+  promotedTermId: number | null;
+  evidence?: Record<string, unknown>;
+  createdAt: string | null;
+  updatedAt: string | null;
+  reviewedAt: string | null;
+};
+
+export type AdminVocabularyTerm = {
+  id: number;
+  term: string;
+  normalizedTerm: string;
+  meaning: string | null;
+  type: string;
+  scope: string;
+  projectId: string | null;
+  source: string;
+  confidence: number | null;
+  evidenceCount: number;
+  approved: boolean;
+  active: boolean;
+  createdBy: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type ReviewLearningCandidatePayload = {
+  action: "approve" | "reject" | "promote";
+  term?: string;
+  normalizedTerm?: string;
+  meaning?: string;
+};
+
+export type UpsertVocabularyTermPayload = {
+  term: string;
+  normalizedTerm?: string;
+  meaning?: string;
+  type?: string;
+  scope?: string;
+  approved?: boolean;
+  active?: boolean;
+};

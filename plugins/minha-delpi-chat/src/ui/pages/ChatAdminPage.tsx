@@ -6,6 +6,7 @@ import { AdminSecurityTab } from "../components/admin/security/AdminSecurityTab"
 import { AdminEvaluationsTab } from "../components/admin/evaluations/AdminEvaluationsTab";
 import { AdminGuidelinesTab } from "../components/admin/guidelines/AdminGuidelinesTab";
 import { AdminKnowledgeTab } from "../components/admin/knowledge/AdminKnowledgeTab";
+import { AdminLearningTab } from "../components/admin/learning/AdminLearningTab";
 import { AdminMetricsTab } from "../components/admin/metrics-tab/AdminMetricsTab";
 import { AdminOverviewTab } from "../components/admin/overview/AdminOverviewTab";
 import { AdminShellAlerts } from "../components/admin/shell/AdminShellAlerts";
@@ -236,6 +237,10 @@ export function ChatAdminPage({
 
           {nav.section === "knowledge" && nav.subTab === "behaviors" ? (
             <AdminSkillsTab getAccessToken={getAccessToken} rbac={adminRbac} />
+          ) : null}
+
+          {nav.section === "knowledge" && nav.subTab === "learning" ? (
+            <AdminLearningTab getAccessToken={getAccessToken} />
           ) : null}
 
           {nav.section === "agents" && nav.subTab === "specialization" ? (

@@ -42,6 +42,7 @@ export type AdminSubTab =
   | "documents"
   | "guidelines"
   | "behaviors"
+  | "learning"
   | "specialization"
   | "simulation"
   | "metrics"
@@ -81,6 +82,7 @@ const SUB_SLUG: Record<AdminSubTab, string> = {
   documents: "documentos",
   guidelines: "diretrizes",
   behaviors: "comportamentos",
+  learning: "aprendizagem",
   specialization: "especializacao",
   simulation: "simulacao",
   metrics: "metricas",
@@ -112,6 +114,7 @@ export const ADMIN_SECTIONS: AdminSectionItem[] = [
       { key: "documents", label: "Documentos" },
       { key: "guidelines", label: "Diretrizes" },
       { key: "behaviors", label: "Comportamentos" },
+      { key: "learning", label: "Aprendizagem" },
     ],
   },
   {
