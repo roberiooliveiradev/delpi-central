@@ -4,7 +4,7 @@
   "name": "Transformômetro",
   "description": "Cadastro e mensuração de melhorias de processo — economia, investimento, ROI e payback.",
   "icon": "gauge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/transformometro",
   "entry": "/apps/transformometro/assets/remoteEntry.js",
@@ -60,13 +60,22 @@
   ],
   "routes": [
     {
+      "path": "/apps/transformometro/dashboard",
+      "label": "Dashboard",
+      "permission": "transformometro.view",
+      "icon": "layout-dashboard",
+      "entry": null,
+      "order": 20,
+      "showInMenu": true
+    },
+    {
       "path": "/apps/transformometro",
       "label": "Transformômetro",
       "permission": "transformometro.view",
       "icon": "gauge",
       "entry": null,
-      "order": 20,
-      "showInMenu": true
+      "order": 19,
+      "showInMenu": false
     },
     {
       "path": "/apps/transformometro/processos",
@@ -90,7 +99,7 @@
       "path": "/apps/transformometro/dados",
       "label": "Exportar / Importar",
       "permission": "transformometro.data.transfer",
-      "icon": "database",
+      "icon": "arrow-down-up",
       "entry": null,
       "order": 24,
       "showInMenu": true

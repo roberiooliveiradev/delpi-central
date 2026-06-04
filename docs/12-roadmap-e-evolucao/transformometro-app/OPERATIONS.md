@@ -10,6 +10,7 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Dashboard | `/apps/transformometro/dashboard` |
 | Processos | `/apps/transformometro/processos` |
 | Recursos (catálogo) | `/apps/transformometro/recursos` |
+| Exportar / Importar JSON | `/apps/transformometro/dados` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
 ## Rotina diária
@@ -37,6 +38,7 @@ Atribuir ao perfil de engenharia/gestão, no mínimo:
 - `transformometro.revisions.manage`
 - `transformometro.dashboard.recalculate`
 - `transformometro.shared-resources.manage` (catálogo Recursos)
+- `transformometro.data.transfer` (exportar / importar JSON em `/dados`)
 
 ## Troubleshooting
 

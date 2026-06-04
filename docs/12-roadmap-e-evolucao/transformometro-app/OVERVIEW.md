@@ -77,7 +77,7 @@ Tudo gira em torno de **`revisao_id`**:
 | `transformometro.investments.manage` | Investimentos |
 | `transformometro.shared-resources.manage` | Recursos e vínculos |
 | `transformometro.dashboard.recalculate` | Disparar recálculo mensal |
-| `transformometro.admin` | Auditoria e parâmetros (se habilitados) |
+| `transformometro.data.transfer` | Exportar / importar backup JSON |
 
 ## Stack alinhada ao monorepo
 

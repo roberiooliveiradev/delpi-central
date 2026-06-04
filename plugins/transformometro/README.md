@@ -30,7 +30,7 @@ npm run build
 
 ## Manifesto
 
-`transformometro.manifest.json` — registrar na Core API após deploy (inclui rota `/recursos`):
+`transformometro.manifest.json` — registrar na Core API após deploy (rotas dashboard, processos, recursos, `/dados`):
 
 ```bash
 export TOKEN="<jwt apps.manage>"

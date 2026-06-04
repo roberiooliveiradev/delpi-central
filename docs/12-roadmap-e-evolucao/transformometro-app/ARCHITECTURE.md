@@ -219,12 +219,13 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 
 | Rota UI | Função |
 |---------|--------|
-| `/apps/transformometro` | Início + health |
+| `/apps/transformometro` | Redireciona para o dashboard (não aparece no menu do portal) |
 | `/apps/transformometro/dashboard` | Cards, gráficos, alertas, export CSV/Excel, recalcular |
 | `/apps/transformometro/processos` | Lista |
 | `/apps/transformometro/processos/{id}` | Detalhe + revisões |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Mesma tela com revisão na URL |
 | `/apps/transformometro/recursos` | Catálogo global (CRUD) |
+| `/apps/transformometro/dados` | Exportar / importar backup JSON |
 
 Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; **Definir como ativa** sem etapa de aprovação. Roteamento por URL (`routeParser`, `useDelpiPortalBridge` para sincronizar URL com o portal).
 
