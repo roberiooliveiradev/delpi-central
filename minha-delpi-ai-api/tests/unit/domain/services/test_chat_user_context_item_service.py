@@ -1,6 +1,39 @@
 from app.domain.services.chat_user_context_item_service import ChatUserContextItemService
 
 
+def test_auto_items_capture_product_as_neutral_context():
+    items = ChatUserContextItemService.auto_items_from_entities(
+        {"productCode": "90260114", "productCodeSource": "tool", "branch": "02"},
+    )
+
+    by_kind = {item["kind"]: item for item in items}
+
+    assert by_kind["product"]["label"] == "90260114"
+    assert by_kind["product"]["source"] == "auto"
+    assert by_kind["product"]["extractedEntities"]["productCode"] == "90260114"
+    assert by_kind["branch"]["label"] == "Filial 02"
+
+
+def test_auto_items_skip_inferred_product_code():
+    items = ChatUserContextItemService.auto_items_from_entities(
+        {"productCode": "000224", "productCodeSource": "inferred"},
+    )
+
+    assert all(item["kind"] != "product" for item in items)
+
+
+def test_auto_items_dedupe_against_existing():
+    existing = [
+        {"id": "x", "extractedEntities": {"productCode": "90260114"}},
+    ]
+    items = ChatUserContextItemService.auto_items_from_entities(
+        {"productCode": "90260114", "productCodeSource": "explicit"},
+        existing,
+    )
+
+    assert items == []
+
+
 def test_classify_product_short_text():
     result = ChatUserContextItemService.classify("10080001")
 

@@ -443,7 +443,7 @@ class ChatUserContextItemService:
 
         code = str(data.get("productCode") or "").strip()
         if code:
-            labels.append(f"Produto {code}")
+            labels.append(code)
 
         branch = str(data.get("branch") or "").strip()
         if branch:
@@ -458,6 +458,67 @@ class ChatUserContextItemService:
             labels.append(f"Período {period}")
 
         return labels
+
+    @classmethod
+    def auto_items_from_entities(
+        cls,
+        entities: dict | None,
+        existing_items: list[dict[str, Any]] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Converte o que o chat detectou (código/filial/armazém) em itens de contexto.
+
+        Em vez de tratar o código como "entidade" estruturada, ele entra como
+        contexto comum — o LLM infere o foco a partir desse contexto. Itens já
+        presentes (mesmo valor) não são duplicados.
+        """
+        data = entities or {}
+        existing_keys: set[str] = set()
+
+        for item in existing_items or []:
+            if not isinstance(item, dict):
+                continue
+
+            for key, value in (item.get("extractedEntities") or {}).items():
+                token = str(value or "").strip()
+
+                if token:
+                    existing_keys.add(f"{key}:{token}")
+
+        new_items: list[dict[str, Any]] = []
+
+        def add(kind: str, entity_key: str, value: str, label: str, focus: str) -> None:
+            token = str(value or "").strip()
+
+            if not token or f"{entity_key}:{token}" in existing_keys:
+                return
+
+            existing_keys.add(f"{entity_key}:{token}")
+            new_items.append(
+                {
+                    "id": f"auto:{entity_key}:{token}"[:64],
+                    "kind": kind,
+                    "label": label[:_MAX_LABEL_CHARS],
+                    "content": focus,
+                    "extractedEntities": {entity_key: token},
+                    "source": "auto",
+                }
+            )
+
+        code = str(data.get("productCode") or "").strip()
+        source = str(data.get("productCodeSource") or "").strip()
+
+        if code and source in ("tool", "explicit"):
+            add("product", "productCode", code, code, f"Em foco nesta conversa: {code}")
+
+        branch = str(data.get("branch") or "").strip()
+        if branch:
+            add("branch", "branch", branch, f"Filial {branch}", f"Em foco nesta conversa: filial {branch}")
+
+        warehouse = str(data.get("warehouse") or "").strip()
+        if warehouse:
+            add("warehouse", "warehouse", warehouse, f"Armazém {warehouse}", f"Em foco nesta conversa: armazém {warehouse}")
+
+        return new_items
 
     @classmethod
     def merge_context_labels(cls, *groups: list[str] | None) -> list[str]:

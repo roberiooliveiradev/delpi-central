@@ -82,8 +82,11 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         entities = snapshot.get("lastEntities") or {}
         behavior = snapshot.get("behaviorInstructions") or {}
 
+        # Produto/filial/armazém detectados automaticamente são persistidos como
+        # contexto (não entidade) — ver _persist_auto_context_items. Aqui só
+        # persistimos period, que não é capturado como item de contexto.
         for key, value in entities.items():
-            if key not in self._ENTITY_KEYS or value in (None, "", []):
+            if key != "period" or value in (None, "", []):
                 continue
 
             self._upsert_row(
@@ -96,6 +99,13 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 now=now,
             )
 
+        self._persist_auto_context_items(
+            session_id,
+            snapshot.get("userContextItems"),
+            expires_at=expires_at,
+            now=now,
+        )
+
         for key, value in behavior.items():
             if key not in self._BEHAVIOR_KEYS or value in (None, "", []):
                 continue
@@ -106,6 +116,36 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 key=key,
                 value_json=str(value),
                 source_message_id=source_message_id,
+                expires_at=expires_at,
+                now=now,
+            )
+
+    def _persist_auto_context_items(
+        self,
+        session_id: UUID,
+        items: list | None,
+        *,
+        expires_at: datetime,
+        now: datetime,
+    ) -> None:
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+
+            if str(item.get("source") or "").strip() != "auto":
+                continue
+
+            item_id = str(item.get("id") or "").strip()
+
+            if not item_id:
+                continue
+
+            self._upsert_row(
+                session_id=session_id,
+                memory_type="context_item",
+                key=item_id[:64],
+                value_json=item,
+                source_message_id=None,
                 expires_at=expires_at,
                 now=now,
             )

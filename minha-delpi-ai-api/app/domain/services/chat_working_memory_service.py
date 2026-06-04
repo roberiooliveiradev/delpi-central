@@ -175,7 +175,7 @@ class ChatWorkingMemoryService:
         if entities.get("productCode") and str(
             entities.get("productCodeSource") or ""
         ).strip() in ("tool", "explicit"):
-            lines.append(f"- Produto em foco: {entities['productCode']}.")
+            lines.append(f"- Em foco nesta conversa: {entities['productCode']}.")
 
         if entities.get("branch"):
             lines.append(f"- Filial em foco: {entities['branch']}.")
@@ -449,7 +449,7 @@ class ChatWorkingMemoryService:
         if product_code and product_source in ("tool", "explicit"):
             chips.append(
                 {
-                    "label": f"Produto {product_code}",
+                    "label": product_code,
                     "kind": "product",
                     "value": product_code,
                 }

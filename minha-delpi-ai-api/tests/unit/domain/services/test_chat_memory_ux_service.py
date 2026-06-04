@@ -40,7 +40,7 @@ def test_usage_view_folds_entities_into_unified_context():
 
     context = usage.get("userContextItems") or []
 
-    assert "Produto 90260114" in context
+    assert "90260114" in context
     assert "Filial 02" in context
     assert "Política de devolução" in context
 

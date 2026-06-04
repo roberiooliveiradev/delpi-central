@@ -224,6 +224,27 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             attachments=attachments,
         )
+        snapshot = cls._capture_focus_as_context(snapshot)
+        return snapshot
+
+    @classmethod
+    def _capture_focus_as_context(cls, snapshot: dict) -> dict:
+        """Grava produto/filial detectados como itens de contexto (não entidade)."""
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        auto_items = ChatUserContextItemService.auto_items_from_entities(
+            snapshot.get("lastEntities"),
+            snapshot.get("userContextItems"),
+        )
+
+        if not auto_items:
+            return snapshot
+
+        items = list(snapshot.get("userContextItems") or [])
+        items.extend(auto_items)
+        snapshot["userContextItems"] = items[-12:]
         return snapshot
 
     @classmethod
