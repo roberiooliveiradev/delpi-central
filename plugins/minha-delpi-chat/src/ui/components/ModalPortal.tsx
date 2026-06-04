@@ -40,7 +40,6 @@ export function ModalPortal({ children, lockScroll = true }: ModalPortalProps) {
     <div
       className={[
         "mdc-chat-overlay-portal",
-        "minha-delpi-chat",
         contained ? "mdc-chat-overlay-portal--contained" : "",
       ]
         .filter(Boolean)

@@ -3,6 +3,11 @@
   z-index: 5;
 }
 
+/* Mesmo véu translúcido dos modais centrados (chat vê-se por trás). */
+.mdc-chat-conversation-menu__scrim {
+  background: var(--mdc-overlay-backdrop);
+}
+
 .mdc-chat-conversation-menu__trigger {
   display: inline-flex;
   align-items: center;

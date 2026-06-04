@@ -52,7 +52,8 @@
   --mdc-shadow-lg: 0 24px 64px color-mix(in srgb, var(--mdc-text) 18%, transparent);
   --mdc-card-shadow-soft: 0 2px 8px color-mix(in srgb, var(--mdc-text) 6%, transparent);
   --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 72%, transparent);
-  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 94%, transparent);
+  /* Véu sobre a coluna do chat (#mdc-modal-root), não fundo sólido do painel. */
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
   --mdc-accent: var(--mdc-primary);
   --mdc-warning: var(--warning, #d97706);
 
@@ -189,7 +190,7 @@
   --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
 
   --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
-  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+  --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
 
   --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
   --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);
@@ -240,7 +241,7 @@
     --mdc-follow-up-chip-border: color-mix(in srgb, var(--mdc-primary) 35%, transparent);
 
     --mdc-overlay-backdrop: color-mix(in srgb, var(--mdc-bg) 78%, transparent);
-    --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 96%, transparent);
+    --mdc-overlay-backdrop-contained: color-mix(in srgb, var(--mdc-bg) 55%, transparent);
 
     --mdc-code-surface: color-mix(in srgb, var(--mdc-card-bg) 72%, black 28%);
     --mdc-code-surface-end: color-mix(in srgb, var(--mdc-card-bg) 58%, black 42%);

@@ -14,6 +14,8 @@
   padding: 0;
   pointer-events: none;
   isolation: isolate;
+  /* Não herdar .minha-delpi-chat (fundo opaco do shell) — só o painel é sólido. */
+  background: transparent;
 }
 
 .mdc-chat-overlay-portal--contained {
@@ -30,7 +32,7 @@
   position: fixed;
   inset: 0;
   z-index: var(--mdc-overlay-z-scrim);
-  background: transparent;
+  background: var(--mdc-overlay-backdrop);
   backdrop-filter: none;
   pointer-events: auto;
 }
@@ -43,7 +45,7 @@
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: transparent;
+  background: var(--mdc-overlay-backdrop-contained);
   backdrop-filter: none;
 }
 
@@ -86,7 +88,7 @@
   z-index: var(--mdc-overlay-z-scrim);
   display: grid;
   place-items: center;
-  background: transparent;
+  background: var(--mdc-overlay-backdrop);
   padding: var(--mdc-space-4);
   box-sizing: border-box;
   pointer-events: auto;

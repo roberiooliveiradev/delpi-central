@@ -29,7 +29,6 @@
   z-index: var(--mdc-overlay-z-scrim);
   box-sizing: border-box;
   margin: 0;
-  background: transparent;
   backdrop-filter: none;
 }
 
