@@ -2334,8 +2334,18 @@ class ExternalActionResultPresenter:
             branch = item.get("branch") or ""
 
             parts = [str(part) for part in [ov, kind, status, branch] if part]
-            header = " · ".join(parts) if parts else "LMP"
-            line = f"OV {header}: {desc}".strip(": ")
+            separator = self._route_presentation("lmp", "headerSeparator")
+            header = (
+                separator.join(parts)
+                if parts
+                else self._route_presentation("lmp", "pageHeaderFallback")
+            )
+            line = self._route_presentation(
+                "lmp",
+                "pageLine",
+                header=header,
+                description=str(desc).strip(),
+            ).strip(": ")
 
             if line:
                 linhas.append(line.rstrip(": "))
@@ -2738,22 +2748,39 @@ class ExternalActionResultPresenter:
         unit = str(row.get("UNIDADE") or row.get("unidade") or "").strip()
         start_at = row.get("DATA_INICIO_OPERACAO") or row.get("data_inicio_operacao")
 
-        parts = [f"**`{code}`**"]
+        parts = [
+            ExternalActionResponseContentService.format(
+                "productionSchedule",
+                "rowCode",
+                code=code,
+            )
+        ]
 
         if description:
             parts.append(description)
 
-        line = " — ".join(parts)
+        line = ExternalActionResponseContentService.get(
+            "productionSchedule",
+            "rowSeparator",
+        ).join(parts)
 
         if quantity is not None:
             qty_text = self._format_num(quantity)
-            suffix = f" {unit}".rstrip()
-            line += f" · **{qty_text}{suffix}**"
+            unit_suffix = f" {unit}".rstrip()
+            line += ExternalActionResponseContentService.format(
+                "productionSchedule",
+                "rowQuantity",
+                quantity=qty_text,
+                unit_suffix=unit_suffix,
+            )
 
         if start_at:
             line += (
-                f"{ExternalActionResponseContentService.get('sql', 'operationStartPrefix')}"
-                f"{start_at}"
+                ExternalActionResponseContentService.get(
+                    "sql",
+                    "operationStartPrefix",
+                )
+                + str(start_at)
             )
 
         return line
@@ -2814,20 +2841,15 @@ class ExternalActionResultPresenter:
             if str(item_type).upper() == "MP":
                 mp_codes.add(item_code)
 
-            parts = [f"**{item_code}**"]
+            line = self._format_structure_component_line(
+                item_code,
+                item_desc,
+                item_type,
+                quantity,
+            )
 
-            if item_desc:
-                parts.append(item_desc)
-
-            if item_type:
-                parts.append(f"({item_type})")
-
-            line = " — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "")
-
-            if quantity is not None:
-                line += f" — qtd **{self._format_num(quantity)}**"
-
-            linhas.append(f"- {line}")
+            if line:
+                linhas.append(line)
 
         if level1_count > 10:
             linhas.append(
@@ -2887,26 +2909,18 @@ class ExternalActionResultPresenter:
             qty = item.get("quantity")
             level = item.get("level")
 
-            parts = [f"**{code}**"]
-            if desc:
-                parts.append(desc)
-            if tipo:
-                parts.append(f"({tipo})")
-            if unit:
-                parts.append(f"[{unit}]")
+            line = self._format_product_search_line(
+                code=str(code),
+                description=str(desc),
+                item_type=str(tipo),
+                unit=str(unit),
+                quantity=qty,
+                level=level,
+                is_hierarchy=is_hierarchy,
+            )
 
-            line = " — ".join(parts[:2]) + (f" {parts[2]}" if len(parts) > 2 else "") + (f" {parts[3]}" if len(parts) > 3 else "")
-
-            if is_hierarchy:
-                extras = []
-                if qty is not None:
-                    extras.append(f"Qtd: {qty}")
-                if level is not None:
-                    extras.append(f"Nível: {level}")
-                if extras:
-                    line += f" | {', '.join(extras)}"
-
-            linhas.append(line)
+            if line:
+                linhas.append(line)
 
         if total is not None and total > len(items):
             linhas.append(
@@ -2943,16 +2957,36 @@ class ExternalActionResultPresenter:
             date = item.get("date") or ""
             stage = item.get("stage") or ""
 
-            parts = [f"OV {order}"]
-            if branch:
-                parts.append(f"Fil. {branch}")
-            if date:
-                parts.append(date)
-            if stage:
-                parts.append(stage)
+            parts = [
+                self._route_presentation("saleOrders", "orderPart", order=str(order))
+            ]
 
-            header = " · ".join(parts)
-            line = f"{header}: {desc}".rstrip(": ") if desc else header
+            if branch:
+                parts.append(
+                    self._route_presentation(
+                        "saleOrders",
+                        "branchPart",
+                        branch=str(branch),
+                    )
+                )
+
+            if date:
+                parts.append(str(date))
+
+            if stage:
+                parts.append(str(stage))
+
+            header = self._route_presentation("lmp", "headerSeparator").join(parts)
+            line = (
+                self._route_presentation(
+                    "saleOrders",
+                    "composedLine",
+                    header=header,
+                    description=str(desc).strip(),
+                ).rstrip(": ")
+                if desc
+                else header
+            )
             linhas.append(line)
 
         if total is not None:
@@ -3010,7 +3044,18 @@ class ExternalActionResultPresenter:
 
         if product_code and main_ops:
             ops_preview = ", ".join(
-                f"**{code}** {desc}" if code else f"**{desc}**"
+                self._route_presentation(
+                    "guide",
+                    "opsPreviewWithCode",
+                    code=code,
+                    description=desc,
+                )
+                if code
+                else self._route_presentation(
+                    "guide",
+                    "opsPreviewDescriptionOnly",
+                    description=desc,
+                )
                 for code, desc, _ in main_ops
             )
             linhas.append(
@@ -4285,6 +4330,110 @@ class ExternalActionResultPresenter:
             table_id,
             schema_labels=self._active_schema_labels,
         )
+
+    def _format_structure_component_line(
+        self,
+        code: str,
+        description: str,
+        item_type: str,
+        quantity: object,
+    ) -> str:
+        separator = self._route_presentation("structureItems", "componentSeparator")
+        parts = [
+            self._route_presentation(
+                "structureItems",
+                "componentCode",
+                code=code,
+            )
+        ]
+
+        if description:
+            parts.append(description)
+
+        line = separator.join(parts[:2])
+
+        if item_type:
+            line += self._route_presentation(
+                "structureItems",
+                "componentType",
+                type=item_type,
+            )
+
+        if quantity is not None:
+            line += self._route_presentation(
+                "structureItems",
+                "componentQuantity",
+                quantity=self._format_num(quantity),
+            )
+
+        return (
+            self._route_presentation("structureItems", "componentBulletPrefix")
+            + line
+        )
+
+    def _format_product_search_line(
+        self,
+        *,
+        code: str,
+        description: str,
+        item_type: str,
+        unit: str,
+        quantity: object,
+        level: object,
+        is_hierarchy: bool,
+    ) -> str:
+        separator = self._route_presentation("productSearch", "separator")
+        parts = [
+            self._route_presentation("productSearch", "codeBold", code=code or "?")
+        ]
+
+        if description:
+            parts.append(description)
+
+        line = separator.join(parts[:2])
+
+        if item_type:
+            line += self._route_presentation(
+                "productSearch",
+                "typePart",
+                type=item_type,
+            )
+
+        if unit:
+            line += self._route_presentation(
+                "productSearch",
+                "unitPart",
+                unit=unit,
+            )
+
+        if is_hierarchy:
+            extras: list[str] = []
+
+            if quantity is not None:
+                extras.append(
+                    self._route_presentation(
+                        "productSearch",
+                        "qtyExtra",
+                        qty=str(quantity),
+                    )
+                )
+
+            if level is not None:
+                extras.append(
+                    self._route_presentation(
+                        "productSearch",
+                        "levelExtra",
+                        level=str(level),
+                    )
+                )
+
+            if extras:
+                line += self._route_presentation(
+                    "productSearch",
+                    "extrasSeparator",
+                ) + ", ".join(extras)
+
+        return line
 
     def _product_detail_scope(self, root: dict) -> str:
         if "prices" in root:

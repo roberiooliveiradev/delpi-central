@@ -20,6 +20,7 @@ Escolha mentalmente a rota antes de responder (o backend já executa a action ad
 **Suprimentos (KPI empresa)**
 - Valor total de estoque: `GET /supplies/stock-value` — não confundir com estoque de produto
 - Giro: `GET /supplies/inventory-turnover`
+- Economia em negociações de compras (IDD, planilha por filial): `GET /supplies/negotiation-savings/summary` — use `start_date`/`end_date`; opcional `branch` 01/02
 
 **Vendas**
 - Listar ordens de venda: `GET /sales/` — não confundir com `/products/{code}/sales`

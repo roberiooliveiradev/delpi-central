@@ -24,7 +24,7 @@
 |---------|-------|--------------|----------------------------------|
 | Produtos | 18 | OK / PARCIAL | Busca por `group_code`; comparação BOM; apresentação markdown |
 | Engenharia LMP | 7 | OK | Dashboard vs lista vs detalhe OV |
-| Suprimentos | 4 | OK | CPV, OTD, IDD, stock-value desambiguado de estoque item |
+| Suprimentos | 5 | OK | CPV, OTD, IDD, stock-value, economia negociações (Sheets) |
 | Vendas (OV) | 1 | OK | `list_sale_orders` |
 | Comercial | 9 | OK | + `/commercial/proposals`; heurísticas KPI |
 | Financeiro | 4 | OK | EBITDA, PMR, ROL, custo fixo + typos |
@@ -100,6 +100,7 @@
 | `GET /inventory-turnover` | giro de estoque filial 01 | | OK |
 | `GET /cpv` | qual o cpv filial 01 | | OK |
 | `GET /otd` | otd de compras | | OK |
+| `GET /negotiation-savings/summary` | economia em negociações de compras maio | negociacao | OK |
 
 ---
 

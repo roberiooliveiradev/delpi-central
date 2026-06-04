@@ -128,6 +128,7 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 | Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | `get_supplies_inventory_turnover` |
 | CPV (custo produção vendido) | `GET /supplies/cpv` | `get_supplies_cpv` |
 | OTD (entrega no prazo compras) | `GET /supplies/otd` | `get_supplies_otd` |
+| Economia em negociações de compras (IDD / planilha) | `GET /supplies/negotiation-savings/summary` | `get_supplies_negotiation_savings_summary` |
 
 **Parâmetros importantes (`/supplies/stock-value`)**
 
@@ -147,6 +148,14 @@ Após mudanças na API, rode `scripts/sync_api_delpi_openapi.py` (reimport + emb
 - "Estoque do produto X" → `GET /products/{code}/stock` (**não** `stock-value`)
 - "Giro de estoque em 2024" → `GET /supplies/inventory-turnover` com período
 - "Qual o CPV?" → `GET /supplies/cpv`
+- "Economia em negociações de compras em maio/2026?" → `GET /supplies/negotiation-savings/summary` com `start_date` e `end_date` (por filial em `branches`; consolidado = soma das filiais)
+- "Economia de negociação da matriz/filial 01" → mesma rota com `branch=01`
+
+**Parâmetros (`/supplies/negotiation-savings/summary`)**
+
+- `start_date`, `end_date` — referência mensal do IDD (planilha `economia_negociacoes_compra`)
+- `branch` — opcional (`01` / `02`)
+- Sem linhas no período: `total_savings` e totais por filial vêm `null` (não zero)
 
 Detalhes do cálculo histórico: `api-delpi/docs/api/supplies-estoque-historico.md`.
 

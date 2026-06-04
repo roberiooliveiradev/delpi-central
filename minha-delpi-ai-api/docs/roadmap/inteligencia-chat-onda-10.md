@@ -108,6 +108,7 @@ Solução:
 ✅ qual o OTD de suprimentos?       → /supplies/otd
 ✅ giro de estoque                  → /supplies/inventory-turnover
 ✅ valor total de estoque           → /supplies/stock-value
+✅ economia em negociações compras  → /supplies/negotiation-savings/summary
 ```
 
 ---

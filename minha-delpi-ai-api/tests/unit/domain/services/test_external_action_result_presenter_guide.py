@@ -39,6 +39,15 @@ def test_analyser_guide_items_humanized_not_raw_dict():
     body = "\n".join(result.get("linhas") or [])
 
     assert "Operations=" not in body
-    assert "EMBALAR" in body
-    assert "90260015" in body
-    assert "CORTAR" in body
+
+    tables = presenter.build_analyser_auxiliary_table_presentations(root)
+    guide_table = next(
+        table
+        for table in tables
+        if "roteiro" in str(table.get("title") or "").lower()
+    )
+    serialized_rows = " ".join(str(row) for row in guide_table.get("rows") or [])
+
+    assert "EMBALAR" in serialized_rows
+    assert "90260015" in serialized_rows
+    assert "CORTAR" in serialized_rows

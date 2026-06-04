@@ -50,3 +50,41 @@ def test_product_overview_narrative_uses_content():
 
     assert any("TERM. BANDEIRA" in line for line in lines)
     assert any("Custo padrão vigente" in line for line in lines)
+
+
+def test_product_guide_ops_preview_from_content():
+    presenter = ExternalActionResultPresenter()
+
+    result = presenter._present_product_guide(
+        [
+            {
+                "product_code": "90260123",
+                "bom_level": 0,
+                "operation_code": "01",
+                "operation_description": "EMBALAR",
+                "work_center": "CT-19",
+            }
+        ],
+        path="/products/90260123/guide",
+    )
+
+    joined = "\n".join(result["linhas"])
+
+    assert "**01** EMBALAR" in joined
+    assert "90260123" in joined
+
+
+def test_format_structure_component_line():
+    presenter = ExternalActionResultPresenter()
+
+    line = presenter._format_structure_component_line(
+        "50220013",
+        "CABO",
+        "MP",
+        2.5,
+    )
+
+    assert "50220013" in line
+    assert "CABO" in line
+    assert "MP" in line
+    assert "2,5" in line or "2.5" in line

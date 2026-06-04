@@ -161,7 +161,9 @@
       "operationGeneric": "Operação",
       "operationLine": "- {label}: {desc}{center}.",
       "workCenterSuffix": " no centro **{center}**",
-      "apiFallback": "A API retornou {count} registro(s) de roteiro."
+      "apiFallback": "A API retornou {count} registro(s) de roteiro.",
+      "opsPreviewWithCode": "**{code}** {description}",
+      "opsPreviewDescriptionOnly": "**{description}**"
     },
     "inspection": {
       "defaultTitle": "Inspeção do produto",
@@ -176,7 +178,10 @@
     "saleOrders": {
       "title": "Ordens de Venda",
       "emptyPeriod": "Nenhuma ordem de venda encontrada para o período.",
-      "empty": "Nenhuma ordem de venda encontrada."
+      "empty": "Nenhuma ordem de venda encontrada.",
+      "orderPart": "OV {order}",
+      "branchPart": "Fil. {branch}",
+      "composedLine": "{header}: {description}"
     },
     "lmp": {
       "detailTitle": "LMP OV {sale_number}",
@@ -187,13 +192,23 @@
       "customer": "Cliente: {customer}.",
       "seller": "Vendedor: {seller}.",
       "piQuantity": "Quantidade PI: {qtd}.",
-      "productsCount": "Produtos na LMP: {count} item(ns)."
+      "productsCount": "Produtos na LMP: {count} item(ns).",
+      "pageHeaderFallback": "LMP",
+      "headerSeparator": " · ",
+      "pageLine": "OV {header}: {description}"
     },
     "productSearch": {
       "defaultTitle": "Busca de produtos",
       "emptySearch": "Nenhum produto encontrado para a busca.",
       "empty": "Nenhum produto encontrado.",
-      "totalFound": "Total encontrado: {total} produto(s)."
+      "totalFound": "Total encontrado: {total} produto(s).",
+      "codeBold": "**{code}**",
+      "typePart": " ({type})",
+      "unitPart": " [{unit}]",
+      "separator": " — ",
+      "qtyExtra": "Qtd: {qty}",
+      "levelExtra": "Nível: {level}",
+      "extrasSeparator": " | "
     },
     "structureItems": {
       "titleWithCode": "Estrutura do produto {code}",
@@ -202,7 +217,12 @@
       "noDescription": "sem descrição",
       "totalFromApi": "A composição (BOM) possui **{total}** componente(s) de nível 1.",
       "countFromItems": "A composição possui **{count}** componente(s) de nível 1.",
-      "rawMaterials": "Inclui **{count}** matéria(s)-prima(s): {preview}{suffix}."
+      "rawMaterials": "Inclui **{count}** matéria(s)-prima(s): {preview}{suffix}.",
+      "componentBulletPrefix": "- ",
+      "componentCode": "**{code}**",
+      "componentSeparator": " — ",
+      "componentType": " ({type})",
+      "componentQuantity": " — qtd **{quantity}**"
     },
     "systemTables": {
       "searchTitle": "Busca de tabelas Protheus (SX2)",
