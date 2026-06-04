@@ -20,7 +20,7 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 
 - `depends_on`: keycloak, postgres-plugins
 - `env_file`: `infra/.env`
-- Variáveis `TRANSFORMA_MAIS_*` repassadas para importação da planilha
+- Cadastro de dados somente via CRUD da API (sem importação de planilha)
 
 ## Gateway
 
@@ -36,7 +36,6 @@ Serviço em `infra/docker-compose.yml` e `infra/docker-compose.dev.yml`:
 | `TM_API_ROOT_PATH` | `/apps/transformometro-api` | Prefixo FastAPI |
 | `TM_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` em prod compose) | Aplica V001–V006 no boot |
 | `PLUGINS_DB_*` | — | Postgres schema `transformometro` |
-| `TRANSFORMA_MAIS_SHEET_ID` + `TRANSFORMA_MAIS_GID_*` | — | Import Google Sheets |
 | `JWT_SECRET` / Keycloak | — | `delpi_auth` |
 | `API_DELPI_INTERNAL_SERVICE_TOKEN` | — | Auth S2S nas rotas `/integrations/engineering/*` (mesmo valor em SI e api-delpi) |
 | `TRANSFORMOMETRO_API_BASE_URL` | `http://transformometro-api:8000` | Só nos **consumidores** (SI, api-delpi), não neste serviço |
@@ -62,5 +61,4 @@ Versões: ver [migrations/README.md](../migrations/README.md) (V001–V005).
 3. Registrar manifesto na Core API: `plugins/transformometro/scripts/register-manifest.sh` (inclui rota `/recursos`)
 4. RBAC: `transformometro.shared-resources.manage` para quem edita o catálogo
 5. Health: `GET /apps/transformometro-api/transformometro/health` → `db_ready: true`
-6. Import inicial (se necessário): `python scripts/migrate_transforma_mais_sheet.py --apply --replace` (ver [OPERATIONS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/OPERATIONS.md))
-7. Integração (rede Docker): `curl -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary`
+6. Integração (rede Docker): `curl -H "X-Delpi-Service-Token: $API_DELPI_INTERNAL_SERVICE_TOKEN" http://transformometro-api:8000/transformometro/integrations/engineering/transforma-mais/processes/summary`

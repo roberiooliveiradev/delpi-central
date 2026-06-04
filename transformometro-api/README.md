@@ -47,22 +47,9 @@ make test
 | Dashboard | `/dashboard/resumo`, `/alertas`, `/export.csv`, `/export.xls`, `POST /recalcular` (full ou `?processo_id=` / `?revisao_id=` / competências) |
 | Integração | `/integrations/engineering/transforma-mais/processes` |
 
-## Importação da planilha (Transforma+)
+## Cadastro de dados
 
-Variáveis (mesmos GIDs do `api-delpi` / `infra/.env`):
-
-- `TRANSFORMA_MAIS_SHEET_ID`
-- `TRANSFORMA_MAIS_GID_PROCESSOS`, `_REVISAO`, `_MEDICOES`, `_INVESTIMENTOS`, `_RECURSOS_COMPARTILHADOS`, `_REVISAO_RECURSOS_COMPARTILHADOS`
-
-CLI:
-
-```bash
-python scripts/migrate_transforma_mais_sheet.py --preview
-python scripts/migrate_transforma_mais_sheet.py --apply --replace   # truncate + import + recalc
-python scripts/migrate_transforma_mais_sheet.py --apply             # merge por codigo_processo
-```
-
-HTTP (JWT): `GET /import/preview`, `POST /import/apply`
+Processos, revisões, medições e recursos são mantidos **somente pelo CRUD da API** e pelas telas do plugin (sem importação de planilha).
 
 ## Integração engenharia / SI
 

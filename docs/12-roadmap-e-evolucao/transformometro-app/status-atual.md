@@ -9,13 +9,13 @@ Atualizado: 2026-05-27 (duplicar processo; sem workflow de aprovação).
 | API + migrations V001–V006 | ✅ Repo |
 | CRUD processos, revisões, medições, investimentos, recursos, vínculos | ✅ |
 | Duplicar processo (`POST /processos/{id}/duplicar`) — revisões, medições, investimentos, vínculos | ✅ |
-| UI navegação | Início, Dashboard, Processos, **Recursos**, Importar |
+| UI navegação | Dashboard, Processos, **Recursos** |
 | Cadastro revisão (abas) | Vigência/identificação, Medição, Investimentos, Recursos (vínculos + edição inline) |
 | Revisão ativa | `POST /revisoes/{id}/ativar` — sem etapa de aprovação (como planilha legado) |
 | Catálogo global recursos | Página `/recursos` + `PUT`/`DELETE` na API |
 | Dashboard materializado + recálculo | ✅ |
 | Fase 4 | Alertas, CSV/Excel, por-família, comparativo, diagnóstico rateio |
-| Import planilha (CLI + UI) | ✅ |
+| Import planilha | Removido — cadastro só pelo app |
 | Integração SI / api-delpi (`transformometro_client`) | ✅ |
 | Testes API | `scripts/ci-transformometro-api.sh` |
 | URLs processo/revisão no MFE | `/processos/{id}` e `/processos/{id}/revisoes/{revisaoId}` |

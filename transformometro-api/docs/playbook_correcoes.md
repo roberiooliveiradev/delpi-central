@@ -329,8 +329,6 @@ Durante o build do frontend, apareceram erros como:
 downloadDashboardCsv não exportado
 downloadDashboardExcel não exportado
 DashboardAlertItem não exportado
-ImportApplyResult não exportado
-ImportPreviewResult não exportado
 fetchProcessoComparativo não exportado
 ```
 

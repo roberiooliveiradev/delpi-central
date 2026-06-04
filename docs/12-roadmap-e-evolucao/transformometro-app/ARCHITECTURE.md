@@ -225,7 +225,6 @@ Manifesto `transformometro.manifest.json` (espelho do SI):
 | `/apps/transformometro/processos/{id}` | Detalhe + revisões |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Mesma tela com revisão na URL |
 | `/apps/transformometro/recursos` | Catálogo global (CRUD) |
-| `/apps/transformometro/import` | Import planilha |
 
 Detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos**; **Definir como ativa** sem etapa de aprovação. Roteamento por URL (`routeParser`, `useDelpiPortalBridge` para sincronizar URL com o portal).
 
@@ -236,7 +235,7 @@ Espelhar `strategic-indicators` em `infra/docker-compose.dev.yml`:
 - Serviço `transformometro-api` (porta interna 8000, `TM_API_ROOT_PATH`)
 - Serviço `transformometro` (Vite dev / build estático)
 - Traefik/nginx: `/apps/transformometro` e `/apps/transformometro-api`
-- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP`, `TRANSFORMA_MAIS_*` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
+- Variáveis: `PLUGINS_DB_*`, `TM_RUN_MIGRATIONS_ON_STARTUP` (ver [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md))
 - Registro Core API: `POST /core-api/admin/apps/register` com manifesto
 
 ## Auditoria
@@ -247,17 +246,6 @@ Tabela `audit_logs`:
 - Gravada em PUT/POST/DELETE e em `recalcular`
 
 Autenticação de usuários: **Keycloak** (sem tabela `usuarios` local, salvo cache de display name).
-
-## Migração Sheets → Postgres
-
-Script `scripts/migrate_transforma_mais_sheet.py`:
-
-1. Export CSV por aba (mesmos GIDs de `infra/.env`)
-2. Validar integridade referencial
-3. Insert em transação
-4. `POST /dashboard/recalcular` ou `DashboardRecalcService().recalculate()`
-5. Relatório de diff vs `dashboard_calculos` da planilha (se existir)
-6. Validar que `dashboard_calculos` ficou alinhada ao cálculo em tempo real
 
 ## Segurança
 

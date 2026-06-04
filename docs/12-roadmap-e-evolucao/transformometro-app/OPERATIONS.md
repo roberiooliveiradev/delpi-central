@@ -10,7 +10,6 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Dashboard | `/apps/transformometro/dashboard` |
 | Processos | `/apps/transformometro/processos` |
 | Recursos (catálogo) | `/apps/transformometro/recursos` |
-| Import (admin) | `/apps/transformometro/import` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
 ## Rotina diária
@@ -21,30 +20,7 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 4. Cadastro: preencher **família** e **agrupador ferramenta** quando o processo participa de rateio compartilhado.
 5. **Recursos compartilhados:** cadastrar em **Recursos** (menu); vincular em Processos → revisão → aba Recursos.
 6. **Revisões:** cadastrar baseline/melhorias e **Definir como ativa** quando for usar no dashboard (sem aprovação).
-7. Não editar a planilha Transforma+ em produção (somente leitura ou desligada).
-
-## Importação / reimportação
-
-### Primeira carga (já feita)
-
-```bash
-docker exec delpi-transformometro-api python scripts/migrate_transforma_mais_sheet.py --apply --replace
-```
-
-### Atualizar da planilha (contingência)
-
-```bash
-# Pré-visualizar
-docker exec delpi-transformometro-api python scripts/migrate_transforma_mais_sheet.py --preview
-
-# Merge (mantém UUIDs por codigo_processo)
-docker exec delpi-transformometro-api python scripts/migrate_transforma_mais_sheet.py --apply
-
-# Substituir tudo (cuidado)
-docker exec delpi-transformometro-api python scripts/migrate_transforma_mais_sheet.py --apply --replace
-```
-
-Validar no JSON de saída: `diff.all_match: true` (economia líquida/bruta vs planilha).
+7. Cadastro oficial somente no portal (sem importação de planilha).
 
 ## Registro Core API e RBAC
 
@@ -61,17 +37,6 @@ Atribuir ao perfil de engenharia/gestão, no mínimo:
 - `transformometro.revisions.manage`
 - `transformometro.dashboard.recalculate`
 - `transformometro.shared-resources.manage` (catálogo Recursos)
-- `transformometro.admin` (import planilha)
-
-## Desligar escrita na planilha Google
-
-Checklist (manual, Google Workspace):
-
-1. Comunicar que o cadastro oficial é o **Transformômetro** no portal.
-2. Na planilha `TRANSFORMA_MAIS_SHEET_ID`: restringir edição (visualizador para consulta histórica) ou mover para pasta arquivada.
-3. Remover links de edição em procedimentos internos / Apps Script de escrita.
-4. Manter `TRANSFORMA_MAIS_*` no `.env` só se ainda usar import de contingência.
-5. SI e `dashboard-engineering` consomem **Postgres via transformometro-api** (não Sheets).
 
 ## Troubleshooting
 

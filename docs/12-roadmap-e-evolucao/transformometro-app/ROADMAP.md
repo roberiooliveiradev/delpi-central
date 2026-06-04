@@ -13,7 +13,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | Compose + gateway | URLs `/apps/transformometro` e `/apps/transformometro-api` | ✅ |
 | Build MFE | `npm run build` no plugin | ✅ |
 | Registro no Core API | `plugins/transformometro/scripts/register-manifest.sh` | Pendente (manual no portal) |
-| CI mínimo | `scripts/ci-transformometro-api.sh` (pytest calculador + import) | ✅ |
+| CI mínimo | `scripts/ci-transformometro-api.sh` (pytest calculador) | ✅ |
 
 **Critério de pronto:** `GET /health` e MFE “hello” carregando no portal com JWT.
 
@@ -47,7 +47,7 @@ Entregas em fases para reduzir risco e reaproveitar o que já funciona no monore
 | `POST /dashboard/recalcular` | Rebuild síncrono TRUNCATE + insert | ✅ |
 | `GET /dashboard/resumo`, `/evolucao`, `/processos` | Filtros filial/período; fallback cálculo em memória | ✅ |
 | UI dashboard | Cards, tabela evolução, ranking, botão recalcular | ✅ |
-| Migração planilha | `scripts/migrate_transforma_mais_sheet.py`, `GET/POST /import/*`, UI `/import` | ✅ |
+| Import planilha | Removido — cadastro via CRUD | — |
 
 **Critério de pronto:** números batem com planilha para amostra de ≥10 processos (incl. economia negativa).
 

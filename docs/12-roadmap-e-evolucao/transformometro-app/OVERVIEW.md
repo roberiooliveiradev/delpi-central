@@ -23,7 +23,7 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 | Rotas de negócio | prefixo `/transformometro` | `/apps/transformometro-api/transformometro/*` |
 | MFE (UI) | `plugins/transformometro/` | `/apps/transformometro/` |
 | Banco | schema `transformometro` em `postgres-plugins` | `PLUGINS_DB_*` |
-| Migração inicial | import da planilha Transforma+ | CLI + UI `/import` |
+| Cadastro de dados | CRUD na API + telas do MFE | Postgres como fonte de verdade |
 
 ### Rotas do MFE (menu e abas superiores)
 
@@ -35,7 +35,6 @@ Hoje isso vive em **Google Sheets + Apps Script**. A meta é uma aplicação web
 | `/apps/transformometro/processos/{id}` | Detalhe do processo |
 | `/apps/transformometro/processos/{id}/revisoes/{revisaoId}` | Detalhe com revisão selecionada |
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
-| `/apps/transformometro/import` | Importação planilha (admin) |
 
 No detalhe da revisão: abas **Vigência**, **Medição**, **Investimentos**, **Recursos** (vínculos) e botão **Definir como ativa** (como na planilha legado — sem etapa de aprovação).
 
@@ -65,7 +64,7 @@ Tudo gira em torno de **`revisao_id`**:
 
 - **Não** é extensão do painel Strategic Indicators — o SI e o `api-delpi` consomem dados via HTTP na `transformometro-api` (rotas `/integrations/engineering/transforma-mais/*`).
 - O `dashboard-engineering` (TRANSFORMA+) usa as mesmas rotas `/engineering/transforma-mais/*`, agora alimentadas pelo banco.
-- **Não** usa planilha como fonte permanente após go-live (Sheets só migração / contingência).
+- **Não** usa planilha como fonte de dados (cadastro somente no app).
 
 ## Permissões (manifesto — proposta)
 
@@ -78,7 +77,7 @@ Tudo gira em torno de **`revisao_id`**:
 | `transformometro.investments.manage` | Investimentos |
 | `transformometro.shared-resources.manage` | Recursos e vínculos |
 | `transformometro.dashboard.recalculate` | Disparar recálculo mensal |
-| `transformometro.admin` | Auditoria, import, parâmetros |
+| `transformometro.admin` | Auditoria e parâmetros (se habilitados) |
 
 ## Stack alinhada ao monorepo
 

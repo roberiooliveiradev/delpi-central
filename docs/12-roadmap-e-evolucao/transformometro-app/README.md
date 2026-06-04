@@ -11,7 +11,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) | Contrato vivo de modelagem, vigência, atividade, investimentos, recursos e cálculo |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega, dependências, o que reaproveitar do legado |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional completa (origem: planilha + Apps Script) |
-| [OPERATIONS.md](./OPERATIONS.md) | Runbook: import, recalcular, planilha, troubleshooting |
+| [OPERATIONS.md](./OPERATIONS.md) | Runbook: recalcular, cadastro, troubleshooting |
 | [status-atual.md](./status-atual.md) | Snapshot do que está em produção |
 | [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md) | Docker, compose, migrations, checklist |
 

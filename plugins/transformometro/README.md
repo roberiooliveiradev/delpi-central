@@ -10,9 +10,10 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/dashboard` | Dashboard (KPIs, alertas, CSV/Excel, recalcular) |
 | `/apps/transformometro/processos` | Processos e cadastro de revisões (abas) |
 | `/apps/transformometro/recursos` | Catálogo global de recursos compartilhados |
-| `/apps/transformometro/import` | Importação planilha (admin) |
 
-Barra superior do módulo: **Início · Dashboard · Processos · Recursos · Importar**.
+Barra superior do módulo: **Dashboard · Processos · Recursos**.
+
+Cadastro e evolução dos dados somente pelas telas do app (sem importação de planilha).
 
 ## Desenvolvimento
 

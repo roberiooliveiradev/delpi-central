@@ -10,7 +10,7 @@ function normalizeTipoCustoRecurso(value?: string | null, recorrencia?: string |
     return normalized;
   }
 
-  // Compatibilidade com cadastros/importações antigos em que a recorrência
+  // Compatibilidade com cadastros legados em que a recorrência
   // acabou gravada no campo tipo_custo. A API aceita apenas tipo de custo do
   // catálogo: fixo, variavel, assinatura ou licenca.
   if (["recorrente", "mensal", "anual"].includes(normalized)) {

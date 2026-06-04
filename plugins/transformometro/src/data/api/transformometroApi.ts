@@ -691,29 +691,6 @@ export function downloadDashboardExcel(
   return downloadFile(`/dashboard/export.xls${qs}`, "dashboard-transformometro.xls", getAccessToken);
 }
 
-export type ImportPreviewResult = {
-  validation: {
-    ok: boolean;
-    errors: string[];
-    sheet_counts: Record<string, number>;
-  };
-  sheet_summary?: {
-    economia_liquida_total?: number;
-    solucoes_implementadas?: number;
-    [key: string]: number | string | null | undefined;
-  } | null;
-  [key: string]: unknown;
-};
-
-export type ImportApplyResult = {
-  validation?: ImportPreviewResult["validation"];
-  inserted?: Record<string, number>;
-  updated?: Record<string, number>;
-  deleted?: Record<string, number>;
-  recalculo?: DashboardRecalcResult;
-  [key: string]: unknown;
-};
-
 export type ProcessoComparativoItem = {
   revisao_id: string;
   versao_revisao?: string | null;
