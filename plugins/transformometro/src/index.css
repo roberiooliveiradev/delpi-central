@@ -877,6 +877,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.dashboard-transformometro .ds-charts-grid--rankings .ds-chart-card__body {
+  min-height: 320px;
+}
+
 .dashboard-transformometro .ds-chart-card__toolbar-stack {
   display: flex;
   flex-direction: column;

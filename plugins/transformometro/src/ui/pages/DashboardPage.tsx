@@ -9,18 +9,7 @@ import {
   Percent,
   RefreshCw,
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
@@ -34,6 +23,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
 import { ChartSeriesViewport } from "../../components/ChartSeriesViewport";
+import { RankingBarChart } from "../../components/RankingBarChart";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { PageHeader } from "../../components/PageHeader";
 import { SegmentToggle } from "../../components/SegmentToggle";
@@ -64,6 +54,8 @@ import {
 } from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
+import { currentMonthFilterRange } from "../../utils/dashboardFilters";
+import { economiaLiquidaDiaria } from "../../utils/economiaDiaria";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
@@ -98,12 +90,10 @@ type TopDailyPoint = {
   value: number;
 };
 
-const today = new Date();
-const formatDateInput = (date: Date) => date.toISOString().slice(0, 10);
-const defaultStart = new Date(today.getFullYear(), today.getMonth() - 10, 1);
+const monthRange = currentMonthFilterRange();
 const defaultFilters: Filters = {
-  dataInicial: formatDateInput(defaultStart),
-  dataFinal: formatDateInput(today),
+  dataInicial: monthRange.dataInicial,
+  dataFinal: monthRange.dataFinal,
   filialId: "",
   setorId: "",
 };
@@ -286,21 +276,25 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         .sort((a, b) => (b.economia_diaria ?? 0) - (a.economia_diaria ?? 0))
         .slice(0, 10)
         .map((item) => ({
-          name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
+          name: item.nome_processo,
           value: item.economia_diaria ?? 0,
         })),
     [processos]
   );
 
-  const topHoursChart = useMemo<TopDailyPoint[]>(
+  const topEconomiaDiariaLiquidaChart = useMemo<TopDailyPoint[]>(
     () =>
       [...processos]
-        .filter((item) => (item.horas_economizadas_mes ?? 0) > 0)
-        .sort((a, b) => (b.horas_economizadas_mes ?? 0) - (a.horas_economizadas_mes ?? 0))
-        .slice(0, 10)
         .map((item) => ({
-          name: item.nome_processo.length > 28 ? `${item.nome_processo.slice(0, 25)}...` : item.nome_processo,
-          value: item.horas_economizadas_mes ?? 0,
+          item,
+          value: economiaLiquidaDiaria(item),
+        }))
+        .filter((entry) => entry.value > 0)
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10)
+        .map((entry) => ({
+          name: entry.item.nome_processo,
+          value: entry.value,
         })),
     [processos]
   );
@@ -709,47 +703,37 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         <section className="ds-charts-grid ds-charts-grid--rankings">
           <ChartCard
             title="Top economia diária"
-            hint={topDailyChart.length > 0 ? "10 maiores no recorte · R$" : "Sem ranking no período"}
+            hint={
+              topDailyChart.length > 0 ? "10 maiores no recorte · R$ (bruta)" : "Sem ranking no período"
+            }
           >
             {topDailyChart.length === 0 && !isBusy ? (
               <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
             ) : (
-              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                <BarChart data={topDailyChart} layout="vertical" margin={{ left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                  <XAxis type="number" tickFormatter={(v) => formatCurrency(Number(v))} />
-                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
-                    {topDailyChart.map((_, index) => (
-                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <RankingBarChart
+                data={topDailyChart}
+                colors={CHART_COLORS}
+                formatValue={formatCurrency}
+              />
             )}
           </ChartCard>
 
           <ChartCard
-            title="Top economia de horas"
-            hint={topHoursChart.length > 0 ? "10 maiores no recorte · Horas" : "Sem ranking no período"}
+            title="Top economia diária líquida"
+            hint={
+              topEconomiaDiariaLiquidaChart.length > 0
+                ? "10 maiores no recorte · R$ (líquida)"
+                : "Sem ranking no período"
+            }
           >
-            {topHoursChart.length === 0 && !isBusy ? (
-              <p className="ds-state-box">Nenhum processo com horas economizadas no recorte.</p>
+            {topEconomiaDiariaLiquidaChart.length === 0 && !isBusy ? (
+              <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
             ) : (
-              <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                <BarChart data={topHoursChart} layout="vertical" margin={{ left: 8 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                  <XAxis type="number" tickFormatter={(v) => formatHours(Number(v))} />
-                  <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v) => formatHours(Number(v))} />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]} maxBarSize={28}>
-                    {topHoursChart.map((_, index) => (
-                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <RankingBarChart
+                data={topEconomiaDiariaLiquidaChart}
+                colors={CHART_COLORS}
+                formatValue={formatCurrency}
+              />
             )}
           </ChartCard>
         </section>
