@@ -81,7 +81,8 @@ Mensagem do usuário
 | `ChatToolContextService` | Execução de tools; aceita `previous_messages` para herdar análise |
 | `ChatExternalActionOrchestrationService` | Planeja várias actions OpenAPI (ex.: dois códigos de produto) |
 | `ChatProductMultiScopePlanningService` | Pergunta com 2+ escopos no mesmo produto (estrutura + roteiro, etc.): várias rotas `/products/{code}/…` ou analyser quando integrada/completa |
-| `ChatProductPluralPhrasingService` | Frases no plural («estoque dos produtos X, Y», «onde são usados», «vendas dos itens»): termos com limite de palavra + padrão `{escopo} dos produtos`; rótulos de intro multi-código |
+| `ChatProductOperationalContentService` | Loader de `product_operational_content.json` — escopos, listas de termos, textos de presenter/apresentação/web search |
+| `ChatProductPluralPhrasingService` | Frases no plural («estoque dos produtos X, Y», «onde são usados»): consome termos do JSON; rótulos de intro multi-código |
 | `ChatCompositeDirectAnswerService` | Resposta direta composta: intro humanizada multi-rota (`multiProductRouteIntro`), `multiProductCodesIntro`, `###` por consulta, erros em lista |
 | `ChatOperationalPipelineService` | Fast path operacional (desligado em modo análise e em Normas/descrição técnica) |
 | `ChatSqlOperationalIntentService` | Perguntas SQL analíticas sem rota REST (produção, estoque agregado, vendas/ranking) |
@@ -737,7 +738,7 @@ Mensagens antigas não ganham diagnóstico retroativo.
 
 ## Referências
 
-- Apresentação multi-rota produto (jun/2026): [`../changelog/2026-06-apresentacao-multi-rota-produto.md`](../changelog/2026-06-apresentacao-multi-rota-produto.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026)
+- Apresentação multi-rota produto (jun/2026): [`../changelog/2026-06-apresentacao-multi-rota-produto.md`](../changelog/2026-06-apresentacao-multi-rota-produto.md), [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md#consulta-multi-rota-do-mesmo-produto-jun2026), [`product-operational-content.md`](./product-operational-content.md)
 - Auditoria api-delpi (maio/2026): [`../roadmap/api-delpi-chat-intelligence-audit.md`](../roadmap/api-delpi-chat-intelligence-audit.md)
 - Roadmap onda 1 (pipeline): [`../roadmap/inteligencia-chat-onda-1.md`](../roadmap/inteligencia-chat-onda-1.md)
 - Agentes (HTTP): [`../api/03-agentes.md`](../api/03-agentes.md)

@@ -1,0 +1,212 @@
+{
+  "scopes": {
+    "byScopeKey": {
+      "profile": "cadastro",
+      "guide": "roteiro de produção",
+      "inspection": "plano de inspeção",
+      "structure": "estrutura (BOM)",
+      "stock": "estoque",
+      "parents": "produtos pai",
+      "sales": "vendas",
+      "purchases": "compras",
+      "suppliers": "fornecedores",
+      "pricing": "preços"
+    },
+    "byPathFragment": {
+      "/parents": "onde o item é usado",
+      "/stock": "estoque",
+      "/structure": "estrutura (BOM)",
+      "/guide": "roteiro de produção",
+      "/inspection": "plano de inspeção",
+      "/sales": "vendas",
+      "/profile": "cadastro"
+    },
+    "compositeShort": {
+      "/stock": "estoque",
+      "/parents": "onde o item é usado",
+      "/structure": "estrutura (BOM)",
+      "/guide": "roteiro",
+      "/inspection": "inspeção"
+    }
+  },
+  "listJoin": {
+    "two": "{first} e {second}",
+    "many": "{head}, {last}"
+  },
+  "multiScope": {
+    "reasonTemplate": "A pergunta pede {scope} do produto {code} (consulta combinada com outras rotas na mesma mensagem)."
+  },
+  "composite": {
+    "informedProductFallback": "informado"
+  },
+  "pluralPhrasing": {
+    "productReferenceTerms": [
+      "produtos",
+      "itens",
+      "materiais",
+      "desses produtos",
+      "destes produtos",
+      "esses produtos",
+      "estes produtos",
+      "os produtos citados",
+      "os itens citados",
+      "os produtos acima",
+      "os itens acima",
+      "produtos acima",
+      "itens acima",
+      "mesmos produtos",
+      "mesmos itens"
+    ],
+    "productEntityTerms": [
+      "produto",
+      "produtos",
+      "item",
+      "itens",
+      "material",
+      "materiais",
+      "codigo",
+      "código"
+    ],
+    "linkedScopeStems": {
+      "stock": ["estoque", "stock", "saldo"],
+      "structure": ["estrutura", "bom", "composicao", "composição", "arvore", "árvore"],
+      "sales": ["venda", "vendas"],
+      "description": ["descricao", "descrição", "description"]
+    },
+    "scopeTerms": {
+      "stock": {
+        "terms": ["estoque", "stock", "saldo"],
+        "pluralTerms": ["estoques", "saldos"]
+      },
+      "structure": {
+        "terms": [
+          "estrutura",
+          "bom",
+          "bill of material",
+          "composição",
+          "composicao",
+          "componentes",
+          "árvore do produto",
+          "arvore do produto"
+        ],
+        "pluralTerms": ["estruturas", "composições", "composicoes", "árvores", "arvores"]
+      },
+      "sales": {
+        "terms": ["venda", "vendas"],
+        "pluralTerms": []
+      },
+      "description": {
+        "terms": ["descricao", "descrição", "description"],
+        "pluralTerms": ["descricoes", "descrições"]
+      }
+    }
+  },
+  "referencesPreviousProduct": {
+    "terms": [
+      "desse produto",
+      "deste produto",
+      "desses produtos",
+      "destes produtos",
+      "esse produto",
+      "este produto",
+      "esses produtos",
+      "estes produtos",
+      "mesmo produto",
+      "mesmos produtos",
+      "mesmo item",
+      "mesmos itens",
+      "produto acima",
+      "produtos acima",
+      "produto anterior",
+      "produtos anteriores"
+    ]
+  },
+  "presenter": {
+    "profile": {
+      "nextStepsHint": "Posso detalhar estoque, estrutura (BOM), preços, roteiro ou fornecedores se quiser aprofundar.",
+      "collectionEmpty": "{label}: ainda sem registros vinculados.",
+      "collectionWithTotal": "{label}: **{total}** registro(s) disponível(is)."
+    },
+    "collections": {
+      "labels": {
+        "guide": "Roteiro",
+        "inspection": "Inspeção",
+        "structure": "Estrutura",
+        "customers": "Clientes",
+        "suppliers": "Fornecedores"
+      }
+    },
+    "stock": {
+      "titleDefault": "Estoque do produto",
+      "summaryWithCode": "Consultei o estoque do produto **{code}**: **{positions}** posição(ões)",
+      "summaryBranches": " em **{count}** filial(is) ({branches})",
+      "summaryWarehouses": " e **{count}** armazém(ns) ({warehouses})",
+      "summaryAvailableTotal": " No total, há **{total}** unidade(s) disponível(is) nesta consulta.",
+      "summaryCurrentTotal": " Saldo atual somado: **{total}** unidade(s).",
+      "summaryNoAvailable": " Não há quantidade disponível registrada nas posições retornadas.",
+      "summaryWithoutCode": "Encontrei **{positions}** posição(ões) de estoque",
+      "summaryWithoutCodeBranches": " em **{count}** filial(is).",
+      "textModeDetailHint": "No modo **Texto** você vê as **{lines}** linhas com filial, armazém e quantidades.",
+      "detailLine": "Filial {branch}, armazém {warehouse}: atual {current}, disponível {available}, empenhada {committed}. Local: {location}.",
+      "locationFallback": "não informado"
+    },
+    "items": {
+      "defaultTitle": "Resultado operacional",
+      "apiReturned": "A API retornou {count} registro(s)."
+    },
+    "inspection": {
+      "summaryFallback": "plano de inspeção cadastrado"
+    },
+    "analyser": {
+      "titleWithCode": "Informações completas do produto {code}",
+      "titleGeneric": "Informações completas do produto",
+      "scopeIntro": "Análise integrada do cadastro, roteiro de produção, plano de inspeção e estrutura (BOM) do item abaixo."
+    },
+    "parents": {
+      "titleWithCode": "Onde é usado o produto {code}",
+      "titleGeneric": "Produtos pai (onde é usado)"
+    }
+  },
+  "presentation": {
+    "routeTitles": {
+      "profile": "Cadastro do produto",
+      "guide": "Roteiro de produção",
+      "inspection": "Plano de inspeção",
+      "structure": "Estrutura (BOM)",
+      "stock": "Estoque",
+      "parents": "Onde o item é usado",
+      "analyser": "Análise integrada do produto",
+      "other": "Consulta operacional"
+    },
+    "routeFraming": {
+      "profile": "Identidade e dados cadastrais do item — use a tabela abaixo para conferir código, bloqueio e referências.",
+      "guide": "Sequência de operações de fabricação por produto da hierarquia (centros, operações e tempos).",
+      "inspection": "Referências de inspeção de processo retornadas pela API para os itens consultados.",
+      "structure": "Composição do produto (BOM). A árvore detalha a hierarquia; a tabela lista os componentes em formato plano.",
+      "stock": "Posição de estoque por filial e armazém. O gráfico resume volumes; a tabela permite auditoria linha a linha.",
+      "parents": "Produtos pai e aplicações onde este item entra na estrutura de outros cadastros.",
+      "analyser": "Visão integrada do cadastro, roteiro, inspeção e estrutura na mesma consulta.",
+      "other": "Resultado operacional desta rota."
+    },
+    "sectionFraming": {
+      "scopeWithCode": "Visão integrada do produto {code} — cadastro, roteiro, inspeção e estrutura (BOM).",
+      "scopeGeneric": "Visão integrada do item consultado nesta resposta.",
+      "profile": "Cadastro do item: identidade, bloqueio, referências e custos. Os valores detalhados estão na tabela abaixo.",
+      "highlights": "Leitura rápida do que mais importa nesta consulta — os itens seguintes detalham cada bloco.",
+      "guide": "Sequência de operações de fabricação por produto da hierarquia (consulte códigos, centros e operações na tabela).",
+      "inspection": "Referências de inspeção retornadas para os itens da estrutura — detalhes de ensaio na tabela quando a API enviar.",
+      "structure": "Composição do produto em árvore (PA → PI → MP). Expanda os nós para ver componentes e quantidades.",
+      "attention": "Pontos que merecem validação comercial, de compras ou engenharia antes de usar este cadastro em decisão."
+    }
+  },
+  "webSearch": {
+    "defaultQuery": "sua pergunta",
+    "defaultTitle": "Resultado da busca",
+    "intro": "Consultei a **internet pública** sobre *{query}*.",
+    "otherSourcesHeader": "**Outras fontes encontradas:**",
+    "primarySourceHeader": "**Fonte principal:**",
+    "localizedFooter": "*(Resumo em português via Wikipedia.)*",
+    "retriedQueryFooter": "*(Busca complementada em inglês: «{query}».)*",
+    "noResults": "Realizei uma busca na **internet pública** sobre *{query}*, mas não encontrei resultados úteis para montar um resumo.\n\nSugestões: reformule a pergunta, use termos mais específicos ou informe o tema em inglês se for um assunto técnico internacional."
+  }
+}

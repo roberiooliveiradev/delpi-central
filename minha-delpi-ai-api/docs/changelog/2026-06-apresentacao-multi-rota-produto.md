@@ -2,7 +2,11 @@
 
 Melhorias no chat operacional quando o usuário pede **dois ou mais escopos** do mesmo produto na mesma pergunta (ex.: «estoque e onde é usado do produto 10070011»), sem usar o analyser integrado.
 
-Documentação de arquitetura: [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md) (seção **Consulta multi-rota**), [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+Documentação de arquitetura:
+
+- [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md) (seção **Consulta multi-rota**)
+- [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)
+- [`../architecture/product-operational-content.md`](../architecture/product-operational-content.md) (JSON central + pluralidade)
 
 ---
 
@@ -55,7 +59,9 @@ composite.multiProductRouteIntro
 
 | Arquivo | Função |
 |---------|--------|
-| `presentationMultiRoute.ts` | `isMultiRouteProductPresentation`, `buildMultiRouteStackSegments`, `groupSegmentsByRouteSections`, `ROUTE_FRAMING`, `ROUTE_SHOW_IN`, `resolveRouteTextDetailMarkdown` |
+| `presentationMultiRoute.ts` | `isMultiRouteProductPresentation`, `buildMultiRouteStackSegments`, `groupSegmentsByRouteSections`, `ROUTE_SHOW_IN`, `resolveRouteTextDetailMarkdown` |
+| `operationalPresentationContent.ts` | Importa `product_operational_content.json` — `routeTitle`, `routeFraming` |
+| `AssistantContentRouteCoverage.tsx` | Aviso Parcial e paginação por rota |
 | `assistantContentSegments.ts` | Prioriza stack multi-rota antes do plano humanizado do analyser |
 | `presentationStackPlan.ts` | Multi-rota desliga `humanizedSections` |
 
@@ -90,6 +96,43 @@ Ex.: «onde são usados os produtos **10080022**, **10080012**?»
 | `ChatCompositeDirectAnswerService` | Intro `multiProductCodesIntro` + seções `###` com rótulo **— {código}** |
 | MFE `presentationMultiRoute` | Títulos de seção `1. Onde o item é usado — 10080022` quando há 2+ rotas |
 
+---
+
+## Pluralidade ampliada (jun/2026)
+
+Além de *parents*, a detecção cobre o mesmo padrão para **estoque**, **estrutura**, **vendas** e **descrição**, e follow-ups no plural («desses produtos», «estoque dos produtos X, Y»).
+
+| Peça | Mudança |
+|------|---------|
+| `ChatProductPluralPhrasingService` | Termos e stems carregados do JSON; match por palavra inteira; padrão «{escopo} dos produtos/itens» |
+| `ChatProductQueryIntentService.refine_operational_intent_from_full` | Um único escopo explícito na mensagem refina `FULL` → STOCK/STRUCTURE/PARENTS/… antes do `multi_product` |
+| `ChatAnalysisIntentService` | Contexto com vários produtos reconhece parents + termos plurais do JSON |
+| `ChatExternalActionOrchestrationService` | `multi_product` para STOCK, STRUCTURE, SALES, PARENTS, … com 2+ códigos |
+
+Frases de validação adicionais:
+
+| Pergunta | Esperado |
+|----------|----------|
+| `estoque dos produtos 10080022, 10080012` | 2× `/stock`, intent STOCK |
+| `estruturas dos produtos 90260077 e 90260088` | 2× estrutura |
+| `vendas dos produtos 10080001 e 10080002` | 2× vendas |
+
+---
+
+## Conteúdo centralizado em JSON (jun/2026)
+
+Textos e listas de termos saíram de strings fixas no código para **`product_operational_content.json`**, com loader `ChatProductOperationalContentService`.
+
+| Antes (espalhado) | Depois (JSON) |
+|-------------------|---------------|
+| Rótulos em `ChatProductPluralPhrasingService`, composite, multi-scope | `scopes.*` |
+| `ROUTE_TITLES` / `ROUTE_FRAMING` no TS | `presentation.*` (importado pelo MFE) |
+| Resumos de estoque no presenter | `presenter.stock.*` |
+| Framing do analyser por seção | `presentation.sectionFraming` |
+| Intro web search | `webSearch.*` |
+
+Guia completo: [`../architecture/product-operational-content.md`](../architecture/product-operational-content.md).
+
 ## Frases de validação manual
 
 | Pergunta | Esperado |
@@ -106,5 +149,5 @@ Ex.: «onde são usados os produtos **10080022**, **10080012**?»
 
 | Pacote | Arquivos |
 |--------|----------|
-| API | `test_chat_product_multi_scope_planning_service.py`, `test_chat_product_query_intent_service.py` (stock brief), regressão intent |
+| API | `test_chat_product_multi_scope_planning_service.py`, `test_chat_product_query_intent_service.py`, `test_chat_product_plural_phrasing_service.py`, `test_chat_product_operational_content_service.py`, `test_chat_composite_multi_product_codes_intro.py`, `test_chat_external_action_orchestration_service.py` |
 | MFE | `presentationMultiRoute.test.ts`, `assistantContentVisualFormats.test.ts` |

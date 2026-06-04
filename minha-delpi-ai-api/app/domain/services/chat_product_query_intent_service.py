@@ -123,6 +123,10 @@ class ChatProductQueryIntentService:
     def references_previous_product(cls, message: str) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
         terms = [
             "filtre",
             "filtro",
@@ -134,22 +138,10 @@ class ChatProductQueryIntentService:
             "so a filial",
             "apenas filial",
             "somente filial",
-            "desse produto",
-            "deste produto",
-            "desses produtos",
-            "destes produtos",
-            "esse produto",
-            "este produto",
-            "esses produtos",
-            "estes produtos",
-            "mesmo produto",
-            "mesmos produtos",
-            "mesmo item",
-            "mesmos itens",
-            "produto acima",
-            "produtos acima",
-            "produto anterior",
-            "produtos anteriores",
+            *ChatProductOperationalContentService.list(
+                "referencesPreviousProduct",
+                "terms",
+            ),
             "código acima",
             "codigo acima",
             "desse item",
@@ -915,8 +907,7 @@ class ChatProductQueryIntentService:
 
         if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
             normalized,
-            scope_terms=("venda", "vendas"),
-            linked_stems=("venda", "vendas"),
+            scope="sales",
         ):
             return True
 
@@ -947,9 +938,7 @@ class ChatProductQueryIntentService:
 
         if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
             normalized,
-            scope_terms=("estoque", "stock", "saldo"),
-            scope_plural_terms=("estoques", "saldos"),
-            linked_stems=("estoque", "stock", "saldo"),
+            scope="stock",
         ):
             return True
 
@@ -1073,9 +1062,7 @@ class ChatProductQueryIntentService:
 
         if ChatProductPluralPhrasingService.matches_scope_linked_to_products(
             normalized,
-            scope_terms=("descricao", "descrição", "description"),
-            scope_plural_terms=("descricoes", "descrições"),
-            linked_stems=("descricao", "descrição", "description"),
+            scope="description",
         ):
             return True
 
@@ -1246,24 +1233,7 @@ class ChatProductQueryIntentService:
 
         return ChatProductPluralPhrasingService.matches_scope_linked_to_products(
             normalized,
-            scope_terms=(
-                "estrutura",
-                "bom",
-                "bill of material",
-                "composição",
-                "composicao",
-                "componentes",
-                "árvore do produto",
-                "arvore do produto",
-            ),
-            scope_plural_terms=(
-                "estruturas",
-                "composições",
-                "composicoes",
-                "árvores",
-                "arvores",
-            ),
-            linked_stems=("estrutura", "bom", "composicao", "composição", "arvore", "árvore"),
+            scope="structure",
         )
 
     @classmethod

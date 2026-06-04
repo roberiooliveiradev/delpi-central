@@ -1036,13 +1036,36 @@ class ExternalActionResultPresenter:
                 total = value.get("total")
                 if total is not None:
                     label = self._label_collection(key)
+                    from app.domain.services.chat_product_operational_content_service import (
+                        ChatProductOperationalContentService,
+                    )
+
                     if int(total or 0) == 0:
-                        lines.append(f"{label}: ainda sem registros vinculados.")
+                        lines.append(
+                            ChatProductOperationalContentService.format(
+                                "presenter",
+                                "profile",
+                                "collectionEmpty",
+                                label=label,
+                            )
+                        )
                     else:
-                        lines.append(f"{label}: **{total}** registro(s) disponível(is).")
+                        lines.append(
+                            ChatProductOperationalContentService.format(
+                                "presenter",
+                                "profile",
+                                "collectionWithTotal",
+                                label=label,
+                                total=total,
+                            )
+                        )
+
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
 
         lines.append(
-            "Posso detalhar estoque, estrutura (BOM), preços, roteiro ou fornecedores se quiser aprofundar."
+            ChatProductOperationalContentService.get("presenter", "profile", "nextStepsHint")
         )
 
         return lines
@@ -2922,7 +2945,15 @@ class ExternalActionResultPresenter:
                 measurable_count = len(measurable) if isinstance(measurable, list) else 0
                 textual_count = len(textual) if isinstance(textual, list) else 0
 
-                summary = header_desc or "plano de inspeção cadastrado"
+                from app.domain.services.chat_product_operational_content_service import (
+                    ChatProductOperationalContentService,
+                )
+
+                summary = header_desc or ChatProductOperationalContentService.get(
+                    "presenter",
+                    "inspection",
+                    "summaryFallback",
+                )
                 linhas.append(
                     f"- **{item_code}**: {summary} "
                     f"({measurable_count} teste(s) dimensional(is), "
@@ -3042,15 +3073,26 @@ class ExternalActionResultPresenter:
                 has_current = True
                 total_current += float(current or 0)
 
+            from app.domain.services.chat_product_operational_content_service import (
+                ChatProductOperationalContentService,
+            )
+
             detail_lines.append(
-                "Filial {branch}, armazém {warehouse}: atual {current}, "
-                "disponível {available}, empenhada {committed}. Local: {location}.".format(
+                ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "detailLine",
                     branch=item.get("branch") or "—",
                     warehouse=item.get("warehouse") or "—",
                     current=self._format_num(item.get("current_quantity")),
                     available=self._format_num(item.get("available_quantity")),
                     committed=self._format_num(item.get("committed_quantity")),
-                    location=item.get("physical_location") or "não informado",
+                    location=item.get("physical_location")
+                    or ChatProductOperationalContentService.get(
+                        "presenter",
+                        "stock",
+                        "locationFallback",
+                    ),
                 )
             )
 
@@ -3058,49 +3100,89 @@ class ExternalActionResultPresenter:
         branch_count = len(branches)
         warehouse_count = len(warehouses)
 
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
         if product_code:
-            summary = (
-                f"Consultei o estoque do produto **{product_code}**: "
-                f"**{len(items)}** posição(ões)"
+            summary = ChatProductOperationalContentService.format(
+                "presenter",
+                "stock",
+                "summaryWithCode",
+                code=product_code,
+                positions=len(items),
             )
 
             if branch_count:
-                summary += (
-                    f" em **{branch_count}** filial(is)"
-                    f" ({', '.join(sorted(branches))})"
+                summary += ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "summaryBranches",
+                    count=branch_count,
+                    branches=", ".join(sorted(branches)),
                 )
 
             if warehouse_count:
-                summary += (
-                    f" e **{warehouse_count}** armazém(ns)"
-                    f" ({', '.join(sorted(warehouses))})"
+                summary += ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "summaryWarehouses",
+                    count=warehouse_count,
+                    warehouses=", ".join(sorted(warehouses)),
                 )
 
             summary += "."
 
             if has_available:
-                summary += (
-                    f" No total, há **{self._format_num(total_available)}** unidade(s) "
-                    "disponível(is) nesta consulta."
+                summary += ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "summaryAvailableTotal",
+                    total=self._format_num(total_available),
                 )
             elif has_current:
-                summary += (
-                    f" Saldo atual somado: **{self._format_num(total_current)}** unidade(s)."
+                summary += ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "summaryCurrentTotal",
+                    total=self._format_num(total_current),
                 )
             else:
-                summary += " Não há quantidade disponível registrada nas posições retornadas."
+                summary += ChatProductOperationalContentService.get(
+                    "presenter",
+                    "stock",
+                    "summaryNoAvailable",
+                )
 
             linhas.append(summary)
         else:
-            linhas.append(
-                f"Encontrei **{len(items)}** posição(ões) de estoque"
-                + (f" em **{branch_count}** filial(is)." if branch_count else ".")
+            summary = ChatProductOperationalContentService.format(
+                "presenter",
+                "stock",
+                "summaryWithoutCode",
+                positions=len(items),
             )
+
+            if branch_count:
+                summary += ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "summaryWithoutCodeBranches",
+                    count=branch_count,
+                )
+            else:
+                summary += "."
+
+            linhas.append(summary)
 
         if len(detail_lines) > 8:
             linhas.append(
-                f"No modo **Texto** você vê as **{len(detail_lines)}** linhas com filial, "
-                "armazém e quantidades."
+                ChatProductOperationalContentService.format(
+                    "presenter",
+                    "stock",
+                    "textModeDetailHint",
+                    lines=len(detail_lines),
+                )
             )
 
         return {
@@ -3115,8 +3197,23 @@ class ExternalActionResultPresenter:
         }
 
     def _present_items(self, items: list, *, title: str | None = None) -> dict:
-        titulo = title or "Resultado operacional"
-        linhas = [f"A API retornou {len(items)} registro(s)."]
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        titulo = title or ChatProductOperationalContentService.get(
+            "presenter",
+            "items",
+            "defaultTitle",
+        )
+        linhas = [
+            ChatProductOperationalContentService.format(
+                "presenter",
+                "items",
+                "apiReturned",
+                count=len(items),
+            )
+        ]
 
         detail_lines = []
         for item in items[:10]:
@@ -3174,13 +3271,15 @@ class ExternalActionResultPresenter:
         }
 
     def _label_collection(self, key: str) -> str:
-        labels = {
-            "guide": "Roteiro",
-            "inspection": "Inspeção",
-            "structure": "Estrutura",
-            "customers": "Clientes",
-            "suppliers": "Fornecedores",
-        }
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        labels = ChatProductOperationalContentService.get_mapping(
+            "presenter",
+            "collections",
+            "labels",
+        )
 
         return labels.get(key, key)
 
@@ -3220,8 +3319,25 @@ class ExternalActionResultPresenter:
         product: dict,
         path: str,
     ) -> dict | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
         code = str(product.get("code") or "").strip()
-        title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
+        title = (
+            ChatProductOperationalContentService.format(
+                "presenter",
+                "analyser",
+                "titleWithCode",
+                code=code,
+            )
+            if code
+            else ChatProductOperationalContentService.get(
+                "presenter",
+                "analyser",
+                "titleGeneric",
+            )
+        )
         from app.domain.services.chat_rich_presentation_text_service import (
             ChatRichPresentationTextService,
         )
@@ -3240,9 +3356,10 @@ class ExternalActionResultPresenter:
         markdown_parts = [f"### {title}", ""]
 
         if not compact_for_rich_ui:
-            scope_line = (
-                "Análise integrada do cadastro, roteiro de produção, plano de inspeção "
-                "e estrutura (BOM) do item abaixo."
+            scope_line = ChatProductOperationalContentService.get(
+                "presenter",
+                "analyser",
+                "scopeIntro",
             )
             markdown_parts.extend([scope_line, ""])
 
@@ -3261,7 +3378,24 @@ class ExternalActionResultPresenter:
         items = root.get("items") if isinstance(root.get("items"), list) else []
         shown = len(items)
 
-        title = f"Onde é usado o produto {code}" if code else "Produtos pai (onde é usado)"
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        title = (
+            ChatProductOperationalContentService.format(
+                "presenter",
+                "parents",
+                "titleWithCode",
+                code=code,
+            )
+            if code
+            else ChatProductOperationalContentService.get(
+                "presenter",
+                "parents",
+                "titleGeneric",
+            )
+        )
 
         summary_parts = [
             f"Produto consultado: **{code}** — {root_node.get('description') or 'sem descrição'}.",

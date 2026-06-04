@@ -19,6 +19,7 @@ Arquivos em `assistant/` usados pela API de chat:
 | `capabilities.json` | Catálogo de capacidades e `pathRules` api-delpi |
 | `column_labels.json` | Colunas e perfis de tabelas operacionais |
 | `external_action_responses.json` | Respostas SQL, produção, composite e temporal |
+| `product_operational_content.json` | Escopos, termos plurais, textos de presenter, framing MFE/API, web search — doc: [`docs/architecture/product-operational-content.md`](../docs/architecture/product-operational-content.md) |
 | `identity.json` | Identidade e small talk |
 | `operational_parameters.json` | Parâmetros faltantes e ambiguidade de período |
 | `small_talk.json` | Respostas conversacionais (8 categorias; padrões editáveis) |

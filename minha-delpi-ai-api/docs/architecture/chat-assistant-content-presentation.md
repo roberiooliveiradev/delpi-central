@@ -212,7 +212,7 @@ Regras importantes:
 | Texto na seção estoque | Prose breve + `linhas_detalhe` / `textPresentation` injetados só com `activeKind === 'text'` |
 | Plano stack | `resolveMultiRouteStackPlan`: `humanizedSections: false` (mockup 1–7 só no analyser) |
 
-Framing por rota (`ROUTE_FRAMING` em `presentationMultiRoute.ts`) — uma frase interpretiva por bloco, sem repetir tabela/árvore.
+Framing por rota — uma frase interpretiva por bloco (`presentation.routeFraming` em `product_operational_content.json`, exposto no MFE por `operationalPresentationContent.ts`). Ver [Conteúdo operacional de produto](./product-operational-content.md).
 
 ### O que não confundir
 
@@ -261,7 +261,8 @@ Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
 |---------|--------|
 | `ChatAssistantContent.tsx` | Orquestra chrome, toolbar global ou delega seções multi-rota |
 | `AssistantContentRouteSection.tsx` | Toolbar + filtro **por** bloco de rota |
-| `presentationMultiRoute.ts` | Stack multi-rota, framing, agrupamento, detalhe texto |
+| `presentationMultiRoute.ts` | Stack multi-rota, agrupamento, detalhe texto |
+| `operationalPresentationContent.ts` | Títulos e framing de rota (JSON compartilhado com a API) |
 | `assistantContentSegments.ts` | `buildAssistantContentSegments`, coleta visuais |
 | `assistantContentLayout.ts` | `layoutMode`, ordenação |
 | `assistantContentVisualFormats.ts` | Opções de troca, `shouldUsePerSectionFormatToolbar`, filtro |
@@ -284,7 +285,8 @@ Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
 | `ChatPresentationDecisionService` | `layoutMode`, `visualOrder`, `availableViews` |
 | `ChatProductAnalyserDivergenceService` | Pontos de atenção confiáveis |
 | `ChatProductOverviewIntentService` | Overview → analyser + LLM |
-| `app/content/pt-BR/assistant/external_action_responses.json` | `composite.multiProductRouteIntro` |
+| `app/content/pt-BR/assistant/external_action_responses.json` | `composite.multiProductRouteIntro`, `composite.multiProductCodesIntro` |
+| `app/content/pt-BR/assistant/product_operational_content.json` | Escopos, termos plurais, presenter, `presentation.*`, web search — ver [product-operational-content.md](./product-operational-content.md) |
 
 ---
 

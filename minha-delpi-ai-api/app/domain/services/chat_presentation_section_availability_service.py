@@ -119,48 +119,39 @@ class ChatPresentationSectionAvailabilityService:
         code = cls._product_code_from_path(metadata)
         framing: dict[str, str] = {}
 
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        section_texts = ChatProductOperationalContentService.get_mapping(
+            "presentation",
+            "sectionFraming",
+        )
+
         if visibility.get(cls._SCOPE):
-            framing[cls._SCOPE] = (
-                f"Visão integrada do produto {code} — cadastro, roteiro, inspeção e estrutura (BOM)."
-                if code
-                else "Visão integrada do item consultado nesta resposta."
-            )
+            if code:
+                template = section_texts.get("scopeWithCode", "")
+                framing[cls._SCOPE] = template.format(code=code) if template else ""
+            else:
+                framing[cls._SCOPE] = section_texts.get("scopeGeneric", "")
 
         if visibility.get(cls._PROFILE):
-            framing[cls._PROFILE] = (
-                "Cadastro do item: identidade, bloqueio, referências e custos. "
-                "Os valores detalhados estão na tabela abaixo."
-            )
+            framing[cls._PROFILE] = section_texts.get("profile", "")
 
         if visibility.get(cls._HIGHLIGHTS):
-            framing[cls._HIGHLIGHTS] = (
-                "Leitura rápida do que mais importa nesta consulta — "
-                "os itens seguintes detalham cada bloco."
-            )
+            framing[cls._HIGHLIGHTS] = section_texts.get("highlights", "")
 
         if visibility.get(cls._GUIDE):
-            framing[cls._GUIDE] = (
-                "Sequência de operações de fabricação por produto da hierarquia "
-                "(consulte códigos, centros e operações na tabela)."
-            )
+            framing[cls._GUIDE] = section_texts.get("guide", "")
 
         if visibility.get(cls._INSPECTION):
-            framing[cls._INSPECTION] = (
-                "Referências de inspeção retornadas para os itens da estrutura — "
-                "detalhes de ensaio na tabela quando a API enviar."
-            )
+            framing[cls._INSPECTION] = section_texts.get("inspection", "")
 
         if visibility.get(cls._STRUCTURE):
-            framing[cls._STRUCTURE] = (
-                "Composição do produto em árvore (PA → PI → MP). "
-                "Expanda os nós para ver componentes e quantidades."
-            )
+            framing[cls._STRUCTURE] = section_texts.get("structure", "")
 
         if visibility.get(cls._ATTENTION):
-            framing[cls._ATTENTION] = (
-                "Pontos que merecem validação comercial, de compras ou engenharia "
-                "antes de usar este cadastro em decisão."
-            )
+            framing[cls._ATTENTION] = section_texts.get("attention", "")
 
         return framing
 

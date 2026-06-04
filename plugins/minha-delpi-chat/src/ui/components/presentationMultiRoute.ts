@@ -5,50 +5,20 @@ import type { AssistantContentSegment } from "./assistantContentTypes";
 import { parseMarkdownAndCodeSegments } from "./assistantContentSegments";
 import type { StackSectionChrome } from "./presentationStackSections";
 import type { StackPresentationPlan } from "./presentationStackPlan";
+import {
+  isProductRouteKey,
+  routeFraming,
+  routeTitle,
+  type ProductRouteKey,
+} from "../../content/operationalPresentationContent";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
-export type ProductRouteKey =
-  | "profile"
-  | "guide"
-  | "inspection"
-  | "structure"
-  | "stock"
-  | "parents"
-  | "analyser"
-  | "other";
+export type { ProductRouteKey };
 
 export type ProductRouteBlock = {
   path: string;
   routeKey: ProductRouteKey;
   toolCall: ChatToolCall;
-};
-
-const ROUTE_TITLES: Record<ProductRouteKey, string> = {
-  profile: "Cadastro do produto",
-  guide: "Roteiro de produção",
-  inspection: "Plano de inspeção",
-  structure: "Estrutura (BOM)",
-  stock: "Estoque",
-  parents: "Onde o item é usado",
-  analyser: "Análise integrada do produto",
-  other: "Consulta operacional",
-};
-
-const ROUTE_FRAMING: Record<ProductRouteKey, string> = {
-  profile:
-    "Identidade e dados cadastrais do item — use a tabela abaixo para conferir código, bloqueio e referências.",
-  guide:
-    "Sequência de operações de fabricação por produto da hierarquia (centros, operações e tempos).",
-  inspection:
-    "Referências de inspeção de processo retornadas pela API para os itens consultados.",
-  structure:
-    "Composição do produto (BOM). A árvore detalha a hierarquia; a tabela lista os componentes em formato plano.",
-  stock:
-    "Posição de estoque por filial e armazém. O gráfico resume volumes; a tabela permite auditoria linha a linha.",
-  parents: "Produtos pai e aplicações onde este item entra na estrutura de outros cadastros.",
-  analyser:
-    "Visão integrada do cadastro, roteiro, inspeção e estrutura na mesma consulta.",
-  other: "Resultado operacional desta rota.",
 };
 
 const ROUTE_SHOW_IN: Record<ProductRouteKey, StackSectionChrome["showIn"]> = {
@@ -202,7 +172,7 @@ export function routeKeyFromSectionId(sectionId: string): ProductRouteKey | null
 
   const key = match[1] as ProductRouteKey;
 
-  return key in ROUTE_TITLES ? key : null;
+  return isProductRouteKey(key) ? key : null;
 }
 
 export function groupSegmentsByRouteSections(segments: AssistantContentSegment[]): {
@@ -249,7 +219,7 @@ function buildRouteSectionChrome(
   path = "",
 ): StackSectionChrome {
   const code = productCodeFromPath(path);
-  const baseTitle = ROUTE_TITLES[routeKey];
+  const baseTitle = routeTitle(routeKey);
   const titled = code ? `${baseTitle} — ${code}` : baseTitle;
 
   return {
@@ -344,7 +314,7 @@ function resolveProseForBlock(
   compositeSections: Map<string, string>,
 ): string {
   const titleKey = normalizeCompositeHeadingKey(
-    ROUTE_TITLES[block.routeKey] || block.routeKey,
+    routeTitle(block.routeKey) || block.routeKey,
   );
   const pathKey = normalizeCompositeHeadingKey(block.path);
   const fromTitle = compositeSections.get(titleKey);
@@ -490,7 +460,7 @@ export function buildMultiRouteStackSegments(
       section: buildRouteSectionChrome(block.routeKey, sectionIndex, block.path),
     });
 
-    const framing = ROUTE_FRAMING[block.routeKey];
+    const framing = routeFraming(block.routeKey);
 
     if (framing) {
       for (const segment of parseMarkdownAndCodeSegments(framing)) {

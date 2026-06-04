@@ -4,44 +4,26 @@ from __future__ import annotations
 
 import re
 
+from app.domain.services.chat_product_operational_content_service import (
+    ChatProductOperationalContentService,
+)
+
 
 class ChatProductPluralPhrasingService:
     _PRODUCT_NOUN = r"(?:produto|produtos|item|itens|material|materiais)"
-
-    _PLURAL_PRODUCT_REFERENCE_TERMS = (
-        "produtos",
-        "itens",
-        "materiais",
-        "desses produtos",
-        "destes produtos",
-        "esses produtos",
-        "estes produtos",
-        "os produtos citados",
-        "os itens citados",
-        "os produtos acima",
-        "os itens acima",
-        "produtos acima",
-        "itens acima",
-        "mesmos produtos",
-        "mesmos itens",
-    )
-
-    _SCOPE_LABEL_BY_PATH_FRAGMENT: tuple[tuple[str, str], ...] = (
-        ("/parents", "onde o item é usado"),
-        ("/stock", "estoque"),
-        ("/structure", "estrutura (BOM)"),
-        ("/guide", "roteiro de produção"),
-        ("/inspection", "plano de inspeção"),
-        ("/sales", "vendas"),
-        ("/profile", "cadastro"),
-    )
 
     @classmethod
     def mentions_plural_products(cls, normalized: str) -> bool:
         if not normalized:
             return False
 
-        return any(term in normalized for term in cls._PLURAL_PRODUCT_REFERENCE_TERMS)
+        return any(
+            term in normalized
+            for term in ChatProductOperationalContentService.list(
+                "pluralPhrasing",
+                "productReferenceTerms",
+            )
+        )
 
     @classmethod
     def _contains_whole_term(cls, normalized: str, term: str) -> bool:
@@ -71,12 +53,23 @@ class ChatProductPluralPhrasingService:
         cls,
         normalized: str,
         *,
-        scope_terms: tuple[str, ...],
+        scope: str | None = None,
+        scope_terms: tuple[str, ...] = (),
         scope_plural_terms: tuple[str, ...] = (),
         linked_stems: tuple[str, ...] = (),
     ) -> bool:
         if not normalized:
             return False
+
+        if scope:
+            loaded_terms, loaded_plural = ChatProductOperationalContentService.scope_term_groups(
+                scope
+            )
+            scope_terms = scope_terms or loaded_terms
+            scope_plural_terms = scope_plural_terms or loaded_plural
+            linked_stems = linked_stems or ChatProductOperationalContentService.linked_scope_stems(
+                scope
+            )
 
         if any(cls._contains_whole_term(normalized, term) for term in scope_terms):
             return True
@@ -95,38 +88,21 @@ class ChatProductPluralPhrasingService:
     def has_product_entity_reference(cls, normalized: str) -> bool:
         return any(
             term in normalized
-            for term in (
-                "produto",
-                "produtos",
-                "item",
-                "itens",
-                "material",
-                "materiais",
-                "codigo",
-                "código",
+            for term in ChatProductOperationalContentService.list(
+                "pluralPhrasing",
+                "productEntityTerms",
             )
         )
 
     @classmethod
     def scope_labels_from_api_path(cls, path: str) -> list[str]:
-        lowered = str(path or "").lower()
-        labels: list[str] = []
-
-        for fragment, label in cls._SCOPE_LABEL_BY_PATH_FRAGMENT:
-            if fragment in lowered and label not in labels:
-                labels.append(label)
-
-        return labels
+        return ChatProductOperationalContentService.scope_labels_from_api_path(path)
 
     @classmethod
     def join_scope_labels_pt(cls, labels: list[str]) -> str | None:
         if not labels:
             return None
 
-        if len(labels) == 1:
-            return labels[0]
+        joined = ChatProductOperationalContentService.join_list_pt(labels)
 
-        if len(labels) == 2:
-            return f"{labels[0]} e {labels[1]}"
-
-        return ", ".join(labels[:-1]) + f" e {labels[-1]}"
+        return joined or None

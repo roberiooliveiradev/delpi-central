@@ -234,21 +234,15 @@ class ChatProductMultiScopePlanningService:
 
     @classmethod
     def _reason_for_scope(cls, scope: str, product_code: str) -> str:
-        labels = {
-            "profile": "cadastro",
-            "guide": "roteiro de produção",
-            "inspection": "plano de inspeção",
-            "structure": "estrutura (BOM)",
-            "stock": "estoque",
-            "parents": "produtos pai",
-            "sales": "vendas",
-            "purchases": "compras",
-            "suppliers": "fornecedores",
-            "pricing": "preços",
-        }
-        label = labels.get(scope, scope)
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
 
-        return (
-            f"A pergunta pede {label} do produto {product_code} "
-            "(consulta combinada com outras rotas na mesma mensagem)."
+        label = ChatProductOperationalContentService.scope_label_for_scope_key(scope)
+
+        return ChatProductOperationalContentService.format(
+            "multiScope",
+            "reasonTemplate",
+            scope=label,
+            code=product_code,
         )

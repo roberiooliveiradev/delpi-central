@@ -286,11 +286,15 @@ class ChatCompositeDirectAnswerService:
             if code and code not in codes:
                 codes.append(code)
 
+            from app.domain.services.chat_product_operational_content_service import (
+                ChatProductOperationalContentService,
+            )
+
             for label in ChatProductPluralPhrasingService.scope_labels_from_api_path(path):
                 if label not in scope_labels:
                     scope_labels.append(label)
 
-        scope_label = ChatProductPluralPhrasingService.join_scope_labels_pt(scope_labels)
+        scope_label = ChatProductOperationalContentService.join_list_pt(scope_labels)
 
         message_codes = ChatAnalysisIntentService.extract_all_product_codes(message)
 
@@ -337,26 +341,29 @@ class ChatCompositeDirectAnswerService:
                     message
                 ) or ChatProductQueryIntentService.extract_product_code(path)
 
-            if "/stock" in path and "estoque" not in scope_labels:
-                scope_labels.append("estoque")
+            from app.domain.services.chat_product_operational_content_service import (
+                ChatProductOperationalContentService,
+            )
 
-            if "/parents" in path and "onde o item é usado" not in scope_labels:
-                scope_labels.append("onde o item é usado")
-
-            if "/structure" in path and "estrutura (BOM)" not in scope_labels:
-                scope_labels.append("estrutura (BOM)")
-
-            if "/guide" in path and "roteiro" not in scope_labels:
-                scope_labels.append("roteiro")
-
-            if "/inspection" in path and "inspeção" not in scope_labels:
-                scope_labels.append("inspeção")
+            for label in ChatProductOperationalContentService.composite_short_scope_labels_from_path(
+                path
+            ):
+                if label not in scope_labels:
+                    scope_labels.append(label)
 
         if len(scope_labels) < 2:
             return None
 
-        code = product_code or "informado"
-        scopes = cls._join_pt_list(scope_labels)
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
+        code = product_code or ChatProductOperationalContentService.get(
+            "composite",
+            "informedProductFallback",
+            default="informado",
+        )
+        scopes = ChatProductOperationalContentService.join_list_pt(scope_labels)
 
         return ExternalActionResponseContentService.format(
             "composite",
@@ -367,16 +374,11 @@ class ChatCompositeDirectAnswerService:
 
     @staticmethod
     def _join_pt_list(items: list[str]) -> str:
-        if not items:
-            return ""
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
 
-        if len(items) == 1:
-            return items[0]
-
-        if len(items) == 2:
-            return f"{items[0]} e {items[1]}"
-
-        return ", ".join(items[:-1]) + f" e {items[-1]}"
+        return ChatProductOperationalContentService.join_list_pt(items)
 
     @classmethod
     def _action_label(cls, path: str, action_id: str, index: int) -> str:

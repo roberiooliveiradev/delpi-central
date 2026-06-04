@@ -67,13 +67,31 @@ class ChatWebSearchDirectAnswerService:
         else:
             primary = ranked_useful[0]
 
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
+
         query = str(payload.get("query") or message or "").strip()
-        title = str(primary.get("title") or query or "Resultado da busca").strip()
+        default_query = ChatProductOperationalContentService.get(
+            "webSearch",
+            "defaultQuery",
+            default="sua pergunta",
+        )
+        default_title = ChatProductOperationalContentService.get(
+            "webSearch",
+            "defaultTitle",
+            default="Resultado da busca",
+        )
+        title = str(primary.get("title") or query or default_title).strip()
         snippet = str(primary.get("snippet") or "").strip()
         url = str(primary.get("url") or "").strip()
 
         lines = [
-            f"Consultei a **internet pública** sobre *{query or 'sua pergunta'}*.",
+            ChatProductOperationalContentService.format(
+                "webSearch",
+                "intro",
+                query=query or default_query,
+            ),
             "",
             f"## {title}",
             "",
@@ -83,18 +101,49 @@ class ChatWebSearchDirectAnswerService:
         extra_sources = cls._format_source_links(useful, exclude_url=url)
 
         if extra_sources:
-            lines.extend(["", "**Outras fontes encontradas:**", *extra_sources])
+            lines.extend(
+                [
+                    "",
+                    ChatProductOperationalContentService.get(
+                        "webSearch",
+                        "otherSourcesHeader",
+                    ),
+                    *extra_sources,
+                ]
+            )
 
         if url and not extra_sources:
-            lines.extend(["", f"**Fonte principal:** {url}"])
+            lines.extend(
+                [
+                    "",
+                    f"{ChatProductOperationalContentService.get('webSearch', 'primarySourceHeader')} {url}",
+                ]
+            )
 
         if payload.get("localizedFor") == "pt-BR":
-            lines.extend(["", "*(Resumo em português via Wikipedia.)*"])
+            lines.extend(
+                [
+                    "",
+                    ChatProductOperationalContentService.get(
+                        "webSearch",
+                        "localizedFooter",
+                    ),
+                ]
+            )
         else:
             retried = str(payload.get("retriedQuery") or "").strip()
 
             if retried and retried.casefold() != query.casefold():
-                lines.extend(["", f"*(Busca complementada em inglês: «{retried}».)*"])
+                lines.extend(
+                    [
+                        "",
+                        ChatProductOperationalContentService.format(
+                            "webSearch",
+                            "retriedQueryFooter",
+                            query=retried,
+                        ),
+                    ]
+                )
 
         from app.domain.services.chat_web_search_source_evaluation_service import (
             ChatWebSearchSourceEvaluationService,
@@ -180,13 +229,21 @@ class ChatWebSearchDirectAnswerService:
 
     @classmethod
     def _format_no_results(cls, payload: dict, *, message: str) -> str:
-        query = str(payload.get("query") or message or "").strip()
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
 
-        return (
-            f"Realizei uma busca na **internet pública** sobre *{query or 'sua pergunta'}*, "
-            "mas não encontrei resultados úteis para montar um resumo.\n\n"
-            "Sugestões: reformule a pergunta, use termos mais específicos ou informe o tema "
-            "em inglês se for um assunto técnico internacional."
+        query = str(payload.get("query") or message or "").strip()
+        default_query = ChatProductOperationalContentService.get(
+            "webSearch",
+            "defaultQuery",
+            default="sua pergunta",
+        )
+
+        return ChatProductOperationalContentService.format(
+            "webSearch",
+            "noResults",
+            query=query or default_query,
         )
 
     @classmethod
