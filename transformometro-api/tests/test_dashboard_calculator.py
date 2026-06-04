@@ -27,6 +27,8 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
 
     # tempo: 100 * (60-30)/60 * 50 = 2500
     assert row["economia_tempo"] == 2500.0
+    # horas: (100*60 - 100*30) / 60 = 50
+    assert row["horas_economizadas_mes"] == 50.0
     assert row["economia_bruta"] >= 2500.0
     assert row["economia_recursos_compartilhados"] == 0.0
     assert row["custo_recursos_compartilhados_mes"] == 150.0
@@ -396,3 +398,78 @@ def test_competencia_day_fraction_single_month():
         "2026-06-03",
     )
     assert abs(factor - (3 / 30)) < 1e-6
+
+
+def test_hours_saved_compares_total_minutes_per_revision_volume():
+    """Baseline e melhoria com volumes distintos: soma minutos de cada lado."""
+    raw = TransformometroRawData(
+        processos=[
+            {
+                "processo_id": "p1",
+                "codigo_processo": "PROC-VOL",
+                "nome_processo": "Volume distinto",
+                "filial_id": "01",
+                "setor_id": "engenharia",
+                "status_processo": "ativo",
+                "deletado": False,
+            }
+        ],
+        revisoes=[
+            {
+                "revisao_id": "r-baseline",
+                "processo_id": "p1",
+                "cenario_tipo": "baseline",
+                "data_inicio_vigencia": "2025-01-01",
+                "revisao_ativa": False,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "processo_id": "p1",
+                "cenario_tipo": "melhoria",
+                "data_inicio_vigencia": "2025-02-01",
+                "revisao_ativa": True,
+                "deletado": False,
+            },
+        ],
+        medicoes=[
+            {
+                "revisao_id": "r-baseline",
+                "volume_mensal": 1000,
+                "tempo_medio_execucao_min": 10,
+                "percentual_retrabalho": 0,
+                "custo_hora_mao_obra": 50,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 0,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+            {
+                "revisao_id": "r-melhoria",
+                "volume_mensal": 500,
+                "tempo_medio_execucao_min": 5,
+                "percentual_retrabalho": 0,
+                "custo_hora_mao_obra": 50,
+                "custo_unitario_retrabalho": 0,
+                "tempo_retrabalho_min": 0,
+                "quantidade_erros_mes": 0,
+                "custo_unitario_erro": 0,
+                "custo_outros_desperdicios": 0,
+                "deletado": False,
+            },
+        ],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+    calc = DashboardCalculatorService()
+    row = next(
+        r
+        for r in calc.build_dashboard_rows(raw)
+        if r["revisao_id"] == "r-melhoria" and r["competencia"] == "2025-02"
+    )
+    # (1000*10 - 500*5) / 60 = 125 h — não (10-5)*500/60 ≈ 41,67 h
+    assert row["horas_economizadas_mes"] == 125.0

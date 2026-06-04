@@ -683,11 +683,18 @@ class DashboardCalculatorService:
         review: dict,
         competencia_date: date,
     ) -> float:
-        current_time = self._to_float(current_measurement.get("tempo_medio_execucao_min")) or 0.0
-        baseline_time = self._to_float(baseline_measurement.get("tempo_medio_execucao_min")) or 0.0
-        volume = self._to_float(current_measurement.get("volume_mensal")) or 0.0
+        """Horas economizadas = max(0, tempo_total_baseline − tempo_total_melhoria) no mês.
 
-        minutes_saved_full_month = (baseline_time - current_time) * volume
+        Cada revisão usa seu próprio volume_mensal (alinhado à economia_tempo em R$).
+        """
+        baseline_time = self._to_float(baseline_measurement.get("tempo_medio_execucao_min")) or 0.0
+        current_time = self._to_float(current_measurement.get("tempo_medio_execucao_min")) or 0.0
+        baseline_volume = self._to_float(baseline_measurement.get("volume_mensal")) or 0.0
+        current_volume = self._to_float(current_measurement.get("volume_mensal")) or 0.0
+
+        baseline_minutes_total = baseline_time * baseline_volume
+        current_minutes_total = current_time * current_volume
+        minutes_saved_full_month = baseline_minutes_total - current_minutes_total
         if minutes_saved_full_month <= 0:
             return 0.0
 

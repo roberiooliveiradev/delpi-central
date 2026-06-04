@@ -35,6 +35,16 @@ Os cálculos que prorrateiam por tempo usam **todos os dias do mês civil** (28�
 
 Modo **apenas dias úteis** (seg–sex + feriados nacionais) existe no código (`USE_ONLY_BUSINESS_DAYS`) mas está **desativado**.
 
+## Horas economizadas (mensal por revisão)
+
+```text
+minutos_baseline = volume_baseline × tempo_medio_execucao_min_baseline
+minutos_melhoria = volume_melhoria × tempo_medio_execucao_min_melhoria
+horas_economizadas_mes = max(0, minutos_baseline − minutos_melhoria) × fração_vigência / 60
+```
+
+Cada revisão usa **seu próprio** `volume_mensal` (mesma lógica da `economia_tempo` em R$). Com volumes iguais, equivale a `(Δtempo × volume) / 60`.
+
 ## Economia diária (ranking “Top economia diária”)
 
 ```text

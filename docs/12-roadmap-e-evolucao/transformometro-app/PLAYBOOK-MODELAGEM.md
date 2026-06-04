@@ -292,9 +292,10 @@ investimento_total_mes =
 ### Horas economizadas
 
 ```text
+minutos_baseline = volume_baseline × tempo_medio_execucao_min_baseline
+minutos_melhoria = volume_melhoria × tempo_medio_execucao_min_melhoria
 horas_economizadas_mes =
-  max(0, baseline.tempo_medio_execucao_min - atual.tempo_medio_execucao_min)
-  * volume_mensal
+  max(0, minutos_baseline - minutos_melhoria)
   * fração_de_vigencia_no_mês
   / 60
 ```
