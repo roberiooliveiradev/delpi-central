@@ -1394,8 +1394,17 @@ class ChatToolContextService:
         cls,
         direct_answer: str | None,
         safe_tool_calls: list[dict],
+        *,
+        message: str | None = None,
     ) -> str | None:
         """Resposta curta quando a UI rica já exibe tabela/gráfico/KPI (11.4.1)."""
+
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if ChatProductOverviewIntentService.blocks_presentation_only_shortcut(message):
+            return direct_answer
 
         if not cls.should_answer_with_presentation_only(safe_tool_calls):
             return direct_answer

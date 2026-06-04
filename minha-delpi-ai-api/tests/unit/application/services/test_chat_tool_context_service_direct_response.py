@@ -51,6 +51,7 @@ class FakeExternalActionSelectionService:
         allowed_action_ids=None,
         conversation_context=None,
         previous_messages=None,
+        **kwargs,
     ):
         return {
             "name": "execute_external_action",
@@ -546,6 +547,7 @@ class PaginatedParentsSelectionService:
         allowed_action_ids=None,
         conversation_context=None,
         previous_messages=None,
+        **kwargs,
     ):
         return {
             "name": "execute_external_action",

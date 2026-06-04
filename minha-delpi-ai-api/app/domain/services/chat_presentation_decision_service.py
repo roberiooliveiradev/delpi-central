@@ -103,6 +103,7 @@ class ChatPresentationDecisionService:
                 user_message=message,
                 available_formats=available_formats,
                 intent=intent,
+                tree_presentation=tree_presentation,
             )
 
         intent_decision = cls._decision_for_operational_intent(
@@ -744,7 +745,41 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if (
+            text_presentation
+            and ChatProductOverviewIntentService.is_product_overview_message(message)
+        ):
+            return cls._build(
+                selected="text",
+                fallback="table",
+                reason="visão do produto — narrativa com insights antes da ficha tabular",
+                available_views=cls._merge_views(
+                    available_formats,
+                    ["text", "table"],
+                ),
+                rows=table_rows,
+                intent=intent,
+            )
+
         return None
+
+    @classmethod
+    def _is_product_field_value_table(cls, rows: list[dict[str, Any]] | None) -> bool:
+        if not rows:
+            return False
+
+        sample = rows[0]
+
+        if not isinstance(sample, dict):
+            return False
+
+        keys = {str(key).strip().lower() for key in sample.keys()}
+
+        return keys == {"campo", "valor"} or keys == {"field", "value"}
 
     @classmethod
     def _decision_for_preference(
@@ -755,14 +790,44 @@ class ChatPresentationDecisionService:
         user_message: str,
         available_formats: list[str] | None,
         intent: str | None,
+        tree_presentation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        normalized_views = {
+            cls._view_from_legacy_format(str(token))
+            for token in (available_formats or [])
+        }
+        resolved = preferred
+
+        if preferred in {"tree", "chart", "line_chart", "bar_chart", "donut"}:
+            if preferred == "tree" and not tree_presentation:
+                resolved = "text" if "text" in normalized_views else "table"
+            elif preferred not in normalized_views and "text" in normalized_views:
+                resolved = "text"
+
+        if (
+            resolved == "table"
+            and cls._is_product_field_value_table(rows)
+            and "text" in normalized_views
+        ):
+            from app.domain.services.chat_product_overview_intent_service import (
+                ChatProductOverviewIntentService,
+            )
+
+            if ChatProductOverviewIntentService.is_product_overview_message(user_message):
+                resolved = "text"
+
         fallback = "table" if rows else "text"
-        views = cls._merge_views(available_formats, [preferred, fallback, "text"])
+        views = cls._merge_views(available_formats, [resolved, fallback, "text"])
+        reason = (
+            "formato solicitado indisponível — texto narrativo com apoio visual"
+            if resolved != preferred
+            else "formato solicitado pelo usuário"
+        )
 
         return cls._build(
-            selected=preferred,
+            selected=resolved,
             fallback=fallback,
-            reason="formato solicitado pelo usuário",
+            reason=reason,
             available_views=views,
             rows=rows,
             intent=intent,

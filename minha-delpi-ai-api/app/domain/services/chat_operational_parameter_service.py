@@ -166,6 +166,13 @@ class ChatOperationalParameterService:
         if ChatToolContextService.should_answer_with_presentation_only(tool_calls):
             return True
 
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if ChatProductOverviewIntentService.should_force_llm_synthesis(message, tool_calls):
+            return False
+
         for tool_call in tool_calls:
             if str(tool_call.get("name") or "") != "execute_external_action":
                 continue

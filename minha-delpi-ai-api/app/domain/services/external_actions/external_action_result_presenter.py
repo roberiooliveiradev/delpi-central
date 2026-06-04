@@ -977,6 +977,84 @@ class ExternalActionResultPresenter:
 
         return normalized
 
+    def _build_product_overview_narrative_lines(self, product: dict, root: dict) -> list[str]:
+        code = str(product.get("code") or "").strip()
+        description = str(product.get("description") or "").strip()
+        product_type = str(product.get("type") or "").strip()
+        unit = str(product.get("unit") or "").strip()
+        group_code = str(product.get("group_code") or "").strip()
+        active = str(product.get("active") or "").strip()
+        warehouse = str(product.get("default_warehouse") or "").strip()
+
+        lines = [
+            f"**{code}** — {description or 'sem descrição cadastrada'}.",
+            (
+                f"Classificação **{product_type or '—'}**, unidade **{unit or '—'}**, "
+                f"grupo **{group_code or '—'}**."
+            ),
+            (
+                f"Situação cadastral: ativo **{active or '—'}**"
+                + (f", armazém padrão **{warehouse}**." if warehouse else ".")
+            ),
+        ]
+
+        purchase_price = product.get("last_purchase_price")
+        purchase_date = str(product.get("last_purchase_date") or "").strip()
+        standard_cost = product.get("standard_cost")
+
+        if purchase_price in (0, 0.0, None) and not purchase_date:
+            lines.append(
+                "Não há histórico recente de compra — vale confirmar se o item é fabricado internamente ou ainda não foi comprado."
+            )
+        else:
+            price_text = self._format_currency(purchase_price)
+            date_text = self._format_revision_date(purchase_date) if purchase_date else ""
+            suffix = f" ({date_text})" if date_text else ""
+            lines.append(f"Última compra registrada: **{price_text}**{suffix}.")
+
+        if standard_cost not in (None, ""):
+            lines.append(
+                f"Custo padrão vigente: **R$ {self._format_currency(standard_cost)}**."
+            )
+
+        revision = str(product.get("last_revision_date") or "").strip()
+        ncm = str(product.get("ncm_ipi_position") or "").strip()
+
+        if revision:
+            lines.append(f"Última revisão técnica: **{self._format_revision_date(revision)}**.")
+
+        if ncm:
+            lines.append(f"NCM: **{ncm}**.")
+
+        blocked = str(product.get("blocked") or "").strip()
+        if blocked and blocked not in {"N", "0", ""}:
+            lines.append(f"Atenção: indicador de bloqueio **{blocked}** no cadastro.")
+
+        for key in ["guide", "inspection", "structure", "customers", "suppliers"]:
+            value = root.get(key)
+            if isinstance(value, dict):
+                total = value.get("total")
+                if total is not None:
+                    label = self._label_collection(key)
+                    if int(total or 0) == 0:
+                        lines.append(f"{label}: ainda sem registros vinculados.")
+                    else:
+                        lines.append(f"{label}: **{total}** registro(s) disponível(is).")
+
+        lines.append(
+            "Posso detalhar estoque, estrutura (BOM), preços, roteiro ou fornecedores se quiser aprofundar."
+        )
+
+        return lines
+
+    def _format_revision_date(self, token: str) -> str:
+        raw = str(token or "").strip()
+
+        if len(raw) == 8 and raw.isdigit():
+            return f"{raw[6:8]}/{raw[4:6]}/{raw[0:4]}"
+
+        return raw
+
     def _present_product(self, root: dict, product: dict) -> dict:
         product_summary = {
             "code": product.get("code"),
@@ -997,23 +1075,10 @@ class ExternalActionResultPresenter:
         if detail_list:
             return self._present_product_with_details(product_summary, detail_list, root)
 
-        linhas = [
-            f"Produto {product_summary['code']}: {product_summary['description']}.",
-            f"Tipo {product_summary['type']}, unidade {product_summary['unit']}, grupo {product_summary['groupCode']}.",
-            f"Status ativo: {product_summary['active']}. Armazém padrão: {product_summary['defaultWarehouse']}.",
-            f"Último preço de compra: {product_summary['lastPurchasePrice']}. Custo padrão: {product_summary['standardCost']}.",
-            f"Última revisão: {product_summary['lastRevisionDate']}. NCM: {product_summary['ncm']}.",
-        ]
-
-        for key in ["guide", "inspection", "structure", "customers", "suppliers"]:
-            value = root.get(key)
-            if isinstance(value, dict):
-                total = value.get("total")
-                if total is not None:
-                    linhas.append(f"{self._label_collection(key)}: {total} registro(s).")
+        linhas = self._build_product_overview_narrative_lines(product, root)
 
         return {
-            "titulo": f"Informações do produto {product_summary['code']}",
+            "titulo": f"Visão do produto {product_summary['code']}",
             "linhas": [line for line in linhas if "None" not in line],
             "campos": self._alias_dict(product_summary, self.PRODUCT_ALIASES),
             "dados": {

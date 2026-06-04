@@ -2486,7 +2486,14 @@ class ExternalActionSelectionService:
             any(term in normalized for term in ("venda", "vendas"))
             or ("faturamento" in normalized and not wants_billing)
         ) and not wants_open_orders
-        wants_product_summary = any(
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        wants_product_overview = ChatProductOverviewIntentService.is_product_overview_message(
+            message
+        )
+        wants_product_summary = wants_product_overview or any(
             term in normalized
             for term in (
                 "resumo do produto",
@@ -2593,7 +2600,10 @@ class ExternalActionSelectionService:
             wants_purchases or wants_sales or wants_open_orders or wants_structure
             or wants_guide or wants_suppliers or wants_pricing or wants_customers
             or wants_parents or wants_movements or wants_invoices or wants_inspection
-            or wants_billing or wants_product_summary or wants_full_analyser
+            or wants_billing
+            or wants_product_summary
+            or wants_product_overview
+            or wants_full_analyser
         )
 
         def score(action: dict) -> int:
@@ -2620,14 +2630,26 @@ class ExternalActionSelectionService:
             elif wants_sales and "/sales" in path and "open-orders" not in path and "billing" not in path:
                 value += 100
 
+            if wants_product_overview and "/products/{code}/analyser" in haystack:
+                value += 200
+
+            if wants_product_overview and path.endswith("/analyser"):
+                value += 180
+
             if wants_product_summary and "/summary" in path:
                 value += 125
+
+            if wants_product_overview and "/summary" in path:
+                value += 160
 
             if wants_full_analyser and "analyser" in path:
                 value += 125
 
-            if wants_product_summary and "analyser" in haystack:
+            if wants_product_summary and not wants_product_overview and "analyser" in haystack:
                 value -= 55
+
+            if wants_product_overview and path.rstrip("/") == "/products/{code}":
+                value += 40
 
             if wants_full_analyser and "/summary" in path:
                 value -= 45
@@ -2714,6 +2736,9 @@ class ExternalActionSelectionService:
                     value -= 80
 
             elif intent == ChatProductQueryIntent.SUMMARY:
+                if "/products/{code}/analyser" in haystack or path.endswith("/analyser"):
+                    value += 240
+
                 if "/products/{code}/summary" in path or path.endswith("/summary"):
                     value += 260
 
@@ -2721,7 +2746,7 @@ class ExternalActionSelectionService:
                     value += 40
 
                 if "analyser" in haystack or "analyzer" in haystack:
-                    value -= 120
+                    value += 80
 
                 if path == "/products/{code}":
                     value += 30

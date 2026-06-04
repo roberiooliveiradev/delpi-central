@@ -58,6 +58,13 @@ class ChatPromptBuilderService:
             )
         )
 
+    def _product_overview_policy_addon(self, current_message: str) -> str:
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        return ChatProductOverviewIntentService.build_prompt_policy_addon(current_message)
+
     def build_fast_path_messages(
         self,
         *,
@@ -121,6 +128,7 @@ class ChatPromptBuilderService:
         base_prompt += self._assistant_identity_policy_addon(current_message)
         base_prompt += self._capabilities_policy_addon(current_message)
         base_prompt += self._technical_description_policy_addon(current_message)
+        base_prompt += self._product_overview_policy_addon(current_message)
 
         if text_task_mode:
             from app.application.services.chat_text_task_composer_service import (

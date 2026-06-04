@@ -43,17 +43,25 @@ def test_price_intent_prefers_text_when_text_presentation_exists():
     assert decision["selected"] == "text"
 
 
-def test_user_preference_tree_overrides_table_default():
+def test_user_preference_tree_requires_tree_presentation():
+    tree = {
+        "type": "tree",
+        "title": "Estrutura",
+        "root": {"code": "90260144", "description": "CABO", "children": []},
+    }
+
     decision = ChatPresentationDecisionService.decide(
         user_preference="tree",
-        user_message="estoque",
+        user_message="estrutura",
+        tree_presentation=tree,
+        available_formats=["tree", "table", "text"],
         table_presentation={
             "type": "table",
-            "title": "Estoque",
-            "columns": [{"key": "branch", "label": "Filial"}],
-            "rows": [{"branch": "01", "available_quantity": 1}],
+            "title": "Componentes",
+            "columns": [{"key": "code", "label": "Código"}],
+            "rows": [{"code": "1"}],
         },
-        rows=[{"branch": "01", "available_quantity": 1}],
+        rows=[{"code": "1"}],
     )
 
     assert decision["selected"] == "tree"

@@ -61,6 +61,13 @@ class ChatProductQueryIntentService:
         if cls._looks_like_stock_question(normalized):
             return ChatProductQueryIntent.STOCK
 
+        from app.domain.services.chat_product_overview_intent_service import (
+            ChatProductOverviewIntentService,
+        )
+
+        if ChatProductOverviewIntentService.is_product_overview_message(message):
+            return ChatProductQueryIntent.SUMMARY
+
         if cls._looks_like_product_summary_question(normalized):
             return ChatProductQueryIntent.SUMMARY
 
@@ -972,13 +979,7 @@ class ChatProductQueryIntentService:
             "o que e o produto",
             "detalhes do produto",
             "detalhe do produto",
-            "dados do produto",
             "dados cadastrais",
-            "cadastro do produto",
-            "me fale sobre o",
-            "me fale do",
-            "informações do produto",
-            "informacoes do produto",
             "informações completas",
             "informacoes completas",
         ]
