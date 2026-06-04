@@ -152,5 +152,5 @@ def test_build_context_chips_includes_warehouse():
 
     by_kind = {chip["kind"]: chip for chip in chips}
 
-    assert by_kind["warehouse"]["label"] == "Armazém 01"
+    assert by_kind["warehouse"]["label"] == "01"
     assert by_kind["branch"]["value"] == "02"

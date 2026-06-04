@@ -63,14 +63,11 @@ class ChatManualContextPinService:
 
         chip_kind, chip_value = normalized
 
-        if chip_kind == "product":
-            label = f"Produto {chip_value}"
-        elif chip_kind == "branch":
-            label = f"Filial {chip_value}"
-        elif chip_kind == "warehouse":
-            label = f"Armazém {chip_value}"
-        else:
-            return None
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        label = ChatUserContextItemService.neutral_entity_label(chip_kind, chip_value)
 
         return {
             "label": label,

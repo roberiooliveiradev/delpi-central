@@ -41,7 +41,7 @@ def test_usage_view_folds_entities_into_unified_context():
     context = usage.get("userContextItems") or []
 
     assert "90260114" in context
-    assert "Filial 02" in context
+    assert "02" in context
     assert "Política de devolução" in context
 
 
@@ -50,14 +50,14 @@ def test_usage_view_context_dedupes_entity_and_manual_item():
         {
             "lastEntities": {"branch": "02"},
             "userContextItems": [
-                {"id": "1", "label": "Filial 02", "kind": "branch"},
+                {"id": "1", "label": "02", "kind": "branch"},
             ],
         },
     )
 
     context = usage.get("userContextItems") or []
 
-    assert context.count("Filial 02") == 1
+    assert context.count("02") == 1
 
 
 def test_memory_introspection_direct_answer():

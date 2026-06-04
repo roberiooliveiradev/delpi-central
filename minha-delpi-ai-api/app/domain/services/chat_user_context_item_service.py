@@ -161,6 +161,19 @@ class ChatUserContextItemService:
         return f"{prefix}: {snippet[:39]}…"[:_MAX_LABEL_CHARS]
 
     @classmethod
+    def neutral_entity_label(cls, kind: str, value: str) -> str:
+        """Rótulo neutro para código/filial/armazém (sem prefixo Produto/Filial)."""
+        token = str(value or "").strip()
+
+        if not token:
+            return "Contexto"
+
+        if str(kind or "").strip().lower() in ("product", "branch", "warehouse"):
+            return token[:_MAX_LABEL_CHARS]
+
+        return token[:_MAX_LABEL_CHARS]
+
+    @classmethod
     def classify(cls, content: str, *, filename: str | None = None) -> dict[str, Any]:
         text = str(content or "").strip()
         lowered_name = str(filename or "").lower()
@@ -206,21 +219,21 @@ class ChatUserContextItemService:
         if product_code and len(text) <= 80 and not branch_match and not warehouse_match:
             return {
                 "kind": "product",
-                "label": f"Produto {product_code}",
+                "label": cls.neutral_entity_label("product", product_code),
                 "extractedEntities": extracted,
             }
 
         if branch_match and len(text) <= 60:
             return {
                 "kind": "branch",
-                "label": f"Filial {extracted['branch']}",
+                "label": cls.neutral_entity_label("branch", extracted["branch"]),
                 "extractedEntities": extracted,
             }
 
         if warehouse_match and len(text) <= 60:
             return {
                 "kind": "warehouse",
-                "label": f"Armazém {extracted['warehouse']}",
+                "label": cls.neutral_entity_label("warehouse", extracted["warehouse"]),
                 "extractedEntities": extracted,
             }
 
@@ -447,11 +460,11 @@ class ChatUserContextItemService:
 
         branch = str(data.get("branch") or "").strip()
         if branch:
-            labels.append(f"Filial {branch}")
+            labels.append(branch)
 
         warehouse = str(data.get("warehouse") or "").strip()
         if warehouse:
-            labels.append(f"Armazém {warehouse}")
+            labels.append(warehouse)
 
         period = str(data.get("period") or "").strip()
         if period:
@@ -512,11 +525,17 @@ class ChatUserContextItemService:
 
         branch = str(data.get("branch") or "").strip()
         if branch:
-            add("branch", "branch", branch, f"Filial {branch}", f"Em foco nesta conversa: filial {branch}")
+            add("branch", "branch", branch, branch, f"Em foco nesta conversa: {branch}")
 
         warehouse = str(data.get("warehouse") or "").strip()
         if warehouse:
-            add("warehouse", "warehouse", warehouse, f"Armazém {warehouse}", f"Em foco nesta conversa: armazém {warehouse}")
+            add(
+                "warehouse",
+                "warehouse",
+                warehouse,
+                warehouse,
+                f"Em foco nesta conversa: {warehouse}",
+            )
 
         return new_items
 

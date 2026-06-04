@@ -178,7 +178,7 @@ class ChatWorkingMemoryService:
             lines.append(f"- Em foco nesta conversa: {entities['productCode']}.")
 
         if entities.get("branch"):
-            lines.append(f"- Filial em foco: {entities['branch']}.")
+            lines.append(f"- Em foco nesta conversa: {entities['branch']}.")
 
         if entities.get("period"):
             lines.append(f"- Período em foco: {entities['period']}.")
@@ -460,7 +460,7 @@ class ChatWorkingMemoryService:
         if branch:
             chips.append(
                 {
-                    "label": f"Filial {branch}",
+                    "label": branch,
                     "kind": "branch",
                     "value": branch,
                 }
@@ -471,7 +471,7 @@ class ChatWorkingMemoryService:
         if warehouse:
             chips.append(
                 {
-                    "label": f"Armazém {warehouse}",
+                    "label": warehouse,
                     "kind": "warehouse",
                     "value": warehouse,
                 }

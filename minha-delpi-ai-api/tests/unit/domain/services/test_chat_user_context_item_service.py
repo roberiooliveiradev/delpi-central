@@ -11,7 +11,7 @@ def test_auto_items_capture_product_as_neutral_context():
     assert by_kind["product"]["label"] == "90260114"
     assert by_kind["product"]["source"] == "auto"
     assert by_kind["product"]["extractedEntities"]["productCode"] == "90260114"
-    assert by_kind["branch"]["label"] == "Filial 02"
+    assert by_kind["branch"]["label"] == "02"
 
 
 def test_auto_items_skip_inferred_product_code():
@@ -38,7 +38,15 @@ def test_classify_product_short_text():
     result = ChatUserContextItemService.classify("10080001")
 
     assert result["kind"] == "product"
+    assert result["label"] == "10080001"
     assert result["extractedEntities"]["productCode"] == "10080001"
+
+
+def test_classify_branch_short_text_neutral_label():
+    result = ChatUserContextItemService.classify("filial 01")
+
+    assert result["kind"] == "branch"
+    assert result["label"] == "01"
 
 
 def test_classify_table_markdown():
@@ -137,7 +145,7 @@ def test_chip_from_item_branch_uses_entity_value_not_item_id():
     chip = ChatUserContextItemService.chip_from_item(item)
 
     assert chip["value"] == "01"
-    assert chip["label"] == "Filial 01"
+    assert chip["label"] == "01"
 
 
 def test_build_context_chips_no_duplicate_branch_entity_and_user_item():

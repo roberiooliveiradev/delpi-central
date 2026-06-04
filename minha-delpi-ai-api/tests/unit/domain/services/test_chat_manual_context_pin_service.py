@@ -28,7 +28,7 @@ def test_rejects_invalid_product():
 def test_build_chip_labels():
     chip = ChatManualContextPinService.build_chip(kind="warehouse", value="01")
 
-    assert chip == {"label": "Armazém 01", "kind": "warehouse", "value": "01"}
+    assert chip == {"label": "01", "kind": "warehouse", "value": "01"}
 
 
 def test_chips_from_overlay():
