@@ -48,10 +48,10 @@ class ChatInteractivityQueryResolver:
         snapshot = (metadata or {}).get("contextSnapshot")
 
         if isinstance(snapshot, dict):
-            last_entities = snapshot.get("operationalFocus") or {}
+            focus = snapshot.get("operationalFocus") or {}
 
-            if isinstance(last_entities, dict):
-                cls._merge_entities(output, last_entities)
+            if isinstance(focus, dict):
+                cls._merge_entities(output, focus)
 
         working = (workspace_context or {}).get("workingMemory") or {}
         persisted = working.get("operationalFocus") or {}

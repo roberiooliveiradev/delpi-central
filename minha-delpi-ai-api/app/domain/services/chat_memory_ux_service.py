@@ -212,7 +212,6 @@ class ChatMemoryUxService:
             if isinstance(state.get("activeTask"), dict)
             else None,
             "operationalFocus": operational_focus,
-            "entities": operational_focus,
             "preferences": preferences,
             "resolvedReferences": [
                 str(item.get("text") or "")

@@ -5,56 +5,56 @@ from __future__ import annotations
 from typing import Any
 
 OPERATIONAL_FOCUS_KEY = "operationalFocus"
-LEGACY_LAST_ENTITIES_KEY = "lastEntities"
-LEGACY_ACTIVE_ENTITIES_KEY = "activeEntities"
+
+# Chaves removidas do contrato (pré-produção); ignoradas se ainda aparecerem em JSON antigo local.
+_REMOVED_SNAPSHOT_KEYS = frozenset({"lastEntities", "activeEntities"})
 
 
 class ChatSnapshotOperationalFocus:
     @classmethod
     def get(cls, snapshot: dict[str, Any] | None) -> dict[str, str]:
-        """Lê foco operacional; aceita snapshots antigos com ``lastEntities``."""
-        snap = snapshot or {}
+        block = (snapshot or {}).get(OPERATIONAL_FOCUS_KEY)
 
-        for key in (OPERATIONAL_FOCUS_KEY, LEGACY_LAST_ENTITIES_KEY, LEGACY_ACTIVE_ENTITIES_KEY):
-            block = snap.get(key)
+        if not isinstance(block, dict) or not block:
+            return {}
 
-            if not isinstance(block, dict) or not block:
-                continue
-
-            return {
-                str(name).strip(): str(value).strip()
-                for name, value in block.items()
-                if value is not None and str(value).strip()
-            }
-
-        return {}
+        return {
+            str(name).strip(): str(value).strip()
+            for name, value in block.items()
+            if value is not None and str(value).strip()
+        }
 
     @classmethod
     def set(cls, snapshot: dict[str, Any], focus: dict[str, str] | None) -> dict[str, Any]:
-        """Grava só ``operationalFocus`` e remove chaves legadas do snapshot."""
-        result = dict(snapshot)
-        merged = {
+        """Grava só ``operationalFocus`` e remove chaves obsoletas do snapshot."""
+        result = cls.strip_removed_keys(dict(snapshot))
+
+        result[OPERATIONAL_FOCUS_KEY] = {
             str(name).strip(): str(value).strip()
             for name, value in (focus or {}).items()
             if value is not None and str(value).strip()
         }
-        result[OPERATIONAL_FOCUS_KEY] = merged
-        result.pop(LEGACY_LAST_ENTITIES_KEY, None)
-        result.pop(LEGACY_ACTIVE_ENTITIES_KEY, None)
+
+        return result
+
+    @classmethod
+    def strip_removed_keys(cls, snapshot: dict[str, Any] | None) -> dict[str, Any]:
+        result = dict(snapshot or {})
+
+        for key in _REMOVED_SNAPSHOT_KEYS:
+            result.pop(key, None)
+
         return result
 
     @classmethod
     def normalize(cls, snapshot: dict[str, Any] | None) -> dict[str, Any]:
-        """Migra chaves legadas para ``operationalFocus`` antes de processar o turno."""
-        if not snapshot:
-            return {}
+        """Garante snapshot sem chaves obsoletas antes do pré-turno."""
+        result = cls.strip_removed_keys(snapshot)
 
-        focus = cls.get(snapshot)
+        if OPERATIONAL_FOCUS_KEY not in result:
+            result[OPERATIONAL_FOCUS_KEY] = cls.get(result)
 
-        if not focus:
-            return dict(snapshot)
-
-        return cls.set(dict(snapshot), focus)
+        return result
 
     @classmethod
     def overlay_get(cls, overlay: dict[str, Any] | None) -> dict[str, str]:

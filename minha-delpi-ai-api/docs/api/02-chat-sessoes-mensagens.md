@@ -39,7 +39,7 @@
 | `user_feedback_reason` | Motivo estruturado do thumbs down (ex.: `incomplete`, `wrong_data`), quando informado. IDs válidos vêm de `personality_playbook.json` → `feedbackReasons`. |
 | `branch` | Em perguntas `user` com variações (irmãs): `{ currentIndex, total, siblingIds }` para navegação « 1 / N ». |
 | `adminDebug` | Diagnóstico do turno (pipeline, RAG, tools, LLM). **Persistido** em toda mensagem `assistant`; **retornado** no JSON só para admin (ver abaixo). |
-| `contextSnapshot` | Snapshot pós-turno da memória de contexto (entidades, follow-up, referências). Persistido no `assistant`. |
+| `contextSnapshot` | Snapshot pós-turno (`operationalFocus`, `userContextItems`, follow-up, referências). Persistido no `assistant`. |
 | `contextAssertiveness` | Score 0–100 e `flags` de assertividade contextual do turno. Persistido no `assistant`. |
 | `followUpSuggestions` | Chips «Próximos passos» (`label`, `query`) após respostas operacionais. |
 
@@ -58,7 +58,7 @@ Na resposta HTTP/SSE ao admin, o objeto pode incluir também (mesclado após o t
 
 | Campo | Descrição |
 |-------|-----------|
-| `memory` | Resumo compacto de `contextSnapshot` (`lastEntities`, follow-up) |
+| `memory` | Resumo compacto de `contextSnapshot` (`operationalFocus`, follow-up) |
 | `contextAssertiveness` | Mesmo conteúdo de `metadata.contextAssertiveness` |
 | `intelligence` | Timings e estágios do pipeline (`timings`, `pipeline.stages`, …) |
 

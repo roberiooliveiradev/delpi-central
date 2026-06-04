@@ -32,7 +32,7 @@ class ChatMemoryContextDebugService:
         layers: list[str] = []
 
         if snapshot.get("operationalFocus") or snapshot.get("operationalFocus"):
-            layers.append("entities")
+            layers.append("operationalFocus")
 
         if snapshot.get("behaviorInstructions") or snapshot.get("userPreferences"):
             layers.append("preferences")

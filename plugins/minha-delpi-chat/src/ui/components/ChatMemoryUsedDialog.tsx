@@ -7,7 +7,7 @@ export type MemoryUsageView = {
   layers?: string[];
   topic?: string | null;
   task?: string | null;
-  entities?: Record<string, string>;
+  operationalFocus?: Record<string, string>;
   preferences?: string[];
   resolvedReferences?: string[];
   semanticHits?: Array<{ title?: string; snippet?: string }>;

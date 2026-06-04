@@ -562,7 +562,7 @@ class ChatProductQueryIntentService:
         *,
         previous_messages: list | None = None,
         user_context_items: list | None = None,
-        last_entities: dict | None = None,
+        operational_focus: dict | None = None,
         memory_snapshot: dict | None = None,
     ) -> str | None:
         from app.domain.services.chat_product_description_resolution_service import (
@@ -629,10 +629,10 @@ class ChatProductQueryIntentService:
             ChatSnapshotOperationalFocus,
         )
 
-        if memory_snapshot and user_context_items is None and last_entities is None:
+        if memory_snapshot and user_context_items is None and operational_focus is None:
             if isinstance(memory_snapshot, dict):
                 user_context_items = memory_snapshot.get("userContextItems")
-                last_entities = ChatSnapshotOperationalFocus.get(memory_snapshot)
+                operational_focus = ChatSnapshotOperationalFocus.get(memory_snapshot)
 
         if user_context_items is not None:
             code = ChatUserContextItemService.resolve_product_code_from_items(
@@ -642,8 +642,8 @@ class ChatProductQueryIntentService:
             if code:
                 return code
 
-        if isinstance(last_entities, dict):
-            token = str(last_entities.get("productCode") or "").strip()
+        if isinstance(operational_focus, dict):
+            token = str(operational_focus.get("productCode") or "").strip()
 
             if token and cls.is_plausible_product_code(token):
                 return token

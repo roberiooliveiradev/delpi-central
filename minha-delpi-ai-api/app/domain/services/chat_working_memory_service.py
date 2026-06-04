@@ -38,10 +38,10 @@ class ChatWorkingMemoryService:
         carryover_entities, previous_product_codes = cls._extract_carryover_from_history(
             previous_messages
         )
-        last_entities = cls._extract_last_entities(previous_messages)
-        last_entities = {**carryover_entities, **last_entities}
+        operational_focus = cls._extract_operational_focus_from_messages(previous_messages)
+        operational_focus = {**carryover_entities, **operational_focus}
         cls._annotate_product_code_source(
-            last_entities,
+            operational_focus,
             message=message,
             previous_messages=previous_messages,
         )
@@ -62,7 +62,7 @@ class ChatWorkingMemoryService:
         behavior = ChatTextTaskPreferenceService.merge_into_behavior(message, behavior)
 
         snapshot = {
-            "operationalFocus": last_entities,
+            "operationalFocus": operational_focus,
             "behaviorInstructions": behavior,
         }
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
@@ -71,12 +71,15 @@ class ChatWorkingMemoryService:
         email_preferences = snapshot.get("emailPreferences") or {}
         text_correction_preferences = snapshot.get("textCorrectionPreferences") or {}
 
-        resolved, used_keys = ChatReferenceResolutionService.resolve(message, last_entities)
+        resolved, used_keys = ChatReferenceResolutionService.resolve(
+            message,
+            operational_focus,
+        )
         follow_up = ChatFollowUpIntentService.is_operational_follow_up(message)
 
         return cls._sync_focus_to_context_items(
             {
-                "operationalFocus": last_entities,
+                "operationalFocus": operational_focus,
                 "previousProductCodes": previous_product_codes,
                 "behaviorInstructions": behavior,
                 "emailPreferences": email_preferences,
@@ -395,7 +398,10 @@ class ChatWorkingMemoryService:
             entities["productCode"] = token
 
     @classmethod
-    def _extract_last_entities(cls, previous_messages: list[Any] | None) -> dict[str, str]:
+    def _extract_operational_focus_from_messages(
+        cls,
+        previous_messages: list[Any] | None,
+    ) -> dict[str, str]:
         entities: dict[str, str] = {}
         code = ChatProductQueryIntentService.extract_last_product_code_from_messages(
             previous_messages,

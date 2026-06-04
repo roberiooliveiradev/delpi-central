@@ -129,7 +129,7 @@ def main() -> int:
     bootstrap = _send(token, session_id, agent_id, "me fale do produto 10080001")
     admin = bootstrap.get("adminDebug") or {}
     memory = admin.get("memory") or {}
-    entities = memory.get("operationalFocus") or memory.get("activeEntities") or {}
+    entities = memory.get("operationalFocus") or {}
 
     if entities.get("productCode") == "10080001" or _tool_path_has_product(
         bootstrap, "10080001"
@@ -155,7 +155,7 @@ def main() -> int:
     after_clear = _send(token, session_id, agent_id, "mostre os fornecedores")
     admin_after = after_clear.get("adminDebug") or {}
     memory_dbg = admin_after.get("memory") or {}
-    entities_after = memory_dbg.get("operationalFocus") or memory_dbg.get("activeEntities") or {}
+    entities_after = memory_dbg.get("operationalFocus") or {}
 
     if memory_dbg.get("clearedThisTurn"):
         print("OK turno 3: após clear, turno marca persistedMemoryCleared")

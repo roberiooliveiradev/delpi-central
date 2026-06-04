@@ -1,43 +1,48 @@
-# Contexto unificado vs. vestígios de «entidades»
+# Contexto unificado (sem `lastEntities`)
 
-## Modelo alvo (UI + prompt)
+## Modelo
 
 | Conceito | Onde vive |
 |----------|-----------|
 | O que o usuário vê e edita | `userContextItems`, chips `kind: context` |
 | Texto no LLM | Bloco «Contexto adicionado pelo usuário…» (`ChatUserContextItemService.format_prompt_block`) |
-| Código/filial para tools | Último item de contexto → `resolve_product_code` / `sync_operational_focus` |
+| Código/filial para tools | `userContextItems` → `resolve_product_code` |
+| Cache interno do turno | `operationalFocus` no `contextSnapshot` |
 
-## Uso interno legítimo (não é UI de entidade)
+Chaves **removidas** do contrato (pré-produção): `lastEntities`, `activeEntities`. Se aparecerem em JSON local antigo, `ChatSnapshotOperationalFocus.strip_removed_keys` as descarta.
 
-| Campo / serviço | Papel |
-|-----------------|-------|
-| `operationalFocus` | Cache derivado no snapshot (ex-`lastEntities` / `activeEntities`) |
-| `ChatSnapshotOperationalFocus` | Leitura/escrita com compatibilidade de snapshots antigos |
-| `sync_operational_focus` | **Único escritor** de produto/filial/armazém em `operationalFocus` |
-| `productCode` em APIs/actions | Parâmetro operacional Protheus (não confundir com tipo «entidade» da memória) |
-| `memory_type=entity` no Postgres | Só **período** em gravações novas; linhas antigas de produto/filial lidas como legado até expirar |
-| `ChatEntityTrackerService` | SQL recente, pedido, anexo; depois passa por `sync_operational_focus` |
-| `ChatReferenceResolutionService` | «esse produto», «mesma filial» → lê `lastEntities` já sincronizado |
+## Escrita do cache
 
-## O que foi consolidado nesta revisão
+Somente `ChatUserContextItemService.sync_operational_focus` grava produto/filial/armazém em `operationalFocus`, derivando de:
 
-- `ChatUserContextItemService.sync_operational_focus` no pré/pós-turno, entity tracker, overlay Postgres, pins.
-- `load_active_overlay`: produto/filial/armazém vêm de `context_item`; linhas `entity` antigas só se não houver itens.
-- `remove_pin`: remove `context_item` correspondente (não só `deactivate_entity`).
-- `upsert_entity`: restrito a `period` (legado documentado).
-- Regra em `.cursor/rules/chat-intelligence-base.mdc`.
+1. `userContextItems` (prioridade quando existem itens), ou
+2. sinais do turno (tool, mensagem explícita) quando não há itens de contexto.
 
-## Vestígios que ainda existem (não são o modelo de UI)
+`ChatWorkingMemoryService` e `ChatEntityTrackerService` alimentam o turno; o sync reconcilia com o contexto do usuário.
 
-- Leitura de `lastEntities` / `activeEntities` em mensagens antigas (`ChatSnapshotOperationalFocus.get`).
-- Nomes `entity_key_for_kind`, `deactivate_entity` — mapeamento interno Postgres/API legado.
-- `usage.entities` no admin (alias de `operationalFocus` na API de memória).
-- Testes e regressões com snapshot `lastEntities` (contrato interno).
-- Módulos **fora** do chat de sessão: RBAC entity, knowledge entity, `productCode` em presenters — domínios diferentes.
+## Persistência (`ai_chat_session_memory`)
 
-## Próximos passos opcionais
+| `memory_type` | Conteúdo |
+|---------------|----------|
+| `context_item` | Itens de contexto (usuário + auto) |
+| `entity` | Apenas **período** (`period`) |
+| `behavior` | Preferências de comportamento |
 
-1. Migração one-shot: converter linhas `memory_type=entity` (product/branch/warehouse) em `context_item`.
-2. ~~Renomear `lastEntities` → `operationalFocus`~~ — feito; leitura legada mantida.
-3. Remover `entity_context_labels` e port `upsert_entity` quando não houver callers.
+Produto/filial/armazém **não** são mais persistidos como `memory_type=entity`.
+
+## Serviços que leem `operationalFocus`
+
+- `ChatSnapshotOperationalFocus.get` / `set` / `normalize`
+- `ChatReferenceResolutionService` (esse produto, mesma filial)
+- `ChatProductQueryIntentService.resolve_product_code`
+- `ChatIntentRouterService`, seleção de actions, refinamentos operacionais
+
+## API memória de sessão
+
+`GET /chat/sessions/{id}/memory/context` → `usage.operationalFocus` (mapa compacto) e `usage.userContextItems` (rótulos para o modal).
+
+## Referência
+
+- [`chat-intelligence-base.md`](./chat-intelligence-base.md)
+- [`session-memory.md`](./session-memory.md)
+- Changelog: [`../changelog/2026-06-contexto-operational-focus.md`](../changelog/2026-06-contexto-operational-focus.md)

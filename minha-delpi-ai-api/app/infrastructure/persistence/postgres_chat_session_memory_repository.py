@@ -45,8 +45,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             .all()
         )
 
-        last_entities: dict[str, str] = {}
-        legacy_operational: dict[str, str] = {}
+        period_focus: dict[str, str] = {}
         behavior: dict[str, str] = {}
 
         for row in rows:
@@ -56,12 +55,8 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
             if not scalar:
                 continue
 
-            if row.memory_type == "entity" and row.key in self._ENTITY_KEYS:
-                if row.key == "period":
-                    last_entities.setdefault(row.key, scalar)
-                elif row.key in {"productCode", "branch", "warehouse"}:
-                    # Linhas antigas até migração completa; itens de contexto prevalecem no sync.
-                    legacy_operational.setdefault(row.key, scalar)
+            if row.memory_type == "entity" and row.key == "period":
+                period_focus.setdefault(row.key, scalar)
             elif row.memory_type == "behavior" and row.key in self._BEHAVIOR_KEYS:
                 behavior.setdefault(row.key, scalar)
 
@@ -71,7 +66,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
 
         return ChatUserContextItemService.sync_operational_focus(
             {
-                "operationalFocus": {**legacy_operational, **last_entities},
+                "operationalFocus": period_focus,
                 "behaviorInstructions": behavior,
                 "userContextItems": self.list_context_items(session_id),
             }

@@ -1,6 +1,6 @@
 # Memória de sessão (Playbook 01)
 
-Camada transversal do chat base para entidades, preferências, lousa, ações e referências vagas.
+Camada transversal do chat base para contexto de sessão, preferências, lousa, ações e referências vagas.
 
 ## Pipeline
 
@@ -28,7 +28,7 @@ Histórico + mensagem
 |---------|--------|
 | `ChatConversationMemoryService` | Orquestra pré/pós-turno, chips, admin debug |
 | `ChatConversationStateService` | `activeTopic`, `activeTask`, siga/próximo, correções, mudança de assunto (playbook memória §9) |
-| `ChatEntityTrackerService` | `activeEntities`, `referenceHints`, `previousProductCodes`, SQL recente (playbook memória §10) |
+| `ChatEntityTrackerService` | Sinais do turno → `operationalFocus`, `referenceHints`, SQL recente (§10) |
 | `ChatUserPreferenceManagerService` | `userPreferences` unificado (behavior, e-mail, texto, correção); revogação e reset por assunto (§13) |
 | `ChatConversationSummarizerService` | Resumo estruturado extrativo (entidades, decisões, pendências) quando histórico ≥ 10 mensagens (§17) |
 | `ChatContextCompressionService` | `compressedContext` no snapshot; bloco compactado no prompt (§18) |
@@ -47,9 +47,10 @@ Histórico + mensagem
 | `ChatMemoryUxService` | `memoryUx` no metadata, chips UX, resposta «o que está usando» (Fase 8) |
 | `ChatSessionMemoryAdminMetricsService` | Agregado admin `sessionMemoryAdminMetrics` (Fase 9) |
 | `ChatMemoryContextLossAlertService` | `memoryContextAlerts` por turno (Fase 9) |
-| `ChatManualContextPinService` | Pins manuais produto/filial/armazém (legado) |
-| `ChatUserContextItemService` | Contexto livre + **pergunta/resposta** da conversa (`context_item`, dedup por `messageId`) |
-| `ChatWorkingMemoryService` | Entidades, behavior, prompt block |
+| `ChatManualContextPinService` | API de pin → grava `context_item` |
+| `ChatSnapshotOperationalFocus` | Leitura/escrita de `operationalFocus` no snapshot |
+| `ChatUserContextItemService` | Contexto do usuário + `sync_operational_focus` |
+| `ChatWorkingMemoryService` | Pré/pós-turno, behavior, prompt block |
 | `ChatConversationMemoryExtractor` | lastAction, lastPresentation, canvas, lastAttachment |
 | `ChatReferenceResolutionService` | esse produto, mesmo período, essa tabela, faça o mesmo |
 | `ChatSessionMemoryService` | Persistência ai_chat_session_memory, limpeza |
@@ -79,4 +80,6 @@ cd minha-delpi-ai-api && ./scripts/run_memory_context_validation.sh
 
 Campos úteis no `adminDebug.memory`: `semanticMemory`, `episodicMemory`, `advancedContext` (`memoryContextDebug`, grafo, gating).
 
-- `sessionMemoryMetrics`: snapshot por turno (entidades, refs, follow-up, lousa)
+- `sessionMemoryMetrics`: snapshot por turno (`operationalFocus`, refs, follow-up, lousa)
+
+Ver também: [`contexto-vs-entidades.md`](./contexto-vs-entidades.md).

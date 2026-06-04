@@ -59,11 +59,11 @@ class ChatReferenceResolutionService:
     def resolve(
         cls,
         message: str,
-        last_entities: dict[str, str] | None,
+        operational_focus: dict[str, str] | None,
     ) -> tuple[list[dict[str, Any]], list[str]]:
         return cls.resolve_from_snapshot(
             message,
-            {"operationalFocus": last_entities or {}},
+            {"operationalFocus": operational_focus or {}},
         )
 
     @classmethod
