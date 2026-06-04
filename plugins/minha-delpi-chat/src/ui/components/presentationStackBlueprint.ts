@@ -46,7 +46,7 @@ function pushStackSection(
   appendUnique(segments, { kind: "stackSection", section });
 }
 
-function resolveStackSection(plan: StackPresentationPlan, sectionId: StackSectionId): StackSectionChrome {
+function resolveStackSection(sectionId: StackSectionId): StackSectionChrome {
   return buildStackSectionChrome(sectionId);
 }
 
@@ -66,7 +66,7 @@ function maybePushStackSection(
     return;
   }
 
-  pushStackSection(segments, resolveStackSection(plan, sectionId), appendUnique);
+  pushStackSection(segments, resolveStackSection(sectionId), appendUnique);
 }
 
 function pushSectionFraming(
