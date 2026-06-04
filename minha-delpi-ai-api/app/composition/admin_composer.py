@@ -301,6 +301,14 @@ def make_upsert_vocabulary_term_use_case():
     return UpsertVocabularyTermUseCase()
 
 
+def make_get_admin_learning_summary_use_case():
+    from app.application.use_cases.get_admin_learning_summary_use_case import (
+        GetAdminLearningSummaryUseCase,
+    )
+
+    return GetAdminLearningSummaryUseCase()
+
+
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
 

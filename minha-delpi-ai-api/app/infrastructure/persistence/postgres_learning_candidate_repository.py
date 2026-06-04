@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy import func
+
 from app.extensions.db import db
 from app.infrastructure.db.models.learning_candidate_model import (
     AiLearningCandidateModel,
 )
 
 _ACTIVE_STATUSES = ("pending", "auto_approved")
+_HIGH_CONFIDENCE = 0.85
 
 
 class PostgresLearningCandidateRepository:
@@ -133,6 +136,47 @@ class PostgresLearningCandidateRepository:
         )
 
         return [self._to_dict(row) for row in rows], total
+
+    def summary(self, *, since: datetime | None = None) -> dict:
+        model = AiLearningCandidateModel
+
+        by_status = dict(
+            db.session.query(model.status, func.count())
+            .group_by(model.status)
+            .all()
+        )
+        by_type = dict(
+            db.session.query(model.candidate_type, func.count())
+            .group_by(model.candidate_type)
+            .all()
+        )
+
+        total = sum(by_status.values())
+        pending_high = model.query.filter(
+            model.status == "pending",
+            model.confidence >= _HIGH_CONFIDENCE,
+        ).count()
+
+        recent_created = (
+            model.query.filter(model.created_at >= since).count()
+            if since is not None
+            else total
+        )
+
+        avg_pending = (
+            db.session.query(func.avg(model.confidence))
+            .filter(model.status == "pending")
+            .scalar()
+        )
+
+        return {
+            "total": int(total),
+            "byStatus": {str(key): int(value) for key, value in by_status.items()},
+            "byType": {str(key): int(value) for key, value in by_type.items()},
+            "pendingHighConfidence": int(pending_high),
+            "recentCreated": int(recent_created),
+            "avgPendingConfidence": float(avg_pending) if avg_pending is not None else None,
+        }
 
     def get(self, candidate_id: int) -> dict | None:
         row = AiLearningCandidateModel.query.filter_by(id=candidate_id).first()

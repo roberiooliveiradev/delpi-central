@@ -21,7 +21,7 @@ e aplicação das regras aprovadas na normalização base. Tudo atrás de featur
 | Aplicação | `ChatLearnedNormalizationService` | Carrega termos aprovados (cache TTL) e injeta as regras no normalizador base. |
 | Infra | `PostgresLearningCandidateRepository` / `PostgresVocabularyTermRepository` | Persistência. |
 | Infra | Tabelas `ai_learning_candidates`, `ai_vocabulary_terms` | Migração `r0s1t2u3v4w5`. |
-| Interface | `GET/POST /admin/learning/candidates*`, `GET/POST /admin/learning/vocabulary` | Revisão (aprovar/rejeitar/promover) e CRUD de termos. |
+| Interface | `GET/POST /admin/learning/candidates*`, `GET/POST /admin/learning/vocabulary`, `GET /admin/metrics/learning/summary` | Revisão (aprovar/rejeitar/promover), CRUD de termos e KPIs. |
 
 ## Fluxo (Fase 1)
 
@@ -72,9 +72,23 @@ Próximos turnos (send/stream)
 - `POST /admin/learning/candidates/{id}/review` — body `{ "action": "approve|reject|promote", "term?", "normalizedTerm?", "meaning?" }`
 - `GET /admin/learning/vocabulary?scope=&approved=&type=&limit=&offset=`
 - `POST /admin/learning/vocabulary` — cria/edita termo aprovado (ex.: regra de typo `como vc s chama → como voce se chama`).
+- `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques).
+
+## KPIs (playbook §36)
+
+`GetAdminLearningSummaryUseCase` agrega contagens dos repositórios e o
+`ChatLearningMetricsService` (puro) monta o funil/derivados:
+
+- **Funil**: criados (total e na janela `hours`), pendentes, aprovados, rejeitados,
+  promovidos, taxa de aprovação (`(aprovados+promovidos)/revisados`) e taxa de
+  promoção (`promovidos/total`).
+- **Destaques**: definições de termo, regras de normalização (typos), candidatos
+  pendentes de alta confiança e termos aprendidos ativos no vocabulário.
+
+A faixa de KPIs aparece no topo da aba **Conhecimento → Aprendizagem** do MFE e é
+informativa (falha na coleta não bloqueia a revisão).
 
 ## Não coberto nesta fase (próximas)
 
-- KPIs de aprendizagem no painel admin (taxa de aprovação, typos corrigidos, etc.).
 - `memory_items` cross-usuário/projeto com embedding, `evaluation_cases`, eventos/workers,
   pesquisa web de significado e fine-tuning offline (Fases 4–7 do roadmap).

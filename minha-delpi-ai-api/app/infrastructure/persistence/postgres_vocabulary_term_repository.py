@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy import func
+
 from app.extensions.db import db
 from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermModel
 
@@ -125,6 +127,29 @@ class PostgresVocabularyTermRepository:
             }
             for row in rows
         ]
+
+    def summary(self) -> dict:
+        model = AiVocabularyTermModel
+
+        by_type = dict(
+            db.session.query(model.type, func.count())
+            .group_by(model.type)
+            .all()
+        )
+
+        total = sum(by_type.values())
+        approved = model.query.filter(model.approved.is_(True)).count()
+        active = model.query.filter(
+            model.approved.is_(True),
+            model.active.is_(True),
+        ).count()
+
+        return {
+            "total": int(total),
+            "approved": int(approved),
+            "activeApproved": int(active),
+            "byType": {str(key): int(value) for key, value in by_type.items()},
+        }
 
     def get(self, term_id: int) -> dict | None:
         row = AiVocabularyTermModel.query.filter_by(id=term_id).first()

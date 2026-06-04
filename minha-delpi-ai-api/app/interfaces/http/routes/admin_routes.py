@@ -86,6 +86,7 @@ from app.infrastructure.persistence.postgres_audit_repository import PostgresAud
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.rate_limit_decorators import rate_limit
+from app.interfaces.http.utils.errors import bad_request
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -947,6 +948,20 @@ def admin_upsert_vocabulary_term():
         raise
 
     return jsonify(result), 201
+
+
+@admin_bp.get("/metrics/learning/summary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_learning_metrics_summary():
+    from app.composition.admin_composer import make_get_admin_learning_summary_use_case
+
+    try:
+        hours = int(request.args.get("hours", 168))
+    except (TypeError, ValueError):
+        return bad_request("hours must be an integer")
+
+    use_case = make_get_admin_learning_summary_use_case()
+    return jsonify(use_case.execute(hours=hours)), 200
 
 
 @admin_bp.get("/metrics/text-tasks/summary")

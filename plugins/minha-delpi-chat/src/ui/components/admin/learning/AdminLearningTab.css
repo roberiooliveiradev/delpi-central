@@ -36,6 +36,38 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
+.mdc-admin-learning__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.mdc-admin-learning__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--mdc-admin-surface-muted, rgba(120, 120, 140, 0.12));
+}
+
+.mdc-admin-learning__kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.mdc-admin-learning__kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.mdc-admin-learning__kpi-hint {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
 .mdc-admin-learning__error {
   color: #b4232a;
   font-size: 13px;

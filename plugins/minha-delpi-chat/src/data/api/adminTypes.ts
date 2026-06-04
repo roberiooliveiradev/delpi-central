@@ -1180,3 +1180,37 @@ export type UpsertVocabularyTermPayload = {
   approved?: boolean;
   active?: boolean;
 };
+
+export type AdminLearningSummary = {
+  windowHours: number;
+  candidates: {
+    total: number;
+    byStatus: Record<string, number>;
+    byType: Record<string, number>;
+    pendingHighConfidence: number;
+    recentCreated: number;
+    avgPendingConfidence: number | null;
+  };
+  vocabulary: {
+    total: number;
+    approved: number;
+    activeApproved: number;
+    byType: Record<string, number>;
+  };
+  funnel: {
+    created: number;
+    recentCreated: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    promoted: number;
+    approvalRate: number | null;
+    promotionRate: number | null;
+  };
+  highlights: {
+    termDefinitions: number;
+    normalizationRules: number;
+    pendingHighConfidence: number;
+    learnedTermsActive: number;
+  };
+};

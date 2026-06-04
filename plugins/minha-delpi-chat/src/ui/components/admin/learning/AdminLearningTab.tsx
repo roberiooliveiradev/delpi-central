@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  getAdminLearningSummary,
   listAdminLearningCandidates,
   listAdminVocabularyTerms,
   reviewAdminLearningCandidate,
@@ -8,8 +9,11 @@ import {
 } from "../../../../data/api/adminApi";
 import type {
   AdminLearningCandidate,
+  AdminLearningSummary,
   AdminVocabularyTerm,
 } from "../../../../data/api/adminTypes";
+
+import { LearningSummaryStrip } from "./LearningSummaryStrip";
 
 import "./AdminLearningTab.css";
 
@@ -55,6 +59,8 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
   const [candidates, setCandidates] = useState<AdminLearningCandidate[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [terms, setTerms] = useState<AdminVocabularyTerm[]>([]);
+  const [summary, setSummary] = useState<AdminLearningSummary | null>(null);
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -108,6 +114,20 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
     }
   }, [getAccessToken]);
 
+  const loadSummary = useCallback(async () => {
+    setIsSummaryLoading(true);
+
+    try {
+      const response = await getAdminLearningSummary({ getAccessToken });
+      setSummary(response);
+    } catch {
+      // KPIs são informativos; falha não deve bloquear a revisão.
+      setSummary(null);
+    } finally {
+      setIsSummaryLoading(false);
+    }
+  }, [getAccessToken]);
+
   useEffect(() => {
     if (view === "candidates") {
       void loadCandidates();
@@ -115,6 +135,10 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       void loadTerms();
     }
   }, [view, loadCandidates, loadTerms]);
+
+  useEffect(() => {
+    void loadSummary();
+  }, [loadSummary]);
 
   useEffect(() => {
     // Pré-preenche os overrides ao selecionar um candidato.
@@ -155,6 +179,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       );
       setSelectedId(null);
       await loadCandidates();
+      void loadSummary();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao revisar candidato.");
     } finally {
@@ -189,6 +214,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       setNewNormalized("");
       setNewMeaning("");
       await loadTerms();
+      void loadSummary();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar termo.");
     } finally {
@@ -229,11 +255,16 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
           type="button"
           className="mdc-chat-ws-outline-btn"
           disabled={isLoading}
-          onClick={() => (view === "candidates" ? void loadCandidates() : void loadTerms())}
+          onClick={() => {
+            void (view === "candidates" ? loadCandidates() : loadTerms());
+            void loadSummary();
+          }}
         >
           {isLoading ? "Atualizando..." : "Atualizar"}
         </button>
       </header>
+
+      <LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />
 
       {error ? <p className="mdc-admin-learning__error">{error}</p> : null}
       {successMessage ? (

@@ -59,6 +59,7 @@ import type {
   AdminPaginatedResponse,
   AdminLearningCandidate,
   AdminVocabularyTerm,
+  AdminLearningSummary,
   ReviewLearningCandidatePayload,
   UpsertVocabularyTermPayload,
 } from "./adminTypes";
@@ -1417,4 +1418,19 @@ export async function upsertAdminVocabularyTerm(
   });
 
   return parseJsonResponse<AdminVocabularyTerm>(response);
+}
+
+export async function getAdminLearningSummary(
+  options: AdminApiOptions = {},
+  params: { hours?: number } = {},
+): Promise<AdminLearningSummary> {
+  const query = new URLSearchParams();
+  query.set("hours", String(params.hours ?? 168));
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/metrics/learning/summary?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminLearningSummary>(response);
 }
