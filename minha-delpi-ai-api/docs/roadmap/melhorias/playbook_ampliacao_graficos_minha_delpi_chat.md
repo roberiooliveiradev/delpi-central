@@ -26,7 +26,7 @@ Hoje existem componentes para:
 - exportação de tabela para CSV;
 - navegação por paginação e profundidade.
 
-No front, o componente `ChatRichPresentation` já centraliza a decisão entre texto, gráfico, árvore e tabela, além de usar `ChatRichChart`, `ChatRichTable`, `ChatRichKpi` e `ChatRichTree`.
+No front, **`ChatAssistantContent`** centraliza narrativa + troca entre tabela, gráfico e árvore (`AssistantContentFormatToolbar`), usando `ChatRichChart`, `ChatRichTable`, `ChatRichKpi` e `ChatRichTree`. Ver [`../../architecture/chat-assistant-content-presentation.md`](../../architecture/chat-assistant-content-presentation.md).
 
 O componente `ChatRichChart` já importa recursos do Recharts para `BarChart`, `LineChart`, `PieChart` e `AreaChart`. Isso indica que a base técnica para alguns gráficos além de barra já está presente no front.
 

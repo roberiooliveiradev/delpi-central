@@ -426,7 +426,7 @@ Com `CHAT_PERSIST_BEFORE_PLAYBACK=false`, tokens chegam em `event: token` até `
 
 Resposta curta no chat («Coloquei …» / «Atualizei a lousa …»); conteúdo completo em `canvas_open` / `canvasOpen`. Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
 
-**Apresentação rica:** `toolCalls[].metadata.presentation` (e `tablePresentation` quando o primário é gráfico) alimenta `ChatRichPresentation` no plugin. O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver compactação em [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md).
+**Apresentação rica:** `toolCalls[].metadata` expõe `presentation`, `tablePresentation`, `treePresentation`, `chartPresentation`, `textPresentation` e `presentationDecision` (`layoutMode`, `visualOrder`, `availableViews`). O plugin renderiza tudo em **`ChatAssistantContent`** (barra de troca entre formatos nativos disponíveis). O campo `answer` não deve repetir os mesmos dados em markdown tabular — ver [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md).
 
 ### Comportamento do pipeline (referência)
 

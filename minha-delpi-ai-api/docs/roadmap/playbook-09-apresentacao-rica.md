@@ -21,19 +21,22 @@ Legado: [`apresentacao-rica-chat-onda-9.md`](./apresentacao-rica-chat-onda-9.md)
 | `ChatChartTypeSelectionService` | Subtipo de gráfico (linha, barra H, rosca, combo, …) |
 | `ExternalActionResultPresenter` | Monta `presentation` / `tablePresentation` / `chartPresentation` |
 | `ExecuteExternalActionUseCase` | Enriquece metadata com `presentationDecision` |
-| MFE `ChatRichPresentation` | Renderização, toggle texto/tabela/gráfico/árvore, export |
+| MFE `ChatAssistantContent` | Único renderizador: segmentos, toolbar de formato, registry extensível |
+| MFE `assistantContentRegistry` | Novos visuais: `registerAssistantSegmentRenderer` |
 
 ---
 
 ## Pipeline
 
 ```
-Dados da action → Presenter (table/chart/tree/kpi)
-               → ExecuteExternalActionUseCase (primary + availableFormats)
+Dados da action → Presenter (table/chart/tree/kpi/text)
+               → ExecuteExternalActionUseCase (primary + table/tree/chart + textPresentation)
                → ChatPresentationDecisionService.enrich_metadata
-               → metadata.presentationDecision + preferredFormat
-               → MFE ChatRichPresentation
+                    (layoutMode, visualOrder, availableViews, selected, insight)
+               → MFE buildAssistantContentSegments → ChatAssistantContent
 ```
+
+Ver: [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md).
 
 ---
 
@@ -45,6 +48,8 @@ Dados da action → Presenter (table/chart/tree/kpi)
     "selected": "line_chart",
     "fallback": "table",
     "reason": "dados temporais com valor numérico",
+    "layoutMode": "stack",
+    "visualOrder": ["text", "table", "line_chart", "chart"],
     "insight": "O maior valor ocorreu em mar/2026; o menor, em jan/2026.",
     "availableViews": ["line_chart", "table", "chart"],
     "dataShape": {
@@ -93,7 +98,7 @@ Arquivos: `tests/fixtures/rich_presentation_cases.py`, `tests/unit/domain/servic
 |------|--------|
 | 1 — Decisão básica de formato | **Concluída** — API + MFE (`presentationDecision`, insight, toggle inicial, chips de alternância) |
 | 2 — Gráficos ampliados | **Concluída** — sync `chartType`, limites, insight, política de fatias |
-| 3 — Alternância de visualização | **Concluída** — toggle Texto/Tabela/Gráfico/Árvore, chips «Ver tabela» / «Gerar gráfico» / «Explique esse gráfico», seletores de eixo X/Y no gráfico, motivos `presentation_*` no feedback |
+| 3 — Alternância de visualização | **Concluída** — toolbar em `ChatAssistantContent` (Tabela/Árvore/Gráfico conforme `availableViews`); chips e «Explique esse gráfico»; seletores de eixo no gráfico |
 | 4 — Interatividade | **Concluída** — filtros por categoria, eixos configuráveis, explicar gráfico inline (`chartExplanation`, `explain_chart`), drill-down, zoom, export PNG/lousa |
 | 5 — Dashboards e insights | **Concluída** — dashboard multi-card, explicar painel inline, `ChatPresentationRecommendationService` + banner/chips de formato alternativo |
 | 6 — Métricas e otimização | **Concluída** — auditoria + telemetria MFE; admin com taxas (engajamento, troca de vista/eixo), distribuições e **alertas** heurísticos |

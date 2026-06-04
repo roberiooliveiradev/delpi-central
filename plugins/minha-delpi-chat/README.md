@@ -56,7 +56,7 @@ src/
 - Sessões com pin, arquivo e renomear
 - Mensagens com streaming, fontes, tool calls e anexos
 - Log de atividade em tempo real (SSE `activity`) com três pontos pulsando durante o carregamento
-- Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`**: narrativa fixa + barra de troca (Tabela/Árvore/Gráfico/…) entre formatos disponíveis em `presentationDecision.availableViews`; novos tipos: `registerAssistantSegmentRenderer` em `assistantContentRegistry.tsx`
+- Tabelas/gráficos/árvore/KPI via **`ChatAssistantContent`** — ver [Apresentação no chat](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md)
 - **Lousa (canvas):** card inline na conversa com prévia do markdown + modal para editar/salvar; comando «coloque na lousa/canvas» após uma resposta do assistente
 - Playback da resposta após persistência no servidor (efeito de digitação sem perder texto ao recarregar)
 - **Handoff stream → histórico:** ao concluir o turno, `chatStreamHandoff` insere a mensagem do assistente na timeline antes de desmontar a bolha de streaming (evita piscar / placeholder `generating` vazio); `loadMessages` em background sincroniza com o servidor
@@ -82,6 +82,16 @@ Fluxo: **Lista de agentes** → **Builder** (configurar) → **Skills** (comport
 | Publicar | `POST /chat/agents/{id}/publish` — visitantes só veem versão publicada |
 
 Detalhes: [roadmap agentes](../../minha-delpi-ai-api/docs/roadmap/agentes-gestao-melhorias.md).
+
+## Apresentação rica (desenvolvimento)
+
+| Tópico | Onde |
+|--------|------|
+| Arquitetura API + MFE | [`chat-assistant-content-presentation.md`](../../minha-delpi-ai-api/docs/architecture/chat-assistant-content-presentation.md) |
+| Playbook 09 (decisão de formato) | [`playbook-09-apresentacao-rica.md`](../../minha-delpi-ai-api/docs/roadmap/playbook-09-apresentacao-rica.md) |
+| Novo componente visual | `registerAssistantSegmentRenderer` em `src/ui/components/assistantContentRegistry.tsx` |
+| Segmentos / layout | `assistantContentSegments.ts`, `assistantContentLayout.ts`, `assistantContentVisualFormats.ts` |
+| Entrada única na UI | `ChatMessageList` → `ChatAssistantContent` (não usar `ChatRichPresentation` — removido) |
 
 ## Painel administrativo
 

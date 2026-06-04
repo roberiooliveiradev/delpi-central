@@ -558,14 +558,17 @@ Serviços: `ChatTurnPreparationService` (`on_stream_activity`), `stream_chat_mes
 
 Validação: `scripts/validate_stream_incremental_persistence_e2e.py`, [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md) (seção **Persistência incremental no stream**).
 
-### Apresentação rica sem duplicar markdown (maio/2026)
+### Apresentação rica — `ChatAssistantContent` (jun/2026)
 
-Quando `toolCalls[].metadata.presentation` (ou `tablePresentation`, `treePresentation`, `chartPresentation` quando não primários) traz **tabela**, **gráfico**, **árvore** ou **KPI**:
+Documentação detalhada: [`chat-assistant-content-presentation.md`](./chat-assistant-content-presentation.md).
+
+Quando `toolCalls[].metadata` traz visuais (`presentation`, `tablePresentation`, `treePresentation`, `chartPresentation`, `textPresentation`):
 
 | Camada | Regra |
 |--------|--------|
-| **API** | `ChatToolContextService._compact_direct_answer_for_rich_presentation` encurta ou anula `directAnswer` tabular; mantém só título ou texto curto não tabular. Estrutura `/structure` com markdown completo continua usando `_suppress_redundant_structure_presentations` (só card, sem tabela duplicada). |
-| **Plugin** | `ChatAssistantContent` empilha texto + visuais conforme `presentationDecision.layoutMode` (`stack`); `shouldSuppressMarkdownForPresentation` evita duplicar tabela/gráfico no markdown. |
+| **API** | `enrich_metadata` define `presentationDecision.layoutMode` (`stack` se ≥ 2 views) e `visualOrder`. Analyser: cadastro em `tablePresentation`, BOM em árvore, divergências em texto (`ChatProductAnalyserDivergenceService`). `prefer_presentation_direct_answer` não encurta overview com LLM. |
+| **Plugin** | **`ChatAssistantContent`** (único renderizador; `ChatRichPresentation` removido): narrativa fixa + barra **Tabela/Árvore/Gráfico** entre formatos disponíveis; `assistantContentRegistry` para novos tipos. |
+| **Markdown** | `shouldSuppressMarkdownForPresentation` e `stripRedundantProfileTableFromMarkdown` evitam duplicar ficha tabular no texto. |
 
 Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compacta o `directAnswer`.
 
@@ -574,7 +577,7 @@ Pedido explícito «em texto» / «só texto» (`_FORMAT_TEXT_HINTS`) não compa
 | Serviço | Papel |
 |---------|--------|
 | `ChatPresentationDataShapeAnalyzer` | Detecta data, numérico, hierarquia e cardinalidade |
-| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`) |
+| `ChatPresentationDecisionService` | Preenche `metadata.presentationDecision` (`selected`, `fallback`, `reason`, `availableViews`, `layoutMode`, `visualOrder`) |
 | `ChatPresentationInsightService` | Gera `insight` curto para o MFE |
 | `ChatPresentationChartPolicyService` | Limita pontos/fatias e agrupa «Outros» em rosca/pizza |
 | `ChatPresentationAxisPreferenceService` | Eixos padrão (eficiência no Y; dispersão evita horas quando há `eficiencia_percentual`) |

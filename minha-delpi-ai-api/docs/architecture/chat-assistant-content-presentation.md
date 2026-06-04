@@ -1,0 +1,180 @@
+# ChatAssistantContent — apresentação rica unificada
+
+Documentação da renderização de respostas operacionais no plugin **minha-delpi-chat** (jun/2026). Substitui o antigo `ChatRichPresentation`.
+
+Relacionado: [chat-intelligence-base.md](./chat-intelligence-base.md), [playbook-09-apresentacao-rica.md](../roadmap/playbook-09-apresentacao-rica.md).
+
+---
+
+## Princípio
+
+| Camada | Responsabilidade |
+|--------|------------------|
+| **API (chat base)** | Montar `presentation` + visuais secundários, `textPresentation`, `presentationDecision` (o que combinar e em que ordem) |
+| **MFE** | `ChatAssistantContent` monta segmentos, exibe narrativa + **um** visual ativo com barra de troca entre formatos disponíveis |
+
+Agentes **não** reimplementam layout; herdam metadata das tools.
+
+---
+
+## Pipeline
+
+```
+execute_external_action
+  → ExternalActionResultPresenter (table / chart / tree / text markdown)
+  → ExecuteExternalActionUseCase._build_presentation_metadata
+       primary = tree | chart | table (prioridade: tree > chart > table)
+       tablePresentation / treePresentation / chartPresentation = secundários (se ≠ primary)
+       textPresentation = narrativa (analyser, structure, …)
+  → ChatPresentationDecisionService.enrich_metadata
+       presentationDecision.layoutMode = "stack" | "single"
+       presentationDecision.visualOrder = ["text","table","tree","chart",…]
+       presentationDecision.availableViews, selected, insight, recommendations
+  → toolCalls[].metadata no turno do chat
+
+MFE: buildAssistantContentSegments(content, toolCalls)
+  → resolveAssistantContentLayout (stack | markers | text-only)
+  → texto + visuais ordenados por visualOrder
+  → ChatAssistantContent filtra visual ativo + AssistantContentFormatToolbar
+  → assistantContentRegistry → ChatRichTable | ChatRichTree | ChatRichChart | …
+```
+
+---
+
+## Metadata da tool (`execute_external_action`)
+
+| Campo | Tipo | Uso |
+|-------|------|-----|
+| `presentation` | objeto | Visual **primário** (geralmente árvore em analyser/structure) |
+| `tablePresentation` | objeto | Tabela secundária (ex.: cadastro do produto no analyser) |
+| `treePresentation` | objeto | Árvore secundária (quando primário não é tree) |
+| `chartPresentation` | objeto | Gráfico secundário (ex.: donut de composição no analyser) |
+| `textPresentation` | `{ type: "markdown", markdown, title? }` | Narrativa; fonte do comentário |
+| `preferredFormat` | string | Legado + preferência de sessão (`sessionResponseFormat`) |
+| `availableFormats` | string[] | Compatível com `availableViews` |
+| `presentationDecision` | objeto | Decisão Playbook 09 + layout (abaixo) |
+
+### `presentationDecision` (campos de layout)
+
+```json
+{
+  "selected": "text",
+  "fallback": "table",
+  "reason": "visão do produto — narrativa com insights antes da ficha tabular",
+  "layoutMode": "stack",
+  "visualOrder": ["text", "table", "tree", "chart"],
+  "availableViews": ["text", "table", "tree", "chart"],
+  "insight": "…",
+  "chartExplanation": "…",
+  "recommendations": [{ "label": "Ver tabela", "query": "…", "reason": "…" }]
+}
+```
+
+| Campo | Regra |
+|-------|--------|
+| `layoutMode` | `"stack"` quando há **≥ 2** views em `availableViews`; senão `"single"` |
+| `visualOrder` | Ordem de empilhamento: texto → tabela → árvore → gráfico → kpi → dashboard |
+| `selected` | Formato sugerido (texto, tabela, árvore, tipos de chart) |
+| `availableViews` | Todos os formatos que o MFE pode oferecer na barra de troca |
+
+Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
+
+---
+
+## Modos de layout no MFE
+
+| Modo | Quando | Comportamento |
+|------|--------|----------------|
+| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa sempre visível; visuais reunidos; **toolbar** se ≥ 2 tipos nativos |
+| **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
+| **text-only** | Sem visual rico | Só markdown/código |
+
+Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`.
+
+---
+
+## Barra de troca de formato
+
+Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções:
+
+- Botões: **Tabela**, **Árvore**, **Gráfico**, **KPI**, **Painel** (conforme dados presentes).
+- Formato inicial: `presentationDecision.selected` → `preferredFormat` → primeiro em `visualOrder`.
+- Apenas segmentos do tipo ativo são renderizados (`filterSegmentsByVisualKind`); markdown/código permanecem.
+
+Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.
+
+Telemetria: `presentation_view_switch` (mesmo evento do antigo toggle).
+
+---
+
+## Visão do produto (`/analyser`)
+
+| Aspecto | Implementação |
+|---------|----------------|
+| Intent | `ChatProductQueryIntent.ANALYSER` para «me fale do produto …» (`ChatProductOverviewIntentService`) |
+| Síntese LLM | `should_force_llm_synthesis` — não usar `directAnswer` só com tabela |
+| Cadastro | `tablePresentation` = `_build_product_analyser_profile_table` (componente `ChatRichTable`) |
+| Estrutura | `presentation` ou `treePresentation` = árvore BOM |
+| Gráfico | `chartPresentation` = donut por tipo de componente (≥ 2 tipos na estrutura) |
+| Texto | Abertura, destaques, **pontos de atenção** (`ChatProductAnalyserDivergenceService`) |
+| Policy LLM | `product-overview.md` |
+
+O corpo em markdown **não** deve repetir tabela Campo/Valor (`stripRedundantProfileTableFromMarkdown` no MFE).
+
+---
+
+## Extensão — novo componente visual
+
+1. Definir tipo em `ChatPresentation` (`chatTypes.ts`) e montar no presenter/API.
+2. Adicionar kind em `assistantContentTypes.ts` (`AssistantContentSegment`).
+3. Registrar renderer: `registerAssistantSegmentRenderer(kind, fn)` em `assistantContentRegistry.tsx`.
+4. Incluir kind em `AssistantVisualKind` + `VISUAL_LABELS` em `assistantContentVisualFormats.ts`.
+5. Mapear view em `ChatPresentationDecisionService._visual_order_for_stack` se for formato global.
+
+Sem alterar `ChatMessageList` — ele só usa `ChatAssistantContent`.
+
+---
+
+## Arquivos principais (MFE)
+
+| Arquivo | Papel |
+|---------|--------|
+| `ChatAssistantContent.tsx` | Orquestra chrome, toolbar, segmentos |
+| `assistantContentSegments.ts` | `buildAssistantContentSegments`, coleta visuais |
+| `assistantContentLayout.ts` | `layoutMode`, ordenação |
+| `assistantContentVisualFormats.ts` | Opções de troca e filtro |
+| `assistantContentRegistry.tsx` | Mapa kind → componente React |
+| `AssistantContentChrome.tsx` | Insight, recomendações, paginação |
+| `chatPresentation.ts` | Helpers, strip de markdown redundante |
+
+---
+
+## Arquivos principais (API)
+
+| Arquivo | Papel |
+|---------|--------|
+| `ExecuteExternalActionUseCase` | Metadata multi-visual; `preferredFormat` texto em analyser |
+| `ExternalActionResultPresenter` | Tabelas, árvores, charts, corpo analyser |
+| `ChatPresentationDecisionService` | `layoutMode`, `visualOrder`, `availableViews` |
+| `ChatProductAnalyserDivergenceService` | Pontos de atenção confiáveis |
+| `ChatProductOverviewIntentService` | Overview → analyser + LLM |
+
+---
+
+## Testes
+
+| Pacote | Arquivos |
+|--------|----------|
+| API | `test_rich_presentation.py`, `test_external_action_result_presenter_analyser*.py`, `test_chat_product_analyser_divergence_service.py` |
+| MFE | `assistantContentLayout.test.ts`, `assistantContentVisualFormats.test.ts`, `assistantContentSegments.test.ts`, `chatPresentation.test.ts` |
+
+Build MFE: `npm run build` em `plugins/minha-delpi-chat`.
+
+---
+
+## Migração desde `ChatRichPresentation`
+
+- **Removido** em jun/2026; não importar em código novo.
+- Toggle texto/tabela/gráfico/árvore → `AssistantContentFormatToolbar` dentro de `ChatAssistantContent`.
+- Modo `commentary-visual` → `layoutMode: "stack"` + filtro por visual ativo.
+- Docs antigas que citam `ChatRichPresentation` devem apontar para este arquivo.

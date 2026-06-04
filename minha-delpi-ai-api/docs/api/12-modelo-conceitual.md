@@ -113,7 +113,7 @@ Documentos ingeridos para recuperação semântica no contexto.
 
 ## Apresentação rica
 
-Estrutura derivada do retorno de actions (tabela, gráfico, KPI) em `toolCalls[].metadata.presentation` (e opcionalmente `tablePresentation` quando o primário é gráfico), renderizada no front (`ChatRichPresentation`). Não é entidade persistida separada.
+Estrutura derivada do retorno de actions (tabela, gráfico, árvore, KPI) em `toolCalls[].metadata` (`presentation` + visuais secundários + `presentationDecision`), renderizada no front por **`ChatAssistantContent`**. Não é entidade persistida separada. Ver [`../architecture/chat-assistant-content-presentation.md`](../architecture/chat-assistant-content-presentation.md).
 
 **Anti-duplicação (maio/2026):** o mesmo payload não deve aparecer em markdown longo na `content` da mensagem **e** no componente rico. O backend compacta `directAnswer`; o plugin suprime markdown tabular quando `shouldSuppressMarkdownForPresentation` detecta `presentation` ativa. Ver [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md) § *Apresentação rica sem duplicar markdown*.
 
