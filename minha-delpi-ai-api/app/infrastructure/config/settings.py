@@ -371,6 +371,10 @@ class Settings:
     CHAT_LEARNING_CAPTURE_FROM_FEEDBACK = (
         os.getenv("CHAT_LEARNING_CAPTURE_FROM_FEEDBACK", "true").lower() == "true"
     )
+    # Capturar definições explícitas durante o turno ("quando eu falar X é Y").
+    CHAT_LEARNING_CAPTURE_FROM_TURN = (
+        os.getenv("CHAT_LEARNING_CAPTURE_FROM_TURN", "true").lower() == "true"
+    )
     # Auto-aprovar candidatos de altíssima confiança (default off: exige revisão).
     CHAT_LEARNING_AUTO_APPROVE_ENABLED = (
         os.getenv("CHAT_LEARNING_AUTO_APPROVE_ENABLED", "false").lower() == "true"

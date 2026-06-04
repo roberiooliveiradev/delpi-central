@@ -65,3 +65,37 @@ class ChatLearningCaptureService:
             candidate["projectId"] = project_id
 
         return self.candidate_service.register_candidate(candidate, created_by=created_by)
+
+    def capture_explicit_definition_from_turn(
+        self,
+        *,
+        message: str,
+        project_id: str | None = None,
+        created_by: str | None = None,
+    ) -> dict | None:
+        """Captura definição explícita dita no turno ("quando eu falar X é Y").
+
+        Isola a escrita num SAVEPOINT: uma falha aqui nunca polui nem quebra a
+        transação do turno (playbook §17, §31 — captura sem efeito colateral).
+        """
+        if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_TURN:
+            return None
+
+        candidate = ChatVocabularyLearningService.detect_explicit_definition(message or "")
+
+        if candidate is None:
+            return None
+
+        if project_id and candidate.get("scope") == "project":
+            candidate["projectId"] = project_id
+
+        from app.extensions.db import db
+
+        try:
+            with db.session.begin_nested():
+                return self.candidate_service.register_candidate(
+                    candidate,
+                    created_by=created_by,
+                )
+        except Exception:
+            return None

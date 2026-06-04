@@ -17,7 +17,7 @@ e aplicação das regras aprovadas na normalização base. Tudo atrás de featur
 | Domínio | `ChatLearningSafetyGuard` | Bloqueia aprendizado tóxico/sensível: segredos, PII (CPF/CNPJ/e-mail/telefone), códigos operacionais e dados de preço/cliente (playbook §7, §26). |
 | Domínio | `ChatMessageNormalizationService` | Ganhou registro de **regras aprendidas** (`set_learned_rules`/`clear_learned_rules`) aplicadas após as regras estáticas. Permanece puro. |
 | Aplicação | `ChatKnowledgeCandidateService` | Orquestra captura: safety → dedup/evidência → confiança → status. Promove candidato a termo de vocabulário (playbook §14, §15, §27). |
-| Aplicação | `ChatLearningCaptureService` | Captura candidatos a partir de **feedback negativo** (caminho transacional, fora do hot path). |
+| Aplicação | `ChatLearningCaptureService` | Captura candidatos a partir de **feedback negativo** e de **definições explícitas ditas no turno** ("quando eu falar X é Y"), com isolamento por SAVEPOINT. |
 | Aplicação | `ChatLearnedNormalizationService` | Carrega termos aprovados (cache TTL) e injeta as regras no normalizador base. |
 | Infra | `PostgresLearningCandidateRepository` / `PostgresVocabularyTermRepository` | Persistência. |
 | Infra | Tabelas `ai_learning_candidates`, `ai_vocabulary_terms` | Migração `r0s1t2u3v4w5`. |
@@ -26,12 +26,14 @@ e aplicação das regras aprovadas na normalização base. Tudo atrás de featur
 ## Fluxo (Fase 1)
 
 ```
-Feedback negativo
- → ChatLearningCaptureService (flag CHAT_LEARNING_CAPTURE_FROM_FEEDBACK)
-   → detecta definição explícita OU candidato de normalização
-   → ChatLearningSafetyGuard (bloqueia sensível)
-   → ChatKnowledgeCandidateService.register (dedup + evidência + confiança)
-     → ai_learning_candidates (status: pending)
+Captura (best-effort):
+ a) Feedback negativo  (flag CHAT_LEARNING_CAPTURE_FROM_FEEDBACK)
+    → detecta definição explícita OU candidato de normalização
+ b) Turno (send/stream) (flag CHAT_LEARNING_CAPTURE_FROM_TURN)
+    → detecta definição explícita dita pelo usuário, isolada em SAVEPOINT
+ → ChatLearningSafetyGuard (bloqueia sensível)
+ → ChatKnowledgeCandidateService.register (dedup + evidência + confiança)
+   → ai_learning_candidates (status: pending)
 
 Admin revisa em /admin/learning/candidates
  → approve | reject | promote
@@ -59,6 +61,7 @@ Próximos turnos (send/stream)
 | `CHAT_LEARNING_ENABLED` | `false` | Liga a camada (captura + aplicação). |
 | `CHAT_LEARNING_APPLY_VOCABULARY` | `true` | Aplica termos aprovados na normalização (se a camada estiver ligada). |
 | `CHAT_LEARNING_CAPTURE_FROM_FEEDBACK` | `true` | Captura candidatos a partir de feedback negativo. |
+| `CHAT_LEARNING_CAPTURE_FROM_TURN` | `true` | Captura definição explícita dita durante o turno. |
 | `CHAT_LEARNING_AUTO_APPROVE_ENABLED` | `false` | Auto-aprovar candidatos de altíssima confiança. |
 | `CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE` | `0.95` | Limiar de auto-aprovação. |
 | `CHAT_LEARNING_VOCABULARY_MAX_RULES` | `500` | Teto de regras aprendidas aplicadas. |
@@ -72,7 +75,6 @@ Próximos turnos (send/stream)
 
 ## Não coberto nesta fase (próximas)
 
-- Captura de definições explícitas **durante o turno** (não só via feedback) — Fase 2/3.
-- UI admin no MFE para a fila de revisão (hoje há apenas a API).
+- KPIs de aprendizagem no painel admin (taxa de aprovação, typos corrigidos, etc.).
 - `memory_items` cross-usuário/projeto com embedding, `evaluation_cases`, eventos/workers,
   pesquisa web de significado e fine-tuning offline (Fases 4–7 do roadmap).

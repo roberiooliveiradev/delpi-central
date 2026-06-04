@@ -119,6 +119,31 @@ class SendChatMessageUseCase:
         except Exception:
             return
 
+    @staticmethod
+    def _capture_learning_from_turn(*, message: str, session, user_id: str) -> None:
+        """Aprendizagem contínua (playbook §17): definição explícita dita no turno.
+
+        Best-effort + savepoint no serviço: nunca quebra nem polui o turno.
+        """
+        try:
+            from app.infrastructure.config.settings import Settings
+
+            if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_TURN:
+                return
+
+            from app.application.services.chat_learning_capture_service import (
+                ChatLearningCaptureService,
+            )
+
+            project_id = getattr(session, "project_id", None)
+            ChatLearningCaptureService().capture_explicit_definition_from_turn(
+                message=message,
+                project_id=str(project_id) if project_id else None,
+                created_by=user_id,
+            )
+        except Exception:
+            return
+
     def _execute_turn(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         self._warm_learned_normalization()
         user_id = UUID(request.user_id)
@@ -189,6 +214,8 @@ class SendChatMessageUseCase:
             session_id=session_id,
             message_id=user_message.id,
         )
+
+        self._capture_learning_from_turn(message=message, session=session, user_id=request.user_id)
 
         prepared = self.turn_preparation_service.prepare(
             message=message,
