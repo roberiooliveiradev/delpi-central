@@ -42,11 +42,27 @@ def _build_google_sheets_client() -> GoogleSheetsClient:
     return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT or 10))
 
 
+def _validate_supplies_negotiation_sheet_config() -> tuple[str, str]:
+    sheet_id = (settings.SUPPLIES_IDD_SHEET_ID or "").strip()
+    gid = (settings.SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID or "").strip()
+
+    if not sheet_id or not gid:
+        raise ValueError(
+            "Planilha de economia em negociações não configurada. "
+            "Defina SUPPLIES_IDD_SHEET_ID e SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID "
+            "em infra/.env e recrie o container api-delpi "
+            "(docker compose up -d --force-recreate api-delpi)."
+        )
+
+    return sheet_id, gid
+
+
 def _build_negotiation_savings_repository() -> NegotiationSavingsRepository:
+    sheet_id, gid = _validate_supplies_negotiation_sheet_config()
     return NegotiationSavingsRepository(
         client=_build_google_sheets_client(),
-        sheet_id=settings.SUPPLIES_IDD_SHEET_ID,
-        gid=settings.SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID,
+        sheet_id=sheet_id,
+        gid=gid,
         utils=Utils(),
     )
 def build_get_cpv_use_case() -> GetCPVUseCase:

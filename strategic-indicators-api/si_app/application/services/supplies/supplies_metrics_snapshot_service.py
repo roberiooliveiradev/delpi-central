@@ -185,16 +185,22 @@ class SuppliesMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> dict[str, float | None]:
-        payload = self._get_negotiation_savings_summary_use_case.execute(
-            NegotiationSavingsSummaryRequest(
-                start_date=start_date,
-                end_date=end_date,
-            )
-        )
-
-        by_branch: dict[str, float | None] = {
+        empty: dict[str, float | None] = {
             branch_code: None for branch_code in BRANCH_UNIT_CODES
         }
+
+        try:
+            payload = self._get_negotiation_savings_summary_use_case.execute(
+                NegotiationSavingsSummaryRequest(
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
+        except Exception:
+            # Planilha não configurada ou api-delpi indisponível: não derruba CPV/OTD/estoque.
+            return empty
+
+        by_branch = dict(empty)
 
         for item in payload.get("branches") or []:
             branch_code = str(item.get("branch") or "").strip()

@@ -100,6 +100,8 @@ append_kv "SI_MEASUREMENTS_BACKEND" "api_delpi_http"
 append_kv "SI_MEASUREMENTS_STUB" "false"
 append_kv "TRANSFORMOMETRO_API_BASE_URL" "http://transformometro-api:8000"
 append_kv "TM_RUN_MIGRATIONS_ON_STARTUP" "true"
+append_kv "SUPPLIES_IDD_SHEET_ID" "1wMykPetGruyoxfsrsW_K1ugYmCFx-DaiyQYVorSS9Kc"
+append_kv "SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID" "770318923"
 
 echo
 echo "Concluído. Recrie os serviços que leem .env:"
