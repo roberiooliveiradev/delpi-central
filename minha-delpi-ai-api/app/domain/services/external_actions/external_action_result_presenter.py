@@ -1518,8 +1518,15 @@ class ExternalActionResultPresenter:
         }
 
     def build_analyser_auxiliary_table_presentations(self, root: dict) -> list[dict]:
-        """Tabelas nativas do analyser: roteiro, inspeção, cadastro (nessa ordem)."""
+        """Tabelas nativas do analyser: ficha, roteiro, inspeção (ordem de leitura no chat)."""
         tables: list[dict] = []
+        product = root.get("product")
+
+        if isinstance(product, dict):
+            profile_table = self._build_product_analyser_profile_table(product, root)
+
+            if profile_table:
+                tables.append(profile_table)
 
         guide_table = self._build_product_analyser_guide_table(root)
 
@@ -1530,14 +1537,6 @@ class ExternalActionResultPresenter:
 
         if inspection_table:
             tables.append(inspection_table)
-
-        product = root.get("product")
-
-        if isinstance(product, dict):
-            profile_table = self._build_product_analyser_profile_table(product, root)
-
-            if profile_table:
-                tables.append(profile_table)
 
         return tables
 

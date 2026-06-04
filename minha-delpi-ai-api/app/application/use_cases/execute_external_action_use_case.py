@@ -297,15 +297,18 @@ class ExecuteExternalActionUseCase:
                 )
 
                 if table_presentations_list:
-                    table_presentation = table_presentations_list[0]
-
                     for candidate in table_presentations_list:
                         title = str(candidate.get("title") or "")
 
                         if title.startswith("Produto "):
                             profile_table_presentation = candidate
-                        elif "inspeção" in title.lower():
+                        elif "inspeção" in title.lower() or "inspecao" in title.lower():
                             inspection_table_presentation = candidate
+                        elif "roteiro" in title.lower() and table_presentation is None:
+                            table_presentation = candidate
+
+                    if table_presentation is None and table_presentations_list:
+                        table_presentation = table_presentations_list[0]
             elif (
                 ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
                 and tree_presentation
@@ -403,6 +406,12 @@ class ExecuteExternalActionUseCase:
         )
 
         ChatRichPresentationTextService.compact_metadata_text(metadata)
+
+        from app.domain.services.chat_presentation_stack_order_service import (
+            ChatPresentationStackOrderService,
+        )
+
+        ChatPresentationStackOrderService.enrich_metadata(metadata)
 
         self._normalize_eficiencia_fabril_titles(metadata, resolved_path)
 

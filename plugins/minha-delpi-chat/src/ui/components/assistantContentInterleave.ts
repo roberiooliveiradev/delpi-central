@@ -51,35 +51,29 @@ export function partitionCommentarySections(markdown: string): CommentarySection
   };
 }
 
-type TableRole = "guide" | "inspection" | "profile" | "other";
+import {
+  inferTableRoleFromTitle,
+  type StackTableRole,
+} from "./presentationStackPlan";
 
-function tableRoleFromTitle(title: string): TableRole {
-  const normalized = title.trim().toLowerCase();
-
-  if (normalized.includes("roteiro")) {
-    return "guide";
-  }
-
-  if (normalized.includes("inspeção") || normalized.includes("inspecao")) {
-    return "inspection";
-  }
-
-  if (normalized.startsWith("produto ") || normalized.includes("cadastro")) {
-    return "profile";
-  }
-
-  return "other";
+function emptyRoleBuckets(): Record<StackTableRole, AssistantContentSegment[]> {
+  return {
+    profile: [],
+    guide: [],
+    inspection: [],
+    stock: [],
+    pricing: [],
+    structure: [],
+    list: [],
+    other: [],
+  };
 }
 
 export function bucketTableSegmentsByRole(
   tables: AssistantContentSegment[],
-): Record<TableRole, AssistantContentSegment[]> {
-  const buckets: Record<TableRole, AssistantContentSegment[]> = {
-    guide: [],
-    inspection: [],
-    profile: [],
-    other: [],
-  };
+  resolveRole: (title: string) => StackTableRole = inferTableRoleFromTitle,
+): Record<StackTableRole, AssistantContentSegment[]> {
+  const buckets = emptyRoleBuckets();
 
   for (const segment of tables) {
     if (segment.kind !== "table") {
@@ -90,7 +84,7 @@ export function bucketTableSegmentsByRole(
       continue;
     }
 
-    const role = tableRoleFromTitle(String(segment.presentation.title || ""));
+    const role = resolveRole(String(segment.presentation.title || ""));
 
     buckets[role].push(segment);
   }
@@ -176,12 +170,14 @@ export function buildInterleavedStackSegments(
   orderedVisuals: AssistantContentSegment[],
   parseMarkdown: (prose: string) => AssistantContentSegment[],
   appendUnique: (segments: AssistantContentSegment[], segment: AssistantContentSegment) => void,
+  toolCalls: import("../../data/api/chatTypes").ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   return buildCanonicalStackSegments(
     commentary,
     orderedVisuals,
     parseMarkdown,
     appendUnique,
+    toolCalls,
   );
 }
 

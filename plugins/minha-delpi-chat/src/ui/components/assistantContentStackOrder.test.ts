@@ -48,6 +48,11 @@ describe("assistantContentStackOrder", () => {
 
     const segments = buildAssistantContentSegments("", toolCalls);
     const kinds = segments.map((segment) => segment.kind);
+    const profileIndex = segments.findIndex(
+      (segment) =>
+        segment.kind === "table" &&
+        String(segment.presentation.title || "").startsWith("Produto "),
+    );
     const destaqueIndex = segments.findIndex(
       (segment) =>
         segment.kind === "markdown" &&
@@ -65,9 +70,10 @@ describe("assistantContentStackOrder", () => {
     );
     const treeIndex = kinds.indexOf("tree");
 
-    expect(destaqueIndex).toBeGreaterThanOrEqual(0);
+    expect(profileIndex).toBeGreaterThanOrEqual(0);
+    expect(destaqueIndex).toBeGreaterThan(profileIndex);
     expect(roteiroIndex).toBeGreaterThan(destaqueIndex);
-    expect(pontosIndex).toBeGreaterThan(roteiroIndex);
-    expect(treeIndex).toBeGreaterThan(pontosIndex);
+    expect(treeIndex).toBeGreaterThan(roteiroIndex);
+    expect(pontosIndex).toBeGreaterThan(treeIndex);
   });
 });

@@ -471,6 +471,7 @@ function buildStackedSegments(
     orderedVisuals,
     parseMarkdownAndCodeSegments,
     appendVisualSegment,
+    toolCalls,
   );
 }
 

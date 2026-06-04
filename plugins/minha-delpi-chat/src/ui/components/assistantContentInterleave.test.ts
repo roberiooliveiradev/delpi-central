@@ -33,7 +33,7 @@ describe("assistantContentInterleave", () => {
     expect(sections.pontos).toContain("Pontos de atenção");
   });
 
-  it("intercala roteiro e ficha entre destaques e pontos", () => {
+  it("ordena ficha, destaques, roteiro, árvore e pontos no final", () => {
     const visuals: AssistantContentSegment[] = [
       {
         kind: "table",
@@ -87,11 +87,17 @@ describe("assistantContentInterleave", () => {
     );
     const treeIndex = segments.findIndex((segment) => segment.kind === "tree");
 
-    expect(destaqueIndex).toBeGreaterThanOrEqual(0);
+    const leadIndex = segments.findIndex(
+      (segment) =>
+        segment.kind === "markdown" && segment.markdown.includes("Informações"),
+    );
+
+    expect(leadIndex).toBeGreaterThanOrEqual(0);
+    expect(profileIndex).toBeGreaterThan(leadIndex);
+    expect(destaqueIndex).toBeGreaterThan(profileIndex);
     expect(roteiroIndex).toBeGreaterThan(destaqueIndex);
-    expect(profileIndex).toBeGreaterThan(roteiroIndex);
-    expect(pontosIndex).toBeGreaterThan(profileIndex);
-    expect(treeIndex).toBeGreaterThan(pontosIndex);
+    expect(treeIndex).toBeGreaterThan(roteiroIndex);
+    expect(pontosIndex).toBeGreaterThan(treeIndex);
   });
 
   it("usa marcadores [[table:n]] embutidos no markdown", () => {
@@ -133,7 +139,7 @@ describe("assistantContentInterleave", () => {
     const treeIndex = segments.findIndex((segment) => segment.kind === "tree");
 
     expect(destaqueIndex).toBeLessThan(tableIndex);
-    expect(tableIndex).toBeLessThan(pontosIndex);
-    expect(pontosIndex).toBeLessThan(treeIndex);
+    expect(tableIndex).toBeLessThan(treeIndex);
+    expect(treeIndex).toBeLessThan(pontosIndex);
   });
 });

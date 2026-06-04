@@ -30,11 +30,13 @@ execute_external_action
        presentationDecision.layoutMode = "stack" | "single"
        presentationDecision.visualOrder = ["text","table","tree","chart",…]
        presentationDecision.availableViews, selected, insight, recommendations
+  → ChatPresentationStackOrderService.enrich_metadata
+       stackPresentationPlan (ordem narrativa + papéis de tabela por rota)
   → toolCalls[].metadata no turno do chat
 
 MFE: buildAssistantContentSegments(content, toolCalls)
   → resolveAssistantContentLayout (stack | markers | text-only)
-  → texto + visuais ordenados por visualOrder
+  → presentationStackBlueprint: lead → ficha → destaques → tabelas operacionais → árvore/gráfico → pontos
   → ChatAssistantContent filtra visual ativo + AssistantContentFormatToolbar
   → assistantContentRegistry → ChatRichTable | ChatRichTree | ChatRichChart | …
 ```
@@ -53,6 +55,22 @@ MFE: buildAssistantContentSegments(content, toolCalls)
 | `preferredFormat` | string | Legado + preferência de sessão (`sessionResponseFormat`) |
 | `availableFormats` | string[] | Compatível com `availableViews` |
 | `presentationDecision` | objeto | Decisão Playbook 09 + layout (abaixo) |
+| `stackPresentationPlan` | objeto | Ordem de intercalação no layout stack (abaixo) |
+
+### `stackPresentationPlan` (ordem humanizada)
+
+Gerado por `ChatPresentationStackOrderService` a partir do `path` e do markdown autorizado.
+
+**Analyser** (`/analyser`):
+
+1. `lead` — título / escopo  
+2. `profileTables` — ficha cadastral (`Produto {código}`)  
+3. `highlights` — **Destaques**  
+4. `operationalTables` — roteiro, inspeção  
+5. `tailVisuals` — árvore (e gráfico, se houver)  
+6. `attention` — **Pontos de atenção** (sempre no final)
+
+Outras rotas usam o mesmo esqueleto com `tableRoleOrder` adaptado (`stock`, `structure`, `guide`, `list`, …). O MFE infere o papel de cada tabela pelo título quando o plano não veio no metadata.
 
 ### `presentationDecision` (campos de layout)
 
