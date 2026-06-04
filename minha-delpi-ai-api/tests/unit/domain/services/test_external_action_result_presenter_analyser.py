@@ -114,6 +114,24 @@ def test_build_presentation_uses_profile_table_for_analyser():
     assert any(row.get("campo") == "Código" for row in table["rows"])
 
 
+def test_build_presentation_uses_guide_table_when_analyser_has_route():
+    from tests.unit.domain.services.test_external_action_result_presenter_analyser_humanized import (
+        _analyser_payload_with_guide_and_inspection,
+    )
+
+    presenter = ExternalActionResultPresenter()
+
+    table = presenter.build_presentation(
+        _analyser_payload_with_guide_and_inspection(),
+        path="/products/90260140/analyser",
+    )
+
+    assert table is not None
+    assert table["type"] == "table"
+    assert "Roteiro" in table["title"]
+    assert any(row.get("operation_description") == "CORTAR TUBO MAIOR E MENOR" for row in table["rows"])
+
+
 def test_build_tree_presentation_for_analyser():
     presenter = ExternalActionResultPresenter()
 

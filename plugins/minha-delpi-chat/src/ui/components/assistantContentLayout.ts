@@ -146,6 +146,11 @@ export function countVisualSegments(visuals: AssistantContentSegment[]): number 
   return visuals.filter((segment) => segmentVisualKind(segment) !== null).length;
 }
 
+/** Empilha narrativa + todos os visuais nativos (sem alternar um por vez). */
+export function shouldShowAllVisualSegments(toolCalls: ChatToolCall[] = []): boolean {
+  return resolveAssistantContentLayout("", toolCalls) === "stack";
+}
+
 export function resolveAssistantContentLayout(
   content: string,
   toolCalls: ChatToolCall[] = [],

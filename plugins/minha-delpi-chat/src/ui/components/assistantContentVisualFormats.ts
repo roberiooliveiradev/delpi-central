@@ -121,6 +121,52 @@ function mapViewFormatToVisualKind(format: ViewFormat | null): AssistantVisualKi
   return format;
 }
 
+function isTableFirstRouteToolCalls(toolCalls: ChatToolCall[]): boolean {
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const path = String((toolCall.metadata as Record<string, unknown> | undefined)?.path ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (
+      path.includes("/guide") ||
+      path.includes("/inspection") ||
+      path.includes("/suppliers") ||
+      path.includes("/customers") ||
+      path.includes("/stock")
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function isStructureHeavyToolCalls(toolCalls: ChatToolCall[]): boolean {
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const path = String((toolCall.metadata as Record<string, unknown> | undefined)?.path ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (
+      path.includes("/structure") ||
+      path.includes("/parents") ||
+      path.includes("/analyser")
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function resolveDefaultVisualKind(
   toolCalls: ChatToolCall[],
   options: VisualFormatOption[],
@@ -149,6 +195,24 @@ export function resolveDefaultVisualKind(
     if (mapped && available.includes(mapped)) {
       return mapped;
     }
+  }
+
+  if (
+    available.includes("tree") &&
+    available.includes("table") &&
+    isStructureHeavyToolCalls(toolCalls)
+  ) {
+    return "tree";
+  }
+
+  if (available.includes("table") && isTableFirstRouteToolCalls(toolCalls)) {
+    const preferred = getPreferredFormatFromToolCalls(toolCalls);
+
+    if (preferred === "chart" && available.includes("chart")) {
+      return "chart";
+    }
+
+    return "table";
   }
 
   return available[0] ?? null;

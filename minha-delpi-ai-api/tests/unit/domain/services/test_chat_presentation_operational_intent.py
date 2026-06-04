@@ -47,7 +47,7 @@ def test_user_preference_tree_requires_tree_presentation():
     tree = {
         "type": "tree",
         "title": "Estrutura",
-        "root": {"code": "90260144", "description": "CABO", "children": []},
+        "root": {"id": "90260144", "label": "90260144", "children": []},
     }
 
     decision = ChatPresentationDecisionService.decide(
@@ -65,3 +65,55 @@ def test_user_preference_tree_requires_tree_presentation():
     )
 
     assert decision["selected"] == "tree"
+
+
+def test_user_preference_tree_accepts_primary_tree_presentation():
+    tree = {
+        "type": "tree",
+        "title": "Estrutura",
+        "root": {"id": "90260144", "label": "90260144", "children": []},
+    }
+
+    decision = ChatPresentationDecisionService.decide(
+        user_preference="tree",
+        user_message="me fale do produto 90260144",
+        primary_presentation=tree,
+        available_formats=["tree", "table", "text"],
+        table_presentation={
+            "type": "table",
+            "title": "Produto",
+            "columns": [{"key": "campo", "label": "Campo"}],
+            "rows": [{"campo": "Código", "valor": "90260144"}],
+        },
+        rows=[{"campo": "Código", "valor": "90260144"}],
+    )
+
+    assert decision["selected"] == "tree"
+
+
+def test_enrich_metadata_analyser_puts_tree_before_table_in_visual_order():
+    tree = {
+        "type": "tree",
+        "title": "Estrutura",
+        "root": {"id": "90260144", "label": "90260144", "children": []},
+    }
+    metadata = {
+        "path": "/products/90260144/analyser",
+        "presentation": tree,
+        "tablePresentation": {
+            "type": "table",
+            "title": "Produto",
+            "columns": [{"key": "campo", "label": "Campo"}],
+            "rows": [{"campo": "Código", "valor": "90260144"}],
+        },
+        "textPresentation": {"type": "markdown", "markdown": "Resumo"},
+        "availableFormats": ["text", "tree", "table"],
+        "preferredFormat": "tree",
+    }
+
+    ChatPresentationDecisionService.enrich_metadata(metadata)
+
+    order = metadata["presentationDecision"]["visualOrder"]
+
+    assert order.index("table") < order.index("tree")
+    assert metadata["presentationDecision"]["selected"] == "tree"

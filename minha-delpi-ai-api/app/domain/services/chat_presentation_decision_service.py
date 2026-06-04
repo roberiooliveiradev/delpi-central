@@ -77,6 +77,21 @@ _USER_FORMAT_ALIASES = {
 
 class ChatPresentationDecisionService:
     @classmethod
+    def _effective_tree_presentation(
+        cls,
+        *,
+        tree_presentation: dict[str, Any] | None = None,
+        primary_presentation: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
+        if isinstance(tree_presentation, dict) and tree_presentation.get("type") == "tree":
+            return tree_presentation
+
+        if isinstance(primary_presentation, dict) and primary_presentation.get("type") == "tree":
+            return primary_presentation
+
+        return None
+
+    @classmethod
     def decide(
         cls,
         *,
@@ -104,6 +119,7 @@ class ChatPresentationDecisionService:
                 available_formats=available_formats,
                 intent=intent,
                 tree_presentation=tree_presentation,
+                primary_presentation=primary_presentation,
             )
 
         intent_decision = cls._decision_for_operational_intent(
@@ -142,8 +158,9 @@ class ChatPresentationDecisionService:
                 intent=intent,
             )
 
-        if tree_presentation or (
-            primary_presentation and primary_presentation.get("type") == "tree"
+        if cls._effective_tree_presentation(
+            tree_presentation=tree_presentation,
+            primary_presentation=primary_presentation,
         ):
             return cls._build(
                 selected="tree",
@@ -386,16 +403,22 @@ class ChatPresentationDecisionService:
         user_preference: str | None = None,
         axis_user_message: str | None = None,
     ) -> dict[str, Any]:
+        primary_presentation = metadata.get("presentation")
+        tree_presentation = cls._effective_tree_presentation(
+            tree_presentation=metadata.get("treePresentation"),
+            primary_presentation=primary_presentation,
+        )
+
         decision = cls.decide(
             intent=intent,
             rows=cls._rows_from_presentation(metadata.get("tablePresentation"))
             or cls._rows_from_presentation(metadata.get("presentation")),
             user_message=user_message,
             user_preference=user_preference or metadata.get("preferredFormat"),
-            primary_presentation=metadata.get("presentation"),
+            primary_presentation=primary_presentation,
             table_presentation=metadata.get("tablePresentation"),
             chart_presentation=metadata.get("chartPresentation"),
-            tree_presentation=metadata.get("treePresentation"),
+            tree_presentation=tree_presentation,
             dashboard_presentation=(
                 metadata.get("presentation")
                 if isinstance(metadata.get("presentation"), dict)
@@ -485,6 +508,8 @@ class ChatPresentationDecisionService:
             decision["recommendations"] = recommendations
 
         cls._apply_chart_category_aggregation(metadata)
+
+        cls._apply_route_visual_policy(metadata, decision)
 
         metadata["presentationDecision"] = decision
 
@@ -657,17 +682,20 @@ class ChatPresentationDecisionService:
         chart_presentation: dict[str, Any] | None,
     ) -> dict[str, Any] | None:
         has_tree = bool(
-            tree_presentation
-            or (
-                isinstance(primary_presentation, dict)
-                and primary_presentation.get("type") == "tree"
+            cls._effective_tree_presentation(
+                tree_presentation=tree_presentation,
+                primary_presentation=primary_presentation,
             )
         )
 
         if has_tree and (
             "structure" in intent_token
             or "structure_lookup" in intent_token
-            or any(term in message for term in ("estrutura", "bom", "componente"))
+            or "parent" in intent_token
+            or "/structure" in intent_token
+            or "/parents" in intent_token
+            or "/analyser" in intent_token
+            or any(term in message for term in ("estrutura", "bom", "componente", "parents", "onde é usado"))
         ):
             return cls._build(
                 selected="tree",
@@ -808,6 +836,7 @@ class ChatPresentationDecisionService:
         available_formats: list[str] | None,
         intent: str | None,
         tree_presentation: dict[str, Any] | None = None,
+        primary_presentation: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         normalized_views = {
             cls._view_from_legacy_format(str(token))
@@ -815,8 +844,13 @@ class ChatPresentationDecisionService:
         }
         resolved = preferred
 
+        effective_tree = cls._effective_tree_presentation(
+            tree_presentation=tree_presentation,
+            primary_presentation=primary_presentation,
+        )
+
         if preferred in {"tree", "chart", "line_chart", "bar_chart", "donut"}:
-            if preferred == "tree" and not tree_presentation:
+            if preferred == "tree" and not effective_tree:
                 resolved = "text" if "text" in normalized_views else "table"
             elif preferred not in normalized_views and "text" in normalized_views:
                 resolved = "text"
@@ -936,6 +970,62 @@ class ChatPresentationDecisionService:
                 ordered.append(view)
 
         return ordered
+
+    @classmethod
+    def _apply_route_visual_policy(
+        cls,
+        metadata: dict[str, Any],
+        decision: dict[str, Any],
+    ) -> None:
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        path = str(metadata.get("path") or "")
+        views = list(decision.get("availableViews") or [])
+
+        if views:
+            ChatPresentationRoutePolicyService.apply_visual_order(decision, path=path)
+
+        has_tree = bool(
+            cls._effective_tree_presentation(
+                tree_presentation=metadata.get("treePresentation"),
+                primary_presentation=metadata.get("presentation"),
+            )
+        )
+
+        preferred = str(metadata.get("preferredFormat") or "").strip().lower()
+
+        if (
+            has_tree
+            and preferred == "tree"
+            and ChatPresentationRoutePolicyService.is_tree_route(path)
+            and decision.get("selected") in {None, "text", "table"}
+        ):
+            decision["selected"] = "tree"
+            decision["reason"] = "estrutura hierárquica — árvore como visão principal"
+
+        if (
+            ChatPresentationRoutePolicyService.is_stock_route(path)
+            and preferred in {"chart", "table"}
+            and preferred in set(views)
+        ):
+            decision["selected"] = preferred
+            decision["reason"] = (
+                "estoque — gráfico para visão agregada"
+                if preferred == "chart"
+                else "estoque — tabela para conferência por filial/armazém"
+            )
+
+        if (
+            ChatPresentationRoutePolicyService.is_table_route(path)
+            and not ChatPresentationRoutePolicyService.is_tree_route(path)
+            and not ChatPresentationRoutePolicyService.is_analyser_route(path)
+            and preferred == "table"
+            and "table" in views
+        ):
+            decision["selected"] = "table"
+            decision["reason"] = "dados operacionais em tabela nativa"
 
     @classmethod
     def _merge_views(

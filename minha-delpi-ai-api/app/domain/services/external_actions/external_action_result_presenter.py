@@ -1323,6 +1323,224 @@ class ExternalActionResultPresenter:
             ),
         ]
 
+    def _build_product_analyser_guide_table(self, root: dict) -> dict | None:
+        guide = root.get("guide")
+
+        if not isinstance(guide, dict):
+            return None
+
+        guide_items = guide.get("items") or []
+        rows = self._flatten_analyser_guide_rows(guide_items)
+
+        if not rows:
+            return None
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        product_code = str(product.get("code") or rows[0].get("product_code") or "").strip()
+        title = (
+            f"Roteiro de produção — {product_code}"
+            if product_code
+            else "Roteiro de produção"
+        )
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": [
+                {"key": "product_code", "label": "Produto"},
+                {"key": "bom_level", "label": "BOM", "dataType": "number"},
+                {"key": "operation_code", "label": "Op."},
+                {"key": "operation_description", "label": "Operação"},
+                {"key": "work_center", "label": "Centro"},
+            ],
+            "rows": rows,
+        }
+
+    def _flatten_analyser_inspection_rows(self, inspection_items: list) -> list[dict]:
+        rows: list[dict] = []
+
+        for item in inspection_items:
+            if not isinstance(item, dict):
+                continue
+
+            product_code = str(
+                item.get("product")
+                or item.get("product_code")
+                or "?"
+            ).strip()
+            level = item.get("level", item.get("bom_level", ""))
+
+            if self._has_protheus_inspection_blocks(item):
+                qp7 = self._inspection_list(item, "QP7", "qp7")
+
+                for test in qp7:
+                    if not isinstance(test, dict):
+                        continue
+
+                    rows.append(
+                        {
+                            "product_code": product_code,
+                            "level": level,
+                            "section": "Dimensional",
+                            "operation": test.get("QP7_OPERAC") or "",
+                            "test": test.get("QP7_ENSAIO") or "",
+                            "lab": test.get("QP7_LABOR") or "",
+                            "nominal": test.get("QP7_NOMINA") or "",
+                            "lower": test.get("QP7_LIE") or test.get("QP7_LIC") or "",
+                            "upper": test.get("QP7_LSE") or test.get("QP7_LSC") or "",
+                            "unit": test.get("QP7_UNIMED") or "",
+                            "detail": "",
+                        }
+                    )
+
+                qp8 = self._inspection_list(item, "QP8", "qp8")
+
+                for test in qp8:
+                    if not isinstance(test, dict):
+                        continue
+
+                    rows.append(
+                        {
+                            "product_code": product_code,
+                            "level": level,
+                            "section": "Textual",
+                            "operation": test.get("QP8_OPERAC") or "",
+                            "test": test.get("QP8_ENSAIO") or "",
+                            "lab": "",
+                            "nominal": "",
+                            "lower": "",
+                            "upper": "",
+                            "unit": "",
+                            "detail": test.get("QP8_TEXTO") or "",
+                        }
+                    )
+                continue
+
+            parent_code = str(
+                item.get("parentCode")
+                or item.get("parentcode")
+                or item.get("Parentcode")
+                or ""
+            ).strip()
+
+            rows.append(
+                {
+                    "product_code": product_code,
+                    "level": level,
+                    "section": "Referência",
+                    "operation": "",
+                    "test": "",
+                    "lab": "",
+                    "nominal": "",
+                    "lower": "",
+                    "upper": "",
+                    "unit": "",
+                    "detail": parent_code or "Sem detalhe nesta consulta",
+                }
+            )
+
+        return rows
+
+    def _build_product_analyser_inspection_table(self, root: dict) -> dict | None:
+        inspection = root.get("inspection")
+
+        if not isinstance(inspection, dict):
+            return None
+
+        inspection_items = inspection.get("items") or []
+        rows = self._flatten_analyser_inspection_rows(inspection_items)
+
+        if not rows:
+            return None
+
+        product = root.get("product") if isinstance(root.get("product"), dict) else {}
+        product_code = str(product.get("code") or "").strip()
+        title = (
+            f"Plano de inspeção — {product_code}"
+            if product_code
+            else "Plano de inspeção"
+        )
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": [
+                {"key": "product_code", "label": "Produto"},
+                {"key": "level", "label": "Nível"},
+                {"key": "section", "label": "Seção"},
+                {"key": "operation", "label": "Op."},
+                {"key": "test", "label": "Ensaio"},
+                {"key": "lab", "label": "Labor."},
+                {"key": "nominal", "label": "Nominal"},
+                {"key": "lower", "label": "Lim. inf."},
+                {"key": "upper", "label": "Lim. sup."},
+                {"key": "unit", "label": "Unid."},
+                {"key": "detail", "label": "Detalhe"},
+            ],
+            "rows": rows,
+        }
+
+    def _build_inspection_items_table(
+        self,
+        items: list,
+        *,
+        path: str = "",
+    ) -> dict | None:
+        rows = self._flatten_analyser_inspection_rows(items)
+
+        if not rows:
+            return None
+
+        product_code = self._extract_product_code_from_path(path)
+        title = (
+            f"Plano de inspeção — {product_code}"
+            if product_code
+            else self._infer_items_title(items, path) or "Plano de inspeção"
+        )
+
+        return {
+            "type": "table",
+            "title": title,
+            "columns": [
+                {"key": "product_code", "label": "Produto"},
+                {"key": "level", "label": "Nível"},
+                {"key": "section", "label": "Seção"},
+                {"key": "operation", "label": "Op."},
+                {"key": "test", "label": "Ensaio"},
+                {"key": "lab", "label": "Labor."},
+                {"key": "nominal", "label": "Nominal"},
+                {"key": "lower", "label": "Lim. inf."},
+                {"key": "upper", "label": "Lim. sup."},
+                {"key": "unit", "label": "Unid."},
+                {"key": "detail", "label": "Detalhe"},
+            ],
+            "rows": rows,
+        }
+
+    def build_analyser_auxiliary_table_presentations(self, root: dict) -> list[dict]:
+        """Tabelas nativas do analyser: roteiro, inspeção, cadastro (nessa ordem)."""
+        tables: list[dict] = []
+
+        guide_table = self._build_product_analyser_guide_table(root)
+
+        if guide_table:
+            tables.append(guide_table)
+
+        inspection_table = self._build_product_analyser_inspection_table(root)
+
+        if inspection_table:
+            tables.append(inspection_table)
+
+        product = root.get("product")
+
+        if isinstance(product, dict):
+            profile_table = self._build_product_analyser_profile_table(product, root)
+
+            if profile_table:
+                tables.append(profile_table)
+
+        return tables
+
     def _has_protheus_inspection_blocks(self, item: dict) -> bool:
         return any(
             key in item
@@ -1503,7 +1721,8 @@ class ExternalActionResultPresenter:
             guide_items = guide.get("items") or []
 
             if guide_items:
-                sections.extend(self._build_product_analyser_guide_markdown(guide_items))
+                if not self._build_product_analyser_guide_table(root):
+                    sections.extend(self._build_product_analyser_guide_markdown(guide_items))
             else:
                 sections.append("Roteiro: 0 registro(s).")
 
@@ -1513,9 +1732,10 @@ class ExternalActionResultPresenter:
             inspection_items = inspection.get("items") or []
 
             if inspection_items:
-                sections.extend(
-                    self._build_product_analyser_inspection_markdown(inspection_items)
-                )
+                if not self._build_product_analyser_inspection_table(root):
+                    sections.extend(
+                        self._build_product_analyser_inspection_markdown(inspection_items)
+                    )
             else:
                 sections.append("Inspeção: 0 registro(s).")
 
@@ -3136,12 +3356,20 @@ class ExternalActionResultPresenter:
                 return self._build_product_detail_table(product, detail_list, root)
 
             if "/analyser" in str(path or "").lower():
+                guide_table = self._build_product_analyser_guide_table(root)
+
+                if guide_table:
+                    return guide_table
+
                 return self._build_product_analyser_profile_table(product, root)
 
             return self._build_product_table(product, root)
 
         if isinstance(root.get("root"), dict) and isinstance(root.get("items"), list):
             lowered = str(path or "").lower()
+
+            if "/structure" in lowered or "/parents" in lowered:
+                return None
 
             if "/parents" not in lowered:
                 structure_table = self._build_analyser_structure_components_table(root)
@@ -3151,6 +3379,14 @@ class ExternalActionResultPresenter:
 
         items = root.get("items")
         if isinstance(items, list) and items and isinstance(items[0], dict):
+            lowered_items = str(path or "").lower()
+
+            if "/inspection" in lowered_items or self._looks_like_inspection_item(items[0]):
+                inspection_table = self._build_inspection_items_table(items, path=path)
+
+                if inspection_table:
+                    return inspection_table
+
             if "sale_number" in items[0] or "saleNumber" in items[0]:
                 return self._build_lmp_table(items, root)
 

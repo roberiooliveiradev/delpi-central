@@ -85,7 +85,7 @@ Serviço: `ChatPresentationDecisionService._build` / `enrich_metadata`.
 
 | Modo | Quando | Comportamento |
 |------|--------|----------------|
-| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa sempre visível; visuais reunidos; **toolbar** se ≥ 2 tipos nativos |
+| **stack** | `layoutMode === "stack"`, rotas `/analyser`, `/structure`, `/parents`, ou ≥ 2 views | Narrativa + **todos** os visuais empilhados (tabela(s), árvore, gráfico); **sem** alternar um tipo por vez |
 | **markers** | Markdown com `[[tabela]]`, `[[arvore]]`, `[[grafico]]` | Visuais inseridos nas posições dos marcadores |
 | **text-only** | Sem visual rico | Só markdown/código |
 
@@ -97,9 +97,9 @@ Arquivos: `assistantContentLayout.ts`, `assistantContentSegments.ts`.
 
 Quando `resolveAvailableVisualFormatOptions` retorna **≥ 2** opções:
 
-- Botões: **Tabela**, **Árvore**, **Gráfico**, **KPI**, **Painel** (conforme dados presentes).
-- Formato inicial: `presentationDecision.selected` → `preferredFormat` → primeiro em `visualOrder`.
-- Apenas segmentos do tipo ativo são renderizados (`filterSegmentsByVisualKind`); markdown/código permanecem.
+- Em **stack** (analyser e combinações): exibe narrativa + cada componente nativo com dados (várias tabelas, árvore, gráfico).
+- Toolbar de troca (**Tabela** / **Árvore** / **Gráfico**) só em layout **não-stack** (um visual por vez).
+- Ordem vertical: `presentationDecision.visualOrder` (analyser: texto → tabelas → árvore → gráfico).
 
 Arquivos: `AssistantContentFormatToolbar.tsx`, `assistantContentVisualFormats.ts`.
 
@@ -113,8 +113,11 @@ Telemetria: `presentation_view_switch` (mesmo evento do antigo toggle).
 |---------|----------------|
 | Intent | `ChatProductQueryIntent.ANALYSER` para «me fale do produto …» (`ChatProductOverviewIntentService`) |
 | Síntese LLM | `should_force_llm_synthesis` — não usar `directAnswer` só com tabela |
-| Cadastro | `tablePresentation` = `_build_product_analyser_profile_table` (componente `ChatRichTable`) |
-| Estrutura | `presentation` ou `treePresentation` = árvore BOM |
+| Roteiro | `tablePresentations[]` ou `tablePresentation` = tabela nativa (`_build_product_analyser_guide_table`) |
+| Inspeção | `tablePresentations[]` ou `inspectionTablePresentation` = tabela nativa |
+| Cadastro | `tablePresentations[]` (última) ou `profileTablePresentation` = ficha Campo/Valor |
+| Estrutura / pais | `presentation` ou `treePresentation` = árvore BOM (`/structure`, `/parents`; analyser usa árvore) |
+| Estoque | `tablePresentation` + `chartPresentation` (tabela ou gráfico; ver `ChatPresentationRoutePolicyService`) |
 | Gráfico | `chartPresentation` = donut por tipo de componente (≥ 2 tipos na estrutura) |
 | Texto | Abertura, destaques, **pontos de atenção** (`ChatProductAnalyserDivergenceService`) |
 | Policy LLM | `product-overview.md` |

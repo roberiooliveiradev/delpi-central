@@ -50,6 +50,7 @@ describe("assistantContentVisualFormats", () => {
     const options = resolveAvailableVisualFormatOptions(segments, toolCalls);
 
     expect(options.map((item) => item.kind)).toEqual(["table", "tree", "chart"]);
+    expect(resolveDefaultVisualKind(toolCalls, options)).toBe("table");
     expect(options.map((item) => item.label)).toEqual(["Tabela", "Árvore", "Gráfico"]);
   });
 
@@ -82,5 +83,39 @@ describe("assistantContentVisualFormats", () => {
     const options = resolveAvailableVisualFormatOptions(segments, withTree);
 
     expect(resolveDefaultVisualKind(withTree, options)).toBe("tree");
+  });
+
+  it("prioriza árvore em rotas de estrutura (analyser/structure/parents)", () => {
+    const analyserCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90260144/analyser",
+          presentationDecision: {
+            selected: "text",
+            availableViews: ["text", "table", "tree"],
+            visualOrder: ["text", "tree", "table"],
+            layoutMode: "stack",
+          },
+          preferredFormat: "text",
+          presentation: {
+            type: "tree",
+            title: "Estrutura do produto 90260144",
+            root: { id: "90260144", label: "90260144", children: [] },
+          },
+          tablePresentation: {
+            type: "table",
+            title: "Produto 90260144",
+            columns: [{ key: "campo", label: "Campo" }],
+            rows: [{ campo: "Código", valor: "90260144" }],
+          },
+          textPresentation: { type: "markdown", markdown: "Resumo." },
+        },
+      },
+    ]);
+    const segments = buildAssistantContentSegments("", analyserCalls);
+    const options = resolveAvailableVisualFormatOptions(segments, analyserCalls);
+
+    expect(resolveDefaultVisualKind(analyserCalls, options)).toBe("tree");
   });
 });

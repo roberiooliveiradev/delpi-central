@@ -300,17 +300,63 @@ function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantContentSegme
       }
     }
 
-    const tablePresentation = metadata.tablePresentation;
+    const bundledTables = metadata.tablePresentations;
 
-    if (
-      tablePresentation &&
-      typeof tablePresentation === "object" &&
-      (tablePresentation as ChatPresentation).type === "table"
-    ) {
-      appendVisualSegment(segments, {
-        kind: "table",
-        presentation: tablePresentation as Extract<ChatPresentation, { type: "table" }>,
-      });
+    if (Array.isArray(bundledTables) && bundledTables.length) {
+      for (const candidate of bundledTables) {
+        if (
+          candidate &&
+          typeof candidate === "object" &&
+          (candidate as ChatPresentation).type === "table"
+        ) {
+          appendVisualSegment(segments, {
+            kind: "table",
+            presentation: candidate as Extract<ChatPresentation, { type: "table" }>,
+          });
+        }
+      }
+    } else {
+      const tablePresentation = metadata.tablePresentation;
+
+      if (
+        tablePresentation &&
+        typeof tablePresentation === "object" &&
+        (tablePresentation as ChatPresentation).type === "table"
+      ) {
+        appendVisualSegment(segments, {
+          kind: "table",
+          presentation: tablePresentation as Extract<ChatPresentation, { type: "table" }>,
+        });
+      }
+
+      const profileTablePresentation = metadata.profileTablePresentation;
+
+      if (
+        profileTablePresentation &&
+        typeof profileTablePresentation === "object" &&
+        (profileTablePresentation as ChatPresentation).type === "table"
+      ) {
+        appendVisualSegment(segments, {
+          kind: "table",
+          presentation: profileTablePresentation as Extract<ChatPresentation, { type: "table" }>,
+        });
+      }
+
+      const inspectionTablePresentation = metadata.inspectionTablePresentation;
+
+      if (
+        inspectionTablePresentation &&
+        typeof inspectionTablePresentation === "object" &&
+        (inspectionTablePresentation as ChatPresentation).type === "table"
+      ) {
+        appendVisualSegment(segments, {
+          kind: "table",
+          presentation: inspectionTablePresentation as Extract<
+            ChatPresentation,
+            { type: "table" }
+          >,
+        });
+      }
     }
 
     const chartPresentation = metadata.chartPresentation;

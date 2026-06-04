@@ -4,9 +4,9 @@ import { buildAssistantContentSegments } from "./assistantContentSegments";
 import {
   orderVisualSegments,
   resolveAssistantContentLayout,
+  shouldShowAllVisualSegments,
 } from "./assistantContentLayout";
 import type { AssistantContentSegment } from "./assistantContentTypes";
-import { filterSegmentsByVisualKind } from "./assistantContentVisualFormats";
 import { fixtureToolCalls } from "./testFixtures";
 
 describe("assistantContentLayout", () => {
@@ -26,12 +26,20 @@ describe("assistantContentLayout", () => {
             title: "Estrutura",
             root: { id: "90260114", label: "PA", children: [] },
           },
-          tablePresentation: {
-            type: "table",
-            title: "Produto",
-            columns: [{ key: "campo", label: "Campo" }],
-            rows: [{ campo: "Código", valor: "90260114" }],
-          },
+          tablePresentations: [
+            {
+              type: "table",
+              title: "Roteiro de produção — 90260114",
+              columns: [{ key: "product_code", label: "Produto" }],
+              rows: [{ product_code: "90260114" }],
+            },
+            {
+              type: "table",
+              title: "Produto 90260114",
+              columns: [{ key: "campo", label: "Campo" }],
+              rows: [{ campo: "Código", valor: "90260114" }],
+            },
+          ],
           chartPresentation: {
             type: "chart",
             chartType: "donut",
@@ -55,11 +63,7 @@ describe("assistantContentLayout", () => {
     expect(kinds).toContain("table");
     expect(kinds).toContain("tree");
     expect(kinds).toContain("chart");
-
-    const tableView = filterSegmentsByVisualKind(segments, "table").map((item) => item.kind);
-
-    expect(tableView).toContain("table");
-    expect(tableView).not.toContain("tree");
+    expect(shouldShowAllVisualSegments(toolCalls)).toBe(true);
   });
 
   it("ordena segmentos conforme visualOrder", () => {

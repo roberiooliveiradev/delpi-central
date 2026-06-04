@@ -120,11 +120,33 @@ def test_analyser_guide_and_inspection_use_tables_not_raw_dict():
 
     assert "Qp6=[" not in body
     assert "Product=" not in body
-    assert "| Produto | BOM | Op. |" in body
-    assert "CORTAR TUBO MAIOR E MENOR" in body
-    assert "| Op. | Ensaio |" in body
-    assert "Ensaios dimensionais" in body
-    assert "Componentes referenciados" in body
+    assert "| Produto | BOM | Op. |" not in body
+
+    table = presenter.build_presentation(
+        _analyser_payload_with_guide_and_inspection(),
+        path="/products/90260140/analyser",
+    )
+
+    assert table is not None
+    assert "Roteiro" in table["title"]
+    assert any(
+        row.get("operation_description") == "CORTAR TUBO MAIOR E MENOR"
+        for row in table["rows"]
+    )
+    assert "| Op. | Ensaio |" not in body
+    assert "Ensaios dimensionais" not in body
+    assert "Componentes referenciados" not in body
+
+    inspection_table = presenter._build_product_analyser_inspection_table(
+        presenter._normalize_analyser_root(_analyser_payload_with_guide_and_inspection()),
+    )
+
+    assert inspection_table is not None
+    assert any(
+        row.get("test") == "506"
+        for row in inspection_table["rows"]
+        if isinstance(row, dict)
+    )
     assert "**Estrutura do produto 90260140**" not in body
     assert "árvore" in body.lower() or "tabela" in body.lower()
     assert "**Pontos de atenção encontrados na API:**" in body
@@ -145,4 +167,11 @@ def test_analyser_text_presentation_aligns_with_body():
 
     assert text is not None
     assert "Qp6=[" not in text["markdown"]
-    assert "| Centro |" in text["markdown"]
+    assert "| Produto | BOM | Op. |" not in text["markdown"]
+    assert "| Op. | Ensaio |" not in text["markdown"]
+
+    tables = presenter.build_analyser_auxiliary_table_presentations(root)
+
+    assert len(tables) >= 2
+    assert any("Roteiro" in str(table.get("title") or "") for table in tables)
+    assert any("inspeção" in str(table.get("title") or "").lower() for table in tables)

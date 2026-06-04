@@ -41,12 +41,32 @@ def main() -> int:
             failed += 1
 
     check("sem dump Qp6/Qp7 no corpo", "Qp6=[" not in body and "Product=" not in body)
-    check("roteiro em tabela markdown", "| Produto | BOM | Op. |" in body)
-    check("inspeção dimensional", "Ensaios dimensionais" in body)
+    guide_table = presenter.build_presentation(payload, path=path)
+    check(
+        "roteiro em tablePresentation",
+        isinstance(guide_table, dict)
+        and guide_table.get("type") == "table"
+        and "Roteiro" in str(guide_table.get("title") or ""),
+    )
+    check(
+        "roteiro fora do markdown narrativo",
+        "| Produto | BOM | Op. |" not in body and "| Produto | BOM | Op. |" not in markdown,
+    )
+    inspection_table = presenter._build_product_analyser_inspection_table(
+        presenter._normalize_analyser_root(payload),
+    )
+    check(
+        "inspeção em tablePresentation",
+        isinstance(inspection_table, dict) and inspection_table.get("type") == "table",
+    )
+    check(
+        "inspeção fora do markdown narrativo",
+        "Ensaios dimensionais" not in body and "Ensaios dimensionais" not in markdown,
+    )
     check("estrutura só no painel visual", "**Estrutura do produto" not in body)
     check("árvore disponível", (humanized.get("apresentacao") or {}).get("type") == "tree")
     check("textPresentation sem dump", "Qp6=[" not in markdown)
-    check("perfil em tabela", "| Campo | Valor |" in body)
+    check("perfil em linhas narrativas", "90260140" in body and "CHICOTE" in body)
 
     if failed:
         print(f"\n{failed} verificação(ões) falharam", file=sys.stderr)

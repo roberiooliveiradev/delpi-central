@@ -4,7 +4,10 @@ import type { ChatCanvasOpenPayload, ChatToolCall } from "../../data/api/chatTyp
 
 import { AssistantContentFormatToolbar } from "./AssistantContentFormatToolbar";
 import { AssistantContentChrome } from "./AssistantContentChrome";
-import type { AssistantVisualKind } from "./assistantContentLayout";
+import {
+  shouldShowAllVisualSegments,
+  type AssistantVisualKind,
+} from "./assistantContentLayout";
 import {
   buildAssistantContentSegments,
   isPresentationHeadingTitle,
@@ -65,13 +68,18 @@ export function ChatAssistantContent({
     setActiveVisualKind(defaultVisualKind);
   }, [defaultVisualKind, toolCalls, segments]);
 
+  const combineAllVisuals = useMemo(
+    () => shouldShowAllVisualSegments(toolCalls),
+    [toolCalls],
+  );
+
   const visibleSegments = useMemo(() => {
-    if (visualFormatOptions.length < 2) {
+    if (combineAllVisuals || visualFormatOptions.length < 2) {
       return segments;
     }
 
     return filterSegmentsByVisualKind(segments, activeVisualKind);
-  }, [activeVisualKind, segments, visualFormatOptions.length]);
+  }, [activeVisualKind, combineAllVisuals, segments, visualFormatOptions.length]);
 
   const title = useMemo(() => getPresentationTitle(content, toolCalls), [content, toolCalls]);
   const dataCoverageNotice = useMemo(
@@ -129,7 +137,7 @@ export function ChatAssistantContent({
     );
 
   const showFormatToolbar =
-    visualFormatOptions.length >= 2 && activeVisualKind !== null;
+    !combineAllVisuals && visualFormatOptions.length >= 2 && activeVisualKind !== null;
 
   return (
     <div className="mdc-assistant-content mdc-rich-presentation mdc-rich-presentation--enter mdc-rich-presentation--commentary">

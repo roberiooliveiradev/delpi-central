@@ -270,9 +270,45 @@ class ExecuteExternalActionUseCase:
             primary_presentation = None
 
         price_like = "/prices" in path_lower or "/pricing" in path_lower
-        structure_like = "/structure" in path_lower
 
         session_format = str(request_parameters.get("sessionResponseFormat") or "").strip().lower()
+
+        from app.domain.services.chat_presentation_route_policy_service import (
+            ChatPresentationRoutePolicyService,
+        )
+
+        table_presentations_list: list[dict] = []
+        profile_table_presentation = None
+        inspection_table_presentation = None
+        root_payload = self.presenter._unwrap_data(sanitized_data)
+
+        if isinstance(root_payload, dict):
+            if "/analyser" in path_lower and isinstance(root_payload.get("product"), dict):
+                table_presentations_list = (
+                    self.presenter.build_analyser_auxiliary_table_presentations(root_payload)
+                )
+
+                if table_presentations_list:
+                    table_presentation = table_presentations_list[0]
+
+                    for candidate in table_presentations_list:
+                        title = str(candidate.get("title") or "")
+
+                        if title.startswith("Produto "):
+                            profile_table_presentation = candidate
+                        elif "inspeção" in title.lower():
+                            inspection_table_presentation = candidate
+            elif (
+                ChatPresentationRoutePolicyService.is_tree_route(resolved_path)
+                and tree_presentation
+                and not table_presentation
+            ):
+                structure_table = self.presenter._build_analyser_structure_components_table(
+                    root_payload,
+                )
+
+                if structure_table:
+                    table_presentation = structure_table
 
         preferred_format = None
 
@@ -280,26 +316,17 @@ class ExecuteExternalActionUseCase:
             preferred_format = "text" if session_format == "canvas" else session_format
         elif dashboard_presentation:
             preferred_format = "dashboard"
-        elif structure_like and tree_presentation:
-            preferred_format = "tree"
-        elif price_like and text_presentation:
+        elif price_like and text_presentation and not session_format:
             preferred_format = "text"
-        elif (
-            "/analyser" in path_lower
-            and text_presentation
-            and not session_format
-        ):
-            preferred_format = "text"
-        elif tree_presentation:
-            preferred_format = "tree"
-        elif chart_presentation and stock_like and not text_presentation:
-            preferred_format = "chart"
-        elif table_presentation:
-            preferred_format = "table"
-        elif text_presentation:
-            preferred_format = "text"
-        elif chart_presentation:
-            preferred_format = "chart"
+        else:
+            preferred_format = ChatPresentationRoutePolicyService.resolve_default_preferred_format(
+                path=resolved_path,
+                session_format=session_format or None,
+                has_tree=bool(tree_presentation),
+                has_table=bool(table_presentation or table_presentations_list),
+                has_chart=bool(chart_presentation),
+                has_text=bool(text_presentation),
+            )
 
         data_coverage_notice = ChatDataCoverageNoticeService.build(
             sanitized_data,
@@ -311,6 +338,9 @@ class ExecuteExternalActionUseCase:
 
         metadata = {
             "presentation": primary_presentation,
+            "tablePresentations": table_presentations_list or None,
+            "inspectionTablePresentation": inspection_table_presentation,
+            "profileTablePresentation": profile_table_presentation,
             "tablePresentation": (
                 table_presentation
                 if table_presentation is not None
@@ -342,6 +372,8 @@ class ExecuteExternalActionUseCase:
         user_message = str(request_parameters.get("userMessage") or "").strip() or None
 
         behavior_format = session_format or None
+
+        metadata["path"] = resolved_path
 
         ChatPresentationDecisionService.enrich_metadata(
             metadata,

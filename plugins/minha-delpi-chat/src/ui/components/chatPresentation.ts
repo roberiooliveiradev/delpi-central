@@ -891,6 +891,85 @@ export function stripRedundantProfileTableFromMarkdown(markdown: string): string
   return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+/** Remove tabela markdown do roteiro quando `tablePresentation` já exibe o componente nativo. */
+export function stripRedundantGuideTableFromMarkdown(markdown: string): string {
+  const lines = markdown.split("\n");
+  const result: string[] = [];
+  let skipping = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!skipping && /^\*\*Roteiro de produção\*\*$/i.test(trimmed)) {
+      skipping = true;
+      continue;
+    }
+
+    if (skipping) {
+      if (
+        trimmed.startsWith("|") ||
+        trimmed === "" ||
+        /^Inspeção:/i.test(trimmed)
+      ) {
+        if (/^Inspeção:/i.test(trimmed)) {
+          skipping = false;
+          result.push(line);
+        }
+
+        continue;
+      }
+
+      skipping = false;
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/** Remove blocos markdown de inspeção quando há tabela nativa no metadata. */
+export function stripRedundantInspectionFromMarkdown(markdown: string): string {
+  const lines = markdown.split("\n");
+  const result: string[] = [];
+  let skipping = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!skipping && /^\*\*Plano de inspeção\*\*$/i.test(trimmed)) {
+      skipping = true;
+      continue;
+    }
+
+    if (skipping) {
+      if (
+        trimmed.startsWith("|") ||
+        trimmed === "" ||
+        /^\*(Ensaios|Componentes referenciados)/i.test(trimmed) ||
+        /^\*\*Destaques\*\*$/i.test(trimmed) ||
+        /^\*\*Pontos de atenção/i.test(trimmed)
+      ) {
+        if (
+          /^\*\*Destaques\*\*$/i.test(trimmed) ||
+          /^\*\*Pontos de atenção/i.test(trimmed)
+        ) {
+          skipping = false;
+          result.push(line);
+        }
+
+        continue;
+      }
+
+      skipping = false;
+    }
+
+    result.push(line);
+  }
+
+  return result.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 export function stripRedundantStructureFromMarkdown(markdown: string): string {
   const lines = markdown.split("\n");
   const result: string[] = [];
@@ -1157,6 +1236,86 @@ export function resolveDefaultRichViewMode(
   return "tree";
 }
 
+export function hasInspectionTablePresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const candidates = [
+      metadata.inspectionTablePresentation,
+      ...(Array.isArray(metadata.tablePresentations) ? metadata.tablePresentations : []),
+    ];
+
+    for (const candidate of candidates) {
+      if (!isTablePresentation(candidate)) {
+        continue;
+      }
+
+      const title = String(candidate.title || "").toLowerCase();
+
+      if (title.includes("inspeção") || title.includes("inspecao")) {
+        return true;
+      }
+
+      const keys = new Set(
+        (candidate.columns ?? []).map((column) => String(column.key || "").toLowerCase()),
+      );
+
+      if (keys.has("section") && keys.has("test")) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+export function hasGuideTablePresentation(toolCalls?: ChatToolCall[]): boolean {
+  if (!Array.isArray(toolCalls)) {
+    return false;
+  }
+
+  for (const toolCall of toolCalls) {
+    if (toolCall.name && toolCall.name !== "execute_external_action") {
+      continue;
+    }
+
+    const metadata = (toolCall.metadata ?? {}) as Record<string, unknown>;
+    const candidates = [metadata.tablePresentation, metadata.presentation].filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (!isTablePresentation(candidate)) {
+        continue;
+      }
+
+      const title = String(candidate.title || "").toLowerCase();
+      const keys = new Set(
+        (candidate.columns ?? []).map((column) => String(column.key || "").toLowerCase()),
+      );
+
+      if (title.includes("roteiro")) {
+        return true;
+      }
+
+      if (
+        keys.has("product_code") &&
+        keys.has("operation_description") &&
+        keys.has("bom_level")
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 export function getPathFromToolCalls(toolCalls?: ChatToolCall[]): string {
   if (!Array.isArray(toolCalls)) {
     return "";
@@ -1220,6 +1379,14 @@ export function resolveCommentaryTextBody(
     body = stripRedundantStructureFromMarkdown(body);
     body = stripRedundantHierarchyListFromMarkdown(body);
     body = stripRedundantInspectionDumpFromMarkdown(body);
+  }
+
+  if (hasGuideTablePresentation(toolCalls)) {
+    body = stripRedundantGuideTableFromMarkdown(body);
+  }
+
+  if (hasInspectionTablePresentation(toolCalls)) {
+    body = stripRedundantInspectionFromMarkdown(body);
   }
 
   body = stripCoverageNoticeFromMarkdown(body);
