@@ -96,6 +96,18 @@ class DelpiApiClient:
     def get_inventory_turnover(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/supplies/inventory-turnover", params=params, authorization=authorization)
 
+    def get_supplies_negotiation_savings_summary(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/supplies/negotiation-savings/summary",
+            params=params,
+            authorization=authorization,
+        )
+
     # -- Quality --
     def get_ppm_summary(self, ppm_type: str, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get(f"/quality/ppm/{ppm_type}/summary", params=params, authorization=authorization)

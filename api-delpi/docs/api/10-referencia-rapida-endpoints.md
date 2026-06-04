@@ -139,6 +139,7 @@ Legenda de permissões:
 | GET | `/supplies/otd` | A |
 | GET | `/supplies/stock-value` | A |
 | GET | `/supplies/inventory-turnover` | A |
+| GET | `/supplies/negotiation-savings/summary` | A |
 
 ---
 

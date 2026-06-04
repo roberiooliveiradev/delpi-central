@@ -82,6 +82,18 @@ Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** 
 | `/supplies/stock-value` | KPI valor total — sem datas: atual; com `start_date`+`end_date`: histórico estimado |
 | `/supplies/inventory-turnover` | Giro (IDD) |
 | `/supplies/cpv`, `/supplies/otd` | CPV e OTD compras |
+| `/supplies/negotiation-savings/summary` | Economia em negociações de compras (planilha `idd_suprimentos`, por filial) |
+
+**Parâmetros (`/supplies/negotiation-savings/summary`)**
+
+- `start_date`, `end_date` — período (obrigatório para IDD mensal; aceita `YYYY-MM-DD` ou `DD/MM/YYYY`)
+- `branch` — `01` ou `02` (opcional; sem filial retorna `branches` com totais por unidade)
+- Fonte: Google Sheets (`SUPPLIES_IDD_SHEET_ID` + `SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID`); indicador SI `supplies_negotiation_savings`
+
+**Exemplos**
+
+- "Quanto foi a economia em negociações de compras em maio?" → `/supplies/negotiation-savings/summary` com período
+- "Economia de negociação da filial 01" → mesma rota com `branch=01`
 
 Detalhes histórico: [supplies-estoque-historico.md](./supplies-estoque-historico.md).
 

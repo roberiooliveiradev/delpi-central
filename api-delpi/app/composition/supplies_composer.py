@@ -1,5 +1,10 @@
+from app.config import settings
+
 from app.application.services.supplies.supplies_metrics_snapshot_service import (
     SuppliesMetricsSnapshotService,
+)
+from app.application.use_cases.supplies.get_negotiation_savings_summary_use_case import (
+    GetNegotiationSavingsSummaryUseCase,
 )
 from app.application.use_cases.supplies.get_cpv_use_case import GetCPVUseCase
 from app.application.use_cases.supplies.get_inventory_turnover_use_case import (
@@ -24,6 +29,26 @@ from app.infrastructure.persistence.totvs.supplies_repositories.otd_query_reposi
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_query_repository import (
     StockValueQueryRepository,
 )
+from app.infrastructure.persistence.google_sheets.supplies.negotiation_savings_repository import (
+    NegotiationSavingsRepository,
+)
+from app.infrastructure.persistence.google_sheets.utils import Utils
+from app.infrastructure.providers.google_sheets.google_sheets_client import (
+    GoogleSheetsClient,
+)
+
+
+def _build_google_sheets_client() -> GoogleSheetsClient:
+    return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT or 10))
+
+
+def _build_negotiation_savings_repository() -> NegotiationSavingsRepository:
+    return NegotiationSavingsRepository(
+        client=_build_google_sheets_client(),
+        sheet_id=settings.SUPPLIES_IDD_SHEET_ID,
+        gid=settings.SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID,
+        utils=Utils(),
+    )
 def build_get_cpv_use_case() -> GetCPVUseCase:
     cpv_repository = CpvQueryRepository()
     financial_repository = FinancialRepository()
@@ -48,6 +73,12 @@ def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
     return GetInventoryTurnoverUseCase(
         repository=InventoryTurnoverQueryRepository(),
         stock_repository=StockValueQueryRepository(),
+    )
+
+
+def build_get_negotiation_savings_summary_use_case() -> GetNegotiationSavingsSummaryUseCase:
+    return GetNegotiationSavingsSummaryUseCase(
+        repository=_build_negotiation_savings_repository(),
     )
 
 

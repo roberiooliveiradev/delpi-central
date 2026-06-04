@@ -75,13 +75,22 @@ Após mudanças na API, **reimporte** o schema no agente e **reindexe** este doc
 | O usuário quer | Rota | operationId |
 |----------------|------|-------------|
 | **Valor total** de estoque (KPI) | `GET /supplies/stock-value` | `get_supplies_stock_value` |
-| Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | (ver catálogo) |
-| CPV / OTD compras | `/supplies/cpv`, `/supplies/otd` | (ver catálogo) |
+| Giro de estoque (IDD) | `GET /supplies/inventory-turnover` | `get_supplies_inventory_turnover` |
+| CPV / OTD compras | `GET /supplies/cpv`, `GET /supplies/otd` | `get_supplies_cpv`, `get_supplies_otd` |
+| Economia em negociações (IDD / planilha) | `GET /supplies/negotiation-savings/summary` | `get_supplies_negotiation_savings_summary` |
+
+**Parâmetros (`/supplies/negotiation-savings/summary`)**
+
+- `start_date`, `end_date` — período mensal (planilha `economia_negociacoes_compra`)
+- `branch` — opcional (`01` / `02`); sem filial retorna `branches` com totais por unidade
+- Sem linhas no período: `total_savings` vem `null` (não zero)
 
 **Exemplos**
 
 - “Qual o valor total de estoque da empresa?” → `get_supplies_stock_value` (**não** `/products/{code}/stock`)
 - “Estoque do produto X” → `get_product_stock` (**não** `stock-value`)
+- “Economia em negociações de compras em maio?” → `get_supplies_negotiation_savings_summary` com período
+- “Economia de negociação da filial 01” → mesma action com `branch=01`
 
 ---
 

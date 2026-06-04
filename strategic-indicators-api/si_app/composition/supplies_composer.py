@@ -9,10 +9,14 @@ from si_app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
 from si_app.application.use_cases.supplies.get_stock_value_use_case import (
     GetStockValueUseCase,
 )
+from si_app.application.use_cases.supplies.get_negotiation_savings_summary_use_case import (
+    GetNegotiationSavingsSummaryUseCase,
+)
 from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.infrastructure.gateways.delpi_supplies_gateway import (
     DelpiCpvGateway,
     DelpiInventoryTurnoverGateway,
+    DelpiNegotiationSavingsGateway,
     DelpiOtdSuppliesGateway,
     DelpiStockValueGateway,
 )
@@ -47,6 +51,12 @@ def build_get_stock_value_use_case() -> GetStockValueUseCase:
     return GetStockValueUseCase(DelpiStockValueGateway(_get_delpi_client()))
 
 
+def build_get_negotiation_savings_summary_use_case() -> GetNegotiationSavingsSummaryUseCase:
+    return GetNegotiationSavingsSummaryUseCase(
+        DelpiNegotiationSavingsGateway(_get_delpi_client()),
+    )
+
+
 def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
     delpi = _get_delpi_client()
     return GetInventoryTurnoverUseCase(
@@ -61,6 +71,7 @@ def build_supplies_metrics_snapshot_service() -> SuppliesMetricsSnapshotService:
         get_inventory_turnover_use_case=build_get_inventory_turnover_use_case(),
         get_otd_use_case=build_get_otd_use_case(),
         get_stock_value_use_case=build_get_stock_value_use_case(),
+        get_negotiation_savings_summary_use_case=build_get_negotiation_savings_summary_use_case(),
     )
 
 

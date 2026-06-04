@@ -34,6 +34,7 @@ Rotas que dependem **só** de **Google Sheets** continuam funcionando. Rotas que
 | Audit 5S | `QUALITY_SHEET_ID` + `QUALITY_AUDIT_5S_SHEET_GID` |
 | EBITDA | `FINANCIAL_EBITDA_SHEET_ID` + `FINANCIAL_EBITDA_SHEET_GID` |
 | Mão de obra direta | `DIRECT_LABOR_SHEET_ID` + `DIRECT_LABOR_SHEET_GID` |
+| Economia negociações (Suprimentos) | `SUPPLIES_IDD_SHEET_ID` + `SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID` |
 
 ---
 

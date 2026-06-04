@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from si_app.application.dto.supplies.negotiation_savings_summary_request import (
+    NegotiationSavingsSummaryRequest,
+)
 from si_app.application.dto.supplies.get_cpv_request import GetCPVRequest
 from si_app.application.dto.supplies.get_inventory_turnover_request import GetInventoryTurnoverRequest
 from si_app.application.dto.supplies.get_otd_request import GetOTDRequest
 from si_app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 
+from si_app.domain.ports.supplies.negotiation_savings_query_repository_port import (
+    NegotiationSavingsQueryRepositoryPort,
+)
 from si_app.domain.ports.supplies.cpv_query_repository_port import CpvQueryRepositoryPort
 from si_app.domain.ports.supplies.inventory_turnover_query_repository_port import InventoryTurnoverQueryRepositoryPort
 from si_app.domain.ports.supplies.otd_query_repository_port import OtdQueryRepositoryPort
@@ -31,6 +37,30 @@ class _CachedFetch:
         if key not in self._cache:
             self._cache[key] = fetcher()
         return self._cache[key]
+
+
+class DelpiNegotiationSavingsGateway(_CachedFetch, NegotiationSavingsQueryRepositoryPort):
+    def __init__(self, client: DelpiApiClient) -> None:
+        super().__init__(client)
+
+    def get_summary(self, request: NegotiationSavingsSummaryRequest) -> dict:
+        key = _cache_key(
+            request.branch,
+            request.start_date,
+            request.end_date,
+            "negotiation-savings",
+        )
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_supplies_negotiation_savings_summary(
+                params={
+                    "branch": request.branch,
+                    "start_date": request.start_date,
+                    "end_date": request.end_date,
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
 
 
 class DelpiCpvGateway(_CachedFetch, CpvQueryRepositoryPort):

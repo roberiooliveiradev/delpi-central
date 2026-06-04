@@ -29,7 +29,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 | Comercial | ROL por segmento, taxa fechamento, OTD pedidos, % novos negócios | `api-delpi` HTTP | `commercial_indicators_snapshot_provider` |
 | Produção | OTD e OEE (TOTVS), MO/custo/depreciação (Sheets) | `api-delpi` HTTP + Sheets | `production_indicators_snapshot_provider` |
 | Qualidade | PPM e NC (TOTVS), Kaizen e 5S (Sheets) | `api-delpi` HTTP + Sheets | `quality_indicators_snapshot_provider` |
-| Suprimentos | CPV, giro de estoque, OTD, estoque (TOTVS) | `api-delpi` HTTP | `supplies_indicators_snapshot_provider` |
+| Suprimentos | CPV, giro de estoque, OTD, estoque (TOTVS); economia em negociações (Sheets) | `api-delpi` HTTP + Sheets | `supplies_indicators_snapshot_provider` |
 | Engenharia | LMP (TOTVS), Transforma+ (Sheets) | `api-delpi` HTTP + Sheets | `engineering_indicators_snapshot_provider` |
 | RH | Portal RH (Postgres) | direto | `hr_indicators_snapshot_provider` |
 

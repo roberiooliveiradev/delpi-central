@@ -116,9 +116,29 @@ class SuppliesIndicatorsSnapshotProvider(
                     source="supplies_stock_value",
                     value=snapshot.stock_value,
                 ),
+                self._build_negotiation_savings_measurement(snapshot=snapshot),
             ],
             "errors": [],
         }
+
+    def _build_negotiation_savings_measurement(self, *, snapshot) -> dict:
+        unit_values = dict(snapshot.negotiation_savings_by_branch or {})
+        consolidated_value = self._sum_branch_values(unit_values)
+
+        return {
+            "department_id": "supplies",
+            "indicator_id": "supplies-negotiation-savings",
+            "value": consolidated_value,
+            "source": "supplies_negotiation_savings",
+            "unit_values": unit_values,
+        }
+
+    @staticmethod
+    def _sum_branch_values(unit_values: dict[str, float | None]) -> float | None:
+        values = [value for value in unit_values.values() if value is not None]
+        if not values:
+            return None
+        return round(sum(values), 2)
 
     def _build_indicator_measurement(
         self,

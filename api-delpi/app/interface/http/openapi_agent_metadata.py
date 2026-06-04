@@ -107,6 +107,16 @@ SUPPLIES_INVENTORY_TURNOVER = agent_route(
     operation_id="get_supplies_inventory_turnover",
 )
 
+SUPPLIES_NEGOTIATION_SAVINGS = agent_route(
+    summary="Economia em negociações de compras (planilha IDD Suprimentos)",
+    description=(
+        "Soma da economia em reais por filial e período, lida da aba "
+        "economia_negociacoes_compra (Google Sheets). "
+        "Use para o indicador estratégico supplies_negotiation_savings / IDD Suprimentos."
+    ),
+    operation_id="get_supplies_negotiation_savings_summary",
+)
+
 SUPPLIES_STOCK_VALUE = agent_route(
     summary="Valor total de estoque (suprimentos)",
     description=(

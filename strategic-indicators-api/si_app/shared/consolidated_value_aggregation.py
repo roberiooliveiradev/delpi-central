@@ -8,6 +8,7 @@ ConsolidatedValueAggregation = Literal["sum", "average"]
 # A nota do indicador no SI continua sendo a média das notas por filial
 # (departamento comercial: average_of_units).
 INDICATOR_CONSOLIDATED_VALUE_AGGREGATION: dict[str, ConsolidatedValueAggregation] = {
+    "supplies-negotiation-savings": "sum",
     "commercial-rol": "sum",
     "commercial-closing-rate": "average",
     "commercial-sales-order-otd": "average",

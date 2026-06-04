@@ -132,6 +132,11 @@ class Settings:
     FINANCIAL_RECEIVABLES_SHEET_ID: str | None = _get_env("FINANCIAL_RECEIVABLES_SHEET_ID")
     FINANCIAL_RECEIVABLES_SHEET_GID: str | None = _get_env("FINANCIAL_RECEIVABLES_SHEET_GID")
 
+    SUPPLIES_IDD_SHEET_ID: str | None = _get_env("SUPPLIES_IDD_SHEET_ID")
+    SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID: str | None = _get_env(
+        "SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID"
+    )
+
     # ==========================
     # Core API — rastreamento de uso (backend-only)
     # ==========================

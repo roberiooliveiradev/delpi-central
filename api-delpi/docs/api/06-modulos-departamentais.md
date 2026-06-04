@@ -79,6 +79,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/supplies/otd` | On-Time Delivery compras. |
 | GET | `/supplies/stock-value` | Valor total de estoque (atual ou histórico estimado). Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). |
+| GET | `/supplies/negotiation-savings/summary` | Economia em negociações de compras (Google Sheets `idd_suprimentos`). |
 
 Parâmetros adicionais:
 

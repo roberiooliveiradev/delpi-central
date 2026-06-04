@@ -22,6 +22,7 @@ SUPPLIES_CPV = "supplies_cpv"
 SUPPLIES_OTD = "supplies_otd"
 SUPPLIES_STOCK_VALUE = "supplies_stock_value"
 SUPPLIES_STOCK_TURNOVER = "supplies_stock_turnover"
+SUPPLIES_NEGOTIATION_SAVINGS = "supplies_negotiation_savings"
 
 HR_ABSENTEEISM = "hr_absenteeism"
 HR_TURNOVER = "hr_turnover"

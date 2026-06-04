@@ -41,6 +41,11 @@ def api_client() -> TestClient:
         ("audit-5s", "QUALITY_SHEET_ID", "QUALITY_AUDIT_5S_SHEET_GID"),
         ("ebitda", "FINANCIAL_EBITDA_SHEET_ID", "FINANCIAL_EBITDA_SHEET_GID"),
         ("direct_labor", "DIRECT_LABOR_SHEET_ID", "DIRECT_LABOR_SHEET_GID"),
+        (
+            "supplies-negotiation-savings",
+            "SUPPLIES_IDD_SHEET_ID",
+            "SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID",
+        ),
     ],
 )
 def test_google_sheets_client_reads_rows(
@@ -82,6 +87,20 @@ def test_quality_audit_5s_summary_route(api_client: TestClient) -> None:
     body = response.json()
     assert body.get("success") is True
     assert isinstance(body.get("data"), dict)
+
+
+def test_supplies_negotiation_savings_summary_route(api_client: TestClient) -> None:
+    response = api_client.get(
+        "/supplies/negotiation-savings/summary",
+        params={"start_date": "2026-05-01", "end_date": "2026-05-31"},
+        headers=_service_headers(caller_app="dashboard-supplies"),
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("success") is True
+    data = body.get("data") or {}
+    assert "branches" in data
 
 
 def test_quality_kaizen_summary_with_date_filter(api_client: TestClient) -> None:

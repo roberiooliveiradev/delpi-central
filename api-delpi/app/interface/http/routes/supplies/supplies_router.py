@@ -10,16 +10,24 @@ from app.application.dto.supplies.get_stock_value_request import GetStockValueRe
 from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
+from app.application.dto.supplies.negotiation_savings_summary_request import (
+    NegotiationSavingsSummaryRequest,
+)
+from app.application.services.strategic_indicators.dashboard_goal_dates import (
+    normalize_si_branch,
+)
 
 from app.interface.http.openapi_agent_metadata import (
     SUPPLIES_CPV,
     SUPPLIES_INVENTORY_TURNOVER,
+    SUPPLIES_NEGOTIATION_SAVINGS,
     SUPPLIES_OTD,
     SUPPLIES_STOCK_VALUE,
 )
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
+    build_get_negotiation_savings_summary_use_case,
     build_get_otd_use_case,
     build_get_stock_value_use_case,
     build_get_inventory_turnover_use_case,
@@ -164,6 +172,50 @@ def get_stock_value(
             status_code=500,
         )
     
+
+@router.get("/negotiation-savings/summary", **SUPPLIES_NEGOTIATION_SAVINGS)
+@require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
+def get_negotiation_savings_summary(
+    branch: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
+):
+    try:
+        use_case = build_get_negotiation_savings_summary_use_case()
+
+        request = NegotiationSavingsSummaryRequest(
+            branch=normalize_si_branch(branch),
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        result = enrich_dashboard_metric(
+            use_case.execute(request).to_dict(),
+            source_key=goal_keys.SUPPLIES_NEGOTIATION_SAVINGS,
+            start_date=start_date,
+            end_date=end_date,
+            branch=normalize_si_branch(branch),
+            summary_key="summary",
+        )
+
+        return success_response(
+            data=result,
+            message="Economia em negociações de compras buscada com sucesso.",
+        )
+
+    except ValueError as exc:
+        log_error(
+            f"Erro de validação ao buscar economia em negociações de compras: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+
+    except Exception as exc:
+        log_error(f"Erro ao buscar economia em negociações de compras: {exc}")
+        return error_response(
+            "Erro interno ao buscar economia em negociações de compras.",
+            status_code=500,
+        )
+
 
 @router.get("/inventory-turnover", **SUPPLIES_INVENTORY_TURNOVER)
 @require_any_permission(["api-delpi.access", "dashboard-supplies.view"])
