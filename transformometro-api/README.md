@@ -49,7 +49,7 @@ make test
 
 ## Cadastro de dados
 
-Processos, revisões, medições e recursos são mantidos **somente pelo CRUD da API** e pelas telas do plugin (sem importação de planilha).
+Processos, revisões, medições e recursos são mantidos pelo CRUD e pelas telas do plugin. Backup/restauração: `GET /transformometro/data/export`, `POST /transformometro/data/import/preview` e `POST /transformometro/data/import/apply` (modos `merge` e `replace`).
 
 ## Integração engenharia / SI
 

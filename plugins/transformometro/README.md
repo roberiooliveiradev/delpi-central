@@ -13,7 +13,7 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 
 Barra superior do módulo: **Dashboard · Processos · Recursos**.
 
-Cadastro e evolução dos dados somente pelas telas do app (sem importação de planilha).
+Cadastro pelas telas do app. Backup/restauração completa via **Exportar / Importar JSON** (mesclar por ID ou substituir tudo).
 
 ## Desenvolvimento
 

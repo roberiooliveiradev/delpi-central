@@ -3,4 +3,5 @@ export const TRANSFORMOMETRO_ROUTES = {
   dashboard: "/apps/transformometro/dashboard",
   processos: "/apps/transformometro/processos",
   recursos: "/apps/transformometro/recursos",
+  dados: "/apps/transformometro/dados",
 } as const;

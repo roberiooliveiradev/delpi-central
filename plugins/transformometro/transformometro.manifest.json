@@ -50,6 +50,12 @@
       "name": "Recalcular dashboard",
       "description": "Permite disparar o recálculo mensal derivado.",
       "module": "transformometro"
+    },
+    {
+      "code": "transformometro.data.transfer",
+      "name": "Exportar e importar JSON",
+      "description": "Permite backup e restauração do cadastro via JSON.",
+      "module": "transformometro"
     }
   ],
   "routes": [
@@ -78,6 +84,15 @@
       "icon": "layers",
       "entry": null,
       "order": 23,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/transformometro/dados",
+      "label": "Exportar / Importar",
+      "permission": "transformometro.data.transfer",
+      "icon": "database",
+      "entry": null,
+      "order": 24,
       "showInMenu": true
     }
   ],

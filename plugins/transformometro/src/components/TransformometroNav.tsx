@@ -10,6 +10,7 @@ const LINKS = [
   { path: TRANSFORMOMETRO_ROUTES.dashboard, label: "Dashboard" },
   { path: TRANSFORMOMETRO_ROUTES.processos, label: "Processos" },
   { path: TRANSFORMOMETRO_ROUTES.recursos, label: "Recursos" },
+  { path: TRANSFORMOMETRO_ROUTES.dados, label: "Exportar / Importar" },
 ] as const;
 
 function isActive(path: string, currentPath?: string): boolean {

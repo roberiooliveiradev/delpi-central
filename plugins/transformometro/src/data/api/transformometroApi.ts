@@ -729,3 +729,65 @@ export function fetchProcessoComparativo(
 ) {
   return request<ProcessoComparativoResponse>(`/processos/${processoId}/comparativo`, getAccessToken);
 }
+
+export type JsonBackupBundle = {
+  schema_version: string;
+  exported_at?: string;
+  counts?: Record<string, number>;
+  processos: Record<string, unknown>[];
+  revisoes: Record<string, unknown>[];
+  medicoes: Record<string, unknown>[];
+  investimentos: Record<string, unknown>[];
+  recursos_compartilhados: Record<string, unknown>[];
+  recurso_custos: Record<string, unknown>[];
+  revisao_recursos_compartilhados: Record<string, unknown>[];
+};
+
+export type JsonImportMode = "replace" | "merge";
+
+export type JsonImportEntityStats = {
+  total: number;
+  insert: number;
+  update: number;
+  skip: number;
+};
+
+export type JsonImportPreview = {
+  valid: boolean;
+  errors?: string[];
+  mode: JsonImportMode;
+  entities?: Record<string, JsonImportEntityStats>;
+  current_counts?: Record<string, number>;
+  import_counts?: Record<string, number>;
+  recalc?: DashboardRecalcResult;
+};
+
+export function downloadJsonExport(getAccessToken?: () => string | undefined) {
+  return downloadFile("/data/export", "transformometro-backup.json", getAccessToken);
+}
+
+export function previewJsonImport(
+  data: JsonBackupBundle,
+  mode: JsonImportMode,
+  getAccessToken?: () => string | undefined
+) {
+  return request<JsonImportPreview>("/data/import/preview", getAccessToken, {
+    method: "POST",
+    body: JSON.stringify({ mode, data }),
+  });
+}
+
+export function applyJsonImport(
+  data: JsonBackupBundle,
+  mode: JsonImportMode,
+  getAccessToken?: () => string | undefined
+) {
+  return request<JsonImportPreview & { recalc?: DashboardRecalcResult }>(
+    "/data/import/apply",
+    getAccessToken,
+    {
+      method: "POST",
+      body: JSON.stringify({ mode, data }),
+    }
+  );
+}

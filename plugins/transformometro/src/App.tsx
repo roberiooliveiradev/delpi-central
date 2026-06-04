@@ -3,6 +3,7 @@ import { ProcessoDetailPage } from "./ui/pages/ProcessoDetailPage";
 import { RecursoDetailPage } from "./ui/pages/RecursoDetailPage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { RecursosPage } from "./ui/pages/RecursosPage";
+import { DataTransferPage } from "./ui/pages/DataTransferPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
 import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
@@ -40,6 +41,16 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         pathname={pathname}
         onNavigate={onNavigate}
         onBack={() => onNavigate(TRANSFORMOMETRO_ROUTES.recursos)}
+      />
+    );
+  }
+
+  if (route.view === "dados") {
+    return (
+      <DataTransferPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        onNavigate={onNavigate}
       />
     );
   }
