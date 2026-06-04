@@ -19,9 +19,11 @@ e aplicação das regras aprovadas na normalização base. Tudo atrás de featur
 | Aplicação | `ChatKnowledgeCandidateService` | Orquestra captura: safety → dedup/evidência → confiança → status. Promove candidato a termo de vocabulário (playbook §14, §15, §27). |
 | Aplicação | `ChatLearningCaptureService` | Captura candidatos a partir de **feedback negativo** e de **definições explícitas ditas no turno** ("quando eu falar X é Y"), com isolamento por SAVEPOINT. |
 | Aplicação | `ChatLearnedNormalizationService` | Carrega termos aprovados (cache TTL) e injeta as regras no normalizador base. |
-| Infra | `PostgresLearningCandidateRepository` / `PostgresVocabularyTermRepository` | Persistência. |
-| Infra | Tabelas `ai_learning_candidates`, `ai_vocabulary_terms` | Migração `r0s1t2u3v4w5`. |
-| Interface | `GET/POST /admin/learning/candidates*`, `GET/POST /admin/learning/vocabulary`, `GET /admin/metrics/learning/summary` | Revisão (aprovar/rejeitar/promover), CRUD de termos e KPIs. |
+| Domínio | `ChatUserMemoryDurabilityService` | Decide, de forma conservadora e de alta precisão, o que de um turno vira memória durável (preferências de estilo, dados de perfil declarados). Puro/sem DB. |
+| Aplicação | `ChatUserMemoryService` | Captura memória persistente do usuário/projeto (safety + dedup/evidência, SAVEPOINT) e monta o bloco de prompt injetado no turno. |
+| Infra | `PostgresLearningCandidateRepository` / `PostgresVocabularyTermRepository` / `PostgresMemoryItemRepository` | Persistência. |
+| Infra | Tabelas `ai_learning_candidates`, `ai_vocabulary_terms` (`r0s1t2u3v4w5`), `ai_memory_items` (`s1t2u3v4w5x6`) | Esquema. |
+| Interface | `GET/POST /admin/learning/candidates*`, `GET/POST /admin/learning/vocabulary`, `GET/POST /admin/learning/memory*`, `GET /admin/metrics/learning/summary` | Revisão, CRUD de termos, gestão de memória (esquecer/restaurar) e KPIs. |
 
 ## Fluxo (Fase 1)
 
@@ -65,6 +67,10 @@ Próximos turnos (send/stream)
 | `CHAT_LEARNING_AUTO_APPROVE_ENABLED` | `false` | Auto-aprovar candidatos de altíssima confiança. |
 | `CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE` | `0.95` | Limiar de auto-aprovação. |
 | `CHAT_LEARNING_VOCABULARY_MAX_RULES` | `500` | Teto de regras aprendidas aplicadas. |
+| `CHAT_USER_MEMORY_ENABLED` | `false` | Liga a memória persistente do usuário (captura + injeção). |
+| `CHAT_USER_MEMORY_CAPTURE` | `true` | Captura preferências/perfil duráveis ditos no turno. |
+| `CHAT_USER_MEMORY_APPLY` | `true` | Injeta a memória persistente no contexto do turno. |
+| `CHAT_USER_MEMORY_MAX_ITEMS` | `20` | Teto de itens de memória injetados por turno. |
 
 ## Endpoints admin
 
@@ -72,7 +78,26 @@ Próximos turnos (send/stream)
 - `POST /admin/learning/candidates/{id}/review` — body `{ "action": "approve|reject|promote", "term?", "normalizedTerm?", "meaning?" }`
 - `GET /admin/learning/vocabulary?scope=&approved=&type=&limit=&offset=`
 - `POST /admin/learning/vocabulary` — cria/edita termo aprovado (ex.: regra de typo `como vc s chama → como voce se chama`).
-- `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques).
+- `GET /admin/learning/memory?userId=&scope=&type=&status=&limit=&offset=` — lista memórias persistentes.
+- `POST /admin/learning/memory/{id}/review` — body `{ "action": "forget|restore" }` (esquecer/restaurar).
+- `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques + memória).
+
+## Memória persistente do usuário (Fase 3)
+
+Complementa a memória de **sessão** (`ai_chat_session_memory`) com memória
+**cross-sessão** por `user_id`/`project_id` em `ai_memory_items`:
+
+- **Captura** (`ChatUserMemoryService.capture_from_turn`, best-effort + SAVEPOINT):
+  só afirmações explícitas e estáveis — preferências de estilo/idioma/formato e
+  dados de perfil declarados (`ChatUserMemoryDurabilityService`). Tudo passa pelo
+  `ChatLearningSafetyGuard` (mensagem inteira + conteúdo) e por dedup/evidência.
+  Respeita o anti-padrão "não salvar tudo que o usuário fala" (playbook §43).
+- **Injeção** (`ChatTurnPreparationService`): quando ligada, um bloco
+  "Memória persistente do usuário" é mesclado ao `conversation_context` do turno.
+- **Governança/esquecer**: status `active → forgotten` (e `restore`), via admin
+  (`/admin/learning/memory`), atendendo ao requisito de permitir apagar memória.
+- `embedding` (JSONB) fica reservado para recuperação semântica futura (Fase 5);
+  a recuperação atual é por `user_id`/`project_id` + recência/evidência.
 
 ## KPIs (playbook §36)
 
@@ -90,5 +115,6 @@ informativa (falha na coleta não bloqueia a revisão).
 
 ## Não coberto nesta fase (próximas)
 
-- `memory_items` cross-usuário/projeto com embedding, `evaluation_cases`, eventos/workers,
-  pesquisa web de significado e fine-tuning offline (Fases 4–7 do roadmap).
+- Recuperação semântica de `memory_items` por embedding (Fase 5).
+- `evaluation_cases` com execução automática e bloqueio de promoção que quebra casos (Fase 6).
+- Glossário vivo com pesquisa web de significado (Fase 4) e fine-tuning offline (Fase 7).

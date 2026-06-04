@@ -309,6 +309,22 @@ def make_get_admin_learning_summary_use_case():
     return GetAdminLearningSummaryUseCase()
 
 
+def make_list_user_memory_items_use_case():
+    from app.application.use_cases.chat_user_memory_use_cases import (
+        ListUserMemoryItemsUseCase,
+    )
+
+    return ListUserMemoryItemsUseCase()
+
+
+def make_review_user_memory_item_use_case():
+    from app.application.use_cases.chat_user_memory_use_cases import (
+        ReviewUserMemoryItemUseCase,
+    )
+
+    return ReviewUserMemoryItemUseCase()
+
+
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
 

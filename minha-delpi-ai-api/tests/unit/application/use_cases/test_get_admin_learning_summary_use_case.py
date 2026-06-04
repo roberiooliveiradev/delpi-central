@@ -29,12 +29,24 @@ class _FakeVocabRepo:
         }
 
 
+class _FakeMemoryRepo:
+    def summary(self):
+        return {
+            "total": 5,
+            "active": 4,
+            "forgotten": 1,
+            "byStatus": {"active": 4, "forgotten": 1},
+            "byType": {"preference": 3, "profile": 1},
+        }
+
+
 def test_execute_assembles_summary_with_window():
     candidate_repo = _FakeCandidateRepo()
 
     use_case = GetAdminLearningSummaryUseCase(
         candidate_repository=candidate_repo,
         vocabulary_repository=_FakeVocabRepo(),
+        memory_repository=_FakeMemoryRepo(),
     )
 
     result = use_case.execute(hours=24)
@@ -43,6 +55,8 @@ def test_execute_assembles_summary_with_window():
     assert result["funnel"]["created"] == 4
     assert result["funnel"]["promoted"] == 1
     assert result["vocabulary"]["activeApproved"] == 2
+    assert result["memory"]["active"] == 4
+    assert result["highlights"]["memoryItemsActive"] == 4
     # janela aplicada ao repositório de candidatos
     assert candidate_repo.since is not None
 
@@ -51,6 +65,7 @@ def test_execute_normalizes_invalid_hours():
     use_case = GetAdminLearningSummaryUseCase(
         candidate_repository=_FakeCandidateRepo(),
         vocabulary_repository=_FakeVocabRepo(),
+        memory_repository=_FakeMemoryRepo(),
     )
 
     result = use_case.execute(hours=0)

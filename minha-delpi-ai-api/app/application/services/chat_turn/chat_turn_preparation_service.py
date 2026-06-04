@@ -519,6 +519,26 @@ class ChatTurnPreparationService:
             )
             pipeline_stages.append("project_shared_context")
 
+        try:
+            from app.application.services.chat_user_memory_service import (
+                ChatUserMemoryService,
+            )
+
+            user_memory_block = ChatUserMemoryService().format_prompt_block_for(
+                user_id=str(user_id) if user_id else None,
+                project_id=str((workspace_context.get("project") or {}).get("id") or "")
+                or None,
+            )
+
+            if user_memory_block:
+                conversation_context = ChatWorkingMemoryService.merge_conversation_context(
+                    conversation_context,
+                    user_memory_block,
+                )
+                pipeline_stages.append("user_memory")
+        except Exception:
+            pass
+
         from app.application.services.chat_attachment_multi_compare_service import (
             ChatAttachmentMultiCompareService,
         )

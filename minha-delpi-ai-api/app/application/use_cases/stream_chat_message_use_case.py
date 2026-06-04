@@ -150,6 +150,34 @@ class StreamChatMessageUseCase:
         except Exception:
             return
 
+    @staticmethod
+    def _capture_user_memory_from_turn(
+        *, message: str, session, user_id: str, session_id: str
+    ) -> None:
+        """Memória persistente (playbook Fase 3): preferências/perfil duráveis.
+
+        Best-effort + savepoint no serviço: nunca quebra nem polui o turno.
+        """
+        try:
+            from app.infrastructure.config.settings import Settings
+
+            if not Settings.CHAT_USER_MEMORY_ENABLED or not Settings.CHAT_USER_MEMORY_CAPTURE:
+                return
+
+            from app.application.services.chat_user_memory_service import (
+                ChatUserMemoryService,
+            )
+
+            project_id = getattr(session, "project_id", None)
+            ChatUserMemoryService().capture_from_turn(
+                message=message,
+                user_id=user_id,
+                project_id=str(project_id) if project_id else None,
+                session_id=session_id,
+            )
+        except Exception:
+            return
+
     def _stream_turn(self, request: SendChatMessageRequest) -> Iterator[dict]:
         self._warm_learned_normalization()
         turn_generation_config = ChatLlmMetadataService.resolve_generation_config(request)
@@ -289,6 +317,12 @@ class StreamChatMessageUseCase:
             message=message,
             session=session,
             user_id=request.user_id,
+        )
+        self._capture_user_memory_from_turn(
+            message=message,
+            session=session,
+            user_id=request.user_id,
+            session_id=request.session_id,
         )
 
         yield {

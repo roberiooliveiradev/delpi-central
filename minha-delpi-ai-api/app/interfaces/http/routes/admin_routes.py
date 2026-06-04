@@ -950,6 +950,64 @@ def admin_upsert_vocabulary_term():
     return jsonify(result), 201
 
 
+@admin_bp.get("/learning/memory")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_user_memory_items():
+    from app.composition.admin_composer import make_list_user_memory_items_use_case
+
+    user_id = (request.args.get("userId") or "").strip() or None
+    scope = (request.args.get("scope") or "").strip() or None
+    item_type = (request.args.get("type") or "").strip() or None
+    status = (request.args.get("status") or "").strip() or None
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_user_memory_items_use_case()
+    return jsonify(
+        use_case.execute(
+            user_id=user_id,
+            scope=scope,
+            type=item_type,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+    ), 200
+
+
+@admin_bp.post("/learning/memory/<int:item_id>/review")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_review_user_memory_item(item_id: int):
+    from app.composition.admin_composer import make_review_user_memory_item_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("action"):
+        return bad_request("action is required (forget|restore)")
+
+    use_case = make_review_user_memory_item_use_case()
+
+    try:
+        result = use_case.execute(
+            item_id=item_id,
+            action=str(payload.get("action")),
+            reviewer_id=str(g.current_user.sub),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @admin_bp.get("/metrics/learning/summary")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_learning_metrics_summary():

@@ -387,6 +387,24 @@ class Settings:
         os.getenv("CHAT_LEARNING_VOCABULARY_MAX_RULES", "500")
     )
 
+    # Memória persistente do usuário/projeto (playbook §30, Fase 3). Desligada por
+    # padrão: cross-sessão exige rollout controlado.
+    CHAT_USER_MEMORY_ENABLED = (
+        os.getenv("CHAT_USER_MEMORY_ENABLED", "false").lower() == "true"
+    )
+    # Capturar preferências/perfil duráveis declarados no turno.
+    CHAT_USER_MEMORY_CAPTURE = (
+        os.getenv("CHAT_USER_MEMORY_CAPTURE", "true").lower() == "true"
+    )
+    # Injetar a memória persistente no contexto do turno.
+    CHAT_USER_MEMORY_APPLY = (
+        os.getenv("CHAT_USER_MEMORY_APPLY", "true").lower() == "true"
+    )
+    # Teto de itens de memória injetados por turno.
+    CHAT_USER_MEMORY_MAX_ITEMS = int(
+        os.getenv("CHAT_USER_MEMORY_MAX_ITEMS", "20")
+    )
+
     @classmethod
     def resolve_web_search_provider(cls) -> str:
         provider = cls.CHAT_WEB_SEARCH_PROVIDER

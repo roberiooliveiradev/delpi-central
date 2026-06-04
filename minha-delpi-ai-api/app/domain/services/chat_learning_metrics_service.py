@@ -2,7 +2,7 @@ class ChatLearningMetricsService:
     """Monta KPIs de aprendizagem progressiva (playbook §36). Puro/sem DB."""
 
     @staticmethod
-    def assemble(*, candidates: dict, vocabulary: dict) -> dict:
+    def assemble(*, candidates: dict, vocabulary: dict, memory: dict | None = None) -> dict:
         by_status = candidates.get("byStatus", {}) if isinstance(candidates, dict) else {}
 
         pending = int(by_status.get("pending", 0)) + int(by_status.get("auto_approved", 0))
@@ -19,10 +19,12 @@ class ChatLearningMetricsService:
         )
 
         by_type = candidates.get("byType", {}) if isinstance(candidates, dict) else {}
+        memory = memory if isinstance(memory, dict) else {"total": 0, "active": 0}
 
         return {
             "candidates": candidates,
             "vocabulary": vocabulary,
+            "memory": memory,
             "funnel": {
                 "created": int(candidates.get("total", 0)),
                 "recentCreated": int(candidates.get("recentCreated", 0)),
@@ -40,5 +42,6 @@ class ChatLearningMetricsService:
                 "learnedTermsActive": int(vocabulary.get("activeApproved", 0))
                 if isinstance(vocabulary, dict)
                 else 0,
+                "memoryItemsActive": int(memory.get("active", 0)),
             },
         }
