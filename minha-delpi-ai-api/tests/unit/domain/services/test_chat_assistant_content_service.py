@@ -17,6 +17,21 @@ def test_product_overview_intent_terms_loaded():
     assert "me fale do produto" in terms
 
 
+def test_presenter_route_presentations_guide():
+    line = ChatAssistantContentService.format(
+        "presenter_content",
+        "routePresentations",
+        "guide",
+        "mainOps",
+        code="90260114",
+        count="3",
+        preview="**10** Usinagem",
+    )
+
+    assert "90260114" in line
+    assert "3" in line
+
+
 def test_presenter_operational_empty_messages():
     message = ChatAssistantContentService.format(
         "presenter_content",

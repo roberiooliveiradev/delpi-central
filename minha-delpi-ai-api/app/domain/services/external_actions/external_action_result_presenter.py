@@ -544,13 +544,19 @@ class ExternalActionResultPresenter:
             linhas.append(line)
 
         if len(results) > 12:
-            linhas.append(f"… e mais {len(results) - 12} tabela(s).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination", "moreTables", count=str(len(results) - 12)
+                )
+            )
 
         if len(linhas) <= 1:
-            linhas.append("Nenhuma tabela correspondeu à descrição informada.")
+            linhas.append(
+                self._route_presentation("systemTables", "noMatch")
+            )
 
         return {
-            "titulo": "Busca de tabelas Protheus (SX2)",
+            "titulo": self._route_presentation("systemTables", "searchTitle"),
             "linhas": linhas,
             "dados": root,
         }
@@ -584,7 +590,11 @@ class ExternalActionResultPresenter:
             linhas.append(f"… e mais {len(results) - 8} coluna(s).")
 
         return {
-            "titulo": f"Colunas da tabela {table_name.upper()}",
+            "titulo": self._route_presentation(
+                "systemTables",
+                "columnsTitle",
+                table=table_name.upper(),
+            ),
             "linhas": linhas,
             "dados": root,
         }
@@ -2294,34 +2304,47 @@ class ExternalActionResultPresenter:
         qtd_pi = root.get("qtd_pi")
 
         linhas = [
-            f"OV {sale_number}: {desc}".strip(": "),
+            self._route_presentation(
+                "lmp",
+                "ovHeader",
+                sale_number=str(sale_number),
+                desc=str(desc).strip(": "),
+            ).strip(": "),
         ]
 
         if kind:
-            linhas.append(f"Tipo: {kind}.")
+            linhas.append(self._route_presentation("lmp", "kind", kind=str(kind)))
 
         if branch:
-            linhas.append(f"Filial: {branch}.")
+            linhas.append(self._route_presentation("lmp", "branch", branch=str(branch)))
 
         if status:
-            linhas.append(f"Status engenharia: {status}.")
+            linhas.append(self._route_presentation("lmp", "status", status=str(status)))
 
         if customer:
-            linhas.append(f"Cliente: {customer}.")
+            linhas.append(
+                self._route_presentation("lmp", "customer", customer=str(customer))
+            )
 
         if seller:
-            linhas.append(f"Vendedor: {seller}.")
+            linhas.append(self._route_presentation("lmp", "seller", seller=str(seller)))
 
         if qtd_pi is not None:
-            linhas.append(f"Quantidade PI: {qtd_pi}.")
+            linhas.append(self._route_presentation("lmp", "piQuantity", qtd=str(qtd_pi)))
 
         products = root.get("list_products") or root.get("listProducts") or []
 
         if isinstance(products, list):
-            linhas.append(f"Produtos na LMP: {len(products)} item(ns).")
+            linhas.append(
+                self._route_presentation(
+                    "lmp", "productsCount", count=str(len(products))
+                )
+            )
 
         return {
-            "titulo": f"LMP OV {sale_number}",
+            "titulo": self._route_presentation(
+                "lmp", "detailTitle", sale_number=str(sale_number)
+            ),
             "linhas": [line for line in linhas if line],
             "dados": root,
         }
@@ -2683,17 +2706,30 @@ class ExternalActionResultPresenter:
         total = root.get("total")
         level1_count = len(items)
 
+        description = (
+            str(description or "").strip()
+            or self._route_presentation("structureItems", "noDescription")
+        )
         linhas: list[str] = [
-            f"Produto **{code}**: {description or 'sem descrição'}.",
+            self._route_presentation(
+                "structureItems",
+                "productLine",
+                code=code,
+                description=description,
+            ),
         ]
 
         if total is not None:
             linhas.append(
-                f"A composição (BOM) possui **{total}** componente(s) de nível 1."
+                self._route_presentation(
+                    "structureItems", "totalFromApi", total=str(total)
+                )
             )
         elif level1_count:
             linhas.append(
-                f"A composição possui **{level1_count}** componente(s) de nível 1."
+                self._route_presentation(
+                    "structureItems", "countFromItems", count=str(level1_count)
+                )
             )
 
         mp_codes: set[str] = set()
@@ -2726,31 +2762,47 @@ class ExternalActionResultPresenter:
             linhas.append(f"- {line}")
 
         if level1_count > 10:
-            linhas.append(f"… e mais **{level1_count - 10}** componente(s).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination",
+                    "moreStructureComponents",
+                    count=str(level1_count - 10),
+                )
+            )
 
         if mp_codes:
             preview = ", ".join(sorted(mp_codes)[:6])
             suffix = "…" if len(mp_codes) > 6 else ""
             linhas.append(
-                f"Inclui **{len(mp_codes)}** matéria(s)-prima(s): {preview}{suffix}."
+                self._route_presentation(
+                    "structureItems",
+                    "rawMaterials",
+                    count=str(len(mp_codes)),
+                    preview=preview,
+                    suffix=suffix,
+                )
             )
 
         return {
-            "titulo": f"Estrutura do produto {code}" if code else "Estrutura do produto",
+            "titulo": (
+                self._route_presentation("structureItems", "titleWithCode", code=code)
+                if code
+                else self._route_presentation("structureItems", "titleGeneric")
+            ),
             "linhas": linhas,
             "dados": root,
             "sourcePath": path,
         }
 
     def _present_product_search(self, root: dict, items: list, *, title: str | None = None) -> dict:
-        titulo = title or "Busca de produtos"
+        titulo = title or self._route_presentation("productSearch", "defaultTitle")
         total = root.get("total")
         is_hierarchy = titulo and ("pai" in titulo.lower() or "estrutura" in titulo.lower())
 
         if not items:
             return {
                 "titulo": titulo,
-                "linhas": ["Nenhum produto encontrado para a busca."],
+                "linhas": [self._route_presentation("productSearch", "emptySearch")],
                 "dados": root,
             }
 
@@ -2789,11 +2841,15 @@ class ExternalActionResultPresenter:
             linhas.append(line)
 
         if total is not None and total > len(items):
-            linhas.append(f"\nTotal encontrado: {total} produto(s).")
+            linhas.append(
+                self._route_presentation(
+                    "productSearch", "totalFound", total=str(total)
+                )
+            )
 
         return {
             "titulo": titulo,
-            "linhas": linhas or ["Nenhum produto encontrado."],
+            "linhas": linhas or [self._route_presentation("productSearch", "empty")],
             "dados": {"total": total, "items": [{"code": i.get("code"), "description": i.get("description"), "type": i.get("type"), "unit": i.get("unit")} for i in items]},
         }
 
@@ -2802,8 +2858,8 @@ class ExternalActionResultPresenter:
 
         if not items:
             return {
-                "titulo": "Ordens de Venda",
-                "linhas": ["Nenhuma ordem de venda encontrada para o período."],
+                "titulo": self._route_presentation("saleOrders", "title"),
+                "linhas": [self._route_presentation("saleOrders", "emptyPeriod")],
                 "dados": root,
             }
 
@@ -2832,11 +2888,18 @@ class ExternalActionResultPresenter:
             linhas.append(line)
 
         if total is not None:
-            linhas.append(f"Total: {total} ordem(ns) (página {root.get('page', 1)}).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination",
+                    "saleOrdersPageTotal",
+                    total=str(total),
+                    page=str(root.get("page", 1)),
+                )
+            )
 
         return {
-            "titulo": "Ordens de Venda",
-            "linhas": linhas or ["Nenhuma ordem de venda encontrada."],
+            "titulo": self._route_presentation("saleOrders", "title"),
+            "linhas": linhas or [self._route_presentation("saleOrders", "empty")],
             "dados": {"total": total, "items": items[:12]},
         }
 
@@ -2847,7 +2910,11 @@ class ExternalActionResultPresenter:
         path: str = "",
         title: str | None = None,
     ) -> dict:
-        titulo = title or self._infer_items_title(items, path) or "Roteiro do produto"
+        titulo = (
+            title
+            or self._infer_items_title(items, path)
+            or self._route_presentation("guide", "defaultTitle")
+        )
         product_code = self._extract_product_code_from_path(path)
 
         main_ops: list[tuple[str, str, str | None]] = []
@@ -2879,30 +2946,66 @@ class ExternalActionResultPresenter:
                 for code, desc, _ in main_ops
             )
             linhas.append(
-                f"O produto **{product_code}** possui {len(main_ops)} operação(ões): "
-                f"{ops_preview}."
+                self._route_presentation(
+                    "guide",
+                    "mainOps",
+                    code=product_code,
+                    count=str(len(main_ops)),
+                    preview=ops_preview,
+                )
             )
         elif product_code:
             linhas.append(
-                f"Consulta de roteiro do produto **{product_code}** "
-                f"com {len(items)} registro(s)."
+                self._route_presentation(
+                    "guide",
+                    "queryOnly",
+                    code=product_code,
+                    count=str(len(items)),
+                )
             )
 
         if component_products:
             preview_codes = ", ".join(sorted(component_products)[:5])
             suffix = "…" if len(component_products) > 5 else ""
             linhas.append(
-                f"Inclui também roteiros de **{len(component_products)}** componente(s) "
-                f"de nível BOM ({preview_codes}{suffix})."
+                self._route_presentation(
+                    "guide",
+                    "bomComponents",
+                    count=str(len(component_products)),
+                    preview=preview_codes,
+                    suffix=suffix,
+                )
             )
 
         for op_code, op_desc, work_center in main_ops:
-            center_part = f" no centro **{work_center}**" if work_center else ""
-            label = f"Operação **{op_code}**" if op_code else "Operação"
-            linhas.append(f"- {label}: {op_desc}{center_part}.")
+            center_part = (
+                self._route_presentation(
+                    "guide", "workCenterSuffix", center=str(work_center)
+                )
+                if work_center
+                else ""
+            )
+            label = (
+                self._route_presentation("guide", "operationWithCode", code=op_code)
+                if op_code
+                else self._route_presentation("guide", "operationGeneric")
+            )
+            linhas.append(
+                self._route_presentation(
+                    "guide",
+                    "operationLine",
+                    label=label,
+                    desc=op_desc,
+                    center=center_part,
+                )
+            )
 
         if not linhas:
-            linhas = [f"A API retornou {len(items)} registro(s) de roteiro."]
+            linhas = [
+                self._route_presentation(
+                    "guide", "apiFallback", count=str(len(items))
+                )
+            ]
 
         return {
             "titulo": titulo,
@@ -2940,7 +3043,11 @@ class ExternalActionResultPresenter:
         path: str = "",
         title: str | None = None,
     ) -> dict:
-        titulo = title or self._infer_items_title(items, path) or "Inspeção do produto"
+        titulo = (
+            title
+            or self._infer_items_title(items, path)
+            or self._route_presentation("inspection", "defaultTitle")
+        )
         product_code = self._extract_product_code_from_path(path)
         linhas: list[str] = []
 
@@ -2950,16 +3057,34 @@ class ExternalActionResultPresenter:
 
             if product_code:
                 linhas.append(
-                    f"Plano de inspeção do produto **{product_code}** "
-                    f"com **{len(items)}** registro(s)."
+                    self._route_presentation(
+                        "inspection",
+                        "planWithProduct",
+                        code=product_code,
+                        count=str(len(items)),
+                    )
                 )
             else:
-                linhas.append(f"Plano de inspeção com **{len(items)}** registro(s).")
+                linhas.append(
+                    self._route_presentation(
+                        "inspection",
+                        "planGeneric",
+                        count=str(len(items)),
+                    )
+                )
 
-            linhas.append(f"**{len(with_plan)}** item(ns) com inspeção definida.")
+            linhas.append(
+                self._route_presentation(
+                    "inspection", "withPlanCount", count=str(len(with_plan))
+                )
+            )
 
             if without_plan:
-                linhas.append(f"**{without_plan}** item(ns) sem plano cadastrado.")
+                linhas.append(
+                    self._route_presentation(
+                        "inspection", "withoutPlanCount", count=str(without_plan)
+                    )
+                )
 
             for item in with_plan:
                 if not isinstance(item, dict):
@@ -2983,9 +3108,14 @@ class ExternalActionResultPresenter:
                     "summaryFallback",
                 )
                 linhas.append(
-                    f"- **{item_code}**: {summary} "
-                    f"({measurable_count} teste(s) dimensional(is), "
-                    f"{textual_count} textual(is))."
+                    self._route_presentation(
+                        "inspection",
+                        "itemLine",
+                        code=item_code,
+                        summary=summary,
+                        measurable=str(measurable_count),
+                        textual=str(textual_count),
+                    )
                 )
 
                 if isinstance(measurable, list):
@@ -3007,10 +3137,23 @@ class ExternalActionResultPresenter:
                             spec_parts.append(f"limites {lower or '—'} a {upper or '—'}{unit}")
 
                         if spec_parts:
-                            linhas.append(f"  - {label}: {', '.join(spec_parts)}.")
+                            linhas.append(
+                                self._route_presentation(
+                                    "inspection",
+                                    "testLimits",
+                                    label=str(label),
+                                    specs=", ".join(spec_parts),
+                                )
+                            )
 
             if len(with_plan) > 8:
-                linhas.append(f"… e mais **{len(with_plan) - 8}** item(ns) com inspeção.")
+                linhas.append(
+                    self._presenter_text(
+                        "pagination",
+                        "moreInspectionItems",
+                        count=str(len(with_plan) - 8),
+                    )
+                )
 
             return {
                 "titulo": titulo,
@@ -3022,7 +3165,11 @@ class ExternalActionResultPresenter:
                 },
             }
 
-        linhas.append(f"Plano de inspeção com **{len(items)}** característica(s).")
+        linhas.append(
+            self._route_presentation(
+                "inspection", "characteristicsPlan", count=str(len(items))
+            )
+        )
 
         for item in items[:10]:
             if not isinstance(item, dict):
@@ -3048,7 +3195,13 @@ class ExternalActionResultPresenter:
             linhas.append(f"- {' — '.join(str(part) for part in parts)}")
 
         if len(items) > 10:
-            linhas.append(f"… e mais **{len(items) - 10}** característica(s).")
+            linhas.append(
+                self._presenter_text(
+                    "pagination",
+                    "moreCharacteristics",
+                    count=str(len(items) - 10),
+                )
+            )
 
         return {
             "titulo": titulo,
@@ -3850,7 +4003,11 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "table",
-            "title": f"LMPs ({root.get('total', len(rows))} registro(s))",
+            "title": self._route_presentation(
+                "tableTitles",
+                "lmps",
+                total=str(root.get("total", len(rows))),
+            ),
             "columns": columns,
             "rows": rows,
         }
@@ -3868,7 +4025,11 @@ class ExternalActionResultPresenter:
 
         return {
             "type": "table",
-            "title": f"Ordens de Venda ({root.get('total', len(rows))} registro(s))",
+            "title": self._route_presentation(
+                "tableTitles",
+                "saleOrders",
+                total=str(root.get("total", len(rows))),
+            ),
             "columns": columns,
             "rows": rows,
         }
@@ -4438,6 +4599,9 @@ class ExternalActionResultPresenter:
 
     def _route_narrative(self, route: str, key: str, **values: str) -> str:
         return self._presenter_text("routeNarratives", route, key, **values)
+
+    def _route_presentation(self, route: str, key: str, **values: str) -> str:
+        return self._presenter_text("routePresentations", route, key, **values)
 
     def _presenter_text(self, section: str, key: str, *extra_path: str, **values: str) -> str:
         from app.domain.services.chat_assistant_content_service import (

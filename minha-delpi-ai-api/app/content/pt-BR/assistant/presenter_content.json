@@ -139,12 +139,80 @@
     "lmpPageTotal": "Total: {total} registro(s) (página {page}).",
     "lmpEmptyPage": "Nenhuma LMP na página atual.",
     "itemsPageTotal": "Total: {total} registro(s) (página {page}).",
-    "moreDetailRecords": "… e mais {count} registro(s)."
+    "moreDetailRecords": "… e mais {count} registro(s).",
+    "saleOrdersPageTotal": "Total: {total} ordem(ns) (página {page}).",
+    "moreInspectionItems": "… e mais **{count}** item(ns) com inspeção.",
+    "moreCharacteristics": "… e mais **{count}** característica(s).",
+    "moreStructureComponents": "… e mais **{count}** componente(s).",
+    "moreTables": "… e mais {count} tabela(s)."
   },
   "analyserCollections": {
     "guideEmpty": "Roteiro: 0 registro(s).",
     "inspectionEmpty": "Inspeção: 0 registro(s).",
     "structureVisualizationHint": "A **estrutura** (BOM) está nas visualizações em **árvore**, **tabela** e, quando disponível, **gráfico** abaixo."
+  },
+  "routePresentations": {
+    "guide": {
+      "defaultTitle": "Roteiro do produto",
+      "mainOps": "O produto **{code}** possui {count} operação(ões): {preview}.",
+      "queryOnly": "Consulta de roteiro do produto **{code}** com {count} registro(s).",
+      "bomComponents": "Inclui também roteiros de **{count}** componente(s) de nível BOM ({preview}{suffix}).",
+      "operationWithCode": "Operação **{code}**",
+      "operationGeneric": "Operação",
+      "operationLine": "- {label}: {desc}{center}.",
+      "workCenterSuffix": " no centro **{center}**",
+      "apiFallback": "A API retornou {count} registro(s) de roteiro."
+    },
+    "inspection": {
+      "defaultTitle": "Inspeção do produto",
+      "planWithProduct": "Plano de inspeção do produto **{code}** com **{count}** registro(s).",
+      "planGeneric": "Plano de inspeção com **{count}** registro(s).",
+      "withPlanCount": "**{count}** item(ns) com inspeção definida.",
+      "withoutPlanCount": "**{count}** item(ns) sem plano cadastrado.",
+      "itemLine": "- **{code}**: {summary} ({measurable} teste(s) dimensional(is), {textual} textual(is)).",
+      "characteristicsPlan": "Plano de inspeção com **{count}** característica(s).",
+      "testLimits": "  - {label}: {specs}."
+    },
+    "saleOrders": {
+      "title": "Ordens de Venda",
+      "emptyPeriod": "Nenhuma ordem de venda encontrada para o período.",
+      "empty": "Nenhuma ordem de venda encontrada."
+    },
+    "lmp": {
+      "detailTitle": "LMP OV {sale_number}",
+      "ovHeader": "OV {sale_number}: {desc}",
+      "kind": "Tipo: {kind}.",
+      "branch": "Filial: {branch}.",
+      "status": "Status engenharia: {status}.",
+      "customer": "Cliente: {customer}.",
+      "seller": "Vendedor: {seller}.",
+      "piQuantity": "Quantidade PI: {qtd}.",
+      "productsCount": "Produtos na LMP: {count} item(ns)."
+    },
+    "productSearch": {
+      "defaultTitle": "Busca de produtos",
+      "emptySearch": "Nenhum produto encontrado para a busca.",
+      "empty": "Nenhum produto encontrado.",
+      "totalFound": "Total encontrado: {total} produto(s)."
+    },
+    "structureItems": {
+      "titleWithCode": "Estrutura do produto {code}",
+      "titleGeneric": "Estrutura do produto",
+      "productLine": "Produto **{code}**: {description}.",
+      "noDescription": "sem descrição",
+      "totalFromApi": "A composição (BOM) possui **{total}** componente(s) de nível 1.",
+      "countFromItems": "A composição possui **{count}** componente(s) de nível 1.",
+      "rawMaterials": "Inclui **{count}** matéria(s)-prima(s): {preview}{suffix}."
+    },
+    "systemTables": {
+      "searchTitle": "Busca de tabelas Protheus (SX2)",
+      "noMatch": "Nenhuma tabela correspondeu à descrição informada.",
+      "columnsTitle": "Colunas da tabela {table}"
+    },
+    "tableTitles": {
+      "lmps": "LMPs ({total} registro(s))",
+      "saleOrders": "Ordens de Venda ({total} registro(s))"
+    }
   },
   "routeNarratives": {
     "parents": {

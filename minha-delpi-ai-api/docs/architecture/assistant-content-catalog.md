@@ -73,12 +73,14 @@ Wrappers especializados (mantêm API estável):
 - Resumos de texto de parents/estrutura → `presenter_content.routeNarratives`
 - Visão geral do produto → `product_overview_intent.json`
 - Presenter genérico (vazio operacional, erros API, paginação, analyser) → `presenter_content.generic`, `operationalEmpty`, `apiErrors`, `pagination`, `analyserCollections`
+- Apresentações por rota (roteiro, inspeção, OV, LMP, busca, estrutura, SX2) → `presenter_content.routePresentations`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. Frases dinâmicas restantes no presenter (roteiro/inspeção agregados, títulos de tabela LMP/OV)
+1. Labels de coluna fixas no presenter (`FIELD_LABELS`) e faturamento/PMR especializados
+2. Seções markdown expandidas do analyser (inspeção dimensional em `_build_product_analyser_inspection_markdown`)
 
 ## Como adicionar conteúdo
 
