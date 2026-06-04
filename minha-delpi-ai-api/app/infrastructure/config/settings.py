@@ -405,6 +405,24 @@ class Settings:
         os.getenv("CHAT_USER_MEMORY_MAX_ITEMS", "20")
     )
 
+    # Glossário vivo (playbook §9–§13, Fase 4). Gated por CHAT_LEARNING_ENABLED.
+    # Recupera definições aprovadas e injeta no contexto quando o termo aparece.
+    CHAT_LEARNING_GLOSSARY_RETRIEVAL = (
+        os.getenv("CHAT_LEARNING_GLOSSARY_RETRIEVAL", "true").lower() == "true"
+    )
+    # Captura termos desconhecidos perguntados ("o que é X?") como candidatos.
+    CHAT_LEARNING_GLOSSARY_CAPTURE = (
+        os.getenv("CHAT_LEARNING_GLOSSARY_CAPTURE", "true").lower() == "true"
+    )
+    # Pesquisar significado público na web para enriquecer candidatos (custo/latência).
+    CHAT_LEARNING_GLOSSARY_WEB_MEANING = (
+        os.getenv("CHAT_LEARNING_GLOSSARY_WEB_MEANING", "false").lower() == "true"
+    )
+    # Teto de definições de glossário carregadas/injetadas por turno.
+    CHAT_LEARNING_GLOSSARY_MAX_TERMS = int(
+        os.getenv("CHAT_LEARNING_GLOSSARY_MAX_TERMS", "300")
+    )
+
     @classmethod
     def resolve_web_search_provider(cls) -> str:
         provider = cls.CHAT_WEB_SEARCH_PROVIDER

@@ -172,6 +172,31 @@ class SendChatMessageUseCase:
         except Exception:
             return
 
+    @staticmethod
+    def _capture_glossary_from_turn(*, message: str, session, user_id: str) -> None:
+        """Glossário vivo (playbook Fase 4): termo desconhecido perguntado vira candidato.
+
+        Best-effort + savepoint no serviço: nunca quebra nem polui o turno.
+        """
+        try:
+            from app.infrastructure.config.settings import Settings
+
+            if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_GLOSSARY_CAPTURE:
+                return
+
+            from app.application.services.chat_meaning_discovery_service import (
+                ChatMeaningDiscoveryService,
+            )
+
+            project_id = getattr(session, "project_id", None)
+            ChatMeaningDiscoveryService().capture_unknown_term_from_turn(
+                message=message,
+                project_id=str(project_id) if project_id else None,
+                created_by=user_id,
+            )
+        except Exception:
+            return
+
     def _execute_turn(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
         self._warm_learned_normalization()
         user_id = UUID(request.user_id)
@@ -249,6 +274,9 @@ class SendChatMessageUseCase:
             session=session,
             user_id=request.user_id,
             session_id=request.session_id,
+        )
+        self._capture_glossary_from_turn(
+            message=message, session=session, user_id=request.user_id
         )
 
         prepared = self.turn_preparation_service.prepare(

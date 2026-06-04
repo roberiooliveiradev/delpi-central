@@ -75,6 +75,16 @@ class ReviewLearningCandidateUseCase:
         except Exception:
             pass
 
+        # Atualiza o cache de definições do glossário (termo promovido com meaning).
+        try:
+            from app.application.services.chat_glossary_retrieval_service import (
+                ChatGlossaryRetrievalService,
+            )
+
+            ChatGlossaryRetrievalService().refresh()
+        except Exception:
+            pass
+
         return result
 
 
@@ -181,6 +191,15 @@ class UpsertVocabularyTermUseCase:
 
         try:
             ChatLearnedNormalizationService().refresh()
+        except Exception:
+            pass
+
+        try:
+            from app.application.services.chat_glossary_retrieval_service import (
+                ChatGlossaryRetrievalService,
+            )
+
+            ChatGlossaryRetrievalService().refresh()
         except Exception:
             pass
 

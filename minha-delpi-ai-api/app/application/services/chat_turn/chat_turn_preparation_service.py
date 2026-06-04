@@ -1105,6 +1105,32 @@ class ChatTurnPreparationService:
                     semantic_block,
                 )
 
+        try:
+            from app.application.services.chat_glossary_retrieval_service import (
+                ChatGlossaryRetrievalService,
+            )
+
+            glossary_block = ChatGlossaryRetrievalService().build_context_block_for(
+                message=message,
+                project_id=str((workspace_context.get("project") or {}).get("id") or "")
+                or None,
+            )
+
+            if glossary_block:
+                existing_rag_context = rag.get("context") or ""
+                rag = {
+                    **rag,
+                    "context": (
+                        f"{existing_rag_context}\n\n{glossary_block}"
+                        if existing_rag_context
+                        else glossary_block
+                    ),
+                }
+                if "glossary" not in pipeline_stages:
+                    pipeline_stages.append("glossary")
+        except Exception:
+            pass
+
         rag_context_chars = len(rag.get("context") or "")
         pipeline_timings.mark("rag_done")
 

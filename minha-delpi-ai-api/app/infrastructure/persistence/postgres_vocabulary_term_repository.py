@@ -128,6 +128,76 @@ class PostgresVocabularyTermRepository:
             for row in rows
         ]
 
+    def list_active_definitions(
+        self,
+        *,
+        scopes: tuple[str, ...] = ("global",),
+        project_id: UUID | None = None,
+        max_terms: int = 300,
+    ) -> list[dict]:
+        """Termos de glossário aprovados/ativos com significado (type=term_definition)."""
+        scope_filter = AiVocabularyTermModel.scope.in_(scopes)
+
+        if project_id is not None:
+            scope_filter = db.or_(
+                scope_filter,
+                AiVocabularyTermModel.project_id == project_id,
+            )
+
+        rows = (
+            AiVocabularyTermModel.query.filter(
+                AiVocabularyTermModel.approved.is_(True),
+                AiVocabularyTermModel.active.is_(True),
+                AiVocabularyTermModel.type == "term_definition",
+                AiVocabularyTermModel.meaning.isnot(None),
+                scope_filter,
+            )
+            .order_by(AiVocabularyTermModel.updated_at.desc())
+            .limit(max(1, min(max_terms, 2000)))
+            .all()
+        )
+
+        return [
+            {
+                "term": str(row.term),
+                "normalizedTerm": str(row.normalized_term),
+                "meaning": str(row.meaning),
+                "scope": str(row.scope),
+            }
+            for row in rows
+            if row.meaning
+        ]
+
+    def find_definition_by_term(
+        self,
+        *,
+        normalized_term: str,
+        scopes: tuple[str, ...] = ("global",),
+        project_id: UUID | None = None,
+    ) -> dict | None:
+        """Busca uma definição aprovada por forma normalizada (lookup interno)."""
+        scope_filter = AiVocabularyTermModel.scope.in_(scopes)
+
+        if project_id is not None:
+            scope_filter = db.or_(
+                scope_filter,
+                AiVocabularyTermModel.project_id == project_id,
+            )
+
+        row = (
+            AiVocabularyTermModel.query.filter(
+                AiVocabularyTermModel.approved.is_(True),
+                AiVocabularyTermModel.active.is_(True),
+                AiVocabularyTermModel.type == "term_definition",
+                AiVocabularyTermModel.normalized_term == normalized_term,
+                scope_filter,
+            )
+            .order_by(AiVocabularyTermModel.updated_at.desc())
+            .first()
+        )
+
+        return self._to_dict(row) if row else None
+
     def summary(self) -> dict:
         model = AiVocabularyTermModel
 

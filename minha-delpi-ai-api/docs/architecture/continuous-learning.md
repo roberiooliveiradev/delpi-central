@@ -21,6 +21,10 @@ e aplicação das regras aprovadas na normalização base. Tudo atrás de featur
 | Aplicação | `ChatLearnedNormalizationService` | Carrega termos aprovados (cache TTL) e injeta as regras no normalizador base. |
 | Domínio | `ChatUserMemoryDurabilityService` | Decide, de forma conservadora e de alta precisão, o que de um turno vira memória durável (preferências de estilo, dados de perfil declarados). Puro/sem DB. |
 | Aplicação | `ChatUserMemoryService` | Captura memória persistente do usuário/projeto (safety + dedup/evidência, SAVEPOINT) e monta o bloco de prompt injetado no turno. |
+| Domínio | `ChatTermExtractionService` | Detecta perguntas de definição ("o que é X?") e classifica termos desconhecidos (sigla/técnico/código/cliente — playbook §9, §13). Puro/sem DB. |
+| Domínio | `ChatWebMeaningResearchService` | Decide elegibilidade de pesquisa web (termo público, não sensível) e monta a query (playbook §12, §35). Puro/sem rede. |
+| Aplicação | `ChatGlossaryRetrievalService` | Carrega definições aprovadas (cache TTL) e injeta no contexto do turno os termos do glossário citados na pergunta. |
+| Aplicação | `ChatMeaningDiscoveryService` | Cascata de descoberta de significado: glossário interno → pesquisa web autorizada → candidato `term_definition` pendente (SAVEPOINT). |
 | Infra | `PostgresLearningCandidateRepository` / `PostgresVocabularyTermRepository` / `PostgresMemoryItemRepository` | Persistência. |
 | Infra | Tabelas `ai_learning_candidates`, `ai_vocabulary_terms` (`r0s1t2u3v4w5`), `ai_memory_items` (`s1t2u3v4w5x6`) | Esquema. |
 | Interface | `GET/POST /admin/learning/candidates*`, `GET/POST /admin/learning/vocabulary`, `GET/POST /admin/learning/memory*`, `GET /admin/metrics/learning/summary` | Revisão, CRUD de termos, gestão de memória (esquecer/restaurar) e KPIs. |
@@ -71,6 +75,10 @@ Próximos turnos (send/stream)
 | `CHAT_USER_MEMORY_CAPTURE` | `true` | Captura preferências/perfil duráveis ditos no turno. |
 | `CHAT_USER_MEMORY_APPLY` | `true` | Injeta a memória persistente no contexto do turno. |
 | `CHAT_USER_MEMORY_MAX_ITEMS` | `20` | Teto de itens de memória injetados por turno. |
+| `CHAT_LEARNING_GLOSSARY_RETRIEVAL` | `true` | Injeta definições do glossário citadas na pergunta. |
+| `CHAT_LEARNING_GLOSSARY_CAPTURE` | `true` | Captura termo desconhecido perguntado ("o que é X?") como candidato. |
+| `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `false` | Pesquisa significado público na web para enriquecer o candidato. |
+| `CHAT_LEARNING_GLOSSARY_MAX_TERMS` | `300` | Teto de definições carregadas/injetadas por turno. |
 
 ## Endpoints admin
 
@@ -113,8 +121,30 @@ Complementa a memória de **sessão** (`ai_chat_session_memory`) com memória
 A faixa de KPIs aparece no topo da aba **Conhecimento → Aprendizagem** do MFE e é
 informativa (falha na coleta não bloqueia a revisão).
 
+## Glossário vivo (Fase 4)
+
+Quando um termo do glossário aprovado (`ai_vocabulary_terms` tipo `term_definition`,
+com `meaning`) aparece na pergunta, sua definição é injetada no `rag["context"]`
+do turno (`ChatGlossaryRetrievalService`, cache TTL atualizado em promoção/edição).
+
+Quando o usuário pergunta o significado de um termo desconhecido ("o que é X?"):
+
+```
+ChatTermExtractionService.detect_definition_question(message) → termo
+→ se já existe no glossário interno → nada a aprender
+→ senão ChatMeaningDiscoveryService:
+   1. lookup interno (glossário)
+   2. (autorizado) pesquisa web pública  [flag CHAT_LEARNING_GLOSSARY_WEB_MEANING]
+      → WebSearchHttpGateway + ChatWebSearchSourceEvaluationService
+      → só termos públicos/seguros (ChatWebMeaningResearchService.is_eligible)
+   3. registra candidato term_definition (status pending) para revisão admin
+```
+
+Os candidatos entram no fluxo já existente de `/admin/learning/candidates`
+(aprovar/rejeitar/promover com `meaning`), e a promoção atualiza o cache do glossário.
+
 ## Não coberto nesta fase (próximas)
 
-- Recuperação semântica de `memory_items` por embedding (Fase 5).
+- Recuperação semântica de `memory_items`/glossário por embedding e indexação no RAG (Fase 5).
 - `evaluation_cases` com execução automática e bloqueio de promoção que quebra casos (Fase 6).
-- Glossário vivo com pesquisa web de significado (Fase 4) e fine-tuning offline (Fase 7).
+- Fine-tuning offline (Fase 7).
