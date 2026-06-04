@@ -71,7 +71,7 @@ describe("assistantContentInterleave", () => {
     );
 
     const destaqueIndex = segments.findIndex(
-      (segment) => segment.kind === "markdown" && segment.markdown.includes("Destaques"),
+      (segment) => segment.kind === "markdown" && segment.markdown.includes("Destaque."),
     );
     const roteiroIndex = segments.findIndex(
       (segment) =>
@@ -83,7 +83,7 @@ describe("assistantContentInterleave", () => {
         segment.kind === "table" && segment.presentation.title?.startsWith("Produto "),
     );
     const pontosIndex = segments.findIndex(
-      (segment) => segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
+      (segment) => segment.kind === "markdown" && segment.markdown.includes("1. Atenção"),
     );
     const treeIndex = segments.findIndex((segment) => segment.kind === "tree");
 
@@ -130,11 +130,11 @@ describe("assistantContentInterleave", () => {
 
     const segments = buildAssistantContentSegments("", toolCalls);
     const destaqueIndex = segments.findIndex(
-      (segment) => segment.kind === "markdown" && segment.markdown.includes("Destaques"),
+      (segment) => segment.kind === "markdown" && segment.markdown.includes("- Item."),
     );
     const tableIndex = segments.findIndex((segment) => segment.kind === "table");
     const pontosIndex = segments.findIndex(
-      (segment) => segment.kind === "markdown" && segment.markdown.includes("Pontos"),
+      (segment) => segment.kind === "markdown" && segment.markdown.includes("1. Alerta"),
     );
     const treeIndex = segments.findIndex((segment) => segment.kind === "tree");
 

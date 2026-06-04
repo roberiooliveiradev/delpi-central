@@ -55,8 +55,7 @@ describe("assistantContentStackOrder", () => {
     );
     const destaqueIndex = segments.findIndex(
       (segment) =>
-        segment.kind === "markdown" &&
-        segment.markdown.includes("**Destaques**"),
+        segment.kind === "markdown" && segment.markdown.includes("Estrutura com 6 itens"),
     );
     const roteiroIndex = segments.findIndex(
       (segment) =>
@@ -64,9 +63,7 @@ describe("assistantContentStackOrder", () => {
         String(segment.presentation.title || "").includes("Roteiro"),
     );
     const pontosIndex = segments.findIndex(
-      (segment) =>
-        segment.kind === "markdown" &&
-        segment.markdown.includes("**Pontos de atenção"),
+      (segment) => segment.kind === "markdown" && segment.markdown.includes("1. Bloqueio"),
     );
     const treeIndex = kinds.indexOf("tree");
 

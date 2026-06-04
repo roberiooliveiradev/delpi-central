@@ -31,8 +31,8 @@ export type StackPresentationPlan = {
   presentationProfile?: "product_analyser" | "generic_stack";
   humanizedSections?: boolean;
   sectionVisibility?: Partial<Record<StackSectionId, boolean>>;
-  /** Análise curta por seção (API — conteúdo real, não texto de mockup). */
-  sectionIntros?: Partial<Record<StackSectionId, string>>;
+  /** Texto explicativo por seção (API) — renderizado como markdown normal, sem repetir tabela/bullets. */
+  sectionFraming?: Partial<Record<StackSectionId, string>>;
 };
 
 const DEFAULT_TABLE_ROLE_ORDER: StackTableRole[] = [
@@ -90,7 +90,7 @@ function normalizeNarrativeOrder(value: unknown): StackNarrativeSlot[] {
   return slots.length ? slots : DEFAULT_NARRATIVE_ORDER;
 }
 
-function normalizeSectionIntros(
+function normalizeSectionFraming(
   value: unknown,
 ): Partial<Record<StackSectionId, string>> | undefined {
   if (!value || typeof value !== "object") {
@@ -168,7 +168,9 @@ function parsePlan(raw: Record<string, unknown>): StackPresentationPlan {
         : undefined,
     humanizedSections: raw.humanizedSections === true,
     sectionVisibility: normalizeSectionVisibility(raw.sectionVisibility),
-    sectionIntros: normalizeSectionIntros(raw.sectionIntros),
+    sectionFraming: normalizeSectionFraming(
+      raw.sectionFraming ?? raw.sectionIntros,
+    ),
   };
 }
 

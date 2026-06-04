@@ -30,7 +30,8 @@ describe("presentationStackBlueprint live fixture", () => {
       );
       const destaqueIndex = indexOf(
         (segment) =>
-          segment.kind === "markdown" && segment.markdown.includes("**Destaques**"),
+          segment.kind === "markdown" &&
+          segment.markdown.includes("Estrutura com 6 item"),
       );
       const roteiroIndex = indexOf(
         (segment) =>
@@ -40,7 +41,8 @@ describe("presentationStackBlueprint live fixture", () => {
       const treeIndex = indexOf((segment) => segment.kind === "tree");
       const pontosIndex = indexOf(
         (segment) =>
-          segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
+          segment.kind === "markdown" &&
+          segment.markdown.includes("1. Cadastro com indicador"),
       );
 
       expect(profileIndex).toBeGreaterThanOrEqual(0);

@@ -12,7 +12,6 @@ export type StackSectionId =
 export type StackSectionChrome = {
   id: StackSectionId;
   title: string;
-  description: string;
   showIn: Array<ContentFormatKind | "complete">;
 };
 
@@ -36,14 +35,10 @@ const SECTION_SHOW_IN: Record<StackSectionId, StackSectionChrome["showIn"]> = {
   attention: ["complete", "text"],
 };
 
-export function buildStackSectionChrome(
-  id: StackSectionId,
-  intro?: string | null,
-): StackSectionChrome {
+export function buildStackSectionChrome(id: StackSectionId): StackSectionChrome {
   return {
     id,
     title: SECTION_TITLES[id],
-    description: String(intro || "").trim(),
     showIn: SECTION_SHOW_IN[id],
   };
 }

@@ -128,8 +128,7 @@ describe("assistantContentVisualFormats", () => {
     expect(kinds).toEqual(["stackSection", "tree"]);
     expect(
       segments.some(
-        (segment) =>
-          segment.kind === "markdown" && segment.markdown.includes("**Pontos de atenção"),
+        (segment) => segment.kind === "markdown" && segment.markdown.includes("1. Bloqueio"),
       ),
     ).toBe(true);
   });

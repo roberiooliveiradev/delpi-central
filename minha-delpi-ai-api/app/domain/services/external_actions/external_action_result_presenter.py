@@ -3218,11 +3218,16 @@ class ExternalActionResultPresenter:
             product,
             compact_for_rich_ui=compact_for_rich_ui,
         )
-        scope_line = (
-            "Análise integrada do cadastro, roteiro de produção, plano de inspeção "
-            "e estrutura (BOM) do item abaixo."
-        )
-        markdown_parts = [f"### {title}", "", scope_line, "", *body_parts]
+        markdown_parts = [f"### {title}", ""]
+
+        if not compact_for_rich_ui:
+            scope_line = (
+                "Análise integrada do cadastro, roteiro de produção, plano de inspeção "
+                "e estrutura (BOM) do item abaixo."
+            )
+            markdown_parts.extend([scope_line, ""])
+
+        markdown_parts.extend(body_parts)
 
         return {
             "type": "markdown",

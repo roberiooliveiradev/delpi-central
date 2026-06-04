@@ -46,11 +46,11 @@ def test_analyser_humanized_sections_only_when_data_exists():
     assert plan["sectionVisibility"]["inspection"] is False
     assert plan["sectionVisibility"]["structure"] is True
     assert "inspection" not in plan["narrativeOrder"] or plan["sectionVisibility"]["inspection"] is False
-    intros = plan.get("sectionIntros") or {}
-    assert "90260149" in intros.get("profile", "")
-    assert "roteiro" in intros.get("guide", "").lower() or "registro" in intros.get("guide", "").lower()
-    assert "Destaques" not in str(intros.get("highlights", ""))
-    assert "leitura de abertura" not in " ".join(intros.values()).lower()
+    framing = plan.get("sectionFraming") or {}
+    assert "cadastro" in framing.get("profile", "").lower()
+    assert "operações" in framing.get("guide", "").lower()
+    assert "90260149" not in framing.get("highlights", "")
+    assert "estrutura com" not in " ".join(framing.values()).lower()
 
 
 def test_stock_route_has_no_humanized_sections():

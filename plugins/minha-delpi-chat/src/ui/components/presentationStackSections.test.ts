@@ -77,13 +77,13 @@ describe("presentationStackSections", () => {
               structure: true,
               attention: true,
             },
-            sectionIntros: {
-              scope: "Análise integrada do produto 90260149.",
-              profile: "90260149 · ficha cadastral.",
-              highlights: "Estrutura com 6 itens.",
-              guide: "1 registro no roteiro.",
-              structure: "1 nó na árvore.",
-              attention: "Bloqueio «2».",
+            sectionFraming: {
+              scope: "Visão integrada do produto 90260149.",
+              profile: "Cadastro do item na tabela abaixo.",
+              highlights: "Leitura rápida do que mais importa.",
+              guide: "Operações de fabricação na tabela.",
+              structure: "Composição em árvore abaixo.",
+              attention: "Validar antes de decidir.",
             },
             narrativeOrder: [
               "lead",
@@ -139,13 +139,13 @@ describe("presentationStackSections", () => {
   });
 
   it("filtra seções por aba da toolbar", () => {
-    const profileSection = buildStackSectionChrome("profile", "ficha");
+    const profileSection = buildStackSectionChrome("profile");
 
     expect(isStackSectionVisible(profileSection, "table")).toBe(true);
     expect(isStackSectionVisible(profileSection, "text")).toBe(false);
 
     const segments: AssistantContentSegment[] = [
-      { kind: "stackSection", section: buildStackSectionChrome("scope", "escopo") },
+      { kind: "stackSection", section: buildStackSectionChrome("scope") },
       { kind: "stackSection", section: profileSection },
       { kind: "markdown", markdown: "texto" },
     ];
