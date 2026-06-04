@@ -43,7 +43,7 @@ def _assistant_with_stock(product_code: str = "10080001"):
 @pytest.mark.parametrize("message,entities,expected_keys", SESSION_MEMORY_REFERENCE_CASES)
 def test_reference_resolution_from_snapshot(message, entities, expected_keys):
     snapshot = {
-        "lastEntities": entities,
+        "operationalFocus": entities,
         "lastPresentation": {"type": "table", "messageId": "msg-1"},
         "lastAction": {"name": "stock_lookup", "params": entities},
     }
@@ -73,7 +73,7 @@ def test_m1_stock_then_suppliers_inherits_product():
         previous_messages=previous,
     )
 
-    assert snapshot["lastEntities"].get("productCode") == "10080001"
+    assert snapshot["operationalFocus"].get("productCode") == "10080001"
     assert snapshot["followUpDetected"] is True
 
 
@@ -96,11 +96,11 @@ def test_m6_clear_context_wipes_entities():
     service = ChatSessionMemoryService(_Repo())
     snapshot = service.apply_to_pre_turn(
         session_id=uuid4(),
-        snapshot={"lastEntities": {"productCode": "10080001"}},
+        snapshot={"operationalFocus": {"productCode": "10080001"}},
         message="limpe o contexto",
     )
 
-    assert snapshot["lastEntities"] == {}
+    assert snapshot["operationalFocus"] == {}
     assert snapshot.get("persistedMemoryCleared") is True
 
 
@@ -137,7 +137,7 @@ def test_m10_post_turn_enriches_last_action():
 
 def test_m11_selective_clear_product():
     snapshot = {
-        "lastEntities": {"productCode": "10080001", "branch": "02"},
+        "operationalFocus": {"productCode": "10080001", "branch": "02"},
         "behaviorInstructions": {},
     }
     snapshot = ChatConversationMemoryService._apply_selective_clear(
@@ -145,8 +145,8 @@ def test_m11_selective_clear_product():
         snapshot,
     )
 
-    assert "productCode" not in snapshot["lastEntities"]
-    assert snapshot["lastEntities"].get("branch") == "02"
+    assert "productCode" not in snapshot["operationalFocus"]
+    assert snapshot["operationalFocus"].get("branch") == "02"
 
 
 def test_m5_canvas_state_in_snapshot():

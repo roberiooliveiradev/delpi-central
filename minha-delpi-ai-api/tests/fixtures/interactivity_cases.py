@@ -151,7 +151,7 @@ INTERACTIVITY_CASES: list[dict] = [
             ],
             "contextSnapshot": {
                 "summary": "Produto 10080001",
-                "lastEntities": {"productCode": "10080001"},
+                "operationalFocus": {"productCode": "10080001"},
             },
             "followUpSuggestions": [
                 {"label": "Ver fornecedores", "query": "fornecedores"},
@@ -168,7 +168,7 @@ INTERACTIVITY_CASES: list[dict] = [
                     "query": "Qual o estoque do produto {{productCode}}?",
                 },
             ],
-            "contextSnapshot": {"lastEntities": {"productCode": "10080001"}},
+            "contextSnapshot": {"operationalFocus": {"productCode": "10080001"}},
         },
         "expect_resolved_query": "10080001",
     },

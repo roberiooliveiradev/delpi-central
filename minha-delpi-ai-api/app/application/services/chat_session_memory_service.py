@@ -43,7 +43,7 @@ class ChatSessionMemoryService:
             self.repository.deactivate_all(session_id)
             return {
                 **snapshot,
-                "lastEntities": {},
+                "operationalFocus": {},
                 "behaviorInstructions": {},
                 "persistedMemoryApplied": False,
                 "persistedMemoryCleared": True,
@@ -54,7 +54,7 @@ class ChatSessionMemoryService:
         if overlay.get("cleared"):
             cleared_snapshot = {
                 **snapshot,
-                "lastEntities": {},
+                "operationalFocus": {},
                 "behaviorInstructions": {},
                 "persistedMemoryApplied": False,
                 "persistedMemoryCleared": True,
@@ -63,7 +63,7 @@ class ChatSessionMemoryService:
 
         merged = self._merge_overlay(snapshot, overlay)
 
-        if overlay.get("lastEntities") or overlay.get("behaviorInstructions"):
+        if overlay.get("operationalFocus") or overlay.get("behaviorInstructions"):
             merged["persistedMemoryApplied"] = True
 
         return merged
@@ -131,19 +131,22 @@ class ChatSessionMemoryService:
     @classmethod
     def _merge_overlay(cls, snapshot: dict, overlay: dict) -> dict:
         result = dict(snapshot)
-        entities = dict(result.get("lastEntities") or {})
         behavior = dict(result.get("behaviorInstructions") or {})
-
-        for key, value in (overlay.get("lastEntities") or {}).items():
-            if value and not entities.get(key):
-                entities[key] = value
 
         for key, value in (overlay.get("behaviorInstructions") or {}).items():
             if value and not behavior.get(key):
                 behavior[key] = value
 
-        result["lastEntities"] = entities
         result["behaviorInstructions"] = behavior
+        entities = dict(result.get("operationalFocus") or {})
+
+        for key, value in (overlay.get("operationalFocus") or {}).items():
+            token = str(value or "").strip()
+
+            if token and not entities.get(key):
+                entities[key] = token
+
+        result["operationalFocus"] = entities
         return ChatUserContextItemService.merge_items_into_snapshot(
             result,
             overlay.get("userContextItems"),

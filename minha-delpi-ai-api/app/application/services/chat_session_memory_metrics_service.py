@@ -11,7 +11,7 @@ class ChatSessionMemoryMetricsService:
         if not isinstance(snapshot, dict):
             return None
 
-        entities = snapshot.get("lastEntities") or {}
+        entities = snapshot.get("operationalFocus") or {}
         resolved = snapshot.get("resolvedReferences") or []
         preferences = snapshot.get("preferencesApplied") or []
         last_action = snapshot.get("lastAction") or {}

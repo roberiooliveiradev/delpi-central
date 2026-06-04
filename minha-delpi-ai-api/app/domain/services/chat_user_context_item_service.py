@@ -11,6 +11,9 @@ from app.domain.services.chat_manual_context_pin_service import ChatManualContex
 from app.domain.services.chat_product_query_intent_service import (
     ChatProductQueryIntentService,
 )
+from app.domain.services.chat_snapshot_operational_focus import (
+    ChatSnapshotOperationalFocus,
+)
 
 _MAX_CONTENT_CHARS = 12_000
 _MAX_PROMPT_CHARS = 4_000
@@ -36,6 +39,16 @@ _USER_CONTEXT_SECTION_END_RE = re.compile(
 _CONVERSATION_KINDS = frozenset({"question", "answer", "turn"})
 _CONTEXT_CHIP_KIND = "context"
 _ENTITY_ITEM_KINDS = frozenset({"product", "branch", "warehouse"})
+_OPERATIONAL_FROM_CONTEXT_KEYS = frozenset({"productCode", "branch", "warehouse"})
+_PRESERVED_ENTITY_KEYS = frozenset(
+    {
+        "period",
+        "orderId",
+        "lastSqlSnippet",
+        "lastAttachmentName",
+        "productCodeSource",
+    }
+)
 
 
 class ChatUserContextItemService:
@@ -401,14 +414,47 @@ class ChatUserContextItemService:
 
         if not normalized:
             result.pop("userContextItems", None)
-            return result
+            return cls.sync_operational_focus(result)
 
         result["userContextItems"] = normalized[-12:]
-        result["lastEntities"] = cls._resolve_entities_from_items(
-            normalized,
-            result.get("lastEntities"),
-        )
-        return result
+        return cls.sync_operational_focus(result)
+
+    @classmethod
+    def sync_operational_focus(cls, snapshot: dict | None) -> dict:
+        """Deriva ``operationalFocus`` (cache) a partir de ``userContextItems`` ou do turno.
+
+        Não é editável pelo usuário — só espelha contexto + sinais do turno (SQL, período).
+        """
+        result = ChatSnapshotOperationalFocus.normalize(snapshot)
+        existing = ChatSnapshotOperationalFocus.get(result)
+        items = [
+            item
+            for item in (result.get("userContextItems") or [])
+            if isinstance(item, dict) and item.get("id")
+        ]
+        derived = cls._resolve_entities_from_items(items, {}) if items else {}
+        merged: dict[str, str] = {}
+
+        for key in _PRESERVED_ENTITY_KEYS:
+            token = str(existing.get(key) or "").strip()
+
+            if token:
+                merged[key] = token
+
+        if items:
+            for key in _OPERATIONAL_FROM_CONTEXT_KEYS:
+                token = str(derived.get(key) or "").strip()
+
+                if token:
+                    merged[key] = token
+        else:
+            for key in _OPERATIONAL_FROM_CONTEXT_KEYS:
+                token = str(existing.get(key) or "").strip()
+
+                if token:
+                    merged[key] = token
+
+        return ChatSnapshotOperationalFocus.set(result, merged)
 
     @classmethod
     def _resolve_entities_from_items(
@@ -416,7 +462,7 @@ class ChatUserContextItemService:
         items: list[dict[str, Any]] | None,
         existing: dict | None = None,
     ) -> dict[str, str]:
-        """Deriva lastEntities só para resolução interna (follow-up), não para UI."""
+        """Extrai chaves operacionais dos itens para compor ``operationalFocus``."""
         entities = dict(existing or {})
 
         for item in items or []:
@@ -445,11 +491,42 @@ class ChatUserContextItemService:
             items.append(item)
 
         result["userContextItems"] = items[-12:]
-        result["lastEntities"] = cls._resolve_entities_from_items(
-            items,
-            result.get("lastEntities"),
-        )
-        return result
+        return cls.sync_operational_focus(result)
+
+    @classmethod
+    def remove_context_items_for_operational_kind(
+        cls,
+        items: list[dict[str, Any]] | None,
+        *,
+        kind: str,
+    ) -> tuple[list[dict[str, Any]], list[str]]:
+        """Remove itens cujo ``extractedEntities`` corresponde ao tipo operacional."""
+        entity_key = ChatManualContextPinService.entity_key_for_kind(kind)
+
+        if not entity_key:
+            return list(items or []), []
+
+        kept: list[dict[str, Any]] = []
+        removed_ids: list[str] = []
+
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+
+            extracted = item.get("extractedEntities") or {}
+            token = str(extracted.get(entity_key) or "").strip()
+
+            if token:
+                item_id = str(item.get("id") or "").strip()
+
+                if item_id:
+                    removed_ids.append(item_id)
+
+                continue
+
+            kept.append(item)
+
+        return kept, removed_ids
 
     @classmethod
     def _product_code_from_item(cls, item: dict[str, Any]) -> str | None:
@@ -516,6 +593,29 @@ class ChatUserContextItemService:
         if end_match:
             section = section[: end_match.start()]
 
+        item_lines: list[str] = []
+
+        for line in section.splitlines()[1:]:
+            stripped = line.strip()
+
+            if not stripped:
+                if item_lines:
+                    break
+
+                continue
+
+            if stripped.startswith("- ["):
+                item_lines.append(stripped)
+                continue
+
+            if item_lines:
+                break
+
+        if item_lines:
+            return ChatProductQueryIntentService.extract_last_product_code(
+                "\n".join(item_lines),
+            )
+
         return ChatProductQueryIntentService.extract_last_product_code(section)
 
     @classmethod
@@ -561,12 +661,7 @@ class ChatUserContextItemService:
 
     @classmethod
     def entity_context_labels(cls, entities: dict | None) -> list[str]:
-        """Rótulos amigáveis para o que o chat capturou na conversa.
-
-        Produto/filial/armazém/período detectados na pergunta deixam de ser
-        tratados como "entidade" à parte e passam a aparecer como contexto
-        comum, para o usuário e para o LLM inferirem o foco da conversa.
-        """
+        """Legado — preferir ``items_for_usage_view`` com ``userContextItems``."""
         data = entities or {}
         labels: list[str] = []
 

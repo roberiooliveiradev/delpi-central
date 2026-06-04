@@ -14,7 +14,7 @@ def test_context_chips_include_email_preference():
     chips = ChatWorkingMemoryService.build_context_chips(
         {
             "emailPreferences": {"shortEmails": True},
-            "lastEntities": {},
+            "operationalFocus": {},
         }
     )
     assert any(chip.get("kind") == "emailPreference" for chip in chips)

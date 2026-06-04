@@ -77,7 +77,7 @@ def test_classify_does_not_inherit_product_code_for_ranking_query():
             "role": "assistant",
             "content": "Resultado",
             "metadata": {
-                "memory": {"activeEntities": {"productCode": "2026"}},
+                "memory": {"operationalFocus": {"productCode": "2026"}},
                 "toolCalls": [
                     {
                         "name": "execute_external_action",
@@ -95,7 +95,7 @@ def test_classify_does_not_inherit_product_code_for_ranking_query():
         "Ranking dos 10 clientes que mais compraram",
         previous_messages=history,
         workspace_context={
-            "workingMemory": {"activeEntities": {"productCode": "2026"}},
+            "workingMemory": {"operationalFocus": {"productCode": "2026"}},
         },
     )
 

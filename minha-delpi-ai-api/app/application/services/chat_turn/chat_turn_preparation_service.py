@@ -580,6 +580,7 @@ class ChatTurnPreparationService:
                         message,
                         conversation_context=conversation_context,
                         previous_messages=history_source,
+                        memory_snapshot=working_memory_snapshot,
                     )
                 )
             ambiguous_period_answer = (

@@ -13,7 +13,7 @@ def test_evaluate_turn_flags_supplier_question_with_analyser():
                 "metadata": {"path": "/products/10080001/analyser", "ok": True},
             }
         ],
-        snapshot={"followUpDetected": False, "lastEntities": {}},
+        snapshot={"followUpDetected": False, "operationalFocus": {}},
     )
 
     assert result["score"] < 70
@@ -33,7 +33,7 @@ def test_evaluate_turn_rewards_follow_up_entity_reuse():
         ],
         snapshot={
             "followUpDetected": True,
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
             "resolvedReferences": [
                 {
                     "text": "follow-up operacional",

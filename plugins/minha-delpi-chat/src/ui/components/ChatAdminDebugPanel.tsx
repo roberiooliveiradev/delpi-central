@@ -374,7 +374,12 @@ export function ChatAdminDebugPanel({ debug }: ChatAdminDebugPanelProps) {
           ) : null}
           {memory?.loaded ? (
             <div className="mdc-chat-admin-debug__timings" aria-label="Memória ativa">
-              {Object.entries((memory.activeEntities as Record<string, unknown>) || {}).map(
+              {Object.entries(
+                (memory.operationalFocus ?? memory.activeEntities ?? {}) as Record<
+                  string,
+                  unknown
+                >,
+              ).map(
                 ([key, value]) => (
                   <span key={key} className="mdc-chat-admin-debug__timing-chip">
                     <strong>{key}</strong> {String(value)}

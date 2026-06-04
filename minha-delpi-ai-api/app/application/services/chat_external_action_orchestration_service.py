@@ -82,6 +82,14 @@ class ChatExternalActionOrchestrationService:
 
             return planned
 
+        memory_snapshot = None
+
+        if isinstance(workspace_context, dict):
+            working = workspace_context.get("workingMemory")
+
+            if isinstance(working, dict):
+                memory_snapshot = working
+
         if forced_product_code and forced_intent:
             selected = selection_service.select_action_for_product(
                 message,
@@ -127,6 +135,7 @@ class ChatExternalActionOrchestrationService:
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
                 raw_message=raw_message,
+                memory_snapshot=memory_snapshot,
             )
 
             return _return_planned([selected] if selected else [])
@@ -182,6 +191,7 @@ class ChatExternalActionOrchestrationService:
                 conversation_context=conversation_context,
                 previous_messages=previous_messages,
                 raw_message=raw_message,
+                memory_snapshot=memory_snapshot,
             )
 
             return _return_planned([selected] if selected else [])
@@ -219,6 +229,7 @@ class ChatExternalActionOrchestrationService:
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
                         raw_message=raw_message,
+                        memory_snapshot=memory_snapshot,
                     )
                 elif refinement.kind == "pagination_refinement":
                     selected = selection_service.select_action(
@@ -227,6 +238,7 @@ class ChatExternalActionOrchestrationService:
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
                         raw_message=raw_message,
+                        memory_snapshot=memory_snapshot,
                     )
                 elif refinement.kind == "depth_refinement":
                     selected = selection_service.select_action(
@@ -235,6 +247,7 @@ class ChatExternalActionOrchestrationService:
                         conversation_context=conversation_context,
                         previous_messages=previous_messages,
                         raw_message=raw_message,
+                        memory_snapshot=memory_snapshot,
                     )
                 else:
                     selected = None
@@ -320,6 +333,7 @@ class ChatExternalActionOrchestrationService:
             conversation_context=conversation_context,
             previous_messages=previous_messages,
             raw_message=raw_message,
+            memory_snapshot=memory_snapshot,
         )
 
         return _return_planned([selected] if selected else [])

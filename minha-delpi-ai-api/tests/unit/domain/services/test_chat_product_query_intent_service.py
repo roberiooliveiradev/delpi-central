@@ -121,6 +121,83 @@ def test_resolve_product_code_uses_last_code_in_context():
     assert code == "10080055"
 
 
+def test_resolve_product_code_prioritizes_user_context_items_over_history():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080047/stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+    items = [
+        {
+            "id": "1",
+            "source": "user",
+            "kind": "context",
+            "label": "10080045",
+            "content": "10080045",
+            "extractedEntities": {"productCode": "10080045"},
+        },
+        {
+            "id": "2",
+            "source": "user",
+            "kind": "context",
+            "label": "10080055",
+            "content": "10080055",
+            "extractedEntities": {"productCode": "10080055"},
+        },
+    ]
+
+    code = ChatProductQueryIntentService.resolve_product_code(
+        "qual o estoque",
+        previous_messages=history,
+        user_context_items=items,
+    )
+
+    assert code == "10080055"
+
+
+def test_resolve_product_code_prioritizes_user_context_prompt_over_history():
+    history = [
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/products/10080047/stock",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+    prompt = (
+        "Contexto adicionado pelo usuário (priorize nas próximas respostas):\n"
+        "- [context] 10080055: 10080055\n\n"
+        "assistant: Produto 10080047: TERM. PINO RETO"
+    )
+
+    code = ChatProductQueryIntentService.resolve_product_code(
+        "estoque do produto",
+        prompt,
+        previous_messages=history,
+    )
+
+    assert code == "10080055"
+
+
 def test_resolve_product_code_from_tool_metadata_in_history():
     history = [
         {"role": "user", "content": "resumo do produto 10080047"},

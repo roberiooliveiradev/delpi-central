@@ -3,7 +3,7 @@ from app.domain.services.chat_working_memory_service import ChatWorkingMemorySer
 
 def test_post_turn_records_previous_product_when_tool_switches_code():
     pre = {
-        "lastEntities": {"productCode": "10080001"},
+        "operationalFocus": {"productCode": "10080001"},
         "previousProductCodes": [],
         "usedMemoryKeys": ["productCode"],
     }
@@ -19,7 +19,7 @@ def test_post_turn_records_previous_product_when_tool_switches_code():
         pre_snapshot=pre,
     )
 
-    assert snapshot["lastEntities"]["productCode"] == "10080002"
+    assert snapshot["operationalFocus"]["productCode"] == "10080002"
     assert "10080001" in snapshot.get("previousProductCodes", [])
 
 
@@ -30,7 +30,7 @@ def test_pre_turn_restores_previous_product_codes_from_context_snapshot():
             "content": "Estoque",
             "metadata": {
                 "contextSnapshot": {
-                    "lastEntities": {"productCode": "10080002"},
+                    "operationalFocus": {"productCode": "10080002"},
                     "previousProductCodes": ["10080001"],
                 }
             },
@@ -42,5 +42,5 @@ def test_pre_turn_restores_previous_product_codes_from_context_snapshot():
         previous_messages=previous_messages,
     )
 
-    assert snapshot["lastEntities"]["productCode"] == "10080002"
+    assert snapshot["operationalFocus"]["productCode"] == "10080002"
     assert "10080001" in snapshot.get("previousProductCodes", [])

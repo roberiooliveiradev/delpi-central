@@ -249,7 +249,7 @@ class ChatFollowUpSuggestionService:
         previous_messages: list[Any] | None = None,
     ) -> str | None:
         working_memory = (workspace_context or {}).get("workingMemory") or {}
-        entities = working_memory.get("lastEntities") or {}
+        entities = working_memory.get("operationalFocus") or {}
         memory_code = str(entities.get("productCode") or "").strip()
 
         if memory_code:

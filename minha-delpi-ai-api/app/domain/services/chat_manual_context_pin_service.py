@@ -1,4 +1,8 @@
-"""Pins manuais de contexto (filial, armazém, produto) na memória de sessão."""
+"""Pins manuais de contexto (filial, armazém, produto) na memória de sessão.
+
+Persistência via ``userContextItems`` (kind «context»). Mapeamentos ``entity_key_*``
+são só chaves internas de ``extractedEntities`` — não há tipo «entidade» na UI.
+"""
 
 from __future__ import annotations
 

@@ -37,7 +37,7 @@ def _assistant_with_stock(product_code: str = "10080001"):
                 }
             ],
             "contextSnapshot": {
-                "lastEntities": {"productCode": product_code},
+                "operationalFocus": {"productCode": product_code},
                 "conversationState": {
                     "activeTopic": "estoque",
                     "activeTask": {
@@ -62,7 +62,7 @@ def test_m1_product_follow_up():
         previous_messages=[_assistant_with_stock()],
     )
 
-    assert snapshot["lastEntities"].get("productCode") == "10080001"
+    assert snapshot["operationalFocus"].get("productCode") == "10080001"
     assert snapshot["followUpDetected"] is True
 
 
@@ -117,7 +117,7 @@ def test_m3_proximo_with_playbook_task_continues():
 
 def test_m4_isso_resolves_single_table():
     snapshot = {
-        "lastEntities": {},
+        "operationalFocus": {},
         "lastPresentation": {"type": "table", "messageId": "msg-table"},
         "canvas": {"active": False},
     }
@@ -163,7 +163,7 @@ def test_compare_previous_sets_ambiguity_when_two_products_in_history():
             "content": "Produto 10080001",
             "metadata": {
                 "contextSnapshot": {
-                    "lastEntities": {"productCode": "10080001"},
+                    "operationalFocus": {"productCode": "10080001"},
                     "previousProductCodes": [],
                 }
             },
@@ -174,7 +174,7 @@ def test_compare_previous_sets_ambiguity_when_two_products_in_history():
             "content": "Estoque do produto",
             "metadata": {
                 "contextSnapshot": {
-                    "lastEntities": {"productCode": "10080002"},
+                    "operationalFocus": {"productCode": "10080002"},
                     "previousProductCodes": ["10080001"],
                 }
             },
@@ -248,7 +248,7 @@ def test_m12_sql_column_edit_resolves_last_sql():
         previous_messages=previous,
     )
 
-    assert "lastSqlSnippet" in (snapshot.get("activeEntities") or {})
+    assert "lastSqlSnippet" in (snapshot.get("operationalFocus") or {})
     resolved, used = ChatReferenceResolutionService.resolve_from_snapshot(
         "adicione coluna preco",
         snapshot,

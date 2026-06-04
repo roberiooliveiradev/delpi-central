@@ -62,8 +62,8 @@ class ChatSemanticMemoryRetrieverService:
             if objective:
                 parts.append(f"tarefa: {objective[:160]}")
 
-        entities = dict(snap.get("lastEntities") or {})
-        active = snap.get("activeEntities") or {}
+        entities = dict(snap.get("operationalFocus") or {})
+        active = snap.get("operationalFocus") or {}
 
         if isinstance(active, dict):
             entities.update({k: v for k, v in active.items() if v})

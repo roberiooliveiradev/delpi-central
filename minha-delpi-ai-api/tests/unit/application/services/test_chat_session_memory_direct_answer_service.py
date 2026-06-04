@@ -18,7 +18,7 @@ def test_no_ack_on_operational_follow_up():
     answer = ChatSessionMemoryDirectAnswerService.build(
         message="agora estoque",
         workspace_context={
-            "workingMemory": {"lastEntities": {"productCode": "10080001"}},
+            "workingMemory": {"operationalFocus": {"productCode": "10080001"}},
         },
     )
 
@@ -47,7 +47,7 @@ def test_memory_introspection_m20():
         message="quais informações você está usando?",
         workspace_context={
             "workingMemory": {
-                "lastEntities": {"productCode": "10080001"},
+                "operationalFocus": {"productCode": "10080001"},
             },
             "memoryUx": {
                 "summary": "Produto 10080001",

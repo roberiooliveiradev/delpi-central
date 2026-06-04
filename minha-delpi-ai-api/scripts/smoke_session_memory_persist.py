@@ -129,7 +129,7 @@ def main() -> int:
     bootstrap = _send(token, session_id, agent_id, "me fale do produto 10080001")
     admin = bootstrap.get("adminDebug") or {}
     memory = admin.get("memory") or {}
-    entities = memory.get("activeEntities") or {}
+    entities = memory.get("operationalFocus") or memory.get("activeEntities") or {}
 
     if entities.get("productCode") == "10080001" or _tool_path_has_product(
         bootstrap, "10080001"
@@ -139,7 +139,7 @@ def main() -> int:
         if metrics:
             print(f"OK sessionMemoryMetrics snapshot ({metrics.get('resolvedReferenceCount', 0)} refs)")
     else:
-        print(f"FAIL turno 1: activeEntities={entities!r}", file=sys.stderr)
+        print(f"FAIL turno 1: operationalFocus={entities!r}", file=sys.stderr)
         failed += 1
 
     follow = _send(token, session_id, agent_id, "mostre os fornecedores")
@@ -155,7 +155,7 @@ def main() -> int:
     after_clear = _send(token, session_id, agent_id, "mostre os fornecedores")
     admin_after = after_clear.get("adminDebug") or {}
     memory_dbg = admin_after.get("memory") or {}
-    entities_after = memory_dbg.get("activeEntities") or {}
+    entities_after = memory_dbg.get("operationalFocus") or memory_dbg.get("activeEntities") or {}
 
     if memory_dbg.get("clearedThisTurn"):
         print("OK turno 3: após clear, turno marca persistedMemoryCleared")
@@ -163,7 +163,7 @@ def main() -> int:
         print("OK turno 3: após clear, sem productCode na memória ativa")
     else:
         print(
-            f"WARN turno 3: productCode ainda em activeEntities "
+            f"WARN turno 3: productCode ainda em operationalFocus "
             f"(pode vir de tool/histórico): {entities_after!r}",
             file=sys.stderr,
         )

@@ -22,14 +22,14 @@ def test_build_pre_turn_snapshot_resolves_product_on_follow_up():
         previous_messages=previous,
     )
 
-    assert snapshot["lastEntities"]["productCode"] == "10080001"
+    assert snapshot["operationalFocus"]["productCode"] == "10080001"
     assert snapshot["followUpDetected"] is True
     assert snapshot["resolvedReferences"][0]["value"] == "10080001"
 
 
 def test_format_prompt_block_behavior_without_entity_focus_lines():
     snapshot = {
-        "lastEntities": {"productCode": "10080001", "productCodeSource": "tool"},
+        "operationalFocus": {"productCode": "10080001", "productCodeSource": "tool"},
         "behaviorInstructions": {"responseFormat": "table"},
         "resolvedReferences": [],
         "usedMemoryKeys": ["productCode"],
@@ -45,7 +45,7 @@ def test_format_prompt_block_behavior_without_entity_focus_lines():
 def test_build_context_chips_from_snapshot():
     chips = ChatWorkingMemoryService.build_context_chips(
         {
-            "lastEntities": {
+            "operationalFocus": {
                 "productCode": "10080001",
                 "productCodeSource": "tool",
                 "branch": "02",
@@ -65,7 +65,7 @@ def test_build_context_chips_from_snapshot():
 def test_build_context_chips_suppresses_ambiguous_product_code():
     chips = ChatWorkingMemoryService.build_context_chips(
         {
-            "lastEntities": {
+            "operationalFocus": {
                 "productCode": "000224",
                 "productCodeSource": "inferred",
                 "branch": "02",
@@ -102,7 +102,7 @@ def test_ambiguous_drilldown_code_does_not_create_product_chip():
         tool_calls=[],
     )
 
-    entities = snapshot["lastEntities"]
+    entities = snapshot["operationalFocus"]
 
     assert entities.get("productCode") == "000224"
     assert entities.get("productCodeSource") == "inferred"
@@ -187,7 +187,7 @@ def test_real_product_tool_keeps_product_chip():
 
 def test_build_context_chips_includes_warehouse():
     chips = ChatWorkingMemoryService.build_context_chips(
-        {"lastEntities": {"warehouse": "01", "branch": "02"}}
+        {"operationalFocus": {"warehouse": "01", "branch": "02"}}
     )
 
     by_value = {chip["value"]: chip for chip in chips}

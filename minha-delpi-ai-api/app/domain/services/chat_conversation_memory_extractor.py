@@ -40,14 +40,14 @@ class ChatConversationMemoryExtractor:
         project_id: str | None = None,
     ) -> dict:
         result = dict(snapshot)
-        entities = dict(result.get("lastEntities") or {})
+        entities = dict(result.get("operationalFocus") or {})
 
         period = cls._extract_period_from_messages(previous_messages)
 
         if period and not entities.get("period"):
             entities["period"] = period
 
-        result["lastEntities"] = entities
+        result["operationalFocus"] = entities
         result["lastAction"] = cls._extract_last_action(previous_messages, tool_calls)
         result["lastPresentation"] = cls._extract_last_presentation(previous_messages)
         result["canvas"] = cls._extract_canvas_state(previous_messages)

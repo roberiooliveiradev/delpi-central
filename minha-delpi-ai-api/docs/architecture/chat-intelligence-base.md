@@ -150,7 +150,8 @@ Mensagem do usuário
 | `ChatMessageNormalizationService` | Typos comuns (ebita→ebitda, kaisen→kaizen, coonsegue→consegue, «como vc s chama»→«como voce se chama», «oq vc faz», «num entendi»→«nao entendi», …) |
 | `ChatStructureComparisonOrchestrationService` | Comparação de estruturas com fetch multi-produto |
 | `PromptPolicyService` | Policies globais (`operational-agent.md`, `administrative-writing.md`, `email-writing.md`, `chat-analysis-insights.md`, …) |
-| `ChatWorkingMemoryService` | Snapshot pré/pós-turno: entidades, follow-up, referências resolvidas |
+| `ChatWorkingMemoryService` | Snapshot pré/pós-turno: follow-up, referências; foco operacional via `ChatUserContextItemService.sync_operational_focus` |
+| `ChatUserContextItemService` | Contexto do usuário (`userContextItems`), classificação, prompt «Contexto adicionado…», prioridade em `resolve_product_code` |
 | `ChatConversationMemoryService` | Orquestrador playbook memória (Fases 1–6): ver [`session-memory.md`](./session-memory.md) |
 | `ChatSemanticMemoryService` | Fase 5: enriquece query RAG; registra `semanticMemoryHits` |
 | `ChatEpisodicMemoryService` | Fase 6: episódios no `contextSnapshot` (recall / gravação / exclusão) |

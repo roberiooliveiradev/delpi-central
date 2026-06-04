@@ -81,6 +81,7 @@ class ExternalActionSelectionService:
         previous_messages: list | None = None,
         *,
         raw_message: str | None = None,
+        memory_snapshot: dict | None = None,
     ) -> dict | None:
         allowed_action_ids = allowed_action_ids or []
         sql_source = str(raw_message or message).strip()
@@ -167,6 +168,7 @@ class ExternalActionSelectionService:
                 message,
                 conversation_context,
                 previous_messages=previous_messages,
+                memory_snapshot=memory_snapshot,
             )
 
             if product_code:
@@ -344,6 +346,7 @@ class ExternalActionSelectionService:
             message,
             conversation_context,
             previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
         )
         product_intent = ChatProductQueryIntentService.resolve_product_intent(
             message,

@@ -25,7 +25,7 @@ def test_shows_operational_chips_when_user_activated_agent():
         workspace_context={
             "actionsEnabled": True,
             "userActivatedAgent": True,
-            "workingMemory": {"lastEntities": {"productCode": "10080001"}},
+            "workingMemory": {"operationalFocus": {"productCode": "10080001"}},
         },
     )
 

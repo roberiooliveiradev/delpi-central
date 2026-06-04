@@ -27,7 +27,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
 
     def load_active_overlay(self, session_id: UUID) -> dict:
         if self._has_clear_marker(session_id):
-            return {"lastEntities": {}, "behaviorInstructions": {}, "cleared": True}
+            return {"operationalFocus": {}, "behaviorInstructions": {}, "cleared": True}
 
         now = datetime.now(timezone.utc)
         rows = (
@@ -46,6 +46,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         )
 
         last_entities: dict[str, str] = {}
+        legacy_operational: dict[str, str] = {}
         behavior: dict[str, str] = {}
 
         for row in rows:
@@ -56,15 +57,25 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
                 continue
 
             if row.memory_type == "entity" and row.key in self._ENTITY_KEYS:
-                last_entities.setdefault(row.key, scalar)
+                if row.key == "period":
+                    last_entities.setdefault(row.key, scalar)
+                elif row.key in {"productCode", "branch", "warehouse"}:
+                    # Linhas antigas até migração completa; itens de contexto prevalecem no sync.
+                    legacy_operational.setdefault(row.key, scalar)
             elif row.memory_type == "behavior" and row.key in self._BEHAVIOR_KEYS:
                 behavior.setdefault(row.key, scalar)
 
-        return {
-            "lastEntities": last_entities,
-            "behaviorInstructions": behavior,
-            "userContextItems": self.list_context_items(session_id),
-        }
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        return ChatUserContextItemService.sync_operational_focus(
+            {
+                "operationalFocus": {**legacy_operational, **last_entities},
+                "behaviorInstructions": behavior,
+                "userContextItems": self.list_context_items(session_id),
+            }
+        )
 
     def sync_from_snapshot(
         self,
@@ -79,7 +90,7 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         now = datetime.now(timezone.utc)
         self._clear_clear_marker(session_id, now=now)
         expires_at = now + timedelta(days=30)
-        entities = snapshot.get("lastEntities") or {}
+        entities = snapshot.get("operationalFocus") or {}
         behavior = snapshot.get("behaviorInstructions") or {}
 
         # Produto/filial/armazém detectados automaticamente são persistidos como
@@ -173,7 +184,8 @@ class PostgresChatSessionMemoryRepository(ChatSessionMemoryRepositoryPort):
         *,
         source_message_id: UUID | None = None,
     ) -> None:
-        if key not in self._ENTITY_KEYS or not str(value or "").strip():
+        """Legado — produto/filial/armazém usam ``add_context_item``; só período aqui."""
+        if key not in {"period"} or not str(value or "").strip():
             return
 
         now = datetime.now(timezone.utc)

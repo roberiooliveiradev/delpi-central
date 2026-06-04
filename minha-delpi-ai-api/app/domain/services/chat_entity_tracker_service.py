@@ -1,4 +1,4 @@
-"""Rastreamento de entidades ativas — Playbook memória e contexto (Fase 2 / §10)."""
+"""Sinais operacionais do turno (SQL, pedido, filial na mensagem) → ``operationalFocus``."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class ChatEntityTrackerService:
         attachments: list | None = None,
     ) -> dict:
         result = dict(snapshot)
-        entities = dict(result.get("lastEntities") or {})
+        entities = dict(result.get("operationalFocus") or {})
         previous_codes = list(result.get("previousProductCodes") or [])
 
         cls._merge_from_message(entities, message, previous_codes=previous_codes)
@@ -41,11 +41,16 @@ class ChatEntityTrackerService:
         if previous_codes:
             result["previousProductCodes"] = previous_codes[-8:]
 
-        result["lastEntities"] = entities
-        result["activeEntities"] = dict(entities)
+        result["operationalFocus"] = entities
+
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        result = ChatUserContextItemService.sync_operational_focus(result)
         result["referenceHints"] = cls._build_reference_hints(
             message,
-            entities,
+            result.get("operationalFocus") or {},
             result,
         )
         result["lastUsefulMessageId"] = cls._last_assistant_message_id(previous_messages)
@@ -64,7 +69,7 @@ class ChatEntityTrackerService:
         for phrase, resolution in hints.items():
             lines.append(f"- «{phrase}» → {resolution}")
 
-        entities = (snapshot or {}).get("activeEntities") or {}
+        entities = (snapshot or {}).get("operationalFocus") or {}
 
         if entities.get("lastSqlSnippet"):
             lines.append(

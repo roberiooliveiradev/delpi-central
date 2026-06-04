@@ -77,7 +77,7 @@ def test_resolve_client_admin_debug_merges_assertiveness_from_metadata():
     build_payload = {"pipeline": {"skipRag": True}}
     assistant_metadata = {
         "adminDebug": {
-            "memory": {"lastEntities": {"productCode": "10080001"}},
+            "memory": {"operationalFocus": {"productCode": "10080001"}},
             "contextAssertiveness": {"score": 92.0, "flags": ["follow_up_entity_reused"]},
         }
     }
@@ -93,7 +93,7 @@ def test_resolve_client_admin_debug_merges_assertiveness_from_metadata():
 
     assert merged is not None
     assert merged["contextAssertiveness"]["score"] == 92.0
-    assert merged["memory"]["lastEntities"]["productCode"] == "10080001"
+    assert merged["memory"]["operationalFocus"]["productCode"] == "10080001"
     assert merged["pipeline"]["skipRag"] is True
 
 

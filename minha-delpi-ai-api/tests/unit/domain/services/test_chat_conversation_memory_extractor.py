@@ -5,7 +5,7 @@ from app.domain.services.chat_conversation_memory_extractor import (
 
 def test_enrich_snapshot_extracts_last_action():
     snapshot = ChatConversationMemoryExtractor.enrich_snapshot(
-        {"lastEntities": {}},
+        {"operationalFocus": {}},
         previous_messages=[],
         tool_calls=[
             {

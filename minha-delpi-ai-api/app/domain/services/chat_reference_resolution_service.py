@@ -63,7 +63,7 @@ class ChatReferenceResolutionService:
     ) -> tuple[list[dict[str, Any]], list[str]]:
         return cls.resolve_from_snapshot(
             message,
-            {"lastEntities": last_entities or {}},
+            {"operationalFocus": last_entities or {}},
         )
 
     @classmethod
@@ -72,8 +72,14 @@ class ChatReferenceResolutionService:
         message: str,
         snapshot: dict | None,
     ) -> tuple[list[dict[str, Any]], list[str]]:
-        snapshot = snapshot or {}
-        entities = snapshot.get("lastEntities") or {}
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
+
+        if not isinstance(snapshot, dict):
+            snapshot = {}
+
+        entities = ChatSnapshotOperationalFocus.get(snapshot)
         last_action = snapshot.get("lastAction") or {}
         last_presentation = snapshot.get("lastPresentation") or {}
         used_keys: list[str] = []
@@ -103,7 +109,7 @@ class ChatReferenceResolutionService:
                     text="esse produto" if cls._PRODUCT_REF_RE.search(normalized) else "follow-up operacional",
                     resolved_to="productCode",
                     value=product_code,
-                    source="lastEntities.productCode",
+                    source="operationalFocus.productCode",
                     confidence=0.9,
                 )
             )
@@ -116,7 +122,7 @@ class ChatReferenceResolutionService:
                         text="filial em contexto",
                         resolved_to="branch",
                         value=branch,
-                        source="lastEntities.branch",
+                        source="operationalFocus.branch",
                         confidence=0.75,
                     )
                 )
@@ -128,7 +134,7 @@ class ChatReferenceResolutionService:
                     text="mesmo período",
                     resolved_to="period",
                     value=period,
-                    source="lastEntities.period",
+                    source="operationalFocus.period",
                     confidence=0.85,
                 )
             )
@@ -179,7 +185,7 @@ class ChatReferenceResolutionService:
                 used_keys.append("lastAction")
 
         canvas = snapshot.get("canvas") or {}
-        active_entities = snapshot.get("activeEntities") or entities
+        active_entities = snapshot.get("operationalFocus") or entities
         last_sql = str(active_entities.get("lastSqlSnippet") or "").strip()
         last_useful_id = str(snapshot.get("lastUsefulMessageId") or "").strip()
 
@@ -218,7 +224,7 @@ class ChatReferenceResolutionService:
                     text="consulta SQL",
                     resolved_to="lastSqlSnippet",
                     value=last_sql[:200],
-                    source="activeEntities.lastSqlSnippet",
+                    source="operationalFocus.lastSqlSnippet",
                     confidence=0.9,
                 )
             )
@@ -230,7 +236,7 @@ class ChatReferenceResolutionService:
                     text="esse código",
                     resolved_to="productCode",
                     value=product_code,
-                    source="activeEntities.productCode",
+                    source="operationalFocus.productCode",
                     confidence=0.92,
                 )
             )
@@ -332,7 +338,7 @@ class ChatReferenceResolutionService:
         if not cls._COMPARE_PREVIOUS_RE.search(message or ""):
             return None
 
-        entities = (snapshot or {}).get("lastEntities") or {}
+        entities = (snapshot or {}).get("operationalFocus") or {}
         product_code = str(entities.get("productCode") or "").strip()
 
         if not product_code:

@@ -6,7 +6,7 @@ from app.application.services.chat_session_memory_metrics_service import (
 def test_build_snapshot_with_follow_up():
     snapshot = {
         "memoryUsed": True,
-        "lastEntities": {"productCode": "10080001", "period": "last_30_days"},
+        "operationalFocus": {"productCode": "10080001", "period": "last_30_days"},
         "resolvedReferences": [{"text": "follow-up", "value": "10080001"}],
         "preferencesApplied": ["format=table"],
         "followUpDetected": True,
@@ -27,7 +27,7 @@ def test_attach_to_metadata():
     metadata: dict = {}
     ChatSessionMemoryMetricsService.attach_to_assistant_metadata(
         metadata,
-        snapshot={"memoryUsed": True, "lastEntities": {"productCode": "1"}},
+        snapshot={"memoryUsed": True, "operationalFocus": {"productCode": "1"}},
     )
 
     assert metadata["sessionMemoryMetrics"]["entityCount"] == 1

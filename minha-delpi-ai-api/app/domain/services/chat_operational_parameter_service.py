@@ -56,11 +56,13 @@ class ChatOperationalParameterService:
         *,
         conversation_context: str | None = None,
         previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
     ) -> str | None:
         intent = cls._missing_product_code_intent(
             message,
             conversation_context,
             previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
         )
 
         if not intent:
@@ -192,6 +194,7 @@ class ChatOperationalParameterService:
         conversation_context: str | None,
         *,
         previous_messages: list | None = None,
+        memory_snapshot: dict | None = None,
     ) -> str | None:
         message = ChatMessageNormalizationService.normalize_for_matching(message) or message
         normalized = message
@@ -209,6 +212,7 @@ class ChatOperationalParameterService:
                     message,
                     conversation_context,
                     previous_messages=previous_messages,
+                    memory_snapshot=memory_snapshot,
                 )
 
                 if not inherited:
@@ -241,6 +245,7 @@ class ChatOperationalParameterService:
             message,
             conversation_context,
             previous_messages=previous_messages,
+            memory_snapshot=memory_snapshot,
         )
 
         if product_code:

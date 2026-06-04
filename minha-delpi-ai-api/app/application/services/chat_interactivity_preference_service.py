@@ -68,7 +68,7 @@ class ChatInteractivityPreferenceService:
         repository.sync_from_snapshot(
             session_uuid,
             {
-                "lastEntities": overlay.get("lastEntities") or {},
+                "operationalFocus": overlay.get("operationalFocus") or {},
                 "behaviorInstructions": behavior,
             },
         )

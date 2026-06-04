@@ -159,7 +159,7 @@ def test_build_context_chips_no_duplicate_branch_entity_and_user_item():
 
     item = ChatUserContextItemService.ingest(content="filial 02")
     snapshot = {
-        "lastEntities": {"productCode": "90260146", "branch": "02"},
+        "operationalFocus": {"productCode": "90260146", "branch": "02"},
         "userContextItems": [item],
     }
 

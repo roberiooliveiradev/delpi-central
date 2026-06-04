@@ -169,11 +169,11 @@ class ChatMemoryUxService:
     def build_usage_view(cls, snapshot: dict | None) -> dict[str, Any]:
         snap = snapshot or {}
         state = snap.get("conversationState") or {}
-        entities = dict(snap.get("lastEntities") or {})
-        active = snap.get("activeEntities") or {}
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
 
-        if isinstance(active, dict):
-            entities.update({k: v for k, v in active.items() if v})
+        operational_focus = ChatSnapshotOperationalFocus.get(snap)
 
         preferences: list[str] = list(snap.get("preferencesAppliedLabels") or [])
 
@@ -202,7 +202,7 @@ class ChatMemoryUxService:
         )
 
         # Painel e barra usam só rótulos dos itens de contexto (o que o usuário
-        # digitou ou o chat gravou), sem duplicar códigos soltos de lastEntities.
+        # digitou ou o chat gravou), sem duplicar códigos soltos do foco operacional.
         user_context = ChatUserContextItemService.items_for_usage_view(snap)
 
         return {
@@ -211,7 +211,8 @@ class ChatMemoryUxService:
             "task": (state.get("activeTask") or {}).get("label")
             if isinstance(state.get("activeTask"), dict)
             else None,
-            "entities": entities,
+            "operationalFocus": operational_focus,
+            "entities": operational_focus,
             "preferences": preferences,
             "resolvedReferences": [
                 str(item.get("text") or "")

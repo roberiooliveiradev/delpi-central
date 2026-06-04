@@ -18,7 +18,7 @@ def test_add_pin_persists_as_context_item():
 
     memory_repo = MagicMock()
     memory_repo.load_active_overlay.return_value = {
-        "lastEntities": {"branch": "02", "warehouse": "01"},
+        "operationalFocus": {"branch": "02", "warehouse": "01"},
         "behaviorInstructions": {},
     }
 
@@ -76,7 +76,7 @@ def test_add_context_item_replaces_duplicate_message_reference():
 
     memory_repo = MagicMock()
     memory_repo.load_active_overlay.return_value = {
-        "lastEntities": {},
+        "operationalFocus": {},
         "behaviorInstructions": {},
         "userContextItems": [old_item],
     }
@@ -105,7 +105,7 @@ def test_add_context_item_ingests_question_answer_turn():
 
     memory_repo = MagicMock()
     memory_repo.load_active_overlay.return_value = {
-        "lastEntities": {},
+        "operationalFocus": {},
         "behaviorInstructions": {},
         "userContextItems": [],
     }

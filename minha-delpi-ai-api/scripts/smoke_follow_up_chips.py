@@ -156,7 +156,7 @@ def _validate_unit_build() -> list[str]:
         workspace_context={
             "actionsEnabled": True,
             "userActivatedAgent": True,
-            "workingMemory": {"lastEntities": {"productCode": "10080001"}},
+            "workingMemory": {"operationalFocus": {"productCode": "10080001"}},
         },
     )
     by_label = {item["label"]: item["query"] for item in suggestions}

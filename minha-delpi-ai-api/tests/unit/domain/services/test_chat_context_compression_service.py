@@ -34,7 +34,7 @@ def test_compress_respects_char_budget():
 
 
 def test_apply_skips_short_sessions():
-    snapshot = {"lastEntities": {}}
+    snapshot = {"operationalFocus": {}}
 
     result = ChatContextCompressionService.apply_to_snapshot(
         snapshot,

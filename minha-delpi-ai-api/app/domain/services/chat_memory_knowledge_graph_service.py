@@ -20,8 +20,8 @@ class ChatMemoryKnowledgeGraphService:
         state = snapshot.get("conversationState") or {}
         topic = str(state.get("activeTopic") or "").strip()
         task = state.get("activeTask") if isinstance(state.get("activeTask"), dict) else {}
-        entities = dict(snapshot.get("lastEntities") or {})
-        active = snapshot.get("activeEntities") or {}
+        entities = dict(snapshot.get("operationalFocus") or {})
+        active = snapshot.get("operationalFocus") or {}
 
         if isinstance(active, dict):
             entities.update({k: v for k, v in active.items() if v})

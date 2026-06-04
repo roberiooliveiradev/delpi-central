@@ -31,7 +31,7 @@ class ChatMemoryContextDebugService:
     def build(cls, snapshot: dict) -> dict[str, Any]:
         layers: list[str] = []
 
-        if snapshot.get("lastEntities") or snapshot.get("activeEntities"):
+        if snapshot.get("operationalFocus") or snapshot.get("operationalFocus"):
             layers.append("entities")
 
         if snapshot.get("behaviorInstructions") or snapshot.get("userPreferences"):

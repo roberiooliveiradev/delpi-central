@@ -48,9 +48,15 @@ class ChatConversationMemoryService:
         attachments: list | None = None,
         previous_agent_id: str | None = None,
     ) -> dict:
-        snapshot = ChatWorkingMemoryService.build_pre_turn_snapshot(
-            message=message,
-            previous_messages=previous_messages,
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
+
+        snapshot = ChatSnapshotOperationalFocus.normalize(
+            ChatWorkingMemoryService.build_pre_turn_snapshot(
+                message=message,
+                previous_messages=previous_messages,
+            )
         )
 
         if session_memory_service and session_id:
@@ -102,7 +108,7 @@ class ChatConversationMemoryService:
         snapshot["usedMemoryKeys"] = merged_used
         snapshot["memoryUsed"] = bool(
             merged_used
-            or snapshot.get("lastEntities")
+            or snapshot.get("operationalFocus")
             or snapshot.get("behaviorInstructions")
         )
         snapshot["preferencesApplied"] = cls._preferences_applied(snapshot)
@@ -156,7 +162,11 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
         )
 
-        return snapshot
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        return ChatUserContextItemService.sync_operational_focus(snapshot)
 
     @classmethod
     def build_post_turn(
@@ -224,7 +234,13 @@ class ChatConversationMemoryService:
             previous_messages=previous_messages,
             attachments=attachments,
         )
-        return ChatWorkingMemoryService._sync_focus_to_context_items(snapshot)
+        snapshot = ChatWorkingMemoryService._sync_focus_to_context_items(snapshot)
+
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        return ChatUserContextItemService.sync_operational_focus(snapshot)
 
     @classmethod
     def format_prompt_block(cls, snapshot: dict | None) -> str:
@@ -255,7 +271,7 @@ class ChatConversationMemoryService:
         if not snapshot:
             return chips
 
-        entities = snapshot.get("lastEntities") or {}
+        entities = snapshot.get("operationalFocus") or {}
         period = str(entities.get("period") or "").strip()
 
         if period and not any(chip.get("kind") == "period" for chip in chips):
@@ -317,7 +333,11 @@ class ChatConversationMemoryService:
         base["conversationState"] = ChatConversationStateService.compact_for_admin_debug(
             snapshot
         )
-        base["activeEntities"] = snapshot.get("activeEntities") or {}
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
+
+        base["operationalFocus"] = ChatSnapshotOperationalFocus.get(snapshot)
         base["referenceHints"] = snapshot.get("referenceHints") or {}
         base["userPreferences"] = ChatUserPreferenceManagerService.compact_for_admin_debug(
             snapshot
@@ -382,7 +402,7 @@ class ChatConversationMemoryService:
         result = dict(snapshot)
         normalized = (message or "").strip().lower()
         cleared: list[str] = []
-        entities = dict(result.get("lastEntities") or {})
+        entities = dict(result.get("operationalFocus") or {})
         behavior = dict(result.get("behaviorInstructions") or {})
 
         if re.search(r"esque.{0,40}produto", normalized):
@@ -405,7 +425,7 @@ class ChatConversationMemoryService:
             cleared.append("behaviorInstructions")
 
         if cleared:
-            result["lastEntities"] = entities
+            result["operationalFocus"] = entities
             result["behaviorInstructions"] = behavior
             result["selectiveMemoryCleared"] = cleared
 

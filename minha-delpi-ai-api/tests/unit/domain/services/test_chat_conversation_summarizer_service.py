@@ -39,7 +39,7 @@ def test_build_includes_entities_decisions_pending():
         }
     )
     snapshot = {
-        "lastEntities": {"productCode": "10080001"},
+        "operationalFocus": {"productCode": "10080001"},
         "conversationState": {
             "activeTopic": "estoque",
             "activeTask": {

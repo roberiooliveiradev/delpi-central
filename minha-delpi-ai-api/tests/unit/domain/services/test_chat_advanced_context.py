@@ -61,7 +61,7 @@ def test_knowledge_graph_builds_nodes():
                 "activeTopic": "estoque",
                 "activeTask": {"type": "stock_lookup", "label": "estoque"},
             },
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
         },
         message="e os fornecedores?",
     )

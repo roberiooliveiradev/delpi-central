@@ -148,12 +148,27 @@ class ChatSessionMemoryPinsUseCase:
     def remove_pin(self, *, user_id: UUID, session_id: UUID, kind: str) -> dict:
         self._ensure_session_access(user_id=user_id, session_id=session_id)
 
-        entity_key = ChatManualContextPinService.entity_key_for_kind(kind)
-
-        if not entity_key:
+        if not ChatManualContextPinService.entity_key_for_kind(kind):
             raise ValueError("Tipo de contexto não suportado.")
 
-        self.memory_repository.deactivate_entity(session_id, entity_key)
+        overlay = self.memory_repository.load_active_overlay(session_id)
+        existing_items = list(overlay.get("userContextItems") or [])
+        kept, removed_ids = ChatUserContextItemService.remove_context_items_for_operational_kind(
+            existing_items,
+            kind=kind,
+        )
+
+        for item_id in removed_ids:
+            self.memory_repository.remove_context_item(session_id, item_id)
+
+        entity_key = ChatManualContextPinService.entity_key_for_kind(kind)
+
+        if entity_key:
+            self.memory_repository.deactivate_entity(session_id, entity_key)
+
+        overlay["userContextItems"] = kept[-12:]
+        overlay = ChatUserContextItemService.sync_operational_focus(overlay)
+
         return self._build_response(session_id)
 
     def _ensure_session_access(self, *, user_id: UUID, session_id: UUID) -> None:
@@ -167,11 +182,13 @@ class ChatSessionMemoryPinsUseCase:
 
     def _build_response(self, session_id: UUID) -> dict:
         overlay = self.memory_repository.load_active_overlay(session_id)
-        snapshot = {
-            "lastEntities": overlay.get("lastEntities") or {},
-            "behaviorInstructions": overlay.get("behaviorInstructions") or {},
-            "userContextItems": overlay.get("userContextItems") or [],
-        }
+        snapshot = ChatUserContextItemService.sync_operational_focus(
+            {
+                "operationalFocus": overlay.get("operationalFocus") or {},
+                "behaviorInstructions": overlay.get("behaviorInstructions") or {},
+                "userContextItems": overlay.get("userContextItems") or [],
+            }
+        )
         chips = ChatConversationMemoryService.build_context_chips(snapshot)
 
         return {

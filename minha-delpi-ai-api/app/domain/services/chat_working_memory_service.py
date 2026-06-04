@@ -1,8 +1,9 @@
 """Memória de trabalho da sessão — contexto, instruções e referências.
 
 Foco operacional (código, filial, etc.) é exposto só como itens de contexto
-(`userContextItems`, kind «context»). `lastEntities` permanece uso interno
-para resolução de referências e follow-up, sem chips/prompt de «entidade».
+(`userContextItems`, kind «context»). ``operationalFocus`` é cache derivado por
+``ChatUserContextItemService.sync_operational_focus`` — uso interno (tools,
+follow-up), nunca editável pelo usuário.
 """
 
 from __future__ import annotations
@@ -61,7 +62,7 @@ class ChatWorkingMemoryService:
         behavior = ChatTextTaskPreferenceService.merge_into_behavior(message, behavior)
 
         snapshot = {
-            "lastEntities": last_entities,
+            "operationalFocus": last_entities,
             "behaviorInstructions": behavior,
         }
         ChatEmailPreferenceService.apply_to_snapshot(snapshot, message=message)
@@ -75,7 +76,7 @@ class ChatWorkingMemoryService:
 
         return cls._sync_focus_to_context_items(
             {
-                "lastEntities": last_entities,
+                "operationalFocus": last_entities,
                 "previousProductCodes": previous_product_codes,
                 "behaviorInstructions": behavior,
                 "emailPreferences": email_preferences,
@@ -109,7 +110,7 @@ class ChatWorkingMemoryService:
             entities: dict[str, str] = {}
             previous_product_codes = []
         else:
-            entities = dict(snapshot.get("lastEntities") or {})
+            entities = dict(snapshot.get("operationalFocus") or {})
 
         for code in cls._extract_codes_from_tool_calls(tool_calls):
             cls._record_product_switch(
@@ -139,7 +140,7 @@ class ChatWorkingMemoryService:
             tool_calls=tool_calls,
         )
 
-        snapshot["lastEntities"] = entities
+        snapshot["operationalFocus"] = entities
         snapshot["previousProductCodes"] = previous_product_codes[-8:]
         used = list(snapshot.get("usedMemoryKeys") or [])
 
@@ -362,7 +363,7 @@ class ChatWorkingMemoryService:
             if not isinstance(snapshot, dict):
                 continue
 
-            entities = snapshot.get("lastEntities") or {}
+            entities = snapshot.get("operationalFocus") or {}
             previous_codes = [
                 str(code).strip()
                 for code in (snapshot.get("previousProductCodes") or [])
@@ -433,7 +434,7 @@ class ChatWorkingMemoryService:
 
     @classmethod
     def _merged_user_context_items(cls, snapshot: dict | None) -> list[dict[str, Any]]:
-        """Une itens persistidos com foco operacional derivado de lastEntities."""
+        """Une itens persistidos com foco operacional derivado do snapshot."""
         from app.domain.services.chat_user_context_item_service import (
             ChatUserContextItemService,
         )
@@ -445,7 +446,7 @@ class ChatWorkingMemoryService:
             if isinstance(item, dict) and item.get("id")
         ]
         auto = ChatUserContextItemService.auto_items_from_entities(
-            snap.get("lastEntities") or {},
+            snap.get("operationalFocus") or {},
             items,
         )
 

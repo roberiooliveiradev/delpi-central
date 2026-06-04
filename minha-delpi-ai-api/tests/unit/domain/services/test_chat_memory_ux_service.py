@@ -31,7 +31,7 @@ def test_build_context_chips_topic_and_task():
 def test_usage_view_lists_only_user_context_item_labels():
     usage = ChatMemoryUxService.build_usage_view(
         {
-            "lastEntities": {"productCode": "90260114", "branch": "02"},
+            "operationalFocus": {"productCode": "90260114", "branch": "02"},
             "userContextItems": [
                 {"id": "1", "label": "Política de devolução", "kind": "note"},
                 {"id": "2", "label": "filial 02", "kind": "context"},
@@ -51,7 +51,7 @@ def test_usage_view_lists_only_user_context_item_labels():
 def test_usage_view_context_dedupes_entity_and_manual_item():
     usage = ChatMemoryUxService.build_usage_view(
         {
-            "lastEntities": {"branch": "02"},
+            "operationalFocus": {"branch": "02"},
             "userContextItems": [
                 {"id": "1", "label": "02", "kind": "branch"},
             ],
@@ -67,7 +67,7 @@ def test_memory_introspection_direct_answer():
     answer = ChatMemoryUxService.build_direct_answer(
         "Quais informações você está usando?",
         {
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
             "userContextItems": [
                 {"id": "p1", "label": "10080001", "kind": "context"},
             ],

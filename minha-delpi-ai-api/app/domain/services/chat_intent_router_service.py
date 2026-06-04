@@ -104,16 +104,11 @@ def _working_memory_entities(workspace_context: dict | None) -> dict[str, str]:
     if not isinstance(working, dict):
         return {}
 
-    entities = working.get("lastEntities")
+    from app.domain.services.chat_snapshot_operational_focus import (
+        ChatSnapshotOperationalFocus,
+    )
 
-    if not isinstance(entities, dict):
-        return {}
-
-    return {
-        str(key): str(value).strip()
-        for key, value in entities.items()
-        if value is not None and str(value).strip()
-    }
+    return ChatSnapshotOperationalFocus.get(working)
 
 
 def _resolve_entities_from_memory(
@@ -157,9 +152,11 @@ def _resolve_entities_from_memory(
                 params[key] = value
 
     code_in_message = ChatProductQueryIntentService.extract_product_code(message)
+    working = workspace_context.get("workingMemory") if isinstance(workspace_context, dict) else {}
     code = ChatProductQueryIntentService.resolve_product_code(
         message,
         previous_messages=previous_messages,
+        memory_snapshot=working if isinstance(working, dict) else None,
     )
 
     if code and not code_in_message and ChatProductQueryIntentService.should_inherit_product_code(

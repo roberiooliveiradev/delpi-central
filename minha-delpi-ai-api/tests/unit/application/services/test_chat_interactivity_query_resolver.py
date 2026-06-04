@@ -7,7 +7,7 @@ def test_resolve_product_code_from_snapshot():
     query = ChatInteractivityQueryResolver.resolve(
         "Qual o estoque do produto {{productCode}}?",
         metadata={
-            "contextSnapshot": {"lastEntities": {"productCode": "10080001"}},
+            "contextSnapshot": {"operationalFocus": {"productCode": "10080001"}},
         },
     )
 

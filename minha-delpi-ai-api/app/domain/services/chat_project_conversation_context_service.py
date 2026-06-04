@@ -102,10 +102,10 @@ class ChatProjectConversationContextService:
             return snapshot
 
         merged = dict(snapshot)
-        entities = dict(merged.get("lastEntities") or {})
+        entities = dict(merged.get("operationalFocus") or {})
         behavior = dict(merged.get("behaviorInstructions") or {})
 
-        for key, value in (overlay.get("lastEntities") or {}).items():
+        for key, value in (overlay.get("operationalFocus") or {}).items():
             if key not in entities or not str(entities.get(key) or "").strip():
                 entities[key] = value
 
@@ -113,10 +113,21 @@ class ChatProjectConversationContextService:
             if key not in behavior or not str(behavior.get(key) or "").strip():
                 behavior[key] = value
 
-        merged["lastEntities"] = entities
+        merged["operationalFocus"] = entities
         merged["behaviorInstructions"] = behavior
+        peer_items = overlay.get("userContextItems")
 
-        if entities or behavior:
+        if isinstance(peer_items, list) and peer_items:
+            existing = list(merged.get("userContextItems") or [])
+            merged["userContextItems"] = (existing + peer_items)[-12:]
+
+        from app.domain.services.chat_user_context_item_service import (
+            ChatUserContextItemService,
+        )
+
+        merged = ChatUserContextItemService.sync_operational_focus(merged)
+
+        if merged.get("operationalFocus") or merged.get("behaviorInstructions"):
             merged["projectMemoryApplied"] = True
 
         return merged
@@ -256,7 +267,7 @@ class ChatProjectConversationContextService:
         ]
 
         if not session_ids:
-            return {"lastEntities": {}, "behaviorInstructions": {}}
+            return {"operationalFocus": {}, "behaviorInstructions": {}}
 
         rows = (
             AiChatSessionMemoryModel.query.filter(
@@ -277,12 +288,12 @@ class ChatProjectConversationContextService:
             if not scalar:
                 continue
 
-            if row.memory_type == "entity" and row.key in _ENTITY_KEYS:
+            if row.memory_type == "entity" and row.key == "period":
                 entities.setdefault(row.key, scalar)
             elif row.memory_type == "behavior" and row.key in _BEHAVIOR_KEYS:
                 behavior.setdefault(row.key, scalar)
 
         return {
-            "lastEntities": entities,
+            "operationalFocus": entities,
             "behaviorInstructions": behavior,
         }

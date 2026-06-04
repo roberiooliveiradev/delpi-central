@@ -1400,7 +1400,7 @@ CONTEXT_ASSERTIVENESS_CASES = [
         "tool_paths": ["/products/10080001/stock"],
         "snapshot": {
             "followUpDetected": True,
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
         },
         "expected_flags": ["follow_up_entity_reused"],
         "min_score": 80.0,
@@ -1410,7 +1410,7 @@ CONTEXT_ASSERTIVENESS_CASES = [
         "tool_paths": [],
         "snapshot": {
             "followUpDetected": True,
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
         },
         "expected_flags": ["follow_up_without_entity_reuse"],
         "max_score": 65.0,
@@ -1421,7 +1421,7 @@ CONTEXT_ASSERTIVENESS_CASES = [
         "tool_paths": [],
         "snapshot": {
             "followUpDetected": False,
-            "lastEntities": {"productCode": "10080001"},
+            "operationalFocus": {"productCode": "10080001"},
         },
         "expected_flags": ["unnecessary_code_request"],
         "max_score": 75.0,
@@ -1430,7 +1430,7 @@ CONTEXT_ASSERTIVENESS_CASES = [
         "message": "me fale do produto 10080001",
         "answer": "Produto **None**: None.",
         "tool_paths": ["/products/10080001/analyser"],
-        "snapshot": {"lastEntities": {"productCode": "10080001"}},
+        "snapshot": {"operationalFocus": {"productCode": "10080001"}},
         "expected_flags": ["humanized_none_fields"],
         "max_score": 60.0,
     },

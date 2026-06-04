@@ -5,7 +5,7 @@ from uuid import UUID
 class ChatSessionMemoryRepositoryPort(ABC):
     @abstractmethod
     def load_active_overlay(self, session_id: UUID) -> dict:
-        """Retorna ``lastEntities`` e ``behaviorInstructions`` ativos da sessão."""
+        """Retorna ``operationalFocus``, ``userContextItems`` e ``behaviorInstructions``."""
         raise NotImplementedError
 
     @abstractmethod

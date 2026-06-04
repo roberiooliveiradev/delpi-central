@@ -20,7 +20,7 @@ class ChatContextAssertivenessService:
         score = 100.0
 
         snapshot = snapshot or {}
-        entities = snapshot.get("lastEntities") or {}
+        entities = snapshot.get("operationalFocus") or {}
         resolved = snapshot.get("resolvedReferences") or []
         follow_up = bool(snapshot.get("followUpDetected"))
         product_in_memory = str(entities.get("productCode") or "").strip()

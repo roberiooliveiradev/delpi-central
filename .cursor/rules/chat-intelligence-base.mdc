@@ -18,9 +18,16 @@ O **chat** é o núcleo de inteligência da plataforma. **Agentes** são chats c
 | **Projeto** | Agrupamento, prompt de projeto, agente default | `ChatWorkspaceContextService`, `projectPrompt` |
 | **Use cases** | Orquestração fina (stream/send/simulate) | Apenas **consumir** o pipeline base; sem lógica de inteligência duplicada |
 
+## Contexto vs. «entidades» (jun/2026)
+
+- **UI e prompt:** só `userContextItems` + chips kind `context` (`ChatUserContextItemService`).
+- **Foco operacional interno:** só `operationalFocus` (cache via `sync_operational_focus` / `ChatSnapshotOperationalFocus`) — não duplicar produto/filial em `memory_type=entity` nem chips `product`/`branch`.
+- **Resolução de código:** `resolve_product_code` prioriza itens de contexto antes do histórico.
+
 ## O que NÃO fazer
 
 - Lógica de comparação, insights, seleção operacional ou resposta direta **só** no prompt de um agente.
+- Reintroduzir seção «Entidades» na UI ou gravar produto/filial só em `upsert_entity` sem `context_item`.
 - Copiar o mesmo `if` em `SendChatMessageUseCase` e `StreamChatMessageUseCase` sem extrair para serviço base.
 - Bypass do pipeline em preview/simulate sem `previous_messages` quando o histórico importa.
 

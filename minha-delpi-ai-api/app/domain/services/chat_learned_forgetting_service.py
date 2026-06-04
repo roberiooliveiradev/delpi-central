@@ -63,19 +63,18 @@ class ChatLearnedForgettingService:
             result["previousProductCodes"] = codes[-cls.MAX_PRODUCT_HISTORY :]
             forgotten.append("previousProductCodes:limit")
 
-        entities = dict(result.get("lastEntities") or {})
-        active = dict(result.get("activeEntities") or {})
+        from app.domain.services.chat_snapshot_operational_focus import (
+            ChatSnapshotOperationalFocus,
+        )
+
+        focus = ChatSnapshotOperationalFocus.get(result)
 
         if active_topic and "sql" not in active_topic:
             for key in ("warehouse",):
-                if entities.pop(key, None):
-                    forgotten.append(f"lastEntities:{key}")
+                if focus.pop(key, None):
+                    forgotten.append(f"operationalFocus:{key}")
 
-                if active.pop(key, None):
-                    forgotten.append(f"activeEntities:{key}")
-
-        result["lastEntities"] = entities
-        result["activeEntities"] = active
+        result = ChatSnapshotOperationalFocus.set(result, focus)
         result["conversationState"] = state
 
         if forgotten:
