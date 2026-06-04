@@ -1944,10 +1944,10 @@ class ExternalActionResultPresenter:
                 f"Custo padrão vigente: R$ {self._format_currency(standard_cost)}."
             )
 
-        if self._total(root.get("guide")) == 0:
+        if self._collection_is_empty(root.get("guide")):
             insights.append("Roteiro de produção ainda não cadastrado.")
 
-        if self._total(root.get("inspection")) == 0:
+        if self._collection_is_empty(root.get("inspection")):
             insights.append("Plano de inspeção ainda não cadastrado.")
 
         blocked = str(product.get("blocked") or "").strip()
@@ -3161,6 +3161,30 @@ class ExternalActionResultPresenter:
             return value.get("total")
 
         return None
+
+    def _collection_is_empty(self, value) -> bool:
+        if not isinstance(value, dict):
+            return True
+
+        total = value.get("total")
+
+        try:
+            if total is not None and int(total) > 0:
+                return False
+        except (TypeError, ValueError):
+            pass
+
+        items = value.get("items")
+
+        if isinstance(items, list) and items:
+            return False
+
+        data = value.get("data")
+
+        if isinstance(data, list) and data:
+            return False
+
+        return True
 
     def _build_product_analyser_text_presentation(
         self,

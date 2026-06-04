@@ -63,6 +63,7 @@ import {
   buildAssistantCopyText,
   buildEmailCopyText,
   getPresentationPairFromToolCalls,
+  getTextMarkdownFromToolCalls,
   isShortPresentationCaption,
   shouldShowActionResults,
   shouldSuppressMarkdownForPresentation,
@@ -978,7 +979,8 @@ export function ChatMessageList({
           lastSentUserText,
           message.id === latestUserMessageId,
         )
-      : String(message.content ?? "").trim();
+      : String(message.content ?? "").trim() ||
+        getTextMarkdownFromToolCalls(messageToolCalls);
     const messageCanvasOpen = getCanvasOpenFromMetadata(message.metadata);
 
     return (

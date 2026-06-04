@@ -14,14 +14,18 @@ import {
 } from "./presentationStackPlan";
 import { dedupeTableSegments } from "./presentationTableDedup";
 
-const TABLE_MARKER_RE = /\[\[(?:tabela|table)(?::\d+)?]]/gi;
-const TAIL_MARKER_RE = /\[\[(?:grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
+const PRESENTATION_MARKER_RE =
+  /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)(?::\d+)?]]/gi;
 
-export function stripInlineTableMarkers(markdown: string): string {
+export function stripPresentationMarkersFromMarkdown(markdown: string): string {
   return String(markdown || "")
-    .replace(TABLE_MARKER_RE, "")
+    .replace(PRESENTATION_MARKER_RE, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+export function stripInlineTableMarkers(markdown: string): string {
+  return stripPresentationMarkersFromMarkdown(markdown);
 }
 
 export function commentaryHasStructuredSections(sections: CommentarySections): boolean {
@@ -129,7 +133,9 @@ export function buildPlanOrderedStackSegments(
   appendUnique: (segments: AssistantContentSegment[], segment: AssistantContentSegment) => void,
   plan: StackPresentationPlan,
 ): AssistantContentSegment[] {
-  const sections = partitionCommentarySections(stripInlineTableMarkers(commentary));
+  const sections = partitionCommentarySections(
+    stripPresentationMarkersFromMarkdown(commentary),
+  );
   const segments: AssistantContentSegment[] = [];
   const tables = orderedVisuals.filter((segment) => segment.kind === "table");
   const profileRoles: StackTableRole[] = plan.profileFirst ? ["profile"] : [];
@@ -208,8 +214,7 @@ export function buildCanonicalStackSegments(
   const trimmedCommentary = String(commentary || "").trim();
   const plan = getStackPresentationPlanFromToolCalls(toolCalls);
   const sections = partitionCommentarySections(trimmedCommentary);
-  const hasTailMarkers = TAIL_MARKER_RE.test(trimmedCommentary);
-  const hasTableMarkers = TABLE_MARKER_RE.test(trimmedCommentary);
+  const hasEmbeddedMarkers = PRESENTATION_MARKER_RE.test(trimmedCommentary);
 
   if (
     commentaryHasStructuredSections(sections) ||
@@ -225,9 +230,9 @@ export function buildCanonicalStackSegments(
     );
   }
 
-  if (hasTableMarkers || hasTailMarkers) {
+  if (hasEmbeddedMarkers) {
     return buildPlanOrderedStackSegments(
-      stripInlineTableMarkers(trimmedCommentary),
+      stripPresentationMarkersFromMarkdown(trimmedCommentary),
       orderedVisuals,
       parseMarkdown,
       appendUnique,

@@ -269,16 +269,17 @@ class ChatRichPresentationTextService:
             markers = "\n\n".join(f"[[table:{index}]]" for index in range(1, table_count + 1))
             body = f"{body[:insert_at].rstrip()}\n\n{markers}\n\n{body[insert_at:].lstrip()}".strip()
 
-        tail_markers: list[str] = []
+        if not has_destaques:
+            tail_markers: list[str] = []
 
-        if has_tree:
-            tail_markers.append("[[arvore]]")
+            if has_tree:
+                tail_markers.append("[[arvore]]")
 
-        if has_chart:
-            tail_markers.append("[[chart]]")
+            if has_chart:
+                tail_markers.append("[[chart]]")
 
-        if tail_markers and (has_tree or has_chart):
-            body = f"{body.rstrip()}\n\n" + "\n\n".join(tail_markers)
+            if tail_markers:
+                body = f"{body.rstrip()}\n\n" + "\n\n".join(tail_markers)
 
         return re.sub(r"\n{3,}", "\n\n", body).strip()
 

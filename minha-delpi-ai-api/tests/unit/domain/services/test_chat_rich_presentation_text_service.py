@@ -106,8 +106,7 @@ def test_embed_visual_markers_for_analyser_sections():
 
     assert "[[table:1]]" not in embedded
     assert "[[table:2]]" not in embedded
-    assert "[[arvore]]" in embedded
-    assert embedded.index("**Pontos de atenção") < embedded.index("[[arvore]]")
+    assert "[[arvore]]" not in embedded
 
 
 def test_should_compact_narrative_for_table_plus_tree():
