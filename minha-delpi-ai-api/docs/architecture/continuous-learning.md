@@ -80,6 +80,9 @@ Próximos turnos (send/stream)
 | `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `false` | Pesquisa significado público na web para enriquecer o candidato. |
 | `CHAT_LEARNING_GLOSSARY_MAX_TERMS` | `300` | Teto de definições carregadas/injetadas por turno. |
 | `CHAT_LEARNING_GLOSSARY_RAG_INDEX` | `false` | Indexa termos aprovados como conhecimento RAG recuperável por embedding (Fase 5). |
+| `CHAT_LEARNING_EVALUATION_ENABLED` | `false` | Liga casos de regressão e execução automática (Fase 6). |
+| `CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION` | `true` | Bloqueia promoção se casos ativos falharem com a regra simulada. |
+| `CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK` | `true` | Cria caso de regressão a partir de feedback negativo. |
 
 ## Endpoints admin
 
@@ -88,6 +91,10 @@ Próximos turnos (send/stream)
 - `GET /admin/learning/vocabulary?scope=&approved=&type=&limit=&offset=`
 - `POST /admin/learning/vocabulary` — cria/edita termo aprovado (ex.: regra de typo `como vc s chama → como voce se chama`).
 - `POST /admin/learning/vocabulary/reindex?limit=2000` — backfill do índice RAG do glossário (Fase 5).
+- `GET /admin/learning/evaluation-cases?category=&status=&limit=&offset=`
+- `POST /admin/learning/evaluation-cases` — cria caso (`input`, `category`, `expectedIntent`, …).
+- `POST /admin/learning/evaluation-cases/run` — body `{ caseId? }` ou roda todos os ativos.
+- `POST /admin/learning/evaluation-cases/{id}/review` — body `{ "action": "enable|disable" }`.
 - `GET /admin/learning/memory?userId=&scope=&type=&status=&limit=&offset=` — lista memórias persistentes.
 - `POST /admin/learning/memory/{id}/review` — body `{ "action": "forget|restore" }` (esquecer/restaurar).
 - `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques + memória).
@@ -182,9 +189,25 @@ sync_term(term)  (apenas type=term_definition)
 Repositório: novo `KnowledgeRepositoryPort.find_document_by_source_ref(source_ref,
 source_type=)` para upsert por origem.
 
+## Avaliação automática (Fase 6)
+
+Dataset de regressão em `ai_evaluation_cases`, executado de forma determinística (sem LLM)
+via `ChatEvaluationCaseRunnerService` (intenção/turno simples, normalização, flags
+`mustNotUseTools`/`mustNotUseRag`, trecho de resposta direta opcional).
+
+```
+Feedback negativo (opcional) → ChatEvaluationCaseService.capture_from_negative_feedback
+Admin cria caso manualmente
+Promoção de candidato → ChatLearningPromotionGateService:
+  simula vocabulário + regra proposta → roda casos ativos → bloqueia se falhar
+POST /admin/learning/evaluation-cases/run → atualiza lastPassed / lastFailureReason
+```
+
+Categorias sugeridas: `routing`, `normalization`, `small_talk`, `security`, `memory`.
+KPIs: `evaluationCasesFailing`, `evaluationCasesActive` no summary admin.
+
 ## Não coberto nesta fase (próximas)
 
 - Recuperação semântica de `memory_items` por embedding (indexação no RAG) — a Fase 5
   cobre o glossário; a memória persistente segue por user/projeto + recência.
-- `evaluation_cases` com execução automática e bloqueio de promoção que quebra casos (Fase 6).
 - Fine-tuning offline (Fase 7).

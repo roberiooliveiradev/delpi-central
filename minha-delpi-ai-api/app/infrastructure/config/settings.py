@@ -427,6 +427,16 @@ class Settings:
     CHAT_LEARNING_GLOSSARY_RAG_INDEX = (
         os.getenv("CHAT_LEARNING_GLOSSARY_RAG_INDEX", "false").lower() == "true"
     )
+    # Avaliação automática (playbook Fase 6): casos de regressão e gate de promoção.
+    CHAT_LEARNING_EVALUATION_ENABLED = (
+        os.getenv("CHAT_LEARNING_EVALUATION_ENABLED", "false").lower() == "true"
+    )
+    CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION = (
+        os.getenv("CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION", "true").lower() == "true"
+    )
+    CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK = (
+        os.getenv("CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK", "true").lower() == "true"
+    )
 
     @classmethod
     def resolve_web_search_provider(cls) -> str:

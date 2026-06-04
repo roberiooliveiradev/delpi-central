@@ -40,6 +40,19 @@ class _FakeMemoryRepo:
         }
 
 
+class _FakeEvalRepo:
+    def summary(self):
+        return {
+            "total": 2,
+            "active": 2,
+            "disabled": 0,
+            "failing": 1,
+            "passing": 1,
+            "neverRun": 0,
+            "byCategory": {"routing": 2},
+        }
+
+
 def test_execute_assembles_summary_with_window():
     candidate_repo = _FakeCandidateRepo()
 
@@ -47,6 +60,7 @@ def test_execute_assembles_summary_with_window():
         candidate_repository=candidate_repo,
         vocabulary_repository=_FakeVocabRepo(),
         memory_repository=_FakeMemoryRepo(),
+        evaluation_repository=_FakeEvalRepo(),
     )
 
     result = use_case.execute(hours=24)
@@ -57,6 +71,8 @@ def test_execute_assembles_summary_with_window():
     assert result["vocabulary"]["activeApproved"] == 2
     assert result["memory"]["active"] == 4
     assert result["highlights"]["memoryItemsActive"] == 4
+    assert result["highlights"]["evaluationCasesFailing"] == 1
+    assert result["evaluation"]["active"] == 2
     # janela aplicada ao repositório de candidatos
     assert candidate_repo.since is not None
 
@@ -66,6 +82,7 @@ def test_execute_normalizes_invalid_hours():
         candidate_repository=_FakeCandidateRepo(),
         vocabulary_repository=_FakeVocabRepo(),
         memory_repository=_FakeMemoryRepo(),
+        evaluation_repository=_FakeEvalRepo(),
     )
 
     result = use_case.execute(hours=0)

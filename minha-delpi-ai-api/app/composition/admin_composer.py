@@ -317,6 +317,38 @@ def make_get_admin_learning_summary_use_case():
     return GetAdminLearningSummaryUseCase()
 
 
+def make_list_evaluation_cases_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ListEvaluationCasesUseCase,
+    )
+
+    return ListEvaluationCasesUseCase()
+
+
+def make_create_evaluation_case_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        CreateEvaluationCaseUseCase,
+    )
+
+    return CreateEvaluationCaseUseCase()
+
+
+def make_run_evaluation_case_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        RunEvaluationCaseUseCase,
+    )
+
+    return RunEvaluationCaseUseCase()
+
+
+def make_review_evaluation_case_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ReviewEvaluationCaseUseCase,
+    )
+
+    return ReviewEvaluationCaseUseCase()
+
+
 def make_list_user_memory_items_use_case():
     from app.application.use_cases.chat_user_memory_use_cases import (
         ListUserMemoryItemsUseCase,

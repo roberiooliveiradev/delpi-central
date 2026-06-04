@@ -24,6 +24,7 @@ from app.infrastructure.db.models.chat_quality_issue_model import AiChatQualityI
 from app.infrastructure.db.models.learning_candidate_model import AiLearningCandidateModel
 from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermModel
 from app.infrastructure.db.models.memory_item_model import AiMemoryItemModel
+from app.infrastructure.db.models.evaluation_case_model import AiEvaluationCaseModel
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -52,4 +53,5 @@ __all__ = [
     "AiLearningCandidateModel",
     "AiVocabularyTermModel",
     "AiMemoryItemModel",
+    "AiEvaluationCaseModel",
 ]

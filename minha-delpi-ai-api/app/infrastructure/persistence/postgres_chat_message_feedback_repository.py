@@ -147,6 +147,7 @@ class PostgresChatMessageFeedbackRepository:
 
     def _to_dict(self, row: AiChatMessageFeedbackModel) -> dict:
         payload = {
+            "id": int(row.id),
             "messageId": str(row.message_id),
             "userId": str(row.user_id),
             "rating": int(row.rating),

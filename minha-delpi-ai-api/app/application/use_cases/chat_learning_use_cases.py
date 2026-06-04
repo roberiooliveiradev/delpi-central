@@ -250,3 +250,84 @@ class UpsertVocabularyTermUseCase:
             pass
 
         return result
+
+
+class ListEvaluationCasesUseCase:
+    def __init__(self, evaluation_service=None):
+        from app.application.services.chat_evaluation_case_service import (
+            ChatEvaluationCaseService,
+        )
+
+        self.evaluation_service = evaluation_service or ChatEvaluationCaseService()
+
+    def execute(
+        self,
+        *,
+        category: str | None = None,
+        status: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
+        return self.evaluation_service.list_cases(
+            category=category,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+
+
+class CreateEvaluationCaseUseCase:
+    def __init__(self, evaluation_service=None):
+        from app.application.services.chat_evaluation_case_service import (
+            ChatEvaluationCaseService,
+        )
+
+        self.evaluation_service = evaluation_service or ChatEvaluationCaseService()
+
+    def execute(self, *, payload: dict, created_by: str | None = None) -> dict:
+        return self.evaluation_service.create_case(payload=payload, created_by=created_by)
+
+
+class RunEvaluationCaseUseCase:
+    def __init__(self, evaluation_service=None):
+        from app.application.services.chat_evaluation_case_service import (
+            ChatEvaluationCaseService,
+        )
+
+        self.evaluation_service = evaluation_service or ChatEvaluationCaseService()
+
+    def execute(self, *, case_id: int | None = None, category: str | None = None) -> dict:
+        if case_id is not None:
+            return self.evaluation_service.run_case(case_id)
+
+        return self.evaluation_service.run_all_active(category=category)
+
+
+class ReviewEvaluationCaseUseCase:
+    """Ativa/desativa um caso de regressão."""
+
+    _ACTIONS = {"enable", "disable"}
+
+    def __init__(self, repository=None):
+        if repository is None:
+            from app.infrastructure.persistence.postgres_evaluation_case_repository import (
+                PostgresEvaluationCaseRepository,
+            )
+
+            repository = PostgresEvaluationCaseRepository()
+
+        self.repository = repository
+
+    def execute(self, *, case_id: int, action: str) -> dict:
+        normalized = str(action or "").strip().lower()
+
+        if normalized not in self._ACTIONS:
+            raise ValueError("invalid review action")
+
+        status = "active" if normalized == "enable" else "disabled"
+        updated = self.repository.set_status(case_id, status=status)
+
+        if not updated:
+            raise ValueError("case not found")
+
+        return {"case": updated}

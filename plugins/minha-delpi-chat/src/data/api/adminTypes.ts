@@ -1201,6 +1201,35 @@ export type ReviewMemoryItemPayload = {
   action: "forget" | "restore";
 };
 
+export type AdminEvaluationCase = {
+  id: number;
+  category: string;
+  input: string;
+  expectedIntent: string | null;
+  expectedAnswer: string | null;
+  expectedNormalized: string | null;
+  mustNotUseTools: boolean;
+  mustNotUseRag: boolean;
+  sourceFeedbackId: number | null;
+  linkedCandidateId: number | null;
+  status: string;
+  lastRunAt: string | null;
+  lastPassed: boolean | null;
+  lastFailureReason: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type CreateEvaluationCasePayload = {
+  category?: string;
+  input: string;
+  expectedIntent?: string;
+  expectedAnswer?: string;
+  expectedNormalized?: string;
+  mustNotUseTools?: boolean;
+  mustNotUseRag?: boolean;
+};
+
 export type AdminLearningSummary = {
   windowHours: number;
   candidates: {
@@ -1224,6 +1253,15 @@ export type AdminLearningSummary = {
     byStatus: Record<string, number>;
     byType: Record<string, number>;
   };
+  evaluation?: {
+    total: number;
+    active: number;
+    disabled: number;
+    failing: number;
+    passing: number;
+    neverRun: number;
+    byCategory: Record<string, number>;
+  };
   funnel: {
     created: number;
     recentCreated: number;
@@ -1240,5 +1278,7 @@ export type AdminLearningSummary = {
     pendingHighConfidence: number;
     learnedTermsActive: number;
     memoryItemsActive?: number;
+    evaluationCasesFailing?: number;
+    evaluationCasesActive?: number;
   };
 };

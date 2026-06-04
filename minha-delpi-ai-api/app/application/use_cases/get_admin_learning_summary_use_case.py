@@ -11,6 +11,7 @@ class GetAdminLearningSummaryUseCase:
         candidate_repository=None,
         vocabulary_repository=None,
         memory_repository=None,
+        evaluation_repository=None,
     ):
         if candidate_repository is None:
             from app.infrastructure.persistence.postgres_learning_candidate_repository import (
@@ -33,9 +34,17 @@ class GetAdminLearningSummaryUseCase:
 
             memory_repository = PostgresMemoryItemRepository()
 
+        if evaluation_repository is None:
+            from app.infrastructure.persistence.postgres_evaluation_case_repository import (
+                PostgresEvaluationCaseRepository,
+            )
+
+            evaluation_repository = PostgresEvaluationCaseRepository()
+
         self.candidate_repository = candidate_repository
         self.vocabulary_repository = vocabulary_repository
         self.memory_repository = memory_repository
+        self.evaluation_repository = evaluation_repository
 
     def execute(self, *, hours: int = 168) -> dict:
         window = max(1, int(hours))
@@ -44,11 +53,13 @@ class GetAdminLearningSummaryUseCase:
         candidates = self.candidate_repository.summary(since=since)
         vocabulary = self.vocabulary_repository.summary()
         memory = self.memory_repository.summary()
+        evaluation = self.evaluation_repository.summary()
 
         summary = ChatLearningMetricsService.assemble(
             candidates=candidates,
             vocabulary=vocabulary,
             memory=memory,
+            evaluation=evaluation,
         )
         summary["windowHours"] = window
         return summary

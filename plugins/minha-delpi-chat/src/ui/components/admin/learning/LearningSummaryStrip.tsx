@@ -57,6 +57,11 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: String(summary.highlights.memoryItemsActive ?? summary.memory?.active ?? 0),
       hint: `${summary.memory?.forgotten ?? 0} esquecidas`,
     },
+    {
+      label: "Testes falhando",
+      value: String(summary.highlights.evaluationCasesFailing ?? summary.evaluation?.failing ?? 0),
+      hint: `${summary.highlights.evaluationCasesActive ?? summary.evaluation?.active ?? 0} casos ativos`,
+    },
   ];
 
   return (

@@ -61,6 +61,8 @@ import type {
   AdminVocabularyTerm,
   AdminLearningSummary,
   AdminMemoryItem,
+  AdminEvaluationCase,
+  CreateEvaluationCasePayload,
   ReviewLearningCandidatePayload,
   ReviewMemoryItemPayload,
   UpsertVocabularyTermPayload,
@@ -1481,4 +1483,55 @@ export async function getAdminLearningSummary(
   );
 
   return parseJsonResponse<AdminLearningSummary>(response);
+}
+
+export type ListAdminEvaluationCasesParams = {
+  category?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export async function listAdminEvaluationCases(
+  params: ListAdminEvaluationCasesParams = {},
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminEvaluationCase>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit ?? 50));
+  query.set("offset", String(params.offset ?? 0));
+  if (params.category?.trim()) query.set("category", params.category.trim());
+  if (params.status?.trim()) query.set("status", params.status.trim());
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/evaluation-cases?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminEvaluationCase>>(response);
+}
+
+export async function createAdminEvaluationCase(
+  payload: CreateEvaluationCasePayload,
+  options: AdminApiOptions = {},
+): Promise<AdminEvaluationCase> {
+  const response = await fetch(`${API_BASE_URL}/admin/learning/evaluation-cases`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminEvaluationCase>(response);
+}
+
+export async function runAdminEvaluationCases(
+  payload: { caseId?: number; category?: string } = {},
+  options: AdminApiOptions = {},
+): Promise<Record<string, unknown>> {
+  const response = await fetch(`${API_BASE_URL}/admin/learning/evaluation-cases/run`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse(response);
 }

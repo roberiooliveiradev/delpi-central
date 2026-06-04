@@ -170,6 +170,19 @@ class ChatKnowledgeCandidateService:
         if candidate["status"] in {"rejected", "expired"}:
             raise ValueError("cannot promote a rejected/expired candidate")
 
+        from app.application.services.chat_learning_promotion_gate_service import (
+            ChatLearningPromotionGateService,
+        )
+
+        gate = ChatLearningPromotionGateService().validate_promotion(
+            candidate,
+            term_override=term_override,
+            normalized_override=normalized_override,
+        )
+
+        if not gate.get("allowed", True):
+            raise ValueError(gate.get("message") or "promotion blocked by evaluation regression")
+
         term_text = (
             self._clip(term_override, 160)
             or candidate.get("term")

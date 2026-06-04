@@ -974,6 +974,113 @@ def admin_reindex_glossary_knowledge():
     return jsonify(result), 200
 
 
+@admin_bp.get("/learning/evaluation-cases")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_evaluation_cases():
+    from app.composition.admin_composer import make_list_evaluation_cases_use_case
+
+    category = (request.args.get("category") or "").strip() or None
+    status = (request.args.get("status") or "").strip() or None
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_evaluation_cases_use_case()
+    return jsonify(
+        use_case.execute(
+            category=category,
+            status=status,
+            limit=limit,
+            offset=offset,
+        )
+    ), 200
+
+
+@admin_bp.post("/learning/evaluation-cases")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_create_evaluation_case():
+    from app.composition.admin_composer import make_create_evaluation_case_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("input"):
+        return bad_request("input is required")
+
+    use_case = make_create_evaluation_case_use_case()
+
+    try:
+        result = use_case.execute(
+            payload=payload,
+            created_by=str(g.current_user.sub),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/learning/evaluation-cases/run")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_run_evaluation_cases():
+    from app.composition.admin_composer import make_run_evaluation_case_use_case
+
+    payload = request.get_json(silent=True) or {}
+    case_id = payload.get("caseId") or payload.get("case_id")
+    category = (payload.get("category") or request.args.get("category") or "").strip() or None
+
+    use_case = make_run_evaluation_case_use_case()
+
+    try:
+        if case_id is not None:
+            result = use_case.execute(case_id=int(case_id))
+        else:
+            result = use_case.execute(category=category)
+
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/learning/evaluation-cases/<int:case_id>/review")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_review_evaluation_case(case_id: int):
+    from app.composition.admin_composer import make_review_evaluation_case_use_case
+
+    payload = request.get_json(silent=True) or {}
+    action = str(payload.get("action") or "").strip().lower()
+
+    if not action:
+        return bad_request("action is required")
+
+    use_case = make_review_evaluation_case_use_case()
+
+    try:
+        result = use_case.execute(case_id=case_id, action=action)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @admin_bp.get("/learning/memory")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_list_user_memory_items():

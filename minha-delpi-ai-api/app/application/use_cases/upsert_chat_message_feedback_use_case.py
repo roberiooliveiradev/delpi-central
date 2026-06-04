@@ -136,6 +136,12 @@ class UpsertChatMessageFeedbackUseCase:
                 session=session,
                 user_id=user_id,
             )
+            self._capture_evaluation_case(
+                message_uuid=message_uuid,
+                reason=normalized_reason,
+                feedback_id=result.get("id"),
+                user_id=user_id,
+            )
 
         return result
 
@@ -175,6 +181,41 @@ class UpsertChatMessageFeedbackUseCase:
                 user_question=user_question,
                 reason=reason,
                 project_id=project_id,
+                created_by=user_id,
+            )
+        except Exception:
+            return
+
+    def _capture_evaluation_case(
+        self,
+        *,
+        message_uuid: UUID,
+        reason: str | None,
+        feedback_id: int | None,
+        user_id: str,
+    ) -> None:
+        """Casos de regressão (Fase 6): best-effort, nunca quebra o feedback."""
+        from app.infrastructure.config.settings import Settings
+
+        if not Settings.CHAT_LEARNING_ENABLED:
+            return
+
+        try:
+            user_question = self.feedback_repository.get_user_question_for_assistant(
+                message_uuid,
+            )
+
+            if not user_question:
+                return
+
+            from app.application.services.chat_evaluation_case_service import (
+                ChatEvaluationCaseService,
+            )
+
+            ChatEvaluationCaseService().capture_from_negative_feedback(
+                user_question=user_question,
+                reason=reason,
+                feedback_id=feedback_id,
                 created_by=user_id,
             )
         except Exception:

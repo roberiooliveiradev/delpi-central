@@ -2,14 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   getAdminLearningSummary,
+  createAdminEvaluationCase,
+  listAdminEvaluationCases,
   listAdminLearningCandidates,
   listAdminMemoryItems,
   listAdminVocabularyTerms,
   reviewAdminLearningCandidate,
   reviewAdminMemoryItem,
+  runAdminEvaluationCases,
   upsertAdminVocabularyTerm,
 } from "../../../../data/api/adminApi";
 import type {
+  AdminEvaluationCase,
   AdminLearningCandidate,
   AdminLearningSummary,
   AdminMemoryItem,
@@ -24,7 +28,12 @@ type AdminLearningTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
-type LearningView = "candidates" | "vocabulary" | "memory";
+type LearningView = "candidates" | "vocabulary" | "memory" | "evaluation";
+
+const EVAL_STATUS_LABEL: Record<string, string> = {
+  true: "Passou",
+  false: "Falhou",
+};
 
 const MEMORY_STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "active", label: "Ativas" },
@@ -76,6 +85,9 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
   const [terms, setTerms] = useState<AdminVocabularyTerm[]>([]);
   const [memoryItems, setMemoryItems] = useState<AdminMemoryItem[]>([]);
   const [memoryStatusFilter, setMemoryStatusFilter] = useState<string>("active");
+  const [evalCases, setEvalCases] = useState<AdminEvaluationCase[]>([]);
+  const [evalInput, setEvalInput] = useState("");
+  const [evalIntent, setEvalIntent] = useState("assistant_identity");
   const [summary, setSummary] = useState<AdminLearningSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
@@ -148,6 +160,20 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
     }
   }, [getAccessToken, memoryStatusFilter]);
 
+  const loadEvalCases = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await listAdminEvaluationCases({ limit: 100 }, { getAccessToken });
+      setEvalCases(response.items);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar casos de teste.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [getAccessToken]);
+
   const loadSummary = useCallback(async () => {
     setIsSummaryLoading(true);
 
@@ -167,10 +193,12 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       void loadCandidates();
     } else if (view === "vocabulary") {
       void loadTerms();
-    } else {
+    } else if (view === "memory") {
       void loadMemoryItems();
+    } else {
+      void loadEvalCases();
     }
-  }, [view, loadCandidates, loadTerms, loadMemoryItems]);
+  }, [view, loadCandidates, loadTerms, loadMemoryItems, loadEvalCases]);
 
   useEffect(() => {
     void loadSummary();
@@ -218,6 +246,63 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       void loadSummary();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao revisar candidato.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleRunEvaluations(caseId?: number) {
+    setIsBusy(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const result = await runAdminEvaluationCases(
+        caseId ? { caseId } : {},
+        { getAccessToken },
+      );
+      const failed = Number(result.failed ?? 0);
+      const passed = Number(result.passed ?? 0);
+
+      setSuccessMessage(
+        caseId
+          ? "Caso executado."
+          : `Execução concluída: ${passed} passou, ${failed} falhou.`,
+      );
+      await loadEvalCases();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao executar casos.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleCreateEvalCase() {
+    if (!evalInput.trim()) {
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+
+    try {
+      await createAdminEvaluationCase(
+        {
+          category: "routing",
+          input: evalInput.trim(),
+          expectedIntent: evalIntent.trim() || undefined,
+          mustNotUseTools: true,
+          mustNotUseRag: true,
+        },
+        { getAccessToken },
+      );
+      setEvalInput("");
+      setSuccessMessage("Caso de regressão criado.");
+      await loadEvalCases();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar caso.");
     } finally {
       setIsBusy(false);
     }
@@ -311,6 +396,13 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
           >
             Memória
           </button>
+          <button
+            type="button"
+            className={view === "evaluation" ? "is-active" : undefined}
+            onClick={() => setView("evaluation")}
+          >
+            Regressão
+          </button>
         </div>
 
         <button
@@ -322,8 +414,10 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
               void loadCandidates();
             } else if (view === "vocabulary") {
               void loadTerms();
-            } else {
+            } else if (view === "memory") {
               void loadMemoryItems();
+            } else {
+              void loadEvalCases();
             }
             void loadSummary();
           }}
@@ -559,7 +653,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
             </div>
           </article>
         </div>
-      ) : (
+      ) : view === "memory" ? (
         <div className="mdc-admin-learning__layout">
           <div className="mdc-admin-panel">
             <div className="mdc-admin-learning__memory-toolbar">
@@ -629,6 +723,92 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
               ))}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="mdc-admin-learning__layout mdc-admin-split">
+          <aside className="mdc-admin-split__aside mdc-admin-panel">
+            <h3 className="mdc-admin-learning__subtitle">Novo caso</h3>
+            <label className="mdc-admin-field">
+              <span>Pergunta / entrada</span>
+              <input
+                value={evalInput}
+                onChange={(event) => setEvalInput(event.target.value)}
+                placeholder='ex.: "como vc s chama?"'
+              />
+            </label>
+            <label className="mdc-admin-field">
+              <span>Intenção esperada</span>
+              <input
+                value={evalIntent}
+                onChange={(event) => setEvalIntent(event.target.value)}
+                placeholder="assistant_identity"
+              />
+            </label>
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={isBusy || !evalInput.trim()}
+              onClick={() => void handleCreateEvalCase()}
+            >
+              Adicionar caso
+            </button>
+            <button
+              type="button"
+              className="mdc-chat-ws-primary-btn"
+              disabled={isBusy}
+              onClick={() => void handleRunEvaluations()}
+            >
+              Executar todos
+            </button>
+          </aside>
+
+          <article className="mdc-admin-split__main mdc-admin-panel">
+            <h3 className="mdc-admin-learning__subtitle">Casos de regressão</h3>
+            <div className="mdc-admin-entity-list">
+              {evalCases.length === 0 ? (
+                <p className="mdc-chat-muted">Nenhum caso de regressão ainda.</p>
+              ) : null}
+
+              {evalCases.map((item) => (
+                <div key={item.id} className="mdc-admin-learning__memory-item">
+                  <div className="mdc-admin-learning__memory-body">
+                    <div className="mdc-admin-learning__item-head">
+                      <strong>{item.input}</strong>
+                      <span
+                        className={`mdc-admin-learning__badge is-${
+                          item.lastPassed === false
+                            ? "high"
+                            : item.lastPassed === true
+                              ? "low"
+                              : "medium"
+                        }`}
+                      >
+                        {item.lastPassed === null || item.lastPassed === undefined
+                          ? "Não executado"
+                          : EVAL_STATUS_LABEL[String(item.lastPassed)] ?? "—"}
+                      </span>
+                    </div>
+                    <small className="mdc-admin-entity-row__detail">
+                      {item.category}
+                      {item.expectedIntent ? ` · ${item.expectedIntent}` : ""}
+                      {item.status !== "active" ? ` · ${item.status}` : ""}
+                    </small>
+                    {item.lastFailureReason ? (
+                      <p className="mdc-admin-learning__error">{item.lastFailureReason}</p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="mdc-chat-ws-outline-btn"
+                    disabled={isBusy}
+                    onClick={() => void handleRunEvaluations(item.id)}
+                  >
+                    Executar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </article>
         </div>
       )}
     </section>
