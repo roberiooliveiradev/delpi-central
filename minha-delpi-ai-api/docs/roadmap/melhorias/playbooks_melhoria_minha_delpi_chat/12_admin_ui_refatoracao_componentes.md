@@ -1,7 +1,7 @@
 # Playbook 12 — Admin UI: refatoração de componentes e layout
 
-> **Status (jun/2026):** **concluído** no MFE (Fases 0–5). Pendente opcional: capturas PNG de baseline no staging e migração total de `AdminMetricsTab.css` legado.  
-> **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (navegação 6 seções **já aplicada** no MFE). Este playbook trata **como** cada tela renderiza dados: grid, KPIs, tabelas, gráficos e estados vazios.
+> **Status (jun/2026):** **concluído** no MFE (Fases 0–5 + shell **admin-v3-sidebar**). Pendente opcional: capturas PNG de baseline no staging e migração total de `AdminMetricsTab.css` legado.  
+> **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (6 seções no MFE). Este playbook trata **como** cada tela renderiza dados; a **navegação lateral** está documentada em [`plugins/minha-delpi-chat/docs/admin-shell-navegacao.md`](../../../../plugins/minha-delpi-chat/docs/admin-shell-navegacao.md).
 
 ## Objetivo
 
@@ -24,7 +24,7 @@ O administrador deve conseguir, em qualquer seção:
 | `admin-design-system.css`, `admin-shared.css`, tokens `--mdc-*` | Mudanças de backend / novos endpoints |
 | `AgentMiniDashboard` + `ChatRichDashboard` no contexto admin | Absorver `ChatAgentBuilderPage` no admin |
 | Blocos em `AdminMetricsTab` e subcomponentes `Admin*Metrics.tsx` | Redesign completo do Portal ou Strategic Indicators |
-| Shell (`AdminShellTopbar`, sub-abas, status strip) | |
+| Shell (`AdminShellTopbar`, `AdminSidebar`, `AdminShellLayout`, status strip) | |
 
 ---
 
@@ -257,15 +257,30 @@ Migrar nesta ordem:
 
 ---
 
+## Shell de navegação (admin-v3-sidebar)
+
+Entregue em jun/2026 — substitui topbar + barra horizontal de seções/sub-abas.
+
+| Antes | Depois |
+|-------|--------|
+| `AdminSectionNav` + `AdminSubTabNav` | `AdminSidebar` (árvore + busca) |
+| 2 níveis de URL | 3 níveis em Aprendizagem (`/conhecimento/aprendizagem/vocabulario`) |
+| Busca só por rótulo | Índice de conteúdo (`adminNavSearchIndex.ts`) + filtro na árvore |
+| Fallbacks `#fff` em abas | Tokens `--mdc-admin-*` em `.mdc-admin-root` |
+
+**Documentação:** [`plugins/minha-delpi-chat/docs/admin-shell-navegacao.md`](../../../../plugins/minha-delpi-chat/docs/admin-shell-navegacao.md).
+
+---
+
 ## Relação com Playbook 11
 
 | Playbook 11 | Playbook 12 |
 |-------------|-------------|
-| **Onde** clicar (6 seções, sub-abas, deep links) | **Como** cada sub-aba aparece |
-| `adminNavigation.ts`, `AdminSectionNav` | `admin/shared/*`, `AdminMetricsTab/*` |
-| Status: parcial / mockups | Status: proposta |
+| **Onde** clicar (6 seções, domínios de trabalho) | **Como** cada sub-aba aparece + shell lateral |
+| `adminNavigation.ts`, slugs PT | `admin/shared/*`, `AdminMetricsTab/*`, `AdminSidebar` |
+| Deep links por seção/sub-aba | Deep links com `page` onde `ADMIN_NESTED_PAGES` define |
 
-Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
+Ordem aplicada: navegação 6 seções (11) → primitivos visuais (12) → sidebar e busca de conteúdo (12 extensão).
 
 ---
 
@@ -301,6 +316,7 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 | Mini dashboard agente | `plugins/minha-delpi-chat/src/ui/components/admin/agents/AgentMiniDashboard.tsx` |
 | Rich dashboard (chat) | `plugins/minha-delpi-chat/src/ui/components/ChatRichDashboard.css` |
 | Navegação 6 abas | `plugins/minha-delpi-chat/src/navigation/adminNavigation.ts` |
+| Shell + busca | `plugins/minha-delpi-chat/docs/admin-shell-navegacao.md` |
 | Playbook navegação | [11_admin_ux_reorganizacao_abas.md](./11_admin_ux_reorganizacao_abas.md) |
 | README admin | `plugins/minha-delpi-chat/src/ui/components/admin/README.md` |
 
@@ -308,6 +324,6 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 ## Resumo executivo
 
-O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
+O painel admin tem **6 seções** e **sidebar em árvore com busca de conteúdo**; a **camada de apresentação** de métricas ainda evolui nos primitivos: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
 **Próximo passo sugerido (opcional):** capturar PNG em `baseline/screenshots/` no staging e executar `baseline/QA_MANUAL.md` no browser.

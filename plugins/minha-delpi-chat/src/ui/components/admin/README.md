@@ -4,7 +4,7 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 
 ## Estrutura
 
-- `shell/`: topbar, 6 seções, sub-abas, status strip e alertas.
+- `shell/`: topbar única, sidebar em árvore, layout, status strip e alertas. Ver [admin-shell-navegacao.md](../../../docs/admin-shell-navegacao.md).
 - `overview/`: painel inicial (KPIs, RBAC, navegação rápida).
 - `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
@@ -38,9 +38,25 @@ Todas as seções do admin usam `AdminTabHeader` no topo da sub-aba (Painel, Con
 
 ## Shell (navegação)
 
-- `AdminShellTopbar` — uma única barra: voltar, título com breadcrumb, atualizar.
-- `AdminSidebar` — árvore de seções/sub-abas + busca em navegação e conteúdo (`adminNavTree.ts`, `adminNavSearchIndex.ts`).
-- `AdminShellLayout` — sidebar fixa à esquerda (desktop); menu recolhível no mobile.
+Documentação completa: [docs/admin-shell-navegacao.md](../../../docs/admin-shell-navegacao.md).
+
+| Peça | Descrição |
+|------|-----------|
+| `AdminShellTopbar` | Voltar, breadcrumb (`getAdminNavBreadcrumb`), atualizar |
+| `AdminSidebar` | Busca (árvore + índice de conteúdo), até 3 níveis de URL |
+| `AdminShellLayout` | Sidebar fixa (desktop); **Menu do admin** &lt;1024px |
+
+Módulos em `src/navigation/`:
+
+| Arquivo | Papel |
+|---------|--------|
+| `adminNavigation.ts` | Seções, slugs PT, `AdminNavState`, href/parse |
+| `adminNavPages.ts` | Páginas do 3º nível (ex. aprendizagem) |
+| `adminNavTree.ts` | Árvore e filtro da sidebar |
+| `adminNavSearchIndex.ts` | Textos indexados por tela/bloco |
+| `adminNavSearch.ts` | União busca navegação + hits de conteúdo |
+
+Revisão do bundle: `shell/adminShellRevision.ts` (ex. `admin-v3-sidebar`).
 
 ## Roadmap de UI
 
@@ -55,7 +71,7 @@ Após alterações no admin, validar em tema escuro (1440px):
 | Seção | Sub-abas | Verificar |
 |-------|----------|-----------|
 | Painel | — | KPIs, links rápidos |
-| Conhecimento | Documentos, Diretrizes, Comportamentos, Aprendizagem | `AdminTabHeader`, filtros KPI, listas |
+| Conhecimento | Documentos, Diretrizes, Comportamentos, Aprendizagem (5 páginas na sidebar) | `AdminTabHeader`, filtros KPI, listas; aprendizagem sem barra de abas no header |
 | Agentes | Especialização, Simulação | Nome legível, badge, UUID em `<code>`, gráfico de uso |
 | Qualidade | Métricas, Avaliações | Blocos `AdminMetricSection`, tabelas legíveis |
 | Plataforma | Ferramentas, Inteligência | Strip de saúde, catálogo de ações |
