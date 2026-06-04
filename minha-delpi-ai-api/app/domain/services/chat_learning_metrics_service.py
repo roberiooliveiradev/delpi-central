@@ -8,6 +8,7 @@ class ChatLearningMetricsService:
         vocabulary: dict,
         memory: dict | None = None,
         evaluation: dict | None = None,
+        fine_tuning: dict | None = None,
     ) -> dict:
         by_status = candidates.get("byStatus", {}) if isinstance(candidates, dict) else {}
 
@@ -27,12 +28,14 @@ class ChatLearningMetricsService:
         by_type = candidates.get("byType", {}) if isinstance(candidates, dict) else {}
         memory = memory if isinstance(memory, dict) else {"total": 0, "active": 0}
         evaluation = evaluation if isinstance(evaluation, dict) else {"total": 0, "failing": 0}
+        fine_tuning = fine_tuning if isinstance(fine_tuning, dict) else {}
 
         return {
             "candidates": candidates,
             "vocabulary": vocabulary,
             "memory": memory,
             "evaluation": evaluation,
+            "fineTuning": fine_tuning,
             "funnel": {
                 "created": int(candidates.get("total", 0)),
                 "recentCreated": int(candidates.get("recentCreated", 0)),
@@ -53,5 +56,7 @@ class ChatLearningMetricsService:
                 "memoryItemsActive": int(memory.get("active", 0)),
                 "evaluationCasesFailing": int(evaluation.get("failing", 0)),
                 "evaluationCasesActive": int(evaluation.get("active", 0)),
+                "fineTuningSamplesApproved": int(fine_tuning.get("samplesApproved", 0)),
+                "fineTuningDatasetsApproved": int(fine_tuning.get("datasetsApproved", 0)),
             },
         }

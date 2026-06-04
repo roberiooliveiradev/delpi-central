@@ -25,6 +25,9 @@ from app.infrastructure.db.models.learning_candidate_model import AiLearningCand
 from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermModel
 from app.infrastructure.db.models.memory_item_model import AiMemoryItemModel
 from app.infrastructure.db.models.evaluation_case_model import AiEvaluationCaseModel
+from app.infrastructure.db.models.fine_tuning_dataset_model import AiFineTuningDatasetModel
+from app.infrastructure.db.models.fine_tuning_sample_model import AiFineTuningSampleModel
+from app.infrastructure.db.models.fine_tuning_run_model import AiFineTuningRunModel
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -54,4 +57,7 @@ __all__ = [
     "AiVocabularyTermModel",
     "AiMemoryItemModel",
     "AiEvaluationCaseModel",
+    "AiFineTuningDatasetModel",
+    "AiFineTuningSampleModel",
+    "AiFineTuningRunModel",
 ]

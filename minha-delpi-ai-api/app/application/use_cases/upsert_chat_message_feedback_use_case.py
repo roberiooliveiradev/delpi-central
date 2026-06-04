@@ -112,6 +112,13 @@ class UpsertChatMessageFeedbackUseCase:
                 result["correctiveActions"] = corrective
 
         if rating == 1:
+            self._capture_fine_tuning_sample(
+                message_uuid=message_uuid,
+                feedback_id=result.get("id"),
+                context_metadata=context_metadata,
+                user_id=user_id,
+            )
+
             thanks = ChatFeedbackContentService.thanks_for_rating(
                 rating,
                 seed=message_id,
@@ -216,6 +223,32 @@ class UpsertChatMessageFeedbackUseCase:
                 user_question=user_question,
                 reason=reason,
                 feedback_id=feedback_id,
+                created_by=user_id,
+            )
+        except Exception:
+            return
+
+    def _capture_fine_tuning_sample(
+        self,
+        *,
+        message_uuid: UUID,
+        feedback_id: int | None,
+        context_metadata: dict | None,
+        user_id: str,
+    ) -> None:
+        """Fine-tuning offline (Fase 7): best-effort em feedback positivo."""
+        from app.infrastructure.config.settings import Settings
+
+        if not Settings.CHAT_LEARNING_ENABLED:
+            return
+
+        try:
+            from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+            ChatFineTuningService().capture_from_positive_feedback(
+                message_id=message_uuid,
+                feedback_id=feedback_id,
+                context_metadata=context_metadata,
                 created_by=user_id,
             )
         except Exception:

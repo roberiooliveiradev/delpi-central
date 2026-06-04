@@ -83,6 +83,8 @@ Próximos turnos (send/stream)
 | `CHAT_LEARNING_EVALUATION_ENABLED` | `true` | Liga casos de regressão e execução automática (Fase 6). |
 | `CHAT_LEARNING_EVALUATION_BLOCK_PROMOTION` | `true` | Bloqueia promoção se casos ativos falharem com a regra simulada. |
 | `CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK` | `true` | Cria caso de regressão a partir de feedback negativo. |
+| `CHAT_LEARNING_FINE_TUNING_ENABLED` | `true` | Liga curadoria/export/jobs de fine-tuning offline. |
+| `CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK` | `true` | Captura amostra em feedback positivo (anonimizada). |
 
 ## Endpoints admin
 
@@ -206,8 +208,32 @@ POST /admin/learning/evaluation-cases/run → atualiza lastPassed / lastFailureR
 Categorias sugeridas: `routing`, `normalization`, `small_talk`, `security`, `memory`.
 KPIs: `evaluationCasesFailing`, `evaluationCasesActive` no summary admin.
 
+## Fine-tuning offline (Fase 7)
+
+Pipeline de curadoria para treino **fora da API** (sem fine-tune em tempo real):
+
+```
+Feedback positivo (opcional) → amostra captured + anonimizada
+Admin aprova amostras → agrupa em dataset → aprova dataset (≥3 amostras)
+POST .../runs → export → train (validação) → deploy / rollback
+GET .../datasets/{id}/export → JSONL {messages, intent?, category?}
+```
+
+Tabelas: `ai_fine_tuning_samples`, `ai_fine_tuning_datasets`, `ai_fine_tuning_runs`.
+`ChatFineTuningAnonymizationService` redige PII/segredos antes de persistir.
+`execute_run_training` valida o export e marca o job como `completed` (orquestração;
+treino real em Ollama/MLX fica externo).
+
+| Flag | Default |
+|------|---------|
+| `CHAT_LEARNING_FINE_TUNING_ENABLED` | `true` |
+| `CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK` | `true` |
+
+Endpoints: `/admin/learning/fine-tuning/samples`, `/datasets`, `/datasets/{id}/export`,
+`/datasets/{id}/runs`, `/runs/{id}/{export|train|deploy|rollback}`.
+
 ## Não coberto nesta fase (próximas)
 
 - Recuperação semântica de `memory_items` por embedding (indexação no RAG) — a Fase 5
   cobre o glossário; a memória persistente segue por user/projeto + recência.
-- Fine-tuning offline (Fase 7).
+- Integração automática com runner Ollama/MLX (treino GPU) dentro do cluster.

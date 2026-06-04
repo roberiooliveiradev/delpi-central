@@ -1220,6 +1220,30 @@ export type AdminEvaluationCase = {
   updatedAt: string | null;
 };
 
+export type AdminFineTuningSample = {
+  id: number;
+  datasetId: number | null;
+  category: string;
+  source: string;
+  sourceRef: string | null;
+  status: string;
+  messages: Array<{ role: string; content: string }>;
+  intentLabel: string | null;
+  qualityScore: number | null;
+  anonymized: boolean;
+  riskLevel: string | null;
+  createdAt: string | null;
+};
+
+export type AdminFineTuningDataset = {
+  id: number;
+  name: string;
+  description: string | null;
+  status: string;
+  targetModel: string;
+  createdAt: string | null;
+};
+
 export type CreateEvaluationCasePayload = {
   category?: string;
   input: string;
@@ -1280,5 +1304,13 @@ export type AdminLearningSummary = {
     memoryItemsActive?: number;
     evaluationCasesFailing?: number;
     evaluationCasesActive?: number;
+    fineTuningSamplesApproved?: number;
+    fineTuningDatasetsApproved?: number;
+  };
+  fineTuning?: {
+    samplesTotal: number;
+    samplesApproved: number;
+    samplesCaptured: number;
+    datasetsApproved: number;
   };
 };

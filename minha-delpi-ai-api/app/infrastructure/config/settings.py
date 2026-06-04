@@ -437,6 +437,13 @@ class Settings:
     CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK = (
         os.getenv("CHAT_LEARNING_EVALUATION_CAPTURE_FROM_FEEDBACK", "true").lower() == "true"
     )
+    # Fine-tuning offline (playbook Fase 7): curadoria, exportação JSONL e jobs.
+    CHAT_LEARNING_FINE_TUNING_ENABLED = (
+        os.getenv("CHAT_LEARNING_FINE_TUNING_ENABLED", "true").lower() == "true"
+    )
+    CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK = (
+        os.getenv("CHAT_LEARNING_FINE_TUNING_CAPTURE_POSITIVE_FEEDBACK", "true").lower() == "true"
+    )
 
     @classmethod
     def resolve_web_search_provider(cls) -> str:

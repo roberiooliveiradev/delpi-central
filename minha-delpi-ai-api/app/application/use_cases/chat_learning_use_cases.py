@@ -331,3 +331,107 @@ class ReviewEvaluationCaseUseCase:
             raise ValueError("case not found")
 
         return {"case": updated}
+
+
+class ListFineTuningSamplesUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, **kwargs) -> dict:
+        return self.service.list_samples(**kwargs)
+
+
+class CreateFineTuningSampleUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, *, payload: dict, created_by: str | None = None) -> dict:
+        return self.service.create_sample_manual(payload=payload, created_by=created_by)
+
+
+class ReviewFineTuningSampleUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(
+        self,
+        *,
+        sample_id: int,
+        action: str,
+        reviewer_id: str | None = None,
+        dataset_id: int | None = None,
+    ) -> dict:
+        return self.service.review_sample(
+            sample_id,
+            action=action,
+            reviewer_id=reviewer_id,
+            dataset_id=dataset_id,
+        )
+
+
+class ListFineTuningDatasetsUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, **kwargs) -> dict:
+        return self.service.list_datasets(**kwargs)
+
+
+class CreateFineTuningDatasetUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, *, payload: dict, created_by: str | None = None) -> dict:
+        return self.service.create_dataset(payload=payload, created_by=created_by)
+
+
+class ApproveFineTuningDatasetUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, *, dataset_id: int, approved_by: str | None = None) -> dict:
+        return self.service.approve_dataset(dataset_id, approved_by=approved_by)
+
+
+class ExportFineTuningDatasetUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def execute(self, *, dataset_id: int) -> dict:
+        return self.service.export_dataset(dataset_id)
+
+
+class FineTuningRunUseCase:
+    def __init__(self, service=None):
+        from app.application.services.chat_fine_tuning_service import ChatFineTuningService
+
+        self.service = service or ChatFineTuningService()
+
+    def start(self, *, dataset_id: int, created_by: str | None = None) -> dict:
+        return {"run": self.service.start_run(dataset_id=dataset_id, created_by=created_by)}
+
+    def export(self, *, run_id: int) -> dict:
+        return self.service.execute_run_export(run_id)
+
+    def train(self, *, run_id: int) -> dict:
+        return self.service.execute_run_training(run_id)
+
+    def deploy(self, *, run_id: int) -> dict:
+        return self.service.deploy_run(run_id)
+
+    def rollback(self, *, run_id: int) -> dict:
+        return self.service.rollback_run(run_id)

@@ -62,6 +62,11 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       value: String(summary.highlights.evaluationCasesFailing ?? summary.evaluation?.failing ?? 0),
       hint: `${summary.highlights.evaluationCasesActive ?? summary.evaluation?.active ?? 0} casos ativos`,
     },
+    {
+      label: "FT amostras",
+      value: String(summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0),
+      hint: `${summary.fineTuning?.samplesCaptured ?? 0} capturadas`,
+    },
   ];
 
   return (

@@ -62,6 +62,8 @@ import type {
   AdminLearningSummary,
   AdminMemoryItem,
   AdminEvaluationCase,
+  AdminFineTuningDataset,
+  AdminFineTuningSample,
   CreateEvaluationCasePayload,
   ReviewLearningCandidatePayload,
   ReviewMemoryItemPayload,
@@ -1534,4 +1536,85 @@ export async function runAdminEvaluationCases(
   });
 
   return parseJsonResponse(response);
+}
+
+export async function listAdminFineTuningSamples(
+  params: { status?: string; limit?: number } = {},
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminFineTuningSample>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params.limit ?? 50));
+  if (params.status?.trim()) query.set("status", params.status.trim());
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/fine-tuning/samples?${query.toString()}`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminFineTuningSample>>(response);
+}
+
+export async function reviewAdminFineTuningSample(
+  sampleId: number,
+  payload: { action: "approve" | "reject"; datasetId?: number },
+  options: AdminApiOptions = {},
+): Promise<{ sample: AdminFineTuningSample }> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/fine-tuning/samples/${sampleId}/review`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(options),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return parseJsonResponse<{ sample: AdminFineTuningSample }>(response);
+}
+
+export async function listAdminFineTuningDatasets(
+  options: AdminApiOptions = {},
+): Promise<AdminPaginatedResponse<AdminFineTuningDataset>> {
+  const response = await fetch(`${API_BASE_URL}/admin/learning/fine-tuning/datasets`, {
+    method: "GET",
+    headers: await getAuthHeaders(options),
+  });
+
+  return parseJsonResponse<AdminPaginatedResponse<AdminFineTuningDataset>>(response);
+}
+
+export async function createAdminFineTuningDataset(
+  payload: { name: string; description?: string },
+  options: AdminApiOptions = {},
+): Promise<AdminFineTuningDataset> {
+  const response = await fetch(`${API_BASE_URL}/admin/learning/fine-tuning/datasets`, {
+    method: "POST",
+    headers: await getAuthHeaders(options),
+    body: JSON.stringify(payload),
+  });
+
+  return parseJsonResponse<AdminFineTuningDataset>(response);
+}
+
+export async function approveAdminFineTuningDataset(
+  datasetId: number,
+  options: AdminApiOptions = {},
+): Promise<{ dataset: AdminFineTuningDataset }> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/fine-tuning/datasets/${datasetId}/approve`,
+    { method: "POST", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<{ dataset: AdminFineTuningDataset }>(response);
+}
+
+export async function exportAdminFineTuningDataset(
+  datasetId: number,
+  options: AdminApiOptions = {},
+): Promise<{ jsonl: string; stats: Record<string, unknown> }> {
+  const response = await fetch(
+    `${API_BASE_URL}/admin/learning/fine-tuning/datasets/${datasetId}/export`,
+    { method: "GET", headers: await getAuthHeaders(options) },
+  );
+
+  return parseJsonResponse<{ jsonl: string; stats: Record<string, unknown> }>(response);
 }

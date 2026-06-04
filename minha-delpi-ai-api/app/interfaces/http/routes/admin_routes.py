@@ -1081,6 +1081,222 @@ def admin_review_evaluation_case(case_id: int):
     return jsonify(result), 200
 
 
+@admin_bp.get("/learning/fine-tuning/samples")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_fine_tuning_samples():
+    from app.composition.admin_composer import make_list_fine_tuning_samples_use_case
+
+    status = (request.args.get("status") or "").strip() or None
+    dataset_id = request.args.get("datasetId") or request.args.get("dataset_id")
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+        parsed_dataset_id = int(dataset_id) if dataset_id else None
+    except (TypeError, ValueError):
+        return bad_request("limit, offset and datasetId must be valid")
+
+    use_case = make_list_fine_tuning_samples_use_case()
+    return jsonify(
+        use_case.execute(
+            status=status,
+            dataset_id=parsed_dataset_id,
+            limit=limit,
+            offset=offset,
+        )
+    ), 200
+
+
+@admin_bp.post("/learning/fine-tuning/samples")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_create_fine_tuning_sample():
+    from app.composition.admin_composer import make_create_fine_tuning_sample_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("messages"):
+        return bad_request("messages is required")
+
+    use_case = make_create_fine_tuning_sample_use_case()
+
+    try:
+        result = use_case.execute(payload=payload, created_by=str(g.current_user.sub))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/learning/fine-tuning/samples/<int:sample_id>/review")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_review_fine_tuning_sample(sample_id: int):
+    from app.composition.admin_composer import make_review_fine_tuning_sample_use_case
+
+    payload = request.get_json(silent=True) or {}
+    action = str(payload.get("action") or "").strip().lower()
+    dataset_id = payload.get("datasetId") or payload.get("dataset_id")
+
+    if not action:
+        return bad_request("action is required")
+
+    try:
+        parsed_dataset_id = int(dataset_id) if dataset_id is not None else None
+    except (TypeError, ValueError):
+        return bad_request("datasetId must be an integer")
+
+    use_case = make_review_fine_tuning_sample_use_case()
+
+    try:
+        result = use_case.execute(
+            sample_id=sample_id,
+            action=action,
+            reviewer_id=str(g.current_user.sub),
+            dataset_id=parsed_dataset_id,
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/learning/fine-tuning/datasets")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_fine_tuning_datasets():
+    from app.composition.admin_composer import make_list_fine_tuning_datasets_use_case
+
+    status = (request.args.get("status") or "").strip() or None
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_fine_tuning_datasets_use_case()
+    return jsonify(use_case.execute(status=status, limit=limit, offset=offset)), 200
+
+
+@admin_bp.post("/learning/fine-tuning/datasets")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_create_fine_tuning_dataset():
+    from app.composition.admin_composer import make_create_fine_tuning_dataset_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("name"):
+        return bad_request("name is required")
+
+    use_case = make_create_fine_tuning_dataset_use_case()
+
+    try:
+        result = use_case.execute(payload=payload, created_by=str(g.current_user.sub))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/learning/fine-tuning/datasets/<int:dataset_id>/approve")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_approve_fine_tuning_dataset(dataset_id: int):
+    from app.composition.admin_composer import make_approve_fine_tuning_dataset_use_case
+
+    use_case = make_approve_fine_tuning_dataset_use_case()
+
+    try:
+        result = use_case.execute(dataset_id=dataset_id, approved_by=str(g.current_user.sub))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/learning/fine-tuning/datasets/<int:dataset_id>/export")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_export_fine_tuning_dataset(dataset_id: int):
+    from app.composition.admin_composer import make_export_fine_tuning_dataset_use_case
+
+    use_case = make_export_fine_tuning_dataset_use_case()
+
+    try:
+        result = use_case.execute(dataset_id=dataset_id)
+    except ValueError as exc:
+        return bad_request(str(exc))
+
+    return jsonify(result), 200
+
+
+@admin_bp.post("/learning/fine-tuning/datasets/<int:dataset_id>/runs")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_start_fine_tuning_run(dataset_id: int):
+    from app.composition.admin_composer import make_fine_tuning_run_use_case
+
+    use_case = make_fine_tuning_run_use_case()
+
+    try:
+        result = use_case.start(dataset_id=dataset_id, created_by=str(g.current_user.sub))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
+@admin_bp.post("/learning/fine-tuning/runs/<int:run_id>/<action>")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_fine_tuning_run_action(run_id: int, action: str):
+    from app.composition.admin_composer import make_fine_tuning_run_use_case
+
+    normalized = str(action or "").strip().lower()
+    handlers = {
+        "export": "export",
+        "train": "train",
+        "deploy": "deploy",
+        "rollback": "rollback",
+    }
+
+    if normalized not in handlers:
+        return bad_request("action must be export, train, deploy or rollback")
+
+    use_case = make_fine_tuning_run_use_case()
+
+    try:
+        result = getattr(use_case, handlers[normalized])(run_id=run_id)
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @admin_bp.get("/learning/memory")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_list_user_memory_items():

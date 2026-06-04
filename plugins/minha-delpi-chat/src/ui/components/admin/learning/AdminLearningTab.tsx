@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
+  approveAdminFineTuningDataset,
+  createAdminFineTuningDataset,
+  exportAdminFineTuningDataset,
   getAdminLearningSummary,
   createAdminEvaluationCase,
   listAdminEvaluationCases,
+  listAdminFineTuningDatasets,
+  listAdminFineTuningSamples,
   listAdminLearningCandidates,
   listAdminMemoryItems,
   listAdminVocabularyTerms,
+  reviewAdminFineTuningSample,
   reviewAdminLearningCandidate,
   reviewAdminMemoryItem,
   runAdminEvaluationCases,
@@ -14,6 +20,8 @@ import {
 } from "../../../../data/api/adminApi";
 import type {
   AdminEvaluationCase,
+  AdminFineTuningDataset,
+  AdminFineTuningSample,
   AdminLearningCandidate,
   AdminLearningSummary,
   AdminMemoryItem,
@@ -28,7 +36,25 @@ type AdminLearningTabProps = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
-type LearningView = "candidates" | "vocabulary" | "memory" | "evaluation";
+type LearningView =
+  | "candidates"
+  | "vocabulary"
+  | "memory"
+  | "evaluation"
+  | "finetuning";
+
+const FT_SAMPLE_STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "captured", label: "Capturadas" },
+  { value: "approved", label: "Aprovadas" },
+  { value: "rejected", label: "Rejeitadas" },
+  { value: "", label: "Todas" },
+];
+
+const FT_SAMPLE_STATUS_LABELS: Record<string, string> = {
+  captured: "Capturada",
+  approved: "Aprovada",
+  rejected: "Rejeitada",
+};
 
 const EVAL_STATUS_LABEL: Record<string, string> = {
   true: "Passou",
@@ -88,6 +114,12 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
   const [evalCases, setEvalCases] = useState<AdminEvaluationCase[]>([]);
   const [evalInput, setEvalInput] = useState("");
   const [evalIntent, setEvalIntent] = useState("assistant_identity");
+  const [ftSamples, setFtSamples] = useState<AdminFineTuningSample[]>([]);
+  const [ftDatasets, setFtDatasets] = useState<AdminFineTuningDataset[]>([]);
+  const [ftSampleStatusFilter, setFtSampleStatusFilter] = useState<string>("captured");
+  const [ftDatasetName, setFtDatasetName] = useState("");
+  const [ftDatasetDescription, setFtDatasetDescription] = useState("");
+  const [ftSelectedDatasetId, setFtSelectedDatasetId] = useState<number | null>(null);
   const [summary, setSummary] = useState<AdminLearningSummary | null>(null);
   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
 
@@ -174,6 +206,30 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
     }
   }, [getAccessToken]);
 
+  const loadFineTuning = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [samplesRes, datasetsRes] = await Promise.all([
+        listAdminFineTuningSamples(
+          { status: ftSampleStatusFilter || undefined, limit: 100 },
+          { getAccessToken },
+        ),
+        listAdminFineTuningDatasets({ getAccessToken }),
+      ]);
+      setFtSamples(samplesRes.items);
+      setFtDatasets(datasetsRes.items);
+      setFtSelectedDatasetId(
+        (prev) => prev ?? (datasetsRes.items[0]?.id != null ? datasetsRes.items[0].id : null),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar fine-tuning.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [ftSampleStatusFilter, getAccessToken]);
+
   const loadSummary = useCallback(async () => {
     setIsSummaryLoading(true);
 
@@ -195,10 +251,12 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
       void loadTerms();
     } else if (view === "memory") {
       void loadMemoryItems();
-    } else {
+    } else if (view === "evaluation") {
       void loadEvalCases();
+    } else {
+      void loadFineTuning();
     }
-  }, [view, loadCandidates, loadTerms, loadMemoryItems, loadEvalCases]);
+  }, [view, loadCandidates, loadTerms, loadMemoryItems, loadEvalCases, loadFineTuning]);
 
   useEffect(() => {
     void loadSummary();
@@ -327,6 +385,99 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
     }
   }
 
+  async function handleReviewFtSample(sampleId: number, action: "approve" | "reject") {
+    setIsBusy(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await reviewAdminFineTuningSample(
+        sampleId,
+        {
+          action,
+          datasetId:
+            action === "approve" && ftSelectedDatasetId ? ftSelectedDatasetId : undefined,
+        },
+        { getAccessToken },
+      );
+      setSuccessMessage(action === "approve" ? "Amostra aprovada." : "Amostra rejeitada.");
+      await loadFineTuning();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao revisar amostra.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleCreateFtDataset() {
+    if (!ftDatasetName.trim()) {
+      return;
+    }
+
+    setIsBusy(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      const dataset = await createAdminFineTuningDataset(
+        {
+          name: ftDatasetName.trim(),
+          description: ftDatasetDescription.trim() || undefined,
+        },
+        { getAccessToken },
+      );
+      setFtDatasetName("");
+      setFtDatasetDescription("");
+      setFtSelectedDatasetId(dataset.id);
+      setSuccessMessage("Dataset criado.");
+      await loadFineTuning();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao criar dataset.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleApproveFtDataset(datasetId: number) {
+    setIsBusy(true);
+    setError(null);
+    setSuccessMessage(null);
+
+    try {
+      await approveAdminFineTuningDataset(datasetId, { getAccessToken });
+      setSuccessMessage("Dataset aprovado para exportação.");
+      await loadFineTuning();
+      void loadSummary();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao aprovar dataset.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleExportFtDataset(datasetId: number) {
+    setIsBusy(true);
+    setError(null);
+
+    try {
+      const result = await exportAdminFineTuningDataset(datasetId, { getAccessToken });
+      const blob = new Blob([result.jsonl], { type: "application/x-ndjson" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `fine-tuning-dataset-${datasetId}.jsonl`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      setSuccessMessage("JSONL exportado.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao exportar dataset.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function handleCreateTerm() {
     if (!newTerm.trim()) {
       return;
@@ -403,6 +554,13 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
           >
             Regressão
           </button>
+          <button
+            type="button"
+            className={view === "finetuning" ? "is-active" : undefined}
+            onClick={() => setView("finetuning")}
+          >
+            Fine-tuning
+          </button>
         </div>
 
         <button
@@ -416,8 +574,10 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
               void loadTerms();
             } else if (view === "memory") {
               void loadMemoryItems();
-            } else {
+            } else if (view === "evaluation") {
               void loadEvalCases();
+            } else {
+              void loadFineTuning();
             }
             void loadSummary();
           }}
@@ -724,7 +884,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
             </div>
           </div>
         </div>
-      ) : (
+      ) : view === "evaluation" ? (
         <div className="mdc-admin-learning__layout mdc-admin-split">
           <aside className="mdc-admin-split__aside mdc-admin-panel">
             <h3 className="mdc-admin-learning__subtitle">Novo caso</h3>
@@ -805,6 +965,164 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
                   >
                     Executar
                   </button>
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
+      ) : (
+        <div className="mdc-admin-learning__layout mdc-admin-split">
+          <aside className="mdc-admin-split__aside mdc-admin-panel">
+            <h3 className="mdc-admin-learning__subtitle">Datasets</h3>
+            <label className="mdc-admin-field">
+              <span>Nome</span>
+              <input
+                value={ftDatasetName}
+                onChange={(event) => setFtDatasetName(event.target.value)}
+                placeholder="ex.: chat-v1-mar-2026"
+              />
+            </label>
+            <label className="mdc-admin-field">
+              <span>Descrição</span>
+              <textarea
+                value={ftDatasetDescription}
+                rows={2}
+                onChange={(event) => setFtDatasetDescription(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="mdc-chat-ws-outline-btn"
+              disabled={isBusy || !ftDatasetName.trim()}
+              onClick={() => void handleCreateFtDataset()}
+            >
+              Criar dataset
+            </button>
+
+            <label className="mdc-admin-field">
+              <span>Dataset para aprovar amostras</span>
+              <select
+                value={ftSelectedDatasetId ?? ""}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setFtSelectedDatasetId(value ? Number(value) : null);
+                }}
+              >
+                <option value="">— selecione —</option>
+                {ftDatasets.map((dataset) => (
+                  <option key={dataset.id} value={dataset.id}>
+                    {dataset.name} ({dataset.status})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="mdc-admin-field">
+              <span>Status das amostras</span>
+              <select
+                value={ftSampleStatusFilter}
+                onChange={(event) => setFtSampleStatusFilter(event.target.value)}
+              >
+                {FT_SAMPLE_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </aside>
+
+          <article className="mdc-admin-split__main mdc-admin-panel">
+            <h3 className="mdc-admin-learning__subtitle">Datasets exportáveis</h3>
+            <div className="mdc-admin-entity-list">
+              {ftDatasets.length === 0 ? (
+                <p className="mdc-chat-muted">Nenhum dataset ainda.</p>
+              ) : null}
+
+              {ftDatasets.map((dataset) => (
+                <div key={dataset.id} className="mdc-admin-learning__memory-item">
+                  <div className="mdc-admin-learning__memory-body">
+                    <div className="mdc-admin-learning__item-head">
+                      <strong>{dataset.name}</strong>
+                      <span className="mdc-admin-learning__badge is-medium">
+                        {dataset.status}
+                      </span>
+                    </div>
+                    <small className="mdc-admin-entity-row__detail">
+                      {dataset.targetModel}
+                      {dataset.description ? ` · ${dataset.description}` : ""}
+                    </small>
+                  </div>
+                  {dataset.status !== "approved" ? (
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-outline-btn"
+                      disabled={isBusy}
+                      onClick={() => void handleApproveFtDataset(dataset.id)}
+                    >
+                      Aprovar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="mdc-chat-ws-primary-btn"
+                      disabled={isBusy}
+                      onClick={() => void handleExportFtDataset(dataset.id)}
+                    >
+                      Exportar JSONL
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <h3 className="mdc-admin-learning__subtitle">Amostras curadas</h3>
+            <div className="mdc-admin-entity-list">
+              {ftSamples.length === 0 ? (
+                <p className="mdc-chat-muted">Nenhuma amostra neste filtro.</p>
+              ) : null}
+
+              {ftSamples.map((sample) => (
+                <div key={sample.id} className="mdc-admin-learning__memory-item">
+                  <div className="mdc-admin-learning__memory-body">
+                    <div className="mdc-admin-learning__item-head">
+                      <strong>
+                        {sample.messages[0]?.content?.slice(0, 80) ?? `Amostra #${sample.id}`}
+                      </strong>
+                      <span
+                        className={`mdc-admin-learning__badge is-${
+                          sample.riskLevel === "high" ? "high" : "low"
+                        }`}
+                      >
+                        {FT_SAMPLE_STATUS_LABELS[sample.status] ?? sample.status}
+                      </span>
+                    </div>
+                    <small className="mdc-admin-entity-row__detail">
+                      {sample.category} · {sample.source}
+                      {sample.intentLabel ? ` · ${sample.intentLabel}` : ""}
+                      {sample.anonymized ? " · anonimizada" : ""}
+                    </small>
+                  </div>
+                  {sample.status === "captured" ? (
+                    <div className="mdc-admin-learning__actions">
+                      <button
+                        type="button"
+                        className="mdc-chat-ws-primary-btn"
+                        disabled={isBusy || !ftSelectedDatasetId}
+                        onClick={() => void handleReviewFtSample(sample.id, "approve")}
+                      >
+                        Aprovar
+                      </button>
+                      <button
+                        type="button"
+                        className="mdc-admin-learning__danger"
+                        disabled={isBusy}
+                        onClick={() => void handleReviewFtSample(sample.id, "reject")}
+                      >
+                        Rejeitar
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

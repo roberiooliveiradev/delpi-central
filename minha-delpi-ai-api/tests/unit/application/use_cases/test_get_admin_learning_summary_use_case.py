@@ -53,6 +53,18 @@ class _FakeEvalRepo:
         }
 
 
+class _FakeFineTuningRepo:
+    def summary(self):
+        return {
+            "samplesTotal": 10,
+            "samplesCaptured": 4,
+            "samplesApproved": 5,
+            "samplesRejected": 1,
+            "datasetsApproved": 1,
+            "activeDeploys": 0,
+        }
+
+
 def test_execute_assembles_summary_with_window():
     candidate_repo = _FakeCandidateRepo()
 
@@ -61,6 +73,7 @@ def test_execute_assembles_summary_with_window():
         vocabulary_repository=_FakeVocabRepo(),
         memory_repository=_FakeMemoryRepo(),
         evaluation_repository=_FakeEvalRepo(),
+        fine_tuning_repository=_FakeFineTuningRepo(),
     )
 
     result = use_case.execute(hours=24)
@@ -72,6 +85,7 @@ def test_execute_assembles_summary_with_window():
     assert result["memory"]["active"] == 4
     assert result["highlights"]["memoryItemsActive"] == 4
     assert result["highlights"]["evaluationCasesFailing"] == 1
+    assert result["highlights"]["fineTuningSamplesApproved"] == 5
     assert result["evaluation"]["active"] == 2
     # janela aplicada ao repositório de candidatos
     assert candidate_repo.since is not None
@@ -83,6 +97,7 @@ def test_execute_normalizes_invalid_hours():
         vocabulary_repository=_FakeVocabRepo(),
         memory_repository=_FakeMemoryRepo(),
         evaluation_repository=_FakeEvalRepo(),
+        fine_tuning_repository=_FakeFineTuningRepo(),
     )
 
     result = use_case.execute(hours=0)

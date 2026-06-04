@@ -349,6 +349,54 @@ def make_review_evaluation_case_use_case():
     return ReviewEvaluationCaseUseCase()
 
 
+def make_list_fine_tuning_samples_use_case():
+    from app.application.use_cases.chat_learning_use_cases import ListFineTuningSamplesUseCase
+
+    return ListFineTuningSamplesUseCase()
+
+
+def make_create_fine_tuning_sample_use_case():
+    from app.application.use_cases.chat_learning_use_cases import CreateFineTuningSampleUseCase
+
+    return CreateFineTuningSampleUseCase()
+
+
+def make_review_fine_tuning_sample_use_case():
+    from app.application.use_cases.chat_learning_use_cases import ReviewFineTuningSampleUseCase
+
+    return ReviewFineTuningSampleUseCase()
+
+
+def make_list_fine_tuning_datasets_use_case():
+    from app.application.use_cases.chat_learning_use_cases import ListFineTuningDatasetsUseCase
+
+    return ListFineTuningDatasetsUseCase()
+
+
+def make_create_fine_tuning_dataset_use_case():
+    from app.application.use_cases.chat_learning_use_cases import CreateFineTuningDatasetUseCase
+
+    return CreateFineTuningDatasetUseCase()
+
+
+def make_approve_fine_tuning_dataset_use_case():
+    from app.application.use_cases.chat_learning_use_cases import ApproveFineTuningDatasetUseCase
+
+    return ApproveFineTuningDatasetUseCase()
+
+
+def make_export_fine_tuning_dataset_use_case():
+    from app.application.use_cases.chat_learning_use_cases import ExportFineTuningDatasetUseCase
+
+    return ExportFineTuningDatasetUseCase()
+
+
+def make_fine_tuning_run_use_case():
+    from app.application.use_cases.chat_learning_use_cases import FineTuningRunUseCase
+
+    return FineTuningRunUseCase()
+
+
 def make_list_user_memory_items_use_case():
     from app.application.use_cases.chat_user_memory_use_cases import (
         ListUserMemoryItemsUseCase,
