@@ -85,6 +85,16 @@ class ReviewLearningCandidateUseCase:
         except Exception:
             pass
 
+        # RAG adaptativo (Fase 5): indexa o termo promovido como conhecimento recuperável.
+        try:
+            from app.application.services.chat_glossary_knowledge_index_service import (
+                ChatGlossaryKnowledgeIndexService,
+            )
+
+            ChatGlossaryKnowledgeIndexService().sync_term(result.get("term") or {})
+        except Exception:
+            pass
+
         return result
 
 
@@ -119,6 +129,33 @@ class ListVocabularyTermsUseCase:
                 "hasPrevious": offset > 0,
             },
         }
+
+
+class ReindexGlossaryKnowledgeUseCase:
+    """Backfill do índice RAG do glossário (playbook Fase 5).
+
+    Reindexa todos os termos de definição aprovados como conhecimento recuperável,
+    útil ao habilitar a flag em uma base com termos já promovidos.
+    """
+
+    def __init__(self, vocabulary_repository: PostgresVocabularyTermRepository | None = None):
+        self.vocabulary_repository = vocabulary_repository or PostgresVocabularyTermRepository()
+
+    def execute(self, *, limit: int = 2000) -> dict:
+        from app.application.services.chat_glossary_knowledge_index_service import (
+            ChatGlossaryKnowledgeIndexService,
+        )
+
+        items, total = self.vocabulary_repository.list_terms(
+            type="term_definition",
+            approved=True,
+            limit=max(1, min(int(limit), 5000)),
+            offset=0,
+        )
+
+        result = ChatGlossaryKnowledgeIndexService().reindex_all(items)
+        result["total"] = int(total)
+        return result
 
 
 class UpsertVocabularyTermUseCase:
@@ -200,6 +237,15 @@ class UpsertVocabularyTermUseCase:
             )
 
             ChatGlossaryRetrievalService().refresh()
+        except Exception:
+            pass
+
+        try:
+            from app.application.services.chat_glossary_knowledge_index_service import (
+                ChatGlossaryKnowledgeIndexService,
+            )
+
+            ChatGlossaryKnowledgeIndexService().sync_term(result or {})
         except Exception:
             pass
 

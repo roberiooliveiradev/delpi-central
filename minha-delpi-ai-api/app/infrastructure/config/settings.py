@@ -422,6 +422,11 @@ class Settings:
     CHAT_LEARNING_GLOSSARY_MAX_TERMS = int(
         os.getenv("CHAT_LEARNING_GLOSSARY_MAX_TERMS", "300")
     )
+    # RAG adaptativo (playbook Fase 5): indexar termos de glossário aprovados como
+    # conhecimento recuperável (embedding). Desligado por padrão: gera custo/embed.
+    CHAT_LEARNING_GLOSSARY_RAG_INDEX = (
+        os.getenv("CHAT_LEARNING_GLOSSARY_RAG_INDEX", "false").lower() == "true"
+    )
 
     @classmethod
     def resolve_web_search_provider(cls) -> str:

@@ -950,6 +950,30 @@ def admin_upsert_vocabulary_term():
     return jsonify(result), 201
 
 
+@admin_bp.post("/learning/vocabulary/reindex")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_reindex_glossary_knowledge():
+    from app.composition.admin_composer import (
+        make_reindex_glossary_knowledge_use_case,
+    )
+
+    try:
+        limit = int(request.args.get("limit", 2000))
+    except (TypeError, ValueError):
+        return bad_request("limit must be an integer")
+
+    use_case = make_reindex_glossary_knowledge_use_case()
+
+    try:
+        result = use_case.execute(limit=limit)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
 @admin_bp.get("/learning/memory")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_list_user_memory_items():

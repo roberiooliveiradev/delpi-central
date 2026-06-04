@@ -480,6 +480,28 @@ class PostgresKnowledgeRepository(KnowledgeRepositoryPort):
 
         return self._to_document_entity(model)
 
+    def find_document_by_source_ref(
+        self,
+        source_ref: str,
+        *,
+        source_type: str | None = None,
+    ) -> KnowledgeDocument | None:
+        normalized = str(source_ref or "").strip()
+
+        if not normalized:
+            return None
+
+        query = AiKnowledgeDocumentModel.query.filter(
+            AiKnowledgeDocumentModel.source_ref == normalized
+        )
+
+        if source_type:
+            query = query.filter(AiKnowledgeDocumentModel.source_type == source_type)
+
+        model = query.order_by(AiKnowledgeDocumentModel.updated_at.desc()).first()
+
+        return self._to_document_entity(model) if model else None
+
     def delete_chunks_by_document_id(self, document_id: UUID) -> None:
         AiKnowledgeChunkModel.query.filter(
             AiKnowledgeChunkModel.document_id == document_id

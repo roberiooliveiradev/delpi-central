@@ -127,6 +127,15 @@ class KnowledgeRepositoryPort(ABC):
     ) -> KnowledgeDocument | None:
         raise NotImplementedError
 
+    def find_document_by_source_ref(
+        self,
+        source_ref: str,
+        *,
+        source_type: str | None = None,
+    ) -> KnowledgeDocument | None:
+        """Busca documento por source_ref estável (upsert por origem). Default: None."""
+        return None
+
     @abstractmethod
     def delete_chunks_by_document_id(self, document_id: UUID) -> None:
         raise NotImplementedError

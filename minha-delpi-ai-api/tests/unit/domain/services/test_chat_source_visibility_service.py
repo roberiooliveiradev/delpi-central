@@ -57,6 +57,19 @@ def test_hide_legacy_unscoped_corporate_source():
     )
 
 
+def test_show_glossary_source_even_when_global():
+    assert (
+        should_hide_source_from_client(
+            {
+                "scope": "global",
+                "sourceType": "glossary",
+                "title": "Onda 13",
+            }
+        )
+        is False
+    )
+
+
 def test_filter_client_visible_sources():
     sources = [
         {"scope": "global", "title": "Global"},

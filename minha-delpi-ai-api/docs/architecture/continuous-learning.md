@@ -79,6 +79,7 @@ Próximos turnos (send/stream)
 | `CHAT_LEARNING_GLOSSARY_CAPTURE` | `true` | Captura termo desconhecido perguntado ("o que é X?") como candidato. |
 | `CHAT_LEARNING_GLOSSARY_WEB_MEANING` | `false` | Pesquisa significado público na web para enriquecer o candidato. |
 | `CHAT_LEARNING_GLOSSARY_MAX_TERMS` | `300` | Teto de definições carregadas/injetadas por turno. |
+| `CHAT_LEARNING_GLOSSARY_RAG_INDEX` | `false` | Indexa termos aprovados como conhecimento RAG recuperável por embedding (Fase 5). |
 
 ## Endpoints admin
 
@@ -86,6 +87,7 @@ Próximos turnos (send/stream)
 - `POST /admin/learning/candidates/{id}/review` — body `{ "action": "approve|reject|promote", "term?", "normalizedTerm?", "meaning?" }`
 - `GET /admin/learning/vocabulary?scope=&approved=&type=&limit=&offset=`
 - `POST /admin/learning/vocabulary` — cria/edita termo aprovado (ex.: regra de typo `como vc s chama → como voce se chama`).
+- `POST /admin/learning/vocabulary/reindex?limit=2000` — backfill do índice RAG do glossário (Fase 5).
 - `GET /admin/learning/memory?userId=&scope=&type=&status=&limit=&offset=` — lista memórias persistentes.
 - `POST /admin/learning/memory/{id}/review` — body `{ "action": "forget|restore" }` (esquecer/restaurar).
 - `GET /admin/metrics/learning/summary?hours=168` — KPIs agregados (funil + destaques + memória).
@@ -143,8 +145,46 @@ ChatTermExtractionService.detect_definition_question(message) → termo
 Os candidatos entram no fluxo já existente de `/admin/learning/candidates`
 (aprovar/rejeitar/promover com `meaning`), e a promoção atualiza o cache do glossário.
 
+## RAG adaptativo — glossário indexável (Fase 5)
+
+Além da injeção lexical da Fase 4, termos de glossário aprovados são indexados como
+conhecimento recuperável pelo RAG existente (recuperação **semântica** por embedding),
+com fonte citável.
+
+`ChatGlossaryKnowledgeIndexService` faz upsert por `source_ref` estável:
+
+```
+sync_term(term)  (apenas type=term_definition)
+  aprovado + ativo + com meaning → index_term:
+    source_type = "glossary"
+    source_ref  = "glossary:{vocabularyTermId}"
+    content     = "{term}: {meaning}"  → embedding → ai_knowledge_chunks
+    metadata    = {scope: global|project_source, projectId?, vocabularyTermId,
+                   term, type, contentHash}
+    - já existe e contentHash igual → skip
+    - já existe e mudou → update_document + recria chunk (re-embed)
+    - não existe → create_document + chunk
+  inativo/sem meaning → deindex_term (delete_document por source_ref)
+```
+
+- **Atualização contínua:** disparado na promoção de candidato e no upsert admin de
+  termo (`chat_learning_use_cases`), best-effort e isolado da transação principal.
+- **Fonte citável:** documentos `sourceType=glossary` são visíveis ao cliente mesmo
+  com `scope=global` (`ChatSourceVisibilityService`).
+- **Backfill:** `POST /admin/learning/vocabulary/reindex` (`?limit=`) reindexa termos
+  já aprovados ao habilitar a feature em uma base existente.
+- **Coexistência com a Fase 4:** a injeção lexical (`ChatGlossaryRetrievalService`)
+  e o chunk semântico são complementares; pode haver leve sobreposição no prompt
+  quando o termo exato aparece e também é recuperado por similaridade.
+- **Flag:** `CHAT_LEARNING_GLOSSARY_RAG_INDEX` (default `false`; requer também
+  `CHAT_LEARNING_ENABLED`). Embedding via `LocalEmbeddingGateway`.
+
+Repositório: novo `KnowledgeRepositoryPort.find_document_by_source_ref(source_ref,
+source_type=)` para upsert por origem.
+
 ## Não coberto nesta fase (próximas)
 
-- Recuperação semântica de `memory_items`/glossário por embedding e indexação no RAG (Fase 5).
+- Recuperação semântica de `memory_items` por embedding (indexação no RAG) — a Fase 5
+  cobre o glossário; a memória persistente segue por user/projeto + recência.
 - `evaluation_cases` com execução automática e bloqueio de promoção que quebra casos (Fase 6).
 - Fine-tuning offline (Fase 7).

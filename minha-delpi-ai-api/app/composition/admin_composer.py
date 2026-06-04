@@ -301,6 +301,14 @@ def make_upsert_vocabulary_term_use_case():
     return UpsertVocabularyTermUseCase()
 
 
+def make_reindex_glossary_knowledge_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ReindexGlossaryKnowledgeUseCase,
+    )
+
+    return ReindexGlossaryKnowledgeUseCase()
+
+
 def make_get_admin_learning_summary_use_case():
     from app.application.use_cases.get_admin_learning_summary_use_case import (
         GetAdminLearningSummaryUseCase,

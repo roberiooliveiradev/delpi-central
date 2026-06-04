@@ -2,6 +2,12 @@ def should_hide_source_from_client(source: dict | None) -> bool:
     if not source:
         return True
 
+    source_type = str(source.get("sourceType") or "").strip().lower()
+
+    # Glossário aprovado é conhecimento público citável (playbook Fase 5).
+    if source_type == "glossary":
+        return False
+
     scope = str(source.get("scope") or "").strip().lower()
 
     if scope in {"global", "agent_source"}:
@@ -15,8 +21,6 @@ def should_hide_source_from_client(source: dict | None) -> bool:
 
     if source.get("agentId"):
         return True
-
-    source_type = str(source.get("sourceType") or "").strip().lower()
 
     if source_type == "global":
         return True
