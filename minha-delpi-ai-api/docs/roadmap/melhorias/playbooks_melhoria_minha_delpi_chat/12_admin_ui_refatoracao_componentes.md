@@ -1,6 +1,6 @@
 # Playbook 12 — Admin UI: refatoração de componentes e layout
 
-> **Status (jun/2026):** em andamento — **Fases 1–2 concluídas** no MFE (primitivos `admin/shared/`, migração dos blocos `Admin*Metrics` para `AdminMetricSection` + KPI/ranking/tabela; eyebrows internos removidos da UI). Pendente: Fase 3 (agentes/gráficos), Fase 4 (`AdminTabHeader` nas abas), baseline visual (Fase 0).  
+> **Status (jun/2026):** em andamento — **Fases 0, 1–2 e 3 concluídas** no MFE/docs; pendente Fase 4 (`AdminTabHeader` nas demais abas) e polish Fase 5.  
 > **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (navegação 6 seções **já aplicada** no MFE). Este playbook trata **como** cada tela renderiza dados: grid, KPIs, tabelas, gráficos e estados vazios.
 
 ## Objetivo
@@ -193,11 +193,12 @@ Criar em `plugins/minha-delpi-chat/src/ui/components/admin/shared/`:
 
 ### Fase 0 — Baseline e checklist (0,5–1 dia)
 
-- [ ] Screenshots por seção/sub-aba em 1440px e 768px (tema escuro atual).
-- [ ] Planilha: componente × problema × severidade (bloqueante / cosmético).
-- [ ] Listar todas as ocorrências de `drawing-metrics__status-list` e `__recent` (grep).
+- [x] Planilha: componente × problema × severidade — `baseline/CHECKLIST.md`.
+- [x] Auditoria `drawing-metrics__status-list` / `__recent` — `baseline/LEGACY_MARKUP_AUDIT.md`.
+- [x] Estrutura `baseline/screenshots/{1440,768}/` + README e script `plugins/minha-delpi-chat/scripts/capture-admin-baseline.sh`.
+- [ ] Screenshots PNG versionados (captura manual/staging — ver `baseline/screenshots/README.md`).
 
-**Entregável:** pasta `12_admin_ui_refatoracao_componentes/baseline/` com PNG + `CHECKLIST.md`.
+**Entregável:** pasta `baseline/` com checklist + auditoria; PNG opcionais no ambiente local.
 
 ### Fase 1 — Fundação CSS + primitivos (2–3 dias)
 
@@ -223,9 +224,9 @@ Migrar nesta ordem:
 
 ### Fase 3 — Agentes (2–3 dias)
 
-- [ ] Sidebar: nome amigável + badge de status; UUID em `<code>` secundário.
-- [ ] `AgentMiniDashboard`: painel Indicadores via `AdminKpiGrid`; gráfico com toolbar legível (min-height 36px nos selects).
-- [ ] Avaliar `variant="admin"` em `ChatRichDashboard` (CSS em `ChatRichDashboard.css` scoped sob `.mdc-admin-root`).
+- [x] Sidebar: nome amigável + badge de status; UUID em `<code>` secundário (`agentDisplay`, `AdminAgentsTab`).
+- [x] `AgentMiniDashboard`: KPIs via `AdminKpiGrid` + gráficos com KPIs extraídos do dashboard API.
+- [x] `variant="admin"` em `ChatRichDashboard` (toolbar ≥36px, ações de chat ocultas no admin).
 
 **Critério de aceite:** admin identifica agente sem copiar UUID; gráfico não sobrepõe KPIs em split view.
 
@@ -307,4 +308,4 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
-**Próximo passo sugerido:** Fase 3 — `AdminAgentsTab` + `AgentMiniDashboard` (KPI cards admin, filtros legíveis); Fase 4 — adotar `AdminTabHeader` em Conhecimento, Aprendizagem e cabeçalhos de sub-abas; Fase 0 opcional — screenshots de baseline antes/depois.
+**Próximo passo sugerido:** Fase 4 — `AdminTabHeader` em Conhecimento, Aprendizagem, Plataforma e Governança; Fase 5 — remover CSS legado `drawing-metrics__*` e capturar PNG de baseline no staging.

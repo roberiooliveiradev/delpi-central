@@ -77,16 +77,59 @@
   color: inherit;
 }
 
+.mdc-admin-agents__list-head,
+.mdc-admin-agents__agent-title-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mdc-admin-agents__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+  border: 1px solid transparent;
+}
+
+.mdc-admin-agents__badge--success {
+  color: var(--mdc-success);
+  background: color-mix(in srgb, var(--mdc-success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-success) 28%, transparent);
+}
+
+.mdc-admin-agents__badge--accent {
+  color: var(--mdc-primary);
+  background: color-mix(in srgb, var(--mdc-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-primary) 24%, transparent);
+}
+
+.mdc-admin-agents__badge--muted {
+  color: var(--mdc-text-muted);
+  background: color-mix(in srgb, var(--mdc-text-muted) 10%, transparent);
+  border-color: color-mix(in srgb, var(--mdc-text-muted) 22%, transparent);
+}
+
 .mdc-admin-agents__agent-id {
   font-size: 0.72rem;
   color: var(--mdc-text-muted);
   font-family: ui-monospace, monospace;
   overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--mdc-surface) 88%, var(--mdc-text-muted) 12%);
+  border-radius: var(--mdc-radius-sm);
+  padding: 0.12rem 0.35rem;
 }
 
 .mdc-admin-agents__agent-title .mdc-admin-agents__agent-id {
   display: block;
   margin-top: 0.15rem;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .mdc-admin-agents__list button.is-selected {
@@ -156,9 +199,9 @@
 }
 
 .mdc-admin-agents__agent-title {
-  display: flex;
-  align-items: baseline;
-  gap: var(--mdc-space-2);
+  display: grid;
+  gap: 0.2rem;
+  align-content: start;
 }
 
 .mdc-admin-agents__grid {

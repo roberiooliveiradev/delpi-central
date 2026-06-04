@@ -13,7 +13,7 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 - `shared/`: formulários, `admin-shared.css`, `admin-workspace-theme.css`, **`admin-design-system.css`** e **`admin-primitives.css`**; componentes `AdminMetricSection`, `AdminKpiCard`, `AdminRankedList`, `AdminDataTable`.
 - `simulate/`: simulação do agente (sessão, sandbox, LLM).
 - `evaluations/`: avaliação de respostas e sugestões.
-- `agents/`: especialização por agente.
+- `agents/`: especialização por agente (`agentDisplay`, `AgentMiniDashboard` com `AdminKpiGrid` + `ChatRichDashboard variant="admin"`).
 - `security/`: segurança operacional de entrada.
 - `tools/`: provider LLM, actions e health (`GET /admin/tools/health`).
 - `audit/`: auditoria, timeline, export CSV, trace id.

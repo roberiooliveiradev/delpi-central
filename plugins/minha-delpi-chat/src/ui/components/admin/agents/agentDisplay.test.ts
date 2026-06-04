@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { agentPrimaryLabel, agentSecondaryLabel } from "./agentDisplay";
+import { agentPrimaryLabel, agentSecondaryLabel, agentStatusBadge } from "./agentDisplay";
 
 const UUID = "f9c225b-0414-40d3-a462-040889719b83";
 
@@ -48,5 +48,33 @@ describe("agentDisplay", () => {
 
     expect(agentPrimaryLabel(agent)).toBe("Admin execução");
     expect(agentSecondaryLabel(agent)).toBe(truncatedId);
+  });
+
+  it("define badge de status por agente", () => {
+    expect(
+      agentStatusBadge({
+        id: UUID,
+        name: "X",
+        description: null,
+        category: null,
+        visibility: "private",
+        enabled: false,
+        hasSpecialization: false,
+        specialization: null,
+      }).label,
+    ).toBe("Inativo");
+
+    expect(
+      agentStatusBadge({
+        id: UUID,
+        name: "X",
+        description: null,
+        category: null,
+        visibility: "private",
+        enabled: true,
+        hasSpecialization: true,
+        specialization: null,
+      }).label,
+    ).toBe("Especializado");
   });
 });

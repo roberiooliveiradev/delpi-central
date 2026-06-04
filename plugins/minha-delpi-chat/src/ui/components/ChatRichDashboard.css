@@ -202,3 +202,17 @@
 .mdc-rich-dashboard__panel-body .mdc-rich-chart__toolbar-row--types {
   display: none;
 }
+
+/* Variante admin (scoped pelo host .mdc-admin-root no MFE) */
+.mdc-admin-root .mdc-rich-dashboard--admin {
+  width: 100%;
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-rich-dashboard--admin .mdc-rich-dashboard__stack {
+  gap: var(--mdc-space-3, 0.75rem);
+}
+
+.mdc-admin-root .mdc-rich-dashboard--admin .mdc-rich-dashboard__panel {
+  min-width: 0;
+}

@@ -4,6 +4,45 @@
   min-width: 0;
 }
 
+.mdc-admin-root .mdc-agent-mini-dashboard--admin {
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-admin-kpi-grid {
+  width: 100%;
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin {
+  min-width: 0;
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__ux-toolbar select,
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__toolbar-row select,
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__ux-field select {
+  min-height: 2.25rem;
+  min-width: 5.75rem;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.45rem;
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__ux-toolbar,
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-dashboard__charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--mdc-space-3);
+}
+
+.mdc-admin-root .mdc-agent-mini-dashboard--admin .mdc-rich-dashboard--admin .mdc-rich-chart__container .recharts-responsive-container {
+  min-height: 220px;
+}
+
 .mdc-agent-mini-dashboard .mdc-rich-dashboard__grid {
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }

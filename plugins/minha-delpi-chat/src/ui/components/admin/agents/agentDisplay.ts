@@ -45,3 +45,20 @@ export function agentSecondaryLabel(agent: AdminSpecializedAgent): string {
 
   return agent.id;
 }
+
+export type AgentStatusBadge = {
+  label: string;
+  tone: "success" | "muted" | "accent";
+};
+
+export function agentStatusBadge(agent: AdminSpecializedAgent): AgentStatusBadge {
+  if (!agent.enabled) {
+    return { label: "Inativo", tone: "muted" };
+  }
+
+  if (agent.hasSpecialization) {
+    return { label: "Especializado", tone: "accent" };
+  }
+
+  return { label: "Ativo", tone: "success" };
+}

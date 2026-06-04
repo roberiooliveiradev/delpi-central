@@ -45,6 +45,7 @@ export function ChatRichDashboard({
   onShowDashboardExplanationChange,
   onDrillDown,
   onOpenCanvas,
+  variant = "default",
 }: {
   presentation: DashboardPresentation;
   toolCalls?: ChatToolCall[];
@@ -53,6 +54,8 @@ export function ChatRichDashboard({
   onShowDashboardExplanationChange?: (open: boolean) => void;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
+  /** `admin` — toolbar legível e ações reduzidas no painel administrativo. */
+  variant?: "default" | "admin";
 }) {
   const { title, panels } = presentation;
   const [localExplainOpen, setLocalExplainOpen] = useState(false);
@@ -91,12 +94,22 @@ export function ChatRichDashboard({
     return getChartPresentationFromPair(pair, toolCalls);
   }, [toolCalls]);
 
+  const isAdminVariant = variant === "admin";
+
   return (
-    <div className="mdc-rich-dashboard">
+    <div
+      className={[
+        "mdc-rich-dashboard",
+        isAdminVariant ? "mdc-rich-dashboard--admin" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {title || !isAdminVariant ? (
       <div className="mdc-rich-dashboard__header">
         {title ? <div className="mdc-rich-dashboard__title">{title}</div> : <span />}
         <div className="mdc-rich-dashboard__actions">
-          {resolvedDashboardExplanation ? (
+          {!isAdminVariant && resolvedDashboardExplanation ? (
             <button
               type="button"
               className={`mdc-rich-chart__btn${explainOpen ? " mdc-rich-chart__toggle-btn--active" : ""}`}
@@ -107,15 +120,17 @@ export function ChatRichDashboard({
               Explicar painel
             </button>
           ) : null}
-          <button
-            type="button"
-            className="mdc-rich-chart__btn"
-            onClick={() => downloadDashboardCsv(presentation)}
-            title="Baixar dashboard em CSV"
-          >
-            ↓ CSV
-          </button>
-          {onOpenCanvas ? (
+          {!isAdminVariant ? (
+            <button
+              type="button"
+              className="mdc-rich-chart__btn"
+              onClick={() => downloadDashboardCsv(presentation)}
+              title="Baixar dashboard em CSV"
+            >
+              ↓ CSV
+            </button>
+          ) : null}
+          {!isAdminVariant && onOpenCanvas ? (
             <button
               type="button"
               className="mdc-rich-chart__btn"
@@ -126,9 +141,12 @@ export function ChatRichDashboard({
               Lousa
             </button>
           ) : null}
-          <ExpandButton presentation={presentation} onOpenCanvas={onOpenCanvas} />
+          {!isAdminVariant ? (
+            <ExpandButton presentation={presentation} onOpenCanvas={onOpenCanvas} />
+          ) : null}
         </div>
       </div>
+      ) : null}
 
       {explainOpen && resolvedDashboardExplanation ? (
         <div

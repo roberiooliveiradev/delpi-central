@@ -1,5 +1,11 @@
 import type { ChatAgentStats } from "../../../../data/api/chatTypes";
 import { ChatRichDashboard } from "../../ChatRichDashboard";
+import { AdminKpiCard, AdminKpiGrid } from "../shared/AdminKpiCard";
+import {
+  agentDashboardKpisFromPresentation,
+  agentUsageKpisFromStats,
+  dashboardWithoutKpiPanels,
+} from "./agentMiniDashboardHelpers";
 
 import "./AgentMiniDashboard.css";
 
@@ -12,18 +18,39 @@ type AgentMiniDashboardProps = {
 export function AgentMiniDashboard({ stats, compact = false }: AgentMiniDashboardProps) {
   const dashboard = stats.miniDashboard;
   const recommendations = stats.recommendations ?? [];
+  const usageKpis = agentUsageKpisFromStats(stats);
+  const dashboardKpis = agentDashboardKpisFromPresentation(dashboard);
+  const chartDashboard = dashboard
+    ? compact
+      ? dashboard
+      : dashboardWithoutKpiPanels(dashboard)
+    : null;
+
+  const kpiItems = compact
+    ? []
+    : [...usageKpis, ...dashboardKpis].filter(
+        (item, index, list) => list.findIndex((entry) => entry.key === item.key) === index,
+      );
 
   return (
     <div
       className={[
         "mdc-agent-mini-dashboard",
-        compact ? "mdc-agent-mini-dashboard--compact" : "",
+        compact ? "mdc-agent-mini-dashboard--compact" : "mdc-agent-mini-dashboard--admin",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {dashboard ? (
-        <ChatRichDashboard presentation={dashboard} />
+      {!compact && kpiItems.length > 0 ? (
+        <AdminKpiGrid>
+          {kpiItems.map((item) => (
+            <AdminKpiCard key={item.key} title={item.title} value={item.value} hint={item.hint} />
+          ))}
+        </AdminKpiGrid>
+      ) : null}
+
+      {chartDashboard ? (
+        <ChatRichDashboard presentation={chartDashboard} variant={compact ? "default" : "admin"} />
       ) : null}
 
       {recommendations.length > 0 ? (

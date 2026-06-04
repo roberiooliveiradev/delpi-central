@@ -24,7 +24,7 @@ import {
   filterAgentsByCatalog,
   type AgentCatalogFilter,
 } from "./agentsSummary";
-import { agentPrimaryLabel, agentSecondaryLabel } from "./agentDisplay";
+import { agentPrimaryLabel, agentStatusBadge } from "./agentDisplay";
 
 import "./AdminAgentsTab.css";
 
@@ -307,19 +307,29 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
             </p>
           ) : (
           <ul>
-            {visibleAgents.map((agent) => (
+            {visibleAgents.map((agent) => {
+              const badge = agentStatusBadge(agent);
+
+              return (
               <li key={agent.id}>
                 <button
                   type="button"
                   className={selectedAgentId === agent.id ? "is-selected" : undefined}
                   onClick={() => setSelectedAgentId(agent.id)}
                 >
-                  <strong>{agentPrimaryLabel(agent)}</strong>
-                  <span className="mdc-admin-agents__agent-id">{agentSecondaryLabel(agent)}</span>
-                  <small>{agent.hasSpecialization ? "Especializado" : "Sem especialização"}</small>
+                  <span className="mdc-admin-agents__list-head">
+                    <strong>{agentPrimaryLabel(agent)}</strong>
+                    <span
+                      className={`mdc-admin-agents__badge mdc-admin-agents__badge--${badge.tone}`}
+                    >
+                      {badge.label}
+                    </span>
+                  </span>
+                  <code className="mdc-admin-agents__agent-id">{agent.id}</code>
                 </button>
               </li>
-            ))}
+              );
+            })}
           </ul>
           )}
         </aside>
@@ -330,8 +340,20 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
           ) : (
             <>
               <div className="mdc-admin-agents__agent-title">
-                <strong>{agentPrimaryLabel(selectedAgent)}</strong>
-                <span className="mdc-admin-agents__agent-id">{agentSecondaryLabel(selectedAgent)}</span>
+                <div className="mdc-admin-agents__agent-title-main">
+                  <strong>{agentPrimaryLabel(selectedAgent)}</strong>
+                  {(() => {
+                    const badge = agentStatusBadge(selectedAgent);
+                    return (
+                      <span
+                        className={`mdc-admin-agents__badge mdc-admin-agents__badge--${badge.tone}`}
+                      >
+                        {badge.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <code className="mdc-admin-agents__agent-id">{selectedAgent.id}</code>
               </div>
 
               <div className="mdc-admin-agents__stats">
