@@ -1,4 +1,5 @@
 import type { AdminQualityReport, AdminQualityIssue } from "../../../../data/api/adminTypes";
+import { AdminMetricSection } from "../shared/AdminMetricSection";
 
 type AdminQualityOperationsProps = {
   latestReport: AdminQualityReport | null;
@@ -18,13 +19,15 @@ export function AdminQualityOperations({
   onResolveIssue,
 }: AdminQualityOperationsProps) {
   return (
-    <section className="mdc-admin-drawing-metrics" aria-labelledby="mdc-admin-quality-ops-title">
-      <header className="mdc-admin-drawing-metrics__header">
-        <div>
-          <p className="mdc-chat-eyebrow">Qualidade</p>
-          <h3 id="mdc-admin-quality-ops-title">Relatório semanal e issues</h3>
-          <p>Geração automática de relatório de qualidade e issues a partir de feedback recorrente.</p>
-        </div>
+    <AdminMetricSection
+      id="mdc-admin-quality-ops-title"
+      domain="Qualidade"
+      title="Relatório semanal e pendências"
+      description="Geração automática de relatório de qualidade e pendências a partir de feedback recorrente."
+      isLoading={isLoading}
+      loadingMessage="Carregando relatório e pendências..."
+    >
+      <div className="mdc-admin-metric-section__toolbar">
         <button
           type="button"
           className="mdc-admin-btn mdc-admin-btn--primary"
@@ -33,9 +36,7 @@ export function AdminQualityOperations({
         >
           {isGenerating ? "Gerando..." : "Gerar relatório semanal"}
         </button>
-      </header>
-
-      {isLoading ? <p className="mdc-chat-muted">Carregando relatório e issues...</p> : null}
+      </div>
 
       {latestReport ? (
         <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
@@ -45,12 +46,10 @@ export function AdminQualityOperations({
           </p>
           <pre className="mdc-admin-quality-report__markdown">{latestReport.markdown.slice(0, 1200)}</pre>
         </article>
-      ) : (
-        <p className="mdc-chat-muted">Nenhum relatório semanal gerado ainda.</p>
-      )}
+      ) : null}
 
       <article className="mdc-admin-kpi-card mdc-admin-kpi-card--wide">
-        <h4>Issues abertas ({issues.length})</h4>
+        <h4>Pendências abertas ({issues.length})</h4>
         {issues.length ? (
           <ul>
             {issues.map((issue) => (
@@ -60,7 +59,7 @@ export function AdminQualityOperations({
                   <>
                     {" "}
                     <a href={issue.externalUrl} target="_blank" rel="noreferrer">
-                      GitHub
+                      Abrir no GitHub
                     </a>
                   </>
                 ) : null}
@@ -77,9 +76,9 @@ export function AdminQualityOperations({
             ))}
           </ul>
         ) : (
-          <p className="mdc-chat-muted">Nenhuma issue aberta.</p>
+          <p className="mdc-chat-muted">Nenhuma pendência aberta.</p>
         )}
       </article>
-    </section>
+    </AdminMetricSection>
   );
 }

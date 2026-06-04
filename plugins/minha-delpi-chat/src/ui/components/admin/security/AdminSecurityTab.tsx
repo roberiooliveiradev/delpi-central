@@ -89,7 +89,7 @@ export function AdminSecurityTab({
         className="mdc-admin-security__toolbar"
         eyebrow="Governança"
         title="Segurança operacional"
-        description="Anti prompt-injection, sanitização, limites e auditoria de tentativas suspeitas."
+        description="Proteção contra injeção de prompt, sanitização, limites e auditoria de tentativas suspeitas."
         summary={<SecuritySummaryStrip summary={summary} isLoading={isLoading} />}
         actions={
           <div className="mdc-admin-security__toolbar-actions">
@@ -120,7 +120,7 @@ export function AdminSecurityTab({
             <textarea
               value={scanMessage}
               onChange={(event) => setScanMessage(event.target.value)}
-              placeholder="Cole uma mensagem para avaliar risco de prompt injection..."
+              placeholder="Cole uma mensagem para avaliar risco de injeção de prompt..."
             />
           </label>
           <button

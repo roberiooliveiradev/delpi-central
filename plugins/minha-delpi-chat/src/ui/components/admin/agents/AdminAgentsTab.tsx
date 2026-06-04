@@ -17,6 +17,7 @@ import type {
   AdminSpecializedAgent,
 } from "../../../../data/api/adminTypes";
 
+import { AdminTabHeader } from "../shared/AdminTabHeader";
 import { AgentMiniDashboard } from "./AgentMiniDashboard";
 import { AgentsSummaryStrip } from "./AgentsSummaryStrip";
 import {
@@ -255,42 +256,41 @@ export function AdminAgentsTab({ getAccessToken, initialAgentId }: AdminAgentsTa
 
   return (
     <section className="mdc-admin-agents">
-      <header className="mdc-admin-page-header">
-        <h2>Agentes especializados</h2>
-        <p className="mdc-chat-muted">
-          Configure domínio, escopo de RAG, diretrizes e tools permitidas por agente oficial. Para
-          identidade, prompt e actions, use o builder do agente.
-        </p>
-      </header>
-
-      <div className="mdc-admin-agents__toolbar">
-        <AgentsSummaryStrip
-          summary={summary}
-          activeFilter={catalogFilter}
-          isLoading={isLoading}
-          onFilterChange={setCatalogFilter}
-        />
-
-        <div className="mdc-admin-agents__toolbar-actions">
-          <button
-            type="button"
-            className="mdc-admin-btn"
-            disabled={isLoading}
-            onClick={() => void loadData()}
-          >
-            {isLoading ? "Carregando..." : "Atualizar"}
-          </button>
-          <button
-            type="button"
-            className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
-            disabled={!selectedAgentId}
-            onClick={openAgentBuilder}
-          >
-            <ExternalLink size={15} aria-hidden="true" />
-            <span>Abrir builder</span>
-          </button>
-        </div>
-      </div>
+      <AdminTabHeader
+        className="mdc-admin-agents__toolbar"
+        eyebrow="Agentes"
+        title="Agentes especializados"
+        description="Configure domínio, escopo de RAG, diretrizes e ferramentas permitidas por agente oficial. Para identidade, prompt e ações, use o builder do agente."
+        summary={
+          <AgentsSummaryStrip
+            summary={summary}
+            activeFilter={catalogFilter}
+            isLoading={isLoading}
+            onFilterChange={setCatalogFilter}
+          />
+        }
+        actions={
+          <div className="mdc-admin-agents__toolbar-actions">
+            <button
+              type="button"
+              className="mdc-admin-btn"
+              disabled={isLoading}
+              onClick={() => void loadData()}
+            >
+              {isLoading ? "Carregando..." : "Atualizar"}
+            </button>
+            <button
+              type="button"
+              className="mdc-chat-ws-toolbar-btn mdc-chat-ws-toolbar-btn--primary"
+              disabled={!selectedAgentId}
+              onClick={openAgentBuilder}
+            >
+              <ExternalLink size={15} aria-hidden="true" />
+              <span>Abrir builder</span>
+            </button>
+          </div>
+        }
+      />
 
       {error ? <p className="mdc-admin-agents__error">{error}</p> : null}
       {successMessage ? <p className="mdc-admin-agents__success">{successMessage}</p> : null}

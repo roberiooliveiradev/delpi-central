@@ -15,14 +15,18 @@ export function ToolsSummaryStrip({ summary }: ToolsSummaryStripProps) {
         value={summary.llmConfigured ? "Configurado" : "—"}
         hint={summary.llmLabel}
       />
-      <AdminKpiCard title="Saúde" value={summary.healthLabel} hint="Checks operacionais do catálogo." />
       <AdminKpiCard
-        title="Actions globais"
+        title="Saúde"
+        value={summary.healthLabel}
+        hint="Verificações operacionais do catálogo."
+      />
+      <AdminKpiCard
+        title="Ações globais"
         value={formatMetricNumber(summary.globalActions)}
         hint="Rotas OpenAPI administradas."
       />
       <AdminKpiCard
-        title="Actions no chat"
+        title="Ações no chat"
         value={formatMetricNumber(summary.chatActions)}
         hint="Itens expostos ao catálogo do usuário."
       />

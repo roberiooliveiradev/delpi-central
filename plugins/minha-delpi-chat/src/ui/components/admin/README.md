@@ -6,31 +6,60 @@ A área admin é organizada por ambientes isolados. Cada aba ou bloco complexo d
 
 - `shell/`: topbar, 6 seções, sub-abas, status strip e alertas.
 - `overview/`: painel inicial (KPIs, RBAC, navegação rápida).
-- `metrics/` e `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
+- `metrics-tab/`: resumo operacional e métricas avançadas (janela, custo, série).
 - `knowledge/`: base global de conhecimento e pré-visualização de pipeline.
 - `guidelines/`: diretrizes globais de comportamento.
-- `skills/`: catálogo global de comportamentos/skills (CRUD, policy Markdown) — sub-aba Conhecimento.
-- `shared/`: formulários, `admin-shared.css`, `admin-workspace-theme.css`, **`admin-design-system.css`** e **`admin-primitives.css`**; primitivos `AdminTabHeader`, `AdminSummaryStrip`, `AdminMetricSection`, `AdminKpiCard`, `AdminRankedList`, `AdminDataTable`.
-- `simulate/`: simulação do agente (sessão, sandbox, LLM).
-- `evaluations/`: avaliação de respostas e sugestões.
-- `agents/`: especialização por agente (`agentDisplay`, `AgentMiniDashboard` com `AdminKpiGrid` + `ChatRichDashboard variant="admin"`).
+- `skills/`: catálogo global de comportamentos/skills — sub-aba Conhecimento.
+- `learning/`: aprendizagem contínua (candidatos, vocabulário, memória, regressão, ajuste fino).
+- `shared/`: design system + primitivos (`AdminTabHeader`, `AdminSummaryStrip`, `AdminMetricSection`, `AdminKpiCard`, `AdminRankedList`, `AdminDataTable`, `admin-primitives.css`).
+- `simulate/`: simulação do agente.
+- `evaluations/`: avaliação de respostas.
+- `agents/`: especialização e uso (`agentDisplay`, `AgentMiniDashboard` com `variant="admin"`).
 - `security/`: segurança operacional de entrada.
-- `tools/`: provider LLM, actions e health (`GET /admin/tools/health`).
-- `audit/`: auditoria, timeline, export CSV, trace id.
-- `rbac/`: resumo de permissões do admin.
+- `tools/`: LLM, saúde e catálogo de ações.
+- `audit/`: auditoria, timeline, exportação, trace id.
+- `rbac/`: permissões do admin.
 
 Notificações de plataforma ficam no **Portal** (`/admin` → aba Notificações), não neste plugin.
 
+## Primitivos (Playbook 12)
+
+| Componente | Uso |
+|------------|-----|
+| `AdminTabHeader` | Título + descrição + faixa KPI + ações por aba |
+| `AdminSummaryStrip` | Grid de `AdminKpiCard` com `aria-label` |
+| `AdminMetricSection` | Bloco de métricas em Qualidade |
+| `AdminDataTable` | Tabelas (métricas, auditoria) |
+| `AdminRankedList` | Rankings label/valor |
+
+Estilos escopados em `.mdc-admin-root` (ver `ChatAdminPage.tsx`).
+
 ## Roadmap de UI
 
-- Navegação (6 seções): `minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md`
-- Componentes e layout (primitivos, métricas, tabelas): `12_admin_ui_refatoracao_componentes.md` (mesma pasta)
+- Navegação (6 seções): [11_admin_ux_reorganizacao_abas.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/11_admin_ux_reorganizacao_abas.md)
+- Componentes e layout: [12_admin_ui_refatoracao_componentes.md](../../../minha-delpi-ai-api/docs/roadmap/melhorias/playbooks_melhoria_minha_delpi_chat/12_admin_ui_refatoracao_componentes.md)
+- Baseline visual: `12_admin_ui_refatoracao_componentes/baseline/`
+
+## QA manual (smoke)
+
+Após alterações no admin, validar em tema escuro (1440px):
+
+| Seção | Sub-abas | Verificar |
+|-------|----------|-----------|
+| Painel | — | KPIs, links rápidos |
+| Conhecimento | Documentos, Diretrizes, Comportamentos, Aprendizagem | `AdminTabHeader`, filtros KPI, listas |
+| Agentes | Especialização, Simulação | Nome legível, badge, UUID em `<code>`, gráfico de uso |
+| Qualidade | Métricas, Avaliações | Blocos `AdminMetricSection`, tabelas legíveis |
+| Plataforma | Ferramentas, Inteligência | Strip de saúde, catálogo de ações |
+| Governança | Segurança, Auditoria | Scan, tabela + paginação `AdminDataTable` |
+
+Comando: `cd plugins/minha-delpi-chat && npm run build && npm test -- --run src/ui/components/admin/`
 
 ## Regras
 
 1. Não colocar CSS de aba dentro de `ChatAdminPage.css`.
-2. Não usar seletores genéricos compartilhados entre abas quando o componente for isolado.
-3. Toda aba deve expor componentes menores para formulário, lista, tabela, filtros e ações.
-4. Contratos administrativos ficam centralizados em `data/api/adminApi.ts` e `adminTypes.ts`.
-5. Endpoints documentados em `minha-delpi-ai-api/docs/api/08-admin.md`.
-6. A base de conhecimento do admin representa contexto global do chat; anexos de conversa não pertencem a essa tela.
+2. Preferir primitivos em `shared/` a markup legado (`mdc-admin-drawing-metrics__*`).
+3. Toda aba expõe componentes menores (formulário, lista, tabela, filtros).
+4. Contratos em `data/api/adminApi.ts` e `adminTypes.ts`.
+5. API documentada em `minha-delpi-ai-api/docs/api/08-admin.md`.
+6. Copy da UI em português; siglas técnicas (LLM, UUID, CSV) só quando inevitáveis.

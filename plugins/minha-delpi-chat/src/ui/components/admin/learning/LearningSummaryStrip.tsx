@@ -71,7 +71,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
     },
     {
       key: "ft",
-      title: "FT amostras",
+      title: "Amostras (ajuste fino)",
       value: formatMetricNumber(
         summary.highlights.fineTuningSamplesApproved ?? summary.fineTuning?.samplesApproved ?? 0,
       ),
@@ -99,7 +99,7 @@ export function LearningSummaryStrip({ summary, isLoading }: LearningSummaryStri
       </AdminKpiGrid>
       {topTypos.length > 0 ? (
         <aside className="mdc-admin-learning__typo-hints">
-          <span className="mdc-admin-learning__kpi-label">Typos mais usados</span>
+          <span className="mdc-admin-learning__kpi-label">Erros de digitação frequentes</span>
           <ul>
             {topTypos.map((rule) => (
               <li key={`${rule.term}-${rule.normalizedTerm}`}>

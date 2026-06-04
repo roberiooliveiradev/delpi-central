@@ -154,7 +154,7 @@ export function AdminToolsTab({
       setError(
         err instanceof Error
           ? err.message
-          : "Erro ao carregar logs recentes da action.",
+          : "Erro ao carregar logs recentes da ação.",
       );
     } finally {
       setIsLoadingActionLogs(false);
@@ -213,7 +213,7 @@ export function AdminToolsTab({
         className="mdc-admin-tools-tab__toolbar"
         eyebrow="Plataforma"
         title="Ferramentas e integrações"
-        description="Providers LLM, saúde operacional e catálogo de actions por agente."
+        description="Provedor LLM, saúde operacional e catálogo de ações por agente."
         summary={<ToolsSummaryStrip summary={toolsSummary} />}
         actions={
           <button
@@ -491,7 +491,7 @@ export function AdminToolsTab({
                               log.ok ? "mdc-admin-badge--success" : "mdc-admin-badge--danger"
                             }`}
                           >
-                            {log.ok ? "OK" : "Erro"} · {log.statusCode ?? "—"}
+                            {log.ok ? "Sucesso" : "Erro"} · {log.statusCode ?? "—"}
                           </span>
                         </div>
                         <p className="mdc-admin-entity-row__detail">

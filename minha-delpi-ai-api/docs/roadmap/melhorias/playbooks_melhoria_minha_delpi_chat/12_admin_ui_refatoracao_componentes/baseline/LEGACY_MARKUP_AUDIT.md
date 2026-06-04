@@ -9,7 +9,16 @@
 | Estilos de compatibilidade | `src/ui/components/admin/shared/admin-primitives.css` | Mantidos para HTML legado eventual; equivalente a `AdminRankedList` / `AdminDataTable` |
 | **Nenhum** `.tsx` de métricas | — | Fase 2 migrou para primitivos |
 
-**Conclusão:** uso em componentes React **eliminado**. CSS legado permanece sob `.mdc-admin-root` até remoção na Fase 5.
+**Conclusão:** uso em componentes React **eliminado**. Seletores CSS `__status-list` e `__recent` **removidos** de `admin-primitives.css` na Fase 5.
+
+## Classes `mdc-admin-drawing-metrics` restantes
+
+| Arquivo | Uso | Notas |
+|---------|-----|--------|
+| `AdminMetricsTab.css` | Layout de blocos legados na aba métricas | Pode migrar para `AdminMetricSection` em refactor futuro |
+| `AdminDrawingAnalysisMetrics.tsx` | `id` do título apenas | Componente já usa `AdminMetricSection` |
+
+`AdminKpiGrid` não usa mais alias `mdc-admin-drawing-metrics__grid`.
 
 ## Outras classes `mdc-admin-drawing-metrics*`
 

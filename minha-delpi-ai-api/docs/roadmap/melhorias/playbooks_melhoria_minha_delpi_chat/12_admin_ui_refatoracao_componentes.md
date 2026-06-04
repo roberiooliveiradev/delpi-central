@@ -1,6 +1,6 @@
 # Playbook 12 — Admin UI: refatoração de componentes e layout
 
-> **Status (jun/2026):** em andamento — **Fases 0–4 concluídas** no MFE; pendente Fase 5 (polish, i18n, remoção CSS legado).  
+> **Status (jun/2026):** **concluído** no MFE (Fases 0–5). Pendente opcional: capturas PNG de baseline no staging e migração total de `AdminMetricsTab.css` legado.  
 > **Complementa:** [Playbook 11 — reorganização das abas](./11_admin_ux_reorganizacao_abas.md) (navegação 6 seções **já aplicada** no MFE). Este playbook trata **como** cada tela renderiza dados: grid, KPIs, tabelas, gráficos e estados vazios.
 
 ## Objetivo
@@ -238,9 +238,11 @@ Migrar nesta ordem:
 
 ### Fase 5 — Polish, i18n e QA (1–2 dias)
 
-- [ ] Passagem de copy PT (eliminar inglês desnecessário na UI).
-- [ ] `npm run build` + teste manual das 6 seções × sub-abas.
-- [ ] Atualizar `plugins/minha-delpi-chat/src/ui/components/admin/README.md`.
+- [x] Copy PT em abas principais (ações, ajuste fino, injeção de prompt, pendências de qualidade).
+- [x] Remoção CSS legado `drawing-metrics__status-list` / `__recent` de `admin-primitives.css`.
+- [x] `AdminQualityOperations` → `AdminMetricSection`; `AdminAgentsTab` → `AdminTabHeader`.
+- [x] `npm run build` + testes unitários admin; checklist em `baseline/QA_MANUAL.md`.
+- [x] README admin atualizado com primitivos e smoke QA.
 
 ---
 
@@ -308,4 +310,4 @@ Ordem recomendada: **12 após 11 estável** — situação atual (jun/2026).
 
 O painel admin **já tem a navegação certa** (6 seções), mas a **camada de apresentação** ficou pela metade: blocos de métricas de playbooks internos usam markup sem CSS, gráficos do chat foram reaproveitados sem variante admin, e grids de KPI não escalam em telas largas. Este playbook prioriza **primitivos compartilhados** e migração em 5 fases, começando por **Qualidade → Métricas** (onde as capturas mostram o pior estado) e **Agentes → Uso**.
 
-**Próximo passo sugerido:** Fase 5 — passagem de copy PT, remover CSS legado `drawing-metrics__*`, capturar PNG de baseline no staging e QA manual das 6 seções.
+**Próximo passo sugerido (opcional):** capturar PNG em `baseline/screenshots/` no staging; migrar estilos restantes de `AdminMetricsTab.css` (`mdc-admin-drawing-metrics`) para primitivos.

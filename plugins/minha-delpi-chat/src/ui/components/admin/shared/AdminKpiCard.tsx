@@ -58,5 +58,5 @@ export function AdminKpiCard({
 }
 
 export function AdminKpiGrid({ children }: { children: ReactNode }) {
-  return <div className="mdc-admin-kpi-grid mdc-admin-drawing-metrics__grid">{children}</div>;
+  return <div className="mdc-admin-kpi-grid">{children}</div>;
 }

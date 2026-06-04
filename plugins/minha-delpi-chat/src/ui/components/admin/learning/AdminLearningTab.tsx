@@ -225,7 +225,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
         (prev) => prev ?? (datasetsRes.items[0]?.id != null ? datasetsRes.items[0].id : null),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar fine-tuning.");
+      setError(err instanceof Error ? err.message : "Erro ao carregar ajuste fino.");
     } finally {
       setIsLoading(false);
     }
@@ -520,7 +520,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
         className="mdc-admin-learning__toolbar"
         eyebrow="Conhecimento"
         title="Aprendizagem contínua"
-        description="Revise candidatos aprendidos com o uso (typos, definições) e promova-os ao vocabulário aprovado, que refina a normalização do chat."
+        description="Revise candidatos aprendidos com o uso (erros de digitação, definições) e promova-os ao vocabulário aprovado, que refina a normalização do chat."
         summary={<LearningSummaryStrip summary={summary} isLoading={isSummaryLoading} />}
         actions={
           <>
@@ -558,7 +558,7 @@ export function AdminLearningTab({ getAccessToken }: AdminLearningTabProps) {
                 className={view === "finetuning" ? "is-active" : undefined}
                 onClick={() => setView("finetuning")}
               >
-                Fine-tuning
+                Ajuste fino
               </button>
             </div>
 

@@ -96,7 +96,7 @@ export function AdminPresentationMetrics({
               hint="Filial, operador, centro, etc."
             />
             <AdminKpiCard
-              title="Export PNG"
+              title="Exportar PNG"
               value={formatMetricNumber(summary.exportPngCount)}
               hint="Downloads de gráfico."
             />
