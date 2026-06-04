@@ -109,6 +109,22 @@ class PostgresChatMessageFeedbackRepository:
             ).first()
         )
 
+    def get_user_question_for_assistant(self, message_id: UUID) -> str | None:
+        assistant = AiChatMessageModel.query.filter_by(id=message_id).first()
+
+        if not assistant or not assistant.parent_message_id:
+            return None
+
+        parent = AiChatMessageModel.query.filter(
+            AiChatMessageModel.id == assistant.parent_message_id,
+            AiChatMessageModel.role == "user",
+        ).first()
+
+        if not parent or not parent.content:
+            return None
+
+        return str(parent.content)
+
     def get_message_session_id(self, message_id: UUID) -> UUID | None:
         row = AiChatMessageModel.query.filter_by(id=message_id).first()
 

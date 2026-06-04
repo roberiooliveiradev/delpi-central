@@ -113,7 +113,20 @@ class StreamChatMessageUseCase:
         with llm_generation_scope(generation_config):
             yield from self._stream_turn(request)
 
+    @staticmethod
+    def _warm_learned_normalization() -> None:
+        """Aplica regras de vocabulário aprendidas (best-effort, cacheado por TTL)."""
+        try:
+            from app.application.services.chat_learned_normalization_service import (
+                ChatLearnedNormalizationService,
+            )
+
+            ChatLearnedNormalizationService().ensure_loaded()
+        except Exception:
+            return
+
     def _stream_turn(self, request: SendChatMessageRequest) -> Iterator[dict]:
+        self._warm_learned_normalization()
         turn_generation_config = ChatLlmMetadataService.resolve_generation_config(request)
         user_id = UUID(request.user_id)
         message = self.message_security_service.secure_message(

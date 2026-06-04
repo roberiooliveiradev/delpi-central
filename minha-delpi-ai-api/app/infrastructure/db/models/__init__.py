@@ -21,6 +21,8 @@ from app.infrastructure.db.models.chat_message_feedback_model import AiChatMessa
 from app.infrastructure.db.models.admin_runtime_settings_model import AiAdminRuntimeSettingsModel
 from app.infrastructure.db.models.chat_quality_report_model import AiChatQualityReportModel
 from app.infrastructure.db.models.chat_quality_issue_model import AiChatQualityIssueModel
+from app.infrastructure.db.models.learning_candidate_model import AiLearningCandidateModel
+from app.infrastructure.db.models.vocabulary_term_model import AiVocabularyTermModel
 
 __all__ = [
     "AiAdminGuidelineModel",
@@ -46,4 +48,6 @@ __all__ = [
     "AiAdminRuntimeSettingsModel",
     "AiChatQualityReportModel",
     "AiChatQualityIssueModel",
+    "AiLearningCandidateModel",
+    "AiVocabularyTermModel",
 ]

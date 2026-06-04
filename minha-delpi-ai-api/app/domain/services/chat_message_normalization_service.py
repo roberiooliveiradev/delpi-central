@@ -194,7 +194,16 @@ _TYPO_PATTERNS = [
 
 
 class ChatMessageNormalizationService:
-    """Normaliza mensagens do usuário para matching de intenção (acentos, typos)."""
+    """Normaliza mensagens do usuário para matching de intenção (acentos, typos).
+
+    Além das regras estáticas (`_TYPO_PATTERNS`), aplica regras *aprendidas*
+    promovidas pela camada de aprendizagem contínua, registradas via
+    `set_learned_rules` (playbook §10/§15). O registro fica vazio por padrão,
+    preservando o comportamento puro/determinístico do serviço.
+    """
+
+    # (pattern compilado, substituição) — populado por ChatLearnedNormalizationService.
+    _LEARNED_PATTERNS: list[tuple["re.Pattern", str]] = []
 
     @staticmethod
     def strip_accents(value: str) -> str:
@@ -202,11 +211,39 @@ class ChatMessageNormalizationService:
         return "".join(char for char in normalized if not unicodedata.combining(char))
 
     @classmethod
+    def set_learned_rules(cls, rules: list[tuple[str, str]] | None) -> None:
+        """Registra regras aprendidas (term -> normalized) aplicadas após as estáticas."""
+        compiled: list[tuple[re.Pattern, str]] = []
+
+        for raw_term, replacement in rules or []:
+            term = str(raw_term or "").strip()
+            target = str(replacement or "").strip()
+
+            if not term or not target or term == target:
+                continue
+
+            try:
+                compiled.append(
+                    (re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE), target)
+                )
+            except re.error:
+                continue
+
+        cls._LEARNED_PATTERNS = compiled
+
+    @classmethod
+    def clear_learned_rules(cls) -> None:
+        cls._LEARNED_PATTERNS = []
+
+    @classmethod
     def normalize_for_matching(cls, message: str) -> str:
         text = cls.strip_accents(message)
         text = re.sub(r"\s+", " ", text).strip()
 
         for pattern, replacement in _TYPO_PATTERNS:
+            text = pattern.sub(replacement, text)
+
+        for pattern, replacement in cls._LEARNED_PATTERNS:
             text = pattern.sub(replacement, text)
 
         return text

@@ -269,6 +269,38 @@ def make_update_admin_quality_issue_status_use_case():
     return UpdateAdminQualityIssueStatusUseCase()
 
 
+def make_list_learning_candidates_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ListLearningCandidatesUseCase,
+    )
+
+    return ListLearningCandidatesUseCase()
+
+
+def make_review_learning_candidate_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ReviewLearningCandidateUseCase,
+    )
+
+    return ReviewLearningCandidateUseCase()
+
+
+def make_list_vocabulary_terms_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        ListVocabularyTermsUseCase,
+    )
+
+    return ListVocabularyTermsUseCase()
+
+
+def make_upsert_vocabulary_term_use_case():
+    from app.application.use_cases.chat_learning_use_cases import (
+        UpsertVocabularyTermUseCase,
+    )
+
+    return UpsertVocabularyTermUseCase()
+
+
 def make_get_admin_text_task_summary_use_case() -> GetAdminTextTaskSummaryUseCase:
     return GetAdminTextTaskSummaryUseCase(PostgresAuditRepository())
 

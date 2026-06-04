@@ -834,6 +834,121 @@ def admin_update_quality_issue_status(issue_id: int):
     return jsonify(updated), 200
 
 
+@admin_bp.get("/learning/candidates")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_learning_candidates():
+    from app.composition.admin_composer import make_list_learning_candidates_use_case
+
+    status = (request.args.get("status") or "").strip() or None
+    candidate_type = (request.args.get("type") or "").strip() or None
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_learning_candidates_use_case()
+    return jsonify(
+        use_case.execute(
+            status=status,
+            candidate_type=candidate_type,
+            limit=limit,
+            offset=offset,
+        )
+    ), 200
+
+
+@admin_bp.post("/learning/candidates/<int:candidate_id>/review")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_review_learning_candidate(candidate_id: int):
+    from app.composition.admin_composer import make_review_learning_candidate_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("action"):
+        return bad_request("action is required (approve|reject|promote)")
+
+    use_case = make_review_learning_candidate_use_case()
+
+    try:
+        result = use_case.execute(
+            candidate_id=candidate_id,
+            action=str(payload.get("action")),
+            reviewer_id=str(g.current_user.sub),
+            term_override=payload.get("term"),
+            normalized_override=payload.get("normalizedTerm") or payload.get("normalized_term"),
+            meaning_override=payload.get("meaning"),
+        )
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 200
+
+
+@admin_bp.get("/learning/vocabulary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_list_vocabulary_terms():
+    from app.composition.admin_composer import make_list_vocabulary_terms_use_case
+
+    scope = (request.args.get("scope") or "").strip() or None
+    term_type = (request.args.get("type") or "").strip() or None
+    approved_raw = (request.args.get("approved") or "").strip().lower()
+    approved = None
+
+    if approved_raw in {"true", "1"}:
+        approved = True
+    elif approved_raw in {"false", "0"}:
+        approved = False
+
+    try:
+        limit = int(request.args.get("limit", 50))
+        offset = int(request.args.get("offset", 0))
+    except (TypeError, ValueError):
+        return bad_request("limit and offset must be integers")
+
+    use_case = make_list_vocabulary_terms_use_case()
+    return jsonify(
+        use_case.execute(
+            scope=scope,
+            approved=approved,
+            type=term_type,
+            limit=limit,
+            offset=offset,
+        )
+    ), 200
+
+
+@admin_bp.post("/learning/vocabulary")
+@require_permission(CHAT_ADMIN_PERMISSION)
+def admin_upsert_vocabulary_term():
+    from app.composition.admin_composer import make_upsert_vocabulary_term_use_case
+
+    payload = request.get_json(silent=True) or {}
+
+    if not isinstance(payload, dict) or not payload.get("term"):
+        return bad_request("term is required")
+
+    use_case = make_upsert_vocabulary_term_use_case()
+
+    try:
+        result = use_case.execute(payload=payload, created_by=str(g.current_user.sub))
+        db.session.commit()
+    except ValueError as exc:
+        db.session.rollback()
+        return bad_request(str(exc))
+    except Exception:
+        db.session.rollback()
+        raise
+
+    return jsonify(result), 201
+
+
 @admin_bp.get("/metrics/text-tasks/summary")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_text_task_metrics_summary():

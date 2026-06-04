@@ -129,4 +129,53 @@ class UpsertChatMessageFeedbackUseCase:
             context=context_metadata,
         )
 
+        if rating == -1:
+            self._capture_learning_candidate(
+                message_uuid=message_uuid,
+                reason=normalized_reason,
+                session=session,
+                user_id=user_id,
+            )
+
         return result
+
+    def _capture_learning_candidate(
+        self,
+        *,
+        message_uuid: UUID,
+        reason: str | None,
+        session,
+        user_id: str,
+    ) -> None:
+        """Aprendizagem contínua (playbook §16): best-effort, nunca quebra o feedback."""
+        from app.infrastructure.config.settings import Settings
+
+        if not Settings.CHAT_LEARNING_ENABLED or not Settings.CHAT_LEARNING_CAPTURE_FROM_FEEDBACK:
+            return
+
+        try:
+            user_question = self.feedback_repository.get_user_question_for_assistant(
+                message_uuid,
+            )
+
+            if not user_question:
+                return
+
+            from app.application.services.chat_learning_capture_service import (
+                ChatLearningCaptureService,
+            )
+
+            project_id = None
+            session_project = getattr(session, "project_id", None)
+
+            if session_project:
+                project_id = str(session_project)
+
+            ChatLearningCaptureService().capture_from_negative_feedback(
+                user_question=user_question,
+                reason=reason,
+                project_id=project_id,
+                created_by=user_id,
+            )
+        except Exception:
+            return

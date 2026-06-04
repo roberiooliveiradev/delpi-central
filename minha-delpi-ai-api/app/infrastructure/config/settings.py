@@ -359,6 +359,30 @@ class Settings:
         os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS", "2")
     )
 
+    # Aprendizagem contínua (playbook). Desligado por padrão: human-in-the-loop.
+    CHAT_LEARNING_ENABLED = (
+        os.getenv("CHAT_LEARNING_ENABLED", "false").lower() == "true"
+    )
+    # Aplicar termos de vocabulário aprovados durante a normalização de mensagens.
+    CHAT_LEARNING_APPLY_VOCABULARY = (
+        os.getenv("CHAT_LEARNING_APPLY_VOCABULARY", "true").lower() == "true"
+    )
+    # Capturar candidatos automaticamente a partir de feedback negativo.
+    CHAT_LEARNING_CAPTURE_FROM_FEEDBACK = (
+        os.getenv("CHAT_LEARNING_CAPTURE_FROM_FEEDBACK", "true").lower() == "true"
+    )
+    # Auto-aprovar candidatos de altíssima confiança (default off: exige revisão).
+    CHAT_LEARNING_AUTO_APPROVE_ENABLED = (
+        os.getenv("CHAT_LEARNING_AUTO_APPROVE_ENABLED", "false").lower() == "true"
+    )
+    CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE = float(
+        os.getenv("CHAT_LEARNING_AUTO_APPROVE_MIN_CONFIDENCE", "0.95")
+    )
+    # Limite de termos aprendidos carregados/aplicados na normalização.
+    CHAT_LEARNING_VOCABULARY_MAX_RULES = int(
+        os.getenv("CHAT_LEARNING_VOCABULARY_MAX_RULES", "500")
+    )
+
     @classmethod
     def resolve_web_search_provider(cls) -> str:
         provider = cls.CHAT_WEB_SEARCH_PROVIDER

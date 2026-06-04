@@ -107,7 +107,20 @@ class SendChatMessageUseCase:
         with llm_generation_scope(generation_config):
             return self._execute_turn(request)
 
+    @staticmethod
+    def _warm_learned_normalization() -> None:
+        """Aplica regras de vocabulário aprendidas (best-effort, cacheado por TTL)."""
+        try:
+            from app.application.services.chat_learned_normalization_service import (
+                ChatLearnedNormalizationService,
+            )
+
+            ChatLearnedNormalizationService().ensure_loaded()
+        except Exception:
+            return
+
     def _execute_turn(self, request: SendChatMessageRequest) -> SendChatMessageResponse:
+        self._warm_learned_normalization()
         user_id = UUID(request.user_id)
         message = self.message_security_service.secure_message(
             request.message,
