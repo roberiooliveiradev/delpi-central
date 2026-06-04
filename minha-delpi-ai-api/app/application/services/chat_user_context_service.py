@@ -3,7 +3,12 @@ import re
 from urllib.parse import urljoin
 
 from app.domain.ports.core_api_gateway_port import CoreApiGatewayPort
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.infrastructure.config.settings import Settings
+
+_USER_CONTEXT_BUNDLE = "user_context"
 
 logger = logging.getLogger("minha-delpi-ai-api.user_context")
 
@@ -68,6 +73,17 @@ _USER_IDENTITY_TERMS = (
 
 class ChatUserContextService:
     """Constrói bloco textual com informações do usuário para injeção no prompt."""
+
+    @classmethod
+    def _content(cls, *path: str, default: str = "", **values: str) -> str:
+        if values:
+            return ChatAssistantContentService.format(
+                _USER_CONTEXT_BUNDLE, *path, default=default, **values
+            )
+
+        return ChatAssistantContentService.get(
+            _USER_CONTEXT_BUNDLE, *path, default=default
+        )
 
     def __init__(self, core_api_gateway: CoreApiGatewayPort):
         self.core_api_gateway = core_api_gateway
@@ -286,15 +302,23 @@ class ChatUserContextService:
 
         if any(t in normalized for t in ("quais apps", "meus apps", "meus aplicativos", "posso acessar", "tenho acesso", "acesso a quais")):
             if app_names:
-                lines = [f"Você tem acesso a **{len(app_names)} app(s)**:"]
+                lines = [
+                    cls._content(
+                        "headings", "appsAccess", count=str(len(app_names))
+                    )
+                ]
                 for app_name in app_names:
                     lines.append(f"- {app_name}")
                 return "\n".join(lines)
-            return "Não encontrei apps vinculados ao seu perfil."
+            return cls._content("empty", "noApps")
 
         if any(t in normalized for t in ("meu papel", "meus papéis", "meus papeis")):
             if profile_roles:
-                lines = [f"Seus papéis ({len(profile_roles)}):"]
+                lines = [
+                    cls._content(
+                        "headings", "rolesList", count=str(len(profile_roles))
+                    )
+                ]
                 for role in profile_roles:
                     name = role.get("name") or "Papel"
                     sources = self._format_role_sources(role)
@@ -302,54 +326,99 @@ class ChatUserContextService:
                     perm_count = len(role.get("permissions") or [])
                     app_count = len(role.get("apps") or [])
                     lines.append(
-                        f"- **{name}**{suffix} — {perm_count} permissão(ões), "
-                        f"{app_count} app(s) com rotas"
+                        cls._content(
+                            "lines",
+                            "roleEntry",
+                            name=name,
+                            suffix=suffix,
+                            perm_count=str(perm_count),
+                            app_count=str(app_count),
+                        )
                     )
-                lines.append(
-                    "\nPara detalhes de um papel, pergunte por exemplo: "
-                    "\"quais as permissões de Chat Full?\""
-                )
+                lines.append(cls._content("lines", "roleDetailHint"))
                 return "\n".join(lines)
             if roles:
-                lines = [f"Seus papéis ({len(roles)}):"]
+                lines = [
+                    cls._content(
+                        "headings", "rolesListSimple", count=str(len(roles))
+                    )
+                ]
                 for role in roles:
-                    lines.append(f"- {role}")
+                    lines.append(
+                        cls._content("lines", "roleEntrySimple", role=role)
+                    )
                 return "\n".join(lines)
-            return "Não encontrei papéis vinculados ao seu perfil."
+            return cls._content("empty", "noRoles")
 
         if any(t in normalized for t in ("minha permiss", "minhas permiss")):
             if permissions:
-                lines = [f"Suas permissões ({len(permissions)}):"]
+                lines = [
+                    cls._content(
+                        "headings", "permissionsList", count=str(len(permissions))
+                    )
+                ]
                 for perm in permissions[:40]:
-                    lines.append(f"- {perm}")
+                    lines.append(cls._content("lines", "permissionEntry", perm=perm))
                 if len(permissions) > 40:
-                    lines.append(f"- … e mais {len(permissions) - 40}")
+                    lines.append(
+                        cls._content(
+                            "lines",
+                            "permissionsMore",
+                            count=str(len(permissions) - 40),
+                        )
+                    )
                 return "\n".join(lines)
-            return "Não encontrei permissões vinculadas ao seu perfil."
+            return cls._content("empty", "noPermissions")
 
         if any(t in normalized for t in ("meu grupo", "meus grupos")):
             if groups:
-                lines = [f"Seus grupos ({len(groups)}):"]
+                lines = [
+                    cls._content("headings", "groupsList", count=str(len(groups)))
+                ]
                 for group in groups:
-                    lines.append(f"- {group}")
+                    lines.append(cls._content("lines", "groupEntry", group=group))
                 return "\n".join(lines)
-            return "Não encontrei grupos vinculados ao seu perfil."
+            return cls._content("empty", "noGroups")
 
-        parts = [f"**Seu perfil na Minha DELPI:**\n"]
-        parts.append(f"- **Nome:** {name}")
-        parts.append(f"- **Email:** {email}")
+        parts = [cls._content("headings", "profileTitle") + "\n"]
+        parts.append(cls._content("lines", "profileName", name=name))
+        parts.append(cls._content("lines", "profileEmail", email=email))
         if is_superadmin:
-            parts.append("- **Perfil:** Superadministrador")
+            parts.append(cls._content("lines", "profileSuperadmin"))
         if roles:
-            parts.append(f"- **Papéis:** {', '.join(roles)}")
+            parts.append(
+                cls._content("lines", "profileRoles", roles=", ".join(roles))
+            )
         if groups:
-            parts.append(f"- **Grupos:** {', '.join(groups)}")
+            parts.append(
+                cls._content("lines", "profileGroups", groups=", ".join(groups))
+            )
         if permissions:
-            parts.append(f"- **Permissões ({len(permissions)}):** {', '.join(permissions[:15])}")
+            parts.append(
+                cls._content(
+                    "lines",
+                    "profilePermissions",
+                    count=str(len(permissions)),
+                    preview=", ".join(permissions[:15]),
+                )
+            )
             if len(permissions) > 15:
-                parts.append(f"  … e mais {len(permissions) - 15}")
+                parts.append(
+                    cls._content(
+                        "lines",
+                        "profilePermissionsMore",
+                        count=str(len(permissions) - 15),
+                    )
+                )
         if app_names:
-            parts.append(f"- **Apps disponíveis ({len(app_names)}):** {', '.join(app_names)}")
+            parts.append(
+                cls._content(
+                    "lines",
+                    "profileApps",
+                    count=str(len(app_names)),
+                    apps=", ".join(app_names),
+                )
+            )
 
         return "\n".join(parts)
 
@@ -380,14 +449,18 @@ class ChatUserContextService:
 
         return best_match
 
-    @staticmethod
-    def _format_role_sources(role: dict) -> str:
+    @classmethod
+    def _format_role_sources(cls, role: dict) -> str:
         labels: list[str] = []
         for source in role.get("sources") or []:
             if source.get("type") == "direct":
-                labels.append("atribuição direta")
+                labels.append(cls._content("roleSources", "direct"))
             elif source.get("type") == "group" and source.get("groupName"):
-                labels.append(f"grupo {source['groupName']}")
+                labels.append(
+                    cls._content(
+                        "roleSources", "group", name=source["groupName"]
+                    )
+                )
         return ", ".join(labels)
 
     @classmethod
@@ -440,17 +513,23 @@ class ChatUserContextService:
     @classmethod
     def _format_role_detail_answer(cls, role: dict) -> str:
         name = role.get("name") or "Papel"
-        lines = [f"**Papel: {name}**"]
+        lines = [cls._content("roleDetail", "title", name=name)]
 
         if role.get("description"):
             lines.append(str(role["description"]))
 
         sources = cls._format_role_sources(role)
         if sources:
-            lines.append(f"**Como você recebe este papel:** {sources}")
+            lines.append(
+                cls._content("roleDetail", "sources", sources=sources)
+            )
 
         permissions = role.get("permissions") or []
-        lines.append(f"\n**Permissões ({len(permissions)}):**")
+        lines.append(
+            cls._content(
+                "roleDetail", "permissionsHeading", count=str(len(permissions))
+            )
+        )
         if permissions:
             for perm in permissions[:40]:
                 code = perm.get("code") or ""
@@ -459,34 +538,66 @@ class ChatUserContextService:
                 module = perm.get("module")
                 detail = description if description and description != label else label
                 module_suffix = f" [{module}]" if module else ""
-                lines.append(f"- `{code}` — {detail}{module_suffix}")
+                lines.append(
+                    cls._content(
+                        "roleDetail",
+                        "permissionLine",
+                        code=code,
+                        detail=detail,
+                        module_suffix=module_suffix,
+                    )
+                )
             if len(permissions) > 40:
-                lines.append(f"- … e mais {len(permissions) - 40} permissão(ões)")
+                lines.append(
+                    cls._content(
+                        "roleDetail",
+                        "permissionsMore",
+                        count=str(len(permissions) - 40),
+                    )
+                )
         else:
-            lines.append("- Nenhuma permissão cadastrada para este papel.")
+            lines.append(cls._content("roleDetail", "noPermissions"))
 
         apps = role.get("apps") or []
-        lines.append(f"\n**Apps e funcionalidades ({len(apps)}):**")
+        lines.append(
+            cls._content("roleDetail", "appsHeading", count=str(len(apps)))
+        )
         if apps:
             for app in apps[:10]:
                 app_name = app.get("name") or app.get("id") or "App"
                 routes = app.get("routes") or []
-                lines.append(f"- **{app_name}**")
+                lines.append(cls._content("roleDetail", "appLine", name=app_name))
                 for route in routes[:8]:
                     label = route.get("label") or route.get("path") or "Rota"
                     permission = route.get("permission")
                     if permission:
-                        lines.append(f"  - {label} (`{permission}`)")
+                        lines.append(
+                            cls._content(
+                                "roleDetail",
+                                "routeWithPermission",
+                                label=label,
+                                permission=permission,
+                            )
+                        )
                     else:
-                        lines.append(f"  - {label}")
+                        lines.append(
+                            cls._content("roleDetail", "routeLine", label=label)
+                        )
                 if len(routes) > 8:
-                    lines.append(f"  - … e mais {len(routes) - 8} rota(s)")
+                    lines.append(
+                        cls._content(
+                            "roleDetail",
+                            "routesMore",
+                            count=str(len(routes) - 8),
+                        )
+                    )
             if len(apps) > 10:
-                lines.append(f"- … e mais {len(apps) - 10} app(s)")
+                lines.append(
+                    cls._content(
+                        "roleDetail", "appsMore", count=str(len(apps) - 10)
+                    )
+                )
         else:
-            lines.append(
-                "- Nenhum app com rotas liberadas apenas por este papel "
-                "(pode depender de combinação com outros papéis)."
-            )
+            lines.append(cls._content("roleDetail", "noAppsForRole"))
 
         return "\n".join(lines)

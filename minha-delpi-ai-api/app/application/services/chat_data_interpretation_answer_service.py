@@ -6,26 +6,28 @@ import json
 from typing import Any
 
 from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
 
+_CONTENT_BUNDLE = "data_interpretation"
+
 
 class ChatDataInterpretationAnswerService:
-    _GENERIC_LINE_MARKERS = (
-        "a api retornou",
-        "a consulta retornou",
-        "nenhum registro encontrado",
-        "dados autorizados para a consulta",
-        "visualização dos dados",
-    )
+    @classmethod
+    def _generic_line_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            ChatAssistantContentService.list(_CONTENT_BUNDLE, "genericLineMarkers")
+        )
 
-    _GENERIC_TITLES = (
-        "consulta sql",
-        "resultado da api",
-        "resultado operacional",
-        "consulta",
-    )
+    @classmethod
+    def _generic_titles(cls) -> tuple[str, ...]:
+        return tuple(
+            ChatAssistantContentService.list(_CONTENT_BUNDLE, "genericTitles")
+        )
 
     @classmethod
     def build_answer(
@@ -67,7 +69,12 @@ class ChatDataInterpretationAnswerService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         latest = summaries[-1]
-        title = str(latest.get("titulo") or "Consulta anterior").strip()
+        title = str(
+            latest.get("titulo")
+            or ChatAssistantContentService.get(
+                _CONTENT_BUNDLE, "defaultTitle", default="Consulta anterior"
+            )
+        ).strip()
         lines = [
             str(line).strip()
             for line in (latest.get("linhas") or [])
@@ -175,7 +182,11 @@ class ChatDataInterpretationAnswerService:
                 if str(line or "").strip()
             ]
 
-            if title and title.lower() not in cls._GENERIC_TITLES and cls._has_substantive_lines(lines):
+            if (
+                title
+                and title.lower() not in cls._generic_titles()
+                and cls._has_substantive_lines(lines)
+            ):
                 return {"titulo": title, "linhas": lines, "path": path}
 
             if cls._has_substantive_lines(lines):
@@ -225,7 +236,7 @@ class ChatDataInterpretationAnswerService:
     def _is_generic_line(cls, line: str) -> bool:
         lowered = line.lower()
 
-        return any(marker in lowered for marker in cls._GENERIC_LINE_MARKERS)
+        return any(marker in lowered for marker in cls._generic_line_markers())
 
     @classmethod
     def _title_from_path(cls, path: str) -> str:

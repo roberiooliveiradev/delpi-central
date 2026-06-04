@@ -6,6 +6,9 @@ import re
 from typing import Any
 from urllib.parse import urlparse
 
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -13,66 +16,24 @@ from app.domain.services.chat_web_search_history_service import (
     ChatWebSearchHistoryService,
 )
 
+_BUNDLE = "web_search"
+
 
 class ChatWebSearchSourceFollowUpService:
-    _LIST_SOURCES_MARKERS = (
-        "liste os links",
-        "lista os links",
-        "listar os links",
-        "liste as fontes",
-        "lista as fontes",
-        "listar as fontes",
-        "links das fontes",
-        "links da pesquisa",
-        "link das fontes",
-        "mostre os links",
-        "mostra os links",
-        "mostrar os links",
-        "quais foram as fontes",
-        "quais sao as fontes",
-        "quais são as fontes",
-        "abrir fontes",
-        "urls das fontes",
-        "url das fontes",
-    )
+    @classmethod
+    def _markers(cls, key: str) -> tuple[str, ...]:
+        return tuple(
+            ChatAssistantContentService.list(_BUNDLE, "followUp", "markers", key)
+        )
 
-    _WEB_CONTEXT_TERMS = (
-        "pesquisa web",
-        "busca na web",
-        "pesquisa na web",
-        "fontes da pesquisa",
-        "fontes da busca",
-        "fonte documental",
-        "fontes documentais",
-        "internet",
-        "resultados da pesquisa",
-    )
+    @classmethod
+    def _msg(cls, key: str, **values: str) -> str:
+        if values:
+            return ChatAssistantContentService.format(
+                _BUNDLE, "followUp", "messages", key, **values
+            )
 
-    _SUMMARIZE_MARKERS = (
-        "resuma em topicos",
-        "resuma em tópicos",
-        "resumir pesquisa",
-        "resumir a pesquisa",
-        "resumo da pesquisa",
-        "resumo dos resultados",
-        "resultados da pesquisa web",
-    )
-
-    _EXTRACT_PARAMS_MARKERS = (
-        "extraia parametros",
-        "extraia parâmetros",
-        "parametros tecnicos",
-        "parâmetros técnicos",
-        "tabela markdown",
-    )
-
-    _COMPARE_MARKERS = (
-        "compare as fontes",
-        "comparar as fontes",
-        "compare as fontes da pesquisa",
-        "destaque divergencias",
-        "destaque divergências",
-    )
+        return ChatAssistantContentService.get(_BUNDLE, "followUp", "messages", key)
 
     @classmethod
     def is_web_research_follow_up_request(cls, message: str | None) -> bool:
@@ -114,14 +75,14 @@ class ChatWebSearchSourceFollowUpService:
         if not normalized:
             return False
 
-        if not any(marker in normalized for marker in cls._LIST_SOURCES_MARKERS):
+        if not any(marker in normalized for marker in cls._markers("listSources")):
             if not (
                 ("liste" in normalized or "lista" in normalized or "listar" in normalized)
                 and ("link" in normalized or "fonte" in normalized or "url" in normalized)
             ):
                 return False
 
-        return any(term in normalized for term in cls._WEB_CONTEXT_TERMS) or (
+        return any(term in normalized for term in cls._markers("webContext")) or (
             "fonte" in normalized and ("acima" in normalized or "anterior" in normalized)
         )
 
@@ -137,30 +98,25 @@ class ChatWebSearchSourceFollowUpService:
         bundle = ChatWebSearchHistoryService.extract_recent_bundle(previous_messages)
 
         if not bundle:
-            return (
-                "Não encontrei uma **pesquisa na web** recente nesta conversa.\n\n"
-                "Faça primeiro uma busca (ex.: «pesquise na web sobre …») e depois peça "
-                "para listar os links das fontes."
-            )
+            return cls._msg("missingRecentSearchList")
 
         sources = bundle.get("sources") or []
 
         if not sources:
-            return (
-                "A última pesquisa web não trouxe fontes com URL para listar. "
-                "Tente ampliar a busca ou usar «pesquisa profunda na web»."
-            )
+            return cls._msg("noSourcesToList")
 
         query = str(bundle.get("query") or "").strip()
-        lines = ["**Links das fontes da pesquisa web**", ""]
+        lines = [cls._msg("listSourcesTitle"), ""]
 
         if query:
-            lines.append(f"*Consulta:* {query}")
+            lines.append(cls._msg("queryLine", query=query))
             lines.append("")
 
         for index, source in enumerate(sources, start=1):
             title = str(
-                source.get("title") or source.get("sourceRef") or f"Fonte {index}"
+                source.get("title")
+                or source.get("sourceRef")
+                or cls._msg("sourceTitleFallback", index=str(index))
             ).strip()
             url = str(source.get("sourceRef") or source.get("url") or "").strip()
 
@@ -168,14 +124,11 @@ class ChatWebSearchSourceFollowUpService:
                 continue
 
             official = source.get("isOfficial") is True
-            badge = " *(oficial)*" if official else ""
+            badge = cls._msg("officialBadge") if official else ""
             lines.append(f"{index}. [{title}]({url}){badge}")
 
         if len(lines) <= 2:
-            return (
-                "Não há URLs utilizáveis nas fontes da última pesquisa web. "
-                "Repita a busca ou peça «pesquisa profunda na web»."
-            )
+            return cls._msg("noUsableUrls")
 
         return "\n".join(lines).strip()
 
@@ -186,14 +139,14 @@ class ChatWebSearchSourceFollowUpService:
         if not normalized:
             return False
 
-        if not any(marker in normalized for marker in cls._SUMMARIZE_MARKERS):
+        if not any(marker in normalized for marker in cls._markers("summarize")):
             if not (
                 ("resuma" in normalized or "resumo" in normalized)
                 and "pesquisa web" in normalized
             ):
                 return False
 
-        return any(term in normalized for term in cls._WEB_CONTEXT_TERMS)
+        return any(term in normalized for term in cls._markers("webContext"))
 
     @classmethod
     def is_extract_params_request(cls, message: str | None) -> bool:
@@ -202,11 +155,11 @@ class ChatWebSearchSourceFollowUpService:
         if not normalized:
             return False
 
-        if not any(marker in normalized for marker in cls._EXTRACT_PARAMS_MARKERS):
+        if not any(marker in normalized for marker in cls._markers("extractParams")):
             if "parametr" not in normalized or "pesquisa web" not in normalized:
                 return False
 
-        return any(term in normalized for term in cls._WEB_CONTEXT_TERMS) or (
+        return any(term in normalized for term in cls._markers("webContext")) or (
             "fonte" in normalized and "pesquisa" in normalized
         )
 
@@ -217,7 +170,7 @@ class ChatWebSearchSourceFollowUpService:
         if not normalized:
             return False
 
-        if not any(marker in normalized for marker in cls._COMPARE_MARKERS):
+        if not any(marker in normalized for marker in cls._markers("compare")):
             if not (
                 ("compare" in normalized or "compar" in normalized)
                 and "fonte" in normalized
@@ -242,19 +195,16 @@ class ChatWebSearchSourceFollowUpService:
             return cls._missing_web_search_message()
 
         query = str(bundle.get("query") or "").strip()
-        lines = ["**Resumo em tópicos — pesquisa web**", ""]
+        lines = [cls._msg("summarizeTitle"), ""]
 
         if query:
-            lines.append(f"*Consulta:* {query}")
+            lines.append(cls._msg("queryLine", query=query))
             lines.append("")
 
         bullets = cls._topic_bullets_from_bundle(bundle)
 
         if not bullets:
-            return (
-                "A última pesquisa web não trouxe trechos utilizáveis para resumir. "
-                "Tente «pesquisa profunda na web» ou reformule o tema."
-            )
+            return cls._msg("noSnippetsToSummarize")
 
         lines.extend(bullets)
         return "\n".join(lines).strip()
@@ -276,20 +226,17 @@ class ChatWebSearchSourceFollowUpService:
         rows = cls._parameter_rows_from_bundle(bundle)
 
         if not rows:
-            return (
-                "Não encontrei parâmetros técnicos explícitos nos trechos da última pesquisa web. "
-                "Peça «pesquisa profunda na web» com o nome do produto ou norma."
-            )
+            return cls._msg("noParamsFound")
 
         query = str(bundle.get("query") or "").strip()
-        lines = ["**Parâmetros técnicos (trechos das fontes)**", ""]
+        lines = [cls._msg("extractParamsTitle"), ""]
 
         if query:
-            lines.append(f"*Consulta:* {query}")
+            lines.append(cls._msg("queryLine", query=query))
             lines.append("")
 
-        lines.append("| Dado / parâmetro | Fonte |")
-        lines.append("| --- | --- |")
+        lines.append(cls._msg("paramsTableHeader"))
+        lines.append(cls._msg("paramsTableSeparator"))
 
         for param, source in rows[:12]:
             param_cell = param.replace("|", "\\|")
@@ -297,7 +244,9 @@ class ChatWebSearchSourceFollowUpService:
 
         if len(rows) > 12:
             lines.append("")
-            lines.append(f"_… e mais {len(rows) - 12} linha(s) nas fontes originais._")
+            lines.append(
+                cls._msg("paramsMoreRows", count=str(len(rows) - 12))
+            )
 
         return "\n".join(lines).strip()
 
@@ -319,54 +268,44 @@ class ChatWebSearchSourceFollowUpService:
         snippets = cls._snippet_entries_from_bundle(bundle)
 
         if len(sources) < 2 and len(snippets) < 2:
-            return (
-                "Há poucas fontes na última pesquisa web para comparar. "
-                "Use «pesquisa profunda na web» para ampliar o conjunto."
-            )
+            return cls._msg("fewSourcesToCompare")
 
         query = str(bundle.get("query") or "").strip()
-        lines = ["**Comparação das fontes da pesquisa web**", ""]
+        lines = [cls._msg("compareTitle"), ""]
 
         if query:
-            lines.append(f"*Consulta:* {query}")
+            lines.append(cls._msg("queryLine", query=query))
             lines.append("")
 
         for index, entry in enumerate(snippets[:8], start=1):
             title = entry["title"]
             url = entry["url"]
             snippet = entry["snippet"]
-            official = " *(oficial)*" if entry.get("isOfficial") else ""
+            official = cls._msg("officialBadge") if entry.get("isOfficial") else ""
             lines.append(f"### {index}. {title}{official}")
             lines.append("")
             lines.append(snippet[:500] + ("…" if len(snippet) > 500 else ""))
 
             if url:
                 lines.append("")
-                lines.append(f"[Abrir fonte]({url})")
+                lines.append(cls._msg("openSourceLink", url=url))
 
             lines.append("")
 
         divergences = cls._heuristic_divergence_note(snippets)
 
         if divergences:
-            lines.append("**Possíveis divergências**")
+            lines.append(cls._msg("divergencesHeader"))
             lines.append("")
             lines.append(divergences)
 
-        lines.append(
-            "_Revise os links acima; a comparação automática usa apenas os trechos "
-            "retornados pela busca, não o conteúdo integral das páginas._"
-        )
+        lines.append(cls._msg("compareDisclaimer"))
 
         return "\n".join(lines).strip()
 
     @classmethod
     def _missing_web_search_message(cls) -> str:
-        return (
-            "Não encontrei uma **pesquisa na web** recente nesta conversa.\n\n"
-            "Faça primeiro uma busca (ex.: «pesquise na web sobre …») e depois use "
-            "os atalhos **Após pesquisa web**."
-        )
+        return cls._msg("missingRecentSearch")
 
     @classmethod
     def _topic_bullets_from_bundle(cls, bundle: dict) -> list[str]:

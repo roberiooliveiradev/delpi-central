@@ -35,7 +35,10 @@ Wrappers especializados (mantêm API estável):
 | `data_coverage.json` | Avisos parcial/paginação/profundidade | `ChatDataCoverageNoticeService` |
 | `structure_comparison.json` | Comparação BOM/ficha | `ChatStructureComparisonService` |
 | `memory_ux.json` | Memória de sessão (barra + introspecção) | `ChatMemoryUxService` |
-| `web_search.json` | Resposta direta e marcadores de follow-up | `ChatWebSearchDirectAnswerService` |
+| `web_search.json` | Resposta direta e follow-up pós-pesquisa | `ChatWebSearchDirectAnswerService`, `ChatWebSearchSourceFollowUpService` |
+| `drawing_validation.json` | Relatório e checklist de análise de desenho | `ChatDrawingValidationOrchestrationService` |
+| `user_context.json` | Respostas diretas sobre perfil e papéis | `ChatUserContextService` |
+| `data_interpretation.json` | Marcadores e título padrão de interpretação de dados | `ChatDataInterpretationAnswerService` |
 | `stream.json` | Status SSE + fases de atividade + desenho | `ContentService.stream`, `ChatStreamActivityService` |
 | `operational_parameters.json` | Parâmetros faltantes | `ChatOperationalParameterService` |
 | `interactivity.json` | Chips, refinamentos | Vários serviços de interatividade |
@@ -56,19 +59,19 @@ Wrappers especializados (mantêm API estável):
 - Comparação de estrutura (insufficient data) → `structure_comparison.json`
 - Memória UX → `memory_ux.json`
 - Web search direct answer → `web_search.json` (antes em `product_operational_content.webSearch`)
+- Web search follow-up (links, resumo, parâmetros, comparação) → `web_search.followUp`
+- Validação de desenho (relatório, templates de checklist, conclusões) → `drawing_validation.json`
+- Contexto de usuário (perfil, papéis, permissões, grupos) → `user_context.json`
+- Interpretação de dados (marcadores genéricos) → `data_interpretation.json`
 - Títulos de lista no presenter → `presenter_content.titlesByPathFragment`
 
 ## Pendente (próximas PRs)
 
 Prioridade sugerida para novos JSON ou seções:
 
-1. `drawing_validation.json` — `chat_drawing_validation_orchestration_service.py`
-2. `user_context.json` — `chat_user_context_service.py`
-3. `web_search.json` — completar marcadores em `chat_web_search_source_follow_up_service.py`
-4. `analyser_insights.json` — `chat_product_analyser_divergence_service.py`, seções `**Destaques**` no presenter
-5. `presenter_content.json` — KPI titles (`_kpi_title`), narrativas analyser restantes
-6. `data_interpretation.json` — `chat_data_interpretation_answer_service.py`
-7. Termos de intenção ainda inline em `chat_product_query_intent_service.py` (parents regex mantém lógica; termos literais podem ir para JSON)
+1. `analyser_insights.json` — `chat_product_analyser_divergence_service.py`, seções `**Destaques**` no presenter
+2. `presenter_content.json` — KPI titles (`_kpi_title`), narrativas analyser restantes
+3. Termos de intenção ainda inline em `chat_product_query_intent_service.py` (parents regex mantém lógica; termos literais podem ir para JSON)
 
 ## Como adicionar conteúdo
 

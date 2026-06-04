@@ -1,0 +1,51 @@
+{
+  "empty": {
+    "noApps": "Não encontrei apps vinculados ao seu perfil.",
+    "noRoles": "Não encontrei papéis vinculados ao seu perfil.",
+    "noPermissions": "Não encontrei permissões vinculadas ao seu perfil.",
+    "noGroups": "Não encontrei grupos vinculados ao seu perfil."
+  },
+  "headings": {
+    "appsAccess": "Você tem acesso a **{count} app(s)**:",
+    "rolesList": "Seus papéis ({count}):",
+    "rolesListSimple": "Seus papéis ({count}):",
+    "permissionsList": "Suas permissões ({count}):",
+    "groupsList": "Seus grupos ({count}):",
+    "profileTitle": "**Seu perfil na Minha DELPI:**"
+  },
+  "lines": {
+    "roleEntry": "- **{name}**{suffix} — {perm_count} permissão(ões), {app_count} app(s) com rotas",
+    "roleEntrySimple": "- {role}",
+    "roleDetailHint": "\nPara detalhes de um papel, pergunte por exemplo: \"quais as permissões de Chat Full?\"",
+    "permissionEntry": "- {perm}",
+    "permissionsMore": "- … e mais {count}",
+    "groupEntry": "- {group}",
+    "profileName": "- **Nome:** {name}",
+    "profileEmail": "- **Email:** {email}",
+    "profileSuperadmin": "- **Perfil:** Superadministrador",
+    "profileRoles": "- **Papéis:** {roles}",
+    "profileGroups": "- **Grupos:** {groups}",
+    "profilePermissions": "- **Permissões ({count}):** {preview}",
+    "profilePermissionsMore": "  … e mais {count}",
+    "profileApps": "- **Apps disponíveis ({count}):** {apps}"
+  },
+  "roleDetail": {
+    "title": "**Papel: {name}**",
+    "sources": "**Como você recebe este papel:** {sources}",
+    "permissionsHeading": "\n**Permissões ({count}):**",
+    "noPermissions": "- Nenhuma permissão cadastrada para este papel.",
+    "permissionLine": "- `{code}` — {detail}{module_suffix}",
+    "permissionsMore": "- … e mais {count} permissão(ões)",
+    "appsHeading": "\n**Apps e funcionalidades ({count}):**",
+    "appLine": "- **{name}**",
+    "routeWithPermission": "  - {label} (`{permission}`)",
+    "routeLine": "  - {label}",
+    "routesMore": "  - … e mais {count} rota(s)",
+    "appsMore": "- … e mais {count} app(s)",
+    "noAppsForRole": "- Nenhum app com rotas liberadas apenas por este papel (pode depender de combinação com outros papéis)."
+  },
+  "roleSources": {
+    "direct": "atribuição direta",
+    "group": "grupo {name}"
+  }
+}

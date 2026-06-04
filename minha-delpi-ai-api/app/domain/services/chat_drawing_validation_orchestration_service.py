@@ -4,6 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_assistant_content_service import (
+    ChatAssistantContentService,
+)
+
+_DRAWING_CONTENT = "drawing_validation"
+
 
 class ChatDrawingValidationOrchestrationService:
     """Gera relatório estruturado e metadata `drawingAnalysis` a partir da API."""
@@ -13,6 +19,56 @@ class ChatDrawingValidationOrchestrationService:
     _STATUS_ERROR = "error"
     _STATUS_CRITICAL = "critical_error"
     _STATUS_NA = "not_applicable"
+
+    @classmethod
+    def _content(cls, *path: str, default: str = "", **values: str) -> str:
+        if values:
+            return ChatAssistantContentService.format(
+                _DRAWING_CONTENT, *path, default=default, **values
+            )
+
+        return ChatAssistantContentService.get(
+            _DRAWING_CONTENT, *path, default=default
+        )
+
+    @classmethod
+    def _evidence(cls, key: str) -> str:
+        return cls._content("evidence", key)
+
+    @classmethod
+    def _item_from_template(
+        cls,
+        template_key: str,
+        *,
+        status: str,
+        pdf_evidence: str,
+        api_evidence: str,
+        recommendation: str | None = None,
+        recommendation_field: str = "recommendation",
+    ) -> dict[str, Any]:
+        template = (
+            ChatAssistantContentService.get_node(
+                _DRAWING_CONTENT, "itemTemplates", template_key
+            )
+            or {}
+        )
+
+        if recommendation is None:
+            recommendation = str(
+                template.get(recommendation_field)
+                or template.get("recommendation")
+                or cls._evidence("dash")
+            )
+
+        return cls._item(
+            section=str(template.get("section") or "—"),
+            item=str(template.get("item") or "—"),
+            status=status,
+            pdf_evidence=pdf_evidence,
+            api_evidence=api_evidence,
+            rule=str(template.get("rule") or "—"),
+            recommendation=recommendation,
+        )
 
     @classmethod
     def build_from_analyser_payload(
@@ -33,14 +89,11 @@ class ChatDrawingValidationOrchestrationService:
 
         if not api_ok or api_status_code == 404 or not product:
             items.append(
-                cls._item(
-                    section="API DELPI",
-                    item="Cadastro do produto",
+                cls._item_from_template(
+                    "product_not_found",
                     status=cls._STATUS_CRITICAL,
-                    pdf_evidence="—",
-                    api_evidence="Não encontrado",
-                    rule="Produto deve existir em SB1010",
-                    recommendation="Verificar código ou cadastro no Protheus",
+                    pdf_evidence=cls._evidence("dash"),
+                    api_evidence=cls._evidence("notFound"),
                 )
             )
             return cls._package(
@@ -52,27 +105,30 @@ class ChatDrawingValidationOrchestrationService:
             )
 
         items.append(
-            cls._item(
-                section="API DELPI",
-                item="Cadastro do produto",
+            cls._item_from_template(
+                "product_found",
                 status=cls._STATUS_OK,
-                pdf_evidence="—",
+                pdf_evidence=cls._evidence("dash"),
                 api_evidence=str(product.get("code") or code),
-                rule="Produto localizado na API",
-                recommendation="—",
             )
         )
 
         revision = str(product.get("last_revision_date") or product.get("revision") or "").strip()
         items.append(
-            cls._item(
-                section="Cabeçalho",
-                item="Revisão (API)",
+            cls._item_from_template(
+                "revision_api",
                 status=cls._STATUS_OK if revision else cls._STATUS_PENDING,
-                pdf_evidence="Pendente leitura do PDF" if not has_pdf_attachment else "—",
-                api_evidence=revision or "—",
-                rule="Revisão deve bater com carimbo do PDF",
-                recommendation="Conferir REV. no carimbo" if has_pdf_attachment else "Anexe o PDF",
+                pdf_evidence=(
+                    cls._evidence("pendingPdf")
+                    if not has_pdf_attachment
+                    else cls._evidence("dash")
+                ),
+                api_evidence=revision or cls._evidence("dash"),
+                recommendation_field=(
+                    "recommendationWithPdf"
+                    if has_pdf_attachment
+                    else "recommendationNoPdf"
+                ),
             )
         )
 
@@ -81,14 +137,18 @@ class ChatDrawingValidationOrchestrationService:
         has_guide = bool(guide_items)
 
         items.append(
-            cls._item(
-                section="Roteiro",
-                item="Roteiro de produção (SG2010)",
+            cls._item_from_template(
+                "guide",
                 status=cls._STATUS_OK if has_guide else cls._STATUS_CRITICAL,
-                pdf_evidence="—",
-                api_evidence=f"{len(guide_items)} operação(ões)" if has_guide else "Ausente",
-                rule="Roteiro obrigatório para liberação",
-                recommendation="Cadastrar roteiro" if not has_guide else "—",
+                pdf_evidence=cls._evidence("dash"),
+                api_evidence=(
+                    f"{len(guide_items)} operação(ões)"
+                    if has_guide
+                    else cls._evidence("absent")
+                ),
+                recommendation_field=(
+                    "recommendationOk" if has_guide else "recommendationMissing"
+                ),
             )
         )
 
@@ -107,38 +167,36 @@ class ChatDrawingValidationOrchestrationService:
                 break
 
         items.append(
-            cls._item(
-                section="Inspeção",
-                item="QP6 / QP7 / QP8",
+            cls._item_from_template(
+                "inspection_qp",
                 status=cls._STATUS_OK if has_qp else cls._STATUS_CRITICAL,
-                pdf_evidence="—",
-                api_evidence="Vinculado" if has_qp else "Ausente",
-                rule="Inspeção obrigatória quando aplicável",
-                recommendation="Cadastrar plano de inspeção" if not has_qp else "—",
+                pdf_evidence=cls._evidence("dash"),
+                api_evidence=(
+                    cls._evidence("linked") if has_qp else cls._evidence("absent")
+                ),
+                recommendation_field=(
+                    "recommendationOk" if has_qp else "recommendationMissing"
+                ),
             )
         )
 
         if not has_pdf_attachment:
             items.append(
-                cls._item(
-                    section="PDF",
-                    item="Documento anexado",
+                cls._item_from_template(
+                    "pdf_missing",
                     status=cls._STATUS_PENDING,
-                    pdf_evidence="Sem anexo",
-                    api_evidence="—",
-                    rule="PDF necessário para BOM, cotas e carimbo",
-                    recommendation="Anexe o PDF do desenho",
+                    pdf_evidence=cls._evidence("noAttachment"),
+                    api_evidence=cls._evidence("dash"),
                 )
             )
             items.append(
-                cls._item(
-                    section="BOM",
-                    item="Tabela de materiais (PDF × SG1010)",
+                cls._item_from_template(
+                    "bom_pending",
                     status=cls._STATUS_PENDING,
-                    pdf_evidence="—",
-                    api_evidence=f"{guide.get('total', len(guide_items))} item(ns) na estrutura",
-                    rule="Comparar PDF com SG1010",
-                    recommendation="Anexe o PDF para conferência completa",
+                    pdf_evidence=cls._evidence("dash"),
+                    api_evidence=(
+                        f"{guide.get('total', len(guide_items))} item(ns) na estrutura"
+                    ),
                 )
             )
         else:
@@ -188,26 +246,26 @@ class ChatDrawingValidationOrchestrationService:
         analysis = package.get("drawingAnalysis") or {}
         product = package.get("productSummary") or {}
         lines = [
-            "# Relatório de Análise de Desenho DELPI",
+            cls._content("report", "title"),
             "",
-            "## 1. Status geral",
-            str(analysis.get("overallLabel") or "—"),
+            cls._content("report", "sections", "overall"),
+            str(analysis.get("overallLabel") or cls._evidence("dash")),
             "",
-            "## 2. Dados identificados no PDF",
+            cls._content("report", "sections", "pdfData"),
             "| Campo | Valor |",
             "|---|---|",
             f"| Código | {analysis.get('productCode') or '—'} |",
             f"| Revisão (PDF) | {analysis.get('revisionPdf') or '—'} |",
             f"| PDF anexado | {'Sim' if analysis.get('hasPdfAttachment') else 'Não'} |",
             "",
-            "## 3. Dados retornados pela API",
+            cls._content("report", "sections", "apiData"),
             "| Campo | Valor |",
             "|---|---|",
             f"| Código | {product.get('code') or '—'} |",
             f"| Descrição | {product.get('description') or '—'} |",
             f"| Revisão (API) | {product.get('last_revision_date') or '—'} |",
             "",
-            "## 4. Divergências críticas",
+            cls._content("report", "sections", "critical"),
             "| Seção | Item | Status | PDF | API | Ação |",
             "|---|---|---|---|---|---|",
         ]
@@ -219,43 +277,45 @@ class ChatDrawingValidationOrchestrationService:
         ]
 
         if not critical:
-            lines.append("| — | Nenhuma divergência crítica automática | OK | — | — | — |")
+            lines.append(cls._content("report", "noCriticalRow"))
         else:
+            row_tpl = cls._content("report", "criticalRow")
             for item in critical:
                 lines.append(
-                    "| {section} | {item} | Erro crítico | {pdf} | {api} | {rec} |".format(
-                        section=item.get("section") or "—",
-                        item=item.get("item") or "—",
-                        pdf=item.get("pdfEvidence") or "—",
-                        api=item.get("apiEvidence") or "—",
-                        rec=item.get("recommendation") or "—",
+                    row_tpl.format(
+                        section=item.get("section") or cls._evidence("dash"),
+                        item=item.get("item") or cls._evidence("dash"),
+                        pdf=item.get("pdfEvidence") or cls._evidence("dash"),
+                        api=item.get("apiEvidence") or cls._evidence("dash"),
+                        rec=item.get("recommendation") or cls._evidence("dash"),
                     )
                 )
 
         lines.extend(
             [
                 "",
-                "## 5. Checklist completo",
+                cls._content("report", "sections", "checklist"),
                 "| Seção | Item | Status | Observação |",
                 "|---|---|---|---|",
             ]
         )
 
+        checklist_tpl = cls._content("report", "checklistRow")
         for item in analysis.get("items") or []:
             lines.append(
-                "| {section} | {item} | {status} | {rec} |".format(
-                    section=item.get("section") or "—",
-                    item=item.get("item") or "—",
+                checklist_tpl.format(
+                    section=item.get("section") or cls._evidence("dash"),
+                    item=item.get("item") or cls._evidence("dash"),
                     status=cls._status_label(str(item.get("status") or "")),
-                    rec=item.get("recommendation") or "—",
+                    rec=item.get("recommendation") or cls._evidence("dash"),
                 )
             )
 
         lines.extend(
             [
                 "",
-                "## 6. Conclusão",
-                str(analysis.get("conclusion") or "—"),
+                cls._content("report", "sections", "conclusion"),
+                str(analysis.get("conclusion") or cls._evidence("dash")),
             ]
         )
 
@@ -265,10 +325,14 @@ class ChatDrawingValidationOrchestrationService:
     def format_critical_only_markdown(cls, analysis: dict[str, Any]) -> str:
         product_code = str(analysis.get("productCode") or "—")
         lines = [
-            "# Erros críticos — análise de desenho DELPI",
+            cls._content("criticalReport", "title"),
             "",
-            f"**Produto:** {product_code}",
-            f"**Status:** {analysis.get('overallLabel') or '—'}",
+            cls._content("report", "productLine", code=product_code),
+            cls._content(
+                "report",
+                "statusLine",
+                label=str(analysis.get("overallLabel") or cls._evidence("dash")),
+            ),
             "",
             "| Seção | Item | PDF | API | Ação |",
             "|---|---|---|---|---|",
@@ -281,16 +345,17 @@ class ChatDrawingValidationOrchestrationService:
         ]
 
         if not critical:
-            lines.append("| — | Nenhum erro crítico registrado | — | — | — |")
+            lines.append(cls._content("criticalReport", "noCriticalRow"))
         else:
+            row_tpl = cls._content("criticalReport", "criticalRow")
             for item in critical:
                 lines.append(
-                    "| {section} | {item} | {pdf} | {api} | {rec} |".format(
-                        section=item.get("section") or "—",
-                        item=item.get("item") or "—",
-                        pdf=item.get("pdfEvidence") or "—",
-                        api=item.get("apiEvidence") or "—",
-                        rec=item.get("recommendation") or "—",
+                    row_tpl.format(
+                        section=item.get("section") or cls._evidence("dash"),
+                        item=item.get("item") or cls._evidence("dash"),
+                        pdf=item.get("pdfEvidence") or cls._evidence("dash"),
+                        api=item.get("apiEvidence") or cls._evidence("dash"),
+                        rec=item.get("recommendation") or cls._evidence("dash"),
                     )
                 )
 
@@ -467,30 +532,24 @@ class ChatDrawingValidationOrchestrationService:
 
         if critical:
             overall = "rejected"
-            overall_label = "Reprovado"
-            conclusion = "O desenho não pode ser liberado enquanto houver erro crítico."
+            overall_label = cls._content("overallLabels", "rejected")
+            conclusion = cls._content("conclusions", "rejected")
         elif has_pdf_attachment and pdf_meta and not pdf_meta.get("legible"):
             overall = "incomplete"
-            overall_label = "Análise incompleta"
-            conclusion = (
-                "O PDF está ilegível ou sem texto extraível suficiente. "
-                "Informe o código na mensagem ou regenere o PDF."
-            )
+            overall_label = cls._content("overallLabels", "incomplete")
+            conclusion = cls._content("conclusions", "illegiblePdf")
         elif pending and not has_pdf_attachment:
             overall = "incomplete"
-            overall_label = "Análise incompleta"
-            conclusion = (
-                "Anexe o PDF para validar carimho, BOM e cotas. "
-                "A API já foi consultada para cadastro, roteiro e inspeção."
-            )
+            overall_label = cls._content("overallLabels", "incomplete")
+            conclusion = cls._content("conclusions", "noPdf")
         elif errors or pending:
             overall = "approved_with_notes"
-            overall_label = "Aprovado com ressalvas"
-            conclusion = "Revise os itens pendentes ou com erro antes da liberação."
+            overall_label = cls._content("overallLabels", "approvedWithNotes")
+            conclusion = cls._content("conclusions", "pendingWithPdf")
         else:
             overall = "approved"
-            overall_label = "Aprovado"
-            conclusion = "Nenhuma divergência crítica detectada na validação automática da API."
+            overall_label = cls._content("overallLabels", "approved")
+            conclusion = cls._content("conclusions", "approved")
 
         return {
             "drawingAnalysis": {

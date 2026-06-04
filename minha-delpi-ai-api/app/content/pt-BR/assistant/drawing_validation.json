@@ -1,0 +1,93 @@
+{
+  "report": {
+    "title": "# Relatório de Análise de Desenho DELPI",
+    "criticalTitle": "# Erros críticos — análise de desenho DELPI",
+    "sections": {
+      "overall": "## 1. Status geral",
+      "pdfData": "## 2. Dados identificados no PDF",
+      "apiData": "## 3. Dados retornados pela API",
+      "critical": "## 4. Divergências críticas",
+      "checklist": "## 5. Checklist completo",
+      "conclusion": "## 6. Conclusão"
+    },
+    "noCriticalRow": "| — | Nenhuma divergência crítica automática | OK | — | — | — |",
+    "criticalRow": "| {section} | {item} | Erro crítico | {pdf} | {api} | {rec} |",
+    "checklistRow": "| {section} | {item} | {status} | {rec} |",
+    "productLine": "**Produto:** {code}",
+    "statusLine": "**Status:** {label}"
+  },
+  "conclusions": {
+    "rejected": "O desenho não pode ser liberado enquanto houver erro crítico.",
+    "illegiblePdf": "O PDF está ilegível ou sem texto extraível suficiente. Informe o código na mensagem ou regenere o PDF.",
+    "noPdf": "Anexe o PDF para validar carimho, BOM e cotas. A API já foi consultada para cadastro, roteiro e inspeção.",
+    "pendingWithPdf": "Revise os itens pendentes ou com erro antes da liberação.",
+    "approved": "Nenhuma divergência crítica detectada na validação automática da API."
+  },
+  "criticalReport": {
+    "title": "# Erros críticos — análise de desenho DELPI",
+    "noCriticalRow": "| — | Nenhum erro crítico registrado | — | — | — |",
+    "criticalRow": "| {section} | {item} | {pdf} | {api} | {rec} |"
+  },
+  "overallLabels": {
+    "rejected": "Reprovado",
+    "incomplete": "Análise incompleta",
+    "pending": "Pendente de conferência",
+    "approvedWithNotes": "Aprovado com ressalvas",
+    "approved": "Aprovado"
+  },
+  "itemTemplates": {
+    "product_not_found": {
+      "section": "API DELPI",
+      "item": "Cadastro do produto",
+      "rule": "Produto deve existir em SB1010",
+      "recommendation": "Verificar código ou cadastro no Protheus"
+    },
+    "product_found": {
+      "section": "API DELPI",
+      "item": "Cadastro do produto",
+      "rule": "Produto localizado na API",
+      "recommendation": "—"
+    },
+    "revision_api": {
+      "section": "Cabeçalho",
+      "item": "Revisão (API)",
+      "rule": "Revisão deve bater com carimbo do PDF",
+      "recommendationWithPdf": "Conferir REV. no carimbo",
+      "recommendationNoPdf": "Anexe o PDF"
+    },
+    "guide": {
+      "section": "Roteiro",
+      "item": "Roteiro de produção (SG2010)",
+      "rule": "Roteiro obrigatório para liberação",
+      "recommendationMissing": "Cadastrar roteiro",
+      "recommendationOk": "—"
+    },
+    "inspection_qp": {
+      "section": "Inspeção",
+      "item": "QP6 / QP7 / QP8",
+      "rule": "Inspeção obrigatória quando aplicável",
+      "recommendationMissing": "Cadastrar plano de inspeção",
+      "recommendationOk": "—"
+    },
+    "pdf_missing": {
+      "section": "PDF",
+      "item": "Documento anexado",
+      "rule": "PDF necessário para BOM, cotas e carimbo",
+      "recommendation": "Anexe o PDF do desenho"
+    },
+    "bom_pending": {
+      "section": "BOM",
+      "item": "Tabela de materiais (PDF × SG1010)",
+      "rule": "Comparar PDF com SG1010",
+      "recommendation": "Anexe o PDF para conferência completa"
+    }
+  },
+  "evidence": {
+    "notFound": "Não encontrado",
+    "pendingPdf": "Pendente leitura do PDF",
+    "noAttachment": "Sem anexo",
+    "absent": "Ausente",
+    "linked": "Vinculado",
+    "dash": "—"
+  }
+}

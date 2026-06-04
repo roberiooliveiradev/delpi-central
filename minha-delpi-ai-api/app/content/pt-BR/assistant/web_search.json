@@ -7,35 +7,84 @@
   "localizedFooter": "*(Resumo em português via Wikipedia.)*",
   "retriedQueryFooter": "*(Busca complementada em inglês: «{query}».)*",
   "noResults": "Realizei uma busca na **internet pública** sobre *{query}*, mas não encontrei resultados úteis para montar um resumo.\n\nSugestões: reformule a pergunta, use termos mais específicos ou informe o tema em inglês se for um assunto técnico internacional.",
-  "listSourcesMarkers": [
-    "liste os links",
-    "lista os links",
-    "listar os links",
-    "liste as fontes",
-    "lista as fontes",
-    "listar as fontes",
-    "links das fontes",
-    "links da pesquisa",
-    "mostre os links",
-    "mostra os links",
-    "quais foram as fontes",
-    "quais sao as fontes",
-    "quais são as fontes"
-  ],
-  "webContextTerms": [
-    "pesquisa web",
-    "busca na web",
-    "pesquisa na web",
-    "fontes da pesquisa",
-    "fontes da busca",
-    "internet",
-    "resultados da pesquisa"
-  ],
-  "summarizeMarkers": [
-    "resuma em topicos",
-    "resuma em tópicos",
-    "resumir pesquisa",
-    "resumo da pesquisa",
-    "resumo dos resultados"
-  ]
+  "followUp": {
+    "markers": {
+      "listSources": [
+        "liste os links",
+        "lista os links",
+        "listar os links",
+        "liste as fontes",
+        "lista as fontes",
+        "listar as fontes",
+        "links das fontes",
+        "links da pesquisa",
+        "link das fontes",
+        "mostre os links",
+        "mostra os links",
+        "mostrar os links",
+        "quais foram as fontes",
+        "quais sao as fontes",
+        "quais são as fontes",
+        "abrir fontes",
+        "urls das fontes",
+        "url das fontes"
+      ],
+      "webContext": [
+        "pesquisa web",
+        "busca na web",
+        "pesquisa na web",
+        "fontes da pesquisa",
+        "fontes da busca",
+        "fonte documental",
+        "fontes documentais",
+        "internet",
+        "resultados da pesquisa"
+      ],
+      "summarize": [
+        "resuma em topicos",
+        "resuma em tópicos",
+        "resumir pesquisa",
+        "resumir a pesquisa",
+        "resumo da pesquisa",
+        "resumo dos resultados",
+        "resultados da pesquisa web"
+      ],
+      "extractParams": [
+        "extraia parametros",
+        "extraia parâmetros",
+        "parametros tecnicos",
+        "parâmetros técnicos",
+        "tabela markdown"
+      ],
+      "compare": [
+        "compare as fontes",
+        "comparar as fontes",
+        "compare as fontes da pesquisa",
+        "destaque divergencias",
+        "destaque divergências"
+      ]
+    },
+    "messages": {
+      "missingRecentSearch": "Não encontrei uma **pesquisa na web** recente nesta conversa.\n\nFaça primeiro uma busca (ex.: «pesquise na web sobre …») e depois use os atalhos **Após pesquisa web**.",
+      "missingRecentSearchList": "Não encontrei uma **pesquisa na web** recente nesta conversa.\n\nFaça primeiro uma busca (ex.: «pesquise na web sobre …») e depois peça para listar os links das fontes.",
+      "noSourcesToList": "A última pesquisa web não trouxe fontes com URL para listar. Tente ampliar a busca ou usar «pesquisa profunda na web».",
+      "noUsableUrls": "Não há URLs utilizáveis nas fontes da última pesquisa web. Repita a busca ou peça «pesquisa profunda na web».",
+      "listSourcesTitle": "**Links das fontes da pesquisa web**",
+      "queryLine": "*Consulta:* {query}",
+      "sourceTitleFallback": "Fonte {index}",
+      "officialBadge": " *(oficial)*",
+      "summarizeTitle": "**Resumo em tópicos — pesquisa web**",
+      "noSnippetsToSummarize": "A última pesquisa web não trouxe trechos utilizáveis para resumir. Tente «pesquisa profunda na web» ou reformule o tema.",
+      "extractParamsTitle": "**Parâmetros técnicos (trechos das fontes)**",
+      "noParamsFound": "Não encontrei parâmetros técnicos explícitos nos trechos da última pesquisa web. Peça «pesquisa profunda na web» com o nome do produto ou norma.",
+      "paramsTableHeader": "| Dado / parâmetro | Fonte |",
+      "paramsTableSeparator": "| --- | --- |",
+      "paramsMoreRows": "_… e mais {count} linha(s) nas fontes originais._",
+      "compareTitle": "**Comparação das fontes da pesquisa web**",
+      "fewSourcesToCompare": "Há poucas fontes na última pesquisa web para comparar. Use «pesquisa profunda na web» para ampliar o conjunto.",
+      "openSourceLink": "[Abrir fonte]({url})",
+      "divergencesHeader": "**Possíveis divergências**",
+      "compareDisclaimer": "_Revise os links acima; a comparação automática usa apenas os trechos retornados pela busca, não o conteúdo integral das páginas._"
+    }
+  }
 }

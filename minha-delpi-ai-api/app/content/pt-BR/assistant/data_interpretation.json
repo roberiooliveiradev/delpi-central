@@ -1,0 +1,19 @@
+{
+  "defaultTitle": "Consulta anterior",
+  "genericLineMarkers": [
+    "a api retornou",
+    "a consulta retornou",
+    "nenhum registro encontrado",
+    "dados autorizados para a consulta",
+    "visualização dos dados"
+  ],
+  "genericTitles": [
+    "consulta sql",
+    "resultado da api",
+    "resultado operacional",
+    "consulta"
+  ],
+  "resumeIntro": "Resumo do que já consultamos sobre **{title}**:",
+  "explainIntro": "Interpretação dos dados de **{title}**:",
+  "unclear": "Não entendi qual aspecto dos dados anteriores você quer que eu explique. Pode dizer «resuma», «explique as diferenças» ou citar a coluna/tabela?"
+}
