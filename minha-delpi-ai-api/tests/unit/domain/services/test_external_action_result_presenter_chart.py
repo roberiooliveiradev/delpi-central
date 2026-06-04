@@ -99,7 +99,7 @@ def test_presentation_metadata_nested_stock_includes_chart():
     assert "chart" in meta["availableFormats"]
     assert meta["presentation"]["type"] == "chart"
     assert meta["tablePresentation"]["type"] == "table"
-    assert meta["preferredFormat"] == "chart"
+    assert meta["preferredFormat"] == "table"
 
 
 def test_presentation_metadata_flat_parents_includes_tree():

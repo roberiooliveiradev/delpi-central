@@ -313,5 +313,78 @@
     "stockByLocationTitle": "Estoque por filial/armazém",
     "stockLocationLabel": "Fil.{branch}/{warehouse}",
     "componentTypeFallback": "Outros"
+  },
+  "productOverview": {
+    "identityLine": "**{code}** — {description}.",
+    "noDescription": "sem descrição cadastrada",
+    "classificationLine": "Classificação **{type}**, unidade **{unit}**, grupo **{group_code}**.",
+    "missingValue": "—",
+    "cadastralActive": "Situação cadastral: ativo **{active}**",
+    "cadastralWarehouseSuffix": ", armazém padrão **{warehouse}**.",
+    "cadastralEnd": ".",
+    "lastPurchase": "Última compra registrada: **{price}**{date_suffix}.",
+    "lastPurchaseDateSuffix": " ({date})",
+    "revisionLine": "Última revisão técnica: **{revision}**.",
+    "ncmLine": "NCM: **{ncm}**.",
+    "blockedLine": "Atenção: indicador de bloqueio **{blocked}** no cadastro."
+  },
+  "analyserProfile": {
+    "introLine": "Produto **{code}**: {description}.",
+    "typeLine": "Tipo {type}, unidade {unit}, grupo {group_code}.",
+    "statusLine": "Status ativo: {active}. Armazém padrão: {default_warehouse}.",
+    "blockedLine": "Indicador de bloqueio: {blocked}.",
+    "customerRefLine": "Referência de cliente: {customer_reference}.",
+    "purchaseCostLine": "Último preço de compra: {last_purchase_price}. Custo padrão: R$ {standard_cost}.",
+    "revisionNcmLine": "Última revisão: {last_revision_date}. NCM: {ncm_ipi_position}.",
+    "drawingLine": "Código desenho: {drawing_code}.",
+    "barcodeLine": "Código de barras: {barcode}.",
+    "purchaseFallback": "0"
+  },
+  "analyserGuideMarkdown": {
+    "header": "**Roteiro de produção**"
+  },
+  "analyserInsights": {
+    "structureSummary": "Estrutura com {level1_count} item(ns) de nível 1 e {mp_count} matéria(s)-prima(s) distinta(s).",
+    "guideEmpty": "Roteiro de produção ainda não cadastrado.",
+    "inspectionEmpty": "Plano de inspeção ainda não cadastrado.",
+    "blockedInsight": "Produto com indicador de bloqueio «{blocked}»."
+  },
+  "inspectionSections": {
+    "dimensional": "Dimensional",
+    "textual": "Textual",
+    "reference": "Referência"
+  },
+  "guideItemNarrative": {
+    "singleOperation": "- Produto **{product_code}** (BOM {level}): {operation_label} — {operation_description}{center_part}.",
+    "multiOperations": "- Produto **{product_code}** (BOM {level}): {operations_joined}.",
+    "operationWithCode": "Op. **{operation_code}**",
+    "operationGeneric": "Operação",
+    "centerPart": " ({work_center})",
+    "operationLabelWithCode": "**{operation_code}** {operation_description}",
+    "operationLabelDescriptionOnly": "**{operation_description}**",
+    "operationLabelWithCenter": "{label} ({work_center})"
+  },
+  "productPresentationTitles": {
+    "overviewWithCode": "Visão do produto {code}",
+    "analyserWithCode": "Informações completas do produto {code}",
+    "analyserGeneric": "Informações completas do produto"
+  },
+  "productWithDetails": {
+    "introLine": "Produto {code}: {description}."
+  },
+  "structureComponents": {
+    "titleWithCode": "Componentes da estrutura {code}",
+    "titleGeneric": "Componentes da estrutura"
+  },
+  "systemTablesNarrative": {
+    "tablesFound": "**Tabelas encontradas:** {total}",
+    "tableLineBoth": "- **{table_code}:** {label}",
+    "tableLineCode": "- **{table_code}**",
+    "tableLineLabel": "- {label}",
+    "relevanceSuffix": " (relevância {score})",
+    "columnsTotal": "**Total de colunas:** {total}",
+    "columnLineBoth": "- **{field}:** {label}",
+    "columnLineField": "- **{field}**",
+    "moreColumns": "… e mais {count} coluna(s)."
   }
 }

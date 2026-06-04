@@ -474,7 +474,13 @@ class ExternalActionResultPresenter:
             return None
 
         total = root.get("total_records", len(results))
-        linhas = [f"**Tabelas encontradas:** {total}"]
+        linhas = [
+            self._presenter_text(
+                "systemTablesNarrative",
+                "tablesFound",
+                total=str(total),
+            )
+        ]
 
         for item in results[:12]:
             if not isinstance(item, dict):
@@ -489,17 +495,34 @@ class ExternalActionResultPresenter:
             score = item.get("total_score") or item.get("score")
 
             if table_code and label:
-                line = f"- **{table_code}:** {label}"
+                line = self._presenter_text(
+                    "systemTablesNarrative",
+                    "tableLineBoth",
+                    table_code=str(table_code),
+                    label=str(label),
+                )
             elif table_code:
-                line = f"- **{table_code}**"
+                line = self._presenter_text(
+                    "systemTablesNarrative",
+                    "tableLineCode",
+                    table_code=str(table_code),
+                )
             elif label:
-                line = f"- {label}"
+                line = self._presenter_text(
+                    "systemTablesNarrative",
+                    "tableLineLabel",
+                    label=str(label),
+                )
             else:
                 continue
 
             if score is not None:
                 try:
-                    line += f" (relevância {float(score):.0f})"
+                    line += self._presenter_text(
+                        "systemTablesNarrative",
+                        "relevanceSuffix",
+                        score=f"{float(score):.0f}",
+                    )
                 except (TypeError, ValueError):
                     pass
 
@@ -534,7 +557,13 @@ class ExternalActionResultPresenter:
 
         table_name = str(path or "").rstrip("/").split("/")[-2]
         total = root.get("total", len(results))
-        linhas = [f"**Total de colunas:** {total}"]
+        linhas = [
+            self._presenter_text(
+                "systemTablesNarrative",
+                "columnsTotal",
+                total=str(total),
+            )
+        ]
 
         for item in results:
             if not isinstance(item, dict):
@@ -544,12 +573,31 @@ class ExternalActionResultPresenter:
             label = item.get("X3_DESCRIC") or item.get("column_description") or item.get("label")
 
             if field and label:
-                linhas.append(f"- **{field}:** {label}")
+                linhas.append(
+                    self._presenter_text(
+                        "systemTablesNarrative",
+                        "columnLineBoth",
+                        field=str(field),
+                        label=str(label),
+                    )
+                )
             elif field:
-                linhas.append(f"- **{field}**")
+                linhas.append(
+                    self._presenter_text(
+                        "systemTablesNarrative",
+                        "columnLineField",
+                        field=str(field),
+                    )
+                )
 
         if len(results) > 8:
-            linhas.append(f"… e mais {len(results) - 8} coluna(s).")
+            linhas.append(
+                self._presenter_text(
+                    "systemTablesNarrative",
+                    "moreColumns",
+                    count=str(len(results) - 8),
+                )
+            )
 
         return {
             "titulo": self._route_presentation(
@@ -880,6 +928,9 @@ class ExternalActionResultPresenter:
 
         return normalized
 
+    def _overview_missing(self) -> str:
+        return self._presenter_text("productOverview", "missingValue")
+
     def _build_product_overview_narrative_lines(self, product: dict, root: dict) -> list[str]:
         code = str(product.get("code") or "").strip()
         description = str(product.get("description") or "").strip()
@@ -888,16 +939,32 @@ class ExternalActionResultPresenter:
         group_code = str(product.get("group_code") or "").strip()
         active = str(product.get("active") or "").strip()
         warehouse = str(product.get("default_warehouse") or "").strip()
+        missing = self._overview_missing()
 
         lines = [
-            f"**{code}** — {description or 'sem descrição cadastrada'}.",
-            (
-                f"Classificação **{product_type or '—'}**, unidade **{unit or '—'}**, "
-                f"grupo **{group_code or '—'}**."
+            self._presenter_text(
+                "productOverview",
+                "identityLine",
+                code=code,
+                description=description
+                or self._presenter_text("productOverview", "noDescription"),
             ),
-            (
-                f"Situação cadastral: ativo **{active or '—'}**"
-                + (f", armazém padrão **{warehouse}**." if warehouse else ".")
+            self._presenter_text(
+                "productOverview",
+                "classificationLine",
+                type=product_type or missing,
+                unit=unit or missing,
+                group_code=group_code or missing,
+            ),
+            self._presenter_text("productOverview", "cadastralActive", active=active or missing)
+            + (
+                self._presenter_text(
+                    "productOverview",
+                    "cadastralWarehouseSuffix",
+                    warehouse=warehouse,
+                )
+                if warehouse
+                else self._presenter_text("productOverview", "cadastralEnd")
             ),
         ]
 
@@ -910,26 +977,58 @@ class ExternalActionResultPresenter:
         else:
             price_text = self._format_currency(purchase_price)
             date_text = self._format_revision_date(purchase_date) if purchase_date else ""
-            suffix = f" ({date_text})" if date_text else ""
-            lines.append(f"Última compra registrada: **{price_text}**{suffix}.")
+            date_suffix = (
+                self._presenter_text(
+                    "productOverview",
+                    "lastPurchaseDateSuffix",
+                    date=date_text,
+                )
+                if date_text
+                else ""
+            )
+            lines.append(
+                self._presenter_text(
+                    "productOverview",
+                    "lastPurchase",
+                    price=price_text,
+                    date_suffix=date_suffix,
+                )
+            )
 
         if standard_cost not in (None, ""):
             lines.append(
-                f"Custo padrão vigente: **R$ {self._format_currency(standard_cost)}**."
+                self._analyser_markdown(
+                    "standardCost",
+                    cost=self._format_currency(standard_cost),
+                )
             )
 
         revision = str(product.get("last_revision_date") or "").strip()
         ncm = str(product.get("ncm_ipi_position") or "").strip()
 
         if revision:
-            lines.append(f"Última revisão técnica: **{self._format_revision_date(revision)}**.")
+            lines.append(
+                self._presenter_text(
+                    "productOverview",
+                    "revisionLine",
+                    revision=self._format_revision_date(revision),
+                )
+            )
 
         if ncm:
-            lines.append(f"NCM: **{ncm}**.")
+            lines.append(
+                self._presenter_text("productOverview", "ncmLine", ncm=ncm)
+            )
 
         blocked = str(product.get("blocked") or "").strip()
         if blocked and blocked not in {"N", "0", ""}:
-            lines.append(f"Atenção: indicador de bloqueio **{blocked}** no cadastro.")
+            lines.append(
+                self._presenter_text(
+                    "productOverview",
+                    "blockedLine",
+                    blocked=blocked,
+                )
+            )
 
         for key in ["guide", "inspection", "structure", "customers", "suppliers"]:
             value = root.get(key)
@@ -1002,7 +1101,11 @@ class ExternalActionResultPresenter:
         linhas = self._build_product_overview_narrative_lines(product, root)
 
         return {
-            "titulo": f"Visão do produto {product_summary['code']}",
+            "titulo": self._presenter_text(
+                "productPresentationTitles",
+                "overviewWithCode",
+                code=str(product_summary["code"]),
+            ),
             "linhas": [line for line in linhas if "None" not in line],
             "campos": self._alias_dict(product_summary),
             "dados": {
@@ -1015,7 +1118,18 @@ class ExternalActionResultPresenter:
 
     def _present_product_analyser(self, root: dict, product: dict, path: str) -> dict:
         code = str(product.get("code") or "").strip()
-        title = f"Informações completas do produto {code}" if code else "Informações completas do produto"
+        title = (
+            self._presenter_text(
+                "productPresentationTitles",
+                "analyserWithCode",
+                code=code,
+            )
+            if code
+            else self._presenter_text(
+                "productPresentationTitles",
+                "analyserGeneric",
+            )
+        )
 
         linhas = self._build_product_analyser_body_lines(root, product)
 
@@ -1054,50 +1168,94 @@ class ExternalActionResultPresenter:
         }
 
     def _build_product_analyser_profile_lines(self, product: dict) -> list[str]:
-        code = product.get("code")
-        desc = product.get("description")
+        code = str(product.get("code") or "")
+        desc = str(product.get("description") or "")
+        purchase_fallback = self._presenter_text("analyserProfile", "purchaseFallback")
+        last_purchase = product.get("last_purchase_price")
+
+        if last_purchase not in (None, ""):
+            last_purchase_display = self._format_currency(last_purchase)
+        else:
+            last_purchase_display = purchase_fallback
 
         lines = [
-            f"Produto **{code}**: {desc}.",
-            (
-                f"Tipo {product.get('type')}, unidade {product.get('unit')}, "
-                f"grupo {product.get('group_code')}."
+            self._presenter_text(
+                "analyserProfile",
+                "introLine",
+                code=code,
+                description=desc,
             ),
-            (
-                f"Status ativo: {product.get('active')}. "
-                f"Armazém padrão: {product.get('default_warehouse')}."
+            self._presenter_text(
+                "analyserProfile",
+                "typeLine",
+                type=str(product.get("type") or ""),
+                unit=str(product.get("unit") or ""),
+                group_code=str(product.get("group_code") or ""),
+            ),
+            self._presenter_text(
+                "analyserProfile",
+                "statusLine",
+                active=str(product.get("active") or ""),
+                default_warehouse=str(product.get("default_warehouse") or ""),
             ),
         ]
 
         blocked = str(product.get("blocked") or "").strip()
 
         if blocked:
-            lines.append(f"Indicador de bloqueio: {blocked}.")
+            lines.append(
+                self._presenter_text("analyserProfile", "blockedLine", blocked=blocked)
+            )
 
         customer_reference = str(product.get("customer_reference") or "").strip()
 
         if customer_reference:
-            lines.append(f"Referência de cliente: {customer_reference}.")
+            lines.append(
+                self._presenter_text(
+                    "analyserProfile",
+                    "customerRefLine",
+                    customer_reference=customer_reference,
+                )
+            )
 
         lines.append(
-            "Último preço de compra: "
-            f"{self._format_currency(product.get('last_purchase_price')) if product.get('last_purchase_price') not in (None, '') else '0'}. "
-            f"Custo padrão: R$ {self._format_currency(product.get('standard_cost'))}."
+            self._presenter_text(
+                "analyserProfile",
+                "purchaseCostLine",
+                last_purchase_price=last_purchase_display,
+                standard_cost=self._format_currency(product.get("standard_cost")),
+            )
         )
         lines.append(
-            f"Última revisão: {product.get('last_revision_date')}. "
-            f"NCM: {product.get('ncm_ipi_position')}."
+            self._presenter_text(
+                "analyserProfile",
+                "revisionNcmLine",
+                last_revision_date=str(product.get("last_revision_date") or ""),
+                ncm_ipi_position=str(product.get("ncm_ipi_position") or ""),
+            )
         )
 
         drawing_code = str(product.get("drawing_code") or "").strip()
 
         if drawing_code:
-            lines.append(f"Código desenho: {drawing_code}.")
+            lines.append(
+                self._presenter_text(
+                    "analyserProfile",
+                    "drawingLine",
+                    drawing_code=drawing_code,
+                )
+            )
 
         barcode = str(product.get("barcode") or "").strip()
 
         if barcode:
-            lines.append(f"Código de barras: {barcode}.")
+            lines.append(
+                self._presenter_text(
+                    "analyserProfile",
+                    "barcodeLine",
+                    barcode=barcode,
+                )
+            )
 
         return lines
 
@@ -1124,51 +1282,35 @@ class ExternalActionResultPresenter:
         return [header, separator, *body]
 
     def _build_product_analyser_profile_markdown(self, product: dict) -> list[str]:
-        purchase = product.get("last_purchase_price")
+        table_rows: list[dict] = []
 
-        if purchase in (None, ""):
-            purchase_display = "0,00"
-        elif isinstance(purchase, (int, float)):
-            purchase_display = self._format_currency(purchase)
-        else:
-            purchase_display = str(purchase)
+        for key in self._column_labels.product_profile_field_keys(extended=True):
+            value = product.get(key)
 
-        rows = [
-            ("code", "Código", product.get("code")),
-            ("description", "Descrição", product.get("description")),
-            ("type", "Tipo", product.get("type")),
-            ("unit", "Unidade", product.get("unit")),
-            ("group_code", "Grupo", product.get("group_code")),
-            ("active", "Ativo", product.get("active")),
-            ("blocked", "Bloqueio", product.get("blocked")),
-            ("default_warehouse", "Armazém padrão", product.get("default_warehouse")),
-            ("customer_reference", "Ref. cliente", product.get("customer_reference")),
-            ("drawing_code", "Código desenho", product.get("drawing_code")),
-            ("last_purchase_price", "Últ. preço compra", purchase_display),
-            (
-                "standard_cost",
-                "Custo padrão",
-                f"R$ {self._format_currency(product.get('standard_cost'))}"
-                if product.get("standard_cost") not in (None, "")
-                else "",
-            ),
-            ("last_revision_date", "Última revisão", product.get("last_revision_date")),
-            ("ncm_ipi_position", "NCM", product.get("ncm_ipi_position")),
-        ]
+            if value in (None, ""):
+                continue
 
-        table_rows = [
-            {"campo": label, "valor": value}
-            for _, label, value in rows
-            if value not in (None, "")
-        ]
+            if key == "last_purchase_price":
+                value = self._format_currency(value)
+            elif key == "standard_cost":
+                value = f"R$ {self._format_currency(value)}"
+
+            table_rows.append(
+                {
+                    "campo": self._humanize_key(key),
+                    "valor": value,
+                }
+            )
 
         if not table_rows:
             return []
 
+        kv_columns = self._column_labels.kv_table_column_defs()
+
         return [
             "",
             *self._markdown_table(
-                [("campo", "Campo"), ("valor", "Valor")],
+                [(column["key"], column["label"]) for column in kv_columns],
                 table_rows,
             ),
         ]
@@ -1230,16 +1372,10 @@ class ExternalActionResultPresenter:
 
         return [
             "",
-            "**Roteiro de produção**",
+            self._presenter_text("analyserGuideMarkdown", "header"),
             "",
             *self._markdown_table(
-                [
-                    ("product_code", "Produto"),
-                    ("bom_level", "BOM"),
-                    ("operation_code", "Op."),
-                    ("operation_description", "Operação"),
-                    ("work_center", "Centro"),
-                ],
+                self._markdown_column_pairs("analyserGuide"),
                 rows,
             ),
         ]
@@ -1291,7 +1427,10 @@ class ExternalActionResultPresenter:
                         {
                             "product_code": product_code,
                             "level": level,
-                            "section": "Dimensional",
+                            "section": self._presenter_text(
+                                "inspectionSections",
+                                "dimensional",
+                            ),
                             "operation": test.get("QP7_OPERAC") or "",
                             "test": test.get("QP7_ENSAIO") or "",
                             "lab": test.get("QP7_LABOR") or "",
@@ -1313,7 +1452,10 @@ class ExternalActionResultPresenter:
                         {
                             "product_code": product_code,
                             "level": level,
-                            "section": "Textual",
+                            "section": self._presenter_text(
+                                "inspectionSections",
+                                "textual",
+                            ),
                             "operation": test.get("QP8_OPERAC") or "",
                             "test": test.get("QP8_ENSAIO") or "",
                             "lab": "",
@@ -1337,7 +1479,10 @@ class ExternalActionResultPresenter:
                 {
                     "product_code": product_code,
                     "level": level,
-                    "section": "Referência",
+                    "section": self._presenter_text(
+                        "inspectionSections",
+                        "reference",
+                    ),
                     "operation": "",
                     "test": "",
                     "lab": "",
@@ -1781,12 +1926,36 @@ class ExternalActionResultPresenter:
                 level = item.get("bom_level", 0)
                 op_code = str(item.get("operation_code") or "").strip()
                 center = str(item.get("work_center") or "").strip()
-                label = f"Op. **{op_code}**" if op_code else "Operação"
-                center_part = f" ({center})" if center else ""
+                label = (
+                    self._presenter_text(
+                        "guideItemNarrative",
+                        "operationWithCode",
+                        operation_code=op_code,
+                    )
+                    if op_code
+                    else self._presenter_text(
+                        "guideItemNarrative",
+                        "operationGeneric",
+                    )
+                )
+                center_part = (
+                    self._presenter_text(
+                        "guideItemNarrative",
+                        "centerPart",
+                        work_center=center,
+                    )
+                    if center
+                    else ""
+                )
 
-                return (
-                    f"- Produto **{product_code}** (BOM {level}): "
-                    f"{label} — {op_desc}{center_part}."
+                return self._presenter_text(
+                    "guideItemNarrative",
+                    "singleOperation",
+                    product_code=product_code,
+                    level=str(level),
+                    operation_label=label,
+                    operation_description=op_desc,
+                    center_part=center_part,
                 )
 
             return None
@@ -1806,10 +1975,27 @@ class ExternalActionResultPresenter:
 
             op_code = str(operation.get("operation_code") or "").strip()
             center = str(operation.get("work_center") or "").strip()
-            label = f"**{op_code}** {op_desc}" if op_code else f"**{op_desc}**"
+            if op_code:
+                label = self._presenter_text(
+                    "guideItemNarrative",
+                    "operationLabelWithCode",
+                    operation_code=op_code,
+                    operation_description=op_desc,
+                )
+            else:
+                label = self._presenter_text(
+                    "guideItemNarrative",
+                    "operationLabelDescriptionOnly",
+                    operation_description=op_desc,
+                )
 
             if center:
-                label = f"{label} ({center})"
+                label = self._presenter_text(
+                    "guideItemNarrative",
+                    "operationLabelWithCenter",
+                    label=label,
+                    work_center=center,
+                )
 
             op_parts.append(label)
 
@@ -1818,7 +2004,13 @@ class ExternalActionResultPresenter:
 
         joined = "; ".join(op_parts)
 
-        return f"- Produto **{product_code}** (BOM {level}): {joined}."
+        return self._presenter_text(
+            "guideItemNarrative",
+            "multiOperations",
+            product_code=product_code,
+            level=str(level),
+            operations_joined=joined,
+        )
 
 
     def _build_product_analyser_insights(self, root: dict, product: dict) -> list[str]:
@@ -1853,8 +2045,12 @@ class ExternalActionResultPresenter:
 
         if items:
             insights.append(
-                f"Estrutura com {len(items)} item(ns) de nível 1 "
-                f"e {len(mp_codes)} matéria(s)-prima(s) distinta(s)."
+                self._presenter_text(
+                    "analyserInsights",
+                    "structureSummary",
+                    level1_count=str(len(items)),
+                    mp_count=str(len(mp_codes)),
+                )
             )
 
         shared_components = sorted(
@@ -1888,15 +2084,23 @@ class ExternalActionResultPresenter:
             )
 
         if self._collection_is_empty(root.get("guide")):
-            insights.append("Roteiro de produção ainda não cadastrado.")
+            insights.append(self._presenter_text("analyserInsights", "guideEmpty"))
 
         if self._collection_is_empty(root.get("inspection")):
-            insights.append("Plano de inspeção ainda não cadastrado.")
+            insights.append(
+                self._presenter_text("analyserInsights", "inspectionEmpty")
+            )
 
         blocked = str(product.get("blocked") or "").strip()
 
         if blocked and blocked not in {"N", "0"}:
-            insights.append(f"Produto com indicador de bloqueio «{blocked}».")
+            insights.append(
+                self._presenter_text(
+                    "analyserInsights",
+                    "blockedInsight",
+                    blocked=blocked,
+                )
+            )
 
         return insights
 
@@ -1961,9 +2165,13 @@ class ExternalActionResultPresenter:
             product_code = str(structure["root"].get("code") or "").strip()
 
         title = (
-            f"Componentes da estrutura {product_code}"
+            self._presenter_text(
+                "structureComponents",
+                "titleWithCode",
+                code=product_code,
+            )
             if product_code
-            else "Componentes da estrutura"
+            else self._presenter_text("structureComponents", "titleGeneric")
         )
 
         return {
@@ -2055,7 +2263,14 @@ class ExternalActionResultPresenter:
         code = product_summary.get("code") or ""
         desc = product_summary.get("description") or ""
 
-        linhas = [f"Produto {code}: {desc}."]
+        linhas = [
+            self._presenter_text(
+                "productWithDetails",
+                "introLine",
+                code=str(code),
+                description=str(desc),
+            )
+        ]
 
         for item in detail_list[:5]:
             preview = self._format_detail_preview_line(item)
