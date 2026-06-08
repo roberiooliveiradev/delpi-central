@@ -90,7 +90,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return sql, params_ad1
 
     def _engineering_residence_filter_sql(self) -> str:
-        return "WHERE ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?"
+        return f"""
+            WHERE
+                C.LISTING_KIND <> '{LISTING_KIND_LMP}'
+                OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+        """
 
     def _get_request_branch(self, request) -> str | None:
         return getattr(request, "branch", None)

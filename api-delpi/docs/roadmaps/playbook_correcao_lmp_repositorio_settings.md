@@ -56,8 +56,8 @@ Uma OV só deve aparecer na listagem principal se cumprir todos os critérios:
 3. O evento AIJ010 pertence à mesma filial da OV.
 4. O evento AIJ010 pertence à revisão atual da OV.
 5. Possui evento real de chegada na engenharia.
-6. Permaneceu no fluxo por pelo menos 30 minutos.
-7. Não é apenas passagem instantânea por erro operacional.
+6. Se classificada como **LMP**, permaneceu no fluxo por pelo menos 30 minutos.
+7. Se classificada como **AMOSTRA** ou **OUTRO**, pode listar mesmo com passagem pontual (0 minutos).
 ```
 
 ---
@@ -249,23 +249,31 @@ LISTING_KIND_SAMPLE,
 
 ## 8. Correção de permanência mínima na engenharia
 
-### Regra
+### Regra final (jun/2026)
 
-A OV só deve entrar na listagem se:
-
-```text
-engineering_total_minutes >= min_engineering_residence_minutes
-```
-
-Valor inicial homologado:
+O filtro de tempo **não é geral da listagem** — é filtro de **LMP**:
 
 ```text
-30 minutos
+O filtro de 30 minutos aplica SOMENTE para LMP.
+AMOSTRA não passa pelo filtro de tempo.
+OUTRO não passa pelo filtro de tempo.
 ```
+
+| Tipo da listagem | Aplica filtro de 30 minutos? | Deve listar quando tempo = 0? |
+|---|---:|---:|
+| LMP | Sim | Não |
+| AMOSTRA | Não | Sim |
+| OUTRO | Não | Sim |
+
+Valor homologado: `min_engineering_residence_minutes = 30`.
+
+### Caso que motivou o ajuste
+
+OV `003578` (Amostra, jun/2026): `Minutos critério: 0` — deve listar mesmo com passagem pontual.
 
 ### Onde aplicar
 
-Aplicar o filtro nos selects finais da listagem, após o join com `EngenhariaResumoUltimaRevisao`.
+Aplicar o filtro nos selects finais da listagem, após o join com `EngenhariaResumoUltimaRevisao`, **condicionado ao `LISTING_KIND`**.
 
 ---
 
@@ -275,12 +283,20 @@ Aplicar o filtro nos selects finais da listagem, após o join com `EngenhariaRes
 
 O select final traz os dados de `CandidateLMPs` e faz `LEFT JOIN` com `#Delpi_EngResumo`.
 
-### Patch conceitual
-
-Adicionar filtro:
+### SQL incorreto (não usar)
 
 ```sql
 WHERE ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+```
+
+Esse filtro exclui Amostras pontuais que devem aparecer.
+
+### SQL correto
+
+```sql
+WHERE
+    C.LISTING_KIND <> 'LMP'
+    OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
 ```
 
 ### Exemplo
@@ -305,7 +321,9 @@ LEFT JOIN {self._TEMP_ENG_RESUMO} H
     ON H.AIJ_FILIAL = C.AD1_FILIAL
    AND H.AIJ_NROPOR = C.AD1_NROPOR
 {qtd_pi_join}
-WHERE ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+WHERE
+    C.LISTING_KIND <> 'LMP'
+    OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
 GROUP BY
     C.AD1_FILIAL,
     C.AD1_NROPOR,
@@ -338,13 +356,13 @@ A contagem da página precisa usar o mesmo filtro da listagem.
 
 ### Patch em `_staged_count_select`
 
-Adicionar:
+Adicionar o mesmo filtro condicional por `LISTING_KIND` antes do `GROUP BY`:
 
 ```sql
-WHERE ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+WHERE
+    C.LISTING_KIND <> 'LMP'
+    OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
 ```
-
-antes do `GROUP BY`.
 
 Se o count não receber esse filtro, a página pode mostrar total diferente da lista.
 
@@ -695,10 +713,16 @@ Tem marcador Amostra?
 E então classificar:
 
 ```text
-Se não ficou 30 minutos → excluir.
 Se tem LMP → LMP.
 Se não tem LMP e tem Amostra → AMOSTRA.
-Se chegou na engenharia e não tem LMP/Amostra → OUTROS.
+Se chegou na engenharia e não tem LMP/Amostra → OUTRO.
+```
+
+Depois de classificar, aplicar filtro de tempo **somente** se o tipo final for LMP:
+
+```text
+Se LMP e não ficou 30 minutos → excluir.
+Se AMOSTRA ou OUTRO → listar independente do tempo.
 ```
 
 ---
@@ -707,13 +731,13 @@ Se chegou na engenharia e não tem LMP/Amostra → OUTROS.
 
 1. Adicionar `min_engineering_residence_minutes` no settings.
 2. Alterar prioridade de classificação para `LMP > AMOSTRA > OUTROS`.
-3. Aplicar filtro `TEMPO_TOTAL_MINUTOS_ENG >= ?` na listagem.
-4. Aplicar o mesmo filtro no count.
+3. Aplicar filtro `TEMPO_TOTAL_MINUTOS_ENG >= ?` **somente para LMP** na listagem.
+4. Aplicar o mesmo filtro condicional no count.
 5. Garantir que o parâmetro seja passado no batch.
 6. Revisar joins com `AD1_REVISA = AIJ_REVISA`.
 7. Rodar homologação de abril/2026.
 8. Rodar homologação de maio/2026.
-9. Validar casos 000124, 000073, 003306 e 000061.
+9. Validar casos 000124, 000073, 003306, 000061, 003578 e 003520.
 10. Publicar.
 
 ---
@@ -729,5 +753,45 @@ Maio/2026 = 17 registros
 003306 = fora
 000073 = LMP
 000061 = entra pelo AIJ010, mas não depende do RQ-060
+003578 = AMOSTRA com 0 minuto → listar
+003520 = AMOSTRA com 0 minuto → listar
+LMP com < 30 minutos = fora
+OUTRO com 0 minuto = listar
 Contagem da página = quantidade real da lista
+```
+
+---
+
+## 21. Regra final — filtro de tempo por tipo (referência)
+
+### Patch em `_engineering_residence_filter_sql`
+
+```python
+def _engineering_residence_filter_sql(self) -> str:
+    return """
+        WHERE
+            C.LISTING_KIND <> 'LMP'
+            OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?
+    """
+```
+
+### Exemplos esperados
+
+| OV | Tipo | Minutos | Resultado |
+|---:|---|---:|---|
+| 003578 | AMOSTRA | 0 | Listar |
+| 003520 | AMOSTRA | 0 | Listar |
+| 000124 | LMP ou AMOSTRA (conforme classificação) | 2725 | Listar |
+| LMP com passagem rápida | LMP | 0 | Não listar |
+| OUTRO com passagem rápida | OUTRO | 0 | Listar |
+
+### Resumo
+
+```text
+Filtro de tempo não é filtro geral da listagem.
+Filtro de tempo é filtro de LMP.
+
+Amostra pode ser pontual.
+Outros pode ser pontual.
+LMP precisa comprovar permanência mínima de 30 minutos.
 ```

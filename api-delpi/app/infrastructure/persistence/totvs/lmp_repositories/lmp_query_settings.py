@@ -6,7 +6,7 @@ from typing import Dict, List
 class LMPQuerySettings:
     branches: List[str] = field(default_factory=lambda: ["01", "02"])
 
-    # Tempo mínimo para considerar chegada real na engenharia (elimina passagens por engano).
+    # Tempo mínimo de permanência em engenharia — aplica somente a LISTING_KIND LMP.
     min_engineering_residence_minutes: int = 30
 
     # Prioridade quando a OV possui mais de um marcador na mesma revisão.

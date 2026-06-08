@@ -47,7 +47,7 @@ def test_eng_support_reference_uses_current_revision() -> None:
     assert "A.AIJ_REVISA" in sql
 
 
-def test_staged_batch_applies_minimum_engineering_residence_filter() -> None:
+def test_staged_batch_applies_minimum_engineering_residence_filter_only_for_lmp() -> None:
     repo = _repository()
     request = ListLMPRequest(date_start="20260401", date_end="20260501")
 
@@ -59,8 +59,18 @@ def test_staged_batch_applies_minimum_engineering_residence_filter() -> None:
         final_params=(repo._min_engineering_residence_minutes(),),
     )
 
+    assert "C.LISTING_KIND <> 'LMP'" in batch_sql
     assert "ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in batch_sql
     assert batch_params[-1] == 30
+
+
+def test_engineering_residence_filter_sql_allows_sample_and_other_without_minutes() -> None:
+    repo = _repository()
+
+    sql = repo._engineering_residence_filter_sql()
+
+    assert "C.LISTING_KIND <> 'LMP'" in sql
+    assert "OR ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in sql
 
 
 def test_paged_batch_passes_residence_filter_for_count_and_rows() -> None:
