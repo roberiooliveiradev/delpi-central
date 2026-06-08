@@ -402,12 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes):**
+**Sprint imediata (Fase 3 — god classes, lote 2):**
 
-1. Extrair fatias do `external_action_result_presenter.py` (chart/KPI presenter).
+1. Extrair `product_list_presenter` / `product_analyser_presenter` do facade.
 2. Migrar `_select_product_action` para `ExternalActionRouteSelectionService`.
 3. Reduzir `external_action_selection_service.py` e `chat_tool_context_service.py`.
 
-**Concluído (Fase 2 + HTTP fino lote 1):** `domainInfrastructureImports` **0**; `interfacesPostgresFiles` **0** — rotas usam `repository_composer` / use cases.
+**Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade `external_action_result_presenter.py` **6247 → ~5570** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
