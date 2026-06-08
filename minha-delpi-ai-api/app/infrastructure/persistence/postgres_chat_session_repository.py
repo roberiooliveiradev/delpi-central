@@ -86,7 +86,7 @@ class PostgresChatSessionRepository(ChatSessionRepositoryPort):
         self,
         session_id: UUID,
         user_id: UUID,
-        agent_id: UUID,
+        agent_id: UUID | None,
     ) -> bool:
         model = (
             AiChatSessionModel.query

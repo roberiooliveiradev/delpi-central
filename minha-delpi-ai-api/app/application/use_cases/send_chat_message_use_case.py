@@ -122,14 +122,16 @@ class SendChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
-        if request.agent_id and not session.agent_id:
-            parsed_agent_id = UUID(request.agent_id)
-            self.chat_repository.update_session_agent_id(
-                session_id=session_id,
-                user_id=user_id,
-                agent_id=parsed_agent_id,
-            )
-            object.__setattr__(session, "agent_id", parsed_agent_id)
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+
+        ChatWorkspaceAgentActivationService.prepare_session_for_turn(
+            session=session,
+            request_agent_id=request.agent_id,
+            chat_mode=request.chat_mode,
+            update_session_agent_id=self.chat_repository.update_session_agent_id,
+        )
 
         workspace_context = self.turn_support.build_workspace_context(
             session,

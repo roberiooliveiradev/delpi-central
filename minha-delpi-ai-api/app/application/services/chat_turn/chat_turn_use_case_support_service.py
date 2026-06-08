@@ -289,6 +289,15 @@ class ChatTurnUseCaseSupportService:
         if not self.chat_agentic_tool_loop_service or not request.access_token:
             return tool_context
 
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+
+        if not ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            workspace_context
+        ):
+            return tool_context
+
         specialization = workspace_context.get("specialization") or {}
         allowed_tool_names = None
 

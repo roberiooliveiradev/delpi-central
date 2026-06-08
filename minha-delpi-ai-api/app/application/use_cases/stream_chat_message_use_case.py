@@ -54,6 +54,9 @@ from app.domain.services.chat_message_delivery_service import ChatMessageDeliver
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.infrastructure.config.settings import Settings
 from app.application.services.chat_llm_metadata_service import ChatLlmMetadataService
+from app.application.services.chat_workspace_agent_activation_service import (
+    ChatWorkspaceAgentActivationService,
+)
 from app.infrastructure.llm.llm_request_context import llm_generation_scope
 
 
@@ -141,14 +144,12 @@ class StreamChatMessageUseCase:
         if session.user_id != user_id:
             raise ChatSessionAccessDeniedError()
 
-        if request.agent_id and not session.agent_id:
-            parsed_agent_id = UUID(request.agent_id)
-            self.chat_repository.update_session_agent_id(
-                session_id=session_id,
-                user_id=user_id,
-                agent_id=parsed_agent_id,
-            )
-            object.__setattr__(session, "agent_id", parsed_agent_id)
+        ChatWorkspaceAgentActivationService.prepare_session_for_turn(
+            session=session,
+            request_agent_id=request.agent_id,
+            chat_mode=request.chat_mode,
+            update_session_agent_id=self.chat_repository.update_session_agent_id,
+        )
 
         resend_from_message_id = request.resend_from_message_id
         workspace_context = self.turn_support.build_workspace_context(

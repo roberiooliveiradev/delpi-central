@@ -70,7 +70,7 @@ def test_run_tool_phase_skips_tools_for_text_task():
         operational_guards=ChatTurnPreparationOperationalGuards(None, None),
         routing_disambiguation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
@@ -122,7 +122,7 @@ def test_run_tool_phase_invokes_build_tool_context_with_request_once():
         operational_guards=ChatTurnPreparationOperationalGuards(None, None),
         routing_disambiguation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
@@ -168,7 +168,7 @@ def test_run_tool_phase_skips_tools_for_assistant_identity_question():
         operational_guards=ChatTurnPreparationOperationalGuards(None, None),
         routing_disambiguation_answer=None,
         interpretation_without_data_answer=None,
-        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, []),
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, True, False, False, False, []),
         small_talk_direct=None,
         utility_direct=None,
         web_save_sources_direct=None,
@@ -187,3 +187,17 @@ def test_run_tool_phase_skips_tools_for_assistant_identity_question():
     assert result.tool_calls == []
     assert "assistant_identity_shortcut" in pipeline_stages
     build_tool_context.assert_not_called()
+
+
+def test_resolve_skip_tool_flags_for_common_chat_without_active_agent():
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="o que vc pensa sobre o Brasil?",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[],
+        workspace_context={
+            "userActivatedAgent": False,
+            "actionsEnabled": False,
+        },
+    )
+
+    assert flags.skip_tools_for_inactive_agent is True

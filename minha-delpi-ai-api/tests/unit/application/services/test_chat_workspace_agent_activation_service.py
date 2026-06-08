@@ -5,6 +5,13 @@ from app.application.services.chat_workspace_agent_activation_service import (
 )
 
 
+class FakeSession:
+    def __init__(self, *, agent_id=None, user_id=None, session_id=None):
+        self.agent_id = agent_id
+        self.user_id = user_id or uuid4()
+        self.id = session_id or uuid4()
+
+
 def test_resolve_explicit_agent_prefers_session_over_request():
     session_id = uuid4()
     request_id = uuid4()
@@ -49,3 +56,56 @@ def test_user_activated_when_session_has_agent_and_actions():
         )
         is True
     )
+
+
+def test_operational_tools_disabled_in_common_chat_workspace():
+    assert (
+        ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            {
+                "userActivatedAgent": False,
+                "actionsEnabled": True,
+            }
+        )
+        is False
+    )
+
+
+def test_operational_tools_enabled_with_active_agent():
+    assert (
+        ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            {
+                "userActivatedAgent": True,
+                "actionsEnabled": True,
+            }
+        )
+        is True
+    )
+
+
+def test_resolve_chat_mode_defaults_to_common_without_agent_id():
+    assert (
+        ChatWorkspaceAgentActivationService.resolve_chat_mode_for_request(
+            chat_mode=None,
+            request_agent_id=None,
+        )
+        == "common"
+    )
+
+
+def test_sync_session_agent_binding_clears_legacy_agent_on_common_chat():
+    agent_id = uuid4()
+    session = FakeSession(agent_id=agent_id)
+    cleared: list[object] = []
+
+    def update_session_agent_id(*, session_id, user_id, agent_id):
+        cleared.append(agent_id)
+
+    ChatWorkspaceAgentActivationService.sync_session_agent_binding(
+        session=session,
+        request_agent_id=None,
+        chat_mode="common",
+        update_session_agent_id=update_session_agent_id,
+    )
+
+    assert session.agent_id is None
+    assert cleared == [None]

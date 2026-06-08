@@ -210,6 +210,7 @@ class ChatTurnPreparationService:
             message=message,
             request=request,
             history_source=history_source,
+            workspace_context=workspace_context,
         )
         skip_tools_for_data_interpretation = (
             skip_tool_flags.skip_tools_for_data_interpretation

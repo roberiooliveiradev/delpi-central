@@ -61,6 +61,7 @@ type UseChatSessionOptions = {
   getAccessToken?: () => string | undefined | Promise<string | undefined>;
   projectId?: string | null;
   agentId?: string | null;
+  chatMode?: "common" | "agent";
   onSessionActivated?: (
     sessionId: string,
     context?: { agentId?: string | null; projectId?: string | null },
@@ -406,6 +407,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             ensureAwaitingStreamUi(sessionId);
           } else {
             unmarkSessionPending(sessionId);
+            clearSessionStreamUi(sessionId);
 
             if (activeSessionIdRef.current === sessionId) {
               resetStreamingUi();
@@ -1262,6 +1264,14 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          if (isIncompleteChatStreamError(streamError)) {
+            markSessionPending(sessionId);
+            ensureAwaitingStreamUi(sessionId);
+            setPendingUserMessage(null);
+            void loadMessages(sessionId);
+            return;
+          }
+
           dismissBackgroundStream(sessionId);
           setPendingUserMessage(null);
           resetStreamingUi();
@@ -1277,11 +1287,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     },
     [
       dismissBackgroundStream,
+      ensureAwaitingStreamUi,
       finalizeAssistantTurn,
       finishSending,
       isStreamForActiveSession,
       loadMessages,
       loadSessions,
+      markSessionPending,
       options.onOpenCanvas,
       patchStreamStatus,
       resetStreamingUi,
@@ -1494,6 +1506,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         context: sessionForMessage.context ?? "geral",
         attachmentIds,
         agentId: options.agentId,
+        chatMode: options.chatMode ?? (options.agentId ? "agent" : "common"),
         responseMode: getResponseModeRef.current?.() ?? "normal",
         ...buildStreamCallbacks(sessionForMessage, optimisticId),
       });
@@ -1565,6 +1578,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     markSessionCancelling,
     markSessionPending,
     options.agentId,
+    options.chatMode,
     options.getAccessToken,
     options.projectId,
     resetStreamingUi,

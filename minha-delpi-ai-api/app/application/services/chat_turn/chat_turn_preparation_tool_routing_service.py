@@ -29,6 +29,7 @@ class ChatTurnPreparationSkipToolFlags:
     skip_tools_for_assistant_identity: bool
     skip_tools_for_data_interpretation: bool
     skip_tools_for_attachment_document: bool
+    skip_tools_for_inactive_agent: bool
     request_attachment_ids: list[str]
 
 
@@ -109,7 +110,15 @@ class ChatTurnPreparationToolRoutingService:
         message: str,
         request,
         history_source: list,
+        workspace_context: dict | None = None,
     ) -> ChatTurnPreparationSkipToolFlags:
+        from app.application.services.chat_workspace_agent_activation_service import (
+            ChatWorkspaceAgentActivationService,
+        )
+        from app.domain.services.chat_web_search_intent_service import (
+            ChatWebSearchIntentService,
+        )
+
         skip_tools_for_user_identity = bool(
             getattr(request, "access_token", None)
             and ChatUserContextService.is_user_identity_question(message)
@@ -141,11 +150,22 @@ class ChatTurnPreparationToolRoutingService:
             )
         )
 
+        skip_tools_for_inactive_agent = False
+
+        if not ChatWorkspaceAgentActivationService.operational_tools_enabled(
+            workspace_context
+        ):
+            skip_tools_for_inactive_agent = not (
+                request_attachment_ids
+                or ChatWebSearchIntentService.matches(message)
+            )
+
         return ChatTurnPreparationSkipToolFlags(
             skip_tools_for_user_identity=skip_tools_for_user_identity,
             skip_tools_for_assistant_identity=skip_tools_for_assistant_identity,
             skip_tools_for_data_interpretation=skip_tools_for_data_interpretation,
             skip_tools_for_attachment_document=skip_tools_for_attachment_document,
+            skip_tools_for_inactive_agent=skip_tools_for_inactive_agent,
             request_attachment_ids=request_attachment_ids,
         )
 
@@ -181,6 +201,7 @@ class ChatTurnPreparationToolRoutingService:
                 or skip_flags.skip_tools_for_assistant_identity
                 or skip_flags.skip_tools_for_data_interpretation
                 or skip_flags.skip_tools_for_attachment_document
+                or skip_flags.skip_tools_for_inactive_agent
                 or small_talk_direct
                 or utility_direct
                 or web_save_sources_direct
@@ -254,6 +275,8 @@ class ChatTurnPreparationToolRoutingService:
             pipeline_stages.append("unclear_request")
         elif text_task_pure:
             pipeline_stages.append("text_task")
+        elif skip_flags.skip_tools_for_inactive_agent:
+            pipeline_stages.append("common_chat_no_tools")
 
     @classmethod
     def run_tool_phase(
