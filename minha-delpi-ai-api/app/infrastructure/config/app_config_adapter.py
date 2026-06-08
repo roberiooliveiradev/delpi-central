@@ -35,6 +35,9 @@ class InfrastructureAppConfigAdapter(AppConfigPort):
     def chat_web_search_timeout_seconds(self) -> float:
         return float(Settings.CHAT_WEB_SEARCH_TIMEOUT_SECONDS)
 
+    def chat_web_search_auto_augment_enabled(self) -> bool:
+        return bool(Settings.CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED)
+
     def chat_pagination_auto_fetch_enabled(self) -> bool:
         return bool(Settings.CHAT_PAGINATION_AUTO_FETCH_ENABLED)
 

@@ -358,6 +358,9 @@ class Settings:
     CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS = int(
         os.getenv("CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS", "2")
     )
+    CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED = (
+        os.getenv("CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED", "true").lower() == "true"
+    )
 
     # Aprendizagem contínua (playbook). Ligado por padrão no Docker; use false na env
     # para desligar. Promoção continua exigindo revisão admin (auto-approve off).

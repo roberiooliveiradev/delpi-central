@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
@@ -201,3 +201,21 @@ def test_resolve_skip_tool_flags_for_common_chat_without_active_agent():
     )
 
     assert flags.skip_tools_for_inactive_agent is True
+
+
+@patch(
+    "app.domain.services.chat_web_search_intent_service.ChatWebSearchIntentService.is_feature_enabled",
+    return_value=True,
+)
+def test_resolve_skip_tool_flags_allows_web_augment_in_common_chat(_web_enabled):
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="o que vc pensa sobre o Brasil?",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[],
+        workspace_context={
+            "userActivatedAgent": False,
+            "actionsEnabled": False,
+        },
+    )
+
+    assert flags.skip_tools_for_inactive_agent is False

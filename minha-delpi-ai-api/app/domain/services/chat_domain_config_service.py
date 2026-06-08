@@ -52,6 +52,10 @@ class ChatDomainConfigService:
         return cls._require_config().chat_web_search_timeout_seconds()
 
     @classmethod
+    def chat_web_search_auto_augment_enabled(cls) -> bool:
+        return cls._require_config().chat_web_search_auto_augment_enabled()
+
+    @classmethod
     def chat_pagination_auto_fetch_enabled(cls) -> bool:
         return cls._require_config().chat_pagination_auto_fetch_enabled()
 

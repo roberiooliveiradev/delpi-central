@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -59,16 +61,66 @@ class ChatWebSearchIntentService:
         return ChatRuntimeIntelligenceSettingsService.web_search_enabled()
 
     @classmethod
-    def matches(cls, message: str) -> bool:
+    def is_auto_augment_enabled(cls) -> bool:
+        return ChatDomainConfigService.chat_web_search_auto_augment_enabled()
+
+    @classmethod
+    def is_explicit_request(cls, message: str) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         return bool(normalized) and any(term in normalized for term in cls._TRIGGER_TERMS)
 
     @classmethod
-    def blocks_external_action_selection(cls, message: str) -> bool:
-        """Busca explícita na web não dispara actions OpenAPI no mesmo turno."""
+    def matches(cls, message: str) -> bool:
+        return cls.should_use_web_research(message)
+
+    @classmethod
+    def should_use_web_research(cls, message: str) -> bool:
         raw = str(message or "").strip()
 
-        if not cls.matches(raw):
+        if not raw:
+            return False
+
+        if cls.is_explicit_request(raw):
+            return True
+
+        return cls.should_augment_with_web(raw)
+
+    @classmethod
+    def should_augment_with_web(cls, message: str) -> bool:
+        if not cls.is_feature_enabled() or not cls.is_auto_augment_enabled():
+            return False
+
+        raw = str(message or "").strip()
+
+        if not raw or cls.is_explicit_request(raw):
+            return False
+
+        if cls._is_excluded_from_auto_augment(raw):
+            return False
+
+        config = _augmentation_content()
+        max_length = int(config.get("maxMessageLength") or 320)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(raw)
+
+        if len(normalized) > max_length:
+            return False
+
+        trigger_terms = tuple(str(item) for item in (config.get("triggerTerms") or ()))
+
+        if not ChatMessageNormalizationService.contains_any(normalized, trigger_terms):
+            return False
+
+        min_topic_length = int(config.get("minTopicLength") or 4)
+        topic = cls._extract_augment_topic(raw)
+
+        return len(topic) >= min_topic_length
+
+    @classmethod
+    def blocks_external_action_selection(cls, message: str) -> bool:
+        """Busca na web (explícita ou auto-augmentada) não dispara actions OpenAPI no mesmo turno."""
+        raw = str(message or "").strip()
+
+        if not cls.should_use_web_research(raw):
             return False
 
         if not cls.is_feature_enabled():
@@ -111,7 +163,7 @@ class ChatWebSearchIntentService:
 
         raw = str(message or "").strip()
 
-        if not raw or not cls.matches(raw):
+        if not raw or not cls.should_use_web_research(raw):
             return None
 
         from app.domain.services.chat_web_search_planning_service import (
@@ -144,10 +196,18 @@ class ChatWebSearchIntentService:
         if not plan:
             return None
 
-        reason = "A pergunta solicita informação pública na internet."
-
-        if plan.prefer_official:
+        if cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
+            reason = str(
+                _augmentation_content().get("augmentReason")
+                or (
+                    "A pergunta pede contexto público atual — combino conhecimento interno "
+                    "com pesquisa na web para maior assertividade."
+                )
+            )
+        elif plan.prefer_official:
             reason = "A pergunta solicita informação pública com preferência por fontes oficiais."
+        else:
+            reason = "A pergunta solicita informação pública na internet."
 
         if plan.mode == "deep":
             reason = (
@@ -195,6 +255,9 @@ class ChatWebSearchIntentService:
             if integration.synthesis_note:
                 arguments["integrationSynthesisNote"] = integration.synthesis_note
 
+        if cls.should_augment_with_web(raw) and not cls.is_explicit_request(raw):
+            arguments["searchTrigger"] = "auto_augment"
+
         return {
             "name": "web_search",
             "arguments": arguments,
@@ -206,8 +269,11 @@ class ChatWebSearchIntentService:
         query = str(message or "").strip()
         normalized = ChatMessageNormalizationService.normalize_for_matching(query) or query
 
-        for pattern in cls._STRIP_PATTERNS:
-            normalized = re.sub(pattern, " ", normalized, flags=re.IGNORECASE).strip()
+        if cls.should_augment_with_web(query) and not cls.is_explicit_request(query):
+            normalized = cls._extract_augment_topic(query)
+        else:
+            for pattern in cls._STRIP_PATTERNS:
+                normalized = re.sub(pattern, " ", normalized, flags=re.IGNORECASE).strip()
 
         normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
 
@@ -219,3 +285,133 @@ class ChatWebSearchIntentService:
             return base
 
         return security.query or base
+
+    @classmethod
+    def _extract_augment_topic(cls, message: str) -> str:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message) or ""
+
+        for pattern in _augmentation_content().get("stripPatterns") or ():
+            normalized = re.sub(
+                str(pattern),
+                " ",
+                normalized,
+                flags=re.IGNORECASE,
+            ).strip()
+
+        normalized = re.sub(r"\s+", " ", normalized).strip(" ?.")
+        suffix = str(_augmentation_content().get("querySuffix") or "").strip()
+
+        if suffix and normalized:
+            return f"{normalized}{suffix}"
+
+        return normalized
+
+    @classmethod
+    def _is_excluded_from_auto_augment(cls, message: str) -> bool:
+        from app.domain.services.chat_intent_router_service import ChatIntentRouterService
+        from app.domain.services.chat_small_talk_pattern_service import (
+            ChatSmallTalkPatternService,
+        )
+        from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
+        from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+
+        if ChatIntentRouterService._blocks_web_search(message):
+            return True
+
+        if ChatSmallTalkPatternService.is_small_talk(message):
+            return True
+
+        if ChatTextTaskIntentService.is_pure_text_task(message):
+            return True
+
+        if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return True
+
+        if cls._is_capabilities_question(message):
+            return True
+
+        if cls._is_assistant_identity_question(message):
+            return True
+
+        exclude_terms = tuple(
+            str(item) for item in (_augmentation_content().get("excludeTerms") or ())
+        )
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        return bool(
+            exclude_terms
+            and ChatMessageNormalizationService.contains_any(normalized, exclude_terms)
+        )
+
+    @classmethod
+    def _is_capabilities_question(cls, message: str) -> bool:
+        detection = ChatAssistantContentService.get_node("capabilities", "detection") or {}
+
+        if not isinstance(detection, dict):
+            return False
+
+        max_length = int(detection.get("maxMessageLength") or 280)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if len(normalized) > max_length:
+            return False
+
+        question_terms = tuple(str(item) for item in (detection.get("questionTerms") or ()))
+
+        if ChatMessageNormalizationService.contains_any(message, question_terms):
+            return True
+
+        short_help = tuple(str(item) for item in (detection.get("shortHelp") or ()))
+
+        if normalized in short_help:
+            return True
+
+        help_prefix_max = int(detection.get("helpPrefixMaxLength") or 80)
+
+        if normalized.startswith(("ajuda ", "help ")) and len(normalized) < help_prefix_max:
+            return True
+
+        capaz_tokens = tuple(str(item) for item in (detection.get("capazTokens") or ()))
+
+        return "capaz" in normalized and any(token in normalized for token in capaz_tokens)
+
+    @classmethod
+    def _is_assistant_identity_question(cls, message: str) -> bool:
+        if cls._is_capabilities_question(message):
+            return False
+
+        content = ChatAssistantContentService.load_bundle("identity")
+        max_length = int(content.get("maxMessageLength") or 220)
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if len(normalized) > max_length:
+            return False
+
+        patterns = content.get("patterns") or {}
+        priority = tuple(
+            str(item)
+            for item in (
+                content.get("categoryPriority")
+                or ("who", "limits", "origin", "usage", "role", "what")
+            )
+        )
+
+        for category in priority:
+            terms = tuple(str(item) for item in (patterns.get(category) or ()))
+
+            if terms and ChatMessageNormalizationService.contains_any(message, terms):
+                return True
+
+        exclusions = tuple(str(item) for item in (content.get("userIdentityExclusions") or ()))
+
+        return bool(
+            exclusions and ChatMessageNormalizationService.contains_any(message, exclusions)
+        )
+
+
+@lru_cache(maxsize=1)
+def _augmentation_content() -> dict:
+    node = ChatAssistantContentService.get_node("web_search", "augmentation")
+
+    return dict(node) if isinstance(node, dict) else {}

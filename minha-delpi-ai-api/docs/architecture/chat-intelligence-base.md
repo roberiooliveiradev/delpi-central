@@ -703,7 +703,8 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 
 | Aspecto | Comportamento |
 |---------|----------------|
-| Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` (triggers: «pesquise na internet», «busque na web», etc.) |
+| Seleção | `ChatWebSearchIntentService` + `ToolSelectionService` — pedido explícito («pesquise na web», etc.) ou **auto-augment** em perguntas abertas («o que você pensa sobre…», «me fale sobre…»); padrões em `web_search.json` → `augmentation` |
+| Chat comum | Com web habilitada, auto-augment **não exige agente** — `skip_tools_for_inactive_agent` fica `false` e bloqueia actions OpenAPI no turno |
 | Consulta | `WebSearchQueryService`: remove «a empresa», gera candidatos (`Tyco`, `Tyco International`, retry EN) |
 | Provedores | `auto`: Tavily → Serper → Bing → **SearXNG** (OSS) → DuckDuckGo Instant Answer; fallback Wikipedia PT se todos falharem |
 | Isolamento | `blocks_external_action_selection`: no mesmo turno **não** roda `execute_external_action`, roteador de actions nem loop agentic |
@@ -722,6 +723,7 @@ docker compose -f infra/docker-compose.dev.yml exec -T -e PYTHONPATH=/app minha-
 | Variável | Default | Papel |
 |----------|---------|--------|
 | `CHAT_WEB_SEARCH_ENABLED` | `false` | Master switch |
+| `CHAT_WEB_SEARCH_AUTO_AUGMENT_ENABLED` | `true` | Perguntas abertas sobre tópicos públicos disparam web sem frase explícita |
 | `CHAT_WEB_SEARCH_DIRECT_RESPONSE_ENABLED` | `true` | Resposta direta sem LLM principal |
 | `CHAT_WEB_SEARCH_SYNTHESIS_ENABLED` | `true` | Síntese estruturada via LLM |
 | `CHAT_WEB_SEARCH_SYNTHESIS_MIN_RESULTS` | `2` | Mínimo de snippets úteis para sintetizar |

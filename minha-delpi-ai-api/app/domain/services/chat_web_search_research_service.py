@@ -39,10 +39,14 @@ class ChatWebSearchResearchService:
         if ChatIntentRouterService._blocks_web_search(raw):
             return False
 
-        if text_task_pure or ChatTextTaskIntentService.is_pure_text_task(raw):
+        is_explicit_web = ChatWebSearchIntentService.is_explicit_request(raw)
+
+        if not is_explicit_web and (
+            text_task_pure or ChatTextTaskIntentService.is_pure_text_task(raw)
+        ):
             return False
 
-        return ChatWebSearchIntentService.matches(raw)
+        return ChatWebSearchIntentService.should_use_web_research(raw)
 
     @classmethod
     def should_decline_web(cls, message: str) -> bool:
