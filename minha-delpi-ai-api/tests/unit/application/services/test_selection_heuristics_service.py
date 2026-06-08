@@ -20,3 +20,12 @@ def test_looks_like_lmp_question_matches_lmp_term():
         "liste as lmps da ov 12345",
         extract_sale_number=lambda value: "12345" if "12345" in str(value) else None,
     )
+
+
+def test_looks_like_sql_or_data_query_matches_sql_terms():
+    assert ExternalActionSelectionHeuristicsService.looks_like_sql_or_data_query(
+        "execute essa consulta sql no banco"
+    )
+    assert not ExternalActionSelectionHeuristicsService.looks_like_sql_or_data_query(
+        "qual o estoque do produto 10080022"
+    )

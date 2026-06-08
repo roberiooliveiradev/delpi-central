@@ -20,6 +20,12 @@ def test_action_selection_heuristic_terms_exist():
         "lmpQuestion",
         "terms",
     )
+    sql_terms = ExternalActionResponseContentService.list(
+        "actionSelection",
+        "sqlOrDataQueryTerms",
+    )
+    assert "sql" in sql_terms
+    assert "select " in sql_terms
 
 
 def test_selection_reasons_keys_exist():

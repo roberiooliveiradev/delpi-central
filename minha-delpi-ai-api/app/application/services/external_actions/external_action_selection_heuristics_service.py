@@ -7,6 +7,9 @@ from typing import Callable
 from app.application.services.external_actions.external_action_domain_route_selection_service import (
     ExternalActionDomainRouteSelectionService,
 )
+from app.domain.services.chat_sql_operational_intent_service import (
+    ChatSqlOperationalIntentService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -57,3 +60,16 @@ class ExternalActionSelectionHeuristicsService:
             )
 
         return False
+
+    @staticmethod
+    def looks_like_sql_or_data_query(message: str) -> bool:
+        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
+            return True
+
+        normalized = str(message or "").lower()
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "sqlOrDataQueryTerms",
+        )
+
+        return any(term in normalized for term in terms)

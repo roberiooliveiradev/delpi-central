@@ -104,6 +104,18 @@
       "nota de saída",
       "nota de saida"
     ],
+    "sqlOrDataQueryTerms": [
+      "sql",
+      "consulta sql",
+      "consulta no banco",
+      "rodar sql",
+      "executar sql",
+      "execute o sql",
+      "execute essa consulta",
+      "data/sql",
+      "query",
+      "select "
+    ],
     "lmpQuestion": {
       "terms": [
         "lmp",

@@ -124,6 +124,57 @@ class OperationalApiParameterBuilderService:
 
         return parameters
 
+    def merge_date_range(
+        self,
+        action: dict,
+        message: str,
+        parameters: dict,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict:
+        from app.domain.services.chat_date_range_intent_service import (
+            ChatDateRangeIntentService,
+        )
+
+        date_range = ChatDateRangeIntentService.resolve(
+            message,
+            previous_messages=previous_messages,
+        )
+
+        if not date_range:
+            return parameters
+
+        merged = dict(parameters)
+
+        for parameter in action.get("parametersSchema") or []:
+            name = parameter.get("name")
+
+            if not name:
+                continue
+
+            lowered = name.lower()
+
+            if lowered in {
+                "start_date",
+                "startdate",
+                "data_inicio",
+                "data_inicial",
+                "date_start",
+                "datestart",
+            }:
+                merged[name] = date_range.start_date
+            elif lowered in {
+                "end_date",
+                "enddate",
+                "data_fim",
+                "data_final",
+                "date_end",
+                "dateend",
+            }:
+                merged[name] = date_range.end_date
+
+        return merged
+
     @staticmethod
     def build_supplies_stock(action: dict) -> dict:
         parameters: dict[str, Any] = {}

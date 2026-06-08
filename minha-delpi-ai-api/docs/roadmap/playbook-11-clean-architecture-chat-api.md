@@ -402,10 +402,14 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — fechamento, lote 22):**
+**Sprint imediata (Fase 3 — fechamento, lote 23):**
 
-1. **3B:** reduzir `external_action_selection_service.py` (~870 linhas) — candidatos: `_looks_like_sql_or_data_query`, `_list_allowed_candidates`, helpers finais.
-2. **3C:** `chat_turn_preparation_service.py` (~380 linhas) — avaliar se já é orquestrador fino; senão extrair early direct-answer wiring.
+1. **3B:** reduzir `select_action` (~510 linhas restantes) — candidato: `ExternalActionSelectionDispatchService` para o despacho por intent.
+2. **3C:** `chat_turn_preparation_service.py` (~356 linhas) — orquestrador fino; Fase 3C encerrada.
+
+**Concluído (Fase 3B lote 22):** `ExternalActionSelectionSupportService` (candidatos, ranking, histórico de tools); `looks_like_sql_or_data_query` em `ExternalActionSelectionHeuristicsService` com termos em `actionSelection.sqlOrDataQueryTerms`; `merge_date_range` em `OperationalApiParameterBuilderService`; `external_action_selection_service.py` **886 → ~723** linhas.
+
+**Concluído (Fase 3C lote 22):** `ChatTurnPreparationPreToolContextService`; early bundle + memória + interpretação sem dados extraídos; `chat_turn_preparation_service.py` **387 → ~356** linhas.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 

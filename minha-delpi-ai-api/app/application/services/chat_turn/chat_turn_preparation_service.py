@@ -12,11 +12,8 @@ from typing import Any
 from app.application.services.chat_canvas_content_service import ChatCanvasContentService
 from app.application.services.chat_pipeline_timings import ChatPipelineTimings
 from app.application.services.chat_knowledge_scope_service import ChatKnowledgeScopeService
-from app.application.services.chat_turn.chat_turn_preparation_direct_answer_service import (
-    ChatTurnPreparationDirectAnswerService,
-)
-from app.application.services.chat_turn.chat_turn_preparation_memory_context_service import (
-    ChatTurnPreparationMemoryContextService,
+from app.application.services.chat_turn.chat_turn_preparation_pre_tool_context_service import (
+    ChatTurnPreparationPreToolContextService,
 )
 from app.application.services.chat_turn.chat_turn_preparation_tool_routing_service import (
     ChatTurnPreparationToolRoutingService,
@@ -33,8 +30,6 @@ from app.application.services.chat_turn.chat_turn_preparation_result_service imp
 from app.application.services.chat_turn.chat_turn_preparation_ingress_service import (
     ChatTurnPreparationIngressService,
 )
-from app.domain.services.chat_analysis_intent_service import ChatAnalysisIntentService
-
 @dataclass(frozen=True)
 class ChatTurnPreparationResult:
     # Flags
@@ -153,7 +148,7 @@ class ChatTurnPreparationService:
         pipeline_stages = list(ingress.pipeline_stages)
         fast_path = ingress.fast_path
 
-        direct_answer_bundle = ChatTurnPreparationDirectAnswerService.build_early_bundle(
+        pre_tool = ChatTurnPreparationPreToolContextService.build(
             message=message,
             workspace_context=workspace_context,
             history_source=history_source,
@@ -168,61 +163,35 @@ class ChatTurnPreparationService:
             text_task_category=text_task_category,
             fast_path_enabled=fast_path_enabled,
             fast_path_max_chars=fast_path_max_chars,
-        )
-
-        fast_path = direct_answer_bundle.fast_path
-        pre_capability_answer = direct_answer_bundle.pre_capability_answer
-        small_talk_direct = direct_answer_bundle.small_talk_direct
-        utility_direct = direct_answer_bundle.utility_direct
-        unclear_direct = direct_answer_bundle.unclear_direct
-        web_save_sources_direct = direct_answer_bundle.web_save_sources_direct
-        web_post_search_direct = direct_answer_bundle.web_post_search_direct
-        attachment_welcome_direct = direct_answer_bundle.attachment_welcome_direct
-        routing_disambiguation = direct_answer_bundle.routing_disambiguation
-        routing_disambiguation_answer = direct_answer_bundle.routing_disambiguation_answer
-        routing_disambiguation_suggestions = (
-            direct_answer_bundle.routing_disambiguation_suggestions
-        )
-        session_memory_direct = direct_answer_bundle.session_memory_direct
-        email_writing_mode = direct_answer_bundle.email_writing_mode
-        email_subtype = direct_answer_bundle.email_subtype
-        text_correction_mode = direct_answer_bundle.text_correction_mode
-        text_correction_subtype = direct_answer_bundle.text_correction_subtype
-
-        for stage in direct_answer_bundle.pipeline_stage_additions:
-            if stage not in pipeline_stages:
-                pipeline_stages.append(stage)
-
-        workspace_context.update(direct_answer_bundle.workspace_context_patches)
-
-        memory_context = ChatTurnPreparationMemoryContextService.build(
-            message=message,
-            workspace_context=workspace_context,
-            history_source=history_source,
-            attachments=attachments,
-            session=session,
-            user_id=user_id,
+            ingress_fast_path=fast_path,
             session_memory_service=self.session_memory_service,
         )
 
-        workspace_context = memory_context.workspace_context
-        working_memory_snapshot = memory_context.working_memory_snapshot
-        conversation_context = memory_context.conversation_context
+        workspace_context = pre_tool.workspace_context
+        working_memory_snapshot = pre_tool.working_memory_snapshot
+        conversation_context = pre_tool.conversation_context
+        canvas_action = pre_tool.canvas_action
+        fast_path = pre_tool.fast_path
+        pre_capability_answer = pre_tool.pre_capability_answer
+        small_talk_direct = pre_tool.small_talk_direct
+        utility_direct = pre_tool.utility_direct
+        unclear_direct = pre_tool.unclear_direct
+        web_save_sources_direct = pre_tool.web_save_sources_direct
+        web_post_search_direct = pre_tool.web_post_search_direct
+        attachment_welcome_direct = pre_tool.attachment_welcome_direct
+        routing_disambiguation = pre_tool.routing_disambiguation
+        routing_disambiguation_answer = pre_tool.routing_disambiguation_answer
+        routing_disambiguation_suggestions = pre_tool.routing_disambiguation_suggestions
+        session_memory_direct = pre_tool.session_memory_direct
+        email_writing_mode = pre_tool.email_writing_mode
+        email_subtype = pre_tool.email_subtype
+        text_correction_mode = pre_tool.text_correction_mode
+        text_correction_subtype = pre_tool.text_correction_subtype
+        interpretation_without_data_answer = pre_tool.interpretation_without_data_answer
 
-        for stage in memory_context.pipeline_stage_additions:
+        for stage in pre_tool.pipeline_stage_additions:
             if stage not in pipeline_stages:
                 pipeline_stages.append(stage)
-
-        interpretation_without_data_answer = (
-            ChatTurnPreparationDirectAnswerService.resolve_interpretation_without_data(
-                message=message,
-                history_source=history_source,
-                canvas_action=canvas_action,
-                pre_capability_answer=pre_capability_answer,
-                analysis_mode=analysis_mode,
-                text_task_pure=text_task_pure,
-            )
-        )
 
         operational_guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
             message=message,

@@ -33,6 +33,9 @@ from app.application.services.external_actions.external_action_product_search_ro
 from app.application.services.external_actions.external_action_selection_heuristics_service import (
     ExternalActionSelectionHeuristicsService,
 )
+from app.application.services.external_actions.external_action_selection_support_service import (
+    ExternalActionSelectionSupportService,
+)
 
 
 class ExternalActionSelectionService:
@@ -41,6 +44,10 @@ class ExternalActionSelectionService:
         self.repository = repository
         self.semantic_ranker = semantic_ranker
         self._route_selection = ExternalActionRouteSelectionService(repository)
+        self._support = ExternalActionSelectionSupportService(
+            repository,
+            semantic_ranker=semantic_ranker,
+        )
 
     def select_action_for_product(
         self,
@@ -64,7 +71,7 @@ class ExternalActionSelectionService:
         preferred_action_id = None
 
         if previous_messages and resolved_intent == ChatProductQueryIntent.STOCK:
-            preferred_action_id = self._resolve_previous_external_action_id(
+            preferred_action_id = self._support.resolve_previous_external_action_id(
                 previous_messages,
                 path_fragment="/stock",
             )
@@ -243,7 +250,7 @@ class ExternalActionSelectionService:
         )
 
         if refinement and refinement.kind in {"stock_refinement", "stock_reset"}:
-            previous_stock_action_id = self._resolve_previous_external_action_id(
+            previous_stock_action_id = self._support.resolve_previous_external_action_id(
                 previous_messages,
                 path_fragment="/stock",
             )
@@ -562,7 +569,7 @@ class ExternalActionSelectionService:
             if selected:
                 return selected
 
-        if self._looks_like_sql_or_data_query(message):
+        if ExternalActionSelectionHeuristicsService.looks_like_sql_or_data_query(message):
             if ChatSqlIntentService.should_auto_execute_sql(message):
                 return self._select_sql_or_data_action(
                     message,
@@ -607,35 +614,6 @@ class ExternalActionSelectionService:
             message,
             previous_messages=previous_messages,
         )
-
-    def _looks_like_sql_or_data_query(self, message: str) -> bool:
-        from app.domain.services.chat_sql_operational_intent_service import (
-            ChatSqlOperationalIntentService,
-        )
-
-        if ChatSqlOperationalIntentService.requires_sql_knowledge(message):
-            return True
-
-        normalized = str(message or "").lower()
-
-        return any(
-            term in normalized
-            for term in [
-                "sql",
-                "consulta sql",
-                "consulta no banco",
-                "rodar sql",
-                "executar sql",
-                "execute o sql",
-                "execute essa consulta",
-                "data/sql",
-                "query",
-                "select ",
-            ]
-        )
-
-    def _extract_sql_query(self, message: str) -> str | None:
-        return self._route_selection._sql_route._extract_sql_query(message)
 
     def _select_sql_or_data_action(
         self,
@@ -711,96 +689,11 @@ class ExternalActionSelectionService:
         *,
         previous_messages: list | None = None,
     ) -> dict:
-        from app.domain.services.chat_date_range_intent_service import (
-            ChatDateRangeIntentService,
-        )
-
-        date_range = ChatDateRangeIntentService.resolve(
+        return self._route_selection.parameter_builder.merge_date_range(
+            action,
             message,
+            parameters,
             previous_messages=previous_messages,
-        )
-
-        if not date_range:
-            return parameters
-
-        merged = dict(parameters)
-
-        for parameter in action.get("parametersSchema") or []:
-            name = parameter.get("name")
-
-            if not name:
-                continue
-
-            lowered = name.lower()
-
-            if date_range and lowered in {
-                "start_date",
-                "startdate",
-                "data_inicio",
-                "data_inicial",
-                "date_start",
-                "datestart",
-            }:
-                merged[name] = date_range.start_date
-            elif date_range and lowered in {
-                "end_date",
-                "enddate",
-                "data_fim",
-                "data_final",
-                "date_end",
-                "dateend",
-            }:
-                merged[name] = date_range.end_date
-
-        return merged
-
-    def _resolve_previous_external_action_id(
-        self,
-        previous_messages: list | None,
-        *,
-        path_fragment: str,
-    ) -> str | None:
-        fragment = str(path_fragment or "").strip().lower()
-
-        if not fragment:
-            return None
-
-        for item in reversed((previous_messages or [])[-14:]):
-            metadata = item.get("metadata") if isinstance(item, dict) else getattr(item, "metadata", None)
-
-            if not isinstance(metadata, dict):
-                continue
-
-            for tool_call in reversed(metadata.get("toolCalls") or []):
-                if not isinstance(tool_call, dict):
-                    continue
-
-                if str(tool_call.get("name") or "") != "execute_external_action":
-                    continue
-
-                tool_meta = tool_call.get("metadata") or {}
-
-                if not tool_meta.get("ok"):
-                    continue
-
-                path = str(tool_meta.get("path") or "").lower()
-
-                if fragment not in path:
-                    continue
-
-                action_id = tool_meta.get("actionId")
-
-                if action_id:
-                    return str(action_id)
-
-        return None
-
-    def _extract_numeric_code(self, message: str) -> str | None:
-        return ChatProductQueryIntentService.extract_product_code(message)
-
-    def _resolve_data_sql_action(self, allowed_action_ids: list[str]) -> dict | None:
-        return self._route_selection._sql_route._resolve_data_sql_action(
-            allowed_action_ids
         )
 
     def _list_allowed_candidates(
@@ -810,61 +703,11 @@ class ExternalActionSelectionService:
         allowed_action_ids: list[str],
         limit: int,
     ) -> list[dict]:
-        allowed = {str(item) for item in allowed_action_ids}
-
-        return [
-            action
-            for action in self.repository.find_candidate_actions(
-                message,
-                limit=limit,
-                allowed_action_ids=allowed_action_ids,
-            )
-            if str(action.get("actionId")) in allowed
-        ]
-
-    def _find_allowed_actions_by_path_token(
-        self,
-        *,
-        path_token: str,
-        operation_token: str,
-        allowed_action_ids: list[str],
-        method: str = "GET",
-    ) -> list[dict]:
-        token = str(path_token or "").lower().strip()
-        op_token = str(operation_token or "").lower().strip()
-        allowed = {str(item) for item in allowed_action_ids}
-
-        if not allowed or (not token and not op_token):
-            return []
-
-        matches: list[dict] = []
-        list_actions = getattr(self.repository, "list_actions", None)
-
-        if not callable(list_actions):
-            return []
-
-        for action in list_actions():
-            if str(action.get("actionId")) not in allowed:
-                continue
-
-            if str(action.get("method") or "").upper() != method.upper():
-                continue
-
-            path = str(action.get("path") or "").lower()
-            operation_id = str(action.get("operationId") or "").lower()
-
-            if token and token in path:
-                matches.append(action)
-                continue
-
-            if op_token and op_token in operation_id:
-                matches.append(action)
-                continue
-
-            if token and token.replace("-", "_") in operation_id:
-                matches.append(action)
-
-        return matches
+        return self._support.list_allowed_candidates(
+            message,
+            allowed_action_ids=allowed_action_ids,
+            limit=limit,
+        )
 
     def _rank_candidates(
         self,
@@ -873,14 +716,8 @@ class ExternalActionSelectionService:
         *,
         allowed_action_ids: list[str] | None = None,
     ) -> list[dict]:
-        if not candidates:
-            return []
-
-        if self.semantic_ranker:
-            return self.semantic_ranker.rank(
-                message,
-                candidates,
-                allowed_action_ids=allowed_action_ids,
-            )
-
-        return candidates
+        return self._support.rank_candidates(
+            message,
+            candidates,
+            allowed_action_ids=allowed_action_ids,
+        )
