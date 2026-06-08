@@ -293,17 +293,34 @@ class ChatToolContextSelectionService:
                     }
                 )
 
+        blocked_external_action = False
+
+        if allowed_action_ids is not None:
+            before_count = len(selected_tools)
+            selected_tools = [
+                tool
+                for tool in selected_tools
+                if str(tool.get("name") or "") != "execute_external_action"
+                or host._is_external_action_allowed(tool, allowed_action_ids)
+            ]
+            blocked_external_action = before_count > 0 and not selected_tools
+
         if not selected_tools:
+            early_result = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": native_meta,
+                "currentMessage": raw_message,
+            }
+
+            if blocked_external_action:
+                early_result["suppressAdvancedSqlEnrichment"] = True
+
             return ToolSelectionOutcome(
                 early_result=host._finalize_tool_context_result(
                     message=raw_message,
                     previous_messages=previous_messages,
-                    result={
-                        "context": "",
-                        "toolCalls": [],
-                        "nativeToolCalling": native_meta,
-                        "currentMessage": raw_message,
-                    },
+                    result=early_result,
                 ),
             )
 

@@ -639,3 +639,54 @@ class ExternalActionColumnLabelService:
 
         if isinstance(items, dict):
             self._collect_schema_property_labels(items, labels, depth=depth + 1)
+
+    _COLUMN_TYPE_MAP: dict[str, tuple[str, ...]] = {
+        "currency": (
+            "valor", "preco", "price", "custo", "cost", "total", "revenue",
+            "faturamento", "receita", "vlr", "vl_", "last_purchase_price",
+            "standard_cost", "unit_price", "net_value", "gross_value",
+        ),
+        "percent": (
+            "pct", "percent", "taxa", "rate", "margem", "margin", "otd",
+            "giro", "eficiencia", "yield",
+        ),
+        "date": (
+            "data", "date", "emissao", "criacao", "atualizacao", "inicio",
+            "fim", "vencimento", "dt_", "created", "updated", "last_revision",
+        ),
+        "quantity": (
+            "qtd", "quantidade", "qty", "quantity", "saldo", "disponivel",
+            "reservado", "estoque", "volume", "current_quantity",
+            "available_quantity", "committed_quantity", "reserved_quantity",
+        ),
+    }
+
+    def infer_column_type(self, key: str) -> str | None:
+        lowered = key.lower()
+
+        for data_type, tokens in self._COLUMN_TYPE_MAP.items():
+            if any(token in lowered for token in tokens):
+                return data_type
+
+        return None
+
+    def enrich_column(self, key: str, label: str) -> dict:
+        col = {"key": key, "label": label}
+        data_type = self.infer_column_type(key)
+
+        if data_type:
+            col["dataType"] = data_type
+
+        return col
+
+    @staticmethod
+    def format_num(value) -> str:
+        try:
+            num = float(value)
+
+            if num == int(num):
+                return str(int(num))
+
+            return f"{num:.2f}"
+        except (ValueError, TypeError):
+            return str(value)

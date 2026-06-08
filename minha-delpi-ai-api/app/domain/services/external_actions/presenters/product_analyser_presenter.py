@@ -197,6 +197,15 @@ class ExternalActionProductAnalyserPresenter:
 
         return [header, separator, *body]
 
+    def _analyser_has_rich_collections(self, root: dict) -> bool:
+        for key in ("guide", "inspection", "structure"):
+            value = root.get(key)
+
+            if isinstance(value, dict) and (value.get("items") or value.get("total")):
+                return True
+
+        return False
+
     def _build_product_analyser_profile_markdown(self, product: dict) -> list[str]:
         table_rows: list[dict] = []
 
@@ -736,7 +745,11 @@ class ExternalActionProductAnalyserPresenter:
                 lines.extend(["", opening, ""])
 
             lines.extend(self._build_product_analyser_profile_lines(product))
-            lines.extend(self._build_product_analyser_collection_sections(root))
+            collection_lines = self._build_product_analyser_collection_sections(root)
+            lines.extend(collection_lines)
+
+            if not collection_lines and not self._analyser_has_rich_collections(root):
+                lines.extend(self._build_product_analyser_profile_markdown(product))
 
         insights = self._build_product_analyser_insights(root, product)
 

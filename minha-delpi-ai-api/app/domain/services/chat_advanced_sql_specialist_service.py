@@ -463,7 +463,22 @@ class ChatAdvancedSqlSpecialistService:
             tool_calls=result.get("toolCalls") if isinstance(result.get("toolCalls"), list) else None,
         )
 
+        if result.get("suppressAdvancedSqlEnrichment"):
+            cleaned = dict(result)
+            cleaned.pop("suppressAdvancedSqlEnrichment", None)
+            return cleaned
+
         if not snapshot:
+            return result
+
+        tool_calls = result.get("toolCalls")
+
+        if (
+            (not isinstance(tool_calls, list) or not tool_calls)
+            and not str(result.get("context") or "").strip()
+            and not result.get("directAnswer")
+            and not cls.requires_llm_response(snapshot)
+        ):
             return result
 
         updated = dict(result)
@@ -477,11 +492,35 @@ class ChatAdvancedSqlSpecialistService:
 
         if cls.requires_llm_response(snapshot):
             updated.pop("directAnswer", None)
-            updated["skipRag"] = False
+            if not cls._has_successful_operational_tool_result(updated):
+                updated["skipRag"] = False
             updated["sqlRequiresLlm"] = True
             updated = cls.strip_schema_catalog_presentations(updated)
 
         return updated
+
+    @classmethod
+    def _has_successful_operational_tool_result(cls, result: dict) -> bool:
+        tool_calls = result.get("toolCalls")
+
+        if not isinstance(tool_calls, list):
+            return False
+
+        for call in tool_calls:
+            if str(call.get("name") or "") != "execute_external_action":
+                continue
+
+            metadata = call.get("metadata") or {}
+
+            if not metadata.get("ok") or metadata.get("sqlSchemaPrefetch"):
+                continue
+
+            if cls.is_schema_prefetch_path(str(metadata.get("path") or "")):
+                continue
+
+            return True
+
+        return False
 
     @classmethod
     def is_schema_prefetch_path(cls, path: str | None) -> bool:

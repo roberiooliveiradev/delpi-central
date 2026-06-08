@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 13):**
+**Sprint imediata (Fase 3 — god classes, lote 14):**
 
-1. Extrair turno pré-tools (drawing, SQL refinement, paginação) de `build_context`.
-2. Continuar redução de `external_action_result_presenter.py` (helpers de coluna/KPI residuais).
+1. Extrair delegates residuais de `external_action_result_presenter.py` (`_humanize_key`, `_format_field_value`, helpers de estrutura).
+2. Avaliar extração de `chat_turn_preparation_service.py` e send/stream use cases.
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -438,5 +438,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 12):** `ExternalActionTextPresentationPresenter` (~238 linhas); `build_text_presentation` / `build_tree_presentation` migrados para `_text()`; facade **2054 → ~1853** linhas.
 
 **Concluído (Fase 3C lote 12):** `ChatToolContextSelectionService`, `ChatToolContextExecutionService` e `ChatToolContextResultAssemblyService`; `build_context` fatiado em seleção/execução/finalização; `chat_tool_context_service.py` **1645 → ~872** linhas.
+
+**Concluído (Fase 3C lote 13):** `ChatToolContextPreTurnService` (~458 linhas); drawing/SQL/paginação extraídos; `chat_tool_context_service.py` **872 → ~523** linhas.
+
+**Concluído (Fase 3A lote 13):** helpers de coluna (`infer_column_type`, `enrich_column`, `format_num`) migrados para `ExternalActionColumnLabelService`; facade **1853 → ~1818** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.

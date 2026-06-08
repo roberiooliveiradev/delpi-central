@@ -2,7 +2,7 @@ from app.application.services.chat_tool_context_service import ChatToolContextSe
 
 
 class FakeToolSelectionService:
-    def select_tools(self, message):
+    def select_tools(self, message, **kwargs):
         return []
 
 
