@@ -42,7 +42,7 @@ class ExternalActionResultPresenter:
     ) -> dict | None:
         entity = profile.entity
 
-        if not ChatApiDelpiResponseProfileService.is_profile_present_entity(entity):
+        if not ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity):
             return None
 
         error = self._detect_api_error(data, path=path)
@@ -135,7 +135,210 @@ class ExternalActionResultPresenter:
             if fallback:
                 return fallback
 
+        return self._present_entity_extensions(
+            root,
+            path=path,
+            profile=profile,
+        )
+
+    def _present_entity_extensions(
+        self,
+        root,
+        *,
+        path: str,
+        profile: ApiDelpiResponseProfile,
+    ) -> dict | None:
+        entity = profile.entity
+        effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+            path=path,
+            entity=entity,
+        )
+
+        if entity == "product_billing":
+            billing = self._present_product_billing_summary(
+                root,
+                effective_path,
+                entity=entity,
+            )
+
+            if billing:
+                return billing
+
+        if entity == "product_pricing" and isinstance(root, dict):
+            prices = root.get("prices")
+
+            if isinstance(prices, list) and prices:
+                title = self._infer_items_title(prices, effective_path)
+
+                return self._present_items(
+                    prices,
+                    title=title or self._presenter_text("productDetailTitles", "prices", code=""),
+                )
+
+            pricing_fallback = self._present_dict_fallback(root, effective_path)
+
+            if pricing_fallback:
+                return pricing_fallback
+
+        if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
+            items = root.get("items") if isinstance(root, dict) else None
+
+            if isinstance(items, list):
+                if not items:
+                    title = self._infer_items_title([], effective_path) or self._presenter_text(
+                        "generic",
+                        "defaultQueryTitle",
+                    )
+                    return {
+                        "titulo": title,
+                        "linhas": [
+                            self._presenter_text("generic", "emptyItemsQuery")
+                        ],
+                        "dados": root,
+                    }
+
+                if entity == "product_open_orders":
+                    return self._present_items(
+                        items,
+                        title=self._infer_items_title(items, effective_path),
+                    )
+
+                title = self._infer_items_title(items, effective_path)
+                return self._present_items(items, title=title)
+
+        if entity == "product_sales" and isinstance(root, dict):
+            kpi = self._present_kpi_response(root, effective_path, entity=entity)
+
+            if kpi:
+                return kpi
+
+        if ChatApiDelpiResponseProfileService.is_kpi_entity(entity) and isinstance(root, dict):
+            specialized = (
+                self._present_stock_value_summary(root, effective_path, entity=entity)
+                or self._present_financial_pmr(root, effective_path, entity=entity)
+            )
+
+            if specialized:
+                return specialized
+
+            kpi = self._present_kpi_response(root, effective_path, entity=entity)
+
+            if kpi:
+                return kpi
+
+        if entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES and isinstance(
+            root, dict
+        ):
+            lmp_page = self._present_lmp_page(root)
+
+            if lmp_page:
+                return lmp_page
+
+            lmp_detail = self._present_lmp_detail(root)
+
+            if lmp_detail:
+                return lmp_detail
+
+        if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
+            items = root.get("items") if isinstance(root, dict) else None
+
+            if isinstance(items, list) and items:
+                return self._present_sale_orders(root, items)
+
+        if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
+            sql_resultsets = self._present_sql_resultsets(root, effective_path)
+
+            if sql_resultsets:
+                return sql_resultsets
+
+            sql_rows = self._present_sql_rows(root)
+
+            if sql_rows:
+                return sql_rows
+
+        if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES and isinstance(
+            root, dict
+        ):
+            system = (
+                self._present_system_tables_search(root, effective_path, entity=entity)
+                or self._present_system_table_columns(root, effective_path, entity=entity)
+            )
+
+            if system:
+                return system
+
+            system_fallback = self._present_dict_fallback(root, effective_path)
+
+            if system_fallback:
+                return system_fallback
+
+        if entity == "commercial_proposal" and isinstance(root, dict):
+            items = root.get("items")
+
+            if isinstance(items, list):
+                title = self._infer_items_title(items, effective_path)
+                return self._present_items(items, title=title)
+
+        if entity == "eficiencia_fabril_appointment" and isinstance(root, dict):
+            items = root.get("items")
+
+            if isinstance(items, list) and items:
+                title = self._infer_items_title(items, effective_path)
+                return self._present_items(items, title=title)
+
         return None
+
+    def _present_kpi_response(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if not isinstance(root, dict):
+            return None
+
+        if not self._looks_like_kpi_response(root, path, entity=entity):
+            return self._present_dict_fallback(root, path)
+
+        kpi = self._build_kpi_chart(root, path)
+
+        if kpi:
+            linhas = self._kpi_cards_to_linhas(kpi)
+            kpi_title = kpi.get("title") or self._kpi_title(path)
+
+            return {
+                "titulo": kpi_title,
+                "linhas": linhas
+                or [
+                    self._presenter_text(
+                        "generic",
+                        "kpiSeeData",
+                        title=kpi_title,
+                    )
+                ],
+                "dados": root,
+                "apresentacao": kpi,
+            }
+
+        fallback = self._present_dict_fallback(root, path)
+
+        if fallback:
+            return fallback
+
+        kpi_title = self._kpi_title(path)
+
+        return {
+            "titulo": kpi_title,
+            "linhas": [
+                self._presenter_text(
+                    "generic",
+                    "kpiSeeData",
+                    title=kpi_title,
+                )
+            ],
+            "dados": root,
+        }
 
     def _present_legacy(self, data, *, path: str = "") -> dict:
         error = self._detect_api_error(data, path=path)
@@ -259,25 +462,10 @@ class ExternalActionResultPresenter:
             return self._present_items(items, title=title)
 
         if isinstance(root, dict) and self._looks_like_kpi_response(root, path):
-            kpi = self._build_kpi_chart(root, path)
+            kpi = self._present_kpi_response(root, path)
+
             if kpi:
-                linhas = self._kpi_cards_to_linhas(kpi)
-
-                kpi_title = kpi.get("title") or self._kpi_title(path)
-
-                return {
-                    "titulo": kpi_title,
-                    "linhas": linhas
-                    or [
-                        self._presenter_text(
-                            "generic",
-                            "kpiSeeData",
-                            title=kpi_title,
-                        )
-                    ],
-                    "dados": root,
-                    "apresentacao": kpi,
-                }
+                return kpi
 
         if isinstance(root, dict) and root:
             fallback = self._present_dict_fallback(root, path)
@@ -500,8 +688,14 @@ class ExternalActionResultPresenter:
 
         return linhas
 
-    def _present_stock_value_summary(self, root: dict, path: str) -> dict | None:
-        if "stock-value" not in str(path or "").lower():
+    def _present_stock_value_summary(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "supplies_stock_value" and "stock-value" not in str(path or "").lower():
             return None
 
         summary = root.get("summary")
@@ -521,10 +715,16 @@ class ExternalActionResultPresenter:
             "apresentacao": kpi,
         }
 
-    def _present_product_billing_summary(self, root: dict, path: str) -> dict | None:
+    def _present_product_billing_summary(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
         lowered = str(path or "").lower()
 
-        if "/sales/billing" not in lowered:
+        if entity != "product_billing" and "/sales/billing" not in lowered:
             return None
 
         if "value" not in root and "documents" not in root:
@@ -571,8 +771,14 @@ class ExternalActionResultPresenter:
             "dados": root,
         }
 
-    def _present_financial_pmr(self, root: dict, path: str) -> dict | None:
-        if "pmr" not in str(path or "").lower():
+    def _present_financial_pmr(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "financial_pmr" and "pmr" not in str(path or "").lower():
             return None
 
         if "branch" not in root and "pmr_days" not in root:
@@ -605,8 +811,14 @@ class ExternalActionResultPresenter:
             "dados": root,
         }
 
-    def _present_system_tables_search(self, root: dict, path: str) -> dict | None:
-        if "/tables/search" not in str(path or "").lower():
+    def _present_system_tables_search(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "protheus_table" and "/tables/search" not in str(path or "").lower():
             return None
 
         results = root.get("results")
@@ -687,8 +899,14 @@ class ExternalActionResultPresenter:
             "dados": root,
         }
 
-    def _present_system_table_columns(self, root: dict, path: str) -> dict | None:
-        if "/columns" not in str(path or "").lower():
+    def _present_system_table_columns(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "protheus_column" and "/columns" not in str(path or "").lower():
             return None
 
         results = root.get("results")
@@ -767,8 +985,14 @@ class ExternalActionResultPresenter:
             "cards": cards,
         }
 
-    def _build_stock_value_branch_table(self, root: dict, path: str) -> dict | None:
-        if "stock-value" not in str(path or "").lower():
+    def _build_stock_value_branch_table(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "supplies_stock_value" and "stock-value" not in str(path or "").lower():
             return None
 
         by_branch = root.get("by_branch")
@@ -792,8 +1016,14 @@ class ExternalActionResultPresenter:
             "rows": rows,
         }
 
-    def _build_product_billing_table(self, root: dict, path: str) -> dict | None:
-        if "/sales/billing" not in str(path or "").lower():
+    def _build_product_billing_table(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "product_billing" and "/sales/billing" not in str(path or "").lower():
             return None
 
         if root.get("value") is None and root.get("documents") is None:
@@ -806,8 +1036,14 @@ class ExternalActionResultPresenter:
             "rows": self._billing_table_rows(root),
         }
 
-    def _build_system_columns_table(self, root: dict, path: str) -> dict | None:
-        if "/columns" not in str(path or "").lower():
+    def _build_system_columns_table(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> dict | None:
+        if entity != "protheus_column" and "/columns" not in str(path or "").lower():
             return None
 
         results = root.get("results")
@@ -4211,7 +4447,7 @@ class ExternalActionResultPresenter:
     ) -> dict | None:
         entity = profile.entity
 
-        if not ChatApiDelpiResponseProfileService.is_profile_present_entity(entity):
+        if not ChatApiDelpiResponseProfileService.is_entity_routed_for_present(entity):
             return None
 
         root = self._unwrap_data(data)
@@ -4279,6 +4515,91 @@ class ExternalActionResultPresenter:
             "product_structure_exclusivity",
         }:
             return self._build_playbook_report_table(root, path, entity=entity)
+
+        return self._build_presentation_entity_extensions(
+            root,
+            path=path,
+            profile=profile,
+        )
+
+    def _build_presentation_entity_extensions(
+        self,
+        root: dict,
+        *,
+        path: str,
+        profile: ApiDelpiResponseProfile,
+    ) -> dict | None:
+        entity = profile.entity
+        effective_path = ChatApiDelpiResponseProfileService.presentation_path(
+            path=path,
+            entity=entity,
+        )
+
+        if entity == "product_billing":
+            billing_table = self._build_product_billing_table(
+                root,
+                effective_path,
+                entity=entity,
+            )
+
+            if billing_table:
+                return billing_table
+
+        if entity in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES:
+            items = root.get("items")
+
+            if isinstance(items, list) and items and isinstance(items[0], dict):
+                title = self._infer_items_title(items, effective_path)
+
+                if len(items) >= 2 or self._is_tabular_data(items[0]):
+                    return self._build_items_table(items, title=title, path=effective_path)
+
+        if entity == "product_pricing" and isinstance(root.get("prices"), list):
+            prices = root["prices"]
+
+            if prices and isinstance(prices[0], dict):
+                title = self._infer_items_title(prices, effective_path)
+                return self._build_items_table(prices, title=title, path=effective_path)
+
+        if entity in ChatApiDelpiResponseProfileService.SALE_ORDER_PRESENT_ENTITIES:
+            items = root.get("items")
+
+            if isinstance(items, list) and items:
+                return self._build_sale_orders_table(items, root)
+
+        if entity in ChatApiDelpiResponseProfileService.SQL_PRESENT_ENTITIES:
+            rows = self._collect_sql_resultset_rows(root.get("resultsets") or [])
+            title = self._sql_result_title(root, effective_path)
+
+            if rows:
+                return self._build_items_table(rows, title=title, path=effective_path)
+
+        if ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+            stock_value_table = self._build_stock_value_branch_table(
+                root,
+                effective_path,
+                entity=entity,
+            )
+
+            if stock_value_table:
+                return stock_value_table
+
+        if entity in ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES:
+            columns_table = self._build_system_columns_table(
+                root,
+                effective_path,
+                entity=entity,
+            )
+
+            if columns_table:
+                return columns_table
+
+        if entity in ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES:
+            items = root.get("items")
+
+            if isinstance(items, list) and items and isinstance(items[0], dict):
+                if "sale_number" in items[0] or "saleNumber" in items[0]:
+                    return self._build_lmp_table(items, root)
 
         return None
 
@@ -5435,7 +5756,19 @@ class ExternalActionResultPresenter:
             },
         }
 
-    def _looks_like_kpi_response(self, root: dict, path: str) -> bool:
+    def _looks_like_kpi_response(
+        self,
+        root: dict,
+        path: str,
+        *,
+        entity: str | None = None,
+    ) -> bool:
+        if entity == "product_billing":
+            return False
+
+        if entity and ChatApiDelpiResponseProfileService.is_kpi_entity(entity):
+            return True
+
         lowered = str(path or "").lower()
 
         if "/sales/billing" in lowered:
