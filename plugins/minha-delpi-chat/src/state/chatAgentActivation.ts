@@ -11,9 +11,13 @@ export type ChatAgentActivationInput = {
   activeAgentPageId?: string | null;
 };
 
-function normalizeAgentId(value: string | null | undefined): string | null {
+function normalizeId(value: string | null | undefined): string | null {
   const normalized = String(value ?? "").trim();
   return normalized || null;
+}
+
+function normalizeAgentId(value: string | null | undefined): string | null {
+  return normalizeId(value);
 }
 
 /** ID do agente que o usuário ativou explicitamente neste turno (composer ou rota). */
@@ -26,6 +30,36 @@ export function resolveExplicitChatAgentId(
   );
 }
 
+/** Agente efetivo do turno — overlay do composer prevalece quando difere da página. */
+export function resolveEffectiveChatAgentId(input: {
+  pageAgentId?: string | null;
+  contextAgentId?: string | null;
+}): string | null {
+  const pageAgentId = normalizeAgentId(input.pageAgentId);
+  const contextAgentId = normalizeAgentId(input.contextAgentId);
+
+  if (contextAgentId && pageAgentId && contextAgentId !== pageAgentId) {
+    return contextAgentId;
+  }
+
+  return pageAgentId ?? contextAgentId;
+}
+
+/** Projeto efetivo do turno — overlay do composer prevalece quando difere da página. */
+export function resolveEffectiveProjectId(input: {
+  pageProjectId?: string | null;
+  contextProjectId?: string | null;
+}): string | null {
+  const pageProjectId = normalizeId(input.pageProjectId);
+  const contextProjectId = normalizeId(input.contextProjectId);
+
+  if (contextProjectId && pageProjectId && contextProjectId !== pageProjectId) {
+    return contextProjectId;
+  }
+
+  return pageProjectId ?? contextProjectId;
+}
+
 export function isExplicitChatAgentActive(agentId: string | null | undefined): boolean {
   return Boolean(normalizeAgentId(agentId));
 }
@@ -35,6 +69,52 @@ export type ChatModePresentation = {
   label: string;
   subtitle: string;
 };
+
+export type ComposerContextBarItemKind = "agent" | "project";
+
+export type ComposerContextBarItem = {
+  kind: ComposerContextBarItemKind;
+  id: string;
+};
+
+export type ComposerContextBarInput = {
+  /** Agente da rota/página dedicada */
+  pageAgentId?: string | null;
+  /** Projeto da rota/página dedicada */
+  pageProjectId?: string | null;
+  /** Agente escolhido no menu + do composer */
+  contextAgentId?: string | null;
+  /** Projeto escolhido no menu + sem sair da página atual */
+  contextProjectId?: string | null;
+};
+
+export type ComposerContextBar = {
+  items: ComposerContextBarItem[];
+};
+
+/**
+ * Barra de contexto no composer: chips de agente e/ou projeto quando o usuário
+ * adiciona contexto explícito que difere da superfície atual.
+ */
+export function resolveComposerContextBar(
+  input: ComposerContextBarInput,
+): ComposerContextBar {
+  const pageAgentId = normalizeAgentId(input.pageAgentId);
+  const pageProjectId = normalizeId(input.pageProjectId);
+  const contextAgentId = normalizeAgentId(input.contextAgentId);
+  const contextProjectId = normalizeId(input.contextProjectId);
+  const items: ComposerContextBarItem[] = [];
+
+  if (contextAgentId && (!pageAgentId || contextAgentId !== pageAgentId)) {
+    items.push({ kind: "agent", id: contextAgentId });
+  }
+
+  if (contextProjectId && (!pageProjectId || contextProjectId !== pageProjectId)) {
+    items.push({ kind: "project", id: contextProjectId });
+  }
+
+  return { items };
+}
 
 type ChatModePresentationInput = {
   agentName?: string | null;

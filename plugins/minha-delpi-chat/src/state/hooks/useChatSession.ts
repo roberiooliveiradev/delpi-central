@@ -35,6 +35,11 @@ import {
 } from "../chatMessageDelivery";
 import { isIncompleteChatStreamError } from "../chatStreamConnection";
 import {
+  CHAT_TURN_STALL_TIMEOUT_MS,
+  resolveUnansweredTurnRecovery,
+  stallTimeoutMessage,
+} from "../chatTurnRecovery";
+import {
   applyStreamHandoffToMessages,
   handoffFromPlaybackPayload,
   streamContentAlreadyDisplayed,
@@ -137,13 +142,32 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const [pendingSessionIds, setPendingSessionIds] = useState<Set<string>>(() => new Set());
   const [cancellingSessionIds, setCancellingSessionIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
+  const [dismissedRecoveryMessageId, setDismissedRecoveryMessageId] = useState<string | null>(
+    null,
+  );
   const [branchSwitchingMessageId, setBranchSwitchingMessageId] = useState<string | null>(
     null,
   );
   const skipNextSessionLoadRef = useRef(false);
   const activeSessionIdRef = useRef<string | null>(null);
   const userDismissedBackgroundStreamRef = useRef<Set<string>>(new Set());
+  const inFlightSinceRef = useRef<Map<string, number>>(new Map());
+  const streamActivityAtRef = useRef<Map<string, number>>(new Map());
   const [dismissedStreamRevision, setDismissedStreamRevision] = useState(0);
+
+  const touchStreamActivity = useCallback((sessionId: string) => {
+    const now = Date.now();
+    streamActivityAtRef.current.set(sessionId, now);
+
+    if (!inFlightSinceRef.current.has(sessionId)) {
+      inFlightSinceRef.current.set(sessionId, now);
+    }
+  }, []);
+
+  const clearStreamActivityTracking = useCallback((sessionId: string) => {
+    inFlightSinceRef.current.delete(sessionId);
+    streamActivityAtRef.current.delete(sessionId);
+  }, []);
 
   const isSessionStreamDismissed = useCallback(
     (sessionId: string) => userDismissedBackgroundStreamRef.current.has(sessionId),
@@ -175,6 +199,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   }, []);
 
   const markSessionPending = useCallback((sessionId: string) => {
+    touchStreamActivity(sessionId);
+
     setPendingSessionIds((current) => {
       if (current.has(sessionId)) {
         return current;
@@ -184,7 +210,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       next.add(sessionId);
       return next;
     });
-  }, []);
+  }, [touchStreamActivity]);
 
   const unmarkSessionPending = useCallback((sessionId: string) => {
     setPendingSessionIds((current) => {
@@ -860,8 +886,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
   const finishSending = useCallback(
     (sessionId: string) => {
       unmarkSessionPending(sessionId);
+      clearStreamActivityTracking(sessionId);
     },
-    [unmarkSessionPending],
+    [clearStreamActivityTracking, unmarkSessionPending],
   );
 
   const dismissBackgroundStream = useCallback(
@@ -869,6 +896,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       userDismissedBackgroundStreamRef.current.add(sessionId);
       setDismissedStreamRevision((current) => current + 1);
       unmarkSessionPending(sessionId);
+      clearStreamActivityTracking(sessionId);
       cancelSessionStreaming(sessionId);
       clearSessionStreamUi(sessionId);
 
@@ -876,7 +904,38 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
         getAccessToken: options.getAccessToken,
       }).catch(() => undefined);
     },
-    [cancelSessionStreaming, options.getAccessToken, unmarkSessionPending],
+    [
+      cancelSessionStreaming,
+      clearStreamActivityTracking,
+      options.getAccessToken,
+      unmarkSessionPending,
+    ],
+  );
+
+  const recoverFromTurnStall = useCallback(
+    (sessionId: string) => {
+      if (!isSessionPending(sessionId) && !isSessionStreaming(sessionId)) {
+        return;
+      }
+
+      dismissBackgroundStream(sessionId);
+      resetStreamingUi();
+      setPendingUserMessage(null);
+      setMessages((current) =>
+        sanitizeMessagesAfterStreamDismiss(
+          current.filter((message) => !message.metadata?.optimistic),
+        ),
+      );
+      setError(stallTimeoutMessage());
+      void loadMessages(sessionId, { userDismissedBackground: true });
+    },
+    [
+      dismissBackgroundStream,
+      isSessionPending,
+      isSessionStreaming,
+      loadMessages,
+      resetStreamingUi,
+    ],
   );
 
   const cancelStreaming = useCallback(() => {
@@ -927,9 +986,13 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       const sessionId = sessionForMessage.id;
       const shouldIgnoreStreamEvent = () =>
         userDismissedBackgroundStreamRef.current.has(sessionId);
+      const markStreamProgress = () => {
+        touchStreamActivity(sessionId);
+      };
 
       return {
         onUserPersisted: (messageId: string) => {
+          markStreamProgress();
           if (shouldIgnoreStreamEvent()) {
             return;
           }
@@ -979,6 +1042,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           const snapshot = patchStreamStatus(sessionId, statusMessage);
 
           if (!isStreamForActiveSession(sessionId)) {
@@ -997,6 +1061,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           const cached = getSessionStreamUi(sessionId);
           const activityLog = upsertStreamingActivityEntry(cached.activityLog, entry);
           const status = resolveActivityStatusMessage(entry, cached.status);
@@ -1022,6 +1087,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           const status =
             sources.length > 0
               ? "Consultando a base de conhecimento..."
@@ -1044,6 +1110,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           const hasRichPresentation = shouldShowRichPresentation("", toolCalls);
           const status = hasRichPresentation
             ? "Finalizando apresentação..."
@@ -1071,6 +1138,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           const snapshot = patchStreamStatus(
             sessionId,
             "Gerando resposta em linguagem natural...",
@@ -1090,6 +1158,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           awaitingPlaybackRef.current = true;
           setStreamingStatus("Exibindo resposta...");
           setStreamingSources(payload.sources);
@@ -1121,6 +1190,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          markStreamProgress();
           setStreamingShowPresentation(true);
           setStreamingAnswer((current) => {
             const next = current + token;
@@ -1134,6 +1204,9 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           if (shouldIgnoreStreamEvent()) {
             return;
           }
+
+          markStreamProgress();
+          setDismissedRecoveryMessageId(null);
 
           try {
             await loadSessions();
@@ -1264,6 +1337,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
             return;
           }
 
+          clearStreamActivityTracking(sessionId);
+
           if (isIncompleteChatStreamError(streamError)) {
             markSessionPending(sessionId);
             ensureAwaitingStreamUi(sessionId);
@@ -1286,6 +1361,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       };
     },
     [
+      clearStreamActivityTracking,
       dismissBackgroundStream,
       ensureAwaitingStreamUi,
       finalizeAssistantTurn,
@@ -1297,6 +1373,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       options.onOpenCanvas,
       patchStreamStatus,
       resetStreamingUi,
+      touchStreamActivity,
     ],
   );
 
@@ -1348,6 +1425,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     let sessionForMessage = params.session ?? activeSession;
 
     setError(null);
+    setDismissedRecoveryMessageId(null);
     if (fromDraft) {
       setDraft("");
     }
@@ -1819,6 +1897,41 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     unmarkSessionPending,
   ]);
 
+  useEffect(() => {
+    const sessionId = activeSession?.id;
+
+    if (!sessionId || isSessionStreamDismissed(sessionId)) {
+      return;
+    }
+
+    if (!isSessionStreaming(sessionId) && !isSessionPending(sessionId)) {
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      const startedAt = inFlightSinceRef.current.get(sessionId);
+      const lastActivity =
+        streamActivityAtRef.current.get(sessionId) ?? startedAt ?? Date.now();
+
+      if (Date.now() - lastActivity < CHAT_TURN_STALL_TIMEOUT_MS) {
+        return;
+      }
+
+      recoverFromTurnStall(sessionId);
+    }, 5_000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [
+    activeSession?.id,
+    dismissedStreamRevision,
+    isSessionPending,
+    isSessionStreamDismissed,
+    isSessionStreaming,
+    recoverFromTurnStall,
+  ]);
+
   const visibleMessages = useMemo(() => {
     let list = messages;
 
@@ -1858,6 +1971,33 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       isSessionPending(activeSession.id) ||
       isPlaybackActive ||
       isBackgroundAwaitingResponse);
+
+  const unansweredTurnRecovery = useMemo(() => {
+    if (!activeSession || isComposerBusy) {
+      return null;
+    }
+
+    return resolveUnansweredTurnRecovery(messages, {
+      dismissedMessageId: dismissedRecoveryMessageId,
+    });
+  }, [
+    activeSession,
+    dismissedRecoveryMessageId,
+    isComposerBusy,
+    messages,
+  ]);
+
+  const dismissUnansweredTurnRecovery = useCallback(() => {
+    const recovery = resolveUnansweredTurnRecovery(messages, {
+      dismissedMessageId: dismissedRecoveryMessageId,
+    });
+
+    if (recovery?.messageId) {
+      setDismissedRecoveryMessageId(recovery.messageId);
+    }
+
+    setError(null);
+  }, [dismissedRecoveryMessageId, messages]);
 
   const switchMessageBranch = useCallback(
     async (anchorUserMessageId: string, sourceUserMessageId?: string) => {
@@ -1991,6 +2131,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     isSessionProcessing,
     error,
     clearError,
+    unansweredTurnRecovery,
+    dismissUnansweredTurnRecovery,
     setDraft,
     sendMessage,
     cancelStreaming,

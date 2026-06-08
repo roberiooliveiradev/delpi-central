@@ -7,6 +7,7 @@ import {
   sessionAwaitingAssistantResponse,
   shouldAppendPendingUserMessage,
 } from "./chatMessageDelivery";
+import { resolveUnansweredTurnRecovery } from "./chatTurnRecovery";
 
 function userMessage(
   id: string,
@@ -143,5 +144,39 @@ describe("sessionAwaitingAssistantResponse", () => {
         userMessage("user-1", "360", "cancelled"),
       ]),
     ).toBe(false);
+  });
+});
+
+describe("resolveUnansweredTurnRecovery", () => {
+  it("oferece saída quando a última mensagem do usuário ficou sem resposta", () => {
+    expect(
+      resolveUnansweredTurnRecovery([
+        userMessage("user-1", "me fale do produto 10080023", "cancelled"),
+      ]),
+    ).toEqual({
+      messageId: "user-1",
+      retryContent: "me fale do produto 10080023",
+      title: "Não consegui concluir a resposta.",
+      message:
+        "A resposta foi interrompida antes de terminar. Você pode tentar enviar de novo.",
+      reason: "cancelled",
+    });
+  });
+
+  it("não exibe recuperação enquanto ainda aguarda resposta", () => {
+    expect(
+      resolveUnansweredTurnRecovery([
+        userMessage("user-1", "oi", "processing"),
+      ]),
+    ).toBeNull();
+  });
+
+  it("respeita mensagem dispensada pelo usuário", () => {
+    expect(
+      resolveUnansweredTurnRecovery(
+        [userMessage("user-1", "oi", "cancelled")],
+        { dismissedMessageId: "user-1" },
+      ),
+    ).toBeNull();
   });
 });

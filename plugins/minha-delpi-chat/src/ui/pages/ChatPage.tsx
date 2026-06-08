@@ -34,7 +34,9 @@ import {
 import {
   isExplicitChatAgentActive,
   resolveChatModePresentation,
-  resolveExplicitChatAgentId,
+  resolveComposerContextBar,
+  resolveEffectiveChatAgentId,
+  resolveEffectiveProjectId,
 } from "../../state/chatAgentActivation";
 import {
   buildActiveContextSummary,
@@ -185,6 +187,13 @@ export function ChatPage({
   const [canOpenAdmin, setCanOpenAdmin] = useState(false);
 
   const [contextAgentId, setContextAgentId] = useState<string | null>(null);
+  const [contextProjectId, setContextProjectId] = useState<string | null>(null);
+
+  function clearComposerOverlayContext() {
+    setContextAgentId(null);
+    setContextProjectId(null);
+  }
+
   const [currentView, setCurrentView] = useState<ChatSidebarView>(() =>
     initialRoute ? getChatSidebarViewForRoute(initialRoute) : "chat",
   );
@@ -194,9 +203,13 @@ export function ChatPage({
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
   const [isLoadingProjectSources, setIsLoadingProjectSources] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const requestedAgentId = resolveExplicitChatAgentId({
-    activeAgentPageId,
+  const requestedAgentId = resolveEffectiveChatAgentId({
+    pageAgentId: activeAgentPageId,
     contextAgentId,
+  });
+  const requestedProjectId = resolveEffectiveProjectId({
+    pageProjectId: selectedProjectId,
+    contextProjectId,
   });
   const [canvasDocument, setCanvasDocument] = useState<ChatCanvasDocument | null>(null);
   const [helpPanelOpen, setHelpPanelOpen] = useState(false);
@@ -297,6 +310,8 @@ export function ChatPage({
     isSessionProcessing,
     error,
     clearError,
+    unansweredTurnRecovery,
+    dismissUnansweredTurnRecovery,
     setDraft,
     sendMessage,
     cancelStreaming,
@@ -316,7 +331,7 @@ export function ChatPage({
     continueFromMessage,
   } = useChatSession({
     getAccessToken,
-    projectId: selectedProjectId,
+    projectId: requestedProjectId,
     agentId: requestedAgentId,
     getResponseMode,
     onSessionActivated: (sessionId, context) => {
@@ -768,6 +783,12 @@ export function ChatPage({
   const conversationAgentId = activeSession?.agent_id ?? activeAgentPageId;
   const conversationAgent = agents.find((agent) => agent.id === conversationAgentId);
   const contextAgent = agents.find((agent) => agent.id === contextAgentId);
+  const composerContextBar = resolveComposerContextBar({
+    pageAgentId: activeAgentPageId,
+    pageProjectId: selectedProject?.id ?? null,
+    contextAgentId,
+    contextProjectId,
+  });
   const chatModePresentation = resolveChatModePresentation({
     explicitAgentActive,
     agentName: activeAgent?.name ?? null,
@@ -879,7 +900,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(null);
           setActiveAgentPageId(null);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -903,7 +924,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(session.project_id ?? null);
           setActiveAgentPageId(session.agent_id ?? null);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           selectSession(session);
           closeMobileSidebar();
@@ -971,7 +992,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(routeProject.id);
           setActiveAgentPageId(null);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1003,7 +1024,7 @@ export function ChatPage({
             setComposerAttachments([]);
             setSelectedProjectId(session.project_id ?? null);
             setActiveAgentPageId(routeAgent.id);
-            setContextAgentId(null);
+            clearComposerOverlayContext();
             setCurrentView("chat");
             selectSession(session);
             closeMobileSidebar();
@@ -1026,7 +1047,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(null);
           setActiveAgentPageId(routeAgent.id);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1059,7 +1080,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(routeProject.id);
           setActiveAgentPageId(null);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1091,7 +1112,7 @@ export function ChatPage({
           setComposerAttachments([]);
           setSelectedProjectId(null);
           setActiveAgentPageId(routeAgent.id);
-          setContextAgentId(null);
+          clearComposerOverlayContext();
           setCurrentView("chat");
           void startSession();
           closeMobileSidebar();
@@ -1432,7 +1453,7 @@ export function ChatPage({
     setComposerAttachments([]);
     setSelectedProjectId(session.project_id ?? null);
     setActiveAgentPageId(session.agent_id ?? null);
-    setContextAgentId(null);
+    clearComposerOverlayContext();
     setCurrentView("chat");
     selectSession(session);
     navigateChatHref(buildChatSessionHrefForSession(session));
@@ -1887,24 +1908,22 @@ export function ChatPage({
   }
 
   async function handleSelectContextProject(projectId: string | null) {
-    setSelectedProjectId(projectId);
-    setActiveAgentPageId(null);
-    setContextAgentId(null);
+    setContextProjectId(projectId);
   }
 
   const composerContextProps = {
     agents,
     projects,
     selectedAgentId: contextAgentId,
-    selectedProjectId,
-    chatMode: explicitAgentActive ? ("agent" as const) : ("common" as const),
+    selectedProjectId: contextProjectId,
+    contextBarItems: composerContextBar.items,
     onSelectAgent: handleSelectContextAgent,
     onOpenAgentPage: (agentId: string) => {
       const agent = agents.find((item) => item.id === agentId);
 
       setCanvasDocument(null);
       setSelectedProjectId(null);
-      setContextAgentId(null);
+      clearComposerOverlayContext();
       setActiveAgentPageId(agentId);
       setCurrentView("chat");
 
@@ -1915,16 +1934,6 @@ export function ChatPage({
       void startSession();
     },
     onSelectProject: handleSelectContextProject,
-  };
-
-  const agentPageComposerContextProps = {
-    agents,
-    projects: [],
-    selectedAgentId: activeAgentPageId,
-    selectedProjectId: null,
-    onSelectAgent: () => undefined,
-    onSelectProject: () => undefined,
-    chatMode: "agent" as const,
   };
 
   const composerAttachmentProps = {
@@ -2107,7 +2116,7 @@ export function ChatPage({
                 clearError();
                 setCanvasDocument(null);
                 setActiveAgentPageId(null);
-                setContextAgentId(null);
+                clearComposerOverlayContext();
                 setSelectedProjectId(projectId);
                 setCurrentView("chat");
                 navigateChatHref(buildChatProjectHref(projectId));
@@ -2148,7 +2157,7 @@ export function ChatPage({
                 setSelectedProjectId(null);
                 setAgentEditRequest(null);
                 setActiveAgentPageId(agentId);
-                setContextAgentId(null);
+                clearComposerOverlayContext();
                 setCurrentView("chat");
 
                 if (agentId) {
@@ -2244,46 +2253,52 @@ export function ChatPage({
 
               if (deleted) {
                 setSelectedProjectId(null);
-                setContextAgentId(null);
+                clearComposerOverlayContext();
                 await handleStartSession();
               }
             }}
             onManageAgents={canManageAgents ? openAgentsDirectory : undefined}
             onClearAgent={() => {
               setActiveAgentPageId(null);
-              setContextAgentId(null);
+              clearComposerOverlayContext();
               navigateChatHref(buildChatHref({ kind: "home" }));
               void startSession();
             }}
           />
 
-          {error || workspaceError ? (
+          {error || workspaceError || unansweredTurnRecovery ? (
             <ChatInlineError
               title={
                 error?.includes("diálogo dos atalhos") ||
                 error?.includes("{{")
                   ? "Complete os campos antes de enviar"
-                  : undefined
+                  : unansweredTurnRecovery?.title
               }
               message={
                 error ||
                 workspaceError ||
+                unansweredTurnRecovery?.message ||
                 "Tente novamente em alguns instantes."
               }
-              details={error || workspaceError}
+              details={error || workspaceError || undefined}
               onRetry={() => {
-                if (draft.trim()) {
-                  void handleSubmitMessage();
+                const retryContent =
+                  unansweredTurnRecovery?.retryContent ||
+                  draft.trim() ||
+                  lastSentUserText.trim();
+
+                if (!retryContent) {
                   return;
                 }
 
-                if (lastSentUserText.trim()) {
-                  void promptAndSendMessage({ content: lastSentUserText.trim() });
-                }
+                clearError();
+                dismissUnansweredTurnRecovery();
+                void promptAndSendMessage({ content: retryContent });
               }}
               onDismiss={() => {
                 clearWorkspaceError();
                 clearError();
+                dismissUnansweredTurnRecovery();
               }}
             />
           ) : null}
@@ -2346,7 +2361,7 @@ export function ChatPage({
 
                     setCanvasDocument(null);
                     setSelectedProjectId(null);
-                    setContextAgentId(null);
+                    clearComposerOverlayContext();
                     setActiveAgentPageId(agentId);
                     setCurrentView("chat");
 
@@ -2368,7 +2383,7 @@ export function ChatPage({
 
                     if (deleted) {
                       setSelectedProjectId(null);
-                      setContextAgentId(null);
+                      clearComposerOverlayContext();
                       await handleStartSession();
                     }
 
@@ -2376,7 +2391,7 @@ export function ChatPage({
                   }}
                   onClearProject={() => {
                     setSelectedProjectId(null);
-                    setContextAgentId(null);
+                    clearComposerOverlayContext();
                     navigateChatHref(buildChatHref({ kind: "home" }));
                     void handleStartSession();
                   }}
@@ -2466,7 +2481,7 @@ export function ChatPage({
                     {...composerPresentationFormatProps}
                     {...composerPresentationFormatProps}
                   {...composerResponseModeProps}
-                    {...(activeAgentPage ? agentPageComposerContextProps : composerContextProps)}
+                    {...composerContextProps}
                     plusMenuOpen={tourPlusMenuOpen ?? undefined}
                     onPlusMenuOpenChange={setTourPlusMenuOpen}
                     onChange={setDraft}

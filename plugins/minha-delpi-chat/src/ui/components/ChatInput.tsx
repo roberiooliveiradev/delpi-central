@@ -30,6 +30,7 @@ import {
 import { CHAT_TEXT_HOME_STARTERS } from "../chatHomeStarters";
 import { CHAT_TEXT_TEMPLATES } from "../chatTextTemplates";
 import { useAutoGrowTextarea } from "../hooks/useAutoGrowTextarea";
+import type { ComposerContextBarItem } from "../../state/chatAgentActivation";
 
 import "./ChatInput.css";
 
@@ -75,8 +76,8 @@ type ChatInputProps = {
   presentationFormat?: ChatPresentationFormatId;
   onPresentationFormatChange?: (format: ChatPresentationFormatId) => void;
   showPresentationFormatSelector?: boolean;
-  /** Indica visualmente chat comum vs agente ativo (regra centralizada em chatAgentActivation). */
-  chatMode?: "common" | "agent";
+  /** Chips de contexto no composer — regra em resolveComposerContextBar (chatAgentActivation). */
+  contextBarItems?: ComposerContextBarItem[];
 };
 
 function formatFileSize(size: number): string {
@@ -122,7 +123,7 @@ export function ChatInput({
   presentationFormat = "auto",
   onPresentationFormatChange,
   showPresentationFormatSelector = true,
-  chatMode = "common",
+  contextBarItems = [],
 }: ChatInputProps) {
   const [internalMenuOpen, setInternalMenuOpen] = useState(false);
   const isPlusMenuControlled = plusMenuOpen !== undefined;
@@ -189,6 +190,7 @@ export function ChatInput({
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
   const selectedProject = projects.find((project) => project.id === selectedProjectId);
+  const hasContextBar = contextBarItems.length > 0;
   const hasAttachments = attachments.length > 0;
 
   const plusControl = (
@@ -258,7 +260,7 @@ export function ChatInput({
           ) : null}
 
           <div className="mdc-chat-input__menu-section" data-tour="composer-plus-menu-agents">
-            <strong>Usar agente neste contexto</strong>
+            <strong>Usar app ou agente neste contexto</strong>
 
             {selectedAgent ? (
               <button
@@ -402,36 +404,68 @@ export function ChatInput({
       <div
         className={[
           "mdc-chat-input__box",
-          selectedAgent ? "mdc-chat-input__box--with-agent" : "",
+          hasContextBar ? "mdc-chat-input__box--with-agent" : "",
           hasAttachments ? "mdc-chat-input__box--with-attachments" : "",
           showResponseMode ? "mdc-chat-input__box--with-response-mode" : "",
         ]
           .filter(Boolean)
           .join(" ")}
       >
-        {selectedAgent ? (
-          <div className="mdc-chat-input__agent-context">
-            <span className="mdc-chat-input__agent-avatar">
-              <Bot size={15} aria-hidden="true" />
-            </span>
+        {hasContextBar ? (
+          <div className="mdc-chat-input__context-bar">
+            {contextBarItems.map((item) => {
+              if (item.kind === "agent") {
+                const agent = agents.find((entry) => entry.id === item.id);
 
-            <strong>{selectedAgent.name}</strong>
+                if (!agent) {
+                  return null;
+                }
 
-            <button
-              type="button"
-              onClick={() => onSelectAgent?.(null)}
-              aria-label="Remover agente do contexto"
-              title="Remover agente do contexto"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          </div>
-        ) : chatMode === "common" ? (
-          <div className="mdc-chat-input__agent-context mdc-chat-input__agent-context--common">
-            <strong>Chat comum</strong>
-            <span className="mdc-chat-input__mode-hint">
-              Use o menu + para ativar um agente
-            </span>
+                return (
+                  <div key={`agent-${item.id}`} className="mdc-chat-input__agent-context">
+                    <span className="mdc-chat-input__agent-avatar">
+                      <Bot size={15} aria-hidden="true" />
+                    </span>
+
+                    <strong>{agent.name}</strong>
+
+                    <button
+                      type="button"
+                      onClick={() => onSelectAgent?.(null)}
+                      aria-label={`Remover ${agent.name} do contexto`}
+                      title={`Remover ${agent.name} do contexto`}
+                    >
+                      <X size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                );
+              }
+
+              const project = projects.find((entry) => entry.id === item.id);
+
+              if (!project) {
+                return null;
+              }
+
+              return (
+                <div key={`project-${item.id}`} className="mdc-chat-input__agent-context">
+                  <span className="mdc-chat-input__agent-avatar">
+                    <Folder size={15} aria-hidden="true" />
+                  </span>
+
+                  <strong>{project.name}</strong>
+
+                  <button
+                    type="button"
+                    onClick={() => onSelectProject?.(null)}
+                    aria-label={`Remover ${project.name} do contexto`}
+                    title={`Remover ${project.name} do contexto`}
+                  >
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         ) : null}
 

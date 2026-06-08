@@ -1,0 +1,9 @@
+{
+  "title": "Não consegui concluir a resposta.",
+  "messages": {
+    "cancelled": "A resposta foi interrompida antes de terminar. Você pode tentar enviar de novo.",
+    "timeout": "A resposta demorou mais que o esperado. Tente novamente ou reformule a pergunta.",
+    "orphaned": "Não recebi resposta para esta pergunta. Tente de novo ou ative um agente com acesso aos dados."
+  },
+  "retryLabel": "Tentar novamente"
+}

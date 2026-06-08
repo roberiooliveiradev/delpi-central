@@ -440,9 +440,23 @@
   }
 }
 
-/* Indicador do agente usado no contexto do chat/projeto */
+/* Indicadores de agente/projeto usados no contexto do composer */
 .mdc-chat-input__box--with-agent {
   padding-top: 0.45rem;
+}
+
+.mdc-chat-input__context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  width: 100%;
+  margin: -0.08rem -0.25rem 0.25rem;
+}
+
+.mdc-chat-input__context-bar .mdc-chat-input__agent-context {
+  flex: 1 1 10rem;
+  width: auto;
+  margin: 0;
 }
 
 .mdc-chat-input__agent-context {
