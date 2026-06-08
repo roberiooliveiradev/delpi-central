@@ -266,10 +266,3 @@ def delete_artifact(artifact_id: str):
 
     return "", 204
 
-
-_PRIVACY_NOTICE = (
-    "Suas mensagens são armazenadas por até 1 ano. "
-    "Evite inserir dados pessoais sensíveis (CPF, endereços, etc.)."
-)
-
-

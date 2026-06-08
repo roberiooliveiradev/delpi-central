@@ -414,3 +414,9 @@ def _stream_chat_response(session_id: str, request_dto: SendChatMessageRequest):
     response.headers["X-Accel-Buffering"] = "no"
 
     return response
+
+
+_PRIVACY_NOTICE = (
+    "Suas mensagens são armazenadas por até 1 ano. "
+    "Evite inserir dados pessoais sensíveis (CPF, endereços, etc.)."
+)

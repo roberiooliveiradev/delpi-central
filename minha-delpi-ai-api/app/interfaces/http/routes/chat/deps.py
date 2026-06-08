@@ -122,6 +122,7 @@ from app.infrastructure.external_actions.external_action_test_executor import (
 from app.interfaces.http.auth_decorators import require_permission
 from app.interfaces.http.rate_limit_decorators import rate_limit
 from app.interfaces.http.routes.chat.shared import (
+    _PRIVACY_NOTICE,
     _build_send_chat_message_request,
     _can_manage_agent_configuration,
     _can_use_admin_debug,
@@ -135,3 +136,6 @@ from app.interfaces.http.routes.chat.shared import (
     chat_forbidden,
 )
 from app.interfaces.http.utils.errors import bad_request, conflict, forbidden
+
+# `from deps import *` ignora nomes com `_` salvo se estiverem em `__all__`.
+__all__ = [name for name in globals() if not name.startswith("__")]

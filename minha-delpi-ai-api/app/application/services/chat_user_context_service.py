@@ -303,19 +303,19 @@ class ChatUserContextService:
         if any(t in normalized for t in ("quais apps", "meus apps", "meus aplicativos", "posso acessar", "tenho acesso", "acesso a quais")):
             if app_names:
                 lines = [
-                    cls._content(
+                    self._content(
                         "headings", "appsAccess", count=str(len(app_names))
                     )
                 ]
                 for app_name in app_names:
                     lines.append(f"- {app_name}")
                 return "\n".join(lines)
-            return cls._content("empty", "noApps")
+            return self._content("empty", "noApps")
 
         if any(t in normalized for t in ("meu papel", "meus papéis", "meus papeis")):
             if profile_roles:
                 lines = [
-                    cls._content(
+                    self._content(
                         "headings", "rolesList", count=str(len(profile_roles))
                     )
                 ]
@@ -326,7 +326,7 @@ class ChatUserContextService:
                     perm_count = len(role.get("permissions") or [])
                     app_count = len(role.get("apps") or [])
                     lines.append(
-                        cls._content(
+                        self._content(
                             "lines",
                             "roleEntry",
                             name=name,
@@ -335,67 +335,67 @@ class ChatUserContextService:
                             app_count=str(app_count),
                         )
                     )
-                lines.append(cls._content("lines", "roleDetailHint"))
+                lines.append(self._content("lines", "roleDetailHint"))
                 return "\n".join(lines)
             if roles:
                 lines = [
-                    cls._content(
+                    self._content(
                         "headings", "rolesListSimple", count=str(len(roles))
                     )
                 ]
                 for role in roles:
                     lines.append(
-                        cls._content("lines", "roleEntrySimple", role=role)
+                        self._content("lines", "roleEntrySimple", role=role)
                     )
                 return "\n".join(lines)
-            return cls._content("empty", "noRoles")
+            return self._content("empty", "noRoles")
 
         if any(t in normalized for t in ("minha permiss", "minhas permiss")):
             if permissions:
                 lines = [
-                    cls._content(
+                    self._content(
                         "headings", "permissionsList", count=str(len(permissions))
                     )
                 ]
                 for perm in permissions[:40]:
-                    lines.append(cls._content("lines", "permissionEntry", perm=perm))
+                    lines.append(self._content("lines", "permissionEntry", perm=perm))
                 if len(permissions) > 40:
                     lines.append(
-                        cls._content(
+                        self._content(
                             "lines",
                             "permissionsMore",
                             count=str(len(permissions) - 40),
                         )
                     )
                 return "\n".join(lines)
-            return cls._content("empty", "noPermissions")
+            return self._content("empty", "noPermissions")
 
         if any(t in normalized for t in ("meu grupo", "meus grupos")):
             if groups:
                 lines = [
-                    cls._content("headings", "groupsList", count=str(len(groups)))
+                    self._content("headings", "groupsList", count=str(len(groups)))
                 ]
                 for group in groups:
-                    lines.append(cls._content("lines", "groupEntry", group=group))
+                    lines.append(self._content("lines", "groupEntry", group=group))
                 return "\n".join(lines)
-            return cls._content("empty", "noGroups")
+            return self._content("empty", "noGroups")
 
-        parts = [cls._content("headings", "profileTitle") + "\n"]
-        parts.append(cls._content("lines", "profileName", name=name))
-        parts.append(cls._content("lines", "profileEmail", email=email))
+        parts = [self._content("headings", "profileTitle") + "\n"]
+        parts.append(self._content("lines", "profileName", name=name))
+        parts.append(self._content("lines", "profileEmail", email=email))
         if is_superadmin:
-            parts.append(cls._content("lines", "profileSuperadmin"))
+            parts.append(self._content("lines", "profileSuperadmin"))
         if roles:
             parts.append(
-                cls._content("lines", "profileRoles", roles=", ".join(roles))
+                self._content("lines", "profileRoles", roles=", ".join(roles))
             )
         if groups:
             parts.append(
-                cls._content("lines", "profileGroups", groups=", ".join(groups))
+                self._content("lines", "profileGroups", groups=", ".join(groups))
             )
         if permissions:
             parts.append(
-                cls._content(
+                self._content(
                     "lines",
                     "profilePermissions",
                     count=str(len(permissions)),
@@ -404,7 +404,7 @@ class ChatUserContextService:
             )
             if len(permissions) > 15:
                 parts.append(
-                    cls._content(
+                    self._content(
                         "lines",
                         "profilePermissionsMore",
                         count=str(len(permissions) - 15),
@@ -412,7 +412,7 @@ class ChatUserContextService:
                 )
         if app_names:
             parts.append(
-                cls._content(
+                self._content(
                     "lines",
                     "profileApps",
                     count=str(len(app_names)),
