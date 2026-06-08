@@ -16,8 +16,8 @@ from si_app.infrastructure.gateways.delpi_financial_gateway import (
 class FinancialBranchSnapshot:
     branch: str
     rol: float
-    ebitda_value: float
-    fixed_cost_value: float
+    ebitda_value: float | None
+    fixed_cost_value: float | None
     pmr_days: float | None
     ebitda_over_rol_pct: float | None
     fixed_cost_over_rol_pct: float | None
@@ -185,8 +185,8 @@ class FinancialMetricsSnapshotService:
         return FinancialBranchSnapshot(
             branch=FINANCIAL_CONSOLIDATED_BRANCH_KEY,
             rol=round(rol, 2),
-            ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else 0.0,
-            fixed_cost_value=round(fixed_pct, 2) if fixed_pct is not None else 0.0,
+            ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else None,
+            fixed_cost_value=round(fixed_pct, 2) if fixed_pct is not None else None,
             pmr_days=round(pmr_days, 2) if pmr_days is not None else None,
             ebitda_over_rol_pct=ebitda_pct,
             fixed_cost_over_rol_pct=fixed_pct,
@@ -226,8 +226,8 @@ class FinancialMetricsSnapshotService:
         return FinancialBranchSnapshot(
             branch=branch_code,
             rol=round(rol, 2),
-            ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else 0.0,
-            fixed_cost_value=round(fixed_pct, 2) if fixed_pct is not None else 0.0,
+            ebitda_value=round(ebitda_pct, 2) if ebitda_pct is not None else None,
+            fixed_cost_value=round(fixed_pct, 2) if fixed_pct is not None else None,
             pmr_days=round(pmr_days, 2) if pmr_days is not None else None,
             ebitda_over_rol_pct=ebitda_pct,
             fixed_cost_over_rol_pct=fixed_pct,

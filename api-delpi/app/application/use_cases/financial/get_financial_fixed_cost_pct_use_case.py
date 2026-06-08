@@ -32,9 +32,9 @@ class GetFinancialFixedCostPctUseCase:
                     "branch": request.branch,
                     "start_date": request.start_date,
                     "end_date": request.end_date,
-                    "fixed_cost_value": 0.0,
-                    "rol_with_ipi": 0.0,
-                    "fixed_cost_over_rol_pct": 0.0,
+                    "fixed_cost_value": None,
+                    "rol_with_ipi": None,
+                    "fixed_cost_over_rol_pct": None,
                 }
 
             return {
@@ -64,8 +64,7 @@ class GetFinancialFixedCostPctUseCase:
         consolidated_value = (
             consolidated_snapshot.fixed_cost_over_rol_pct
             if consolidated_snapshot
-            and consolidated_snapshot.fixed_cost_over_rol_pct is not None
-            else 0.0
+            else None
         )
 
         return {

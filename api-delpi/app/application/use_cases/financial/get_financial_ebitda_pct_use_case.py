@@ -32,9 +32,9 @@ class GetFinancialEbitdaPctUseCase:
                     "branch": request.branch,
                     "start_date": request.start_date,
                     "end_date": request.end_date,
-                    "ebitda_value": 0.0,
-                    "rol_with_ipi": 0.0,
-                    "ebitda_over_rol_pct": 0.0,
+                    "ebitda_value": None,
+                    "rol_with_ipi": None,
+                    "ebitda_over_rol_pct": None,
                 }
 
             return {
@@ -63,8 +63,8 @@ class GetFinancialEbitdaPctUseCase:
         )
         consolidated_value = (
             consolidated_snapshot.ebitda_over_rol_pct
-            if consolidated_snapshot and consolidated_snapshot.ebitda_over_rol_pct is not None
-            else 0.0
+            if consolidated_snapshot
+            else None
         )
 
         return {

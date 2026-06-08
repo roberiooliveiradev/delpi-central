@@ -63,11 +63,11 @@ def test_build_snapshot_uses_api_pct_without_rol_division() -> None:
 def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
     service = _build_service(
         ebitda={
-            "ebitda_over_rol_pct": 0.0,
-            "branches": [{"branch": "01", "ebitda_over_rol_pct": 0.0}],
+            "ebitda_over_rol_pct": None,
+            "branches": [{"branch": "01", "ebitda_over_rol_pct": None}],
         },
         fixed_cost={
-            "fixed_cost_over_rol_pct": 0.0,
+            "fixed_cost_over_rol_pct": None,
             "branches": [],
         },
         pmr={"pmr_days": None, "branches": []},
@@ -80,9 +80,16 @@ def test_build_snapshot_returns_none_when_branch_has_no_sheet_rows() -> None:
         branch=None,
     )
 
+    consolidated = next(
+        item
+        for item in snapshot.branches
+        if item.branch == FINANCIAL_CONSOLIDATED_BRANCH_KEY
+    )
     branch_01 = next(item for item in snapshot.branches if item.branch == "01")
 
-    assert branch_01.ebitda_over_rol_pct == 0.0
+    assert consolidated.ebitda_over_rol_pct is None
+    assert consolidated.fixed_cost_over_rol_pct is None
+    assert branch_01.ebitda_over_rol_pct is None
     assert branch_01.fixed_cost_over_rol_pct is None
 
 
