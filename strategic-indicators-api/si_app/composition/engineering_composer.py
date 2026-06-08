@@ -4,9 +4,6 @@ from si_app.application.services.engineering.engineering_metrics_snapshot_servic
     EngineeringMetricsSnapshotService,
 )
 from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway
-from si_app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
-    TransformometroTransformaMaisGateway,
-)
 from delpi_api_client import DelpiApiClient
 
 _delpi_client: DelpiApiClient | None = None
@@ -22,7 +19,6 @@ def _get_delpi_client() -> DelpiApiClient:
 def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotService:
     return EngineeringMetricsSnapshotService(
         engineering_gateway=DelpiEngineeringGateway(_get_delpi_client()),
-        transforma_mais_gateway=TransformometroTransformaMaisGateway(),
     )
 
 

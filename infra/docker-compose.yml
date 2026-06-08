@@ -765,7 +765,6 @@ services:
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
       PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
-      TRANSFORMOMETRO_API_BASE_URL: http://transformometro-api:8000
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       DELPI_API_URL: http://delpi-api-delpi:8000
       DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-60}
@@ -773,7 +772,6 @@ services:
     depends_on:
       - keycloak
       - postgres-plugins
-      - transformometro-api
 
     networks:
       - delpi-network

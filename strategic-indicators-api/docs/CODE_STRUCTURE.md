@@ -29,7 +29,6 @@ domain/
 
 infrastructure/
   gateways/delpi_*_gateway.py             # Adapters HTTP para api-delpi
-  gateways/transformometro_*_gateway.py   # Adapter HTTP para transformometro-api
   http/auth_header.py                     # bearer_authorization_from_context()
   persistence/plugins/repositories/strategic_indicators/  # Postgres
   providers/strategic_indicators/         # Coletores Sheets/RH + medições
@@ -86,7 +85,6 @@ Pacote monorepo `shared/` (instalado com `pip install -e ./shared[fastapi]`):
 
 - `delpi_auth` — JWT, `@require_permission`
 - `delpi_api_client` — HTTP client para api-delpi (`DelpiApiClient`)
-- `transformometro_client` — HTTP client para transformometro-api
 
 ## Legado removido (fase 1 — jun/2026)
 

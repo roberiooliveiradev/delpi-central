@@ -9,9 +9,6 @@ from si_app.application.use_cases.strategic_indicators.period_resolution import 
     ResolvedPeriod,
 )
 from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway
-from si_app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
-    TransformometroTransformaMaisGateway,
-)
 from si_app.shared.branch_filter import effective_query_branch
 
 
@@ -29,10 +26,8 @@ class EngineeringMetricsSnapshotService:
         self,
         *,
         engineering_gateway: DelpiEngineeringGateway,
-        transforma_mais_gateway: TransformometroTransformaMaisGateway,
     ) -> None:
         self._engineering_gateway = engineering_gateway
-        self._transforma_mais_gateway = transforma_mais_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             EngineeringMetricsSnapshot,
@@ -98,15 +93,13 @@ class EngineeringMetricsSnapshotService:
             date_start=start_date,
             date_end=end_date,
             branch=branch,
-            include_avg_lead_time=False,
-            include_qtd_pi=False,
         )
 
         lmp_projects_on_time_pct = self._to_float(
             lmp_summary.get("percent_dentro_prazo")
         )
 
-        transforma_summary = self._transforma_mais_gateway.get_process_summary(
+        transforma_summary = self._engineering_gateway.get_transforma_mais_summary(
             filial_id=branch,
             start_date=start_date,
             end_date=end_date,

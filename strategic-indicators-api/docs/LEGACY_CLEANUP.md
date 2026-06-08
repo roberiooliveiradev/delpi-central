@@ -22,7 +22,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 |------|-------------------|--------|
 | Repositórios TOTVS | `si_app/infrastructure/persistence/totvs/**` | Substituídos por gateways HTTP; composers não injetam mais |
 | Pool TOTVS / pyodbc | `si_app/infrastructure/providers/totvs/**` | Só usado pelos repos TOTVS |
-| Sheets Transforma+ legado | `si_app/infrastructure/persistence/google_sheets/transforma_mais/**` | Engenharia usa `TransformometroTransformaMaisGateway` |
+| Sheets Transforma+ legado | `si_app/infrastructure/persistence/google_sheets/transforma_mais/**` | Engenharia via `GET /engineering/transforma-mais/*` (api-delpi) |
 | Port morto | `si_app/domain/ports/transforma_mais/process_query_port.py` | Só referenciado pelo `ProcessRepository` removido |
 | Factories HTTP antigas | `build_get_*` não importados em `financial_composer`, `production_composer`, `quality_composer` | Restos das rotas departamentais da api-delpi |
 | Dependência | `pyodbc` em `requirements.txt` | Só TOTVS direto no SI |
@@ -124,6 +124,22 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 **Mantido:** `si_app/application/dto/strategic_indicators/`, `si_app/domain/ports/strategic_indicators/`, `si_app/application/use_cases/strategic_indicators/`, `period_resolution`.
 
 **api-delpi:** rotas e shapes de resposta **inalterados** (consumidores externos intactos).
+
+### Fase 8 — Engenharia só via api-delpi HTTP (concluída jun/2026)
+
+**Objetivo:** SI não calcula LMP localmente nem chama transformometro-api direto; engenharia consome apenas rotas `/engineering/*` da api-delpi.
+
+| Removido no SI | Substituído por |
+|----------------|-----------------|
+| `lmp_business_rules.py` (~250 LOC) | `GET /engineering/lmps/dashboard/summary` |
+| `get_lmp_dashboard_rows` + fallback `_from_rows` | `DelpiEngineeringGateway.get_lmp_dashboard_summary` |
+| `TransformometroTransformaMaisGateway` | `GET /engineering/transforma-mais/processes/summary` |
+| `services/lmp/*` (caches legados) | `engineering/engineering_lmp_summary_cache.py` |
+| `TRANSFORMOMETRO_API_BASE_URL` no compose do SI | `DELPI_API_URL` (já usado) |
+
+**Mantido na api-delpi:** `lmp_business_rules`, repos TOTVS, proxy Transformometro nas rotas `/engineering/*`.
+
+**delpi_api_client:** `get_transforma_mais_summary()` adicionado.
 
 ---
 

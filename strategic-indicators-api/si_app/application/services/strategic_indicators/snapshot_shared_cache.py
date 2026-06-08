@@ -99,19 +99,15 @@ def catalog_cache_key(
 
 def clear_in_process_snapshot_cache() -> None:
     """Limpa apenas caches em memória (TTL). Não altera period_scores no Postgres."""
-    from si_app.application.services.lmp.lmp_dashboard_cache import (
-        invalidate_lmp_dashboard_cache,
-    )
-    from si_app.application.services.lmp.lmp_dashboard_summary_cache import (
-        invalidate_lmp_dashboard_summary_cache,
+    from si_app.application.services.engineering.engineering_lmp_summary_cache import (
+        invalidate_lmp_summary_cache,
     )
 
     _measurements_cache.invalidate_all()
     _rol_cache.invalidate_all()
     _catalog_cache.invalidate_all()
     _catalog_fingerprint_cache.invalidate_all()
-    invalidate_lmp_dashboard_cache()
-    invalidate_lmp_dashboard_summary_cache()
+    invalidate_lmp_summary_cache()
 
 
 def invalidate_strategic_indicators_snapshot_cache(

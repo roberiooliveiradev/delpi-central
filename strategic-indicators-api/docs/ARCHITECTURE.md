@@ -31,7 +31,7 @@ Limpeza de legado (repos TOTVS duplicados, pyodbc no SI): [LEGACY_CLEANUP.md](./
 
 ## Integração HTTP com api-delpi (padrão Gateway)
 
-A partir de maio/2026, o SI não acessa mais o TOTVS/SQL Server diretamente. Consome a **api-delpi** via HTTP, seguindo o padrão já estabelecido pela integração com a `transformometro-api`.
+A partir de maio/2026, o SI não acessa mais o TOTVS/SQL Server diretamente. Consome a **api-delpi** via HTTP (incluindo engenharia/LMP e Transforma+).
 
 ### Gateways
 
@@ -44,8 +44,7 @@ Criados em `si_app/infrastructure/gateways/`:
 | `delpi_production_gateway.py` | `GET /production/*_pct` (MO, custo, depreciação, OEE, OTD) |
 | `delpi_supplies_gateway.py` | `GET /supplies/*` (incl. `/supplies/negotiation-savings/summary` — planilha IDD) |
 | `delpi_quality_gateway.py` | `GET /quality/ppm/*`, `/quality/kaizens/summary`, `/quality/audit-5s/summary`, `/quality/branches` |
-| `delpi_engineering_gateway.py` | `GET /engineering/lmps*` |
-| `transformometro_transforma_mais_gateway.py` | `GET /transformometro/*` (já existia) |
+| `delpi_engineering_gateway.py` | `GET /engineering/lmps/dashboard/summary`, `/engineering/transforma-mais/processes/summary` |
 
 ### Fluxo
 

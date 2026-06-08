@@ -54,7 +54,7 @@ from si_app.application.services.strategic_indicators.snapshot_shared_cache impo
     set_catalog_fingerprint,
 )
 from si_app.application.services.strategic_indicators.measurement_errors import (
-    has_transformometro_auth_error,
+    has_stale_period_snapshot_errors,
 )
 from si_app.application.services.strategic_indicators.measurements_cache_policy import (
     enrich_measurement_errors,
@@ -216,7 +216,7 @@ class StrategicIndicatorsSnapshotService:
                 department_id=department_id,
                 branch=branch,
             )
-            if stored is not None and not has_transformometro_auth_error(
+            if stored is not None and not has_stale_period_snapshot_errors(
                 stored.measurement_errors
             ):
                 logger.info(
@@ -230,7 +230,7 @@ class StrategicIndicatorsSnapshotService:
             if stored is not None:
                 logger.warning(
                     (
-                        "si_period_scores_skip_stale_transformometro_auth "
+                        "si_period_scores_skip_stale_upstream_errors "
                         "competence=%s department_id=%s branch=%s"
                     ),
                     period.competence,
@@ -403,6 +403,15 @@ class StrategicIndicatorsSnapshotService:
                 department_id=department_id,
                 branch=branch,
             )
+            if stored_current is not None and stored_previous is not None:
+                if has_stale_period_snapshot_errors(
+                    stored_current.measurement_errors
+                ) or has_stale_period_snapshot_errors(
+                    stored_previous.measurement_errors
+                ):
+                    stored_current = None
+                    stored_previous = None
+
             if stored_current is not None and stored_previous is not None:
                 catalog = self.get_catalog_snapshot(
                     competence=current_period.competence,

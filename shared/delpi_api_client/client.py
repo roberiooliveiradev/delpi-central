@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any, Mapping
 
 import httpx
@@ -44,8 +45,28 @@ class DelpiApiClient:
         if authorization:
             headers["Authorization"] = authorization
 
-        with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
-            resp = client.get(path, params=clean_params, headers=headers)
+        resp = None
+        last_connect_error: httpx.ConnectError | None = None
+        for attempt in range(3):
+            try:
+                with httpx.Client(base_url=self._base_url, timeout=self._timeout) as client:
+                    resp = client.get(path, params=clean_params, headers=headers)
+                break
+            except httpx.ConnectError as exc:
+                last_connect_error = exc
+                if attempt < 2:
+                    time.sleep(0.5 * (attempt + 1))
+                    continue
+                raise DelpiApiError(
+                    503,
+                    f"Falha ao conectar na api-delpi ({self._base_url}): {exc}",
+                ) from exc
+
+        if resp is None and last_connect_error is not None:
+            raise DelpiApiError(
+                503,
+                f"Falha ao conectar na api-delpi ({self._base_url}): {last_connect_error}",
+            ) from last_connect_error
 
         body: dict[str, Any] | Any
         try:
@@ -210,6 +231,18 @@ class DelpiApiClient:
 
     def get_lmp_dashboard_summary(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/engineering/lmps/dashboard/summary", params=params, authorization=authorization)
+
+    def get_transforma_mais_summary(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/engineering/transforma-mais/processes/summary",
+            params=params,
+            authorization=authorization,
+        )
 
     # -- HR --
     def get_hr_snapshot(
