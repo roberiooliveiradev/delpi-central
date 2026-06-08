@@ -1,3 +1,5 @@
+import pytest
+
 from app.application.services.response_meta_builder import ResponseMetaBuilder
 
 
@@ -23,3 +25,27 @@ def test_pagination_from_data_reads_page_fields() -> None:
         "total": 2,
         "total_pages": 1,
     }
+
+
+@pytest.mark.parametrize(
+    ("data", "expected_shape"),
+    [
+        ({"page": 1, "page_size": 10, "total": 0, "items": []}, "paged_list"),
+        ({"root": {"code": "X"}, "items": []}, "hierarchy"),
+        ({"product": {"code": "90269001"}, "stock": []}, "product_snapshot"),
+        (
+            {
+                "product": {"code": "90269001"},
+                "structure": {},
+                "guide": {},
+            },
+            "composite_analysis",
+        ),
+        ({"items": [{"a": 1}], "summary": {"total": 1}}, "playbook_report"),
+        ({"rol": 100}, "scalar"),
+        ([], "paged_list"),
+        ([{"id": 1}], "scalar"),
+    ],
+)
+def test_infer_shape(data, expected_shape) -> None:
+    assert ResponseMetaBuilder.infer_shape(data) == expected_shape

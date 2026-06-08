@@ -1,0 +1,243 @@
+"""Smoke: rotas amostra por módulo retornam meta semântico no envelope."""
+
+from __future__ import annotations
+
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+from app.application.services.response_meta_builder import DATA_VERSION
+
+
+def _assert_meta(body: dict, *, operation_id: str, shape: str) -> None:
+    assert body.get("success") is True
+    meta = body.get("meta")
+    assert isinstance(meta, dict), body
+    assert meta.get("operationId") == operation_id
+    assert meta.get("shape") == shape
+    assert meta.get("dataVersion") == DATA_VERSION
+    assert isinstance(meta.get("entity"), str) and meta["entity"]
+
+
+def _body(response) -> dict:
+    return json.loads(response.body.decode())
+
+
+@patch(
+    "app.interface.http.routes.supplies.supplies_router.enrich_dashboard_metric",
+    side_effect=lambda payload, **_: payload,
+)
+@patch("app.interface.http.routes.supplies.supplies_router.build_get_cpv_use_case")
+def test_supplies_cpv_returns_meta(mock_build, _mock_enrich) -> None:
+    from app.interface.http.routes.supplies.supplies_router import get_cpv
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = {"summary": {"value": 1}}
+    mock_build.return_value = mock_use_case
+
+    response = get_cpv()
+    _assert_meta(
+        _body(response),
+        operation_id="get_supplies_cpv",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.commercial.commercial_router.enrich_dashboard_metric",
+    side_effect=lambda payload, **_: payload,
+)
+@patch(
+    "app.interface.http.routes.commercial.commercial_router.build_get_sales_conversion_rate_use_case"
+)
+def test_commercial_closing_rate_returns_meta(mock_build, _mock_enrich) -> None:
+    from app.interface.http.routes.commercial.commercial_router import (
+        get_sales_conversion_rate,
+    )
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = {"rate_pct": 12.5}
+    mock_build.return_value = mock_use_case
+
+    response = get_sales_conversion_rate()
+    _assert_meta(
+        _body(response),
+        operation_id="get_sales_conversion_rate",
+        shape="scalar",
+    )
+
+
+@patch("app.interface.http.routes.engineering.engineering_router.build_engineering_list_lmps_use_case")
+def test_engineering_list_lmps_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.engineering.engineering_router import list_lmps_route
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_lmps_route()
+    _assert_meta(
+        _body(response),
+        operation_id="list_lmps",
+        shape="paged_list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.quality.quality_router.enrich_dashboard_metric",
+    side_effect=lambda payload, **_: payload,
+)
+@patch("app.interface.http.routes.quality.quality_router.build_get_kaizen_summary_use_case")
+def test_quality_kaizen_summary_returns_meta(mock_build, _mock_enrich) -> None:
+    from app.interface.http.routes.quality.quality_router import get_kaizen_summary
+
+    mock_summary = MagicMock()
+    mock_summary.to_dict.return_value = {"total": 3}
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_summary
+    mock_build.return_value = mock_use_case
+
+    response = get_kaizen_summary()
+    _assert_meta(
+        _body(response),
+        operation_id="get_kaizen_summary",
+        shape="scalar",
+    )
+
+
+@patch("app.interface.http.routes.hr.hr_router.build_hr_metrics_repository")
+def test_hr_branches_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.hr.hr_router import list_hr_branches
+
+    mock_repo = MagicMock()
+    mock_repo.list_active_branches.return_value = ["01", "02"]
+    mock_build.return_value = mock_repo
+
+    response = list_hr_branches()
+    _assert_meta(
+        _body(response),
+        operation_id="list_hr_branches",
+        shape="scalar",
+    )
+
+
+@patch("app.interface.http.routes.system_routes.build_search_tables_by_description_use_case")
+def test_system_search_tables_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.system_routes import search_tables
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 20,
+        "total": 0,
+    }
+    mock_build.return_value = mock_use_case
+
+    response = search_tables(description="produto", page=1, limit=20)
+    _assert_meta(
+        _body(response),
+        operation_id="search_tables_by_description",
+        shape="paged_list",
+    )
+
+
+@patch("app.interface.http.routes.sale_routes.build_list_sale_order_use_case")
+def test_sale_orders_list_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.sale_routes import list_sale_order_route
+
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+    }
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = list_sale_order_route()
+    _assert_meta(
+        _body(response),
+        operation_id="list_sale_orders",
+        shape="paged_list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.production.production_router.enrich_dashboard_metric",
+    side_effect=lambda payload, **_: payload,
+)
+@patch(
+    "app.interface.http.routes.production.production_router.build_get_on_time_delivery_pct_use_case"
+)
+def test_production_otd_returns_meta(mock_build, _mock_enrich) -> None:
+    from app.interface.http.routes.production.production_router import (
+        get_on_time_delivery_pct,
+    )
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = {"otd_pct": 88.0}
+    mock_build.return_value = mock_use_case
+
+    response = get_on_time_delivery_pct()
+    _assert_meta(
+        _body(response),
+        operation_id="get_on_time_delivery_pct",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.scheduling.scheduling_router._branch_view_allowed",
+    return_value=True,
+)
+@patch("app.interface.http.routes.scheduling.scheduling_router.build_scheduling_repository")
+def test_scheduling_resources_returns_meta(mock_build, _mock_branch) -> None:
+    from app.interface.http.routes.scheduling.scheduling_router import list_resources
+
+    mock_repo = MagicMock()
+    mock_repo.list_resources.return_value = []
+    mock_build.return_value = mock_repo
+
+    response = list_resources(branch="ES", active=True)
+    _assert_meta(
+        _body(response),
+        operation_id="list_scheduling_resources",
+        shape="paged_list",
+    )
+
+
+@pytest.mark.asyncio
+@patch("app.interface.http.routes.data_routes.build_run_sql_use_case")
+async def test_data_sql_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.data_routes import execute_sql_raw
+
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 50,
+        "total": 0,
+    }
+    mock_build.return_value = mock_use_case
+
+    request = MagicMock()
+    request.headers.get.return_value = "application/json"
+    request.json = AsyncMock(return_value={"sql": "SELECT 1"})
+
+    response = await execute_sql_raw(request)
+    _assert_meta(
+        _body(response),
+        operation_id="execute_readonly_sql",
+        shape="paged_list",
+    )

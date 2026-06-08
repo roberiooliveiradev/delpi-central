@@ -75,6 +75,8 @@ def test_quality_kaizen_summary_route(api_client: TestClient) -> None:
     body = response.json()
     assert body.get("success") is True
     assert isinstance(body.get("data"), dict)
+    assert body["meta"]["operationId"] == "get_kaizen_summary"
+    assert body["meta"]["shape"] == "scalar"
 
 
 def test_quality_audit_5s_summary_route(api_client: TestClient) -> None:
@@ -87,6 +89,8 @@ def test_quality_audit_5s_summary_route(api_client: TestClient) -> None:
     body = response.json()
     assert body.get("success") is True
     assert isinstance(body.get("data"), dict)
+    assert body["meta"]["operationId"] == "get_audit_5s_summary"
+    assert body["meta"]["shape"] == "scalar"
 
 
 def test_supplies_negotiation_savings_summary_route(api_client: TestClient) -> None:
@@ -101,6 +105,8 @@ def test_supplies_negotiation_savings_summary_route(api_client: TestClient) -> N
     assert body.get("success") is True
     data = body.get("data") or {}
     assert "branches" in data
+    assert body["meta"]["operationId"] == "get_supplies_negotiation_savings_summary"
+    assert body["meta"]["shape"] == "scalar"
 
 
 def test_quality_kaizen_summary_with_date_filter(api_client: TestClient) -> None:

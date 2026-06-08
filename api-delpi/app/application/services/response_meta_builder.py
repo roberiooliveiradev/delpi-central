@@ -69,7 +69,7 @@ class ResponseMetaBuilder:
             return "paged_list"
         if "items" in data and isinstance(data.get("items"), list):
             return "paged_list"
-        if any(key in data for key in ("structure", "production", "shipping", "branches")):
+        if any(key in data for key in ("structure", "production", "shipping")):
             return "composite_analysis"
         return "scalar"
 
