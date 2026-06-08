@@ -1,24 +1,25 @@
+/** Paleta alinhada ao portal (`--primary`, `--secundary`, `--success`, `--danger`). */
 export const CHART_COLORS = {
   primary: "#089bdb",
   secondary: "#003866",
-  success: "#2e7d32",
-  warning: "#f9a825",
-  danger: "#c62828",
+  success: "#067647",
+  warning: "#f59e0b",
+  danger: "#b42318",
   muted: "#94a3b8",
 } as const;
 
 export const SENSO_COLORS = [
   "#089bdb",
   "#003866",
-  "#2e7d32",
-  "#f9a825",
+  "#067647",
+  "#f59e0b",
   "#7b1fa2",
 ] as const;
 
 export const NC_STATUS_COLORS: Record<string, string> = {
-  open: "#f9a825",
+  open: "#f59e0b",
   in_progress: "#089bdb",
-  closed: "#2e7d32",
+  closed: "#067647",
 };
 
 export const CHART_HEIGHT = 300;

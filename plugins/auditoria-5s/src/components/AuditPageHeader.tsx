@@ -17,7 +17,7 @@ export function AuditPageHeader({ branch, subtitle, title, showBack, onBack, act
       <div className="a5s-hero__inner">
         <div className="a5s-hero__brand">
           <div className="a5s-hero__icon" aria-hidden>
-            <ClipboardCheck size={26} strokeWidth={2.2} />
+            <ClipboardCheck size={28} strokeWidth={1.75} />
           </div>
           <div className="a5s-hero__copy">
             <p className="a5s-hero__eyebrow">Filial {branch} · Qualidade</p>

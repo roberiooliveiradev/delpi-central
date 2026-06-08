@@ -294,22 +294,26 @@ export function AuditListView({
                 <tbody>
                   {pageItems.map((item) => (
                     <tr key={item.id}>
-                      <td className="a5s-table__code">{item.audit_code}</td>
-                      <td>{formatAuditDate(item.audit_date)}</td>
-                      <td>{item.area_name}</td>
-                      <td>{shiftLabel(item.shift)}</td>
-                      <td>{formatPersonNamesList(item.auditor_names)}</td>
-                      <td>
+                      <td className="a5s-table__code" data-label="Código">
+                        {item.audit_code}
+                      </td>
+                      <td data-label="Data">{formatAuditDate(item.audit_date)}</td>
+                      <td data-label="Área">{item.area_name}</td>
+                      <td data-label="Turno">{shiftLabel(item.shift)}</td>
+                      <td data-label="Auditores">
+                        {formatPersonNamesList(item.auditor_names)}
+                      </td>
+                      <td data-label="% Geral">
                         <span
                           className={`a5s-score-pill ${scorePercentClass(item.overall_score_pct)}`}
                         >
                           {item.overall_score_pct != null ? `${item.overall_score_pct}%` : "—"}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Status">
                         <StatusBadge status={item.status} />
                       </td>
-                      <td className="a5s-table__actions-cell">
+                      <td className="a5s-table__actions-cell" data-label="Ações">
                         <div className="a5s-table__actions a5s-table__actions--dashboard">
                           <button
                             type="button"

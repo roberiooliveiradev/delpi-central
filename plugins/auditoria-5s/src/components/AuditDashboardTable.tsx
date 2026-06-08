@@ -70,31 +70,31 @@ export function AuditDashboardTable({
             ) : (
               items.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.audit_code}</td>
-                  <td>{formatDisplayDate(item.audit_date)}</td>
-                  <td>{item.area_name}</td>
-                  <td>{shiftLabel(item.shift)}</td>
-                  <td>{formatPersonNamesList(item.auditor_names)}</td>
-                  <td>
+                  <td data-label="Código">{item.audit_code}</td>
+                  <td data-label="Data">{formatDisplayDate(item.audit_date)}</td>
+                  <td data-label="Área">{item.area_name}</td>
+                  <td data-label="Turno">{shiftLabel(item.shift)}</td>
+                  <td data-label="Auditores">{formatPersonNamesList(item.auditor_names)}</td>
+                  <td data-label={sensoColumnLabel ?? "Nota geral"}>
                     {formatPercent(
                       sensoColumnLabel ? item.senso_score_pct ?? null : item.overall_score_pct,
                     )}
                   </td>
-                  <td>
+                  <td data-label="Status">
                     <span
                       className={`a5s-status-badge a5s-status-badge--${auditStatusVariant(item.status)} a5s-status-badge--table`}
                     >
                       {auditStatusLabel(item.status)}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="NCs">
                     {item.nc_open > 0
                       ? `${item.nc_open} aberta${item.nc_open === 1 ? "" : "s"} / ${item.nc_total}`
                       : item.nc_total > 0
                         ? `${item.nc_total} finalizada${item.nc_total === 1 ? "" : "s"}`
                         : "—"}
                   </td>
-                  <td>
+                  <td data-label="Ações">
                     <button
                       type="button"
                       className="a5s-btn a5s-btn--table-action"

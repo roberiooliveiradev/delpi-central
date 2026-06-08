@@ -353,8 +353,12 @@ export function Audit5sPage({ pathname }: Props) {
 
   if (!branch) {
     return (
-      <div className="a5s-app">
-        <p>Rota inválida. Use /apps/auditoria-5s/filial-01 ou filial-02.</p>
+      <div className="dashboard-auditoria-5s dashboard-page a5s-app">
+        <div className="a5s-app-shell">
+          <div className="a5s-alert a5s-alert--error" role="alert">
+            Rota inválida. Use /apps/auditoria-5s/filial-01 ou filial-02.
+          </div>
+        </div>
       </div>
     );
   }
@@ -379,7 +383,10 @@ export function Audit5sPage({ pathname }: Props) {
             : "Avaliação colaborativa dos 5 sensos — Utilização, Ordenação, Limpeza, Padronização e Disciplina.";
 
   return (
-    <div className={`a5s-app ${view === "list" ? "a5s-app--dashboard" : ""} ${view === "nc" ? "a5s-app--nc" : ""} ${view === "dashboard" ? "a5s-app--analytics" : ""}`}>
+    <div
+      className={`dashboard-auditoria-5s dashboard-page a5s-app ${view === "list" ? "a5s-app--dashboard" : ""} ${view === "nc" ? "a5s-app--nc" : ""} ${view === "dashboard" ? "a5s-app--analytics" : ""}`}
+    >
+      <div className="a5s-app-shell">
       {view !== "list" ? (
         <AuditPageHeader
           branch={branch}
@@ -637,6 +644,7 @@ export function Audit5sPage({ pathname }: Props) {
           />
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -23,7 +23,7 @@ export function AuditDashboardKpis({ summary }: Props) {
     <div className="a5s-analytics-kpis">
       <article className="a5s-analytics-kpi">
         <div className="a5s-analytics-kpi__icon" aria-hidden>
-          <ClipboardList size={18} />
+          <ClipboardList size={22} />
         </div>
         <div>
           <span className="a5s-analytics-kpi__label">Auditorias no período</span>
@@ -32,7 +32,7 @@ export function AuditDashboardKpis({ summary }: Props) {
       </article>
       <article className="a5s-analytics-kpi">
         <div className="a5s-analytics-kpi__icon" aria-hidden>
-          <Target size={18} />
+          <Target size={22} />
         </div>
         <div>
           <span className="a5s-analytics-kpi__label">{scoreLabel}</span>
@@ -43,7 +43,7 @@ export function AuditDashboardKpis({ summary }: Props) {
       </article>
       <article className="a5s-analytics-kpi">
         <div className="a5s-analytics-kpi__icon" aria-hidden>
-          <BarChart3 size={18} />
+          <BarChart3 size={22} />
         </div>
         <div>
           <span className="a5s-analytics-kpi__label">NC registradas</span>
@@ -56,7 +56,7 @@ export function AuditDashboardKpis({ summary }: Props) {
       </article>
       <article className="a5s-analytics-kpi a5s-analytics-kpi--warning">
         <div className="a5s-analytics-kpi__icon" aria-hidden>
-          <AlertTriangle size={18} />
+          <AlertTriangle size={22} />
         </div>
         <div>
           <span className="a5s-analytics-kpi__label">NC pendentes</span>
