@@ -6,7 +6,10 @@ from si_app.application.dto.strategic_indicators.catalog_models import (
     StrategicIndicatorCatalogItem,
     StrategicIndicatorMeasuredValue,
 )
-from delpi_domain.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
+from si_app.infrastructure.http.hr_snapshot_models import (
+    HrBranchSnapshot,
+    HrMetricsSnapshot,
+)
 from si_app.domain.services.strategic_indicators_calculator import (
     StrategicIndicatorsCalculator,
 )

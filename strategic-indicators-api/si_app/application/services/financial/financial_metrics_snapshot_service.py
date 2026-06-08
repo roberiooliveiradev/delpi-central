@@ -2,19 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.dto.financial.list_rol_by_branch_request import (
-    ListRolByBranchRequest,
-)
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
 from si_app.application.services.financial.financial_sheet_scope import (
     CONSOLIDATED_BRANCH_KEY,
 )
-from si_app.domain.ports.financial.financial_query_repository_port import (
-    FinancialQueryRepositoryPort,
-)
 from si_app.infrastructure.gateways.delpi_financial_gateway import (
+    DelpiFinancialGateway,
     DelpiFinancialSheetsGateway,
 )
 
@@ -42,10 +37,10 @@ class FinancialMetricsSnapshotService:
         self,
         *,
         financial_sheets_gateway: DelpiFinancialSheetsGateway,
-        financial_query_repository: FinancialQueryRepositoryPort,
+        financial_gateway: DelpiFinancialGateway,
     ) -> None:
         self._financial_sheets_gateway = financial_sheets_gateway
-        self._financial_query_repository = financial_query_repository
+        self._financial_gateway = financial_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             FinancialMetricsSnapshot,
@@ -140,12 +135,10 @@ class FinancialMetricsSnapshotService:
             pmr_data=pmr_data,
         )
 
-        rol_by_branch = self._financial_query_repository.list_rol_by_branch(
-            ListRolByBranchRequest(
-                branches=branch_codes,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        rol_by_branch = self._financial_gateway.list_rol_by_branch(
+            branches=branch_codes,
+            start_date=start_date,
+            end_date=end_date,
         )
 
         snapshots: list[FinancialBranchSnapshot] = []

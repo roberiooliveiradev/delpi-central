@@ -40,7 +40,6 @@ build-backend = "setuptools.build_meta"
 include = [
   "delpi_auth*",
   "delpi_api_client*",
-  "delpi_domain*",
   "strategic_indicators_client*",
   "transformometro_client*",
 ]

@@ -2,21 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.dto.financial.get_rol_request import GetRolRequest
-from si_app.application.dto.production.production_request import ProductionRequest
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
-from si_app.domain.ports.financial.financial_query_repository_port import (
-    FinancialQueryRepositoryPort,
-)
-from si_app.domain.ports.production.on_time_delivery_repository_port import (
-    OnTimeDeliveryRepositoryPort,
-)
-from si_app.domain.ports.production.overall_equipment_effectiveness_repository_port import (
-    OverallEquipmentEffectivenessRepositoryPort,
-)
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.infrastructure.gateways.delpi_production_gateway import (
+    DelpiProductionGateway,
     DelpiProductionSheetsGateway,
 )
 from si_app.shared.branch_filter import effective_query_branch
@@ -43,16 +34,12 @@ class ProductionMetricsSnapshotService:
         self,
         *,
         production_sheets_gateway: DelpiProductionSheetsGateway,
-        overall_equipment_effectiveness_repository: OverallEquipmentEffectivenessRepositoryPort,
-        on_time_delivery_repository: OnTimeDeliveryRepositoryPort,
-        financial_query_repository: FinancialQueryRepositoryPort,
+        production_gateway: DelpiProductionGateway,
+        financial_gateway: DelpiFinancialGateway,
     ) -> None:
         self._production_sheets_gateway = production_sheets_gateway
-        self._overall_equipment_effectiveness_repository = (
-            overall_equipment_effectiveness_repository
-        )
-        self._on_time_delivery_repository = on_time_delivery_repository
-        self._financial_query_repository = financial_query_repository
+        self._production_gateway = production_gateway
+        self._financial_gateway = financial_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             ProductionUnitMetricsSnapshot,
@@ -135,34 +122,39 @@ class ProductionMetricsSnapshotService:
         if cached is not None:
             return cached
 
-        production_request = ProductionRequest(
+        rol_payload = self._financial_gateway.get_rol(
             branch=effective_branch,
             start_date=start_date,
             end_date=end_date,
         )
-        rol_request = GetRolRequest(
-            branch=effective_branch,
-            start_date=start_date,
-            end_date=end_date,
-        )
-
-        rol_payload = self._financial_query_repository.get_rol(rol_request)
         rol_value = self._rol_value(rol_payload)
 
         direct_labor_cost_pct = self._production_sheets_gateway.get_direct_labor_cost_pct(
-            production_request
+            branch=effective_branch,
+            start_date=start_date,
+            end_date=end_date,
         )
         production_cost_pct = self._production_sheets_gateway.get_production_cost_pct(
-            production_request
+            branch=effective_branch,
+            start_date=start_date,
+            end_date=end_date,
         )
         depreciation_pct = self._production_sheets_gateway.get_depreciation_pct(
-            production_request
+            branch=effective_branch,
+            start_date=start_date,
+            end_date=end_date,
         )
 
-        oee = self._overall_equipment_effectiveness_repository.get_overall_equipment_effectiveness(
-            production_request
+        oee_pct = self._production_gateway.get_oee_pct(
+            branch=effective_branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        otd = self._on_time_delivery_repository.get_on_time_delivery(production_request)
+        otd_pct = self._production_gateway.get_on_time_delivery_pct(
+            branch=effective_branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
         snapshot = ProductionUnitMetricsSnapshot(
             branch=effective_branch,
@@ -175,8 +167,8 @@ class ProductionMetricsSnapshotService:
             direct_labor_cost_pct=direct_labor_cost_pct,
             production_cost_pct=production_cost_pct,
             depreciation_pct=depreciation_pct,
-            oee_pct=self._to_float(getattr(oee, "oee_pct", None)),
-            otd_pct=self._to_float(getattr(otd, "on_time_delivery_pct", None)),
+            oee_pct=oee_pct,
+            otd_pct=otd_pct,
         )
         self._cache[key] = snapshot
         return snapshot

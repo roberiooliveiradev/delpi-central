@@ -30,12 +30,12 @@ def _build_service(
     sheets_gateway.get_fixed_cost_pct.return_value = fixed_cost
     sheets_gateway.get_pmr.return_value = pmr
 
-    financial_query_repository = MagicMock()
-    financial_query_repository.list_rol_by_branch.return_value = rol_by_branch
+    financial_gateway = MagicMock()
+    financial_gateway.list_rol_by_branch.return_value = rol_by_branch
 
     return FinancialMetricsSnapshotService(
         financial_sheets_gateway=sheets_gateway,
-        financial_query_repository=financial_query_repository,
+        financial_gateway=financial_gateway,
     )
 
 

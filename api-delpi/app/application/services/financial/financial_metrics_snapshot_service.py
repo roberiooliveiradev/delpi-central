@@ -24,7 +24,7 @@ from app.infrastructure.persistence.google_sheets.financial.financial_receivable
     FinancialReceivablesRepository,
 )
 from app.infrastructure.persistence.google_sheets.utils import Utils
-from delpi_domain.spreadsheet_date import spreadsheet_date_in_range
+from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
 
 
 @dataclass(frozen=True)

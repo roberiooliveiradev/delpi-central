@@ -14,7 +14,7 @@ from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
-from delpi_domain.spreadsheet_date import parse_spreadsheet_date
+from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 
 class Audit5SRepository(Audit5SQueryRepositoryPort):

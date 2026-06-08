@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.dto.lmp.list_lmp_request import ListLMPRequest
-from si_app.application.dto.transforma_mais.process_summary_request import ProcessSummaryRequest
-from si_app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
-    GetLMPDashboardSummaryUseCase,
+from si_app.application.services.engineering.engineering_metrics_helpers import (
+    resolve_lmp_dashboard_summary,
 )
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
-from si_app.application.use_cases.transforma_mais.get_process_summary_use_case import (
-    GetProcessSummaryUseCase,
+from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway
+from si_app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
+    TransformometroTransformaMaisGateway,
 )
 from si_app.shared.branch_filter import effective_query_branch
 
@@ -29,11 +28,11 @@ class EngineeringMetricsSnapshotService:
     def __init__(
         self,
         *,
-        lmp_dashboard_summary_use_case: GetLMPDashboardSummaryUseCase,
-        transforma_mais_summary_use_case: GetProcessSummaryUseCase,
+        engineering_gateway: DelpiEngineeringGateway,
+        transforma_mais_gateway: TransformometroTransformaMaisGateway,
     ) -> None:
-        self._lmp_dashboard_summary_use_case = lmp_dashboard_summary_use_case
-        self._transforma_mais_summary_use_case = transforma_mais_summary_use_case
+        self._engineering_gateway = engineering_gateway
+        self._transforma_mais_gateway = transforma_mais_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             EngineeringMetricsSnapshot,
@@ -94,35 +93,27 @@ class EngineeringMetricsSnapshotService:
         end_date: str | None,
         branch: str | None,
     ) -> EngineeringMetricsSnapshot:
-        lmp_summary = self._lmp_dashboard_summary_use_case.execute(
-            ListLMPRequest(
-                date_start=start_date,
-                date_end=end_date,
-                branch=branch,
-                page=None,
-                page_size=None,
-                include_qtd_pi=False,
-            ),
+        lmp_summary = resolve_lmp_dashboard_summary(
+            gateway=self._engineering_gateway,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
             include_avg_lead_time=False,
+            include_qtd_pi=False,
         )
 
         lmp_projects_on_time_pct = self._to_float(
-            lmp_summary.percent_dentro_prazo
+            lmp_summary.get("percent_dentro_prazo")
         )
 
-        transforma_summary = self._transforma_mais_summary_use_case.execute(
-            ProcessSummaryRequest(
-                filial_id=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        transforma_summary = self._transforma_mais_gateway.get_process_summary(
+            filial_id=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        payload = (
-            transforma_summary.to_dict()
-            if hasattr(transforma_summary, "to_dict")
-            else transforma_summary
+        transforma_mais_financial_gain = self._extract_financial_gain_value(
+            transforma_summary
         )
-        transforma_mais_financial_gain = self._extract_financial_gain_value(payload)
 
         snapshot = EngineeringMetricsSnapshot(
             start_date=start_date,

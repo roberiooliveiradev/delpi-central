@@ -15,7 +15,7 @@ from app.domain.services.commercial_proposal_status import (
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
-from delpi_domain.spreadsheet_date import parse_spreadsheet_date
+from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 
 class CommercialProposalsRepository(BaseRepository, CommercialProposalsRepositoryPort):

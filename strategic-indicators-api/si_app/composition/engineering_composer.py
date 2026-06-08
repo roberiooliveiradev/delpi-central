@@ -3,17 +3,9 @@ from __future__ import annotations
 from si_app.application.services.engineering.engineering_metrics_snapshot_service import (
     EngineeringMetricsSnapshotService,
 )
-from si_app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
-    GetLMPDashboardSummaryUseCase,
-)
-from si_app.application.use_cases.transforma_mais.get_process_summary_use_case import (
-    GetProcessSummaryUseCase,
-)
+from si_app.infrastructure.gateways.delpi_engineering_gateway import DelpiEngineeringGateway
 from si_app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
     TransformometroTransformaMaisGateway,
-)
-from si_app.infrastructure.gateways.delpi_engineering_gateway import (
-    DelpiLmpGateway,
 )
 from delpi_api_client import DelpiApiClient
 
@@ -27,26 +19,10 @@ def _get_delpi_client() -> DelpiApiClient:
     return _delpi_client
 
 
-def _build_lmp_gateway() -> DelpiLmpGateway:
-    return DelpiLmpGateway(_get_delpi_client())
-
-
-def _build_transforma_mais_gateway() -> TransformometroTransformaMaisGateway:
-    return TransformometroTransformaMaisGateway()
-
-
-def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummaryUseCase:
-    return GetProcessSummaryUseCase(_build_transforma_mais_gateway())
-
-
-def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
-    return GetLMPDashboardSummaryUseCase(_build_lmp_gateway())
-
-
 def build_engineering_metrics_snapshot_service() -> EngineeringMetricsSnapshotService:
     return EngineeringMetricsSnapshotService(
-        lmp_dashboard_summary_use_case=build_engineering_get_lmp_dashboard_summary_use_case(),
-        transforma_mais_summary_use_case=build_engineering_get_transforma_mais_summary_use_case(),
+        engineering_gateway=DelpiEngineeringGateway(_get_delpi_client()),
+        transforma_mais_gateway=TransformometroTransformaMaisGateway(),
     )
 
 

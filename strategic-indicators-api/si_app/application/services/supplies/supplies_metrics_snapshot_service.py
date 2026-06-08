@@ -2,29 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from si_app.application.dto.supplies.get_cpv_request import GetCPVRequest
-from si_app.application.dto.supplies.negotiation_savings_summary_request import (
-    NegotiationSavingsSummaryRequest,
+from si_app.application.services.supplies.supplies_metrics_helpers import (
+    build_cpv_payload,
+    build_inventory_turnover_payload,
+    build_otd_payload,
+    build_stock_value_payload,
 )
-from si_app.application.dto.supplies.get_inventory_turnover_request import (
-    GetInventoryTurnoverRequest,
-)
-from si_app.application.dto.supplies.get_otd_request import GetOTDRequest
-from si_app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
-from si_app.application.use_cases.supplies.get_cpv_use_case import GetCPVUseCase
-from si_app.application.use_cases.supplies.get_inventory_turnover_use_case import (
-    GetInventoryTurnoverUseCase,
-)
-from si_app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
-from si_app.application.use_cases.supplies.get_stock_value_use_case import (
-    GetStockValueUseCase,
-)
-from si_app.application.use_cases.supplies.get_negotiation_savings_summary_use_case import (
-    GetNegotiationSavingsSummaryUseCase,
-)
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
+from si_app.infrastructure.gateways.delpi_supplies_gateway import DelpiSuppliesGateway
 from si_app.shared.branch_filter import effective_query_branch
 from si_app.shared.goal_scope import BRANCH_UNIT_CODES
 
@@ -45,19 +33,11 @@ class SuppliesMetricsSnapshotService:
     def __init__(
         self,
         *,
-        get_cpv_use_case: GetCPVUseCase,
-        get_inventory_turnover_use_case: GetInventoryTurnoverUseCase,
-        get_otd_use_case: GetOTDUseCase,
-        get_stock_value_use_case: GetStockValueUseCase,
-        get_negotiation_savings_summary_use_case: GetNegotiationSavingsSummaryUseCase,
+        supplies_gateway: DelpiSuppliesGateway,
+        financial_gateway: DelpiFinancialGateway,
     ) -> None:
-        self._get_cpv_use_case = get_cpv_use_case
-        self._get_inventory_turnover_use_case = get_inventory_turnover_use_case
-        self._get_otd_use_case = get_otd_use_case
-        self._get_stock_value_use_case = get_stock_value_use_case
-        self._get_negotiation_savings_summary_use_case = (
-            get_negotiation_savings_summary_use_case
-        )
+        self._supplies_gateway = supplies_gateway
+        self._financial_gateway = financial_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             SuppliesMetricsSnapshot,
@@ -118,50 +98,68 @@ class SuppliesMetricsSnapshotService:
         end_date: str | None,
         branch: str | None,
     ) -> SuppliesMetricsSnapshot:
-        cpv_result = self._get_cpv_use_case.execute(
-            GetCPVRequest(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-            )
+        cpv_raw = self._supplies_gateway.fetch_cpv_raw(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        inventory_turnover_result = self._get_inventory_turnover_use_case.execute(
-            GetInventoryTurnoverRequest(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-                strict_idd_period=False,
-            )
+        rol_data = self._financial_gateway.get_rol(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        otd_result = self._get_otd_use_case.execute(
-            GetOTDRequest(
-                start_date=start_date,
-                end_date=end_date,
-                branch=branch,
-            )
-        )
-        stock_value_result = self._get_stock_value_use_case.execute(
-            GetStockValueRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        cpv_result = build_cpv_payload(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            cpv_raw=cpv_raw,
+            rol_data=rol_data,
         )
 
-        cpv_payload = self._extract_payload(cpv_result)
-        inventory_turnover_payload = self._extract_payload(inventory_turnover_result)
-        otd_payload = self._extract_payload(otd_result)
-        stock_value_payload = self._extract_payload(stock_value_result)
+        stock_raw = self._supplies_gateway.fetch_stock_value_raw(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        turnover_raw = self._supplies_gateway.fetch_inventory_turnover_raw(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        inventory_turnover_result = build_inventory_turnover_payload(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            location=None,
+            turnover_raw=turnover_raw,
+            stock_raw=stock_raw,
+            strict_idd_period=False,
+        )
 
-        cpv_data = self._extract_data(cpv_payload)
-        inventory_turnover_data = self._extract_data(inventory_turnover_payload)
-        otd_data = self._extract_data(otd_payload)
-        stock_value_data = self._extract_data(stock_value_payload)
+        otd_raw = self._supplies_gateway.fetch_otd_raw(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        otd_result = build_otd_payload(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            otd_raw=otd_raw,
+        )
 
-        cpv_summary = cpv_data.get("summary", {})
-        inventory_turnover_summary = inventory_turnover_data.get("summary", {})
-        otd_summary = otd_data.get("summary", {})
-        stock_value_summary = stock_value_data.get("summary", {})
+        stock_value_result = build_stock_value_payload(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            location=None,
+            stock_raw=stock_raw,
+        )
+
+        cpv_summary = cpv_result.get("summary", {})
+        inventory_turnover_summary = inventory_turnover_result.get("summary", {})
+        otd_summary = otd_result.get("summary", {})
+        stock_value_summary = stock_value_result.get("summary", {})
 
         return SuppliesMetricsSnapshot(
             branch=branch,
@@ -190,14 +188,11 @@ class SuppliesMetricsSnapshotService:
         }
 
         try:
-            payload = self._get_negotiation_savings_summary_use_case.execute(
-                NegotiationSavingsSummaryRequest(
-                    start_date=start_date,
-                    end_date=end_date,
-                )
+            payload = self._supplies_gateway.fetch_negotiation_savings_summary(
+                start_date=start_date,
+                end_date=end_date,
             )
         except Exception:
-            # Planilha não configurada ou api-delpi indisponível: não derruba CPV/OTD/estoque.
             return empty
 
         by_branch = dict(empty)
@@ -213,12 +208,6 @@ class SuppliesMetricsSnapshotService:
             )
 
         return by_branch
-
-    def _extract_payload(self, result):
-        return result.to_dict() if hasattr(result, "to_dict") else result
-
-    def _extract_data(self, payload: dict) -> dict:
-        return payload.get("data", payload)
 
     def _to_float(self, value) -> float:
         if value is None:

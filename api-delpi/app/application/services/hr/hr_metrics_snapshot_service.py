@@ -6,7 +6,7 @@ from app.application.shared.period_resolution import (
 from app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_repository import (
     HrMetricsRepository,
 )
-from delpi_domain.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
+from app.application.dto.hr.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
 
 
 class HrMetricsSnapshotService:

@@ -79,34 +79,34 @@ def test_supplies_metrics_snapshot_loads_negotiation_savings_from_gateway() -> N
         SuppliesMetricsSnapshotService,
     )
 
-    negotiation_use_case = MagicMock()
-    negotiation_use_case.execute.return_value = {
+    supplies_gateway = MagicMock()
+    supplies_gateway.fetch_cpv_raw.return_value = {
+        "summary": {"cpv_total": 0, "total_movements": 0, "total_quantity": 0},
+    }
+    supplies_gateway.fetch_stock_value_raw.return_value = {
+        "summary": {"total_stock_value": 0, "total_stock_quantity": 0},
+    }
+    supplies_gateway.fetch_inventory_turnover_raw.return_value = {
+        "start_date": "20260501",
+        "end_date": "20260531",
+        "cpv_context": {"cpv_total": 1.0},
+    }
+    supplies_gateway.fetch_otd_raw.return_value = {
+        "summary": {"otd_percentage": 0},
+    }
+    supplies_gateway.fetch_negotiation_savings_summary.return_value = {
         "branches": [
             {"branch": "01", "total_savings": 15000.0},
             {"branch": "02", "total_savings": 22000.0},
         ],
     }
 
-    cpv_use_case = MagicMock()
-    cpv_use_case.execute.return_value = {"data": {"summary": {"cpv_percentage": 0}}}
-
-    inventory_use_case = MagicMock()
-    inventory_use_case.execute.return_value = {
-        "data": {"summary": {"inventory_turnover_months": 0}},
-    }
-
-    otd_use_case = MagicMock()
-    otd_use_case.execute.return_value = {"data": {"summary": {"otd_percentage": 0}}}
-
-    stock_use_case = MagicMock()
-    stock_use_case.execute.return_value = {"data": {"summary": {"total_stock_value": 0}}}
+    financial_gateway = MagicMock()
+    financial_gateway.get_rol.return_value = {"rol": 1.0}
 
     service = SuppliesMetricsSnapshotService(
-        get_cpv_use_case=cpv_use_case,
-        get_inventory_turnover_use_case=inventory_use_case,
-        get_otd_use_case=otd_use_case,
-        get_stock_value_use_case=stock_use_case,
-        get_negotiation_savings_summary_use_case=negotiation_use_case,
+        supplies_gateway=supplies_gateway,
+        financial_gateway=financial_gateway,
     )
 
     snapshot = service.get_snapshot(
@@ -115,4 +115,4 @@ def test_supplies_metrics_snapshot_loads_negotiation_savings_from_gateway() -> N
     )
 
     assert snapshot.negotiation_savings_by_branch == {"01": 15000.0, "02": 22000.0}
-    negotiation_use_case.execute.assert_called_once()
+    supplies_gateway.fetch_negotiation_savings_summary.assert_called_once()

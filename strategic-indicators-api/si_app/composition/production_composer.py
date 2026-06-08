@@ -3,8 +3,7 @@ from si_app.application.services.production.production_metrics_snapshot_service 
 )
 from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 from si_app.infrastructure.gateways.delpi_production_gateway import (
-    DelpiOeeGateway,
-    DelpiOtdProductionGateway,
+    DelpiProductionGateway,
     DelpiProductionSheetsGateway,
 )
 from delpi_api_client import DelpiApiClient
@@ -24,7 +23,6 @@ def build_production_metrics_snapshot_service() -> ProductionMetricsSnapshotServ
 
     return ProductionMetricsSnapshotService(
         production_sheets_gateway=DelpiProductionSheetsGateway(delpi),
-        overall_equipment_effectiveness_repository=DelpiOeeGateway(delpi),
-        on_time_delivery_repository=DelpiOtdProductionGateway(delpi),
-        financial_query_repository=DelpiFinancialGateway(delpi),
+        production_gateway=DelpiProductionGateway(delpi),
+        financial_gateway=DelpiFinancialGateway(delpi),
     )

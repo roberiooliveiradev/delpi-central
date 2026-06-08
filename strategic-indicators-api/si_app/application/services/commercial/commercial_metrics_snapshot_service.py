@@ -2,33 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from si_app.application.dto.commercial.commercial_target_request import CommercialTargetRequest
-from si_app.application.dto.commercial.new_business_rol_pct_request import (
-    NewBusinessRolPctRequest,
-)
-from si_app.application.dto.commercial.sales_conversion_rate_request import (
-    SalesConversionRateRequest,
-)
-from si_app.application.dto.commercial.sales_order_otd_request import SalesOrderOtdRequest
-from si_app.application.use_cases.commercial.get_new_business_rol_pct_use_case import (
-    GetNewBusinessRolPctUseCase,
-)
-from si_app.application.use_cases.commercial.get_sales_order_otd_use_case import (
-    GetSalesOrderOtdUseCase,
-)
-from si_app.application.use_cases.commercial.get_rol_target_pct_use_case import (
-    GetRolTargetPctUseCase,
-)
-from si_app.application.use_cases.commercial.get_sales_conversion_rate_use_case import (
-    GetSalesConversionRateUseCase,
-)
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )
+from si_app.infrastructure.gateways.delpi_commercial_gateway import DelpiCommercialGateway
+from si_app.infrastructure.gateways.delpi_financial_gateway import DelpiFinancialGateway
 
 
 MATRIX_BRANCH_CODE = "01"
 BRANCH_BRANCH_CODE = "02"
+DEFAULT_HEAD_OFFICE_TARGET = 1.0
+DEFAULT_BRANCH_TARGET = 1.0
 
 
 @dataclass(frozen=True)
@@ -47,17 +31,15 @@ class CommercialMetricsSnapshotService:
     def __init__(
         self,
         *,
-        head_office_rol_target_use_case: GetRolTargetPctUseCase,
-        branch_rol_target_use_case: GetRolTargetPctUseCase,
-        sales_conversion_rate_use_case: GetSalesConversionRateUseCase,
-        new_business_rol_pct_use_case: GetNewBusinessRolPctUseCase,
-        sales_order_otd_use_case: GetSalesOrderOtdUseCase,
+        commercial_gateway: DelpiCommercialGateway,
+        financial_gateway: DelpiFinancialGateway,
+        head_office_target: float = DEFAULT_HEAD_OFFICE_TARGET,
+        branch_target: float = DEFAULT_BRANCH_TARGET,
     ) -> None:
-        self._head_office_rol_target_use_case = head_office_rol_target_use_case
-        self._branch_rol_target_use_case = branch_rol_target_use_case
-        self._sales_conversion_rate_use_case = sales_conversion_rate_use_case
-        self._new_business_rol_pct_use_case = new_business_rol_pct_use_case
-        self._sales_order_otd_use_case = sales_order_otd_use_case
+        self._commercial_gateway = commercial_gateway
+        self._financial_gateway = financial_gateway
+        self._head_office_target = head_office_target
+        self._branch_target = branch_target
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             CommercialMetricsSnapshot,
@@ -116,38 +98,30 @@ class CommercialMetricsSnapshotService:
         branch: str | None,
     ) -> CommercialMetricsSnapshot:
         matrix_rol_value = self._load_rol_value(
-            use_case=self._head_office_rol_target_use_case,
             branch=MATRIX_BRANCH_CODE,
             start_date=start_date,
             end_date=end_date,
         )
         branch_rol_value = self._load_rol_value(
-            use_case=self._branch_rol_target_use_case,
             branch=BRANCH_BRANCH_CODE,
             start_date=start_date,
             end_date=end_date,
         )
 
-        sales_conversion_result = self._sales_conversion_rate_use_case.execute(
-            SalesConversionRateRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        sales_conversion_result = self._commercial_gateway.get_sales_conversion_rate(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        new_business_rol_result = self._new_business_rol_pct_use_case.execute(
-            NewBusinessRolPctRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        new_business_rol_result = self._commercial_gateway.get_new_business_rol_pct(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        sales_order_otd_result = self._sales_order_otd_use_case.execute(
-            SalesOrderOtdRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        sales_order_otd_result = self._commercial_gateway.get_sales_order_otd(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
 
         sales_conversion_rate_pct = self._extract_number(
@@ -193,19 +167,16 @@ class CommercialMetricsSnapshotService:
     def _load_rol_value(
         self,
         *,
-        use_case: GetRolTargetPctUseCase,
         branch: str,
         start_date: str | None,
         end_date: str | None,
     ) -> float | None:
-        result = use_case.execute(
-            CommercialTargetRequest(
-                branch=branch,
-                start_date=start_date,
-                end_date=end_date,
-            )
+        rol_result = self._financial_gateway.get_rol(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
         )
-        return self._extract_number(result, ["rol"])
+        return self._extract_number(rol_result, ["rol"])
 
     def _extract_number(self, payload, candidate_keys: list[str]) -> float | None:
         if payload is None:

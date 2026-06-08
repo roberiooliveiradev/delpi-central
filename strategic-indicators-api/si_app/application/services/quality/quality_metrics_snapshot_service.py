@@ -1,24 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 
-from si_app.application.dto.auditoria_5s.audit_5s_summary_request import (
-    Audit5SSummaryRequest,
-)
-from si_app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryRequest
-from si_app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
-from si_app.application.use_cases.audit_5s.get_audit_5s_summary_use_case import (
-    GetAudit5SSummaryUseCase,
-)
-from si_app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
-    GetKaizenSummaryUseCase,
-)
-from si_app.application.use_cases.ppm.get_ppm_summary_use_case import (
-    GetPpmSummaryUseCase,
-)
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
+    _parse_dashboard_date_parts,
 )
+from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiQualityGateway
 
 
 @dataclass(frozen=True)
@@ -44,15 +33,9 @@ class QualityMetricsSnapshotService:
     def __init__(
         self,
         *,
-        internal_ppm_use_case: GetPpmSummaryUseCase,
-        external_ppm_use_case: GetPpmSummaryUseCase,
-        kaizen_summary_use_case: GetKaizenSummaryUseCase,
-        audit_5s_summary_use_case: GetAudit5SSummaryUseCase,
+        quality_gateway: DelpiQualityGateway,
     ) -> None:
-        self._internal_ppm_use_case = internal_ppm_use_case
-        self._external_ppm_use_case = external_ppm_use_case
-        self._kaizen_summary_use_case = kaizen_summary_use_case
-        self._audit_5s_summary_use_case = audit_5s_summary_use_case
+        self._quality_gateway = quality_gateway
         self._cache: dict[
             tuple[str | None, str | None, str | None],
             QualityMetricsSnapshot,
@@ -154,22 +137,16 @@ class QualityMetricsSnapshotService:
                 end_date=end_date,
             )
 
-            kaizen_summary = self._kaizen_summary_use_case.execute(
-                KaizenSummaryRequest(
-                    title=None,
-                    status=None,
-                    date_start=start_date,
-                    date_end=end_date,
-                    branch=branch_code,
-                )
+            kaizen_summary = self._quality_gateway.get_kaizen_summary(
+                branch=branch_code,
+                date_start=start_date,
+                date_end=end_date,
             )
 
-            audit_summary = self._audit_5s_summary_use_case.execute(
-                Audit5SSummaryRequest(
-                    start_date=start_date,
-                    end_date=end_date,
-                    branch=branch_code,
-                )
+            audit_summary = self._quality_gateway.get_audit_5s_summary(
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
             )
 
             months = self._resolve_month_count(
@@ -177,8 +154,9 @@ class QualityMetricsSnapshotService:
                 end_date=end_date,
             )
 
+            total_kaizens = int(kaizen_summary.get("total_kaizens") or 0)
             kaizen_ideas_avg = (
-                round(kaizen_summary.total_kaizens / months, 2)
+                round(total_kaizens / months, 2)
                 if months > 0
                 else None
             )
@@ -189,8 +167,14 @@ class QualityMetricsSnapshotService:
                     ppm_internal=round(ppm_internal, 2) if ppm_internal is not None else None,
                     ppm_external=round(ppm_external, 2) if ppm_external is not None else None,
                     kaizen_ideas_avg=kaizen_ideas_avg,
-                    kaizen_financial_gain=round(kaizen_summary.total_savings, 2),
-                    audit_5s_score=round(audit_summary.average_score, 2),
+                    kaizen_financial_gain=round(
+                        float(kaizen_summary.get("total_savings") or 0),
+                        2,
+                    ),
+                    audit_5s_score=round(
+                        float(audit_summary.get("average_score") or 0),
+                        2,
+                    ),
                 )
             )
 
@@ -218,19 +202,14 @@ class QualityMetricsSnapshotService:
         start_date: str | None,
         end_date: str | None,
     ) -> float | None:
-        use_case = (
-            self._internal_ppm_use_case
-            if ppm_type == "internal"
-            else self._external_ppm_use_case
-        )
+        if ppm_type not in {"internal", "external"}:
+            raise ValueError("ppm_type deve ser internal ou external")
 
-        result = use_case.execute(
-            PpmSummaryRequest(
-                type=ppm_type,
-                branch=branch,
-                date_start=start_date,
-                date_end=end_date,
-            )
+        result = self._quality_gateway.get_ppm_summary(
+            ppm_type=ppm_type,
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
         )
 
         value = self._extract_first_number(result)
@@ -248,66 +227,47 @@ class QualityMetricsSnapshotService:
     ) -> list[str]:
         branches: set[str] = set()
 
-        try:
-            internal_ppm_branches = self._internal_ppm_use_case.list_branches(
-                ppm_type="internal",
-                date_start=start_date,
-                date_end=end_date,
-            )
-            branches.update(
-                branch.strip()
-                for branch in internal_ppm_branches
-                if branch and branch.strip()
-            )
-        except Exception:
-            pass
-
-        try:
-            external_ppm_branches = self._external_ppm_use_case.list_branches(
-                ppm_type="external",
-                date_start=start_date,
-                date_end=end_date,
-            )
-            branches.update(
-                branch.strip()
-                for branch in external_ppm_branches
-                if branch and branch.strip()
-            )
-        except Exception:
-            pass
-
-        try:
-            kaizen_summary = self._kaizen_summary_use_case.execute(
-                KaizenSummaryRequest(
-                    title=None,
-                    status=None,
+        for ppm_type in ("internal", "external"):
+            try:
+                ppm_branches = self._quality_gateway.list_branches(
+                    ppm_type=ppm_type,
                     date_start=start_date,
                     date_end=end_date,
-                    branch=None,
                 )
+                branches.update(
+                    branch.strip()
+                    for branch in ppm_branches
+                    if branch and branch.strip()
+                )
+            except Exception:
+                pass
+
+        try:
+            kaizen_summary = self._quality_gateway.get_kaizen_summary(
+                branch=None,
+                date_start=start_date,
+                date_end=end_date,
             )
 
             branches.update(
-                (item.branch or "").strip()
-                for item in kaizen_summary.list_kaizen
-                if (item.branch or "").strip()
+                str(item.get("branch") or "").strip()
+                for item in (kaizen_summary.get("list_kaizen") or [])
+                if str(item.get("branch") or "").strip()
             )
         except Exception:
             pass
 
         try:
-            audit_summary = self._audit_5s_summary_use_case.execute(
-                Audit5SSummaryRequest(
-                    start_date=start_date,
-                    end_date=end_date,
-                    branch=None,
-                )
+            audit_summary = self._quality_gateway.get_audit_5s_summary(
+                branch=None,
+                start_date=start_date,
+                end_date=end_date,
             )
 
             branches.update(
-                (item.branch or "").strip()
-                for item in audit_summary.list_audits
-                if (item.branch or "").strip()
+                str(item.get("branch") or "").strip()
+                for item in (audit_summary.get("list_audits") or [])
+                if str(item.get("branch") or "").strip()
             )
         except Exception:
             pass
@@ -340,6 +300,16 @@ class QualityMetricsSnapshotService:
 
         return None
 
+    @staticmethod
+    def _parse_dashboard_date(value: str | None) -> date | None:
+        if not value:
+            return None
+        parts = _parse_dashboard_date_parts(value.strip())
+        if parts is None:
+            return None
+        day, month, year = parts
+        return date(year, month, day)
+
     def _resolve_month_count(
         self,
         *,
@@ -349,10 +319,8 @@ class QualityMetricsSnapshotService:
         if not start_date or not end_date:
             return 1
 
-        from delpi_domain.spreadsheet_date import parse_spreadsheet_date
-
-        start = parse_spreadsheet_date(start_date)
-        end = parse_spreadsheet_date(end_date)
+        start = self._parse_dashboard_date(start_date)
+        end = self._parse_dashboard_date(end_date)
 
         if not start or not end:
             return 1

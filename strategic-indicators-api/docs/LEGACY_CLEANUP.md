@@ -1,6 +1,6 @@
 # Limpeza de legado — Strategic Indicators API
 
-**Última atualização:** 2026-06-04
+**Última atualização:** 2026-06-08
 
 Documento de referência para remover código herdado da api-delpi que o SI **não usa mais** após a migração HTTP (maio/2026).
 
@@ -86,7 +86,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | `*_metrics_snapshot_service` departamentais | commercial, production, quality, supplies, engineering | Builders existiam nos composers mas **nenhuma rota HTTP** usava; agregação ficou só no SI |
 | Mantidos | `financial_metrics_snapshot_service`, `hr_metrics_snapshot_service` | Rotas `/financial/ebitda_pct`, `/pmr`, `/hr/*` |
 
-**Pendente (fase 6+):** demais DTOs/entidades departamentais, `period_resolution`.
+**Pendente (fase 7+):** mover `period_resolution` para `si_app/application/services/strategic_indicators/` (ainda usado por snapshots e repositórios).
 
 ### Fase 5 — RH via HTTP no SI (concluída jun/2026)
 
@@ -100,15 +100,30 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 
 **Mantido na api-delpi:** `HrMetricsRepository`, rotas `/hr/*`.
 
-### Fase 6 — Contratos em `shared/delpi_domain` (concluída jun/2026)
+### Fase 6 — Remoção de código morto + `delpi_domain` revertido (jun/2026)
 
-| Item | Destino | Removido |
-|------|---------|----------|
-| `spreadsheet_date.py` | `shared/delpi_domain/spreadsheet_date.py` | cópias em `api-delpi/app/shared/utils/` e `si_app/shared/utils/` |
-| Contrato RH (`Hr*Snapshot`, `parse_hr_snapshot_payload`) | `shared/delpi_domain/hr_snapshot.py` | `si_app/application/dto/hr/hr_snapshot.py`; dataclasses inline na api-delpi |
+| Item | Onde ficou | Removido |
+|------|------------|----------|
+| `spreadsheet_date.py` | **só api-delpi** (`app/shared/utils/`) | cópia no SI; pacote `shared/delpi_domain` |
+| Contrato RH (`Hr*Snapshot`) | **só api-delpi** (`app/application/dto/hr/`) | SI parse local em `infrastructure/http/hr_snapshot_models.py` |
 | `process_summary_calculator.py` | — (código morto) | ~1130 LOC × 2 em `domain/services/transforma_mais/` |
 
-Pacote registrado em `shared/pyproject.toml` (`delpi_domain*`).
+**Decisão:** DTOs/entidades departamentais **não** vão para `shared/` — ficam na api-delpi; o SI consome JSON HTTP.
+
+### Fase 7 — Gateways HTTP puros no SI (concluída jun/2026)
+
+**Objetivo:** SI consome api-delpi (e Transformometro) **somente via HTTP**; lógica de negócio departamental fica em `*_metrics_snapshot_service` ou `*_metrics_helpers.py`.
+
+| Removido no SI | Substituído por |
+|----------------|-----------------|
+| DTOs/entidades/ports/use cases departamentais (suprimentos, financeiro, produção, comercial, qualidade, engenharia) | Gateways `Delpi*Gateway` com kwargs (`branch`, `start_date`, `end_date`) retornando `dict`/`float` |
+| Múltiplas classes por domínio (`DelpiCpvGateway`, `DelpiOeeGateway`, …) | Uma classe por departamento: `DelpiSuppliesGateway`, `DelpiProductionGateway`, `DelpiCommercialGateway`, `DelpiQualityGateway`, `DelpiEngineeringGateway` |
+| Use cases finos (`GetCPVUseCase`, `GetPpmSummaryUseCase`, …) | `supplies_metrics_helpers.py`, `engineering_metrics_helpers.py`; snapshot services chamam gateways direto |
+| `shared/delpi_domain/` (já ausente) | Contratos HTTP em `si_app/infrastructure/http/` (ex.: `hr_snapshot_models.py`) |
+
+**Mantido:** `si_app/application/dto/strategic_indicators/`, `si_app/domain/ports/strategic_indicators/`, `si_app/application/use_cases/strategic_indicators/`, `period_resolution`.
+
+**api-delpi:** rotas e shapes de resposta **inalterados** (consumidores externos intactos).
 
 ---
 

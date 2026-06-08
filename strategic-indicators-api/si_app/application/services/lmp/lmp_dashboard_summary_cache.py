@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-from si_app.application.dto.lmp.lmp_dashboard_summary_response import (
-    LMPDashboardSummaryResponse,
-)
 from si_app.config import settings
 from si_app.infrastructure.cache.ttl_cache import TtlCache
 
-_lmp_dashboard_summary_cache: TtlCache[LMPDashboardSummaryResponse] = TtlCache(
+_lmp_dashboard_summary_cache: TtlCache[dict[str, float | int]] = TtlCache(
     ttl_seconds=settings.SI_SNAPSHOT_CACHE_TTL_SECONDS,
 )
 
@@ -33,13 +30,13 @@ def lmp_dashboard_summary_cache_key(
 
 def get_cached_lmp_dashboard_summary(
     key: str,
-) -> LMPDashboardSummaryResponse | None:
+) -> dict[str, float | int] | None:
     return _lmp_dashboard_summary_cache.get(key)
 
 
 def set_cached_lmp_dashboard_summary(
     key: str,
-    value: LMPDashboardSummaryResponse,
+    value: dict[str, float | int],
 ) -> None:
     _lmp_dashboard_summary_cache.set(key, value)
 

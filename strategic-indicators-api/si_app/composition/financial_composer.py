@@ -24,7 +24,7 @@ def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotServic
     client = _get_delpi_client()
     return FinancialMetricsSnapshotService(
         financial_sheets_gateway=DelpiFinancialSheetsGateway(client),
-        financial_query_repository=DelpiFinancialGateway(client),
+        financial_gateway=DelpiFinancialGateway(client),
     )
 
 
