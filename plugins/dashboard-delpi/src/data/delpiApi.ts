@@ -42,10 +42,19 @@ export interface ApiDelpiErrorPayload {
 
 export interface ApiSuccessResponse<T> {
   success: boolean;
-  message: string;
+  message?: string;
   data: T;
   meta?: ApiDelpiResponseMeta;
   error?: ApiDelpiErrorPayload | null;
+}
+
+function isApiDelpiEnvelope(value: unknown): value is ApiSuccessResponse<unknown> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "success" in value &&
+    "data" in value
+  );
 }
 
 function assertApiDelpiSuccess<T>(
@@ -91,16 +100,8 @@ export class DelpiApi {
       }
 
       const body = (await response.json()) as T;
-      if (
-        body &&
-        typeof body === "object" &&
-        "success" in body &&
-        "data" in body
-      ) {
-        return assertApiDelpiSuccess(
-          body as ApiSuccessResponse<unknown>,
-          "Erro na API DELPI",
-        ) as T;
+      if (isApiDelpiEnvelope(body)) {
+        return assertApiDelpiSuccess(body, "Erro na API DELPI") as T;
       }
       return body;
     } catch (error: any) {
