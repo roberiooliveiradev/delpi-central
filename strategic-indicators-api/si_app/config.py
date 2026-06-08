@@ -14,15 +14,6 @@ def _get_env(*names: str, default=None):
 
 class Settings:
     # ==========================
-    # Core / banco principal
-    # ==========================
-    DB_HOST: str = _get_env("DB_HOST")
-    DB_USER: str = _get_env("DB_USER")
-    DB_PASSWORD: str = _get_env("DB_PASSWORD")
-    DB_DATABASE: str = _get_env("DB_DATABASE", "DB_NAME")
-    DB_PORT: str = _get_env("DB_PORT", default="5432")
-
-    # ==========================
     # Strategic Indicators API (gateway path)
     # ==========================
     SI_API_ROOT_PATH: str = _get_env("SI_API_ROOT_PATH", default="/apps/strategic-indicators-api")
@@ -116,19 +107,6 @@ class Settings:
     VITE_KC_REALM: str | None = _get_env("VITE_KC_REALM")
     VITE_KC_CLIENT_ID: str | None = _get_env("VITE_KC_CLIENT_ID")
     VITE_KC_REDIRECT_URI: str | None = _get_env("VITE_KC_REDIRECT_URI")
-
-    # ==========================
-    # TOTVS legado
-    # ==========================
-    TOTVS_DB_HOST: str | None = _get_env("TOTVS_DB_HOST")
-    TOTVS_DB_PORT: str = _get_env("TOTVS_DB_PORT", default="1433")
-    TOTVS_DB_USER: str | None = _get_env("TOTVS_DB_USER")
-    TOTVS_DB_PASSWORD: str | None = _get_env("TOTVS_DB_PASSWORD")
-    TOTVS_DB_DATABASE: str | None = _get_env("TOTVS_DB_DATABASE")
-    TOTVS_POOL_ENABLED: bool = (
-        str(_get_env("TOTVS_POOL_ENABLED", default="true")).lower() in {"1", "true", "yes"}
-    )
-    TOTVS_POOL_MAX_SIZE: int = int(_get_env("TOTVS_POOL_MAX_SIZE", default="8") or "8")
 
     # ==========================
     # Plugins PostgreSQL

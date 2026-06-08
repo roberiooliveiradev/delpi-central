@@ -1,0 +1,97 @@
+# Limpeza de legado — Strategic Indicators API
+
+**Última atualização:** 2026-06-04
+
+Documento de referência para remover código herdado da api-delpi que o SI **não usa mais** após a migração HTTP (maio/2026).
+
+## Contexto
+
+O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
+
+- **HTTP público:** só `/strategic-indicators/*` e integração de metas (`/integrations/dashboard-goals`).
+- **Medições TOTVS:** 100% via `delpi_*_gateway` + `DelpiApiClient`.
+- **Medições Sheets:** misto — parte ainda lida no SI (qualidade/financeiro/produção), parte via api-delpi (ex.: economia em negociações de suprimentos).
+
+## Fases
+
+### Fase 1 — Remoção segura (sem mudar comportamento do painel)
+
+**Objetivo:** apagar código morto e dependências que não entram no grafo de execução dos snapshots.
+
+| Item | Caminho / artefato | Motivo |
+|------|-------------------|--------|
+| Repositórios TOTVS | `si_app/infrastructure/persistence/totvs/**` | Substituídos por gateways HTTP; composers não injetam mais |
+| Pool TOTVS / pyodbc | `si_app/infrastructure/providers/totvs/**` | Só usado pelos repos TOTVS |
+| Sheets Transforma+ legado | `si_app/infrastructure/persistence/google_sheets/transforma_mais/**` | Engenharia usa `TransformometroTransformaMaisGateway` |
+| Port morto | `si_app/domain/ports/transforma_mais/process_query_port.py` | Só referenciado pelo `ProcessRepository` removido |
+| Factories HTTP antigas | `build_get_*` não importados em `financial_composer`, `production_composer`, `quality_composer` | Restos das rotas departamentais da api-delpi |
+| Dependência | `pyodbc` em `requirements.txt` | Só TOTVS direto no SI |
+| Imagem Docker | `unixodbc`, `msodbcsql18`, toolchain ODBC no `Dockerfile` | Só para pyodbc |
+| Config / compose | `TOTVS_*`, `DB_HOST`→TOTVS no serviço `strategic-indicators-api` | SI não conecta mais ao SQL Server |
+| Docs | `CODE_STRUCTURE`, `DEPLOYMENT`, `OPERATIONS`, `PERFORMANCE_IMPLEMENTATION` | Remover referências ao pool TOTVS **no SI** |
+
+**Testes:** suite `strategic-indicators-api/tests/` — nenhum teste importa `persistence.totvs`.
+
+**Não remover na fase 1:**
+
+- Gateways `delpi_*`, use cases e DTOs departamentais usados pelos snapshot providers.
+- Google Sheets em qualidade (Kaizen/5S), financeiro (EBITDA/custo fixo/PMR) e produção (MO/custo/depreciação).
+- Portal RH (`persistence/portal_rh/`).
+
+---
+
+### Fase 2 — Alinhar Google Sheets via api-delpi HTTP
+
+**Objetivo:** uma única fonte de leitura de planilhas (api-delpi), como já feito para suprimentos (`/supplies/negotiation-savings/summary`).
+
+| Departamento | Hoje no SI | Migrar para (api-delpi) |
+|--------------|------------|--------------------------|
+| Qualidade | `KaizenRepository`, `Audit5SRepository` local | `GET /quality/kaizens/summary`, `GET /quality/audit-5s/summary` |
+| Financeiro | `FinancialEbitdaRepository`, fixed cost, receivables local | `GET /financial/ebitda_pct`, `/fixed_cost_pct`, `/pmr` |
+| Produção | `DirectLaborRepository`, production cost, depreciation local | `GET /production/direct_labor_cost_pct`, etc. |
+
+**Passos por indicador:**
+
+1. Garantir rota estável na api-delpi (já existe na maioria).
+2. Criar/estender gateway no SI (padrão `DelpiNegotiationSavingsGateway`).
+3. Trocar composer do departamento para usar gateway em vez de `persistence/google_sheets`.
+4. Remover repositório Sheets duplicado no SI.
+5. Atualizar `DATA_SOURCES.md` e testes de snapshot.
+
+**Risco:** diferenças sutis de normalização de datas/filiais entre SI e api-delpi — validar com testes de regressão em `tests/fixtures/` ou casos em `test_*_snapshot*.py`.
+
+---
+
+### Fase 3 — Enxugar camada duplicada (opcional)
+
+**Objetivo:** reduzir cópia estrutural da api-delpi mantendo só o necessário para snapshots.
+
+Candidatos (avaliar custo/benefício):
+
+- Unificar DTOs departamentais com contratos mínimos nos gateways (menos arquivos em `application/dto/`).
+- Colapsar use cases que só repassam ao gateway em chamadas diretas nos `*MetricsSnapshotService`.
+- Mover testes de repositório Sheets (`test_kaizen_repository`) para api-delpi ou para testes de gateway.
+
+**Não é obrigatório** para operação do painel; melhora manutenção de longo prazo.
+
+---
+
+## Checklist pós-fase 1
+
+```bash
+cd strategic-indicators-api
+PYTHONPATH=. pytest tests/ -q
+
+# Container sem ODBC (rebuild)
+cd ../infra
+docker compose build strategic-indicators-api
+docker compose up -d --force-recreate strategic-indicators-api
+```
+
+Validar no painel: árvore de departamentos e indicadores de Suprimentos/Comercial/Produção (fontes via api-delpi) continuam carregando.
+
+## Referências
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — gateways HTTP
+- [DATA_SOURCES.md](./DATA_SOURCES.md) — fontes por departamento
+- [CODE_STRUCTURE.md](./CODE_STRUCTURE.md) — pacote `si_app`

@@ -3,7 +3,6 @@ from si_app.config import settings
 from si_app.application.services.financial.financial_metrics_snapshot_service import (
     FinancialMetricsSnapshotService,
 )
-from si_app.application.use_cases.financial.get_rol_use_case import GetRolUseCase
 from si_app.infrastructure.persistence.google_sheets.financial.financial_ebitda_repository import (
     FinancialEbitdaRepository,
 )
@@ -20,16 +19,6 @@ from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
 )
 from si_app.infrastructure.providers.strategic_indicators.financial_indicators_snapshot_provider import (
     FinancialIndicatorsSnapshotProvider,
-)
-
-from si_app.application.use_cases.financial.get_financial_ebitda_pct_use_case import (
-    GetFinancialEbitdaPctUseCase,
-)
-from si_app.application.use_cases.financial.get_financial_fixed_cost_pct_use_case import (
-    GetFinancialFixedCostPctUseCase,
-)
-from si_app.application.use_cases.financial.get_financial_pmr_use_case import (
-    GetFinancialPmrUseCase,
 )
 
 
@@ -84,27 +73,5 @@ def build_financial_metrics_snapshot_service() -> FinancialMetricsSnapshotServic
 
 def build_get_financial_indicators_snapshot_port() -> FinancialIndicatorsSnapshotProvider:
     return FinancialIndicatorsSnapshotProvider(
-        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
-    )
-
-
-def build_get_rol_use_case() -> GetRolUseCase:
-    return GetRolUseCase(_build_delpi_financial_gateway())
-
-
-def build_get_financial_ebitda_pct_use_case() -> GetFinancialEbitdaPctUseCase:
-    return GetFinancialEbitdaPctUseCase(
-        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
-    )
-
-
-def build_get_financial_fixed_cost_pct_use_case() -> GetFinancialFixedCostPctUseCase:
-    return GetFinancialFixedCostPctUseCase(
-        financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
-    )
-
-
-def build_get_financial_pmr_use_case() -> GetFinancialPmrUseCase:
-    return GetFinancialPmrUseCase(
         financial_metrics_snapshot_service=build_financial_metrics_snapshot_service(),
     )

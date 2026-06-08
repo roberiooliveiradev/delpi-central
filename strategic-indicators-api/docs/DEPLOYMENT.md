@@ -57,8 +57,7 @@ Ver [gateway-nginx.md](../../docs/02-infraestrutura/gateway-nginx.md).
 | `SI_PERIOD_SCORES_REFRESH_TRENDS_MONTHS` | `3` | Meses materializados (consolidado) |
 | `SI_PERIOD_SCORES_REFRESH_PER_DEPARTMENT` | `false` | Materializa linha por departamento (não lida pela exibição; leitura usa sempre a base global) |
 | `SI_RUN_MIGRATIONS_ON_STARTUP` | `false` (`true` dev) | Migrations no boot |
-| `TOTVS_POOL_ENABLED` | `true` | Pool pyodbc |
-| `TOTVS_POOL_MAX_SIZE` | `8` | Conexões máx. no pool |
+| `DELPI_API_URL` | `http://delpi-api-delpi:8000` | Medições TOTVS via HTTP (não há pool ODBC no SI) |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
 
 Exemplo: [infra/env.strategic-indicators.example](../../infra/env.strategic-indicators.example)
@@ -76,8 +75,8 @@ Exemplo: [infra/env.strategic-indicators.example](../../infra/env.strategic-indi
 | Grupo | Variáveis |
 |-------|-----------|
 | Postgres plugins | `PLUGINS_DB_HOST`, `PLUGINS_DB_PORT`, `PLUGINS_DB_NAME`, `PLUGINS_DB_USER`, `PLUGINS_DB_PASSWORD` |
-| TOTVS | `TOTVS_DB_*` → mapeadas para `DB_*` no container |
 | Portal RH | `PORTAL_RH_DB_*` |
+| api-delpi (HTTP) | `DELPI_API_URL`, `DELPI_API_TIMEOUT` |
 | Google Sheets | `GOOGLE_SHEETS_*`, `*_SHEET_ID`, `*_GID` (ver `config.py`) |
 
 ## Ordem de subida (dev)
@@ -93,7 +92,7 @@ postgres-plugins, keycloak
 
 1. `SI_RUN_MIGRATIONS_ON_STARTUP=false` — rodar migrations em pipeline ou job
 2. `SI_WARMUP_ON_STARTUP=true` se aceitar carga no boot; ou cron com `warmup_si_snapshots.py`
-3. Ajustar `TOTVS_POOL_MAX_SIZE` conforme filiais × paralelismo
+3. Dimensionar `TOTVS_POOL_MAX_SIZE` na **api-delpi** (não no SI) conforme burst de snapshots
 4. Logs em stdout do container; arquivo opcional em `logs/` no volume dev
 5. Health: `GET /apps/strategic-indicators-api/health`
 

@@ -256,5 +256,5 @@ Após alterar metas, settings, import de config ou estrutura admin, o cache in-p
 - Latência p95 de `executive-summary` e `trends?months=6`
 - Taxa de `*_failed` nos logs HTTP
 - `si_warmup_failed` no startup
-- Conexões TOTVS pool esgotado — tanto no SI (`TOTVS_POOL_MAX_SIZE`) quanto na **api-delpi** (warnings no stderr: `totvs_pool TIMEOUT`)
+- Conexões TOTVS pool esgotado na **api-delpi** (`TOTVS_POOL_MAX_SIZE`; o SI não usa mais pool ODBC — ver [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md))
 - `si_measurements_loaded` com `errors > 0` (indica falha em rotas da api-delpi durante snapshot)

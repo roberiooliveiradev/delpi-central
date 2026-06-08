@@ -17,6 +17,8 @@ Portal (shell)
 
 A **api-delpi** não monta mais o router `/strategic-indicators`. Toda leitura e admin do módulo passam pelo serviço dedicado.
 
+Limpeza de legado (repos TOTVS duplicados, pyodbc no SI): [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md).
+
 ## Componentes
 
 | Componente | Container (dev) | Responsabilidade |

@@ -88,8 +88,11 @@ Pacote monorepo `shared/` (instalado com `pip install -e ./shared[fastapi]`):
 - `delpi_api_client` — HTTP client para api-delpi (`DelpiApiClient`)
 - `transformometro_client` — HTTP client para transformometro-api
 
-## O que foi removido / depreciado
+## Legado removido (fase 1 — jun/2026)
 
-- Os 15 repositórios TOTVS em `si_app/infrastructure/persistence/totvs/` estão **depreciados** — mantidos no código como fallback, mas não são mais injetados pelos composers.
-- O pool TOTVS (`BaseRepository`, `QueryBuilder`) pode ser removido em PR futura quando a validação estiver completa.
-- A api-delpi mantém apenas composers departamentais para rotas `/financial`, `/commercial`, etc., e `application/shared/period_resolution.py` para resolução de competência.
+Ver [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md).
+
+- Removidos: `persistence/totvs/`, `providers/totvs/`, Sheets Transforma+ legado, `pyodbc`, factories HTTP mortas nos composers.
+- Mantidos: gateways HTTP, use cases usados por snapshots, Sheets locais (qualidade/financeiro/produção) até a fase 2.
+
+A api-delpi mantém composers departamentais para rotas `/financial`, `/commercial`, etc.

@@ -138,7 +138,7 @@ PROIBIDO:
 
 - [x] 3.1 Lock no cache do provider
 - [x] 3.2 Períodos paralelos com factory
-- [x] 3.3 Pool pyodbc TOTVS (`connection_pool.py`, `TOTVS_POOL_*`)
+- [x] 3.3 Pool pyodbc TOTVS no SI — **removido jun/2026** ([LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md)); pool permanece na api-delpi
 - [x] 3.4 Coletores thin — produção consolidada (`get_consolidated_snapshot` → passagem única)
 - [x] 3.4b Transforma+ — cache TTL de `load_raw_data` (6 abas)
 - [x] 3.4c Financial — `list_rol_by_branch` (1 query TOTVS por período)
@@ -166,8 +166,7 @@ PROIBIDO:
 |----------|---------|-----|
 | `SI_SNAPSHOT_CACHE_TTL_SECONDS` | `300` no Compose | TTL cache in-process entre requests |
 | `LOG_LEVEL` | `INFO` | Logs `strategic_indicators.*` |
-| `TOTVS_POOL_ENABLED` | `true` | Reutiliza conexões pyodbc entre queries |
-| `TOTVS_POOL_MAX_SIZE` | `8` | Máx. conexões simultâneas (7 deptos + margem) |
+| `TOTVS_POOL_*` (api-delpi) | — | Pool ODBC só na api-delpi; removido do SI |
 | `SI_WARMUP_ON_STARTUP` | `false` no Compose | Warm-up legado (só se `SI_PERIOD_SCORES_REFRESH_ENABLED=false`) |
 | `SI_WARMUP_TRENDS_MONTHS` | `6` | Meses no warm-up legado |
 | `SI_PERIOD_SCORES_ENABLED` | `true` | Lê/grava `period_scores` nas rotas de leitura |

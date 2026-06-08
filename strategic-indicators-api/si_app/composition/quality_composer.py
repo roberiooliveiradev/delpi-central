@@ -9,14 +9,8 @@ from si_app.application.use_cases.audit_5s.get_audit_5s_summary_use_case import 
 from si_app.application.use_cases.kaizen.get_kaizen_summary_use_case import (
     GetKaizenSummaryUseCase,
 )
-from si_app.application.use_cases.nonconformity.list_nonconformity_use_case import (
-    ListNonconformityUseCase,
-)
 from si_app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
-)
-from si_app.application.use_cases.ppm.list_ppm_use_case import (
-    ListPpmUseCase,
 )
 from si_app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository import (
     Audit5SRepository,
@@ -25,10 +19,7 @@ from si_app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository im
     KaizenRepository,
 )
 from si_app.infrastructure.persistence.google_sheets.utils import Utils
-from si_app.infrastructure.gateways.delpi_quality_gateway import (
-    DelpiNonconformityGateway,
-    DelpiPpmGateway,
-)
+from si_app.infrastructure.gateways.delpi_quality_gateway import DelpiPpmGateway
 from si_app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
@@ -77,10 +68,6 @@ def _build_ppm_gateway() -> DelpiPpmGateway:
     return DelpiPpmGateway(_get_delpi_client())
 
 
-def _build_nonconformity_gateway() -> DelpiNonconformityGateway:
-    return DelpiNonconformityGateway(_get_delpi_client())
-
-
 def build_get_kaizen_summary_use_case() -> GetKaizenSummaryUseCase:
     return GetKaizenSummaryUseCase(repository=_build_kaizen_repository())
 
@@ -91,14 +78,6 @@ def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
     return GetPpmSummaryUseCase(_build_ppm_gateway())
-
-
-def build_list_ppm_use_case() -> ListPpmUseCase:
-    return ListPpmUseCase(_build_ppm_gateway())
-
-
-def build_list_nonconformity_use_case() -> ListNonconformityUseCase:
-    return ListNonconformityUseCase(_build_nonconformity_gateway())
 
 
 def build_quality_metrics_snapshot_service() -> QualityMetricsSnapshotService:

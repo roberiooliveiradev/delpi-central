@@ -39,7 +39,9 @@ Composição: `real_indicator_measurements_provider.py` — paraleliza departame
 
 A partir de maio/2026, o SI **não acessa mais o TOTVS/SQL Server diretamente**. Todas as medições operacionais TOTVS são obtidas via HTTP da api-delpi, usando o client compartilhado `shared/delpi_api_client`.
 
-Os repositórios TOTVS originais (`si_app/infrastructure/persistence/totvs/`) foram substituídos por gateways HTTP (`si_app/infrastructure/gateways/delpi_*_gateway.py`). Os ports de domínio não mudaram — a troca é transparente para use cases e services.
+Os repositórios TOTVS originais foram **removidos** (fase 1 em [LEGACY_CLEANUP.md](./LEGACY_CLEANUP.md)). Medições operacionais passam por gateways HTTP (`si_app/infrastructure/gateways/delpi_*_gateway.py`). Os ports de domínio não mudaram — a troca é transparente para use cases e services.
+
+**Pendente (fase 2):** migrar leituras Google Sheets ainda locais no SI (qualidade Kaizen/5S, financeiro, produção) para rotas da api-delpi.
 
 ## api-delpi (HTTP)
 

@@ -14,7 +14,7 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
-logger = logging.getLogger("api-totvs")
+logger = logging.getLogger("strategic-indicators-api")
 
 def log_info(message: str):
     logger.info(message)
