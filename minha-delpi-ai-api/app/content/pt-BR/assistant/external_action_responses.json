@@ -136,6 +136,225 @@
         "amostra",
         "engenharia"
       ]
+    },
+    "saleOrdersList": {
+      "excludeTerms": ["lmp", "lmps", "amostra"],
+      "terms": [
+        "ordens de venda",
+        "pedidos de venda",
+        "lista de ov",
+        "listar ov",
+        "listar as ov",
+        "vendas do período",
+        "vendas do periodo"
+      ]
+    },
+    "systemMetadata": {
+      "terms": [
+        "tabela",
+        "tabelas",
+        "coluna",
+        "colunas",
+        "protheus",
+        "sx2",
+        "sx3",
+        "metadado",
+        "schema da tabela",
+        "indices da tabela",
+        "índices da tabela",
+        "relacionamento da tabela"
+      ]
+    },
+    "systemTableSearch": {
+      "patterns": [
+        "(?:buscar|pesquisar|procurar)\\s+tabelas?\\s+(.+?)(?:\\?|$)",
+        "\\bqual\\s+(?:a\\s+)?tabela(?:s)?\\s+(?:de|do|da|dos|das)\\s+(.+?)(?:\\?|$)",
+        "\\bqual\\s+(?:a\\s+)?tabela(?:s)?\\s+(?:que\\s+)?(?:guarda|guardam|armazena|armazenam|contem|possui|tem|registra|grava)\\s+(.+?)(?:\\?|$)",
+        "\\bqual\\s+(?:a\\s+)?tabela(?:s)?\\s+guarda(?:m)?\\s+(.+?)(?:\\?|$)"
+      ],
+      "descriptionStripPrefix": "^(?:as?\\s+|os?\\s+)?(?:informacoes?|dados|registros?)\\s+(?:de|do|da|dos|das|sobre)\\s+"
+    },
+    "kpiQuestions": {
+      "cpvTerms": [
+        "cpv",
+        "custo de produção vendido",
+        "custo de producao vendido",
+        "custo producao vendido"
+      ],
+      "inventoryTurnoverTerms": [
+        "giro de estoque",
+        "giro do estoque",
+        "giro estoque",
+        " rotatividade",
+        "idd",
+        "inventory-turnover"
+      ],
+      "suppliesStockTerms": [
+        "valor total",
+        "valor de estoque",
+        "valor do estoque",
+        "valor em estoque"
+      ]
+    },
+    "lmpRanking": {
+      "dashboardTerms": [
+        "dashboard",
+        "painel",
+        "resumo gerencial",
+        "visão gerencial"
+      ],
+      "dashboardSummaryTerms": [
+        "kpis do painel",
+        "resumo do painel",
+        "resumo do dashboard",
+        "indicadores do painel",
+        "dashboard/summary"
+      ],
+      "dashboardItemsTerms": [
+        "itens do dashboard",
+        "itens do painel",
+        "lista do painel"
+      ]
+    },
+    "productRouteRanking": {
+      "purchasesTerms": [
+        "compra",
+        "compras",
+        "ultimas compras",
+        "últimas compras",
+        "ultima compra",
+        "última compra",
+        "fornecedor comprou",
+        "histórico de compra",
+        "historico de compra"
+      ],
+      "summaryTerms": [
+        "resumo do produto",
+        "resumo sintetico",
+        "resumo sintético",
+        "visao resumida",
+        "visão resumida"
+      ],
+      "guideTerms": [
+        "roteiro",
+        "guide",
+        "rota de fabricação",
+        "rota de fabricacao"
+      ],
+      "pricingTerms": [
+        "preço",
+        "preco",
+        "pricing",
+        "tabela de preço",
+        "tabela de preco",
+        "quanto custa",
+        "custo do"
+      ],
+      "parentsTerms": [
+        "produto pai",
+        "produtos pai",
+        "parent",
+        "where used",
+        "onde é usado",
+        "onde e usado",
+        "pai do",
+        "pais do",
+        "quais produtos usam",
+        "quais itens usam",
+        "produtos que usam"
+      ],
+      "invoicesTerms": [
+        "nota fiscal",
+        "notas fiscai",
+        "nfe",
+        "invoice",
+        "nota de entrada",
+        "notas de entrada",
+        "nota de saída",
+        "nota de saida",
+        "notas de saída",
+        "notas de saida"
+      ]
+    },
+    "productSearch": {
+      "audit5sExcludeTerms": [
+        "nc 5s",
+        "nao conformidade 5s",
+        "não conformidade 5s",
+        "auditoria 5s",
+        "auditorias 5s",
+        "audit 5s",
+        "candidatas a nc 5s"
+      ],
+      "searchTriggers": [
+        "busque",
+        "buscar",
+        "pesquise",
+        "pesquisar",
+        "procure",
+        "procurar",
+        "encontre",
+        "encontrar",
+        "traga",
+        "liste",
+        "listar",
+        "exemplos de",
+        "existe algum",
+        "existem",
+        "tem algum",
+        "quais produtos",
+        "quais itens",
+        "quais materiais",
+        "mais informações sobre",
+        "mais informacoes sobre",
+        "informações sobre",
+        "informacoes sobre",
+        "detalhe de",
+        "detalhes sobre",
+        "search",
+        "find"
+      ],
+      "productContextTerms": [
+        "produto",
+        "item",
+        "material",
+        "cabo",
+        "parafuso",
+        "chapa",
+        "tubo",
+        "peça",
+        "peca",
+        "insumo",
+        "mp",
+        "componente",
+        "motor",
+        "válvula",
+        "valvula",
+        "rolamento",
+        "filtro",
+        "conector",
+        "anel"
+      ],
+      "broadSearchExcludeTerms": [
+        "lmp",
+        "ov",
+        "cpv",
+        "otd",
+        "sql",
+        "estoque total",
+        "giro"
+      ],
+      "descriptionExtractPatterns": [
+        "(?:mais\\s+)?informa(?:ç|c)(?:õ|o)es\\s+sobre\\s+(.+?)$",
+        "detalhes?\\s+(?:sobre\\s+)?(.+?)$",
+        "detalhe\\s+de\\s+(.+?)$",
+        "(?:busque|pesquise|procure|encontre|traga|liste)\\s+(?:\\d+\\s+)?(?:exemplos?\\s+de\\s+)(.+?)(?:\\s+na\\s+api|\\s+no\\s+sistema)?$",
+        "(?:busque|pesquise|procure|encontre|traga|liste)\\s+(?:\\d+\\s+)?(?:produtos?|itens?|materiais?)\\s+(?:d[eoa]\\s+(?:tipo\\s+)?|com\\s+(?:descri[çc][ãa]o\\s+)?|tipo\\s+)(.+?)(?:\\s+na\\s+api|\\s+no\\s+sistema)?$",
+        "(?:busque|pesquise|procure|encontre|traga|liste)\\s+(?:\\d+\\s+)?(.+?)(?:\\s+na\\s+api|\\s+no\\s+sistema)?$",
+        "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(?:existem?|tem|há)\\s+(?:com\\s+(?:descri[çc][ãa]o\\s+)?|d[eoa]\\s+(?:tipo\\s+)?|tipo\\s+)(.+?)$",
+        "(?:quais|quantos?)\\s+(?:produtos?|itens?|materiais?)\\s+(.+?)$",
+        "(?:existe|tem)\\s+(?:algum|alguma)\\s+(.+?)(?:\\s+no\\s+sistema|\\s+cadastrado)?$"
+      ]
     }
   },
   "selectionReasons": {
@@ -158,6 +377,7 @@
     "paginationRefinementPage": "A mensagem solicita a página {page} da consulta anterior.",
     "depthRefinementDefault": "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa.",
     "genericSemanticFallback": "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
+    "semanticRankReason": "Action selecionada por similaridade semântica (score {score}).",
     "productOperational": "A pergunta solicita informações operacionais de produto via OpenAPI.",
     "productStockBranchRefinement": "A mensagem refina o estoque do produto {product_code} para a filial {branch_code}.",
     "kpiCpv": "A pergunta solicita o indicador CPV de suprimentos.",

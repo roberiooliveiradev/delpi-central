@@ -252,15 +252,13 @@ class ExternalActionKpiRouteSelectionService:
 
     @staticmethod
     def looks_like_cpv_question(value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                "cpv",
-                "custo de produção vendido",
-                "custo de producao vendido",
-                "custo producao vendido",
-            )
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "kpiQuestions",
+            "cpvTerms",
         )
+
+        return any(term in value for term in terms)
 
     @staticmethod
     def looks_like_otd_question(value: str) -> bool:
@@ -277,26 +275,21 @@ class ExternalActionKpiRouteSelectionService:
 
     @staticmethod
     def looks_like_inventory_turnover_question(value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                "giro de estoque",
-                "giro do estoque",
-                "giro estoque",
-                " rotatividade",
-                "idd",
-                "inventory-turnover",
-            )
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "kpiQuestions",
+            "inventoryTurnoverTerms",
         )
+
+        return any(term in value for term in terms)
 
     @staticmethod
     def looks_like_supplies_stock_kpi(value: str) -> bool:
-        terms = [
-            "valor total",
-            "valor de estoque",
-            "valor do estoque",
-            "valor em estoque",
-        ]
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "kpiQuestions",
+            "suppliesStockTerms",
+        )
 
         return any(term in value for term in terms)
 

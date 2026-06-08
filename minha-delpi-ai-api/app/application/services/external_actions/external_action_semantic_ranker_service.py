@@ -1,6 +1,9 @@
 import logging
 
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
+from app.domain.services.external_actions.external_action_response_content_service import (
+    ExternalActionResponseContentService,
+)
 from app.domain.services.vector_similarity import cosine_similarity
 from app.infrastructure.config.settings import Settings
 
@@ -107,9 +110,10 @@ class ExternalActionSemanticRankerService:
         ]
 
         for action in filtered:
-            action["selectionReason"] = (
-                "Action selecionada por similaridade semântica "
-                f"(score {action.get('selectionScore')})."
+            action["selectionReason"] = ExternalActionResponseContentService.format(
+                "selectionReasons",
+                "semanticRankReason",
+                score=action.get("selectionScore"),
             )
 
         return filtered

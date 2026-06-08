@@ -1,7 +1,7 @@
 # Playbook 11 — Clean Architecture na API Chat AI
 
 **Projeto:** `minha-delpi-ai-api`  
-**Status:** Fases 0–6 concluídas (jun/2026) · sprint pós-playbook: baseline PT  
+**Status:** Fases 0–6 concluídas (jun/2026) · baseline PT zerado (jun/2026)  
 **Público:** backend, revisores de PR, agentes Cursor  
 **Relacionado:** [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md), [`chat-pre-llm-layers.md`](../architecture/chat-pre-llm-layers.md), [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md)
 
@@ -401,8 +401,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 **Sprint imediata (pós-playbook 11):**
 
-1. Reduzir baseline restante (heurísticas selection → `external_action_responses.json` onde couber).
-2. Ports application restantes (`Postgres*` inline em learning, memory, vision — fora do escopo Fase 4 original).
+1. Ports application restantes (`Postgres*` inline em learning, memory, vision — fora do escopo Fase 4 original).
+
+**Concluído (baseline PT):** heurísticas `external_action_*_route_selection_service` migradas para `external_action_responses.json` (`actionSelection.*`); `semanticRankReason` em `selectionReasons`; gate `test_no_hardcoded_pt_strings` com baseline **32 → 0**.
 
 **Concluído (Fase 2 lote 3):** `ChatRuntimeIntelligenceSettingsPort` + adapter; `ChatWebSearchIntentService` sem import da application; gate `test_domain_clean_architecture`; Fase 2 encerrada (DoD: 0 imports domain→infra).
 

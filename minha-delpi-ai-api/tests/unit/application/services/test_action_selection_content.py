@@ -26,6 +26,16 @@ def test_action_selection_heuristic_terms_exist():
     )
     assert "sql" in sql_terms
     assert "select " in sql_terms
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "productSearch",
+        "searchTriggers",
+    )
+    assert ExternalActionResponseContentService.list(
+        "actionSelection",
+        "kpiQuestions",
+        "cpvTerms",
+    )
 
 
 def test_selection_reasons_keys_exist():
@@ -40,6 +50,7 @@ def test_selection_reasons_keys_exist():
         "lmpQuery",
         "kpiCpv",
         "kpiStockValue",
+        "semanticRankReason",
     )
 
     for key in keys:

@@ -19,21 +19,22 @@ class ExternalActionDomainRouteSelectionService:
 
     @staticmethod
     def looks_like_sale_orders_list_question(value: str) -> bool:
-        if any(term in value for term in ("lmp", "lmps", "amostra")):
+        exclude_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "saleOrdersList",
+            "excludeTerms",
+        )
+
+        if any(term in value for term in exclude_terms):
             return False
 
-        return any(
-            term in value
-            for term in (
-                "ordens de venda",
-                "pedidos de venda",
-                "lista de ov",
-                "listar ov",
-                "listar as ov",
-                "vendas do período",
-                "vendas do periodo",
-            )
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "saleOrdersList",
+            "terms",
         )
+
+        return any(term in value for term in terms)
 
     @staticmethod
     def looks_like_transforma_question(value: str) -> bool:
@@ -41,23 +42,13 @@ class ExternalActionDomainRouteSelectionService:
 
     @staticmethod
     def looks_like_system_metadata_question(value: str) -> bool:
-        return any(
-            term in value
-            for term in (
-                "tabela",
-                "tabelas",
-                "coluna",
-                "colunas",
-                "protheus",
-                "sx2",
-                "sx3",
-                "metadado",
-                "schema da tabela",
-                "indices da tabela",
-                "índices da tabela",
-                "relacionamento da tabela",
-            )
+        terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemMetadata",
+            "terms",
         )
+
+        return any(term in value for term in terms)
 
     def select_sale_orders(
         self,
@@ -311,14 +302,13 @@ class ExternalActionDomainRouteSelectionService:
     def _extract_system_table_search_description(self, message: str) -> str | None:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        for pattern in (
-            r"(?:buscar|pesquisar|procurar)\s+tabelas?\s+(.+?)(?:\?|$)",
-            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+(?:de|do|da|dos|das)\s+(.+?)(?:\?|$)",
-            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+(?:que\s+)?"
-            r"(?:guarda|guardam|armazena|armazenam|contem|possui|tem|registra|grava)\s+"
-            r"(.+?)(?:\?|$)",
-            r"\bqual\s+(?:a\s+)?tabela(?:s)?\s+guarda(?:m)?\s+(.+?)(?:\?|$)",
-        ):
+        patterns = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "systemTableSearch",
+            "patterns",
+        )
+
+        for pattern in patterns:
             match = re.search(pattern, normalized, flags=re.IGNORECASE)
 
             if match:
@@ -332,12 +322,14 @@ class ExternalActionDomainRouteSelectionService:
     @staticmethod
     def _clean_table_search_description(value: str) -> str:
         query = str(value or "").strip(" .?")
-        query = re.sub(
-            r"^(?:as?\s+|os?\s+)?(?:informacoes?|dados|registros?)\s+(?:de|do|da|dos|das|sobre)\s+",
-            "",
-            query,
-            flags=re.IGNORECASE,
+        strip_prefix = ExternalActionResponseContentService.get(
+            "actionSelection",
+            "systemTableSearch",
+            "descriptionStripPrefix",
         )
+
+        if strip_prefix:
+            query = re.sub(strip_prefix, "", query, flags=re.IGNORECASE)
 
         return query.strip(" .?")
 

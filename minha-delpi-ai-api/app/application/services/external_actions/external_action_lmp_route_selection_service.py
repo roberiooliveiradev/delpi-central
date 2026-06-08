@@ -96,21 +96,27 @@ class ExternalActionLmpRouteSelectionService:
         sale_number = self._extract_sale_number(message)
         wants_dashboard = any(
             term in normalized
-            for term in ("dashboard", "painel", "resumo gerencial", "visão gerencial")
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "lmpRanking",
+                "dashboardTerms",
+            )
         )
         wants_dashboard_summary = any(
             term in normalized
-            for term in (
-                "kpis do painel",
-                "resumo do painel",
-                "resumo do dashboard",
-                "indicadores do painel",
-                "dashboard/summary",
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "lmpRanking",
+                "dashboardSummaryTerms",
             )
         )
         wants_dashboard_items = any(
             term in normalized
-            for term in ("itens do dashboard", "itens do painel", "lista do painel")
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "lmpRanking",
+                "dashboardItemsTerms",
+            )
         )
         wants_dashboard_charts = any(
             term in normalized

@@ -177,16 +177,10 @@ class ExternalActionProductRouteSelectionService:
         inherited_segment = str(route_segment or "").strip().lower()
         wants_purchases = any(
             term in normalized
-            for term in (
-                "compra",
-                "compras",
-                "ultimas compras",
-                "últimas compras",
-                "ultima compra",
-                "última compra",
-                "fornecedor comprou",
-                "histórico de compra",
-                "historico de compra",
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "purchasesTerms",
             )
         )
         wants_billing = ChatProductQueryIntentService._looks_like_billing_question(
@@ -214,12 +208,10 @@ class ExternalActionProductRouteSelectionService:
         )
         wants_product_summary = wants_product_overview or any(
             term in normalized
-            for term in (
-                "resumo do produto",
-                "resumo sintetico",
-                "resumo sintético",
-                "visao resumida",
-                "visão resumida",
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "summaryTerms",
             )
         ) or (
             "resumo" in normalized
@@ -241,7 +233,11 @@ class ExternalActionProductRouteSelectionService:
 
         wants_guide = any(
             term in normalized
-            for term in ("roteiro", "guide", "rota de fabricação", "rota de fabricacao")
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "guideTerms",
+            )
         )
         wants_suppliers = any(
             term in normalized
@@ -249,7 +245,11 @@ class ExternalActionProductRouteSelectionService:
         ) or bool(re.search(r"\bfornece\b", normalized))
         wants_pricing = any(
             term in normalized
-            for term in ("preço", "preco", "pricing", "tabela de preço", "tabela de preco", "quanto custa", "custo do")
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "pricingTerms",
+            )
         )
         wants_customers = any(
             term in normalized
@@ -257,10 +257,10 @@ class ExternalActionProductRouteSelectionService:
         )
         wants_parents = any(
             term in normalized
-            for term in (
-                "produto pai", "produtos pai", "parent", "where used",
-                "onde é usado", "onde e usado", "pai do", "pais do",
-                "quais produtos usam", "quais itens usam", "produtos que usam",
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "parentsTerms",
             )
         )
         wants_movements = any(
@@ -269,10 +269,10 @@ class ExternalActionProductRouteSelectionService:
         )
         wants_invoices = any(
             term in normalized
-            for term in (
-                "nota fiscal", "notas fiscai", "nfe", "invoice",
-                "nota de entrada", "notas de entrada", "nota de saída", "nota de saida",
-                "notas de saída", "notas de saida",
+            for term in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productRouteRanking",
+                "invoicesTerms",
             )
         )
         wants_inbound = any(

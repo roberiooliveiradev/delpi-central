@@ -39,67 +39,24 @@ class ExternalActionProductSearchRouteSelectionService:
         if ChatSqlOperationalIntentService.requires_sql_knowledge(value):
             return False
 
-        audit5s_terms = (
-            "nc 5s",
-            "nao conformidade 5s",
-            "não conformidade 5s",
-            "auditoria 5s",
-            "auditorias 5s",
-            "audit 5s",
-            "candidatas a nc 5s",
+        audit5s_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productSearch",
+            "audit5sExcludeTerms",
         )
 
         if any(term in value for term in audit5s_terms):
             return False
 
-        search_triggers = (
-            "busque",
-            "buscar",
-            "pesquise",
-            "pesquisar",
-            "procure",
-            "procurar",
-            "encontre",
-            "encontrar",
-            "traga",
-            "liste",
-            "listar",
-            "exemplos de",
-            "existe algum",
-            "existem",
-            "tem algum",
-            "quais produtos",
-            "quais itens",
-            "quais materiais",
-            "mais informações sobre",
-            "mais informacoes sobre",
-            "informações sobre",
-            "informacoes sobre",
-            "detalhe de",
-            "detalhes sobre",
-            "search",
-            "find",
+        search_triggers = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productSearch",
+            "searchTriggers",
         )
-        product_context = (
-            "produto",
-            "item",
-            "material",
-            "cabo",
-            "parafuso",
-            "chapa",
-            "tubo",
-            "peça",
-            "peca",
-            "insumo",
-            "mp",
-            "componente",
-            "motor",
-            "válvula",
-            "valvula",
-            "rolamento",
-            "filtro",
-            "conector",
-            "anel",
+        product_context = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productSearch",
+            "productContextTerms",
         )
 
         has_trigger = any(term in value for term in search_triggers)
@@ -109,10 +66,13 @@ class ExternalActionProductSearchRouteSelectionService:
             return True
 
         if has_trigger and len(value.split()) >= 3:
-            if not any(
-                term in value
-                for term in ("lmp", "ov", "cpv", "otd", "sql", "estoque total", "giro")
-            ):
+            exclude_terms = ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productSearch",
+                "broadSearchExcludeTerms",
+            )
+
+            if not any(term in value for term in exclude_terms):
                 return True
 
         return False
@@ -222,17 +182,11 @@ class ExternalActionProductSearchRouteSelectionService:
     def extract_search_description(message: str) -> str:
         normalized = str(message or "").lower().strip()
 
-        patterns = [
-            r"(?:mais\s+)?informa(?:ç|c)(?:õ|o)es\s+sobre\s+(.+?)$",
-            r"detalhes?\s+(?:sobre\s+)?(.+?)$",
-            r"detalhe\s+de\s+(.+?)$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:exemplos?\s+de\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(?:produtos?|itens?|materiais?)\s+(?:d[eoa]\s+(?:tipo\s+)?|com\s+(?:descri[çc][ãa]o\s+)?|tipo\s+)(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:busque|pesquise|procure|encontre|traga|liste)\s+(?:\d+\s+)?(.+?)(?:\s+na\s+api|\s+no\s+sistema)?$",
-            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(?:existem?|tem|há)\s+(?:com\s+(?:descri[çc][ãa]o\s+)?|d[eoa]\s+(?:tipo\s+)?|tipo\s+)(.+?)$",
-            r"(?:quais|quantos?)\s+(?:produtos?|itens?|materiais?)\s+(.+?)$",
-            r"(?:existe|tem)\s+(?:algum|alguma)\s+(.+?)(?:\s+no\s+sistema|\s+cadastrado)?$",
-        ]
+        patterns = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productSearch",
+            "descriptionExtractPatterns",
+        )
 
         for pattern in patterns:
             match = re.search(pattern, normalized)
