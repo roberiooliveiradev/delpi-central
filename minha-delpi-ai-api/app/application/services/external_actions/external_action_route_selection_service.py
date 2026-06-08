@@ -17,6 +17,12 @@ from app.domain.services.external_actions.external_action_response_content_servi
 from app.domain.services.operational_api_parameter_builder_service import (
     OperationalApiParameterBuilderService,
 )
+from app.application.services.external_actions.external_action_product_route_selection_service import (
+    ExternalActionProductRouteSelectionService,
+)
+from app.domain.services.chat_product_query_intent_service import (
+    ChatProductQueryIntent,
+)
 
 
 class ExternalActionRouteSelectionService:
@@ -27,9 +33,13 @@ class ExternalActionRouteSelectionService:
         repository,
         *,
         parameter_builder: OperationalApiParameterBuilderService | None = None,
+        product_route: ExternalActionProductRouteSelectionService | None = None,
     ):
         self.repository = repository
         self.parameter_builder = parameter_builder or OperationalApiParameterBuilderService()
+        self._product_route = product_route or ExternalActionProductRouteSelectionService(
+            repository
+        )
 
     def select(
         self,
@@ -80,6 +90,34 @@ class ExternalActionRouteSelectionService:
             }
 
         return None
+
+    def select_product(
+        self,
+        message: str,
+        product_code: str,
+        *,
+        allowed_action_ids: list[str],
+        intent: str = ChatProductQueryIntent.FULL,
+        route_segment: str | None = None,
+        preferred_action_id: str | None = None,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+    ) -> dict | None:
+        return self._product_route.select(
+            message,
+            product_code,
+            allowed_action_ids=allowed_action_ids,
+            intent=intent,
+            route_segment=route_segment,
+            preferred_action_id=preferred_action_id,
+            candidates_loader=candidates_loader,
+        )
+
+    @classmethod
+    def clamp_max_depth_for_path(cls, value: int, path: str) -> int:
+        return ExternalActionProductRouteSelectionService._clamp_max_depth_for_path(
+            value,
+            path,
+        )
 
     def _find_candidates(
         self,
