@@ -10,9 +10,9 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.openapi.docs import get_swagger_ui_html
 
-# from app.startup.run_plugins_migrations_on_startup import (
-#     run_plugins_migrations_on_startup,
-# )
+from app.startup.run_plugins_migrations_on_startup import (
+    run_plugins_migrations_on_startup,
+)
 
 from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
@@ -69,10 +69,11 @@ check_credentials()
 # FASTAPI CONFIG
 # ==========================================================
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     run_plugins_migrations_on_startup()
-#     yield
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    run_plugins_migrations_on_startup()
+    yield
+
 
 app = FastAPI(
     title="API DELPI",
@@ -81,7 +82,7 @@ app = FastAPI(
     root_path="/apps/api-delpi",
     docs_url=None,
     redoc_url=None,
-    # lifespan=lifespan,
+    lifespan=lifespan,
 )
 
 

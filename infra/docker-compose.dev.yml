@@ -649,15 +649,21 @@ services:
       SUPPLIES_IDD_SHEET_ID: ${SUPPLIES_IDD_SHEET_ID:-}
       SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID: ${SUPPLIES_NEGOTIATION_SAVINGS_SHEET_GID:-}
 
+      RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
+
     volumes:
       - ../api-delpi:/app
       - ../shared:/shared
 
     depends_on:
-      - keycloak
-      - postgres-plugins
-      - strategic-indicators-api
-      - core-api
+      keycloak:
+        condition: service_started
+      postgres-plugins:
+        condition: service_healthy
+      strategic-indicators-api:
+        condition: service_started
+      core-api:
+        condition: service_started
 
     networks:
       - delpi-network
