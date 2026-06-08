@@ -21,6 +21,23 @@ def test_label_for_prefers_openapi_schema_title():
     assert label == "Roteiro (OpenAPI)"
 
 
+def test_merge_meta_field_labels_overrides_schema_glossary():
+    service = ExternalActionColumnLabelService()
+
+    labels = service.merge_meta_field_labels(
+        {"available_quantity": "Saldo (OpenAPI)"},
+        {
+            "meta": {
+                "fields": {
+                    "available_quantity": "Saldo disponível (atual - empenhado - reservado)",
+                }
+            }
+        },
+    )
+
+    assert labels["available_quantity"] == "Saldo disponível (atual - empenhado - reservado)"
+
+
 def test_resolve_schema_labels_from_openapi_response():
     service = ExternalActionColumnLabelService()
 

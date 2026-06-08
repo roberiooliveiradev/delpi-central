@@ -3985,8 +3985,10 @@ class ExternalActionResultPresenter:
         path: str = "",
         response_schema: dict | None = None,
     ) -> dict | None:
-        self._active_schema_labels = self._column_labels.resolve_schema_labels(
-            response_schema
+        schema_labels = self._column_labels.resolve_schema_labels(response_schema)
+        self._active_schema_labels = self._column_labels.merge_meta_field_labels(
+            schema_labels,
+            data,
         )
 
         try:

@@ -147,6 +147,29 @@ class ExternalActionColumnLabelService:
             )
         ]
 
+    def merge_meta_field_labels(
+        self,
+        schema_labels: dict[str, str] | None,
+        data,
+    ) -> dict[str, str]:
+        labels = dict(schema_labels or {})
+        payload = data if isinstance(data, dict) else {}
+        meta = payload.get("meta")
+
+        if not isinstance(meta, dict):
+            return labels
+
+        fields = meta.get("fields")
+
+        if not isinstance(fields, dict):
+            return labels
+
+        for key, value in fields.items():
+            if isinstance(key, str) and isinstance(value, str) and value.strip():
+                labels[key] = value.strip()
+
+        return labels
+
     def resolve_schema_labels(self, response_schema: dict | None) -> dict[str, str]:
         if not isinstance(response_schema, dict):
             return {}

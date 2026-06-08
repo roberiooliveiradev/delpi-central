@@ -380,15 +380,15 @@ Fase 7 ─ Presenter por perfil + testes de contrato no chat
 
 **Entregas (api-delpi):**
 
-- [ ] Pydantic models por perfil: `PagedListResponse`, `HierarchyResponse`, `ProductSnapshotResponse`, `CompositeAnalysisResponse`, `PlaybookReportResponse`.
-- [ ] `response_model` nas rotas da Fase 3.
-- [ ] `openapi_extra` com `examples` em stock, structure, factory-status.
-- [ ] `custom_openapi()` preserva examples (se necessário).
+- [x] Pydantic models por perfil: `PagedListResponse`, `HierarchyResponse`, `ProductSnapshotResponse`, `CompositeAnalysisResponse`, `PlaybookReportResponse`.
+- [x] `response_model` nas rotas da Fase 3.
+- [x] `openapi_extra` com `examples` em stock, structure, factory-status.
+- [x] `custom_openapi()` preserva examples (se necessário).
 
 **Entregas (chat):**
 
-- [ ] Reimport do provider `api_delpi` em ambiente dev documentado no playbook.
-- [ ] `responseSchema` do OpenAPI alimenta `ExternalActionColumnLabelService` onde couber.
+- [x] Reimport do provider `api_delpi` em ambiente dev documentado no playbook.
+- [x] `responseSchema` do OpenAPI alimenta `ExternalActionColumnLabelService` onde couber.
 
 **Critério de aceite:** `openapi.json` contém schemas não vazios para ≥ 6 operações; diff de reimport não quebra actions existentes.
 
