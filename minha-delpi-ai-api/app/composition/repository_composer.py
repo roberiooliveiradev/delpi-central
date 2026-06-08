@@ -34,3 +34,15 @@ def make_list_external_actions_use_case() -> ListExternalActionsUseCase:
 
 def make_postgres_chat_quality_report_repository() -> PostgresChatQualityReportRepository:
     return PostgresChatQualityReportRepository()
+
+
+def make_audit_repository() -> PostgresAuditRepository:
+    return make_postgres_audit_repository()
+
+
+def make_chat_agent_repository() -> PostgresChatAgentRepository:
+    return make_postgres_chat_agent_repository()
+
+
+def make_external_action_repository():
+    return make_postgres_external_action_repository()

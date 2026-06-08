@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 4 — lote 3):**
+**Sprint imediata (Fase 4 — lote 4):**
 
-1. **4C:** `chat_routes.py` (~3153 linhas) — dividir rotas por domínio (`chat_session_routes`, `chat_message_routes`, etc.).
-2. **4D:** ports restantes (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`).
+1. **4D:** ports formais (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`) e remover `make_postgres_*` de `admin_routes.py`.
+2. **4E:** reduzir `chat/agent_routes.py` (~1076 linhas) — extrair providers/actions para submódulo.
+
+**Concluído (Fase 4 lote 3):** `app/interfaces/http/routes/chat/` — `meta`, `agent`, `project`, `attachment`, `session`, `message` + `shared`/`deps`; `chat_routes.py` facade (**3153 → 5**); `rg 'Postgres.*Repository' app/interfaces/http/routes/chat` → **0**; aliases `make_chat_agent_repository` / `make_audit_repository` / `make_external_action_repository`.
 
 **Concluído (Fase 4 lote 2):** `ChatStreamTurnPrepareService`, `ChatStreamSessionTitleService`, `ChatStreamUserMessageService`; textos prepare em `stream.json`; `stream_chat_message_use_case.py` **838 → ~437** linhas.
 
