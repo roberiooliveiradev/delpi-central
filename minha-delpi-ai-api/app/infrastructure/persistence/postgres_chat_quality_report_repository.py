@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 
+from app.domain.ports.chat_quality_report_repository_port import ChatQualityReportRepositoryPort
 from app.extensions.db import db
 from app.infrastructure.db.models.chat_quality_report_model import AiChatQualityReportModel
 
 
-class PostgresChatQualityReportRepository:
+class PostgresChatQualityReportRepository(ChatQualityReportRepositoryPort):
     def create(
         self,
         *,

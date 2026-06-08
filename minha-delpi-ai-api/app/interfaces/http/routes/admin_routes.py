@@ -83,8 +83,8 @@ from app.composition.admin_composer import (
 from app.extensions.db import db
 from app.infrastructure.config.settings import Settings
 from app.composition.repository_composer import (
-    make_postgres_audit_repository,
-    make_postgres_chat_quality_report_repository,
+    make_audit_repository,
+    make_chat_quality_report_repository,
 )
 from app.infrastructure.gateways.core_api_http_gateway import CoreApiHttpGateway
 from app.interfaces.http.auth_decorators import require_permission
@@ -442,7 +442,7 @@ def test_admin_rag():
     assertive = score >= Settings.RAG_ASSERTIVENESS_MIN_SCORE and len(chunks) > 0
 
     try:
-        make_postgres_audit_repository().log(
+        make_audit_repository().log(
             user_id=UUID(str(g.current_user.sub)),
             action="admin.rag.tested",
             context="admin",
@@ -493,7 +493,7 @@ def simulate_admin_agent():
         ), 400
 
     try:
-        make_postgres_audit_repository().log(
+        make_audit_repository().log(
             user_id=UUID(str(g.current_user.sub)),
             action="admin.agent.simulated",
             context="admin",
@@ -742,7 +742,7 @@ def admin_quality_unified_metrics():
 @admin_bp.get("/reports/quality/weekly/latest")
 @require_permission(CHAT_ADMIN_PERMISSION)
 def admin_latest_weekly_quality_report():
-    report = make_postgres_chat_quality_report_repository().get_latest(report_type="weekly")
+    report = make_chat_quality_report_repository().get_latest(report_type="weekly")
 
     if not report:
         return jsonify({"report": None}), 200
@@ -760,7 +760,7 @@ def admin_list_weekly_quality_reports():
     except (TypeError, ValueError):
         return bad_request("limit must be an integer")
 
-    reports = make_postgres_chat_quality_report_repository().list_recent(
+    reports = make_chat_quality_report_repository().list_recent(
         report_type="weekly",
         limit=limit,
     )
@@ -1536,7 +1536,7 @@ def save_admin_llm_cost_table():
         ), 400
 
     try:
-        make_postgres_audit_repository().log(
+        make_audit_repository().log(
             user_id=UUID(str(g.current_user.sub)),
             action="admin.metrics.cost_table.updated",
             context="admin",
@@ -1577,7 +1577,7 @@ def save_admin_chat_intelligence_settings():
         ), 400
 
     try:
-        make_postgres_audit_repository().log(
+        make_audit_repository().log(
             user_id=UUID(str(g.current_user.sub)),
             action="admin.chat.intelligence_settings.updated",
             context="admin",
@@ -1601,7 +1601,7 @@ def reindex_external_action_embeddings():
     result = use_case.execute(provider_key=str(provider_key).strip() if provider_key else None)
 
     try:
-        make_postgres_audit_repository().log(
+        make_audit_repository().log(
             user_id=UUID(str(g.current_user.sub)),
             action="admin.tools.actions.reindex_embeddings",
             context="admin",

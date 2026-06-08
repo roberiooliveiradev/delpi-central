@@ -402,10 +402,12 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 4 — lote 4):**
+**Sprint imediata (Fase 4 — lote 5):**
 
-1. **4D:** ports formais (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`) e remover `make_postgres_*` de `admin_routes.py`.
-2. **4E:** reduzir `chat/agent_routes.py` (~1076 linhas) — extrair providers/actions para submódulo.
+1. **4F:** `admin_chat_skill_use_cases` e `generate_weekly_quality_report_use_case` tipados com ports (remover `Postgres*` inline na application).
+2. **4G:** enforcement `rg 'Postgres.*Repository' app/interfaces/'` em CI + smoke admin quality report.
+
+**Concluído (Fase 4 lote 4):** ports formais (`ExternalActionRepositoryPort`, `ChatSkillRepositoryPort`, `ChatQualityReportRepositoryPort`); aliases `make_chat_quality_report_repository` / `make_chat_skill_repository`; `admin_routes.py` sem `make_postgres_*`; `agent_routes.py` **1076 → 548** + `agent_provider_routes.py` (461) + `agent_skill_routes.py` (68); `rg 'Postgres.*Repository|make_postgres_' app/interfaces/` → **0**.
 
 **Concluído (Fase 4 lote 3):** `app/interfaces/http/routes/chat/` — `meta`, `agent`, `project`, `attachment`, `session`, `message` + `shared`/`deps`; `chat_routes.py` facade (**3153 → 5**); `rg 'Postgres.*Repository' app/interfaces/http/routes/chat` → **0**; aliases `make_chat_agent_repository` / `make_audit_repository` / `make_external_action_repository`.
 

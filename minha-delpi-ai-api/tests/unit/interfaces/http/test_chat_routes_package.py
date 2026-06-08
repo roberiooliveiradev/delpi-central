@@ -9,6 +9,8 @@ def test_chat_routes_split_modules_exist():
         "deps.py",
         "meta_routes.py",
         "agent_routes.py",
+        "agent_provider_routes.py",
+        "agent_skill_routes.py",
         "project_routes.py",
         "attachment_routes.py",
         "session_routes.py",
