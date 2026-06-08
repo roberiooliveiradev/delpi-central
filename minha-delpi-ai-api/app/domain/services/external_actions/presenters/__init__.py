@@ -16,6 +16,9 @@ from app.domain.services.external_actions.presenters.entity_route_presenter impo
 from app.domain.services.external_actions.presenters.legacy_route_presenter import (
     ExternalActionLegacyRoutePresenter,
 )
+from app.domain.services.external_actions.presenters.presentation_builder_presenter import (
+    ExternalActionPresentationBuilderPresenter,
+)
 from app.domain.services.external_actions.presenters.playbook_report_presenter import (
     ExternalActionPlaybookReportPresenter,
 )
@@ -32,6 +35,7 @@ __all__ = [
     "ExternalActionKpiChartPresenter",
     "ExternalActionLegacyRoutePresenter",
     "ExternalActionPlaybookReportPresenter",
+    "ExternalActionPresentationBuilderPresenter",
     "ExternalActionProductAnalyserPresenter",
     "ExternalActionProductListPresenter",
     "ExternalActionSqlPresenter",

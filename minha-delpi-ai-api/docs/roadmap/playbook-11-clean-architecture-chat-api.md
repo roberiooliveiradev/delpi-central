@@ -402,10 +402,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 ## 9. Próxima ação recomendada
 
-**Sprint imediata (Fase 3 — god classes, lote 11):**
+**Sprint imediata (Fase 3 — god classes, lote 12):**
 
-1. Extrair `_build_presentation` / entity table builders restantes do facade.
-2. Extrair helpers de drawing/SQL recovery de `chat_tool_context_service.py`.
+1. Extrair `_build_text_presentation` / tree presentation do facade.
+2. Extrair `build_context` em fases (seleção de tools vs execução vs finalização).
 
 **Concluído (Fase 3 lote 1):** `ExternalActionKpiChartPresenter` (~850 linhas) extraído; facade **6247 → ~5570** linhas.
 
@@ -430,5 +430,9 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 **Concluído (Fase 3A lote 10):** `ExternalActionEntityRoutePresenter` (~254 linhas); `_present_entity_first` / `_present_entity_extensions` migrados para `_entity_route()`; facade **2700 → ~2459** linhas.
 
 **Concluído (Fase 3C lote 10):** `ChatToolContextExternalActionFormatter` (~211 linhas); metadata/contexto de external actions extraído; `chat_tool_context_service.py` **2028 → ~1870** linhas.
+
+**Concluído (Fase 3A lote 11):** `ExternalActionPresentationBuilderPresenter` (~454 linhas); `_build_presentation*` e table builders migrados para `_presentation_builder()`; facade **2459 → ~2054** linhas.
+
+**Concluído (Fase 3C lote 11):** `ChatToolContextAuxiliaryService` (~287 linhas); drawing/direct answer/SQL recovery extraídos; `chat_tool_context_service.py` **1869 → ~1645** linhas.
 
 Atualizar a coluna **Status** deste playbook quando cada fase for concluída.
