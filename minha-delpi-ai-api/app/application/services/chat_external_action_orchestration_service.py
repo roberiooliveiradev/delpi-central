@@ -178,11 +178,11 @@ class ChatExternalActionOrchestrationService:
 
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
 
-        from app.application.services.external_actions.external_action_selection_service import (
-            ExternalActionSelectionService,
+        from app.application.services.external_actions.external_action_domain_route_selection_service import (
+            ExternalActionDomainRouteSelectionService,
         )
 
-        if ExternalActionSelectionService._looks_like_sale_orders_list_question(
+        if ExternalActionDomainRouteSelectionService.looks_like_sale_orders_list_question(
             normalized
         ):
             selected = selection_service.select_action(

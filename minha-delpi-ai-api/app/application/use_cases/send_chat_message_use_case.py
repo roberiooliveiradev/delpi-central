@@ -190,7 +190,6 @@ class SendChatMessageUseCase:
             history_source=previous_messages,
             build_tool_context=partial(
                 self.turn_support.build_tool_context,
-                request,
                 agent_context=workspace_context.get("agent"),
             ),
             maybe_extend_tool_context=partial(

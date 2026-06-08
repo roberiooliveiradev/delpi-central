@@ -1018,6 +1018,37 @@ class PostgresChatAgentRepository(ChatAgentRepositoryPort):
 
         return True
 
+    def list_enabled_ordered(self) -> list[ChatAgent]:
+        models = (
+            AiChatAgentModel.query.filter(AiChatAgentModel.enabled.is_(True))
+            .order_by(AiChatAgentModel.name.asc())
+            .all()
+        )
+
+        return [self._to_runtime_entity(model) for model in models]
+
+    def get_by_id(self, agent_id: UUID) -> ChatAgent | None:
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model:
+            return None
+
+        return self._to_entity_raw(model)
+
+    def update_metadata(self, agent_id: UUID, metadata: dict) -> ChatAgent | None:
+        from sqlalchemy.orm.attributes import flag_modified
+
+        model = AiChatAgentModel.query.filter(AiChatAgentModel.id == agent_id).first()
+
+        if not model:
+            return None
+
+        model.agent_metadata = metadata
+        flag_modified(model, "agent_metadata")
+        db.session.flush()
+
+        return self._to_entity_raw(model)
+
     def _safe_isoformat(self, value) -> str | None:
         return value.isoformat() if value else None
 

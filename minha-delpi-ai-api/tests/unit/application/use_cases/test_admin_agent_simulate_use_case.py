@@ -1,5 +1,25 @@
+from unittest.mock import Mock
+
 from app.application.services.admin_guideline_prompt_service import AdminGuidelinePromptService
 from app.application.use_cases.admin_agent_simulate_use_case import AdminAgentSimulateUseCase
+from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
+
+
+def _make_use_case(**kwargs) -> AdminAgentSimulateUseCase:
+    return AdminAgentSimulateUseCase(
+        rag_context_service=kwargs.get("rag_context_service", FakeRagContextService()),
+        guideline_prompt_service=kwargs.get(
+            "guideline_prompt_service",
+            AdminGuidelinePromptService(FakeGuidelineRepository()),
+        ),
+        chat_agent_repository=kwargs.get("chat_agent_repository", Mock(spec=ChatAgentRepositoryPort)),
+        chat_session_repository=kwargs.get(
+            "chat_session_repository",
+            Mock(spec=ChatSessionRepositoryPort),
+        ),
+        chat_tool_context_service=kwargs.get("chat_tool_context_service"),
+    )
 
 
 class FakeGuidelineRepository:
@@ -48,10 +68,7 @@ class FakeChatToolContextService:
 
 
 def test_admin_agent_simulate_builds_prompt_and_comparison():
-    use_case = AdminAgentSimulateUseCase(
-        rag_context_service=FakeRagContextService(),
-        guideline_prompt_service=AdminGuidelinePromptService(FakeGuidelineRepository()),
-    )
+    use_case = _make_use_case()
 
     result = use_case.execute(question="Como funciona o chat?")
 
@@ -65,11 +82,7 @@ def test_admin_agent_simulate_builds_prompt_and_comparison():
 
 
 def test_admin_agent_simulate_executes_tools_with_access_token():
-    use_case = AdminAgentSimulateUseCase(
-        rag_context_service=FakeRagContextService(),
-        guideline_prompt_service=AdminGuidelinePromptService(FakeGuidelineRepository()),
-        chat_tool_context_service=FakeChatToolContextService(),
-    )
+    use_case = _make_use_case(chat_tool_context_service=FakeChatToolContextService())
 
     result = use_case.execute(
         question="Quem sou eu?",
@@ -85,10 +98,7 @@ def test_admin_agent_simulate_executes_tools_with_access_token():
 
 
 def test_admin_agent_simulate_rejects_empty_question():
-    use_case = AdminAgentSimulateUseCase(
-        rag_context_service=FakeRagContextService(),
-        guideline_prompt_service=AdminGuidelinePromptService(FakeGuidelineRepository()),
-    )
+    use_case = _make_use_case()
 
     try:
         use_case.execute(question="   ")

@@ -6,6 +6,8 @@ from app.application.services.chat_intelligence_pipeline_service import (
     ChatIntelligencePipelineService,
 )
 from app.application.services.chat_prompt_builder_service import ChatPromptBuilderService
+from app.domain.ports.chat_agent_repository_port import ChatAgentRepositoryPort
+from app.domain.ports.chat_session_repository_port import ChatSessionRepositoryPort
 from app.domain.services.prompt_policy_service import PromptPolicyService
 from app.domain.services.tool_selection_service import ToolSelectionService
 from app.infrastructure.config.settings import Settings
@@ -17,12 +19,16 @@ class AdminAgentSimulateUseCase:
         *,
         rag_context_service,
         guideline_prompt_service: AdminGuidelinePromptService,
+        chat_agent_repository: ChatAgentRepositoryPort,
+        chat_session_repository: ChatSessionRepositoryPort,
         tool_selection_service: ToolSelectionService | None = None,
         chat_tool_context_service=None,
         llm_gateway=None,
     ):
         self.rag_context_service = rag_context_service
         self.guideline_prompt_service = guideline_prompt_service
+        self.chat_agent_repository = chat_agent_repository
+        self.chat_session_repository = chat_session_repository
         self.tool_selection_service = tool_selection_service or ToolSelectionService()
         self.chat_tool_context_service = chat_tool_context_service
         self.llm_gateway = llm_gateway
@@ -231,21 +237,17 @@ class AdminAgentSimulateUseCase:
         if not session_id or not user_id:
             return []
 
-        from app.infrastructure.persistence.postgres_chat_session_repository import (
-            PostgresChatSessionRepository,
-        )
-
-        repository = PostgresChatSessionRepository()
-
         try:
-            session = repository.get_session_by_id(UUID(str(session_id)))
+            parsed_session_id = UUID(str(session_id))
         except ValueError:
             return []
+
+        session = self.chat_session_repository.get_session_by_id(parsed_session_id)
 
         if not session or str(session.user_id) != str(user_id):
             return []
 
-        messages = repository.list_messages_by_session(UUID(str(session_id)))
+        messages = self.chat_session_repository.list_messages_by_session(parsed_session_id)
         tail = messages[-Settings.CHAT_HISTORY_MAX_MESSAGES :]
 
         return [message for message in tail if message.role in {"user", "assistant"}]
@@ -300,37 +302,36 @@ class AdminAgentSimulateUseCase:
         user_id: str | None,
         skip_enabled_check: bool = False,
     ) -> tuple[str | None, dict | None, dict | None]:
-        from app.infrastructure.db.models.chat_agent_model import AiChatAgentModel
-        from app.infrastructure.persistence.postgres_chat_agent_repository import (
-            PostgresChatAgentRepository,
-        )
-
-        repository = PostgresChatAgentRepository()
-        model = None
-
-        if agent_id:
-            try:
-                query = AiChatAgentModel.query.filter(
-                    AiChatAgentModel.id == UUID(str(agent_id)),
-                )
-
-                if not skip_enabled_check:
-                    query = query.filter(AiChatAgentModel.enabled.is_(True))
-
-                model = query.first()
-            except ValueError:
-                model = None
-
-        if not model:
+        if not agent_id:
             return None, None, None
 
+        try:
+            parsed_agent_id = UUID(str(agent_id))
+        except ValueError:
+            return None, None, None
+
+        agent = None
+
         if user_id:
-            loaded = repository.get_accessible_by_id(model.id, UUID(str(user_id)))
+            loaded = self.chat_agent_repository.get_accessible_by_id(
+                parsed_agent_id,
+                UUID(str(user_id)),
+            )
+
             if not loaded:
                 return None, None, None
+
             agent, _role = loaded
+
+            if not skip_enabled_check and not agent.enabled:
+                return None, None, None
+        elif skip_enabled_check:
+            agent = self.chat_agent_repository.get_by_id(parsed_agent_id)
         else:
-            agent = repository._to_entity(model)
+            agent = self.chat_agent_repository.get_enabled_by_id(parsed_agent_id)
+
+        if not agent:
+            return None, None, None
 
         specialization = self.specialization_service.parse((agent.metadata or {}).get("specialization"))
 

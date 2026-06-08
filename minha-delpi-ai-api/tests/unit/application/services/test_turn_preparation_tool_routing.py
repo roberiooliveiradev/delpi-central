@@ -78,3 +78,55 @@ def test_run_tool_phase_skips_tools_for_text_task():
     assert result.tool_calls == []
     assert "text_task" in pipeline_stages
     build_tool_context.assert_not_called()
+
+
+def test_run_tool_phase_invokes_build_tool_context_with_request_once():
+    from functools import partial
+
+    from app.application.services.chat_turn.chat_turn_preparation_tool_routing_service import (
+        ChatTurnPreparationOperationalGuards,
+        ChatTurnPreparationSkipToolFlags,
+    )
+
+    request = MagicMock()
+    request.attachment_ids = None
+    request.access_token = "token"
+    calls: list[tuple] = []
+
+    def build_tool_context(call_request, **kwargs):
+        calls.append((call_request, kwargs))
+        return {"context": "ctx", "toolCalls": [{"name": "get_product"}]}
+
+    result = ChatTurnPreparationToolRoutingService.run_tool_phase(
+        message="me fale do produto 10080045",
+        request=request,
+        history_source=[],
+        workspace_context={"capabilities": {"actions": True}},
+        conversation_context="",
+        pipeline_stages=[],
+        pipeline_timings=ChatPipelineTimings(),
+        canvas_action=None,
+        canvas_operational_update=False,
+        pre_capability_answer=None,
+        operational_guards=ChatTurnPreparationOperationalGuards(None, None),
+        routing_disambiguation_answer=None,
+        interpretation_without_data_answer=None,
+        skip_flags=ChatTurnPreparationSkipToolFlags(False, False, False, []),
+        small_talk_direct=None,
+        utility_direct=None,
+        web_save_sources_direct=None,
+        web_post_search_direct=None,
+        attachment_welcome_direct=None,
+        unclear_direct=None,
+        text_task_pure=False,
+        fast_path=False,
+        operational_optimize=False,
+        analysis_mode=False,
+        build_tool_context=partial(build_tool_context, agent_context={"id": str(uuid4())}),
+        maybe_extend_tool_context=lambda **kwargs: kwargs["tool_context"],
+        max_external_action_calls=None,
+    )
+
+    assert len(calls) == 1
+    assert calls[0][0] is request
+    assert result.tool_calls == [{"name": "get_product"}]

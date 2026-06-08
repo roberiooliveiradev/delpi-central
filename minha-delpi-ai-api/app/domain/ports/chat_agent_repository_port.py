@@ -247,3 +247,18 @@ class ChatAgentRepositoryPort(ABC):
         can_manage_official_agents: bool = False,
     ) -> bool:
         raise NotImplementedError
+
+    @abstractmethod
+    def list_enabled_ordered(self) -> list[ChatAgent]:
+        """Lista agentes habilitados ordenados por nome (admin)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_by_id(self, agent_id: UUID) -> ChatAgent | None:
+        """Obtém agente por ID sem checagem de acesso (admin)."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def update_metadata(self, agent_id: UUID, metadata: dict) -> ChatAgent | None:
+        """Atualiza metadados persistidos do agente (admin)."""
+        raise NotImplementedError

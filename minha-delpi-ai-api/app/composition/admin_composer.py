@@ -683,9 +683,16 @@ def make_test_admin_rag_use_case() -> AdminRagTestUseCase:
 
 
 def make_admin_agent_simulate_use_case(*, with_llm: bool = False) -> AdminAgentSimulateUseCase:
+    from app.composition.repository_composer import (
+        make_chat_agent_repository,
+        make_chat_session_repository,
+    )
+
     return AdminAgentSimulateUseCase(
         rag_context_service=make_rag_context_service(),
         guideline_prompt_service=make_admin_guideline_prompt_service(),
+        chat_agent_repository=make_chat_agent_repository(),
+        chat_session_repository=make_chat_session_repository(),
         tool_selection_service=ToolSelectionService(),
         chat_tool_context_service=make_chat_tool_context_service(),
         llm_gateway=make_llm_gateway() if with_llm else None,
@@ -786,15 +793,31 @@ def make_list_admin_agent_specialization_presets_use_case() -> (
 
 
 def make_list_admin_specialized_agents_use_case() -> ListAdminSpecializedAgentsUseCase:
-    return ListAdminSpecializedAgentsUseCase()
+    from app.composition.repository_composer import make_chat_agent_repository
+
+    return ListAdminSpecializedAgentsUseCase(
+        agent_repository=make_chat_agent_repository(),
+    )
 
 
 def make_get_admin_agent_specialization_use_case() -> GetAdminAgentSpecializationUseCase:
-    return GetAdminAgentSpecializationUseCase()
+    from app.composition.repository_composer import make_chat_agent_repository
+
+    return GetAdminAgentSpecializationUseCase(
+        agent_repository=make_chat_agent_repository(),
+    )
 
 
 def make_save_admin_agent_specialization_use_case() -> SaveAdminAgentSpecializationUseCase:
-    return SaveAdminAgentSpecializationUseCase(audit_repository=PostgresAuditRepository())
+    from app.composition.repository_composer import (
+        make_audit_repository,
+        make_chat_agent_repository,
+    )
+
+    return SaveAdminAgentSpecializationUseCase(
+        agent_repository=make_chat_agent_repository(),
+        audit_repository=make_audit_repository(),
+    )
 
 
 def make_get_admin_security_config_use_case() -> GetAdminSecurityConfigUseCase:

@@ -200,7 +200,6 @@ class ChatStreamTurnPrepareService:
                 history_source=history_source,
                 build_tool_context=partial(
                     self.turn_support.build_tool_context,
-                    request,
                     agent_context=workspace_context.get("agent"),
                 ),
                 maybe_extend_tool_context=partial(
