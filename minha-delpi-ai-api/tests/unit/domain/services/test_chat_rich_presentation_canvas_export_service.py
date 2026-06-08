@@ -99,7 +99,9 @@ def test_build_markdown_includes_tables_tree_and_chart():
     assert "Produto 90260015" in markdown
     assert "Roteiro de produção" in markdown
     assert "Estrutura do produto 90260015" in markdown
+    assert "#### 90260015" in markdown
     assert "10420040" in markdown
+    assert "Caminho" not in markdown
     assert "Composição por tipo de componente" in markdown
     assert "MP (7)" in markdown
 

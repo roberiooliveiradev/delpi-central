@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from app.domain.services.chat_presentation_structure_dedup_service import (
+    ChatPresentationStructureDedupService,
+)
 from app.domain.services.chat_rich_presentation_text_service import (
     ChatRichPresentationTextService,
 )
@@ -59,14 +62,18 @@ class ChatRichPresentationCanvasExportService:
     @classmethod
     def _visual_sections_from_metadata(cls, metadata: dict[str, Any]) -> list[str]:
         sections: list[str] = []
+        tree = cls._resolve_tree_presentation(metadata)
 
         for table in ChatRichPresentationTextService._iter_unique_table_presentations(metadata):
+            if tree and ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                table
+            ):
+                continue
+
             section = cls._table_presentation_to_markdown(table)
 
             if section:
                 sections.append(section)
-
-        tree = cls._resolve_tree_presentation(metadata)
 
         if tree:
             section = cls._tree_presentation_to_markdown(tree)
@@ -176,72 +183,126 @@ class ChatRichPresentationCanvasExportService:
             return None
 
         title = str(presentation.get("title") or "Estrutura").strip()
-        rows = cls._flatten_tree_rows(root)
+        blocks = cls._collect_tree_block_sections(root)
 
-        if not rows:
+        if not blocks:
             return f"### {title}"
 
-        header = "Nível | Código | Descrição | Tipo | Unid. | Qtde | Caminho"
-        body_lines = [
-            " | ".join(
+        lines = [f"### {title}", ""]
+        rendered_rows = 0
+
+        for block in blocks:
+            rows = block["rows"]
+
+            if not rows:
+                continue
+
+            lines.extend([f"#### {block['heading']}", ""])
+            header = "Nível | Código | Descrição | Tipo | Unid. | Qtde"
+            lines.extend(
                 [
-                    str(row["nivel"]),
-                    row["codigo"],
-                    row["descricao"],
-                    row["tipo"],
-                    row["unidade"],
-                    row["quantidade"],
-                    row["caminho"],
+                    f"| {header} |",
+                    f"| {' | '.join(['---'] * 6)} |",
                 ]
             )
-            for row in rows[:_MAX_TREE_ROWS]
-        ]
 
-        lines = [
-            f"### {title}",
-            "",
-            f"| {header} |",
-            f"| {' | '.join(['---'] * 7)} |",
-            *[f"| {line} |" for line in body_lines],
-        ]
+            for row in rows:
+                if rendered_rows >= _MAX_TREE_ROWS:
+                    break
 
-        if len(rows) > _MAX_TREE_ROWS:
-            lines.extend(["", f"_… e mais {len(rows) - _MAX_TREE_ROWS} nó(s)._"])
+                lines.append(
+                    "| "
+                    + " | ".join(
+                        [
+                            cls._cell(str(row["nivel"])),
+                            cls._cell(row["codigo"]),
+                            cls._cell(row["descricao"]),
+                            cls._cell(row["tipo"]),
+                            cls._cell(row["unidade"]),
+                            cls._cell(row["quantidade"]),
+                        ]
+                    )
+                    + " |"
+                )
+                rendered_rows += 1
+
+            lines.append("")
+
+            if rendered_rows >= _MAX_TREE_ROWS:
+                break
+
+        total_rows = sum(len(block["rows"]) for block in blocks)
+
+        if total_rows > _MAX_TREE_ROWS:
+            lines.extend([f"_… e mais {total_rows - _MAX_TREE_ROWS} componente(s)._", ""])
 
         return "\n".join(lines).strip()
 
     @classmethod
-    def _flatten_tree_rows(
+    def _collect_tree_block_sections(
         cls,
         node: dict[str, Any],
         *,
         depth: int = 0,
-        path: list[str] | None = None,
-    ) -> list[dict[str, str]]:
-        current_path = [
-            *(path or []),
-            str(node.get("label") or node.get("id") or "").strip(),
+    ) -> list[dict[str, Any]]:
+        children = [
+            child for child in (node.get("children") or []) if isinstance(child, dict)
         ]
+        blocks: list[dict[str, Any]] = []
+
+        if children:
+            blocks.append(
+                {
+                    "heading": cls._format_tree_block_heading(node, depth),
+                    "nivel": depth,
+                    "rows": [
+                        cls._tree_child_row(child, depth + 1) for child in children
+                    ],
+                }
+            )
+
+            for child in children:
+                blocks.extend(cls._collect_tree_block_sections(child, depth=depth + 1))
+
+        return blocks
+
+    @classmethod
+    def _tree_child_row(cls, node: dict[str, Any], depth: int) -> dict[str, str]:
         meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
-        rows = [
-            {
-                "nivel": str(depth),
-                "codigo": str(node.get("label") or node.get("id") or "").strip(),
-                "descricao": str(node.get("subtitle") or "").strip(),
-                "tipo": str(node.get("badge") or "").strip(),
-                "unidade": str(meta.get("unit") or "").strip(),
-                "quantidade": cls._format_quantity(meta.get("quantity")),
-                "caminho": " > ".join(part for part in current_path if part),
-            }
+
+        return {
+            "nivel": str(depth),
+            "codigo": str(node.get("label") or node.get("id") or "").strip(),
+            "descricao": str(node.get("subtitle") or "").strip(),
+            "tipo": str(node.get("badge") or "").strip(),
+            "unidade": str(meta.get("unit") or "").strip(),
+            "quantidade": cls._format_quantity(meta.get("quantity")),
+        }
+
+    @classmethod
+    def _format_tree_block_heading(cls, node: dict[str, Any], depth: int) -> str:
+        code = str(node.get("label") or node.get("id") or "").strip()
+        description = str(node.get("subtitle") or "").strip()
+        badge = str(node.get("badge") or "").strip()
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        quantity = cls._format_quantity(meta.get("quantity"))
+        unit = str(meta.get("unit") or "").strip()
+        label = f"{code} — {description}" if description else code
+        meta_parts = [
+            part
+            for part in [
+                badge,
+                f"{quantity} {unit}".strip() if quantity and unit else quantity or unit,
+            ]
+            if part
         ]
+        heading = f"{label} ({' · '.join(meta_parts)})" if meta_parts else label
 
-        for child in node.get("children") or []:
-            if isinstance(child, dict):
-                rows.extend(
-                    cls._flatten_tree_rows(child, depth=depth + 1, path=current_path)
-                )
+        return heading.strip() or f"Nível {depth}"
 
-        return rows
+    @classmethod
+    def _cell(cls, value: str) -> str:
+        return str(value or "").replace("|", "\\|")
 
     @classmethod
     def _chart_presentation_to_markdown(cls, presentation: dict[str, Any]) -> str | None:

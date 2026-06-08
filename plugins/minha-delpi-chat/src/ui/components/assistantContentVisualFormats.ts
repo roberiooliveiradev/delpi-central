@@ -12,6 +12,7 @@ import {
   renumberStackSectionTitles,
 } from "./presentationStackSections";
 import { isHierarchyDuplicateTable } from "./presentationStructureDedup";
+import { expandTreeSegmentsToBlockTables } from "./treePresentationUtils";
 import {
   getPresentationDecisionFromToolCalls,
   getPreferredFormatFromToolCalls,
@@ -370,12 +371,19 @@ export function filterSegmentsByVisualKind(
           return activeKind === "table";
         }
 
+        if (segment.kind === "tree" && activeKind === "table") {
+          return true;
+        }
+
         const kind = segmentVisualKind(segment);
 
         return kind === activeKind;
       });
 
-  return renumberStackSectionTitles(filtered, activeKind);
+  const normalized =
+    activeKind === "table" ? expandTreeSegmentsToBlockTables(filtered) : filtered;
+
+  return renumberStackSectionTitles(normalized, activeKind);
 }
 
 export function shouldShowCompleteStackView(toolCalls: ChatToolCall[]): boolean {

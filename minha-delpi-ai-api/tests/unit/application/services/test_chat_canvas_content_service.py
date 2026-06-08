@@ -136,8 +136,27 @@ def test_resolve_simple_copy_includes_rich_presentations_from_tool_calls():
                             "root": {
                                 "id": "90260015",
                                 "label": "90260015",
+                                "subtitle": "CHICOTE DE LIGACAO",
                                 "badge": "PA",
-                                "children": [],
+                                "meta": {"quantity": 1, "unit": "MI"},
+                                "children": [
+                                    {
+                                        "id": "50210372",
+                                        "label": "50210372",
+                                        "subtitle": "CA18AZUL",
+                                        "badge": "PI",
+                                        "meta": {"quantity": 1, "unit": "MI"},
+                                        "children": [
+                                            {
+                                                "id": "10420040",
+                                                "label": "10420040",
+                                                "subtitle": "CABO PVC",
+                                                "badge": "MP",
+                                                "meta": {"quantity": 142, "unit": "MT"},
+                                            }
+                                        ],
+                                    }
+                                ],
                             },
                         },
                     },
@@ -156,6 +175,10 @@ def test_resolve_simple_copy_includes_rich_presentations_from_tool_calls():
     assert action.open_payload is not None
     assert "Produto 90260015" in action.open_payload.markdown
     assert "Estrutura do produto 90260015" in action.open_payload.markdown
+    assert "#### 90260015" in action.open_payload.markdown
+    assert "#### 50210372" in action.open_payload.markdown
+    assert "10420040" in action.open_payload.markdown
+    assert "Caminho" not in action.open_payload.markdown
 
 
 def test_content_append_skips_canvas_confirmation_and_merges_existing_canvas():

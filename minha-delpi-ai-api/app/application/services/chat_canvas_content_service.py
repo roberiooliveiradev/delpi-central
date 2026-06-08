@@ -272,7 +272,10 @@ class ChatCanvasContentService:
                 open_payload=None,
             )
 
-        addition_markdown = str(addition.get("content") or "").strip()
+        addition_markdown = ChatRichPresentationCanvasExportService.build_markdown_from_assistant(
+            str(addition.get("content") or ""),
+            addition.get("metadata"),
+        ).strip()
 
         if not addition_markdown:
             return ChatCanvasAction(
