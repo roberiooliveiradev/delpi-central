@@ -1,6 +1,6 @@
 {
   "godFileLines": {
-    "external_action_result_presenter.py": 3325,
+    "external_action_result_presenter.py": 2893,
     "external_action_selection_service.py": 2236,
     "chat_routes.py": 3153,
     "chat_tool_context_service.py": 2438,

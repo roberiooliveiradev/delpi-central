@@ -28,6 +28,13 @@ from app.domain.services.external_actions.presenters.sql_presenter import (
     ExternalActionSqlPresenter,
 )
 
+from app.domain.services.external_actions.presenters.billing_presenter import (
+    ExternalActionBillingPresenter,
+)
+from app.domain.services.external_actions.presenters.system_tables_presenter import (
+    ExternalActionSystemTablesPresenter,
+)
+
 
 class ExternalActionResultPresenter:
     def __init__(
@@ -41,6 +48,8 @@ class ExternalActionResultPresenter:
         self._product_analyser_presenter: ExternalActionProductAnalyserPresenter | None = None
         self._product_list_presenter: ExternalActionProductListPresenter | None = None
         self._sql_presenter: ExternalActionSqlPresenter | None = None
+        self._billing_presenter: ExternalActionBillingPresenter | None = None
+        self._system_tables_presenter: ExternalActionSystemTablesPresenter | None = None
 
     def _kpi_chart(self) -> ExternalActionKpiChartPresenter:
         if self._kpi_chart_presenter is None:
@@ -66,6 +75,19 @@ class ExternalActionResultPresenter:
             self._sql_presenter = ExternalActionSqlPresenter(self)
 
         return self._sql_presenter
+
+
+    def _billing(self) -> ExternalActionBillingPresenter:
+        if self._billing_presenter is None:
+            self._billing_presenter = ExternalActionBillingPresenter(self)
+
+        return self._billing_presenter
+
+    def _system_tables(self) -> ExternalActionSystemTablesPresenter:
+        if self._system_tables_presenter is None:
+            self._system_tables_presenter = ExternalActionSystemTablesPresenter(self)
+
+        return self._system_tables_presenter
 
     def present(self, data, *, path: str = "") -> dict:
         previous_labels = self._active_schema_labels
@@ -682,398 +704,14 @@ class ExternalActionResultPresenter:
     def _kpi_cards_to_linhas(self, kpi: dict) -> list[str]:
         return self._kpi_chart().kpi_cards_to_linhas(kpi)
 
-    def _present_stock_value_summary(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "supplies_stock_value" and "stock-value" not in str(path or "").lower():
-            return None
 
-        summary = root.get("summary")
 
-        if not isinstance(summary, dict):
-            return None
 
-        title = self._kpi_title(path)
-        linhas = self._stock_value_summary_lines(summary, root.get("by_branch"))
 
-        kpi = self._build_stock_value_kpi(root, path)
 
-        return {
-            "titulo": title,
-            "linhas": linhas,
-            "dados": root,
-            "apresentacao": kpi,
-        }
 
-    def _present_product_billing_summary(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        lowered = str(path or "").lower()
 
-        if entity != "product_billing" and "/sales/billing" not in lowered:
-            return None
 
-        if "value" not in root and "documents" not in root:
-            return None
-
-        title = self._billing_title(path)
-        linhas: list[str] = []
-
-        if root.get("value") is not None:
-            linhas.append(
-                self._presenter_text(
-                    "productBilling",
-                    "billedValue",
-                    value=self._format_currency(root.get("value")),
-                )
-            )
-
-        if root.get("documents") is not None:
-            linhas.append(
-                self._presenter_text(
-                    "productBilling",
-                    "documents",
-                    count=str(root.get("documents")),
-                )
-            )
-
-        first_date = self._format_protheus_date(root.get("first_billing_date"))
-
-        if first_date:
-            linhas.append(
-                self._presenter_text("productBilling", "firstIssue", date=first_date)
-            )
-
-        last_date = self._format_protheus_date(root.get("last_billing_date"))
-
-        if last_date:
-            linhas.append(
-                self._presenter_text("productBilling", "lastIssue", date=last_date)
-            )
-
-        return {
-            "titulo": title,
-            "linhas": linhas,
-            "dados": root,
-        }
-
-    def _present_financial_pmr(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "financial_pmr" and "pmr" not in str(path or "").lower():
-            return None
-
-        if "branch" not in root and "pmr_days" not in root:
-            return None
-
-        title = self._kpi_title(path)
-        branch = str(
-            root.get("branch")
-            or self._presenter_text("financialPmr", "branchFallback")
-        ).strip()
-        linhas = [
-            self._presenter_text("financialPmr", "branchLine", branch=branch)
-        ]
-        pmr_days = root.get("pmr_days")
-
-        if pmr_days is None:
-            linhas.append(self._analyser_markdown("pmrUnavailable"))
-        else:
-            linhas.append(
-                self._presenter_text(
-                    "financialPmr",
-                    "pmrLine",
-                    days=self._format_num(pmr_days),
-                )
-            )
-
-        return {
-            "titulo": title,
-            "linhas": linhas,
-            "dados": root,
-        }
-
-    def _present_system_tables_search(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "protheus_table" and "/tables/search" not in str(path or "").lower():
-            return None
-
-        results = root.get("results")
-
-        if not isinstance(results, list):
-            return None
-
-        total = root.get("total_records", len(results))
-        linhas = [
-            self._presenter_text(
-                "systemTablesNarrative",
-                "tablesFound",
-                total=str(total),
-            )
-        ]
-
-        for item in results[:12]:
-            if not isinstance(item, dict):
-                continue
-
-            table_code = (
-                item.get("X2_ARQUIVO")
-                or item.get("table_name")
-                or item.get("name")
-            )
-            label = item.get("X2_NOME") or item.get("description") or item.get("title")
-            score = item.get("total_score") or item.get("score")
-
-            if table_code and label:
-                line = self._presenter_text(
-                    "systemTablesNarrative",
-                    "tableLineBoth",
-                    table_code=str(table_code),
-                    label=str(label),
-                )
-            elif table_code:
-                line = self._presenter_text(
-                    "systemTablesNarrative",
-                    "tableLineCode",
-                    table_code=str(table_code),
-                )
-            elif label:
-                line = self._presenter_text(
-                    "systemTablesNarrative",
-                    "tableLineLabel",
-                    label=str(label),
-                )
-            else:
-                continue
-
-            if score is not None:
-                try:
-                    line += self._presenter_text(
-                        "systemTablesNarrative",
-                        "relevanceSuffix",
-                        score=f"{float(score):.0f}",
-                    )
-                except (TypeError, ValueError):
-                    pass
-
-            linhas.append(line)
-
-        if len(results) > 12:
-            linhas.append(
-                self._presenter_text(
-                    "pagination", "moreTables", count=str(len(results) - 12)
-                )
-            )
-
-        if len(linhas) <= 1:
-            linhas.append(
-                self._route_presentation("systemTables", "noMatch")
-            )
-
-        return {
-            "titulo": self._route_presentation("systemTables", "searchTitle"),
-            "linhas": linhas,
-            "dados": root,
-        }
-
-    def _present_system_table_columns(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "protheus_column" and "/columns" not in str(path or "").lower():
-            return None
-
-        results = root.get("results")
-
-        if not isinstance(results, list) or not results:
-            return None
-
-        table_name = str(path or "").rstrip("/").split("/")[-2]
-        total = root.get("total", len(results))
-        linhas = [
-            self._presenter_text(
-                "systemTablesNarrative",
-                "columnsTotal",
-                total=str(total),
-            )
-        ]
-
-        for item in results:
-            if not isinstance(item, dict):
-                continue
-
-            field = item.get("X3_CAMPO") or item.get("column_name") or item.get("field")
-            label = item.get("X3_DESCRIC") or item.get("column_description") or item.get("label")
-
-            if field and label:
-                linhas.append(
-                    self._presenter_text(
-                        "systemTablesNarrative",
-                        "columnLineBoth",
-                        field=str(field),
-                        label=str(label),
-                    )
-                )
-            elif field:
-                linhas.append(
-                    self._presenter_text(
-                        "systemTablesNarrative",
-                        "columnLineField",
-                        field=str(field),
-                    )
-                )
-
-        if len(results) > 8:
-            linhas.append(
-                self._presenter_text(
-                    "systemTablesNarrative",
-                    "moreColumns",
-                    count=str(len(results) - 8),
-                )
-            )
-
-        return {
-            "titulo": self._route_presentation(
-                "systemTables",
-                "columnsTitle",
-                table=table_name.upper(),
-            ),
-            "linhas": linhas,
-            "dados": root,
-        }
-
-    def _build_stock_value_kpi(self, root: dict, path: str) -> dict | None:
-        summary = root.get("summary")
-
-        if not isinstance(summary, dict):
-            return None
-
-        cards = self._kpi_chart().kpi_cards_from_presenter_section("stockValue", summary)
-
-        if not cards:
-            return None
-
-        return {
-            "type": "kpi",
-            "title": self._kpi_chart().kpi_title(path),
-            "cards": cards,
-        }
-
-    def _build_stock_value_branch_table(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "supplies_stock_value" and "stock-value" not in str(path or "").lower():
-            return None
-
-        by_branch = root.get("by_branch")
-
-        if not isinstance(by_branch, list):
-            return None
-
-        rows = [
-            item
-            for item in by_branch
-            if isinstance(item, dict) and str(item.get("branch") or "").strip()
-        ]
-
-        if not rows:
-            return None
-
-        return {
-            "type": "table",
-            "title": self._presenter_text("stockValue", "branchTableTitle"),
-            "columns": self._fixed_columns("stockValueByBranch"),
-            "rows": rows,
-        }
-
-    def _build_product_billing_table(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "product_billing" and "/sales/billing" not in str(path or "").lower():
-            return None
-
-        if root.get("value") is None and root.get("documents") is None:
-            return None
-
-        return {
-            "type": "table",
-            "title": self._billing_title(path),
-            "columns": self._column_labels.kv_table_column_defs(),
-            "rows": self._billing_table_rows(root),
-        }
-
-    def _build_system_columns_table(
-        self,
-        root: dict,
-        path: str,
-        *,
-        entity: str | None = None,
-    ) -> dict | None:
-        if entity != "protheus_column" and "/columns" not in str(path or "").lower():
-            return None
-
-        results = root.get("results")
-
-        if not isinstance(results, list) or not results:
-            return None
-
-        table_name = str(path or "").rstrip("/").split("/")[-2]
-        rows = []
-
-        for item in results:
-            if not isinstance(item, dict):
-                continue
-
-            rows.append(
-                {
-                    "campo": item.get("X3_CAMPO") or item.get("column_name") or item.get("field"),
-                    "descricao": item.get("X3_DESCRIC") or item.get("column_description") or item.get("label"),
-                    "tipo": item.get("X3_TIPO") or item.get("type"),
-                    "tamanho": item.get("X3_TAMANHO") or item.get("size"),
-                }
-            )
-
-        if not rows:
-            return None
-
-        return {
-            "type": "table",
-            "title": self._route_presentation(
-                "systemTables",
-                "columnsTitle",
-                table=table_name.upper(),
-            ),
-            "columns": self._fixed_columns("systemSx2Columns"),
-            "rows": rows,
-        }
 
     def _path_fragment_title(self, fragment: str) -> str | None:
         from app.domain.services.chat_assistant_content_service import (
@@ -2858,121 +2496,51 @@ class ExternalActionResultPresenter:
             code=str(code or "").strip(),
         )
 
+
+
+
+
+
+
+    # --- Billing / estoque / PMR (delegação Fase 3A lote 8) ---
+
+    def _present_stock_value_summary(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._billing()._present_stock_value_summary(root, path, entity=entity)
+
+    def _present_product_billing_summary(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._billing()._present_product_billing_summary(root, path, entity=entity)
+
+    def _present_financial_pmr(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._billing()._present_financial_pmr(root, path, entity=entity)
+
+    def _build_stock_value_kpi(self, root: dict, path: str) -> dict | None:
+        return self._billing()._build_stock_value_kpi(root, path)
+
+    def _build_stock_value_branch_table(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._billing()._build_stock_value_branch_table(root, path, entity=entity)
+
+    def _build_product_billing_table(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._billing()._build_product_billing_table(root, path, entity=entity)
+
     def _billing_title(self, path: str) -> str:
-        product_code = self._extract_product_code_from_path(path)
-
-        if product_code:
-            return self._presenter_text(
-                "productBilling",
-                "titleWithCode",
-                code=product_code,
-            )
-
-        return self._presenter_text("productBilling", "titleGeneric")
-
+        return self._billing()._billing_title(path)
 
     def _billing_table_rows(self, root: dict) -> list[dict]:
-        from app.domain.services.chat_assistant_content_service import (
-            ChatAssistantContentService,
-        )
+        return self._billing()._billing_table_rows(root)
 
-        rows_cfg = ChatAssistantContentService.get_node(
-            "presenter_content",
-            "productBilling",
-            "tableRows",
-        )
+    def _stock_value_summary_lines(self, summary: dict, by_branch: object) -> list[str]:
+        return self._billing()._stock_value_summary_lines(summary, by_branch)
 
-        if not isinstance(rows_cfg, list):
-            return []
+    # --- System tables (delegação Fase 3A lote 8) ---
 
-        rows: list[dict] = []
+    def _present_system_tables_search(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._system_tables()._present_system_tables_search(root, path, entity=entity)
 
-        for item in rows_cfg:
-            if not isinstance(item, dict):
-                continue
+    def _present_system_table_columns(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._system_tables()._present_system_table_columns(root, path, entity=entity)
 
-            root_key = str(item.get("rootKey") or "").strip()
-            campo = str(item.get("campo") or "").strip()
-
-            if not root_key or not campo:
-                continue
-
-            valor = root.get(root_key)
-            valor_type = item.get("valorType")
-
-            if valor_type == "date":
-                valor = self._format_protheus_date(valor)
-
-            row: dict = {"campo": campo, "valor": valor}
-
-            if isinstance(valor_type, str) and valor_type.strip():
-                row["valorType"] = valor_type.strip()
-
-            rows.append(row)
-
-        return rows
-
-    def _stock_value_summary_lines(
-        self,
-        summary: dict,
-        by_branch: object,
-    ) -> list[str]:
-        linhas = [
-            self._presenter_text(
-                "stockValue",
-                "summaryLines",
-                "totalValue",
-                value=self._format_currency(summary.get("total_stock_value")),
-            ),
-            self._presenter_text(
-                "stockValue",
-                "summaryLines",
-                "totalQuantity",
-                qty=self._format_num(summary.get("total_stock_quantity")),
-            ),
-            self._presenter_text(
-                "stockValue",
-                "summaryLines",
-                "distinctProducts",
-                count=str(summary.get("total_products")),
-            ),
-            self._presenter_text(
-                "stockValue",
-                "summaryLines",
-                "records",
-                count=str(summary.get("total_records")),
-            ),
-            self._presenter_text(
-                "stockValue",
-                "summaryLines",
-                "locations",
-                count=str(summary.get("total_locations")),
-            ),
-        ]
-
-        if isinstance(by_branch, list):
-            for item in by_branch:
-                if not isinstance(item, dict):
-                    continue
-
-                branch = str(item.get("branch") or "").strip()
-
-                if not branch:
-                    continue
-
-                linhas.append(
-                    self._presenter_text(
-                        "stockValue",
-                        "summaryLines",
-                        "branchItem",
-                        branch=branch,
-                        value=self._format_currency(item.get("total_stock_value")),
-                        qty=self._format_num(item.get("total_stock_quantity")),
-                    )
-                )
-
-        return linhas
-
+    def _build_system_columns_table(self, root: dict, path: str, *, entity: str | None = None) -> dict | None:
+        return self._system_tables()._build_system_columns_table(root, path, entity=entity)
 
     # --- SQL (delegação Fase 3A lote 7) ---
 
