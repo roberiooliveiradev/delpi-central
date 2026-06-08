@@ -2,32 +2,55 @@
   box-sizing: border-box;
 }
 
-.ca-app,
-.ca-app * {
+.dashboard-central-agendamento.ca-app,
+.dashboard-central-agendamento.ca-app * {
   box-sizing: border-box;
 }
 
-.ca-app {
+.dashboard-central-agendamento.ca-app {
+  --ca-page-padding: 24px;
+  --ca-section-gap: 20px;
+  --ca-gap: 16px;
   --ca-accent: var(--primary, #089bdb);
   --ca-title: var(--secundary, #003866);
   --ca-border: var(--border, #e6e6e6);
-  --ca-surface: var(--surface, #fff);
-  --ca-text: var(--text, #111);
+  --ca-surface: var(--surface, #ffffff);
+  --ca-text: var(--text, #111111);
   --ca-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
-  --ca-success: #2e7d32;
-  --ca-danger: #c62828;
-  --ca-radius: 16px;
+  --ca-success: var(--success, #067647);
+  --ca-danger: var(--danger, #b42318);
+  --ca-radius: 18px;
+  --ca-control-radius: 12px;
+  --ca-control-height: 42px;
+  --ca-font-xs: 12px;
+  --ca-font-sm: 13px;
+  --ca-font-md: 14px;
+  --ca-font-hero: clamp(24px, 2vw, 36px);
+}
+
+.dashboard-central-agendamento.dashboard-page {
   width: 100%;
   min-height: 100%;
-  padding: 24px;
+  padding: var(--ca-page-padding);
   color: var(--ca-text);
-  background-color: var(--app-canvas, var(--bg, #fff));
+  background-color: var(--app-canvas, var(--bg, #ffffff));
   background-image: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--ca-accent) 7%, var(--app-canvas, var(--bg, #fff))),
-    var(--app-canvas, var(--bg, #fff)) 320px
+    color-mix(in srgb, var(--ca-accent) 5%, var(--app-canvas, var(--bg, #ffffff))),
+    var(--app-canvas, var(--bg, #ffffff)) 280px
   );
-  animation: ca-fade-in 0.2s ease-out;
+}
+
+.dashboard-central-agendamento .ca-app-shell {
+  animation: ca-fade-in 0.18s ease-out;
+}
+
+:root[data-theme="dark"] .dashboard-central-agendamento.ca-app {
+  --ca-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --ca-text: rgba(255, 255, 255, 0.88);
+  --ca-muted: rgba(255, 255, 255, 0.72);
+  --ca-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
+  --ca-border: rgba(255, 255, 255, 0.1);
 }
 
 @keyframes ca-fade-in {
@@ -51,11 +74,17 @@
   animation: ca-spin 0.8s linear infinite;
 }
 
-.ca-app button,
-.ca-app input,
-.ca-app select,
-.ca-app textarea {
+.dashboard-central-agendamento button,
+.dashboard-central-agendamento input,
+.dashboard-central-agendamento select,
+.dashboard-central-agendamento textarea {
   font: inherit;
+}
+
+.dashboard-central-agendamento button:focus-visible,
+.dashboard-central-agendamento a:focus-visible {
+  outline: 2px solid var(--ca-accent);
+  outline-offset: 2px;
 }
 
 .ca-hero {
@@ -91,8 +120,27 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--ca-gap);
   flex-wrap: wrap;
+}
+
+.ca-hero__brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+}
+
+.ca-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ca-accent) 12%, transparent);
+  color: var(--ca-accent);
+  flex-shrink: 0;
 }
 
 .ca-hero__eyebrow {
@@ -106,7 +154,8 @@
 
 .ca-hero__title {
   margin: 0;
-  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-size: var(--ca-font-hero);
+  line-height: 1.15;
   color: var(--ca-title);
 }
 
@@ -125,10 +174,12 @@
 .ca-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  border-radius: 12px;
+  border-radius: var(--ca-control-radius);
   border: 1px solid var(--ca-border);
   padding: 10px 14px;
+  min-height: var(--ca-control-height);
   background: var(--ca-surface);
   color: var(--ca-text);
   cursor: pointer;
@@ -178,9 +229,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ca-control-radius);
   border: 1px solid var(--ca-border);
   background: var(--ca-surface);
   cursor: pointer;
@@ -193,7 +244,7 @@
   align-items: start;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   .ca-layout {
     grid-template-columns: 1fr;
   }
@@ -266,12 +317,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 10px;
+  min-height: var(--ca-control-height);
+  padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--ca-border);
   background: var(--ca-surface);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--ca-font-xs);
 }
 
 .ca-chip--active {
@@ -293,7 +345,7 @@
 }
 
 /* Sobrescreve label { flex-direction: column } do portal (Modal.css) */
-.ca-app label.ca-resource-item {
+.dashboard-central-agendamento label.ca-resource-item {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -313,12 +365,12 @@
     box-shadow 0.15s ease;
 }
 
-.ca-app label.ca-resource-item:hover {
+.dashboard-central-agendamento label.ca-resource-item:hover {
   border-color: color-mix(in srgb, var(--ca-accent) 35%, var(--ca-border));
   background: color-mix(in srgb, var(--ca-accent) 8%, var(--ca-surface));
 }
 
-.ca-app label.ca-resource-item:has(.ca-resource-item__checkbox:checked) {
+.dashboard-central-agendamento label.ca-resource-item:has(.ca-resource-item__checkbox:checked) {
   border-color: color-mix(in srgb, var(--ca-accent) 55%, var(--ca-border));
   background: color-mix(in srgb, var(--ca-accent) 12%, var(--ca-surface));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ca-accent) 20%, transparent);
@@ -678,8 +730,9 @@
 .ca-field select,
 .ca-field textarea {
   width: 100%;
+  min-height: var(--ca-control-height);
   border: 1px solid var(--ca-border);
-  border-radius: 12px;
+  border-radius: var(--ca-control-radius);
   padding: 10px 12px;
   background: var(--ca-surface);
   color: var(--ca-text);
@@ -725,13 +778,15 @@
 }
 
 .ca-alert--error {
-  background: #ffebee;
-  color: #b71c1c;
+  background: color-mix(in srgb, var(--ca-danger) 12%, var(--ca-surface));
+  color: var(--ca-danger);
+  border: 1px solid color-mix(in srgb, var(--ca-danger) 30%, var(--ca-surface));
 }
 
 .ca-alert--success {
-  background: #e8f5e9;
+  background: color-mix(in srgb, var(--ca-success) 12%, var(--ca-surface));
   color: var(--ca-success);
+  border: 1px solid color-mix(in srgb, var(--ca-success) 30%, var(--ca-surface));
 }
 
 .ca-muted {
@@ -781,10 +836,12 @@
 }
 
 .ca-table th {
-  font-size: 12px;
+  font-size: var(--ca-font-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--ca-muted);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--ca-surface) 92%, var(--ca-accent) 8%);
 }
 
 .ca-table__sub {
@@ -807,25 +864,109 @@
 }
 
 .ca-badge--success {
-  background: #e8f5e9;
+  background: color-mix(in srgb, var(--ca-success) 12%, var(--ca-surface));
   color: var(--ca-success);
+  border: 1px solid color-mix(in srgb, var(--ca-success) 30%, var(--ca-border));
 }
 
 .ca-badge--muted {
-  background: #f3f4f6;
+  background: color-mix(in srgb, var(--ca-muted) 10%, var(--ca-surface));
   color: var(--ca-muted);
+  border: 1px solid var(--ca-border);
 }
 
-:root[data-theme="dark"] .ca-app {
-  --ca-border: rgba(255, 255, 255, 0.12);
-}
+@media (max-width: 768px) {
+  .dashboard-central-agendamento.dashboard-page {
+    padding: 16px;
+  }
 
-:root[data-theme="dark"] .ca-alert--error {
-  background: rgba(198, 40, 40, 0.15);
-  color: #ef9a9a;
-}
+  .ca-hero {
+    padding: 18px 16px;
+  }
 
-:root[data-theme="dark"] .ca-alert--success {
-  background: rgba(46, 125, 50, 0.18);
-  color: #a5d6a7;
+  .ca-hero__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ca-hero__actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .ca-hero__actions .ca-btn {
+    width: 100%;
+  }
+
+  .ca-sidebar__stats {
+    grid-template-columns: 1fr;
+  }
+
+  .ca-main-panel {
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .ca-calendar-wrap {
+    height: min(560px, 72vh);
+  }
+
+  .ca-admin-panel__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ca-admin-panel__head .ca-btn {
+    width: 100%;
+  }
+
+  .ca-table-wrap {
+    border: none;
+  }
+
+  .ca-table {
+    min-width: 100%;
+  }
+
+  .ca-table thead {
+    display: none;
+  }
+
+  .ca-table,
+  .ca-table tbody,
+  .ca-table tr,
+  .ca-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .ca-table tr {
+    margin-bottom: 14px;
+    border: 1px solid var(--ca-border);
+    border-radius: 14px;
+    padding: 14px;
+    background: var(--ca-surface);
+  }
+
+  .ca-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: none;
+    text-align: right;
+  }
+
+  .ca-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--ca-muted);
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  .ca-table__actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
 }

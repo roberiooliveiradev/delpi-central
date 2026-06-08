@@ -53,22 +53,22 @@ export function ResourceAdminPanel({
             <tbody>
               {resources.map((resource) => (
                 <tr key={resource.id}>
-                  <td>
+                  <td data-label="Nome">
                     <strong>{resource.name}</strong>
                     {resource.description ? (
                       <small className="ca-table__sub">{resource.description}</small>
                     ) : null}
                   </td>
-                  <td>{resourceTypeLabel(resource.resource_type)}</td>
-                  <td>{resource.capacity ?? "—"}</td>
-                  <td>
+                  <td data-label="Tipo">{resourceTypeLabel(resource.resource_type)}</td>
+                  <td data-label="Capacidade">{resource.capacity ?? "—"}</td>
+                  <td data-label="Status">
                     <span
                       className={`ca-badge ${resource.active ? "ca-badge--success" : "ca-badge--muted"}`}
                     >
                       {resource.active ? "Ativo" : "Inativo"}
                     </span>
                   </td>
-                  <td>
+                  <td data-label="Ações">
                     <div className="ca-table__actions">
                       <button
                         type="button"

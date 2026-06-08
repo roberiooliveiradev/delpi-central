@@ -157,9 +157,11 @@ export function SchedulingPage({ pathname }: Props) {
 
   if (!branch) {
     return (
-      <div className="ca-app">
-        <div className="ca-alert ca-alert--error">
-          Filial inválida. Use uma rota como /apps/central-agendamento/filial-es.
+      <div className="dashboard-central-agendamento dashboard-page ca-app">
+        <div className="ca-app-shell">
+          <div className="ca-alert ca-alert--error" role="alert">
+            Filial inválida. Use uma rota como /apps/central-agendamento/filial-es.
+          </div>
         </div>
       </div>
     );
@@ -170,7 +172,8 @@ export function SchedulingPage({ pathname }: Props) {
     (canManage || selectedEvent?.bookedByUserId === currentUserId);
 
   return (
-    <div className="ca-app">
+    <div className="dashboard-central-agendamento dashboard-page ca-app">
+      <div className="ca-app-shell">
       <SchedulingPageHeader
         eyebrow={BRANCH_LABELS[branch]}
         title="Central de Agendamento"
@@ -294,6 +297,7 @@ export function SchedulingPage({ pathname }: Props) {
         onClose={() => setResourceModalOpen(false)}
         onSubmit={handleSaveResource}
       />
+      </div>
     </div>
   );
 }

@@ -16,10 +16,11 @@ export const RESOURCE_TYPES: { value: ResourceType; label: string }[] = [
   { value: "other", label: "Outros" },
 ];
 
+/** Paleta alinhada ao portal (`--primary`, `--success`, `--warning`). */
 export const RESOURCE_TYPE_COLORS: Record<ResourceType, string> = {
   meeting_room: "#089bdb",
-  training_room: "#2e7d32",
-  company_car: "#e65100",
+  training_room: "#067647",
+  company_car: "#f59e0b",
   other: "#6b7280",
 };
 
