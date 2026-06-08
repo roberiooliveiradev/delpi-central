@@ -50,6 +50,13 @@ def test_entity_path_hint_for_kpi_without_http_path() -> None:
     ) == "/supplies/cpv"
 
 
+def test_class_exposes_presenter_entity_constants() -> None:
+    assert ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES
+    assert "product_open_orders" in ChatApiDelpiResponseProfileService.PRODUCT_LIST_PRESENT_ENTITIES
+    assert ChatApiDelpiResponseProfileService.LMP_PRESENT_ENTITIES
+    assert ChatApiDelpiResponseProfileService.SYSTEM_PRESENT_ENTITIES
+
+
 def test_is_entity_routed_for_present_includes_kpi_and_sql() -> None:
     assert ChatApiDelpiResponseProfileService.is_entity_routed_for_present(
         "financial_rol"

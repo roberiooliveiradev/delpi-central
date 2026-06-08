@@ -657,8 +657,18 @@ class ChatIntentRouterService:
 
         ambiguous, candidates = cls._operational_ambiguity(normalized, resolved_params)
 
-        if operational_optimize or cls._looks_operational(normalized) or is_follow_up:
+        department_kpi = cls._resolve_department_kpi(normalized)
+
+        if (
+            operational_optimize
+            or cls._looks_operational(normalized)
+            or department_kpi
+            or is_follow_up
+        ):
             sub = cls._operational_sub_intent(normalized)
+
+            if not sub and department_kpi:
+                sub = "department_kpi"
 
             if is_follow_up and not sub:
                 sub = ChatFollowUpIntentService.follow_up_type(normalized)
@@ -679,7 +689,13 @@ class ChatIntentRouterService:
                     candidates=candidates,
                 ),
                 decision="operational_action" if not ambiguous else "clarify_operational",
-                reason="operational_keywords" if not ambiguous else "ambiguous_operational_scope",
+                reason=(
+                    "department_kpi_keywords"
+                    if department_kpi and not ambiguous
+                    else "operational_keywords"
+                    if not ambiguous
+                    else "ambiguous_operational_scope"
+                ),
             )
 
         if attachment_ids:
@@ -1252,6 +1268,14 @@ class ChatIntentRouterService:
         return bool(re.search(r"\bnf(?:e)?\b", lowered)) and (
             "saída" in lowered or "saida" in lowered
         )
+
+    @staticmethod
+    def _resolve_department_kpi(message: str):
+        from app.domain.services.chat_department_kpi_intent_service import (
+            ChatDepartmentKpiIntentService,
+        )
+
+        return ChatDepartmentKpiIntentService.resolve(message)
 
     @staticmethod
     def _looks_operational(message: str) -> bool:

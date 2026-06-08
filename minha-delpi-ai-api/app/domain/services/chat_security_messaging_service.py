@@ -84,6 +84,9 @@ class ChatSecurityMessagingService:
                 ),
             )
 
+        if error and cls._looks_like_internal_error(error):
+            return cls._resolve_internal_error_message(lowered_path)
+
         if error and not cls._looks_like_technical_only(error):
             if "/data/sql" in lowered_path:
                 from app.domain.services.chat_sql_execution_error_interpretation_service import (
@@ -118,4 +121,45 @@ class ChatSecurityMessagingService:
             "internal server error",
             "bad request",
             "service unavailable",
+        )
+
+    @classmethod
+    def _looks_like_internal_error(cls, error: str) -> bool:
+        lowered = str(error or "").strip().lower()
+
+        if not lowered:
+            return False
+
+        if cls._looks_like_technical_only(lowered):
+            return True
+
+        internal_markers = (
+            "has no attribute",
+            "type object",
+            "traceback",
+            "attributeerror",
+            "keyerror",
+            "typeerror",
+            "valueerror",
+            "nameerror",
+            "importerror",
+            "modulenotfounderror",
+            "exception:",
+            "  file ",
+            "line ",
+        )
+
+        return any(marker in lowered for marker in internal_markers)
+
+    @classmethod
+    def _resolve_internal_error_message(cls, lowered_path: str) -> str:
+        if "/structure" in lowered_path and "/analyser" not in lowered_path:
+            return ExternalActionResponseContentService.get(
+                "security",
+                "structurePresentationFailed",
+            )
+
+        return ExternalActionResponseContentService.get(
+            "security",
+            "presentationFormatFailed",
         )

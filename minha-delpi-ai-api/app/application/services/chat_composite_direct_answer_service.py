@@ -55,13 +55,19 @@ class ChatCompositeDirectAnswerService:
                 )
                 continue
 
-            humanized = presenter.present(
-                ExternalActionSqlCapabilityService.attach_request_sql_to_data(
-                    execution.data,
-                    metadata=metadata,
-                ),
-                path=path,
-            )
+            try:
+                humanized = presenter.present(
+                    ExternalActionSqlCapabilityService.attach_request_sql_to_data(
+                        execution.data,
+                        metadata=metadata,
+                    ),
+                    path=path,
+                )
+            except Exception:
+                issues.append(
+                    f"- **{label}:** {ExternalActionResponseContentService.get('composite', 'formatFailed')}"
+                )
+                continue
             body = ChatExternalActionDirectAnswerService.format(
                 humanized,
                 message=message,

@@ -45,6 +45,15 @@ def test_resolve_financial_rol_for_month_question():
     assert match.domain_prefix == "/financial/"
 
 
+def test_resolve_financial_rol_qual_foi_da_empresa():
+    match = ChatDepartmentKpiIntentService.resolve(
+        "Qual foi o ROL da empresa em março de 2026?"
+    )
+
+    assert match is not None
+    assert match.path_token == "/financial/rol"
+
+
 def test_resolve_rol_series_only_for_explicit_series():
     match = ChatDepartmentKpiIntentService.resolve("serie de rol no tempo")
 

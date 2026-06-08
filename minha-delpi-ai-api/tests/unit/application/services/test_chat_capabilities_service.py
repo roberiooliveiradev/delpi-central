@@ -131,6 +131,25 @@ def test_qual_estoque_with_product_code_runs_operational_not_capabilities():
     ) is None
 
 
+def test_financial_rol_month_question_is_operational_not_capability_inquiry():
+    message = "Qual foi o ROL da empresa em março de 2026?"
+
+    assert not ChatCapabilitiesService.is_capability_inquiry(message)
+    assert ChatCapabilitiesService.resolve_capability_answer(
+        message=message,
+        workspace_context={"agent": {"name": "Agente Minha DELPI"}, "agentId": "x"},
+        allowed_action_ids=["act.rol"],
+        action_catalog=[
+            {
+                "actionId": "act.rol",
+                "method": "GET",
+                "path": "/financial/rol",
+                "summary": "ROL financeiro",
+            }
+        ],
+    ) is None
+
+
 def test_ruptura_stock_question_is_operational_not_capability_inquiry():
     message = "Ruptura de estoque — quais produtos estão abaixo do mínimo?"
 

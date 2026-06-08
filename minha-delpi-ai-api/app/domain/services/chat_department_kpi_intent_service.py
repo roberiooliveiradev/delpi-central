@@ -110,6 +110,7 @@ class ChatDepartmentKpiIntentService:
                 "rol do mes",
                 "rol de ",
                 "qual o rol",
+                "qual foi o rol",
                 "quanto foi o rol",
                 " qual rol",
                 " o rol",

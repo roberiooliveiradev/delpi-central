@@ -54,6 +54,18 @@ def test_classify_supplier_question_quem_fornece_not_ambiguous():
     assert route.resolved_params == {"productCode": "10080022"}
 
 
+def test_classify_financial_rol_routes_to_department_kpi_not_self_help():
+    route = ChatIntentRouterService.classify(
+        "Qual foi o ROL da empresa em março de 2026?",
+        allowed_action_ids=["get_rol_financial_rol_get"],
+    )
+
+    assert route.intent == "operational_query"
+    assert route.sub_intent == "department_kpi"
+    assert route.decision == "operational_action"
+    assert route.reason == "department_kpi_keywords"
+
+
 def test_classify_system_metadata_table_question():
     route = ChatIntentRouterService.classify(
         "qual a tabela de produtos?",

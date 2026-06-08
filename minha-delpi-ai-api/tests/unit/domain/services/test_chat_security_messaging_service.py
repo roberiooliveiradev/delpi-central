@@ -37,6 +37,35 @@ def test_sql_invalid_object_failure_message():
     assert "indispon" not in message.lower()
 
 
+def test_internal_attribute_error_on_structure_uses_friendly_message():
+    message = ChatSecurityMessagingService.resolve_api_failure(
+        {
+            "ok": False,
+            "error": (
+                "type object 'ChatApiDelpiResponseProfileService' "
+                "has no attribute 'PRODUCT_LIST_PRESENT_ENTITIES'"
+            ),
+        },
+        path="/products/9020115/structure",
+    )
+
+    assert "has no attribute" not in message
+    assert "estrutura" in message.lower() or "bom" in message.lower()
+
+
+def test_internal_attribute_error_uses_generic_presentation_message():
+    message = ChatSecurityMessagingService.resolve_api_failure(
+        {
+            "ok": False,
+            "error": "type object 'Foo' has no attribute 'bar'",
+        },
+        path="/products/10080001/suppliers",
+    )
+
+    assert "has no attribute" not in message
+    assert "montar a resposta" in message.lower()
+
+
 def test_system_metadata_db_failure_message():
     message = ChatSecurityMessagingService.resolve_api_failure(
         {
