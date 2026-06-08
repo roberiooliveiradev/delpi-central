@@ -1,7 +1,7 @@
 # Playbook 11 — Clean Architecture na API Chat AI
 
 **Projeto:** `minha-delpi-ai-api`  
-**Status:** Fase 0 concluída · Fase 1 concluída · Fase 2 lote 2 concluído (jun/2026)  
+**Status:** Fases 0–6 concluídas (jun/2026) · sprint pós-playbook: baseline PT  
 **Público:** backend, revisores de PR, agentes Cursor  
 **Relacionado:** [`chat-intelligence-base.md`](../architecture/chat-intelligence-base.md), [`chat-pre-llm-layers.md`](../architecture/chat-pre-llm-layers.md), [`assistant-content-catalog.md`](../architecture/assistant-content-catalog.md)
 
@@ -161,7 +161,7 @@ flowchart TB
 ```text
 Fase 0 ─ Governança e baseline          [concluída]
 Fase 1 ─ Unificar turno send/stream     [concluída]
-Fase 2 ─ Desacoplar domain da infra     [lote 1 concluído · ports conteúdo/config]
+Fase 2 ─ Desacoplar domain da infra     [concluída]
 Fase 3 ─ Quebrar god classes            [concluída]
 Fase 4 ─ HTTP fino + ports restantes    [concluída]
 Fase 5 ─ Enforcement conteúdo + CI      [concluída]
@@ -231,22 +231,18 @@ PYTHONPATH=minha-delpi-ai-api python3 scripts/audit_clean_architecture.py --writ
 
 **Por quê:** domain não deve importar Flask, SQLAlchemy, paths de JSON, env vars.
 
-**Lote 1 (jun/2026) — concluído parcialmente:**
+**Lotes 1–3 (jun/2026) — concluídos:**
 
 | Item | Status |
 |------|--------|
 | `AssistantContentPort` + `InfrastructureAssistantContentAdapter` | ✅ |
-| `AppConfigPort` + `InfrastructureAppConfigAdapter` | ✅ |
-| `configure_domain_infrastructure_ports()` no composition root | ✅ |
-| `ChatAssistantContentService` via port | ✅ |
-| Migração `column_labels`, `api_route_domains`, `personality_playbook`, direct response | ✅ |
-| ~15 serviços domain ainda com `ContentService`/`Settings` direto | ⏳ lote 2 |
-
-**Entregas restantes (lotes 2–3):**
-
-1. Migrar serviços domain restantes que importam `ContentService` (~15 arquivos).
-2. Expandir `AppConfigPort` para flags SQL/agentic usadas no domain.
-3. Extrair queries ORM de domain para repos dedicados (ex.: métricas adoção, contexto projeto).
+| `AppConfigPort` + `InfrastructureAppConfigAdapter` + `ChatDomainConfigService` | ✅ |
+| `ChatRuntimeIntelligenceSettingsPort` (override admin web_search) | ✅ |
+| `configure_domain_infrastructure_ports()` + `configure_domain_persistence_ports()` | ✅ |
+| `ChatAssistantContentService` via port; bundles JSON no domain | ✅ |
+| Repos domain: adoção, peer context, quality issues, skills/actions | ✅ |
+| `rg 'from app.infrastructure' app/domain/` → **0** | ✅ |
+| Gate CI `test_domain_clean_architecture` | ✅ |
 
 **Ordem sugerida de migração:**
 
@@ -405,8 +401,10 @@ Commit `2b4d2272` (jun/2026) entregou blocos alinhados a este playbook:
 
 **Sprint imediata (pós-playbook 11):**
 
-1. Fase 2 lote 3: migrar serviços domain restantes com `ContentService`/`Settings` direto (~15 arquivos).
-2. Reduzir baseline restante (heurísticas selection → `external_action_responses.json` onde couber).
+1. Reduzir baseline restante (heurísticas selection → `external_action_responses.json` onde couber).
+2. Ports application restantes (`Postgres*` inline em learning, memory, vision — fora do escopo Fase 4 original).
+
+**Concluído (Fase 2 lote 3):** `ChatRuntimeIntelligenceSettingsPort` + adapter; `ChatWebSearchIntentService` sem import da application; gate `test_domain_clean_architecture`; Fase 2 encerrada (DoD: 0 imports domain→infra).
 
 **Concluído (Fase 2 lote 2):** `ChatMessageFeedbackRepositoryPort` + `ChatQualityIssueRepositoryPort` (`list_issues`, `update_status`); use cases feedback/quality issues e resumos admin (`session_memory`, `text_task`) tipados com ports; composers `make_chat_message_feedback_repository` / `make_chat_quality_issue_repository`; `get_assistant_message` retorna dict (`id`, `metadata`, `content`); testes `test_repository_ports`, `test_feedback_repository_ports`.
 

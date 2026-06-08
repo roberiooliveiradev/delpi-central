@@ -5,7 +5,13 @@ from app.domain.services.chat_domain_config_service import ChatDomainConfigServi
 from app.domain.services.chat_external_action_direct_response_service import (
     ChatExternalActionDirectResponseService,
 )
+from app.domain.services.chat_runtime_intelligence_settings_service import (
+    ChatRuntimeIntelligenceSettingsService,
+)
 from app.infrastructure.config.app_config_adapter import InfrastructureAppConfigAdapter
+from app.infrastructure.config.chat_runtime_intelligence_settings_adapter import (
+    InfrastructureChatRuntimeIntelligenceSettingsAdapter,
+)
 from app.infrastructure.content.assistant_content_adapter import (
     InfrastructureAssistantContentAdapter,
 )
@@ -25,6 +31,9 @@ def configure_domain_infrastructure_ports() -> None:
     ChatAssistantContentService.configure(InfrastructureAssistantContentAdapter())
     ChatDomainConfigService.configure(config)
     ChatExternalActionDirectResponseService.configure(config)
+    ChatRuntimeIntelligenceSettingsService.configure(
+        InfrastructureChatRuntimeIntelligenceSettingsAdapter()
+    )
     _CONFIGURED = True
 
 

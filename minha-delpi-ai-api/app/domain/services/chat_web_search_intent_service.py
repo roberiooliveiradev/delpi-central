@@ -12,6 +12,9 @@ from app.domain.services.chat_web_search_query_security_service import (
 )
 from app.domain.services.web_search_query_service import WebSearchQueryService
 from app.domain.services.chat_domain_config_service import ChatDomainConfigService
+from app.domain.services.chat_runtime_intelligence_settings_service import (
+    ChatRuntimeIntelligenceSettingsService,
+)
 
 
 class ChatWebSearchIntentService:
@@ -53,12 +56,7 @@ class ChatWebSearchIntentService:
         if not ChatDomainConfigService.chat_web_search_enabled():
             return False
 
-        from app.application.services.chat_intelligence_settings_service import (
-            ChatIntelligenceSettingsService,
-        )
-
-        resolved = ChatIntelligenceSettingsService().resolve()
-        return bool(resolved.web_search_enabled)
+        return ChatRuntimeIntelligenceSettingsService.web_search_enabled()
 
     @classmethod
     def matches(cls, message: str) -> bool:
