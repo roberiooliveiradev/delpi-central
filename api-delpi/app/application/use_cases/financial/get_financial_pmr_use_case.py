@@ -51,13 +51,12 @@ class GetFinancialPmrUseCase:
             if item.branch != CONSOLIDATED_BRANCH_KEY
         ]
 
-        valid_pmr = [
-            float(item["pmr_days"])
-            for item in branches
-            if item["pmr_days"] is not None
-        ]
+        consolidated_snapshot = next(
+            (item for item in snapshot.branches if item.branch == CONSOLIDATED_BRANCH_KEY),
+            None,
+        )
         consolidated_value = (
-            round(sum(valid_pmr) / len(valid_pmr), 2) if valid_pmr else None
+            consolidated_snapshot.pmr_days if consolidated_snapshot else None
         )
 
         return {

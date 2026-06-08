@@ -16,6 +16,9 @@ from app.application.use_cases.financial.get_financial_ebitda_pct_use_case impor
 from app.application.use_cases.financial.get_financial_fixed_cost_pct_use_case import (
     GetFinancialFixedCostPctUseCase,
 )
+from app.application.use_cases.financial.get_financial_pmr_use_case import (
+    GetFinancialPmrUseCase,
+)
 
 
 def _empty_snapshot() -> FinancialMetricsSnapshot:
@@ -58,3 +61,42 @@ def test_fixed_cost_pct_returns_null_when_sheet_has_no_rows() -> None:
     )
 
     assert result["fixed_cost_over_rol_pct"] is None
+
+
+def test_pmr_returns_null_when_sheet_has_no_rows() -> None:
+    service = MagicMock()
+    service.get_snapshot.return_value = _empty_snapshot()
+    use_case = GetFinancialPmrUseCase(service)
+
+    result = use_case.execute(
+        GetRolRequest(start_date="01-05-2026", end_date="31-05-2026", branch=None)
+    )
+
+    assert result["pmr_days"] is None
+
+
+def test_pmr_returns_consolidated_row_when_sheet_has_only_consolidated_data() -> None:
+    service = MagicMock()
+    service.get_snapshot.return_value = FinancialMetricsSnapshot(
+        start_date="01-04-2026",
+        end_date="30-04-2026",
+        branches=[
+            FinancialBranchSnapshot(
+                branch=CONSOLIDATED_BRANCH_KEY,
+                rol_with_ipi=0.0,
+                ebitda_value=0.0,
+                fixed_cost_value=0.0,
+                pmr_days=39.0,
+                ebitda_over_rol_pct=None,
+                fixed_cost_over_rol_pct=None,
+            ),
+        ],
+    )
+    use_case = GetFinancialPmrUseCase(service)
+
+    result = use_case.execute(
+        GetRolRequest(start_date="01-04-2026", end_date="30-04-2026", branch=None)
+    )
+
+    assert result["pmr_days"] == 39.0
+    assert result["branches"] == []
