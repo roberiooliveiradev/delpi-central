@@ -4,7 +4,7 @@ from app.infrastructure.providers.google_sheets.google_sheets_client import Goog
 from app.domain.ports.production.depreciation_repository_port import DepreciationRepositoryPort
 from app.application.dto.production.production_request import ProductionRequest
 from app.domain.entities.production.depreciation_cost import DepreciationCost
-from app.shared.utils.spreadsheet_date import spreadsheet_date_in_range
+from delpi_domain.spreadsheet_date import spreadsheet_date_in_range
 from app.infrastructure.persistence.google_sheets.utils import Utils
 
 

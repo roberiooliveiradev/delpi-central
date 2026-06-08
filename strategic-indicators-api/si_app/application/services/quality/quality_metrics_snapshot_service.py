@@ -349,7 +349,7 @@ class QualityMetricsSnapshotService:
         if not start_date or not end_date:
             return 1
 
-        from si_app.shared.utils.spreadsheet_date import parse_spreadsheet_date
+        from delpi_domain.spreadsheet_date import parse_spreadsheet_date
 
         start = parse_spreadsheet_date(start_date)
         end = parse_spreadsheet_date(end_date)

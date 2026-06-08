@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-from si_app.application.dto.hr.hr_snapshot import (
-    HrBranchSnapshot,
-    HrMetricsSnapshot,
-)
+from delpi_domain.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
 from si_app.application.use_cases.strategic_indicators.period_resolution import (
     ResolvedPeriod,
 )

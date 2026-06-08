@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from si_app.application.dto.hr.hr_snapshot import parse_hr_snapshot_payload
+from delpi_domain.hr_snapshot import parse_hr_snapshot_payload
 from si_app.infrastructure.providers.strategic_indicators.hr_indicators_snapshot_provider import (
     HrIndicatorsSnapshotProvider,
 )
@@ -44,7 +44,7 @@ def test_parse_hr_snapshot_payload_maps_api_response() -> None:
 def test_provider_maps_global_satisfaction_to_branch_unit_values() -> None:
     from unittest.mock import MagicMock
 
-    from si_app.application.dto.hr.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
+    from delpi_domain.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
 
     service = MagicMock()
     service.get_snapshot.return_value = HrMetricsSnapshot(

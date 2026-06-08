@@ -2,10 +2,7 @@ from __future__ import annotations
 
 from delpi_api_client import DelpiApiClient
 
-from si_app.application.dto.hr.hr_snapshot import (
-    HrMetricsSnapshot,
-    parse_hr_snapshot_payload,
-)
+from delpi_domain.hr_snapshot import HrMetricsSnapshot, parse_hr_snapshot_payload
 from si_app.infrastructure.http.auth_header import bearer_authorization_from_context
 
 

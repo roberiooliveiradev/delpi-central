@@ -37,7 +37,13 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["delpi_auth*", "transformometro_client*", "strategic_indicators_client*", "delpi_api_client*"]
+include = [
+  "delpi_auth*",
+  "delpi_api_client*",
+  "delpi_domain*",
+  "strategic_indicators_client*",
+  "transformometro_client*",
+]
 
 [tool.setuptools]
 zip-safe = false

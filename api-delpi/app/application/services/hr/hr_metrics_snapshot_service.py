@@ -1,35 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from app.application.shared.period_resolution import (
     ResolvedPeriod,
 )
 from app.infrastructure.persistence.portal_rh.hr_repositories.hr_metrics_repository import (
     HrMetricsRepository,
 )
-
-
-@dataclass(frozen=True)
-class HrBranchSnapshot:
-    branch_code: str
-    absenteeism_pct: float | None
-    turnover_pct: float | None
-    training_hours_per_collaborator: float | None
-    active_pdi_count: float | None = None
-    active_pdi_pct: float | None = None
-    performance_reviews_completion_pct: float | None = None
-
-
-@dataclass(frozen=True)
-class HrMetricsSnapshot:
-    start_date: str | None
-    end_date: str | None
-    branches: list[HrBranchSnapshot]
-    internal_satisfaction_pct: float | None = None
-    active_pdi_count: float | None = None
-    active_pdi_pct: float | None = None
-    performance_reviews_completion_pct: float | None = None
+from delpi_domain.hr_snapshot import HrBranchSnapshot, HrMetricsSnapshot
 
 
 class HrMetricsSnapshotService:

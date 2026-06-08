@@ -86,7 +86,7 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | `*_metrics_snapshot_service` departamentais | commercial, production, quality, supplies, engineering | Builders existiam nos composers mas **nenhuma rota HTTP** usava; agregação ficou só no SI |
 | Mantidos | `financial_metrics_snapshot_service`, `hr_metrics_snapshot_service` | Rotas `/financial/ebitda_pct`, `/pmr`, `/hr/*` |
 
-**Pendente:** extrair contratos idênticos para `shared/`.
+**Pendente (fase 6+):** demais DTOs/entidades departamentais, `period_resolution`.
 
 ### Fase 5 — RH via HTTP no SI (concluída jun/2026)
 
@@ -99,6 +99,16 @@ O `strategic-indicators-api` nasceu como cópia podada da api-delpi. Hoje:
 | `PORTAL_RH_DB_*` no compose/config do SI | `DELPI_API_URL` (já usado pelos demais gateways) |
 
 **Mantido na api-delpi:** `HrMetricsRepository`, rotas `/hr/*`.
+
+### Fase 6 — Contratos em `shared/delpi_domain` (concluída jun/2026)
+
+| Item | Destino | Removido |
+|------|---------|----------|
+| `spreadsheet_date.py` | `shared/delpi_domain/spreadsheet_date.py` | cópias em `api-delpi/app/shared/utils/` e `si_app/shared/utils/` |
+| Contrato RH (`Hr*Snapshot`, `parse_hr_snapshot_payload`) | `shared/delpi_domain/hr_snapshot.py` | `si_app/application/dto/hr/hr_snapshot.py`; dataclasses inline na api-delpi |
+| `process_summary_calculator.py` | — (código morto) | ~1130 LOC × 2 em `domain/services/transforma_mais/` |
+
+Pacote registrado em `shared/pyproject.toml` (`delpi_domain*`).
 
 ---
 

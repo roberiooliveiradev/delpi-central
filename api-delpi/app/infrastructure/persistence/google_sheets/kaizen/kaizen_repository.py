@@ -7,7 +7,7 @@ from app.domain.entities.kaizen.kaizen import Kaizen
 from app.application.dto.kaizen.kaizen_summary_request import KaizenSummaryRequest
 from app.application.dto.kaizen.kaizen_summary_response import KaizenSummaryResponse
 from app.infrastructure.persistence.google_sheets.utils import Utils
-from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
+from delpi_domain.spreadsheet_date import parse_spreadsheet_date
 
 
 class KaizenRepository(KaizenQueryRepositoryPort):
