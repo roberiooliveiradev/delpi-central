@@ -258,7 +258,7 @@ export function AuditListView({
             ))}
           </select>
         </label>
-        <label className="a5s-filters-card__field">
+        <label className="a5s-filters-card__field a5s-filters-card__field--period">
           <span>Período</span>
           <div className="a5s-filters-card__period">
             <input
@@ -275,7 +275,11 @@ export function AuditListView({
             />
           </div>
         </label>
-        <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--filter" onClick={clearFilters}>
+        <button
+          type="button"
+          className="a5s-btn a5s-btn--ghost a5s-btn--filter a5s-filters-card__clear"
+          onClick={clearFilters}
+        >
           <FilterX size={16} aria-hidden />
           Limpar filtros
         </button>
