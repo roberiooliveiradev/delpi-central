@@ -1,0 +1,132 @@
+---
+description: Padrão visual, responsivo e mobile dos plugins MFE (claro/escuro)
+globs: plugins/**/*
+alwaysApply: false
+---
+
+# Plugins — design system Minha Delpi
+
+## Princípio
+
+Plugins novos e alterações de UI em `plugins/` devem **parecer nativos do portal** e ser **totalmente responsivos** (desktop, tablet e mobile). Herdar tokens, tipografia e componentes dos dashboards maduros — **nunca** estilos isolados (Vite default, cores hardcoded, dark mode só com `@media`, layouts com largura fixa).
+
+## Referências obrigatórias
+
+| Papel | Caminho |
+|-------|---------|
+| Tokens globais | `portal/src/index.css` (`--primary`, `--surface`, `--chart-*`, etc.) |
+| Tema claro/escuro | `portal/src/utils/theme.ts` → `data-theme` no `<html>` |
+| Dashboard modelo | `plugins/dashboard-production/` (`index.css`, `KpiCard`, `ChartCard`) |
+| Dashboard extras | `plugins/dashboard-commercial/` (tabela com busca, impressão) |
+| Admin analytics | `portal/src/ui/admin/tabs/StatsTab.css` |
+| Anti-referência | `plugins/dashboard-delpi/` (template Vite, não seguir) |
+
+## Tema claro e escuro
+
+1. **Consumir** vars do portal: `var(--primary)`, `var(--surface)`, `var(--text)`, `var(--app-canvas)`, `var(--border)`.
+2. **Dark mode** só via `:root[data-theme="dark"] .dashboard-{nome} { ... }` — o portal já resolve `light` / `dark` / `system`.
+3. **Não** redefinir `:root` global nem duplicar `@media (prefers-color-scheme: dark)` em MFE federado.
+4. **Não** usar `#fff`, `#000`, `rgb(...)` fixos para superfície/texto — usar tokens com fallback de marca (`var(--primary, #089bdb)`).
+
+## Estrutura CSS do plugin
+
+```tsx
+// Página
+<div className="dashboard-{nome} dashboard-page">
+  <div className="{prefix}-app-shell">...</div>
+</div>
+```
+
+```css
+.dashboard-{nome} {
+  --{prefix}-card-radius: 18px;
+  --{prefix}-card-padding: 20px;
+  --{prefix}-accent: var(--primary, #089bdb);
+  --{prefix}-card-bg: var(--surface, #ffffff);
+  --{prefix}-text: var(--text, #111111);
+}
+.dashboard-{nome}.dashboard-page {
+  background-color: var(--app-canvas, var(--bg));
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--app-canvas)),
+    var(--app-canvas) 280px);
+}
+```
+
+- Prefixo único por plugin (`dp-`, `dc-`, `dq-`, …); **escopar** todas as classes em `.dashboard-{nome}`.
+- Tipografia: `Inter` (herdada do portal); escala local `--{prefix}-font-xs/sm/md` (12/13/14px).
+- Focus: `outline: 2px solid var(--{prefix}-accent); outline-offset: 2px`.
+
+## Responsividade e mobile
+
+Toda tela deve funcionar em **qualquer largura** — sem scroll horizontal involuntário, sem conteúdo cortado, sem depender de hover.
+
+### Breakpoints de referência
+
+| Largura | Comportamento |
+|---------|---------------|
+| `> 1100px` | Layout completo (grids multi-coluna) |
+| `≤ 1100px` | Reduzir colunas intermediárias (ex.: atalhos 2 colunas) |
+| `≤ 768px` | **Mobile** — coluna única, padding reduzido, toolbars empilhadas |
+
+### Padrões obrigatórios (copiar de `dashboard-production`)
+
+- Grids (`kpi`, `charts`, `summary`): `grid-template-columns: 1fr` em `@media (max-width: 768px)`.
+- Page padding mobile: `16px` (desktop: `24px`).
+- Header da página: `flex-direction: column` no mobile.
+- Toolbars de gráfico/filtro: `flex-direction: column; align-items: stretch`; ações com `width: 100%`.
+- Tabelas: `{prefix}-table-wrap` com `overflow-x: auto` no desktop; no mobile, modo card como `portal/src/components/DataTable.css` (`data-label` + thead oculto) ou scroll horizontal **intencional** com indicação visual.
+- Gráficos: sempre `ResponsiveContainer` (Recharts); altura mínima legível, eixos/legendas que não estourem em telas estreitas.
+- Tipografia: preferir `clamp()` para títulos e KPIs (`--{prefix}-font-hero`, `--{prefix}-font-kpi`).
+- Toque: área mínima de alvo **44×44px** em botões e controles interativos.
+
+### O que NÃO fazer (mobile)
+
+- `min-width` fixo em containers de página ou tabelas sem wrapper scrollável.
+- Grids só com `repeat(4, 1fr)` sem media query.
+- Esconder conteúdo essencial no mobile (só desktop).
+- Depender de hover para ações críticas.
+
+## Componentes — copiar o padrão dos dashboards
+
+### Cards
+
+- Base: `{prefix}-card` — `border-radius: 18px`, `padding: 20px`, borda `var(--border)`.
+- KPI: `{prefix}-kpi-card` + `{prefix}-kpi-icon` (44×44, `border-radius: 14px`, fundo `color-mix(... accent 10%)`).
+- Chart: `{prefix}-chart-card` com BEM `__header`, `__title`, `__body`.
+- Badges: pill `border-radius: 999px`; semântica via `success` / `warning` / `danger` do portal.
+
+### Tabelas
+
+- `{prefix}-table-wrap` + `{prefix}-table`; cabeçalho com fundo `color-mix(... accent 8%)`, `font-size: 13px`.
+- Colunas numéricas: `{prefix}-table__col--numeric`; vazio: `{prefix}-table__empty`.
+- Paginação ghost alinhada ao portal (`DataTable.css` como referência de densidade).
+
+### Gráficos
+
+- Biblioteca: **Recharts** (`ResponsiveContainer`, `strokeWidth={2}`).
+- Cores: `CHART_COLORS` de `dashboard-production/src/constants/chartColors.ts` ou `--chart-1`…`--chart-6` no portal.
+- Layout: `{prefix}-charts-grid`, `{prefix}-chart-toolbar`, `{prefix}-state-box` para loading/vazio.
+
+### Ícones
+
+- Biblioteca: **`lucide-react`** (única no ecossistema).
+- Tamanhos: header **28** (`strokeWidth={1.75}`), KPI **22**, botão/toolbar **16**, banner **18**.
+- Container decorativo: `aria-hidden="true"`; fundo accent 10–12%, `border-radius: 14px`.
+- **Não** usar outras libs de ícone nem emojis como substituto visual.
+
+## O que NÃO fazer
+
+- CSS global fora do root do plugin; estilos do template Vite (`#root { max-width: 1280px }`, etc.).
+- Componentes com aparência Material/Ant/Bootstrap desalinhada do portal.
+- Gráficos com paleta aleatória ou sem legenda/estado vazio.
+- Ignorar dark mode ou testar só em um tema.
+- Layout só desktop ou sem `@media (max-width: 768px)`.
+
+## O que fazer (novo plugin)
+
+1. Copiar esqueleto de `dashboard-production` (`index.css`, header, shell, KPI/chart cards).
+2. Definir tokens locais mapeando para vars do portal.
+3. Incluir media queries `1100px` e `768px` para grids, header, toolbars e tabelas.
+4. Validar visualmente em **claro e escuro** e em **mobile** (viewport ≤ 768px ou DevTools).
+5. `npm run build` do plugin antes de entregar (ver regra `plugins-frontend-build`).
