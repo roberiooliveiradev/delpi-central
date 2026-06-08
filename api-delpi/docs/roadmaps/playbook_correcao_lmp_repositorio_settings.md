@@ -791,26 +791,28 @@ def _engineering_residence_filter_sql(self) -> str:
 | LMP com passagem rápida | LMP | 0 | Não listar |
 | OUTRO com passagem rápida | OUTRO | 0 | Listar |
 
-### Reclassificação LMP pontual com marcador de Amostra
+### Medição de tempo por revisão no período
 
-Quando a âncora inicial é `LMP` mas `TEMPO_TOTAL_MINUTOS_ENG < 30` e existe marcador de
-`AMOSTRA` na revisão (`HAS_SAMPLE_ANCHOR = 1`), reclassificar para `AMOSTRA` e listar.
+Na listagem com `date_start`/`date_end`, o histórico de engenharia:
 
-Caso típico: OV `003578` (jun/2026) — passagem pontual na engenharia com 0 minuto.
+1. Considera **todas as revisões** da OV candidata (escopo por filial + número, não só `AD1_REVISA`).
+2. Elege revisões com pelo menos um evento de engenharia com `AIJ_DTINIC` no período.
+3. Mede na revisão com **maior `MINUTOS_REVISAO`**, desempate: âncora LMP, depois revisão mais alta.
+4. Se nenhuma revisão cair no período, usa fallback `AD1_REVISA` do candidato.
 
-```sql
--- inclusão no filtro
-OR C.HAS_SAMPLE_ANCHOR = 1
+Caso típico: OV `003578` em jun/2026 mede na **rev. 09** (~1.326 min), não na rev. 12 (0 min).
 
--- tipo exibido
-CASE
-    WHEN C.LISTING_KIND = 'LMP'
-     AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
-     AND C.HAS_SAMPLE_ANCHOR = 1
-    THEN 'AMOSTRA'
-    ELSE C.LISTING_KIND
-END
-```
+### Reclassificação LMP com marcador de Amostra (`HAS_SAMPLE_ANCHOR`)
+
+Quando a âncora inicial é `LMP` mas existe marcador de `AMOSTRA` na revisão:
+
+| Condição na revisão medida | Tipo exibido |
+|----------------------------|--------------|
+| `TEMPO_MINUTOS_AMOSTRA_ENG > 0` (estágio amostra com permanência) | **AMOSTRA** |
+| `TEMPO_TOTAL_MINUTOS_ENG < 30` sem tempo em estágio amostra | **OUTRO** |
+
+Casos: `003578` (jun/2026) → AMOSTRA (rev. 09, estágio 000008 ~1.326 min);
+`003520` → OUTRO (só passagem pontual na engenharia, 0 min).
 
 ### Resumo
 

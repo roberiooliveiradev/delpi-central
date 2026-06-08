@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.application.dto.lmp.get_lmp_request import GetLMPRequest
 from app.application.dto.lmp.list_lmp_request import (
     LISTING_KIND_OTHER,
     LISTING_KIND_SAMPLE,
@@ -37,6 +38,40 @@ def test_listing_anchor_marker_prioritizes_lmp_over_sample() -> None:
     assert sql.count("?") == len(params)
 
 
+def test_header_lmp_uses_period_measurement_when_dates_provided() -> None:
+    repo = _repository()
+    request = GetLMPRequest(
+        sale_number="003578",
+        date_start="20260601",
+        date_end="20260630",
+    )
+
+    sql, params = repo._sql_header_lmp(request)
+
+    assert "GetLmpCandidateScope" in sql
+    assert "EngenhariaMinutosPorRevisao" in sql
+    assert "TEMPO_MINUTOS_AMOSTRA_ENG" in sql
+    assert "THEN 'AMOSTRA'" in sql
+    assert request.sale_number in params
+
+
+def test_historico_uses_period_revision_measurement_when_listing() -> None:
+    repo = _repository()
+
+    sql, _params = repo._sql_historico_ov_cte(
+        scope_cte_name="CandidateLMPs",
+        requested_branch=None,
+        date_start="20260601",
+        date_end="20260608",
+    )
+
+    assert "EngenhariaMinutosPorRevisao" in sql
+    assert "RevisoesElegiveisMedicao" in sql
+    assert "MINUTOS_REVISAO DESC" in sql
+    assert "SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR" in sql
+    assert "SCOPE_A.AD1_REVISA = A.AIJ_REVISA" not in sql
+
+
 def test_eng_support_reference_uses_current_revision() -> None:
     repo = _repository()
 
@@ -71,7 +106,9 @@ def test_staged_batch_applies_minimum_engineering_residence_filter_only_for_lmp(
     assert "C.LISTING_KIND = 'LMP'" in batch_sql
     assert "C.HAS_SAMPLE_ANCHOR = 1" in batch_sql
     assert "ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in batch_sql
+    assert "TEMPO_MINUTOS_AMOSTRA_ENG" in batch_sql
     assert "THEN 'AMOSTRA'" in batch_sql
+    assert "THEN 'OUTRO'" in batch_sql
     assert batch_params[-2:] == (30, 30)
 
 

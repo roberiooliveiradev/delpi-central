@@ -103,14 +103,23 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 )
         """
 
-    def _effective_listing_kind_expr(self) -> str:
+    def _effective_listing_kind_expr(
+        self,
+        *,
+        listing_kind_field: str = "C.LISTING_KIND",
+        has_sample_field: str = "C.HAS_SAMPLE_ANCHOR",
+    ) -> str:
         return f"""
             CASE
-                WHEN C.LISTING_KIND = '{LISTING_KIND_LMP}'
-                 AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
-                 AND C.HAS_SAMPLE_ANCHOR = 1
+                WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
+                 AND {has_sample_field} = 1
+                 AND ISNULL(H.TEMPO_MINUTOS_AMOSTRA_ENG, 0) > 0
                 THEN '{LISTING_KIND_SAMPLE}'
-                ELSE C.LISTING_KIND
+                WHEN {listing_kind_field} = '{LISTING_KIND_LMP}'
+                 AND {has_sample_field} = 1
+                 AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) < ?
+                THEN '{LISTING_KIND_OTHER}'
+                ELSE {listing_kind_field}
             END
         """
 
@@ -125,6 +134,175 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         params.extend([minutes] * residence_filter_count)
         params.extend([minutes] * listing_kind_reclass_count)
         return tuple(params)
+
+    def _uses_period_revision_measurement(
+        self,
+        *,
+        scope_cte_name: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> bool:
+        return bool(scope_cte_name and date_start and date_end)
+
+    def _sql_event_engineering_minutes_expr(self, alias: str) -> str:
+        return f"""
+            CASE
+                WHEN ISNULL({alias}.AIJ_DTINIC, '') <> ''
+                 AND ISNULL({alias}.AIJ_HRINIC, '') <> ''
+                THEN DATEDIFF(
+                    MINUTE,
+                    CAST(
+                        CONCAT(
+                            SUBSTRING({alias}.AIJ_DTINIC, 1, 4), '-',
+                            SUBSTRING({alias}.AIJ_DTINIC, 5, 2), '-',
+                            SUBSTRING({alias}.AIJ_DTINIC, 7, 2), ' ',
+                            {alias}.AIJ_HRINIC, ':00'
+                        ) AS DATETIME
+                    ),
+                    CASE
+                        WHEN ISNULL({alias}.AIJ_DTENCE, '') <> ''
+                         AND ISNULL({alias}.AIJ_HRENCE, '') <> ''
+                        THEN CAST(
+                            CONCAT(
+                                SUBSTRING({alias}.AIJ_DTENCE, 1, 4), '-',
+                                SUBSTRING({alias}.AIJ_DTENCE, 5, 2), '-',
+                                SUBSTRING({alias}.AIJ_DTENCE, 7, 2), ' ',
+                                {alias}.AIJ_HRENCE, ':00'
+                            ) AS DATETIME
+                        )
+                        WHEN ISNULL({alias}.PROXIMO_DTINIC_GLOBAL, '') <> ''
+                         AND ISNULL({alias}.PROXIMO_HRINIC_GLOBAL, '') <> ''
+                        THEN CAST(
+                            CONCAT(
+                                SUBSTRING({alias}.PROXIMO_DTINIC_GLOBAL, 1, 4), '-',
+                                SUBSTRING({alias}.PROXIMO_DTINIC_GLOBAL, 5, 2), '-',
+                                SUBSTRING({alias}.PROXIMO_DTINIC_GLOBAL, 7, 2), ' ',
+                                {alias}.PROXIMO_HRINIC_GLOBAL, ':00'
+                            ) AS DATETIME
+                        )
+                        ELSE GETDATE()
+                    END
+                )
+                ELSE 0
+            END
+        """
+
+    def _sql_period_revision_measurement_ctes(
+        self,
+        *,
+        use_period_revision: bool,
+        scope_cte_name: str | None,
+        where_period_eng: str,
+        where_period_eng_e2: str,
+        where_lmp_anchor_rank_e: str,
+        where_lmp_anchor_rank_m: str,
+        eng_minutes_expr: str,
+    ) -> str:
+        eng_minutes_per_rev_expr = self._sql_event_engineering_minutes_expr("M")
+        if use_period_revision:
+            return f"""
+            EngenhariaMinutosPorRevisao AS (
+                SELECT
+                    M.AIJ_FILIAL,
+                    M.AIJ_NROPOR,
+                    M.AIJ_REVISA,
+                    SUM({eng_minutes_per_rev_expr}) AS MINUTOS_REVISAO,
+                    MAX(
+                        CASE
+                            WHEN {where_lmp_anchor_rank_m} THEN 1
+                            ELSE 0
+                        END
+                    ) AS TEM_ANCORA_LMP
+                FROM EngenhariaEventos M
+                GROUP BY
+                    M.AIJ_FILIAL,
+                    M.AIJ_NROPOR,
+                    M.AIJ_REVISA
+            ),
+
+            RevisoesElegiveisMedicao AS (
+                SELECT DISTINCT
+                    E.AIJ_FILIAL,
+                    E.AIJ_NROPOR,
+                    E.AIJ_REVISA
+                FROM EngenhariaEventos E
+                WHERE 1=1
+                  {where_period_eng}
+
+                UNION
+
+                SELECT
+                    S.AD1_FILIAL,
+                    S.AD1_NROPOR,
+                    S.AD1_REVISA
+                FROM {scope_cte_name} S
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM EngenhariaEventos E2
+                    WHERE E2.AIJ_FILIAL = S.AD1_FILIAL
+                      AND E2.AIJ_NROPOR = S.AD1_NROPOR
+                      {where_period_eng_e2}
+                )
+            ),
+
+            UltimaRevisaoMedicaoEngenharia AS (
+                SELECT
+                    T.AIJ_FILIAL,
+                    T.AIJ_NROPOR,
+                    T.AIJ_REVISA AS ULTIMA_REVISA_MEDICAO
+                FROM (
+                    SELECT
+                        M.AIJ_FILIAL,
+                        M.AIJ_NROPOR,
+                        M.AIJ_REVISA,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY M.AIJ_FILIAL, M.AIJ_NROPOR
+                            ORDER BY
+                                M.MINUTOS_REVISAO DESC,
+                                M.TEM_ANCORA_LMP DESC,
+                                M.AIJ_REVISA DESC
+                        ) AS RN
+                    FROM EngenhariaMinutosPorRevisao M
+                    INNER JOIN RevisoesElegiveisMedicao R
+                        ON R.AIJ_FILIAL = M.AIJ_FILIAL
+                       AND R.AIJ_NROPOR = M.AIJ_NROPOR
+                       AND R.AIJ_REVISA = M.AIJ_REVISA
+                ) T
+                WHERE T.RN = 1
+            ),
+            """
+
+        return f"""
+            UltimaRevisaoMedicaoEngenharia AS (
+                SELECT
+                    T.AIJ_FILIAL,
+                    T.AIJ_NROPOR,
+                    T.AIJ_REVISA AS ULTIMA_REVISA_MEDICAO
+                FROM (
+                    SELECT
+                        R.AIJ_FILIAL,
+                        R.AIJ_NROPOR,
+                        R.AIJ_REVISA,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY R.AIJ_FILIAL, R.AIJ_NROPOR
+                            ORDER BY
+                                CASE
+                                    WHEN {where_lmp_anchor_rank_e} THEN 2
+                                    ELSE 1
+                                END DESC,
+                                R.AIJ_REVISA DESC
+                        ) AS RN
+                    FROM EngenhariaEventos R
+                    GROUP BY
+                        R.AIJ_FILIAL,
+                        R.AIJ_NROPOR,
+                        R.AIJ_REVISA,
+                        R.AIJ_PROVEN,
+                        R.AIJ_STAGE
+                ) T
+                WHERE T.RN = 1
+            ),
+            """
 
     def _get_request_branch(self, request) -> str | None:
         return getattr(request, "branch", None)
@@ -322,6 +500,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         cte_hist, params_hist = self._sql_historico_ov_cte(
             scope_cte_name="CandidateLMPs",
             requested_branch=request.branch,
+            date_start=request.date_start,
+            date_end=request.date_end,
         )
 
         ctes = [
@@ -760,6 +940,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         self,
         scope_cte_name: str | None = None,
         requested_branch: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
     ) -> Tuple[str, tuple]:
         where_aij_base_a, params_aij_base_a = self._build_filter_sql(
             lambda qb: (
@@ -783,13 +965,44 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             "R.AIJ_STAGE",
         )
 
+        where_lmp_anchor_rank_m, params_lmp_anchor_rank_m = self._sql_lmp_anchor_process_stage_condition(
+            "M.AIJ_PROVEN",
+            "M.AIJ_STAGE",
+        )
+
+        use_period_revision = self._uses_period_revision_measurement(
+            scope_cte_name=scope_cte_name,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        where_period_eng, params_period_eng = self._sql_aij_period_filter_clause(
+            "E.AIJ_DTINIC",
+            date_start,
+            date_end,
+        )
+        where_period_eng_e2, _params_period_eng_e2 = self._sql_aij_period_filter_clause(
+            "E2.AIJ_DTINIC",
+            date_start,
+            date_end,
+        )
+        eng_minutes_expr = self._sql_event_engineering_minutes_expr("E")
+        where_sample_eng_e, params_sample_eng_e = (
+            self._sql_sample_anchor_process_stage_condition(
+                "E.AIJ_PROVEN",
+                "E.AIJ_STAGE",
+            )
+        )
+
         scope_join_a = ""
         if scope_cte_name:
+            revision_match = ""
+            if not use_period_revision:
+                revision_match = "AND SCOPE_A.AD1_REVISA = A.AIJ_REVISA"
             scope_join_a = f"""
                 INNER JOIN {scope_cte_name} SCOPE_A
                     ON SCOPE_A.AD1_FILIAL = A.AIJ_FILIAL
                    AND SCOPE_A.AD1_NROPOR = A.AIJ_NROPOR
-                   AND SCOPE_A.AD1_REVISA = A.AIJ_REVISA
+                   {revision_match}
             """
 
         win = """PARTITION BY A.AIJ_FILIAL, A.AIJ_NROPOR
@@ -799,6 +1012,16 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                             A.AIJ_HRINIC,
                             A.AIJ_STAGE,
                             A.R_E_C_N_O_"""
+
+        period_revision_measurement_ctes = self._sql_period_revision_measurement_ctes(
+            use_period_revision=use_period_revision,
+            scope_cte_name=scope_cte_name,
+            where_period_eng=where_period_eng,
+            where_period_eng_e2=where_period_eng_e2,
+            where_lmp_anchor_rank_e=where_lmp_anchor_rank_e,
+            where_lmp_anchor_rank_m=where_lmp_anchor_rank_m,
+            eng_minutes_expr=eng_minutes_expr,
+        )
 
         sql = f"""
             TodosEventosOV AS (
@@ -860,17 +1083,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 WHERE {where_eng_support_e}
             ),
 
-            UltimaRevisaoEngenharia AS (
-                SELECT
-                    E.AIJ_FILIAL,
-                    E.AIJ_NROPOR,
-                    MAX(E.AIJ_REVISA) AS ULTIMA_REVISA
-                FROM EngenhariaEventos E
-                GROUP BY
-                    E.AIJ_FILIAL,
-                    E.AIJ_NROPOR
-            ),
-
+            {period_revision_measurement_ctes}
             StatusUltimaRevisaoEngenharia AS (
                 SELECT
                     E.AIJ_FILIAL,
@@ -908,43 +1121,13 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                         ELSE ?
                     END AS ENGINEERING_STATUS
                 FROM EngenhariaEventos E
-                INNER JOIN UltimaRevisaoEngenharia U
-                    ON U.AIJ_FILIAL = E.AIJ_FILIAL
-                   AND U.AIJ_NROPOR = E.AIJ_NROPOR
-                   AND U.ULTIMA_REVISA = E.AIJ_REVISA
+                INNER JOIN UltimaRevisaoMedicaoEngenharia M
+                    ON M.AIJ_FILIAL = E.AIJ_FILIAL
+                   AND M.AIJ_NROPOR = E.AIJ_NROPOR
+                   AND M.ULTIMA_REVISA_MEDICAO = E.AIJ_REVISA
                 GROUP BY
                     E.AIJ_FILIAL,
                     E.AIJ_NROPOR
-            ),
-
-            UltimaRevisaoMedicaoEngenharia AS (
-                SELECT
-                    T.AIJ_FILIAL,
-                    T.AIJ_NROPOR,
-                    T.AIJ_REVISA AS ULTIMA_REVISA_MEDICAO
-                FROM (
-                    SELECT
-                        R.AIJ_FILIAL,
-                        R.AIJ_NROPOR,
-                        R.AIJ_REVISA,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY R.AIJ_FILIAL, R.AIJ_NROPOR
-                            ORDER BY
-                                CASE
-                                    WHEN {where_lmp_anchor_rank_e} THEN 2
-                                    ELSE 1
-                                END DESC,
-                                R.AIJ_REVISA DESC
-                        ) AS RN
-                    FROM EngenhariaEventos R
-                    GROUP BY
-                        R.AIJ_FILIAL,
-                        R.AIJ_NROPOR,
-                        R.AIJ_REVISA,
-                        R.AIJ_PROVEN,
-                        R.AIJ_STAGE
-                ) T
-                WHERE T.RN = 1
             ),
 
             EngenhariaResumoUltimaRevisao AS (
@@ -968,47 +1151,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                             ELSE 0
                         END
                     ) AS QTD_PASSAGENS_ENCERRADAS,
+                    SUM({eng_minutes_expr}) AS TEMPO_TOTAL_MINUTOS_ENG,
                     SUM(
                         CASE
-                            WHEN ISNULL(E.AIJ_DTINIC, '') <> ''
-                             AND ISNULL(E.AIJ_HRINIC, '') <> ''
-                            THEN DATEDIFF(
-                                MINUTE,
-                                CAST(
-                                    CONCAT(
-                                        SUBSTRING(E.AIJ_DTINIC, 1, 4), '-',
-                                        SUBSTRING(E.AIJ_DTINIC, 5, 2), '-',
-                                        SUBSTRING(E.AIJ_DTINIC, 7, 2), ' ',
-                                        E.AIJ_HRINIC, ':00'
-                                    ) AS DATETIME
-                                ),
-                                CASE
-                                    WHEN ISNULL(E.AIJ_DTENCE, '') <> ''
-                                     AND ISNULL(E.AIJ_HRENCE, '') <> ''
-                                    THEN CAST(
-                                        CONCAT(
-                                            SUBSTRING(E.AIJ_DTENCE, 1, 4), '-',
-                                            SUBSTRING(E.AIJ_DTENCE, 5, 2), '-',
-                                            SUBSTRING(E.AIJ_DTENCE, 7, 2), ' ',
-                                            E.AIJ_HRENCE, ':00'
-                                        ) AS DATETIME
-                                    )
-                                    WHEN ISNULL(E.PROXIMO_DTINIC_GLOBAL, '') <> ''
-                                     AND ISNULL(E.PROXIMO_HRINIC_GLOBAL, '') <> ''
-                                    THEN CAST(
-                                        CONCAT(
-                                            SUBSTRING(E.PROXIMO_DTINIC_GLOBAL, 1, 4), '-',
-                                            SUBSTRING(E.PROXIMO_DTINIC_GLOBAL, 5, 2), '-',
-                                            SUBSTRING(E.PROXIMO_DTINIC_GLOBAL, 7, 2), ' ',
-                                            E.PROXIMO_HRINIC_GLOBAL, ':00'
-                                        ) AS DATETIME
-                                    )
-                                    ELSE GETDATE()
-                                END
-                            )
+                            WHEN {where_sample_eng_e}
+                            THEN {eng_minutes_expr}
                             ELSE 0
                         END
-                    ) AS TEMPO_TOTAL_MINUTOS_ENG,
+                    ) AS TEMPO_MINUTOS_AMOSTRA_ENG,
                     SUM(
                         CASE
                             WHEN (
@@ -1055,17 +1205,28 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             )
         """
 
-        params = (
+        params: list = [
             *params_aij_base_a,
             *params_eng_support_next,
             *params_eng_support_e,
+        ]
+        if use_period_revision:
+            params.extend([
+                *params_lmp_anchor_rank_m,
+                *params_period_eng,
+                *params_period_eng,
+            ])
+        else:
+            params.extend([*params_lmp_anchor_rank_e])
+
+        params.extend([
             self._engineering_status_returned_label(),
             self._engineering_status_in_progress_label(),
             self._engineering_status_finished_label(),
             self._engineering_status_partial_label(),
-            *params_lmp_anchor_rank_e,
-        )
-        return sql, params
+            *params_sample_eng_e,
+        ])
+        return sql, tuple(params)
 
     def _sql_listing_anchor_marker_cte(
         self,
@@ -1637,32 +1798,114 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         )
         return sql, params
 
-    def _sql_header_lmp(
-        self,
-        requested_branch: str | None = None,
-    ) -> Tuple[str, tuple]:
-        cte_marker, params_marker = self._sql_listing_anchor_marker_cte(requested_branch)
-        cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
-            requested_branch
+    def _sql_get_lmp_candidate_scope_cte(self, *, where_ad1: str) -> str:
+        return f"""
+            GetLmpCandidateScope AS (
+                SELECT
+                    AD1.AD1_FILIAL,
+                    AD1.AD1_NROPOR,
+                    AD1.AD1_REVISA,
+                    COALESCE(L.LISTING_KIND, ?) AS LISTING_KIND,
+                    CASE
+                        WHEN SA.AIJ_NROPOR IS NOT NULL THEN 1
+                        ELSE 0
+                    END AS HAS_SAMPLE_ANCHOR
+                FROM AD1010 AD1
+                LEFT JOIN ListingAnchorEventos L
+                    ON L.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND L.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND L.AIJ_REVISA = AD1.AD1_REVISA
+                LEFT JOIN SampleAnchorOvKeys SA
+                    ON SA.AIJ_FILIAL = AD1.AD1_FILIAL
+                   AND SA.AIJ_NROPOR = AD1.AD1_NROPOR
+                   AND SA.AIJ_REVISA = AD1.AD1_REVISA
+                WHERE {where_ad1}
+                  AND AD1.AD1_NROPOR = ?
+            ),
+        """
+
+    def _sql_header_lmp(self, request: GetLMPRequest) -> Tuple[str, tuple]:
+        requested_branch = self._get_request_branch(request)
+        use_period = self._uses_period_revision_measurement(
+            scope_cte_name="GetLmpCandidateScope",
+            date_start=request.date_start,
+            date_end=request.date_end,
         )
-        cte_hist, params_hist = self._sql_historico_ov_cte(requested_branch=requested_branch)
+
+        if use_period:
+            cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
+                requested_branch,
+                request.date_start,
+                request.date_end,
+            )
+            cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
+                requested_branch,
+                request.date_start,
+                request.date_end,
+            )
+        else:
+            cte_marker, params_marker = self._sql_listing_anchor_marker_cte(
+                requested_branch,
+            )
+            cte_eng_ref, params_eng_ref = self._sql_eng_support_ov_reference_cte(
+                requested_branch,
+            )
+
         where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1", requested_branch)
         where_sa1, params_sa1 = self._sql_filter_sa1_active("SA1")
         where_sa3, params_sa3 = self._sql_filter_sa3_active("SA3")
+
+        scope_cte = ""
+        params_scope: tuple = ()
+        if use_period:
+            scope_cte = self._sql_get_lmp_candidate_scope_cte(where_ad1=where_ad1)
+            params_scope = (LISTING_KIND_OTHER, *params_ad1, request.sale_number)
+            cte_hist, params_hist = self._sql_historico_ov_cte(
+                scope_cte_name="GetLmpCandidateScope",
+                requested_branch=requested_branch,
+                date_start=request.date_start,
+                date_end=request.date_end,
+            )
+        else:
+            cte_hist, params_hist = self._sql_historico_ov_cte(
+                requested_branch=requested_branch,
+            )
+
+        listing_kind_select = (
+            f"{self._effective_listing_kind_expr()} AS listing_kind"
+            if use_period
+            else f"""
+                CASE
+                    WHEN L.AIJ_NROPOR IS NOT NULL THEN L.LISTING_KIND
+                    ELSE ?
+                END AS listing_kind
+            """
+        )
+        candidate_join = """
+            INNER JOIN GetLmpCandidateScope C
+                ON C.AD1_FILIAL = AD1.AD1_FILIAL
+               AND C.AD1_NROPOR = AD1.AD1_NROPOR
+               AND C.AD1_REVISA = AD1.AD1_REVISA
+        """ if use_period else ""
+
+        sale_filter = "" if use_period else "AND AD1.AD1_NROPOR = ?"
+        listing_presence_filter = (
+            ""
+            if use_period
+            else "AND (L.AIJ_NROPOR IS NOT NULL OR R.AIJ_NROPOR IS NOT NULL)"
+        )
 
         sql = f"""
             WITH
             {cte_marker},
             {cte_eng_ref},
+            {scope_cte}
             {cte_hist}
             SELECT TOP 1
                 AD1.AD1_FILIAL AS branch,
                 AD1.AD1_NROPOR AS sale_number,
                 AD1.AD1_DESCRI AS sale_description,
-                CASE
-                    WHEN L.AIJ_NROPOR IS NOT NULL THEN L.LISTING_KIND
-                    ELSE ?
-                END AS listing_kind,
+                {listing_kind_select},
                 COALESCE(L.ANCHOR_START_DATE, R.ANCHOR_START_DATE) AS start_date,
                 COALESCE(L.ANCHOR_END_DATE, R.ANCHOR_END_DATE) AS end_date,
                 H.ENGINEERING_STATUS AS engineering_status,
@@ -1677,6 +1920,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 AD1.AD1_VEND AS seller_code,
                 SA3.A3_NOME AS seller_name
             FROM AD1010 AD1
+            {candidate_join}
             LEFT JOIN ListingAnchorEventos L
                 ON L.AIJ_FILIAL = AD1.AD1_FILIAL
                AND L.AIJ_NROPOR = AD1.AD1_NROPOR
@@ -1696,21 +1940,31 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 ON SA3.A3_COD = AD1.AD1_VEND
                AND {where_sa3}
             WHERE {where_ad1}
-              AND AD1.AD1_NROPOR = ?
-              AND (L.AIJ_NROPOR IS NOT NULL OR R.AIJ_NROPOR IS NOT NULL)
+              {sale_filter}
+              {listing_presence_filter}
             ORDER BY AD1.AD1_REVISA DESC
         """
 
-        params = (
+        params: list = [
             *params_marker,
             *params_eng_ref,
+            *params_scope,
             *params_hist,
-            LISTING_KIND_OTHER,
+        ]
+        if use_period:
+            params.append(self._min_engineering_residence_minutes())
+        else:
+            params.append(LISTING_KIND_OTHER)
+
+        params.extend([
             *params_sa1,
             *params_sa3,
             *params_ad1,
-        )
-        return sql, params
+        ])
+        if not use_period:
+            params.append(request.sale_number)
+
+        return sql, tuple(params)
 
     def _sql_products_lmp(
         self,
@@ -1800,6 +2054,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         cte_hist, params_hist = self._sql_historico_ov_cte(
             scope_cte_name=self._TEMP_CANDIDATES,
             requested_branch=request.branch,
+            date_start=request.date_start,
+            date_end=request.date_end,
         )
 
         parts = [
@@ -1880,7 +2136,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     C.LMP_START_DATE,
                     C.LMP_END_DATE,
                     H.ENGINEERING_STATUS,
-                    H.TEMPO_TOTAL_MINUTOS_ENG
+                    H.TEMPO_TOTAL_MINUTOS_ENG,
+                    H.TEMPO_MINUTOS_AMOSTRA_ENG
                     {qtd_pi_group_by}
                 {order_clause}
             """
@@ -1919,7 +2176,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 H.QTD_PASSAGENS_ENCERRADAS,
                 H.QTD_AVANCOU_ENG,
                 H.QTD_RETORNOU_ENG,
-                H.TEMPO_TOTAL_MINUTOS_ENG
+                H.TEMPO_TOTAL_MINUTOS_ENG,
+                H.TEMPO_MINUTOS_AMOSTRA_ENG
                 {qtd_pi_group_by}
             {order_clause}
         """
@@ -1959,7 +2217,8 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                     H.QTD_PASSAGENS_ENCERRADAS,
                     H.QTD_AVANCOU_ENG,
                     H.QTD_RETORNOU_ENG,
-                    H.TEMPO_TOTAL_MINUTOS_ENG
+                    H.TEMPO_TOTAL_MINUTOS_ENG,
+                    H.TEMPO_MINUTOS_AMOSTRA_ENG
                     {qtd_pi_group_by}
             ) BASE_ROWS
         """
@@ -2055,14 +2314,14 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def get_lmp(self, request: GetLMPRequest) -> LMP:
         requested_branch = self._get_request_branch(request)
 
-        sql_header, params_header = self._sql_header_lmp(requested_branch=requested_branch)
+        sql_header, params_header = self._sql_header_lmp(request)
         sql_products, params_products = self._sql_products_lmp(requested_branch=requested_branch)
         sql_qtd_pi, params_qtd_pi = self._sql_qtd_pi_lmp_total(requested_branch=requested_branch)
 
         with self as repo:
             header_row = repo.execute_one(
                 sql_header,
-                (*params_header, request.sale_number),
+                params_header,
             )
 
             if not header_row:

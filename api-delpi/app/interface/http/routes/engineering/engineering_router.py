@@ -277,9 +277,19 @@ def lmps_dashboard_charts_route(
 
 @router.get("/lmps/{sale_number}", **LMP_BY_SALE)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
-def get_lmp_route(sale_number: str):
+def get_lmp_route(
+    sale_number: str,
+    date_start: Optional[str] = None,
+    date_end: Optional[str] = None,
+    branch: Optional[str] = None,
+):
     try:
-        dto = GetLMPRequest(sale_number=sale_number)
+        dto = GetLMPRequest(
+            sale_number=sale_number,
+            date_start=date_start,
+            date_end=date_end,
+            branch=branch,
+        )
 
         use_case = build_engineering_get_lmp_use_case()
         result = use_case.execute(dto)
